@@ -28,7 +28,8 @@ class Plotter(object):
         plt.subplots_adjust(left=0.04, right=0.98, bottom=0.05, top=0.95, wspace=0.1, hspace=0.4)
 
     def subplot(self, plot_num):
-        fig = plt.subplot(self.total_height, self.total_width, plot_num)
+        subplot_str = str(self.total_height) + str(self.total_width) + str(plot_num)
+        fig = plt.subplot(subplot_str)
         return fig
 
     def subplot_more(self, plot_num):
@@ -101,7 +102,7 @@ class Plotter(object):
             origin="lower",
         )
         ys, xs = np.meshgrid(width_range, height_range, indexing="ij")
-        for x, y, val in zip(xs.flatten(), ys.flatten(), data.flatten()):
+        for (x, y, val) in zip(xs.flatten(), ys.flatten(), data.flatten()):
             self.plot_text(x, y, val, num_data_type)
         plt.colorbar()
 

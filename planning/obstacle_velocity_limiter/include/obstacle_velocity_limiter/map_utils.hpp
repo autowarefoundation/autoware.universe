@@ -29,7 +29,7 @@ namespace obstacle_velocity_limiter
 /// @param[in] lanelet_map lanelet map
 /// @param[in] tags tags to identify obstacle linestrings
 /// @return the extracted obstacles
-multi_linestring_t extractStaticObstacles(
+multilinestring_t extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags);
 
 /// @brief Determine if the given linestring is an obstacle

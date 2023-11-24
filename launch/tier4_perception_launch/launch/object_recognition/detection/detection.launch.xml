@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- Interface parameters -->
+  <arg name="tier4_perception_launch_param_path"/>
   <arg name="mode" default="lidar" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
 
-  <!-- LiDAR parameters -->
+  <!-- lidar param -->
   <arg name="input/pointcloud"/>
-  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`"/>
+  <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
   <arg name="use_object_filter" default="true" description="use object filter"/>
   <arg name="use_pointcloud_container" default="false" description="use pointcloud container for detection preprocessor"/>
   <arg name="container_name" default="pointcloud_container"/>
 
-  <!-- Camera parameters -->
+  <!-- camera param -->
   <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
   <arg name="camera_info0" default="/camera_info" description="camera info topic name"/>
   <arg name="image_raw1" default=""/>
@@ -27,19 +28,11 @@
   <arg name="camera_info6" default=""/>
   <arg name="image_raw7" default=""/>
   <arg name="camera_info7" default=""/>
-  <arg name="image_number" default="1" description="choose image raw number(1-8)"/>
+  <arg name="image_number" default="1" description="choose image raw number(0-7)"/>
 
-  <!-- Radar parameters -->
-  <arg name="input/radar" default="/sensing/radar/detected_objects"/>
-  <arg name="radar_lanelet_filtering_range_param" default="$(find-pkg-share detected_object_validation)/config/object_lanelet_filter.param.yaml"/>
-  <arg name="radar_object_clustering_param_path" default="$(find-pkg-share radar_object_clustering)/config/radar_object_clustering.param.yaml"/>
+  <!-- radar param -->
 
-  <!-- Camera-LiDAR fusion parameters -->
-  <arg name="remove_unknown" default="true"/>
-  <arg name="fusion_distance" default="100.0"/>
-  <arg name="trust_object_distance" default="100.0"/>
-
-  <!-- Camera-LiDAR-Radar fusion based detection -->
+  <!-- camera lidar radar fusion based detection-->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_radar_fusion&quot;')">
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/camera_lidar_radar_fusion_based_detection.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
@@ -65,22 +58,13 @@
       <arg name="use_object_filter" value="$(var use_object_filter)"/>
       <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
       <arg name="container_name" value="$(var container_name)"/>
-      <arg name="remove_unknown" value="$(var remove_unknown)"/>
-      <arg name="fusion_distance" value="$(var fusion_distance)"/>
-      <arg name="trust_object_distance" value="$(var trust_object_distance)"/>
-      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
-      <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
-      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
-      <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
-      <arg name="input/radar" value="$(var input/radar)"/>
-      <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
-      <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
     </include>
   </group>
 
-  <!-- Camera-LiDAR fusion based detection -->
+  <!-- camera lidar fusion based detection-->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_fusion&quot;')">
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/camera_lidar_fusion_based_detection.launch.xml">
+      <arg name="tier4_perception_launch_param_path" value="$(var tier4_perception_launch_param_path)"/>
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="image_raw0" value="$(var image_raw0)"/>
       <arg name="camera_info0" value="$(var camera_info0)"/>
@@ -104,13 +88,10 @@
       <arg name="use_object_filter" value="$(var use_object_filter)"/>
       <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
       <arg name="container_name" value="$(var container_name)"/>
-      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
-      <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
-      <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
     </include>
   </group>
 
-  <!-- LiDAR-Radar fusion based detection -->
+  <!-- lidar radar based detection-->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;lidar_radar_fusion&quot;')">
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/lidar_radar_based_detection.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
@@ -119,34 +100,26 @@
       <arg name="use_object_filter" value="$(var use_object_filter)"/>
       <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
       <arg name="container_name" value="$(var container_name)"/>
-      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
-      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
-      <arg name="input/radar" value="$(var input/radar)"/>
-      <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
     </include>
   </group>
 
-  <!-- LiDAR based detection -->
+  <!-- lidar based detection-->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;lidar&quot;')">
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/lidar_based_detection.launch.xml">
+      <arg name="tier4_perception_launch_param_path" value="$(var tier4_perception_launch_param_path)"/>
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
       <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
       <arg name="use_object_filter" value="$(var use_object_filter)"/>
       <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
       <arg name="container_name" value="$(var container_name)"/>
-      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
-      <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
     </include>
   </group>
 
-  <!-- Radar based detection -->
+  <!-- radar based detection-->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;radar&quot;')">
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/radar_based_detection.launch.xml">
-      <arg name="input/radar" value="$(var input/radar)"/>
       <arg name="output/objects" value="objects"/>
-      <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
-      <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
     </include>
   </group>
 </launch>

@@ -54,15 +54,11 @@ The `L-fit` method of fitting a bounding box to a cluster is used for that.
 Due to an accuracy issue of `centerpoint` model, `vulkan` cannot be used at the moment.
 As for 'llvm' backend, real-time performance cannot be achieved.
 
-### Scatter Implementation
-
-Scatter function can be implemented using either TVMScript or C++. For C++ implementation, please refer to <https://github.com/angry-crab/autoware.universe/blob/c020419fe52e359287eccb1b77e93bdc1a681e24/perception/lidar_centerpoint_tvm/lib/network/scatter.cpp#L65>
-
 ## Reference
 
 [1] Yin, Tianwei, Xingyi Zhou, and Philipp Krähenbühl. "Center-based 3d object detection and tracking." arXiv preprint arXiv:2006.11275 (2020).
 
-[2] Lang, Alex H., et al. "PointPillars: Fast encoders for object detection from point clouds." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2019.
+[2] Lang, Alex H., et al. "Pointpillars: Fast encoders for object detection from point clouds." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2019.
 
 [3] <https://github.com/tianweiy/CenterPoint>
 

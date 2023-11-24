@@ -16,6 +16,7 @@
 #define OBSTACLE_POINTCLOUD_BASED_VALIDATOR__DEBUGGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -71,18 +72,11 @@ public:
   void addNeighborPointcloud(const pcl::PointCloud<pcl::PointXY>::Ptr & input)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr input_xyz = toXYZ(input);
-    addNeighborPointcloud(input_xyz);
-  }
-
-  void addNeighborPointcloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr & input)
-  {
-    if (!input->empty()) {
-      neighbor_pointcloud_->reserve(neighbor_pointcloud_->size() + input->size());
-      for (const auto & point : *input) {
-        neighbor_pointcloud_->push_back(point);
-      }
+    for (const auto & point : *input_xyz) {
+      neighbor_pointcloud_->push_back(point);
     }
   }
+
   void addPointcloudWithinPolygon(const pcl::PointCloud<pcl::PointXYZ>::Ptr & input)
   {
     // pcl::PointCloud<pcl::PointXYZ>::Ptr input_xyz = toXYZ(input);

@@ -51,6 +51,7 @@ namespace radar_fusion_to_detected_object
 {
 using autoware_auto_perception_msgs::msg::DetectedObject;
 using autoware_auto_perception_msgs::msg::DetectedObjects;
+using autoware_auto_perception_msgs::msg::TrackedObjects;
 
 RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
   const rclcpp::NodeOptions & node_options)
@@ -61,29 +62,31 @@ RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
     std::bind(&RadarObjectFusionToDetectedObjectNode::onSetParam, this, _1));
 
   // Node Parameter
-  node_param_.update_rate_hz = declare_parameter<double>("node_params.update_rate_hz");
+  node_param_.update_rate_hz = declare_parameter<double>("node_params.update_rate_hz", 10.0);
 
   // Core Parameter
-  core_param_.bounding_box_margin = declare_parameter<double>("core_params.bounding_box_margin");
+  core_param_.bounding_box_margin =
+    declare_parameter<double>("core_params.bounding_box_margin", 0.5);
   core_param_.split_threshold_velocity =
-    declare_parameter<double>("core_params.split_threshold_velocity");
-  core_param_.threshold_yaw_diff = declare_parameter<double>("core_params.threshold_yaw_diff");
+    declare_parameter<double>("core_params.split_threshold_velocity", 0.0);
+  core_param_.threshold_yaw_diff =
+    declare_parameter<double>("core_params.threshold_yaw_diff", 0.35);
   core_param_.velocity_weight_min_distance =
-    declare_parameter<double>("core_params.velocity_weight_min_distance");
+    declare_parameter<double>("core_params.velocity_weight_min_distance", 1.0);
   core_param_.velocity_weight_average =
-    declare_parameter<double>("core_params.velocity_weight_average");
+    declare_parameter<double>("core_params.velocity_weight_average", 0.0);
   core_param_.velocity_weight_median =
-    declare_parameter<double>("core_params.velocity_weight_median");
+    declare_parameter<double>("core_params.velocity_weight_median", 0.0);
   core_param_.velocity_weight_target_value_average =
-    declare_parameter<double>("core_params.velocity_weight_target_value_average");
+    declare_parameter<double>("core_params.velocity_weight_target_value_average", 0.0);
   core_param_.velocity_weight_target_value_top =
-    declare_parameter<double>("core_params.velocity_weight_target_value_top");
+    declare_parameter<double>("core_params.velocity_weight_target_value_top", 1.0);
   core_param_.convert_doppler_to_twist =
-    declare_parameter<bool>("core_params.convert_doppler_to_twist");
+    declare_parameter<bool>("core_params.convert_doppler_to_twist", false);
   core_param_.threshold_probability =
-    declare_parameter<double>("core_params.threshold_probability");
+    declare_parameter<float>("core_params.threshold_probability", 0.0);
   core_param_.compensate_probability =
-    declare_parameter<bool>("core_params.compensate_probability");
+    declare_parameter<bool>("core_params.compensate_probability", false);
 
   // Core
   radar_fusion_to_detected_object_ = std::make_unique<RadarFusionToDetectedObject>(get_logger());
@@ -95,7 +98,7 @@ RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
 
   using std::placeholders::_1;
   using std::placeholders::_2;
-  sync_ptr_ = std::make_shared<Sync>(SyncPolicy(20), sub_object_, sub_radar_);
+  sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), sub_object_, sub_radar_);
   sync_ptr_->registerCallback(
     std::bind(&RadarObjectFusionToDetectedObjectNode::onData, this, _1, _2));
 
@@ -178,7 +181,7 @@ bool RadarObjectFusionToDetectedObjectNode::isDataReady()
 }
 
 void RadarObjectFusionToDetectedObjectNode::onData(
-  const DetectedObjects::ConstSharedPtr object_msg, const DetectedObjects::ConstSharedPtr radar_msg)
+  const DetectedObjects::ConstSharedPtr object_msg, const TrackedObjects::ConstSharedPtr radar_msg)
 {
   detected_objects_ = object_msg;
   radar_objects_ = radar_msg;
@@ -208,7 +211,7 @@ void RadarObjectFusionToDetectedObjectNode::onData(
 }
 
 RadarFusionToDetectedObject::RadarInput RadarObjectFusionToDetectedObjectNode::setRadarInput(
-  const DetectedObject & radar_object, const std_msgs::msg::Header & header_)
+  const TrackedObject & radar_object, const std_msgs::msg::Header & header_)
 {
   RadarFusionToDetectedObject::RadarInput output{};
   output.pose_with_covariance = radar_object.kinematics.pose_with_covariance;

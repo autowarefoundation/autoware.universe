@@ -15,17 +15,15 @@
 #ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
-#include "ekf_localizer/aged_object_queue.hpp"
-#include "ekf_localizer/ekf_module.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/warning.hpp"
 
+#include <kalman_filter/kalman_filter.hpp>
+#include <kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -48,6 +46,20 @@
 #include <queue>
 #include <string>
 #include <vector>
+
+struct PoseInfo
+{
+  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr pose;
+  int counter;
+  int smoothing_steps;
+};
+
+struct TwistInfo
+{
+  geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr twist;
+  int counter;
+  int smoothing_steps;
+};
 
 class Simple1DFilter
 {
@@ -89,7 +101,7 @@ public:
     return;
   };
   void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
-  double get_x() const { return x_; }
+  double get_x() { return x_; }
 
 private:
   bool initialized_;
@@ -105,7 +117,7 @@ public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
-  const std::shared_ptr<Warning> warning_;
+  const Warning warning_;
 
   //!< @brief ekf estimated pose publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;
@@ -117,14 +129,16 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_twist_;
   //!< @brief ekf estimated twist with covariance publisher
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr pub_twist_cov_;
+  //!< @brief debug info publisher
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr pub_debug_;
+  //!< @brief debug measurement pose publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_measured_pose_;
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_biased_pose_;
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_biased_pose_cov_;
-  //!< @brief diagnostics publisher
-  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diag_;
   //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber
@@ -143,12 +157,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_tf_;
   //!< @brief tf broadcaster
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
-
-  //!< @brief logger configure module
-  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
-
   //!< @brief  extended kalman filter instance.
-  std::unique_ptr<EKFModule> ekf_module_;
+  TimeDelayKalmanFilter ekf_;
   Simple1DFilter z_filter_;
   Simple1DFilter roll_filter_;
   Simple1DFilter pitch_filter_;
@@ -158,6 +168,11 @@ private:
   double ekf_rate_;
   double ekf_dt_;
 
+  /* parameters */
+
+  int dim_x_;     //!< @brief  dimension of EKF state
+  int dim_x_ex_;  //!< @brief  dimension of extended EKF state (dim_x_ * extended_state_step)
+
   /* process noise variance for discrete model */
   double proc_cov_yaw_d_;       //!< @brief  discrete yaw process noise
   double proc_cov_yaw_bias_d_;  //!< @brief  discrete yaw bias process noise
@@ -166,11 +181,15 @@ private:
 
   bool is_activated_;
 
-  EKFDiagnosticInfo pose_diag_info_;
-  EKFDiagnosticInfo twist_diag_info_;
-
-  AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
-  AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
+  /* for model prediction */
+  std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose
+  std::queue<PoseInfo> current_pose_info_queue_;      //!< @brief current measured pose
+  geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
+  geometry_msgs::msg::PoseStamped
+    current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction
+  geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
+  std::array<double, 36ul> current_pose_covariance_;
+  std::array<double, 36ul> current_twist_covariance_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -198,9 +217,31 @@ private:
   void callbackInitialPose(geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
   /**
+   * @brief initialization of EKF
+   */
+  void initEKF();
+
+  /**
    * @brief update predict frequency
    */
   void updatePredictFrequency();
+
+  /**
+   * @brief compute EKF prediction
+   */
+  void predictKinematicsModel();
+
+  /**
+   * @brief compute EKF update with pose measurement
+   * @param pose measurement value
+   */
+  void measurementUpdatePose(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+
+  /**
+   * @brief compute EKF update with pose measurement
+   * @param twist measurement value
+   */
+  void measurementUpdateTwist(const geometry_msgs::msg::TwistWithCovarianceStamped & twist);
 
   /**
    * @brief get transform from frame_id
@@ -210,23 +251,24 @@ private:
     geometry_msgs::msg::TransformStamped & transform);
 
   /**
-   * @brief publish current EKF estimation result
+   * @brief set current EKF estimation result to current_ekf_pose_ & current_ekf_twist_
    */
-  void publishEstimateResult(
-    const geometry_msgs::msg::PoseStamped & current_ekf_pose,
-    const geometry_msgs::msg::PoseStamped & current_biased_ekf_pose,
-    const geometry_msgs::msg::TwistStamped & current_ekf_twist);
+  void setCurrentResult();
 
   /**
-   * @brief publish diagnostics message
+   * @brief publish current EKF estimation result
    */
-  void publishDiagnostics();
+  void publishEstimateResult();
+
+  /**
+   * @brief for debug
+   */
+  void showCurrentX();
 
   /**
    * @brief update simple1DFilter
    */
-  void updateSimple1DFilters(
-    const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step);
+  void updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
   /**
    * @brief initialize simple1DFilter

@@ -58,16 +58,15 @@ polygon_t createObjectPolygon(
   return translate_obj_poly;
 }
 
-multi_polygon_t createObjectPolygons(
+multipolygon_t createObjectPolygons(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer,
   const double min_velocity)
 {
-  multi_polygon_t polygons;
+  multipolygon_t polygons;
   for (const auto & object : objects.objects) {
-    const double obj_vel_norm = std::hypot(
-      object.kinematics.initial_twist_with_covariance.twist.linear.x,
-      object.kinematics.initial_twist_with_covariance.twist.linear.y);
-    if (min_velocity <= obj_vel_norm) {
+    if (
+      object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_velocity ||
+      object.kinematics.initial_twist_with_covariance.twist.linear.x <= -min_velocity) {
       polygons.push_back(createObjectPolygon(
         object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions, buffer));
     }
@@ -80,7 +79,7 @@ void addSensorObstacles(
   const ObstacleMasks & masks, tier4_autoware_utils::TransformListener & transform_listener,
   const std::string & target_frame, const ObstacleParameters & obstacle_params)
 {
-  if (obstacle_params.dynamic_source == ObstacleParameters::OCCUPANCY_GRID) {
+  if (obstacle_params.dynamic_source == ObstacleParameters::OCCUPANCYGRID) {
     auto grid_map = convertToGridMap(occupancy_grid);
     threshold(grid_map, obstacle_params.occupancy_grid_threshold);
     maskPolygons(grid_map, masks);

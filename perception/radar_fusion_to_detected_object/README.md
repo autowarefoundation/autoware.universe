@@ -13,11 +13,11 @@ The document of core algorithm is [here](docs/algorithm.md)
 
 ### Parameters for sensor fusion
 
-| Name                     | Type   | Description                                                                                                                                                                                                                    | Default value |
-| :----------------------- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| bounding_box_margin      | double | The distance to extend the 2D bird's-eye view Bounding Box on each side. This distance is used as a threshold to find radar centroids falling inside the extended box. [m]                                                     | 2.0           |
-| split_threshold_velocity | double | The object's velocity threshold to decide to split for two objects from radar information (currently not implemented) [m/s]                                                                                                    | 5.0           |
-| threshold_yaw_diff       | double | The yaw orientation threshold. If ∣ θ_ob − θ_ra ∣ < threshold × yaw_diff attached to radar information include estimated velocity, where*θob*is yaw angle from 3d detected object,\*θ_ra is yaw angle from radar object. [rad] | 0.35          |
+| Name                     | Type   | Description                                                                                                                                                                                                                                                                      | Default value |
+| :----------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| bounding_box_margin      | double | The distance to extend the 2D bird's-eye view Bounding Box on each side. This distance is used as a threshold to find radar centroids falling inside the extended box. [m]                                                                                                       | 2.0           |
+| split_threshold_velocity | double | The object's velocity threshold to decide to split for two objects from radar information (currently not implemented) [m/s]                                                                                                                                                      | 5.0           |
+| threshold_yaw_diff       | double | The yaw orientation threshold. If $ \vert \theta _{ob} - \theta_ {ra} \vert < threshold*yaw_diff $ attached to radar information include estimated velocity, where $ \theta*{ob} $ is yaw angle from 3d detected object, $ \theta\_ {ra} $ is yaw angle from radar object. [rad] | 0.35          |
 
 ### Weight parameters for velocity estimation
 
@@ -56,10 +56,10 @@ ros2 launch radar_fusion_to_detected_object radar_object_to_detected_object.laun
 
 ### Input
 
-| Name                    | Type                                                  | Description                                                            |
-| ----------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- |
-| `~/input/objects`       | autoware_auto_perception_msgs/msg/DetectedObject.msg  | 3D detected objects.                                                   |
-| `~/input/radar_objects` | autoware_auto_perception_msgs/msg/DetectedObjects.msg | Radar objects. Note that frame_id need to be same as `~/input/objects` |
+| Name                    | Type                                                 | Description                                                            |
+| ----------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------- |
+| `~/input/objects`       | autoware_auto_perception_msgs/msg/DetectedObject.msg | 3D detected objects.                                                   |
+| `~/input/radar_objects` | autoware_auto_perception_msgs/msg/TrackedObjects.msg | Radar objects. Note that frame_id need to be same as `~/input/objects` |
 
 ### Output
 

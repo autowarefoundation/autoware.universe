@@ -28,7 +28,7 @@ namespace raw_vehicle_cmd_converter
 class SteerMap
 {
 public:
-  bool readSteerMapFromCSV(const std::string & csv_path, const bool validation = false);
+  bool readSteerMapFromCSV(const std::string & csv_path);
   void getSteer(const double steer_rate, const double steer, double & output) const;
 
 private:

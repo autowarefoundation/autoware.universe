@@ -54,7 +54,6 @@ private:
 
   void update_state();
   void change_state(const State state);
-  void update_pause(const State state);
   void change_pause(bool pause);
   void on_timer();
   void on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg);

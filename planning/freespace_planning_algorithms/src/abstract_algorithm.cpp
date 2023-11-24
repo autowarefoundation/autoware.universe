@@ -14,8 +14,7 @@
 
 #include "freespace_planning_algorithms/abstract_algorithm.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <vector>
 
@@ -90,9 +89,6 @@ geometry_msgs::msg::Pose local2global(
 
 double PlannerWaypoints::compute_length() const
 {
-  if (waypoints.empty()) {
-    std::runtime_error("cannot compute cost because waypoint has size 0");
-  }
   double total_cost = 0.0;
   for (size_t i = 0; i < waypoints.size() - 1; ++i) {
     const auto pose_a = waypoints.at(i);
@@ -124,20 +120,15 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
   is_obstacle_table_ = is_obstacle_table;
 
   // construct collision indexes table
-  if (is_collision_table_initialized == false) {
-    for (int i = 0; i < planner_common_param_.theta_size; i++) {
-      std::vector<IndexXY> indexes_2d, vertex_indexes_2d;
-      computeCollisionIndexes(i, indexes_2d, vertex_indexes_2d);
-      coll_indexes_table_.push_back(indexes_2d);
-      vertex_indexes_table_.push_back(vertex_indexes_2d);
-    }
-    is_collision_table_initialized = true;
+  for (int i = 0; i < planner_common_param_.theta_size; i++) {
+    std::vector<IndexXY> indexes_2d;
+    computeCollisionIndexes(i, indexes_2d);
+    coll_indexes_table_.push_back(indexes_2d);
   }
 }
 
 void AbstractPlanningAlgorithm::computeCollisionIndexes(
-  int theta_index, std::vector<IndexXY> & indexes_2d,
-  std::vector<IndexXY> & vertex_indexes_2d) const
+  int theta_index, std::vector<IndexXY> & indexes_2d) const
 {
   IndexXYT base_index{0, 0, theta_index};
   const VehicleShape & vehicle_shape = collision_vehicle_shape_;
@@ -152,8 +143,7 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
   const auto base_theta = tf2::getYaw(base_pose.orientation);
 
   // Convert each point to index and check if the node is Obstacle
-  const auto addIndex2d = [&](
-                            const double x, const double y, std::vector<IndexXY> & indexes_cache) {
+  const auto addIndex2d = [&](const double x, const double y) {
     // Calculate offset in rotated frame
     const double offset_x = std::cos(base_theta) * x - std::sin(base_theta) * y;
     const double offset_y = std::sin(base_theta) * x + std::cos(base_theta) * y;
@@ -164,41 +154,19 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
 
     const auto index = pose2index(costmap_, pose_local, planner_common_param_.theta_size);
     const auto index_2d = IndexXY{index.x, index.y};
-    indexes_cache.push_back(index_2d);
+    indexes_2d.push_back(index_2d);
   };
 
   for (double x = back; x <= front; x += costmap_.info.resolution / 2) {
     for (double y = right; y <= left; y += costmap_.info.resolution / 2) {
-      addIndex2d(x, y, indexes_2d);
+      addIndex2d(x, y);
     }
-    addIndex2d(x, left, indexes_2d);
+    addIndex2d(x, left);
   }
   for (double y = right; y <= left; y += costmap_.info.resolution / 2) {
-    addIndex2d(front, y, indexes_2d);
+    addIndex2d(front, y);
   }
-  addIndex2d(front, left, indexes_2d);
-
-  const auto compareIndex2d = [](const IndexXY & left, const IndexXY & right) {
-    if (left.x != right.x) {
-      return (left.x < right.x);
-    } else {
-      return (left.y < right.y);
-    }
-  };
-
-  const auto equalIndex2d = [](const IndexXY & left, const IndexXY & right) {
-    return ((left.x == right.x) && (left.y == right.y));
-  };
-
-  // remove duplicate indexes
-  std::sort(indexes_2d.begin(), indexes_2d.end(), compareIndex2d);
-  indexes_2d.erase(
-    std::unique(indexes_2d.begin(), indexes_2d.end(), equalIndex2d), indexes_2d.end());
-
-  addIndex2d(front, left, vertex_indexes_2d);
-  addIndex2d(front, right, vertex_indexes_2d);
-  addIndex2d(back, right, vertex_indexes_2d);
-  addIndex2d(back, left, vertex_indexes_2d);
+  addIndex2d(front, left);
 }
 
 bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) const
@@ -207,18 +175,6 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
     std::cerr << "[abstract_algorithm] setMap has not yet been done." << std::endl;
     return false;
   }
-
-  const auto & vertex_indexes_2d = vertex_indexes_table_[base_index.theta];
-  for (const auto & vertex_index_2d : vertex_indexes_2d) {
-    IndexXYT vertex_index{vertex_index_2d.x, vertex_index_2d.y, 0};
-    // must slide to current base position
-    vertex_index.x += base_index.x;
-    vertex_index.y += base_index.y;
-    if (isOutOfRange(vertex_index)) {
-      return true;
-    }
-  }
-
   const auto & coll_indexes_2d = coll_indexes_table_[base_index.theta];
   for (const auto & coll_index_2d : coll_indexes_2d) {
     int idx_theta = 0;  // whatever. Yaw is nothing to do with collision detection between grids.
@@ -227,11 +183,10 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
     coll_index.x += base_index.x;
     coll_index.y += base_index.y;
 
-    if (isObs(coll_index)) {
+    if (isOutOfRange(coll_index) || isObs(coll_index)) {
       return true;
     }
   }
-
   return false;
 }
 

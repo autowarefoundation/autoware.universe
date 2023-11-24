@@ -23,8 +23,8 @@ namespace default_ad_api
 MotionNode::MotionNode(const rclcpp::NodeOptions & options)
 : Node("motion", options), vehicle_stop_checker_(this)
 {
-  stop_check_duration_ = declare_parameter<double>("stop_check_duration");
-  require_accept_start_ = declare_parameter<bool>("require_accept_start");
+  stop_check_duration_ = declare_parameter("stop_check_duration", 1.0);
+  require_accept_start_ = declare_parameter("require_accept_start", false);
   is_calling_set_pause_ = false;
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
@@ -105,17 +105,6 @@ void MotionNode::change_state(const State state)
     pub_state_->publish(msg);
   }
   state_ = state;
-  update_pause(state);
-}
-
-void MotionNode::update_pause(const State state)
-{
-  if (state == State::Pausing) {
-    return change_pause(true);
-  }
-  if (state == State::Resuming) {
-    return change_pause(false);
-  }
 }
 
 void MotionNode::change_pause(bool pause)
@@ -131,19 +120,24 @@ void MotionNode::change_pause(bool pause)
 void MotionNode::on_timer()
 {
   update_state();
+
+  if (state_ == State::Pausing) {
+    return change_pause(true);
+  }
+  if (state_ == State::Resuming) {
+    return change_pause(false);
+  }
 }
 
 void MotionNode::on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg)
 {
   is_paused_ = msg->data;
-  update_state();
 }
 
 void MotionNode::on_is_start_requested(
   const control_interface::IsStartRequested::Message::ConstSharedPtr msg)
 {
   is_start_requested_ = msg->data;
-  update_state();
 }
 
 void MotionNode::on_accept(

@@ -24,8 +24,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-// cspell: ignore rsspace
-// In this case, RSSpace means "Reeds Shepp state Space"
 namespace rrtstar_core
 {
 CSpace::CSpace(
@@ -160,13 +158,13 @@ void RRTStar::extend()
     return;
   }
 
-  const auto & neighbor_nodes = findNeighborNodes(x_new);
+  const auto & neighbore_nodes = findNeighboreNodes(x_new);
 
-  const auto & node_best_parent = getBestParentNode(x_new, node_nearest, neighbor_nodes);
+  const auto & node_best_parent = getBestParentNode(x_new, node_nearest, neighbore_nodes);
   const auto & node_new = addNewNode(x_new, std::const_pointer_cast<Node>(node_best_parent));
 
   // Rewire
-  const auto node_reconnect = getReconnectTargeNode(node_new, neighbor_nodes);
+  const auto node_reconnect = getReconnectTargeNode(node_new, neighbore_nodes);
   if (node_reconnect) {
     reconnect(node_new, std::const_pointer_cast<Node>(node_reconnect));
   }
@@ -199,8 +197,7 @@ void RRTStar::extend()
 
 void RRTStar::deleteNodeUsingBranchAndBound()
 {
-  // cspell: ignore Karaman
-  // ref : III.B of Karaman et al. ICRA 2011
+  // see III.B of Karaman et al. ICRA 2011
   if (!isSolutionFound()) {
     return;
   }
@@ -344,26 +341,26 @@ NodeConstSharedPtr RRTStar::findNearestNode(const Pose & x_rand) const
   return node_nearest;
 }
 
-std::vector<NodeConstSharedPtr> RRTStar::findNeighborNodes(const Pose & x_new) const
+std::vector<NodeConstSharedPtr> RRTStar::findNeighboreNodes(const Pose & x_new) const
 {
   // In the original paper of rrtstar, radius is shrinking over time.
   // However, because we use reeds-shepp distance metric instead of Euclidean metric,
-  // it is hard to design the shrinking radius update. Usage of informed sampling
-  // makes the problem far more complex, as the sampling region is shrinking over
+  // it is hard to design the shirinking radius update. Usage of informed sampling
+  // makes the problem far more complex, as the sampling reagion is shirinking over
   // the time.
   // Due to above difficulty in design of radius update, radius is simply fixed here.
   // In practice, the fixed radius setting works well as long as mu_ value is
-  // properly tuned. In car planning scenario, the order or planning world area
-  // is similar, and turning radius is also similar through different problems.
+  // propery tuned. In car planning scenario, the order or planning world area
+  // is similar, and turining radius is also similar through different problems.
   // So, tuning mu_ parameter is not so difficult.
 
-  const double radius_neighbor = mu_;
+  const double radius_neighbore = mu_;
 
   std::vector<NodeConstSharedPtr> nodes;
   for (auto & node : nodes_) {
-    if (cspace_.distanceLowerBound(node->pose, x_new) > radius_neighbor) continue;
-    const bool is_neighbor = (cspace_.distance(node->pose, x_new) < radius_neighbor);
-    if (is_neighbor) {
+    if (cspace_.distanceLowerBound(node->pose, x_new) > radius_neighbore) continue;
+    const bool is_neighbour = (cspace_.distance(node->pose, x_new) < radius_neighbore);
+    if (is_neighbour) {
       nodes.push_back(node);
     }
   }
@@ -382,17 +379,17 @@ NodeSharedPtr RRTStar::addNewNode(const Pose & pose, NodeSharedPtr node_parent)
 }
 
 NodeConstSharedPtr RRTStar::getReconnectTargeNode(
-  const NodeConstSharedPtr node_new, const std::vector<NodeConstSharedPtr> & neighbor_nodes) const
+  const NodeConstSharedPtr node_new, const std::vector<NodeConstSharedPtr> & neighbore_nodes) const
 {
   NodeConstSharedPtr node_reconnect = nullptr;
 
-  for (const auto & node_neighbor : neighbor_nodes) {
+  for (const auto & node_neighbore : neighbore_nodes) {
     if (cspace_.isValidPath_child2parent(
-          node_neighbor->pose, node_new->pose, collision_check_resolution_)) {
+          node_neighbore->pose, node_new->pose, collision_check_resolution_)) {
       const double cost_from_start_rewired =
-        *node_new->cost_from_start + cspace_.distance(node_new->pose, node_neighbor->pose);
-      if (cost_from_start_rewired < *node_neighbor->cost_from_start) {
-        node_reconnect = node_neighbor;
+        *node_new->cost_from_start + cspace_.distance(node_new->pose, node_neighbore->pose);
+      if (cost_from_start_rewired < *node_neighbore->cost_from_start) {
+        node_reconnect = node_neighbore;
       }
     }
   }
@@ -402,12 +399,12 @@ NodeConstSharedPtr RRTStar::getReconnectTargeNode(
 
 NodeConstSharedPtr RRTStar::getBestParentNode(
   const Pose & pose_new, const NodeConstSharedPtr & node_nearest,
-  const std::vector<NodeConstSharedPtr> & neighbor_nodes) const
+  const std::vector<NodeConstSharedPtr> & neighbore_nodes) const
 {
   NodeConstSharedPtr node_best = node_nearest;
   double cost_min =
     *(node_nearest->cost_from_start) + cspace_.distance(node_nearest->pose, pose_new);
-  for (const auto & node : neighbor_nodes) {
+  for (const auto & node : neighbore_nodes) {
     const double cost_start_to_new =
       *(node->cost_from_start) + cspace_.distance(node->pose, pose_new);
     if (cost_start_to_new < cost_min) {
@@ -447,14 +444,14 @@ void RRTStar::reconnect(const NodeSharedPtr & node_new, const NodeSharedPtr & no
   // node_reconnect_parent -> #nil;
 
   // update cost of all descendents of node_reconnect
-  std::queue<NodeSharedPtr> bf_queue;
-  bf_queue.push(node_reconnect);
-  while (!bf_queue.empty()) {
-    const auto node = bf_queue.front();
-    bf_queue.pop();
+  std::queue<NodeSharedPtr> bfqueue;
+  bfqueue.push(node_reconnect);
+  while (!bfqueue.empty()) {
+    const auto node = bfqueue.front();
+    bfqueue.pop();
     for (const auto & child : node->childs) {
       child->cost_from_start = *node->cost_from_start + *child->cost_to_parent;
-      bf_queue.push(child);
+      bfqueue.push(child);
     }
   }
 }

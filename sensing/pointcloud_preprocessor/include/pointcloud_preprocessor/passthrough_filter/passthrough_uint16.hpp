@@ -62,7 +62,6 @@
 
 namespace pcl
 {
-// cspell: ignore ptfilter
 /** \brief @b PassThroughUInt16 passes points in a cloud based on constraints for one particular
  * field of the point type. \details Iterates through the entire input once, automatically filtering
  * non-finite points and the points outside the interval specified by setFilterLimits(), which

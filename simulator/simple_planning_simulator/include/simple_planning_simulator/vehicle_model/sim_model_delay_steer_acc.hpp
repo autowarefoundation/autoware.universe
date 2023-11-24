@@ -15,10 +15,9 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_HPP_
 
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/LU"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
-
-#include <Eigen/Core>
-#include <Eigen/LU>
 
 #include <deque>
 #include <iostream>
@@ -39,15 +38,11 @@ public:
    * @param [in] acc_time_constant time constant for 1D model of accel dynamics
    * @param [in] steer_delay time delay for steering command [s]
    * @param [in] steer_time_constant time constant for 1D model of steering dynamics
-   * @param [in] steer_dead_band dead band for steering angle [rad]
-   * @param [in] debug_acc_scaling_factor scaling factor for accel command
-   * @param [in] debug_steer_scaling_factor scaling factor for steering command
    */
   SimModelDelaySteerAcc(
     double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
     double dt, double acc_delay, double acc_time_constant, double steer_delay,
-    double steer_time_constant, double steer_dead_band, double debug_acc_scaling_factor,
-    double debug_steer_scaling_factor);
+    double steer_time_constant);
 
   /**
    * @brief default destructor
@@ -77,15 +72,12 @@ private:
   const double steer_rate_lim_;  //!< @brief steering angular velocity limit [rad/s]
   const double wheelbase_;       //!< @brief vehicle wheelbase length [m]
 
-  std::deque<double> acc_input_queue_;       //!< @brief buffer for accel command
-  std::deque<double> steer_input_queue_;     //!< @brief buffer for steering command
-  const double acc_delay_;                   //!< @brief time delay for accel command [s]
-  const double acc_time_constant_;           //!< @brief time constant for accel dynamics
-  const double steer_delay_;                 //!< @brief time delay for steering command [s]
-  const double steer_time_constant_;         //!< @brief time constant for steering dynamics
-  const double steer_dead_band_;             //!< @brief dead band for steering angle [rad]
-  const double debug_acc_scaling_factor_;    //!< @brief scaling factor for accel command
-  const double debug_steer_scaling_factor_;  //!< @brief scaling factor for steering command
+  std::deque<double> acc_input_queue_;    //!< @brief buffer for accel command
+  std::deque<double> steer_input_queue_;  //!< @brief buffer for steering command
+  const double acc_delay_;                //!< @brief time delay for accel command [s]
+  const double acc_time_constant_;        //!< @brief time constant for accel dynamics
+  const double steer_delay_;              //!< @brief time delay for steering command [s]
+  const double steer_time_constant_;      //!< @brief time constant for steering dynamics
 
   /**
    * @brief set queue buffer for input command

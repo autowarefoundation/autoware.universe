@@ -333,9 +333,6 @@ int Net::getInputSize() const
   return input_size;
 }
 
-int Net::getMaxDetections() const
-{
-  return engine_->getBindingDimensions(1).d[1];
-}
+int Net::getMaxDetections() const { return engine_->getBindingDimensions(1).d[1]; }
 
 }  // namespace yolo

@@ -14,11 +14,8 @@
 
 #include "state.hpp"
 
-#include "util.hpp"
-
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/geometry/pose_deviation.hpp>
+#include <motion_utils/motion_utils.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -38,23 +35,12 @@ AutonomousMode::AutonomousMode(rclcpp::Node * node)
   sub_control_cmd_ = node->create_subscription<AckermannControlCommand>(
     "control_cmd", 1,
     [this](const AckermannControlCommand::SharedPtr msg) { control_cmd_ = *msg; });
-  sub_trajectory_follower_control_cmd_ = node->create_subscription<AckermannControlCommand>(
-    "trajectory_follower_control_cmd", 1, [this](const AckermannControlCommand::SharedPtr msg) {
-      trajectory_follower_control_cmd_ = *msg;
-    });
 
   sub_kinematics_ = node->create_subscription<Odometry>(
     "kinematics", 1, [this](const Odometry::SharedPtr msg) { kinematics_ = *msg; });
 
   sub_trajectory_ = node->create_subscription<Trajectory>(
     "trajectory", 1, [this](const Trajectory::SharedPtr msg) { trajectory_ = *msg; });
-
-  check_engage_condition_ = node->declare_parameter<bool>("check_engage_condition");
-  enable_engage_on_driving_ = node->declare_parameter<bool>("enable_engage_on_driving");
-  nearest_dist_deviation_threshold_ =
-    node->declare_parameter<double>("nearest_dist_deviation_threshold");
-  nearest_yaw_deviation_threshold_ =
-    node->declare_parameter<double>("nearest_yaw_deviation_threshold");
 
   // params for mode change available
   {
@@ -77,7 +63,7 @@ AutonomousMode::AutonomousMode(rclcpp::Node * node)
   // params for mode change completed
   {
     auto & p = stable_check_param_;
-    p.duration = node->get_parameter("stable_check.duration").as_double();
+    p.duration = node->declare_parameter<double>("stable_check.duration");
     p.dist_threshold = node->declare_parameter<double>("stable_check.dist_threshold");
     p.speed_upper_threshold = node->declare_parameter<double>("stable_check.speed_upper_threshold");
     p.speed_lower_threshold = node->declare_parameter<double>("stable_check.speed_lower_threshold");
@@ -94,17 +80,8 @@ void AutonomousMode::update(bool transition)
 
 bool AutonomousMode::isModeChangeCompleted()
 {
-  if (!check_engage_condition_) {
-    return true;
-  }
-
-  const auto current_speed = kinematics_.twist.twist.linear.x;
-  const auto & param = engage_acceptable_param_;
-
-  // Engagement completes quickly if the vehicle is stopped.
-  if (param.allow_autonomous_in_stopped && std::abs(current_speed) < 0.01) {
-    return true;
-  }
+  constexpr auto dist_max = 5.0;
+  constexpr auto yaw_max = M_PI_4;
 
   const auto unstable = [this]() {
     stable_start_time_.reset();
@@ -116,9 +93,8 @@ bool AutonomousMode::isModeChangeCompleted()
     return unstable();
   }
 
-  const auto closest_idx = findNearestIndex(
-    trajectory_.points, kinematics_.pose.pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+  const auto closest_idx =
+    findNearestIndex(trajectory_.points, kinematics_.pose.pose, dist_max, yaw_max);
   if (!closest_idx) {
     RCLCPP_INFO(logger_, "Not stable yet: closest point not found");
     return unstable();
@@ -127,24 +103,14 @@ bool AutonomousMode::isModeChangeCompleted()
   const auto closest_point = trajectory_.points.at(*closest_idx);
 
   // check for lateral deviation
-  const auto dist_deviation =
-    motion_utils::calcLateralOffset(trajectory_.points, kinematics_.pose.pose.position);
-  if (std::isnan(dist_deviation)) {
-    RCLCPP_INFO(logger_, "Not stable yet: lateral offset calculation failed.");
-    return unstable();
-  }
+  const auto dist_deviation = calcDistance2d(closest_point.pose, kinematics_.pose.pose);
   if (dist_deviation > stable_check_param_.dist_threshold) {
     RCLCPP_INFO(logger_, "Not stable yet: distance deviation is too large: %f", dist_deviation);
     return unstable();
   }
 
   // check for yaw deviation
-  const auto yaw_deviation =
-    motion_utils::calcYawDeviation(trajectory_.points, kinematics_.pose.pose);
-  if (std::isnan(yaw_deviation)) {
-    RCLCPP_INFO(logger_, "Not stable yet: lateral offset calculation failed.");
-    return unstable();
-  }
+  const auto yaw_deviation = calcYawDeviation(closest_point.pose, kinematics_.pose.pose);
   if (yaw_deviation > stable_check_param_.yaw_threshold) {
     RCLCPP_INFO(logger_, "Not stable yet: yaw deviation is too large: %f", yaw_deviation);
     return unstable();
@@ -214,23 +180,12 @@ std::pair<bool, bool> AutonomousMode::hasDangerLateralAcceleration()
 
 bool AutonomousMode::isModeChangeAvailable()
 {
-  if (!check_engage_condition_) {
-    setAllOk(debug_info_);
-    return true;
-  }
+  constexpr auto dist_max = 100.0;
+  constexpr auto yaw_max = M_PI_4;
 
   const auto current_speed = kinematics_.twist.twist.linear.x;
   const auto target_control_speed = control_cmd_.longitudinal.speed;
   const auto & param = engage_acceptable_param_;
-
-  if (!enable_engage_on_driving_ && std::fabs(current_speed) > 1.0e-2) {
-    RCLCPP_INFO(
-      logger_,
-      "Engage unavailable: enable_engage_on_driving is false, and the vehicle is not "
-      "stationary.");
-    debug_info_ = DebugInfo{};  // all false
-    return false;
-  }
 
   if (trajectory_.points.size() < 2) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
@@ -239,9 +194,8 @@ bool AutonomousMode::isModeChangeAvailable()
     return false;
   }
 
-  const auto closest_idx = findNearestIndex(
-    trajectory_.points, kinematics_.pose.pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+  const auto closest_idx =
+    findNearestIndex(trajectory_.points, kinematics_.pose.pose, dist_max, yaw_max);
   if (!closest_idx) {
     RCLCPP_INFO(logger_, "Engage unavailable: closest point not found");
     debug_info_ = DebugInfo{};  // all false
@@ -265,10 +219,7 @@ bool AutonomousMode::isModeChangeAvailable()
   const bool speed_lower_deviation_ok = speed_deviation >= param.speed_lower_threshold;
 
   // No engagement if the vehicle is moving but the target speed is zero.
-  const bool is_stop_cmd_indicated =
-    std::abs(target_control_speed) < 0.01 ||
-    std::abs(trajectory_follower_control_cmd_.longitudinal.speed) < 0.01;
-  const bool stop_ok = !(std::abs(current_speed) > 0.1 && is_stop_cmd_indicated);
+  const bool stop_ok = !(std::abs(current_speed) > 0.1 && std::abs(target_control_speed) < 0.01);
 
   // No engagement if the large acceleration is commanded.
   const bool large_acceleration_ok = !hasDangerAcceleration();

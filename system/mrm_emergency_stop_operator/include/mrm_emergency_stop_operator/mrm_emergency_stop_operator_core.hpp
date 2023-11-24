@@ -24,7 +24,7 @@
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
 
-// ROS 2 core
+// ROS2 core
 #include <rclcpp/rclcpp.hpp>
 
 namespace mrm_emergency_stop_operator

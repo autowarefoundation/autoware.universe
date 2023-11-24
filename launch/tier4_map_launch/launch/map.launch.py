@@ -12,18 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
-from ament_index_python import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
-from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
-from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
@@ -62,9 +57,7 @@ def launch_setup(context, *args, **kwargs):
         package="map_loader",
         plugin="Lanelet2MapLoaderNode",
         name="lanelet2_map_loader",
-        remappings=[
-            ("output/lanelet2_map", "vector_map"),
-        ],
+        remappings=[("output/lanelet2_map", "vector_map")],
         parameters=[
             {
                 "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
@@ -91,14 +84,11 @@ def launch_setup(context, *args, **kwargs):
         name="pointcloud_map_loader",
         remappings=[
             ("output/pointcloud_map", "pointcloud_map"),
-            ("output/pointcloud_map_metadata", "pointcloud_map_metadata"),
             ("service/get_partial_pcd_map", "/map/get_partial_pointcloud_map"),
             ("service/get_differential_pcd_map", "/map/get_differential_pointcloud_map"),
-            ("service/get_selected_pcd_map", "/map/get_selected_pointcloud_map"),
         ],
         parameters=[
             {"pcd_paths_or_directory": ["[", LaunchConfiguration("pointcloud_map_path"), "]"]},
-            {"pcd_metadata_path": [LaunchConfiguration("pointcloud_map_metadata_path")]},
             pointcloud_map_loader_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -115,19 +105,6 @@ def launch_setup(context, *args, **kwargs):
             }
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
-    )
-
-    map_projection_loader_launch_file = os.path.join(
-        get_package_share_directory("map_projection_loader"),
-        "launch",
-        "map_projection_loader.launch.xml",
-    )
-    map_projection_loader = IncludeLaunchDescription(
-        AnyLaunchDescriptionSource(map_projection_loader_launch_file),
-        launch_arguments={
-            "map_projector_info_path": LaunchConfiguration("map_projector_info_path"),
-            "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
-        }.items(),
     )
 
     container = ComposableNodeContainer(
@@ -149,7 +126,6 @@ def launch_setup(context, *args, **kwargs):
             PushRosNamespace("map"),
             container,
             map_hash_generator,
-            map_projection_loader,
         ]
     )
 
@@ -176,16 +152,6 @@ def generate_launch_description():
         "path to pointcloud map file",
     ),
     add_launch_arg(
-        "pointcloud_map_metadata_path",
-        [LaunchConfiguration("map_path"), "/pointcloud_map_metadata.yaml"],
-        "path to pointcloud map metadata file",
-    ),
-    add_launch_arg(
-        "map_projector_info_path",
-        [LaunchConfiguration("map_path"), "/map_projector_info.yaml"],
-        "path to map projector info yaml file",
-    ),
-    add_launch_arg(
         "lanelet2_map_loader_param_path",
         [
             FindPackageShare("map_loader"),
@@ -195,10 +161,13 @@ def generate_launch_description():
     ),
     add_launch_arg(
         "pointcloud_map_loader_param_path",
-        None,
+        [
+            FindPackageShare("tier4_map_launch"),
+            "/config/pointcloud_map_loader.param.yaml",
+        ],
         "path to pointcloud_map_loader param file",
     ),
-    add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication"),
+    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication"),
     add_launch_arg("use_multithread", "false", "use multithread"),
 
     set_container_executable = SetLaunchConfiguration(

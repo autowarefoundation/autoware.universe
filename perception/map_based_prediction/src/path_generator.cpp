@@ -15,18 +15,17 @@
 #include "map_based_prediction/path_generator.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <motion_utils/motion_utils.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 
 namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
-  const double time_horizon, const double lateral_time_horizon, const double sampling_time_interval,
+  const double time_horizon, const double sampling_time_interval,
   const double min_crosswalk_user_velocity)
 : time_horizon_(time_horizon),
-  lateral_time_horizon_(lateral_time_horizon),
   sampling_time_interval_(sampling_time_interval),
   min_crosswalk_user_velocity_(min_crosswalk_user_velocity)
 {
@@ -71,7 +70,7 @@ PredictedPath PathGenerator::generatePathToTargetPoint(
 }
 
 PredictedPath PathGenerator::generatePathForCrosswalkUser(
-  const TrackedObject & object, const CrosswalkEdgePoints & reachable_crosswalk) const
+  const TrackedObject & object, const EntryPoint & reachable_crosswalk) const
 {
   PredictedPath predicted_path{};
   const double ep = 0.001;
@@ -80,11 +79,10 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
 
   const Eigen::Vector2d pedestrian_to_entry_point(
-    reachable_crosswalk.front_center_point.x() - obj_pos.x,
-    reachable_crosswalk.front_center_point.y() - obj_pos.y);
+    reachable_crosswalk.first.x() - obj_pos.x, reachable_crosswalk.first.y() - obj_pos.y);
   const Eigen::Vector2d entry_to_exit_point(
-    reachable_crosswalk.back_center_point.x() - reachable_crosswalk.front_center_point.x(),
-    reachable_crosswalk.back_center_point.y() - reachable_crosswalk.front_center_point.y());
+    reachable_crosswalk.second.x() - reachable_crosswalk.first.x(),
+    reachable_crosswalk.second.y() - reachable_crosswalk.first.y());
   const auto velocity = std::max(std::hypot(obj_vel.x, obj_vel.y), min_crosswalk_user_velocity_);
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
@@ -100,10 +98,10 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
       predicted_path.path.push_back(world_frame_pose);
     } else {
       world_frame_pose.position.x =
-        reachable_crosswalk.front_center_point.x() +
+        reachable_crosswalk.first.x() +
         velocity * entry_to_exit_point.normalized().x() * (dt - arrival_time);
       world_frame_pose.position.y =
-        reachable_crosswalk.front_center_point.y() +
+        reachable_crosswalk.first.y() +
         velocity * entry_to_exit_point.normalized().y() * (dt - arrival_time);
       world_frame_pose.position.z = obj_pos.z;
       world_frame_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
@@ -112,17 +110,6 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
     if (predicted_path.path.size() >= predicted_path.path.max_size()) {
       break;
     }
-  }
-
-  // calculate orientation of each point
-  if (predicted_path.path.size() >= 2) {
-    for (size_t i = 0; i < predicted_path.path.size() - 1; i++) {
-      const auto yaw = tier4_autoware_utils::calcAzimuthAngle(
-        predicted_path.path.at(i).position, predicted_path.path.at(i + 1).position);
-      predicted_path.path.at(i).orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
-    }
-    predicted_path.path.back().orientation =
-      predicted_path.path.at(predicted_path.path.size() - 2).orientation;
   }
 
   predicted_path.confidence = 1.0;
@@ -152,7 +139,8 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
   const TrackedObject & object, const PosePath & ref_paths)
 {
   if (ref_paths.size() < 2) {
-    return generateStraightPath(object);
+    const PredictedPath empty_path;
+    return empty_path;
   }
 
   return generatePolynomialPath(object, ref_paths);
@@ -202,7 +190,8 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
 
   if (frenet_predicted_path.size() < 2 || interpolated_ref_path.size() < 2) {
-    return generateStraightPath(object);
+    const PredictedPath empty_path;
+    return empty_path;
   }
 
   // Step4. Convert predicted trajectory from Frenet to Cartesian coordinate
@@ -214,25 +203,18 @@ FrenetPath PathGenerator::generateFrenetPath(
 {
   FrenetPath path;
   const double duration = time_horizon_;
-  const double lateral_duration = lateral_time_horizon_;
 
   // Compute Lateral and Longitudinal Coefficients to generate the trajectory
-  const Eigen::Vector3d lat_coeff =
-    calcLatCoefficients(current_point, target_point, lateral_duration);
+  const Eigen::Vector3d lat_coeff = calcLatCoefficients(current_point, target_point, duration);
   const Eigen::Vector2d lon_coeff = calcLonCoefficients(current_point, target_point, duration);
 
   path.reserve(static_cast<size_t>(duration / sampling_time_interval_));
   for (double t = 0.0; t <= duration; t += sampling_time_interval_) {
-    const double current_acc =
-      0.0;  // Currently we assume the object is traveling at a constant speed
-    const double d_next_ = current_point.d + current_point.d_vel * t +
-                           current_acc * 2.0 * std::pow(t, 2) + lat_coeff(0) * std::pow(t, 3) +
-                           lat_coeff(1) * std::pow(t, 4) + lat_coeff(2) * std::pow(t, 5);
-    // t > lateral_duration: 0.0, else d_next_
-    const double d_next = t > lateral_duration ? 0.0 : d_next_;
-    const double s_next = current_point.s + current_point.s_vel * t +
-                          2.0 * current_acc * std::pow(t, 2) + lon_coeff(0) * std::pow(t, 3) +
-                          lon_coeff(1) * std::pow(t, 4);
+    const double d_next = current_point.d + current_point.d_vel * t + 0 * 2 * std::pow(t, 2) +
+                          lat_coeff(0) * std::pow(t, 3) + lat_coeff(1) * std::pow(t, 4) +
+                          lat_coeff(2) * std::pow(t, 5);
+    const double s_next = current_point.s + current_point.s_vel * t + 2 * 0 * std::pow(t, 2) +
+                          lon_coeff(0) * std::pow(t, 3) + lon_coeff(1) * std::pow(t, 4);
     if (s_next > max_length) {
       break;
     }
@@ -305,18 +287,15 @@ PosePath PathGenerator::interpolateReferencePath(
     return interpolated_path;
   }
 
-  std::vector<double> base_path_x(base_path.size());
-  std::vector<double> base_path_y(base_path.size());
-  std::vector<double> base_path_z(base_path.size());
-  std::vector<double> base_path_s(base_path.size(), 0.0);
+  std::vector<double> base_path_x;
+  std::vector<double> base_path_y;
+  std::vector<double> base_path_z;
+  std::vector<double> base_path_s;
   for (size_t i = 0; i < base_path.size(); ++i) {
-    base_path_x.at(i) = base_path.at(i).position.x;
-    base_path_y.at(i) = base_path.at(i).position.y;
-    base_path_z.at(i) = base_path.at(i).position.z;
-    if (i > 0) {
-      base_path_s.at(i) = base_path_s.at(i - 1) + tier4_autoware_utils::calcDistance2d(
-                                                    base_path.at(i - 1), base_path.at(i));
-    }
+    base_path_x.push_back(base_path.at(i).position.x);
+    base_path_y.push_back(base_path.at(i).position.y);
+    base_path_z.push_back(base_path.at(i).position.z);
+    base_path_s.push_back(motion_utils::calcSignedArcLength(base_path, 0, i));
   }
 
   std::vector<double> resampled_s(frenet_predicted_path.size());

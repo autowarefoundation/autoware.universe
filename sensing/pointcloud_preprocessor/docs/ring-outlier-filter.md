@@ -22,12 +22,11 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Core Parameters
 
-| Name                      | Type    | Default Value | Description |
-| ------------------------- | ------- | ------------- | ----------- |
-| `distance_ratio`          | double  | 1.03          |             |
-| `object_length_threshold` | double  | 0.1           |             |
-| `num_points_threshold`    | int     | 4             |             |
-| `max_rings_num`           | uint_16 | 128           |             |
+| Name                      | Type   | Default Value | Description |
+| ------------------------- | ------ | ------------- | ----------- |
+| `distance_ratio`          | double | 1.03          |             |
+| `object_length_threshold` | double | 0.1           |             |
+| `num_points_threshold`    | int    | 4             |             |
 
 ## Assumptions / Known limits
 

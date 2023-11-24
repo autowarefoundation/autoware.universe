@@ -21,7 +21,9 @@ double squaredMahalanobis(
   return d.dot(C.inverse() * d);
 }
 
-double mahalanobis(const Eigen::VectorXd & x, const Eigen::VectorXd & y, const Eigen::MatrixXd & C)
+bool mahalanobisGate(
+  const double & dist_max, const Eigen::MatrixXd & x, const Eigen::MatrixXd & obj_x,
+  const Eigen::MatrixXd & cov)
 {
-  return std::sqrt(squaredMahalanobis(x, y, C));
+  return squaredMahalanobis(x, obj_x, cov) <= dist_max * dist_max;
 }

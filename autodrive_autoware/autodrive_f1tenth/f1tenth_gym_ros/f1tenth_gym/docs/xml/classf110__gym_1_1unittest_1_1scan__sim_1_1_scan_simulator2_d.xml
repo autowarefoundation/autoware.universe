@@ -1,0 +1,482 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d" kind="class" language="Python" prot="public">
+    <compoundname>f110_gym::unittest::scan_sim::ScanSimulator2D</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">object</basecompoundref>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ab651a44dfee70e7f2c2c8389b95e6e51" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::num_beams</definition>
+        <argsstring></argsstring>
+        <name>num_beams</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="201" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="201" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a675555c29ace0ea5ddea92835965e654" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::fov</definition>
+        <argsstring></argsstring>
+        <name>fov</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="202" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="202" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1af5f188b7150482f5518461af89d61fe7" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::std_dev</definition>
+        <argsstring></argsstring>
+        <name>std_dev</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="203" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="203" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ae0b3e8aec78d765f2c64fc274b9e447f" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::eps</definition>
+        <argsstring></argsstring>
+        <name>eps</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="204" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="204" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1aad699977c807e3ad150b6dac8b2bb1a0" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::theta_dis</definition>
+        <argsstring></argsstring>
+        <name>theta_dis</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="205" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="205" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a510e60d159e716bcd62b54dac8a69066" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::max_range</definition>
+        <argsstring></argsstring>
+        <name>max_range</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="206" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="206" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a7cf918616a14c3d8f76bc359cf2f1c4c" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::angle_increment</definition>
+        <argsstring></argsstring>
+        <name>angle_increment</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="207" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="207" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a52a218f72d96e62281f00e3aa01f6616" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::theta_index_increment</definition>
+        <argsstring></argsstring>
+        <name>theta_index_increment</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="208" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="208" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a6fb0a8e58e42af2934c5f3e35ab3488e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::orig_c</definition>
+        <argsstring></argsstring>
+        <name>orig_c</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="209" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="209" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ac1a4dcaf191c8308accbcf86999efd5c" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::orig_s</definition>
+        <argsstring></argsstring>
+        <name>orig_s</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="210" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="210" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a49263002630bb21764217caa6c3314b7" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::orig_x</definition>
+        <argsstring></argsstring>
+        <name>orig_x</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="211" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="211" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ab6b56af3b1396d900b097d4e0463941f" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::orig_y</definition>
+        <argsstring></argsstring>
+        <name>orig_y</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="212" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="212" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a7b15deec5d81ddfa0c6297523cdfc295" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::map_height</definition>
+        <argsstring></argsstring>
+        <name>map_height</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="213" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="213" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ac5acff270a2a66d20a8bb514001cc3c4" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::map_width</definition>
+        <argsstring></argsstring>
+        <name>map_width</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="214" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="214" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a935128be3649ba7d230f63bf7480bfa1" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::map_resolution</definition>
+        <argsstring></argsstring>
+        <name>map_resolution</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="215" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="215" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a184ddbfb8a5aaebb9c523625f716ad7c" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::dt</definition>
+        <argsstring></argsstring>
+        <name>dt</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="216" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="216" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1afcb7de24911c98dd85473247c7d4af17" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::rng</definition>
+        <argsstring></argsstring>
+        <name>rng</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="219" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="219" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1af2c50f973462f4717c9c02d6c8d47004" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::sines</definition>
+        <argsstring></argsstring>
+        <name>sines</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="223" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="223" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a578ecb22495b2d227517b8a54a505c7e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::cosines</definition>
+        <argsstring></argsstring>
+        <name>cosines</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="224" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="224" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a15778cb625d962a2481cbc34854044dd" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::map_img</definition>
+        <argsstring></argsstring>
+        <name>map_img</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="242" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="242" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a62fb5e7c6a7060685208643a265aaa95" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.unittest.scan_sim.ScanSimulator2D::origin</definition>
+        <argsstring></argsstring>
+        <name>origin</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="257" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="257" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1aaa079c96c4018da2b7e80388bcd2d417" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.ScanSimulator2D.__init__</definition>
+        <argsstring>(self, num_beams, fov, std_dev=0.01, eps=0.0001, theta_dis=2000, max_range=30.0, seed=123)</argsstring>
+        <name>__init__</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>num_beams</type>
+          <defname>num_beams</defname>
+        </param>
+        <param>
+          <type>fov</type>
+          <defname>fov</defname>
+        </param>
+        <param>
+          <type>std_dev</type>
+          <defname>std_dev</defname>
+          <defval>0.01</defval>
+        </param>
+        <param>
+          <type>eps</type>
+          <defname>eps</defname>
+          <defval>0.0001</defval>
+        </param>
+        <param>
+          <type>theta_dis</type>
+          <defname>theta_dis</defname>
+          <defval>2000</defval>
+        </param>
+        <param>
+          <type>max_range</type>
+          <defname>max_range</defname>
+          <defval>30.0</defval>
+        </param>
+        <param>
+          <type>seed</type>
+          <defname>seed</defname>
+          <defval>123</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="199" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="199" bodyend="225"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a00925f5100ae8b2e556154e8935ea86e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.ScanSimulator2D.set_map</definition>
+        <argsstring>(self, map_path, map_ext)</argsstring>
+        <name>set_map</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>map_path</type>
+          <defname>map_path</defname>
+        </param>
+        <param>
+          <type>map_ext</type>
+          <defname>map_ext</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Set the bitmap of the scan simulator by path
+
+    Args:
+map_path (str): path to the map yaml file
+map_ext (str): extension (image type) of the map image
+
+    Returns:
+flag (bool): if image reading and loading is successful
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="226" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="226" bodyend="271"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a038a0fc7e42df7827c175fdb3755f2c4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.ScanSimulator2D.scan</definition>
+        <argsstring>(self, pose)</argsstring>
+        <name>scan</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>pose</type>
+          <defname>pose</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Perform simulated 2D scan by pose on the given map
+
+    Args:
+pose (numpy.ndarray (3, )): pose of the scan frame (x, y, theta)
+
+    Returns:
+scan (numpy.ndarray (n, )): data array of the laserscan, n=num_beams
+
+    Raises:
+ValueError: when scan is called before a map is set
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="272" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="272" bodyend="291"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a492d1949d030fb6b8665f399db5cdb4d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.ScanSimulator2D.get_increment</definition>
+        <argsstring>(self)</argsstring>
+        <name>get_increment</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="292" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="292" bodyend="305"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para><verbatim>2D LIDAR scan simulator class
+
+Init params:
+    num_beams (int): number of beams in the scan
+    fov (float): field of view of the laser scan
+    std_dev (float, default=0.01): standard deviation of the generated whitenoise in the scan
+    eps (float, default=0.0001): ray tracing iteration termination condition
+    theta_dis (int, default=2000): number of steps to discretize the angles between 0 and 2pi for look up
+    max_range (float, default=30.0): maximum range of the laser
+    seed (int, default=123): seed for random number generator for the whitenoise in scan
+</verbatim> </para>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="1">
+        <label>f110_gym.unittest.scan_sim.ScanSimulator2D</label>
+        <link refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>object</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="1">
+        <label>f110_gym.unittest.scan_sim.ScanSimulator2D</label>
+        <link refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>object</label>
+      </node>
+    </collaborationgraph>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="185" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="185" bodyend="306"/>
+    <listofallmembers>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1aaa079c96c4018da2b7e80388bcd2d417" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>__init__</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a7cf918616a14c3d8f76bc359cf2f1c4c" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>angle_increment</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a578ecb22495b2d227517b8a54a505c7e" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>cosines</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a184ddbfb8a5aaebb9c523625f716ad7c" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>dt</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ae0b3e8aec78d765f2c64fc274b9e447f" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>eps</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a675555c29ace0ea5ddea92835965e654" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>fov</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a492d1949d030fb6b8665f399db5cdb4d" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>get_increment</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a7b15deec5d81ddfa0c6297523cdfc295" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>map_height</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a15778cb625d962a2481cbc34854044dd" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>map_img</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a935128be3649ba7d230f63bf7480bfa1" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>map_resolution</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ac5acff270a2a66d20a8bb514001cc3c4" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>map_width</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a510e60d159e716bcd62b54dac8a69066" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>max_range</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ab651a44dfee70e7f2c2c8389b95e6e51" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>num_beams</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a6fb0a8e58e42af2934c5f3e35ab3488e" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>orig_c</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ac1a4dcaf191c8308accbcf86999efd5c" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>orig_s</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a49263002630bb21764217caa6c3314b7" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>orig_x</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ab6b56af3b1396d900b097d4e0463941f" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>orig_y</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a62fb5e7c6a7060685208643a265aaa95" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>origin</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1afcb7de24911c98dd85473247c7d4af17" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>rng</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a038a0fc7e42df7827c175fdb3755f2c4" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>scan</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a00925f5100ae8b2e556154e8935ea86e" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>set_map</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1af2c50f973462f4717c9c02d6c8d47004" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>sines</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1af5f188b7150482f5518461af89d61fe7" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>std_dev</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1aad699977c807e3ad150b6dac8b2bb1a0" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>theta_dis</name></member>
+      <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a52a218f72d96e62281f00e3aa01f6616" prot="public" virt="non-virtual"><scope>f110_gym::unittest::scan_sim::ScanSimulator2D</scope><name>theta_index_increment</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -28,13 +28,13 @@ namespace
 {
 std::vector<std::string> getFilePath(const std::string & input_dir)
 {
-  glob_t glob_buffer;
+  glob_t globbuf;
   std::vector<std::string> files;
-  glob((input_dir + "*").c_str(), 0, NULL, &glob_buffer);
-  for (size_t i = 0; i < glob_buffer.gl_pathc; i++) {
-    files.push_back(glob_buffer.gl_pathv[i]);
+  glob((input_dir + "*").c_str(), 0, NULL, &globbuf);
+  for (size_t i = 0; i < globbuf.gl_pathc; i++) {
+    files.push_back(globbuf.gl_pathv[i]);
   }
-  globfree(&glob_buffer);
+  globfree(&globbuf);
   return files;
 }
 }  // namespace

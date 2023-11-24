@@ -21,7 +21,7 @@
 
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/utils/utils.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "perception_utils/perception_utils.hpp"
 
 #include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
@@ -58,7 +58,7 @@ public:
   virtual ~Tracker() {}
   bool updateWithMeasurement(
     const autoware_auto_perception_msgs::msg::DetectedObject & object,
-    const rclcpp::Time & measurement_time, const geometry_msgs::msg::Transform & self_transform);
+    const rclcpp::Time & measurement_time);
   bool updateWithoutMeasurement();
   std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> getClassification() const
   {
@@ -66,7 +66,7 @@ public:
   }
   std::uint8_t getHighestProbLabel() const
   {
-    return object_recognition_utils::getHighestProbLabel(classification_);
+    return perception_utils::getHighestProbLabel(classification_);
   }
   int getNoMeasurementCount() const { return no_measurement_count_; }
   int getTotalNoMeasurementCount() const { return total_no_measurement_count_; }
@@ -84,8 +84,8 @@ public:
 
 protected:
   virtual bool measure(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-    const geometry_msgs::msg::Transform & self_transform) = 0;
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    const rclcpp::Time & time) = 0;
 
 public:
   virtual bool getTrackedObject(

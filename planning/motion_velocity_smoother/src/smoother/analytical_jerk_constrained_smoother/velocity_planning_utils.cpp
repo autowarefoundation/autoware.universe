@@ -222,38 +222,38 @@ bool calcStopVelocityWithConstantJerkAccLimit(
     return true;
   }
 
-  double distance = 0.0;
-  std::vector<double> distances;
-  distances.push_back(distance);
+  double dist = 0.0;
+  std::vector<double> dists;
+  dists.push_back(dist);
   for (size_t i = start_index; i < output_trajectory.size() - 1; ++i) {
-    distance +=
+    dist +=
       tier4_autoware_utils::calcDistance2d(output_trajectory.at(i), output_trajectory.at(i + 1));
-    if (distance > xs.back()) {
+    if (dist > xs.back()) {
       break;
     }
-    distances.push_back(distance);
+    dists.push_back(dist);
   }
 
   if (
-    !interpolation_utils::isIncreasing(xs) || !interpolation_utils::isIncreasing(distances) ||
-    !interpolation_utils::isNotDecreasing(xs) || !interpolation_utils::isNotDecreasing(distances)) {
+    !interpolation_utils::isIncreasing(xs) || !interpolation_utils::isIncreasing(dists) ||
+    !interpolation_utils::isNotDecreasing(xs) || !interpolation_utils::isNotDecreasing(dists)) {
     return false;
   }
 
   if (
-    xs.size() < 2 || vs.size() < 2 || as.size() < 2 || js.size() < 2 || distances.empty() ||
-    distances.front() < xs.front() || xs.back() < distances.back()) {
+    xs.size() < 2 || vs.size() < 2 || as.size() < 2 || js.size() < 2 || dists.empty() ||
+    dists.front() < xs.front() || xs.back() < dists.back()) {
     return false;
   }
 
-  const auto vel_at_wp = interpolation::lerp(xs, vs, distances);
-  const auto acc_at_wp = interpolation::lerp(xs, as, distances);
-  const auto jerk_at_wp = interpolation::lerp(xs, js, distances);
+  const auto vel_at_wp = interpolation::lerp(xs, vs, dists);
+  const auto acc_at_wp = interpolation::lerp(xs, as, dists);
+  const auto jerk_at_wp = interpolation::lerp(xs, js, dists);
 
   // for debug
   std::stringstream ssi;
-  for (unsigned int i = 0; i < distances.size(); ++i) {
-    ssi << "d: " << distances.at(i) << ", v: " << vel_at_wp.at(i) << ", a: " << acc_at_wp.at(i)
+  for (unsigned int i = 0; i < dists.size(); ++i) {
+    ssi << "d: " << dists.at(i) << ", v: " << vel_at_wp.at(i) << ", a: " << acc_at_wp.at(i)
         << ", j: " << jerk_at_wp.at(i) << std::endl;
   }
   RCLCPP_DEBUG(
@@ -343,15 +343,9 @@ double integ_x(double x0, double v0, double a0, double j0, double t)
   return x0 + v0 * t + 0.5 * a0 * t * t + (1.0 / 6.0) * j0 * t * t * t;
 }
 
-double integ_v(double v0, double a0, double j0, double t)
-{
-  return v0 + a0 * t + 0.5 * j0 * t * t;
-}
+double integ_v(double v0, double a0, double j0, double t) { return v0 + a0 * t + 0.5 * j0 * t * t; }
 
-double integ_a(double a0, double j0, double t)
-{
-  return a0 + j0 * t;
-}
+double integ_a(double a0, double j0, double t) { return a0 + j0 * t; }
 
 }  // namespace analytical_velocity_planning_utils
 }  // namespace motion_velocity_smoother

@@ -1,4 +1,4 @@
-// Copyright 2020 TIER IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,13 +48,6 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   const std::string onnx_file = this->declare_parameter<std::string>("onnx_file");
   const std::string label_file = this->declare_parameter<std::string>("label_file");
   const std::string mode = this->declare_parameter("mode", "FP32");
-  dnn_header_type_ = this->declare_parameter("dnn_header_type", "pytorch");
-
-  if (dnn_header_type_.compare("pytorch") != 0 && dnn_header_type_.compare("mmdetection") != 0) {
-    RCLCPP_ERROR(
-      this->get_logger(), "Unexpected DNN type: %s, choose from (pytorch, mmdetection)",
-      dnn_header_type_.c_str());
-  }
 
   fs::path engine_path{onnx_file};
   engine_path.replace_extension("engine");
@@ -85,12 +78,11 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
     net_ptr_.reset(new ssd::Net(onnx_file, mode, max_batch_size));
     net_ptr_->save(engine_path);
   }
-
-  input_shape_ = net_ptr_->getInputShape();
-  box_dims_ = net_ptr_->getOutputDimensions("boxes");
-  score_dims_ = net_ptr_->getOutputDimensions("scores");
-  detection_per_class_ = score_dims_->d[0];
-  class_num_ = score_dims_->d[1];
+  channel_ = net_ptr_->getInputSize()[0];
+  width_ = net_ptr_->getInputSize()[1];
+  height_ = net_ptr_->getInputSize()[2];
+  detection_per_class_ = net_ptr_->getOutputScoreSize()[0];
+  class_num_ = net_ptr_->getOutputScoreSize()[1];
 
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
   score_thresh_ = this->declare_parameter<double>("score_thresh", 0.7);
@@ -103,7 +95,8 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
   output_roi_pub_ =
-    this->create_publisher<tier4_perception_msgs::msg::TrafficLightRoiArray>("~/output/rois", 1);
+    this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>(
+      "~/output/rois", 1);
   exe_time_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/exe_time_ms", 1);
   if (is_approximate_sync_) {
@@ -113,11 +106,6 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   } else {
     sync_.reset(new Sync(SyncPolicy(10), image_sub_, roi_sub_));
     sync_->registerCallback(std::bind(&TrafficLightSSDFineDetectorNodelet::callback, this, _1, _2));
-  }
-
-  if (this->declare_parameter("build_only", false)) {
-    RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
-    rclcpp::shutdown();
   }
 }
 
@@ -135,7 +123,7 @@ void TrafficLightSSDFineDetectorNodelet::connectCb()
 
 void TrafficLightSSDFineDetectorNodelet::callback(
   const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg,
-  const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg)
+  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg)
 {
   if (in_image_msg->width < 2 || in_image_msg->height < 2) {
     return;
@@ -145,7 +133,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
   using std::chrono::milliseconds;
   const auto exe_start_time = high_resolution_clock::now();
   cv::Mat original_image;
-  tier4_perception_msgs::msg::TrafficLightRoiArray out_rois;
+  autoware_auto_perception_msgs::msg::TrafficLightRoiArray out_rois;
 
   rosMsg2CvMat(in_image_msg, original_image);
   int num_rois = in_roi_msg->rois.size();
@@ -153,15 +141,10 @@ void TrafficLightSSDFineDetectorNodelet::callback(
   const int batch_size = net_ptr_->getMaxBatchSize();
   while (num_rois != 0) {
     const int num_infer = (num_rois / batch_size > 0) ? batch_size : num_rois % batch_size;
-    auto data_d = cuda::make_unique<float[]>(num_infer * input_shape_.size());
-    auto box_d = cuda::make_unique<float[]>(num_infer * box_dims_->size());
-    auto score_d = cuda::make_unique<float[]>(num_infer * score_dims_->size());
-    std::vector<void *> buffers;
-    if (dnn_header_type_.compare("pytorch") == 0) {
-      buffers = {data_d.get(), score_d.get(), box_d.get()};
-    } else {
-      buffers = {data_d.get(), box_d.get(), score_d.get()};
-    }
+    auto data_d = cuda::make_unique<float[]>(num_infer * channel_ * width_ * height_);
+    auto scores_d = cuda::make_unique<float[]>(num_infer * detection_per_class_ * class_num_);
+    auto boxes_d = cuda::make_unique<float[]>(num_infer * detection_per_class_ * 4);
+    std::vector<void *> buffers = {data_d.get(), scores_d.get(), boxes_d.get()};
     std::vector<cv::Point> lts, rbs;
     std::vector<cv::Mat> cropped_imgs;
 
@@ -176,7 +159,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
       cropped_imgs.push_back(cv::Mat(original_image, cv::Rect(lts.at(i), rbs.at(i))));
     }
 
-    std::vector<float> data(num_infer * input_shape_.size());
+    std::vector<float> data(num_infer * channel_ * width_ * height_);
     if (!cvMat2CnnInput(cropped_imgs, num_infer, data)) {
       RCLCPP_ERROR(this->get_logger(), "Fail to preprocess image");
       return;
@@ -194,10 +177,10 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     auto scores = std::make_unique<float[]>(num_infer * detection_per_class_ * class_num_);
     auto boxes = std::make_unique<float[]>(num_infer * detection_per_class_ * 4);
     cudaMemcpy(
-      boxes.get(), box_d.get(), sizeof(float) * num_infer * box_dims_->size(),
+      scores.get(), scores_d.get(), sizeof(float) * num_infer * detection_per_class_ * class_num_,
       cudaMemcpyDeviceToHost);
     cudaMemcpy(
-      scores.get(), score_d.get(), sizeof(float) * num_infer * score_dims_->size(),
+      boxes.get(), boxes_d.get(), sizeof(float) * num_infer * detection_per_class_ * 4,
       cudaMemcpyDeviceToHost);
     // Get Output
     std::vector<Detection> detections;
@@ -215,10 +198,9 @@ void TrafficLightSSDFineDetectorNodelet::callback(
           lts.at(i).x + detections.at(i).x + detections.at(i).w,
           lts.at(i).y + detections.at(i).y + detections.at(i).h);
         fitInFrame(lt_roi, rb_roi, cv::Size(original_image.size()));
-        tier4_perception_msgs::msg::TrafficLightRoi tl_roi;
+        autoware_auto_perception_msgs::msg::TrafficLightRoi tl_roi;
         cvRect2TlRoiMsg(
-          cv::Rect(lt_roi, rb_roi),
-          in_roi_msg->rois.at(i + batch_count * batch_size).traffic_light_id, tl_roi);
+          cv::Rect(lt_roi, rb_roi), in_roi_msg->rois.at(i + batch_count * batch_size).id, tl_roi);
         out_rois.rois.push_back(tl_roi);
       }
     }
@@ -243,7 +225,7 @@ bool TrafficLightSSDFineDetectorNodelet::cvMat2CnnInput(
     // cv::Mat rgb;
     // cv::cvtColor(in_imgs.at(i), rgb, CV_BGR2RGB);
     cv::Mat resized;
-    cv::resize(in_imgs.at(i), resized, cv::Size(input_shape_.width, input_shape_.height));
+    cv::resize(in_imgs.at(i), resized, cv::Size(width_, height_));
 
     cv::Mat pixels;
     resized.convertTo(pixels, CV_32FC3, 1.0 / 255, 0);
@@ -256,10 +238,10 @@ bool TrafficLightSSDFineDetectorNodelet::cvMat2CnnInput(
       return false;
     }
 
-    for (int c = 0; c < input_shape_.channel; ++c) {
-      for (int j = 0, hw = input_shape_.area(); j < hw; ++j) {
-        data[i * input_shape_.size() + c * hw + j] =
-          (img[input_shape_.channel * j + 2 - c] - mean_[c]) / std_[c];
+    for (int c = 0; c < channel_; ++c) {
+      for (int j = 0, hw = width_ * height_; j < hw; ++j) {
+        data[i * channel_ * width_ * height_ + c * hw + j] =
+          (img[channel_ * j + 2 - c] - mean_[c]) / std_[c];
       }
     }
   }
@@ -283,19 +265,10 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
     size_t index = std::distance(tlr_scores.begin(), iter);
     size_t box_index = i * detection_per_class_ * 4 + index * 4;
     cv::Point lt, rb;
-    if (dnn_header_type_.compare("pytorch") == 0) {
-      lt.x = boxes[box_index] * in_imgs.at(i).cols;
-      lt.y = boxes[box_index + 1] * in_imgs.at(i).rows;
-      rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;
-      rb.y = boxes[box_index + 3] * in_imgs.at(i).rows;
-    } else {
-      const float dx = static_cast<float>(in_imgs.at(i).cols) / input_shape_.width;
-      const float dy = static_cast<float>(in_imgs.at(i).rows) / input_shape_.height;
-      lt.x = boxes[box_index] * dx;
-      lt.y = boxes[box_index + 1] * dy;
-      rb.x = boxes[box_index + 2] * dx;
-      rb.y = boxes[box_index + 3] * dy;
-    }
+    lt.x = boxes[box_index] * in_imgs.at(i).cols;
+    lt.y = boxes[box_index + 1] * in_imgs.at(i).rows;
+    rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;
+    rb.y = boxes[box_index + 3] * in_imgs.at(i).rows;
     fitInFrame(lt, rb, cv::Size(in_imgs.at(i).cols, in_imgs.at(i).rows));
     det.x = lt.x;
     det.y = lt.y;
@@ -345,9 +318,10 @@ bool TrafficLightSSDFineDetectorNodelet::fitInFrame(
 }
 
 void TrafficLightSSDFineDetectorNodelet::cvRect2TlRoiMsg(
-  const cv::Rect & rect, const int32_t id, tier4_perception_msgs::msg::TrafficLightRoi & tl_roi)
+  const cv::Rect & rect, const int32_t id,
+  autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi)
 {
-  tl_roi.traffic_light_id = id;
+  tl_roi.id = id;
   tl_roi.roi.x_offset = rect.x;
   tl_roi.roi.y_offset = rect.y;
   tl_roi.roi.width = rect.width;

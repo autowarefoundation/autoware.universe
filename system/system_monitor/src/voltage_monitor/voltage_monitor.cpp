@@ -200,10 +200,7 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void VoltageMonitor::update()
-{
-  updater_.force_update();
-}
+void VoltageMonitor::update() { updater_.force_update(); }
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(VoltageMonitor)

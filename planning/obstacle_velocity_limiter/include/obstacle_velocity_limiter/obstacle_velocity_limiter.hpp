@@ -62,7 +62,7 @@ void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base);
 /// @param[in] buffer buffer used to enlarge the mask
 /// @param[in] min_vel minimum velocity for an object to be masked
 /// @return polygon masks around dynamic objects
-multi_polygon_t createPolygonMasks(
+multipolygon_t createPolygonMasks(
   const autoware_auto_perception_msgs::msg::PredictedObjects & dynamic_obstacles,
   const Float buffer, const Float min_vel);
 
@@ -73,7 +73,7 @@ multi_polygon_t createPolygonMasks(
 /// @param[in] lateral_offset offset to create polygons around the lines
 /// @return polygon footprint of each projection lines
 std::vector<polygon_t> createFootprintPolygons(
-  const std::vector<multi_linestring_t> & projected_linestrings, const Float lateral_offset);
+  const std::vector<multilinestring_t> & projected_linestrings, const Float lateral_offset);
 
 /// @brief create the footprint polygon from a trajectory
 /// @param[in] trajectory the trajectory for which to create a footprint
@@ -102,20 +102,20 @@ polygon_t createEnvelopePolygon(const std::vector<polygon_t> & footprints);
 /// @details depending on the method used, multiple lines can be created for a same trajectory point
 /// @param[in] trajectory input trajectory
 /// @param[in] params projection parameters
-/// @return projection lines for each trajectory point
-std::vector<multi_linestring_t> createProjectedLines(
+/// @return projecton lines for each trajectory point
+std::vector<multilinestring_t> createProjectedLines(
   const Trajectory & trajectory, ProjectionParameters & params);
 
 /// @brief limit the velocity of the given trajectory
 /// @param[in] trajectory input trajectory
-/// @param[in] collision_checker object used to retrieve collision points
+/// @param[in] collision_checker object used to retrive collision points
 /// @param[in] projections forward projection lines at each trajectory point
 /// @param[in] footprints footprint of the forward projection at each trajectory point
 /// @param[in] projection_params projection parameters
 /// @param[in] velocity_params velocity parameters
 void limitVelocity(
   Trajectory & trajectory, const CollisionChecker & collision_checker,
-  const std::vector<multi_linestring_t> & projections, const std::vector<polygon_t> & footprints,
+  const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params);
 
 /// @brief copy the velocity profile of a downsampled trajectory to the original trajectory

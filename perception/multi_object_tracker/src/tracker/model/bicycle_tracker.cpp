@@ -20,9 +20,7 @@
 
 #include "multi_object_tracker/utils/utils.hpp"
 
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/math/normalization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -34,7 +32,7 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "perception_utils/perception_utils.hpp"
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
@@ -43,8 +41,7 @@
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 BicycleTracker::BicycleTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("BicycleTracker")),
   last_update_time_(time),
@@ -57,7 +54,7 @@ BicycleTracker::BicycleTracker(
   float q_stddev_y = 0.6;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(10);     // [rad/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(10);     // [m/(s*s)]
-  float q_stddev_slip = tier4_autoware_utils::deg2rad(15);    // [rad/(s*s)]
+  float q_stddev_wz = tier4_autoware_utils::deg2rad(25);      // [rad/(s*s)]
   float r_stddev_x = 0.6;                                     // [m]
   float r_stddev_y = 0.4;                                     // [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // [rad]
@@ -65,12 +62,12 @@ BicycleTracker::BicycleTracker(
   float p0_stddev_y = 0.5;                                    // [m/s]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(1000);  // [rad/s]
   float p0_stddev_vx = tier4_autoware_utils::kmph2mps(1000);  // [m/(s*s)]
-  float p0_stddev_slip = tier4_autoware_utils::deg2rad(10);   // [rad/(s*s)]
+  float p0_stddev_wz = tier4_autoware_utils::deg2rad(10);     // [rad/(s*s)]
   ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
   ekf_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
   ekf_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
   ekf_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
-  ekf_params_.q_cov_slip = std::pow(q_stddev_slip, 2.0);
+  ekf_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
@@ -78,9 +75,9 @@ BicycleTracker::BicycleTracker(
   ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
   ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
   ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
-  ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
+  ekf_params_.p0_cov_wz = std::pow(p0_stddev_wz, 2.0);
   max_vx_ = tier4_autoware_utils::kmph2mps(100);  // [m/s]
-  max_slip_ = tier4_autoware_utils::deg2rad(30);  // [rad/s]
+  max_wz_ = tier4_autoware_utils::deg2rad(30);    // [rad/s]
 
   // initialize X matrix
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -89,10 +86,11 @@ BicycleTracker::BicycleTracker(
   X(IDX::YAW) = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
   if (object.kinematics.has_twist) {
     X(IDX::VX) = object.kinematics.twist_with_covariance.twist.linear.x;
+    X(IDX::WZ) = object.kinematics.twist_with_covariance.twist.angular.z;
   } else {
     X(IDX::VX) = 0.0;
+    X(IDX::WZ) = 0.0;
   }
-  X(IDX::SLIP) = 0.0;
 
   // initialize P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -111,7 +109,7 @@ BicycleTracker::BicycleTracker(
     P(IDX::Y, IDX::X) = P(IDX::X, IDX::Y);
     P(IDX::YAW, IDX::YAW) = ekf_params_.p0_cov_yaw;
     P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
-    P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
+    P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
   } else {
     P(IDX::X, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     P(IDX::X, IDX::Y) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
@@ -122,10 +120,12 @@ BicycleTracker::BicycleTracker(
     if (object.kinematics.has_twist_covariance) {
       P(IDX::VX, IDX::VX) =
         object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+      P(IDX::WZ, IDX::WZ) =
+        object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
     } else {
       P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
+      P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
     }
-    P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
   }
 
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -135,11 +135,6 @@ BicycleTracker::BicycleTracker(
     bounding_box_ = {1.0, 0.5, 1.7};
   }
   ekf_.init(X, P);
-
-  // Set lf, lr
-  double point_ratio = 0.2;  // under steered if smaller than 0.5
-  lf_ = bounding_box_.length * point_ratio;
-  lr_ = bounding_box_.length * (1.0 - point_ratio);
 }
 
 bool BicycleTracker::predict(const rclcpp::Time & time)
@@ -154,53 +149,47 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
 
 bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
 {
-  /*  == Nonlinear model == static bicycle model
+  /*  == Nonlinear model ==
    *
-   * x_{k+1}   = x_k + vx_k * cos(yaw_k + slip_k) * dt
-   * y_{k+1}   = y_k + vx_k * sin(yaw_k + slip_k) * dt
-   * yaw_{k+1} = yaw_k + vx_k / l_r * sin(slip_k) * dt
+   * x_{k+1}   = x_k + vx_k * cos(yaw_k) * dt
+   * y_{k+1}   = y_k + vx_k * sin(yaw_k) * dt
+   * yaw_{k+1} = yaw_k + (wz_k) * dt
    * vx_{k+1}  = vx_k
-   * slip_{k+1}  = slip_k
+   * wz_{k+1}  = wz_k
    *
    */
 
   /*  == Linearized model ==
    *
-   * A = [ 1, 0, -vx*sin(yaw+slip)*dt, cos(yaw+slip)*dt,  -vx*sin(yaw+slip)*dt]
-   *     [ 0, 1,  vx*cos(yaw+slip)*dt, sin(yaw+slip)*dt,  vx*cos(yaw+slip)*dt]
-   *     [ 0, 0,               1,    1/l_r*sin(slip)*dt,  vx/l_r*cos(slip)*dt]
-   *     [ 0, 0,               0,                     1,  0]
-   *     [ 0, 0,               0,                     0,  1]
+   * A = [ 1, 0, -vx*sin(yaw)*dt, cos(yaw)*dt,  0]
+   *     [ 0, 1,  vx*cos(yaw)*dt, sin(yaw)*dt,  0]
+   *     [ 0, 0,               1,           0, dt]
+   *     [ 0, 0,               0,           1,  0]
+   *     [ 0, 0,               0,           0,  1]
    */
 
   // X t
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
   ekf.getX(X_t);
-  const double cos_yaw = std::cos(X_t(IDX::YAW) + X_t(IDX::SLIP));
-  const double sin_yaw = std::sin(X_t(IDX::YAW) + X_t(IDX::SLIP));
-  const double cos_slip = std::cos(X_t(IDX::SLIP));
-  const double sin_slip = std::sin(X_t(IDX::SLIP));
-  const double vx = X_t(IDX::VX);
+  const double cos_yaw = std::cos(X_t(IDX::YAW));
+  const double sin_yaw = std::sin(X_t(IDX::YAW));
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
 
   // X t+1
-  Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);                 // predicted state
-  X_next_t(IDX::X) = X_t(IDX::X) + vx * cos_yaw * dt;             // dx = v * cos(yaw)
-  X_next_t(IDX::Y) = X_t(IDX::Y) + vx * sin_yaw * dt;             // dy = v * sin(yaw)
-  X_next_t(IDX::YAW) = X_t(IDX::YAW) + vx / lr_ * sin_slip * dt;  // dyaw = omega
+  Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);                // predicted state
+  X_next_t(IDX::X) = X_t(IDX::X) + X_t(IDX::VX) * cos_yaw * dt;  // dx = v * cos(yaw)
+  X_next_t(IDX::Y) = X_t(IDX::Y) + X_t(IDX::VX) * sin_yaw * dt;  // dy = v * sin(yaw)
+  X_next_t(IDX::YAW) = X_t(IDX::YAW) + (X_t(IDX::WZ)) * dt;      // dyaw = omega
   X_next_t(IDX::VX) = X_t(IDX::VX);
-  X_next_t(IDX::SLIP) = X_t(IDX::SLIP);
+  X_next_t(IDX::WZ) = X_t(IDX::WZ);
 
   // A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
-  A(IDX::X, IDX::YAW) = -vx * sin_yaw * dt;
+  A(IDX::X, IDX::YAW) = -X_t(IDX::VX) * sin_yaw * dt;
   A(IDX::X, IDX::VX) = cos_yaw * dt;
-  A(IDX::X, IDX::SLIP) = -vx * sin_yaw * dt;
-  A(IDX::Y, IDX::YAW) = vx * cos_yaw * dt;
+  A(IDX::Y, IDX::YAW) = X_t(IDX::VX) * cos_yaw * dt;
   A(IDX::Y, IDX::VX) = sin_yaw * dt;
-  A(IDX::Y, IDX::SLIP) = vx * cos_yaw * dt;
-  A(IDX::YAW, IDX::VX) = 1.0 / lr_ * sin_slip * dt;
-  A(IDX::YAW, IDX::SLIP) = vx / lr_ * cos_slip * dt;
+  A(IDX::YAW, IDX::WZ) = dt;
 
   // Q
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -214,7 +203,7 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   Q(IDX::Y, IDX::X) = Q(IDX::X, IDX::Y);
   Q(IDX::YAW, IDX::YAW) = ekf_params_.q_cov_yaw * dt * dt;
   Q(IDX::VX, IDX::VX) = ekf_params_.q_cov_vx * dt * dt;
-  Q(IDX::SLIP, IDX::SLIP) = ekf_params_.q_cov_slip * dt * dt;
+  Q(IDX::WZ, IDX::WZ) = ekf_params_.q_cov_wz * dt * dt;
   Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
 
@@ -325,8 +314,8 @@ bool BicycleTracker::measureWithPose(
     if (!(-max_vx_ <= X_t(IDX::VX) && X_t(IDX::VX) <= max_vx_)) {
       X_t(IDX::VX) = X_t(IDX::VX) < 0 ? -max_vx_ : max_vx_;
     }
-    if (!(-max_slip_ <= X_t(IDX::SLIP) && X_t(IDX::SLIP) <= max_slip_)) {
-      X_t(IDX::SLIP) = X_t(IDX::SLIP) < 0 ? -max_slip_ : max_slip_;
+    if (!(-max_wz_ <= X_t(IDX::WZ) && X_t(IDX::WZ) <= max_wz_)) {
+      X_t(IDX::WZ) = X_t(IDX::WZ) < 0 ? -max_wz_ : max_wz_;
     }
     ekf_.init(X_t, P_t);
   }
@@ -346,20 +335,19 @@ bool BicycleTracker::measureWithShape(
   }
   constexpr float gain = 0.9;
 
-  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
+  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.x;
+  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.y;
   bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
 
   return true;
 }
 
 bool BicycleTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & /*self_transform*/)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
 {
   const auto & current_classification = getClassification();
   object_ = object;
-  if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (perception_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -378,7 +366,7 @@ bool BicycleTracker::measure(
 bool BicycleTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = object_recognition_utils::toTrackedObject(object_);
+  object = perception_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 
@@ -429,10 +417,8 @@ bool BicycleTracker::getTrackedObject(
   pose_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
 
   // twist
-  twist_with_cov.twist.linear.x = X_t(IDX::VX) * std::cos(X_t(IDX::SLIP));
-  twist_with_cov.twist.linear.y = X_t(IDX::VX) * std::sin(X_t(IDX::SLIP));
-  twist_with_cov.twist.angular.z =
-    X_t(IDX::VX) / lr_ * std::sin(X_t(IDX::SLIP));  // yaw_rate = vx_k / l_r * sin(slip_k)
+  twist_with_cov.twist.linear.x = X_t(IDX::VX);
+  twist_with_cov.twist.angular.z = X_t(IDX::WZ);
   // twist covariance
   constexpr double vy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
@@ -441,15 +427,15 @@ bool BicycleTracker::getTrackedObject(
   twist_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::VX, IDX::VX);
   twist_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = vy_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::Z_Z] = vz_cov;
-  twist_with_cov.covariance[utils::MSG_COV_IDX::X_YAW] = P(IDX::VX, IDX::SLIP);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_X] = P(IDX::SLIP, IDX::VX);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::X_YAW] = P(IDX::VX, IDX::WZ);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_X] = P(IDX::WZ, IDX::VX);
   twist_with_cov.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
-  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::SLIP, IDX::SLIP);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
 
   // set shape
-  object.shape.dimensions.x = bounding_box_.length;
-  object.shape.dimensions.y = bounding_box_.width;
+  object.shape.dimensions.x = bounding_box_.width;
+  object.shape.dimensions.y = bounding_box_.length;
   object.shape.dimensions.z = bounding_box_.height;
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);

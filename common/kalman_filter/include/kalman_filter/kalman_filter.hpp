@@ -15,8 +15,8 @@
 #ifndef KALMAN_FILTER__KALMAN_FILTER_HPP_
 #define KALMAN_FILTER__KALMAN_FILTER_HPP_
 
-#include <Eigen/Core>
-#include <Eigen/LU>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/LU>
 
 /**
  * @file kalman_filter.h
@@ -109,20 +109,20 @@ public:
    * @brief get current kalman filter state
    * @param x kalman filter state
    */
-  void getX(Eigen::MatrixXd & x) const;
+  void getX(Eigen::MatrixXd & x);
 
   /**
    * @brief get current kalman filter covariance
    * @param P kalman filter covariance
    */
-  void getP(Eigen::MatrixXd & P) const;
+  void getP(Eigen::MatrixXd & P);
 
   /**
    * @brief get component of current kalman filter state
    * @param i index of kalman filter state
    * @return value of i's component of the kalman filter state x[i]
    */
-  double getXelement(unsigned int i) const;
+  double getXelement(unsigned int i);
 
   /**
    * @brief calculate kalman filter state and covariance by prediction model with A, B, Q matrix.

@@ -18,24 +18,16 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/motion_utils.hpp"
+#include "static_centerline_optimizer/collision_free_optimizer_node.hpp"
 #include "static_centerline_optimizer/msg/points_with_lane_id.hpp"
-#include "static_centerline_optimizer/successive_trajectory_optimizer_node.hpp"
 #include "static_centerline_optimizer/type_alias.hpp"
 #include "static_centerline_optimizer/utils.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
-
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
-
-#include <boost/geometry/algorithms/correct.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
@@ -53,8 +45,7 @@ Path convert_to_path(const PathWithLaneId & path_with_lane_id)
 {
   Path path;
   path.header = path_with_lane_id.header;
-  path.left_bound = path_with_lane_id.left_bound;
-  path.right_bound = path_with_lane_id.right_bound;
+  path.drivable_area = path_with_lane_id.drivable_area;
   for (const auto & point : path_with_lane_id.points) {
     path.points.push_back(point.point);
   }
@@ -97,15 +88,9 @@ lanelet::ConstLanelets get_lanelets_from_ids(
   return lanelets;
 }
 
-rclcpp::NodeOptions create_node_options()
-{
-  return rclcpp::NodeOptions{};
-}
+rclcpp::NodeOptions create_node_options() { return rclcpp::NodeOptions{}; }
 
-rclcpp::QoS create_transient_local_qos()
-{
-  return rclcpp::QoS{1}.transient_local();
-}
+rclcpp::QoS create_transient_local_qos() { return rclcpp::QoS{1}.transient_local(); }
 
 lanelet::BasicPoint2d convertToLaneletPoint(const geometry_msgs::msg::Point & geom_point)
 {
@@ -241,6 +226,7 @@ void StaticCenterlineOptimizerNode::run()
   load_map(lanelet2_input_file_path);
   const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
   const auto optimized_traj_points = plan_path(route_lane_ids);
+  evaluate(route_lane_ids, optimized_traj_points);
   save_map(lanelet2_output_file_path, route_lane_ids, optimized_traj_points);
 }
 
@@ -250,9 +236,7 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
   map_bin_ptr_ = [&]() -> HADMapBin::ConstSharedPtr {
     // load map
     lanelet::LaneletMapPtr map_ptr;
-    tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
-    map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
-    map_ptr = Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
+    map_ptr = Lanelet2MapLoaderNode::load_map(*this, lanelet2_input_file_path, "MGRS");
     if (!map_ptr) {
       return nullptr;
     }
@@ -389,14 +373,8 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
     utils::get_center_pose(*route_handler_ptr_, route_lane_ids.front());
 
   // ego nearest search parameters
-  const double ego_nearest_dist_threshold =
-    has_parameter("ego_nearest_dist_threshold")
-      ? get_parameter("ego_nearest_dist_threshold").as_double()
-      : declare_parameter<double>("ego_nearest_dist_threshold");
-  const double ego_nearest_yaw_threshold =
-    has_parameter("ego_nearest_yaw_threshold")
-      ? get_parameter("ego_nearest_yaw_threshold").as_double()
-      : declare_parameter<double>("ego_nearest_yaw_threshold");
+  const double ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
+  const double ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // extract path with lane id from lanelets
   const auto raw_path_with_lane_id = utils::get_path_with_lane_id(
@@ -412,8 +390,9 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
   RCLCPP_INFO(get_logger(), "Converted to path and published.");
 
   // optimize trajectory by the obstacle_avoidance_planner package
-  SuccessiveTrajectoryOptimizer successive_trajectory_optimizer(create_node_options());
-  const auto optimized_traj = successive_trajectory_optimizer.on_centerline(raw_path);
+  CollisionFreeOptimizerNode successive_path_optimizer(create_node_options());
+  const auto optimized_traj =
+    successive_path_optimizer.pathCallback(std::make_shared<Path>(raw_path));
   pub_optimized_centerline_->publish(optimized_traj);
   const auto optimized_traj_points = motion_utils::convertToTrajectoryPointArray(optimized_traj);
 
@@ -453,9 +432,6 @@ void StaticCenterlineOptimizerNode::on_plan_path(
     RCLCPP_ERROR(get_logger(), "Path planning failed.");
     return;
   }
-
-  // publish unsafe_footprints
-  evaluate(route_lane_ids, optimized_traj_points);
 
   // create output data
   auto target_traj_point = optimized_traj_points.cbegin();
@@ -498,13 +474,9 @@ void StaticCenterlineOptimizerNode::evaluate(
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
   const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
-  const auto dist_thresh_vec =
-    has_parameter("marker_color_dist_thresh")
-      ? get_parameter("marker_color_dist_thresh").as_double_array()
-      : declare_parameter<std::vector<double>>("marker_color_dist_thresh");
-  const auto marker_color_vec = has_parameter("marker_color")
-                                  ? get_parameter("marker_color").as_string_array()
-                                  : declare_parameter<std::vector<std::string>>("marker_color");
+
+  const auto dist_thresh_vec = declare_parameter<std::vector<double>>("marker_color_dist_thresh");
+  const auto marker_color_vec = declare_parameter<std::vector<std::string>>("marker_color");
   const auto get_marker_color = [&](const double dist) -> boost::optional<std::array<double, 3>> {
     for (size_t i = 0; i < dist_thresh_vec.size(); ++i) {
       const double dist_thresh = dist_thresh_vec.at(i);

@@ -26,10 +26,10 @@
 
 namespace obstacle_velocity_limiter
 {
-multi_linestring_t extractStaticObstacles(
+multilinestring_t extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags)
 {
-  multi_linestring_t lines;
+  multilinestring_t lines;
   linestring_t line;
   linestring_t simplified_line;
   for (const auto & ls : lanelet_map.lineStringLayer) {

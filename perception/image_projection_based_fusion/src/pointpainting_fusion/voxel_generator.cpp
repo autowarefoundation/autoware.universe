@@ -46,28 +46,23 @@ std::size_t VoxelGenerator::pointsToVoxels(
     auto pc_msg = pc_cache_iter->pointcloud_msg;
     auto affine_past2current =
       pd_ptr_->getAffineWorldToCurrent() * pc_cache_iter->affine_past2world;
-    float time_lag = static_cast<float>(
+    float timelag = static_cast<float>(
       pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_msg.header.stamp).seconds());
 
     for (sensor_msgs::PointCloud2ConstIterator<float> x_iter(pc_msg, "x"), y_iter(pc_msg, "y"),
-         z_iter(pc_msg, "z"), class_iter(pc_msg, "CLASS");
-         x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter, ++class_iter) {
+         z_iter(pc_msg, "z"), car_iter(pc_msg, "CAR"), ped_iter(pc_msg, "PEDESTRIAN"),
+         bic_iter(pc_msg, "BICYCLE");
+         x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter, ++car_iter, ++ped_iter, ++bic_iter) {
       point_past << *x_iter, *y_iter, *z_iter;
       point_current = affine_past2current * point_past;
 
       point[0] = point_current.x();
       point[1] = point_current.y();
       point[2] = point_current.z();
-      point[3] = time_lag;
-      // decode the class value back to one-hot binary and assign it to point
-      std::fill(point.begin() + 4, point.end(), 0);
-      auto class_value = static_cast<int>(*class_iter);
-      auto iter = point.begin() + 4;
-      while (class_value > 0) {
-        *iter = class_value % 2;
-        class_value /= 2;
-        ++iter;
-      }
+      point[3] = timelag;
+      point[4] = *car_iter;
+      point[5] = *ped_iter;
+      point[6] = *bic_iter;
 
       out_of_range = false;
       for (std::size_t di = 0; di < config_.point_dim_size_; di++) {

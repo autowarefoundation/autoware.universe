@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <common/types.hpp>
 #include <lidar_apollo_segmentation_tvm/feature_map.hpp>
 #include <lidar_apollo_segmentation_tvm/util.hpp>
 
 #include <cmath>
 #include <vector>
+
+using autoware::common::types::float32_t;
 
 namespace autoware
 {
@@ -50,11 +53,8 @@ FeatureMap::FeatureMap(const int32_t width, const int32_t height, const int32_t 
   count_data = &(map_data[0]) + width * height * 2;
   nonempty_data = &(map_data[0]) + width * height * 3;
 }
-void FeatureMap::initializeMap(std::vector<float> & map)
-{
-  (void)map;
-}
-void FeatureMap::resetMap(std::vector<float> & map)
+void FeatureMap::initializeMap(std::vector<float32_t> & map) { (void)map; }
+void FeatureMap::resetMap(std::vector<float32_t> & map)
 {
   const int32_t size = width * height;
   (void)map;
@@ -77,11 +77,8 @@ FeatureMapWithIntensity::FeatureMapWithIntensity(
   mean_intensity_data = &(map_data[0]) + width * height * 4;
   nonempty_data = &(map_data[0]) + width * height * 5;
 }
-void FeatureMapWithIntensity::initializeMap(std::vector<float> & map)
-{
-  (void)map;
-}
-void FeatureMapWithIntensity::resetMap(std::vector<float> & map)
+void FeatureMapWithIntensity::initializeMap(std::vector<float32_t> & map) { (void)map; }
+void FeatureMapWithIntensity::resetMap(std::vector<float32_t> & map)
 {
   const int32_t size = width * height;
   (void)map;
@@ -106,7 +103,7 @@ FeatureMapWithConstant::FeatureMapWithConstant(
   distance_data = &(map_data[0]) + width * height * 4;
   nonempty_data = &(map_data[0]) + width * height * 5;
 }
-void FeatureMapWithConstant::initializeMap(std::vector<float> & map)
+void FeatureMapWithConstant::initializeMap(std::vector<float32_t> & map)
 {
   (void)map;
   for (int32_t row = 0; row < height; ++row) {
@@ -116,16 +113,16 @@ void FeatureMapWithConstant::initializeMap(std::vector<float> & map)
       // return the distance from the car to center of the grid.
       // Pc means point cloud = real world scale. so transform pixel scale to
       // real world scale
-      float center_x = Pixel2Pc(row, height, range);
-      float center_y = Pixel2Pc(col, width, range);
+      float32_t center_x = Pixel2Pc(row, height, range);
+      float32_t center_y = Pixel2Pc(col, width, range);
       // normalization. -0.5~0.5
-      direction_data[idx] = std::atan2(center_y, center_x) / static_cast<float>(2.0 * M_PI);
+      direction_data[idx] = std::atan2(center_y, center_x) / static_cast<float32_t>(2.0 * M_PI);
       distance_data[idx] = std::hypot(center_x, center_y) / 60.0f - 0.5f;
     }
   }
 }
 
-void FeatureMapWithConstant::resetMap(std::vector<float> & map)
+void FeatureMapWithConstant::resetMap(std::vector<float32_t> & map)
 {
   const int32_t size = width * height;
   (void)map;
@@ -150,7 +147,7 @@ FeatureMapWithConstantAndIntensity::FeatureMapWithConstantAndIntensity(
   distance_data = &(map_data[0]) + width * height * 6;
   nonempty_data = &(map_data[0]) + width * height * 7;
 }
-void FeatureMapWithConstantAndIntensity::initializeMap(std::vector<float> & map)
+void FeatureMapWithConstantAndIntensity::initializeMap(std::vector<float32_t> & map)
 {
   (void)map;
   for (int32_t row = 0; row < height; ++row) {
@@ -160,16 +157,16 @@ void FeatureMapWithConstantAndIntensity::initializeMap(std::vector<float> & map)
       // return the distance from the car to center of the grid.
       // Pc means point cloud = real world scale. so transform pixel scale to
       // real world scale
-      float center_x = Pixel2Pc(row, height, range);
-      float center_y = Pixel2Pc(col, width, range);
+      float32_t center_x = Pixel2Pc(row, height, range);
+      float32_t center_y = Pixel2Pc(col, width, range);
       // normalization. -0.5~0.5
-      direction_data[idx] = std::atan2(center_y, center_x) / static_cast<float>(2.0 * M_PI);
+      direction_data[idx] = std::atan2(center_y, center_x) / static_cast<float32_t>(2.0 * M_PI);
       distance_data[idx] = std::hypot(center_x, center_y) / 60.0f - 0.5f;
     }
   }
 }
 
-void FeatureMapWithConstantAndIntensity::resetMap(std::vector<float> & map)
+void FeatureMapWithConstantAndIntensity::resetMap(std::vector<float32_t> & map)
 {
   const int32_t size = width * height;
   (void)map;

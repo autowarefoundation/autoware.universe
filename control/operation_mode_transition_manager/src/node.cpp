@@ -37,9 +37,8 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   {
     const auto node = component_interface_utils::NodeAdaptor(this);
     node.init_srv(
-      srv_autoware_control_, this, &OperationModeTransitionManager::onChangeAutowareControl);
-    node.init_srv(
-      srv_operation_mode_, this, &OperationModeTransitionManager::onChangeOperationMode);
+      srv_autoware_control, this, &OperationModeTransitionManager::onChangeAutowareControl);
+    node.init_srv(srv_operation_mode, this, &OperationModeTransitionManager::onChangeOperationMode);
     node.init_pub(pub_operation_mode_);
   }
 
@@ -51,23 +50,12 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   }
 
   // initialize state
+  transition_timeout_ = declare_parameter<double>("transition_timeout");
   current_mode_ = OperationMode::STOP;
   transition_ = nullptr;
   gate_operation_mode_.mode = OperationModeState::UNKNOWN;
   gate_operation_mode_.is_in_transition = false;
   control_mode_report_.mode = ControlModeReport::NO_COMMAND;
-  transition_timeout_ = declare_parameter<double>("transition_timeout");
-  {
-    // check `transition_timeout` value
-    const auto stable_duration = declare_parameter<double>("stable_check.duration");
-    const double TIMEOUT_MARGIN = 0.5;
-    if (transition_timeout_ < stable_duration + TIMEOUT_MARGIN) {
-      transition_timeout_ = stable_duration + TIMEOUT_MARGIN;
-      RCLCPP_WARN(
-        get_logger(), "`transition_timeout` must be somewhat larger than `stable_check.duration`");
-      RCLCPP_WARN_STREAM(get_logger(), "transition_timeout is set to " << transition_timeout_);
-    }
-  }
 
   // modes
   modes_[OperationMode::STOP] = std::make_unique<StopMode>();
@@ -270,19 +258,10 @@ void OperationModeTransitionManager::publishData()
     pub_operation_mode_->publish(state);
   }
 
-  const auto status_str = [&]() {
-    if (!current_control) return "DISENGAGE (autoware mode = " + toString(current_mode_) + ")";
-    if (transition_)
-      return toString(current_mode_) + " (in transition from " + toString(transition_->previous) +
-             ")";
-    return toString(current_mode_);
-  }();
-
   ModeChangeBase::DebugInfo debug_info = modes_.at(OperationMode::AUTONOMOUS)->getDebugInfo();
   debug_info.stamp = time;
-  debug_info.status = status_str;
-  debug_info.in_autoware_control = current_control;
-  debug_info.in_transition = transition_ ? true : false;
+  debug_info.current_state = toString(current_mode_);
+  debug_info.previous_state = transition_ ? toString(transition_->previous) : "NONE";
   pub_debug_info_->publish(debug_info);
 }
 

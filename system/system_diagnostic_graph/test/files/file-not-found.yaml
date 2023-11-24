@@ -1,2 +1,0 @@
-files:
-  - { path: $(dirname)/fake-file-name.yaml }

@@ -16,11 +16,10 @@
 #define INPUT_HPP_
 
 #endif  // INPUT_HPP_
+#include "behavior_path_planner/behavior_tree_manager.hpp"
+#include "behavior_path_planner/utilities.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
-#include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
-#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
-#include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 
 #include <vector>
@@ -28,9 +27,6 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 PathWithLaneId generateStraightSamplePathWithLaneId(
   float initial_pose_value, float pose_increment, size_t point_sample);

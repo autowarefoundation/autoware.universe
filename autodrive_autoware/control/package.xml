@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>autodrive_trajectory_follower</name>
+  <version>0.1.0</version>
+  <description>Nodes to follow a trajectory by generating control actions separated into lateral and longitudinal commands</description>
+
+  <!-- AutoDRIVE Ecosystem Adaptation -->
+  <author email="csamak@clemson.edu">Chinmay Vilas Samak</author>
+  <author email="tsamak@clemson.edu">Tanmay Vilas Samak</author>
+
+  <maintainer email="csamak@clemson.edu">Chinmay Vilas Samak</maintainer>
+  <maintainer email="tsamak@clemson.edu">Tanmay Vilas Samak</maintainer>
+
+  <url type="repository">https://autodrive-ecosystem.github.io</url>
+  <url type="repository">https://github.com/Tinker-Twins/AutoDRIVE</url>
+  <url type="bugtracker">https://github.com/Tinker-Twins/AutoDRIVE/issues</url>
+
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <build_depend>autoware_cmake</build_depend>
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>autoware_auto_planning_msgs</depend>
+  <depend>autoware_auto_system_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>ackermann_msgs</depend>
+  <depend>motion_utils</depend>
+  <depend>pure_pursuit</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>trajectory_follower</depend>
+  <depend>vehicle_info_util</depend>
+
+  <exec_depend>ros2launch</exec_depend>
+
+  <test_depend>ament_cmake_ros</test_depend>
+  <test_depend>ament_index_python</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>autoware_lint_common</test_depend>
+  <test_depend>autoware_testing</test_depend>
+  <test_depend>fake_test_node</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -17,13 +17,14 @@
 
 #include "utils/utils.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
-#include <lanelet2_core/Forward.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -51,7 +52,6 @@ private:
 
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::ConstLanelets road_lanelets_;
-  lanelet::ConstLanelets shoulder_lanelets_;
   std::string lanelet_frame_id_;
 
   tf2_ros::Buffer tf_buffer_;
@@ -63,8 +63,6 @@ private:
   lanelet::ConstLanelets getIntersectedLanelets(
     const LinearRing2d &, const lanelet::ConstLanelets &);
   bool isPolygonOverlapLanelets(const Polygon2d &, const lanelet::ConstLanelets &);
-  geometry_msgs::msg::Polygon setFootprint(
-    const autoware_auto_perception_msgs::msg::DetectedObject &);
 };
 
 }  // namespace object_lanelet_filter

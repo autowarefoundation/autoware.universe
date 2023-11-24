@@ -17,6 +17,8 @@
 
 #include "shape_estimation/shape_estimator.hpp"
 
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 

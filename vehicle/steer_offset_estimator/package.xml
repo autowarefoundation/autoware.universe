@@ -7,7 +7,7 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-  <buildtool_depend>autoware_cmake</buildtool_depend>
+  <build_depend>autoware_cmake</build_depend>
 
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>diagnostic_updater</depend>
@@ -15,7 +15,6 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
-  <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>vehicle_info_util</depend>
   <exec_depend>global_parameter_loader</exec_depend>

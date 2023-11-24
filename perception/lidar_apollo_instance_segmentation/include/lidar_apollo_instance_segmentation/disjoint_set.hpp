@@ -17,8 +17,6 @@
 #ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__DISJOINT_SET_HPP_
 #define LIDAR_APOLLO_INSTANCE_SEGMENTATION__DISJOINT_SET_HPP_
 
-namespace lidar_apollo_instance_segmentation
-{
 template <class T>
 void DisjointSetMakeSet(T * x)
 {
@@ -73,6 +71,5 @@ void DisjointSetUnion(T * x, T * y)
     DisjointSetMerge(x, y);
   }
 }
-}  // namespace lidar_apollo_instance_segmentation
 
 #endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__DISJOINT_SET_HPP_

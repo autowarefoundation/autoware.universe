@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
   }
 
   traffic_signal_array_pub_ =
-    this->create_publisher<tier4_perception_msgs::msg::TrafficSignalArray>(
+    this->create_publisher<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
       "~/output/traffic_signals", rclcpp::QoS{1});
 
   using std::chrono_literals::operator""ms;
@@ -74,7 +74,7 @@ void TrafficLightClassifierNodelet::connectCb()
 
 void TrafficLightClassifierNodelet::imageRoiCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
-  const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_rois_msg)
+  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_rois_msg)
 {
   if (classifier_ptr_.use_count() == 0) {
     return;
@@ -89,20 +89,22 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
       input_image_msg->encoding.c_str());
   }
 
-  tier4_perception_msgs::msg::TrafficSignalArray output_msg;
+  autoware_auto_perception_msgs::msg::TrafficSignalArray output_msg;
 
-  output_msg.signals.resize(input_rois_msg->rois.size());
-
-  std::vector<cv::Mat> images;
-  for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
-    output_msg.signals[i].traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;
+  for (size_t i = 0; i < input_rois_msg->rois.size(); ++i) {
     const sensor_msgs::msg::RegionOfInterest & roi = input_rois_msg->rois.at(i).roi;
-    images.emplace_back(cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
+    cv::Mat clipped_image(
+      cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
+
+    autoware_auto_perception_msgs::msg::TrafficSignal traffic_signal;
+    traffic_signal.map_primitive_id = input_rois_msg->rois.at(i).id;
+    if (!classifier_ptr_->getTrafficSignal(clipped_image, traffic_signal)) {
+      RCLCPP_ERROR(this->get_logger(), "failed classify image, abort callback");
+      return;
+    }
+    output_msg.signals.push_back(traffic_signal);
   }
-  if (!classifier_ptr_->getTrafficSignals(images, output_msg)) {
-    RCLCPP_ERROR(this->get_logger(), "failed classify image, abort callback");
-    return;
-  }
+
   output_msg.header = input_image_msg->header;
   traffic_signal_array_pub_->publish(output_msg);
 }

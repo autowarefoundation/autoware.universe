@@ -35,9 +35,9 @@
 
 namespace fpa = freespace_planning_algorithms;
 
-const double length_lexus = 5.5;
-const double width_lexus = 2.75;
-const fpa::VehicleShape vehicle_shape = fpa::VehicleShape(length_lexus, width_lexus, 1.5);
+const double length_lexas = 5.5;
+const double width_lexas = 2.75;
+const fpa::VehicleShape vehicle_shape = fpa::VehicleShape{length_lexas, width_lexas, 1.5};
 const double pi = 3.1415926;
 const std::array<double, 3> start_pose{5.5, 4., pi * 0.5};
 const std::array<double, 3> goal_pose1{8.0, 26.3, pi * 1.5};   // easiest
@@ -114,22 +114,22 @@ nav_msgs::msg::OccupancyGrid construct_cost_map(
       }
 
       // car1
-      if (10.0 < x && x < 10.0 + width_lexus && 22.0 < y && y < 22.0 + length_lexus) {
+      if (10.0 < x && x < 10.0 + width_lexas && 22.0 < y && y < 22.0 + length_lexas) {
         costmap_msg.data[i * width + j] = 100.0;
       }
 
       // car2
-      if (13.5 < x && x < 13.5 + width_lexus && 22.0 < y && y < 22.0 + length_lexus) {
+      if (13.5 < x && x < 13.5 + width_lexas && 22.0 < y && y < 22.0 + length_lexas) {
         costmap_msg.data[i * width + j] = 100.0;
       }
 
       // car3
-      if (20.0 < x && x < 20.0 + width_lexus && 22.0 < y && y < 22.0 + length_lexus) {
+      if (20.0 < x && x < 20.0 + width_lexas && 22.0 < y && y < 22.0 + length_lexas) {
         costmap_msg.data[i * width + j] = 100.0;
       }
 
       // car4
-      if (10.0 < x && x < 10.0 + width_lexus && 10.0 < y && y < 10.0 + length_lexus) {
+      if (10.0 < x && x < 10.0 + width_lexas && 10.0 < y && y < 10.0 + length_lexas) {
         costmap_msg.data[i * width + j] = 100.0;
       }
     }
@@ -238,7 +238,6 @@ enum AlgorithmType {
   RRTSTAR_UPDATE,
   RRTSTAR_INFORMED_UPDATE,
 };
-// cspell: ignore fpalgos
 std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
   {{ASTAR_SINGLE, "fpalgos-astar_single"},
    {ASTAR_MULTI, "fpalgos-astar_multi"},
@@ -246,7 +245,7 @@ std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
    {RRTSTAR_UPDATE, "fpalgos-rrtstar_update"},
    {RRTSTAR_INFORMED_UPDATE, "fpalgos-rrtstar_informed_update"}});
 
-bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
+bool test_algorithm(enum AlgorithmType algo_type)
 {
   std::unique_ptr<fpa::AbstractPlanningAlgorithm> algo;
   if (algo_type == AlgorithmType::ASTAR_SINGLE) {
@@ -269,7 +268,11 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
 
   rclcpp::Clock clock{RCL_SYSTEM_TIME};
   for (size_t i = 0; i < goal_poses.size(); ++i) {
+    const std::string dir_name =
+      "/tmp/" + rosbag_dir_prefix_table[algo_type] + "-case" + std::to_string(i);
     const auto goal_pose = goal_poses.at(i);
+
+    bool success_local = true;
 
     algo->setMap(costmap_msg);
     double msec;
@@ -283,9 +286,7 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
       for (size_t j = 0; j < N_mc; j++) {
         const rclcpp::Time begin = clock.now();
         if (!algo->makePlan(create_pose_msg(start_pose), create_pose_msg(goal_pose))) {
-          success_all = false;
-          std::cout << "plan fail" << std::endl;
-          continue;
+          success_local = false;
         }
         const rclcpp::Time now = clock.now();
         time_sum += (now - begin).seconds() * 1000.0;
@@ -296,18 +297,19 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
 
     } else {
       const rclcpp::Time begin = clock.now();
-      if (!algo->makePlan(create_pose_msg(start_pose), create_pose_msg(goal_pose))) {
-        success_all = false;
-        std::cout << "plan fail" << std::endl;
-        continue;
-      }
+      success_local = algo->makePlan(create_pose_msg(start_pose), create_pose_msg(goal_pose));
       const rclcpp::Time now = clock.now();
       msec = (now - begin).seconds() * 1000.0;
       cost = algo->getWaypoints().compute_length();
     }
 
-    std::cout << "plan success : " << msec << "[msec]"
-              << ", solution cost : " << cost << std::endl;
+    if (success_local) {
+      std::cout << "plan success : " << msec << "[msec]"
+                << ", solution cost : " << cost << std::endl;
+    } else {
+      success_all = false;
+      std::cout << "plan fail : " << msec << "[msec]" << std::endl;
+    }
     const auto result = algo->getWaypoints();
     geometry_msgs::msg::PoseArray trajectory;
     for (const auto & pose : result.waypoints) {
@@ -318,38 +320,32 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
       success_all = false;
     }
 
-    if (dump_rosbag) {
-      // dump rosbag for visualization using python script
-      const std::string dir_name =
-        "/tmp/" + rosbag_dir_prefix_table[algo_type] + "-case" + std::to_string(i);
+    rcpputils::fs::remove_all(dir_name);
 
-      rcpputils::fs::remove_all(dir_name);
+    rosbag2_storage::StorageOptions storage_options;
+    storage_options.uri = dir_name;
+    storage_options.storage_id = "sqlite3";
 
-      rosbag2_storage::StorageOptions storage_options;
-      storage_options.uri = dir_name;
-      storage_options.storage_id = "sqlite3";
+    rosbag2_cpp::ConverterOptions converter_options;
+    converter_options.input_serialization_format = "cdr";
+    converter_options.output_serialization_format = "cdr";
 
-      rosbag2_cpp::ConverterOptions converter_options;
-      converter_options.input_serialization_format = "cdr";
-      converter_options.output_serialization_format = "cdr";
+    rosbag2_cpp::Writer writer(std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+    writer.open(storage_options, converter_options);
 
-      rosbag2_cpp::Writer writer(std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
-      writer.open(storage_options, converter_options);
+    add_message_to_rosbag(
+      writer, create_float_msg(vehicle_shape.length), "vehicle_length", "std_msgs/msg/Float64");
+    add_message_to_rosbag(
+      writer, create_float_msg(vehicle_shape.width), "vehicle_width", "std_msgs/msg/Float64");
+    add_message_to_rosbag(
+      writer, create_float_msg(vehicle_shape.base2back), "vehicle_base2back",
+      "std_msgs/msg/Float64");
 
-      add_message_to_rosbag(
-        writer, create_float_msg(vehicle_shape.length), "vehicle_length", "std_msgs/msg/Float64");
-      add_message_to_rosbag(
-        writer, create_float_msg(vehicle_shape.width), "vehicle_width", "std_msgs/msg/Float64");
-      add_message_to_rosbag(
-        writer, create_float_msg(vehicle_shape.base2back), "vehicle_base2back",
-        "std_msgs/msg/Float64");
-
-      add_message_to_rosbag(writer, costmap_msg, "costmap", "nav_msgs/msg/OccupancyGrid");
-      add_message_to_rosbag(writer, create_pose_msg(start_pose), "start", "geometry_msgs/msg/Pose");
-      add_message_to_rosbag(writer, create_pose_msg(goal_pose), "goal", "geometry_msgs/msg/Pose");
-      add_message_to_rosbag(writer, trajectory, "trajectory", "geometry_msgs/msg/PoseArray");
-      add_message_to_rosbag(writer, create_float_msg(msec), "elapsed_time", "std_msgs/msg/Float64");
-    }
+    add_message_to_rosbag(writer, costmap_msg, "costmap", "nav_msgs/msg/OccupancyGrid");
+    add_message_to_rosbag(writer, create_pose_msg(start_pose), "start", "geometry_msgs/msg/Pose");
+    add_message_to_rosbag(writer, create_pose_msg(goal_pose), "goal", "geometry_msgs/msg/Pose");
+    add_message_to_rosbag(writer, trajectory, "trajectory", "geometry_msgs/msg/PoseArray");
+    add_message_to_rosbag(writer, create_float_msg(msec), "elapsed_time", "std_msgs/msg/Float64");
   }
   return success_all;
 }
@@ -364,15 +360,9 @@ TEST(AstarSearchTestSuite, MultiCurvature)
   EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_MULTI));
 }
 
-TEST(RRTStarTestSuite, Fastest)
-{
-  EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_FASTEST));
-}
+TEST(RRTStarTestSuite, Fastetst) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_FASTEST)); }
 
-TEST(RRTStarTestSuite, Update)
-{
-  EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_UPDATE));
-}
+TEST(RRTStarTestSuite, Update) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_UPDATE)); }
 
 TEST(RRTStarTestSuite, InformedUpdate)
 {

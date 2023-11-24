@@ -16,7 +16,6 @@
 #define LIDAR_CENTERPOINT__NETWORK__TENSORRT_WRAPPER_HPP_
 
 #include <lidar_centerpoint/centerpoint_config.hpp>
-#include <tensorrt_common/tensorrt_common.hpp>
 
 #include <NvInfer.h>
 
@@ -26,18 +25,45 @@
 
 namespace centerpoint
 {
+struct Deleter
+{
+  template <typename T>
+  void operator()(T * obj) const
+  {
+    if (obj) {
+      delete obj;
+    }
+  }
+};
+
+template <typename T>
+using unique_ptr = std::unique_ptr<T, Deleter>;
+
+class Logger : public nvinfer1::ILogger
+{
+public:
+  explicit Logger(bool verbose) : verbose_(verbose) {}
+
+  void log(Severity severity, const char * msg) noexcept override
+  {
+    if (verbose_ || ((severity != Severity::kINFO) && (severity != Severity::kVERBOSE))) {
+      std::cout << msg << std::endl;
+    }
+  }
+
+private:
+  bool verbose_{false};
+};
 
 class TensorRTWrapper
 {
 public:
-  explicit TensorRTWrapper(const CenterPointConfig & config);
-
-  ~TensorRTWrapper();
+  explicit TensorRTWrapper(const CenterPointConfig & config, const bool verbose);
 
   bool init(
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision);
 
-  tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext> context_{nullptr};
+  unique_ptr<nvinfer1::IExecutionContext> context_ = nullptr;
 
 protected:
   virtual bool setProfile(
@@ -45,7 +71,7 @@ protected:
     nvinfer1::IBuilderConfig & config) = 0;
 
   CenterPointConfig config_;
-  tensorrt_common::Logger logger_;
+  Logger logger_;
 
 private:
   bool parseONNX(
@@ -58,9 +84,9 @@ private:
 
   bool createContext();
 
-  tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime> runtime_{nullptr};
-  tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory> plan_{nullptr};
-  tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine> engine_{nullptr};
+  unique_ptr<nvinfer1::IRuntime> runtime_ = nullptr;
+  unique_ptr<nvinfer1::IHostMemory> plan_ = nullptr;
+  unique_ptr<nvinfer1::ICudaEngine> engine_ = nullptr;
 };
 
 }  // namespace centerpoint

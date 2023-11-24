@@ -18,14 +18,15 @@
 
 #include "multi_object_tracker/tracker/model/pedestrian_and_bicycle_tracker.hpp"
 
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 PedestrianAndBicycleTracker::PedestrianAndBicycleTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & self_transform)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
 : Tracker(time, object.classification),
-  pedestrian_tracker_(time, object, self_transform),
-  bicycle_tracker_(time, object, self_transform)
+  pedestrian_tracker_(time, object),
+  bicycle_tracker_(time, object)
 {
 }
 
@@ -37,12 +38,11 @@ bool PedestrianAndBicycleTracker::predict(const rclcpp::Time & time)
 }
 
 bool PedestrianAndBicycleTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
 {
-  pedestrian_tracker_.measure(object, time, self_transform);
-  bicycle_tracker_.measure(object, time, self_transform);
-  if (object_recognition_utils::getHighestProbLabel(object.classification) != Label::UNKNOWN)
+  pedestrian_tracker_.measure(object, time);
+  bicycle_tracker_.measure(object, time);
+  if (perception_utils::getHighestProbLabel(object.classification) != Label::UNKNOWN)
     setClassification(object.classification);
   return true;
 }

@@ -1,0 +1,6 @@
+image: stata_basement.png
+resolution: 0.0504
+origin: [-26.900000, -16.50000, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196

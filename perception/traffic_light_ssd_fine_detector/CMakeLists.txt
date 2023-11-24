@@ -4,7 +4,6 @@ project(traffic_light_ssd_fine_detector)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-# TODO(traffic_light_ssd_fine_detector): Remove once upgrading to TensorRT 8.5 is complete
 add_compile_options(-Wno-deprecated-declarations)
 
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
@@ -70,6 +69,48 @@ else()
   set(CUDNN_AVAIL OFF)
 endif()
 
+# Download caffemodel and prototxt
+set(PRETRAINED_MODEL_HASH 34ce7f2cbacbf6da8bc35769f027b73f)
+set(LAMP_LABEL_HASH e9f45efb02f2a9aa8ac27b3d5c164905)
+
+set(DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
+if(NOT EXISTS "${DATA_PATH}")
+  execute_process(COMMAND mkdir -p ${DATA_PATH})
+endif()
+function(download FILE_NAME FILE_HASH)
+  message(STATUS "Checking and downloading ${FILE_NAME}")
+  set(FILE_PATH ${DATA_PATH}/${FILE_NAME})
+  set(STATUS_CODE 0)
+  message(STATUS "start ${FILE_NAME}")
+  if(EXISTS ${FILE_PATH})
+    message(STATUS "found ${FILE_NAME}")
+    file(MD5 ${FILE_PATH} EXISTING_FILE_HASH)
+    if(${FILE_HASH} STREQUAL ${EXISTING_FILE_HASH})
+      message(STATUS "same ${FILE_NAME}")
+      message(STATUS "File already exists.")
+    else()
+      message(STATUS "diff ${FILE_NAME}")
+      message(STATUS "File hash changes. Downloading now ...")
+      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+      list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+      list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+    endif()
+  else()
+    message(STATUS "not found ${FILE_NAME}")
+    message(STATUS "File doesn't exists. Downloading now ...")
+    file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+    list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+  endif()
+  if(${STATUS_CODE} EQUAL 0)
+    message(STATUS "Download completed successfully!")
+  else()
+    message(FATAL_ERROR "Error occurred during download: ${ERROR_MESSAGE}")
+  endif()
+endfunction()
+download(mb2-ssd-lite-tlr.onnx 34ce7f2cbacbf6da8bc35769f027b73f)
+download(voc_labels_tl.txt e9f45efb02f2a9aa8ac27b3d5c164905)
+
 if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   include_directories(
     ${OpenCV_INCLUDE_DIRS}
@@ -77,29 +118,11 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   ### ssd ###
-  cuda_add_library(gather_topk_plugin SHARED
-    lib/src/plugins/gather_topk_kernel.cu
-    lib/src/plugins/gather_topk.cpp
-  )
-
-  cuda_add_library(grid_priors_plugin SHARED
-    lib/src/plugins/grid_priors_kernel.cu
-    lib/src/plugins/grid_priors.cpp
-  )
-
   ament_auto_add_library(ssd SHARED
     lib/src/trt_ssd.cpp
   )
 
   target_include_directories(ssd PUBLIC
-    lib/include
-  )
-
-  target_include_directories(gather_topk_plugin PUBLIC
-    lib/include
-  )
-
-  target_include_directories(grid_priors_plugin PUBLIC
     lib/include
   )
 
@@ -110,8 +133,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${CUDA_LIBRARIES}
     ${CUBLAS_LIBRARIES}
     ${CUDNN_LIBRARY}
-    gather_topk_plugin
-    grid_priors_plugin
   )
 
   ament_auto_add_library(traffic_light_ssd_fine_detector_nodelet SHARED
@@ -122,8 +143,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${OpenCV_LIB}
     stdc++fs
     ssd
-    gather_topk_plugin
-    grid_priors_plugin
   )
 
   rclcpp_components_register_node(traffic_light_ssd_fine_detector_nodelet
@@ -132,16 +151,8 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   ament_auto_package(INSTALL_TO_SHARE
+    data
     launch
-  )
-
-  install(
-    TARGETS
-      gather_topk_plugin
-      grid_priors_plugin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
   )
 
 else()

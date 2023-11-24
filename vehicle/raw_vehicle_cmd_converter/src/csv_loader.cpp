@@ -21,10 +21,7 @@
 
 namespace raw_vehicle_cmd_converter
 {
-CSVLoader::CSVLoader(const std::string & csv_path)
-{
-  csv_path_ = csv_path;
-}
+CSVLoader::CSVLoader(const std::string & csv_path) { csv_path_ = csv_path; }
 
 bool CSVLoader::readCSV(Table & result, const char delim)
 {
@@ -54,7 +51,7 @@ bool CSVLoader::readCSV(Table & result, const char delim)
   return true;
 }
 
-bool CSVLoader::validateMap(const Map & map, const bool is_col_decent)
+bool CSVLoader::validateMap(const Map & map, const bool is_row_decent, const bool is_col_decent)
 {
   std::pair<size_t, size_t> invalid_index_pair;
   bool is_invalid = false;
@@ -63,13 +60,22 @@ bool CSVLoader::validateMap(const Map & map, const bool is_col_decent)
     const auto & vec = map.at(i);
     const auto & prev_vec = map.at(i - 1);
     // validate row data
-    for (size_t j = 0; j < vec.size(); j++) {
+    for (size_t j = 1; j < vec.size(); j++) {
       // validate col
       if (vec.at(j) <= prev_vec.at(j) && is_col_decent) {
         invalid_index_pair = std::make_pair(i, j);
         is_invalid = true;
       }
       if (vec.at(j) >= prev_vec.at(j) && !is_col_decent) {
+        invalid_index_pair = std::make_pair(i, j);
+        is_invalid = true;
+      }
+      // validate row
+      if (vec.at(j) < vec.at(j - 1) && is_row_decent) {
+        invalid_index_pair = std::make_pair(i, j);
+        is_invalid = true;
+      }
+      if (vec.at(j) > vec.at(j - 1) && !is_row_decent) {
         invalid_index_pair = std::make_pair(i, j);
         is_invalid = true;
       }
@@ -85,10 +91,6 @@ bool CSVLoader::validateMap(const Map & map, const bool is_col_decent)
 
 bool CSVLoader::validateData(const Table & table, const std::string & csv_path)
 {
-  if (table.empty()) {
-    std::cerr << "The table is empty." << std::endl;
-    return false;
-  }
   if (table[0].size() < 2) {
     std::cerr << "Cannot read " << csv_path.c_str() << " CSV file should have at least 2 column"
               << std::endl;

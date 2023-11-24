@@ -66,10 +66,7 @@ protected:
   void TearDown() { rclcpp::shutdown(); }
 };
 
-TEST_F(GPUMonitorTestSuite, test)
-{
-  ASSERT_TRUE(true);
-}
+TEST_F(GPUMonitorTestSuite, test) { ASSERT_TRUE(true); }
 
 int main(int argc, char ** argv)
 {

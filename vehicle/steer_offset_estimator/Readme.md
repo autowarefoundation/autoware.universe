@@ -46,7 +46,14 @@ ros2 bag play <rosbag_file> --clock
 
 ## Parameters
 
-{{ json_to_markdown("vehicle/steer_offset_estimator/schema/steer_offset_estimator.schema.json") }}
+| Params                  | Description                           |
+| ----------------------- | ------------------------------------- |
+| `steer_update_hz`       | update hz                             |
+| `initial_covariance`    | steer offset is larger than tolerance |
+| `forgetting_factor`     | weight of using previous value        |
+| `valid_min_velocity`    | velocity below this value is not used |
+| `valid_max_steer`       | steer above this value is not used    |
+| `warn_steer_offset_deg` | warn if offset is above this value    |
 
 ## Diagnostics
 

@@ -26,10 +26,10 @@ if((NOT NN_DEPENDENCY_ENCODER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQ
   ament_auto_add_library(${PROJECT_NAME} SHARED
     data/models/${MODEL_NAME_ENCODER}/inference_engine_tvm_config.hpp
     data/models/${MODEL_NAME_BACKBONE}/inference_engine_tvm_config.hpp
-    data/models/${MODEL_NAME_BACKBONE}/preprocessing_inference_engine_tvm_config.hpp
     lib/centerpoint_tvm.cpp
     lib/utils.cpp
     lib/ros_utils.cpp
+    lib/network/scatter.cpp
     lib/preprocess/pointcloud_densification.cpp
     lib/preprocess/voxel_generator.cpp
     lib/preprocess/generate_features.cpp
@@ -67,28 +67,6 @@ if((NOT NN_DEPENDENCY_ENCODER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQ
     PLUGIN "autoware::perception::lidar_centerpoint_tvm::LidarCenterPointTVMNode"
     EXECUTABLE lidar_centerpoint_tvm_node
   )
-
-  ## single inference node ##
-  ament_auto_add_library(single_inference_lidar_centerpoint_tvm_component SHARED
-    src/single_inference_node.cpp
-  )
-
-  target_link_libraries(single_inference_lidar_centerpoint_tvm_component
-    ${tvm_runtime_LIBRARIES}
-  )
-
-
-  rclcpp_components_register_node(single_inference_lidar_centerpoint_tvm_component
-    PLUGIN "autoware::perception::lidar_centerpoint_tvm::SingleInferenceLidarCenterPointNode"
-    EXECUTABLE single_inference_lidar_centerpoint_tvm_node
-  )
-
-  install(PROGRAMS
-    scripts/lidar_centerpoint_visualizer.py
-    DESTINATION lib/${PROJECT_NAME}
-  )
-
-  ament_export_dependencies(ament_cmake_python)
 
   ament_auto_package(INSTALL_TO_SHARE
     launch

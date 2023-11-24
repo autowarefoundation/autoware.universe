@@ -25,8 +25,6 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 
-# cspell: ignore ndim, ndata, linewidth
-
 
 @dataclass
 class Node:
@@ -99,6 +97,7 @@ class Tree:
 
 
 if __name__ == "__main__":
+
     with open("/tmp/rrt_result.txt", "r") as f:
         dict_data = json.load(f)
     tree = Tree.from_dict(dict_data)

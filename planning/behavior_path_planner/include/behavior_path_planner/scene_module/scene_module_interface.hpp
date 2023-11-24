@@ -16,39 +16,29 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner/utilities.hpp"
 
 #include <behavior_path_planner/steering_factor_interface.hpp>
 #include <behavior_path_planner/turn_signal_decider.hpp>
-#include <magic_enum.hpp>
-#include <motion_utils/marker/marker_helper.hpp>
-#include <motion_utils/trajectory/path_with_lane_id.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
-#include <tier4_planning_msgs/msg/stop_factor.hpp>
-#include <tier4_planning_msgs/msg/stop_reason.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
-#include <visualization_msgs/msg/detail/marker_array__struct.hpp>
+
+#include <behaviortree_cpp_v3/basic_types.h>
 
 #include <algorithm>
-#include <any>
 #include <limits>
 #include <memory>
 #include <random>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -56,64 +46,65 @@ namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using rtc_interface::RTCInterface;
 using steering_factor_interface::SteeringFactorInterface;
-using tier4_autoware_utils::calcOffsetPose;
-using tier4_autoware_utils::generateUUID;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
-using tier4_planning_msgs::msg::StopFactor;
-using tier4_planning_msgs::msg::StopReason;
-using tier4_planning_msgs::msg::StopReasonArray;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
 
-enum class ModuleStatus {
-  IDLE = 0,
-  RUNNING = 1,
-  WAITING_APPROVAL = 2,
-  SUCCESS = 3,
-  FAILURE = 4,
+struct BehaviorModuleOutput
+{
+  BehaviorModuleOutput() = default;
+
+  // path planed by module
+  PlanResult path{};
+
+  // path candidate planed by module
+  PlanResult path_candidate{};
+
+  TurnSignalInfo turn_signal_info{};
+};
+
+struct CandidateOutput
+{
+  CandidateOutput() = default;
+  explicit CandidateOutput(const PathWithLaneId & path) : path_candidate{path} {}
+  PathWithLaneId path_candidate{};
+  double lateral_shift{0.0};
+  double start_distance_to_path_change{std::numeric_limits<double>::lowest()};
+  double finish_distance_to_path_change{std::numeric_limits<double>::lowest()};
 };
 
 class SceneModuleInterface
 {
 public:
-  SceneModuleInterface(
-    const std::string & name, rclcpp::Node & node,
-    std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map)
+  SceneModuleInterface(const std::string & name, rclcpp::Node & node)
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
-    rtc_interface_ptr_map_(std::move(rtc_interface_ptr_map)),
-    steering_factor_interface_ptr_(
-      std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
+    uuid_(generateUUID()),
+    is_waiting_approval_{false},
+    current_state_{BT::NodeStatus::SUCCESS}
   {
-    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
-      uuid_map_.emplace(module_name, generateUUID());
-    }
+    std::string module_ns;
+    module_ns.resize(name.size());
+    std::transform(name.begin(), name.end(), module_ns.begin(), tolower);
+
+    const auto ns = std::string("~/debug/") + module_ns;
+    pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
   }
 
   virtual ~SceneModuleInterface() = default;
 
-  virtual void updateModuleParams(const std::any & parameters) = 0;
-
-  virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
-
   /**
-   * @brief Set the current_state_ based on updateState output.
+   * @brief Return SUCCESS if plan is not needed or plan is successfully finished,
+   *        FAILURE if plan has failed, RUNNING if plan is on going.
+   *        These condition is to be implemented in each modules.
    */
-  virtual void updateCurrentState()
-  {
-    const auto print = [this](const auto & from, const auto & to) {
-      RCLCPP_DEBUG(
-        getLogger(), "[%s] Transit from %s to %s.", name_.c_str(), from.data(), to.data());
-    };
-
-    const auto & from = current_state_;
-    current_state_ = updateState();
-    print(magic_enum::enum_name(from), magic_enum::enum_name(current_state_));
-  }
+  virtual BT::NodeStatus updateState() = 0;
 
   /**
    * @brief Return true if the module has request for execution (not necessarily feasible)
@@ -126,258 +117,6 @@ public:
   virtual bool isExecutionReady() const = 0;
 
   /**
-   * @brief update data for planning. Note that the call of this function does not mean
-   *        that the module executed. It should only updates the data necessary for
-   *        planCandidate (e.g., resampling of path).
-   */
-  virtual void updateData() {}
-
-  /**
-   * @brief After executing run(), update the module-specific status and/or data used for internal
-   *        processing that are not defined in ModuleStatus.
-   */
-  virtual void postProcess() {}
-
-  /**
-   * @brief Execute module. Once this function is executed,
-   *        it will continue to run as long as it is in the RUNNING state.
-   */
-  virtual BehaviorModuleOutput run()
-  {
-    updateData();
-    return isWaitingApproval() ? planWaitingApproval() : plan();
-  }
-
-  /**
-   * @brief Called on the first time when the module goes into RUNNING.
-   */
-  void onEntry()
-  {
-    RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
-
-    stop_reason_ = StopReason();
-
-    processOnEntry();
-  }
-
-  /**
-   * @brief Called when the module exit from RUNNING.
-   */
-  void onExit()
-  {
-    RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
-
-    clearWaitingApproval();
-    removeRTCStatus();
-    publishRTCStatus();
-    unlockNewModuleLaunch();
-    unlockOutputPath();
-    steering_factor_interface_ptr_->clearSteeringFactors();
-
-    stop_reason_ = StopReason();
-
-    processOnExit();
-  }
-
-  /**
-   * @brief Publish status if the module is requested to run
-   */
-  void publishRTCStatus()
-  {
-    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
-      if (ptr) {
-        ptr->publishCooperateStatus(clock_->now());
-      }
-    }
-  }
-
-  void publishSteeringFactor()
-  {
-    if (!steering_factor_interface_ptr_) {
-      return;
-    }
-    steering_factor_interface_ptr_->publishSteeringFactor(clock_->now());
-  }
-
-  void lockRTCCommand()
-  {
-    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
-      if (ptr) {
-        ptr->lockCommandUpdate();
-      }
-    }
-  }
-
-  void unlockRTCCommand()
-  {
-    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
-      if (ptr) {
-        ptr->unlockCommandUpdate();
-      }
-    }
-  }
-
-  /**
-   * @brief set previous module's output as input for this module
-   */
-  void setPreviousModuleOutput(const BehaviorModuleOutput & previous_module_output)
-  {
-    previous_module_output_ = previous_module_output;
-  }
-
-  /**
-   * @brief set planner data
-   */
-  virtual void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
-
-  void lockOutputPath() { is_locked_output_path_ = true; }
-
-  void unlockOutputPath() { is_locked_output_path_ = false; }
-
-  bool isWaitingApproval() const
-  {
-    return is_waiting_approval_ || current_state_ == ModuleStatus::WAITING_APPROVAL;
-  }
-
-  bool isLockedNewModuleLaunch() const { return is_locked_new_module_launch_; }
-
-  PlanResult getPathCandidate() const { return path_candidate_; }
-
-  PlanResult getPathReference() const { return path_reference_; }
-
-  MarkerArray getInfoMarkers() const { return info_marker_; }
-
-  MarkerArray getDebugMarkers() const { return debug_marker_; }
-
-  MarkerArray getDrivableLanesMarkers() const { return drivable_lanes_marker_; }
-
-  virtual MarkerArray getModuleVirtualWall() { return MarkerArray(); }
-
-  ModuleStatus getCurrentStatus() const { return current_state_; }
-
-  StopReason getStopReason() const { return stop_reason_; }
-
-  std::string name() const { return name_; }
-
-  boost::optional<Pose> getStopPose() const
-  {
-    if (!stop_pose_) {
-      return {};
-    }
-
-    const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(stop_pose_.get(), base_link2front, 0.0, 0.0);
-  }
-
-  boost::optional<Pose> getSlowPose() const
-  {
-    if (!slow_pose_) {
-      return {};
-    }
-
-    const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(slow_pose_.get(), base_link2front, 0.0, 0.0);
-  }
-
-  boost::optional<Pose> getDeadPose() const
-  {
-    if (!dead_pose_) {
-      return {};
-    }
-
-    const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(dead_pose_.get(), base_link2front, 0.0, 0.0);
-  }
-
-  void resetWallPoses() const
-  {
-    stop_pose_ = boost::none;
-    slow_pose_ = boost::none;
-    dead_pose_ = boost::none;
-  }
-
-  rclcpp::Logger getLogger() const { return logger_; }
-
-private:
-  bool existRegisteredRequest() const
-  {
-    return std::any_of(
-      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
-      [&](const auto & rtc) { return rtc.second->isRegistered(uuid_map_.at(rtc.first)); });
-  }
-
-  bool existApprovedRequest() const
-  {
-    return std::any_of(
-      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(), [&](const auto & rtc) {
-        return rtc.second->isRegistered(uuid_map_.at(rtc.first)) &&
-               rtc.second->isActivated(uuid_map_.at(rtc.first));
-      });
-  }
-
-  bool existNotApprovedRequest() const
-  {
-    return std::any_of(
-      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(), [&](const auto & rtc) {
-        return rtc.second->isRegistered(uuid_map_.at(rtc.first)) &&
-               !rtc.second->isActivated(uuid_map_.at(rtc.first));
-      });
-  }
-
-  bool canTransitWaitingApprovalState() const
-  {
-    if (!existRegisteredRequest()) {
-      return false;
-    }
-    return existNotApprovedRequest();
-  }
-
-  bool canTransitWaitingApprovalToRunningState() const
-  {
-    if (!existRegisteredRequest()) {
-      return true;
-    }
-    return existApprovedRequest();
-  }
-
-  std::string name_;
-
-  rclcpp::Logger logger_;
-
-  BehaviorModuleOutput previous_module_output_;
-
-  StopReason stop_reason_;
-
-  bool is_simultaneously_executable_as_approved_module_{false};
-
-  bool is_simultaneously_executable_as_candidate_module_{false};
-
-  bool is_locked_new_module_launch_{false};
-
-  bool is_locked_output_path_{false};
-
-protected:
-  /**
-   * @brief State transition condition ANY -> SUCCESS
-   */
-  virtual bool canTransitSuccessState() = 0;
-
-  /**
-   * @brief State transition condition ANY -> FAILURE
-   */
-  virtual bool canTransitFailureState() = 0;
-
-  /**
-   * @brief State transition condition IDLE -> RUNNING
-   */
-  virtual bool canTransitIdleToRunningState() = 0;
-
-  /**
-   * @brief Get candidate path. This information is used for external judgement.
-   */
-  virtual CandidateOutput planCandidate() const = 0;
-
-  /**
    * @brief Calculate path. This function is called with the plan is approved.
    */
   virtual BehaviorModuleOutput plan() = 0;
@@ -388,200 +127,190 @@ protected:
    */
   virtual BehaviorModuleOutput planWaitingApproval()
   {
-    path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
-    path_reference_ = getPreviousModuleOutput().reference_path;
-
-    return getPreviousModuleOutput();
+    BehaviorModuleOutput out;
+    out.path = util::generateCenterLinePath(planner_data_);
+    const auto candidate = planCandidate();
+    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+    return out;
   }
 
   /**
-   * @brief Module unique entry process.
+   * @brief Get candidate path. This information is used for external judgement.
    */
-  virtual void processOnEntry() {}
+  virtual CandidateOutput planCandidate() const = 0;
 
   /**
-   * @brief Module unique exit process.
+   * @brief update data for planning. Note that the call of this function does not mean
+   *        that the module executed. It should only updates the data necessary for
+   *        planCandidate (e.g., resampling of path).
    */
-  virtual void processOnExit() {}
-
-  virtual void updateRTCStatus(const double start_distance, const double finish_distance)
-  {
-    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
-      if (ptr) {
-        ptr->updateCooperateStatus(
-          uuid_map_.at(module_name), isExecutionReady(), start_distance, finish_distance,
-          clock_->now());
-      }
-    }
-  }
+  virtual void updateData() {}
 
   /**
-   * @brief Return SUCCESS if plan is not needed or plan is successfully finished,
-   *        FAILURE if plan has failed, RUNNING if plan is on going.
-   *        These condition is to be implemented in each modules.
+   * @brief Execute module. Once this function is executed,
+   *        it will continue to run as long as it is in the RUNNING state.
    */
-  virtual ModuleStatus updateState()
+  virtual BehaviorModuleOutput run()
   {
-    if (current_state_ == ModuleStatus::IDLE) {
-      if (canTransitIdleToRunningState()) {
-        return ModuleStatus::RUNNING;
-      }
+    current_state_ = BT::NodeStatus::RUNNING;
 
-      return ModuleStatus::IDLE;
+    updateData();
+
+    if (!isWaitingApproval()) {
+      return plan();
     }
 
-    if (current_state_ == ModuleStatus::RUNNING) {
-      if (canTransitSuccessState()) {
-        return ModuleStatus::SUCCESS;
-      }
-
-      if (canTransitFailureState()) {
-        return ModuleStatus::FAILURE;
-      }
-
-      if (canTransitWaitingApprovalState()) {
-        return ModuleStatus::WAITING_APPROVAL;
-      }
-
-      return ModuleStatus::RUNNING;
+    // module is waiting approval. Check it.
+    if (isActivated()) {
+      RCLCPP_DEBUG(logger_, "Was waiting approval, and now approved. Do plan().");
+      return plan();
+    } else {
+      RCLCPP_DEBUG(logger_, "keep waiting approval... Do planCandidate().");
+      return planWaitingApproval();
     }
-
-    if (current_state_ == ModuleStatus::WAITING_APPROVAL) {
-      if (canTransitSuccessState()) {
-        return ModuleStatus::SUCCESS;
-      }
-
-      if (canTransitFailureState()) {
-        return ModuleStatus::FAILURE;
-      }
-
-      if (canTransitWaitingApprovalToRunningState()) {
-        return ModuleStatus::RUNNING;
-      }
-
-      return ModuleStatus::WAITING_APPROVAL;
-    }
-
-    if (current_state_ == ModuleStatus::SUCCESS) {
-      return ModuleStatus::SUCCESS;
-    }
-
-    if (current_state_ == ModuleStatus::FAILURE) {
-      return ModuleStatus::FAILURE;
-    }
-
-    return ModuleStatus::IDLE;
   }
 
   /**
-   * @brief Return true if the activation command is received from the RTC interface.
-   *        If no RTC interface is registered, return true.
+   * @brief Called on the first time when the module goes into RUNNING.
    */
-  bool isActivated() const
+  virtual void onEntry() = 0;
+
+  /**
+   * @brief Called when the module exit from RUNNING.
+   */
+  virtual void onExit() = 0;
+
+  /**
+   * @brief Publish status if the module is requested to run
+   */
+  virtual void publishRTCStatus()
   {
-    if (rtc_interface_ptr_map_.empty()) {
-      return true;
-    }
-
-    if (!existRegisteredRequest()) {
-      return false;
-    }
-    return existApprovedRequest();
-  }
-
-  void removeRTCStatus()
-  {
-    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
-      if (ptr) {
-        ptr->clearCooperateStatus();
-      }
-    }
-  }
-
-  void setStopReason(const std::string & stop_reason, const PathWithLaneId & path)
-  {
-    stop_reason_.reason = stop_reason;
-    stop_reason_.stop_factors.clear();
-
-    if (!stop_pose_) {
-      stop_reason_.reason = "";
+    if (!rtc_interface_ptr_) {
       return;
     }
-
-    StopFactor stop_factor;
-    stop_factor.stop_pose = stop_pose_.get();
-    stop_factor.dist_to_stop_pose =
-      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), stop_pose_.get().position);
-    stop_reason_.stop_factors.push_back(stop_factor);
+    rtc_interface_ptr_->publishCooperateStatus(clock_->now());
   }
 
-  void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
+  /**
+   * @brief Return true if the activation command is received
+   */
+  virtual bool isActivated()
   {
-    drivable_lanes_marker_ =
-      marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
+    if (!rtc_interface_ptr_) {
+      return true;
+    }
+    if (rtc_interface_ptr_->isRegistered(uuid_)) {
+      return rtc_interface_ptr_->isActivated(uuid_);
+    }
+    return false;
   }
 
-  BehaviorModuleOutput getPreviousModuleOutput() const { return previous_module_output_; }
+  virtual void publishSteeringFactor()
+  {
+    if (!steering_factor_interface_ptr_) {
+      return;
+    }
+    steering_factor_interface_ptr_->publishSteeringFactor(clock_->now());
+  }
 
-  bool isOutputPathLocked() const { return is_locked_output_path_; }
+  /**
+   * @brief set planner data
+   */
+  void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
 
-  void lockNewModuleLaunch() { is_locked_new_module_launch_ = true; }
+  void publishDebugMarker() { pub_debug_marker_->publish(debug_marker_); }
 
-  void unlockNewModuleLaunch() { is_locked_new_module_launch_ = false; }
+  std::string name() const { return name_; }
+
+  rclcpp::Logger getLogger() const { return logger_; }
+
+  std::shared_ptr<const PlannerData> planner_data_;
+
+  bool isWaitingApproval() const { return is_waiting_approval_; }
+
+  virtual void lockRTCCommand()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->lockCommandUpdate();
+  }
+
+  virtual void unlockRTCCommand()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->unlockCommandUpdate();
+  }
+  virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
+
+private:
+  std::string name_;
+  rclcpp::Logger logger_;
+
+protected:
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
+  mutable MarkerArray debug_marker_;
+
+  std::shared_ptr<RTCInterface> rtc_interface_ptr_;
+  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
+  UUID uuid_;
+  bool is_waiting_approval_;
+
+  void updateRTCStatus(const double start_distance, const double finish_distance)
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->updateCooperateStatus(
+      uuid_, isExecutionReady(), start_distance, finish_distance, clock_->now());
+  }
+
+  virtual void removeRTCStatus()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->clearCooperateStatus();
+  }
 
   void waitApproval() { is_waiting_approval_ = true; }
 
   void clearWaitingApproval() { is_waiting_approval_ = false; }
 
-  void resetPathCandidate() { path_candidate_.reset(); }
-
-  void resetPathReference() { path_reference_.reset(); }
-
-  geometry_msgs::msg::Point getEgoPosition() const
+  static UUID generateUUID()
   {
-    return planner_data_->self_odometry->pose.pose.position;
+    // Generate random number
+    UUID uuid;
+    std::mt19937 gen(std::random_device{}());
+    std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
+    std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
+
+    return uuid;
   }
 
-  geometry_msgs::msg::Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
-
-  geometry_msgs::msg::Twist getEgoTwist() const
+  template <class T>
+  size_t findEgoIndex(const std::vector<T> & points) const
   {
-    return planner_data_->self_odometry->twist.twist;
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      p->parameters.ego_nearest_yaw_threshold);
   }
 
-  double getEgoSpeed() const
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
   {
-    return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      p->parameters.ego_nearest_yaw_threshold);
   }
 
-  rclcpp::Clock::SharedPtr clock_;
-
-  std::shared_ptr<const PlannerData> planner_data_;
-
-  bool is_waiting_approval_{false};
-
-  std::unordered_map<std::string, UUID> uuid_map_;
-
-  PlanResult path_candidate_;
-  PlanResult path_reference_;
-
-  ModuleStatus current_state_{ModuleStatus::IDLE};
-
-  std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
-
-  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
-
-  mutable boost::optional<Pose> stop_pose_{boost::none};
-
-  mutable boost::optional<Pose> slow_pose_{boost::none};
-
-  mutable boost::optional<Pose> dead_pose_{boost::none};
-
-  mutable MarkerArray info_marker_;
-
-  mutable MarkerArray debug_marker_;
-
-  mutable MarkerArray drivable_lanes_marker_;
+public:
+  BT::NodeStatus current_state_;
 };
 
 }  // namespace behavior_path_planner

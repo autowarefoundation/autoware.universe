@@ -16,7 +16,6 @@
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
-#include <geometry_msgs/msg/vector3.hpp>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 
 #include <memory>
@@ -93,7 +92,7 @@ RadarStaticPointcloudFilterNode::RadarStaticPointcloudFilterNode(
     std::bind(&RadarStaticPointcloudFilterNode::onSetParam, this, _1));
 
   // Node Parameter
-  node_param_.doppler_velocity_sd = declare_parameter<double>("doppler_velocity_sd");
+  node_param_.doppler_velocity_sd = declare_parameter<double>("doppler_velocity_sd", 2.0);
 
   // Subscriber
   transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);

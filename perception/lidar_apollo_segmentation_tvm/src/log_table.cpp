@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <common/types.hpp>
 #include <lidar_apollo_segmentation_tvm/log_table.hpp>
 
 #include <cmath>
 #include <string>
 #include <vector>
+
+using autoware::common::types::float32_t;
 
 namespace autoware
 {
@@ -26,19 +29,19 @@ namespace lidar_apollo_segmentation_tvm
 {
 struct LogTable
 {
-  std::vector<float> data;
+  std::vector<float32_t> data;
   LogTable()
   {
     data.resize(256 * 10);
     for (size_t i = 0; i < data.size(); ++i) {
-      data[i] = std::log1p(static_cast<float>(i) / 10);
+      data[i] = std::log1p(static_cast<float32_t>(i) / 10);
     }
   }
 };
 
 static LogTable log_table;
 
-float calcApproximateLog(float num)
+float32_t calcApproximateLog(float32_t num)
 {
   if (num >= 0) {
     size_t integer_num = static_cast<size_t>(num * 10.0f);

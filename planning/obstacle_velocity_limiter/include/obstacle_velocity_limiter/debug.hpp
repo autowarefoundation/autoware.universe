@@ -41,8 +41,8 @@ visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, co
 /// @param[in] marker_z z-value to use for markers
 /// @return marker array
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const Obstacles & obstacles, const std::vector<multi_linestring_t> & original_projections,
-  const std::vector<multi_linestring_t> & adjusted_projections,
+  const Obstacles & obstacles, const std::vector<multilinestring_t> & original_projections,
+  const std::vector<multilinestring_t> & adjusted_projections,
   const std::vector<polygon_t> & original_footprints,
   const std::vector<polygon_t> & adjusted_footprints, const ObstacleMasks & obstacle_masks,
   const Float marker_z);

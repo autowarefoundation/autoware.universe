@@ -16,9 +16,8 @@
 #define RADAR_TRACKS_MSGS_CONVERTER__RADAR_TRACKS_MSGS_CONVERTER_NODE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/ros/transform_listener.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
-#include "autoware_auto_perception_msgs/msg/detected_objects.hpp"
 #include "autoware_auto_perception_msgs/msg/object_classification.hpp"
 #include "autoware_auto_perception_msgs/msg/shape.hpp"
 #include "autoware_auto_perception_msgs/msg/tracked_object.hpp"
@@ -34,9 +33,6 @@
 
 namespace radar_tracks_msgs_converter
 {
-using autoware_auto_perception_msgs::msg::DetectedObject;
-using autoware_auto_perception_msgs::msg::DetectedObjectKinematics;
-using autoware_auto_perception_msgs::msg::DetectedObjects;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_perception_msgs::msg::TrackedObject;
@@ -73,8 +69,7 @@ private:
   geometry_msgs::msg::TransformStamped::ConstSharedPtr transform_;
 
   // Publisher
-  rclcpp::Publisher<TrackedObjects>::SharedPtr pub_tracked_objects_{};
-  rclcpp::Publisher<DetectedObjects>::SharedPtr pub_detected_objects_{};
+  rclcpp::Publisher<TrackedObjects>::SharedPtr pub_radar_{};
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_{};
@@ -91,9 +86,7 @@ private:
   NodeParam node_param_{};
 
   // Core
-  geometry_msgs::msg::PoseWithCovariance convertPoseWithCovariance();
   TrackedObjects convertRadarTrackToTrackedObjects();
-  DetectedObjects convertTrackedObjectsToDetectedObjects(TrackedObjects & objects);
   uint8_t convertClassification(const uint16_t classification);
 };
 

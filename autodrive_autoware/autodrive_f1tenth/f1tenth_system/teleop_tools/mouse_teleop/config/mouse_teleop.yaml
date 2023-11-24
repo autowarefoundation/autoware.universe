@@ -1,0 +1,5 @@
+mouse_teleop:
+  ros__parameters:
+    frequency: 10.0
+    scale    : 1.0
+    holonomic: False

@@ -14,20 +14,22 @@ The lidar points are projected onto the output of an image-only 2d object detect
 
 ### Input
 
-| Name                     | Type                                                     | Description                                               |
-| ------------------------ | -------------------------------------------------------- | --------------------------------------------------------- |
-| `input`                  | `sensor_msgs::msg::PointCloud2`                          | pointcloud                                                |
-| `input/camera_info[0-7]` | `sensor_msgs::msg::CameraInfo`                           | camera information to project 3d points onto image planes |
-| `input/rois[0-7]`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image                                      |
-| `input/image_raw[0-7]`   | `sensor_msgs::msg::Image`                                | images for visualization                                  |
+| Name                  | Type                                                     | Description                                                                        |
+| --------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `input`               | `sensor_msgs::msg::PointCloud2`                          | input pointcloud                                                                   |
+| `input/camera_infoID` | `sensor_msgs::msg::CameraInfo`                           | camera information to project 3d points onto image planes, `ID` is between 0 and 7 |
+| `input/roisID`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image, `ID` is between 0 and 7                                      |
+| `input/image_rawID`   | `sensor_msgs::msg::Image`                                | images for visualization, `ID` is between 0 and 7                                  |
+
+| `
 
 ### Output
 
-| Name                     | Type                                                  | Description              |
-| ------------------------ | ----------------------------------------------------- | ------------------------ |
-| `output`                 | `sensor_msgs::msg::PointCloud2`                       | painted pointcloud       |
-| `~/output/objects`       | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects         |
-| `~/debug/image_raw[0-7]` | `sensor_msgs::msg::Image`                             | images for visualization |
+| Name                 | Type                                                  | Description                                       |
+| -------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| `output`             | `sensor_msgs::msg::PointCloud2`                       | painted pointclouda                               |
+| `~/output/objects`   | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects                                  |
+| `output/image_rawID` | `sensor_msgs::msg::Image`                             | images for visualization, `ID` is between 0 and 7 |
 
 ## Parameters
 
@@ -72,11 +74,7 @@ Example:
 
 ## References/External links
 
-<!-- cspell: ignore Vora, Sourabh -->
-
 [1] Vora, Sourabh, et al. "PointPainting: Sequential fusion for 3d object detection." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2020.
-
-<!-- cspell: ignore Zhuangzhuang -->
 
 [2] CVPR'20 Workshop on Scalability in Autonomous Driving] Waymo Open Dataset Challenge: <https://youtu.be/9g9GsI33ol8?t=535>
 Ding, Zhuangzhuang, et al. "1st Place Solution for Waymo Open Dataset Challenge--3D Detection and Domain Adaptation." arXiv preprint arXiv:2006.15505 (2020).

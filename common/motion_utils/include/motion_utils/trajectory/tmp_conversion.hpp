@@ -15,9 +15,15 @@
 #ifndef MOTION_UTILS__TRAJECTORY__TMP_CONVERSION_HPP_
 #define MOTION_UTILS__TRAJECTORY__TMP_CONVERSION_HPP_
 
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/geometry/pose_deviation.hpp"
+
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
+#include <boost/optional.hpp>
+
+#include <algorithm>
 #include <vector>
 
 namespace motion_utils
@@ -33,15 +39,30 @@ namespace motion_utils
  * @todo Decide how to handle the situation that we need to use the trajectory with the size of
  * points larger than the capacity. (Tier IV)
  */
-autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & trajectory);
+inline autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & trajectory)
+{
+  autoware_auto_planning_msgs::msg::Trajectory output{};
+  for (const auto & pt : trajectory) {
+    output.points.push_back(pt);
+    if (output.points.size() >= output.CAPACITY) {
+      break;
+    }
+  }
+  return output;
+}
 
 /**
  * @brief Convert autoware_auto_planning_msgs::msg::Trajectory to
  * std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>.
  */
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPointArray(
-  const autoware_auto_planning_msgs::msg::Trajectory & trajectory);
+inline std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPointArray(
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory)
+{
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> output(trajectory.points.size());
+  std::copy(trajectory.points.begin(), trajectory.points.end(), output.begin());
+  return output;
+}
 
 }  // namespace motion_utils
 

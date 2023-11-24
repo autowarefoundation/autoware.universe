@@ -53,10 +53,7 @@ void detail::FakeNodeCore::set_up(const std::string & test_name)
     std::make_shared<tf2_ros::TransformListener>(m_tf_buffer, m_fake_node, kSpinThread);
 }
 
-void detail::FakeNodeCore::tear_down()
-{
-  (void)rclcpp::shutdown();
-}
+void detail::FakeNodeCore::tear_down() { (void)rclcpp::shutdown(); }
 
 std::string detail::get_test_name(const ::testing::TestInfo * info)
 {
@@ -71,10 +68,7 @@ void FakeTestNode::SetUp()
   set_up(detail::get_test_name(::testing::UnitTest::GetInstance()->current_test_info()));
 }
 
-void FakeTestNode::TearDown()
-{
-  tear_down();
-}
+void FakeTestNode::TearDown() { tear_down(); }
 
 }  // namespace testing
 }  // namespace tools

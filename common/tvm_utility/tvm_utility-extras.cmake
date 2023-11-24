@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Get user-provided variables
+set(DOWNLOAD_ARTIFACTS OFF CACHE BOOL "enable artifacts download")
+set(MODELZOO_VERSION "2.1.0-20221102" CACHE STRING "targeted ModelZoo version")
+
 #
+# Download the selected neural network if it is not already present on disk.
 # Make inference_engine_tvm_config.hpp available under "data/models/${MODEL_NAME}/".
 # Install the TVM artifacts to "share/${PROJECT_NAME}/models/".
 # Return the name of the custom target in the DEPENDENCY parameter.
@@ -27,27 +32,46 @@
 function(get_neural_network MODEL_NAME MODEL_BACKEND DEPENDENCY)
   set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
   set(EXTERNALPROJECT_NAME ${MODEL_NAME}_${MODEL_BACKEND})
-  set(PREPROCESSING "")
 
-  if(IS_DIRECTORY "${DATA_PATH}/models/${MODEL_NAME}")
+  # Prioritize user-provided models.
+  if(IS_DIRECTORY "${DATA_PATH}/user/${MODEL_NAME}")
+    message(STATUS "Using user-provided model from ${DATA_PATH}/user/${MODEL_NAME}")
+    file(REMOVE_RECURSE "${DATA_PATH}/models/${MODEL_NAME}/")
+    configure_file(
+      "${DATA_PATH}/user/${MODEL_NAME}/inference_engine_tvm_config.hpp"
+      "${DATA_PATH}/models/${MODEL_NAME}/inference_engine_tvm_config.hpp"
+      COPYONLY
+    )
+    set(DOWNLOAD_DIR "")
+    set(SOURCE_DIR "${DATA_PATH}/user/${MODEL_NAME}")
+    set(INSTALL_DIRECTORY "${DATA_PATH}/user/${MODEL_NAME}")
+  else()
+    set(ARCHIVE_NAME "${MODEL_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${MODEL_BACKEND}-${MODELZOO_VERSION}.tar.gz")
+
+    # Use previously-downloaded archives if available.
+    if(EXISTS "${DATA_PATH}/downloads/${ARCHIVE_NAME}")
+      set(URL "${DATA_PATH}/downloads/${ARCHIVE_NAME}")
+    elseif(DOWNLOAD_ARTIFACTS)
+      message(STATUS "Downloading ${ARCHIVE_NAME} ...")
+      set(URL "https://autoware-modelzoo.s3.us-east-2.amazonaws.com/models/${MODELZOO_VERSION}/${ARCHIVE_NAME}")
+    else()
+      message(WARNING "Skipped download for ${MODEL_NAME} (enable by setting DOWNLOAD_ARTIFACTS)")
+      set(${DEPENDENCY} "" PARENT_SCOPE)
+      return()
+    endif()
+    set(DOWNLOAD_DIR "${DATA_PATH}/downloads")
     set(SOURCE_DIR "${DATA_PATH}/models/${MODEL_NAME}")
     set(INSTALL_DIRECTORY "${DATA_PATH}/models/${MODEL_NAME}")
-    if(EXISTS "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
-      set(PREPROCESSING "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
-    endif()
-  else()
-    message(WARNING "No model configuration files were provided")
-    set(${DEPENDENCY} "" PARENT_SCOPE)
-    return()
   endif()
 
   include(ExternalProject)
   externalproject_add(${EXTERNALPROJECT_NAME}
+    DOWNLOAD_DIR ${DOWNLOAD_DIR}
     SOURCE_DIR ${SOURCE_DIR}
+    URL ${URL}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     BUILD_BYPRODUCTS "${DATA_PATH}/models/${MODEL_NAME}/inference_engine_tvm_config.hpp"
-    BUILD_BYPRODUCTS ${PREPROCESSING}
     INSTALL_COMMAND ""
   )
   install(

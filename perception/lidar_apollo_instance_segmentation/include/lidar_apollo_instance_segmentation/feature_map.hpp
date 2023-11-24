@@ -1,4 +1,4 @@
-// Copyright 2020-2023 TIER IV, Inc.
+// Copyright 2020 TierIV
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,15 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-#ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__FEATURE_MAP_HPP_
-#define LIDAR_APOLLO_INSTANCE_SEGMENTATION__FEATURE_MAP_HPP_
-
+#pragma once
 #include <memory>
 #include <vector>
 
-namespace lidar_apollo_instance_segmentation
-{
 struct FeatureMapInterface
 {
 public:
@@ -68,6 +63,3 @@ struct FeatureMapWithConstantAndIntensity : public FeatureMapInterface
   void initializeMap(std::vector<float> & map) override;
   void resetMap(std::vector<float> & map) override;
 };
-}  // namespace lidar_apollo_instance_segmentation
-
-#endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__FEATURE_MAP_HPP_

@@ -20,6 +20,7 @@
 #include "planning_debug_tools/util.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
@@ -86,7 +87,7 @@ public:
     TrajectoryDebugInfo data;
     data.stamp = node_->now();
     data.size = points.size();
-    data.curvature = motion_utils::calcCurvature(points);
+    data.curvature = calcCurvature(points);
     const auto arclength_offset = motion_utils::calcSignedArcLength(points, 0, ego_p);
     data.arclength = calcPathArcLengthArray(points, -arclength_offset);
     data.velocity = getVelocityArray(points);

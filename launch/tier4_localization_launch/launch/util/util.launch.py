@@ -20,6 +20,7 @@ from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
@@ -34,7 +35,7 @@ def launch_setup(context, *args, **kwargs):
         plugin="pointcloud_preprocessor::CropBoxFilterComponent",
         name="crop_box_filter_measurement_range",
         remappings=[
-            ("input", LaunchConfiguration("input_pointcloud")),
+            ("input", LaunchConfiguration("input/pointcloud")),
             ("output", "measurement_range/pointcloud"),
         ],
         parameters=[
@@ -94,27 +95,35 @@ def generate_launch_description():
         launch_arguments.append(arg)
 
     add_launch_arg(
+        "tier4_localization_launch_param_path",
+        [FindPackageShare("tier4_localization_launch"), "/config"],
+        "tier4_localization_launch param path",
+    )
+    add_launch_arg(
         "crop_box_filter_measurement_range_param_path",
         [
-            LaunchConfiguration("crop_box_filter_measurement_range_param_path"),
+            LaunchConfiguration("tier4_localization_launch_param_path"),
+            "/crop_box_filter_measurement_range.param.yaml",
         ],
         "path to the parameter file of crop_box_filter_measurement_range",
     )
     add_launch_arg(
         "voxel_grid_downsample_filter_param_path",
         [
-            LaunchConfiguration("voxel_grid_downsample_filter_param_path"),
+            LaunchConfiguration("tier4_localization_launch_param_path"),
+            "/voxel_grid_filter.param.yaml",
         ],
         "path to the parameter file of voxel_grid_downsample_filter",
     )
     add_launch_arg(
         "random_downsample_filter_param_path",
         [
-            LaunchConfiguration("random_downsample_filter_param_path"),
+            LaunchConfiguration("tier4_localization_launch_param_path"),
+            "/random_downsample_filter.param.yaml",
         ],
         "path to the parameter file of random_downsample_filter",
     )
-    add_launch_arg("use_intra_process", "true", "use ROS 2 component container communication")
+    add_launch_arg("use_intra_process", "true", "use ROS2 component container communication")
     add_launch_arg("use_pointcloud_container", "True", "use pointcloud container")
     add_launch_arg(
         "pointcloud_container_name",

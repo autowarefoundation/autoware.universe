@@ -14,7 +14,7 @@
 
 #include "localization_evaluator/metrics/localization_metrics.hpp"
 
-#include <cmath>
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 namespace localization_diagnostics
 {

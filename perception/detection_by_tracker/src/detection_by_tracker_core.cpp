@@ -14,10 +14,7 @@
 
 #include "detection_by_tracker/detection_by_tracker_core.hpp"
 
-#include "object_recognition_utils/object_recognition_utils.hpp"
-
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include "perception_utils/perception_utils.hpp"
 
 #include <chrono>
 #include <memory>
@@ -160,47 +157,12 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output", rclcpp::QoS{1});
 
-  // Set parameters
-  tracker_ignore_.UNKNOWN = declare_parameter<bool>("tracker_ignore_label.UNKNOWN");
-  tracker_ignore_.CAR = declare_parameter<bool>("tracker_ignore_label.CAR");
-  tracker_ignore_.TRUCK = declare_parameter<bool>("tracker_ignore_label.TRUCK");
-  tracker_ignore_.BUS = declare_parameter<bool>("tracker_ignore_label.BUS");
-  tracker_ignore_.TRAILER = declare_parameter<bool>("tracker_ignore_label.TRAILER");
-  tracker_ignore_.MOTORCYCLE = declare_parameter<bool>("tracker_ignore_label.MOTORCYCLE");
-  tracker_ignore_.BICYCLE = declare_parameter<bool>("tracker_ignore_label.BICYCLE");
-  tracker_ignore_.PEDESTRIAN = declare_parameter<bool>("tracker_ignore_label.PEDESTRIAN");
-
-  // set maximum search setting for merger/divider
-  setMaxSearchRange();
+  ignore_unknown_tracker_ = declare_parameter<bool>("ignore_unknown_tracker", true);
 
   shape_estimator_ = std::make_shared<ShapeEstimator>(true, true);
   cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
     false, 10, 10000, 0.7, 0.3, 0);
   debugger_ = std::make_shared<Debugger>(this);
-}
-
-void DetectionByTracker::setMaxSearchRange()
-{
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
-  // set max search distance for merger
-  max_search_distance_for_merger_[Label::UNKNOWN] = 5.0;
-  max_search_distance_for_merger_[Label::CAR] = 5.0;
-  max_search_distance_for_merger_[Label::TRUCK] = 8.0;
-  max_search_distance_for_merger_[Label::BUS] = 8.0;
-  max_search_distance_for_merger_[Label::TRAILER] = 10.0;
-  max_search_distance_for_merger_[Label::MOTORCYCLE] = 2.0;
-  max_search_distance_for_merger_[Label::BICYCLE] = 1.0;
-  max_search_distance_for_merger_[Label::PEDESTRIAN] = 1.0;
-
-  // set max search distance for divider
-  max_search_distance_for_divider_[Label::UNKNOWN] = 6.0;
-  max_search_distance_for_divider_[Label::CAR] = 6.0;
-  max_search_distance_for_divider_[Label::TRUCK] = 9.0;
-  max_search_distance_for_divider_[Label::BUS] = 9.0;
-  max_search_distance_for_divider_[Label::TRAILER] = 11.0;
-  max_search_distance_for_divider_[Label::MOTORCYCLE] = 3.0;
-  max_search_distance_for_divider_[Label::BICYCLE] = 2.0;
-  max_search_distance_for_divider_[Label::PEDESTRIAN] = 2.0;
 }
 
 void DetectionByTracker::onObjects(
@@ -217,13 +179,13 @@ void DetectionByTracker::onObjects(
       tracker_handler_.estimateTrackedObjects(input_msg->header.stamp, objects);
     if (
       !available_trackers ||
-      !object_recognition_utils::transformObjects(
+      !perception_utils::transformObjects(
         objects, input_msg->header.frame_id, tf_buffer_, transformed_objects)) {
       objects_pub_->publish(detected_objects);
       return;
     }
     // to simplify post processes, convert tracked_objects to DetectedObjects message.
-    tracked_objects = object_recognition_utils::toDetectedObjects(transformed_objects);
+    tracked_objects = perception_utils::toDetectedObjects(transformed_objects);
   }
   debugger_->publishInitialObjects(*input_msg);
   debugger_->publishTrackedObjects(tracked_objects);
@@ -260,6 +222,7 @@ void DetectionByTracker::divideUnderSegmentedObjects(
 {
   constexpr float recall_min_threshold = 0.4;
   constexpr float precision_max_threshold = 0.5;
+  constexpr float max_search_range = 6.0;
   constexpr float min_score_threshold = 0.4;
 
   out_objects.header = in_cluster_objects.header;
@@ -267,10 +230,7 @@ void DetectionByTracker::divideUnderSegmentedObjects(
 
   for (const auto & tracked_object : tracked_objects.objects) {
     const auto & label = tracked_object.classification.front().label;
-    if (tracker_ignore_.isIgnore(label)) continue;
-
-    // change search range according to label type
-    const float max_search_range = max_search_distance_for_divider_[label];
+    if (ignore_unknown_tracker_ && (label == Label::UNKNOWN)) continue;
 
     std::optional<tier4_perception_msgs::msg::DetectedObjectWithFeature>
       highest_score_divided_object = std::nullopt;
@@ -285,10 +245,9 @@ void DetectionByTracker::divideUnderSegmentedObjects(
         continue;
       }
       // detect under segmented cluster
-      const float recall =
-        object_recognition_utils::get2dRecall(initial_object.object, tracked_object);
+      const float recall = perception_utils::get2dRecall(initial_object.object, tracked_object);
       const float precision =
-        object_recognition_utils::get2dPrecision(initial_object.object, tracked_object);
+        perception_utils::get2dPrecision(initial_object.object, tracked_object);
       const bool is_under_segmented =
         (recall_min_threshold < recall && precision < precision_max_threshold);
       if (!is_under_segmented) {
@@ -363,8 +322,8 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
       if (!is_shape_estimated) {
         continue;
       }
-      const float iou = object_recognition_utils::get2dIoU(
-        highest_iou_object_in_current_iter.object, target_object);
+      const float iou =
+        perception_utils::get2dIoU(highest_iou_object_in_current_iter.object, target_object);
       if (highest_iou_in_current_iter < iou) {
         highest_iou_in_current_iter = iou;
         setClusterInObjectWithFeature(
@@ -385,7 +344,7 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
   // build output
   highest_iou_object.object.classification = target_object.classification;
   highest_iou_object.object.existence_probability =
-    object_recognition_utils::get2dIoU(target_object, highest_iou_object.object);
+    perception_utils::get2dIoU(target_object, highest_iou_object.object);
 
   output = highest_iou_object;
   return highest_iou;
@@ -398,15 +357,13 @@ void DetectionByTracker::mergeOverSegmentedObjects(
   tier4_perception_msgs::msg::DetectedObjectsWithFeature & out_objects)
 {
   constexpr float precision_threshold = 0.5;
+  constexpr float max_search_range = 5.0;
   out_objects.header = in_cluster_objects.header;
   out_no_found_tracked_objects.header = tracked_objects.header;
 
   for (const auto & tracked_object : tracked_objects.objects) {
     const auto & label = tracked_object.classification.front().label;
-    if (tracker_ignore_.isIgnore(label)) continue;
-
-    // change search range according to label type
-    const float max_search_range = max_search_distance_for_merger_[label];
+    if (ignore_unknown_tracker_ && (label == Label::UNKNOWN)) continue;
 
     // extend shape
     autoware_auto_perception_msgs::msg::DetectedObject extended_tracked_object = tracked_object;
@@ -424,7 +381,7 @@ void DetectionByTracker::mergeOverSegmentedObjects(
 
       // If there is an initial object in the tracker, it will be merged.
       const float precision =
-        object_recognition_utils::get2dPrecision(initial_object.object, extended_tracked_object);
+        perception_utils::get2dPrecision(initial_object.object, extended_tracked_object);
       if (precision < precision_threshold) {
         continue;
       }
@@ -454,7 +411,7 @@ void DetectionByTracker::mergeOverSegmentedObjects(
     }
 
     feature_object.object.existence_probability =
-      object_recognition_utils::get2dIoU(tracked_object, feature_object.object);
+      perception_utils::get2dIoU(tracked_object, feature_object.object);
     setClusterInObjectWithFeature(in_cluster_objects.header, pcl_merged_cluster, feature_object);
     out_objects.feature_objects.push_back(feature_object);
   }

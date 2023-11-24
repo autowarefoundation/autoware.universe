@@ -1,13 +1,4 @@
-from warnings import simplefilter
-
-from pkg_resources import PkgResourcesDeprecationWarning
-from setuptools import SetuptoolsDeprecationWarning
 from setuptools import setup
-
-# cspell: ignore moraisim
-
-simplefilter("ignore", category=SetuptoolsDeprecationWarning)
-simplefilter("ignore", category=PkgResourcesDeprecationWarning)
 
 package_name = "simulator_compatibility_test"
 clients = "simulator_compatibility_test/clients/"

@@ -1,70 +1,32 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- Parameter files -->
-  <arg name="object_recognition_detection_euclidean_cluster_param_path"/>
-  <arg name="object_recognition_detection_outlier_param_path"/>
-  <arg name="object_recognition_detection_object_lanelet_filter_param_path"/>
-  <arg name="object_recognition_detection_object_position_filter_param_path"/>
-  <arg name="object_recognition_detection_pointcloud_map_filter_param_path"/>
-  <arg name="object_recognition_prediction_map_based_prediction_param_path"/>
-  <arg name="object_recognition_detection_object_merger_data_association_matrix_param_path"/>
-  <arg name="object_recognition_detection_object_merger_distance_threshold_list_path"/>
-  <arg name="object_recognition_detection_fusion_sync_param_path"/>
-  <arg name="object_recognition_detection_lidar_model_param_path"/>
-  <arg name="object_recognition_detection_radar_lanelet_filtering_range_param"/>
-  <arg name="object_recognition_detection_radar_object_clustering_param_path"/>
-  <arg name="object_recognition_tracking_multi_object_tracker_data_association_matrix_param_path"/>
-  <arg name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path"/>
-  <arg name="object_recognition_tracking_radar_object_tracker_tracking_setting_param_path"/>
-  <arg name="obstacle_segmentation_ground_segmentation_param_path"/>
-  <arg name="obstacle_segmentation_ground_segmentation_elevation_map_param_path"/>
-  <arg name="object_recognition_detection_obstacle_pointcloud_based_validator_param_path"/>
-  <arg name="object_recognition_detection_detection_by_tracker_param"/>
-  <arg name="occupancy_grid_map_method"/>
-  <arg name="occupancy_grid_map_param_path"/>
-  <arg name="occupancy_grid_map_updater"/>
-  <arg name="occupancy_grid_map_updater_param_path"/>
-  <arg name="traffic_light_arbiter_param_path"/>
+  <!-- parameter path -->
+  <arg name="tier4_perception_launch_param_path" default="$(find-pkg-share tier4_perception_launch)/config" description="tier4_perception_launch parameter path"/>
 
-  <!-- CenterPoint model parameters -->
-  <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint` or `centerpoint_tiny`"/>
-  <arg name="centerpoint_model_path" default="$(var data_path)/lidar_centerpoint"/>
-
-  <!-- Common parameters -->
+  <!-- common parameters -->
   <arg name="input/pointcloud" default="/sensing/lidar/concatenated/pointcloud" description="The topic will be used in the detection module"/>
   <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
-  <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
-  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`"/>
   <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color" description="image raw topic name"/>
   <arg name="camera_info0" default="/sensing/camera/camera0/camera_info" description="camera info topic name"/>
-  <arg name="detection_rois0" default="/perception/object_recognition/detection/rois0" description="detection rois output topic name"/>
   <arg name="image_raw1" default="/sensing/camera/camera1/image_rect_color"/>
   <arg name="camera_info1" default="/sensing/camera/camera1/camera_info"/>
-  <arg name="detection_rois1" default="/perception/object_recognition/detection/rois1"/>
   <arg name="image_raw2" default="/sensing/camera/camera2/image_rect_color"/>
   <arg name="camera_info2" default="/sensing/camera/camera2/camera_info"/>
-  <arg name="detection_rois2" default="/perception/object_recognition/detection/rois2"/>
   <arg name="image_raw3" default="/sensing/camera/camera3/image_rect_color"/>
   <arg name="camera_info3" default="/sensing/camera/camera3/camera_info"/>
-  <arg name="detection_rois3" default="/perception/object_recognition/detection/rois3"/>
   <arg name="image_raw4" default="/sensing/camera/camera4/image_rect_color"/>
   <arg name="camera_info4" default="/sensing/camera/camera4/camera_info"/>
-  <arg name="detection_rois4" default="/perception/object_recognition/detection/rois4"/>
   <arg name="image_raw5" default="/sensing/camera/camera5/image_rect_color"/>
   <arg name="camera_info5" default="/sensing/camera/camera5/camera_info"/>
-  <arg name="detection_rois5" default="/perception/object_recognition/detection/rois5"/>
   <arg name="image_raw6" default="/sensing/camera/camera6/image_rect_color"/>
   <arg name="camera_info6" default="/sensing/camera/camera6/camera_info"/>
-  <arg name="detection_rois6" default="/perception/object_recognition/detection/rois6"/>
   <arg name="image_raw7" default="/sensing/camera/camera7/image_rect_color"/>
   <arg name="camera_info7" default="/sensing/camera/camera7/camera_info"/>
-  <arg name="detection_rois7" default="/perception/object_recognition/detection/rois7"/>
-  <arg name="image_number" default="6" description="choose image raw number(1-8)"/>
+  <arg name="image_number" default="6" description="choose image raw number(0-7)"/>
   <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
-  <arg name="use_low_height_cropbox" default="true" description="use low height crop filter in clustering"/>
   <arg name="use_object_filter" default="true" description="use object filter"/>
-  <arg name="use_roi_based_cluster" default="true" description="use roi_based_cluster in clustering"/>
   <arg
     name="use_empty_dynamic_object_publisher"
     default="false"
@@ -72,50 +34,18 @@
   />
   <arg name="use_pointcloud_container" default="false" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
-  <arg name="objects_filter_method" default="lanelet_filter"/>
-  <arg name="objects_validation_method" default="obstacle_pointcloud"/>
-
-  <!-- Traffic light recognition parameters -->
-  <arg name="use_traffic_light_recognition" default="true"/>
+  <!-- Traffic Light Recognition Parameters -->
   <arg name="traffic_light_recognition/enable_fine_detection" default="true"/>
-  <arg name="traffic_light_recognition/fusion_only" default="false"/>
-  <arg name="traffic_light_image_number" default="1" description="choose traffic light image raw number(1-2)"/>
-  <arg
-    name="traffic_light_fine_detector_model_path"
-    default="$(var data_path)/traffic_light_fine_detector"
-    description="options: `tlr_yolox_s_batch_**`. The batch number must be either one of 1, 4, 6"
-  />
-  <arg name="traffic_light_fine_detector_model_name" default="tlr_yolox_s_batch_6" description="options: `tlr_yolox_s_batch_**`. The batch number must be either one of 1, 4, 6"/>
-  <arg name="traffic_light_classifier_model_path" default="$(var data_path)/traffic_light_classifier" description="classifier onnx model path"/>
-  <arg
-    name="traffic_light_classifier_model_name"
-    default="traffic_light_classifier_mobilenetv2_batch_6"
-    description="options: `traffic_light_classifier_mobilenetv2_batch_*` or `traffic_light_classifier_efficientNet_b1_batch_*`. The batch number must be either one of 1, 4, 6"
-  />
 
-  <!-- Camera-Lidar fusion parameters -->
-  <arg name="remove_unknown" default="true"/>
-  <arg name="fusion_distance" default="100.0"/>
-  <arg name="trust_object_distance" default="100.0"/>
-
-  <!-- Whether to use detection by tracker -->
-  <arg name="use_detection_by_tracker" default="true"/>
-
-  <!-- Radar long range integration methods -->
-  <arg
-    name="use_radar_tracking_fusion"
-    default="true"
-    description="if use_radar_tracking_fusion:=true, radar information is merged in tracking launch. Otherwise, radar information is merged in detection launch."
-  />
-
-  <!-- Perception module -->
+  <!-- perception module -->
   <group>
     <push-ros-namespace namespace="perception"/>
 
-    <!-- Object segmentation module -->
+    <!-- object segmentation module -->
     <group>
       <push-ros-namespace namespace="obstacle_segmentation"/>
       <include file="$(find-pkg-share tier4_perception_launch)/launch/obstacle_segmentation/ground_segmentation/ground_segmentation.launch.py">
+        <arg name="tier4_perception_launch_param_path" value="$(var tier4_perception_launch_param_path)"/>
         <arg name="base_frame" value="base_link"/>
         <arg name="use_intra_process" value="true"/>
         <arg name="use_multithread" value="true"/>
@@ -125,10 +55,10 @@
       </include>
     </group>
 
-    <!-- Occupancy grid map module -->
+    <!-- occupancy grid map module -->
     <group>
       <push-ros-namespace namespace="occupancy_grid_map"/>
-      <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/probabilistic_occupancy_grid_map.launch.xml">
+      <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/pointcloud_based_occupancy_grid_map.launch.py">
         <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud_raw"/>
         <arg name="input/raw_pointcloud" value="$(var input/pointcloud)"/>
         <arg name="output" value="/perception/occupancy_grid_map/map"/>
@@ -136,20 +66,17 @@
         <arg name="use_multithread" value="true"/>
         <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
         <arg name="container_name" value="$(var pointcloud_container_name)"/>
-        <arg name="occupancy_grid_map_method" value="$(var occupancy_grid_map_method)"/>
-        <arg name="occupancy_grid_map_param_path" value="$(var occupancy_grid_map_param_path)"/>
-        <arg name="occupancy_grid_map_updater" value="$(var occupancy_grid_map_updater)"/>
-        <arg name="occupancy_grid_map_updater_param_path" value="$(var occupancy_grid_map_updater_param_path)"/>
       </include>
     </group>
 
-    <!-- Object recognition module -->
+    <!-- object recognition module -->
     <group unless="$(var use_empty_dynamic_object_publisher)">
       <push-ros-namespace namespace="object_recognition"/>
-      <!-- Detection module -->
+      <!-- detection module -->
       <group>
         <push-ros-namespace namespace="detection"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detection.launch.xml">
+          <arg name="tier4_perception_launch_param_path" value="$(var tier4_perception_launch_param_path)"/>
           <arg name="mode" value="$(var mode)"/>
           <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
           <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
@@ -170,44 +97,20 @@
           <arg name="image_raw7" value="$(var image_raw7)"/>
           <arg name="camera_info7" value="$(var camera_info7)"/>
           <arg name="image_number" value="$(var image_number)"/>
-          <arg name="sync_param_path" value="$(var object_recognition_detection_fusion_sync_param_path)"/>
-          <arg name="lidar_model_param_path" value="$(var object_recognition_detection_lidar_model_param_path)"/>
-          <arg name="euclidean_param_path" value="$(var object_recognition_detection_euclidean_cluster_param_path)"/>
-          <arg name="outlier_param_path" value="$(var object_recognition_detection_outlier_param_path)"/>
-          <arg name="voxel_grid_based_euclidean_param_path" value="$(var object_recognition_detection_voxel_grid_based_euclidean_cluster_param_path)"/>
-          <arg name="radar_lanelet_filtering_range_param" value="$(var object_recognition_detection_radar_lanelet_filtering_range_param)"/>
-          <arg name="radar_object_clustering_param_path" value="$(var object_recognition_detection_radar_object_clustering_param_path)"/>
-          <arg name="detection_by_tracker_param_path" value="$(var object_recognition_detection_detection_by_tracker_param)"/>
-
           <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
-          <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
           <arg name="use_object_filter" value="$(var use_object_filter)"/>
           <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
           <arg name="container_name" value="$(var pointcloud_container_name)"/>
-          <arg name="remove_unknown" value="$(var remove_unknown)"/>
-          <arg name="fusion_distance" value="$(var fusion_distance)"/>
-          <arg name="trust_object_distance" value="$(var trust_object_distance)"/>
-          <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
         </include>
       </group>
-
-      <!-- Tracking module -->
+      <!-- tracking module -->
       <group>
         <push-ros-namespace namespace="tracking"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/tracking/tracking.launch.xml">
-          <arg name="mode" value="$(var mode)"/>
-          <arg
-            name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path"
-            value="$(var object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path)"
-          />
-          <arg name="object_recognition_tracking_radar_object_tracker_tracking_setting_param_path" value="$(var object_recognition_tracking_radar_object_tracker_tracking_setting_param_path)"/>
-          <arg name="object_recognition_tracking_radar_object_tracker_node_param_path" value="$(var object_recognition_tracking_radar_object_tracker_node_param_path)"/>
-          <arg name="object_recognition_tracking_object_merger_data_association_matrix_param_path" value="$(var object_recognition_tracking_object_merger_data_association_matrix_param_path)"/>
-          <arg name="object_recognition_tracking_object_merger_node_param_path" value="$(var object_recognition_tracking_object_merger_node_param_path)"/>
+          <arg name="tier4_perception_launch_param_path" value="$(var tier4_perception_launch_param_path)"/>
         </include>
       </group>
-
-      <!-- Prediction module -->
+      <!-- prediction module -->
       <group>
         <push-ros-namespace namespace="prediction"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/prediction/prediction.launch.xml">
@@ -223,13 +126,11 @@
       </node>
     </group>
 
-    <!-- Traffic light module -->
-    <group if="$(var use_traffic_light_recognition)">
+    <!-- traffic light module -->
+    <group>
       <push-ros-namespace namespace="traffic_light_recognition"/>
       <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light.launch.xml">
         <arg name="enable_fine_detection" value="$(var traffic_light_recognition/enable_fine_detection)"/>
-        <arg name="fusion_only" value="$(var traffic_light_recognition/fusion_only)"/>
-        <arg name="image_number" value="$(var traffic_light_image_number)"/>
       </include>
     </group>
   </group>

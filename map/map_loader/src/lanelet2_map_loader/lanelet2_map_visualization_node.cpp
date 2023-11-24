@@ -109,10 +109,6 @@ void Lanelet2MapVisualizationNode::onMapBin(
     lanelet::utils::query::detectionAreas(all_lanelets);
   std::vector<lanelet::NoStoppingAreaConstPtr> no_reg_elems =
     lanelet::utils::query::noStoppingAreas(all_lanelets);
-  std::vector<lanelet::SpeedBumpConstPtr> sb_reg_elems =
-    lanelet::utils::query::speedBumps(all_lanelets);
-  std::vector<lanelet::CrosswalkConstPtr> cw_reg_elems =
-    lanelet::utils::query::crosswalks(all_lanelets);
   lanelet::ConstLineStrings3d parking_spaces =
     lanelet::utils::query::getAllParkingSpaces(viz_lanelet_map);
   lanelet::ConstPolygons3d parking_lots = lanelet::utils::query::getAllParkingLots(viz_lanelet_map);
@@ -123,20 +119,11 @@ void Lanelet2MapVisualizationNode::onMapBin(
   lanelet::ConstPolygons3d no_obstacle_segmentation_area_for_run_out =
     lanelet::utils::query::getAllPolygonsByType(
       viz_lanelet_map, "no_obstacle_segmentation_area_for_run_out");
-  lanelet::ConstPolygons3d hatched_road_markings_area =
-    lanelet::utils::query::getAllPolygonsByType(viz_lanelet_map, "hatched_road_markings");
-  lanelet::ConstPolygons3d intersection_areas =
-    lanelet::utils::query::getAllPolygonsByType(viz_lanelet_map, "intersection_area");
-  std::vector<lanelet::NoParkingAreaConstPtr> no_parking_reg_elems =
-    lanelet::utils::query::noParkingAreas(all_lanelets);
-  lanelet::ConstLineStrings3d curbstones = lanelet::utils::query::curbstones(viz_lanelet_map);
 
   std_msgs::msg::ColorRGBA cl_road, cl_shoulder, cl_cross, cl_partitions, cl_pedestrian_markings,
     cl_ll_borders, cl_shoulder_borders, cl_stoplines, cl_trafficlights, cl_detection_areas,
-    cl_speed_bumps, cl_crosswalks, cl_parking_lots, cl_parking_spaces, cl_lanelet_id,
-    cl_obstacle_polygons, cl_no_stopping_areas, cl_no_obstacle_segmentation_area,
-    cl_no_obstacle_segmentation_area_for_run_out, cl_hatched_road_markings_area,
-    cl_hatched_road_markings_line, cl_no_parking_areas, cl_curbstones, cl_intersection_area;
+    cl_parking_lots, cl_parking_spaces, cl_lanelet_id, cl_obstacle_polygons, cl_no_stopping_areas,
+    cl_no_obstacle_segmentation_area, cl_no_obstacle_segmentation_area_for_run_out;
   setColor(&cl_road, 0.27, 0.27, 0.27, 0.999);
   setColor(&cl_shoulder, 0.15, 0.15, 0.15, 0.999);
   setColor(&cl_cross, 0.27, 0.3, 0.27, 0.5);
@@ -148,19 +135,12 @@ void Lanelet2MapVisualizationNode::onMapBin(
   setColor(&cl_trafficlights, 0.5, 0.5, 0.5, 0.8);
   setColor(&cl_detection_areas, 0.27, 0.27, 0.37, 0.5);
   setColor(&cl_no_stopping_areas, 0.37, 0.37, 0.37, 0.5);
-  setColor(&cl_speed_bumps, 0.56, 0.40, 0.27, 0.5);
-  setColor(&cl_crosswalks, 0.80, 0.80, 0.0, 0.5);
   setColor(&cl_obstacle_polygons, 0.4, 0.27, 0.27, 0.5);
   setColor(&cl_parking_lots, 0.5, 0.5, 0.0, 0.3);
   setColor(&cl_parking_spaces, 1.0, 0.647, 0.0, 0.6);
   setColor(&cl_lanelet_id, 0.5, 0.5, 0.5, 0.999);
   setColor(&cl_no_obstacle_segmentation_area, 0.37, 0.37, 0.27, 0.5);
   setColor(&cl_no_obstacle_segmentation_area_for_run_out, 0.37, 0.7, 0.27, 0.5);
-  setColor(&cl_hatched_road_markings_area, 0.3, 0.3, 0.3, 0.5);
-  setColor(&cl_hatched_road_markings_line, 0.5, 0.5, 0.5, 0.999);
-  setColor(&cl_no_parking_areas, 0.42, 0.42, 0.42, 0.5);
-  setColor(&cl_curbstones, 0.1, 0.1, 0.2, 0.999);
-  setColor(&cl_intersection_area, 0.16, 1.0, 0.69, 0.5);
 
   visualization_msgs::msg::MarkerArray map_marker_array;
 
@@ -193,12 +173,6 @@ void Lanelet2MapVisualizationNode::onMapBin(
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::noStoppingAreasAsMarkerArray(no_reg_elems, cl_no_stopping_areas));
-  insertMarkerArray(
-    &map_marker_array,
-    lanelet::visualization::speedBumpsAsMarkerArray(sb_reg_elems, cl_speed_bumps));
-  insertMarkerArray(
-    &map_marker_array,
-    lanelet::visualization::crosswalkAreasAsMarkerArray(cw_reg_elems, cl_crosswalks));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::parkingLotsAsMarkerArray(parking_lots, cl_parking_lots));
@@ -237,23 +211,6 @@ void Lanelet2MapVisualizationNode::onMapBin(
     &map_marker_array,
     lanelet::visualization::noObstacleSegmentationAreaForRunOutAsMarkerArray(
       no_obstacle_segmentation_area_for_run_out, cl_no_obstacle_segmentation_area_for_run_out));
-
-  insertMarkerArray(
-    &map_marker_array,
-    lanelet::visualization::hatchedRoadMarkingsAreaAsMarkerArray(
-      hatched_road_markings_area, cl_hatched_road_markings_area, cl_hatched_road_markings_line));
-
-  insertMarkerArray(
-    &map_marker_array,
-    lanelet::visualization::noParkingAreasAsMarkerArray(no_parking_reg_elems, cl_no_parking_areas));
-
-  insertMarkerArray(
-    &map_marker_array,
-    lanelet::visualization::lineStringsAsMarkerArray(curbstones, "curbstone", cl_curbstones, 0.2));
-
-  insertMarkerArray(
-    &map_marker_array, lanelet::visualization::intersectionAreaAsMarkerArray(
-                         intersection_areas, cl_intersection_area));
 
   pub_marker_->publish(map_marker_array);
 }

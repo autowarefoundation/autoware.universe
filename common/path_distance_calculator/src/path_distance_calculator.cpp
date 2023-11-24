@@ -14,7 +14,8 @@
 
 #include "path_distance_calculator.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
+#include <motion_utils/motion_utils.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -43,9 +44,12 @@ PathDistanceCalculator::PathDistanceCalculator(const rclcpp::NodeOptions & optio
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "no path");
       return;
     }
-    if (path->points.size() <= 1) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "too short or empty path");
-      return;
+    if (path->points.empty()) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "path empty");
+    }
+
+    if (path->points.size() == 1) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "too short path");
     }
 
     const double distance =

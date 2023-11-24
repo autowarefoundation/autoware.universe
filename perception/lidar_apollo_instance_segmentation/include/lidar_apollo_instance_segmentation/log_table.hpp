@@ -1,4 +1,4 @@
-// Copyright 2020-2023 TIER IV, Inc.
+// Copyright 2020 TierIV
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,13 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#pragma once
 
-#ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__LOG_TABLE_HPP_
-#define LIDAR_APOLLO_INSTANCE_SEGMENTATION__LOG_TABLE_HPP_
-
-namespace lidar_apollo_instance_segmentation
-{
 float calcApproximateLog(float num);
-}  // namespace lidar_apollo_instance_segmentation
-
-#endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__LOG_TABLE_HPP_

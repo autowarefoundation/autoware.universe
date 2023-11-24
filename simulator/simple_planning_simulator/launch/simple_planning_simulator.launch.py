@@ -53,7 +53,6 @@ def launch_setup(context, *args, **kwargs):
             },
         ],
         remappings=[
-            ("input/vector_map", "/map/vector_map"),
             ("input/initialpose", "/initialpose3d"),
             ("input/ackermann_control_command", "/control/command/control_cmd"),
             ("input/manual_ackermann_control_command", "/vehicle/command/manual_control_cmd"),
@@ -67,7 +66,6 @@ def launch_setup(context, *args, **kwargs):
             ("output/twist", "/vehicle/status/velocity_status"),
             ("output/odometry", "/localization/kinematic_state"),
             ("output/acceleration", "/localization/acceleration"),
-            ("output/imu", "/sensing/imu/imu_data"),
             ("output/steering", "/vehicle/status/steering_status"),
             ("output/gear_report", "/vehicle/status/gear_status"),
             ("output/turn_indicators_report", "/vehicle/status/turn_indicators_status"),
@@ -81,12 +79,7 @@ def launch_setup(context, *args, **kwargs):
         executable="static_transform_publisher",
         name="static_map_to_odom_tf_publisher",
         output="screen",
-        arguments=[
-            "--frame-id",
-            "map",
-            "--child-frame-id",
-            "odom",
-        ],
+        arguments=["0.0", "0.0", "0.0", "0", "0", "0", "map", "odom"],
     )
 
     group = GroupAction([simple_planning_simulator_node, map_to_odom_tf_publisher])

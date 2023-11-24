@@ -15,14 +15,14 @@
 #ifndef BEHAVIOR_PATH_PLANNER__TURN_SIGNAL_DECIDER_HPP_
 #define BEHAVIOR_PATH_PLANNER__TURN_SIGNAL_DECIDER_HPP_
 
-#include <behavior_path_planner/parameters.hpp>
+#include <behavior_path_planner/data_manager.hpp>
 #include <route_handler/route_handler.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 
-#include <lanelet2_core/Forward.h>
+#include <lanelet2_core/LaneletMap.h>
 
 #include <limits>
 #include <map>
@@ -38,12 +38,6 @@ using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using route_handler::RouteHandler;
-
-const std::map<std::string, uint8_t> signal_map = {
-  {"left", TurnIndicatorsCommand::ENABLE_LEFT},
-  {"right", TurnIndicatorsCommand::ENABLE_RIGHT},
-  {"straight", TurnIndicatorsCommand::DISABLE},
-  {"none", TurnIndicatorsCommand::DISABLE}};
 
 struct TurnSignalInfo
 {
@@ -63,28 +57,22 @@ struct TurnSignalInfo
   geometry_msgs::msg::Pose required_end_point;
 };
 
-struct TurnSignalDebugData
-{
-  TurnSignalInfo intersection_turn_signal_info;
-  TurnSignalInfo behavior_turn_signal_info;
-};
+const std::map<std::string, uint8_t> signal_map = {
+  {"left", TurnIndicatorsCommand::ENABLE_LEFT},
+  {"right", TurnIndicatorsCommand::ENABLE_RIGHT},
+  {"straight", TurnIndicatorsCommand::DISABLE},
+  {"none", TurnIndicatorsCommand::DISABLE}};
 
 class TurnSignalDecider
 {
 public:
   TurnIndicatorsCommand getTurnSignal(
-    const std::shared_ptr<RouteHandler> & route_handler, const PathWithLaneId & path,
-    const TurnSignalInfo & turn_signal_info, const Pose & current_pose, const double current_vel,
-    const BehaviorPathPlannerParameters & parameters, TurnSignalDebugData & debug_data);
+    const std::shared_ptr<const PlannerData> & planner_data, const PathWithLaneId & path,
+    const TurnSignalInfo & turn_signal_info);
 
   TurnIndicatorsCommand resolve_turn_signal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
     const TurnSignalInfo & intersection_signal_info, const TurnSignalInfo & behavior_signal_info,
-    const double nearest_dist_threshold, const double nearest_yaw_threshold);
-
-  TurnSignalInfo use_prior_turn_signal(
-    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
-    const TurnSignalInfo & original_signal, const TurnSignalInfo & new_signal,
     const double nearest_dist_threshold, const double nearest_yaw_threshold);
 
   void setParameters(

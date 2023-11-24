@@ -25,8 +25,7 @@
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
-#include <tier4_autoware_utils/math/normalization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #endif

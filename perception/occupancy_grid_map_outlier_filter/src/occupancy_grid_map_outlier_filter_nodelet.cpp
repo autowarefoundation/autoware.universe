@@ -15,9 +15,7 @@
 #include "occupancy_grid_map_outlier_filter/occupancy_grid_map_outlier_filter_nodelet.hpp"
 
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <boost/optional.hpp>
 
@@ -103,19 +101,17 @@ boost::optional<char> getCost(
 
 namespace occupancy_grid_map_outlier_filter
 {
-RadiusSearch2dFilter::RadiusSearch2dFilter(rclcpp::Node & node)
+RadiusSearch2dfilter::RadiusSearch2dfilter(rclcpp::Node & node)
 {
   search_radius_ = node.declare_parameter("radius_search_2d_filter.search_radius", 1.0f);
   min_points_and_distance_ratio_ =
     node.declare_parameter("radius_search_2d_filter.min_points_and_distance_ratio", 400.0f);
   min_points_ = node.declare_parameter("radius_search_2d_filter.min_points", 4);
   max_points_ = node.declare_parameter("radius_search_2d_filter.max_points", 70);
-  max_filter_points_nb_ =
-    node.declare_parameter("radius_search_2d_filter.max_filter_points_nb", 15000);
   kd_tree_ = pcl::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
 }
 
-void RadiusSearch2dFilter::filter(
+void RadiusSearch2dfilter::filter(
   const PclPointCloud & input, const Pose & pose, PclPointCloud & output, PclPointCloud & outlier)
 {
   const auto & xyz_cloud = input;
@@ -127,7 +123,7 @@ void RadiusSearch2dFilter::filter(
   }
 
   std::vector<int> k_indices(xy_cloud->points.size());
-  std::vector<float> k_distances(xy_cloud->points.size());
+  std::vector<float> k_dists(xy_cloud->points.size());
   kd_tree_->setInputCloud(xy_cloud);
   for (size_t i = 0; i < xy_cloud->points.size(); ++i) {
     const float distance =
@@ -136,7 +132,7 @@ void RadiusSearch2dFilter::filter(
       std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
       max_points_);
     const int points_num =
-      kd_tree_->radiusSearch(i, search_radius_, k_indices, k_distances, min_points_threshold);
+      kd_tree_->radiusSearch(i, search_radius_, k_indices, k_dists, min_points_threshold);
 
     if (min_points_threshold <= points_num) {
       output.points.push_back(xyz_cloud.points.at(i));
@@ -146,20 +142,12 @@ void RadiusSearch2dFilter::filter(
   }
 }
 
-void RadiusSearch2dFilter::filter(
+void RadiusSearch2dfilter::filter(
   const PclPointCloud & high_conf_input, const PclPointCloud & low_conf_input, const Pose & pose,
   PclPointCloud & output, PclPointCloud & outlier)
 {
   const auto & high_conf_xyz_cloud = high_conf_input;
   const auto & low_conf_xyz_cloud = low_conf_input;
-  // check the limit points number
-  if (low_conf_xyz_cloud.points.size() > max_filter_points_nb_) {
-    RCLCPP_WARN(
-      rclcpp::get_logger("OccupancyGridMapOutlierFilterComponent"),
-      "Skip outlier filter since too much low_confidence pointcloud!");
-    return;
-  }
-
   pcl::PointCloud<pcl::PointXY>::Ptr xy_cloud(new pcl::PointCloud<pcl::PointXY>);
   xy_cloud->points.resize(low_conf_xyz_cloud.points.size() + high_conf_xyz_cloud.points.size());
   for (size_t i = 0; i < low_conf_xyz_cloud.points.size(); ++i) {
@@ -172,7 +160,7 @@ void RadiusSearch2dFilter::filter(
   }
 
   std::vector<int> k_indices(xy_cloud->points.size());
-  std::vector<float> k_distances(xy_cloud->points.size());
+  std::vector<float> k_dists(xy_cloud->points.size());
   kd_tree_->setInputCloud(xy_cloud);
   for (size_t i = 0; i < low_conf_xyz_cloud.points.size(); ++i) {
     const float distance =
@@ -181,7 +169,7 @@ void RadiusSearch2dFilter::filter(
       std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
       max_points_);
     const int points_num =
-      kd_tree_->radiusSearch(i, search_radius_, k_indices, k_distances, min_points_threshold);
+      kd_tree_->radiusSearch(i, search_radius_, k_indices, k_dists, min_points_threshold);
 
     if (min_points_threshold <= points_num) {
       output.points.push_back(low_conf_xyz_cloud.points.at(i));
@@ -228,7 +216,7 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
 
   /* Radius search 2d filter */
   if (use_radius_search_2d_filter) {
-    radius_search_2d_filter_ptr_ = std::make_shared<RadiusSearch2dFilter>(*this);
+    radius_search_2d_filter_ptr_ = std::make_shared<RadiusSearch2dfilter>(*this);
   }
   /* debugger */
   if (enable_debugger) {
@@ -236,49 +224,19 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   }
 }
 
-void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
-  const PointCloud2::ConstSharedPtr & input_pc, PointCloud2 & front_pc, PointCloud2 & behind_pc)
-{
-  PclPointCloud tmp_behind_pc;
-  PclPointCloud tmp_front_pc;
-  for (sensor_msgs::PointCloud2ConstIterator<float> x(*input_pc, "x"), y(*input_pc, "y"),
-       z(*input_pc, "z");
-       x != x.end(); ++x, ++y, ++z) {
-    if (*x < 0.0) {
-      tmp_behind_pc.push_back(pcl::PointXYZ(*x, *y, *z));
-    } else {
-      tmp_front_pc.push_back(pcl::PointXYZ(*x, *y, *z));
-    }
-  }
-  pcl::toROSMsg(tmp_front_pc, front_pc);
-  pcl::toROSMsg(tmp_behind_pc, behind_pc);
-  front_pc.header = input_pc->header;
-  behind_pc.header = input_pc->header;
-}
 void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   const OccupancyGrid::ConstSharedPtr & input_ogm, const PointCloud2::ConstSharedPtr & input_pc)
 {
   stop_watch_ptr_->toc("processing_time", true);
   // Transform to occupancy grid map frame
   PointCloud2 ogm_frame_pc{};
-  PointCloud2 input_front_pc{};
-  PointCloud2 input_behind_pc{};
-  PointCloud2 ogm_frame_input_behind_pc{};
-  splitPointCloudFrontBack(input_pc, input_front_pc, input_behind_pc);
-  if (
-    !transformPointcloud(input_front_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc) ||
-    !transformPointcloud(
-      input_behind_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_input_behind_pc)) {
+  if (!transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc)) {
     return;
   }
   // Occupancy grid map based filter
   PclPointCloud high_confidence_pc{};
   PclPointCloud low_confidence_pc{};
-  PclPointCloud out_ogm_pc{};
-  PclPointCloud ogm_frame_behind_pc;
-  pcl::fromROSMsg(ogm_frame_input_behind_pc, ogm_frame_behind_pc);
-  filterByOccupancyGridMap(
-    *input_ogm, ogm_frame_pc, high_confidence_pc, low_confidence_pc, out_ogm_pc);
+  filterByOccupancyGridMap(*input_ogm, ogm_frame_pc, high_confidence_pc, low_confidence_pc);
   // Apply Radius search 2d filter for low confidence pointcloud
   PclPointCloud filtered_low_confidence_pc{};
   PclPointCloud outlier_pc{};
@@ -292,8 +250,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     outlier_pc = low_confidence_pc;
   }
   // Concatenate high confidence pointcloud from occupancy grid map and non-outlier pointcloud
-  PclPointCloud concat_pc =
-    high_confidence_pc + filtered_low_confidence_pc + out_ogm_pc + ogm_frame_behind_pc;
+  PclPointCloud concat_pc = high_confidence_pc + filtered_low_confidence_pc;
   // Convert to ros msg
   {
     PointCloud2 ogm_frame_filtered_pc{};
@@ -304,6 +261,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
           ogm_frame_filtered_pc, *tf2_, base_link_frame_, *base_link_frame_filtered_pc_ptr)) {
       return;
     }
+    auto pc_ptr = std::make_unique<PointCloud2>();
     pointcloud_pub_->publish(std::move(base_link_frame_filtered_pc_ptr));
   }
   if (debugger_ptr_) {
@@ -325,7 +283,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 
 void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
   const OccupancyGrid & occupancy_grid_map, const PointCloud2 & pointcloud,
-  PclPointCloud & high_confidence, PclPointCloud & low_confidence, PclPointCloud & out_ogm)
+  PclPointCloud & high_confidence, PclPointCloud & low_confidence)
 {
   for (sensor_msgs::PointCloud2ConstIterator<float> x(pointcloud, "x"), y(pointcloud, "y"),
        z(pointcloud, "z");
@@ -338,7 +296,7 @@ void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
         low_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
       }
     } else {
-      out_ogm.push_back(pcl::PointXYZ(*x, *y, *z));
+      high_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
     }
   }
 }

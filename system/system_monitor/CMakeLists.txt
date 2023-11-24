@@ -118,8 +118,7 @@ ament_auto_add_executable(hdd_reader
 )
 
 ament_auto_add_executable(traffic_reader
-  reader/traffic_reader/traffic_reader_main.cpp
-  reader/traffic_reader/traffic_reader_service.cpp
+  reader/traffic_reader/traffic_reader.cpp
 )
 
 find_library(NL3 nl-3 REQUIRED)
@@ -186,7 +185,7 @@ rclcpp_components_register_node(voltage_monitor_lib
   EXECUTABLE voltage_monitor
 )
 
-# TODO(yunus.caliskan): Port the tests to ROS 2, robustify the tests.
+# TODO(yunus.caliskan): Port the tests to ROS2, robustify the tests.
 if(BUILD_TESTING)
   # ament_add_ros_isolated_gtest(test_cpu_monitor
   #   test/src/cpu_monitor/test_${CMAKE_CPU_PLATFORM}_cpu_monitor.cpp

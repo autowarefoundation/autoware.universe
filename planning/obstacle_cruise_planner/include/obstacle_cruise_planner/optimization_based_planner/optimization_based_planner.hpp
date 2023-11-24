@@ -18,75 +18,80 @@
 #include "obstacle_cruise_planner/optimization_based_planner/s_boundary.hpp"
 #include "obstacle_cruise_planner/optimization_based_planner/velocity_optimizer.hpp"
 #include "obstacle_cruise_planner/planner_interface.hpp"
-#include "obstacle_cruise_planner/type_alias.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <boost/optional.hpp>
+
 #include <memory>
-#include <optional>
 #include <tuple>
 #include <vector>
+
+using autoware_auto_perception_msgs::msg::ObjectClassification;
+using autoware_auto_perception_msgs::msg::PredictedPath;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using tier4_debug_msgs::msg::Float32Stamped;
 
 class OptimizationBasedPlanner : public PlannerInterface
 {
 public:
   OptimizationBasedPlanner(
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-    const vehicle_info_util::VehicleInfo & vehicle_info, const EgoNearestParam & ego_nearest_param,
-    const std::shared_ptr<DebugData> debug_data_ptr);
+    const vehicle_info_util::VehicleInfo & vehicle_info, const EgoNearestParam & ego_nearest_param);
 
-  std::vector<TrajectoryPoint> generateCruiseTrajectory(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
-    const std::vector<CruiseObstacle> & obstacles,
-    std::optional<VelocityLimit> & vel_limit) override;
+  Trajectory generateCruiseTrajectory(
+    const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
+    DebugData & debug_data) override;
 
 private:
   // Member Functions
   std::vector<double> createTimeVector();
   std::tuple<double, double> calcInitialMotion(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
-    const std::vector<TrajectoryPoint> & prev_traj_points);
+    const ObstacleCruisePlannerData & planner_data, const Trajectory & prev_traj);
 
-  bool checkHasReachedGoal(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points);
+  bool checkHasReachedGoal(const ObstacleCruisePlannerData & planner_data);
 
-  std::optional<SBoundaries> getSBoundaries(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
-    const std::vector<CruiseObstacle> & obstacles, const std::vector<double> & time_vec);
+  boost::optional<SBoundaries> getSBoundaries(
+    const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec);
 
-  std::optional<SBoundaries> getSBoundaries(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
-    const CruiseObstacle & object, const std::vector<double> & time_vec, const double traj_length);
+  boost::optional<SBoundaries> getSBoundaries(
+    const ObstacleCruisePlannerData & planner_data, const TargetObstacle & object,
+    const std::vector<double> & time_vec, const double traj_length);
 
-  std::optional<SBoundaries> getSBoundariesForOnTrajectoryObject(
-    const PlannerData & planner_data, const std::vector<double> & time_vec,
-    const double safety_distance, const CruiseObstacle & object, const double traj_length);
+  boost::optional<SBoundaries> getSBoundariesForOnTrajectoryObject(
+    const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
+    const double safety_distance, const TargetObstacle & object, const double traj_length);
 
-  std::optional<SBoundaries> getSBoundariesForOffTrajectoryObject(
-    const PlannerData & planner_data, const std::vector<double> & time_vec,
-    const double safety_distance, const CruiseObstacle & object, const double traj_length);
+  boost::optional<SBoundaries> getSBoundariesForOffTrajectoryObject(
+    const ObstacleCruisePlannerData & planner_data, const std::vector<double> & time_vec,
+    const double safety_distance, const TargetObstacle & object, const double traj_length);
 
   bool checkOnTrajectory(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
-    const PointWithStamp & point);
+    const ObstacleCruisePlannerData & planner_data, const geometry_msgs::msg::PointStamped & point);
 
-  std::optional<double> calcTrajectoryLengthFromCurrentPose(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & ego_pose);
+  boost::optional<double> calcTrajectoryLengthFromCurrentPose(
+    const autoware_auto_planning_msgs::msg::Trajectory & traj,
+    const geometry_msgs::msg::Pose & current_pose);
 
   geometry_msgs::msg::Pose transformBaseLink2Center(
     const geometry_msgs::msg::Pose & pose_base_link);
 
-  std::optional<VelocityOptimizer::OptimizationResult> processOptimizedResult(
+  boost::optional<VelocityOptimizer::OptimizationResult> processOptimizedResult(
     const double v0, const VelocityOptimizer::OptimizationResult & opt_result, const double offset);
 
   void publishDebugTrajectory(
-    const PlannerData & planner_data, const double offset, const std::vector<double> & time_vec,
-    const SBoundaries & s_boundaries, const VelocityOptimizer::OptimizationResult & opt_result);
+    const ObstacleCruisePlannerData & planner_data, const double offset,
+    const std::vector<double> & time_vec, const SBoundaries & s_boundaries,
+    const VelocityOptimizer::OptimizationResult & opt_result);
 
-  std::vector<TrajectoryPoint> prev_output_;
+  Trajectory prev_output_;
 
   // Velocity Optimizer
   std::shared_ptr<VelocityOptimizer> velocity_optimizer_ptr_;
@@ -96,11 +101,6 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_sv_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_st_graph_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_marker_pub_;
-
-  // Subscriber
-  rclcpp::Subscription<Trajectory>::SharedPtr smoothed_traj_sub_;
-
-  Trajectory::ConstSharedPtr smoothed_trajectory_ptr_{nullptr};
 
   // Resampling Parameter
   double dense_resampling_time_interval_;

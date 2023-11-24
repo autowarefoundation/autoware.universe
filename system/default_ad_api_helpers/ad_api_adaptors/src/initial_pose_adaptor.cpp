@@ -34,9 +34,10 @@ std::array<double, 36> get_covariance_parameter(rclcpp::Node * node, const std::
   return array;
 }
 
-InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_adaptor"), fitter_(this)
+InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_adaptor")
 {
   rviz_particle_covariance_ = get_covariance_parameter(this, "initial_pose_particle_covariance");
+  cli_map_fit_ = create_client<RequestHeightFitting>("~/fit_map_height");
   sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
     "~/initialpose", rclcpp::QoS(1),
     std::bind(&InitialPoseAdaptor::on_initial_pose, this, std::placeholders::_1));
@@ -47,16 +48,14 @@ InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_adaptor"), fitter_
 
 void InitialPoseAdaptor::on_initial_pose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
-  PoseWithCovarianceStamped pose = *msg;
-  const auto fitted = fitter_.fit(pose.pose.pose.position, pose.header.frame_id);
-  if (fitted) {
-    pose.pose.pose.position = fitted.value();
-  }
-  pose.pose.covariance = rviz_particle_covariance_;
-
-  const auto req = std::make_shared<Initialize::Service::Request>();
-  req->pose.push_back(pose);
-  cli_initialize_->async_send_request(req);
+  const auto req = std::make_shared<RequestHeightFitting::Request>();
+  req->pose_with_covariance = *msg;
+  cli_map_fit_->async_send_request(req, [this](Future<RequestHeightFitting> future) {
+    const auto req = std::make_shared<Initialize::Service::Request>();
+    req->pose.push_back(future.get()->pose_with_covariance);
+    req->pose.back().pose.covariance = rviz_particle_covariance_;
+    cli_initialize_->async_send_request(req);
+  });
 }
 
 }  // namespace ad_api_adaptors
@@ -64,7 +63,7 @@ void InitialPoseAdaptor::on_initial_pose(const PoseWithCovarianceStamped::ConstS
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::executors::MultiThreadedExecutor executor;
+  rclcpp::executors::SingleThreadedExecutor executor;
   auto node = std::make_shared<ad_api_adaptors::InitialPoseAdaptor>();
   executor.add_node(node);
   executor.spin();

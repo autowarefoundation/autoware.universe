@@ -21,10 +21,6 @@
 
 #include <boost/optional.hpp>
 
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl_conversions/pcl_conversions.h>
-
 #include <string>
 #include <vector>
 
@@ -33,14 +29,13 @@ class PointcloudMapLoaderModule
 public:
   explicit PointcloudMapLoaderModule(
     rclcpp::Node * node, const std::vector<std::string> & pcd_paths,
-    const std::string & publisher_name, const bool use_downsample);
+    const std::string publisher_name);
 
 private:
   rclcpp::Logger logger_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pointcloud_map_;
 
-  sensor_msgs::msg::PointCloud2 loadPCDFiles(
-    const std::vector<std::string> & pcd_paths, const boost::optional<float> leaf_size) const;
+  sensor_msgs::msg::PointCloud2 loadPCDFiles(const std::vector<std::string> & pcd_paths) const;
 };
 
 #endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_MODULE_HPP_

@@ -1,4 +1,4 @@
-# freespace planning algorithms
+# `freespace planning algorithms`
 
 ## Role
 
@@ -10,12 +10,10 @@ This package is for development of path planning algorithms in free space.
 
 Please see [rrtstar.md](rrtstar.md) for a note on the implementation for informed-RRT\*.
 
-<!-- cspell:ignore Gammell -->
-
 NOTE: As for RRT\*, one can choose whether update after feasible solution found in RRT\*.
 If not doing so, the algorithm is the almost (but exactly because of rewiring procedure) same as vanilla RRT.
 If you choose update, then you have option if the sampling after feasible solution found is "informed".
-If set true, then the algorithm is equivalent to `informed RRT\* of Gammell et al. 2014`.
+If set true, then the algorithm is equivalent to `informed RRT\* of Gammmell et al. 2014`.
 
 ## Algorithm selection
 
@@ -50,10 +48,7 @@ colcon build --packages-select freespace_planning_algorithms
 colcon test --packages-select freespace_planning_algorithms
 ```
 
-<!-- cspell: ignore fpalgos -->
-<!-- "fpalgos" means Free space Planning ALGOrithmS -->
-
-Inside the test, simulation results are stored in `/tmp/fpalgos-{algorithm_type}-case{scenario_number}` as a rosbag.
+Inside the test, simulation results are stored in `/tmp/fpalgos-{#algorithm_type}-case{#scenario_number}` as a rosbag.
 Loading these resulting files, by using [test/debug_plot.py](test/debug_plot.py),
 one can create plots visualizing the path and obstacles as shown
 in the figures below. The created figures are then again saved in `/tmp`.

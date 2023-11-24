@@ -29,8 +29,4 @@ ament_auto_add_library(${PROJECT_NAME}_lanelet2_plugins SHARED
 )
 pluginlib_export_plugin_description_file(mission_planner plugins/plugin_description.xml)
 
-ament_auto_package(
-        INSTALL_TO_SHARE
-        config
-        launch
-)
+ament_auto_package(INSTALL_TO_SHARE launch)

@@ -42,17 +42,17 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   use_steer_ff_ = declare_parameter("use_steer_ff", true);
   use_steer_fb_ = declare_parameter("use_steer_fb", true);
   if (convert_accel_cmd_) {
-    if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map, true)) {
+    if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
       throw std::invalid_argument("Accel map is invalid.");
     }
   }
   if (convert_brake_cmd_) {
-    if (!brake_map_.readBrakeMapFromCSV(csv_path_brake_map, true)) {
+    if (!brake_map_.readBrakeMapFromCSV(csv_path_brake_map)) {
       throw std::invalid_argument("Brake map is invalid.");
     }
   }
   if (convert_steer_cmd_) {
-    if (!steer_map_.readSteerMapFromCSV(csv_path_steer_map, true)) {
+    if (!steer_map_.readSteerMapFromCSV(csv_path_steer_map)) {
       throw std::invalid_argument("Steer map is invalid.");
     }
     const auto kp_steer{declare_parameter("steer_pid.kp", 150.0)};
@@ -84,8 +84,6 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
     "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
     "/vehicle/raw_vehicle_cmd_converter/debug/steer_pid", 1);
-
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 void RawVehicleCommandConverterNode::publishActuationCmd()
@@ -146,7 +144,7 @@ double RawVehicleCommandConverterNode::calculateSteer(
   double dt = (current_time - prev_time_steer_calculation_).seconds();
   if (std::abs(dt) > 1.0) {
     RCLCPP_WARN_EXPRESSION(get_logger(), is_debugging_, "ignore old topic");
-    dt = 0.1;  // set ordinary delta time instead
+    dt = 0.1;  // set ordinaray delta time instead
   }
   prev_time_steer_calculation_ = current_time;
   // feed-forward

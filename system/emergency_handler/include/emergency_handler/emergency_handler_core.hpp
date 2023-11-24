@@ -29,7 +29,7 @@
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
 
-// ROS 2 core
+// ROS2 core
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
 

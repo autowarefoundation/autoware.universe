@@ -18,7 +18,6 @@
 #include "cost_value.hpp"
 
 #include <nav2_costmap_2d/costmap_2d.hpp>
-#include <rclcpp/node.hpp>
 
 namespace costmap_2d
 {
@@ -33,7 +32,6 @@ public:
   }
   virtual ~OccupancyGridMapUpdaterInterface() = default;
   virtual bool update(const Costmap2D & single_frame_occupancy_grid_map) = 0;
-  virtual void initRosParam(rclcpp::Node & node) = 0;
 };
 
 }  // namespace costmap_2d

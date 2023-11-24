@@ -44,10 +44,7 @@ GPUMonitorBase::GPUMonitorBase(const std::string & node_name, const rclcpp::Node
   updater_.add("GPU Frequency", this, &GPUMonitorBase::checkFrequency);
 }
 
-void GPUMonitorBase::update()
-{
-  updater_.force_update();
-}
+void GPUMonitorBase::update() { updater_.force_update(); }
 
 void GPUMonitorBase::shut_down()
 { /*NOOP by default.*/

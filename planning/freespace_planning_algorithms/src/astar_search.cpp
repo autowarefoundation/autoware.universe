@@ -14,8 +14,7 @@
 
 #include "freespace_planning_algorithms/astar_search.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tf2/utils.h>
 
@@ -62,6 +61,18 @@ geometry_msgs::msg::Pose calcRelativePose(
   return transformed.pose;
 }
 
+geometry_msgs::msg::Pose node2pose(const AstarNode & node)
+{
+  geometry_msgs::msg::Pose pose_local;
+
+  pose_local.position.x = node.x;
+  pose_local.position.y = node.y;
+  pose_local.position.z = 0;
+  pose_local.orientation = tier4_autoware_utils::createQuaternionFromYaw(node.theta);
+
+  return pose_local;
+}
+
 AstarSearch::TransitionTable createTransitionTable(
   const double minimum_turning_radius, const double maximum_turning_radius,
   const int turning_radius_size, const double theta_size, const bool use_back)
@@ -77,13 +88,13 @@ AstarSearch::TransitionTable createTransitionTable(
   const auto & R_min = minimum_turning_radius;
   const auto & R_max = maximum_turning_radius;
   const double step_min = R_min * dtheta;
-  const double dR = (R_max - R_min) / std::max(turning_radius_size - 1, 1);
+  const double dR = (R_max - R_min) / turning_radius_size;
 
   // NodeUpdate actions
   std::vector<NodeUpdate> forward_node_candidates;
   const NodeUpdate forward_straight{step_min, 0.0, 0.0, step_min, false, false};
   forward_node_candidates.push_back(forward_straight);
-  for (int i = 0; i < turning_radius_size; ++i) {
+  for (int i = 0; i < turning_radius_size + 1; ++i) {
     double R = R_min + i * dR;
     double step = R * dtheta;
     const NodeUpdate forward_left{
@@ -122,8 +133,6 @@ AstarSearch::AstarSearch(
     planner_common_param_.minimum_turning_radius, planner_common_param_.maximum_turning_radius,
     planner_common_param_.turning_radius_size, planner_common_param_.theta_size,
     astar_param_.use_back);
-
-  y_scale_ = planner_common_param.theta_size;
 }
 
 void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
@@ -132,8 +141,17 @@ void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 
   clearNodes();
 
-  x_scale_ = costmap_.info.height;
-  graph_.reserve(100000);
+  const auto height = costmap_.info.height;
+  const auto width = costmap_.info.width;
+
+  // Initialize nodes
+  nodes_.resize(height);
+  for (size_t i = 0; i < height; i++) {
+    nodes_[i].resize(width);
+    for (size_t j = 0; j < width; j++) {
+      nodes_[i][j].resize(planner_common_param_.theta_size);
+    }
+  }
 }
 
 bool AstarSearch::makePlan(
@@ -157,9 +175,8 @@ void AstarSearch::clearNodes()
 {
   // clearing openlist is necessary because otherwise remaining elements of openlist
   // point to deleted node.
+  nodes_.clear();
   openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
-
-  graph_ = std::unordered_map<uint, AstarNode>();
 }
 
 bool AstarSearch::setStartNode()
@@ -343,18 +360,6 @@ bool AstarSearch::isGoal(const AstarNode & node) const
   }
 
   return true;
-}
-
-geometry_msgs::msg::Pose AstarSearch::node2pose(const AstarNode & node) const
-{
-  geometry_msgs::msg::Pose pose_local;
-
-  pose_local.position.x = node.x;
-  pose_local.position.y = node.y;
-  pose_local.position.z = goal_pose_.position.z;
-  pose_local.orientation = tier4_autoware_utils::createQuaternionFromYaw(node.theta);
-
-  return pose_local;
 }
 
 }  // namespace freespace_planning_algorithms

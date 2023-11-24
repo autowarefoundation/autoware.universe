@@ -22,7 +22,7 @@
 namespace raw_vehicle_cmd_converter
 {
 
-bool SteerMap::readSteerMapFromCSV(const std::string & csv_path, const bool validation)
+bool SteerMap::readSteerMapFromCSV(const std::string & csv_path)
 {
   CSVLoader csv(csv_path);
   std::vector<std::vector<std::string>> table;
@@ -35,7 +35,7 @@ bool SteerMap::readSteerMapFromCSV(const std::string & csv_path, const bool vali
   steer_index_ = CSVLoader::getRowIndex(table);
   output_index_ = CSVLoader::getColumnIndex(table);
   steer_map_ = CSVLoader::getMap(table);
-  if (validation && !CSVLoader::validateMap(steer_map_, true)) {
+  if (!CSVLoader::validateMap(steer_map_, false, true)) {
     return false;
   }
   return true;

@@ -14,8 +14,6 @@
 
 #include "lidar_centerpoint/network/tensorrt_wrapper.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
 #include <NvOnnxParser.h>
 
 #include <fstream>
@@ -24,25 +22,17 @@
 
 namespace centerpoint
 {
-TensorRTWrapper::TensorRTWrapper(const CenterPointConfig & config) : config_(config)
+TensorRTWrapper::TensorRTWrapper(const CenterPointConfig & config, const bool verbose)
+: config_(config), logger_(Logger(verbose))
 {
-}
-
-TensorRTWrapper::~TensorRTWrapper()
-{
-  context_.reset();
-  runtime_.reset();
-  plan_.reset();
-  engine_.reset();
 }
 
 bool TensorRTWrapper::init(
   const std::string & onnx_path, const std::string & engine_path, const std::string & precision)
 {
-  runtime_ =
-    tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
+  runtime_ = unique_ptr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
   if (!runtime_) {
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create runtime");
+    std::cout << "Fail to create runtime" << std::endl;
     return false;
   }
 
@@ -61,15 +51,13 @@ bool TensorRTWrapper::init(
 bool TensorRTWrapper::createContext()
 {
   if (!engine_) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("lidar_centerpoint"), "Failed to create context: Engine was not created");
+    std::cout << "Fail to create context: Engine isn't created" << std::endl;
     return false;
   }
 
-  context_ =
-    tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext>(engine_->createExecutionContext());
+  context_ = unique_ptr<nvinfer1::IExecutionContext>(engine_->createExecutionContext());
   if (!context_) {
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create context");
+    std::cout << "Fail to create context" << std::endl;
     return false;
   }
 
@@ -80,17 +68,15 @@ bool TensorRTWrapper::parseONNX(
   const std::string & onnx_path, const std::string & engine_path, const std::string & precision,
   const size_t workspace_size)
 {
-  auto builder =
-    tensorrt_common::TrtUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(logger_));
+  auto builder = unique_ptr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(logger_));
   if (!builder) {
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create builder");
+    std::cout << "Fail to create builder" << std::endl;
     return false;
   }
 
-  auto config =
-    tensorrt_common::TrtUniquePtr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
+  auto config = unique_ptr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
   if (!config) {
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create config");
+    std::cout << "Fail to create config" << std::endl;
     return false;
   }
 #if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8400
@@ -100,46 +86,40 @@ bool TensorRTWrapper::parseONNX(
 #endif
   if (precision == "fp16") {
     if (builder->platformHasFastFp16()) {
-      RCLCPP_INFO(rclcpp::get_logger("lidar_centerpoint"), "Using TensorRT FP16 Inference");
+      std::cout << "use TensorRT FP16 Inference" << std::endl;
       config->setFlag(nvinfer1::BuilderFlag::kFP16);
     } else {
-      RCLCPP_INFO(
-        rclcpp::get_logger("lidar_centerpoint"),
-        "TensorRT FP16 Inference isn't supported in this environment");
+      std::cout << "TensorRT FP16 Inference isn't supported in this environment" << std::endl;
     }
   }
 
   const auto flag =
     1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-  auto network =
-    tensorrt_common::TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(flag));
+  auto network = unique_ptr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(flag));
   if (!network) {
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create network");
+    std::cout << "Fail to create network" << std::endl;
     return false;
   }
 
-  auto parser = tensorrt_common::TrtUniquePtr<nvonnxparser::IParser>(
-    nvonnxparser::createParser(*network, logger_));
+  auto parser = unique_ptr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, logger_));
   parser->parseFromFile(onnx_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR));
 
   if (!setProfile(*builder, *network, *config)) {
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to set profile");
+    std::cout << "Fail to set profile" << std::endl;
     return false;
   }
 
-  RCLCPP_INFO_STREAM(
-    rclcpp::get_logger("lidar_centerpoint"),
-    "Applying optimizations and building TRT CUDA engine (" << onnx_path << ") ...");
-  plan_ = tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory>(
-    builder->buildSerializedNetwork(*network, *config));
+  std::cout << "Applying optimizations and building TRT CUDA engine (" << onnx_path << ") ..."
+            << std::endl;
+  plan_ = unique_ptr<nvinfer1::IHostMemory>(builder->buildSerializedNetwork(*network, *config));
   if (!plan_) {
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create serialized network");
+    std::cout << "Fail to create serialized network" << std::endl;
     return false;
   }
-  engine_ = tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(
+  engine_ = unique_ptr<nvinfer1::ICudaEngine>(
     runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
   if (!engine_) {
-    RCLCPP_ERROR(rclcpp::get_logger("lidar_centerpoint"), "Failed to create engine");
+    std::cout << "Fail to create engine" << std::endl;
     return false;
   }
 
@@ -148,7 +128,7 @@ bool TensorRTWrapper::parseONNX(
 
 bool TensorRTWrapper::saveEngine(const std::string & engine_path)
 {
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("lidar_centerpoint"), "Writing to " << engine_path);
+  std::cout << "Writing to " << engine_path << std::endl;
   std::ofstream file(engine_path, std::ios::out | std::ios::binary);
   file.write(reinterpret_cast<const char *>(plan_->data()), plan_->size());
   return true;
@@ -156,13 +136,22 @@ bool TensorRTWrapper::saveEngine(const std::string & engine_path)
 
 bool TensorRTWrapper::loadEngine(const std::string & engine_path)
 {
-  std::ifstream engine_file(engine_path);
-  std::stringstream engine_buffer;
-  engine_buffer << engine_file.rdbuf();
-  std::string engine_str = engine_buffer.str();
-  engine_ = tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(
-    reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("lidar_centerpoint"), "Loaded engine from " << engine_path);
+  std::ifstream file(engine_path, std::ios::in | std::ios::binary);
+  file.seekg(0, std::ifstream::end);
+  const size_t size = file.tellg();
+  file.seekg(0, std::ifstream::beg);
+
+  std::unique_ptr<char[]> buffer{new char[size]};
+  file.read(buffer.get(), size);
+  file.close();
+
+  if (!runtime_) {
+    std::cout << "Fail to load engine: Runtime isn't created" << std::endl;
+    return false;
+  }
+
+  std::cout << "Loading from " << engine_path << std::endl;
+  engine_ = unique_ptr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(buffer.get(), size));
   return true;
 }
 

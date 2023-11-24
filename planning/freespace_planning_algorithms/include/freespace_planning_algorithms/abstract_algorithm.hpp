@@ -16,7 +16,6 @@
 #define FREESPACE_PLANNING_ALGORITHMS__ABSTRACT_ALGORITHM_HPP_
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -60,21 +59,6 @@ struct VehicleShape
   double length;     // X [m]
   double width;      // Y [m]
   double base2back;  // base_link to rear [m]
-
-  VehicleShape() = default;
-
-  VehicleShape(double length, double width, double base2back)
-  : length(length), width(width), base2back(base2back)
-  {
-  }
-
-  explicit VehicleShape(
-    const vehicle_info_util::VehicleInfo & vehicle_info, const double margin = 0.0)
-  : length(vehicle_info.vehicle_length_m + margin),
-    width(vehicle_info.vehicle_width_m + margin),
-    base2back(vehicle_info.rear_overhang_m + margin / 2.0)
-  {
-  }
 };
 
 struct PlannerCommonParam
@@ -120,14 +104,6 @@ public:
     const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape)
   : planner_common_param_(planner_common_param), collision_vehicle_shape_(collision_vehicle_shape)
   {
-    is_collision_table_initialized = false;
-  }
-
-  AbstractPlanningAlgorithm(
-    const PlannerCommonParam & planner_common_param,
-    const vehicle_info_util::VehicleInfo & vehicle_info, const double margin = 0.0)
-  : planner_common_param_(planner_common_param), collision_vehicle_shape_(vehicle_info, margin)
-  {
   }
 
   virtual void setMap(const nav_msgs::msg::OccupancyGrid & costmap);
@@ -135,13 +111,10 @@ public:
     const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose) = 0;
   virtual bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
-
   virtual ~AbstractPlanningAlgorithm() {}
 
 protected:
-  void computeCollisionIndexes(
-    int theta_index, std::vector<IndexXY> & indexes,
-    std::vector<IndexXY> & vertex_indexes_2d) const;
+  void computeCollisionIndexes(int theta_index, std::vector<IndexXY> & indexes) const;
   bool detectCollision(const IndexXYT & base_index) const;
   inline bool isOutOfRange(const IndexXYT & index) const
   {
@@ -170,18 +143,12 @@ protected:
   // collision indexes cache
   std::vector<std::vector<IndexXY>> coll_indexes_table_;
 
-  // vehicle vertex indexes cache
-  std::vector<std::vector<IndexXY>> vertex_indexes_table_;
-
   // is_obstacle's table
   std::vector<std::vector<bool>> is_obstacle_table_;
 
   // pose in costmap frame
   geometry_msgs::msg::Pose start_pose_;
   geometry_msgs::msg::Pose goal_pose_;
-
-  // Is collision table initalized
-  bool is_collision_table_initialized;
 
   // result path
   PlannerWaypoints waypoints_;

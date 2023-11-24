@@ -57,15 +57,9 @@ ScopedPixelBuffer::ScopedPixelBuffer(Ogre::HardwarePixelBufferSharedPtr pixel_bu
   pixel_buffer_->lock(Ogre::HardwareBuffer::HBL_NORMAL);
 }
 
-ScopedPixelBuffer::~ScopedPixelBuffer()
-{
-  pixel_buffer_->unlock();
-}
+ScopedPixelBuffer::~ScopedPixelBuffer() { pixel_buffer_->unlock(); }
 
-Ogre::HardwarePixelBufferSharedPtr ScopedPixelBuffer::getPixelBuffer()
-{
-  return pixel_buffer_;
-}
+Ogre::HardwarePixelBufferSharedPtr ScopedPixelBuffer::getPixelBuffer() { return pixel_buffer_; }
 
 QImage ScopedPixelBuffer::getQImage(unsigned int width, unsigned int height)
 {
@@ -125,10 +119,7 @@ OverlayObject::~OverlayObject()
   // delete overlay_;
 }
 
-std::string OverlayObject::getName()
-{
-  return name_;
-}
+std::string OverlayObject::getName() { return name_; }
 
 void OverlayObject::hide()
 {
@@ -144,10 +135,7 @@ void OverlayObject::show()
   }
 }
 
-bool OverlayObject::isTextureReady()
-{
-  return static_cast<bool>(texture_);
-}
+bool OverlayObject::isTextureReady() { return static_cast<bool>(texture_); }
 
 void OverlayObject::updateTextureSize(unsigned int width, unsigned int height)
 {
@@ -189,20 +177,14 @@ ScopedPixelBuffer OverlayObject::getBuffer()
   }
 }
 
-void OverlayObject::setPosition(double left, double top)
-{
-  panel_->setPosition(left, top);
-}
+void OverlayObject::setPosition(double left, double top) { panel_->setPosition(left, top); }
 
 void OverlayObject::setDimensions(double width, double height)
 {
   panel_->setDimensions(width, height);
 }
 
-bool OverlayObject::isVisible()
-{
-  return overlay_->isVisible();
-}
+bool OverlayObject::isVisible() { return overlay_->isVisible(); }
 
 unsigned int OverlayObject::getTextureWidth()
 {

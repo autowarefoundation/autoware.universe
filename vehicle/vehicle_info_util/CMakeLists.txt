@@ -5,7 +5,6 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(vehicle_info_util SHARED
-  src/vehicle_info.cpp
   src/vehicle_info_util.cpp
 )
 

@@ -55,11 +55,11 @@ public:
 
 protected:
   rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
-  Odometry::ConstSharedPtr odometry_ptr_;
+  Odometry::SharedPtr odometry_ptr_;
 
 private:
   static constexpr double velocity_buffer_time_sec = 10.0;
-  void onOdom(const Odometry::ConstSharedPtr msg);
+  void onOdom(const Odometry::SharedPtr msg);
 };
 
 class VehicleArrivalChecker : public VehicleStopChecker
@@ -74,9 +74,9 @@ private:
 
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
 
-  Trajectory::ConstSharedPtr trajectory_ptr_;
+  Trajectory::SharedPtr trajectory_ptr_;
 
-  void onTrajectory(const Trajectory::ConstSharedPtr msg);
+  void onTrajectory(const Trajectory::SharedPtr msg);
 };
 }  // namespace motion_utils
 

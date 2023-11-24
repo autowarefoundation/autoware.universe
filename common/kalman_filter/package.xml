@@ -12,15 +12,11 @@
   <author email="takamasa.horibe@tier4.jp">Takamasa Horibe</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-  <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <build_depend>eigen</build_depend>
-  <build_depend>eigen3_cmake_module</build_depend>
+  <build_depend>autoware_cmake</build_depend>
 
   <test_depend>ament_cmake_cppcheck</test_depend>
-  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>autoware_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

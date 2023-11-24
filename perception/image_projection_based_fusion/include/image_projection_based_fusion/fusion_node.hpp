@@ -29,9 +29,6 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -43,8 +40,6 @@
 #include <utility>
 #include <vector>
 
-// cspell: ignore minx, maxx, miny, maxy, minz, maxz
-
 namespace image_projection_based_fusion
 {
 using autoware_auto_perception_msgs::msg::DetectedObject;
@@ -52,8 +47,6 @@ using autoware_auto_perception_msgs::msg::DetectedObjects;
 using sensor_msgs::msg::PointCloud2;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
-using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-using autoware_auto_perception_msgs::msg::ObjectClassification;
 
 template <class Msg, class ObjType>
 class FusionNode : public rclcpp::Node
@@ -89,7 +82,7 @@ protected:
   // set args if you need
   virtual void postprocess(Msg & output_msg);
 
-  virtual void publish(const Msg & output_msg);
+  void publish(const Msg & output_msg);
 
   void timer_callback();
   void setPeriod(const int64_t new_period);
@@ -105,20 +98,18 @@ protected:
   rclcpp::TimerBase::SharedPtr timer_;
   double timeout_ms_{};
   double match_threshold_ms_{};
-  std::vector<std::string> input_rois_topics_;
-  std::vector<std::string> input_camera_info_topics_;
-  std::vector<std::string> input_camera_topics_;
 
   /** \brief A vector of subscriber. */
   typename rclcpp::Subscription<Msg>::SharedPtr sub_;
   std::vector<rclcpp::Subscription<DetectedObjectsWithFeature>::SharedPtr> rois_subs_;
 
-  // offsets between cameras and the lidars
+  /** \brief Input point cloud topics. */
+  std::vector<std::string> input_topics_;
   std::vector<double> input_offset_ms_;
 
   // cache for fusion
   std::vector<bool> is_fused_;
-  std::pair<int64_t, typename Msg::SharedPtr> sub_std_pair_;
+  std::pair<int64_t, typename Msg::SharedPtr> sub_stdpair_;
   std::vector<std::map<int64_t, DetectedObjectsWithFeature::ConstSharedPtr>> roi_stdmap_;
   std::mutex mutex_;
 
@@ -128,7 +119,6 @@ protected:
   // debugger
   std::shared_ptr<Debugger> debugger_;
   virtual bool out_of_scope(const ObjType & obj) = 0;
-  // cspell: ignore minx, maxx, miny, maxy, minz, maxz
   float filter_scope_minx_;
   float filter_scope_maxx_;
   float filter_scope_miny_;

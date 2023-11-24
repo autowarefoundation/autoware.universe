@@ -16,7 +16,8 @@
 #define RADAR_FUSION_TO_DETECTED_OBJECT_HPP_
 
 #include "rclcpp/logger.hpp"
-#include "tier4_autoware_utils/geometry/boost_geometry.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>

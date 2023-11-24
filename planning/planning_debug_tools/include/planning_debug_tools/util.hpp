@@ -18,6 +18,7 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
@@ -35,31 +36,13 @@ using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getRPY;
 
-double getVelocity(const PathPoint & p)
-{
-  return p.longitudinal_velocity_mps;
-}
-double getVelocity(const PathPointWithLaneId & p)
-{
-  return p.point.longitudinal_velocity_mps;
-}
-double getVelocity(const TrajectoryPoint & p)
-{
-  return p.longitudinal_velocity_mps;
-}
+double getVelocity(const PathPoint & p) { return p.longitudinal_velocity_mps; }
+double getVelocity(const PathPointWithLaneId & p) { return p.point.longitudinal_velocity_mps; }
+double getVelocity(const TrajectoryPoint & p) { return p.longitudinal_velocity_mps; }
 
-double getYaw(const PathPoint & p)
-{
-  return getRPY(p.pose.orientation).z;
-}
-double getYaw(const PathPointWithLaneId & p)
-{
-  return getRPY(p.point.pose.orientation).z;
-}
-double getYaw(const TrajectoryPoint & p)
-{
-  return getRPY(p.pose.orientation).z;
-}
+double getYaw(const PathPoint & p) { return getRPY(p.pose.orientation).z; }
+double getYaw(const PathPointWithLaneId & p) { return getRPY(p.point.pose.orientation).z; }
+double getYaw(const TrajectoryPoint & p) { return getRPY(p.pose.orientation).z; }
 
 template <class T>
 inline std::vector<double> getYawArray(const T & points)
@@ -129,6 +112,21 @@ std::vector<double> calcPathArcLengthArray(const T & points, const double offset
     out.push_back(sum);
   }
   return out;
+}
+
+template <class T>
+inline std::vector<double> calcCurvature(const T & points)
+{
+  std::vector<double> curvature_arr;
+  curvature_arr.push_back(0.0);
+  for (size_t i = 1; i < points.size() - 1; ++i) {
+    const auto p1 = getPoint(points.at(i - 1));
+    const auto p2 = getPoint(points.at(i));
+    const auto p3 = getPoint(points.at(i + 1));
+    curvature_arr.push_back(tier4_autoware_utils::calcCurvature(p1, p2, p3));
+  }
+  curvature_arr.push_back(0.0);
+  return curvature_arr;
 }
 
 }  // namespace planning_debug_tools

@@ -18,7 +18,6 @@
 #define TEST_BOUNDING_BOX_HPP_
 
 #include "geometry/bounding_box/lfit.hpp"
-// cspell: ignore lfit
 #include "geometry/bounding_box/rotating_calipers.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
@@ -53,8 +52,6 @@ protected:
     box = autoware::common::geometry::bounding_box::minimum_perimeter_bounding_box(points);
     // apex_test_tools::memory_test::stop();
   }
-
-  // cspell: ignore eigenbox
   template <typename IT>
   void eigenbox(const IT begin, const IT end)
   {
@@ -131,7 +128,7 @@ using PointTypesBoundingBox =
 TYPED_TEST_SUITE(BoxTest, PointTypesBoundingBox, );
 /// NOTE: This is the older version due to 1.8.0 of GTest. v1.8.1 uses TYPED_TEST_SUITE
 
-// TODO(c.ho) consider typed and parameterized tests:
+// TODO(c.ho) consider typed and paremterized tests:
 // https://stackoverflow.com/questions/3258230/passing-a-typename-and-string-to-parameterized-test-using-google-test
 
 ///////////////////////////////////////////
@@ -336,7 +333,7 @@ TYPED_TEST(BoxTest, Line3)
     /_/ <-- first guess is suboptimal
 
 */
-TYPED_TEST(BoxTest, SuboptimalInit)
+TYPED_TEST(BoxTest, SuboptInit)
 {
   this->points.insert(
     this->points.begin(),

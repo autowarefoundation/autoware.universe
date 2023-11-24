@@ -15,7 +15,6 @@
 #include <object_detection/predicted_objects_display.hpp>
 
 #include <memory>
-#include <set>
 
 namespace autoware
 {
@@ -25,44 +24,27 @@ namespace object_detection
 {
 PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
 {
-  max_num_threads = 1;  // hard code the number of threads to be created
-
-  for (int ii = 0; ii < max_num_threads; ++ii) {
-    threads.emplace_back(std::thread(&PredictedObjectsDisplay::workerThread, this));
-  }
+  std::thread worker(&PredictedObjectsDisplay::workerThread, this);
+  worker.detach();
 }
 
 void PredictedObjectsDisplay::workerThread()
-{  // A standard working thread that waiting for jobs
-  while (true) {
-    std::function<void()> job;
-    {
-      std::unique_lock<std::mutex> lock(queue_mutex);
-      condition.wait(lock, [this] { return !jobs.empty() || should_terminate; });
-      if (should_terminate) {
-        return;
-      }
-      job = jobs.front();
-      jobs.pop();
-    }
-    job();
-  }
-}
-
-void PredictedObjectsDisplay::messageProcessorThreadJob()
 {
-  // Receiving
-  std::unique_lock<std::mutex> lock(mutex);
-  auto tmp_msg = this->msg;
-  this->msg.reset();
-  lock.unlock();
+  while (true) {
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [this] { return this->msg; });
 
-  auto tmp_markers = createMarkers(tmp_msg);
+    auto tmp_msg = this->msg;
+    this->msg.reset();
 
-  lock.lock();
-  markers = tmp_markers;
+    lock.unlock();
 
-  consumed = true;
+    auto tmp_markers = createMarkers(tmp_msg);
+    lock.lock();
+    markers = tmp_markers;
+
+    consumed = true;
+  }
 }
 
 std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay::createMarkers(
@@ -148,7 +130,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
       auto acceleration_text_marker_ptr = acceleration_text_marker.value();
       acceleration_text_marker_ptr->header = msg->header;
       acceleration_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(acceleration_text_marker_ptr);
+      add_marker(acceleration_text_marker_ptr);
     }
 
     // Get marker for twist
@@ -205,7 +187,7 @@ void PredictedObjectsDisplay::processMessage(PredictedObjects::ConstSharedPtr ms
   std::unique_lock<std::mutex> lock(mutex);
 
   this->msg = msg;
-  queueJob(std::bind(&PredictedObjectsDisplay::messageProcessorThreadJob, this));
+  condition.notify_one();
 }
 
 void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
@@ -213,19 +195,11 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
   std::unique_lock<std::mutex> lock(mutex);
 
   if (!markers.empty()) {
-    std::set new_marker_ids = std::set<rviz_default_plugins::displays::MarkerID>();
+    clear_markers();
+
     for (const auto & marker : markers) {
-      rviz_default_plugins::displays::MarkerID marker_id =
-        rviz_default_plugins::displays::MarkerID(marker->ns, marker->id);
       add_marker(marker);
-      new_marker_ids.insert(marker_id);
     }
-    for (auto itr = existing_marker_ids.begin(); itr != existing_marker_ids.end(); itr++) {
-      if (new_marker_ids.find(*itr) == new_marker_ids.end()) {
-        deleteMarker(*itr);
-      }
-    }
-    existing_marker_ids = new_marker_ids;
 
     markers.clear();
   }

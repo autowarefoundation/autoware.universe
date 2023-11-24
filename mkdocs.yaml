@@ -1,9 +1,9 @@
 site_name: Autoware Universe Documentation
 site_url: https://autowarefoundation.github.io/autoware.universe
 repo_url: https://github.com/autowarefoundation/autoware.universe
-edit_uri: https://github.com/autowarefoundation/autoware.universe/edit/main/
+edit_uri: edit/main/
 docs_dir: .
-copyright: Copyright &copy; 2023 The Autoware Foundation
+copyright: Copyright &copy; 2022 The Autoware Foundation
 
 theme:
   name: material
@@ -15,7 +15,6 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
-    - navigation.footer
   favicon: docs/assets/images/autoware-foundation.png
   icon:
     logo: fontawesome/solid/car
@@ -45,9 +44,7 @@ extra_css:
   - https://use.fontawesome.com/releases/v5.15.4/css/all.css
 
 extra_javascript:
-  - docs/assets/js/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 
 plugins:
   - awesome-pages
@@ -55,14 +52,11 @@ plugins:
       regex:
         - ^(?!(.*/)?assets/).*\.(?!(.*\.)?md|(.*\.)?svg|(.*\.)?png|(.*\.)?gif|(.*\.)?jpg).*$
         - ^(.*/)?[^.]*$
-  - macros:
-      module_name: mkdocs_macros
-  - mkdocs-video
+  - macros
   - same-dir
   - search
 
 markdown_extensions:
-  - abbr
   - admonition
   - attr_list
   - codehilite:
@@ -76,16 +70,8 @@ markdown_extensions:
   - plantuml_markdown:
       server: http://www.plantuml.com/plantuml
       format: svg
-  - pymdownx.arithmatex:
-      generic: true
-  - pymdownx.details
-  - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.arithmatex
   - pymdownx.highlight
-  - pymdownx.snippets:
-      auto_append:
-        - includes/abbreviations.md
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -93,4 +79,3 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
   - toc:
       permalink: "#"
-      toc_depth: 3

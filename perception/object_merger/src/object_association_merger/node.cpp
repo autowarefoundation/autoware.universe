@@ -15,8 +15,8 @@
 #include "object_association_merger/node.hpp"
 
 #include "object_association_merger/utils/utils.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "perception_utils/perception_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <boost/optional.hpp>
 
@@ -35,22 +35,18 @@ bool isUnknownObjectOverlapped(
   const autoware_auto_perception_msgs::msg::DetectedObject & unknown_object,
   const autoware_auto_perception_msgs::msg::DetectedObject & known_object,
   const double precision_threshold, const double recall_threshold,
-  std::map<int, double> distance_threshold_map,
-  const std::map<int, double> generalized_iou_threshold_map)
+  std::map<int, double> distance_threshold_map, const double generalized_iou_threshold)
 {
-  const double generalized_iou_threshold = generalized_iou_threshold_map.at(
-    object_recognition_utils::getHighestProbLabel(known_object.classification));
-  const double distance_threshold = distance_threshold_map.at(
-    object_recognition_utils::getHighestProbLabel(known_object.classification));
+  const double distance_threshold =
+    distance_threshold_map.at(perception_utils::getHighestProbLabel(known_object.classification));
   const double sq_distance_threshold = std::pow(distance_threshold, 2.0);
   const double sq_distance = tier4_autoware_utils::calcSquaredDistance2d(
     unknown_object.kinematics.pose_with_covariance.pose,
     known_object.kinematics.pose_with_covariance.pose);
   if (sq_distance_threshold < sq_distance) return false;
-  const auto precision = object_recognition_utils::get2dPrecision(unknown_object, known_object);
-  const auto recall = object_recognition_utils::get2dRecall(unknown_object, known_object);
-  const auto generalized_iou =
-    object_recognition_utils::get2dGeneralizedIoU(unknown_object, known_object);
+  const auto precision = perception_utils::get2dPrecision(unknown_object, known_object);
+  const auto recall = perception_utils::get2dRecall(unknown_object, known_object);
+  const auto generalized_iou = perception_utils::get2dGeneralizedIoU(unknown_object, known_object);
   return precision > precision_threshold || recall > recall_threshold ||
          generalized_iou > generalized_iou_threshold;
 }
@@ -77,13 +73,20 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
   object0_sub_(this, "input/object0", rclcpp::QoS{1}.get_rmw_qos_profile()),
-  object1_sub_(this, "input/object1", rclcpp::QoS{1}.get_rmw_qos_profile())
+  object1_sub_(this, "input/object1", rclcpp::QoS{1}.get_rmw_qos_profile()),
+  sync_(SyncPolicy(10), object0_sub_, object1_sub_)
 {
+  // Create publishers and subscribers
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  sync_.registerCallback(std::bind(&ObjectAssociationMergerNode::objectsCallback, this, _1, _2));
+  merged_object_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+    "output/object", rclcpp::QoS{1});
+
   // Parameters
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
   priority_mode_ = static_cast<PriorityMode>(
     declare_parameter<int>("priority_mode", static_cast<int>(PriorityMode::Confidence)));
-  sync_queue_size_ = declare_parameter<int>("sync_queue_size", 20);
   remove_overlapped_unknown_objects_ =
     declare_parameter<bool>("remove_overlapped_unknown_objects", true);
   overlapped_judge_param_.precision_threshold =
@@ -91,7 +94,7 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
   overlapped_judge_param_.recall_threshold =
     declare_parameter<double>("recall_threshold_to_judge_overlapped", 0.5);
   overlapped_judge_param_.generalized_iou_threshold =
-    convertListToClassMap(declare_parameter<std::vector<double>>("generalized_iou_threshold"));
+    declare_parameter<double>("generalized_iou_threshold");
 
   // get distance_threshold_map from distance_threshold_list
   /** TODO(Shin-kyoto):
@@ -108,16 +111,6 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
   const auto min_iou_matrix = this->declare_parameter<std::vector<double>>("min_iou_matrix");
   data_association_ = std::make_unique<DataAssociation>(
     can_assign_matrix, max_dist_matrix, max_rad_matrix, min_iou_matrix);
-
-  // Create publishers and subscribers
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-  sync_ptr_ = std::make_shared<Sync>(SyncPolicy(sync_queue_size_), object0_sub_, object1_sub_);
-  sync_ptr_->registerCallback(
-    std::bind(&ObjectAssociationMergerNode::objectsCallback, this, _1, _2));
-
-  merged_object_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
-    "output/object", rclcpp::QoS{1});
 }
 
 void ObjectAssociationMergerNode::objectsCallback(
@@ -132,9 +125,9 @@ void ObjectAssociationMergerNode::objectsCallback(
   /* transform to base_link coordinate */
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects0, transformed_objects1;
   if (
-    !object_recognition_utils::transformObjects(
+    !perception_utils::transformObjects(
       *input_objects0_msg, base_link_frame_id_, tf_buffer_, transformed_objects0) ||
-    !object_recognition_utils::transformObjects(
+    !perception_utils::transformObjects(
       *input_objects1_msg, base_link_frame_id_, tf_buffer_, transformed_objects1)) {
     return;
   }
@@ -187,7 +180,7 @@ void ObjectAssociationMergerNode::objectsCallback(
     unknown_objects.reserve(output_msg.objects.size());
     known_objects.reserve(output_msg.objects.size());
     for (const auto & object : output_msg.objects) {
-      if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+      if (perception_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
         unknown_objects.push_back(object);
       } else {
         known_objects.push_back(object);

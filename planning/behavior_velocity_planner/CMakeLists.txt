@@ -2,45 +2,85 @@ cmake_minimum_required(VERSION 3.14)
 project(behavior_velocity_planner)
 
 find_package(autoware_cmake REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-
-rosidl_generate_interfaces(
-  ${PROJECT_NAME}
-  "srv/LoadPlugin.srv"
-  "srv/UnloadPlugin.srv"
-  DEPENDENCIES
-)
-
 autoware_package()
 
-ament_auto_add_library(${PROJECT_NAME}_lib SHARED
+# Find the non-obvious packages manually
+find_package(Boost REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common filters)
+find_package(OpenCV REQUIRED)
+
+set(scene_modules
+  detection_area
+  blind_spot
+  stop_line
+  crosswalk
+  traffic_light
+  intersection
+  no_stopping_area
+  virtual_traffic_light
+  occlusion_spot
+  run_out
+)
+
+foreach(scene_module IN LISTS scene_modules)
+  file(GLOB_RECURSE scene_module_src "src/scene_module/${scene_module}/*")
+  list(APPEND scene_modules_src ${scene_module_src})
+endforeach()
+
+ament_auto_add_library(behavior_velocity_planner SHARED
   src/node.cpp
   src/planner_manager.cpp
+  src/utilization/path_utilization.cpp
+  src/utilization/util.cpp
+  src/utilization/debug.cpp
+  ${scene_modules_src}
 )
 
-rclcpp_components_register_node(${PROJECT_NAME}_lib
+target_include_directories(behavior_velocity_planner
+  SYSTEM PUBLIC
+    ${BOOST_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    ${tf2_geometry_msgs_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+)
+
+ament_target_dependencies(behavior_velocity_planner
+  Boost
+  Eigen3
+  PCL
+)
+
+target_link_libraries(behavior_velocity_planner ${PCL_LIBRARIES})
+
+rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTABLE behavior_velocity_planner_node
 )
-
-if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
-    rosidl_target_interfaces(${PROJECT_NAME}_lib
-    ${PROJECT_NAME} "rosidl_typesupport_cpp")
-else()
-    rosidl_get_typesupport_target(
-            cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
-    target_link_libraries(${PROJECT_NAME}_lib "${cpp_typesupport_target}")
-endif()
 
 if(BUILD_TESTING)
-  ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-    test/src/test_node_interface.cpp
+  # Gtest for utilization
+  ament_add_ros_isolated_gtest(utilization-test
+    test/src/test_state_machine.cpp
+    test/src/test_arc_lane_util.cpp
+    test/src/test_utilization.cpp
   )
-  target_link_libraries(test_${PROJECT_NAME}
+  target_link_libraries(utilization-test
     gtest_main
-    ${PROJECT_NAME}_lib
+    behavior_velocity_planner
   )
-  target_include_directories(test_${PROJECT_NAME} PRIVATE src)
+
+  # Gtest for occlusion spot
+  ament_add_ros_isolated_gtest(occlusion_spot-test
+    test/src/test_occlusion_spot_utils.cpp
+    test/src/test_risk_predictive_braking.cpp
+    test/src/test_grid_utils.cpp
+  )
+  target_link_libraries(occlusion_spot-test
+    gtest_main
+    behavior_velocity_planner
+  )
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE

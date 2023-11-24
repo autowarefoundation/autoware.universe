@@ -45,14 +45,14 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   param_.wheelbase_ = vehicle_info.wheel_base_m;
 
   // Node Parameters.
-  param_.curvature_interval_length_ = declare_parameter<double>("curvature_interval_length");
-  param_.prevent_zero_division_value_ = declare_parameter<double>("prevent_zero_division_value");
-  param_.odom_interval_ = declare_parameter<int64_t>("odom_interval");
+  param_.curvature_interval_length_ = declare_parameter("curvature_interval_length", 10.0);
+  param_.prevent_zero_division_value_ = declare_parameter("prevent_zero_division_value", 0.001);
+  param_.odom_interval_ = declare_parameter("odom_interval", 2);
   param_.acceptable_max_distance_to_waypoint_ =
-    declare_parameter<double>("acceptable_max_distance_to_waypoint");
+    declare_parameter("acceptable_max_distance_to_waypoint", 1.5);
   param_.acceptable_max_yaw_difference_rad_ =
-    declare_parameter<double>("acceptable_max_yaw_difference_rad");
-  param_.lpf_gain_ = declare_parameter<double>("low_pass_filter_gain");
+    declare_parameter("acceptable_max_yaw_difference_rad", 1.0472);
+  param_.lpf_gain_ = declare_parameter("low_pass_filter_gain", 0.8);
 
   // Prepare error computation class with the wheelbase parameter.
   control_performance_core_ptr_ = std::make_unique<ControlPerformanceAnalysisCore>(param_);
@@ -76,6 +76,9 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   pub_error_msg_ = create_publisher<ErrorStamped>("~/output/error_stamped", 1);
 
   pub_driving_msg_ = create_publisher<DrivingMonitorStamped>("~/output/driving_status_stamped", 1);
+
+  // Wait for first self pose
+  self_pose_listener_.waitForFirstPose();
 }
 
 void ControlPerformanceAnalysisNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
@@ -96,39 +99,67 @@ void ControlPerformanceAnalysisNode::onTrajectory(const Trajectory::ConstSharedP
 void ControlPerformanceAnalysisNode::onControlRaw(
   const AckermannControlCommand::ConstSharedPtr control_msg)
 {
-  if (last_control_cmd_) {
-    const rclcpp::Duration & duration =
-      (rclcpp::Time(control_msg->stamp) - rclcpp::Time(last_control_cmd_->stamp));
-    d_control_cmd_ = duration.seconds() * 1000;  // ms
-  }
+  static bool initialized = false;
+  if (!control_msg) {
+    RCLCPP_ERROR(get_logger(), "control command has not been received yet ...");
 
-  last_control_cmd_ = current_control_msg_ptr_;
-  current_control_msg_ptr_ = control_msg;
+    return;
+  } else if (!initialized) {
+    initialized = true;
+    current_control_msg_ptr_ = control_msg;
+    last_control_cmd_.stamp = current_control_msg_ptr_->stamp;
+
+  } else {
+    current_control_msg_ptr_ = control_msg;
+    const rclcpp::Duration & duration =
+      (rclcpp::Time(current_control_msg_ptr_->stamp) - rclcpp::Time(last_control_cmd_.stamp));
+    d_control_cmd_ = duration.seconds() * 1000;  // ms
+    last_control_cmd_.stamp = current_control_msg_ptr_->stamp;
+  }
 }
 
 void ControlPerformanceAnalysisNode::onVecSteeringMeasured(
   const SteeringReport::ConstSharedPtr meas_steer_msg)
 {
+  if (!meas_steer_msg) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting for vehicle measured steering message ...");
+    return;
+  }
   current_vec_steering_msg_ptr_ = meas_steer_msg;
 }
 
 void ControlPerformanceAnalysisNode::onVelocity(const Odometry::ConstSharedPtr msg)
 {
-  current_odom_ptr_ = msg;
-
   // Sent previous state to error calculation because we need to calculate current acceleration.
-  control_performance_core_ptr_->setOdomHistory(*current_odom_ptr_);  // k+1, k, k-1
 
-  if (!isDataReady()) {
+  if (!current_odom_ptr_) {
+    if (isDataReady()) {
+      current_odom_ptr_ = msg;
+      current_pose_ = self_pose_listener_.getCurrentPose();
+      control_performance_core_ptr_->setOdomHistory(*current_odom_ptr_);
+      prev_traj = *current_trajectory_ptr_;
+      prev_cmd = *current_control_msg_ptr_;
+      prev_steering = *current_vec_steering_msg_ptr_;
+    }
     return;
   }
 
-  control_performance_core_ptr_->setCurrentWaypoints(*current_trajectory_ptr_);
-  control_performance_core_ptr_->setCurrentPose(current_odom_ptr_->pose.pose);
-  control_performance_core_ptr_->setCurrentControlValue(*current_control_msg_ptr_);
-  control_performance_core_ptr_->setSteeringStatus(*current_vec_steering_msg_ptr_);
+  control_performance_core_ptr_->setCurrentWaypoints(prev_traj);
+  control_performance_core_ptr_->setCurrentPose(current_pose_->pose);
+  control_performance_core_ptr_->setCurrentControlValue(prev_cmd);
+  control_performance_core_ptr_->setOdomHistory(*msg);  // k+1, k, k-1
+  control_performance_core_ptr_->setSteeringStatus(prev_steering);
 
   if (!control_performance_core_ptr_->isDataReady()) {
+    return;
+  }
+  // Find the index of the next waypoint.
+  const std::pair<bool, int32_t> & prev_closest_wp_pose_idx =
+    control_performance_core_ptr_->findClosestPrevWayPointIdx_path_direction();
+
+  if (!prev_closest_wp_pose_idx.first) {
+    RCLCPP_ERROR(get_logger(), "Cannot find closest waypoint");
     return;
   }
 
@@ -139,13 +170,19 @@ void ControlPerformanceAnalysisNode::onVelocity(const Odometry::ConstSharedPtr m
     RCLCPP_ERROR(get_logger(), "Cannot compute error vars ...");
   }
   if (control_performance_core_ptr_->calculateDrivingVars()) {
-    auto & status_vars = control_performance_core_ptr_->driving_status_vars;
-    status_vars.controller_processing_time.header.stamp = current_control_msg_ptr_->stamp;
-    status_vars.controller_processing_time.data = d_control_cmd_;
-    pub_driving_msg_->publish(status_vars);
+    control_performance_core_ptr_->driving_status_vars.controller_processing_time.header.stamp =
+      current_control_msg_ptr_->stamp;
+    control_performance_core_ptr_->driving_status_vars.controller_processing_time.data =
+      d_control_cmd_;
+    pub_driving_msg_->publish(control_performance_core_ptr_->driving_status_vars);
   } else {
     RCLCPP_ERROR(get_logger(), "Cannot compute driving vars ...");
   }
+  prev_traj = *current_trajectory_ptr_;
+  prev_cmd = *current_control_msg_ptr_;
+  prev_steering = *current_vec_steering_msg_ptr_;
+  current_odom_ptr_ = msg;
+  current_pose_ = self_pose_listener_.getCurrentPose();
 }
 
 bool ControlPerformanceAnalysisNode::isDataReady() const
@@ -159,11 +196,6 @@ bool ControlPerformanceAnalysisNode::isDataReady() const
 
   if (!current_control_msg_ptr_) {
     RCLCPP_WARN_THROTTLE(get_logger(), clock, 1000, "waiting for current_control_cmd ...");
-    return false;
-  }
-
-  if (!current_vec_steering_msg_ptr_) {
-    RCLCPP_WARN_THROTTLE(get_logger(), clock, 1000, "waiting for current steering ...");
     return false;
   }
 

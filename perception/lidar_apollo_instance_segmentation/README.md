@@ -9,7 +9,7 @@ based on CNN based model and obstacle clustering method.
 
 ## Inner-workings / Algorithms
 
-See the [original design](https://github.com/ApolloAuto/apollo/blob/r6.0.0/docs/specs/3d_obstacle_perception.md) by Apollo.
+See the [original design](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/3d_obstacle_perception.md) by Apollo.
 
 ## Inputs / Outputs
 
@@ -68,7 +68,7 @@ Original URL
 
 Supported lidars are velodyne 16, 64 and 128, but you can also use velodyne 32 and other lidars with good accuracy.
 
-1. [apollo 3D Obstacle Perception description](https://github.com/ApolloAuto/apollo/blob/r7.0.0/docs/specs/3d_obstacle_perception.md)
+1. [apollo 3D Obstacle Perception description](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/3d_obstacle_perception.md)
 
    ```txt
    /******************************************************************************
@@ -140,4 +140,4 @@ Supported lidars are velodyne 16, 64 and 128, but you can also use velodyne 32 a
 - [Apollo Project](https://github.com/ApolloAuto/apollo)
 - [lewes6369](https://github.com/lewes6369)
 - [Autoware Foundation](https://github.com/autowarefoundation/autoware)
-- [Kosuke Takeuchi](https://github.com/kosuke55) (TIER IV)
+- [Kosuke Takeuchi](https://github.com/kosuke55) (TierIV Part timer)

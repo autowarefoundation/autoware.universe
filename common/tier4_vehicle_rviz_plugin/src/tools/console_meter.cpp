@@ -150,11 +150,7 @@ void ConsoleMeterDisplay::update(float wall_dt, float ros_dt)
   font.setBold(true);
   painter.setFont(font);
   std::ostringstream velocity_ss;
-  if (last_msg_ptr_) {
-    velocity_ss << std::fixed << std::setprecision(2) << linear_x * 3.6 << "km/h";
-  } else {
-    velocity_ss << "Not received";
-  }
+  velocity_ss << std::fixed << std::setprecision(2) << linear_x * 3.6 << "km/h";
   painter.drawText(
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
     std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignVCenter,

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 TIER IV, Inc.
+// Copyright 2020 TierIV
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__DEBUGGER_HPP_
-#define LIDAR_APOLLO_INSTANCE_SEGMENTATION__DEBUGGER_HPP_
+#pragma once
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
-namespace lidar_apollo_instance_segmentation
-{
 class Debugger
 {
 public:
@@ -32,6 +29,3 @@ public:
 private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr instance_pointcloud_pub_;
 };
-}  // namespace lidar_apollo_instance_segmentation
-
-#endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__DEBUGGER_HPP_

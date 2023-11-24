@@ -10,11 +10,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/localization.cpp
   src/motion.cpp
   src/operation_mode.cpp
-  src/perception.cpp
-  src/planning.cpp
   src/routing.cpp
-  src/vehicle.cpp
-  src/vehicle_info.cpp
   src/utils/route_conversion.cpp
   src/compatibility/autoware_state.cpp
 )
@@ -26,11 +22,7 @@ rclcpp_components_register_nodes(${PROJECT_NAME}
   "default_ad_api::LocalizationNode"
   "default_ad_api::MotionNode"
   "default_ad_api::OperationModeNode"
-  "default_ad_api::PerceptionNode"
-  "default_ad_api::PlanningNode"
   "default_ad_api::RoutingNode"
-  "default_ad_api::VehicleNode"
-  "default_ad_api::VehicleInfoNode"
 )
 
 if(BUILD_TESTING)
@@ -38,8 +30,8 @@ if(BUILD_TESTING)
 endif()
 
 install(
-  PROGRAMS script/web_server.py script/guide.py
+  PROGRAMS script/web_server.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
-ament_auto_package(INSTALL_TO_SHARE config launch test)
+ament_auto_package(INSTALL_TO_SHARE launch test)

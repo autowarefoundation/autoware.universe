@@ -69,7 +69,7 @@ grid_map::GridMap convertToGridMap(const OccupancyGrid & occupancy_grid)
   return grid_map;
 }
 
-multi_linestring_t extractObstacles(
+multilinestring_t extractObstacles(
   const grid_map::GridMap & grid_map, const OccupancyGrid & occupancy_grid)
 {
   cv::Mat cv_image;
@@ -78,7 +78,7 @@ multi_linestring_t extractObstacles(
   cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(cv_image, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-  multi_linestring_t obstacles;
+  multilinestring_t obstacles;
   const auto & info = occupancy_grid.info;
   for (const auto & contour : contours) {
     linestring_t line;

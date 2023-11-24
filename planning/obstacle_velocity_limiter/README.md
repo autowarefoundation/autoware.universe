@@ -21,7 +21,7 @@ If the footprint collides with some obstacle, the velocity at the trajectory poi
 
 The motion of the ego vehicle is simulated at each trajectory point using the `heading`, `velocity`, and `steering` defined at the point.
 Footprints are then constructed from these simulations and checked for collision.
-If a collision is found, the distance from the trajectory point is used to calculate the adjusted velocity that would produce a collision-free footprint. Parameter `simulation.distance_method` allow to switch between an exact distance calculation and a less expensive approximation using a simple euclidean distance.
+If a collision is found, the distance from the trajectory point is used to calculate the adjusted velocity that would produce a collision-free footprint. Parameter `simulation.distance_method` allow to switch between an exact distance calculation and a less expensive approximation using a simple euclidian distance.
 
 Two models can be selected with parameter `simulation.model` for simulating the motion of the vehicle: a simple particle model and a more complicated bicycle model.
 
@@ -127,7 +127,7 @@ If a collision is found, the velocity at the trajectory point is adjusted such t
 $velocity = \frac{dist\_to\_collision}{min\_ttc}$
 
 To prevent sudden deceleration of the ego vehicle, the parameter `max_deceleration` limits the deceleration relative to the current ego velocity.
-For a trajectory point occurring at a duration `t` in the future (calculated from the original velocity profile),
+For a trajectory point occuring at a duration `t` in the future (calculated from the original velocity profile),
 the adjusted velocity cannot be set lower than $v_{current} - t * max\_deceleration$.
 
 Furthermore, a parameter `min_adjusted_velocity`
@@ -161,7 +161,7 @@ For example a value of `1` means all trajectory points will be evaluated while a
 | ------------------------------- | ---------------------------------------- | -------------------------------------------------------- |
 | `~/output/trajectory`           | `autoware_auto_planning_msgs/Trajectory` | Trajectory with adjusted velocities                      |
 | `~/output/debug_markers`        | `visualization_msgs/MarkerArray`         | Debug markers (envelopes, obstacle polygons)             |
-| `~/output/runtime_microseconds` | `tier4_debug_msgs/Float64`               | Time taken to calculate the trajectory (in microseconds) |
+| `~/output/runtime_microseconds` | `std_msgs/Int64`                         | Time taken to calculate the trajectory (in microseconds) |
 
 ## Parameters
 

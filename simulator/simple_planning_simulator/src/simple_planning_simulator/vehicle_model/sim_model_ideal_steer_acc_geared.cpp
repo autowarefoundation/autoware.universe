@@ -23,38 +23,17 @@ SimModelIdealSteerAccGeared::SimModelIdealSteerAccGeared(double wheelbase)
 {
 }
 
-double SimModelIdealSteerAccGeared::getX()
-{
-  return state_(IDX::X);
-}
-double SimModelIdealSteerAccGeared::getY()
-{
-  return state_(IDX::Y);
-}
-double SimModelIdealSteerAccGeared::getYaw()
-{
-  return state_(IDX::YAW);
-}
-double SimModelIdealSteerAccGeared::getVx()
-{
-  return state_(IDX::VX);
-}
-double SimModelIdealSteerAccGeared::getVy()
-{
-  return 0.0;
-}
-double SimModelIdealSteerAccGeared::getAx()
-{
-  return current_acc_;
-}
+double SimModelIdealSteerAccGeared::getX() { return state_(IDX::X); }
+double SimModelIdealSteerAccGeared::getY() { return state_(IDX::Y); }
+double SimModelIdealSteerAccGeared::getYaw() { return state_(IDX::YAW); }
+double SimModelIdealSteerAccGeared::getVx() { return state_(IDX::VX); }
+double SimModelIdealSteerAccGeared::getVy() { return 0.0; }
+double SimModelIdealSteerAccGeared::getAx() { return current_acc_; }
 double SimModelIdealSteerAccGeared::getWz()
 {
   return state_(IDX::VX) * std::tan(input_(IDX_U::STEER_DES)) / wheelbase_;
 }
-double SimModelIdealSteerAccGeared::getSteer()
-{
-  return input_(IDX_U::STEER_DES);
-}
+double SimModelIdealSteerAccGeared::getSteer() { return input_(IDX_U::STEER_DES); }
 void SimModelIdealSteerAccGeared::update(const double & dt)
 {
   const auto prev_state = state_;
@@ -85,13 +64,6 @@ Eigen::VectorXd SimModelIdealSteerAccGeared::calcModel(
 void SimModelIdealSteerAccGeared::updateStateWithGear(
   Eigen::VectorXd & state, const Eigen::VectorXd & prev_state, const uint8_t gear, const double dt)
 {
-  const auto setStopState = [&]() {
-    state(IDX::VX) = 0.0;
-    state(IDX::X) = prev_state(IDX::X);
-    state(IDX::Y) = prev_state(IDX::Y);
-    state(IDX::YAW) = prev_state(IDX::YAW);
-  };
-
   using autoware_auto_vehicle_msgs::msg::GearCommand;
   if (
     gear == GearCommand::DRIVE || gear == GearCommand::DRIVE_2 || gear == GearCommand::DRIVE_3 ||
@@ -103,17 +75,29 @@ void SimModelIdealSteerAccGeared::updateStateWithGear(
     gear == GearCommand::DRIVE_16 || gear == GearCommand::DRIVE_17 ||
     gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2) {
     if (state(IDX::VX) < 0.0) {
-      setStopState();
+      state(IDX::VX) = 0.0;
+      state(IDX::X) = prev_state(IDX::X);
+      state(IDX::Y) = prev_state(IDX::Y);
+      state(IDX::YAW) = prev_state(IDX::YAW);
     }
   } else if (gear == GearCommand::REVERSE || gear == GearCommand::REVERSE_2) {
     if (state(IDX::VX) > 0.0) {
-      setStopState();
+      state(IDX::VX) = 0.0;
+      state(IDX::X) = prev_state(IDX::X);
+      state(IDX::Y) = prev_state(IDX::Y);
+      state(IDX::YAW) = prev_state(IDX::YAW);
     }
   } else if (gear == GearCommand::PARK) {
-    setStopState();
+    state(IDX::VX) = 0.0;
+    state(IDX::X) = prev_state(IDX::X);
+    state(IDX::Y) = prev_state(IDX::Y);
+    state(IDX::YAW) = prev_state(IDX::YAW);
   } else {
-    setStopState();
+    state(IDX::VX) = 0.0;
+    state(IDX::X) = prev_state(IDX::X);
+    state(IDX::Y) = prev_state(IDX::Y);
+    state(IDX::YAW) = prev_state(IDX::YAW);
   }
-  // calculate acc from velocity diff
+
   current_acc_ = (state(IDX::VX) - prev_state(IDX::VX)) / std::max(dt, 1.0e-5);
 }

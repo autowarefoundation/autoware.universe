@@ -21,6 +21,8 @@
 double squaredMahalanobis(
   const Eigen::VectorXd & x, const Eigen::VectorXd & y, const Eigen::MatrixXd & C);
 
-double mahalanobis(const Eigen::VectorXd & x, const Eigen::VectorXd & y, const Eigen::MatrixXd & C);
+bool mahalanobisGate(
+  const double & dist_max, const Eigen::MatrixXd & x, const Eigen::MatrixXd & obj_x,
+  const Eigen::MatrixXd & cov);
 
 #endif  // EKF_LOCALIZER__MAHALANOBIS_HPP_

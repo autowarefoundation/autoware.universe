@@ -19,8 +19,9 @@
 
 #include <memory>
 
-GnssModule::GnssModule(rclcpp::Node * node) : fitter_(node)
+GnssModule::GnssModule(rclcpp::Node * node)
 {
+  cli_map_fit_ = node->create_client<RequestHeightFitting>("fit_map_height");
   sub_gnss_pose_ = node->create_subscription<PoseWithCovarianceStamped>(
     "gnss_pose_cov", 1, [this](PoseWithCovarianceStamped::ConstSharedPtr msg) { pose_ = msg; });
 
@@ -28,7 +29,7 @@ GnssModule::GnssModule(rclcpp::Node * node) : fitter_(node)
   timeout_ = node->declare_parameter<double>("gnss_pose_timeout");
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::get_pose()
+geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::get_pose() const
 {
   using Initialize = localization_interface::Initialize;
 
@@ -43,10 +44,9 @@ geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::get_pose()
       Initialize::Service::Response::ERROR_GNSS, "The GNSS pose is out of date.");
   }
 
-  PoseWithCovarianceStamped pose = *pose_;
-  const auto fitted = fitter_.fit(pose.pose.pose.position, pose.header.frame_id);
-  if (fitted) {
-    pose.pose.pose.position = fitted.value();
-  }
-  return pose;
+  const auto req = std::make_shared<RequestHeightFitting::Request>();
+  req->pose_with_covariance = *pose_;
+
+  auto future = cli_map_fit_->async_send_request(req);
+  return future.get()->pose_with_covariance;
 }

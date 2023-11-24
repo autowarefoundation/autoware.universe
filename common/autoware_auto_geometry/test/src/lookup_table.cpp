@@ -107,7 +107,7 @@ TYPED_TEST(SanityCheck, Exact)
 TYPED_TEST(SanityCheck, Interpolation)
 {
   const auto x = TypeParam{2};
-  // Assert x is not identically in domain_
+  // Asssert x is not identically in domain_
   ASSERT_TRUE(this->not_in_domain(x));
   const auto result = this->table_->lookup(x);
   this->check(result, TypeParam{3});

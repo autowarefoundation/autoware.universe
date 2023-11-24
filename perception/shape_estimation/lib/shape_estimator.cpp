@@ -92,10 +92,8 @@ bool ShapeEstimator::applyFilter(
     filter_ptr.reset(new CarFilter);
   } else if (label == Label::BUS) {
     filter_ptr.reset(new BusFilter);
-  } else if (label == Label::TRUCK) {
+  } else if (label == Label::TRUCK || label == Label::TRAILER) {
     filter_ptr.reset(new TruckFilter);
-  } else if (label == Label::TRAILER) {
-    filter_ptr.reset(new TrailerFilter);
   } else {
     filter_ptr.reset(new NoFilter);
   }
@@ -116,10 +114,8 @@ bool ShapeEstimator::applyCorrector(
     corrector_ptr.reset(new CarCorrector(use_reference_yaw));
   } else if (label == Label::BUS) {
     corrector_ptr.reset(new BusCorrector(use_reference_yaw));
-  } else if (label == Label::TRUCK) {
+  } else if (label == Label::TRUCK || label == Label::TRAILER) {
     corrector_ptr.reset(new TruckCorrector(use_reference_yaw));
-  } else if (label == Label::TRAILER) {
-    corrector_ptr.reset(new TrailerCorrector(use_reference_yaw));
   } else {
     corrector_ptr.reset(new NoCorrector);
   }

@@ -23,7 +23,7 @@
 #include "obstacle_velocity_limiter/types.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
+#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
@@ -55,8 +55,9 @@ ObstacleVelocityLimiterNode::ObstacleVelocityLimiterNode(const rclcpp::NodeOptio
     "~/input/dynamic_obstacles", 1,
     [this](const PredictedObjects::ConstSharedPtr msg) { dynamic_obstacles_ptr_ = msg; });
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/odometry", rclcpp::QoS{1},
-    [this](const nav_msgs::msg::Odometry::ConstSharedPtr msg) { current_odometry_ptr_ = msg; });
+    "~/input/odometry", rclcpp::QoS{1}, [this](const nav_msgs::msg::Odometry::ConstSharedPtr msg) {
+      current_ego_velocity_ = static_cast<Float>(msg->twist.twist.linear.x);
+    });
   map_sub_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/map", rclcpp::QoS{1}.transient_local(),
     [this](const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) {
@@ -68,8 +69,7 @@ ObstacleVelocityLimiterNode::ObstacleVelocityLimiterNode(const rclcpp::NodeOptio
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
-  pub_runtime_ =
-    create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/output/runtime_microseconds", 1);
+  pub_runtime_ = create_publisher<std_msgs::msg::Int64>("~/output/runtime_microseconds", 1);
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
@@ -80,8 +80,6 @@ ObstacleVelocityLimiterNode::ObstacleVelocityLimiterNode(const rclcpp::NodeOptio
 
   set_param_res_ =
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
-
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 rcl_interfaces::msg::SetParametersResult ObstacleVelocityLimiterNode::onParameter(
@@ -153,7 +151,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleVelocityLimiterNode::onParamete
         result.successful = false;
         result.reason = "Unknown forward projection model";
       }
-    } else if (parameter.get_name() == ProjectionParameters::NB_POINTS_PARAM) {
+    } else if (parameter.get_name() == ProjectionParameters::NBPOINTS_PARAM) {
       if (!projection_params_.updateNbPoints(*this, static_cast<int>(parameter.as_int()))) {
         result.successful = false;
         result.reason = "number of points for projections must be at least 2";
@@ -172,20 +170,19 @@ rcl_interfaces::msg::SetParametersResult ObstacleVelocityLimiterNode::onParamete
 
 void ObstacleVelocityLimiterNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
-  if (!validInputs()) return;
   const auto t_start = std::chrono::system_clock::now();
-  const auto ego_idx =
-    motion_utils::findNearestIndex(msg->points, current_odometry_ptr_->pose.pose);
-  if (!ego_idx) {
+  const auto current_pose_ptr = self_pose_listener_.getCurrentPose();
+  if (!current_pose_ptr) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), rcutils_duration_value_t(1000),
-      "Cannot calculate ego index on the trajectory");
+      get_logger(), *get_clock(), rcutils_duration_value_t(1000), "Waiting for current pose");
     return;
   }
+  const auto ego_idx = motion_utils::findNearestIndex(msg->points, current_pose_ptr->pose);
+  if (!validInputs(ego_idx)) return;
   auto original_traj = *msg;
   if (preprocessing_params_.calculate_steering_angles)
     calculateSteeringAngles(original_traj, projection_params_.wheel_base);
-  velocity_params_.current_ego_velocity = current_odometry_ptr_->twist.twist.linear.x;
+  velocity_params_.current_ego_velocity = *current_ego_velocity_;
   const auto start_idx =
     calculateStartIndex(original_traj, *ego_idx, preprocessing_params_.start_distance);
   const auto end_idx = calculateEndIndex(
@@ -224,8 +221,7 @@ void ObstacleVelocityLimiterNode::onTrajectory(const Trajectory::ConstSharedPtr 
 
   const auto t_end = std::chrono::system_clock::now();
   const auto runtime = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
-  pub_runtime_->publish(tier4_debug_msgs::msg::Float64Stamped().set__stamp(now()).set__data(
-    static_cast<double>(runtime.count())));
+  pub_runtime_->publish(std_msgs::msg::Int64().set__data(runtime.count()));
 
   if (pub_debug_markers_->get_subscription_count() > 0) {
     const auto safe_projected_linestrings =
@@ -238,18 +234,21 @@ void ObstacleVelocityLimiterNode::onTrajectory(const Trajectory::ConstSharedPtr 
   }
 }
 
-bool ObstacleVelocityLimiterNode::validInputs()
+bool ObstacleVelocityLimiterNode::validInputs(const boost::optional<size_t> & ego_idx)
 {
   constexpr auto one_sec = rcutils_duration_value_t(1000);
   if (!occupancy_grid_ptr_)
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Occupancy grid not yet received");
   if (!dynamic_obstacles_ptr_)
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Dynamic obstacles not yet received");
-  if (!current_odometry_ptr_)
+  if (!ego_idx)
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), one_sec, "Cannot calculate ego index on the trajectory");
+  if (!current_ego_velocity_)
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), one_sec, "Current ego velocity not yet received");
 
-  return occupancy_grid_ptr_ && dynamic_obstacles_ptr_ && current_odometry_ptr_;
+  return occupancy_grid_ptr_ && dynamic_obstacles_ptr_ && ego_idx && current_ego_velocity_;
 }
 }  // namespace obstacle_velocity_limiter
 

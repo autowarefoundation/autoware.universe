@@ -15,21 +15,19 @@
 #include "static_centerline_optimizer/utils.hpp"
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "tier4_autoware_utils/ros/marker_helper.hpp"
+#include "behavior_path_planner/utilities.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_core/geometry/Lanelet.h>
 namespace static_centerline_optimizer
 {
 namespace
 {
-nav_msgs::msg::Odometry::ConstSharedPtr convert_to_odometry(const geometry_msgs::msg::Pose & pose)
+geometry_msgs::msg::PoseStamped::ConstSharedPtr convert_to_pose_stamped(
+  const geometry_msgs::msg::Pose & pose)
 {
-  auto odometry_ptr = std::make_shared<nav_msgs::msg::Odometry>();
-  odometry_ptr->pose.pose = pose;
-  return odometry_ptr;
+  auto pose_stamped_ptr = std::make_shared<geometry_msgs::msg::PoseStamped>();
+  pose_stamped_ptr->pose = pose;
+  return pose_stamped_ptr;
 }
 
 lanelet::Point3d createPoint3d(const double x, const double y, const double z = 19.0)
@@ -86,15 +84,19 @@ PathWithLaneId get_path_with_lane_id(
   // create planner data
   auto planner_data = std::make_shared<behavior_path_planner::PlannerData>();
   planner_data->route_handler = std::make_shared<RouteHandler>(route_handler);
-  planner_data->self_odometry = convert_to_odometry(start_pose);
+  planner_data->self_pose = convert_to_pose_stamped(start_pose);
+  planner_data->parameters.drivable_lane_forward_length = std::numeric_limits<double>::max();
+  planner_data->parameters.drivable_lane_backward_length = std::numeric_limits<double>::min();
+  planner_data->parameters.drivable_lane_margin = 5.0;
   planner_data->parameters.ego_nearest_dist_threshold = ego_nearest_dist_threshold;
   planner_data->parameters.ego_nearest_yaw_threshold = ego_nearest_yaw_threshold;
 
   // generate drivable area and store it in path with lane id
+  constexpr double drivable_area_resolution = 0.1;
   constexpr double vehicle_length = 0.0;
-  const auto drivable_lanes = behavior_path_planner::utils::generateDrivableLanes(lanelets);
-  behavior_path_planner::utils::generateDrivableArea(
-    path_with_lane_id, drivable_lanes, false, false, vehicle_length, planner_data);
+  const auto drivable_lanes = behavior_path_planner::util::generateDrivableLanes(lanelets);
+  path_with_lane_id.drivable_area = behavior_path_planner::util::generateDrivableArea(
+    path_with_lane_id, drivable_lanes, drivable_area_resolution, vehicle_length, planner_data);
 
   return path_with_lane_id;
 }

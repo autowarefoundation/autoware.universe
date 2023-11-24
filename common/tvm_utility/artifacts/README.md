@@ -1,4 +1,4 @@
-# TVM Utility Artifacts
+# TVM Utility Artifacts {#tvm-utility-artifacts-readme}
 
 Place any test artifacts in subdirectories within this directory.
 

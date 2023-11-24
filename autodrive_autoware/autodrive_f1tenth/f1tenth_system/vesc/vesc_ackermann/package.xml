@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>vesc_ackermann</name>
+  <version>1.1.0</version>
+  <description>
+    Translate between VESC messages and ROS ackermann and odometry messages.
+  </description>
+  <maintainer email="joebetz@seas.upenn.edu">Johannes Betz</maintainer>
+  <license>BSD</license>
+  <url type="website">http://www.ros.org/wiki/vesc_ackermann</url>
+  <url type="repository">https://github.com/f1tenth/vesc</url>
+  <url type="bugtracker">https://github.com/f1tenth/vesc/issues</url>
+  <author email="boulet@ll.mit.edu">Michael T. Boulet</author>
+  <author email="josh.whitley@autoware.org">Joshua Whitley</author>
+
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <depend>ackermann_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>vesc_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

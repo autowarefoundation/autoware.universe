@@ -14,6 +14,8 @@
 
 #include "kinematic_evaluator/metrics/kinematic_metrics.hpp"
 
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+
 namespace kinematic_diagnostics
 {
 namespace metrics

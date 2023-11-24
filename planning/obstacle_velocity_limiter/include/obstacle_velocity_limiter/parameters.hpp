@@ -39,7 +39,7 @@ struct ObstacleParameters
   static constexpr auto RTREE_SEGMENTS_PARAM = "obstacles.rtree_min_segments";
   static constexpr auto RTREE_POINTS_PARAM = "obstacles.rtree_min_points";
 
-  enum { POINTCLOUD, OCCUPANCY_GRID, STATIC_ONLY } dynamic_source = OCCUPANCY_GRID;
+  enum { POINTCLOUD, OCCUPANCYGRID, STATIC_ONLY } dynamic_source = OCCUPANCYGRID;
   int8_t occupancy_grid_threshold{};
   Float dynamic_obstacles_buffer{};
   Float dynamic_obstacles_min_vel{};
@@ -72,7 +72,7 @@ struct ObstacleParameters
     if (type == "pointcloud") {
       dynamic_source = POINTCLOUD;
     } else if (type == "occupancy_grid") {
-      dynamic_source = OCCUPANCY_GRID;
+      dynamic_source = OCCUPANCYGRID;
     } else if (type == "static_only") {
       dynamic_source = STATIC_ONLY;
     } else {
@@ -111,7 +111,7 @@ struct ObstacleParameters
 struct ProjectionParameters
 {
   static constexpr auto MODEL_PARAM = "simulation.model";
-  static constexpr auto NB_POINTS_PARAM = "simulation.nb_points";
+  static constexpr auto NBPOINTS_PARAM = "simulation.nb_points";
   static constexpr auto STEER_OFFSET_PARAM = "simulation.steering_offset";
   static constexpr auto DISTANCE_METHOD_PARAM = "simulation.distance_method";
   static constexpr auto DURATION_PARAM = "min_ttc";
@@ -133,7 +133,7 @@ struct ProjectionParameters
   {
     updateModel(node, node.declare_parameter<std::string>(MODEL_PARAM));
     updateDistanceMethod(node, node.declare_parameter<std::string>(DISTANCE_METHOD_PARAM));
-    updateNbPoints(node, node.declare_parameter<int>(NB_POINTS_PARAM));
+    updateNbPoints(node, node.declare_parameter<int>(NBPOINTS_PARAM));
     steering_angle_offset = node.declare_parameter<double>(STEER_OFFSET_PARAM);
     duration = node.declare_parameter<double>(DURATION_PARAM);
   }

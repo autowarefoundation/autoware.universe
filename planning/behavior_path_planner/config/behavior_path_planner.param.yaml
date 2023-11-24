@@ -1,14 +1,18 @@
 /**:
   ros__parameters:
-    verbose: false
-    max_iteration_num: 100
-    traffic_light_signal_timeout: 1.0
-    planning_hz: 10.0
     backward_path_length: 5.0
-    forward_path_length: 300.0
+    forward_path_length: 200.0
+    backward_length_buffer_for_end_of_lane: 5.0
     backward_length_buffer_for_end_of_pull_over: 5.0
     backward_length_buffer_for_end_of_pull_out: 5.0
+    minimum_lane_change_length: 12.0
     minimum_pull_over_length: 16.0
+
+    drivable_area_resolution: 0.1
+    drivable_lane_forward_length: 50.0
+    drivable_lane_backward_length:  5.0
+    drivable_lane_margin: 3.0
+    drivable_area_margin: 6.0
 
     refine_goal_search_radius_range: 7.5
 
@@ -18,20 +22,19 @@
     turn_signal_minimum_search_distance: 10.0
     turn_signal_search_time: 3.0
     turn_signal_shift_length_threshold: 0.3
-    turn_signal_on_swerving: true
 
-    enable_akima_spline_first: false
-    enable_cog_on_centerline: false
-    input_path_interval: 2.0
-    output_path_interval: 2.0
+    path_interval: 2.0
 
-    visualize_maximum_drivable_area: true
+    visualize_drivable_area_for_shared_linestrings_lanelet: true
 
-    lane_following:
-      drivable_area_right_bound_offset: 0.0
-      drivable_area_left_bound_offset: 0.0
-      drivable_area_types_to_skip: [road_border]
+    lateral_distance_max_threshold: 2.0
+    longitudinal_distance_min_threshold: 3.0
 
-    closest_lanelet:
-      distance_threshold: 5.0 # [m]
-      yaw_threshold: 0.79 # [rad]
+    expected_front_deceleration: -1.0
+    expected_rear_deceleration: -1.0
+
+    expected_front_deceleration_for_abort: -2.0
+    expected_rear_deceleration_for_abort: -2.5
+
+    rear_vehicle_reaction_time: 2.0
+    rear_vehicle_safety_time_margin: 2.0

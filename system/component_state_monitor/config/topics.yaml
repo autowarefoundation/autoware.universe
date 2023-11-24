@@ -1,5 +1,5 @@
 - module: map
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: launch
   args:
     node_name_suffix: vector_map
@@ -12,7 +12,7 @@
     timeout: 0.0
 
 - module: map
-  mode: [online, logging_simulation]
+  mode: [online]
   type: launch
   args:
     node_name_suffix: pointcloud_map
@@ -25,7 +25,7 @@
     timeout: 0.0
 
 - module: localization
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: initialpose3d
@@ -38,7 +38,7 @@
     timeout: 0.0
 
 - module: localization
-  mode: [online, logging_simulation]
+  mode: [online]
   type: autonomous
   args:
     node_name_suffix: pose_twist_fusion_filter_pose
@@ -50,21 +50,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- module: localization
-  mode: [online, logging_simulation]
-  type: autonomous
-  args:
-    node_name_suffix: pose_estimator_pose
-    topic: /localization/pose_estimator/pose_with_covariance
-    topic_type: geometry_msgs/msg/PoseWithCovarianceStamped
-    best_effort: false
-    transient_local: false
-    warn_rate: 5.0
-    error_rate: 1.0
-    timeout: 1.0
-
 - module: perception
-  mode: [online, logging_simulation]
+  mode: [online]
   type: launch
   args:
     node_name_suffix: obstacle_segmentation_pointcloud
@@ -77,7 +64,7 @@
     timeout: 1.0
 
 - module: perception
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: object_recognition_objects
@@ -90,12 +77,12 @@
     timeout: 1.0
 
 - module: planning
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: mission_planning_route
     topic: /planning/mission_planning/route
-    topic_type: autoware_planning_msgs/msg/LaneletRoute
+    topic_type: autoware_auto_planning_msgs/msg/LaneletRoute
     best_effort: false
     transient_local: true
     warn_rate: 0.0
@@ -103,7 +90,7 @@
     timeout: 0.0
 
 - module: planning
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: scenario_planning_trajectory
@@ -116,7 +103,7 @@
     timeout: 1.0
 
 - module: control
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: trajectory_follower_control_cmd
@@ -129,7 +116,7 @@
     timeout: 1.0
 
 - module: control
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: control_command_control_cmd
@@ -142,7 +129,7 @@
     timeout: 1.0
 
 - module: vehicle
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: vehicle_status_velocity_status
@@ -155,7 +142,7 @@
     timeout: 1.0
 
 - module: vehicle
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: vehicle_status_steering_status
@@ -168,7 +155,7 @@
     timeout: 1.0
 
 - module: system
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: launch
   args:
     node_name_suffix: system_emergency_control_cmd
@@ -181,7 +168,7 @@
     timeout: 1.0
 
 - module: localization
-  mode: [online, logging_simulation, planning_simulation]
+  mode: [online, planning_simulation]
   type: autonomous
   args:
     node_name_suffix: transform_map_to_base_link

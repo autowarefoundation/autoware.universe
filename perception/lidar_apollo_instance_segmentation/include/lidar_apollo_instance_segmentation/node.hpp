@@ -1,4 +1,4 @@
-// Copyright 2020-2023 TIER IV, Inc.
+// Copyright 2020 TierIV
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,10 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-#ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__NODE_HPP_
-#define LIDAR_APOLLO_INSTANCE_SEGMENTATION__NODE_HPP_
-
+#pragma once
 #include "lidar_apollo_instance_segmentation/debugger.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -26,8 +23,6 @@
 
 #include <memory>
 
-namespace lidar_apollo_instance_segmentation
-{
 class LidarInstanceSegmentationInterface
 {
 public:
@@ -53,6 +48,3 @@ private:
 public:
   explicit LidarInstanceSegmentationNode(const rclcpp::NodeOptions & node_options);
 };
-}  // namespace lidar_apollo_instance_segmentation
-
-#endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__NODE_HPP_

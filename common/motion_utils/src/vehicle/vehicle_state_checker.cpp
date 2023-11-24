@@ -31,7 +31,7 @@ void VehicleStopCheckerBase::addTwist(const TwistStamped & twist)
   twist_buffer_.push_front(twist);
 
   const auto now = clock_->now();
-  while (!twist_buffer_.empty()) {
+  while (true) {
     // Check oldest data time
     const auto time_diff = now - twist_buffer_.back().header.stamp;
 
@@ -88,7 +88,7 @@ VehicleStopChecker::VehicleStopChecker(rclcpp::Node * node)
     std::bind(&VehicleStopChecker::onOdom, this, _1));
 }
 
-void VehicleStopChecker::onOdom(const Odometry::ConstSharedPtr msg)
+void VehicleStopChecker::onOdom(const Odometry::SharedPtr msg)
 {
   odometry_ptr_ = msg;
 
@@ -128,8 +128,5 @@ bool VehicleArrivalChecker::isVehicleStoppedAtStopPoint(const double stop_durati
          th_arrived_distance_m;
 }
 
-void VehicleArrivalChecker::onTrajectory(const Trajectory::ConstSharedPtr msg)
-{
-  trajectory_ptr_ = msg;
-}
+void VehicleArrivalChecker::onTrajectory(const Trajectory::SharedPtr msg) { trajectory_ptr_ = msg; }
 }  // namespace motion_utils

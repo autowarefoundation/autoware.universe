@@ -15,8 +15,6 @@
 #ifndef SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_
 #define SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_
 
-#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
-
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -31,7 +29,6 @@
 
 #include <deque>
 #include <map>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -144,13 +141,8 @@ private:
     autoware_auto_system_msgs::msg::HazardStatus * hazard_status) const;
   autoware_auto_system_msgs::msg::HazardStatus judgeHazardStatus() const;
   void updateHazardStatus();
-  void updateTimeoutHazardStatus();
   bool canAutoRecovery() const;
   bool isEmergencyHoldingRequired() const;
-
-  void loggingErrors(const autoware_auto_system_msgs::msg::HazardStatus & diag_array);
-
-  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 
 #endif  // SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_

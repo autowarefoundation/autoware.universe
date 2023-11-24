@@ -20,7 +20,6 @@
 #include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -66,7 +65,7 @@ private:
   Cli<system_interface::ChangeOperationMode> cli_mode_;
   Cli<system_interface::ChangeAutowareControl> cli_control_;
 
-  std::unordered_map<std::string, bool> module_states_;
+  std::vector<bool> module_states_;
   std::vector<rclcpp::Subscription<ModeChangeAvailable>::SharedPtr> sub_module_states_;
 
   void on_change_to_stop(

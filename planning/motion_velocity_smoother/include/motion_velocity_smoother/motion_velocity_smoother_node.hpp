@@ -30,19 +30,15 @@
 #include "tf2_ros/transform_listener.h"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
-#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/ros/self_pose_listener.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
-#include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
-#include "visualization_msgs/msg/marker_array.hpp"
 
 #include <iostream>
 #include <memory>
@@ -56,23 +52,17 @@ namespace motion_velocity_smoother
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
-using autoware_adapi_v1_msgs::msg::OperationModeState;
-using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
 using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
-using visualization_msgs::msg::MarkerArray;
 
 struct Motion
 {
   double vel = 0.0;
   double acc = 0.0;
-
-  Motion() {}
-  Motion(const double v, const double a) : vel(v), acc(a) {}
 };
 
 class MotionVelocitySmootherNode : public rclcpp::Node
@@ -82,23 +72,19 @@ public:
 
 private:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr pub_over_stop_velocity_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_current_odometry_;
-  rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr sub_current_acceleration_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
-  rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
 
+  PoseStamped::ConstSharedPtr current_pose_ptr_;   // current vehicle pose
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
-  AccelWithCovarianceStamped::ConstSharedPtr current_acceleration_ptr_;
   VelocityLimit::ConstSharedPtr external_velocity_limit_ptr_{
     nullptr};                                     // external velocity limit message
   Trajectory::ConstSharedPtr base_traj_raw_ptr_;  // current base_waypoints
   double max_velocity_with_deceleration_;         // maximum velocity with deceleration
                                                   // for external velocity limit
   double wheelbase_;                              // wheelbase
-  double base_link2front_;                        // base_link to front
 
   TrajectoryPoints prev_output_;  // previously published trajectory
 
@@ -106,10 +92,9 @@ private:
   boost::optional<TrajectoryPoint> prev_closest_point_{};
   boost::optional<TrajectoryPoint> current_closest_point_from_prev_output_{};
 
-  bool is_reverse_;
+  tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
 
-  // check if the vehicle is under control of the planning module
-  OperationModeState operation_mode_;
+  bool is_reverse_;
 
   enum class AlgorithmType {
     INVALID = 0,
@@ -120,7 +105,7 @@ private:
   };
 
   enum class InitializeType {
-    EGO_VELOCITY = 0,
+    INIT = 0,
     LARGE_DEVIATION_REPLAN = 1,
     ENGAGING = 2,
     NORMAL = 3,
@@ -128,9 +113,6 @@ private:
 
   struct Param
   {
-    bool enable_lateral_acc_limit;
-    bool enable_steering_rate_limit;
-
     double max_velocity;                              // max velocity [m/s]
     double margin_to_insert_external_velocity_limit;  // for external velocity limit [m]
     double replan_vel_deviation;                      // if speed error exceeds this [m/s],
@@ -149,15 +131,12 @@ private:
 
     resampling::ResampleParam post_resample_param;
     AlgorithmType algorithm_type;  // Option : JerkFiltered, Linf, L2
-
-    bool plan_from_ego_speed_on_manual_mode = true;
   } node_param_{};
 
   struct ExternalVelocityLimit
   {
     double velocity{0.0};  // current external_velocity_limit
     double dist{0.0};      // distance to set external velocity limit
-    std::string sender{""};
   };
   ExternalVelocityLimit
     external_velocity_limit_;  // velocity and distance constraint  of external velocity limit
@@ -168,9 +147,7 @@ private:
 
   double over_stop_velocity_warn_thr_;  // threshold to publish over velocity warn
 
-  mutable rclcpp::Clock::SharedPtr clock_;
-
-  void setupSmoother(const double wheelbase);
+  rclcpp::Clock::SharedPtr clock_;
 
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -234,10 +211,6 @@ private:
   Trajectory toTrajectoryMsg(
     const TrajectoryPoints & points, const std_msgs::msg::Header * header = nullptr) const;
 
-  TrajectoryPoint calcProjectedTrajectoryPoint(
-    const TrajectoryPoints & trajectory, const Pose & pose) const;
-  TrajectoryPoint calcProjectedTrajectoryPointFromEgo(const TrajectoryPoints & trajectory) const;
-
   // parameter handling
   void initCommonParam();
 
@@ -269,8 +242,6 @@ private:
   bool isReverse(const TrajectoryPoints & points) const;
   void flipVelocity(TrajectoryPoints & points) const;
   void publishStopWatchTime();
-
-  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace motion_velocity_smoother
 

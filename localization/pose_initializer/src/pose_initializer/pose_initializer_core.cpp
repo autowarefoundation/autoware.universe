@@ -15,12 +15,10 @@
 #include "pose_initializer_core.hpp"
 
 #include "copy_vector_to_array.hpp"
-#include "ekf_localization_trigger_module.hpp"
 #include "gnss_module.hpp"
-#include "ndt_localization_trigger_module.hpp"
+#include "localization_trigger_module.hpp"
 #include "ndt_module.hpp"
 #include "stop_check_module.hpp"
-#include "yabloc_module.hpp"
 
 #include <memory>
 #include <vector>
@@ -36,25 +34,18 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   output_pose_covariance_ = get_covariance_parameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = get_covariance_parameter(this, "gnss_particle_covariance");
 
-  if (declare_parameter<bool>("ekf_enabled")) {
-    ekf_localization_trigger_ = std::make_unique<EkfLocalizationTriggerModule>(this);
-  }
   if (declare_parameter<bool>("gnss_enabled")) {
     gnss_ = std::make_unique<GnssModule>(this);
   }
-  if (declare_parameter<bool>("yabloc_enabled")) {
-    yabloc_ = std::make_unique<YabLocModule>(this);
-  }
   if (declare_parameter<bool>("ndt_enabled")) {
     ndt_ = std::make_unique<NdtModule>(this);
-    ndt_localization_trigger_ = std::make_unique<NdtLocalizationTriggerModule>(this);
+    localization_trigger_ = std::make_unique<LocalizationTriggerModule>(this);
   }
   if (declare_parameter<bool>("stop_check_enabled")) {
     // Add 1.0 sec margin for twist buffer.
     stop_check_duration_ = declare_parameter<double>("stop_check_duration");
     stop_check_ = std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0);
   }
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 
   change_state(State::Message::UNINITIALIZED);
 }
@@ -82,27 +73,17 @@ void PoseInitializer::on_initialize(
   }
   try {
     change_state(State::Message::INITIALIZING);
-    if (ekf_localization_trigger_) {
-      ekf_localization_trigger_->send_request(false);
-    }
-    if (ndt_localization_trigger_) {
-      ndt_localization_trigger_->send_request(false);
+    if (localization_trigger_) {
+      localization_trigger_->deactivate();
     }
     auto pose = req->pose.empty() ? get_gnss_pose() : req->pose.front();
     if (ndt_) {
       pose = ndt_->align_pose(pose);
-    } else if (yabloc_) {
-      // If both the NDT and YabLoc initializer are enabled, prioritize NDT as it offers more
-      // accuracy pose.
-      pose = yabloc_->align_pose(pose);
     }
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
-    if (ekf_localization_trigger_) {
-      ekf_localization_trigger_->send_request(true);
-    }
-    if (ndt_localization_trigger_) {
-      ndt_localization_trigger_->send_request(true);
+    if (localization_trigger_) {
+      localization_trigger_->activate();
     }
     res->status.success = true;
     change_state(State::Message::INITIALIZED);

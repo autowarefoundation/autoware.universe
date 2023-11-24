@@ -21,8 +21,7 @@
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::NodeOptions options;
-  auto node = std::make_shared<GyroOdometer>(options);
+  auto node = std::make_shared<GyroOdometer>();
   rclcpp::spin(node);
   rclcpp::shutdown();
 

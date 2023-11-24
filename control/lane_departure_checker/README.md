@@ -8,7 +8,6 @@ This package includes the following features:
 
 - **Lane Departure**: Check if ego vehicle is going to be out of lane boundaries based on output from control module (predicted trajectory).
 - **Trajectory Deviation**: Check if ego vehicle's pose does not deviate from the trajectory. Checking lateral, longitudinal and yaw deviation.
-- **Road Border Departure**: Check if ego vehicle's footprint, generated from the control's output, extends beyond the road border.
 
 ## Inner-workings / Algorithms
 
@@ -63,30 +62,10 @@ This package includes the following features:
 
 ### Node Parameters
 
-#### General Parameters
-
-| Name                       | Type   | Description                                                                                                 | Default value |
-| :------------------------- | :----- | :---------------------------------------------------------------------------------------------------------- | :------------ |
-| will_out_of_lane_checker   | bool   | Enable checker whether ego vehicle footprint will depart from lane                                          | True          |
-| out_of_lane_checker        | bool   | Enable checker whether ego vehicle footprint is out of lane                                                 | True          |
-| boundary_departure_checker | bool   | Enable checker whether ego vehicle footprint wil depart from boundary specified by boundary_types_to_detect | False         |
-| update_rate                | double | Frequency for publishing [Hz]                                                                               | 10.0          |
-| visualize_lanelet          | bool   | Flag for visualizing lanelet                                                                                | False         |
-
-#### Parameters For Lane Departure
-
-| Name                      | Type | Description                                       | Default value |
-| :------------------------ | :--- | :------------------------------------------------ | :------------ |
-| include_right_lanes       | bool | Flag for including right lanelet in borders       | False         |
-| include_left_lanes        | bool | Flag for including left lanelet in borders        | False         |
-| include_opposite_lanes    | bool | Flag for including opposite lanelet in borders    | False         |
-| include_conflicting_lanes | bool | Flag for including conflicting lanelet in borders | False         |
-
-#### Parameters For Road Border Departure
-
-| Name                     | Type                       | Description                                                 | Default value |
-| :----------------------- | :------------------------- | :---------------------------------------------------------- | :------------ |
-| boundary_types_to_detect | std::vector\<std::string\> | line_string types to detect with boundary_departure_checker | [road_border] |
+| Name              | Type   | Description                   | Default value |
+| :---------------- | :----- | :---------------------------- | :------------ |
+| update_rate       | double | Frequency for publishing [Hz] | 10.0          |
+| visualize_lanelet | bool   | Flag for visualizing lanelet  | False         |
 
 ### Core Parameters
 

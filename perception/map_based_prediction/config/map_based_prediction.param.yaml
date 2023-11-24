@@ -2,32 +2,17 @@
   ros__parameters:
     enable_delay_compensation: true
     prediction_time_horizon: 10.0 #[s]
-    lateral_control_time_horizon: 5.0 #[s]
     prediction_sampling_delta_time: 0.5 #[s]
     min_velocity_for_map_based_prediction: 1.39 #[m/s]
     min_crosswalk_user_velocity: 1.39 #[m/s]
-    max_crosswalk_user_delta_yaw_threshold_for_lanelet: 0.785 #[m/s]
     dist_threshold_for_searching_lanelet: 3.0 #[m]
     delta_yaw_threshold_for_searching_lanelet: 0.785 #[rad]
     sigma_lateral_offset: 0.5 #[m]
     sigma_yaw_angle_deg: 5.0 #[angle degree]
     object_buffer_time_length: 2.0 #[s]
     history_time_length: 1.0 #[s]
-    # parameter for shoulder lane prediction
-    prediction_time_horizon_rate_for_validate_shoulder_lane_length: 0.8
-
-    # parameters for lc prediction
-    lane_change_detection:
-      method: "lat_diff_distance" # choose from "lat_diff_distance" or "time_to_change_lane"
-      time_to_change_lane:
-        dist_threshold_for_lane_change_detection: 1.0 #[m]
-        time_threshold_for_lane_change_detection: 5.0 #[s]
-        cutoff_freq_of_velocity_for_lane_change_detection: 0.1 #[Hz]
-      lat_diff_distance:
-        dist_ratio_threshold_to_left_bound: -0.5 #[ratio]
-        dist_ratio_threshold_to_right_bound: 0.5 #[ratio
-        diff_dist_threshold_to_left_bound: 0.29 #[m]
-        diff_dist_threshold_to_right_bound: -0.29 #[m]
-      num_continuous_state_transition: 3
-
+    dist_ratio_threshold_to_left_bound: -0.5 #[ratio]
+    dist_ratio_threshold_to_right_bound: 0.5 #[ratio
+    diff_dist_threshold_to_left_bound: 0.29 #[m]
+    diff_dist_threshold_to_right_bound: -0.29 #[m]
     reference_path_resolution: 0.5 #[m]

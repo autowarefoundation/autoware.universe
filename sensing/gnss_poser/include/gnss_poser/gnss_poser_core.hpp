@@ -14,8 +14,9 @@
 #ifndef GNSS_POSER__GNSS_POSER_CORE_HPP_
 #define GNSS_POSER__GNSS_POSER_CORE_HPP_
 
-#include <component_interface_specs/map.hpp>
-#include <component_interface_utils/rclcpp.hpp>
+#include "gnss_poser/convert.hpp"
+#include "gnss_poser/gnss_stat.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_sensing_msgs/msg/gnss_ins_orientation_stamped.hpp>
@@ -47,18 +48,16 @@ public:
   explicit GNSSPoser(const rclcpp::NodeOptions & node_options);
 
 private:
-  using MapProjectorInfo = map_interface::MapProjectorInfo;
-
-  void callbackMapProjectorInfo(const MapProjectorInfo::Message::ConstSharedPtr msg);
   void callbackNavSatFix(const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);
   void callbackGnssInsOrientationStamped(
     const autoware_sensing_msgs::msg::GnssInsOrientationStamped::ConstSharedPtr msg);
 
   bool isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg);
   bool canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg);
+  GNSSStat convert(
+    const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system);
+  geometry_msgs::msg::Point getPosition(const GNSSStat & gnss_stat);
   geometry_msgs::msg::Point getMedianPosition(
-    const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer);
-  geometry_msgs::msg::Point getAveragePosition(
     const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer);
   geometry_msgs::msg::Quaternion getQuaternionByHeading(const int heading);
   geometry_msgs::msg::Quaternion getQuaternionByPositionDifference(
@@ -79,7 +78,6 @@ private:
   tf2_ros::TransformListener tf2_listener_;
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
-  component_interface_utils::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_info_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr nav_sat_fix_sub_;
   rclcpp::Subscription<autoware_sensing_msgs::msg::GnssInsOrientationStamped>::SharedPtr
     autoware_orientation_sub_;
@@ -88,19 +86,21 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_cov_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::BoolStamped>::SharedPtr fixed_pub_;
 
-  MapProjectorInfo::Message projector_info_;
+  CoordinateSystem coordinate_system_;
   std::string base_frame_;
   std::string gnss_frame_;
   std::string gnss_base_frame_;
   std::string map_frame_;
-  bool received_map_projector_info_ = false;
+
+  sensor_msgs::msg::NavSatFix nav_sat_fix_origin_;
   bool use_gnss_ins_orientation_;
 
   boost::circular_buffer<geometry_msgs::msg::Point> position_buffer_;
 
+  int plane_zone_;
+
   autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr
     msg_gnss_ins_orientation_stamped_;
-  int gnss_pose_pub_method;
 };
 }  // namespace gnss_poser
 

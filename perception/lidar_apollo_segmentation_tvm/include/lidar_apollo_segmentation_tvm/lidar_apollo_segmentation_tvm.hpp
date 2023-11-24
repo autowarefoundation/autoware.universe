@@ -15,6 +15,7 @@
 #ifndef LIDAR_APOLLO_SEGMENTATION_TVM__LIDAR_APOLLO_SEGMENTATION_TVM_HPP_
 #define LIDAR_APOLLO_SEGMENTATION_TVM__LIDAR_APOLLO_SEGMENTATION_TVM_HPP_
 
+#include <common/types.hpp>
 #include <lidar_apollo_segmentation_tvm/cluster2d.hpp>
 #include <lidar_apollo_segmentation_tvm/feature_generator.hpp>
 #include <lidar_apollo_segmentation_tvm/visibility_control.hpp>
@@ -35,7 +36,6 @@
 #include <tvm_vendor/tvm/runtime/packed_func.h>
 #include <tvm_vendor/tvm/runtime/registry.h>
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -46,7 +46,8 @@ namespace perception
 {
 namespace lidar_apollo_segmentation_tvm
 {
-
+using autoware::common::types::bool8_t;
+using autoware::common::types::float32_t;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tvm_utility::pipeline::TVMArrayContainer;
 using tvm_utility::pipeline::TVMArrayContainerVector;
@@ -65,7 +66,8 @@ public:
   /// \param[in] max_height The maximum height.
   explicit ApolloLidarSegmentationPreProcessor(
     const tvm_utility::pipeline::InferenceEngineTVMConfig & config, int32_t range,
-    bool use_intensity_feature, bool use_constant_feature, float min_height, float max_height);
+    bool8_t use_intensity_feature, bool8_t use_constant_feature, float32_t min_height,
+    float32_t max_height);
 
   /// \brief Transfer the input data to a TVM array.
   /// \param[in] pc_ptr Input pointcloud.
@@ -77,7 +79,7 @@ private:
   const int64_t input_channels;
   const int64_t input_width;
   const int64_t input_height;
-  const int64_t input_datatype_bytes;
+  const int64_t datatype_bytes;
   const std::shared_ptr<FeatureGenerator> feature_generator;
   TVMArrayContainer output;
 };
@@ -101,7 +103,8 @@ public:
   explicit ApolloLidarSegmentationPostProcessor(
     const tvm_utility::pipeline::InferenceEngineTVMConfig & config,
     const pcl::PointCloud<pcl::PointXYZI>::ConstPtr & pc_ptr, int32_t range,
-    float objectness_thresh, float score_threshold, float height_thresh, int32_t min_pts_num);
+    float32_t objectness_thresh, float32_t score_threshold, float32_t height_thresh,
+    int32_t min_pts_num);
 
   /// \brief Copy the inference result.
   /// \param[in] input The result of the inference engine.
@@ -112,10 +115,10 @@ private:
   const int64_t output_channels;
   const int64_t output_width;
   const int64_t output_height;
-  const int64_t output_datatype_bytes;
-  const float objectness_thresh_;
-  const float score_threshold_;
-  const float height_thresh_;
+  const int64_t datatype_bytes;
+  const float32_t objectness_thresh_;
+  const float32_t score_threshold_;
+  const float32_t height_thresh_;
   const int32_t min_pts_num_;
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr pc_ptr_;
   const std::shared_ptr<Cluster2D> cluster2d_;
@@ -141,11 +144,10 @@ public:
   /// \param[in] height_thresh If it is non-negative, the points that are higher than the predicted
   ///                          object height by height_thresh are filtered out in the
   ///                          post-processing step.
-  /// \param[in] data_path The path to autoware data and artifacts folder
   explicit ApolloLidarSegmentation(
-    int32_t range, float score_threshold, bool use_intensity_feature, bool use_constant_feature,
-    float z_offset, float min_height, float max_height, float objectness_thresh,
-    int32_t min_pts_num, float height_thresh, const std::string & data_path);
+    int32_t range, float32_t score_threshold, bool8_t use_intensity_feature,
+    bool8_t use_constant_feature, float32_t z_offset, float32_t min_height, float32_t max_height,
+    float32_t objectness_thresh, int32_t min_pts_num, float32_t height_thresh);
 
   /// \brief Detect obstacles.
   /// \param[in] input Input pointcloud.
@@ -165,14 +167,14 @@ public:
 
 private:
   const int32_t range_;
-  const float score_threshold_;
-  const float z_offset_;
-  const float objectness_thresh_;
+  const float32_t score_threshold_;
+  const float32_t z_offset_;
+  const float32_t objectness_thresh_;
   const int32_t min_pts_num_;
-  const float height_thresh_;
+  const float32_t height_thresh_;
   const pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud_ptr_;
   // Earliest supported model version.
-  const std::array<int8_t, 3> model_version_from{2, 0, 0};
+  const std::array<char8_t, 3> model_version_from{2, 0, 0};
 
   // Pipeline
   using PrePT = ApolloLidarSegmentationPreProcessor;
@@ -192,7 +194,7 @@ private:
   /// \throw tf2::TransformException If the pointcloud transformation fails.
   void LIDAR_APOLLO_SEGMENTATION_TVM_LOCAL transformCloud(
     const sensor_msgs::msg::PointCloud2 & input, sensor_msgs::msg::PointCloud2 & transformed_cloud,
-    float z_offset);
+    float32_t z_offset);
 
   rclcpp::Clock::SharedPtr clock_ = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_ = std::make_unique<tf2_ros::Buffer>(clock_);

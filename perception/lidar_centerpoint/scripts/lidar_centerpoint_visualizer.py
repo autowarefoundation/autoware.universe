@@ -22,6 +22,7 @@ from rclpy.node import Node
 
 
 def main(args=None):
+
     rclpy.init(args=args)
 
     node = Node("lidar_centerpoint_visualizer")
@@ -52,4 +53,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
+
     main()
