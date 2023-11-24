@@ -108,6 +108,11 @@ Note that we only expand right bound of the rightmost lane and left bound of the
 #### Dynamic Expansion
 
 The drivable area can also be expanded dynamically based on a minumum width calculated from the path curvature and the ego vehicle's properties.
+
+| Without dynamic expansion | With dynamic expansion|
+| --- | --- |
+| ![dynamic_expansion_off](../image/drivable_area/dynamic_expansion_off.png) | ![dyanmic_expansion_on](../image/drivable_area/dynamic_expansion_on.png) |
+
 This expansion can be summarized with the following steps:
 
 ##### 1 Calculate and smooth the path curvature
@@ -119,25 +124,36 @@ With the resulting preprocessed path points and previous curvatures, curvatures 
 
 ###### 2 For each path point, calculate the closest bound segment and the minimum drivable area width
 
-Each path point is projected on the left and right drivable area bounds to calculate the corresponding bound index, the original distance, and the projected point.
-Additionally, for each path point, the minimum drivable area width is calculated using the following equation: TODO (eq + cite)
+Each path point is projected on the left and right drivable area bounds to calculate its corresponding bound index, original distance from the bounds, and the projected point.
+Additionally, for each path point, the minimum drivable area width is calculated using the following equation:
+$$ W = \frac{a² + 2 al + 2kw + l² + w²}{2k + w}$$
+Where $W$ is the minimum drivable area width, $a$, is the front overhang of ego, $l$ is the wheelbase of ego, $w$ is the width of ego, and $k$ is the path curvature.
+This equation was derived from the work of [Lim, H., Kim, C., and Jo, A., "Model Predictive Control-Based Lateral Control of Autonomous Large-Size Bus on Road with Large Curvature," SAE Technical Paper 2021-01-0099, 2021](https://www.sae.org/publications/technical-papers/content/2021-01-0099/).
+
+![min width](../image/drivable_area/DynamicDrivableArea-MinWidth.drawio.svg)
 
 ###### 3 Calculate maximum expansion distances of each bound point based on dynamic objects and linestring of the vector map (optional)
 
 For each drivable area bound point, we calculate its maximum expansion distance as its distance to the closest "obstacle" (either a map linestring with type `avoid_linestrings.type`, or a dynamic object footprint if `dynamic_objects.avoid` is set to `true`).
 If `max_expansion_distance` is not `0.0`, it is use here if smaller than the distance to the closest obstacle.
 
+![max distances](../image/drivable_area/DynamicDrivableArea-MaxWidth.drawio.svg)
+
 ##### 4 Calculate by how much each bound point should be pushed away from the path
 
 For each bound point, a shift distance is calculated.
 such that the resulting width between corresponding left and right bound points is as close as possible to the minimum width calculated in step 2 but the individual shift distance stays bellow the previously calculated maximum expansion distance.
+
+![expansion distances](../image/drivable_area/DynamicDrivableArea-ExpDistances.drawio.svg)
 
 ##### 5 Shift bound points by the values calculated in step 4 and remove all loops in the resulting bound
 
 Finally, each bound point is shifted away from the path by the distance calculated in step 4.
 Once all points have been shifted, loops are removed from the bound and we obtain our final expanded drivable area.
 
-TODO review and add figures
+| | |
+| --- | --- |
+| ![expansion](../image/drivable_area/DynamicDrivableArea-Expansion.drawio.svg) | ![result](../image/drivable_area/DynamicDrivableArea-Result.drawio.svg) |
 
 ### Visualizing maximum drivable area (Debug)
 
