@@ -113,7 +113,7 @@ The drivable area can also be expanded dynamically based on a minimum width calc
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | ![dynamic_expansion_off](../image/drivable_area/dynamic_expansion_off.png) | ![dynamic_expansion_on](../image/drivable_area/dynamic_expansion_on.png) |
 
-This expansion can be summarized with the following steps:
+Next we detail the algorithm used to expand the drivable area bounds.
 
 ##### 1 Calculate and smooth the path curvature
 
@@ -122,7 +122,7 @@ Previous path points and curvatures are reused up to the first previous path poi
 At this stage, the path is also resampled according to the `resampled_interval` and cropped according to the `max_arc_length`.
 With the resulting preprocessed path points and previous curvatures, curvatures of the new path points are calculated using the 3 points method and smoothed using a moving window average with window size `curvature_average_window`.
 
-###### 2 For each path point, calculate the closest bound segment and the minimum drivable area width
+##### 2 For each path point, calculate the closest bound segment and the minimum drivable area width
 
 Each path point is projected on the left and right drivable area bounds to calculate its corresponding bound index, original distance from the bounds, and the projected point.
 Additionally, for each path point, the minimum drivable area width is calculated using the following equation:
@@ -132,7 +132,7 @@ This equation was derived from the work of [Lim, H., Kim, C., and Jo, A., "Model
 
 ![min width](../image/drivable_area/DynamicDrivableArea-MinWidth.drawio.svg)
 
-###### 3 Calculate maximum expansion distances of each bound point based on dynamic objects and linestring of the vector map (optional)
+##### 3 Calculate maximum expansion distances of each bound point based on dynamic objects and linestring of the vector map (optional)
 
 For each drivable area bound point, we calculate its maximum expansion distance as its distance to the closest "obstacle" (either a map linestring with type `avoid_linestrings.type`, or a dynamic object footprint if `dynamic_objects.avoid` is set to `true`).
 If `max_expansion_distance` is not `0.0`, it is use here if smaller than the distance to the closest obstacle.
