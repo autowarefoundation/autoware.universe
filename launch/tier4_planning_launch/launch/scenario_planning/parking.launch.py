@@ -158,4 +158,3 @@ def generate_launch_description():
         ]
         + [OpaqueFunction(function=launch_setup)]
     )
-
