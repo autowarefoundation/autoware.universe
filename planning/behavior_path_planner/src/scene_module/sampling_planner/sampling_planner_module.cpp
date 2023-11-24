@@ -221,6 +221,11 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   debug_data_.footprints.clear();
 
+  if (prev_sampling_path_) {
+    const auto prev_path = prev_sampling_path_.value();
+    frenet_paths.push_back(prev_path);
+  }
+
   for (auto & path : frenet_paths) {
     const auto footprint =
       sampler_common::constraints::checkHardConstraints(path, internal_params_->constraints);
@@ -237,6 +242,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   };
 
   move_to_paths(frenet_paths);
+
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
   debug_data_.sampled_candidates = candidate_paths;
   debug_data_.obstacles = internal_params_->constraints.obstacle_polygons;
@@ -274,6 +280,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     utils::getExtendedCurrentLanes(planner_data_, max_length, max_length, false);
 
   const auto best_path = frenet_paths[*selected_path_idx];
+  prev_sampling_path_ = best_path;
   auto out_path = convertFrenetPathToPathWithLaneID(best_path, road_lanes, velocity);
   const auto goal_pose = planner_data_->route_handler->getGoalPose();
   for (auto & p : out_path.points) {

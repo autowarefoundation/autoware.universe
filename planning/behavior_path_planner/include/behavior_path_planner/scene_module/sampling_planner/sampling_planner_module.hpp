@@ -169,7 +169,7 @@ private:
   // std::shared_ptr<SamplingPlannerParameters> params_;
   std::shared_ptr<SamplingPlannerInternalParameters> internal_params_;
   vehicle_info_util::VehicleInfo vehicle_info_{};
-
+  std::optional<frenet_planner::Path> prev_sampling_path_ = std::nullopt;
   // move to utils
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output);
