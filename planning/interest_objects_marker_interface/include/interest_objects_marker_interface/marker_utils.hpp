@@ -40,7 +40,7 @@ namespace interest_objects_marker_interface::marker_utils
  * @param arrow_length Length of arrow marker
  */
 visualization_msgs::msg::Marker createArrowMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name,
+  const size_t id, const ObjectMarkerData & data, const std::string & name,
   const double height_offset, const double arrow_length = 1.0);
 
 /**
@@ -53,7 +53,7 @@ visualization_msgs::msg::Marker createArrowMarker(
  * @param line_width Line width of circle marker
  */
 visualization_msgs::msg::Marker createCircleMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name, const double radius,
+  const size_t id, const ObjectMarkerData & data, const std::string & name, const double radius,
   const double height_offset, const double line_width = 0.1);
 
 /**
@@ -66,7 +66,7 @@ visualization_msgs::msg::Marker createCircleMarker(
  * @param line_width Line width of circle marker
  */
 visualization_msgs::msg::MarkerArray createTargetMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name,
+  const size_t id, const ObjectMarkerData & data, const std::string & name,
   const double height_offset, const double arrow_length = 1.0, const double line_width = 0.1);
 }  // namespace interest_objects_marker_interface::marker_utils
 

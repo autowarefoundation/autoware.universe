@@ -79,7 +79,7 @@ ColorRGBA InterestObjectsMarkerInterface::getColor(const ColorName & color_name,
       return coloring::getAmber(alpha);
     case ColorName::RED:
       return coloring::getRed(alpha);
-    case ColorName::WHITE:
+    case ColorName::GRAY:
       return coloring::getGray(alpha);
     default:
       return coloring::getGray(alpha);

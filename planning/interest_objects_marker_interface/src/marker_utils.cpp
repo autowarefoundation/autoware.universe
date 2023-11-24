@@ -27,7 +27,7 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
 Marker createArrowMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name,
+  const size_t id, const ObjectMarkerData & data, const std::string & name,
   const double height_offset, const double arrow_length)
 {
   const double line_width = 0.25 * arrow_length;
@@ -53,7 +53,7 @@ Marker createArrowMarker(
 }
 
 Marker createCircleMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name, const double radius,
+  const size_t id, const ObjectMarkerData & data, const std::string & name, const double radius,
   const double height_offset, const double line_width)
 {
   Marker marker = createDefaultMarker(
@@ -78,7 +78,7 @@ Marker createCircleMarker(
 }
 
 MarkerArray createTargetMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name,
+  const size_t id, const ObjectMarkerData & data, const std::string & name,
   const double height_offset, const double arrow_length, const double line_width)
 {
   MarkerArray marker_array;

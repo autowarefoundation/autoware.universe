@@ -28,7 +28,7 @@ struct ObjectMarkerData
   std_msgs::msg::ColorRGBA color;
 };
 
-enum class ColorName { GREEN, AMBER, RED, WHITE };
+enum class ColorName { GRAY, GREEN, AMBER, RED };
 }  // namespace interest_objects_marker_interface
 
 #endif  // INTEREST_OBJECTS_MARKER_INTERFACE__MARKER_DATA_HPP_
