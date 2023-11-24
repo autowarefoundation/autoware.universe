@@ -35,6 +35,8 @@
 #include <vector>
 namespace motion_utils
 {
+#define ANSI_RED "\033[31m "
+#define ANSI_RESET " \033[0m"
 
 /**
  * @brief validate if points container is empty or not
@@ -45,7 +47,7 @@ void validateNonEmpty(const T & points)
 {
   if (points.empty()) {
     tier4_autoware_utils::print_backtrace();
-    throw std::invalid_argument("Points is empty.");
+    throw std::invalid_argument("[motion_utils] error: Points is empty.");
   }
 }
 
@@ -83,7 +85,7 @@ void validateNonSharpAngle(
   constexpr double epsilon = 1e-3;
   if (std::cos(angle_threshold) < product / dist_1to2 / dist_3to2 + epsilon) {
     tier4_autoware_utils::print_backtrace();
-    throw std::invalid_argument("Sharp angle.");
+    throw std::invalid_argument("[motion_utils] error: Too sharp angle.");
   }
 }
 
@@ -215,7 +217,7 @@ boost::optional<size_t> searchZeroVelocityIndex(
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -247,7 +249,7 @@ boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist, con
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -337,7 +339,7 @@ boost::optional<size_t> findNearestIndex(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -398,12 +400,12 @@ double calcLongitudinalOffsetToSegment(
   const bool throw_exception = false)
 {
   if (seg_idx >= points.size() - 1) {
-    const std::out_of_range e("Segment index is invalid.");
+    const std::out_of_range e("[motion_utils] error: Segment index is invalid.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return std::nan("");
   }
 
@@ -415,18 +417,18 @@ double calcLongitudinalOffsetToSegment(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
       return std::nan("");
     }
   }
 
   if (seg_idx >= overlap_removed_points.size() - 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::runtime_error e("[motion_utils] error: Same points are given.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return std::nan("");
   }
 
@@ -572,18 +574,18 @@ double calcLateralOffset(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
       return std::nan("");
     }
   }
 
   if (overlap_removed_points.size() == 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::runtime_error e("[motion_utils] error: Same points are given.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return std::nan("");
   }
 
@@ -634,18 +636,18 @@ double calcLateralOffset(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
       return std::nan("");
     }
   }
 
   if (overlap_removed_points.size() == 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::runtime_error e("[motion_utils] error: Same points are given.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return std::nan("");
   }
 
@@ -681,7 +683,7 @@ double calcSignedArcLength(const T & points, const size_t src_idx, const size_t 
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return 0.0;
   }
 
@@ -724,7 +726,7 @@ std::vector<double> calcSignedArcLengthPartialSum(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -776,7 +778,7 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return 0.0;
   }
 
@@ -819,7 +821,7 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return 0.0;
   }
 
@@ -858,7 +860,7 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return 0.0;
   }
 
@@ -898,7 +900,7 @@ double calcArcLength(const T & points)
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return 0.0;
   }
 
@@ -1004,7 +1006,7 @@ boost::optional<double> calcDistanceToForwardStopPoint(
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -1038,17 +1040,17 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
   if (points.size() - 1 < src_idx) {
-    const auto e = std::out_of_range("Invalid source index");
+    const auto e = std::out_of_range("[motion_utils] error: Invalid source index");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -1115,7 +1117,7 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -1163,17 +1165,17 @@ boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
   if (points.size() - 1 < src_idx) {
-    const auto e = std::out_of_range("Invalid source index");
+    const auto e = std::out_of_range("[motion_utils] error: Invalid source index");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -1262,7 +1264,7 @@ boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -1308,7 +1310,7 @@ boost::optional<size_t> insertTargetPoint(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -1323,7 +1325,7 @@ boost::optional<size_t> insertTargetPoint(
   try {
     validateNonSharpAngle(p_front, p_target, p_back);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -2191,7 +2193,7 @@ boost::optional<double> calcDistanceToForwardStopPoint(
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return {};
   }
 
@@ -2377,18 +2379,18 @@ double calcYawDeviation(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
       return 0.0;
     }
   }
 
   if (overlap_removed_points.size() <= 1) {
-    const std::runtime_error e("points size is less than 2");
+    const std::runtime_error e("[motion_utils] error: points size is less than 2");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
-    std::cerr << e.what() << std::endl;
+    std::cerr << ANSI_RED << e.what() << ANSI_RESET << std::endl;
     return 0.0;
   }
 
