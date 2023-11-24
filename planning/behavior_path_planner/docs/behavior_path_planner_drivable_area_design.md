@@ -107,11 +107,11 @@ Note that we only expand right bound of the rightmost lane and left bound of the
 
 #### Dynamic Expansion
 
-The drivable area can also be expanded dynamically based on a minumum width calculated from the path curvature and the ego vehicle's properties.
+The drivable area can also be expanded dynamically based on a minimum width calculated from the path curvature and the ego vehicle's properties.
 
-| Without dynamic expansion | With dynamic expansion|
-| --- | --- |
-| ![dynamic_expansion_off](../image/drivable_area/dynamic_expansion_off.png) | ![dyanmic_expansion_on](../image/drivable_area/dynamic_expansion_on.png) |
+| Without dynamic expansion                                                  | With dynamic expansion                                                   |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| ![dynamic_expansion_off](../image/drivable_area/dynamic_expansion_off.png) | ![dynamic_expansion_on](../image/drivable_area/dynamic_expansion_on.png) |
 
 This expansion can be summarized with the following steps:
 
@@ -151,8 +151,8 @@ such that the resulting width between corresponding left and right bound points 
 Finally, each bound point is shifted away from the path by the distance calculated in step 4.
 Once all points have been shifted, loops are removed from the bound and we obtain our final expanded drivable area.
 
-| | |
-| --- | --- |
+|                                                                               |                                                                         |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | ![expansion](../image/drivable_area/DynamicDrivableArea-Expansion.drawio.svg) | ![result](../image/drivable_area/DynamicDrivableArea-Result.drawio.svg) |
 
 ### Visualizing maximum drivable area (Debug)
