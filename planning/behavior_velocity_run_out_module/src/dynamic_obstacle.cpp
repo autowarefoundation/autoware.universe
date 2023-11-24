@@ -291,8 +291,8 @@ void calculateMinAndMaxVelFromCovariance(
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
   const double std_dev_multiplier, run_out_utils::DynamicObstacle & dynamic_obstacle)
 {
-  const double x_velocity = twist_with_covariance.twist.linear.x;
-  const double y_velocity = twist_with_covariance.twist.linear.y;
+  const double x_velocity = std::abs(twist_with_covariance.twist.linear.x);
+  const double y_velocity = std::abs(twist_with_covariance.twist.linear.y);
   const double x_variance = twist_with_covariance.covariance.at(0);
   const double y_variance = twist_with_covariance.covariance.at(7);
   const double x_std_dev = std::sqrt(x_variance);
@@ -302,11 +302,11 @@ void calculateMinAndMaxVelFromCovariance(
   // note that this assumes the covariance of x and y is zero
   const double min_x = std::max(0.0, x_velocity - std_dev_multiplier * x_std_dev);
   const double min_y = std::max(0.0, y_velocity - std_dev_multiplier * y_std_dev);
-  const double min_velocity = std::sqrt(min_x * min_x + min_y * min_y);
+  const double min_velocity = std::hypot(min_x, min_y);
 
   const double max_x = x_velocity + std_dev_multiplier * x_std_dev;
   const double max_y = y_velocity + std_dev_multiplier * y_std_dev;
-  const double max_velocity = std::sqrt(max_x * max_x + max_y * max_y);
+  const double max_velocity = std::hypot(max_x, max_y);
 
   dynamic_obstacle.min_velocity_mps = min_velocity;
   dynamic_obstacle.max_velocity_mps = max_velocity;
