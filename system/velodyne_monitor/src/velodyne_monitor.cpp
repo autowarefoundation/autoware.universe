@@ -33,7 +33,7 @@
 VelodyneMonitor::VelodyneMonitor() : Node("velodyne_monitor"), updater_(this)
 {
   timeout_ = declare_parameter<double>("timeout");
-  ip_address_ = declare_parameter<string>("ip_address");
+  ip_address_ = declare_parameter<std::string>("ip_address");
   temp_cold_warn_ = declare_parameter<double>("temp_cold_warn");
   temp_cold_error_ = declare_parameter<double>("temp_cold_error");
   temp_hot_warn_ = declare_parameter<double>("temp_hot_warn");
