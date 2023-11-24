@@ -82,6 +82,9 @@ struct DebugData
   std::vector<std::vector<geometry_msgs::msg::Point>> obj_polygons;
 };
 
+std::optional<geometry_msgs::msg::Pose> toStdOptional(
+  const boost::optional<geometry_msgs::msg::Pose> & boost_pose);
+
 std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
   const geometry_msgs::msg::Pose & current_pose,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
@@ -107,6 +110,16 @@ std::vector<geometry_msgs::msg::Point> getLinestringIntersects(
 std::optional<lanelet::ConstLineString3d> getStopLineFromMap(
   const int lane_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const std::string & attribute_name);
+
+/**
+ * @brief Calculate a feasible stop pose based on the given parameters.
+ * @return A feasible stop pose if one exists, otherwise std::nullopt.
+ */
+std::optional<Pose> getFeasibleStopPose(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & path_points,
+  const geometry_msgs::msg::Point & ego_position, const geometry_msgs::msg::Point & stop_position,
+  const double ego_vel, const double ego_acc, const double min_acc, const double max_jerk,
+  const double min_jerk);
 }  // namespace behavior_velocity_planner
 
 #endif  // BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_

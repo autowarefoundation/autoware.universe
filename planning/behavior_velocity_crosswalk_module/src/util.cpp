@@ -16,6 +16,7 @@
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
+#include <motion_utils/distance/distance.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -48,10 +49,21 @@
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+using motion_utils::calcDecelDistWithJerkAndAccConstraints;
+using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::Line2d;
 using tier4_autoware_utils::Point2d;
+
+std::optional<geometry_msgs::msg::Pose> toStdOptional(
+  const boost::optional<geometry_msgs::msg::Pose> & boost_pose)
+{
+  if (boost_pose) {
+    return *boost_pose;
+  }
+  return std::nullopt;
+}
 
 std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
   const geometry_msgs::msg::Pose & current_pose,
@@ -230,5 +242,24 @@ std::optional<lanelet::ConstLineString3d> getStopLineFromMap(
   }
 
   return stop_line.front();
+}
+
+std::optional<Pose> getFeasibleStopPose(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & path_points,
+  const geometry_msgs::msg::Point & ego_position, const geometry_msgs::msg::Point & stop_position,
+  const double ego_vel, const double ego_acc, const double min_acc, const double max_jerk,
+  const double min_jerk)
+{
+  const auto min_feasible_dist_ego2stop =
+    calcDecelDistWithJerkAndAccConstraints(ego_vel, 0.0, ego_acc, min_acc, max_jerk, min_jerk);
+  if (!min_feasible_dist_ego2stop) {
+    return std::nullopt;
+  }
+  const double dist_ego2stop = calcSignedArcLength(path_points, ego_position, stop_position);
+  const double feasible_dist_ego2stop = std::max(*min_feasible_dist_ego2stop, dist_ego2stop);
+  const double dist_to_ego =
+    calcSignedArcLength(path_points, path_points.front().point.pose.position, ego_position);
+  return toStdOptional(
+    calcLongitudinalOffsetPose(path_points, 0, dist_to_ego + feasible_dist_ego2stop));
 }
 }  // namespace behavior_velocity_planner
