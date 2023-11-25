@@ -220,8 +220,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
 
 bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
   const Polygon2d & poly,
-  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr &
-    predicted_obj_arr_ptr)
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr & predicted_obj_arr_ptr)
 {
   // stuck points by predicted objects
   for (const auto & object : predicted_obj_arr_ptr->objects) {

@@ -1132,14 +1132,11 @@ geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   return obj_pose;
 }
 
-static bool isTargetStuckVehicleType(
-  const autoware_perception_msgs::msg::PredictedObject & object)
+static bool isTargetStuckVehicleType(const autoware_perception_msgs::msg::PredictedObject & object)
 {
   if (
-    object.classification.at(0).label ==
-      autoware_perception_msgs::msg::ObjectClassification::CAR ||
-    object.classification.at(0).label ==
-      autoware_perception_msgs::msg::ObjectClassification::BUS ||
+    object.classification.at(0).label == autoware_perception_msgs::msg::ObjectClassification::CAR ||
+    object.classification.at(0).label == autoware_perception_msgs::msg::ObjectClassification::BUS ||
     object.classification.at(0).label ==
       autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
     object.classification.at(0).label ==

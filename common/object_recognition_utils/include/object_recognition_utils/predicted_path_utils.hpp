@@ -58,9 +58,9 @@ autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
  * @return resampled path
  */
 autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
-  const autoware_perception_msgs::msg::PredictedPath & path,
-  const double sampling_time_interval, const double sampling_horizon,
-  const bool use_spline_for_xy = true, const bool use_spline_for_z = false);
+  const autoware_perception_msgs::msg::PredictedPath & path, const double sampling_time_interval,
+  const double sampling_horizon, const bool use_spline_for_xy = true,
+  const bool use_spline_for_z = false);
 }  // namespace object_recognition_utils
 
 #endif  // OBJECT_RECOGNITION_UTILS__PREDICTED_PATH_UTILS_HPP_

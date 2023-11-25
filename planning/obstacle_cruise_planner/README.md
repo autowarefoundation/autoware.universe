@@ -15,11 +15,11 @@ The `obstacle_cruise_planner` package has following modules.
 
 ### Input topics
 
-| Name                 | Type                                            | Description      |
-| -------------------- | ----------------------------------------------- | ---------------- |
-| `~/input/trajectory` | autoware_auto_planning_msgs::Trajectory         | input trajectory |
+| Name                 | Type                                       | Description      |
+| -------------------- | ------------------------------------------ | ---------------- |
+| `~/input/trajectory` | autoware_auto_planning_msgs::Trajectory    | input trajectory |
 | `~/input/objects`    | autoware_perception_msgs::PredictedObjects | dynamic objects  |
-| `~/input/odometry`   | nav_msgs::msg::Odometry                         | ego odometry     |
+| `~/input/odometry`   | nav_msgs::msg::Odometry                    | ego odometry     |
 
 ### Output topics
 
