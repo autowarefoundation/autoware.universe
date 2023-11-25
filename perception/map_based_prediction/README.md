@@ -161,7 +161,7 @@ If the target object is inside the road or crosswalk, this module outputs one or
 | Name                     | Type                                                   | Description                                                                           |
 | ------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | `~/input/objects`        | `autoware_auto_perception_msgs::msg::TrackedObjects`   | tracking objects. Default is set to `/perception/object_recognition/tracking/objects` |
-| `~/output/objects`       | `autoware_auto_perception_msgs::msg::PredictedObjects` | tracking objects with predicted path.                                                 |
+| `~/output/objects`       | `autoware_perception_msgs::msg::PredictedObjects` | tracking objects with predicted path.                                                 |
 | `~/objects_path_markers` | `visualization_msgs::msg::MarkerArray`                 | marker for visualization.                                                             |
 
 ## Parameters

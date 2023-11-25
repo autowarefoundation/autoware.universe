@@ -52,7 +52,7 @@ Adding a new metric `M` requires the following steps:
 | ------------------------------ | ------------------------------------------------------ | ------------------------------------------------- |
 | `~/input/trajectory`           | `autoware_auto_planning_msgs::msg::Trajectory`         | Main trajectory to evaluate                       |
 | `~/input/reference_trajectory` | `autoware_auto_planning_msgs::msg::Trajectory`         | Reference trajectory to use for deviation metrics |
-| `~/input/objects`              | `autoware_auto_perception_msgs::msg::PredictedObjects` | Obstacles                                         |
+| `~/input/objects`              | `autoware_perception_msgs::msg::PredictedObjects` | Obstacles                                         |
 
 ### Outputs
 

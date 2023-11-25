@@ -246,7 +246,7 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
 : LaneChangeModuleManager(
     node, name, config, Direction::NONE, LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE)
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using autoware_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::getOrDeclareParameter;
 
   rtc_interface_ptr_map_.clear();

@@ -18,7 +18,7 @@ include_directories(
   ${nav_msgs_INCLUDE_DIRS}
   ${tier4_system_msgs_INCLUDE_DIRS}
   ${tier4_vehicle_msgs_INCLUDE_DIRS}
-  ${autoware_auto_perception_msgs_INCLUDE_DIRS}
+  ${autoware_perception_msgs_INCLUDE_DIRS}
   ${tier4_map_msgs_INCLUDE_DIRS}
 )
 

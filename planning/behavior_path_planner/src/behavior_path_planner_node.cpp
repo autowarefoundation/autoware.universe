@@ -126,7 +126,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // route_handler
   auto qos_transient_local = rclcpp::QoS{1}.transient_local();
-  vector_map_subscriber_ = create_subscription<HADMapBin>(
+  vector_map_subscriber_ = create_subscription<LaneletMapBin>(
     "~/input/vector_map", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onMap, this, _1),
     createSubscriptionOptions(this));
   route_subscriber_ = create_subscription<LaneletRoute>(
@@ -469,7 +469,7 @@ void BehaviorPathPlannerNode::run()
   }
 
   // check for map update
-  HADMapBin::ConstSharedPtr map_ptr{nullptr};
+  LaneletMapBin::ConstSharedPtr map_ptr{nullptr};
   {
     std::lock_guard<std::mutex> lk_map(mutex_map_);  // for has_received_map_ and map_ptr_
     if (has_received_map_) {
@@ -950,7 +950,7 @@ void BehaviorPathPlannerNode::onTrafficSignals(const TrafficSignalArray::ConstSh
     planner_data_->traffic_light_id_map[signal.traffic_signal_id] = traffic_signal;
   }
 }
-void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onMap(const LaneletMapBin::ConstSharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_map_);
   map_ptr_ = msg;

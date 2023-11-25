@@ -134,8 +134,8 @@ bool isSamePoint(const geometry_msgs::msg::Point & point1, const geometry_msgs::
 
 namespace behavior_path_planner::utils
 {
-using autoware_auto_perception_msgs::msg::ObjectClassification;
-using autoware_auto_perception_msgs::msg::Shape;
+using autoware_perception_msgs::msg::ObjectClassification;
+using autoware_perception_msgs::msg::Shape;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
 using tf2::fromMsg;
 using tier4_autoware_utils::Point2d;

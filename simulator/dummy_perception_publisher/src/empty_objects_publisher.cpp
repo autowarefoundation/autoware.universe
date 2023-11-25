@@ -14,7 +14,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
 #include <memory>
 #include <utility>
@@ -25,7 +25,7 @@ public:
   EmptyObjectsPublisher() : Node("empty_objects_publisher")
   {
     empty_objects_pub_ =
-      this->create_publisher<autoware_auto_perception_msgs::msg::PredictedObjects>(
+      this->create_publisher<autoware_perception_msgs::msg::PredictedObjects>(
         "~/output/objects", 1);
 
     using std::chrono_literals::operator""ms;
@@ -34,13 +34,13 @@ public:
   }
 
 private:
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::PredictedObjects>::SharedPtr
     empty_objects_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   void timerCallback()
   {
-    autoware_auto_perception_msgs::msg::PredictedObjects empty_objects;
+    autoware_perception_msgs::msg::PredictedObjects empty_objects;
     empty_objects.header.frame_id = "map";
     empty_objects.header.stamp = this->now();
     empty_objects_pub_->publish(empty_objects);

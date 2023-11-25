@@ -85,7 +85,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Subscribers
   sub_predicted_objects_ =
-    this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
+    this->create_subscription<autoware_perception_msgs::msg::PredictedObjects>(
       "~/input/dynamic_objects", 1,
       std::bind(&BehaviorVelocityPlannerNode::onPredictedObjects, this, _1),
       createSubscriptionOptions(this));
@@ -224,7 +224,7 @@ void BehaviorVelocityPlannerNode::onOccupancyGrid(
 }
 
 void BehaviorVelocityPlannerNode::onPredictedObjects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.predicted_objects = msg;

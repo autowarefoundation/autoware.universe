@@ -95,7 +95,7 @@ The current behavior tree structure is shown below. Each modules (LaneChange, Av
 | :----------------------------- | :----------------------------------------------------- | :------------------------------------------------------------------------------------ |
 | ~/input/route                  | `autoware_planning_msgs::msg::LaneletRoute`            | current route from start to goal.                                                     |
 | ~/input/vector_map             | `autoware_map_msgs::msg::LaneletMapBin`                | map information.                                                                      |
-| ~/input/objects                | `autoware_auto_perception_msgs::msg::PredictedObjects` | dynamic objects from perception module.                                               |
+| ~/input/objects                | `autoware_perception_msgs::msg::PredictedObjects` | dynamic objects from perception module.                                               |
 | ~/input/occupancy_grid_map/map | `nav_msgs::msg::OccupancyGrid`                         | occupancy grid map from perception module. This is used for only Goal Planner module. |
 | ~/input/kinematic_state        | `nav_msgs::msg::Odometry`                              | for ego velocity.                                                                     |
 

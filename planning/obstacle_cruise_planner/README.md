@@ -18,7 +18,7 @@ The `obstacle_cruise_planner` package has following modules.
 | Name                 | Type                                            | Description      |
 | -------------------- | ----------------------------------------------- | ---------------- |
 | `~/input/trajectory` | autoware_auto_planning_msgs::Trajectory         | input trajectory |
-| `~/input/objects`    | autoware_auto_perception_msgs::PredictedObjects | dynamic objects  |
+| `~/input/objects`    | autoware_perception_msgs::PredictedObjects | dynamic objects  |
 | `~/input/odometry`   | nav_msgs::msg::Odometry                         | ego odometry     |
 
 ### Output topics

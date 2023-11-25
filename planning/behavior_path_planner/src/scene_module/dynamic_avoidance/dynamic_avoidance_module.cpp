@@ -119,13 +119,13 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
   return std::make_pair(projected_velocity[0], projected_velocity[1]);
 }
 
-double calcObstacleMaxLength(const autoware_auto_perception_msgs::msg::Shape & shape)
+double calcObstacleMaxLength(const autoware_perception_msgs::msg::Shape & shape)
 {
-  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     return std::hypot(shape.dimensions.x / 2.0, shape.dimensions.y / 2.0);
-  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     return shape.dimensions.x / 2.0;
-  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+  } else if (shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
     double max_length_to_point = 0.0;
     for (const auto rel_point : shape.footprint.points) {
       const double length_to_point = std::hypot(rel_point.x, rel_point.y);
@@ -343,7 +343,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::planWaitingApproval()
 
 bool DynamicAvoidanceModule::isLabelTargetObstacle(const uint8_t label) const
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using autoware_perception_msgs::msg::ObjectClassification;
 
   if (label == ObjectClassification::CAR && parameters_->avoid_car) {
     return true;
@@ -769,7 +769,7 @@ std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> DynamicAvoidanceModule
 
 DynamicAvoidanceModule::LatLonOffset DynamicAvoidanceModule::getLateralLongitudinalOffset(
   const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
-  const autoware_auto_perception_msgs::msg::Shape & obj_shape) const
+  const autoware_perception_msgs::msg::Shape & obj_shape) const
 {
   const size_t obj_seg_idx = motion_utils::findNearestSegmentIndex(ego_path, obj_pose.position);
   const auto obj_points = tier4_autoware_utils::toPolygon2d(obj_pose, obj_shape);

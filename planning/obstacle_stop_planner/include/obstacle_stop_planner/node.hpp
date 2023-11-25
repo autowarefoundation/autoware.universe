@@ -28,7 +28,7 @@
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/accel_stamped.hpp>
@@ -75,7 +75,7 @@ using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using std_msgs::msg::Header;
 
-using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using tier4_autoware_utils::Point2d;
@@ -92,7 +92,7 @@ using vehicle_info_util::VehicleInfo;
 
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObject;
 struct ObstacleWithDetectionTime
 {
   explicit ObstacleWithDetectionTime(const rclcpp::Time & t, pcl::PointXYZ & p)

@@ -299,7 +299,7 @@ bool BlindSpotModule::generateStopLine(
 }
 
 void BlindSpotModule::cutPredictPathWithDuration(
-  autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const
+  autoware_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const
 {
   const rclcpp::Time current_time = clock_->now();
 
@@ -372,7 +372,7 @@ int BlindSpotModule::insertPoint(
 bool BlindSpotModule::checkObstacleInBlindSpot(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const geometry_msgs::msg::Pose & stop_line_pose) const
 {
   /* get detection area */
@@ -387,7 +387,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
     debug_data_.detection_areas_for_blind_spot = areas_opt.get().detection_areas;
     debug_data_.conflict_areas_for_blind_spot = areas_opt.get().conflict_areas;
 
-    autoware_auto_perception_msgs::msg::PredictedObjects objects = *objects_ptr;
+    autoware_perception_msgs::msg::PredictedObjects objects = *objects_ptr;
     cutPredictPathWithDuration(&objects, planner_param_.max_future_movement_time);
 
     // check objects in blind spot areas
@@ -419,7 +419,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
 }
 
 bool BlindSpotModule::isPredictedPathInArea(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object,
+  const autoware_perception_msgs::msg::PredictedObject & object,
   const std::vector<lanelet::CompoundPolygon3d> & areas, geometry_msgs::msg::Pose ego_pose) const
 {
   const auto ego_yaw = tf2::getYaw(ego_pose.orientation);
@@ -614,15 +614,15 @@ lanelet::LineString2d BlindSpotModule::getVehicleEdge(
 }
 
 bool BlindSpotModule::isTargetObjectType(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
+  const autoware_perception_msgs::msg::PredictedObject & object) const
 {
   if (
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE ||
+      autoware_perception_msgs::msg::ObjectClassification::BICYCLE ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN ||
+      autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
+      autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
     return true;
   }
   return false;

@@ -49,7 +49,7 @@ namespace
 {
 Polygon2d createOneStepPolygon(
   const geometry_msgs::msg::Pose & prev_pose, const geometry_msgs::msg::Pose & next_pose,
-  const autoware_auto_perception_msgs::msg::Shape & shape)
+  const autoware_perception_msgs::msg::Shape & shape)
 {
   const auto prev_poly = tier4_autoware_utils::toPolygon2d(prev_pose, shape);
   const auto next_poly = tier4_autoware_utils::toPolygon2d(next_pose, shape);
@@ -72,21 +72,21 @@ Polygon2d createOneStepPolygon(
 }  // namespace
 
 static bool isTargetCollisionVehicleType(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object)
+  const autoware_perception_msgs::msg::PredictedObject & object)
 {
   if (
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+      autoware_perception_msgs::msg::ObjectClassification::CAR ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
+      autoware_perception_msgs::msg::ObjectClassification::BUS ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+      autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
+      autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
+      autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) {
+      autoware_perception_msgs::msg::ObjectClassification::BICYCLE) {
     return true;
   }
   return false;
@@ -2065,7 +2065,7 @@ IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
   bool IntersectionModule::checkFrontVehicleDeceleration(
   lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
   const Polygon2d & stuck_vehicle_detect_area,
-  const autoware_auto_perception_msgs::msg::PredictedObject & object,
+  const autoware_perception_msgs::msg::PredictedObject & object,
   const double assumed_front_car_decel)
   {
   const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
@@ -2120,7 +2120,7 @@ IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
   stopping_point.y += lat_offset * std::sin(lane_yaw + M_PI / 2.0);
 
   // calculate footprint of predicted stopping pose
-  autoware_auto_perception_msgs::msg::PredictedObject predicted_object = object;
+  autoware_perception_msgs::msg::PredictedObject predicted_object = object;
   predicted_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
   predicted_object.kinematics.initial_pose_with_covariance.pose.orientation =
   tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);

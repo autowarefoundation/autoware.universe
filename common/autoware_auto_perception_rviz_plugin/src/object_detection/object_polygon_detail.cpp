@@ -68,9 +68,49 @@ visualization_msgs::msg::Marker::SharedPtr get_path_confidence_marker_ptr(
   return marker_ptr;
 }
 
+visualization_msgs::msg::Marker::SharedPtr get_path_confidence_marker_ptr(
+  const autoware_perception_msgs::msg::PredictedPath & predicted_path,
+  const std_msgs::msg::ColorRGBA & path_confidence_color)
+{
+  auto marker_ptr = std::make_shared<Marker>();
+  marker_ptr->type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+  marker_ptr->ns = std::string("path confidence");
+  marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->scale.x = 0.5;
+  marker_ptr->scale.y = 0.5;
+  marker_ptr->scale.z = 0.5;
+  marker_ptr->pose = initPose();
+  marker_ptr->color = path_confidence_color;
+  marker_ptr->pose.position = predicted_path.path.back().position;
+  marker_ptr->text = std::to_string(predicted_path.confidence);
+  marker_ptr->color.a = 0.5;
+  return marker_ptr;
+}
+
 visualization_msgs::msg::Marker::SharedPtr get_predicted_path_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
+  const std_msgs::msg::ColorRGBA & predicted_path_color, const bool is_simple)
+{
+  auto marker_ptr = std::make_shared<Marker>();
+  marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+  marker_ptr->ns = std::string("path");
+  marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->pose = initPose();
+  marker_ptr->color = predicted_path_color;
+  marker_ptr->color.a = 0.6;
+  marker_ptr->scale.x = 0.015;
+  calc_path_line_list(predicted_path, marker_ptr->points, is_simple);
+  for (size_t k = 0; k < marker_ptr->points.size(); ++k) {
+    marker_ptr->points.at(k).z -= shape.dimensions.z / 2.0;
+  }
+  return marker_ptr;
+}
+visualization_msgs::msg::Marker::SharedPtr get_predicted_path_marker_ptr(
+  const autoware_perception_msgs::msg::Shape & shape,
+  const autoware_perception_msgs::msg::PredictedPath & predicted_path,
   const std_msgs::msg::ColorRGBA & predicted_path_color, const bool is_simple)
 {
   auto marker_ptr = std::make_shared<Marker>();
@@ -274,6 +314,39 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
   return marker_ptr;
 }
 
+visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
+  const autoware_perception_msgs::msg::Shape & shape_msg,
+  const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width)
+{
+  auto marker_ptr = std::make_shared<Marker>();
+  marker_ptr->ns = std::string("shape");
+
+  using autoware_perception_msgs::msg::Shape;
+  if (shape_msg.type == Shape::BOUNDING_BOX) {
+    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    calc_bounding_box_line_list(shape_msg, marker_ptr->points);
+  } else if (shape_msg.type == Shape::CYLINDER) {
+    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    calc_cylinder_line_list(shape_msg, marker_ptr->points);
+  } else if (shape_msg.type == Shape::POLYGON) {
+    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    calc_polygon_line_list(shape_msg, marker_ptr->points);
+  } else {
+    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    calc_polygon_line_list(shape_msg, marker_ptr->points);
+  }
+
+  marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
+  marker_ptr->pose = to_pose(centroid, orientation);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->scale.x = line_width;
+  marker_ptr->color = color_rgba;
+
+  return marker_ptr;
+}
+
+
 visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
@@ -306,8 +379,157 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   return marker_ptr;
 }
 
+visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
+  const autoware_perception_msgs::msg::Shape & shape_msg,
+  const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width)
+{
+  auto marker_ptr = std::make_shared<Marker>();
+  marker_ptr->ns = std::string("shape");
+
+  using autoware_perception_msgs::msg::Shape;
+  if (shape_msg.type == Shape::BOUNDING_BOX) {
+    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    calc_2d_bounding_box_bottom_line_list(shape_msg, marker_ptr->points);
+  } else if (shape_msg.type == Shape::CYLINDER) {
+    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    calc_2d_cylinder_bottom_line_list(shape_msg, marker_ptr->points);
+  } else if (shape_msg.type == Shape::POLYGON) {
+    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    calc_2d_polygon_bottom_line_list(shape_msg, marker_ptr->points);
+  } else {
+    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    calc_2d_polygon_bottom_line_list(shape_msg, marker_ptr->points);
+  }
+
+  marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
+  marker_ptr->pose = to_pose(centroid, orientation);
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker_ptr->scale.x = line_width;
+  marker_ptr->color = color_rgba;
+
+  return marker_ptr;
+}
+
+
 void calc_bounding_box_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  geometry_msgs::msg::Point point;
+  point.x = shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  // up surface
+  point.x = shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  // down surface
+  point.x = shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+}
+
+void calc_bounding_box_line_list(
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
 {
   geometry_msgs::msg::Point point;
@@ -465,6 +687,50 @@ void calc_2d_bounding_box_bottom_line_list(
   points.push_back(point);
 }
 
+void calc_2d_bounding_box_bottom_line_list(
+  const autoware_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  geometry_msgs::msg::Point point;
+  // down surface
+  point.x = shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+
+  point.x = shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+  point.x = -shape.dimensions.x / 2.0;
+  point.y = -shape.dimensions.y / 2.0;
+  point.z = -shape.dimensions.z / 2.0;
+  points.push_back(point);
+}
+
+
 void calc_cylinder_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
@@ -508,8 +774,66 @@ void calc_cylinder_line_list(
   }
 }
 
+void calc_cylinder_line_list(
+  const autoware_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  const double radius = shape.dimensions.x * 0.5;
+  {
+    constexpr int n = 20;
+    geometry_msgs::msg::Point center;
+    center.x = 0.0;
+    center.y = 0.0;
+    center.z = shape.dimensions.z * 0.5;
+    calc_circle_line_list(center, radius, points, n);
+    center.z = -shape.dimensions.z * 0.5;
+    calc_circle_line_list(center, radius, points, n);
+  }
+  {
+    constexpr int n = 4;
+    for (int i = 0; i < n; ++i) {
+      geometry_msgs::msg::Point point;
+      point.x = std::cos(
+                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                  M_PI / static_cast<double>(n)) *
+                radius;
+      point.y = std::sin(
+                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                  M_PI / static_cast<double>(n)) *
+                radius;
+      point.z = shape.dimensions.z * 0.5;
+      points.push_back(point);
+      point.x = std::cos(
+                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                  M_PI / static_cast<double>(n)) *
+                radius;
+      point.y = std::sin(
+                  (static_cast<double>(i) / static_cast<double>(n)) * 2.0 * M_PI +
+                  M_PI / static_cast<double>(n)) *
+                radius;
+      point.z = -shape.dimensions.z * 0.5;
+      points.push_back(point);
+    }
+  }
+}
+
 void calc_2d_cylinder_bottom_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  const double radius = shape.dimensions.x * 0.5;
+  {
+    constexpr int n = 20;
+    geometry_msgs::msg::Point center;
+    center.x = 0.0;
+    center.y = 0.0;
+    center.z = -shape.dimensions.z * 0.5;
+    calc_circle_line_list(center, radius, points, n);
+  }
+}
+
+void calc_2d_cylinder_bottom_line_list(
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
 {
   const double radius = shape.dimensions.x * 0.5;
@@ -609,8 +933,87 @@ void calc_polygon_line_list(
   }
 }
 
+void calc_polygon_line_list(
+  const autoware_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  if (shape.footprint.points.size() < 2) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("ObjectPolygonDisplayBase"),
+      "there are no enough footprint to visualize polygon");
+    return;
+  }
+  for (size_t i = 0; i < shape.footprint.points.size(); ++i) {
+    geometry_msgs::msg::Point point;
+    point.x = shape.footprint.points.at(i).x;
+    point.y = shape.footprint.points.at(i).y;
+    point.z = shape.dimensions.z / 2.0;
+    points.push_back(point);
+    point.x = shape.footprint.points
+                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+                .x;
+    point.y = shape.footprint.points
+                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+                .y;
+    point.z = shape.dimensions.z / 2.0;
+    points.push_back(point);
+  }
+  for (size_t i = 0; i < shape.footprint.points.size(); ++i) {
+    geometry_msgs::msg::Point point;
+    point.x = shape.footprint.points.at(i).x;
+    point.y = shape.footprint.points.at(i).y;
+    point.z = -shape.dimensions.z / 2.0;
+    points.push_back(point);
+    point.x = shape.footprint.points
+                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+                .x;
+    point.y = shape.footprint.points
+                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+                .y;
+    point.z = -shape.dimensions.z / 2.0;
+    points.push_back(point);
+  }
+  for (size_t i = 0; i < shape.footprint.points.size(); ++i) {
+    geometry_msgs::msg::Point point;
+    point.x = shape.footprint.points.at(i).x;
+    point.y = shape.footprint.points.at(i).y;
+    point.z = shape.dimensions.z / 2.0;
+    points.push_back(point);
+    point.x = shape.footprint.points.at(i).x;
+    point.y = shape.footprint.points.at(i).y;
+    point.z = -shape.dimensions.z / 2.0;
+    points.push_back(point);
+  }
+}
+
 void calc_2d_polygon_bottom_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  if (shape.footprint.points.size() < 2) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("ObjectPolygonDisplayBase"),
+      "there are no enough footprint to visualize polygon");
+    return;
+  }
+  for (size_t i = 0; i < shape.footprint.points.size(); ++i) {
+    geometry_msgs::msg::Point point;
+    point.x = shape.footprint.points.at(i).x;
+    point.y = shape.footprint.points.at(i).y;
+    point.z = -shape.dimensions.z / 2.0;
+    points.push_back(point);
+    point.x = shape.footprint.points
+                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+                .x;
+    point.y = shape.footprint.points
+                .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
+                .y;
+    point.z = -shape.dimensions.z / 2.0;
+    points.push_back(point);
+  }
+}
+void calc_2d_polygon_bottom_line_list(
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
 {
   if (shape.footprint.points.size() < 2) {
@@ -638,6 +1041,28 @@ void calc_2d_polygon_bottom_line_list(
 
 void calc_path_line_list(
   const autoware_auto_perception_msgs::msg::PredictedPath & paths,
+  std::vector<geometry_msgs::msg::Point> & points, const bool is_simple)
+{
+  const int circle_line_num = is_simple ? 5 : 10;
+
+  for (int i = 0; i < static_cast<int>(paths.path.size()) - 1; ++i) {
+    geometry_msgs::msg::Point point;
+    point.x = paths.path.at(i).position.x;
+    point.y = paths.path.at(i).position.y;
+    point.z = paths.path.at(i).position.z;
+    points.push_back(point);
+    point.x = paths.path.at(i + 1).position.x;
+    point.y = paths.path.at(i + 1).position.y;
+    point.z = paths.path.at(i + 1).position.z;
+    points.push_back(point);
+    if (!is_simple || i % 2 == 0) {
+      calc_circle_line_list(point, 0.25, points, circle_line_num);
+    }
+  }
+}
+
+void calc_path_line_list(
+  const autoware_perception_msgs::msg::PredictedPath & paths,
   std::vector<geometry_msgs::msg::Point> & points, const bool is_simple)
 {
   const int circle_line_num = is_simple ? 5 : 10;

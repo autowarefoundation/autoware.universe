@@ -17,7 +17,7 @@
 
 #include <route_handler/route_handler.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
@@ -147,7 +147,7 @@ struct DecisionInputs
 {
   OverlapRanges ranges{};
   EgoData ego_data;
-  autoware_auto_perception_msgs::msg::PredictedObjects objects{};
+  autoware_perception_msgs::msg::PredictedObjects objects{};
   std::shared_ptr<route_handler::RouteHandler> route_handler{};
   lanelet::ConstLanelets lanelets{};
 };

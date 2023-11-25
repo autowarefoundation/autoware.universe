@@ -196,7 +196,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
 
   // Subscribers
   using std::placeholders::_1;
-  sub_objects_ = this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
+  sub_objects_ = this->create_subscription<autoware_perception_msgs::msg::PredictedObjects>(
     "~/input/objects", 1, std::bind(&CostmapGenerator::onObjects, this, _1));
   sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/points_no_ground", rclcpp::SensorDataQoS(),
@@ -278,7 +278,7 @@ void CostmapGenerator::onLaneletMapBin(
 }
 
 void CostmapGenerator::onObjects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
 {
   objects_ = msg;
 }
@@ -388,12 +388,12 @@ grid_map::Matrix CostmapGenerator::generatePointsCostmap(
   return points_costmap;
 }
 
-autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr transformObjects(
+autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr transformObjects(
   const tf2_ros::Buffer & tf_buffer,
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects,
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects,
   const std::string & target_frame_id, const std::string & src_frame_id)
 {
-  auto objects = new autoware_auto_perception_msgs::msg::PredictedObjects();
+  auto objects = new autoware_perception_msgs::msg::PredictedObjects();
   *objects = *in_objects;
   objects->header.frame_id = target_frame_id;
 
@@ -411,11 +411,11 @@ autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr transformOb
     object.kinematics.initial_pose_with_covariance.pose = output_stamped.pose;
   }
 
-  return autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr(objects);
+  return autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr(objects);
 }
 
 grid_map::Matrix CostmapGenerator::generateObjectsCostmap(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects)
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects)
 {
   const auto object_frame = in_objects->header.frame_id;
   const auto transformed_objects =

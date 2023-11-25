@@ -24,8 +24,8 @@
 
 using Point = geometry_msgs::msg::Point;
 using Vector3 = geometry_msgs::msg::Vector3;
-using DynamicObjects = autoware_auto_perception_msgs::msg::PredictedObjects;
-using DynamicObject = autoware_auto_perception_msgs::msg::PredictedObject;
+using DynamicObjects = autoware_perception_msgs::msg::PredictedObjects;
+using DynamicObject = autoware_perception_msgs::msg::PredictedObject;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;

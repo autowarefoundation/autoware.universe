@@ -122,15 +122,15 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const rclcpp::Logger logger);
 
 geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
-  const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state);
+  const autoware_perception_msgs::msg::PredictedObjectKinematics & obj_state);
 
 bool checkStuckVehicleInIntersection(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const Polygon2d & stuck_vehicle_detect_area, const double stuck_vehicle_vel_thr,
   DebugData * debug_data);
 
 bool checkYieldStuckVehicleInIntersection(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const lanelet::BasicPolygon2d & ego_poly, const lanelet::CompoundPolygon3d & first_attention_area,
   const double stuck_vehicle_vel_thr, const double yield_stuck_distance_thr,
   DebugData * debug_data);

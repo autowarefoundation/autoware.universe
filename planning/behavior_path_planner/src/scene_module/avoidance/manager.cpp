@@ -30,7 +30,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
 : SceneModuleManagerInterface(node, name, config, {"left", "right"})
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using autoware_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::getOrDeclareParameter;
 
   AvoidanceParameters p{};
@@ -328,7 +328,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
 
 void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using autoware_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::updateParam;
 
   auto p = parameters_;

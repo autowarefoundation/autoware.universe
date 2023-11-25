@@ -23,7 +23,7 @@ Note that the velocity is just taken over from the input path.
 | ------------------ | -------------------------------------------------- | -------------------------------------------------- |
 | `~/input/path`     | autoware_auto_planning_msgs/msg/Path               | Reference path and the corresponding drivable area |
 | `~/input/odometry` | nav_msgs/msg/Odometry                              | Current state of the ego vehicle                   |
-| `~/input/objects`  | autoware_auto_perception_msgs/msg/PredictedObjects | objects to avoid                                   |
+| `~/input/objects`  | autoware_perception_msgs/msg/PredictedObjects | objects to avoid                                   |
 
 ### output
 
