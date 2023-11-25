@@ -23,6 +23,7 @@
 
 namespace image_projection_based_fusion
 {
+static constexpr size_t CAPACITY_POINT = 1000000;
 class PointPaintingTRT : public centerpoint::CenterPointTRT
 {
 public:
@@ -41,6 +42,13 @@ protected:
     const tf2_ros::Buffer & tf_buffer) override;
 
   std::unique_ptr<image_projection_based_fusion::VoxelGenerator> vg_ptr_pp_{nullptr};
+  std::vector<float> points_;
+  cuda::unique_ptr<float[]> points_d_{nullptr};
+  cuda::unique_ptr<float[]> voxels_buffer_d_{nullptr};
+  cuda::unique_ptr<unsigned int[]> mask_d_{nullptr};
+  cuda::unique_ptr<unsigned int[]> num_voxels_d_{nullptr};
+  size_t voxels_buffer_size_;
+  size_t mask_size_;
 };
 }  // namespace image_projection_based_fusion
 

@@ -116,7 +116,7 @@ bool CenterPointTRT::detect(
       rclcpp::get_logger("lidar_centerpoint"), "Fail to preprocess and skip to detect.");
     return false;
   }
-
+  
   inference();
 
   postProcess(det_boxes3d);

@@ -27,6 +27,8 @@ class VoxelGenerator : public centerpoint::VoxelGenerator
 public:
   using centerpoint::VoxelGenerator::VoxelGenerator;
 
+  size_t generateSweepPoints(std::vector<float> & points);
+
   std::size_t pointsToVoxels(
     std::vector<float> & voxels, std::vector<int> & coordinates,
     std::vector<float> & num_points_per_voxel) override;
