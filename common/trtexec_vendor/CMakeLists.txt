@@ -32,7 +32,7 @@ if(NOT EXISTS ${TRTEXEC_DEFAULT_BIN})
   message(STATUS "${TRTEXEC_DEFAULT_BIN} not found, download and build from source...")
   include(FetchContent)
   fetchcontent_declare(tensorrt
-    GIT_REPOSITORY https://github.com/NVIDIA/TensorRT
+    GIT_REPOSITORY https://github.com/NVIDIA/TensorRT.git
     GIT_TAG release/${TENSORRT_VERSION_MAJOR}.${TENSORRT_VERSION_MINOR}
     GIT_SUBMODULES ""
   )
