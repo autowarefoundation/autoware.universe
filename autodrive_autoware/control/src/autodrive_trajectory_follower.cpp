@@ -33,6 +33,7 @@ AutoDRIVETrajectoryFollower::AutoDRIVETrajectoryFollower(const rclcpp::NodeOptio
   // General Parameters
   vehicle_name_ = declare_parameter<string>("vehicle_name", "nigel");
   controller_mode_ = declare_parameter<string>("controller_mode", "simulator");
+  loop_trajectory_ = declare_parameter<bool>("loop_trajectory", false);
   use_external_target_vel_ = declare_parameter<bool>("use_external_target_vel", false);
   external_target_vel_ = declare_parameter<float>("external_target_vel", 0.0);
   lateral_deviation_ = declare_parameter<float>("lateral_deviation", 0.0);
@@ -47,12 +48,18 @@ AutoDRIVETrajectoryFollower::AutoDRIVETrajectoryFollower(const rclcpp::NodeOptio
   kd_lat_ = declare_parameter<float>("kd_lateral", 5.0);
   steer_lim_ = declare_parameter<float>("steer_limit", 1.0);
 
+  // Nigel
+  if(vehicle_name_=="nigel" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin" || controller_mode_=="testbed")){
+    nigel_simulator_throttle_pub_ = create_publisher<Float32>("/autodrive/nigel_1/throttle_command", 1);
+    nigel_simulator_steering_pub_ = create_publisher<Float32>("/autodrive/nigel_1/steering_command", 1);
+  }
+  
   // F1TENTH
   if(vehicle_name_=="f1tenth" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin")){
     f1tenth_simulator_throttle_pub_ = create_publisher<Float32>("/autodrive/f1tenth_1/throttle_command", 1);
     f1tenth_simulator_steering_pub_ = create_publisher<Float32>("/autodrive/f1tenth_1/steering_command", 1);
   }
-  if(vehicle_name_=="f1tenth" && (controller_mode_=="gym_rviz"|| controller_mode_=="testbed")){
+  if(vehicle_name_=="f1tenth" && (controller_mode_=="gym_rviz" || controller_mode_=="testbed")){
     f1tenth_testbed_gym_rviz_pub_ = create_publisher<AckermannDriveStamped>("/drive", 1);
   }
 
@@ -121,13 +128,35 @@ void AutoDRIVETrajectoryFollower::onTimer()
   updateClosest();
   createTrajectoryMarker();
 
+  double closest_px = closest_traj_point_.pose.position.x;
+  double closest_py = closest_traj_point_.pose.position.y;
+  double final_px = trajectory_->points.at(trajectory_->points.size()-1).pose.position.x;
+  double final_py = trajectory_->points.at(trajectory_->points.size()-1).pose.position.y;
+
   AckermannControlCommand cmd;
-  cmd.stamp = cmd.lateral.stamp = cmd.longitudinal.stamp = get_clock()->now();
-  cmd.lateral.steering_tire_angle = static_cast<float>(calcSteerCmd());
+  cmd.stamp = cmd.lateral.stamp = cmd.longitudinal.stamp = get_clock()->now();  
+  if(!loop_trajectory_ && closest_px==final_px && closest_py==final_py){
+    cmd.longitudinal.speed = 0.0;
+    cmd.longitudinal.acceleration = 0.0;
+    cmd.lateral.steering_tire_angle = 0.0;
+  }
+  else{
   cmd.longitudinal.speed = use_external_target_vel_ ? static_cast<float>(external_target_vel_)
                                                     : closest_traj_point_.longitudinal_velocity_mps;
   cmd.longitudinal.acceleration = static_cast<float>(calcAccCmd());
-
+  cmd.lateral.steering_tire_angle = static_cast<float>(calcSteerCmd());
+  }
+  
+  // Nigel
+  if(vehicle_name_=="nigel" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin" || controller_mode_=="testbed")){
+    std_msgs::msg::Float32 throttle_msg;
+    std_msgs::msg::Float32 steering_msg;
+    throttle_msg.data = cmd.longitudinal.acceleration;
+    steering_msg.data = cmd.lateral.steering_tire_angle;
+    nigel_simulator_throttle_pub_->publish(throttle_msg);
+    nigel_simulator_steering_pub_->publish(steering_msg);
+  }
+  
   // F1TEHTH
   if(vehicle_name_=="f1tenth" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin")){
     std_msgs::msg::Float32 throttle_msg;
@@ -137,7 +166,7 @@ void AutoDRIVETrajectoryFollower::onTimer()
     f1tenth_simulator_throttle_pub_->publish(throttle_msg);
     f1tenth_simulator_steering_pub_->publish(steering_msg);
   }
-  if(vehicle_name_=="f1tenth" && (controller_mode_=="gym_rviz"|| controller_mode_=="testbed")){
+  if(vehicle_name_=="f1tenth" && (controller_mode_=="gym_rviz" || controller_mode_=="testbed")){
     ackermann_msgs::msg::AckermannDriveStamped ackermann_msg;
     ackermann_msg.drive.speed = cmd.longitudinal.speed * 0.2;
     ackermann_msg.drive.steering_angle = cmd.lateral.steering_tire_angle * 10;

@@ -27,7 +27,7 @@ setup(
     zip_safe=True,
     maintainer='Chinmay Vilas Samak' 'Tanmay Vilas Samak',
     maintainer_email='csamak@clemson.edu' 'tsamak@clemson.edu',
-    description='AutoDRIVE Ecosystem ROS 2 Package for F1TENTH',
+    description='AutoDRIVE Ecosystem Autoware Integration for F1TENTH',
     license='BSD',
     tests_require=['pytest'],
     entry_points={

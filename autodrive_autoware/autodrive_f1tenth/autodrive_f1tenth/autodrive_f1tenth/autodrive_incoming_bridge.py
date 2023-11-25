@@ -39,7 +39,7 @@ from nav_msgs.msg import Odometry # Odometry message class
 from tf_transformations import quaternion_from_euler # Euler angle representation to quaternion representation
 from ament_index_python.packages import get_package_share_directory # Access package's shared directory path
 
-# Python mudule imports
+# Python module imports
 from cv_bridge import CvBridge, CvBridgeError # ROS bridge for opencv library to handle images
 from gevent import pywsgi # Pure-Python gevent-friendly WSGI server
 from geventwebsocket.handler import WebSocketHandler # Handler for WebSocket messages and lifecycle events

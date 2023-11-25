@@ -3,6 +3,7 @@
     # General Parameters
     vehicle_name: 'f1tenth'
     controller_mode: 'testbed'
+    loop_trajectory: True
     use_external_target_vel: true
     external_target_vel: 1.0
     lateral_deviation: 0.0

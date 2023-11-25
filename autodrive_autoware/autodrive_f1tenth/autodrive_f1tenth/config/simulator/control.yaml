@@ -3,6 +3,7 @@
     # General Parameters
     vehicle_name: 'f1tenth'
     controller_mode: 'simulator'
+    loop_trajectory: True
     use_external_target_vel: True
     external_target_vel: 0.1
     lateral_deviation: 0.0

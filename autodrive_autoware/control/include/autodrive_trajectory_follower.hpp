@@ -52,6 +52,10 @@ public:
   ~AutoDRIVETrajectoryFollower() = default;
 
 private:
+  // Nigel
+  rclcpp::Publisher<Float32>::SharedPtr nigel_simulator_throttle_pub_;
+  rclcpp::Publisher<Float32>::SharedPtr nigel_simulator_steering_pub_;
+
   // F1TENTH
   rclcpp::Publisher<Float32>::SharedPtr f1tenth_simulator_throttle_pub_;
   rclcpp::Publisher<Float32>::SharedPtr f1tenth_simulator_steering_pub_;
@@ -77,7 +81,8 @@ private:
 
   // General Parameters
   std::string vehicle_name_;
-  std::string controller_mode_; 
+  std::string controller_mode_;
+  bool loop_trajectory_;
   bool use_external_target_vel_;
   double external_target_vel_;
   double lateral_deviation_;

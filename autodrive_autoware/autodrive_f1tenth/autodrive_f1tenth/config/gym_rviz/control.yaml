@@ -3,6 +3,7 @@
     # General Parameters
     vehicle_name: 'f1tenth'
     controller_mode: 'gym_rviz'
+    loop_trajectory: True
     use_external_target_vel: True
     external_target_vel: 2.0
     lateral_deviation: 0.0

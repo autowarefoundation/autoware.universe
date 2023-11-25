@@ -107,8 +107,6 @@ Visualization Manager:
           Value: true
         ips:
           Value: true
-        laser:
-          Value: false
         left_encoder:
           Value: true
         lidar:
@@ -133,36 +131,16 @@ Visualization Manager:
       Tree:
         world:
           f1tenth_1:
-            front_camera:
-              {}
-            front_left_wheel:
-              {}
-            front_right_wheel:
-              {}
-            imu:
-              {}
-            ips:
-              {}
-            left_encoder:
-              {}
-            lidar:
-              {}
-            rear_left_wheel:
-              {}
-            rear_right_wheel:
-              {}
-            right_encoder:
-              {}
+            {}
           map:
-            laser:
-              {}
+            {}
           odom:
             {}
       Update Interval: 0
       Value: true
     - Acceleration properties:
         Acc. vector alpha: 1
-        Acc. vector color: 255; 0; 255
+        Acc. vector color: 0; 0; 255
         Acc. vector scale: 0.15000000596046448
         Derotate acceleration: false
         Enable acceleration: true

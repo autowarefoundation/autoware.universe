@@ -1,18 +1,19 @@
 /**:
   ros__parameters:
     # General Parameters
-    vehicle_name: 'f1tenth'
+    vehicle_name: 'nigel'
     controller_mode: 'simulator'
+    loop_trajectory: False
     use_external_target_vel: True
-    external_target_vel: 0.1
+    external_target_vel: 0.25
     lateral_deviation: 0.0
     # Longitudinal Controller Parameters
-    kp_longitudinal: 0.5
+    kp_longitudinal: 2.0
     acceleration_limit: 1.0
     # Lateral Controller Parameters
-    wheel_base: 0.33
+    wheel_base: 0.1415
     lookahead_time: 3.0
     min_lookahead: 3.0
-    kp_lateral: 75.0
-    kd_lateral: 25.0
+    kp_lateral: 900.0
+    kd_lateral: 69.0
     steer_limit: 1.0
