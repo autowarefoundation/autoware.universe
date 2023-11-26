@@ -348,6 +348,13 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
+  // debug marker
+  const auto add = [this](const MarkerArray & marker) {
+    tier4_autoware_utils::appendMarkerArray(marker, &debug_marker_);
+  };
+  add(marker_utils::createPathMarkerArray(
+    *getPreviousModuleOutput().reference_path, "prev_reference_path", 1.0, 1.0, 0.3, 0.5));
+
   return output;
 }
 
