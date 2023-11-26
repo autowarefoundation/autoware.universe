@@ -61,7 +61,7 @@ public:
     const NetworkParam & encoder_param, const NetworkParam & head_param,
     const DensificationParam & densification_param, const CenterPointConfig & config);
 
-  ~CenterPointTRT();
+  virtual ~CenterPointTRT();
 
   bool detect(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,

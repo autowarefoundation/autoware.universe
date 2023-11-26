@@ -34,8 +34,6 @@ public:
     const centerpoint::DensificationParam & densification_param,
     const centerpoint::CenterPointConfig & config);
 
-  ~PointPaintingTRT();
-
 protected:
   bool preprocess(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
