@@ -20,22 +20,15 @@
 
 namespace centerpoint
 {
-cudaError_t generateVoxels_random_launch(const float *points, size_t points_size,
-        float min_x_range, float max_x_range,
-        float min_y_range, float max_y_range,
-        float min_z_range, float max_z_range,
-        float pillar_x_size, float pillar_y_size, float pillar_z_size,
-        int grid_y_size, int grid_x_size,
-        unsigned int *mask, float *voxels,
-        cudaStream_t stream);
+cudaError_t generateVoxels_random_launch(
+  const float * points, size_t points_size, float min_x_range, float max_x_range, float min_y_range,
+  float max_y_range, float min_z_range, float max_z_range, float pillar_x_size, float pillar_y_size,
+  float pillar_z_size, int grid_y_size, int grid_x_size, unsigned int * mask, float * voxels,
+  cudaStream_t stream);
 
-cudaError_t generateBaseFeatures_launch(unsigned int *mask, float *voxels,
-        int grid_y_size, int grid_x_size,
-        unsigned int *pillar_num,
-        float *voxel_features,
-        float *voxel_num,
-        int *voxel_idxs,
-        cudaStream_t stream);
+cudaError_t generateBaseFeatures_launch(
+  unsigned int * mask, float * voxels, int grid_y_size, int grid_x_size, unsigned int * pillar_num,
+  float * voxel_features, float * voxel_num, int * voxel_idxs, cudaStream_t stream);
 
 cudaError_t generateFeatures_launch(
   const float * voxel_features, const float * voxel_num_points, const int * coords,

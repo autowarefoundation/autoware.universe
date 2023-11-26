@@ -79,7 +79,8 @@ void CenterPointTRT::initPtr()
     config_.grid_size_x_ * config_.grid_size_y_ * config_.encoder_out_feature_size_;
   const auto grid_xy_size = config_.down_grid_size_x_ * config_.down_grid_size_y_;
 
-  voxels_buffer_size_ = config_.grid_size_x_ * config_.grid_size_y_ * config_.max_point_in_voxel_size_ * config_.point_feature_size_;
+  voxels_buffer_size_ = config_.grid_size_x_ * config_.grid_size_y_ *
+                        config_.max_point_in_voxel_size_ * config_.point_feature_size_;
   mask_size_ = config_.grid_size_x_ * config_.grid_size_y_;
 
   // host
@@ -118,7 +119,7 @@ bool CenterPointTRT::detect(
       rclcpp::get_logger("lidar_centerpoint"), "Fail to preprocess and skip to detect.");
     return false;
   }
-  
+
   inference();
 
   postProcess(det_boxes3d);
@@ -134,33 +135,35 @@ bool CenterPointTRT::preprocess(
     return false;
   }
   const auto count = vg_ptr_->generateSweepPoints(points_);
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(points_d_.get(), points_.data(), count * config_.point_feature_size_ * sizeof(float), cudaMemcpyHostToDevice, stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    points_d_.get(), points_.data(), count * config_.point_feature_size_ * sizeof(float),
+    cudaMemcpyHostToDevice, stream_));
   CHECK_CUDA_ERROR(cudaMemsetAsync(num_voxels_d_.get(), 0, sizeof(unsigned int), stream_));
-  CHECK_CUDA_ERROR(cudaMemsetAsync(voxels_buffer_d_.get(), 0, voxels_buffer_size_ * sizeof(float), stream_));
+  CHECK_CUDA_ERROR(
+    cudaMemsetAsync(voxels_buffer_d_.get(), 0, voxels_buffer_size_ * sizeof(float), stream_));
   CHECK_CUDA_ERROR(cudaMemsetAsync(mask_d_.get(), 0, mask_size_ * sizeof(int), stream_));
   CHECK_CUDA_ERROR(cudaMemsetAsync(voxels_d_.get(), 0, voxels_size_ * sizeof(float), stream_));
-  CHECK_CUDA_ERROR(cudaMemsetAsync(coordinates_d_.get(), 0, coordinates_size_ * sizeof(int), stream_));
-  CHECK_CUDA_ERROR(cudaMemsetAsync(num_points_per_voxel_d_.get(), 0, config_.max_voxel_size_ * sizeof(float), stream_));
+  CHECK_CUDA_ERROR(
+    cudaMemsetAsync(coordinates_d_.get(), 0, coordinates_size_ * sizeof(int), stream_));
+  CHECK_CUDA_ERROR(cudaMemsetAsync(
+    num_points_per_voxel_d_.get(), 0, config_.max_voxel_size_ * sizeof(float), stream_));
 
-  CHECK_CUDA_ERROR(generateVoxels_random_launch(points_d_.get(), count,
-    config_.range_min_x_, config_.range_max_x_,
-    config_.range_min_y_, config_.range_max_y_,
-    config_.range_min_z_, config_.range_max_z_,
-    config_.voxel_size_x_, config_.voxel_size_y_, config_.voxel_size_z_,
-    config_.grid_size_y_, config_.grid_size_x_,
+  CHECK_CUDA_ERROR(generateVoxels_random_launch(
+    points_d_.get(), count, config_.range_min_x_, config_.range_max_x_, config_.range_min_y_,
+    config_.range_max_y_, config_.range_min_z_, config_.range_max_z_, config_.voxel_size_x_,
+    config_.voxel_size_y_, config_.voxel_size_z_, config_.grid_size_y_, config_.grid_size_x_,
     mask_d_.get(), voxels_buffer_d_.get(), stream_));
 
-  CHECK_CUDA_ERROR(generateBaseFeatures_launch(mask_d_.get(), voxels_buffer_d_.get(),
-    config_.grid_size_y_, config_.grid_size_x_,
-    num_voxels_d_.get(),
-    voxels_d_.get(),
-    num_points_per_voxel_d_.get(),
-    coordinates_d_.get(), stream_));
+  CHECK_CUDA_ERROR(generateBaseFeatures_launch(
+    mask_d_.get(), voxels_buffer_d_.get(), config_.grid_size_y_, config_.grid_size_x_,
+    num_voxels_d_.get(), voxels_d_.get(), num_points_per_voxel_d_.get(), coordinates_d_.get(),
+    stream_));
 
   CHECK_CUDA_ERROR(generateFeatures_launch(
     voxels_d_.get(), num_points_per_voxel_d_.get(), coordinates_d_.get(), num_voxels_d_.get(),
     config_.max_voxel_size_, config_.voxel_size_x_, config_.voxel_size_y_, config_.voxel_size_z_,
-    config_.range_min_x_, config_.range_min_y_, config_.range_min_z_, encoder_in_features_d_.get(), stream_));
+    config_.range_min_x_, config_.range_min_y_, config_.range_min_z_, encoder_in_features_d_.get(),
+    stream_));
 
   return true;
 }

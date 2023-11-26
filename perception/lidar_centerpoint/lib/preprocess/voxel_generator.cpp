@@ -56,7 +56,8 @@ std::size_t VoxelGenerator::generateSweepPoints(std::vector<float> & points)
       pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_msg.header.stamp).seconds());
 
     for (sensor_msgs::PointCloud2ConstIterator<float> x_iter(pc_msg, "x"), y_iter(pc_msg, "y"),
-         z_iter(pc_msg, "z"); x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter) {
+         z_iter(pc_msg, "z");
+         x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter) {
       point_past << *x_iter, *y_iter, *z_iter;
       point_current = affine_past2current * point_past;
 
