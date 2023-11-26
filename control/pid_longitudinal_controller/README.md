@@ -217,8 +217,6 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 | time_threshold_before_pid_integration | double | How much time without the vehicle moving must past to enable PID error integration. [s]                                                                            | 5.0           |
 | brake_keeping_acc                     | double | If `enable_brake_keeping_before_stop` is true, a certain acceleration is kept during DRIVE state before the ego stops [m/s^2] See [Brake keeping](#brake-keeping). | 0.2           |
 
-Note:
-
 ### STOPPING Parameter (smooth stop)
 
 Smooth stop is enabled if `enable_smooth_stop` is true.
