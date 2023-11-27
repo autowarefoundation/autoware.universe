@@ -156,7 +156,7 @@ size_t EKFModule::find_closest_delay_time_index(double target_value) const
 
     // Return the index of the closer element.
     return is_closer_to_prev ? std::distance(accumulated_delay_times_.begin(), prev)
-                             : std::distance(accumulated_delay_times_.begin(), lower); 
+                             : std::distance(accumulated_delay_times_.begin(), lower);
   }
 }
 
