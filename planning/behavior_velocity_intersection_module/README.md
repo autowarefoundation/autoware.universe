@@ -53,7 +53,7 @@ That allows ego to generate the attention area dynamically using the real time t
 
 To help the intersection module care only a set of limited lanes, RightOfWay tag needs to be properly set.
 
-Following table shows an **example** of how to set yield_lanes to each lane in a intersection w/o traffic lights. Since it is not apparent how to determine signal phase group for a set of intersection lanes in geometric/topological manner, yield_lane needs to be set manually. Straight lanes with traffic lights are exceptionally handled to detect no lanes because commonly it has priority over all the other lanes, so no RightOfWay setting is required.
+Following table shows an **example** of how to set yield_lanes to each lane in a intersection w/o traffic lights. Since it is not apparent how to uniquely determine signal phase group for a set of intersection lanes in geometric/topological manner, yield_lane needs to be set manually. Straight lanes with traffic lights are exceptionally handled to detect no lanes because commonly it has priority over all the other lanes, so no RightOfWay setting is required.
 
 | turn direction of right_of_way | yield_lane(with traffic light)                                                              | yield_lane(without traffic light)              |
 | ------------------------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------- |
@@ -221,7 +221,7 @@ The occlusion is detected as the common area of occlusion attention area(which i
 
 ![occlusion_detection](./docs/occlusion_grid.drawio.svg)
 
-If the nearest occlusion cell value is below the threshold, occlusion is detected. It is expected that the occlusion gets cleared as the vehicle approaches the occlusion peeking stop line.
+If the nearest occlusion cell value is below the threshold `occlusion.occlusion_required_clearance_distance`, it means that the FOV of ego is not clear. It is expected that the occlusion gets cleared as the vehicle approaches the occlusion peeking stop line.
 
 ### Occlusion source estimation at intersection with traffic light
 
@@ -429,19 +429,63 @@ entity TargetObject {
 
 ### Intersection module stops against unrelated vehicles
 
-In this case, first visualize `/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection` topic and check the `attention_area` polygon. Intersection module performs collision checking for vehicles running on this polygon, so if it extends to uninteded lanes, it needs to have [RightOfWay tag](#how-towhy-set-rightofway-tag).
+In this case, first visualize `/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection` topic and check the `attention_area` polygon. Intersection module performs collision checking for vehicles running on this polygon, so if it extends to unintended lanes, it needs to have [RightOfWay tag](#how-towhy-set-rightofway-tag).
 
 By lowering `common.attention_area_length` you can check which lanes are conflicting with the intersection lane. Then set part of the conflicting lanes as the yield_lane.
 
 ### The stop line of intersection is chattering
 
-The parameter `collision_detection.collision_detection_hold_time` suppresses the chattering by keeping UNSAFE decision for this duration until SAFE decision is finally made. By increasing this value you can suppress the chattering. If the chattering arises from the acceleration/deceleration of target vehicles, increase `collision_detection.collision_detection.collision_end_margin_time` and/or `collision_detection.collision_detection.collision_end_margin_time`.
+The parameter `collision_detection.collision_detection_hold_time` suppresses the chattering by keeping UNSAFE decision for this duration until SAFE decision is finally made. The role of thie parameter is to account for unstable detection/tracking of objects. By increasing this value you can suppress the chattering. However it could elongate the stopping duration excessively.
 
-### The stop lines is released too fast/slow
+If the chattering arises from the acceleration/deceleration of target vehicles, increase `collision_detection.collision_detection.collision_end_margin_time` and/or `collision_detection.collision_detection.collision_end_margin_time`.
 
-If the intersection wall appears too fast, or ego tends to stop too conservatively, lower the parameter `collision_detection.collision_detection.collision_start_margin_time`. If it lasts too long after the target vehicle passed, then lower the parameter `collision_detection.collision_detection.collision_end_margin_time`.
+### The stop line is released too fast/slow
 
-TODO: occlusion detection, occupancy grid map
+If the intersection wall appears too fast, or ego tends to stop too conservatively for upcoming vehicls, lower the parameter `collision_detection.collision_detection.collision_start_margin_time`. If it lasts too long after the target vehicle passed, then lower the parameter `collision_detection.collision_detection.collision_end_margin_time`.
+
+### Ego suddenly stops at intersection with traffic light
+
+If the traffic light color changed from AMBER/RED to UNKNOWN, the intersection module works in the GREEN color mode. So collision and occlusion are likely to be detected again.
+
+### Occlusion is detected overly
+
+You can check which areas are detected as occlusion by visualizing `/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection/occlusion_polygons`.
+
+If you do not want to detect / do want to ignore occlusion far from ego or lower the computational cost of occlusion detection, `occlusion.occlusion_attention_area_length` should be set to lower value.
+
+If you want to care the occlusion nearby ego more cautiously, set `occlusion.occlusion_required_clearance_distance` to a larger value. Then ego will approach the occlusion_peeking_stopline more closely to assure more clear FOV.
+
+`occlusion.possible_object_bbox` is used for checking if detected occlusion area is small enough that no vehicles larger than this size can exist inside. By decreasing this size ego will ignore small occluded area.
+
+#### occupancy grid map tuning
+
+Refer to the document of [probabilistic_occpancy_grid_map](https://autowarefoundation.github.io/autoware.universe/main/perception/probabilistic_occupancy_grid_map/) for details. If occlusion tends to be detected at apparently free space, increase `occlusion.free_space_max` to ignore them.
+
+#### in simple_planning_simulator
+
+intersection_occlusion feature is **not recommended** for use in plannig_simulator because the laserscan_based_occpancy_grid_map generates unnatural UNKNOWN cells in 2D manner:
+
+- all the cells behind pedestrians are UNKNOWN
+- no ground point clouds are generated
+
+Also oftenwise the user does not set trafic light information although it is very critical for intersection_occlusion (and in real traffic environment too).
+
+For these reasons, `occlusion.enable` is false by default.
+
+#### on real vehicle / in end-to-end simulator
+
+On real vehicle or in end-to-end simulator like [AWSIM](https://tier4.github.io/AWSIM/) the following pointcloud_based_occupancy_grid_map configuration is highly recommended:
+
+```yaml
+scan_origin_frame: "velodyne_top"
+
+grid_map_type: "OccupancyGridMapProjectiveBlindSpot"
+OccupancyGridMapProjectiveBlindSpot:
+  projection_dz_threshold: 0.01 # [m] for avoiding null division
+  obstacle_separation_threshold: 1.0 # [m] fill the interval between obstacles with unknown for this length
+```
+
+You should set the top lidar link as the `scan_origin_frame`. In the example it is `velodyne_top`. The method `OccupancyGridMapProjectiveBlindSpot` estimates the FOV by running projective ray-tracing from `scan_origin` to obstacle or up to the ground and filling the cells on the "shadow" of the object as UNKNOWN.
 
 ## Flowchart
 
