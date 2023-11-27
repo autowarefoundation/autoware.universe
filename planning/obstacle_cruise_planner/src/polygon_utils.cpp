@@ -147,15 +147,14 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
     return std::nullopt;
   }
 
-  //TODO (takagi): incomplete implementation for backward trajectory
+  // TODO (takagi): incomplete implementation for backward trajectory
   const auto x_diff_to_bumper = is_driving_forward ? vehicle_info.max_longitudinal_offset_m
                                                    : vehicle_info.min_longitudinal_offset_m;
 
   std::optional<double> nearest_dist = std::nullopt;
   std::optional<geometry_msgs::msg::Point> nearest_point = std::nullopt;
-  double index_dist = motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first);
   for (const auto & collision_point : collision_info->second) {
-    double dist_from_baselink = tier4_autoware_utils::inverseTransformPoint(
+    const double dist_from_baselink = tier4_autoware_utils::inverseTransformPoint(
                                   collision_point.point, traj_points.at(collision_info->first).pose)
                                   .x;
 
