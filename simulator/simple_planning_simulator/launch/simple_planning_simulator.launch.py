@@ -43,7 +43,7 @@ def launch_setup(context, *args, **kwargs):
             simulator_model_param,
             {
                 "initial_engage_state": LaunchConfiguration("initial_engage_state"),
-            }
+            },
         ],
         remappings=[
             ("input/vector_map", "/map/vector_map"),
