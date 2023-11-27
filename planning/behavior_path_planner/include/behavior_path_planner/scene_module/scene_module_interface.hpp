@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -130,6 +131,12 @@ public:
    *        planCandidate (e.g., resampling of path).
    */
   virtual void updateData() {}
+
+  /**
+   * @brief After executing run(), update the module-specific status and/or data used for internal
+   *        processing that are not defined in ModuleStatus.
+   */
+  virtual void postProcess() {}
 
   /**
    * @brief Execute module. Once this function is executed,
@@ -282,7 +289,7 @@ public:
     return calcOffsetPose(dead_pose_.get(), base_link2front, 0.0, 0.0);
   }
 
-  void resetWallPoses()
+  void resetWallPoses() const
   {
     stop_pose_ = boost::none;
     slow_pose_ = boost::none;
@@ -470,7 +477,7 @@ protected:
    * @brief Return true if the activation command is received from the RTC interface.
    *        If no RTC interface is registered, return true.
    */
-  bool isActivated()
+  bool isActivated() const
   {
     if (rtc_interface_ptr_map_.empty()) {
       return true;

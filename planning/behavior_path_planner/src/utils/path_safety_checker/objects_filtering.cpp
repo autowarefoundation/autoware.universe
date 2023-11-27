@@ -15,6 +15,7 @@
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 
 #include "behavior_path_planner/utils/utils.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <motion_utils/trajectory/interpolation.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
@@ -284,6 +285,7 @@ ExtendedPredictedObject transform(
   extended_object.initial_twist = object.kinematics.initial_twist_with_covariance;
   extended_object.initial_acceleration = object.kinematics.initial_acceleration_with_covariance;
   extended_object.shape = object.shape;
+  extended_object.classification = object.classification;
 
   const auto obj_velocity = extended_object.initial_twist.twist.linear.x;
 

@@ -16,7 +16,6 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__SAFETY_CHECK_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -35,7 +34,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::utils::path_safety_checker
@@ -51,8 +49,6 @@ using tier4_autoware_utils::calcYawDeviation;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using vehicle_info_util::VehicleInfo;
-
-namespace bg = boost::geometry;
 
 bool isTargetObjectOncoming(
   const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose);
@@ -89,6 +85,20 @@ boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
 boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
   const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
   const VehicleInfo & ego_info);
+boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+  const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
+  const Shape & shape);
+template <typename T, typename F>
+std::vector<T> filterPredictedPathByTimeHorizon(
+  const std::vector<T> & path, const double time_horizon, const F & interpolateFunc);
+std::vector<PoseWithVelocityStamped> filterPredictedPathByTimeHorizon(
+  const std::vector<PoseWithVelocityStamped> & path, const double time_horizon);
+ExtendedPredictedObject filterObjectPredictedPathByTimeHorizon(
+  const ExtendedPredictedObject & object, const double time_horizon,
+  const bool check_all_predicted_path);
+ExtendedPredictedObjects filterObjectPredictedPathByTimeHorizon(
+  const ExtendedPredictedObjects & objects, const double time_horizon,
+  const bool check_all_predicted_path);
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
@@ -110,10 +120,6 @@ bool checkCollision(
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
   const double hysteresis_factor, CollisionCheckDebug & debug);
-
-std::vector<Polygon2d> generatePolygonsWithStoppingAndInertialMargin(
-  const PathWithLaneId & ego_path, const double base_to_front, const double base_to_rear,
-  const double width, const double maximum_deceleration, const double max_extra_stopping_margin);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
@@ -137,13 +143,17 @@ std::vector<Polygon2d> getCollidedPolygons(
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
   const double hysteresis_factor, CollisionCheckDebug & debug);
 
-/**
- * @brief Check collision between ego polygons with margin and objects.
- * @return Has collision or not
- */
-bool checkCollisionWithMargin(
-  const std::vector<Polygon2d> & ego_polygons, const PredictedObjects & dynamic_objects,
-  const double collision_check_margin);
+bool checkPolygonsIntersects(
+  const std::vector<Polygon2d> & polys_1, const std::vector<Polygon2d> & polys_2);
+bool checkSafetyWithIntegralPredictedPolygon(
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path, const VehicleInfo & vehicle_info,
+  const ExtendedPredictedObjects & objects, const bool check_all_predicted_path,
+  const IntegralPredictedPolygonParams & params, CollisionCheckDebugMap & debug_map);
+
+// debug
+CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);
+void updateCollisionCheckDebugMap(
+  CollisionCheckDebugMap & debug_map, CollisionCheckDebugPair & object_debug, bool is_safe);
 }  // namespace behavior_path_planner::utils::path_safety_checker
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__SAFETY_CHECK_HPP_

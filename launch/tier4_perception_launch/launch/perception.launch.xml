@@ -12,12 +12,14 @@
   <arg name="object_recognition_detection_fusion_sync_param_path"/>
   <arg name="object_recognition_detection_lidar_model_param_path"/>
   <arg name="object_recognition_detection_radar_lanelet_filtering_range_param"/>
+  <arg name="object_recognition_detection_radar_object_clustering_param_path"/>
   <arg name="object_recognition_tracking_multi_object_tracker_data_association_matrix_param_path"/>
   <arg name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path"/>
   <arg name="object_recognition_tracking_radar_object_tracker_tracking_setting_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_elevation_map_param_path"/>
   <arg name="object_recognition_detection_obstacle_pointcloud_based_validator_param_path"/>
+  <arg name="object_recognition_detection_detection_by_tracker_param"/>
   <arg name="occupancy_grid_map_method"/>
   <arg name="occupancy_grid_map_param_path"/>
   <arg name="occupancy_grid_map_updater"/>
@@ -96,6 +98,16 @@
   <arg name="fusion_distance" default="100.0"/>
   <arg name="trust_object_distance" default="100.0"/>
 
+  <!-- Whether to use detection by tracker -->
+  <arg name="use_detection_by_tracker" default="true"/>
+
+  <!-- Radar long range integration methods -->
+  <arg
+    name="use_radar_tracking_fusion"
+    default="true"
+    description="if use_radar_tracking_fusion:=true, radar information is merged in tracking launch. Otherwise, radar information is merged in detection launch."
+  />
+
   <!-- Perception module -->
   <group>
     <push-ros-namespace namespace="perception"/>
@@ -164,6 +176,8 @@
           <arg name="outlier_param_path" value="$(var object_recognition_detection_outlier_param_path)"/>
           <arg name="voxel_grid_based_euclidean_param_path" value="$(var object_recognition_detection_voxel_grid_based_euclidean_cluster_param_path)"/>
           <arg name="radar_lanelet_filtering_range_param" value="$(var object_recognition_detection_radar_lanelet_filtering_range_param)"/>
+          <arg name="radar_object_clustering_param_path" value="$(var object_recognition_detection_radar_object_clustering_param_path)"/>
+
           <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
           <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
           <arg name="use_object_filter" value="$(var use_object_filter)"/>
@@ -181,6 +195,14 @@
         <push-ros-namespace namespace="tracking"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/tracking/tracking.launch.xml">
           <arg name="mode" value="$(var mode)"/>
+          <arg
+            name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path"
+            value="$(var object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path)"
+          />
+          <arg name="object_recognition_tracking_radar_object_tracker_tracking_setting_param_path" value="$(var object_recognition_tracking_radar_object_tracker_tracking_setting_param_path)"/>
+          <arg name="object_recognition_tracking_radar_object_tracker_node_param_path" value="$(var object_recognition_tracking_radar_object_tracker_node_param_path)"/>
+          <arg name="object_recognition_tracking_object_merger_data_association_matrix_param_path" value="$(var object_recognition_tracking_object_merger_data_association_matrix_param_path)"/>
+          <arg name="object_recognition_tracking_object_merger_node_param_path" value="$(var object_recognition_tracking_object_merger_node_param_path)"/>
         </include>
       </group>
 
