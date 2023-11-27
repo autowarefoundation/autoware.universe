@@ -114,6 +114,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
       getOrDeclareParameter<double>(*node, ns + "object_check_shiftable_ratio");
     p.object_check_min_road_shoulder_width =
       getOrDeclareParameter<double>(*node, ns + "object_check_min_road_shoulder_width");
+    p.object_check_yaw_deviation =
+      getOrDeclareParameter<double>(*node, ns + "intersection.yaw_deviation");
     p.object_last_seen_threshold =
       getOrDeclareParameter<double>(*node, ns + "object_last_seen_threshold");
   }
@@ -221,7 +223,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
   // avoidance maneuver (longitudinal)
   {
     std::string ns = "avoidance.avoidance.longitudinal.";
-    p.prepare_time = getOrDeclareParameter<double>(*node, ns + "prepare_time");
+    p.min_prepare_time = getOrDeclareParameter<double>(*node, ns + "min_prepare_time");
+    p.max_prepare_time = getOrDeclareParameter<double>(*node, ns + "max_prepare_time");
     p.min_prepare_distance = getOrDeclareParameter<double>(*node, ns + "min_prepare_distance");
     p.min_slow_down_speed = getOrDeclareParameter<double>(*node, ns + "min_slow_down_speed");
     p.buf_slow_down_speed = getOrDeclareParameter<double>(*node, ns + "buf_slow_down_speed");
@@ -390,7 +393,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
 
   {
     const std::string ns = "avoidance.avoidance.longitudinal.";
-    updateParam<double>(parameters, ns + "prepare_time", p->prepare_time);
+    updateParam<double>(parameters, ns + "min_prepare_time", p->min_prepare_time);
+    updateParam<double>(parameters, ns + "max_prepare_time", p->max_prepare_time);
     updateParam<double>(parameters, ns + "min_slow_down_speed", p->min_slow_down_speed);
     updateParam<double>(parameters, ns + "buf_slow_down_speed", p->buf_slow_down_speed);
   }
