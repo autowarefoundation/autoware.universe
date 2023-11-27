@@ -344,14 +344,14 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
   const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
 
   // get image
-  cv_bridge::CvImagePtr cv_ptr;
+  cv::Mat in_image;
   try {
-    cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
+    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
+    cv_ptr->image.copyTo(in_image);
   } catch (cv_bridge::Exception & e) {
     RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
     return std::vector<landmark_manager::Landmark>();
   }
-  cv::Mat in_image = cv_ptr->image;
 
   // get transform from base_link to camera
   TransformStamped transform_sensor_to_base_link;
