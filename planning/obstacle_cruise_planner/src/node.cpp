@@ -24,8 +24,6 @@
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include <boost/format.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
-#include <boost/geometry/algorithms/intersects.hpp>
 
 #include <algorithm>
 #include <chrono>
