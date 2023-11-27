@@ -16,7 +16,6 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__GOAL_PLANNER__PULL_OVER_PLANNER_BASE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
 
@@ -47,12 +46,15 @@ struct PullOverPath
 {
   PullOverPlannerType type{PullOverPlannerType::NONE};
   std::vector<PathWithLaneId> partial_paths{};
+  size_t path_idx{0};
   // accelerate with constant acceleration to the target velocity
   std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
   Pose start_pose{};
   Pose end_pose{};
   std::vector<Pose> debug_poses{};
   size_t goal_id{};
+  size_t id{};
+  bool decided_velocity{false};
 
   PathWithLaneId getFullPath() const
   {
@@ -85,6 +87,27 @@ struct PullOverPath
 
     return parking_path;
   }
+
+  PathWithLaneId getCurrentPath() const
+  {
+    if (partial_paths.empty()) {
+      return PathWithLaneId{};
+    } else if (partial_paths.size() <= path_idx) {
+      return partial_paths.back();
+    }
+    return partial_paths.at(path_idx);
+  }
+
+  bool incrementPathIndex()
+  {
+    if (partial_paths.size() - 1 <= path_idx) {
+      return false;
+    }
+    path_idx += 1;
+    return true;
+  }
+
+  bool isValidPath() const { return type != PullOverPlannerType::NONE; }
 };
 
 class PullOverPlannerBase

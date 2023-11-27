@@ -38,12 +38,18 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.th_stopped_velocity = node->declare_parameter<double>(base_ns + "th_stopped_velocity");
     p.th_arrived_distance = node->declare_parameter<double>(base_ns + "th_arrived_distance");
     p.th_stopped_time = node->declare_parameter<double>(base_ns + "th_stopped_time");
+    p.center_line_path_interval =
+      node->declare_parameter<double>(base_ns + "center_line_path_interval");
   }
 
   // goal search
   {
     const std::string ns = base_ns + "goal_search.";
-    p.search_priority = node->declare_parameter<std::string>(ns + "search_priority");
+    p.goal_priority = node->declare_parameter<std::string>(ns + "goal_priority");
+    p.minimum_weighted_distance_lateral_weight =
+      node->declare_parameter<double>(ns + "minimum_weighted_distance.lateral_weight");
+    p.prioritize_goals_before_objects =
+      node->declare_parameter<bool>(ns + "prioritize_goals_before_objects");
     p.forward_goal_search_length =
       node->declare_parameter<double>(ns + "forward_goal_search_length");
     p.backward_goal_search_length =
@@ -107,6 +113,9 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.decide_path_distance = node->declare_parameter<double>(ns + "decide_path_distance");
     p.maximum_deceleration = node->declare_parameter<double>(ns + "maximum_deceleration");
     p.maximum_jerk = node->declare_parameter<double>(ns + "maximum_jerk");
+    p.path_priority = node->declare_parameter<std::string>(ns + "path_priority");
+    p.efficient_path_order =
+      node->declare_parameter<std::vector<std::string>>(ns + "efficient_path_order");
   }
 
   // shift parking
@@ -119,6 +128,13 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.deceleration_interval = node->declare_parameter<double>(ns + "deceleration_interval");
     p.after_shift_straight_distance =
       node->declare_parameter<double>(ns + "after_shift_straight_distance");
+  }
+
+  // parallel parking common
+  {
+    const std::string ns = base_ns + "pull_over.parallel_parking.";
+    p.parallel_parking_parameters.center_line_path_interval =
+      p.center_line_path_interval;  // for geometric parallel parking
   }
 
   // forward parallel parking forward
@@ -318,6 +334,9 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
+    p.safety_check_params.keep_unsafe_time =
+      node->declare_parameter<double>(safety_check_ns + "keep_unsafe_time");
+    p.safety_check_params.method = node->declare_parameter<std::string>(safety_check_ns + "method");
     p.safety_check_params.hysteresis_factor_expand_rate =
       node->declare_parameter<double>(safety_check_ns + "hysteresis_factor_expand_rate");
     p.safety_check_params.backward_path_length =
@@ -341,6 +360,19 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
       node->declare_parameter<double>(rss_ns + "longitudinal_distance_min_threshold");
     p.safety_check_params.rss_params.longitudinal_velocity_delta_time =
       node->declare_parameter<double>(rss_ns + "longitudinal_velocity_delta_time");
+  }
+
+  // IntegralPredictedPolygonParams
+  std::string integral_ns = safety_check_ns + "integral_predicted_polygon_params.";
+  {
+    p.safety_check_params.integral_predicted_polygon_params.forward_margin =
+      node->declare_parameter<double>(integral_ns + "forward_margin");
+    p.safety_check_params.integral_predicted_polygon_params.backward_margin =
+      node->declare_parameter<double>(integral_ns + "backward_margin");
+    p.safety_check_params.integral_predicted_polygon_params.lat_margin =
+      node->declare_parameter<double>(integral_ns + "lat_margin");
+    p.safety_check_params.integral_predicted_polygon_params.time_horizon =
+      node->declare_parameter<double>(integral_ns + "time_horizon");
   }
 
   // debug

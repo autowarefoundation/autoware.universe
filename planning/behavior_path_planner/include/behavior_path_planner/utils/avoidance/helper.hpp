@@ -91,10 +91,16 @@ public:
     return std::max(getEgoSpeed(), values.at(idx));
   }
 
+  double getMinimumPrepareDistance() const
+  {
+    const auto & p = parameters_;
+    return std::max(getEgoSpeed() * p->min_prepare_time, p->min_prepare_distance);
+  }
+
   double getNominalPrepareDistance() const
   {
     const auto & p = parameters_;
-    return std::max(getEgoSpeed() * p->prepare_time, p->min_prepare_distance);
+    return std::max(getEgoSpeed() * p->max_prepare_time, p->min_prepare_distance);
   }
 
   double getNominalAvoidanceDistance(const double shift_length) const
@@ -171,6 +177,23 @@ public:
     const auto shift_length = calcShiftLength(is_on_right, object.overhang_dist, margin);
     return is_on_right ? std::min(shift_length, getLeftShiftBound())
                        : std::max(shift_length, getRightShiftBound());
+  }
+
+  double getForwardDetectionRange() const
+  {
+    if (parameters_->use_static_detection_area) {
+      return parameters_->object_check_max_forward_distance;
+    }
+
+    const auto max_shift_length = std::max(
+      std::abs(parameters_->max_right_shift_length), std::abs(parameters_->max_left_shift_length));
+    const auto dynamic_distance = PathShifter::calcLongitudinalDistFromJerk(
+      max_shift_length, getLateralMinJerkLimit(), getEgoSpeed());
+
+    return std::clamp(
+      1.5 * dynamic_distance + getNominalPrepareDistance(),
+      parameters_->object_check_min_forward_distance,
+      parameters_->object_check_max_forward_distance);
   }
 
   void alignShiftLinesOrder(AvoidLineArray & lines, const bool align_shift_length = true) const

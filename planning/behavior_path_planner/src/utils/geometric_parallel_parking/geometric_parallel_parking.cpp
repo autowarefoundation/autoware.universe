@@ -17,7 +17,6 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
-#include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
@@ -37,8 +36,6 @@
 
 #include <boost/geometry/algorithms/within.hpp>
 
-#include <limits>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -286,8 +283,9 @@ bool GeometricParallelParking::planPullOut(
       s_start, planner_data_->parameters.forward_path_length, road_lanes, goal_pose);
     const double s_end = path_end_info.first;
     const bool path_terminal_is_goal = path_end_info.second;
-    PathWithLaneId road_center_line_path =
-      planner_data_->route_handler->getCenterLinePath(road_lanes, s_start, s_end, true);
+    const PathWithLaneId road_center_line_path = utils::resamplePathWithSpline(
+      planner_data_->route_handler->getCenterLinePath(road_lanes, s_start, s_end, true),
+      parameters_.center_line_path_interval);
 
     if (road_center_line_path.points.empty()) {
       continue;
@@ -362,8 +360,10 @@ PathWithLaneId GeometricParallelParking::generateStraightPath(
   const Pose current_pose = planner_data_->self_odometry->pose.pose;
   const auto current_arc_position = lanelet::utils::getArcCoordinates(road_lanes, current_pose);
 
-  auto path = planner_data_->route_handler->getCenterLinePath(
-    road_lanes, current_arc_position.length, start_arc_position.length, true);
+  auto path = utils::resamplePathWithSpline(
+    planner_data_->route_handler->getCenterLinePath(
+      road_lanes, current_arc_position.length, start_arc_position.length, true),
+    parameters_.center_line_path_interval);
   path.header = planner_data_->route_handler->getRouteHeader();
   if (!path.points.empty()) {
     path.points.back().point.longitudinal_velocity_mps = 0;

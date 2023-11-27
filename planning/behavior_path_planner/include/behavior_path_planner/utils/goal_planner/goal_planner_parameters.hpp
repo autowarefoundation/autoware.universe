@@ -45,9 +45,12 @@ struct GoalPlannerParameters
   double th_stopped_velocity{0.0};
   double th_stopped_time{0.0};
   double th_blinker_on_lateral_offset{0.0};
+  double center_line_path_interval{0.0};
 
   // goal search
-  std::string search_priority;   // "efficient_path" or "close_goal"
+  std::string goal_priority;  // "minimum_weighted_distance" or "minimum_longitudinal_distance"
+  double minimum_weighted_distance_lateral_weight{0.0};
+  bool prioritize_goals_before_objects{false};
   ParkingPolicy parking_policy;  // "left_side" or "right_side"
   double forward_goal_search_length{0.0};
   double backward_goal_search_length{0.0};
@@ -79,6 +82,8 @@ struct GoalPlannerParameters
   double decide_path_distance{0.0};
   double maximum_deceleration{0.0};
   double maximum_jerk{0.0};
+  std::string path_priority;  // "efficient_path" or "close_goal"
+  std::vector<std::string> efficient_path_order{};
 
   // shift path
   bool enable_shift_parking{false};

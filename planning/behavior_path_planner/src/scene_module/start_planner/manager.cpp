@@ -33,6 +33,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
 
   std::string ns = "start_planner.";
 
+  p.verbose = node->declare_parameter<bool>(ns + "verbose");
   p.th_arrived_distance = node->declare_parameter<double>(ns + "th_arrived_distance");
   p.th_stopped_velocity = node->declare_parameter<double>(ns + "th_stopped_velocity");
   p.th_stopped_time = node->declare_parameter<double>(ns + "th_stopped_time");
@@ -47,6 +48,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   p.collision_check_distance_from_end =
     node->declare_parameter<double>(ns + "collision_check_distance_from_end");
   p.th_moving_object_velocity = node->declare_parameter<double>(ns + "th_moving_object_velocity");
+  p.center_line_path_interval = node->declare_parameter<double>(ns + "center_line_path_interval");
   // shift pull out
   p.enable_shift_pull_out = node->declare_parameter<bool>(ns + "enable_shift_pull_out");
   p.check_shift_path_lane_departure =
@@ -71,6 +73,8 @@ StartPlannerModuleManager::StartPlannerModuleManager(
     node->declare_parameter<double>(ns + "lane_departure_margin");
   p.parallel_parking_parameters.pull_out_max_steer_angle =
     node->declare_parameter<double>(ns + "pull_out_max_steer_angle");  // 15deg
+  p.parallel_parking_parameters.center_line_path_interval =
+    p.center_line_path_interval;  // for geometric parallel parking
   // search start pose backward
   p.search_priority = node->declare_parameter<std::string>(
     ns + "search_priority");  // "efficient_path" or "short_back_distance"
@@ -317,7 +321,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
     const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
 
     // Currently simultaneous execution with other modules is not supported while backward driving
-    if (!start_planner_ptr->isBackFinished()) {
+    if (!start_planner_ptr->isDrivingForward()) {
       return false;
     }
 
@@ -346,7 +350,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() cons
     const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
 
     // Currently simultaneous execution with other modules is not supported while backward driving
-    if (!start_planner_ptr->isBackFinished()) {
+    if (start_planner_ptr->isDrivingForward()) {
       return false;
     }
 

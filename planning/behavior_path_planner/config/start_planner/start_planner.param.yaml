@@ -1,6 +1,9 @@
 /**:
   ros__parameters:
     start_planner:
+
+      verbose: false
+
       th_arrived_distance: 1.0
       th_stopped_velocity: 0.01
       th_stopped_time: 1.0
@@ -8,6 +11,7 @@
       collision_check_distance_from_end: 1.0
       th_moving_object_velocity: 1.0
       th_distance_to_middle_of_the_road: 0.1
+      center_line_path_interval: 1.0
       # shift pull out
       enable_shift_pull_out: true
       check_shift_path_lane_departure: false
@@ -94,7 +98,7 @@
           # detection range
           object_check_forward_distance: 10.0
           object_check_backward_distance: 100.0
-          ignore_object_velocity_threshold: 0.0
+          ignore_object_velocity_threshold: 1.0
           # ObjectTypesToCheck
           object_types_to_check:
             check_car: true
@@ -126,11 +130,11 @@
           check_all_predicted_path: true
           publish_debug_marker: false
           rss_params:
-            rear_vehicle_reaction_time: 1.0
+            rear_vehicle_reaction_time: 2.0
             rear_vehicle_safety_time_margin: 1.0
-            lateral_distance_max_threshold: 1.0
-            longitudinal_distance_min_threshold: 1.0
-            longitudinal_velocity_delta_time: 1.0
+            lateral_distance_max_threshold: 2.0
+            longitudinal_distance_min_threshold: 3.0
+            longitudinal_velocity_delta_time: 0.8
           # hysteresis factor to expand/shrink polygon
           hysteresis_factor_expand_rate: 1.0
           # temporary
