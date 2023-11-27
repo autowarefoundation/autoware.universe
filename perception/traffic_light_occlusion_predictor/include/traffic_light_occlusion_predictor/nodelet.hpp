@@ -69,11 +69,10 @@ private:
    */
   void syncCallback(
     const tier4_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr in_signal_msg,
-    const tier4_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr in_signal_msg2,
     const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg,
-    const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg2,
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr in_cam_info_msg,
-    const sensor_msgs::msg::PointCloud2::ConstSharedPtr in_cloud_msg);
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr in_cloud_msg,
+    const uint8_t traffic_light_type);
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
   /**
@@ -81,7 +80,6 @@ private:
    *
    */
   rclcpp::Publisher<tier4_perception_msgs::msg::TrafficSignalArray>::SharedPtr signal_pub_;
-  rclcpp::Publisher<tier4_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr roi_pub_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
@@ -92,15 +90,17 @@ private:
    *
    */
   std::shared_ptr<CloudOcclusionPredictor> cloud_occlusion_predictor_;
-
   typedef perception_utils::PrimeSynchronizer<
-    tier4_perception_msgs::msg::TrafficSignalArray, tier4_perception_msgs::msg::TrafficSignalArray,
-    tier4_perception_msgs::msg::TrafficLightRoiArray,
+    tier4_perception_msgs::msg::TrafficSignalArray,
     tier4_perception_msgs::msg::TrafficLightRoiArray, sensor_msgs::msg::CameraInfo,
     sensor_msgs::msg::PointCloud2>
     SynchronizerType;
 
   std::shared_ptr<SynchronizerType> synchronizer_;
+  std::shared_ptr<SynchronizerType> synchronizer_ped_;
+
+  std::vector<int> occlusion_ratios_;
+  tier4_perception_msgs::msg::TrafficSignalArray out_msg_;
 };
 }  // namespace traffic_light
 #endif  // TRAFFIC_LIGHT_OCCLUSION_PREDICTOR__NODELET_HPP_

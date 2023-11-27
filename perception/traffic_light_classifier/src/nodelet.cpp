@@ -23,6 +23,13 @@ namespace traffic_light
 TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeOptions & options)
 : Node("traffic_light_classifier_node", options)
 {
+  auto node_name = this->get_name();
+  if (strcmp(node_name, "traffic_light_classifier_car") == 0) {
+    classify_tl_type_ = tier4_perception_msgs::msg::TrafficLightRoi::CAR_TL;
+  } else if (strcmp(node_name, "traffic_light_classifier_ped") == 0) {
+    classify_tl_type_ = tier4_perception_msgs::msg::TrafficLightRoi::PEDESTRIAN_TL;
+  }
+
   using std::placeholders::_1;
   using std::placeholders::_2;
   is_approximate_sync_ = this->declare_parameter("approximate_sync", false);
@@ -94,11 +101,21 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   output_msg.signals.resize(input_rois_msg->rois.size());
 
   std::vector<cv::Mat> images;
+  size_t j = 0;
   for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
-    output_msg.signals[i].traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;
+    // skip if not the expected type of roi
+    if (input_rois_msg->rois.at(i).traffic_light_type != classify_tl_type_) {
+      continue;
+    }
+    output_msg.signals[j].traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;
+    output_msg.signals[j].traffic_light_type = input_rois_msg->rois.at(i).traffic_light_type;
     const sensor_msgs::msg::RegionOfInterest & roi = input_rois_msg->rois.at(i).roi;
     images.emplace_back(cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
+    j++;
   }
+  // if (j == 0) return;
+  output_msg.signals.resize(j);
+
   if (!classifier_ptr_->getTrafficSignals(images, output_msg)) {
     RCLCPP_ERROR(this->get_logger(), "failed classify image, abort callback");
     return;

@@ -98,8 +98,7 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
     this, get_clock(), 100ms, std::bind(&TrafficLightFineDetectorNodelet::connectCb, this));
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
-  output_car_roi_pub_ = this->create_publisher<TrafficLightRoiArray>("~/output/rois_car", 1);
-  output_ped_roi_pub_ = this->create_publisher<TrafficLightRoiArray>("~/output/rois_ped", 1);
+  output_roi_pub_ = this->create_publisher<TrafficLightRoiArray>("~/output/rois", 1);
   exe_time_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/exe_time_ms", 1);
   if (is_approximate_sync_) {
@@ -122,7 +121,7 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
 void TrafficLightFineDetectorNodelet::connectCb()
 {
   std::lock_guard<std::mutex> lock(connect_mutex_);
-  if (output_car_roi_pub_->get_subscription_count() == 0) {
+  if (output_roi_pub_->get_subscription_count() == 0) {
     image_sub_.unsubscribe();
     rough_roi_sub_.unsubscribe();
     expect_roi_sub_.unsubscribe();
@@ -146,12 +145,10 @@ void TrafficLightFineDetectorNodelet::callback(
   using std::chrono::milliseconds;
   const auto exe_start_time = high_resolution_clock::now();
   cv::Mat original_image;
-  TrafficLightRoiArray out_car_rois;
-  TrafficLightRoiArray out_ped_rois;
+  TrafficLightRoiArray out_rois;
   std::map<int, TrafficLightRoi> id2expectRoi;
   std::map<int, tensorrt_yolox::ObjectArray> id2detections;
   for (const auto & expect_roi : expect_roi_msg->rois) {
-    // std::cout << "expect_roi.traffic_light_id:" << expect_roi.traffic_light_id << std::endl;
     id2expectRoi[expect_roi.traffic_light_id] = expect_roi;
   }
 
@@ -160,8 +157,7 @@ void TrafficLightFineDetectorNodelet::callback(
   tensorrt_yolox::ObjectArrays inference_results;
   std::vector<cv::Point> lts;
   std::vector<size_t> roi_ids;
-  // std::cout << "---------traffic_light rough_roi_msg->rois.size():" << rough_roi_msg->rois.size()
-  //           << std::endl;
+
   for (size_t roi_i = 0; roi_i < rough_roi_msg->rois.size(); roi_i++) {
     const auto & rough_roi = rough_roi_msg->rois[roi_i];
     cv::Point lt(rough_roi.roi.x_offset, rough_roi.roi.y_offset);
@@ -183,7 +179,7 @@ void TrafficLightFineDetectorNodelet::callback(
       trt_yolox_->doMultiScaleInference(original_image, inference_results, rois);
       for (size_t batch_i = 0; batch_i < true_batch_size; batch_i++) {
         for (const tensorrt_yolox::Object & detection : inference_results[batch_i]) {
-          if (detection.score < score_thresh_) {  // || detection.type != tlr_id_) {
+          if (detection.score < score_thresh_) {
             continue;
           }
           cv::Point lt_roi(
@@ -205,11 +201,9 @@ void TrafficLightFineDetectorNodelet::callback(
       roi_ids.clear();
     }
   }
-  detectionMatch(id2expectRoi, id2detections, out_car_rois, out_ped_rois);
-  out_car_rois.header = rough_roi_msg->header;
-  out_ped_rois.header = rough_roi_msg->header;
-  output_car_roi_pub_->publish(out_car_rois);
-  output_ped_roi_pub_->publish(out_ped_rois);
+  detectionMatch(id2expectRoi, id2detections, out_rois);
+  out_rois.header = rough_roi_msg->header;
+  output_roi_pub_->publish(out_rois);
   const auto exe_end_time = high_resolution_clock::now();
   const double exe_time =
     std::chrono::duration_cast<milliseconds>(exe_end_time - exe_start_time).count();
@@ -244,8 +238,7 @@ float TrafficLightFineDetectorNodelet::evalMatchScore(
 
 void TrafficLightFineDetectorNodelet::detectionMatch(
   std::map<int, TrafficLightRoi> & id2expectRoi,
-  std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_car_rois,
-  TrafficLightRoiArray & out_ped_rois)
+  std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_rois)
 {
   float max_score = 0.0f;
   std::map<int, tensorrt_yolox::Object> bestDetections;
@@ -278,20 +271,16 @@ void TrafficLightFineDetectorNodelet::detectionMatch(
     }
   }
 
-  out_car_rois.rois.clear();
-  out_ped_rois.rois.clear();
+  out_rois.rois.clear();
   for (const auto & p : bestDetections) {
     TrafficLightRoi tlr;
     tlr.traffic_light_id = p.first;
+    tlr.traffic_light_type = id2expectRoi[p.first].traffic_light_type;
     tlr.roi.x_offset = p.second.x_offset;
     tlr.roi.y_offset = p.second.y_offset;
     tlr.roi.width = p.second.width;
     tlr.roi.height = p.second.height;
-    if (p.second.type == 1) {
-      out_car_rois.rois.push_back(tlr);
-    } else if (p.second.type == 2) {
-      out_ped_rois.rois.push_back(tlr);
-    }
+    out_rois.rois.push_back(tlr);
   }
 }
 

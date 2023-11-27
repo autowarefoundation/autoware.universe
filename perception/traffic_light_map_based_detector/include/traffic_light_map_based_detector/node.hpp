@@ -93,6 +93,8 @@ private:
   std::shared_ptr<TrafficLightSet> all_traffic_lights_ptr_;
   std::shared_ptr<TrafficLightSet> route_traffic_lights_ptr_;
 
+  std::set<int64_t> pedestrian_tl_id_;
+
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;

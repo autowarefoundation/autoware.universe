@@ -66,6 +66,8 @@ public:
     CNN = 1,
   };
 
+  uint8_t classify_tl_type_;
+
 private:
   void connectCb();
 

@@ -262,7 +262,6 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignals(
       // hold signal recognition results for [last_colors_hold_time_] seconds.
       const auto time_from_last_detected = (get_clock()->now() - t).seconds();
       if (time_from_last_detected > last_colors_hold_time_) {
-        // erase_id_list.emplace_back(id);
         it = last_traffic_signal.second.erase(it);
       } else {
         ++it;
@@ -290,14 +289,15 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
 
   for (const auto & tl_reg_elem : tl_reg_elems) {
     auto id = tl_reg_elem->id();
-    // valid prediction exists, override the estimation
+    // if valid prediction exists, overwrite the estimation; else, use the estimation
     if (valid_id2idx_map.count(id)) {
       size_t idx = valid_id2idx_map[id];
       auto signal = msg.signals[idx];
       isFlashing(signal);  // check if it is flashing
-      output.signals[idx].elements[0].color =
-        updateState(signal);  // update output msg according to flashing and current state
-    } else {                  // not exists,
+      // update output msg according to flashing and current state
+      output.signals[idx].elements[0].color = updateState(signal);
+      // output.signals[idx].elements[0].status =
+    } else {
       TrafficSignal output_traffic_signal;
       TrafficSignalElement output_traffic_signal_element;
       output_traffic_signal_element.color = color;
@@ -316,6 +316,14 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
 {
   const auto id = signal.traffic_signal_id;
 
+  // std::cout << id << " last_colors_: ";
+  // if (last_colors_.count(id) > 0) {
+  //   std::vector<TrafficSignalAndTime> history = last_colors_.at(id);
+  //   for (const auto & h : history) {
+  //     std::cout << +h.first.elements.front().color;
+  //   }
+  // }
+
   // no record of detected color in last_detect_color_hold_time_(2.0s)
   if (is_flashing_.count(id) == 0) {
     is_flashing_.insert(std::make_pair(id, false));
@@ -326,7 +334,7 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
   if (
     signal.elements.front().color == TrafficSignalElement::UNKNOWN &&
     signal.elements.front().confidence != 0 &&  // not due to occlusion
-    current_state_.at(id) == TrafficSignalElement::GREEN) {
+    current_state_.at(id) != TrafficSignalElement::UNKNOWN) {
     is_flashing_.at(id) = true;
     return;
   }
@@ -353,6 +361,8 @@ uint8_t CrosswalkTrafficLightEstimatorNode::updateState(const TrafficSignal & si
 {
   const auto id = signal.traffic_signal_id;
   const auto color = signal.elements[0].color;
+
+  // std::cout << std::endl << id << " is_flashing:" << is_flashing_.at(id) << std::endl;
 
   if (current_state_.count(id) == 0) {
     current_state_.insert(std::make_pair(id, color));

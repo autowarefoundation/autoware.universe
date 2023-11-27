@@ -114,8 +114,8 @@ private:
    */
   void detectionMatch(
     std::map<int, TrafficLightRoi> & id2expectRoi,
-    std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_car_rois,
-    TrafficLightRoiArray & out_ped_rois);
+    std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_rois);
+
   /**
    * @brief convert image message to cv::Mat
    *
@@ -146,8 +146,7 @@ private:
   message_filters::Subscriber<TrafficLightRoiArray> rough_roi_sub_;
   message_filters::Subscriber<TrafficLightRoiArray> expect_roi_sub_;
   std::mutex connect_mutex_;
-  rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr output_car_roi_pub_;
-  rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr output_ped_roi_pub_;
+  rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr output_roi_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
