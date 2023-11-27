@@ -44,6 +44,7 @@
 
 #include "ar_tag_based_localizer.hpp"
 
+#include "localization_util/pose_array_interpolator.hpp"
 #include "localization_util/util_func.hpp"
 
 #include <Eigen/Core>
@@ -127,6 +128,9 @@ bool ArTagBasedLocalizer::setup()
   cam_info_sub_ = this->create_subscription<CameraInfo>(
     "~/input/camera_info", qos_sub,
     std::bind(&ArTagBasedLocalizer::cam_info_callback, this, std::placeholders::_1));
+  ekf_pose_sub_ = this->create_subscription<PoseWithCovarianceStamped>(
+    "~/input/ekf_pose", qos_sub,
+    std::bind(&ArTagBasedLocalizer::ekf_pose_callback, this, std::placeholders::_1));
 
   /*
     Publishers
@@ -174,28 +178,20 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
   // get self pose
   const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
   Pose self_pose;
-  builtin_interfaces::msg::Time pose_stamp;
-  try {
-    TransformStamped transform_base_link_to_map;
-    transform_base_link_to_map = tf_buffer_->lookupTransform("map", "base_link", sensor_stamp);
-    self_pose.position.x = transform_base_link_to_map.transform.translation.x;
-    self_pose.position.y = transform_base_link_to_map.transform.translation.y;
-    self_pose.position.z = transform_base_link_to_map.transform.translation.z;
-    self_pose.orientation = transform_base_link_to_map.transform.rotation;
-    pose_stamp = transform_base_link_to_map.header.stamp;
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(get_logger(), "cannot get map to base_link transform. %s", ex.what());
-    return;
-  }
-
-  // check timestamp
-  const rclcpp::Duration diff_time = rclcpp::Time(sensor_stamp) - rclcpp::Time(pose_stamp);
-  if (diff_time.seconds() > ekf_time_tolerance_) {
-    RCLCPP_INFO_STREAM(
-      this->get_logger(), "pose_stamp: " << pose_stamp.sec << "." << pose_stamp.nanosec);
-    RCLCPP_INFO_STREAM(
-      this->get_logger(), "sensor_stamp: " << sensor_stamp.sec << "." << sensor_stamp.nanosec);
-    return;
+  {
+    // get self-position on map
+    std::unique_lock<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
+    if (self_pose_msg_ptr_array_.size() <= 1) {
+      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
+      return;
+    }
+    PoseArrayInterpolator interpolator(
+      this, sensor_stamp, self_pose_msg_ptr_array_, ekf_time_tolerance_, ekf_position_tolerance_);
+    if (!interpolator.is_success()) {
+      return;
+    }
+    pop_old_pose(self_pose_msg_ptr_array_, sensor_stamp);
+    self_pose = interpolator.get_current_pose().pose.pose;
   }
 
   // detect
@@ -273,36 +269,72 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
 }
 
 // wait for one camera info, then shut down that subscriber
-void ArTagBasedLocalizer::cam_info_callback(const CameraInfo & msg)
+void ArTagBasedLocalizer::cam_info_callback(const CameraInfo::ConstSharedPtr & msg)
 {
   if (cam_info_received_) {
     return;
   }
 
   cv::Mat camera_matrix(3, 4, CV_64FC1, 0.0);
-  camera_matrix.at<double>(0, 0) = msg.p[0];
-  camera_matrix.at<double>(0, 1) = msg.p[1];
-  camera_matrix.at<double>(0, 2) = msg.p[2];
-  camera_matrix.at<double>(0, 3) = msg.p[3];
-  camera_matrix.at<double>(1, 0) = msg.p[4];
-  camera_matrix.at<double>(1, 1) = msg.p[5];
-  camera_matrix.at<double>(1, 2) = msg.p[6];
-  camera_matrix.at<double>(1, 3) = msg.p[7];
-  camera_matrix.at<double>(2, 0) = msg.p[8];
-  camera_matrix.at<double>(2, 1) = msg.p[9];
-  camera_matrix.at<double>(2, 2) = msg.p[10];
-  camera_matrix.at<double>(2, 3) = msg.p[11];
+  camera_matrix.at<double>(0, 0) = msg->p[0];
+  camera_matrix.at<double>(0, 1) = msg->p[1];
+  camera_matrix.at<double>(0, 2) = msg->p[2];
+  camera_matrix.at<double>(0, 3) = msg->p[3];
+  camera_matrix.at<double>(1, 0) = msg->p[4];
+  camera_matrix.at<double>(1, 1) = msg->p[5];
+  camera_matrix.at<double>(1, 2) = msg->p[6];
+  camera_matrix.at<double>(1, 3) = msg->p[7];
+  camera_matrix.at<double>(2, 0) = msg->p[8];
+  camera_matrix.at<double>(2, 1) = msg->p[9];
+  camera_matrix.at<double>(2, 2) = msg->p[10];
+  camera_matrix.at<double>(2, 3) = msg->p[11];
 
   cv::Mat distortion_coeff(4, 1, CV_64FC1);
   for (int i = 0; i < 4; ++i) {
     distortion_coeff.at<double>(i, 0) = 0;
   }
 
-  const cv::Size size(static_cast<int>(msg.width), static_cast<int>(msg.height));
+  const cv::Size size(static_cast<int>(msg->width), static_cast<int>(msg->height));
 
   cam_param_ = aruco::CameraParameters(camera_matrix, distortion_coeff, size);
 
   cam_info_received_ = true;
+}
+
+void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & msg)
+{
+  // lock mutex for initial pose
+  std::lock_guard<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
+  // if rosbag restart, clear buffer
+  if (!self_pose_msg_ptr_array_.empty()) {
+    const builtin_interfaces::msg::Time & t_front = self_pose_msg_ptr_array_.front()->header.stamp;
+    const builtin_interfaces::msg::Time & t_msg = msg->header.stamp;
+    if (t_front.sec > t_msg.sec || (t_front.sec == t_msg.sec && t_front.nanosec > t_msg.nanosec)) {
+      self_pose_msg_ptr_array_.clear();
+    }
+  }
+
+  if (msg->header.frame_id == "map") {
+    self_pose_msg_ptr_array_.push_back(msg);
+  } else {
+    TransformStamped transform_self_pose_frame_to_map;
+    try {
+      transform_self_pose_frame_to_map = tf_buffer_->lookupTransform(
+        "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
+
+      // transform self_pose_frame to map_frame
+      auto self_pose_on_map_ptr = std::make_shared<PoseWithCovarianceStamped>();
+      self_pose_on_map_ptr->pose.pose =
+        tier4_autoware_utils::transformPose(msg->pose.pose, transform_self_pose_frame_to_map);
+      // self_pose_on_map_ptr->pose.covariance;  // TODO(YamatoAndo)
+      self_pose_on_map_ptr->header.stamp = msg->header.stamp;
+      self_pose_msg_ptr_array_.push_back(self_pose_on_map_ptr);
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_WARN(
+        get_logger(), "cannot get map to %s transform. %s", msg->header.frame_id.c_str(),
+        ex.what());
+    }
+  }
 }
 
 std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(

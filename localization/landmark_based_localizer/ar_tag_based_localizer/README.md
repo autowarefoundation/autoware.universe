@@ -13,14 +13,14 @@ The positions and orientations of the AR-Tags are assumed to be written in the L
 
 #### Input
 
-| Name                   | Type                                         | Description                                                                 |
-| :--------------------- | :------------------------------------------- | :-------------------------------------------------------------------------- |
-| `~/input/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | Data of lanelet2                                                            |
-| `~/input/image`        | `sensor_msgs::msg::Image`                    | Camera Image                                                                |
-| `~/input/camera_info`  | `sensor_msgs::msg::CameraInfo`               | Camera Info                                                                 |
-| `/tf` & `/tf_static`   | `geometry_msgs::msg::TransformStamped`       | Subscribe (1) self pose (map to base_link) and (2) base_link to camera pose |
+| Name                   | Type                                            | Description       |
+| :--------------------- | :---------------------------------------------- | :---------------- |
+| `~/input/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin`    | Data of lanelet2  |
+| `~/input/image`        | `sensor_msgs::msg::Image`                       | Camera Image      |
+| `~/input/camera_info`  | `sensor_msgs::msg::CameraInfo`                  | Camera Info       |
+| `~/input/ekf_pose`     | `geometry_msgs::msg::PoseWithCovarianceStamped` | EKF Pose          |
 
-The pose obtained from `/tf` is essentially the EKF pose. It is used to validate detected AR tags by filtering out False Positives. Only if the EKF Pose and the AR tag-detected Pose are within a certain temporal and spatial range, the AR tag-detected Pose is considered valid and published.
+Note: The EKF pose is used to validate detected AR tags by filtering out False Positives. Only if the EKF Pose and the AR tag-detected Pose are within a certain temporal and spatial range, the AR tag-detected Pose is considered valid and published.
 
 #### Output
 

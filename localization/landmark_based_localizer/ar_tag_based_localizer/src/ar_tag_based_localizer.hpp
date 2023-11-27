@@ -60,6 +60,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <deque>
 #include <map>
 #include <memory>
 #include <string>
@@ -85,7 +86,8 @@ public:
 private:
   void map_bin_callback(const HADMapBin::ConstSharedPtr & msg);
   void image_callback(const Image::ConstSharedPtr & msg);
-  void cam_info_callback(const CameraInfo & msg);
+  void cam_info_callback(const CameraInfo::ConstSharedPtr & msg);
+  void ekf_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & msg);
   std::vector<landmark_manager::Landmark> detect_landmarks(const Image::ConstSharedPtr & msg);
   Pose calculate_new_self_pose(
     const std::vector<landmark_manager::Landmark> & detected_landmarks, const Pose & self_pose);
@@ -109,6 +111,7 @@ private:
   rclcpp::Subscription<HADMapBin>::SharedPtr map_bin_sub_;
   rclcpp::Subscription<Image>::SharedPtr image_sub_;
   rclcpp::Subscription<CameraInfo>::SharedPtr cam_info_sub_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr ekf_pose_sub_;
 
   // Publishers
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
@@ -121,6 +124,8 @@ private:
   aruco::MarkerDetector detector_;
   aruco::CameraParameters cam_param_;
   bool cam_info_received_;
+  std::mutex self_pose_array_mtx_;
+  std::deque<PoseWithCovarianceStamped::ConstSharedPtr> self_pose_msg_ptr_array_;
   std::map<std::string, Pose> landmark_map_;
 };
 
