@@ -26,7 +26,6 @@
 namespace drivable_area_expansion
 {
 /// @brief project a point to a segment
-/// @details the distance is signed based on the side of the point: left=positive, right=negative
 /// @param p point to project on the segment
 /// @param p1 first segment point
 /// @param p2 second segment point
@@ -49,7 +48,6 @@ inline PointDistance point_to_segment_projection(
 }
 
 /// @brief project a point to a line
-/// @details the distance is signed based on the side of the point: left=positive, right=negative
 /// @param p point to project on the line
 /// @param p1 first line point
 /// @param p2 second line point
