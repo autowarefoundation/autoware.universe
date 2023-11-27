@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_WITH_CONVERTER_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_WITH_CONVERTER_HPP_
+#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_MAP_ACC_GEARED_HPP_
+#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_MAP_ACC_GEARED_HPP_
 
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
@@ -22,6 +22,7 @@
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 #include <common/types.hpp>
+
 #include <deque>
 #include <iostream>
 #include <queue>
@@ -37,8 +38,9 @@ public:
   {
     CSVLoader csv(csv_path);
     std::vector<std::vector<std::string>> table;
-    std::cerr << __LINE__ << std::endl;
     if (!csv.readCSV(table)) {
+      std::cerr << "[SimModelDelaySteerMapAccGeared]: failed to read acceleration map from "
+                << csv_path << std::endl;
       return false;
     }
 
@@ -46,9 +48,13 @@ public:
     vel_index_ = CSVLoader::getRowIndex(table);
     acc_index_ = CSVLoader::getColumnIndex(table);
     acceleration_map_ = CSVLoader::getMap(table);
+
+    std::cout << "[SimModelDelaySteerMapAccGeared]: success to read acceleration map from "
+              << csv_path << std::endl;
     return true;
   }
-  bool getAcceleration(const double acc_des, const double vel, double & acc) const
+
+  double getAcceleration(const double acc_des, const double vel) const
   {
     std::vector<double> interpolated_acc_vec;
     const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "acc: vel");
@@ -61,9 +67,9 @@ public:
     // When the desired acceleration is smaller than the throttle area, return min acc
     // When the desired acceleration is greater than the throttle area, return max acc
     const double clamped_acc = CSVLoader::clampValue(acc_des, acc_index_, "acceleration: acc");
-    acc = interpolation::lerp(acc_index_, interpolated_acc_vec, clamped_acc);
+    const double acc = interpolation::lerp(acc_index_, interpolated_acc_vec, clamped_acc);
 
-    return true;
+    return acc;
   }
   std::vector<std::vector<double>> acceleration_map_;
 
@@ -73,7 +79,7 @@ private:
   std::vector<double> acc_index_;
 };
 
-class SimModelWithConverter : public SimModelInterface
+class SimModelDelaySteerMapAccGeared : public SimModelInterface
 {
 public:
   /**
@@ -89,7 +95,7 @@ public:
    * @param [in] steer_delay time delay for steering command [s]
    * @param [in] steer_time_constant time constant for 1D model of steering dynamics
    */
-  SimModelWithConverter(
+  SimModelDelaySteerMapAccGeared(
     float64_t vx_lim, float64_t steer_lim, float64_t vx_rate_lim, float64_t steer_rate_lim,
     float64_t wheelbase, float64_t dt, float64_t acc_delay, float64_t acc_time_constant,
     float64_t steer_delay, float64_t steer_time_constant, std::string path);
@@ -97,7 +103,7 @@ public:
   /**
    * @brief default destructor
    */
-  ~SimModelWithConverter() = default;
+  ~SimModelDelaySteerMapAccGeared() = default;
 
   AccelerationMap acc_map_;
 
@@ -203,4 +209,4 @@ private:
     const double dt);
 };
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_WITH_CONVERTER_HPP_
+#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_MAP_ACC_GEARED_HPP_

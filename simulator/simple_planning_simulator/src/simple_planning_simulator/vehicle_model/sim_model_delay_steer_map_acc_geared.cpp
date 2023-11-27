@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "simple_planning_simulator/vehicle_model/sim_model_with_converter.hpp"
+#include "simple_planning_simulator/vehicle_model/sim_model_delay_steer_map_acc_geared.hpp"
 
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
 
@@ -20,7 +20,7 @@
 
 #include <algorithm>
 
-SimModelWithConverter::SimModelWithConverter(
+SimModelDelaySteerMapAccGeared::SimModelDelaySteerMapAccGeared(
   float64_t vx_lim, float64_t steer_lim, float64_t vx_rate_lim, float64_t steer_rate_lim,
   float64_t wheelbase, float64_t dt, float64_t acc_delay, float64_t acc_time_constant,
   float64_t steer_delay, float64_t steer_time_constant, std::string path)
@@ -41,18 +41,39 @@ SimModelWithConverter::SimModelWithConverter(
   acc_map_.readAccelerationMapFromCSV(path_);
 }
 
-float64_t SimModelWithConverter::getX() { return state_(IDX::X); }
-float64_t SimModelWithConverter::getY() { return state_(IDX::Y); }
-float64_t SimModelWithConverter::getYaw() { return state_(IDX::YAW); }
-float64_t SimModelWithConverter::getVx() { return state_(IDX::VX); }
-float64_t SimModelWithConverter::getVy() { return 0.0; }
-float64_t SimModelWithConverter::getAx() { return state_(IDX::ACCX); }
-float64_t SimModelWithConverter::getWz()
+float64_t SimModelDelaySteerMapAccGeared::getX()
+{
+  return state_(IDX::X);
+}
+float64_t SimModelDelaySteerMapAccGeared::getY()
+{
+  return state_(IDX::Y);
+}
+float64_t SimModelDelaySteerMapAccGeared::getYaw()
+{
+  return state_(IDX::YAW);
+}
+float64_t SimModelDelaySteerMapAccGeared::getVx()
+{
+  return state_(IDX::VX);
+}
+float64_t SimModelDelaySteerMapAccGeared::getVy()
+{
+  return 0.0;
+}
+float64_t SimModelDelaySteerMapAccGeared::getAx()
+{
+  return state_(IDX::ACCX);
+}
+float64_t SimModelDelaySteerMapAccGeared::getWz()
 {
   return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
 }
-float64_t SimModelWithConverter::getSteer() { return state_(IDX::STEER); }
-void SimModelWithConverter::update(const float64_t & dt)
+float64_t SimModelDelaySteerMapAccGeared::getSteer()
+{
+  return state_(IDX::STEER);
+}
+void SimModelDelaySteerMapAccGeared::update(const float64_t & dt)
 {
   Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
 
@@ -74,7 +95,7 @@ void SimModelWithConverter::update(const float64_t & dt)
   updateStateWithGear(state_, prev_state, gear_, dt);
 }
 
-void SimModelWithConverter::initializeInputQueue(const float64_t & dt)
+void SimModelDelaySteerMapAccGeared::initializeInputQueue(const float64_t & dt)
 {
   size_t acc_input_queue_size = static_cast<size_t>(round(acc_delay_ / dt));
   acc_input_queue_.resize(acc_input_queue_size);
@@ -85,19 +106,17 @@ void SimModelWithConverter::initializeInputQueue(const float64_t & dt)
   std::fill(steer_input_queue_.begin(), steer_input_queue_.end(), 0.0);
 }
 
-Eigen::VectorXd SimModelWithConverter::calcModel(
+Eigen::VectorXd SimModelDelaySteerMapAccGeared::calcModel(
   const Eigen::VectorXd & state, const Eigen::VectorXd & input)
 {
-  auto sat = [](float64_t val, float64_t u, float64_t l) { return std::max(std::min(val, u), l); };
-
-  const float64_t vel = sat(state(IDX::VX), vx_lim_, -vx_lim_);
-  const float64_t acc = sat(state(IDX::ACCX), vx_rate_lim_, -vx_rate_lim_);
+  const float64_t vel = std::clamp(state(IDX::VX), -vx_lim_, vx_lim_);
+  const float64_t acc = std::clamp(state(IDX::ACCX), -vx_rate_lim_, vx_rate_lim_);
   const float64_t yaw = state(IDX::YAW);
   const float64_t steer = state(IDX::STEER);
-  const float64_t acc_des = sat(input(IDX_U::ACCX_DES), vx_rate_lim_, -vx_rate_lim_);
-  const float64_t steer_des = sat(input(IDX_U::STEER_DES), steer_lim_, -steer_lim_);
+  const float64_t acc_des = std::clamp(input(IDX_U::ACCX_DES), -vx_rate_lim_, vx_rate_lim_);
+  const float64_t steer_des = std::clamp(input(IDX_U::STEER_DES), -steer_lim_, steer_lim_);
   float64_t steer_rate = -(steer - steer_des) / steer_time_constant_;
-  steer_rate = sat(steer_rate, steer_rate_lim_, -steer_rate_lim_);
+  steer_rate = std::clamp(steer_rate, -steer_rate_lim_, steer_rate_lim_);
 
   Eigen::VectorXd d_state = Eigen::VectorXd::Zero(dim_x_);
   d_state(IDX::X) = vel * cos(yaw);
@@ -105,17 +124,15 @@ Eigen::VectorXd SimModelWithConverter::calcModel(
   d_state(IDX::YAW) = vel * std::tan(steer) / wheelbase_;
   d_state(IDX::VX) = acc;
   d_state(IDX::STEER) = steer_rate;
-  double converted_acc = acc_des;
-  if (!acc_map_.acceleration_map_.empty()) {
-    acc_map_.getAcceleration(acc_des, vel, converted_acc);
-  } else {
-  }
+  const double converted_acc =
+    acc_map_.acceleration_map_.empty() ? acc_des : acc_map_.getAcceleration(acc_des, vel);
+
   d_state(IDX::ACCX) = -(acc - converted_acc) / acc_time_constant_;
 
   return d_state;
 }
 
-void SimModelWithConverter::updateStateWithGear(
+void SimModelDelaySteerMapAccGeared::updateStateWithGear(
   Eigen::VectorXd & state, const Eigen::VectorXd & prev_state, const uint8_t gear, const double dt)
 {
   using autoware_auto_vehicle_msgs::msg::GearCommand;

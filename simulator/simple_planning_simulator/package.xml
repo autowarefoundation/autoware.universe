@@ -23,6 +23,7 @@
   <depend>lanelet2_extension</depend>
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
+  <depend>raw_vehicle_cmd_converter</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
@@ -34,7 +35,6 @@
   <depend>tier4_external_api_msgs</depend>
   <depend>tier4_vehicle_msgs</depend>
   <depend>vehicle_info_util</depend>
-  <depend>raw_vehicle_cmd_converter</depend>
 
   <exec_depend>launch_ros</exec_depend>
 

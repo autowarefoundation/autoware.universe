@@ -18,6 +18,7 @@ from launch.actions import GroupAction
 from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+import launch_ros.parameter_descriptions
 from launch_ros.substitutions import FindPackageShare
 import yaml
 
@@ -35,11 +36,9 @@ def launch_setup(context, *args, **kwargs):
         vehicle_characteristics_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     simulator_model_param_path = LaunchConfiguration("simulator_model_param_file").perform(context)
-    with open(simulator_model_param_path, "r") as f:
-        simulator_model_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    simulator_acc_param_path = LaunchConfiguration("acceleration_param_file").perform(context)
-    print("ERROR" + simulator_acc_param_path)
-
+    simulator_model_param = launch_ros.parameter_descriptions.ParameterFile(
+        param_file=simulator_model_param_path, allow_substs=True
+    )
 
     simple_planning_simulator_node = Node(
         package="simple_planning_simulator",
@@ -51,7 +50,6 @@ def launch_setup(context, *args, **kwargs):
             vehicle_info_param,
             vehicle_characteristics_param,
             simulator_model_param,
-            simulator_acc_param_path,
             {
                 "initial_engage_state": LaunchConfiguration("initial_engage_state"),
             },
