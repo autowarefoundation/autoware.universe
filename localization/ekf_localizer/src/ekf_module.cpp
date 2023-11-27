@@ -33,9 +33,6 @@
 #define DEBUG_PRINT_MAT(X) {\
   if (params_.show_debug_info) {std::cout << #X << ": " << X << std::endl;}\
 }
-#define DEBUG_PRINT(X) {\
-  if (params_.show_debug_info) {std::cout << #X << ": " << X << std::endl;}\
-}
 // clang-format on
 
 EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters params)
@@ -214,9 +211,6 @@ bool EKFModule::measurementUpdatePose(
   delay_time = std::max(delay_time, 0.0);
 
   const int delay_step = static_cast<int>(find_closest_delay_time_index(delay_time));
-  DEBUG_PRINT(delay_time);
-  DEBUG_PRINT(delay_step);
-  DEBUG_PRINT(accumulated_delay_times_[delay_step]);
 
   pose_diag_info.delay_time = std::max(delay_time, pose_diag_info.delay_time);
   pose_diag_info.delay_time_threshold = params_.extend_state_step * params_.ekf_dt;
