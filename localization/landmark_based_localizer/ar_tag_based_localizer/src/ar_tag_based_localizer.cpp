@@ -50,6 +50,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <opencv4/opencv2/calib3d.hpp>
+#include <opencv4/opencv2/core/quaternion.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 #include <tf2/LinearMath/Transform.h>
@@ -371,21 +372,15 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
 
   for (aruco::Marker & marker : markers) {
     // convert marker pose to tf
-    cv::Mat rot(3, 3, CV_64FC1);
-    cv::Mat r_vec64;
-    marker.Rvec.convertTo(r_vec64, CV_64FC1);
-    cv::Rodrigues(r_vec64, rot);
-    cv::Mat tran64;
-    marker.Tvec.convertTo(tran64, CV_64FC1);
-    tf2::Matrix3x3 tf_rot(
-      rot.at<double>(0, 0), rot.at<double>(0, 1), rot.at<double>(0, 2),   // row 0
-      rot.at<double>(1, 0), rot.at<double>(1, 1), rot.at<double>(1, 2),   // row 1
-      rot.at<double>(2, 0), rot.at<double>(2, 1), rot.at<double>(2, 2));  // row 2
-    tf2::Vector3 tf_orig(tran64.at<double>(0, 0), tran64.at<double>(1, 0), tran64.at<double>(2, 0));
-    const tf2::Transform tf_cam_to_marker(tf_rot, tf_orig);
-
+    const cv::Quat<float> q = cv::Quat<float>::createFromRvec(marker.Rvec);
     Pose pose;
-    tf2::toMsg(tf_cam_to_marker, pose);
+    pose.position.x = marker.Tvec.at<float>(0, 0);
+    pose.position.y = marker.Tvec.at<float>(1, 0);
+    pose.position.z = marker.Tvec.at<float>(2, 0);
+    pose.orientation.x = q.x;
+    pose.orientation.y = q.y;
+    pose.orientation.z = q.z;
+    pose.orientation.w = q.w;
     const double distance = std::hypot(pose.position.x, pose.position.y, pose.position.z);
     if (distance <= distance_threshold_) {
       tf2::doTransform(pose, pose, transform_sensor_to_base_link);
