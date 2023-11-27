@@ -30,6 +30,7 @@
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
 #include <memory>
+#include <vector>
 
 struct EKFDiagnosticInfo
 {

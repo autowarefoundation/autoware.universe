@@ -143,21 +143,21 @@ size_t EKFModule::find_closest_delay_time_index(double target_value) const
     accumulated_delay_times_.begin(), accumulated_delay_times_.end(), target_value);
 
   // If the lower bound is the first element, return its index.
+  // If the lower bound is beyond the last element, return the last index.
+  // If else, take the closest element.
   if (lower == accumulated_delay_times_.begin()) {
     return 0;
-  }
-  // If the lower bound is beyond the last element, return the last index.
-  else if (lower == accumulated_delay_times_.end()) {
+  } else if (lower == accumulated_delay_times_.end()) {
     return accumulated_delay_times_.size() - 1;
+  } else {
+    // Compare the target with the lower bound and the previous element.
+    auto prev = lower - 1;
+    bool is_closer_to_prev = (target_value - *prev) < (*lower - target_value);
+
+    // Return the index of the closer element.
+    return is_closer_to_prev ? std::distance(accumulated_delay_times_.begin(), prev)
+                             : std::distance(accumulated_delay_times_.begin(), lower); 
   }
-
-  // Compare the target with the lower bound and the previous element.
-  auto prev = lower - 1;
-  bool is_closer_to_prev = (target_value - *prev) < (*lower - target_value);
-
-  // Return the index of the closer element.
-  return is_closer_to_prev ? std::distance(accumulated_delay_times_.begin(), prev)
-                           : std::distance(accumulated_delay_times_.begin(), lower);
 }
 
 void EKFModule::accumulate_delay_time(const double dt)
