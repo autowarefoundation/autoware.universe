@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    dynamic_obstacle_stop: # module to stop or before entering the immediate path of a moving object
+      print_runtimes: true
