@@ -56,6 +56,7 @@
 #include <tf2/LinearMath/Transform.h>
 
 #include <algorithm>
+#include <limits>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
@@ -350,7 +351,7 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
     cv_ptr->image.copyTo(in_image);
   } catch (cv_bridge::Exception & e) {
     RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
-    return std::vector<landmark_manager::Landmark>();
+    return std::vector<landmark_manager::Landmark>{};
   }
 
   // get transform from base_link to camera
@@ -360,7 +361,7 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
       tf_buffer_->lookupTransform("base_link", msg->header.frame_id, sensor_stamp);
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "Could not transform base_link to camera: %s", ex.what());
-    return std::vector<landmark_manager::Landmark>();
+    return std::vector<landmark_manager::Landmark>{};
   }
 
   // detect
