@@ -18,9 +18,9 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
@@ -33,9 +33,9 @@
 namespace behavior_path_planner::utils::path_safety_checker
 {
 
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 
 /**
  * @brief Filters objects based on object centroid position.

@@ -20,9 +20,9 @@
   <buildtool_export_depend>ament_cmake_test</buildtool_export_depend>
 
   <depend>autoware_adapi_v1_msgs</depend>
-  <depend>autoware_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>rcl</depend>

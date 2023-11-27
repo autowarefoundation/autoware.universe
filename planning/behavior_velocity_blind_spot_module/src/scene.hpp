@@ -20,9 +20,9 @@
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
 #include <boost/optional.hpp>
@@ -216,8 +216,7 @@ private:
    * @param time_thr    time threshold to cut path
    */
   void cutPredictPathWithDuration(
-    autoware_perception_msgs::msg::PredictedObjects * objects_ptr,
-    const double time_thr) const;
+    autoware_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const;
 
   StateMachine state_machine_;  //! for state
 

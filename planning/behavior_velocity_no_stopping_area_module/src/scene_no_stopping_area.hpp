@@ -24,10 +24,10 @@
 #include <lanelet2_extension/regulatory_elements/no_stopping_area.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/optional.hpp>
 
@@ -111,8 +111,7 @@ private:
    */
   bool checkStuckVehiclesInNoStoppingArea(
     const Polygon2d & poly,
-    const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr &
-      predicted_obj_arr_ptr);
+    const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr & predicted_obj_arr_ptr);
 
   /**
    * @brief Check if there is a stop line in "stop line detect area".

@@ -20,8 +20,8 @@
 
 #include <planning_evaluator/planning_evaluator_node.hpp>
 
-#include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 

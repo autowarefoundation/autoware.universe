@@ -100,9 +100,8 @@ autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
 }
 
 autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
-  const autoware_perception_msgs::msg::PredictedPath & path,
-  const double sampling_time_interval, const double sampling_horizon, const bool use_spline_for_xy,
-  const bool use_spline_for_z)
+  const autoware_perception_msgs::msg::PredictedPath & path, const double sampling_time_interval,
+  const double sampling_horizon, const bool use_spline_for_xy, const bool use_spline_for_z)
 {
   if (path.path.empty()) {
     throw std::invalid_argument("Predicted Path is empty");
