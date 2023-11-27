@@ -110,16 +110,17 @@ void EKFLocalizer::updatePredictFrequency()
       warning_->warn("Detected jump back in time");
     } else {
       /* Measure dt */
-      double dt = (get_clock()->now() - *last_predict_time_).seconds();
-      DEBUG_INFO(get_logger(), "[EKF] update ekf_dt_ to %f seconds (= %f hz)", dt, 1 / dt);
+      ekf_dt_ = (get_clock()->now() - *last_predict_time_).seconds();
+      ekf_rate_ = 1 / ekf_dt_;
+      DEBUG_INFO(get_logger(), "[EKF] update ekf_dt_ to %f seconds (= %f hz)", ekf_dt_, ekf_rate_);
 
-      if (dt > 10.0) {
-        dt = 10.0;
+      if (ekf_dt_ > 10.0) {
+        ekf_dt_ = 10.0;
         DEBUG_INFO(get_logger(), "Large ekf_dt_ detected. Capped to 10.0 seconds");
       }
 
       /* Register dt and accummulate time delay */
-      ekf_module_->accumulate_delay_time(dt);
+      ekf_module_->accumulate_delay_time(ekf_dt_);
 
       /* Update discrete proc_cov*/
       proc_cov_vx_d_ = std::pow(params_.proc_stddev_vx_c * ekf_dt_, 2.0);
