@@ -298,8 +298,7 @@ void SurroundObstacleCheckerNode::onTimer()
 
   if (use_dynamic_object_ && !object_ptr_) {
     RCLCPP_INFO_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for dynamic object
-      info...");
+      this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for dynamic object info...");
   }
 
   if (!node_param_.pointcloud_enable_check && !use_dynamic_object_) {
