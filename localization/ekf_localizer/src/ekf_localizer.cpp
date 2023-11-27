@@ -119,7 +119,7 @@ void EKFLocalizer::updatePredictFrequency()
         DEBUG_INFO(get_logger(), "Large ekf_dt_ detected. Capped to 10.0 seconds");
       }
 
-      /* Register dt and accummulate time delay */
+      /* Register dt and accumulate time delay */
       ekf_module_->accumulate_delay_time(ekf_dt_);
 
       /* Update discrete proc_cov*/
