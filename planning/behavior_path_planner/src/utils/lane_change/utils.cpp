@@ -18,6 +18,7 @@
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
@@ -963,7 +964,7 @@ bool passParkedObject(
   }
 
   const auto & leading_obj = objects.at(*leading_obj_idx);
-  auto debug = marker_utils::createObjectDebug(leading_obj);
+  auto debug = utils::path_safety_checker::createObjectDebug(leading_obj);
   const auto leading_obj_poly =
     tier4_autoware_utils::toPolygon2d(leading_obj.initial_pose.pose, leading_obj.shape);
   if (leading_obj_poly.outer().empty()) {
@@ -988,7 +989,7 @@ bool passParkedObject(
   // If there are still enough length after the target object, we delay the lane change
   if (min_dist_to_end_of_current_lane > minimum_lane_change_length) {
     debug.second.unsafe_reason = "delay lane change";
-    marker_utils::updateCollisionCheckDebugMap(object_debug, debug, false);
+    utils::path_safety_checker::updateCollisionCheckDebugMap(object_debug, debug, false);
     return true;
   }
 

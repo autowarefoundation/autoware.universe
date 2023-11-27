@@ -1718,7 +1718,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     lane_change_parameters_->lane_expansion_right_offset);
 
   for (const auto & obj : collision_check_objects) {
-    auto current_debug_data = marker_utils::createObjectDebug(obj);
+    auto current_debug_data = utils::path_safety_checker::createObjectDebug(obj);
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       obj, lane_change_parameters_->use_all_predicted_path);
     auto is_safe = true;
@@ -1728,7 +1728,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
         current_debug_data.second);
 
       if (collided_polygons.empty()) {
-        marker_utils::updateCollisionCheckDebugMap(debug_data, current_debug_data, is_safe);
+        utils::path_safety_checker::updateCollisionCheckDebugMap(
+          debug_data, current_debug_data, is_safe);
         continue;
       }
 
@@ -1738,20 +1739,23 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
         utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, expanded_target_lanes);
 
       if (!collision_in_current_lanes && !collision_in_target_lanes) {
-        marker_utils::updateCollisionCheckDebugMap(debug_data, current_debug_data, is_safe);
+        utils::path_safety_checker::updateCollisionCheckDebugMap(
+          debug_data, current_debug_data, is_safe);
         continue;
       }
 
       is_safe = false;
       path_safety_status.is_safe = false;
-      marker_utils::updateCollisionCheckDebugMap(debug_data, current_debug_data, is_safe);
+      utils::path_safety_checker::updateCollisionCheckDebugMap(
+        debug_data, current_debug_data, is_safe);
       const auto & obj_pose = obj.initial_pose.pose;
       const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose, obj.shape);
       path_safety_status.is_object_coming_from_rear |=
         !utils::path_safety_checker::isTargetObjectFront(
           path, current_pose, common_parameters.vehicle_info, obj_polygon);
     }
-    marker_utils::updateCollisionCheckDebugMap(debug_data, current_debug_data, is_safe);
+    utils::path_safety_checker::updateCollisionCheckDebugMap(
+      debug_data, current_debug_data, is_safe);
   }
 
   return path_safety_status;
