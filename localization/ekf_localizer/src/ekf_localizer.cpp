@@ -46,7 +46,6 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   params_(this),
   ekf_rate_(params_.ekf_rate),
   ekf_dt_(params_.ekf_dt),
-  X_delay_times_(params_.extend_state_step, 1.0E15),
   pose_queue_(params_.pose_smoothing_steps),
   twist_queue_(params_.twist_smoothing_steps)
 {
@@ -99,8 +98,6 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   z_filter_.set_proc_dev(1.0);
   roll_filter_.set_proc_dev(0.01);
   pitch_filter_.set_proc_dev(0.01);
-
-  X_delay_times_[0] = ekf_dt_;
 }
 
 /*
@@ -112,23 +109,17 @@ void EKFLocalizer::updatePredictFrequency()
     if (get_clock()->now() < *last_predict_time_) {
       warning_->warn("Detected jump back in time");
     } else {
+      /* Measure dt */
+      double dt = (get_clock()->now() - *last_predict_time_).seconds();
+      DEBUG_INFO(get_logger(), "[EKF] update ekf_dt_ to %f seconds (= %f hz)", dt, 1 / dt);
 
-      /* Update X_delay_times_ */
-      std::copy_backward(
-        X_delay_times_.begin(), X_delay_times_.end() - 1,
-        X_delay_times_.end());
-      X_delay_times_[0] = (get_clock()->now() - *last_predict_time_).seconds();
-      DEBUG_INFO(get_logger(), "[EKF] update ekf_dt_ to %f seconds (= %f hz)", X_delay_times_[0], 1 / X_delay_times_[0]);
-
-      if (X_delay_times_[0] > 10.0) {
-        X_delay_times_[0] = 10.0;
+      if (dt > 10.0) {
+        dt = 10.0;
         DEBUG_INFO(get_logger(), "Large ekf_dt_ detected. Capped to 10.0 seconds");
       }
 
-      for(size_t i = 1; i < X_delay_times_.size(); ++i) {
-        X_delay_times_[i] = X_delay_times_[i] + X_delay_times_[0];
-        DEBUG_INFO(get_logger(), "[EKF] X_delay_times_[%ld] = %f seconds", i, X_delay_times_[i]);
-      }
+      /* Register dt and accummulate time delay */
+      ekf_module_->accumulate_delay_time(dt);
 
       /* Update discrete proc_cov*/
       proc_cov_vx_d_ = std::pow(params_.proc_stddev_vx_c * ekf_dt_, 2.0);
@@ -182,7 +173,7 @@ void EKFLocalizer::timerCallback()
     const size_t n = pose_queue_.size();
     for (size_t i = 0; i < n; ++i) {
       const auto pose = pose_queue_.pop_increment_age();
-      bool is_updated = ekf_module_->measurementUpdatePose(*pose, ekf_dt_, t_curr, pose_diag_info_);
+      bool is_updated = ekf_module_->measurementUpdatePose(*pose, t_curr, pose_diag_info_);
       if (is_updated) {
         pose_is_updated = true;
 
@@ -218,7 +209,7 @@ void EKFLocalizer::timerCallback()
     for (size_t i = 0; i < n; ++i) {
       const auto twist = twist_queue_.pop_increment_age();
       bool is_updated =
-        ekf_module_->measurementUpdateTwist(*twist, ekf_dt_, t_curr, twist_diag_info_);
+        ekf_module_->measurementUpdateTwist(*twist, t_curr, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
       }

@@ -33,11 +33,15 @@
 #define DEBUG_PRINT_MAT(X) {\
   if (params_.show_debug_info) {std::cout << #X << ": " << X << std::endl;}\
 }
+#define DEBUG_PRINT(X) {\
+  if (params_.show_debug_info) {std::cout << #X << ": " << X << std::endl;}\
+}
 // clang-format on
 
 EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters params)
 : warning_(std::move(warning)),
   dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
+  accumulated_delay_times_(params.extend_state_step, 1.0E15),
   params_(params)
 {
   Eigen::MatrixXd X = Eigen::MatrixXd::Zero(dim_x_, 1);
@@ -132,30 +136,43 @@ double EKFModule::getYawBias() const
 }
 
 
-size_t EKFModule::find_closest_index(double target_value, const std::vector<double>& sorted_values) const {
-  if (sorted_values.empty()) {
-    throw std::invalid_argument("Durations vector is empty.");
+size_t EKFModule::find_closest_delay_time_index(double target_value) const {
+
+  // If target_value is too large, return last index + 1
+  if (target_value > params_.ekf_dt * params_.extend_state_step) {
+    return accumulated_delay_times_.size();
   }
 
-  auto lower = std::lower_bound(sorted_values.begin(), sorted_values.end(), target_value);
+  auto lower = std::lower_bound(accumulated_delay_times_.begin(), accumulated_delay_times_.end(), target_value);
 
   // If the lower bound is the first element, return its index.
-  if (lower == sorted_values.begin()) {
+  if (lower == accumulated_delay_times_.begin()) {
     return 0;
   }
   // If the lower bound is beyond the last element, return the last index.
-  else if (lower == sorted_values.end()) {
-    return sorted_values.size() - 1;
+  else if (lower == accumulated_delay_times_.end()) {
+    return accumulated_delay_times_.size() - 1;
   }
 
   // Compare the target with the lower bound and the previous element.
   auto prev = lower - 1;
-  bool is_closer_to_prev = target_value - *prev < *lower - target_value;
+  bool is_closer_to_prev = (target_value - *prev) < (*lower - target_value);
 
   // Return the index of the closer element.
-  return is_closer_to_prev ? std::distance(sorted_values.begin(), prev) : std::distance(sorted_values.begin(), lower);
+  return is_closer_to_prev ? std::distance(accumulated_delay_times_.begin(), prev) : std::distance(accumulated_delay_times_.begin(), lower);
 }
 
+void EKFModule::accumulate_delay_time(const double dt) {
+
+  // Shift the delay times to the right.
+  std::copy_backward(accumulated_delay_times_.begin(), accumulated_delay_times_.end() - 1, accumulated_delay_times_.end());
+
+  // Add the new delay time to all elements.
+  accumulated_delay_times_.front() = 0.0;
+  for (auto & delay_time : accumulated_delay_times_) {
+    delay_time += dt;
+  }
+}
 
 void EKFModule::predictWithDelay(const double dt)
 {
@@ -173,7 +190,7 @@ void EKFModule::predictWithDelay(const double dt)
 }
 
 bool EKFModule::measurementUpdatePose(
-  const PoseWithCovariance & pose, const double dt, const rclcpp::Time & t_curr,
+  const PoseWithCovariance & pose, const rclcpp::Time & t_curr,
   EKFDiagnosticInfo & pose_diag_info)
 {
   if (pose.header.frame_id != params_.pose_frame_id) {
@@ -196,14 +213,17 @@ bool EKFModule::measurementUpdatePose(
 
   delay_time = std::max(delay_time, 0.0);
 
-  const int delay_step = std::roundf(delay_time / dt);
+  const int delay_step = static_cast<int>(find_closest_delay_time_index(delay_time));
+  DEBUG_PRINT(delay_time);
+  DEBUG_PRINT(delay_step);
+  DEBUG_PRINT(accumulated_delay_times_[delay_step]);
 
   pose_diag_info.delay_time = std::max(delay_time, pose_diag_info.delay_time);
-  pose_diag_info.delay_time_threshold = params_.extend_state_step * dt;
+  pose_diag_info.delay_time_threshold = params_.extend_state_step * params_.ekf_dt;
   if (delay_step >= params_.extend_state_step) {
     pose_diag_info.is_passed_delay_gate = false;
     warning_->warnThrottle(
-      poseDelayStepWarningMessage(delay_time, params_.extend_state_step, dt), 2000);
+      poseDelayStepWarningMessage(delay_time, params_.extend_state_step, params_.ekf_dt), 2000);
     return false;
   }
 
@@ -269,7 +289,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensatePoseWithZDela
 }
 
 bool EKFModule::measurementUpdateTwist(
-  const TwistWithCovariance & twist, const double dt, const rclcpp::Time & t_curr,
+  const TwistWithCovariance & twist, const rclcpp::Time & t_curr,
   EKFDiagnosticInfo & twist_diag_info)
 {
   if (twist.header.frame_id != "base_link") {
@@ -288,14 +308,14 @@ bool EKFModule::measurementUpdateTwist(
   }
   delay_time = std::max(delay_time, 0.0);
 
-  const int delay_step = std::roundf(delay_time / dt);
+  const int delay_step = static_cast<int>(find_closest_delay_time_index(delay_time));
 
   twist_diag_info.delay_time = std::max(delay_time, twist_diag_info.delay_time);
-  twist_diag_info.delay_time_threshold = params_.extend_state_step * dt;
+  twist_diag_info.delay_time_threshold = params_.extend_state_step * params_.ekf_dt;
   if (delay_step >= params_.extend_state_step) {
     twist_diag_info.is_passed_delay_gate = false;
     warning_->warnThrottle(
-      twistDelayStepWarningMessage(delay_time, params_.extend_state_step, dt), 2000);
+      twistDelayStepWarningMessage(delay_time, params_.extend_state_step, params_.ekf_dt), 2000);
     return false;
   }
 
