@@ -94,6 +94,7 @@ public:
    * @param [in] acc_time_constant time constant for 1D model of accel dynamics
    * @param [in] steer_delay time delay for steering command [s]
    * @param [in] steer_time_constant time constant for 1D model of steering dynamics
+   * @param [in] path path to csv file for acceleration conversion map
    */
   SimModelDelaySteerMapAccGeared(
     float64_t vx_lim, float64_t steer_lim, float64_t vx_rate_lim, float64_t steer_rate_lim,
