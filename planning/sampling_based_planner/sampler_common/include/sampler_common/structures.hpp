@@ -79,6 +79,7 @@ struct Path
   std::vector<double> curvatures{};
   std::vector<double> yaws{};
   std::vector<double> lengths{};
+  bool constraints_satisfied;
   ConstraintResults constraint_results{};
   double cost{};
   std::string tag{};  // string tag used for debugging

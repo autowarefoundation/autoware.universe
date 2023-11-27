@@ -36,6 +36,18 @@ SamplingPlannerModule::SamplingPlannerModule(
   internal_params_ =
     std::shared_ptr<SamplingPlannerInternalParameters>(new SamplingPlannerInternalParameters{});
   updateModuleParams(parameters);
+
+  hard_constraints_.emplace_back(
+    [](const sampler_common::Path &, const sampler_common::Constraints &) -> bool {
+      const auto footprint = sampler_common::constraints::buildFootprintPoints(path, constraints);
+      if (!footprint.empty()) {
+        if (!boost::geometry::within(footprint, constraints.drivable_polygons)) {
+          path.constraint_results.drivable_area = false;
+        }
+      }
+      path.constraint_results.collision = !has_collision(footprint, constraints.obstacle_polygons);
+      return path.constraint_results.collision && path.constraint_results.drivable_area;
+    });
 }
 
 bool SamplingPlannerModule::isExecutionRequested() const
@@ -227,8 +239,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   }
 
   for (auto & path : frenet_paths) {
-    const auto footprint =
-      sampler_common::constraints::checkHardConstraints(path, internal_params_->constraints);
+    const auto footprint = buildFootprintPoints(path, internal_params_->constraints);
+    checkHardConstraints2(path, internal_params_->constraints, footprint);
     path.constraint_results.curvature = true;
     debug_data_.footprints.push_back(footprint);
     sampler_common::constraints::calculateCost(
@@ -252,7 +264,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     auto min_cost = std::numeric_limits<double>::max();
     size_t best_path_idx = 0;
     for (auto i = 0LU; i < paths.size(); ++i) {
-      if (paths[i].constraint_results.isValid() && paths[i].cost < min_cost) {
+      if (paths[i].constraints_satisfied && paths[i].cost < min_cost) {
         best_path_idx = i;
         min_cost = paths[i].cost;
       }

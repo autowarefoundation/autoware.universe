@@ -25,6 +25,7 @@
 #include "frenet_planner/frenet_planner.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "sampler_common/constraints/footprint.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/constraints/soft_constraint.hpp"
 #include "sampler_common/structures.hpp"
@@ -134,6 +135,8 @@ public:
   }
 
   SamplingPlannerDebugData debug_data_;
+  behavior_path_planner::HardConstraintsFunctionVector hard_constraints_;
+  behavior_path_planner::SoftConstraintsFunctionVector soft_constraints_;
 
 private:
   SamplingPlannerData createPlannerData(

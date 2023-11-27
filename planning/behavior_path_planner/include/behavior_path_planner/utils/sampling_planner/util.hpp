@@ -14,9 +14,64 @@
 
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
+#include "sampler_common/structures.hpp"
+
+#include <any>
+#include <functional>
+#include <vector>
 
 namespace behavior_path_planner
 {
+
+struct HardConstraintsInput
+{
+};
+
+struct HardConstraintsOutput
+{
+  bool constraints_satisfied;
+  MultiPoint2d footprint;
+};
+
+using SoftConstraintsFunctionVector = std::vector<std::function<double>(
+  const sampler_common::Path &, const sampler_common::Constraints &)>;
+
+using HardConstraintsFunctionVector = std::vector<std::function<bool>(
+  const sampler_common::Path &, const sampler_common::Constraints &,
+  std::optional<MultiPoint2d> &)>;
+
+double checkSoftConstraints2(
+  const sampler_common::Path & path, const sampler_common::Constraints & constraints,
+  const SoftConstraintsFunctionVector & soft_constraints, std::vector<double> & constraints_results)
+{
+  constraints_results.clear();
+  double constraints_evaluation = 0.0;
+  for (auto f : soft_constraints) {
+    const auto value = f(path, constraints);
+    constraints_results.push_back(value);
+    constraints_evaluation += value;
+  }
+  return constraints_evaluation;
+}
+
+void checkHardConstraints2(
+  const sampler_common::Path & path, const sampler_common::Constraints & constraints,
+  const MultiPoint2d & footprint, const HardConstraintsFunctionVector & hard_constraints,
+  std::vector<bool> & constraints_results)
+{
+  constraints_results.resize(hard_constraints.size());
+  bool constraints_passed = true;
+  int idx = 0;
+
+  for (const auto & f : hard_constraints) {
+    const bool constraint_check = f(path, constraints, footprint);
+    constraints_passed &= constraint_check;
+    constraints_results[idx] = constraint_check;
+    ++idx;
+  }
+  path.constraints_satisfied = constraints_passed;
+  return;
+}
 
 }  // namespace behavior_path_planner
 
