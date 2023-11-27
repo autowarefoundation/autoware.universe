@@ -435,13 +435,13 @@ By lowering `common.attention_area_length` you can check which lanes are conflic
 
 ### The stop line of intersection is chattering
 
-The parameter `collision_detection.collision_detection_hold_time` suppresses the chattering by keeping UNSAFE decision for this duration until SAFE decision is finally made. The role of thie parameter is to account for unstable detection/tracking of objects. By increasing this value you can suppress the chattering. However it could elongate the stopping duration excessively.
+The parameter `collision_detection.collision_detection_hold_time` suppresses the chattering by keeping UNSAFE decision for this duration until SAFE decision is finally made. The role of this parameter is to account for unstable detection/tracking of objects. By increasing this value you can suppress the chattering. However it could elongate the stopping duration excessively.
 
 If the chattering arises from the acceleration/deceleration of target vehicles, increase `collision_detection.collision_detection.collision_end_margin_time` and/or `collision_detection.collision_detection.collision_end_margin_time`.
 
 ### The stop line is released too fast/slow
 
-If the intersection wall appears too fast, or ego tends to stop too conservatively for upcoming vehicls, lower the parameter `collision_detection.collision_detection.collision_start_margin_time`. If it lasts too long after the target vehicle passed, then lower the parameter `collision_detection.collision_detection.collision_end_margin_time`.
+If the intersection wall appears too fast, or ego tends to stop too conservatively for upcoming vehicles, lower the parameter `collision_detection.collision_detection.collision_start_margin_time`. If it lasts too long after the target vehicle passed, then lower the parameter `collision_detection.collision_detection.collision_end_margin_time`.
 
 ### Ego suddenly stops at intersection with traffic light
 
@@ -459,16 +459,16 @@ If you want to care the occlusion nearby ego more cautiously, set `occlusion.occ
 
 #### occupancy grid map tuning
 
-Refer to the document of [probabilistic_occpancy_grid_map](https://autowarefoundation.github.io/autoware.universe/main/perception/probabilistic_occupancy_grid_map/) for details. If occlusion tends to be detected at apparently free space, increase `occlusion.free_space_max` to ignore them.
+Refer to the document of [probabilistic_occupancy_grid_map](https://autowarefoundation.github.io/autoware.universe/main/perception/probabilistic_occupancy_grid_map/) for details. If occlusion tends to be detected at apparently free space, increase `occlusion.free_space_max` to ignore them.
 
 #### in simple_planning_simulator
 
-intersection_occlusion feature is **not recommended** for use in plannig_simulator because the laserscan_based_occpancy_grid_map generates unnatural UNKNOWN cells in 2D manner:
+intersection_occlusion feature is **not recommended** for use in planning_simulator because the laserscan_based_occupancy_grid_map generates unnatural UNKNOWN cells in 2D manner:
 
 - all the cells behind pedestrians are UNKNOWN
 - no ground point clouds are generated
 
-Also oftenwise the user does not set trafic light information although it is very critical for intersection_occlusion (and in real traffic environment too).
+Also many users do not set traffic light information frequently although it is very critical for intersection_occlusion (and in real traffic environment too).
 
 For these reasons, `occlusion.enable` is false by default.
 
