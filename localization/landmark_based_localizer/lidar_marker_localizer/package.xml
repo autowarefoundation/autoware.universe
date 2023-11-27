@@ -3,9 +3,13 @@
 <package format="3">
   <name>lidar_marker_localizer</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="eijirotakeuchi@todo.todo">eijirotakeuchi</maintainer>
-  <license>TODO: License declaration</license>
+  <description>The lidar_marker_localizer package</description>
+  <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
+  <maintainer email="shintaro.sakoda@tier4.jp">Shintaro Sakoda</maintainer>
+  <license>Apache License 2.0</license>
+  <author email="eijiro.takeuchi@tier4.jp">Eijiro Takeuchi</author>
+  <author email="yamato.ando@tier4.jp">Yamato Ando</author>
+  <author email="shintaro.sakoda@tier4.jp">Shintaro Sakoda</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
