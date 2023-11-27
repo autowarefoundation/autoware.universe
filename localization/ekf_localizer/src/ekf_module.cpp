@@ -132,15 +132,15 @@ double EKFModule::getYawBias() const
   return kalman_filter_.getLatestX()(IDX::YAWB);
 }
 
-
-size_t EKFModule::find_closest_delay_time_index(double target_value) const {
-
+size_t EKFModule::find_closest_delay_time_index(double target_value) const
+{
   // If target_value is too large, return last index + 1
   if (target_value > params_.ekf_dt * params_.extend_state_step) {
     return accumulated_delay_times_.size();
   }
 
-  auto lower = std::lower_bound(accumulated_delay_times_.begin(), accumulated_delay_times_.end(), target_value);
+  auto lower = std::lower_bound(
+    accumulated_delay_times_.begin(), accumulated_delay_times_.end(), target_value);
 
   // If the lower bound is the first element, return its index.
   if (lower == accumulated_delay_times_.begin()) {
@@ -156,13 +156,16 @@ size_t EKFModule::find_closest_delay_time_index(double target_value) const {
   bool is_closer_to_prev = (target_value - *prev) < (*lower - target_value);
 
   // Return the index of the closer element.
-  return is_closer_to_prev ? std::distance(accumulated_delay_times_.begin(), prev) : std::distance(accumulated_delay_times_.begin(), lower);
+  return is_closer_to_prev ? std::distance(accumulated_delay_times_.begin(), prev)
+                           : std::distance(accumulated_delay_times_.begin(), lower);
 }
 
-void EKFModule::accumulate_delay_time(const double dt) {
-
+void EKFModule::accumulate_delay_time(const double dt)
+{
   // Shift the delay times to the right.
-  std::copy_backward(accumulated_delay_times_.begin(), accumulated_delay_times_.end() - 1, accumulated_delay_times_.end());
+  std::copy_backward(
+    accumulated_delay_times_.begin(), accumulated_delay_times_.end() - 1,
+    accumulated_delay_times_.end());
 
   // Add the new delay time to all elements.
   accumulated_delay_times_.front() = 0.0;
@@ -187,8 +190,7 @@ void EKFModule::predictWithDelay(const double dt)
 }
 
 bool EKFModule::measurementUpdatePose(
-  const PoseWithCovariance & pose, const rclcpp::Time & t_curr,
-  EKFDiagnosticInfo & pose_diag_info)
+  const PoseWithCovariance & pose, const rclcpp::Time & t_curr, EKFDiagnosticInfo & pose_diag_info)
 {
   if (pose.header.frame_id != params_.pose_frame_id) {
     warning_->warnThrottle(

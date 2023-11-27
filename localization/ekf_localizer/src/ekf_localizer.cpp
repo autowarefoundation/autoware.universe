@@ -209,8 +209,7 @@ void EKFLocalizer::timerCallback()
     const size_t n = twist_queue_.size();
     for (size_t i = 0; i < n; ++i) {
       const auto twist = twist_queue_.pop_increment_age();
-      bool is_updated =
-        ekf_module_->measurementUpdateTwist(*twist, t_curr, twist_diag_info_);
+      bool is_updated = ekf_module_->measurementUpdateTwist(*twist, t_curr, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
       }
