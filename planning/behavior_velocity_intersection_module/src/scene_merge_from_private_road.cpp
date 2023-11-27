@@ -22,6 +22,7 @@
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -93,8 +94,12 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
       planner_param_.attention_area_length, planner_param_.occlusion_attention_area_length,
       planner_param_.consider_wrong_direction_vehicle);
   }
-  intersection_lanelets_.value().update(false, interpolated_path_info);
-  const auto & first_conflicting_area = intersection_lanelets_.value().first_conflicting_area();
+  auto & intersection_lanelets = intersection_lanelets_.value();
+  const auto local_footprint = planner_data_->vehicle_info_.createFootprint(0.0, 0.0);
+  intersection_lanelets.update(
+    false, interpolated_path_info, local_footprint,
+    planner_data_->vehicle_info_.max_longitudinal_offset_m);
+  const auto & first_conflicting_area = intersection_lanelets.first_conflicting_area();
   if (!first_conflicting_area) {
     return false;
   }
@@ -134,12 +139,11 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
       path->points, current_pose.position, path->points.at(stop_line_idx).point.pose.position);
 
-    constexpr double distance_threshold = 2.0;
     if (
-      signed_arc_dist_to_stop_point < distance_threshold &&
+      signed_arc_dist_to_stop_point < planner_param_.stop_distance_threshold &&
       planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
       state_machine_.setState(StateMachine::State::GO);
-      if (signed_arc_dist_to_stop_point < -distance_threshold) {
+      if (signed_arc_dist_to_stop_point < -planner_param_.stop_distance_threshold) {
         RCLCPP_ERROR(logger_, "Failed to stop near stop line but ego stopped. Change state to GO");
       }
     }

@@ -14,6 +14,13 @@
 
 #include "imu_corrector_core.hpp"
 
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+#include <geometry_msgs/msg/vector3_stamped.hpp>
+
 #include <algorithm>
 
 std::array<double, 9> transformCovariance(const std::array<double, 9> & cov)
@@ -46,9 +53,8 @@ geometry_msgs::msg::Vector3 transformVector3(
 
 namespace imu_corrector
 {
-ImuCorrector::ImuCorrector(const rclcpp::NodeOptions & node_options)
-: Node("imu_corrector", node_options),
-  output_frame_(declare_parameter<std::string>("base_link", "base_link"))
+ImuCorrector::ImuCorrector()
+: Node("imu_corrector"), output_frame_(declare_parameter<std::string>("base_link", "base_link"))
 {
   transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
 
@@ -117,6 +123,3 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
 }
 
 }  // namespace imu_corrector
-
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(imu_corrector::ImuCorrector)

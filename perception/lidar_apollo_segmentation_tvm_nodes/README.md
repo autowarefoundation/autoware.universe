@@ -28,7 +28,7 @@ See the design of the algorithm in the core (lidar_apollo_segmentation_tvm) pack
 
 ### Usage
 
-`lidar_apollo_segmentation_tvm` and `lidar_apollo_segmentation_tvm_nodes` will not build without a neural network.
+`lidar_apollo_segmentation_tvm` and `lidar_apollo_segmentation_tvm_nodes` will not work without a neural network.
 See the lidar_apollo_segmentation_tvm usage for more information.
 
 ### Assumptions / Known limits
@@ -48,6 +48,10 @@ The input are non-ground points as a PointCloud2 message from the sensor_msgs pa
 #### Outputs
 
 The output is a [DetectedObjectsWithFeature](https://github.com/tier4/tier4_autoware_msgs/blob/tier4/universe/tier4_perception_msgs/msg/object_recognition/DetectedObjectsWithFeature.msg).
+
+#### Parameters
+
+{{ json_to_markdown("perception/lidar_apollo_segmentation_tvm_nodes/schema/lidar_apollo_segmentation_tvm_nodes.schema.json") }}
 
 ### Error detection and handling
 

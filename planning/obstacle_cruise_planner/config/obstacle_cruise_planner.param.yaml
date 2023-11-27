@@ -20,7 +20,11 @@
       nearest_dist_deviation_threshold: 3.0 # [m] for finding nearest index
       nearest_yaw_deviation_threshold: 1.57 # [rad] for finding nearest index
       min_behavior_stop_margin: 3.0 # [m]
-      suppress_sudden_obstacle_stop: false
+      stop_on_curve:
+        enable_approaching: true # false
+        additional_safe_distance_margin: 0.0 # [m]
+        min_safe_distance_margin: 3.0 # [m]
+      suppress_sudden_obstacle_stop: true
 
       stop_obstacle_type:
         unknown: true
@@ -54,7 +58,7 @@
           pedestrian: false
 
       slow_down_obstacle_type:
-        unknown: true
+        unknown: false
         car: true
         truck: true
         bus: true
@@ -101,6 +105,13 @@
 
         successive_num_to_entry_slow_down_condition: 5
         successive_num_to_exit_slow_down_condition: 5
+
+      # consider the current ego pose (it is not the nearest pose on the reference trajectory)
+      # Both the lateral error and the yaw error are assumed to decrease to zero by the time duration "time_to_convergence"
+      # The both errors decrease with constant rates against the time.
+      consider_current_pose:
+        enable_to_consider_current_pose: false
+        time_to_convergence: 1.5 #[s]
 
     cruise:
       pid_based_planner:
@@ -168,10 +179,34 @@
 
     slow_down:
       # parameters to calculate slow down velocity by linear interpolation
-      min_lat_margin: 0.2
-      max_lat_margin: 1.0
-      min_ego_velocity: 2.0
-      max_ego_velocity: 8.0
+      labels:
+        - "default"
+        - "pedestrian"
+      default:
+        moving:
+          min_lat_margin: 0.8
+          max_lat_margin: 1.3
+          min_ego_velocity: 0.5
+          max_ego_velocity: 1.5
+        static:
+          min_lat_margin: 0.2
+          max_lat_margin: 1.0
+          min_ego_velocity: 2.0
+          max_ego_velocity: 8.0
+      pedestrian:
+        moving:
+          min_lat_margin: 0.8
+          max_lat_margin: 1.3
+          min_ego_velocity: 0.5
+          max_ego_velocity: 0.8
+        static:
+          min_lat_margin: 0.8
+          max_lat_margin: 1.3
+          min_ego_velocity: 1.0
+          max_ego_velocity: 2.0
+
+      moving_object_speed_threshold: 0.5 # [m/s] how fast the object needs to move to be considered as "moving"
+      moving_object_hysteresis_range: 0.1 # [m/s] hysteresis range used to prevent chattering when obstacle moves close to moving_object_speed_threshold
 
       time_margin_on_target_velocity: 1.5 # [s]
 

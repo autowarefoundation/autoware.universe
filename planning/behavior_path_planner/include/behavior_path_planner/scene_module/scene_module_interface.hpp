@@ -16,16 +16,22 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <behavior_path_planner/steering_factor_interface.hpp>
 #include <behavior_path_planner/turn_signal_decider.hpp>
 #include <magic_enum.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -50,12 +56,8 @@ namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using motion_utils::createDeadLineVirtualWallMarker;
-using motion_utils::createSlowDownVirtualWallMarker;
-using motion_utils::createStopVirtualWallMarker;
 using rtc_interface::RTCInterface;
 using steering_factor_interface::SteeringFactorInterface;
-using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::generateUUID;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
@@ -79,16 +81,16 @@ class SceneModuleInterface
 public:
   SceneModuleInterface(
     const std::string & name, rclcpp::Node & node,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
+    std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map)
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
-    rtc_interface_ptr_map_(rtc_interface_ptr_map),
+    rtc_interface_ptr_map_(std::move(rtc_interface_ptr_map)),
     steering_factor_interface_ptr_(
       std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
   {
-    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
-      uuid_map_.emplace(itr->first, generateUUID());
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      uuid_map_.emplace(module_name, generateUUID());
     }
   }
 
@@ -129,6 +131,12 @@ public:
    *        planCandidate (e.g., resampling of path).
    */
   virtual void updateData() {}
+
+  /**
+   * @brief After executing run(), update the module-specific status and/or data used for internal
+   *        processing that are not defined in ModuleStatus.
+   */
+  virtual void postProcess() {}
 
   /**
    * @brief Execute module. Once this function is executed,
@@ -176,9 +184,9 @@ public:
    */
   void publishRTCStatus()
   {
-    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
-      if (itr->second) {
-        itr->second->publishCooperateStatus(clock_->now());
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      if (ptr) {
+        ptr->publishCooperateStatus(clock_->now());
       }
     }
   }
@@ -193,18 +201,18 @@ public:
 
   void lockRTCCommand()
   {
-    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
-      if (itr->second) {
-        itr->second->lockCommandUpdate();
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      if (ptr) {
+        ptr->lockCommandUpdate();
       }
     }
   }
 
   void unlockRTCCommand()
   {
-    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
-      if (itr->second) {
-        itr->second->unlockCommandUpdate();
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      if (ptr) {
+        ptr->unlockCommandUpdate();
       }
     }
   }
@@ -281,7 +289,7 @@ public:
     return calcOffsetPose(dead_pose_.get(), base_link2front, 0.0, 0.0);
   }
 
-  void resetWallPoses()
+  void resetWallPoses() const
   {
     stop_pose_ = boost::none;
     slow_pose_ = boost::none;
@@ -398,10 +406,10 @@ protected:
 
   virtual void updateRTCStatus(const double start_distance, const double finish_distance)
   {
-    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
-      if (itr->second) {
-        itr->second->updateCooperateStatus(
-          uuid_map_.at(itr->first), isExecutionReady(), start_distance, finish_distance,
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      if (ptr) {
+        ptr->updateCooperateStatus(
+          uuid_map_.at(module_name), isExecutionReady(), start_distance, finish_distance,
           clock_->now());
       }
     }
@@ -469,7 +477,7 @@ protected:
    * @brief Return true if the activation command is received from the RTC interface.
    *        If no RTC interface is registered, return true.
    */
-  bool isActivated()
+  bool isActivated() const
   {
     if (rtc_interface_ptr_map_.empty()) {
       return true;
@@ -483,9 +491,9 @@ protected:
 
   void removeRTCStatus()
   {
-    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
-      if (itr->second) {
-        itr->second->clearCooperateStatus();
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      if (ptr) {
+        ptr->clearCooperateStatus();
       }
     }
   }

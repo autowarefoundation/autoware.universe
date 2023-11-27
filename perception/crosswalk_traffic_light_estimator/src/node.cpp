@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2022-2023 UCI SORA Lab, TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 #include "crosswalk_traffic_light_estimator/node.hpp"
 
+#include <lanelet2_extension/regulatory_elements/Forward.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
 #include <iostream>
@@ -81,8 +82,8 @@ CrosswalkTrafficLightEstimatorNode::CrosswalkTrafficLightEstimatorNode(
 {
   using std::placeholders::_1;
 
-  use_last_detect_color_ = this->declare_parameter("use_last_detect_color", true);
-  last_detect_color_hold_time_ = this->declare_parameter("last_detect_color_hold_time", 2.0);
+  use_last_detect_color_ = declare_parameter<bool>("use_last_detect_color");
+  last_detect_color_hold_time_ = declare_parameter<double>("last_detect_color_hold_time");
 
   sub_map_ = create_subscription<HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
@@ -230,6 +231,7 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
     TrafficSignal output_traffic_signal;
     TrafficSignalElement output_traffic_signal_element;
     output_traffic_signal_element.color = color;
+    output_traffic_signal_element.shape = TrafficSignalElement::CIRCLE;
     output_traffic_signal_element.confidence = 1.0;
     output_traffic_signal.elements.push_back(output_traffic_signal_element);
     output_traffic_signal.traffic_signal_id = tl_reg_elem->id();

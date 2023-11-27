@@ -18,9 +18,11 @@
 #include "types.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -47,8 +49,10 @@ public:
   motion_utils::VirtualWalls createVirtualWalls() override;
 
 private:
-  // Parameter
   PlannerParam params_;
+
+  std::optional<SlowdownToInsert> prev_inserted_point_{};
+  rclcpp::Time prev_inserted_point_time_{};
 
 protected:
   int64_t module_id_{};
@@ -56,15 +60,6 @@ protected:
   // Debug
   mutable DebugData debug_data_;
 };
-
-/// @brief calculate points along the path where we want ego to slowdown/stop
-/// @param ego_data ego data (path, velocity, etc)
-/// @param decisions decisions (before which point to stop, what lane to avoid entering, etc)
-/// @param params parameters
-/// @return precise points to insert in the path
-std::vector<SlowdownToInsert> calculate_slowdown_points(
-  const EgoData & ego_data, const std::vector<Slowdown> & decisions, PlannerParam params);
-
 }  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // SCENE_OUT_OF_LANE_HPP_

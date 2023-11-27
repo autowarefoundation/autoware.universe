@@ -15,11 +15,9 @@
 #ifndef CROSSWALK_TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
 #define CROSSWALK_TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
 
-#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
@@ -31,6 +29,7 @@
 
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/primitives/LineStringOrPolygon.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>

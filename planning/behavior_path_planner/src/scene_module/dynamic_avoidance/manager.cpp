@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 
+#include "tier4_autoware_utils/ros/update_param.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -45,6 +47,7 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
     p.avoid_bicycle = node->declare_parameter<bool>(ns + "bicycle");
     p.avoid_motorcycle = node->declare_parameter<bool>(ns + "motorcycle");
     p.avoid_pedestrian = node->declare_parameter<bool>(ns + "pedestrian");
+    p.max_obstacle_vel = node->declare_parameter<double>(ns + "max_obstacle_vel");
     p.min_obstacle_vel = node->declare_parameter<double>(ns + "min_obstacle_vel");
     p.successive_num_to_entry_dynamic_avoidance_condition =
       node->declare_parameter<int>(ns + "successive_num_to_entry_dynamic_avoidance_condition");
@@ -81,8 +84,6 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
 
   {  // drivable_area_generation
     std::string ns = "dynamic_avoidance.drivable_area_generation.";
-    p.polygon_generation_method =
-      node->declare_parameter<std::string>(ns + "polygon_generation_method");
     p.min_obj_path_based_lon_polygon_margin =
       node->declare_parameter<double>(ns + "object_path_base.min_longitudinal_polygon_margin");
     p.lat_offset_from_obstacle = node->declare_parameter<double>(ns + "lat_offset_from_obstacle");
@@ -136,6 +137,7 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
     updateParam<bool>(parameters, ns + "motorcycle", p->avoid_motorcycle);
     updateParam<bool>(parameters, ns + "pedestrian", p->avoid_pedestrian);
 
+    updateParam<double>(parameters, ns + "max_obstacle_vel", p->max_obstacle_vel);
     updateParam<double>(parameters, ns + "min_obstacle_vel", p->min_obstacle_vel);
 
     updateParam<int>(
@@ -181,9 +183,6 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
 
   {  // drivable_area_generation
     const std::string ns = "dynamic_avoidance.drivable_area_generation.";
-
-    updateParam<std::string>(
-      parameters, ns + "polygon_generation_method", p->polygon_generation_method);
     updateParam<double>(
       parameters, ns + "object_path_base.min_longitudinal_polygon_margin",
       p->min_obj_path_based_lon_polygon_margin);

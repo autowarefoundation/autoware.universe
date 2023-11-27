@@ -15,6 +15,7 @@
 #include "path_sampler/node.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
+#include "motion_utils/marker/marker_helper.hpp"
 #include "path_sampler/path_generation.hpp"
 #include "path_sampler/prepare_inputs.hpp"
 #include "path_sampler/utils/geometry_utils.hpp"
@@ -22,6 +23,8 @@
 #include "rclcpp/time.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/constraints/soft_constraint.hpp"
+
+#include <boost/geometry/algorithms/distance.hpp>
 
 #include <chrono>
 #include <limits>
@@ -295,7 +298,8 @@ PlannerData PathSampler::createPlannerData(const Path & path) const
   return planner_data;
 }
 
-void copyZ(const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj)
+void PathSampler::copyZ(
+  const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj)
 {
   if (from_traj.empty() || to_traj.empty()) return;
   to_traj.front().pose.position.z = from_traj.front().pose.position.z;
@@ -317,7 +321,7 @@ void copyZ(const std::vector<TrajectoryPoint> & from_traj, std::vector<Trajector
   to_traj.back().pose.position.z = from->pose.position.z;
 }
 
-void copyVelocity(
+void PathSampler::copyVelocity(
   const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj,
   const geometry_msgs::msg::Pose & ego_pose)
 {
