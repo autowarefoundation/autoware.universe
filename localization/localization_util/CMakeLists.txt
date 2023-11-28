@@ -8,6 +8,7 @@ ament_auto_add_library(localization_util SHARED
   src/util_func.cpp
   src/pose_array_interpolator.cpp
   src/tf2_listener_module.cpp
+  src/smart_pose_buffer.cpp
 )
 
 ament_auto_package(

@@ -17,6 +17,7 @@
 
 #define FMT_HEADER_ONLY
 
+#include "localization_util/smart_pose_buffer.hpp"
 #include "localization_util/tf2_listener_module.hpp"
 #include "ndt_scan_matcher/map_module.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
@@ -198,10 +199,8 @@ private:
   std::vector<Eigen::Vector2d> initial_pose_offset_model_;
   std::array<double, 36> output_pose_covariance_;
 
-  std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
-    initial_pose_msg_ptr_array_;
   std::mutex ndt_ptr_mtx_;
-  std::mutex initial_pose_array_mtx_;
+  std::unique_ptr<SmartPoseBuffer> initial_pose_buffer_;
 
   // variables for regularization
   const bool regularization_enabled_;  // whether to use longitudinal regularization
