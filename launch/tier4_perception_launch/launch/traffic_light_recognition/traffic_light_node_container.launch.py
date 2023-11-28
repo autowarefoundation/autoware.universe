@@ -41,8 +41,6 @@ def generate_launch_description():
     add_launch_arg("enable_fine_detection", "True")
     add_launch_arg("input/image", "/sensing/camera/traffic_light/image_raw")
     add_launch_arg("output/rois", "/perception/traffic_light_recognition/rois")
-    add_launch_arg("output/rois_car", "/perception/traffic_light_recognition/rois_car")
-    add_launch_arg("output/rois_ped", "/perception/traffic_light_recognition/rois_ped")
     add_launch_arg(
         "output/traffic_signals", "/perception/traffic_light_recognition/traffic_signals"
     )
@@ -130,7 +128,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
-                    ("~/input/rois", LaunchConfiguration("output/rois_car")),
+                    ("~/input/rois", LaunchConfiguration("output/rois")),
                     ("~/output/traffic_signals", "classified/traffic_signals_car"),
                 ],
                 extra_arguments=[
@@ -167,7 +165,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
-                    ("~/input/rois", LaunchConfiguration("output/rois_ped")),
+                    ("~/input/rois", LaunchConfiguration("output/rois")),
                     ("~/output/traffic_signals", "classified/traffic_signals_ped"),
                 ],
                 extra_arguments=[
@@ -242,8 +240,7 @@ def generate_launch_description():
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", "rough/rois"),
                     ("~/expect/rois", "expect/rois"),
-                    ("~/output/rois_car", LaunchConfiguration("output/rois_car")),
-                    ("~/output/rois_ped", LaunchConfiguration("output/rois_ped")),
+                    ("~/output/rois", LaunchConfiguration("output/rois")),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
