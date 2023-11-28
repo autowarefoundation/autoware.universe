@@ -20,14 +20,11 @@ namespace default_ad_api
 VehicleDoorNode::VehicleDoorNode(const rclcpp::NodeOptions & options)
 : Node("vehicle_door", options)
 {
-  const auto on_command = [this](auto, auto res) { res->status.success = true; };
-
-  const auto on_layout = [this](auto, auto res) { res->status.success = true; };
-
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
-  adaptor.init_srv(srv_command_, on_command);
-  adaptor.init_srv(srv_layout_, on_layout);
-  adaptor.init_pub(pub_status_);
+  group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  adaptor.relay_service(cli_command_, srv_command_, group_cli_);
+  adaptor.relay_service(cli_layout_, srv_layout_, group_cli_);
+  adaptor.relay_message(pub_status_, sub_status_);
 }
 
 }  // namespace default_ad_api
