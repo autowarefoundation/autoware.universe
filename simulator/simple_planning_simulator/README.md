@@ -89,7 +89,7 @@ The table below shows which models correspond to what parameters. The model name
 
 example of acceleration_map.csv
 
-```
+```csv
 default,0.00,20.0
 -4,-4,-4
 0,0,0
