@@ -15,6 +15,7 @@
 #include "scene_dynamic_obstacle_stop.hpp"
 
 #include "debug.hpp"
+#include "footprint.hpp"
 #include "types.hpp"
 
 #include <behavior_velocity_planner_common/utilization/debug.hpp>
@@ -82,16 +83,20 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   const auto dynamic_obstacles =
     filter_predicted_objects(*planner_data_->predicted_objects, ego_data.path, params_);
 
+  const auto obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_);
+
   const auto total_time_us = stopwatch.toc();
   RCLCPP_DEBUG(logger_, "Total time = %2.2fus\n", total_time_us);
   debug_data_.dynamic_obstacles = dynamic_obstacles;
+  debug_data_.obstacle_footprints = obstacle_forward_footprints;
   return true;
 }
 
 MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
 {
-  // constexpr auto z = 0.0;
+  constexpr auto z = 0.0;
   MarkerArray debug_marker_array;
+  // dynamic obstacles
   const auto obstacle_markers = debug::make_dynamic_obstacle_markers(debug_data_.dynamic_obstacles);
   debug_marker_array.markers.insert(
     debug_marker_array.markers.end(), obstacle_markers.begin(), obstacle_markers.end());
@@ -100,6 +105,19 @@ MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
   debug_marker_array.markers.insert(
     debug_marker_array.markers.end(), delete_obstacle_markers.begin(),
     delete_obstacle_markers.end());
+  // dynamic obstacles footprints
+  const auto obstacle_footprint_markers =
+    debug::make_polygon_markers(debug_data_.obstacle_footprints, "dynamic_obstacles_footprints", z);
+  debug_marker_array.markers.insert(
+    debug_marker_array.markers.end(), obstacle_footprint_markers.begin(),
+    obstacle_footprint_markers.end());
+  const auto delete_footprint_markers = debug::make_delete_markers(
+    obstacle_footprint_markers.size(), debug_data_.prev_dynamic_obstacles_nb,
+    "dynamic_obstacles_footprints");
+  debug_marker_array.markers.insert(
+    debug_marker_array.markers.end(), delete_footprint_markers.begin(),
+    delete_footprint_markers.end());
+
   debug_data_.prev_dynamic_obstacles_nb = obstacle_markers.size();
   return debug_marker_array;
 }

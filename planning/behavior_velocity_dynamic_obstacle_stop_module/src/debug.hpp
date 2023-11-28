@@ -17,6 +17,8 @@
 
 #include "types.hpp"
 
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
@@ -29,6 +31,8 @@ std::vector<visualization_msgs::msg::Marker> make_delete_markers(
   const size_t from, const size_t to, const std::string & ns);
 std::vector<visualization_msgs::msg::Marker> make_dynamic_obstacle_markers(
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & obstacles);
+std::vector<visualization_msgs::msg::Marker> make_polygon_markers(
+  const tier4_autoware_utils::MultiPolygon2d & footprints, const std::string & ns, const double z);
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop::debug
 
 #endif  // DEBUG_HPP_

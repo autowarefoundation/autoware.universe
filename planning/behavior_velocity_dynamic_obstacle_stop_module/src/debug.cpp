@@ -23,23 +23,6 @@
 
 namespace behavior_velocity_planner::dynamic_obstacle_stop::debug
 {
-namespace
-{
-// visualization_msgs::msg::Marker get_base_marker()
-// {
-//   visualization_msgs::msg::Marker base_marker;
-//   base_marker.header.frame_id = "map";
-//   base_marker.header.stamp = rclcpp::Time(0);
-//   base_marker.id = 0;
-//   base_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-//   base_marker.action = visualization_msgs::msg::Marker::ADD;
-//   base_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0.0, 0.0, 0);
-//   base_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
-//   base_marker.scale = tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1);
-//   base_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.5);
-//   return base_marker;
-// }
-}  // namespace
 
 std::vector<visualization_msgs::msg::Marker> make_delete_markers(
   const size_t from, const size_t to, const std::string & ns)
@@ -69,6 +52,33 @@ std::vector<visualization_msgs::msg::Marker> make_dynamic_obstacle_markers(
   marker.text = "dynamic obstacle";
   for (const auto & obstacle : obstacles) {
     marker.pose = obstacle.kinematics.initial_pose_with_covariance.pose;
+    markers.push_back(marker);
+    ++marker.id;
+  }
+  return markers;
+}
+
+std::vector<visualization_msgs::msg::Marker> make_polygon_markers(
+  const tier4_autoware_utils::MultiPolygon2d & footprints, const std::string & ns, const double z)
+{
+  std::vector<visualization_msgs::msg::Marker> markers;
+  visualization_msgs::msg::Marker marker;
+  marker.header.frame_id = "map";
+  marker.header.stamp = rclcpp::Time(0);
+  marker.ns = ns;
+  marker.id = 0;
+  marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+  marker.scale = tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1);
+  marker.color = tier4_autoware_utils::createMarkerColor(0.1, 1.0, 0.1, 0.8);
+  for (const auto & footprint : footprints) {
+    marker.points.clear();
+    for (const auto & p : footprint.outer()) {
+      marker.points.emplace_back();
+      marker.points.back().x = p.x();
+      marker.points.back().y = p.y();
+      marker.points.back().z = z;
+    }
     markers.push_back(marker);
     ++marker.id;
   }
