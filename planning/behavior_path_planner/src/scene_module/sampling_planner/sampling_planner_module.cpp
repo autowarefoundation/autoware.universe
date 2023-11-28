@@ -64,7 +64,6 @@ SamplingPlannerModule::SamplingPlannerModule(
   // TODO Daniel: Normalize costs to max 1, min 0
   // TODO Daniel: Maybe add a soft cost for average distance to centerline?
   // TODO Daniel: Think of methods to prevent chattering
-  // TODO Daniel: Investigate crash when goal is reached
   //  Distance to goal
   soft_constraints_.emplace_back(
     [](
