@@ -22,35 +22,34 @@
 
 namespace behavior_path_planner
 {
+using geometry_msgs::msg::Pose;
 
-struct HardConstraintsInput
+struct SoftConstraintsInputs
 {
+  Pose goal_pose;
 };
 
-struct HardConstraintsOutput
-{
-  bool constraints_satisfied;
-  MultiPoint2d footprint;
-};
-
-using SoftConstraintsFunctionVector = std::vector<
-  const std::function<double(const sampler_common::Path &, const sampler_common::Constraints &)>>;
+using SoftConstraintsFunctionVector = std::vector<std::function<double(
+  sampler_common::Path &, const sampler_common::Constraints &, const SoftConstraintsInputs &)>>;
 
 using HardConstraintsFunctionVector = std::vector<std::function<bool(
   sampler_common::Path &, const sampler_common::Constraints &, const MultiPoint2d &)>>;
 
-inline double evaluateSoftConstraints(
-  const sampler_common::Path & path, const sampler_common::Constraints & constraints,
-  const SoftConstraintsFunctionVector & soft_constraints, std::vector<double> & constraints_results)
+inline void evaluateSoftConstraints(
+  sampler_common::Path & path, const sampler_common::Constraints & constraints,
+  const SoftConstraintsFunctionVector & soft_constraints, const SoftConstraintsInputs & input_data,
+  std::vector<double> & constraints_results)
 {
   constraints_results.clear();
+  constraints_results.resize(soft_constraints.size());
   double constraints_evaluation = 0.0;
   for (const auto & f : soft_constraints) {
-    const auto value = f(path, constraints);
+    const auto value = f(path, constraints, input_data);
     constraints_results.push_back(value);
     constraints_evaluation += value;
   }
-  return constraints_evaluation;
+  path.cost = constraints_evaluation;
+  return;
 }
 
 inline void evaluateHardConstraints(

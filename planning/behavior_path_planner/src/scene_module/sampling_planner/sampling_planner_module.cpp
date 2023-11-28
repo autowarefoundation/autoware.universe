@@ -52,6 +52,25 @@ SamplingPlannerModule::SamplingPlannerModule(
         !sampler_common::constraints::has_collision(footprint, constraints.obstacle_polygons);
       return path.constraint_results.collision && path.constraint_results.drivable_area;
     });
+
+  // soft_constraints_.emplace_back(
+  //   [](
+  //     sampler_common::Path & path, const sampler_common::Constraints & constraints,
+  //     [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
+  //     return (path.lengths.empty()) ? 0.0 : -constraints.soft.length_weight *
+  //     path.lengths.back();
+  //   });
+
+  soft_constraints_.emplace_back(
+    [](
+      sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
+      [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
+      const auto & goal_pose = input_data.goal_pose;
+      const auto & last_point = path.points.back();
+      const double distance =
+        std::hypot(goal_pose.position.x - last_point.x(), goal_pose.position.y - last_point.y());
+      return distance;
+    });
 }
 
 bool SamplingPlannerModule::isExecutionRequested() const
@@ -242,16 +261,23 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     frenet_paths.push_back(prev_path);
   }
 
+  SoftConstraintsInputs soft_constraints_input;
+  std::vector<double> soft_constraints_results;
+  soft_constraints_input.goal_pose = planner_data_->route_handler->getGoalPose();
+
   for (auto & path : frenet_paths) {
-    std::vector<bool> constraints_results;
+    std::vector<bool> hard_constraints_results;
     const auto footprint =
       sampler_common::constraints::buildFootprintPoints(path, internal_params_->constraints);
     behavior_path_planner::evaluateHardConstraints(
-      path, internal_params_->constraints, footprint, hard_constraints_, constraints_results);
+      path, internal_params_->constraints, footprint, hard_constraints_, hard_constraints_results);
     path.constraint_results.curvature = true;
     debug_data_.footprints.push_back(footprint);
-    sampler_common::constraints::calculateCost(
-      path, internal_params_->constraints, reference_spline);
+    evaluateSoftConstraints(
+      path, internal_params_->constraints, soft_constraints_, soft_constraints_input,
+      soft_constraints_results);
+    // sampler_common::constraints::calculateCost(
+    //   path, internal_params_->constraints, reference_spline);
   }
   std::vector<sampler_common::Path> candidate_paths;
   const auto move_to_paths = [&candidate_paths](auto & paths_to_move) {
@@ -301,9 +327,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   const auto best_path = frenet_paths[*selected_path_idx];
   prev_sampling_path_ = best_path;
   auto out_path = convertFrenetPathToPathWithLaneID(best_path, road_lanes, velocity);
-  const auto goal_pose = planner_data_->route_handler->getGoalPose();
   for (auto & p : out_path.points) {
-    p.point.pose.position.z = goal_pose.position.z;
+    p.point.pose.position.z = soft_constraints_input.goal_pose.position.z;
   }
 
   out.path = std::make_shared<PathWithLaneId>(out_path);
