@@ -1,5 +1,5 @@
 nav:
-  - 'https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/planning/'
+  - planning
   - 'Behavior Path Planner':
     - 'About Behavior Path': planning/behavior_path_planner
     - 'Concept':
