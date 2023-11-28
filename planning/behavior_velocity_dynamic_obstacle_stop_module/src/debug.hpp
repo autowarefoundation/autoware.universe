@@ -17,8 +17,18 @@
 
 #include "types.hpp"
 
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+
+#include <string>
+#include <vector>
+
 namespace behavior_velocity_planner::dynamic_obstacle_stop::debug
 {
+std::vector<visualization_msgs::msg::Marker> make_delete_markers(
+  const size_t from, const size_t to, const std::string & ns);
+std::vector<visualization_msgs::msg::Marker> make_dynamic_obstacle_markers(
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & obstacles);
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop::debug
 
 #endif  // DEBUG_HPP_

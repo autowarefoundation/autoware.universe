@@ -18,6 +18,9 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
+#include <string>
+#include <vector>
+
 namespace behavior_velocity_planner::dynamic_obstacle_stop::debug
 {
 namespace
@@ -37,5 +40,39 @@ namespace
 //   return base_marker;
 // }
 }  // namespace
+
+std::vector<visualization_msgs::msg::Marker> make_delete_markers(
+  const size_t from, const size_t to, const std::string & ns)
+{
+  std::vector<visualization_msgs::msg::Marker> markers;
+  visualization_msgs::msg::Marker marker;
+  marker.action = visualization_msgs::msg::Marker::DELETE;
+  marker.ns = ns;
+  for (marker.id = static_cast<int>(from); marker.id < static_cast<int>(to); ++marker.id)
+    markers.push_back(marker);
+  return markers;
+}
+
+std::vector<visualization_msgs::msg::Marker> make_dynamic_obstacle_markers(
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & obstacles)
+{
+  std::vector<visualization_msgs::msg::Marker> markers;
+  visualization_msgs::msg::Marker marker;
+  marker.header.frame_id = "map";
+  marker.header.stamp = rclcpp::Time(0);
+  marker.ns = "dynamic_obstacles";
+  marker.id = 0;
+  marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+  marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 1.0, 1.0);
+  marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 1.0);
+  marker.text = "dynamic obstacle";
+  for (const auto & obstacle : obstacles) {
+    marker.pose = obstacle.kinematics.initial_pose_with_covariance.pose;
+    markers.push_back(marker);
+    ++marker.id;
+  }
+  return markers;
+}
 
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop::debug

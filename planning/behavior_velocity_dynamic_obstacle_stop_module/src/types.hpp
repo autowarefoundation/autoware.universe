@@ -15,7 +15,7 @@
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
@@ -27,6 +27,10 @@ namespace behavior_velocity_planner::dynamic_obstacle_stop
 struct PlannerParam
 {
   bool print_runtimes;
+  double extra_object_width;
+  double minimum_object_velocity;
+  double stop_distance_buffer;
+  double time_horizon;
   double longitudinal_offset;
   double lateral_offset;
 };
@@ -43,7 +47,9 @@ struct EgoData
 /// @brief debug data
 struct DebugData
 {
-  void reset_data() {}
+  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> dynamic_obstacles{};
+  size_t prev_dynamic_obstacles_nb{};
+  void reset_data() { dynamic_obstacles.clear(); }
 };
 
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop

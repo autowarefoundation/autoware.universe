@@ -45,6 +45,23 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
   velocity_factor_.init(VelocityFactor::UNKNOWN);
 }
 
+std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicted_objects(
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & params)
+{
+  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filtered_objects;
+  for (const auto & object : objects.objects) {
+    const auto vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    const auto width = object.shape.dimensions.y + params.extra_object_width;
+    const auto lateral_offset = std::abs(motion_utils::calcLateralOffset(
+      path.points, object.kinematics.initial_pose_with_covariance.pose.position));
+    if (
+      vel >= params.minimum_object_velocity && lateral_offset <= width / 2 + params.lateral_offset)
+      filtered_objects.push_back(object);
+  }
+  return filtered_objects;
+}
+
 bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_.reset_data();
@@ -62,8 +79,12 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
   ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;
 
+  const auto dynamic_obstacles =
+    filter_predicted_objects(*planner_data_->predicted_objects, ego_data.path, params_);
+
   const auto total_time_us = stopwatch.toc();
   RCLCPP_DEBUG(logger_, "Total time = %2.2fus\n", total_time_us);
+  debug_data_.dynamic_obstacles = dynamic_obstacles;
   return true;
 }
 
@@ -71,6 +92,15 @@ MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
 {
   // constexpr auto z = 0.0;
   MarkerArray debug_marker_array;
+  const auto obstacle_markers = debug::make_dynamic_obstacle_markers(debug_data_.dynamic_obstacles);
+  debug_marker_array.markers.insert(
+    debug_marker_array.markers.end(), obstacle_markers.begin(), obstacle_markers.end());
+  const auto delete_obstacle_markers = debug::make_delete_markers(
+    obstacle_markers.size(), debug_data_.prev_dynamic_obstacles_nb, "dynamic_obstacles");
+  debug_marker_array.markers.insert(
+    debug_marker_array.markers.end(), delete_obstacle_markers.begin(),
+    delete_obstacle_markers.end());
+  debug_data_.prev_dynamic_obstacles_nb = obstacle_markers.size();
   return debug_marker_array;
 }
 

@@ -31,6 +31,10 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   auto & pp = planner_param_;
 
   pp.print_runtimes = getOrDeclareParameter<bool>(node, ns + ".print_runtimes");
+  pp.extra_object_width = getOrDeclareParameter<double>(node, ns + ".extra_object_width");
+  pp.minimum_object_velocity = getOrDeclareParameter<double>(node, ns + ".minimum_object_velocity");
+  pp.stop_distance_buffer = getOrDeclareParameter<double>(node, ns + ".stop_distance_buffer");
+  pp.time_horizon = getOrDeclareParameter<double>(node, ns + ".time_horizon");
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   pp.lateral_offset =
