@@ -111,15 +111,12 @@ protected:
   void setSafe(const bool safe)
   {
     safe_ = safe;
-    syncActivation();
-  }
-  void setDistance(const double distance) { distance_ = distance; }
-  void syncActivation()
-  {
     if (!rtc_enabled_) {
-      setActivation(isSafe());
+      syncActivation()
     }
   }
+  void setDistance(const double distance) { distance_ = distance; }
+  void syncActivation() { setActivation(isSafe()); }
 
   size_t findEgoSegmentIndex(
     const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points) const;
