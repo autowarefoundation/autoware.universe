@@ -16,12 +16,10 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__GOAL_PLANNER__GOAL_SEARCHER_BASE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
-#include <limits>
 #include <memory>
 #include <vector>
 
@@ -60,6 +58,8 @@ public:
   MultiPolygon2d getAreaPolygons() { return area_polygons_; }
   virtual GoalCandidates search() = 0;
   virtual void update([[maybe_unused]] GoalCandidates & goal_candidates) const { return; }
+  virtual GoalCandidate getClosetGoalCandidateAlongLanes(
+    const GoalCandidates & goal_candidates) const = 0;
 
 protected:
   GoalPlannerParameters parameters_{};

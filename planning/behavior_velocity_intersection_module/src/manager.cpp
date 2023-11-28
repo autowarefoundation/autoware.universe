@@ -62,7 +62,17 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".common.path_interpolation_ds");
   ip.common.consider_wrong_direction_vehicle =
     getOrDeclareParameter<bool>(node, ns + ".common.consider_wrong_direction_vehicle");
+  ip.common.max_accel = getOrDeclareParameter<double>(node, ns + ".common.max_accel");
+  ip.common.max_jerk = getOrDeclareParameter<double>(node, ns + ".common.max_jerk");
+  ip.common.delay_response_time =
+    getOrDeclareParameter<double>(node, ns + ".common.delay_response_time");
 
+  ip.stuck_vehicle.turn_direction.left =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.left");
+  ip.stuck_vehicle.turn_direction.right =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.right");
+  ip.stuck_vehicle.turn_direction.straight =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.straight");
   ip.stuck_vehicle.use_stuck_stopline =
     getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.use_stuck_stopline");
   ip.stuck_vehicle.stuck_vehicle_detect_dist =
@@ -77,6 +87,16 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   */
   ip.stuck_vehicle.timeout_private_area =
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.timeout_private_area");
+  ip.stuck_vehicle.enable_private_area_stuck_disregard =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.enable_private_area_stuck_disregard");
+  ip.stuck_vehicle.yield_stuck_turn_direction.left =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.left");
+  ip.stuck_vehicle.yield_stuck_turn_direction.right =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.right");
+  ip.stuck_vehicle.yield_stuck_turn_direction.straight =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.straight");
+  ip.stuck_vehicle.yield_stuck_distance_thr =
+    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.yield_stuck.distance_thr");
 
   ip.collision_detection.min_predicted_path_confidence =
     getOrDeclareParameter<double>(node, ns + ".collision_detection.min_predicted_path_confidence");
@@ -107,6 +127,21 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns + ".collision_detection.use_upstream_velocity");
   ip.collision_detection.minimum_upstream_velocity =
     getOrDeclareParameter<double>(node, ns + ".collision_detection.minimum_upstream_velocity");
+  ip.collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start =
+    getOrDeclareParameter<double>(
+      node,
+      ns + ".collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start");
+  ip.collision_detection.yield_on_green_traffic_light.duration = getOrDeclareParameter<double>(
+    node, ns + ".collision_detection.yield_on_green_traffic_light.duration");
+  ip.collision_detection.yield_on_green_traffic_light.object_dist_to_stopline =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.yield_on_green_traffic_light.object_dist_to_stopline");
+  ip.collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration");
+  ip.collision_detection.ignore_on_red_traffic_light.object_margin_to_path =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.ignore_on_red_traffic_light.object_margin_to_path");
 
   ip.occlusion.enable = getOrDeclareParameter<bool>(node, ns + ".occlusion.enable");
   ip.occlusion.occlusion_attention_area_length =
@@ -144,6 +179,9 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_crop_curvature_threshold");
   ip.occlusion.attention_lane_curvature_calculation_ds =
     getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_curvature_calculation_ds");
+  ip.occlusion.static_occlusion_with_traffic_light_timeout = getOrDeclareParameter<double>(
+    node, ns + ".occlusion.static_occlusion_with_traffic_light_timeout");
+  ip.debug.ttc = getOrDeclareParameter<std::vector<int64_t>>(node, ns + ".debug.ttc");
 }
 
 void IntersectionModuleManager::launchNewModules(
@@ -155,6 +193,7 @@ void IntersectionModuleManager::launchNewModules(
   const auto lanelets =
     planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
   // run occlusion detection only in the first intersection
+  // TODO(Mamoru Sobue): remove `enable_occlusion_detection` variable
   const bool enable_occlusion_detection = intersection_param_.occlusion.enable;
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
