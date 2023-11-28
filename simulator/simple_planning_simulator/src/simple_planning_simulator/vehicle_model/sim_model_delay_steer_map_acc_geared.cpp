@@ -14,8 +14,6 @@
 
 #include "simple_planning_simulator/vehicle_model/sim_model_delay_steer_map_acc_geared.hpp"
 
-#include "raw_vehicle_cmd_converter/csv_loader.hpp"
-
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
 
 #include <algorithm>

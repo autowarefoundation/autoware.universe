@@ -23,7 +23,6 @@
   <depend>lanelet2_extension</depend>
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
-  <depend>raw_vehicle_cmd_converter</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>

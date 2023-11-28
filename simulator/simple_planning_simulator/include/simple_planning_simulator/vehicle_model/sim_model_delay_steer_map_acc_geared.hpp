@@ -18,7 +18,7 @@
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
 #include "interpolation/linear_interpolation.hpp"
-#include "raw_vehicle_cmd_converter/csv_loader.hpp"
+#include "simple_planning_simulator/utils/csv_loader.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 #include <common/types.hpp>
@@ -28,8 +28,6 @@
 #include <queue>
 #include <string>
 #include <vector>
-
-using CSVLoader = raw_vehicle_cmd_converter::CSVLoader;
 
 class AccelerationMap
 {
