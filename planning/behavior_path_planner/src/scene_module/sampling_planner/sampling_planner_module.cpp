@@ -61,15 +61,35 @@ SamplingPlannerModule::SamplingPlannerModule(
   //     path.lengths.back();
   //   });
 
+  // TODO Daniel: Normalize costs to max 1, min 0
+  // TODO Daniel: Maybe add a soft cost for average distance to centerline?
+  // TODO Daniel: Think of methods to prevent chattering
+  // TODO Daniel: Investigate crash when goal is reached
+  //  Distance to goal
   soft_constraints_.emplace_back(
     [](
       sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
+      if (path.points.empty()) return 0.0;
       const auto & goal_pose = input_data.goal_pose;
       const auto & last_point = path.points.back();
       const double distance =
         std::hypot(goal_pose.position.x - last_point.x(), goal_pose.position.y - last_point.y());
-      return distance;
+      return 100.0 * distance;
+    });
+
+  // Curvature cost
+  soft_constraints_.emplace_back(
+    [](
+      sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
+      [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
+      if (path.curvatures.empty()) return std::numeric_limits<double>::max();
+      double curvature_sum = 0.0;
+      for (const auto curvature : path.curvatures) {
+        curvature_sum += std::abs(curvature);
+      }
+      return constraints.soft.curvature_weight * curvature_sum /
+             static_cast<double>(path.curvatures.size());
     });
 }
 
@@ -227,8 +247,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   // const auto drivable_lanes = getPreviousModuleOutput().drivable_area_info.drivable_lanes;
 
-  const auto prev_module_path = getPreviousModuleOutput().path;
-  const auto current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+  const auto & prev_module_path = getPreviousModuleOutput().path;
+  const auto & current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
 
   std::vector<DrivableLanes> drivable_lanes{};
   // expand drivable lanes
