@@ -36,9 +36,9 @@ nav:
         - 'Walkway': planning/behavior_velocity_walkway_module
   - 'Parking':
     - 'Freespace Planner':
-      - 'About Freespace Planner': planner/freespace_planner
-      - 'Algorithm': planner/freespace_planning_algorithms
-      - 'RRT*': planner/freespace_planning_algorithms/rrtstar
+      - 'About Freespace Planner': planning/freespace_planner
+      - 'Algorithm': planning/freespace_planning_algorithms
+      - 'RRT*': planning/freespace_planning_algorithms/rrtstar
   - 'Mission Planner': planning/mission_planner
   - 'Motion Planning':
     - 'Obstacle Avoidance Planner':
