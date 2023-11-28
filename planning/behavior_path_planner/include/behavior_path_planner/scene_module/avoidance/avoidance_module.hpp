@@ -225,7 +225,7 @@ private:
   void insertStopPoint(const bool use_constraints_for_decel, ShiftedPath & shifted_path) const;
 
   /**
-   * @brief insert stop point to return original lane.
+   * @brief insert stop point in return path to original lane.
    * @param flag. if it is true, the ego decelerates within accel/jerk constraints.
    * @param target path.
    */
