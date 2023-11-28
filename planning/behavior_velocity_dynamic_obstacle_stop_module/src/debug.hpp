@@ -33,6 +33,8 @@ std::vector<visualization_msgs::msg::Marker> make_dynamic_obstacle_markers(
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & obstacles);
 std::vector<visualization_msgs::msg::Marker> make_polygon_markers(
   const tier4_autoware_utils::MultiPolygon2d & footprints, const std::string & ns, const double z);
+std::vector<visualization_msgs::msg::Marker> make_collision_markers(
+  const tier4_autoware_utils::MultiPoint2d & collisions, const double z);
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop::debug
 
 #endif  // DEBUG_HPP_

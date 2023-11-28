@@ -25,8 +25,9 @@
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -63,6 +64,45 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
   return filtered_objects;
 }
 
+double calculate_min_stop_distance(const EgoData & ego_data)
+{
+  // TODO(Maxime): simplify;
+  const auto time_to_stop_at_max_decel = ego_data.velocity / ego_data.max_decel;
+  return (ego_data.velocity / 2) * time_to_stop_at_max_decel;
+}
+
+std::optional<geometry_msgs::msg::Point> find_earliest_collision(
+  const EgoData & ego_data, const double min_stop_distance,
+  const tier4_autoware_utils::MultiPolygon2d & obstacle_forward_footprints, DebugData & debug_data)
+{
+  std::optional<geometry_msgs::msg::Point> earliest_collision;
+  tier4_autoware_utils::LineString2d path_ls;
+  auto arc_length = 0.0;
+  for (auto i = ego_data.first_path_idx; i < ego_data.path.points.size(); ++i) {
+    const auto & p = ego_data.path.points[i].point.pose.position;
+    if (arc_length >= min_stop_distance) path_ls.emplace_back(p.x, p.y);
+    if (i + 1 < ego_data.path.points.size()) {
+      const auto & next_p = ego_data.path.points[i + 1].point.pose.position;
+      arc_length += tier4_autoware_utils::calcDistance2d(p, next_p);
+    }
+  }
+  // TODO(Maxime): if need better perf, check collisions for each segment of the path_ls
+  tier4_autoware_utils::MultiPoint2d collision_points;
+  boost::geometry::intersection(path_ls, obstacle_forward_footprints, collision_points);
+  debug_data.collisions = collision_points;
+  auto min_l = std::numeric_limits<double>::max();
+  for (const auto & p : collision_points) {
+    const auto collision = geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y());
+    const auto l = motion_utils::calcSignedArcLength(
+      ego_data.path.points, ego_data.path.points.front().point.pose.position, collision);
+    if (l < min_l) {
+      min_l = l;
+      earliest_collision = collision;
+    }
+  }
+  return earliest_collision;
+}
+
 bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_.reset_data();
@@ -74,16 +114,21 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   EgoData ego_data;
   ego_data.pose = planner_data_->current_odometry->pose;
   ego_data.path.points = path->points;
+  motion_utils::removeOverlapPoints(ego_data.path.points);
   ego_data.first_path_idx =
     motion_utils::findNearestSegmentIndex(ego_data.path.points, ego_data.pose.position);
-  motion_utils::removeOverlapPoints(ego_data.path.points);
   ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
   ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;
 
   const auto dynamic_obstacles =
     filter_predicted_objects(*planner_data_->predicted_objects, ego_data.path, params_);
-
   const auto obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_);
+  const auto min_stop_distance = calculate_min_stop_distance(ego_data);
+  const auto collision =
+    find_earliest_collision(ego_data, min_stop_distance, obstacle_forward_footprints, debug_data_);
+  if (collision) {
+    // insert_stop_point(collision)
+  }
 
   const auto total_time_us = stopwatch.toc();
   RCLCPP_DEBUG(logger_, "Total time = %2.2fus\n", total_time_us);
@@ -117,6 +162,10 @@ MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
   debug_marker_array.markers.insert(
     debug_marker_array.markers.end(), delete_footprint_markers.begin(),
     delete_footprint_markers.end());
+  // collisions
+  const auto collision_markers = debug::make_collision_markers(debug_data_.collisions, z);
+  debug_marker_array.markers.insert(
+    debug_marker_array.markers.end(), collision_markers.begin(), collision_markers.end());
 
   debug_data_.prev_dynamic_obstacles_nb = obstacle_markers.size();
   return debug_marker_array;

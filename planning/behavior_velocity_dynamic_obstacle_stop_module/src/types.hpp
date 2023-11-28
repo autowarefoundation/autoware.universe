@@ -52,10 +52,12 @@ struct DebugData
   std::vector<autoware_auto_perception_msgs::msg::PredictedObject> dynamic_obstacles{};
   tier4_autoware_utils::MultiPolygon2d obstacle_footprints{};
   size_t prev_dynamic_obstacles_nb{};
+  tier4_autoware_utils::MultiPoint2d collisions{};
   void reset_data()
   {
     dynamic_obstacles.clear();
     obstacle_footprints.clear();
+    collisions.clear();
   }
 };
 
