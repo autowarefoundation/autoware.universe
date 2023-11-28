@@ -26,10 +26,12 @@
 #include <deque>
 #include <iostream>
 #include <queue>
+#include <string>
+#include <vector>
 
-using autoware::common::types::float64_t;
+using float64_t = autoware::common::types::float64_t;
 
-using namespace raw_vehicle_cmd_converter;
+using CSVLoader = raw_vehicle_cmd_converter::CSVLoader;
 
 class AccelerationMap
 {

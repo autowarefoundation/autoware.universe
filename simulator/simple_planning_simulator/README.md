@@ -85,7 +85,7 @@ The table below shows which models correspond to what parameters. The model name
 | debug_steer_scaling_factor | double | scaling factor for steer command                                                                            | x      | x      | x        | x      | o      | o        | x            | 1.0           | [-]     |
 | acceleration_map_path      | string | path to csv file for acceleration map which converts velocity and ideal acceleration to actual acceleration | x      | x      | x        | x      | x      | x        | o            | -             | [-]     |
 
-`acceleration_map` is usend only for `DELAY_STEER_MAP_ACC_GEARED` and it shows the acceleration command on the vertical axis and the current velocity on the horizontal axis, with each cell representing the converted acceleration command that is actually used in the simulator's motion calculation. Values in between are linearly interpolated.
+`acceleration_map` is used only for `DELAY_STEER_MAP_ACC_GEARED` and it shows the acceleration command on the vertical axis and the current velocity on the horizontal axis, with each cell representing the converted acceleration command that is actually used in the simulator's motion calculation. Values in between are linearly interpolated.
 
 example of `acceleration_map.csv`
 
@@ -112,7 +112,7 @@ default,0.00,1.39,2.78,4.17,5.56,6.94,8.33,9.72,11.11,12.50,13.89,15.28,16.67
 2,1.8,1.7975859,1.638490281,1.426616009,1.251194668,1.113771502,0.9618652599,0.8098033929,0.6953401352,0.5896689884,0.51189749,0.4180952453,0.42
 ```
 
-![accerlation_map](https://private-user-images.githubusercontent.com/39142679/286099389-97a77043-86af-4384-8612-65b2b81fa360.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE3MDExNDA1NDMsIm5iZiI6MTcwMTE0MDI0MywicGF0aCI6Ii8zOTE0MjY3OS8yODYwOTkzODktOTdhNzcwNDMtODZhZi00Mzg0LTg2MTItNjViMmI4MWZhMzYwLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFJV05KWUFYNENTVkVINTNBJTJGMjAyMzExMjglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjMxMTI4VDAyNTcyM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWRhMTM1YTMyYzBhNDEzNDA4MTU4MGEyMTdlMDhlNDUzYmMxYTUwOGRjOWJkYmU5NWQyNjg5OGMzNDIyOGNiOTEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.D7rTJhrKAz0J8FmlYOQ1QNbYjIEpMiPlBq9JHCbu1PY)
+![acceleration_map](https://private-user-images.githubusercontent.com/39142679/286099389-97a77043-86af-4384-8612-65b2b81fa360.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE3MDExNDA1NDMsIm5iZiI6MTcwMTE0MDI0MywicGF0aCI6Ii8zOTE0MjY3OS8yODYwOTkzODktOTdhNzcwNDMtODZhZi00Mzg0LTg2MTItNjViMmI4MWZhMzYwLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFJV05KWUFYNENTVkVINTNBJTJGMjAyMzExMjglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjMxMTI4VDAyNTcyM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWRhMTM1YTMyYzBhNDEzNDA4MTU4MGEyMTdlMDhlNDUzYmMxYTUwOGRjOWJkYmU5NWQyNjg5OGMzNDIyOGNiOTEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.D7rTJhrKAz0J8FmlYOQ1QNbYjIEpMiPlBq9JHCbu1PY)
 
 <!-- deadzone_delta_steer | double | dead zone for the steering dynamics                  | x      | x      | x        | o      | o      | 0.0      | [rad]         |         | -->
 
