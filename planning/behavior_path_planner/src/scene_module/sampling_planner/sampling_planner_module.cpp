@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/scene_module/sampling_planner/sampling_planner_module.hpp"
 
+#include <boost/geometry/algorithms/within.hpp>
+
 namespace behavior_path_planner
 {
 using geometry_msgs::msg::Point;
@@ -38,14 +40,16 @@ SamplingPlannerModule::SamplingPlannerModule(
   updateModuleParams(parameters);
 
   hard_constraints_.emplace_back(
-    [](const sampler_common::Path &, const sampler_common::Constraints &) -> bool {
-      const auto footprint = sampler_common::constraints::buildFootprintPoints(path, constraints);
+    [](
+      sampler_common::Path & path, const sampler_common::Constraints & constraints,
+      const MultiPoint2d & footprint) -> bool {
       if (!footprint.empty()) {
-        if (!boost::geometry::within(footprint, constraints.drivable_polygons)) {
-          path.constraint_results.drivable_area = false;
-        }
+        path.constraint_results.drivable_area =
+          boost::geometry::within(footprint, constraints.drivable_polygons);
       }
-      path.constraint_results.collision = !has_collision(footprint, constraints.obstacle_polygons);
+
+      path.constraint_results.collision =
+        !sampler_common::constraints::has_collision(footprint, constraints.obstacle_polygons);
       return path.constraint_results.collision && path.constraint_results.drivable_area;
     });
 }
@@ -239,8 +243,11 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   }
 
   for (auto & path : frenet_paths) {
-    const auto footprint = buildFootprintPoints(path, internal_params_->constraints);
-    checkHardConstraints2(path, internal_params_->constraints, footprint);
+    std::vector<bool> constraints_results;
+    const auto footprint =
+      sampler_common::constraints::buildFootprintPoints(path, internal_params_->constraints);
+    behavior_path_planner::evaluateHardConstraints(
+      path, internal_params_->constraints, footprint, hard_constraints_, constraints_results);
     path.constraint_results.curvature = true;
     debug_data_.footprints.push_back(footprint);
     sampler_common::constraints::calculateCost(
