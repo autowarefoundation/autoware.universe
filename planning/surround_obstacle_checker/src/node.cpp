@@ -414,7 +414,11 @@ boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacle() cons
 
 boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByPointCloud() const
 {
-  if (!node_param_.pointcloud_enable_check || pointcloud_ptr_->data.empty()) {
+  if (!node_param_.pointcloud_enable_check || !pointcloud_ptr_) {
+    return boost::none;
+  }
+
+  if (pointcloud_ptr_->data.empty()) {
     return boost::none;
   }
 
