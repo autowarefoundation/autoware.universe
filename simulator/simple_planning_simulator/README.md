@@ -87,7 +87,7 @@ The table below shows which models correspond to what parameters. The model name
 
 `acceleration_map` is used only for `DELAY_STEER_MAP_ACC_GEARED` and it shows the acceleration command on the vertical axis and the current velocity on the horizontal axis, with each cell representing the converted acceleration command that is actually used in the simulator's motion calculation. Values in between are linearly interpolated.
 
-example of `acceleration_map.csv`
+Example of `acceleration_map.csv`
 
 ```csv
 default,0.00,1.39,2.78,4.17,5.56,6.94,8.33,9.72,11.11,12.50,13.89,15.28,16.67
