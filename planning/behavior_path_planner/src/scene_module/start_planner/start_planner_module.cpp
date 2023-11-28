@@ -44,8 +44,10 @@ namespace behavior_path_planner
 StartPlannerModule::StartPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<StartPlannerParameters> & parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
@@ -1104,7 +1106,7 @@ bool StartPlannerModule::isSafePath() const
       if (!utils::path_safety_checker::checkCollision(
             pull_out_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
             safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second)) {
-        marker_utils::updateCollisionCheckDebugMap(
+        utils::path_safety_checker::updateCollisionCheckDebugMap(
           start_planner_data_.collision_check, current_debug_data, false);
         is_safe_dynamic_objects = false;
         is_safe_dynamic_object = false;
@@ -1112,7 +1114,7 @@ bool StartPlannerModule::isSafePath() const
       }
     }
     if (is_safe_dynamic_object) {
-      marker_utils::updateCollisionCheckDebugMap(
+      utils::path_safety_checker::updateCollisionCheckDebugMap(
         start_planner_data_.collision_check, current_debug_data, is_safe_dynamic_object);
     }
   }

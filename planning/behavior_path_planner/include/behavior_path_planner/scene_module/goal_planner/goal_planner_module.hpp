@@ -244,15 +244,15 @@ struct PreviousPullOverData
     stop_path = nullptr;
     stop_path_after_approval = nullptr;
     found_path = false;
-    is_safe = false;
     safety_status = SafetyStatus{};
+    has_decided_path = false;
   }
 
   std::shared_ptr<PathWithLaneId> stop_path{nullptr};
   std::shared_ptr<PathWithLaneId> stop_path_after_approval{nullptr};
   bool found_path{false};
-  bool is_safe{false};
   SafetyStatus safety_status{};
+  bool has_decided_path{false};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -261,7 +261,9 @@ public:
   GoalPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<GoalPlannerParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   void updateModuleParams(const std::any & parameters) override
   {
