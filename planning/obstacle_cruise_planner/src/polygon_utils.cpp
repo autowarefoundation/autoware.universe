@@ -147,25 +147,25 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
     return std::nullopt;
   }
 
-  // TODO (takagi): incomplete implementation for backward trajectory
-  const auto x_diff_to_bumper = is_driving_forward ? vehicle_info.max_longitudinal_offset_m
-                                                   : vehicle_info.min_longitudinal_offset_m;
+  const double x_diff_to_bumper = is_driving_forward ? vehicle_info.max_longitudinal_offset_m
+                                                     : vehicle_info.min_longitudinal_offset_m;
+  const auto bumper_pose = tier4_autoware_utils::calcOffsetPose(
+    traj_points.at(collision_info->first).pose, x_diff_to_bumper, 0.0, 0.0);
 
-  std::optional<double> nearest_dist = std::nullopt;
-  std::optional<geometry_msgs::msg::Point> nearest_point = std::nullopt;
-  for (const auto & collision_point : collision_info->second) {
-    const double dist_from_baselink = tier4_autoware_utils::inverseTransformPoint(
-                                  collision_point.point, traj_points.at(collision_info->first).pose)
-                                  .x;
+  std::optional<double> max_collison_length = std::nullopt;
+  std::optional<geometry_msgs::msg::Point> max_collison_point = std::nullopt;
+  for (const auto & poly_vertex : collision_info->second) {
+    const double dist_from_bumper =
+      std::abs(tier4_autoware_utils::inverseTransformPoint(poly_vertex.point, bumper_pose).x);
 
-    if (!nearest_dist.has_value() || std::abs(dist_from_baselink) < std::abs(*nearest_dist)) {
-      nearest_dist = dist_from_baselink;
-      nearest_point = collision_point.point;
+    if (!max_collison_length.has_value() || dist_from_bumper > *max_collison_length) {
+      max_collison_length = dist_from_bumper;
+      max_collison_point = poly_vertex.point;
     }
   }
   return std::make_pair(
-    *nearest_point, motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first) +
-                      (*nearest_dist - x_diff_to_bumper));
+    *max_collison_point, motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first) -
+                           *max_collison_length);
 }
 
 // NOTE: max_lat_dist is used for efficient calculation to suppress boost::geometry's polygon
