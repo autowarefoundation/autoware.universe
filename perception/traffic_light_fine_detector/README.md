@@ -63,17 +63,17 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 
 ### Overview
 
-This guide provides detailed instruction on training a traffic light detection model using the **[awml_tld](link)** repository and deploying it by converting to onnx model. If you wish to create a custom traffic light detection model with your own dataset, please follow the steps below. 
+This guide provides detailed instruction on training a traffic light detection model using the **[awml_tld](link)** repository and deploying it by converting to onnx model. If you wish to create a custom traffic light detection model with your own dataset, please follow the steps below.
 
 ### Data preparation
 
 #### Use Sample Dataset
 
-Autoware  offers the sample dataset that illustrates the training procedures for traffic light detection. The dataset consists of 1062 images of traffic lights. All images are randomly cropped to imitate output of traffic_light_map_based_detector package. The dataset presented in VOC format. The  dataset is splited in two parts trainval and test. To use the sample dataset, please, download it from **[link](link to autoware aws)** and extract it to a designated folder of your choice. By default training configuration expects data in `awml_tld/TLDD` folder. 
+Autoware offers the sample dataset that illustrates the training procedures for traffic light detection. The dataset consists of 1062 images of traffic lights. All images are randomly cropped to imitate output of traffic_light_map_based_detector package. The dataset presented in VOC format. The dataset is splited in two parts trainval and test. To use the sample dataset, please, download it from **[link](link to autoware aws)** and extract it to a designated folder of your choice. By default training configuration expects data in `awml_tld/TLDD` folder.
 
 #### Use Your Custom Dataset
 
-To train the traffic light detection model you need to provide your data in Pascal VOC format. 
+To train the traffic light detection model you need to provide your data in Pascal VOC format.
 
 ```shell
 data_prefix/
@@ -87,7 +87,7 @@ data_prefix/
 │   └── ...
 └── ImageSets/... annotation files to split train/test/val(e.g. train.txt)
     │── ann_file.txt
-    └── ...   
+    └── ...
 ```
 
 The annotation format is shown as below.
@@ -128,38 +128,37 @@ The annotation format is shown as below.
 
 You need to have `poetry` installed on you system or in venv. You can follow officiall installation **[guide](https://python-poetry.org/docs/#installing-with-pipx)**.
 
-
 #### Install awml_tld
 
 ```shell
-$ git clone https://github.com/lexavtanke/Traffic_light_detector_training.git
-$ cd awml_tld
-$ poetry install 
+git clone https://github.com/lexavtanke/Traffic_light_detector_training.git
+cd awml_tld
+poetry install
 ```
 
 #### Activate env
 
 ```shell
-$ poetry shell
+poetry shell
 ```
 
 ### Training
 
 MMdetection provide a training script which is controlled by config file.
-We provide training configuration for yolox_s model as example. Feel free to use it as parent for you configuration, so you will need to modify only desired part of the pipeline. 
+We provide training configuration for yolox_s model as example. Feel free to use it as parent for you configuration, so you will need to modify only desired part of the pipeline.
 
 ```shell
 # train detection ([] is optional)
 $ mim train mmdet config/model_config/yolox/yolox_s_tld_416x416.py [--work_dir WORK_DIR --gpus NUM_GPUS --resume_from CHECKPOINT.pth]
 ```
 
-### Export  YOLOX to ONNX model 
+### Export YOLOX to ONNX model
 
-Before running conversion script be sure that you installed *onnx-graphsurgeon* with command:
+Before running conversion script be sure that you installed _onnx-graphsurgeon_ with command:
 
 ```shell
-$ pip install nvidia-pyindex
-$ pip install onnx-graphsurgeon
+pip install nvidia-pyindex
+pip install onnx-graphsurgeon
 ```
 
 To convert yolox model to onnx run:
@@ -168,7 +167,6 @@ To convert yolox model to onnx run:
 # refer to yolox2onnx.py for details
 $ python awml_tld/tools/yolox2onnx.py <MODEL.pth> --input_size 416 416 --model yolox-s
 ```
-
 
 ## Assumptions / Known limits
 
