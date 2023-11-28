@@ -1,5 +1,5 @@
 nav:
-  - planning
+  - 'Introduction': planning
   - 'Behavior Path Planner':
     - 'About Behavior Path': planning/behavior_path_planner
     - 'Concept':
