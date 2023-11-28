@@ -1092,7 +1092,7 @@ bool StartPlannerModule::isSafePath() const
   bool is_safe_dynamic_objects = true;
   // Check for collisions with each predicted path of the object
   for (const auto & object : target_objects_on_lane.on_current_lane) {
-    auto current_debug_data = marker_utils::createObjectDebug(object);
+    auto current_debug_data = utils::path_safety_checker::createObjectDebug(object);
 
     bool is_safe_dynamic_object = true;
 
@@ -1104,7 +1104,7 @@ bool StartPlannerModule::isSafePath() const
       if (!utils::path_safety_checker::checkCollision(
             pull_out_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
             safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second)) {
-        marker_utils::updateCollisionCheckDebugMap(
+        utils::path_safety_checker::updateCollisionCheckDebugMap(
           start_planner_data_.collision_check, current_debug_data, false);
         is_safe_dynamic_objects = false;
         is_safe_dynamic_object = false;
@@ -1112,7 +1112,7 @@ bool StartPlannerModule::isSafePath() const
       }
     }
     if (is_safe_dynamic_object) {
-      marker_utils::updateCollisionCheckDebugMap(
+      utils::path_safety_checker::updateCollisionCheckDebugMap(
         start_planner_data_.collision_check, current_debug_data, is_safe_dynamic_object);
     }
   }
