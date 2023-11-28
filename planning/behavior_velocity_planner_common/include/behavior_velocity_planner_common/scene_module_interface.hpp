@@ -112,7 +112,7 @@ protected:
   {
     safe_ = safe;
     if (!rtc_enabled_) {
-      syncActivation()
+      syncActivation();
     }
   }
   void setDistance(const double distance) { distance_ = distance; }
