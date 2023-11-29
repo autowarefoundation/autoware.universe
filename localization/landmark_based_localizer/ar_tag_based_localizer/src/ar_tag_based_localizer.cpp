@@ -308,23 +308,11 @@ void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::Con
   if (msg->header.frame_id == "map") {
     ekf_pose_buffer_->push_back(msg);
   } else {
-    TransformStamped transform_self_pose_frame_to_map;
-    try {
-      transform_self_pose_frame_to_map = tf_buffer_->lookupTransform(
-        "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
-
-      // transform self_pose_frame to map_frame
-      auto self_pose_on_map_ptr = std::make_shared<PoseWithCovarianceStamped>();
-      self_pose_on_map_ptr->pose.pose =
-        tier4_autoware_utils::transformPose(msg->pose.pose, transform_self_pose_frame_to_map);
-      // self_pose_on_map_ptr->pose.covariance;  // TODO(YamatoAndo)
-      self_pose_on_map_ptr->header.stamp = msg->header.stamp;
-      ekf_pose_buffer_->push_back(self_pose_on_map_ptr);
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN(
-        get_logger(), "cannot get map to %s transform. %s", msg->header.frame_id.c_str(),
-        ex.what());
-    }
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      get_logger(), *this->get_clock(), 1000,
+      "Received initial pose message with frame_id "
+        << msg->header.frame_id << ", but expected map. "
+        << "Please check the frame_id in the input topic and ensure it is correct.");
   }
 }
 

@@ -387,17 +387,11 @@ void NDTScanMatcher::callback_initial_pose(
   if (initial_pose_msg_ptr->header.frame_id == map_frame_) {
     initial_pose_buffer_->push_back(initial_pose_msg_ptr);
   } else {
-    // get TF from pose_frame to map_frame
-    auto tf_pose_to_map_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
-    tf2_listener_module_->get_transform(
-      this->now(), map_frame_, initial_pose_msg_ptr->header.frame_id, tf_pose_to_map_ptr);
-
-    // transform pose_frame to map_frame
-    auto initial_pose_msg_in_map_ptr =
-      std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-    *initial_pose_msg_in_map_ptr = transform(*initial_pose_msg_ptr, *tf_pose_to_map_ptr);
-    initial_pose_msg_in_map_ptr->header.stamp = initial_pose_msg_ptr->header.stamp;
-    initial_pose_buffer_->push_back(initial_pose_msg_in_map_ptr);
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      get_logger(), *this->get_clock(), 1000,
+      "Received initial pose message with frame_id "
+        << initial_pose_msg_ptr->header.frame_id << ", but expected " << map_frame_
+        << ". Please check the frame_id in the input topic and ensure it is correct.");
   }
 }
 
