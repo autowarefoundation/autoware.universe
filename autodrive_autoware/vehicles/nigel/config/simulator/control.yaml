@@ -9,7 +9,7 @@
     lateral_deviation: 0.0
     # Longitudinal Controller Parameters
     kp_longitudinal: 2.0
-    acceleration_limit: 1.0
+    acceleration_limit: 0.3
     # Lateral Controller Parameters
     wheel_base: 0.1415
     lookahead_time: 3.0
