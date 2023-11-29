@@ -16,8 +16,6 @@
 
 #include "localization_util/matrix_type.hpp"
 
-static std::random_device seed_gen;
-
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA exchange_color_crc(double x)
 {
@@ -192,19 +190,6 @@ geometry_msgs::msg::PoseStamped interpolate_pose(
   return interpolate_pose(tmp_pose_a, tmp_pose_b, time_stamp);
 }
 
-void pop_old_pose(
-  std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
-    pose_cov_msg_ptr_array,
-  const rclcpp::Time & time_stamp)
-{
-  while (!pose_cov_msg_ptr_array.empty()) {
-    if (rclcpp::Time(pose_cov_msg_ptr_array.front()->header.stamp) >= time_stamp) {
-      break;
-    }
-    pose_cov_msg_ptr_array.pop_front();
-  }
-}
-
 Eigen::Affine3d pose_to_affine3d(const geometry_msgs::msg::Pose & ros_pose)
 {
   Eigen::Affine3d eigen_pose;
@@ -234,49 +219,6 @@ geometry_msgs::msg::Pose matrix4f_to_pose(const Eigen::Matrix4f & eigen_pose_mat
   eigen_pose_affine.matrix() = eigen_pose_matrix.cast<double>();
   geometry_msgs::msg::Pose ros_pose = tf2::toMsg(eigen_pose_affine);
   return ros_pose;
-}
-
-std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num)
-{
-  std::default_random_engine engine(seed_gen());
-  const Eigen::Map<const RowMatrixXd> covariance =
-    make_eigen_covariance(base_pose_with_cov.pose.covariance);
-
-  std::normal_distribution<> x_distribution(0.0, std::sqrt(covariance(0, 0)));
-  std::normal_distribution<> y_distribution(0.0, std::sqrt(covariance(1, 1)));
-  std::normal_distribution<> z_distribution(0.0, std::sqrt(covariance(2, 2)));
-  std::normal_distribution<> roll_distribution(0.0, std::sqrt(covariance(3, 3)));
-  std::normal_distribution<> pitch_distribution(0.0, std::sqrt(covariance(4, 4)));
-  std::normal_distribution<> yaw_distribution(0.0, std::sqrt(covariance(5, 5)));
-
-  const auto base_rpy = get_rpy(base_pose_with_cov);
-
-  std::vector<geometry_msgs::msg::Pose> poses;
-  for (int i = 0; i < particle_num; ++i) {
-    geometry_msgs::msg::Vector3 xyz;
-    geometry_msgs::msg::Vector3 rpy;
-
-    xyz.x = base_pose_with_cov.pose.pose.position.x + x_distribution(engine);
-    xyz.y = base_pose_with_cov.pose.pose.position.y + y_distribution(engine);
-    xyz.z = base_pose_with_cov.pose.pose.position.z + z_distribution(engine);
-    rpy.x = base_rpy.x + roll_distribution(engine);
-    rpy.y = base_rpy.y + pitch_distribution(engine);
-    rpy.z = base_rpy.z + yaw_distribution(engine);
-
-    tf2::Quaternion tf_quaternion;
-    tf_quaternion.setRPY(rpy.x, rpy.y, rpy.z);
-
-    geometry_msgs::msg::Pose pose;
-    pose.position.x = xyz.x;
-    pose.position.y = xyz.y;
-    pose.position.z = xyz.z;
-    pose.orientation = tf2::toMsg(tf_quaternion);
-
-    poses.push_back(pose);
-  }
-
-  return poses;
 }
 
 double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
