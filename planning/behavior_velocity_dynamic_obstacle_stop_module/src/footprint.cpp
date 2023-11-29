@@ -44,12 +44,12 @@ tier4_autoware_utils::Polygon2d make_forward_footprint(
   const auto longitudinal_offset =
     shape.x / 2.0 +
     obstacle.kinematics.initial_twist_with_covariance.twist.linear.x * params.time_horizon;
-  const auto lateral_offset = shape.y / 2.0 + params.extra_object_width;
+  const auto lateral_offset = (shape.y + params.extra_object_width) / 2.0;
   return tier4_autoware_utils::Polygon2d{
     {{longitudinal_offset, -lateral_offset},
      {longitudinal_offset, lateral_offset},
-     {-shape.x / 2.0, lateral_offset},
-     {-shape.x / 2.0, -lateral_offset},
+     {shape.x / 2.0, lateral_offset},
+     {shape.x / 2.0, -lateral_offset},
      {longitudinal_offset, -lateral_offset}},
     {}};
 }

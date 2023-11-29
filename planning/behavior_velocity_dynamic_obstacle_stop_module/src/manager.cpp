@@ -37,9 +37,9 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   pp.time_horizon = getOrDeclareParameter<double>(node, ns + ".time_horizon");
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
-  pp.lateral_offset =
+  pp.ego_lateral_offset =
     std::max(std::abs(vehicle_info.min_lateral_offset_m), vehicle_info.max_lateral_offset_m);
-  pp.longitudinal_offset = vehicle_info.max_longitudinal_offset_m;
+  pp.ego_longitudinal_offset = vehicle_info.max_longitudinal_offset_m;
 }
 
 void DynamicObstacleStopModuleManager::launchNewModules(

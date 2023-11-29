@@ -55,10 +55,22 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
   for (const auto & object : objects.objects) {
     const auto vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
     const auto width = object.shape.dimensions.y + params.extra_object_width;
-    const auto lateral_offset = std::abs(motion_utils::calcLateralOffset(
-      path.points, object.kinematics.initial_pose_with_covariance.pose.position));
+    const auto front_position = tier4_autoware_utils::transformPoint(
+      tier4_autoware_utils::createPoint(object.shape.dimensions.x / 2.0, 0.0, 0.0),
+      object.kinematics.initial_pose_with_covariance.pose);
+    const auto lateral_offset_limit = width / 2 + params.ego_lateral_offset;
+    const auto is_close_to_path = [&](const auto & p) {
+      return std::abs(motion_utils::calcLateralOffset(path.points, p)) < lateral_offset_limit;
+    };
+    const auto is_driving_toward_ego = [&]() {
+      return motion_utils::calcSignedArcLength(
+               path.points, object.kinematics.initial_pose_with_covariance.pose.position,
+               front_position) < 0.0;
+    };
     if (
-      vel >= params.minimum_object_velocity && lateral_offset <= width / 2 + params.lateral_offset)
+      vel >= params.minimum_object_velocity && is_driving_toward_ego() &&
+      is_close_to_path(object.kinematics.initial_pose_with_covariance.pose.position) &&
+      is_close_to_path(front_position))
       filtered_objects.push_back(object);
   }
   return filtered_objects;
@@ -72,19 +84,14 @@ double calculate_min_stop_distance(const EgoData & ego_data)
 }
 
 std::optional<geometry_msgs::msg::Point> find_earliest_collision(
-  const EgoData & ego_data, const double min_stop_distance,
+  const EgoData & ego_data,
   const tier4_autoware_utils::MultiPolygon2d & obstacle_forward_footprints, DebugData & debug_data)
 {
   std::optional<geometry_msgs::msg::Point> earliest_collision;
   tier4_autoware_utils::LineString2d path_ls;
-  auto arc_length = ego_data.longitudinal_offset_to_first_path_idx;
-  for (auto i = ego_data.first_path_idx; i < ego_data.path.points.size(); ++i) {
+  for (auto i = ego_data.first_path_idx + 1; i < ego_data.path.points.size(); ++i) {
     const auto & p = ego_data.path.points[i].point.pose.position;
-    if (arc_length >= min_stop_distance) path_ls.emplace_back(p.x, p.y);
-    if (i + 1 < ego_data.path.points.size()) {
-      const auto & next_p = ego_data.path.points[i + 1].point.pose.position;
-      arc_length += tier4_autoware_utils::calcDistance2d(p, next_p);
-    }
+    path_ls.emplace_back(p.x, p.y);
   }
   if (!path_ls.empty() && boost::geometry::within(path_ls.front(), obstacle_forward_footprints))
     return geometry_msgs::msg::Point().set__x(path_ls.front().x()).set__y(path_ls.front().y());
@@ -133,16 +140,23 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   stopwatch.tic("footprints");
   const auto obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_);
   const auto footprints_duration_us = stopwatch.toc("footprints");
-  const auto min_stop_distance =
-    calculate_min_stop_distance(ego_data) + params_.stop_distance_buffer;
+  const auto min_stop_distance = calculate_min_stop_distance(ego_data);
   stopwatch.tic("collisions");
   const auto collision =
-    find_earliest_collision(ego_data, min_stop_distance, obstacle_forward_footprints, debug_data_);
+    find_earliest_collision(ego_data, obstacle_forward_footprints, debug_data_);
   const auto collisions_duration_us = stopwatch.toc("collisions");
   if (collision) {
-    const auto stop_pose = motion_utils::calcLongitudinalOffsetPose(
-      ego_data.path.points, *collision,
-      -params_.stop_distance_buffer - params_.longitudinal_offset);
+    const auto arc_length_diff =
+      motion_utils::calcSignedArcLength(ego_data.path.points, *collision, ego_data.pose.position);
+    const auto can_stop_before_limit = arc_length_diff < min_stop_distance -
+                                                           params_.ego_longitudinal_offset -
+                                                           params_.stop_distance_buffer;
+    const auto stop_pose = can_stop_before_limit
+                             ? motion_utils::calcLongitudinalOffsetPose(
+                                 ego_data.path.points, *collision,
+                                 -params_.stop_distance_buffer - params_.ego_longitudinal_offset)
+                             : motion_utils::calcLongitudinalOffsetPose(
+                                 ego_data.path.points, ego_data.pose.position, min_stop_distance);
     if (stop_pose) {
       debug_data_.stop_pose = *stop_pose;
       motion_utils::insertStopPoint(*stop_pose, 0.0, path->points);
@@ -201,7 +215,7 @@ motion_utils::VirtualWalls DynamicObstacleStopModule::createVirtualWalls()
   if (!debug_data_.stop_pose) return {};
   motion_utils::VirtualWall virtual_wall;
   virtual_wall.text = "dynamic_obstacle_stop";
-  virtual_wall.longitudinal_offset = params_.longitudinal_offset;
+  virtual_wall.longitudinal_offset = params_.ego_longitudinal_offset;
   virtual_wall.style = motion_utils::VirtualWallType::stop;
   virtual_wall.pose = *debug_data_.stop_pose;
   return {virtual_wall};

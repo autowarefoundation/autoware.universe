@@ -34,8 +34,8 @@ struct PlannerParam
   double minimum_object_velocity;
   double stop_distance_buffer;
   double time_horizon;
-  double longitudinal_offset;
-  double lateral_offset;
+  double ego_longitudinal_offset;
+  double ego_lateral_offset;
 };
 
 struct EgoData
