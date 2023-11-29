@@ -240,8 +240,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
         }
 
         fuseOnSingleImage(
-          *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]), camera_info_map_.at(roi_i),
-          *output_msg);
+          *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
+          camera_info_map_.at(roi_i), *output_msg);
         (cached_roi_msgs_.at(roi_i)).erase(matched_stamp);
         is_fused_.at(roi_i) = true;
 
