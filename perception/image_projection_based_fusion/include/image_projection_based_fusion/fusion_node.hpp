@@ -118,7 +118,8 @@ protected:
 
   // cache for fusion
   std::vector<bool> is_fused_;
-  std::pair<int64_t, typename Msg::SharedPtr> cached_msg_; // first element is the timestamp in nanoseconds, second element is the message
+  std::pair<int64_t, typename Msg::SharedPtr>
+    cached_msg_;  // first element is the timestamp in nanoseconds, second element is the message
   std::vector<std::map<int64_t, DetectedObjectsWithFeature::ConstSharedPtr>> roi_stdmap_;
   std::mutex mutex_;
 
