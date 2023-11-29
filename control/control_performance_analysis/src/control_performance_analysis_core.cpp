@@ -94,8 +94,8 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
     return std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
   }
 
-  idx_prev_wp_ = std::make_unique<int32_t>(closest_segment.get());
-  idx_next_wp_ = std::make_unique<int32_t>(closest_segment.get() + 1);
+  idx_prev_wp_ = std::make_unique<int32_t>(closest_segment.value());
+  idx_next_wp_ = std::make_unique<int32_t>(closest_segment.value() + 1);
   return std::make_pair(true, *idx_prev_wp_);
 }
 
@@ -429,7 +429,7 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
     RCLCPP_WARN(logger_, "Cannot find index of curvature reference waypoint ");
     return 0;
   }
-  const auto idx_curve_ref_wp = idx_curve_ref_wp_optional.get();
+  const auto idx_curve_ref_wp = idx_curve_ref_wp_optional.value();
 
   const auto & points = current_trajectory_ptr_->points;
 
