@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -360,13 +361,13 @@ void ControlPerformanceAnalysisCore::setSteeringStatus(const SteeringReport & st
   current_vec_steering_msg_ptr_ = std::make_shared<SteeringReport>(steering);
 }
 
-boost::optional<int32_t> ControlPerformanceAnalysisCore::findCurveRefIdx()
+std::optional<int32_t> ControlPerformanceAnalysisCore::findCurveRefIdx()
 {
   // Get the previous waypoint as the reference
   if (!interpolated_pose_ptr_) {
     RCLCPP_WARN_THROTTLE(
       logger_, clock_, 1000, "Cannot set the curvature_idx, no valid interpolated pose ...");
-    return boost::none;
+    return std::nullopt;
   }
 
   auto fun_distance_cond = [this](auto point_t) {
