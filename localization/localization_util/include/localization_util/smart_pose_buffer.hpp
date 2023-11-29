@@ -38,7 +38,7 @@ public:
 
   SmartPoseBuffer() = delete;
   SmartPoseBuffer(
-    rclcpp::Logger logger_, const double & pose_timeout_sec,
+    rclcpp::Logger logger, const double & pose_timeout_sec,
     const double & pose_distance_tolerance_meters);
 
   std::optional<InterpolateResult> interpolate(const rclcpp::Time & target_ros_time);
