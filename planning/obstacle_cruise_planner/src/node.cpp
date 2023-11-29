@@ -557,8 +557,9 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
   const double step_length = p.decimate_trajectory_step_length;
   const double time_to_convergence = p.time_to_convergence;
 
-  const auto nearest_pose =
-    traj_points.at(*motion_utils::findNearestSegmentIndex(traj_points, current_ego_pose)).pose;
+  const size_t nearest_idx =
+    motion_utils::findNearestSegmentIndex(traj_points, current_ego_pose.position);
+  const auto nearest_pose = traj_points.at(nearest_idx).pose;
   const auto current_ego_pose_error =
     tier4_autoware_utils::inverseTransformPose(current_ego_pose, nearest_pose);
   const double current_ego_lat_error = current_ego_pose_error.position.y;
