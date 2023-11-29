@@ -163,12 +163,12 @@ void FusionNode<Msg, Obj>::preprocess(Msg & ouput_msg __attribute__((unused)))
 template <class Msg, class Obj>
 void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_msg)
 {
-  if (sub_std_pair_.second != nullptr) {
+  if (cached_msg_.second != nullptr) {
     stop_watch_ptr_->toc("processing_time", true);
     timer_->cancel();
-    postprocess(*(sub_std_pair_.second));
-    publish(*(sub_std_pair_.second));
-    sub_std_pair_.second = nullptr;
+    postprocess(*(cached_msg_.second));
+    publish(*(cached_msg_.second));
+    cached_msg_.second = nullptr;
     std::fill(is_fused_.begin(), is_fused_.end(), false);
 
     // add processing time for debug
@@ -265,7 +265,7 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
     postprocess(*output_msg);
     publish(*output_msg);
     std::fill(is_fused_.begin(), is_fused_.end(), false);
-    sub_std_pair_.second = nullptr;
+    cached_msg_.second = nullptr;
 
     // add processing time for debug
     if (debug_publisher_) {
@@ -278,8 +278,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
       processing_time_ms = 0;
     }
   } else {
-    sub_std_pair_.first = int64_t(timestamp_nsec);
-    sub_std_pair_.second = output_msg;
+    cached_msg_.first = int64_t(timestamp_nsec);
+    cached_msg_.second = output_msg;
     processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
   }
 }
@@ -294,8 +294,8 @@ void FusionNode<Msg, Obj>::roiCallback(
     (*input_roi_msg).header.stamp.sec * (int64_t)1e9 + (*input_roi_msg).header.stamp.nanosec;
 
   // if cached Msg exist, try to match
-  if (sub_std_pair_.second != nullptr) {
-    int64_t new_stamp = sub_std_pair_.first + input_offset_ms_.at(roi_i) * (int64_t)1e6;
+  if (cached_msg_.second != nullptr) {
+    int64_t new_stamp = cached_msg_.first + input_offset_ms_.at(roi_i) * (int64_t)1e6;
     int64_t interval = abs(timestamp_nsec - new_stamp);
 
     if (interval < match_threshold_ms_ * (int64_t)1e6 && is_fused_.at(roi_i) == false) {
@@ -310,12 +310,12 @@ void FusionNode<Msg, Obj>::roiCallback(
       }
 
       fuseOnSingleImage(
-        *(sub_std_pair_.second), roi_i, *input_roi_msg, camera_info_map_.at(roi_i),
-        *(sub_std_pair_.second));
+        *(cached_msg_.second), roi_i, *input_roi_msg, camera_info_map_.at(roi_i),
+        *(cached_msg_.second));
       is_fused_.at(roi_i) = true;
 
       if (debug_publisher_) {
-        double timestamp_interval_ms = (timestamp_nsec - sub_std_pair_.first) / 1e6;
+        double timestamp_interval_ms = (timestamp_nsec - cached_msg_.first) / 1e6;
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
@@ -325,10 +325,10 @@ void FusionNode<Msg, Obj>::roiCallback(
 
       if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
         timer_->cancel();
-        postprocess(*(sub_std_pair_.second));
-        publish(*(sub_std_pair_.second));
+        postprocess(*(cached_msg_.second));
+        publish(*(cached_msg_.second));
         std::fill(is_fused_.begin(), is_fused_.end(), false);
-        sub_std_pair_.second = nullptr;
+        cached_msg_.second = nullptr;
 
         // add processing time for debug
         if (debug_publisher_) {
@@ -362,11 +362,11 @@ void FusionNode<Msg, Obj>::timer_callback()
   timer_->cancel();
   if (mutex_.try_lock()) {
     // timeout, postprocess cached msg
-    if (sub_std_pair_.second != nullptr) {
+    if (cached_msg_.second != nullptr) {
       stop_watch_ptr_->toc("processing_time", true);
 
-      postprocess(*(sub_std_pair_.second));
-      publish(*(sub_std_pair_.second));
+      postprocess(*(cached_msg_.second));
+      publish(*(cached_msg_.second));
 
       // add processing time for debug
       if (debug_publisher_) {
@@ -380,7 +380,7 @@ void FusionNode<Msg, Obj>::timer_callback()
       }
     }
     std::fill(is_fused_.begin(), is_fused_.end(), false);
-    sub_std_pair_.second = nullptr;
+    cached_msg_.second = nullptr;
 
     mutex_.unlock();
   } else {
