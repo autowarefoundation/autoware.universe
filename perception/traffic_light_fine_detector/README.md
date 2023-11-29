@@ -68,12 +68,13 @@ This guide provides detailed instruction on training a traffic light detection m
 ### Data preparation
 
 #### Use Sample Dataset
-
-Autoware offers the sample dataset that illustrates the training procedures for traffic light detection. The dataset consists of 1062 images of traffic lights. All images are randomly cropped to imitate output of traffic_light_map_based_detector package. The dataset presented in VOC format. The dataset is splited in two parts trainval and test. To use the sample dataset, please, download it from **[link](link to autoware aws)** and extract it to a designated folder of your choice. By default training configuration expects data in `awml_tld/TLDD` folder.
+<!-- cpell:ignore TLDD trainval-->
+Autoware offers the sample dataset that illustrates the training procedures for traffic light detection. The dataset consists of 1062 images of traffic lights. All images are randomly cropped to imitate output of traffic_light_map_based_detector package. The dataset presented in VOC format. The dataset is splitted in two parts trainval and test. To use the sample dataset, please, download it from **[link](link to autoware aws)** and extract it to a designated folder of your choice. By default training configuration expects data in `awml_tld/TLDD` folder.
 
 #### Use Your Custom Dataset
 
 To train the traffic light detection model you need to provide your data in Pascal VOC format.
+<!-- cpell:ignore TLDD -->
 
 ```shell
 data_prefix/
@@ -126,7 +127,7 @@ The annotation format is shown as below.
 
 #### Prerequisites
 
-You need to have `poetry` installed on you system or in venv. You can follow officiall installation **[guide](https://python-poetry.org/docs/#installing-with-pipx)**.
+You need to have `poetry` installed on you system or in venv. You can follow official installation **[guide](https://python-poetry.org/docs/#installing-with-pipx)**.
 
 #### Install awml_tld
 
@@ -155,7 +156,7 @@ $ mim train mmdet config/model_config/yolox/yolox_s_tld_416x416.py [--work_dir W
 ### Export YOLOX to ONNX model
 
 Before running conversion script be sure that you installed _onnx-graphsurgeon_ with command:
-
+<!-- cspell:ignore graphsurgeon -->
 ```shell
 pip install nvidia-pyindex
 pip install onnx-graphsurgeon
