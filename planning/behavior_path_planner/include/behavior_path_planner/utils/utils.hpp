@@ -204,9 +204,9 @@ double calcLongitudinalDistanceFromEgoToObjects(
 // drivable area generation
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes);
 lanelet::ConstLanelets transformToLanelets(const std::vector<DrivableLanes> & drivable_lanes);
-boost::optional<lanelet::ConstLanelet> getRightLanelet(
+std::optional<lanelet::ConstLanelet> getRightLanelet(
   const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes);
-boost::optional<lanelet::ConstLanelet> getLeftLanelet(
+std::optional<lanelet::ConstLanelet> getLeftLanelet(
   const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes);
 // goal management
 

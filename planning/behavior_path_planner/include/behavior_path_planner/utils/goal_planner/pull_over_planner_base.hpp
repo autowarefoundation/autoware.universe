@@ -127,7 +127,7 @@ public:
   }
 
   virtual PullOverPlannerType getPlannerType() const = 0;
-  virtual boost::optional<PullOverPath> plan(const Pose & goal_pose) = 0;
+  virtual std::optional<PullOverPath> plan(const Pose & goal_pose) = 0;
 
 protected:
   std::shared_ptr<const PlannerData> planner_data_;

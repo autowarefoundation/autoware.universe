@@ -1047,7 +1047,7 @@ lanelet::ConstLanelets getExtendLanes(
 
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
-  boost::optional<Pose> & p_out)
+  std::optional<Pose> & p_out)
 {
   const auto decel_point = calcLongitudinalOffsetPoint(path.points, p_src, offset);
 

@@ -326,7 +326,7 @@ bool GeometricParallelParking::planPullOut(
   return false;
 }
 
-boost::optional<Pose> GeometricParallelParking::calcStartPose(
+std::optional<Pose> GeometricParallelParking::calcStartPose(
   const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes, const double start_pose_offset,
   const double R_E_far, const bool is_forward, const bool left_side_parking)
 {

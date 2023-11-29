@@ -106,7 +106,7 @@ geometry_msgs::msg::Point calcLongitudinalOffsetGoalPoint(
 
 namespace behavior_path_planner::utils::drivable_area_processing
 {
-boost::optional<std::pair<size_t, geometry_msgs::msg::Point>> intersectBound(
+std::optional<std::pair<size_t, geometry_msgs::msg::Point>> intersectBound(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const std::vector<geometry_msgs::msg::Point> & bound, const size_t seg_idx1,
   const size_t seg_idx2)
@@ -125,7 +125,7 @@ boost::optional<std::pair<size_t, geometry_msgs::msg::Point>> intersectBound(
       return result;
     }
   }
-  return boost::none;
+  return std::nullopt;
 }
 
 double calcDistanceFromPointToSegment(
@@ -515,7 +515,7 @@ namespace behavior_path_planner::utils
 {
 using tier4_autoware_utils::Point2d;
 
-boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes)
+std::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes)
 {
   auto overlaps = [](const DrivableLanes & lanes, const DrivableLanes & target_lanes) {
     const auto lanelets = utils::transformToLanelets(lanes);
@@ -1447,7 +1447,7 @@ void makeBoundLongitudinallyMonotonic(
 
   const auto get_intersect_idx = [](
                                    const auto & bound_with_pose, const auto start_idx,
-                                   const auto & p1, const auto & p2) -> boost::optional<size_t> {
+                                   const auto & p1, const auto & p2) -> std::optional<size_t> {
     std::vector<std::pair<size_t, Point>> intersects;
     for (size_t i = start_idx; i < bound_with_pose.size() - 1; i++) {
       const auto opt_intersect =
@@ -1461,7 +1461,7 @@ void makeBoundLongitudinallyMonotonic(
     }
 
     if (intersects.empty()) {
-      return boost::none;
+      return std::nullopt;
     }
 
     std::sort(intersects.begin(), intersects.end(), [&](const auto & a, const auto & b) {

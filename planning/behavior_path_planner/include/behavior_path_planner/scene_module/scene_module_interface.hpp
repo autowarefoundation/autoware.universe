@@ -277,7 +277,7 @@ public:
 
   std::string name() const { return name_; }
 
-  boost::optional<Pose> getStopPose() const
+  std::optional<Pose> getStopPose() const
   {
     if (!stop_pose_) {
       return {};
@@ -287,7 +287,7 @@ public:
     return calcOffsetPose(stop_pose_.get(), base_link2front, 0.0, 0.0);
   }
 
-  boost::optional<Pose> getSlowPose() const
+  std::optional<Pose> getSlowPose() const
   {
     if (!slow_pose_) {
       return {};
@@ -297,7 +297,7 @@ public:
     return calcOffsetPose(slow_pose_.get(), base_link2front, 0.0, 0.0);
   }
 
-  boost::optional<Pose> getDeadPose() const
+  std::optional<Pose> getDeadPose() const
   {
     if (!dead_pose_) {
       return {};
@@ -309,9 +309,9 @@ public:
 
   void resetWallPoses() const
   {
-    stop_pose_ = boost::none;
-    slow_pose_ = boost::none;
-    dead_pose_ = boost::none;
+    stop_pose_ = std::nullopt;
+    slow_pose_ = std::nullopt;
+    dead_pose_ = std::nullopt;
   }
 
   rclcpp::Logger getLogger() const { return logger_; }
@@ -603,11 +603,11 @@ protected:
 
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
-  mutable boost::optional<Pose> stop_pose_{boost::none};
+  mutable std::optional<Pose> stop_pose_{std::nullopt};
 
-  mutable boost::optional<Pose> slow_pose_{boost::none};
+  mutable std::optional<Pose> slow_pose_{std::nullopt};
 
-  mutable boost::optional<Pose> dead_pose_{boost::none};
+  mutable std::optional<Pose> dead_pose_{std::nullopt};
 
   mutable MarkerArray info_marker_;
 

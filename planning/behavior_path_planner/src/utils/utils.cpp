@@ -271,13 +271,13 @@ bool exists(std::vector<T> vec, T element)
   return std::find(vec.begin(), vec.end(), element) != vec.end();
 }
 
-boost::optional<size_t> findIndexOutOfGoalSearchRange(
+std::optional<size_t> findIndexOutOfGoalSearchRange(
   const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
   const Pose & goal, const int64_t goal_lane_id,
   const double max_dist = std::numeric_limits<double>::max())
 {
   if (points.empty()) {
-    return boost::none;
+    return std::nullopt;
   }
 
   // find goal index
@@ -299,7 +299,7 @@ boost::optional<size_t> findIndexOutOfGoalSearchRange(
       }
     }
     if (!found) {
-      return boost::none;
+      return std::nullopt;
     }
   }
 
@@ -627,7 +627,7 @@ lanelet::ConstLanelets transformToLanelets(const std::vector<DrivableLanes> & dr
   return lanes;
 }
 
-boost::optional<lanelet::ConstLanelet> getRightLanelet(
+std::optional<lanelet::ConstLanelet> getRightLanelet(
   const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes)
 {
   for (const auto & shoulder_lane : shoulder_lanes) {
@@ -639,7 +639,7 @@ boost::optional<lanelet::ConstLanelet> getRightLanelet(
   return {};
 }
 
-boost::optional<lanelet::ConstLanelet> getLeftLanelet(
+std::optional<lanelet::ConstLanelet> getLeftLanelet(
   const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes)
 {
   for (const auto & shoulder_lane : shoulder_lanes) {
@@ -881,12 +881,12 @@ std::optional<double> getSignedDistanceFromBoundary(
   // Find the closest bound segment that contains the corner point in the X-direction
   // and calculate the lateral distance from that segment.
   const auto calcLateralDistanceFromBound =
-    [&](const Point & vehicle_corner_point) -> boost::optional<std::pair<double, size_t>> {
+    [&](const Point & vehicle_corner_point) -> std::optional<std::pair<double, size_t>> {
     Pose vehicle_corner_pose{};
     vehicle_corner_pose.position = vehicle_corner_point;
     vehicle_corner_pose.orientation = vehicle_pose.orientation;
 
-    boost::optional<std::pair<double, size_t>> lateral_distance_with_idx{};
+    std::optional<std::pair<double, size_t>> lateral_distance_with_idx{};
 
     // Euclidean distance to find the closest segment containing the corner point.
     double min_distance = std::numeric_limits<double>::max();
@@ -920,13 +920,13 @@ std::optional<double> getSignedDistanceFromBoundary(
     if (lateral_distance_with_idx) {
       return lateral_distance_with_idx;
     }
-    return boost::optional<std::pair<double, size_t>>{};
+    return std::nullopt;
   };
 
   // Calculate the lateral distance for both the rear and front corners of the vehicle.
-  const boost::optional<std::pair<double, size_t>> rear_lateral_distance_with_idx =
+  const std::optional<std::pair<double, size_t>> rear_lateral_distance_with_idx =
     calcLateralDistanceFromBound(rear_corner_point);
-  const boost::optional<std::pair<double, size_t>> front_lateral_distance_with_idx =
+  const std::optional<std::pair<double, size_t>> front_lateral_distance_with_idx =
     calcLateralDistanceFromBound(front_corner_point);
 
   // If no closest bound segment was found for both corners, return an empty optional.
@@ -1325,7 +1325,7 @@ lanelet::ConstLanelets extendNextLane(
   // Add next lane
   const auto next_lanes = route_handler->getNextLanelets(extended_lanes.back());
   if (!next_lanes.empty()) {
-    boost::optional<lanelet::ConstLanelet> target_next_lane;
+    std::optional<lanelet::ConstLanelet> target_next_lane;
     if (!only_in_route) {
       target_next_lane = next_lanes.front();
     }
@@ -1354,7 +1354,7 @@ lanelet::ConstLanelets extendPrevLane(
   // Add previous lane
   const auto prev_lanes = route_handler->getPreviousLanelets(extended_lanes.front());
   if (!prev_lanes.empty()) {
-    boost::optional<lanelet::ConstLanelet> target_prev_lane;
+    std::optional<lanelet::ConstLanelet> target_prev_lane;
     if (!only_in_route) {
       target_prev_lane = prev_lanes.front();
     }

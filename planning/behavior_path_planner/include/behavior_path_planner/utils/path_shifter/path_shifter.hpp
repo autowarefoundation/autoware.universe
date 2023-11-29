@@ -151,7 +151,7 @@ public:
 
   double getLastShiftLength() const;
 
-  boost::optional<ShiftLine> getLastShiftLine() const;
+  std::optional<ShiftLine> getLastShiftLine() const;
 
   /**
    * @brief  Calculate the theoretical lateral jerk by spline shifting for current shift_lines_.
