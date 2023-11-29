@@ -18,6 +18,7 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 
@@ -65,7 +66,8 @@ boost::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, con
   const auto & stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     *(planner_data_->dynamic_object), parameters_.th_moving_object_velocity);
   const auto [pull_out_lane_stop_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(stop_objects, pull_out_lanes);
+    utils::path_safety_checker::separateObjectsByLanelets(
+      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   if (utils::checkCollisionBetweenPathFootprintsAndObjects(
         vehicle_footprint_, arc_path, pull_out_lane_stop_objects,

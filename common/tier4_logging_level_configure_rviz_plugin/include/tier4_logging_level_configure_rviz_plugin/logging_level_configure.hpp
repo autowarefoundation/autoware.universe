@@ -34,7 +34,21 @@
 
 namespace rviz_plugin
 {
-
+struct LoggerInfo
+{
+  QString node_name;
+  QString logger_name;
+};
+struct ButtonInfo
+{
+  QString button_name;
+  std::vector<LoggerInfo> logger_info_vec;
+};
+struct LoggerNamespaceInfo
+{
+  QString ns;  // group namespace
+  std::vector<ButtonInfo> button_info_vec;
+};
 class LoggingLevelConfigureRvizPlugin : public rviz_common::Panel
 {
   Q_OBJECT  // This macro is needed for Qt to handle slots and signals
@@ -48,24 +62,26 @@ private:
   QMap<QString, QButtonGroup *> buttonGroups_;
   rclcpp::Node::SharedPtr raw_node_;
 
-  // logger_node_map_[target_name] = {container_name, logger_name}
-  std::map<QString, std::vector<std::pair<QString, QString>>> logger_node_map_;
+  std::vector<LoggerNamespaceInfo> display_info_vec_;
 
-  // client_map_[container_name] = service_client
+  // client_map_[node_name] = service_client
   std::unordered_map<QString, rclcpp::Client<logging_demo::srv::ConfigLogger>::SharedPtr>
     client_map_;
 
-  // button_map_[target_name][logging_level] = Q_button_pointer
+  // button_map_[button_name][logging_level] = Q_button_pointer
   std::unordered_map<QString, std::unordered_map<QString, QPushButton *>> button_map_;
 
-  QStringList getContainerList();
+  QStringList getNodeList();
   int getMaxModuleNameWidth(QLabel * containerLabel);
   void setLoggerNodeMap();
-  void attachLoggingComponent();
+
+  ButtonInfo getButtonInfoFromNamespace(const QString & ns);
+  std::vector<LoggerInfo> getNodeLoggerNameFromButtonName(const QString button_name);
 
 private Q_SLOTS:
   void onButtonClick(QPushButton * button, const QString & name, const QString & level);
-  void updateButtonColors(const QString & target_module_name, QPushButton * active_button);
+  void updateButtonColors(
+    const QString & target_module_name, QPushButton * active_button, const QString & level);
   void changeLogLevel(const QString & container, const QString & level);
 };
 

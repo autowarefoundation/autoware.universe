@@ -15,33 +15,38 @@
 
 #include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
 
-#include "behavior_path_planner/utils/drivable_area_expansion/types.hpp"
-#include "lanelet2_core/primitives/LineString.h"
-
 #include <boost/geometry.hpp>
 
 #include <lanelet2_core/Attribute.h>
+#include <lanelet2_core/primitives/LineString.h>
 
 #include <algorithm>
 
 namespace drivable_area_expansion
 {
-multi_linestring_t extractUncrossableLines(
-  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & uncrossable_types)
+SegmentRtree extract_uncrossable_segments(
+  const lanelet::LaneletMap & lanelet_map, const Point & ego_point,
+  const DrivableAreaExpansionParameters & params)
 {
-  multi_linestring_t lines;
-  linestring_t line;
+  SegmentRtree uncrossable_segments_in_range;
+  LineString2d line;
+  const auto ego_p = Point2d{ego_point.x, ego_point.y};
   for (const auto & ls : lanelet_map.lineStringLayer) {
-    if (hasTypes(ls, uncrossable_types)) {
+    if (has_types(ls, params.avoid_linestring_types)) {
       line.clear();
-      for (const auto & p : ls) line.push_back(point_t{p.x(), p.y()});
-      lines.push_back(line);
+      for (const auto & p : ls) line.push_back(Point2d{p.x(), p.y()});
+      for (auto segment_idx = 0LU; segment_idx + 1 < line.size(); ++segment_idx) {
+        Segment2d segment = {line[segment_idx], line[segment_idx + 1]};
+        if (boost::geometry::distance(segment, ego_p) < params.max_path_arc_length) {
+          uncrossable_segments_in_range.insert(segment);
+        }
+      }
     }
   }
-  return lines;
+  return uncrossable_segments_in_range;
 }
 
-bool hasTypes(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & types)
+bool has_types(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & types)
 {
   constexpr auto no_type = "";
   const auto type = ls.attributeOr(lanelet::AttributeName::Type, no_type);

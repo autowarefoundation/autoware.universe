@@ -114,16 +114,24 @@ struct Smoother
 struct DynamicObstacleParam
 {
   bool use_mandatory_area;
+  bool assume_fixed_velocity;
 
   float min_vel_kmph;
   float max_vel_kmph;
 
   // parameter to convert points to dynamic obstacle
+  float std_dev_multiplier;
   float diameter;             // [m]
   float height;               // [m]
   float max_prediction_time;  // [sec]
   float time_step;            // [sec]
   float points_interval;      // [m]
+};
+
+struct IgnoreMomentaryDetection
+{
+  bool enable;
+  double time_threshold;
 };
 
 struct PlannerParam
@@ -138,6 +146,7 @@ struct PlannerParam
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
   Smoother smoother;
+  IgnoreMomentaryDetection ignore_momentary_detection;
 };
 
 enum class DetectionMethod {

@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -25,6 +26,7 @@
 #include <motion_utils/marker/marker_helper.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
+#include <objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
@@ -55,6 +57,8 @@ namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using objects_of_interest_marker_interface::ColorName;
+using objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
 using rtc_interface::RTCInterface;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_autoware_utils::calcOffsetPose;
@@ -80,11 +84,15 @@ class SceneModuleInterface
 public:
   SceneModuleInterface(
     const std::string & name, rclcpp::Node & node,
-    std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map)
+    std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
+      objects_of_interest_marker_interface_ptr_map)
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
     rtc_interface_ptr_map_(std::move(rtc_interface_ptr_map)),
+    objects_of_interest_marker_interface_ptr_map_(
+      std::move(objects_of_interest_marker_interface_ptr_map)),
     steering_factor_interface_ptr_(
       std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
   {
@@ -130,6 +138,12 @@ public:
    *        planCandidate (e.g., resampling of path).
    */
   virtual void updateData() {}
+
+  /**
+   * @brief After executing run(), update the module-specific status and/or data used for internal
+   *        processing that are not defined in ModuleStatus.
+   */
+  virtual void postProcess() {}
 
   /**
    * @brief Execute module. Once this function is executed,
@@ -180,6 +194,15 @@ public:
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
       if (ptr) {
         ptr->publishCooperateStatus(clock_->now());
+      }
+    }
+  }
+
+  void publishObjectsOfInterestMarker()
+  {
+    for (const auto & [module_name, ptr] : objects_of_interest_marker_interface_ptr_map_) {
+      if (ptr) {
+        ptr->publishMarkerArray();
       }
     }
   }
@@ -282,7 +305,7 @@ public:
     return calcOffsetPose(dead_pose_.get(), base_link2front, 0.0, 0.0);
   }
 
-  void resetWallPoses()
+  void resetWallPoses() const
   {
     stop_pose_ = boost::none;
     slow_pose_ = boost::none;
@@ -408,6 +431,17 @@ protected:
     }
   }
 
+  void setObjectsOfInterestData(
+    const geometry_msgs::msg::Pose & obj_pose,
+    const autoware_auto_perception_msgs::msg::Shape & obj_shape, const ColorName & color_name)
+  {
+    for (const auto & [module_name, ptr] : objects_of_interest_marker_interface_ptr_map_) {
+      if (ptr) {
+        ptr->insertObjectData(obj_pose, obj_shape, color_name);
+      }
+    }
+  }
+
   /**
    * @brief Return SUCCESS if plan is not needed or plan is successfully finished,
    *        FAILURE if plan has failed, RUNNING if plan is on going.
@@ -470,7 +504,7 @@ protected:
    * @brief Return true if the activation command is received from the RTC interface.
    *        If no RTC interface is registered, return true.
    */
-  bool isActivated()
+  bool isActivated() const
   {
     if (rtc_interface_ptr_map_.empty()) {
       return true;
@@ -561,6 +595,9 @@ protected:
   ModuleStatus current_state_{ModuleStatus::IDLE};
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
+
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
+    objects_of_interest_marker_interface_ptr_map_;
 
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
