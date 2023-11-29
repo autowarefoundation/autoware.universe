@@ -1703,7 +1703,7 @@ bool GoalPlannerModule::isCrossingPossible(
     if (neighboring_lane) {
       // Check if the neighboring lane is in the end_lane_sequence
       end_it =
-        std::find(end_lane_sequence.rbegin(), end_lane_sequence.rend(), neighboring_lane.get());
+        std::find(end_lane_sequence.rbegin(), end_lane_sequence.rend(), neighboring_lane.value());
       if (end_it != end_lane_sequence.rend()) {
         return true;
       }

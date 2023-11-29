@@ -356,7 +356,7 @@ bool setGoal(
     if (!min_dist_out_of_circle_index_opt) {
       return false;
     }
-    const size_t min_dist_out_of_circle_index = min_dist_out_of_circle_index_opt.get();
+    const size_t min_dist_out_of_circle_index = min_dist_out_of_circle_index_opt.value();
 
     // create output points
     output_ptr->points.reserve(output_ptr->points.size() + min_dist_out_of_circle_index + 3);
@@ -935,23 +935,23 @@ std::optional<double> getSignedDistanceFromBoundary(
   }
   // If only one of them found the closest bound, return the found lateral distance.
   if (!rear_lateral_distance_with_idx) {
-    return front_lateral_distance_with_idx.get().first;
+    return front_lateral_distance_with_idx.value().first;
   } else if (!front_lateral_distance_with_idx) {
-    return rear_lateral_distance_with_idx.get().first;
+    return rear_lateral_distance_with_idx.value().first;
   }
   // If both corners found their closest bound, return the maximum (for left side) or the minimum
   // (for right side) lateral distance.
-  double lateral_distance =
-    left_side
-      ? std::max(
-          rear_lateral_distance_with_idx.get().first, front_lateral_distance_with_idx.get().first)
-      : std::min(
-          rear_lateral_distance_with_idx.get().first, front_lateral_distance_with_idx.get().first);
+  double lateral_distance = left_side ? std::max(
+                                          rear_lateral_distance_with_idx.value().first,
+                                          front_lateral_distance_with_idx.value().first)
+                                      : std::min(
+                                          rear_lateral_distance_with_idx.value().first,
+                                          front_lateral_distance_with_idx.value().first);
 
   // Iterate through all segments between the segments closest to the rear and front corners.
   // Update the lateral distance in case any of these inner segments are closer to the vehicle.
-  for (size_t i = rear_lateral_distance_with_idx.get().second + 1;
-       i < front_lateral_distance_with_idx.get().second; i++) {
+  for (size_t i = rear_lateral_distance_with_idx.value().second + 1;
+       i < front_lateral_distance_with_idx.value().second; i++) {
     Pose bound_pose;
     bound_pose.position = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i]);
     bound_pose.orientation = vehicle_pose.orientation;

@@ -354,7 +354,7 @@ size_t findNearestSegmentIndex(
   const auto nearest_idx =
     motion_utils::findNearestSegmentIndex(points, pose, dist_threshold, yaw_threshold);
   if (nearest_idx) {
-    return nearest_idx.get();
+    return nearest_idx.value();
   }
 
   return motion_utils::findNearestSegmentIndex(points, pose.position);

@@ -88,7 +88,7 @@ geometry_msgs::msg::Point calcLongitudinalOffsetStartPoint(
   const auto offset_point =
     motion_utils::calcLongitudinalOffsetPoint(points, nearest_segment_idx, offset_length + offset);
 
-  return offset_point ? offset_point.get() : points.at(nearest_segment_idx);
+  return offset_point ? offset_point.value() : points.at(nearest_segment_idx);
 }
 
 geometry_msgs::msg::Point calcLongitudinalOffsetGoalPoint(
@@ -100,7 +100,7 @@ geometry_msgs::msg::Point calcLongitudinalOffsetGoalPoint(
   const auto offset_point =
     motion_utils::calcLongitudinalOffsetPoint(points, nearest_segment_idx, offset_length + offset);
 
-  return offset_point ? offset_point.get() : points.at(nearest_segment_idx + 1);
+  return offset_point ? offset_point.value() : points.at(nearest_segment_idx + 1);
 }
 }  // namespace
 
@@ -444,7 +444,7 @@ std::vector<PolygonPoint> getPolygonPointsInsideBounds(
     const auto start_point_on_bound = motion_utils::calcLongitudinalOffsetPoint(
       bound, start_point.bound_seg_idx, start_point.lon_dist_to_segment);
     if (start_point_on_bound) {
-      start_point.point = start_point_on_bound.get();
+      start_point.point = start_point_on_bound.value();
       valid_inside_polygon.insert(valid_inside_polygon.begin(), start_point);
     }
   }
@@ -453,7 +453,7 @@ std::vector<PolygonPoint> getPolygonPointsInsideBounds(
     const auto end_point_on_bound = motion_utils::calcLongitudinalOffsetPoint(
       bound, end_point.bound_seg_idx, end_point.lon_dist_to_segment);
     if (end_point_on_bound) {
-      end_point.point = end_point_on_bound.get();
+      end_point.point = end_point_on_bound.value();
       valid_inside_polygon.insert(valid_inside_polygon.end(), end_point);
     }
   }
@@ -1492,7 +1492,7 @@ void makeBoundLongitudinallyMonotonic(
       }
 
       if (i + 1 == path_points.size()) {
-        for (size_t j = intersect_idx.get(); j < bound_with_pose.size(); j++) {
+        for (size_t j = intersect_idx.value(); j < bound_with_pose.size(); j++) {
           if (j + 1 == bound_with_pose.size()) {
             const auto yaw =
               calcAzimuthAngle(bound_with_pose.at(j - 1).position, bound_with_pose.at(j).position);
@@ -1504,14 +1504,14 @@ void makeBoundLongitudinallyMonotonic(
           }
         }
       } else {
-        for (size_t j = intersect_idx.get() + 1; j < bound_with_pose.size(); j++) {
+        for (size_t j = intersect_idx.value() + 1; j < bound_with_pose.size(); j++) {
           set_orientation(ret, j, getPose(path_points.at(i)).orientation);
         }
       }
 
       constexpr size_t OVERLAP_CHECK_NUM = 3;
       start_bound_idx =
-        intersect_idx.get() < OVERLAP_CHECK_NUM ? 0 : intersect_idx.get() - OVERLAP_CHECK_NUM;
+        intersect_idx.value() < OVERLAP_CHECK_NUM ? 0 : intersect_idx.value() - OVERLAP_CHECK_NUM;
     }
 
     return ret;

@@ -20,8 +20,6 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
-#include <boost/optional.hpp>
-
 #include <string>
 #include <utility>
 #include <vector>

@@ -284,7 +284,7 @@ public:
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(stop_pose_.get(), base_link2front, 0.0, 0.0);
+    return calcOffsetPose(stop_pose_.value(), base_link2front, 0.0, 0.0);
   }
 
   std::optional<Pose> getSlowPose() const
@@ -294,7 +294,7 @@ public:
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(slow_pose_.get(), base_link2front, 0.0, 0.0);
+    return calcOffsetPose(slow_pose_.value(), base_link2front, 0.0, 0.0);
   }
 
   std::optional<Pose> getDeadPose() const
@@ -304,7 +304,7 @@ public:
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(dead_pose_.get(), base_link2front, 0.0, 0.0);
+    return calcOffsetPose(dead_pose_.value(), base_link2front, 0.0, 0.0);
   }
 
   void resetWallPoses() const
@@ -538,9 +538,9 @@ protected:
     }
 
     StopFactor stop_factor;
-    stop_factor.stop_pose = stop_pose_.get();
+    stop_factor.stop_pose = stop_pose_.value();
     stop_factor.dist_to_stop_pose =
-      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), stop_pose_.get().position);
+      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), stop_pose_.value().position);
     stop_reason_.stop_factors.push_back(stop_factor);
   }
 
