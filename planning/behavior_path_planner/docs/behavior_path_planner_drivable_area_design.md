@@ -108,6 +108,7 @@ Note that we only expand right bound of the rightmost lane and left bound of the
 #### Dynamic Expansion
 
 The drivable area can also be expanded dynamically based on a minimum width calculated from the path curvature and the ego vehicle's properties.
+If static expansion is also enabled, the dynamic expansion will be done after the static expansion such that both expansions are applied.
 
 | Without dynamic expansion                                                  | With dynamic expansion                                                   |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -117,14 +118,14 @@ Next we detail the algorithm used to expand the drivable area bounds.
 
 ##### 1 Calculate and smooth the path curvature
 
-To avoid sudden changes of the expanded drivable area, we first try to reuse as much of the previous path and its calculated curvatures as possible.
+To avoid sudden changes of the dynamically expanded drivable area, we first try to reuse as much of the previous path and its calculated curvatures as possible.
 Previous path points and curvatures are reused up to the first previous path point that deviates from the new path by more than the `reuse_max_deviation` parameter.
 At this stage, the path is also resampled according to the `resampled_interval` and cropped according to the `max_arc_length`.
 With the resulting preprocessed path points and previous curvatures, curvatures of the new path points are calculated using the 3 points method and smoothed using a moving window average with window size `curvature_average_window`.
 
 ##### 2 For each path point, calculate the closest bound segment and the minimum drivable area width
 
-Each path point is projected on the left and right drivable area bounds to calculate its corresponding bound index, original distance from the bounds, and the projected point.
+Each path point is projected on the original left and right drivable area bounds to calculate its corresponding bound index, original distance from the bounds, and the projected point.
 Additionally, for each path point, the minimum drivable area width is calculated using the following equation:
 $$ W = \frac{a² + 2 al + 2kw + l² + w²}{2k + w}$$
 Where $W$ is the minimum drivable area width, $a$, is the front overhang of ego, $l$ is the wheelbase of ego, $w$ is the width of ego, and $k$ is the path curvature.
