@@ -32,34 +32,34 @@ namespace
 Eigen::SparseMatrix<double> makePMatrix(const int num_points)
 {
   std::vector<Eigen::Triplet<double>> triplet_vec;
-  const auto set_valueto_triplet_vec = [&](
-                                         const double row, const double colum, const double value) {
-    triplet_vec.push_back(Eigen::Triplet<double>(row, colum, value));
-    triplet_vec.push_back(Eigen::Triplet<double>(row + num_points, colum + num_points, value));
-  };
+  const auto assign_value_to_triplet_vec =
+    [&](const double row, const double colum, const double value) {
+      triplet_vec.push_back(Eigen::Triplet<double>(row, colum, value));
+      triplet_vec.push_back(Eigen::Triplet<double>(row + num_points, colum + num_points, value));
+    };
 
   for (int r = 0; r < num_points; ++r) {
     for (int c = 0; c < num_points; ++c) {
       if (r == c) {
         if (r == 0 || r == num_points - 1) {
-          set_valueto_triplet_vec(r, c, 1.0);
+          assign_value_to_triplet_vec(r, c, 1.0);
         } else if (r == 1 || r == num_points - 2) {
-          set_valueto_triplet_vec(r, c, 5.0);
+          assign_value_to_triplet_vec(r, c, 5.0);
         } else {
-          set_valueto_triplet_vec(r, c, 6.0);
+          assign_value_to_triplet_vec(r, c, 6.0);
         }
       } else if (std::abs(c - r) == 1) {
         if (r == 0 || r == num_points - 1) {
-          set_valueto_triplet_vec(r, c, -2.0);
+          assign_value_to_triplet_vec(r, c, -2.0);
         } else if (c == 0 || c == num_points - 1) {
-          set_valueto_triplet_vec(r, c, -2.0);
+          assign_value_to_triplet_vec(r, c, -2.0);
         } else {
-          set_valueto_triplet_vec(r, c, -4.0);
+          assign_value_to_triplet_vec(r, c, -4.0);
         }
       } else if (std::abs(c - r) == 2) {
-        set_valueto_triplet_vec(r, c, 1.0);
+        assign_value_to_triplet_vec(r, c, 1.0);
       } else {
-        set_valueto_triplet_vec(r, c, 0.0);
+        assign_value_to_triplet_vec(r, c, 0.0);
       }
     }
   }
