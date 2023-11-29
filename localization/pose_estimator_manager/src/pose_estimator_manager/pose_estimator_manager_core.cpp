@@ -49,6 +49,7 @@ PoseEstimatorManager::PoseEstimatorManager()
     parse_estimator_name_args(declare_parameter<std::vector<std::string>>("pose_sources")))
 {
   // Publisher
+  pub_diag_ = create_publisher<DiagnosticArray>("/diagnostics", 10);
   pub_debug_string_ = create_publisher<String>("~/debug/string", 10);
   pub_debug_marker_array_ = create_publisher<MarkerArray>("~/debug/marker_array", 10);
 
@@ -162,6 +163,27 @@ void PoseEstimatorManager::toggle_all(bool enabled)
   toggle_each(toggle_list);
 }
 
+void PoseEstimatorManager::publish_diagnostics()
+{
+  diagnostic_msgs::msg::DiagnosticStatus diag_status;
+  diag_status.name = "localization: " + std::string(this->get_name());
+  diag_status.hardware_id = this->get_name();
+
+  diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  diag_status.message = "Diagnostics is not implemented.";
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "Something important information";
+  key_value.value = "not implemented";
+  diag_status.values.push_back(key_value);
+
+  DiagnosticArray diag_msg;
+  diag_msg.header.stamp = this->now();
+  diag_msg.status.push_back(diag_status);
+
+  pub_diag_->publish(diag_msg);
+}
+
 void PoseEstimatorManager::on_timer()
 {
   auto now = rclcpp::Clock().now();
@@ -186,6 +208,7 @@ void PoseEstimatorManager::on_timer()
       get_logger(), "swtich_rule is not activated. Therefore, enable all pose_estimators");
     toggle_all(true);
   }
+  publish_diagnostics();
 }
 
 void PoseEstimatorManager::call_all_callback()

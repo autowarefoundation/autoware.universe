@@ -21,6 +21,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/set_bool.hpp>
@@ -43,6 +44,7 @@ public:
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
   PoseEstimatorManager();
 
 private:
@@ -52,7 +54,8 @@ private:
 
   // Timer callback
   rclcpp::TimerBase::SharedPtr timer_;
-  //
+  // Publishers
+  rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_diag_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_array_;
   rclcpp::Publisher<String>::SharedPtr pub_debug_string_;
   // For sub manager subscriber
@@ -76,6 +79,8 @@ private:
   void load_switch_rule();
 
   void call_all_callback();
+
+  void publish_diagnostics();
 
   // Timer callback
   void on_timer();

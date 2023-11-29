@@ -13,6 +13,7 @@
 
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>libgoogle-glog-dev</depend>
