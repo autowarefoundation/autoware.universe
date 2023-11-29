@@ -138,29 +138,6 @@ geometry_msgs::msg::Twist calc_twist(
   return twist;
 }
 
-void get_nearest_timestamp_pose(
-  const std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
-    pose_cov_msg_ptr_array,
-  const rclcpp::Time & time_stamp,
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_old_pose_cov_msg_ptr,
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_new_pose_cov_msg_ptr)
-{
-  for (const auto & pose_cov_msg_ptr : pose_cov_msg_ptr_array) {
-    output_new_pose_cov_msg_ptr =
-      std::const_pointer_cast<geometry_msgs::msg::PoseWithCovarianceStamped>(pose_cov_msg_ptr);
-    const rclcpp::Time pose_time_stamp = output_new_pose_cov_msg_ptr->header.stamp;
-    if (pose_time_stamp > time_stamp) {
-      // TODO(Tier IV): refactor
-      const rclcpp::Time old_pose_time_stamp = output_old_pose_cov_msg_ptr->header.stamp;
-      if (old_pose_time_stamp.seconds() == 0.0) {
-        output_old_pose_cov_msg_ptr = output_new_pose_cov_msg_ptr;
-      }
-      break;
-    }
-    output_old_pose_cov_msg_ptr = output_new_pose_cov_msg_ptr;
-  }
-}
-
 geometry_msgs::msg::PoseStamped interpolate_pose(
   const geometry_msgs::msg::PoseStamped & pose_a, const geometry_msgs::msg::PoseStamped & pose_b,
   const rclcpp::Time & time_stamp)

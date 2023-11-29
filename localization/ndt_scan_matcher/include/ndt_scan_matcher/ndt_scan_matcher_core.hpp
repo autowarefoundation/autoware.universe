@@ -129,8 +129,6 @@ private:
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
 
-  std::optional<Eigen::Matrix4f> interpolate_regularization_pose(
-    const rclcpp::Time & sensor_ros_time);
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
   void publish_diagnostic();
@@ -204,9 +202,7 @@ private:
 
   // variables for regularization
   const bool regularization_enabled_;  // whether to use longitudinal regularization
-  std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
-    regularization_pose_msg_ptr_array_;  // queue for storing regularization base poses
-  std::mutex regularization_mutex_;      // mutex for regularization_pose_msg_ptr_array_
+  std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
 
   bool is_activated_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;

@@ -54,13 +54,6 @@ geometry_msgs::msg::Quaternion rpy_deg_to_quaternion(
 geometry_msgs::msg::Twist calc_twist(
   const geometry_msgs::msg::PoseStamped & pose_a, const geometry_msgs::msg::PoseStamped & pose_b);
 
-void get_nearest_timestamp_pose(
-  const std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
-    pose_cov_msg_ptr_array,
-  const rclcpp::Time & time_stamp,
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_old_pose_cov_msg_ptr,
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_new_pose_cov_msg_ptr);
-
 geometry_msgs::msg::PoseStamped interpolate_pose(
   const geometry_msgs::msg::PoseStamped & pose_a, const geometry_msgs::msg::PoseStamped & pose_b,
   const rclcpp::Time & time_stamp);

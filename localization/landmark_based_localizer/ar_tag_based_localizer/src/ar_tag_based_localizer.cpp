@@ -44,7 +44,6 @@
 
 #include "ar_tag_based_localizer.hpp"
 
-#include "localization_util/pose_array_interpolator.hpp"
 #include "localization_util/util_func.hpp"
 
 #include <Eigen/Core>
@@ -94,6 +93,8 @@ bool ArTagBasedLocalizer::setup()
     RCLCPP_ERROR_STREAM(this->get_logger(), "Invalid detection_mode: " << detection_mode);
     return false;
   }
+  ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+    this->get_logger(), ekf_time_tolerance_, ekf_position_tolerance_);
 
   /*
     Log parameter info
@@ -182,18 +183,13 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
   Pose self_pose;
   {
     // get self-position on map
-    std::unique_lock<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
-    if (self_pose_msg_ptr_array_.size() <= 1) {
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
+    const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
+      ekf_pose_buffer_->interpolate(sensor_stamp);
+    if (!interpolate_result) {
       return;
     }
-    PoseArrayInterpolator interpolator(
-      this, sensor_stamp, self_pose_msg_ptr_array_, ekf_time_tolerance_, ekf_position_tolerance_);
-    if (!interpolator.is_success()) {
-      return;
-    }
-    pop_old_pose(self_pose_msg_ptr_array_, sensor_stamp);
-    self_pose = interpolator.get_current_pose().pose.pose;
+    ekf_pose_buffer_->pop_old(sensor_stamp);
+    self_pose = interpolate_result.value().interpolated_pose.pose.pose;
   }
 
   // detect
@@ -305,19 +301,12 @@ void ArTagBasedLocalizer::cam_info_callback(const CameraInfo::ConstSharedPtr & m
 
 void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  // lock mutex for initial pose
-  std::lock_guard<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
-  // if rosbag restart, clear buffer
-  if (!self_pose_msg_ptr_array_.empty()) {
-    const builtin_interfaces::msg::Time & t_front = self_pose_msg_ptr_array_.front()->header.stamp;
-    const builtin_interfaces::msg::Time & t_msg = msg->header.stamp;
-    if (t_front.sec > t_msg.sec || (t_front.sec == t_msg.sec && t_front.nanosec > t_msg.nanosec)) {
-      self_pose_msg_ptr_array_.clear();
-    }
+  if (ekf_pose_buffer_->detect_time_jump_to_past(msg->header.stamp)) {
+    ekf_pose_buffer_->clear();
   }
 
   if (msg->header.frame_id == "map") {
-    self_pose_msg_ptr_array_.push_back(msg);
+    ekf_pose_buffer_->push_back(msg);
   } else {
     TransformStamped transform_self_pose_frame_to_map;
     try {
@@ -330,7 +319,7 @@ void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::Con
         tier4_autoware_utils::transformPose(msg->pose.pose, transform_self_pose_frame_to_map);
       // self_pose_on_map_ptr->pose.covariance;  // TODO(YamatoAndo)
       self_pose_on_map_ptr->header.stamp = msg->header.stamp;
-      self_pose_msg_ptr_array_.push_back(self_pose_on_map_ptr);
+      ekf_pose_buffer_->push_back(self_pose_on_map_ptr);
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(
         get_logger(), "cannot get map to %s transform. %s", msg->header.frame_id.c_str(),
