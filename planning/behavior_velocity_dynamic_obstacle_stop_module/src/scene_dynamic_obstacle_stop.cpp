@@ -77,7 +77,7 @@ std::optional<geometry_msgs::msg::Point> find_earliest_collision(
 {
   std::optional<geometry_msgs::msg::Point> earliest_collision;
   tier4_autoware_utils::LineString2d path_ls;
-  auto arc_length = 0.0;
+  auto arc_length = ego_data.longitudinal_offset_to_first_path_idx;
   for (auto i = ego_data.first_path_idx; i < ego_data.path.points.size(); ++i) {
     const auto & p = ego_data.path.points[i].point.pose.position;
     if (arc_length >= min_stop_distance) path_ls.emplace_back(p.x, p.y);
@@ -86,6 +86,8 @@ std::optional<geometry_msgs::msg::Point> find_earliest_collision(
       arc_length += tier4_autoware_utils::calcDistance2d(p, next_p);
     }
   }
+  if (!path_ls.empty() && boost::geometry::within(path_ls.front(), obstacle_forward_footprints))
+    return geometry_msgs::msg::Point().set__x(path_ls.front().x()).set__y(path_ls.front().y());
   // TODO(Maxime): if need better perf, check collisions for each segment of the path_ls
   tier4_autoware_utils::MultiPoint2d collision_points;
   boost::geometry::intersection(path_ls, obstacle_forward_footprints, collision_points);
@@ -111,22 +113,32 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
 
+  stopwatch.tic("preprocessing");
   EgoData ego_data;
   ego_data.pose = planner_data_->current_odometry->pose;
   ego_data.path.points = path->points;
   motion_utils::removeOverlapPoints(ego_data.path.points);
   ego_data.first_path_idx =
     motion_utils::findNearestSegmentIndex(ego_data.path.points, ego_data.pose.position);
+  ego_data.longitudinal_offset_to_first_path_idx = motion_utils::calcLongitudinalOffsetToSegment(
+    ego_data.path.points, ego_data.first_path_idx, ego_data.pose.position);
   ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
   ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;
+  const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
 
+  stopwatch.tic("filter");
   const auto dynamic_obstacles =
     filter_predicted_objects(*planner_data_->predicted_objects, ego_data.path, params_);
+  const auto filter_duration_us = stopwatch.toc("filter");
+  stopwatch.tic("footprints");
   const auto obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_);
+  const auto footprints_duration_us = stopwatch.toc("footprints");
   const auto min_stop_distance =
     calculate_min_stop_distance(ego_data) + params_.stop_distance_buffer;
+  stopwatch.tic("collisions");
   const auto collision =
     find_earliest_collision(ego_data, min_stop_distance, obstacle_forward_footprints, debug_data_);
+  const auto collisions_duration_us = stopwatch.toc("collisions");
   if (collision) {
     const auto stop_pose = motion_utils::calcLongitudinalOffsetPose(
       ego_data.path.points, *collision,
@@ -138,7 +150,13 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   }
 
   const auto total_time_us = stopwatch.toc();
-  RCLCPP_DEBUG(logger_, "Total time = %2.2fus\n", total_time_us);
+  // TODO(Maxime): set to DEBUG
+  RCLCPP_WARN(
+    logger_,
+    "Total time = %2.2fus\n\tpreprocessing = %2.2fus\n\tfilter = %2.2fus\n\tfootprints = "
+    "%2.2fus\n\tcollisions = %2.2fus\n",
+    total_time_us, preprocessing_duration_us, filter_duration_us, footprints_duration_us,
+    collisions_duration_us);
   debug_data_.dynamic_obstacles = dynamic_obstacles;
   debug_data_.obstacle_footprints = obstacle_forward_footprints;
   return true;

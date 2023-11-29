@@ -42,8 +42,9 @@ struct EgoData
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId path{};
   size_t first_path_idx{};
-  double velocity{};   // [m/s]
-  double max_decel{};  // [m/s²]
+  double velocity{};                             // [m/s]
+  double max_decel{};                            // [m/s²]
+  double longitudinal_offset_to_first_path_idx;  // [m]
   geometry_msgs::msg::Pose pose;
 };
 
