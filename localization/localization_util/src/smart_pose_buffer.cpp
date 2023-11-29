@@ -101,13 +101,14 @@ void SmartPoseBuffer::clear()
   pose_buffer_.clear();
 }
 
-void SmartPoseBuffer::clear_if_time_jump_to_past(const rclcpp::Time & target_ros_time)
+bool SmartPoseBuffer::detect_time_jump_to_past(const rclcpp::Time & target_ros_time)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  const rclcpp::Time time_first = pose_buffer_.front()->header.stamp;
-  if (target_ros_time < time_first) {
-    pose_buffer_.clear();
+  if (pose_buffer_.empty()) {
+    return false;
   }
+  const rclcpp::Time time_first = pose_buffer_.front()->header.stamp;
+  return target_ros_time < time_first;
 }
 
 bool SmartPoseBuffer::validate_time_stamp_difference(

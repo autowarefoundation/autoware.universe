@@ -49,7 +49,7 @@ public:
 
   void clear();
 
-  void clear_if_time_jump_to_past(const rclcpp::Time & target_ros_time);
+  bool detect_time_jump_to_past(const rclcpp::Time & target_ros_time);
 
 private:
   rclcpp::Logger logger_;

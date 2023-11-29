@@ -378,7 +378,9 @@ void NDTScanMatcher::callback_initial_pose(
 {
   if (!is_activated_) return;
 
-  initial_pose_buffer_->clear_if_time_jump_to_past(initial_pose_msg_ptr->header.stamp);
+  if (initial_pose_buffer_->detect_time_jump_to_past(initial_pose_msg_ptr->header.stamp)) {
+    initial_pose_buffer_->clear();
+  }
 
   if (initial_pose_msg_ptr->header.frame_id == map_frame_) {
     initial_pose_buffer_->push_back(initial_pose_msg_ptr);
