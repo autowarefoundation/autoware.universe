@@ -34,6 +34,7 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/utils/path_safety_checker/safety_check.cpp
   src/utils/path_safety_checker/objects_filtering.cpp
   src/utils/start_goal_planner_common/utils.cpp
+  src/utils/avoidance/shift_line_generator.cpp
   src/utils/avoidance/utils.cpp
   src/utils/lane_change/utils.cpp
   src/utils/side_shift/util.cpp
@@ -48,6 +49,7 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/utils/start_planner/geometric_pull_out.cpp
   src/utils/start_planner/freespace_pull_out.cpp
   src/utils/path_shifter/path_shifter.cpp
+  src/utils/drivable_area_expansion/static_drivable_area.cpp
   src/utils/drivable_area_expansion/drivable_area_expansion.cpp
   src/utils/drivable_area_expansion/map_utils.cpp
   src/utils/drivable_area_expansion/footprints.cpp
