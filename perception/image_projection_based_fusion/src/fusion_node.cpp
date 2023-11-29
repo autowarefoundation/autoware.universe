@@ -96,7 +96,7 @@ FusionNode<Msg, ObjType>::FusionNode(
 
   // sub rois
   rois_subs_.resize(rois_number_);
-  roi_stdmap_.resize(rois_number_);
+  cached_roi_msgs_.resize(rois_number_);
   is_fused_.resize(rois_number_, false);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     std::function<void(const DetectedObjectsWithFeature::ConstSharedPtr msg)> roi_callback =
@@ -183,7 +183,7 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
     }
   }
 
-  std::lock_guard<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_cached_msgs_);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double, std::milli>(timeout_ms_));
   try {
@@ -211,12 +211,12 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
       continue;
     }
 
-    if ((roi_stdmap_.at(roi_i)).size() > 0) {
+    if ((cached_roi_msgs_.at(roi_i)).size() > 0) {
       int64_t min_interval = 1e9;
       int64_t matched_stamp = -1;
       std::list<int64_t> outdate_stamps;
 
-      for (const auto & [k, v] : roi_stdmap_.at(roi_i)) {
+      for (const auto & [k, v] : cached_roi_msgs_.at(roi_i)) {
         int64_t new_stamp = timestamp_nsec + input_offset_ms_.at(roi_i) * (int64_t)1e6;
         int64_t interval = abs(int64_t(k) - new_stamp);
 
@@ -230,7 +230,7 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
 
       // remove outdated stamps
       for (auto stamp : outdate_stamps) {
-        (roi_stdmap_.at(roi_i)).erase(stamp);
+        (cached_roi_msgs_.at(roi_i)).erase(stamp);
       }
 
       // fuseOnSingle
@@ -240,9 +240,9 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
         }
 
         fuseOnSingleImage(
-          *input_msg, roi_i, *((roi_stdmap_.at(roi_i))[matched_stamp]), camera_info_map_.at(roi_i),
+          *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]), camera_info_map_.at(roi_i),
           *output_msg);
-        (roi_stdmap_.at(roi_i)).erase(matched_stamp);
+        (cached_roi_msgs_.at(roi_i)).erase(matched_stamp);
         is_fused_.at(roi_i) = true;
 
         // add timestamp interval for debug
@@ -302,7 +302,7 @@ void FusionNode<Msg, Obj>::roiCallback(
       if (camera_info_map_.find(roi_i) == camera_info_map_.end()) {
         RCLCPP_WARN_THROTTLE(
           this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
-        (roi_stdmap_.at(roi_i))[timestamp_nsec] = input_roi_msg;
+        (cached_roi_msgs_.at(roi_i))[timestamp_nsec] = input_roi_msg;
         return;
       }
       if (debugger_) {
@@ -346,7 +346,7 @@ void FusionNode<Msg, Obj>::roiCallback(
     }
   }
   // store roi msg if not matched
-  (roi_stdmap_.at(roi_i))[timestamp_nsec] = input_roi_msg;
+  (cached_roi_msgs_.at(roi_i))[timestamp_nsec] = input_roi_msg;
 }
 
 template <class Msg, class Obj>
@@ -360,7 +360,7 @@ void FusionNode<Msg, Obj>::timer_callback()
 {
   using std::chrono_literals::operator""ms;
   timer_->cancel();
-  if (mutex_.try_lock()) {
+  if (mutex_cached_msgs_.try_lock()) {
     // timeout, postprocess cached msg
     if (cached_msg_.second != nullptr) {
       stop_watch_ptr_->toc("processing_time", true);
@@ -382,7 +382,7 @@ void FusionNode<Msg, Obj>::timer_callback()
     std::fill(is_fused_.begin(), is_fused_.end(), false);
     cached_msg_.second = nullptr;
 
-    mutex_.unlock();
+    mutex_cached_msgs_.unlock();
   } else {
     try {
       std::chrono::nanoseconds period = 10ms;
