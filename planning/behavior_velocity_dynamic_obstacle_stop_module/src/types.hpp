@@ -21,6 +21,7 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
+#include <optional>
 #include <vector>
 
 namespace behavior_velocity_planner::dynamic_obstacle_stop
@@ -53,11 +54,13 @@ struct DebugData
   tier4_autoware_utils::MultiPolygon2d obstacle_footprints{};
   size_t prev_dynamic_obstacles_nb{};
   tier4_autoware_utils::MultiPoint2d collisions{};
+  std::optional<geometry_msgs::msg::Pose> stop_pose{};
   void reset_data()
   {
     dynamic_obstacles.clear();
     obstacle_footprints.clear();
     collisions.clear();
+    stop_pose.reset();
   }
 };
 

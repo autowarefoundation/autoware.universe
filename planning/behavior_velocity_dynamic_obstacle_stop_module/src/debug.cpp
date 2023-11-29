@@ -96,8 +96,8 @@ std::vector<visualization_msgs::msg::Marker> make_collision_markers(
   marker.id = 0;
   marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
   marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 1.0, 4.0);
-  marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 1.0);
+  marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 1.0, 10.0);
+  marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0);
   auto collision = geometry_msgs::msg::Point().set__z(z);
   for (const auto & p : collisions) {
     collision.x = p.x();

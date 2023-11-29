@@ -123,11 +123,18 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   const auto dynamic_obstacles =
     filter_predicted_objects(*planner_data_->predicted_objects, ego_data.path, params_);
   const auto obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_);
-  const auto min_stop_distance = calculate_min_stop_distance(ego_data);
+  const auto min_stop_distance =
+    calculate_min_stop_distance(ego_data) + params_.stop_distance_buffer;
   const auto collision =
     find_earliest_collision(ego_data, min_stop_distance, obstacle_forward_footprints, debug_data_);
   if (collision) {
-    // insert_stop_point(collision)
+    const auto stop_pose = motion_utils::calcLongitudinalOffsetPose(
+      ego_data.path.points, *collision,
+      -params_.stop_distance_buffer - params_.longitudinal_offset);
+    if (stop_pose) {
+      debug_data_.stop_pose = *stop_pose;
+      motion_utils::insertStopPoint(*stop_pose, 0.0, path->points);
+    }
   }
 
   const auto total_time_us = stopwatch.toc();
@@ -173,16 +180,13 @@ MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
 
 motion_utils::VirtualWalls DynamicObstacleStopModule::createVirtualWalls()
 {
-  motion_utils::VirtualWalls virtual_walls;
-  motion_utils::VirtualWall wall;
-  wall.text = "dynamic_obstacle_stop";
-  wall.longitudinal_offset = params_.longitudinal_offset;
-  wall.style = motion_utils::VirtualWallType::stop;
-  // for (const auto & stop : debug_data_.stops) {
-  //   wall.pose = stop
-  //   virtual_walls.push_back(wall);
-  // }
-  return virtual_walls;
+  if (!debug_data_.stop_pose) return {};
+  motion_utils::VirtualWall virtual_wall;
+  virtual_wall.text = "dynamic_obstacle_stop";
+  virtual_wall.longitudinal_offset = params_.longitudinal_offset;
+  virtual_wall.style = motion_utils::VirtualWallType::stop;
+  virtual_wall.pose = *debug_data_.stop_pose;
+  return {virtual_wall};
 }
 
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop
