@@ -18,6 +18,7 @@
 
 #include <any>
 #include <functional>
+#include <optional>
 #include <vector>
 
 namespace behavior_path_planner
@@ -27,6 +28,8 @@ using geometry_msgs::msg::Pose;
 struct SoftConstraintsInputs
 {
   Pose goal_pose;
+  Pose ego_pose;
+  std::optional<sampler_common::Path> prev_path;
 };
 
 using SoftConstraintsFunctionVector = std::vector<std::function<double(

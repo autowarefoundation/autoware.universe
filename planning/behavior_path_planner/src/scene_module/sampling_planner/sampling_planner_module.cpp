@@ -53,6 +53,18 @@ SamplingPlannerModule::SamplingPlannerModule(
       return path.constraint_results.collision && path.constraint_results.drivable_area;
     });
 
+  hard_constraints_.emplace_back(
+    [](
+      sampler_common::Path & path, const sampler_common::Constraints & constraints,
+      [[maybe_unused]] const MultiPoint2d & footprint) -> bool {
+      const bool curvatures_satisfied =
+        std::all_of(path.curvatures.begin(), path.curvatures.end(), [&](const auto & v) -> bool {
+          return (v > constraints.hard.min_curvature) && (v < constraints.hard.max_curvature);
+        });
+      path.constraint_results.curvature = curvatures_satisfied;
+      return curvatures_satisfied;
+    });
+
   // soft_constraints_.emplace_back(
   //   [](
   //     sampler_common::Path & path, const sampler_common::Constraints & constraints,
@@ -66,15 +78,20 @@ SamplingPlannerModule::SamplingPlannerModule(
   // TODO Daniel: Think of methods to prevent chattering
   //  Distance to goal
   soft_constraints_.emplace_back(
-    [](
+    [&](
       sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.points.empty()) return 0.0;
       const auto & goal_pose = input_data.goal_pose;
+      const auto & ego_pose = input_data.ego_pose;
       const auto & last_point = path.points.back();
       const double distance =
         std::hypot(goal_pose.position.x - last_point.x(), goal_pose.position.y - last_point.y());
-      return 100.0 * distance;
+      const double distance_ego_to_pose = std::hypot(
+        goal_pose.position.x - ego_pose.position.x, goal_pose.position.y - ego_pose.position.y);
+      const double epsilon = 0.001;
+      return (distance_ego_to_pose > epsilon) ? distance / distance_ego_to_pose : 0.0;
+      // return 100.0 * distance;
     });
 
   // Curvature cost
@@ -87,8 +104,12 @@ SamplingPlannerModule::SamplingPlannerModule(
       for (const auto curvature : path.curvatures) {
         curvature_sum += std::abs(curvature);
       }
-      return constraints.soft.curvature_weight * curvature_sum /
-             static_cast<double>(path.curvatures.size());
+      const auto curvature_average = curvature_sum / static_cast<double>(path.curvatures.size());
+      const auto max_curvature =
+        (curvature_average > 0.0) ? constraints.hard.max_curvature : constraints.hard.min_curvature;
+      return curvature_average / max_curvature;
+      // return constraints.soft.curvature_weight * curvature_sum /
+      //        static_cast<double>(path.curvatures.size());
     });
 }
 
@@ -140,6 +161,7 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
 
   PathWithLaneId path;
   const auto header = planner_data_->route_handler->getRouteHeader();
+  const auto reference_path_ptr = getPreviousModuleOutput().reference_path;
 
   for (size_t i = 0; i < frenet_path.points.size(); ++i) {
     const auto & frenet_path_point_position = frenet_path.points.at(i);
@@ -168,8 +190,16 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
     if (!is_in_lanes && i > 0) {
       point.lane_ids = path.points.at(i - 1).lane_ids;
     }
+    if (reference_path_ptr) {
+      const auto idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+        reference_path_ptr->points, point.point.pose);
+      const auto & closest_point = reference_path_ptr->points[idx];
+      point.point.longitudinal_velocity_mps = closest_point.point.longitudinal_velocity_mps;
+      point.point.lateral_velocity_mps = closest_point.point.lateral_velocity_mps;
 
-    point.point.longitudinal_velocity_mps = velocity;
+    } else {
+      point.point.longitudinal_velocity_mps = velocity;
+    }
     path.points.push_back(point);
   }
   return path;
@@ -208,21 +238,21 @@ void SamplingPlannerModule::prepareConstraints(
 BehaviorModuleOutput SamplingPlannerModule::plan()
 {
   // const auto refPath = getPreviousModuleOutput().reference_path;
-  const auto path_ptr = getPreviousModuleOutput().reference_path;
-  if (path_ptr->points.empty()) {
+  const auto reference_path_ptr = getPreviousModuleOutput().reference_path;
+  if (reference_path_ptr->points.empty()) {
     return {};
   }
-  // const auto ego_closest_path_index = planner_data_->findEgoIndex(path_ptr->points);
+  // const auto ego_closest_path_index = planner_data_->findEgoIndex(reference_path_ptr->points);
   // RCLCPP_INFO(getLogger(), "ego_closest_path_index %ld", ego_closest_path_index);
   // resetPathCandidate();
   // resetPathReference();
-  // [[maybe_unused]] const auto path = toPath(*path_ptr);
+  // [[maybe_unused]] const auto path = toPath(*reference_path_ptr);
   auto reference_spline = [&]() -> sampler_common::transform::Spline2D {
     std::vector<double> x;
     std::vector<double> y;
-    x.reserve(path_ptr->points.size());
-    y.reserve(path_ptr->points.size());
-    for (const auto & point : path_ptr->points) {
+    x.reserve(reference_path_ptr->points.size());
+    y.reserve(reference_path_ptr->points.size());
+    for (const auto & point : reference_path_ptr->points) {
       x.push_back(point.point.pose.position.x);
       y.push_back(point.point.pose.position.y);
     }
@@ -281,8 +311,9 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   }
 
   SoftConstraintsInputs soft_constraints_input;
-  std::vector<double> soft_constraints_results;
   soft_constraints_input.goal_pose = planner_data_->route_handler->getGoalPose();
+  soft_constraints_input.ego_pose = pose;
+  std::vector<double> soft_constraints_results;
 
   for (auto & path : frenet_paths) {
     std::vector<bool> hard_constraints_results;

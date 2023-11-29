@@ -24,6 +24,7 @@
 #include "bezier_sampler/bezier_sampling.hpp"
 #include "frenet_planner/frenet_planner.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sampler_common/constraints/footprint.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
@@ -98,7 +99,7 @@ public:
       user_params_->lateral_deviation_weight;
     internal_params_->constraints.soft.length_weight = user_params_->length_weight;
     internal_params_->constraints.soft.curvature_weight = user_params_->curvature_weight;
-    internal_params_->constraints.ego_footprint = vehicle_info_.createFootprint(0.25);
+    internal_params_->constraints.ego_footprint = vehicle_info_.createFootprint(0.75);
     internal_params_->constraints.ego_width = vehicle_info_.vehicle_width_m;
     internal_params_->constraints.ego_length = vehicle_info_.vehicle_length_m;
     // Sampling
