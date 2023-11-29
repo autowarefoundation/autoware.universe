@@ -30,21 +30,16 @@ using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 bool compare_pose(
   const PoseWithCovarianceStamped & pose_a, const PoseWithCovarianceStamped & pose_b)
 {
-  if (
-    pose_a.header.stamp != pose_b.header.stamp ||
-    pose_a.header.frame_id != pose_b.header.frame_id ||
-    pose_a.pose.covariance != pose_b.pose.covariance ||
-    pose_a.pose.pose.position.x != pose_b.pose.pose.position.x ||
-    pose_a.pose.pose.position.y != pose_b.pose.pose.position.y ||
-    pose_a.pose.pose.position.z != pose_b.pose.pose.position.z ||
-    pose_a.pose.pose.orientation.x != pose_b.pose.pose.orientation.x ||
-    pose_a.pose.pose.orientation.y != pose_b.pose.pose.orientation.y ||
-    pose_a.pose.pose.orientation.z != pose_b.pose.pose.orientation.z ||
-    pose_a.pose.pose.orientation.w != pose_b.pose.pose.orientation.w) {
-    return false;
-  } else {
-    return true;
-  }
+  return pose_a.header.stamp == pose_b.header.stamp &&
+         pose_a.header.frame_id == pose_b.header.frame_id &&
+         pose_a.pose.covariance == pose_b.pose.covariance &&
+         pose_a.pose.pose.position.x == pose_b.pose.pose.position.x &&
+         pose_a.pose.pose.position.y == pose_b.pose.pose.position.y &&
+         pose_a.pose.pose.position.z == pose_b.pose.pose.position.z &&
+         pose_a.pose.pose.orientation.x == pose_b.pose.pose.orientation.x &&
+         pose_a.pose.pose.orientation.y == pose_b.pose.pose.orientation.y &&
+         pose_a.pose.pose.orientation.z == pose_b.pose.pose.orientation.z &&
+         pose_a.pose.pose.orientation.w == pose_b.pose.pose.orientation.w;
 }
 
 class TestSmartPoseBuffer : public ::testing::Test
@@ -86,7 +81,7 @@ TEST_F(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
   builtin_interfaces::msg::Time target_ros_time_msg;
   target_ros_time_msg.sec = 15;
   target_ros_time_msg.nanosec = static_cast<uint32_t>(0);
-  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
+  const std::optional<SmartPoseBuffer::InterpolateResult> & interpolate_result =
     smart_pose_buffer.interpolate(target_ros_time_msg);
   ASSERT_TRUE(interpolate_result.has_value());
   const SmartPoseBuffer::InterpolateResult result = interpolate_result.value();

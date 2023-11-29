@@ -15,7 +15,7 @@
 #include "localization_util/smart_pose_buffer.hpp"
 
 SmartPoseBuffer::SmartPoseBuffer(
-  rclcpp::Logger logger, const double & pose_timeout_sec,
+  const rclcpp::Logger & logger, const double & pose_timeout_sec,
   const double & pose_distance_tolerance_meters)
 : logger_(logger),
   pose_timeout_sec_(pose_timeout_sec),

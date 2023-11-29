@@ -78,7 +78,7 @@ T transform(const T & input, const geometry_msgs::msg::TransformStamped & transf
 double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2);
 
 void output_pose_with_cov_to_log(
-  const rclcpp::Logger logger, const std::string & prefix,
+  const rclcpp::Logger & logger, const std::string & prefix,
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov);
 
 #endif  // LOCALIZATION_UTIL__UTIL_FUNC_HPP_

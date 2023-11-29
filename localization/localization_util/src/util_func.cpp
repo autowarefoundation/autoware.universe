@@ -230,7 +230,7 @@ double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Poin
 }
 
 void output_pose_with_cov_to_log(
-  const rclcpp::Logger logger, const std::string & prefix,
+  const rclcpp::Logger & logger, const std::string & prefix,
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov)
 {
   const Eigen::Map<const RowMatrixXd> covariance =
