@@ -82,6 +82,28 @@ geometry_msgs::msg::Vector3 get_rpy(const geometry_msgs::msg::PoseWithCovariance
   return get_rpy(pose.pose.pose);
 }
 
+geometry_msgs::msg::Quaternion rpy_rad_to_quaternion(
+  const double r_rad, const double p_rad, const double y_rad)
+{
+  tf2::Quaternion q;
+  q.setRPY(r_rad, p_rad, y_rad);
+  geometry_msgs::msg::Quaternion quaternion_msg;
+  quaternion_msg.x = q.x();
+  quaternion_msg.y = q.y();
+  quaternion_msg.z = q.z();
+  quaternion_msg.w = q.w();
+  return quaternion_msg;
+}
+
+geometry_msgs::msg::Quaternion rpy_deg_to_quaternion(
+  const double r_deg, const double p_deg, const double y_deg)
+{
+  const double r_rad = r_deg * M_PI / 180.0;
+  const double p_rad = p_deg * M_PI / 180.0;
+  const double y_rad = y_deg * M_PI / 180.0;
+  return rpy_rad_to_quaternion(r_rad, p_rad, y_rad);
+}
+
 geometry_msgs::msg::Twist calc_twist(
   const geometry_msgs::msg::PoseStamped & pose_a, const geometry_msgs::msg::PoseStamped & pose_b)
 {

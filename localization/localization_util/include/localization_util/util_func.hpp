@@ -46,6 +46,11 @@ geometry_msgs::msg::Vector3 get_rpy(const geometry_msgs::msg::Pose & pose);
 geometry_msgs::msg::Vector3 get_rpy(const geometry_msgs::msg::PoseStamped & pose);
 geometry_msgs::msg::Vector3 get_rpy(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
+geometry_msgs::msg::Quaternion rpy_rad_to_quaternion(
+  const double r_rad, const double p_rad, const double y_rad);
+geometry_msgs::msg::Quaternion rpy_deg_to_quaternion(
+  const double r_deg, const double p_deg, const double y_deg);
+
 geometry_msgs::msg::Twist calc_twist(
   const geometry_msgs::msg::PoseStamped & pose_a, const geometry_msgs::msg::PoseStamped & pose_b);
 
