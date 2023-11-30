@@ -156,7 +156,7 @@ SamplingPlannerData SamplingPlannerModule::createPlannerData(
 
 PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
   const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
-  const double velocity)
+  const double path_z)
 {
   auto quaternion_from_rpy = [](double roll, double pitch, double yaw) -> tf2::Quaternion {
     tf2::Quaternion quaternion_tf2;
@@ -177,7 +177,7 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
     PathPointWithLaneId point{};
     point.point.pose.position.x = frenet_path_point_position.x();
     point.point.pose.position.y = frenet_path_point_position.y();
-    point.point.pose.position.z = 0.0;
+    point.point.pose.position.z = path_z;
 
     auto yaw_as_quaternion = quaternion_from_rpy(0.0, 0.0, frenet_path_point_yaw);
     point.point.pose.orientation.w = yaw_as_quaternion.getW();
@@ -203,9 +203,6 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
       const auto & closest_point = reference_path_ptr->points[idx];
       point.point.longitudinal_velocity_mps = closest_point.point.longitudinal_velocity_mps;
       point.point.lateral_velocity_mps = closest_point.point.lateral_velocity_mps;
-
-    } else {
-      point.point.longitudinal_velocity_mps = velocity;
     }
     path.points.push_back(point);
   }
@@ -244,16 +241,10 @@ void SamplingPlannerModule::prepareConstraints(
 
 BehaviorModuleOutput SamplingPlannerModule::plan()
 {
-  // const auto refPath = getPreviousModuleOutput().reference_path;
   const auto reference_path_ptr = getPreviousModuleOutput().reference_path;
   if (reference_path_ptr->points.empty()) {
     return {};
   }
-  // const auto ego_closest_path_index = planner_data_->findEgoIndex(reference_path_ptr->points);
-  // RCLCPP_INFO(getLogger(), "ego_closest_path_index %ld", ego_closest_path_index);
-  // resetPathCandidate();
-  // resetPathReference();
-  // [[maybe_unused]] const auto path = toPath(*reference_path_ptr);
   auto reference_spline = [&]() -> sampler_common::transform::Spline2D {
     std::vector<double> x;
     std::vector<double> y;
@@ -266,52 +257,43 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     return {x, y};
   }();
 
-  const auto & pose = planner_data_->self_odometry->pose.pose;
-  // lanelet::ConstLanelet closest_lanelet;
-  // planner_data_->route_handler->getClosestLaneletWithinRoute(pose, &closest_lanelet);
-
-  sampler_common::State initial_state =
-    behavior_path_planner::getInitialState(pose, reference_spline);
-  // Point2d initial_state_pose{pose.position.x, pose.position.y};
-  // const auto rpy =
-  //   tier4_autoware_utils::getRPY(planner_data_->self_odometry->pose.pose.orientation);
-  // initial_state.pose = initial_state_pose;
-  // initial_state.frenet = reference_spline.frenet({pose.position.x, pose.position.y});
-  // initial_state.heading = rpy.z;
-
-  frenet_planner::SamplingParameters sampling_parameters =
-    prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
-
-  // const auto drivable_lanes = getPreviousModuleOutput().drivable_area_info.drivable_lanes;
-
-  const auto & prev_module_path = getPreviousModuleOutput().path;
-  const auto & current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+  frenet_planner::FrenetState frenet_initial_state;
+  frenet_planner::SamplingParameters sampling_parameters;
+  {
+    const auto & pose = planner_data_->self_odometry->pose.pose;
+    sampler_common::State initial_state =
+      behavior_path_planner::getInitialState(pose, reference_spline);
+    sampling_parameters =
+      prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
+    frenet_initial_state.position = initial_state.frenet;
+  }
 
   std::vector<DrivableLanes> drivable_lanes{};
-  // expand drivable lanes
-  std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
-    drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
-  });
+  {
+    const auto & prev_module_path = getPreviousModuleOutput().path;
+    const auto & current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+    // expand drivable lanes
+    std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
+      drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
+    });
+  }
 
-  const auto left_bound =
-    (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, true));
-  const auto right_bound =
-    (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, false));
+  {
+    const auto left_bound =
+      (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, true));
+    const auto right_bound =
+      (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, false));
 
-  const auto sampling_planner_data =
-    createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
+    const auto sampling_planner_data =
+      createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
 
-  prepareConstraints(
-    internal_params_->constraints, planner_data_->dynamic_object, sampling_planner_data.left_bound,
-    sampling_planner_data.right_bound);
-
-  frenet_planner::FrenetState frenet_initial_state;
-  frenet_initial_state.position = initial_state.frenet;
+    prepareConstraints(
+      internal_params_->constraints, planner_data_->dynamic_object,
+      sampling_planner_data.left_bound, sampling_planner_data.right_bound);
+  }
 
   auto frenet_paths =
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
-
-  debug_data_.footprints.clear();
 
   if (prev_sampling_path_) {
     const auto prev_path = prev_sampling_path_.value();
@@ -320,11 +302,12 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   SoftConstraintsInputs soft_constraints_input;
   soft_constraints_input.goal_pose = planner_data_->route_handler->getGoalPose();
-  soft_constraints_input.ego_pose = pose;
-  std::vector<double> soft_constraints_results;
+  soft_constraints_input.ego_pose = planner_data_->self_odometry->pose.pose;
 
+  debug_data_.footprints.clear();
   for (auto & path : frenet_paths) {
     std::vector<bool> hard_constraints_results;
+    std::vector<double> soft_constraints_results;
     const auto footprint =
       sampler_common::constraints::buildFootprintPoints(path, internal_params_->constraints);
     behavior_path_planner::evaluateHardConstraints(
@@ -334,9 +317,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     evaluateSoftConstraints(
       path, internal_params_->constraints, soft_constraints_, soft_constraints_input,
       soft_constraints_results);
-    // sampler_common::constraints::calculateCost(
-    //   path, internal_params_->constraints, reference_spline);
   }
+
   std::vector<sampler_common::Path> candidate_paths;
   const auto move_to_paths = [&candidate_paths](auto & paths_to_move) {
     candidate_paths.insert(
@@ -345,7 +327,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   };
 
   move_to_paths(frenet_paths);
-
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
   debug_data_.sampled_candidates = candidate_paths;
   debug_data_.obstacles = internal_params_->constraints.obstacle_polygons;
@@ -374,24 +355,20 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     return out;
   }
 
-  BehaviorModuleOutput out;
-  const double velocity = 1.5;
+  const auto best_path = frenet_paths[*selected_path_idx];
+  prev_sampling_path_ = best_path;
+
   const double max_length = *std::max_element(
     internal_params_->sampling.target_lengths.begin(),
     internal_params_->sampling.target_lengths.end());
   const auto road_lanes =
     utils::getExtendedCurrentLanes(planner_data_, max_length, max_length, false);
+  auto out_path = convertFrenetPathToPathWithLaneID(
+    best_path, road_lanes, soft_constraints_input.goal_pose.position.z);
 
-  const auto best_path = frenet_paths[*selected_path_idx];
-  prev_sampling_path_ = best_path;
-  auto out_path = convertFrenetPathToPathWithLaneID(best_path, road_lanes, velocity);
-  for (auto & p : out_path.points) {
-    p.point.pose.position.z = soft_constraints_input.goal_pose.position.z;
-  }
-
+  BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(out_path);
-  const auto p = getPreviousModuleOutput().reference_path;
-  out.reference_path = p;
+  out.reference_path = reference_path_ptr;
   out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
   extendOutputDrivableArea(out);
   return out;
