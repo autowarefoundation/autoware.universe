@@ -15,16 +15,10 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__SMOOTHER__SMOOTHER_BASE_HPP_
 #define MOTION_VELOCITY_SMOOTHER__SMOOTHER__SMOOTHER_BASE_HPP_
 
-#include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/resample.hpp"
-#include "motion_velocity_smoother/trajectory_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-
-#include "boost/optional.hpp"
 
 #include <limits>
 #include <vector>
@@ -33,7 +27,6 @@ namespace motion_velocity_smoother
 {
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
-using vehicle_info_util::VehicleInfoUtil;
 
 class SmootherBase
 {
@@ -71,17 +64,21 @@ public:
     const TrajectoryPoints & input, const double v0, const geometry_msgs::msg::Pose & current_pose,
     const double nearest_dist_threshold, const double nearest_yaw_threshold) const = 0;
 
-  virtual boost::optional<TrajectoryPoints> applyLateralAccelerationFilter(
+  virtual TrajectoryPoints applyLateralAccelerationFilter(
     const TrajectoryPoints & input, [[maybe_unused]] const double v0 = 0.0,
-    [[maybe_unused]] const double a0 = 0.0,
-    [[maybe_unused]] const bool enable_smooth_limit = false) const;
+    [[maybe_unused]] const double a0 = 0.0, [[maybe_unused]] const bool enable_smooth_limit = false,
+    const bool use_resampling = true, const double input_points_interval = 1.0) const;
 
-  boost::optional<TrajectoryPoints> applySteeringRateLimit(const TrajectoryPoints & input) const;
+  TrajectoryPoints applySteeringRateLimit(
+    const TrajectoryPoints & input, const bool use_resampling = true,
+    const double input_points_interval = 1.0) const;
 
   double getMaxAccel() const;
   double getMinDecel() const;
   double getMaxJerk() const;
   double getMinJerk() const;
+
+  void setWheelBase(const double wheel_base);
 
   void setParam(const BaseParam & param);
   BaseParam getBaseParam() const;

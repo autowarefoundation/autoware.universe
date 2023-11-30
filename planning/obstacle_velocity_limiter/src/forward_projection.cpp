@@ -47,10 +47,10 @@ segment_t forwardSimulatedSegment(
   return segment_t{from, to};
 }
 
-multilinestring_t bicycleProjectionLines(
+multi_linestring_t bicycleProjectionLines(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params)
 {
-  multilinestring_t lines;
+  multi_linestring_t lines;
   if (params.steering_angle_offset == 0.0)
     lines.push_back(bicycleProjectionLine(origin, params, params.steering_angle));
   else
@@ -77,7 +77,7 @@ linestring_t bicycleProjectionLine(
   return line;
 }
 
-polygon_t generateFootprint(const multilinestring_t & lines, const double lateral_offset)
+polygon_t generateFootprint(const multi_linestring_t & lines, const double lateral_offset)
 {
   polygon_t footprint;
   if (lines.size() == 1) {
@@ -97,7 +97,7 @@ polygon_t generateFootprint(const segment_t & segment, const double lateral_offs
 polygon_t generateFootprint(const linestring_t & linestring, const double lateral_offset)
 {
   namespace bg = boost::geometry;
-  multipolygon_t footprint;
+  multi_polygon_t footprint;
   namespace strategy = bg::strategy::buffer;
   bg::buffer(
     linestring, footprint, strategy::distance_symmetric<double>(lateral_offset),

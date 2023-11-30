@@ -2,15 +2,15 @@
 <package format="3">
   <name>localization_evaluator</name>
   <version>0.1.0</version>
-  <description>localization evaluator ROS2 node</description>
+  <description>localization evaluator ROS 2 node</description>
 
   <maintainer email="dominik.jargot@robotec.ai">Dominik Jargot</maintainer>
+  <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
 
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>

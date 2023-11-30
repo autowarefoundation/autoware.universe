@@ -11,15 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/scene_module/avoidance/avoidance_utils.hpp"
+#include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/avoidance/utils.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-using behavior_path_planner::isOnRight;
-using behavior_path_planner::isSameDirectionShift;
 using behavior_path_planner::ObjectData;
+using behavior_path_planner::utils::avoidance::isOnRight;
+using behavior_path_planner::utils::avoidance::isSameDirectionShift;
 
 TEST(BehaviorPathPlanningAvoidanceUtilsTest, shiftLengthDirectionTest)
 {

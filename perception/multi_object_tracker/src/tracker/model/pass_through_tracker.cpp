@@ -30,14 +30,14 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/tracker/model/pass_through_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "perception_utils/perception_utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 PassThroughTracker::PassThroughTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("PassThroughTracker")),
   last_update_time_(time)
@@ -58,7 +58,8 @@ bool PassThroughTracker::predict(const rclcpp::Time & time)
 }
 
 bool PassThroughTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const geometry_msgs::msg::Transform & self_transform)
 {
   prev_observed_object_ = object_;
   object_ = object;
@@ -74,13 +75,14 @@ bool PassThroughTracker::measure(
   }
   last_update_time_ = time;
 
+  (void)self_transform;  // currently do not use self vehicle position
   return true;
 }
 
 bool PassThroughTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = perception_utils::toTrackedObject(object_);
+  object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
   object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;

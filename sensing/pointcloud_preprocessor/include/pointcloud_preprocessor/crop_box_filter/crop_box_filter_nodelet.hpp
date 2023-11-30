@@ -54,6 +54,7 @@
 #define POINTCLOUD_PREPROCESSOR__CROP_BOX_FILTER__CROP_BOX_FILTER_NODELET_HPP_
 
 #include "pointcloud_preprocessor/filter.hpp"
+#include "pointcloud_preprocessor/transform_info.hpp"
 
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 
@@ -68,6 +69,12 @@ class CropBoxFilterComponent : public pointcloud_preprocessor::Filter
 protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+
+  // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform
+  // to new API
+  virtual void faster_filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
+    const TransformInfo & transform_info);
 
   void publishCropBoxPolygon();
 

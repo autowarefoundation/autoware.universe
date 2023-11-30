@@ -7,11 +7,14 @@
   <maintainer email="opensource@apex.ai">Apex.AI, Inc.</maintainer>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
   <maintainer email="taiki.tanaka@tier4.jp">Taiki Tanaka</maintainer>
+  <maintainer email="takeshi.miura@tier4.jp">Takeshi Miura</maintainer>
+
   <license>Apache 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <build_depend>autoware_cmake</build_depend>
+  <build_depend>libboost-dev</build_depend>
   <build_depend>qtbase5-dev</build_depend>
 
   <depend>autoware_auto_perception_msgs</depend>

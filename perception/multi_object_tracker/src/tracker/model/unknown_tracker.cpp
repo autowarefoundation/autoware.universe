@@ -26,14 +26,17 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/tracker/model/unknown_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "perception_utils/perception_utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 UnknownTracker::UnknownTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("UnknownTracker")),
   last_update_time_(time),
@@ -227,7 +230,8 @@ bool UnknownTracker::measureWithPose(
 }
 
 bool UnknownTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
 {
   object_ = object;
 
@@ -246,7 +250,7 @@ bool UnknownTracker::measure(
 bool UnknownTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = perception_utils::toTrackedObject(object_);
+  object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 

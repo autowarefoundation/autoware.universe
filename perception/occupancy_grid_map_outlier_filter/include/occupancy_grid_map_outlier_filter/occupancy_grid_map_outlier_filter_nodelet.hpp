@@ -47,10 +47,10 @@ using sensor_msgs::msg::PointCloud2;
 using std_msgs::msg::Header;
 using PclPointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
-class RadiusSearch2dfilter
+class RadiusSearch2dFilter
 {
 public:
-  explicit RadiusSearch2dfilter(rclcpp::Node & node);
+  explicit RadiusSearch2dFilter(rclcpp::Node & node);
   void filter(
     const PclPointCloud & input, const Pose & pose, PclPointCloud & output,
     PclPointCloud & outlier);
@@ -63,6 +63,7 @@ private:
   float min_points_and_distance_ratio_;
   int min_points_;
   int max_points_;
+  long unsigned int max_filter_points_nb_;
   pcl::search::Search<pcl::PointXY>::Ptr kd_tree_;
 };
 
@@ -77,7 +78,9 @@ private:
     const PointCloud2::ConstSharedPtr & input_pointcloud);
   void filterByOccupancyGridMap(
     const OccupancyGrid & occupancy_grid_map, const PointCloud2 & pointcloud,
-    PclPointCloud & high_confidence, PclPointCloud & low_confidence);
+    PclPointCloud & high_confidence, PclPointCloud & low_confidence, PclPointCloud & out_ogm);
+  void splitPointCloudFrontBack(
+    const PointCloud2::ConstSharedPtr & input_pc, PointCloud2 & front_pc, PointCloud2 & behind_pc);
 
 private:
   class Debugger
@@ -111,7 +114,7 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
   // 2d outlier filter
-  std::shared_ptr<RadiusSearch2dfilter> radius_search_2d_filter_ptr_;
+  std::shared_ptr<RadiusSearch2dFilter> radius_search_2d_filter_ptr_;
 
   // Debugger
   std::shared_ptr<Debugger> debugger_ptr_;

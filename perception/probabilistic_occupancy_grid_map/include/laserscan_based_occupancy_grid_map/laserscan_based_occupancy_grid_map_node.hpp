@@ -92,7 +92,11 @@ private:
   // ROS Parameters
   std::string map_frame_;
   std::string base_link_frame_;
+  std::string gridmap_origin_frame_;
+  std::string scan_origin_frame_;
   bool use_height_filter_;
+  double min_height_;
+  double max_height_;
   bool enable_single_frame_mode_;
 };
 

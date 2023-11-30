@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,12 +22,16 @@
 #include <rclcpp/rclcpp.hpp>
 #include <trt_ssd.hpp>
 
-#include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
@@ -54,8 +58,7 @@ public:
   void connectCb();
   void callback(
     const sensor_msgs::msg::Image::ConstSharedPtr image_msg,
-    const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr
-      traffic_light_roi_msg);
+    const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr traffic_light_roi_msg);
 
 private:
   bool cvMat2CnnInput(
@@ -66,29 +69,27 @@ private:
   bool rosMsg2CvMat(const sensor_msgs::msg::Image::ConstSharedPtr image_msg, cv::Mat & image);
   bool fitInFrame(cv::Point & lt, cv::Point & rb, const cv::Size & size);
   void cvRect2TlRoiMsg(
-    const cv::Rect & rect, const int32_t id,
-    autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi);
+    const cv::Rect & rect, const int32_t id, tier4_perception_msgs::msg::TrafficLightRoi & tl_roi);
   bool readLabelFile(std::string filepath, std::vector<std::string> & labels);
   bool getTlrIdFromLabel(const std::vector<std::string> & labels, int & tlr_id);
 
   // variables
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
   image_transport::SubscriberFilter image_sub_;
-  message_filters::Subscriber<autoware_auto_perception_msgs::msg::TrafficLightRoiArray> roi_sub_;
+  message_filters::Subscriber<tier4_perception_msgs::msg::TrafficLightRoiArray> roi_sub_;
   std::mutex connect_mutex_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr
-    output_roi_pub_;
+  rclcpp::Publisher<tier4_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr output_roi_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   typedef message_filters::sync_policies::ExactTime<
-    sensor_msgs::msg::Image, autoware_auto_perception_msgs::msg::TrafficLightRoiArray>
+    sensor_msgs::msg::Image, tier4_perception_msgs::msg::TrafficLightRoiArray>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   std::shared_ptr<Sync> sync_;
 
   typedef message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image, autoware_auto_perception_msgs::msg::TrafficLightRoiArray>
+    sensor_msgs::msg::Image, tier4_perception_msgs::msg::TrafficLightRoiArray>
     ApproximateSyncPolicy;
   typedef message_filters::Synchronizer<ApproximateSyncPolicy> ApproximateSync;
   std::shared_ptr<ApproximateSync> approximate_sync_;
@@ -97,11 +98,12 @@ private:
   double score_thresh_;
 
   int tlr_id_;
-  int channel_;
-  int width_;
-  int height_;
+  ssd::Shape input_shape_;
   int class_num_;
   int detection_per_class_;
+  std::optional<ssd::Dims2> box_dims_;
+  std::optional<ssd::Dims2> score_dims_;
+  std::string dnn_header_type_;
 
   std::vector<float> mean_;
   std::vector<float> std_;

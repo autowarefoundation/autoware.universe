@@ -14,8 +14,9 @@
 
 #include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 
-#include "eigen3/Eigen/Core"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include <Eigen/Core>
 
 #include <algorithm>
 #include <chrono>
@@ -31,11 +32,11 @@ namespace motion_velocity_smoother
 JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
   auto & p = smoother_param_;
-  p.jerk_weight = node.declare_parameter("jerk_weight", 10.0);
-  p.over_v_weight = node.declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = node.declare_parameter("over_a_weight", 5000.0);
-  p.over_j_weight = node.declare_parameter("over_j_weight", 2000.0);
-  p.jerk_filter_ds = node.declare_parameter("jerk_filter_ds", 0.1);
+  p.jerk_weight = node.declare_parameter<double>("jerk_weight");
+  p.over_v_weight = node.declare_parameter<double>("over_v_weight");
+  p.over_a_weight = node.declare_parameter<double>("over_a_weight");
+  p.over_j_weight = node.declare_parameter<double>("over_j_weight");
+  p.jerk_filter_ds = node.declare_parameter<double>("jerk_filter_ds");
 
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
@@ -49,7 +50,10 @@ void JerkFilteredSmoother::setParam(const Param & smoother_param)
   smoother_param_ = smoother_param;
 }
 
-JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const { return smoother_param_; }
+JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const
+{
+  return smoother_param_;
+}
 
 bool JerkFilteredSmoother::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
@@ -187,10 +191,9 @@ bool JerkFilteredSmoother::apply(
   /**************************************************************/
 
   // jerk: d(ai)/ds * v_ref -> minimize weight * ((a1 - a0) / ds * v_ref)^2 * ds
-  constexpr double ZERO_VEL_THR_FOR_DT_CALC = 0.3;
   const double smooth_weight = smoother_param_.jerk_weight;
   for (size_t i = 0; i < N - 1; ++i) {
-    const double ref_vel = v_max_arr.at(i);
+    const double ref_vel = 0.5 * (v_max_arr.at(i) + v_max_arr.at(i + 1));
     const double interval_dist = std::max(interval_dist_arr.at(i), 0.0001);
     const double w_x_ds_inv = (1.0 / interval_dist) * ref_vel;
     P(IDX_A0 + i, IDX_A0 + i) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
@@ -199,12 +202,15 @@ bool JerkFilteredSmoother::apply(
     P(IDX_A0 + i + 1, IDX_A0 + i + 1) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
   }
 
+  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
   for (size_t i = 0; i < N; ++i) {
-    const double v_max = std::max(v_max_arr.at(i), 0.1);
-    q.at(IDX_B0 + i) =
-      -1.0 / (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
-    if (i < N - 1) {
-      q.at(IDX_B0 + i) *= std::max(interval_dist_arr.at(i), 0.0001);
+    if (v_max_arr.at(i) > 0.01) {
+      // Note that if v_max[i] is too small, we did not minimize the corresponding -b[i]
+      double v_weight_term = -1.0 / (v_max_arr.at(i) * v_max_arr.at(i));
+      if (i < N - 1) {
+        v_weight_term *= std::max(interval_dist_arr.at(i), 0.0001);
+      }
+      q.at(IDX_B0 + i) += v_weight_term;
     }
     P(IDX_DELTA0 + i, IDX_DELTA0 + i) += over_v_weight;  // over velocity cost
     P(IDX_SIGMA0 + i, IDX_SIGMA0 + i) += over_a_weight;  // over acceleration cost
@@ -254,7 +260,7 @@ bool JerkFilteredSmoother::apply(
   // Soft Constraint Jerk Limit: jerk_min < pseudo_jerk[i] * ref_vel[i] - gamma[i] < jerk_max
   // -> jerk_min * ds < (a[i+1] - a[i]) * ref_vel[i] - gamma[i] * ds < jerk_max * ds
   for (size_t i = 0; i < N - 1; ++i, ++constr_idx) {
-    const double ref_vel = std::max(v_max_arr.at(i), ZERO_VEL_THR_FOR_DT_CALC);
+    const double ref_vel = 0.5 * (v_max_arr.at(i) + v_max_arr.at(i + 1));
     const double ds = interval_dist_arr.at(i);
     A(constr_idx, IDX_A0 + i) = -ref_vel;     // -a[i] * ref_vel
     A(constr_idx, IDX_A0 + i + 1) = ref_vel;  //  a[i+1] * ref_vel
@@ -288,6 +294,17 @@ bool JerkFilteredSmoother::apply(
   // execute optimization
   const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
   const std::vector<double> optval = std::get<0>(result);
+  const int status_val = std::get<3>(result);
+  if (status_val != 1) {
+    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    return false;
+  }
+  const auto has_nan =
+    std::any_of(optval.begin(), optval.end(), [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
+    return false;
+  }
 
   const auto tf1 = std::chrono::system_clock::now();
   const double dt_ms1 =
@@ -312,7 +329,7 @@ bool JerkFilteredSmoother::apply(
     const auto msg = status_polish == 0    ? "unperformed"
                      : status_polish == -1 ? "unsuccessful"
                                            : "unknown";
-    RCLCPP_WARN(logger_, "osqp polish process failed : %s. The result may be inaccurate", msg);
+    RCLCPP_DEBUG(logger_, "osqp polish process failed : %s. The result may be inaccurate", msg);
   }
 
   if (VERBOSE_TRAJECTORY_VELOCITY) {

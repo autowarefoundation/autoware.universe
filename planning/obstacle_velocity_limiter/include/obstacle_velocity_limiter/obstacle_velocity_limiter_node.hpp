@@ -18,6 +18,7 @@
 #include "obstacle_velocity_limiter/obstacles.hpp"
 #include "obstacle_velocity_limiter/parameters.hpp"
 #include "obstacle_velocity_limiter/types.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
@@ -28,7 +29,7 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <std_msgs/msg/int64.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/optional.hpp>
@@ -51,12 +52,11 @@ public:
 
 private:
   tier4_autoware_utils::TransformListener transform_listener_{this};
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   rclcpp::Publisher<Trajectory>::SharedPtr
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     pub_debug_markers_;  //!< @brief publisher for debug markers
-  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr
     pub_runtime_;  //!< @brief publisher for callback runtime
   rclcpp::Subscription<Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscriber for reference trajectory
@@ -75,8 +75,8 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
   PointCloud::ConstSharedPtr pointcloud_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_{new lanelet::LaneletMap};
-  multilinestring_t static_map_obstacles_;
-  std::optional<Float> current_ego_velocity_;
+  multi_linestring_t static_map_obstacles_;
+  nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_ptr_;
 
   // parameters
   PreprocessingParameters preprocessing_params_;
@@ -100,9 +100,10 @@ private:
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
 
   /// @brief validate the inputs of the node
-  /// @param[in] ego_idx trajectory index closest to the current ego pose
   /// @return true if the inputs are valid
-  bool validInputs(const boost::optional<size_t> & ego_idx);
+  bool validInputs();
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace obstacle_velocity_limiter
 

@@ -77,7 +77,7 @@ void MaxVelocityDisplay::onInitialize()
   overlay_->updateTextureSize(property_length_->getInt(), property_length_->getInt());
   overlay_->setPosition(property_left_->getInt(), property_top_->getInt());
   overlay_->setDimensions(overlay_->getTextureWidth(), overlay_->getTextureHeight());
-  processMessage(last_msg_ptr_);
+  updateVisualization();
 
   // QColor background_color;
   // background_color.setAlpha(0);
@@ -122,7 +122,10 @@ void MaxVelocityDisplay::subscribe()
   }
 }
 
-void MaxVelocityDisplay::unsubscribe() { max_vel_sub_.reset(); }
+void MaxVelocityDisplay::unsubscribe()
+{
+  max_vel_sub_.reset();
+}
 
 void MaxVelocityDisplay::processMessage(
   const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg_ptr)

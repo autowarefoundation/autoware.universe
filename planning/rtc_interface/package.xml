@@ -5,6 +5,8 @@
   <description>The rtc_interface package</description>
 
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
+  <maintainer email="taiki.tanaka@tier4.jp">Taiki Tanaka</maintainer>
+  <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
 
   <license>Apache License 2.0</license>
 

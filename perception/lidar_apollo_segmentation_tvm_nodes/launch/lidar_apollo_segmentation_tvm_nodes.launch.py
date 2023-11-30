@@ -1,4 +1,4 @@
-# Copyright 2021-2022 the Autoware Foundation
+# Copyright 2021-2023 Arm Ltd., the Autoware Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,19 +21,25 @@ import launch
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-import yaml
+import launch_ros.parameter_descriptions
 
 
 def generate_launch_description():
     param_file = os.path.join(
-        get_package_share_directory("lidar_apollo_segmentation_tvm_nodes"), "param/test.param.yaml"
+        get_package_share_directory("lidar_apollo_segmentation_tvm_nodes"),
+        "config/lidar_apollo_segmentation_tvm_nodes.param.yaml",
     )
-    with open(param_file, "r") as f:
-        lidar_apollo_segmentation_tvm_node_params = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    lidar_apollo_segmentation_tvm_node_params = launch_ros.parameter_descriptions.ParameterFile(
+        param_file=param_file, allow_substs=True
+    )
 
     arguments = [
         DeclareLaunchArgument("input/pointcloud", default_value="/sensing/lidar/pointcloud"),
         DeclareLaunchArgument("output/objects", default_value="labeled_clusters"),
+        DeclareLaunchArgument(
+            "data_path", default_value=os.path.join(os.environ["HOME"], "autoware_data")
+        ),
     ]
 
     # lidar segmentation node execution definition.

@@ -32,23 +32,17 @@ private:
 private:
   KalmanFilter ekf_;
   rclcpp::Time last_update_time_;
-  enum IDX {
-    X = 0,
-    Y = 1,
-    YAW = 2,
-    VX = 3,
-    WZ = 4,
-  };
+  enum IDX { X = 0, Y = 1, YAW = 2, VX = 3, SLIP = 4 };
   struct EkfParams
   {
     char dim_x = 5;
     float q_cov_x;
     float q_cov_y;
     float q_cov_yaw;
-    float q_cov_wz;
+    float q_cov_slip;
     float q_cov_vx;
     float p0_cov_vx;
-    float p0_cov_wz;
+    float p0_cov_slip;
     float r_cov_x;
     float r_cov_y;
     float r_cov_yaw;
@@ -58,27 +52,31 @@ private:
   } ekf_params_;
 
   double max_vx_;
-  double max_wz_;
+  double max_slip_;
+  double lf_;
+  double lr_;
   float z_;
 
 private:
   struct BoundingBox
   {
-    double width;
     double length;
+    double width;
     double height;
   };
   BoundingBox bounding_box_;
+  BoundingBox last_input_bounding_box_;
 
 public:
   BicycleTracker(
-    const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object);
+    const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    const geometry_msgs::msg::Transform & self_transform);
 
   bool predict(const rclcpp::Time & time) override;
   bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object,
-    const rclcpp::Time & time) override;
+    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const geometry_msgs::msg::Transform & self_transform) override;
   bool measureWithPose(const autoware_auto_perception_msgs::msg::DetectedObject & object);
   bool measureWithShape(const autoware_auto_perception_msgs::msg::DetectedObject & object);
   bool getTrackedObject(

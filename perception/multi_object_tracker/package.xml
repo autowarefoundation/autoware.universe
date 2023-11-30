@@ -3,21 +3,20 @@
 <package format="3">
   <name>multi_object_tracker</name>
   <version>1.0.0</version>
-  <description>The ROS2 multi_object_tracker package</description>
+  <description>The ROS 2 multi_object_tracker package</description>
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
-  <maintainer email="jilada.eccleston@tier4.jp">Jilada Eccleston</maintainer>
+  <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>eigen</depend>
   <depend>kalman_filter</depend>
   <depend>mussp</depend>
-  <depend>perception_utils</depend>
+  <depend>object_recognition_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2</depend>

@@ -1,511 +1,284 @@
 # Behavior Path Planner
 
-## Purpose / Use cases
+The Behavior Path Planner's main objective is to significantly enhance the safety of autonomous vehicles by minimizing the risk of accidents. It improves driving efficiency through time conservation and underpins reliability with its rule-based approach. Additionally, it allows users to integrate their own custom behavior modules or use it with different types of vehicles, such as cars, buses, and delivery robots, as well as in various environments, from busy urban streets to open highways.
 
-The `behavior_path_planner` module is responsible to generate
+The module begins by thoroughly analyzing the ego vehicle's current situation, including its position, speed, and surrounding environment. This analysis leads to essential driving decisions about lane changes or stopping and subsequently generates a path that is both safe and efficient. It considers road geometry, traffic rules, and dynamic conditions while also incorporating obstacle avoidance to respond to static and dynamic obstacles such as other vehicles, pedestrians, or unexpected roadblocks, ensuring safe navigation.
 
-1. **path** based on the traffic situation,
-2. **drivable area** that the vehicle can move (defined in the path msg),
-3. **turn signal** command to be sent to the vehicle interface.
+Moreover, the planner actively interacts with other traffic participants, predicting their actions and accordingly adjusting the vehicle's path. This ensures not only the safety of the autonomous vehicle but also contributes to smooth traffic flow. Its adherence to traffic laws, including speed limits and traffic signals, further guarantees lawful and predictable driving behavior. The planner is also designed to minimize sudden or abrupt maneuvers, aiming for a comfortable and natural driving experience.
 
-Depending on the situation, a suitable module is selected and executed on the behavior tree system.
+!!! note
 
-The following modules are currently supported:
+    The [Planning Component Design](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/) Document outlines the foundational philosophy guiding the design and future development of the Behavior Path Planner module. We strongly encourage readers to consult this document to understand the rationale behind its current configuration and the direction of its ongoing development.
 
-- **Lane Following**: Generate lane centerline from map.
-- **Lane Change**: Performs a lane change. This module is performed when it is necessary and a collision check with other vehicles is cleared.
-- **Obstacle Avoidance**: Perform an obstacle avoidance. This module is for avoidance of a vehicle parked on the edge of the lane or overtaking a low-speed obstacle.
-- **Pull Over**: Performs a pull over. This module is performed when ego-vehicle is in the road lane and goal is in the shoulder lane. ego-vehicle will stop at the goal.
-- **Pull Out**: Performs a pull out. This module is performed when ego-vehicle is stationary and footprint of ego-vehicle is included in shoulder lane. This module ends when ego-vehicle merges into the road.
-- **Side Shift**: (For remote control) Shift the path to left or right according to an external instruction.
+## Purpose / Use Cases
 
-[WIP]
+Essentially, the module has three primary responsibilities:
 
-- **Free Space**: xxx.
+1. Creating a **path based** on the traffic situation.
+2. Generating **drivable area**, i.e. the area within which the vehicle can maneuver.
+3. Generating **turn signal** commands to be relayed to the vehicle interface.
 
-![behavior_modules](./image/behavior_modules.png)
+## Features
 
-## Design
+### Supported Scene Modules
 
-<!-- ## Assumptions / Known limits -->
+Behavior Path Planner has following scene modules
+
+| Name                     | Description                                                                                                                                                                | Details                                                                 |
+| :----------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------- |
+| Lane Following           | this module generates reference path from lanelet centerline.                                                                                                              | LINK                                                                    |
+| Avoidance                | this module generates avoidance path when there is objects that should be avoid.                                                                                           | [LINK](./docs/behavior_path_planner_avoidance_design.md)                |
+| Dynamic Avoidance        | WIP                                                                                                                                                                        | LINK                                                                    |
+| Avoidance By Lane Change | this module generates lane change path when there is objects that should be avoid.                                                                                         | [LINK](./docs/behavior_path_planner_avoidance_by_lane_change_design.md) |
+| Lane Change              | this module is performed when it is necessary and a collision check with other vehicles is cleared.                                                                        | [LINK](./docs/behavior_path_planner_lane_change_design.md)              |
+| External Lane Change     | WIP                                                                                                                                                                        | LINK                                                                    |
+| Start Planner            | this module is performed when ego-vehicle is in the road lane and goal is in the shoulder lane. ego-vehicle will stop at the goal.                                         | [LINK](./docs/behavior_path_planner_goal_planner_design.md)             |
+| Goal Planner             | this module is performed when ego-vehicle is stationary and footprint of ego-vehicle is included in shoulder lane. This module ends when ego-vehicle merges into the road. | [LINK](./docs/behavior_path_planner_start_planner_design.md)            |
+| Side Shift               | (for remote control) shift the path to left or right according to an external instruction.                                                                                 | [LINK](./docs/behavior_path_planner_side_shift_design.md)               |
+
+!!! Note
+
+    click on the following images to view the video of their execution
+
+    <div align="center">
+        <table>
+            <tr>
+                <td><img src="./image/supported_module_lane_following.svg" alt="Lane Following Module" width="300"></td>
+                <td><a href="https://www.youtube.com/watch?v=A_V9yvfKZ4E"><img src="./image/supported_module_avoidance.svg" alt="Avoidance Module" width="300"></a></td>
+                <td><img src="./image/supported_module_avoidance_by_lane_change.svg" alt="Avoidance by Lane Change Module" width="300"></td>
+            </tr>
+            <tr>
+                <td><a href="https://www.youtube.com/watch?v=0jRDGQ84cD4"><img src="./image/supported_module_lane_change.svg" alt="Lane Change Module" width="300"></a></td>
+                <td><a href="https://www.youtube.com/watch?v=xOjnPqoHup4"><img src="./image/supported_module_start_planner.svg" alt="Start Planner Module" width="300"></a></td>
+                <td><a href="https://www.youtube.com/watch?v=ornbzkWxRWU"><img src="./image/supported_module_goal_planner.svg" alt="Goal Planner Module" width="300"></a></td>
+            </tr>
+        </table>
+    </div>
+
+!!! Note
+
+    Users can refer to [Planning component design](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/#supported-functions) for some additional behavior.
+
+#### How to add or implement new module?
+
+All scene modules are implemented by inheriting base class `scene_module_interface.hpp`.
+
+!!! Warning
+
+    The remainder of this subsection is work in progress (WIP).
+
+### Planner Manager
+
+The Planner Manager's responsibilities include:
+
+1. Activating the relevant scene module in response to the specific situation faced by the autonomous vehicle. For example, when a parked vehicle blocks the ego vehicle's driving lane, the manager would engage the avoidance module.
+2. Managing the execution order when multiple modules are running simultaneously. For instance, if both the lane-changing and avoidance modules are operational, the manager decides which should take precedence.
+3. Merging paths from multiple modules when they are activated simultaneously and each generates its own path, thereby creating a single functional path.
+
+!!! note
+
+    To check the scene module's transition, i.e.: registered, approved and candidate modules, set `verbose: true` in the [behavior path planner configuration file](https://github.com/autowarefoundation/autoware_launch/blob/0cd5d891a36ac34a32a417205905c109f2bafe7b/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/behavior_path_planner.param.yaml#L3).
+
+    ![Scene module's transition table](./image/checking_module_transition.png)
+
+!!! note
+
+    For more in-depth information, refer to [Manager design](./docs/behavior_path_planner_manager_design.md) document.
 
 ## Inputs / Outputs / API
 
-### output
+### Input
 
-- path [`autoware_auto_planning_msgs/PathWithLaneId`] : The path generated by modules.
-- path_candidate [`autoware_auto_planning_msgs/Path`] : The path the module is about to take. To be executed as soon as external approval is obtained.
-- turn_indicators_cmd [`autoware_auto_vehicle_msgs/TurnIndicatorsCommand`] : Turn indicators command.
-- hazard_lights_cmd [`autoware_auto_vehicle_msgs/HazardLightsCommand`] : Hazard lights command.
-- force_available [`tier4_planning_msgs/PathChangeModuleArray`] : (For remote control) modules that are force-executable.
-- ready_module [`tier4_planning_msgs/PathChangeModule`] : (For remote control) modules that are ready to be executed.
-- running_modules [`tier4_planning_msgs/PathChangeModuleArray`] : (For remote control) Current running module.
+| Name                          | Required? | Type                                                   | Description                                                                                                                                                                                                              |
+| :---------------------------- | :-------: | :----------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~/input/odometry              |     ○     | `nav_msgs::msg::Odometry`                              | for ego velocity.                                                                                                                                                                                                        |
+| ~/input/accel                 |     ○     | `geometry_msgs::msg::AccelWithCovarianceStamped`       | for ego acceleration.                                                                                                                                                                                                    |
+| ~/input/objects               |     ○     | `autoware_auto_perception_msgs::msg::PredictedObjects` | dynamic objects from perception module.                                                                                                                                                                                  |
+| ~/input/occupancy_grid_map    |     ○     | `nav_msgs::msg::OccupancyGrid`                         | occupancy grid map from perception module. This is used for only Goal Planner module.                                                                                                                                    |
+| ~/input/traffic_signals       |     ○     | `autoware_perception_msgs::msg::TrafficSignalArray`    | traffic signals information from the perception module                                                                                                                                                                   |
+| ~/input/vector_map            |     ○     | `autoware_auto_mapping_msgs::msg::HADMapBin`           | vector map information.                                                                                                                                                                                                  |
+| ~/input/route                 |     ○     | `autoware_auto_mapping_msgs::msg::LaneletRoute`        | current route from start to goal.                                                                                                                                                                                        |
+| ~/input/scenario              |     ○     | `tier4_planning_msgs::msg::Scenario`                   | Launches behavior path planner if current scenario == `Scenario:LaneDriving`.                                                                                                                                            |
+| ~/input/lateral_offset        |     △     | `tier4_planning_msgs::msg::LateralOffset`              | lateral offset to trigger side shift                                                                                                                                                                                     |
+| ~/system/operation_mode/state |     ○     | `autoware_adapi_v1_msgs::msg::OperationModeState`      | Allows planning module to know if vehicle is in autonomous mode or can be controlled<sup>[ref](https://github.com/autowarefoundation/autoware.universe/blob/main/system/default_ad_api/document/operation-mode.md)</sup> |
 
-### input
+- ○ Mandatory: Planning Module would not work if anyone of this is not present.
+- △ Optional: Some module would not work, but Planning Module can still be operated.
 
-- /planning/mission_planning/route [`autoware_planning_msgs/LaneletRoute`] : Current route from start to goal.
-- /map/vector_map [autoware_auto_mapping_msgs/HADMapBin] : Map information.
-- /perception/object_recognition/objects [`autoware_auto_perception_msgs/PredictedObjects`] : dynamic objects from perception module.
-- /perception/occupancy_grid_map/map [nav_msgs/msg/OccupancyGrid] : occupancy grid map from perception module. This is used for only Pull Over module
-- /tf [`tf2_msgs/TFMessage`] : For ego-pose.
-- /localization/kinematic_state [`nav_msgs/Odometry] : For ego-velocity.
-- path_change_approval [`std_msgs::Bool`] : (For remote control)
-- path_change_force [`tier4_planning_msgs::PathChangeModule`] : (For remote control)
+### Output
 
-## Inner-workings / Algorithms
+| Name                          | Type                                                     | Description                                                                                    | QoS Durability    |
+| :---------------------------- | :------------------------------------------------------- | :--------------------------------------------------------------------------------------------- | ----------------- |
+| ~/output/path                 | `autoware_auto_planning_msgs::msg::PathWithLaneId`       | the path generated by modules.                                                                 | `volatile`        |
+| ~/output/turn_indicators_cmd  | `autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand` | turn indicators command.                                                                       | `volatile`        |
+| ~/output/hazard_lights_cmd    | `autoware_auto_vehicle_msgs::msg::HazardLightsCommand`   | hazard lights command.                                                                         | `volatile`        |
+| ~/output/modified_goal        | `autoware_planning_msgs::msg::PoseWithUuidStamped`       | output modified goal commands.                                                                 | `transient_local` |
+| ~/output/stop_reasons         | `tier4_planning_msgs::msg::StopReasonArray`              | describe the reason for ego vehicle stop                                                       | `volatile`        |
+| ~/output/reroute_availability | `tier4_planning_msgs::msg::RerouteAvailability`          | the path the module is about to take. to be executed as soon as external approval is obtained. | `volatile`        |
 
-### Drivable Area Generation
+### Debug
 
-Drivable lanes are quantized and drawn on an image as a drivable area, whose resolution is `drivable_area_resolution`.
-To prevent the quantization from causing instability to the planning modules, drivable area's pose follows the rules below.
+| Name                                    | Type                                                | Description                                                                               | QoS Durability |
+| :-------------------------------------- | :-------------------------------------------------- | :---------------------------------------------------------------------------------------- | -------------- |
+| ~/debug/avoidance_debug_message_array   | `tier4_planning_msgs::msg::AvoidanceDebugMsgArray`  | debug message for avoidance. notify users reasons for avoidance path cannot be generated. | `volatile`     |
+| ~/debug/lane_change_debug_message_array | `tier4_planning_msgs::msg::LaneChangeDebugMsgArray` | debug message for lane change. notify users unsafe reason during lane changing process    | `volatile`     |
+| ~/debug/maximum_drivable_area           | `visualization_msgs::msg::MarkerArray`              | shows maximum static drivable area.                                                       | `volatile`     |
+| ~/debug/turn_signal_info                | `visualization_msgs::msg::MarkerArray`              | TBA                                                                                       | `volatile`     |
+| ~/debug/bound                           | `visualization_msgs::msg::MarkerArray`              | debug for static drivable area                                                            | `volatile`     |
+| ~/planning/path_candidate/\*            | `autoware_auto_planning_msgs::msg::Path`            | the path before approval.                                                                 | `volatile`     |
+| ~/planning/path_reference/\*            | `autoware_auto_planning_msgs::msg::Path`            | reference path generated by each modules.                                                 | `volatile`     |
 
-- Drivable area is generated in the map coordinate.
-- Its position is quantized with `drivable_area_resolution`.
-- Its orientation is 0.
+!!! note
 
-The size of the drivable area changes dynamically to realize both decreasing the computation cost and covering enough lanes to follow.
-For the second purpose, the drivable area covers a certain length forward and backward lanes with some margins defined by parameters.
+    For specific information of which topics are being subscribed and published, refer to [behavior_path_planner.xml](https://github.com/autowarefoundation/autoware.universe/blob/9000f430c937764c14e43109539302f1f878ed70/planning/behavior_path_planner/launch/behavior_path_planner.launch.xml#L36-L49).
 
-#### Parameters for drivable area generation
+## How to enable or disable the modules
 
-| Name                          | Unit | Type   | Description                                                                | Default value |
-| :---------------------------- | :--- | :----- | :------------------------------------------------------------------------- | :------------ |
-| drivable_area_resolution      | [m]  | double | resolution of the image of the drivable area                               | 0.1           |
-| drivable_lane_forward_length  | [m]  | double | length of the forward lane from the ego covered by the drivable area       | 50.0          |
-| drivable_lane_backward_length | [m]  | double | length of the backward lane from the ego covered by the drivable area      | 5.0           |
-| drivable_lane_margin          | [m]  | double | forward and backward lane margin from the ego covered by the drivable area | 3.0           |
-| drivable_area_margin          | [m]  | double | margin of width and height of the drivable area                            | 6.0           |
+Enabling and disabling the modules in the behavior path planner is primarily managed through two key files: `default_preset.yaml` and `behavior_path_planner.launch.xml`.
 
-### Behavior Tree
+The `default_preset.yaml` file acts as a configuration file for enabling or disabling specific modules within the planner. It contains a series of arguments which represent the behavior path planner's modules or features. For example:
 
-In the behavior path planner, the behavior tree mechanism is used to manage which modules are activated in which situations. In general, this "behavior manager" like function is expected to become bigger as more and more modules are added in the future. To improve maintainability, we adopted the behavior tree. The behavior tree has the following advantages: easy visualization, easy configuration management (behaviors can be changed by replacing configuration files), and high scalability compared to the state machine.
+- `launch_avoidance_module`: Set to `true` to enable the avoidance module, or `false` to disable it.
+- `use_experimental_lane_change_function`: Set to `true` to enable experimental features in the lane change module.
 
-The current behavior tree structure is shown below. Each modules (LaneChange, Avoidance, etc) have _Request_, _Ready_, and _Plan_ nodes as a common function.
+!!! note
 
-- **Request**: Check if there is a request from the module (e.g. LaneChange has a request when there are multi-lanes and the vehicle is not on the preferred lane),
-- **Ready**: Check if it is safe to execute the plan (e.g. LaneChange is ready when the lane_change path does not have any conflicts with other dynamic objects on S-T space).
-- **Plan**: Calculates path and set it to the output of the BehaviorTree. Until the internal status returns SUCCESS, it will be in running state and will not transit to another module.
-- **ForceApproval**: A lane change-specific node that overrides the result of _Ready_ when a forced lane change command is given externally.
+    Click [here](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/preset/default_preset.yaml) to view the `default_preset.yaml`.
 
-![behavior_path_planner_bt_config](./image/behavior_path_planner_bt_config.png)
+The `behavior_path_planner.launch.xml` file references the settings defined in `default_preset.yaml` to apply the configurations when the behavior path planner's node is running. For instance, the parameter `avoidance.enable_module` in
 
-### Lane Following
+```xml
+<param name="avoidance.enable_module" value="$(var launch_avoidance_module)"/>
+```
 
-Generate path from center line of the route.
+corresponds to launch_avoidance_module from `default_preset.yaml`.
 
-#### **special case**
+Therefore, to enable or disable a module, simply set the corresponding module in `default_preset.yaml` to `true` or `false`. These changes will be applied upon the next launch of Autoware.
 
-In the case of a route that requires a lane change, the path is generated with a specific distance margin (default: `12.0 m`) from the end of the lane to ensure the minimum distance for lane change. (This function works not only for lane following but also for all modules.)
+## Generating Path
 
-![minimum_lane_change_distance](./image/minimum_lane_change_distance.png)
+A sophisticated methodology is used for path generation, particularly focusing on maneuvers like lane changes and avoidance. At the core of this design is the smooth lateral shifting of the reference path, achieved through a constant-jerk profile. This approach ensures a consistent rate of change in acceleration, facilitating smooth transitions and minimizing abrupt changes in lateral dynamics, crucial for passenger comfort and safety.
 
-### Lane Change
+The design involves complex mathematical formulations for calculating the lateral shift of the vehicle's path over time. These calculations include determining lateral displacement, velocity, and acceleration, while considering the vehicle's lateral acceleration and velocity limits. This is essential for ensuring that the vehicle's movements remain safe and manageable.
 
-The Lane Change module is activated when lane change is needed and can be safely executed.
+The `ShiftLine` struct (as seen [here](https://github.com/autowarefoundation/autoware.universe/blob/9000f430c937764c14e43109539302f1f878ed70/planning/behavior_path_planner/include/behavior_path_planner/utils/path_shifter/path_shifter.hpp#L35-L48)) is utilized to represent points along the path where the lateral shift starts and ends. It includes details like the start and end points in absolute coordinates, the relative shift lengths at these points compared to the reference path, and the associated indexes on the reference path. This struct is integral to managing the path shifts, as it allows the path planner to dynamically adjust the trajectory based on the vehicle's current position and planned maneuver.
 
-#### **start lane change condition** (need to meet all of the conditions below)
+Furthermore, the design and its implementation incorporate various equations and mathematical models to calculate essential parameters for the path shift. These include the total distance of the lateral shift, the maximum allowable lateral acceleration and jerk, and the total time required for the shift. Practical considerations are also noted, such as simplifying assumptions in the absence of a specific time interval for most lane change and avoidance cases.
 
-- lane change request condition
-  - The ego-vehicle isn’t on a `preferred_lane`.
-  - There is neither intersection nor crosswalk on the path of the lane change
-- lane change ready condition
-  - Path of the lane change doesn’t collide with other objects (see the figure below)
-  - Lane change is allowed by an operator
+The shifted path generation logic enables the behavior path planner to dynamically generate safe and efficient paths, precisely controlling the vehicle’s lateral movements to ensure the smooth execution of lane changes and avoidance maneuvers. This careful planning and execution adhere to the vehicle's dynamic capabilities and safety constraints, maximizing efficiency and safety in autonomous vehicle navigation.
 
-#### **finish lane change condition** (need to meet any of the conditions below)
+!!! note
 
-- Certain distance (default: `3.0 m`) have passed after the vehicle move to the target lane.
-- Before the base_link exceeds white dotted line, a collision with the object was predicted (only if `enable_abort_lane_change` is true.)
-  - However, when current velocity is lower than `10km/h` and the ego-vehicle is near the lane end, the lane change isn’t aborted and the ego-vehicle plans to stop. Then, after no collision is predicted, the ego-vehicle resume the lane change.
+    If you're a math lover, refer to [Path Generation Design](./docs/behavior_path_planner_path_generation_design.md) for the nitty-gritty.
 
-#### **Collision prediction with obstacles**
+## Collision Assessment / Safety check
 
-1. Predict each position of the ego-vehicle and other vehicle on the target lane of the lane change at t1, t2,...tn
-2. If a distance between the ego-vehicle and other one is lower than the threshold (`ego_velocity * stop_time (2s)`) at each time, that is judged as a collision
+The purpose of the collision assessment function in the Behavior Path Planner is to evaluate the potential for collisions with target objects across all modules. It is utilized in two scenarios:
 
-![lane_change_fig1](./image/lane_change_fig1.png)
+1. During candidate path generation, to ensure that the generated candidate path is collision-free.
+2. When the path is approved by the manager, and the ego vehicle is executing the current module. If the current situation is deemed unsafe, depending on each module's requirements, the planner will either cancel the execution or opt to execute another module.
 
-#### **Path Generation**
+The safety check process involves several steps. Initially, it obtains the pose of the target object at a specific time, typically through interpolation of the predicted path. It then checks for any overlap between the ego vehicle and the target object at this time. If an overlap is detected, the path is deemed unsafe. The function also identifies which vehicle is in front by using the arc length along the given path. The function operates under the assumption that accurate data on the position, velocity, and shape of both the ego vehicle (the autonomous vehicle) and any target objects are available. It also relies on the yaw angle of each point in the predicted paths of these objects, which is expected to point towards the next path point.
 
-Path to complete the lane change in `n + m` seconds under an assumption that a velocity of the ego-vehicle is constant.
-Once the lane change is executed, the path won’t be updated until the "finish-lane-change-condition" is satisfied.
+A critical part of the safety check is the calculation of the RSS (Responsibility-Sensitive Safety) distance-inspired algorithm. This algorithm considers factors such as reaction time, safety time margin, and the velocities and decelerations of both vehicles. Extended object polygons are created for both the ego and target vehicles. Notably, the rear object’s polygon is extended by the RSS distance longitudinally and by a lateral margin. The function finally checks for overlap between this extended rear object polygon and the front object polygon. Any overlap indicates a potential unsafe situation.
 
-<!-- <p align="center"> <img src="./image/lane_change_fig3.png" width="800"/> </p> -->
+However, the module does have a limitation concerning the yaw angle of each point in the predicted paths of target objects, which may not always accurately point to the next point, leading to potential inaccuracies in some edge cases.
 
-![lane_change_fig3](./image/lane_change_fig3.png)
+!!! note
 
-### Avoidance
+    For further reading on the collision assessment  method, please refer to [Safety check utils](./docs/behavior_path_planner_safety_check.md)
 
-The Avoidance module is activated when dynamic objects to be avoided exist and can be safely avoided.
+## Generating Drivable Area
 
-#### Target objects
+### Static Drivable Area logic
 
-Dynamic objects that satisfy the following conditions are considered to be avoidance targets.
+The drivable area is used to determine the area in which the ego vehicle can travel. The primary goal of static drivable area expansion is to ensure safe travel by generating an area that encompasses only the necessary spaces for the vehicle's current behavior, while excluding non-essential areas. For example, while `avoidance` module is running, the drivable area includes additional space needed for maneuvers around obstacles, and it limits the behavior by not extending the avoidance path outside of lanelet areas.
 
-- Semantics type is `CAR`, `TRUCK`, or `BUS`
-- low speed (default: < `1.0 m/s`)
-- Not being around center line (default: deviation from center > `0.5 m`)
-- Any footprint of the object in on the detection area (driving lane + `1 m` margin for lateral direction).
+<div align="center">
+    <table>
+        <tr>
+            <td><img src="./image/static_drivable_area_before_expansion.png" alt="Before expansion"></td>
+        </tr>
+        <tr>
+            <td><img src="./image/static_drivable_area_after_expansion.png" alt="After expansion"></td>
+        </tr>
+    </table>
+</div>
 
-<!-- The target objects are `CAR`, `TRUCK`, or `BUS` type with low speed (default: < `1.0 m/s`). If the object is around the center of lane, it is not considered as a target (default: deviation from center > `0.5 m`). -->
+Static drivable area expansion operates under assumptions about the correct arrangement of lanes and the coverage of both the front and rear of the vehicle within the left and right boundaries. Key parameters for drivable area generation include extra footprint offsets for the ego vehicle, the handling of dynamic objects, maximum expansion distance, and specific methods for expansion. Additionally, since each module generates its own drivable area, before passing it as the input to generate the next running module's drivable area, or before generating a unified drivable area, the system sorts drivable lanes based on the vehicle's passage order. This ensures the correct definition of the lanes used in drivable area generation.
 
-#### How to generate avoidance path
+!!! note
 
-To prevent sudden changes in the vicinity of the ego-position, an avoidance path is generated after a certain distance of straight lane driving. The process of generating the avoidance path is as follows:
+    Further details can is provided in [Drivable Area Design](./docs/behavior_path_planner_drivable_area_design.md).
 
-1. detect the target object and calculate the lateral shift distance (default: `2.0 m` from closest footprint point)
-2. calculate the avoidance distance within the constraint of lateral jerk. (default: `0.3 ~ 2.0 m/s3`)
-   1. If the maximum jerk constraint is exceeded to keep the straight margin, the avoidance path generation is aborted.
-3. generates the smooth path with given avoiding distance and lateral shift length.
-4. generate "return to center" path if there is no next target within a certain distance (default: `50 m`) after the current target.
+### Dynamic Drivable Area Logic
 
-#### **single objects case**
+Large vehicles require much more space, which sometimes causes them to veer out of their current lane. A typical example being a bus making a turn at a corner. In such cases, relying on a static drivable area is insufficient, since the static method depends on lane information provided by high-definition maps. To overcome the limitations of the static approach, the dynamic drivable area expansion algorithm adjusts the navigable space for an autonomous vehicle in real-time. It conserves computational power by reusing previously calculated path data, updating only when there is a significant change in the vehicle's position. The system evaluates the minimum lane width necessary to accommodate the vehicle's turning radius and other dynamic factors. It then calculates the optimal expansion of the drivable area's boundaries to ensure there is adequate space for safe maneuvering, taking into account the vehicle's path curvature. The rate at which these boundaries can expand or contract is moderated to maintain stability in the vehicle's navigation. The algorithm aims to maximize the drivable space while avoiding fixed obstacles and adhering to legal driving limits. Finally, it applies these boundary adjustments and smooths out the path curvature calculations to ensure a safe and legally compliant navigable path is maintained throughout the vehicle's operation.
 
-<!-- <p align="center"> <img src="./image/avoid_fig_single_case.png" width="800"/> </p> -->
+!!! note
 
-![avoid_fig_single_case](./image/avoid_fig_single_case.png)
+    The feature can be enabled in the [drivable_area_expansion.param.yaml](https://github.com/autowarefoundation/autoware_launch/blob/0cd5d891a36ac34a32a417205905c109f2bafe7b/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_expansion.param.yaml#L10).
 
-#### **multiple objects case**
+## Generating Turn Signal
 
-If there are multiple avoidance targets and the lateral distances of these are close (default: < `0.5m`), those objects are considered as a single avoidance target and avoidance is performed simultaneously with a single steering operation. If the lateral distances of the avoidance targets differ greatly than threshold, multiple steering operations are used to avoid them.
+The Behavior Path Planner module uses the `autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand` to output turn signal commands (see [TurnIndicatorsCommand.idl](https://github.com/tier4/autoware_auto_msgs/blob/tier4/main/autoware_auto_vehicle_msgs/msg/TurnIndicatorsCommand.idl)). The system evaluates the driving context and determines when to activate turn signals based on its maneuver planning—like turning, lane changing, or obstacle avoidance.
 
-<!-- <p align="center"> <img src="./image/avoid_fig_multi_case.png" width="800"/> </p> -->
+Within this framework, the system differentiates between **desired** and **required** blinker activations. **Desired** activations are those recommended by traffic laws for typical driving scenarios, such as signaling before a lane change or turn. **Required** activations are those that are deemed mandatory for safety reasons, like signaling an abrupt lane change to avoid an obstacle.
 
-![avoid_fig_multi_case](./image/avoid_fig_multi_case.png)
+The `TurnIndicatorsCommand` message structure has a command field that can take one of several constants: `NO_COMMAND` indicates no signal is necessary, `DISABLE` to deactivate signals, `ENABLE_LEFT` to signal a left turn, and `ENABLE_RIGHT` to signal a right turn. The Behavior Path Planner sends these commands at the appropriate times, based on its rules-based system that considers both the **desired** and **required** scenarios for blinker activation.
 
-#### Smooth path generation
+!!! note
 
-The path generation is computed in Frenet coordinates. The shift length profile for avoidance is generated by four segmental constant jerk polynomials, and added to the original path. Since the lateral jerk can be approximately seen as a steering maneuver, this calculation yields a result similar to a Clothoid curve.
+    For more in-depth information, refer to [Turn Signal Design](./docs/behavior_path_planner_turn_signal_design.md) document.
 
-<!-- <p align="center"> <img src="./image/path_shifter.png" width="1000"/> </p> -->
+## Rerouting
 
-![path_shifter](./image/path_shifter.png)
+!!! warning
 
-#### Unimplemented parts / limitations for avoidance
+    Rerouting is a feature that was still under progress. Further information will be included on a later date.
 
-- collision check is not implemented
-- shift distance should be variable depending on the situation (left/right is free or occupied). Now it is a fixed value.
-- collaboration with "avoidance-by-lane-change".
-- specific rules for traffic condition (need to back to the center line before entering an intersection).
+## Parameters and Configuration
 
-### Pull Over
+The [configuration files](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner) are organized in a hierarchical directory structure for ease of navigation and management. Each subdirectory contains specific configuration files relevant to its module. The root directory holds general configuration files that apply to the overall behavior of the planner. The following is an overview of the directory structure with the respective configuration files.
 
-The Pull Over module is activated when goal is in the shoulder lane. Ego-vehicle will stop at the goal.
+```text
+behavior_path_planner
+├── behavior_path_planner.param.yaml
+├── drivable_area_expansion.param.yaml
+├── scene_module_manager.param.yaml
+├── avoidance
+│   └── avoidance.param.yaml
+├── avoidance_by_lc
+│   └── avoidance_by_lc.param.yaml
+├── dynamic_avoidance
+│   └── dynamic_avoidance.param.yaml
+├── goal_planner
+│   └── goal_planner.param.yaml
+├── lane_change
+│   └── lane_change.param.yaml
+├── side_shift
+│   └── side_shift.param.yaml
+└── start_planner
+    └── start_planner.param.yaml
+```
 
-#### **start pull over condition** (need to meet all of the conditions below)
+Similarly, the [common](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/common) directory contains configuration files that are used across various modules, providing shared parameters and settings essential for the functioning of the Behavior Path Planner:
 
-- Pull over request condition
+```text
+common
+├── common.param.yaml
+├── costmap_generator.param.yaml
+└── nearest_search.param.yaml
+```
 
-  - The goal is in shoulder lane and the ego-vehicle is in road lane.
-  - The distance between the goal and ego-vehicle is somewhat close.
-    - It is shorter than `request_length`(default: < `200m`).
+The [preset](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/preset) directory contains the configurations for managing the operational state of various modules. It includes the default_preset.yaml file, which specifically caters to enabling and disabling modules within the system.
 
-- Pull over ready condition
+```text
+preset
+└── default_preset.yaml
+```
 
-  - It is always ready if the conditions of the request are met.
+## Limitations & Future Work
 
-- Pull over start condition
-  - Generate safe parking goal and path.
-    - The generated path does not collide with obstacles.
-  - Pull over is allowed by an operator
-    - If pull over path is not allowed by an operator, leave distance required for pull over and stop.
-
-#### **finish pull over condition** (need to meet any of the conditions below)
-
-- The distance to the goal from your vehicle is lower than threshold (default: < `1m`)
-- The ego-vehicle is stopped.
-  - The speed is lower than threshold (default: < `0.01m/s`).
-
-#### General parameters for pull_over
-
-| Name                       | Unit   | Type   | Description                                                                                                                             | Default value |
-| :------------------------- | :----- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| request_length             | [m]    | double | when the ego-vehicle approaches the goal by this distance, the module is activated.                                                     | 200.0         |
-| th_arrived_distance        | [m]    | double | distance threshold for arrival of path termination                                                                                      | 1.0           |
-| th_stopped_velocity        | [m/s]  | double | velocity threshold for arrival of path termination                                                                                      | 0.01          |
-| th_stopped_time            | [s]    | double | time threshold for arrival of path termination                                                                                          | 2.0           |
-| pull_over_velocity         | [m/s]  | double | decelerate to this speed by the goal search area                                                                                        | 2.0           |
-| pull_over_minimum_velocity | [m/s]  | double | speed of pull_over after stopping once. this prevents excessive acceleration.                                                           | 1.38          |
-| margin_from_boundary       | [m]    | double | distance margin from edge of the shoulder lane                                                                                          | 0.5           |
-| decide_path_distance       | [m]    | double | decide path if it approaches this distance relative to the parking position. after that, no path planning and goal search are performed | 10.0          |
-| maximum_deceleration       | [m/s2] | double | maximum deceleration. it prevents sudden deceleration when a parking path cannot be found suddenly                                      | 1.0           |
-
-#### **collision check**
-
-##### **occupancy grid based collision check**
-
-Generate footprints from ego-vehicle path points and determine obstacle collision from the value of occupancy_grid of the corresponding cell.
-
-##### Parameters for occupancy grid based collision check
-
-| Name                                       | Unit | Type   | Description                                                                                                     | Default value |
-| :----------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
-| use_occupancy_grid                         | -    | bool   | flag whether to use occupancy grid for collision check                                                          | true          |
-| use_occupancy_grid_for_longitudinal_margin | -    | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
-| occupancy_grid_collision_check_margin      | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
-| theta_size                                 | -    | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
-| obstacle_threshold                         | -    | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
-
-##### Parameters for object recognition based collision check
-
-| Name                                      | Unit | Type   | Description                                                | Default value |
-| :---------------------------------------- | :--- | :----- | :--------------------------------------------------------- | :------------ |
-| use_object_recognition                    | -    | bool   | flag whether to use object recognition for collision check | true          |
-| object_recognition_collision_check_margin | [m]  | double | margin to calculate ego-vehicle cells from footprint.      | 1.0           |
-
-#### **Goal Search**
-
-If it is not possible to park safely at a given goal, `/planning/scenario_planning/modified_goal` is
-searched for in certain range of the shoulder lane.
-
-[Video of how goal search works](https://user-images.githubusercontent.com/39142679/188359594-c6724e3e-1cb7-4051-9a18-8d2c67d4dee9.mp4)
-
-##### Parameters for goal search
-
-| Name                        | Unit | Type   | Description                                                                                                                                                                                                              | Default value  |
-| :-------------------------- | :--- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
-| search_priority             | -    | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one. | efficient_path |
-| enable_goal_research        | -    | double | flag whether to search goal                                                                                                                                                                                              | true           |
-| forward_goal_search_length  | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                            | 20.0           |
-| backward_goal_search_length | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
-| goal_search_interval        | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
-| longitudinal_margin         | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                            | 3.0            |
-| max_lateral_offset          | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                   | 3.0            |
-| lateral_offset_interval     | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                | 3.0            |
-
-#### **Path Generation**
-
-There are three path generation methods.
-The path is generated with a certain margin (default: `0.5 m`) from left boundary of shoulder lane.
-
-##### **shift parking**
-
-Pull over distance is calculated by the speed, lateral deviation, and the lateral jerk.
-The lateral jerk is searched for among the predetermined minimum and maximum values, and the one satisfies ready conditions described above is output.
-
-1. Apply uniform offset to centerline of shoulder lane for ensuring margin
-2. In the section between merge start and end, path is shifted by a method that is used to generate avoidance path (four segmental constant jerk polynomials)
-3. Combine this path with center line of road lane
-
-![shift_parking](./image/shift_parking.drawio.svg)
-
-[Video of how shift_parking works](https://user-images.githubusercontent.com/39142679/178034101-4dc61a33-bc49-41a0-a9a8-755cce53cbc6.mp4)
-
-###### Parameters for shift parking
-
-| Name                               | Unit   | Type   | Description                                                                                              | Default value |
-| :--------------------------------- | :----- | :----- | :------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_shift_parking               | [-]    | bool   | flag whether to enable shift parking                                                                     | true          |
-| pull_over_sampling_num             | [-]    | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                      | 4             |
-| maximum_lateral_jerk               | [m/s3] | double | maximum lateral jerk                                                                                     | 2.0           |
-| minimum_lateral_jerk               | [m/s3] | double | minimum lateral jerk                                                                                     | 0.5           |
-| deceleration_interval              | [m]    | double | distance of deceleration section                                                                         | 15.0          |
-| after_pull_over_straight_distance  | [m]    | double | straight line distance after pull over end point                                                         | 5.0           |
-| before_pull_over_straight_distance | [m]    | double | straight line distance before pull over end point. a safe path should have a distance that includes this | 5.0           |
-
-##### **geometric parallel parking**
-
-Generate two arc paths with discontinuous curvature. It stops twice in the middle of the path to control the steer on the spot. There are two path generation methods: forward and backward.
-See also [[1]](https://www.sciencedirect.com/science/article/pii/S1474667015347431) for details of the algorithm. There is also [a simple python implementation](https://github.com/kosuke55/geometric-parallel-parking).
-
-###### Parameters geometric parallel parking
-
-| Name                    | Unit  | Type   | Description                                                                                                                         | Default value |
-| :---------------------- | :---- | :----- | :---------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| arc_path_interval       | [m]   | double | interval between arc path points                                                                                                    | 1.0           |
-| pull_over_max_steer_rad | [rad] | double | maximum steer angle for path generation. it may not be possible to control steer up to max_steer_angle in vehicle_info when stopped | 0.35          |
-
-###### arc forward parking
-
-Generate two forward arc paths.
-
-![arc_forward_parking](./image/arc_forward_parking.drawio.svg)
-
-[Video of how arc_forward_parking works](https://user-images.githubusercontent.com/39142679/178034128-4754c401-8aff-4745-b69a-4a69ca29ce4b.mp4)
-
-###### Parameters arc forward parking
-
-| Name                                    | Unit  | Type   | Description                                                                     | Default value |
-| :-------------------------------------- | :---- | :----- | :------------------------------------------------------------------------------ | :------------ |
-| enable_arc_forward_parking              | [-]   | bool   | flag whether to enable arc forward parking                                      | true          |
-| after_forward_parking_straight_distance | [m]   | double | straight line distance after pull over end point                                | 2.0           |
-| forward_parking_velocity                | [m/s] | double | velocity when forward parking                                                   | 1.38          |
-| forward_parking_lane_departure_margin   | [m/s] | double | lane departure margin for front left corner of ego-vehicle when forward parking | 0.0           |
-
-###### arc backward parking
-
-Generate two backward arc paths.
-
-![arc_backward_parking](./image/arc_backward_parking.drawio.svg).
-
-[Video of how arc_forward_parking works](https://user-images.githubusercontent.com/39142679/178034280-4b6754fe-3981-4aee-b5e0-970f34563c6d.mp4)
-
-###### Parameters arc backward parking
-
-| Name                                     | Unit  | Type   | Description                                                               | Default value |
-| :--------------------------------------- | :---- | :----- | :------------------------------------------------------------------------ | :------------ |
-| enable_arc_backward_parking              | [-]   | bool   | flag whether to enable arc backward parking                               | true          |
-| after_backward_parking_straight_distance | [m]   | double | straight line distance after pull over end point                          | 2.0           |
-| backward_parking_velocity                | [m/s] | double | velocity when backward parking                                            | -1.38         |
-| backward_parking_lane_departure_margin   | [m/s] | double | lane departure margin for front right corner of ego-vehicle when backward | 0.0           |
-
-#### Unimplemented parts / limitations for pull over
-
-- parking on the right shoulder is not allowed
-- if the distance from the edge of the shoulder is too narrow, parking is not possible.
-  - if `margin_from_boundary` is set to `0.0`, etc., a path without deviation cannot be found.
-- geometric_parallel_parking assumes road lanes and shoulder lanes are straight and parallel.
-  - sift parking is possible on curved lanes.
-
-### Pull Out
-
-The Pull Out module is activated when ego-vehicle is stationary and footprint of ego-vehicle is included in shoulder lane. This module ends when ego-vehicle merges into the road.
-
-#### **start pull out condition** (need to meet all of the conditions below)
-
-- Pull out request condition
-
-  - The speed of the vehicle is 0.
-  - Somewhere in footprint of ego-vehicle is included in shoulder lane
-  - The distance from ego-vehicle to the destination is long enough for pull out
-
-- Pull out ready condition
-
-  - It is always ready if the conditions of the request are met.
-
-- Pull out start condition
-  - Generate safe path which does not collide with obstacles
-    - If safe path cannot be generated from the current position, safe path from a receding position is searched.
-  - Pull out is allowed by an operator
-
-#### **finish pull out condition** (need to meet any of the conditions below)
-
-- Exceeding the pull out end point by more than the threshold (default: `1.0m`)
-
-#### General parameters for pull_out
-
-| Name                         | Unit  | Type   | Description                                                    | Default value |
-| :--------------------------- | :---- | :----- | :------------------------------------------------------------- | :------------ |
-| th_arrived_distance_m        | [m]   | double | distance threshold for arrival of path termination             | 1.0           |
-| th_stopped_velocity_mps      | [m/s] | double | velocity threshold for arrival of path termination             | 0.01          |
-| th_stopped_time_sec          | [s]   | double | time threshold for arrival of path termination                 | 1.0           |
-| collision_check_margin       | [m]   | double | Obstacle collision check margin                                | 1.0           |
-| pull_out_finish_judge_buffer | [m]   | double | threshold for finish judgment distance from pull out end point | 1.0           |
-
-#### **Safe check with obstacles in shoulder lane**
-
-1. Calculate ego-vehicle's footprint on pull out path between from current position to pull out end point. (Illustrated by blue frame)
-2. Calculate object's polygon which is located in shoulder lane
-3. If a distance between the footprint and the polygon is lower than the threshold (default: `1.0 m`), that is judged as a unsafe path
-
-![pull_out_collision_check](./image/pull_out_collision_check.drawio.svg)
-
-#### **Path Generation**
-
-There are two path generation methods.
-
-##### **shift pull out**
-
-Pull out distance is calculated by the speed, lateral deviation, and the lateral jerk. The lateral jerk is searched for among the predetermined minimum and maximum values, and the one that generates a safe path is selected.
-
-- Generate the shoulder lane centerline and shift it to the current position.
-- In the section between merge start and end, path is shifted by a method that is used to generate avoidance path (four segmental constant jerk polynomials)
-- Combine this path with center line of road lane
-
-![shift_pull_out](./image/shift_pull_out.drawio.svg)
-
-[Video of how shift pull out works](https://user-images.githubusercontent.com/39142679/187872468-6d5057ee-e039-499b-afc7-fe0dc8052a6b.mp4)
-
-###### parameters for shift pull out
-
-| Name                              | Unit   | Type   | Description                                                                                                          | Default value |
-| :-------------------------------- | :----- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_shift_pull_out             | -      | bool   | flag whether to enable shift pull out                                                                                | true          |
-| shift_pull_out_velocity           | [m/s]  | double | velocity of shift pull out                                                                                           | 2.0           |
-| pull_out_sampling_num             | -      | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                                  | 4             |
-| before_pull_out_straight_distance | [m]    | double | distance before pull out start point                                                                                 | 0.0           |
-| maximum_lateral_jerk              | [m/s3] | double | maximum lateral jerk                                                                                                 | 2.0           |
-| minimum_lateral_jerk              | [m/s3] | double | minimum lateral jerk                                                                                                 | 0.5           |
-| minimum_shift_pull_out_distance   | [m]    | double | minimum shift pull out distance. if calculated pull out distance is shorter than this, use this for path generation. | 20.0          |
-
-##### **geometric pull out**
-
-Generate two arc paths with discontinuous curvature. Ego-vehicle stops once in the middle of the path to control the steer on the spot.
-See also [[1]](https://www.sciencedirect.com/science/article/pii/S1474667015347431) for details of the algorithm.
-
-![geometric_pull_out](./image/geometric_pull_out.drawio.svg)
-
-[Video of how geometric pull out works](https://user-images.githubusercontent.com/39142679/181024707-3e7ca5ee-62de-4334-b9e9-ded313de1ea1.mp4)
-
-###### parameters for geometric pull out
-
-| Name                        | Unit  | Type   | Description                                             | Default value |
-| :-------------------------- | :---- | :----- | :------------------------------------------------------ | :------------ |
-| enable_geometric_pull_out   | -     | bool   | flag whether to enable geometric pull out               | true          |
-| geometric_pull_out_velocity | [m/s] | double | velocity of geometric pull out                          | 1.0           |
-| arc_path_interval           | [m]   | double | path points interval of arc paths of geometric pull out | 1.0           |
-| lane_departure_margin       | [m]   | double | margin of deviation to lane right                       | 0.2           |
-| pull_out_max_steer_angle    | [rad] | double | maximum steer angle for path generation                 | 0.26          |
-
-#### **backward pull out start point search**
-
-If a safe path cannot be generated from the current position, search backwards for a pull out start point at regular intervals(default: `2.0`).
-
-![pull_out_after_back](./image/pull_out_after_back.drawio.svg)
-
-[Video of how pull out after backward driving works](https://user-images.githubusercontent.com/39142679/181025149-8fb9fb51-9b8f-45c4-af75-27572f4fba78.mp4)
-
-| Name                                                                       | Unit           | Type   | Description                                                                                                           | Default value |
-| :------------------------------------------------------------------------- | :------------- | :----- | :-------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_back                                                                | -              | bool   | flag whether to search backward for start_point                                                                       | true          |
-| enable_back                                                                | -              | bool   | In the case of `efficient_path`, use efficient paths even if the back distance is longer.                             |
-| In case of `short_back_distance`, use a path with as short a back distance | efficient_path |
-| max_back_distance                                                          | [m]            | double | maximum back distance                                                                                                 | 15.0          |
-| backward_search_resolution                                                 | [m]            | double | distance interval for searching backward pull out start point                                                         | 2.0           |
-| backward_path_update_duration                                              | [s]            | double | time interval for searching backward pull out start point. this prevents chattering between back driving and pull_out | 3.0           |
-
-#### Unimplemented parts / limitations for pull put
-
-- pull out from the right shoulder lane to the left lane is not allowed.
-- The safety of the road lane is not judged
-  - Collision prediction is not performed for vehicles approaching from behind the road lane.
-
-### Side Shift
-
-The role of the Side Shift module is to shift the reference path laterally in response to external instructions (such as remote operation).
-
-#### Parameters for path generation
-
-![path_shifter](./image/side_shift_fig1.png)
-
-In the figure, `straight margin distance` is to avoid sudden shifting, that is calculated by `max(min_distance_to_start_shifting, ego_speed * time_to_start_shifting)` . The `shifting distance` is calculated by jerk, with minimum speed and minimum distance parameter, described below. The minimum speed is used to prevent sharp shift when ego vehicle is stopped.
-
-| Name                           | Unit   | Type   | Description                                                                 | Default value |
-| :----------------------------- | :----- | :----- | :-------------------------------------------------------------------------- | :------------ |
-| min_distance_to_start_shifting | [m]    | double | minimum straight distance before shift start.                               | 5.0           |
-| time_to_start_shifting         | [s]    | double | time of minimum straight distance before shift start.                       | 1.0           |
-| shifting_lateral_jerk          | [m/s3] | double | lateral jerk to calculate shifting distance.                                | 0.2           |
-| min_shifting_distance          | [m]    | double | the shifting distance is longer than this length.                           | 5.0           |
-| min_shifting_speed             | [m/s]  | double | lateral jerk is calculated with the greater of current_speed or this speed. | 5.56          |
-
-### Smooth goal connection
-
-If the target path contains a goal, modify the points of the path so that the path and the goal are connected smoothly. This process will change the shape of the path by the distance of `refine_goal_search_radius_range` from the goal. Note that this logic depends on the interpolation algorithm that will be executed in a later module (at the moment it uses spline interpolation), so it needs to be updated in the future.
-
-![path_goal_refinement](./image/path_goal_refinement.drawio.svg)
-
-## References / External links
-
-This module depends on the external [BehaviorTreeCpp](https://github.com/BehaviorTree/BehaviorTree.CPP) library.
-
-<!-- cspell:ignore Vorobieva, Minoiu, Enache, Mammar, IFAC -->
-
-[[1]](https://www.sciencedirect.com/science/article/pii/S1474667015347431) H. Vorobieva, S. Glaser, N. Minoiu-Enache, and S. Mammar, “Geometric path planning for automatic parallel parking in tiny spots”, IFAC Proceedings Volumes, vol. 45, no. 24, pp. 36–42, 2012.
-
-## Future extensions / Unimplemented parts
-
--
-
-## Related issues
-
--
+1. Goal Planner module cannot be simultaneously executed together with other modules.
+2. Module is not designed as plugin. Integrating custom module is not straightforward and user have to modify some part of the behavior path planner main code.

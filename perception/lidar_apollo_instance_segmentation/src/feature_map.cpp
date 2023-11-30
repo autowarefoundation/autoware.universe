@@ -1,4 +1,4 @@
-// Copyright 2020 TierIV
+// Copyright 2020-2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 #include <cmath>
 
+namespace lidar_apollo_instance_segmentation
+{
 FeatureMapInterface::FeatureMapInterface(
   const int _channels, const int _width, const int _height, const int _range)
 : channels(_channels),
@@ -44,7 +46,9 @@ FeatureMap::FeatureMap(const int width, const int height, const int range)
   count_data = &(map_data[0]) + width * height * 2;
   nonempty_data = &(map_data[0]) + width * height * 3;
 }
-void FeatureMap::initializeMap([[maybe_unused]] std::vector<float> & map) {}
+void FeatureMap::initializeMap([[maybe_unused]] std::vector<float> & map)
+{
+}
 void FeatureMap::resetMap([[maybe_unused]] std::vector<float> & map)
 {
   const int size = width * height;
@@ -66,7 +70,9 @@ FeatureMapWithIntensity::FeatureMapWithIntensity(const int width, const int heig
   mean_intensity_data = &(map_data[0]) + width * height * 4;
   nonempty_data = &(map_data[0]) + width * height * 5;
 }
-void FeatureMapWithIntensity::initializeMap([[maybe_unused]] std::vector<float> & map) {}
+void FeatureMapWithIntensity::initializeMap([[maybe_unused]] std::vector<float> & map)
+{
+}
 void FeatureMapWithIntensity::resetMap([[maybe_unused]] std::vector<float> & map)
 {
   const int size = width * height;
@@ -162,3 +168,4 @@ void FeatureMapWithConstantAndIntensity::resetMap([[maybe_unused]] std::vector<f
     nonempty_data[i] = 0.0f;
   }
 }
+}  // namespace lidar_apollo_instance_segmentation

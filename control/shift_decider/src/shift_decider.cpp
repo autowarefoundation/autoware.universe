@@ -30,7 +30,7 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
   rclcpp::QoS durable_qos(queue_size);
   durable_qos.transient_local();
 
-  park_on_goal_ = declare_parameter("park_on_goal", true);
+  park_on_goal_ = declare_parameter<bool>("park_on_goal");
 
   pub_shift_cmd_ =
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("output/gear_cmd", durable_qos);
@@ -38,6 +38,8 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
     "input/control_cmd", queue_size, std::bind(&ShiftDecider::onControlCmd, this, _1));
   sub_autoware_state_ = create_subscription<autoware_auto_system_msgs::msg::AutowareState>(
     "input/state", queue_size, std::bind(&ShiftDecider::onAutowareState, this, _1));
+  sub_current_gear_ = create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
+    "input/current_gear", queue_size, std::bind(&ShiftDecider::onCurrentGear, this, _1));
 
   initTimer(0.1);
 }
@@ -53,9 +55,14 @@ void ShiftDecider::onAutowareState(autoware_auto_system_msgs::msg::AutowareState
   autoware_state_ = msg;
 }
 
+void ShiftDecider::onCurrentGear(autoware_auto_vehicle_msgs::msg::GearReport::SharedPtr msg)
+{
+  current_gear_ptr_ = msg;
+}
+
 void ShiftDecider::onTimer()
 {
-  if (!autoware_state_ || !control_cmd_) {
+  if (!autoware_state_ || !control_cmd_ || !current_gear_ptr_) {
     return;
   }
 
@@ -70,13 +77,25 @@ void ShiftDecider::updateCurrentShiftCmd()
 
   shift_cmd_.stamp = now();
   static constexpr double vel_threshold = 0.01;  // to prevent chattering
-  if (autoware_state_->state == AutowareState::ARRIVED_GOAL && park_on_goal_) {
-    shift_cmd_.command = GearCommand::PARK;
-  } else if (control_cmd_->longitudinal.speed > vel_threshold) {
-    shift_cmd_.command = GearCommand::DRIVE;
-  } else if (control_cmd_->longitudinal.speed < -vel_threshold) {
-    shift_cmd_.command = GearCommand::REVERSE;
+  if (autoware_state_->state == AutowareState::DRIVING) {
+    if (control_cmd_->longitudinal.speed > vel_threshold) {
+      shift_cmd_.command = GearCommand::DRIVE;
+    } else if (control_cmd_->longitudinal.speed < -vel_threshold) {
+      shift_cmd_.command = GearCommand::REVERSE;
+    } else {
+      shift_cmd_.command = prev_shift_command;
+    }
+  } else {
+    if (
+      (autoware_state_->state == AutowareState::ARRIVED_GOAL ||
+       autoware_state_->state == AutowareState::WAITING_FOR_ROUTE) &&
+      park_on_goal_) {
+      shift_cmd_.command = GearCommand::PARK;
+    } else {
+      shift_cmd_.command = current_gear_ptr_->report;
+    }
   }
+  prev_shift_command = shift_cmd_.command;
 }
 
 void ShiftDecider::initTimer(double period_s)
