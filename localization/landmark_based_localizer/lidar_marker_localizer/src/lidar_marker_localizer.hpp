@@ -15,6 +15,8 @@
 #ifndef LIDAR_MARKER_LOCALIZER_HPP_
 #define LIDAR_MARKER_LOCALIZER_HPP_
 
+#include "localization_util/smart_pose_buffer.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -109,8 +111,7 @@ private:
   bool is_activated_;
   bool is_detected_marker_;
   bool is_exist_marker_within_self_pose_;
-  std::mutex self_pose_array_mtx_;
-  std::deque<PoseWithCovarianceStamped::ConstSharedPtr> self_pose_msg_ptr_array_;
+  std::unique_ptr<SmartPoseBuffer> ekf_pose_buffer_;
 
   std::vector<Pose> marker_pose_on_map_array_;
 };

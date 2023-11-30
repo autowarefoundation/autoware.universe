@@ -14,8 +14,6 @@
 
 #include "lidar_marker_localizer.hpp"
 
-#include "localization_util/pose_array_interpolator.hpp"
-
 #include <autoware_point_types/types.hpp>
 #include <rclcpp/qos.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -58,6 +56,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   param_.limit_distance_from_self_pose_to_marker =
     static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker"));
   param_.base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
+  ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+    this->get_logger(), param_.self_pose_timeout_sec, param_.self_pose_distance_tolerance_m);
 
   rclcpp::CallbackGroup::SharedPtr points_callback_group;
   points_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -117,38 +117,14 @@ void LidarMarkerLocalizer::self_pose_callback(
   // TODO(YamatoAndo)
   // if (!is_activated_) return;
 
-  // lock mutex for initial pose
-  std::lock_guard<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
-  // if rosbag restart, clear buffer
-  if (!self_pose_msg_ptr_array_.empty()) {
-    const builtin_interfaces::msg::Time & t_front = self_pose_msg_ptr_array_.front()->header.stamp;
-    const builtin_interfaces::msg::Time & t_msg = self_pose_msg_ptr->header.stamp;
-    if (t_front.sec > t_msg.sec || (t_front.sec == t_msg.sec && t_front.nanosec > t_msg.nanosec)) {
-      self_pose_msg_ptr_array_.clear();
-    }
-  }
-
   if (self_pose_msg_ptr->header.frame_id == "map") {
-    self_pose_msg_ptr_array_.push_back(self_pose_msg_ptr);
+    ekf_pose_buffer_->push_back(self_pose_msg_ptr);
   } else {
-    TransformStamped transform_self_pose_frame_to_map;
-    try {
-      transform_self_pose_frame_to_map = tf_buffer_->lookupTransform(
-        "map", self_pose_msg_ptr->header.frame_id, self_pose_msg_ptr->header.stamp,
-        rclcpp::Duration::from_seconds(0.1));
-
-      // transform self_pose_frame to map_frame
-      auto self_pose_on_map_ptr = std::make_shared<PoseWithCovarianceStamped>();
-      self_pose_on_map_ptr->pose.pose = tier4_autoware_utils::transformPose(
-        self_pose_msg_ptr->pose.pose, transform_self_pose_frame_to_map);
-      // self_pose_on_map_ptr->pose.covariance;  // TODO(YamatoAndo)
-      self_pose_on_map_ptr->header.stamp = self_pose_msg_ptr->header.stamp;
-      self_pose_msg_ptr_array_.push_back(self_pose_on_map_ptr);
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN(
-        get_logger(), "cannot get map to %s transform. %s",
-        self_pose_msg_ptr->header.frame_id.c_str(), ex.what());
-    }
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      get_logger(), *this->get_clock(), 1000,
+      "Received initial pose message with frame_id "
+        << self_pose_msg_ptr->header.frame_id << ", but expected map. "
+        << "Please check the frame_id in the input topic and ensure it is correct.");
   }
 }
 
@@ -157,33 +133,13 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
   const builtin_interfaces::msg::Time sensor_ros_time = points_msg_ptr->header.stamp;
 
   // (1) Get Self Pose
-  Pose self_pose;
-  {
-    // get self-position on map
-    std::unique_lock<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
-    if (self_pose_msg_ptr_array_.size() <= 1) {
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
-      return;
-    }
-    PoseArrayInterpolator interpolator(
-      this, sensor_ros_time, self_pose_msg_ptr_array_, param_.self_pose_timeout_sec,
-      param_.self_pose_distance_tolerance_m);
-    if (!interpolator.is_success()) {
-      return;
-    }
-    pop_old_pose(self_pose_msg_ptr_array_, sensor_ros_time);
-    self_pose = interpolator.get_current_pose().pose.pose;
+  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
+    ekf_pose_buffer_->interpolate(sensor_ros_time);
+  if (!interpolate_result) {
+    return;
   }
-
-  // (1') alterative way to get current self pose from tf
-  // TransformStamped transform_base_link_to_map;
-  // try {
-  //   transform_base_link_to_map =
-  //     tf_buffer_->lookupTransform("map", "base_link", sensor_ros_time);
-  // } catch (tf2::TransformException & ex) {
-  //   RCLCPP_WARN(get_logger(), "cannot get map to base_link transform. %s", ex.what());
-  //   return;
-  // }
+  ekf_pose_buffer_->pop_old(sensor_ros_time);
+  const Pose self_pose = interpolate_result.value().interpolated_pose.pose.pose;
 
   // (2) detect marker
   const std::vector<landmark_manager::Landmark> detected_landmarks =
@@ -255,8 +211,7 @@ void LidarMarkerLocalizer::service_trigger_node(
 {
   is_activated_ = req->data;
   if (is_activated_) {
-    std::lock_guard<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
-    self_pose_msg_ptr_array_.clear();
+    ekf_pose_buffer_->clear();
   } else {
   }
   res->success = true;
