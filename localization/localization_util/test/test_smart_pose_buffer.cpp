@@ -80,7 +80,7 @@ TEST_F(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
   // interpolate
   builtin_interfaces::msg::Time target_ros_time_msg;
   target_ros_time_msg.sec = 15;
-  target_ros_time_msg.nanosec = static_cast<uint32_t>(0);
+  target_ros_time_msg.nanosec = 0;
   const std::optional<SmartPoseBuffer::InterpolateResult> & interpolate_result =
     smart_pose_buffer.interpolate(target_ros_time_msg);
   ASSERT_TRUE(interpolate_result.has_value());
