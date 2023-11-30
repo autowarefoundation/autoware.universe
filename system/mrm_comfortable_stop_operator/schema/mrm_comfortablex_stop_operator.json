@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for mrm_comfortable_stop_operator",
+  "type": "object",
+  "definitions": {
+    "velodyne_monitor": {
+      "type": "object",
+      "properties": {
+        "update_rate": {
+          "type": "number",
+          "default": 10,
+          "description": "Timer callback frequency [Hz]."
+        },
+        "min_acceleration": {
+          "type": "number",
+          "default": -1.0,
+          "description": "Minimum acceleration for comfortable stop [m/s^2]."
+        },
+        "max_jerk": {
+          "type": "number",
+          "default": 0.3,
+          "description": "Maximum jerk for comfortable stop [m/s^3]."
+        },
+        "min_jerk": {
+          "type": "number",
+          "default": -0.3,
+          "description": "Minimum jerk for comfortable stop [m/s^3]."
+        }
+      },
+      "required": ["update_rate", "min_acceleration", "max_jerk", "min_jerk"]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/mrm_comfortable_stop_operator"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
