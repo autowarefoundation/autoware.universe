@@ -148,15 +148,6 @@ StopFactor createStopFactor(
   return stop_factor;
 }
 
-std::optional<geometry_msgs::msg::Pose> toStdOptional(
-  const boost::optional<geometry_msgs::msg::Pose> & boost_pose)
-{
-  if (boost_pose) {
-    return *boost_pose;
-  }
-  return std::nullopt;
-}
-
 tier4_debug_msgs::msg::StringStamped createStringStampedMessage(
   const rclcpp::Time & now, const int64_t module_id_,
   const std::vector<std::tuple<std::string, CollisionPoint, CollisionState>> & collision_points)
@@ -218,6 +209,8 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   *stop_reason = planning_utils::initializeStopReason(StopReason::CROSSWALK);
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
+  const auto ego_vel = planner_data_->current_velocity->twist.linear.x;
+  const auto ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
   const auto objects_ptr = planner_data_->predicted_objects;
 
   // Initialize debug data
@@ -241,9 +234,16 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const auto p_stop_line = getStopPointWithMargin(*path, path_intersects);
 
   std::optional<geometry_msgs::msg::Pose> default_stop_pose = std::nullopt;
+  std::optional<geometry_msgs::msg::Pose> default_feasible_stop_pose = std::nullopt;
   if (p_stop_line.has_value()) {
     default_stop_pose = toStdOptional(
       calcLongitudinalOffsetPose(path->points, p_stop_line->first, p_stop_line->second));
+    if (default_stop_pose) {
+      default_feasible_stop_pose = getFeasibleStopPose(
+        path->points, ego_pos, default_stop_pose->position, ego_vel, ego_acc,
+        planner_param_.min_acc_for_stuck_vehicle, planner_param_.max_jerk_for_stuck_vehicle,
+        planner_param_.min_jerk_for_stuck_vehicle);
+    }
   }
 
   // Resample path sparsely for less computation cost
@@ -269,13 +269,13 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   // Set distance
   // NOTE: If no stop point is inserted, distance to the virtual stop line has to be calculated.
-  setDistanceToStop(*path, default_stop_pose, nearest_stop_factor);
+  setDistanceToStop(*path, default_feasible_stop_pose, nearest_stop_factor);
 
   // plan Go/Stop
   if (isActivated()) {
     planGo(*path, nearest_stop_factor);
   } else {
-    planStop(*path, nearest_stop_factor, default_stop_pose, stop_reason);
+    planStop(*path, nearest_stop_factor, default_feasible_stop_pose, stop_reason);
   }
   recordTime(4);
 
@@ -831,21 +831,9 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
 
     if (near_attention_range < dist_ego2obj && dist_ego2obj < far_attention_range) {
       // Plan STOP considering min_acc, max_jerk and min_jerk.
-      const auto min_feasible_dist_ego2stop = calcDecelDistWithJerkAndAccConstraints(
-        ego_vel, 0.0, ego_acc, p.min_acc_for_stuck_vehicle, p.max_jerk_for_stuck_vehicle,
-        p.min_jerk_for_stuck_vehicle);
-      if (!min_feasible_dist_ego2stop) {
-        continue;
-      }
-
-      const double dist_ego2stop =
-        calcSignedArcLength(ego_path.points, ego_pos, stop_pose->position);
-      const double feasible_dist_ego2stop = std::max(*min_feasible_dist_ego2stop, dist_ego2stop);
-      const double dist_to_ego =
-        calcSignedArcLength(ego_path.points, ego_path.points.front().point.pose.position, ego_pos);
-
-      const auto feasible_stop_pose =
-        calcLongitudinalOffsetPose(ego_path.points, 0, dist_to_ego + feasible_dist_ego2stop);
+      const auto feasible_stop_pose = getFeasibleStopPose(
+        ego_path.points, ego_pos, stop_pose->position, ego_vel, ego_acc,
+        p.min_acc_for_stuck_vehicle, p.max_jerk_for_stuck_vehicle, p.min_jerk_for_stuck_vehicle);
       if (!feasible_stop_pose) {
         continue;
       }
