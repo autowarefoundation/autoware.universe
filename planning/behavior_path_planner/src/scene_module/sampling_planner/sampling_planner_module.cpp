@@ -65,17 +65,22 @@ SamplingPlannerModule::SamplingPlannerModule(
       return curvatures_satisfied;
     });
 
-  // soft_constraints_.emplace_back(
-  //   [](
-  //     sampler_common::Path & path, const sampler_common::Constraints & constraints,
-  //     [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
-  //     return (path.lengths.empty()) ? 0.0 : -constraints.soft.length_weight *
-  //     path.lengths.back();
-  //   });
-
-  // TODO(Daniel): Normalize costs to max 1, min 0
   // TODO(Daniel): Maybe add a soft cost for average distance to centerline?
   // TODO(Daniel): Think of methods to prevent chattering
+
+  //  Yaw difference
+  // soft_constraints_.emplace_back(
+  //   [&](
+  //     sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints &
+  //     constraints,
+  //     [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
+  //     if (path.points.empty()) return 0.0;
+  //     const auto & goal_pose_yaw =
+  //     tier4_autoware_utils::getRPY(input_data.goal_pose.orientation).z; const auto &
+  //     last_point_yaw = path.yaws.back(); const double angle_difference = std::abs(last_point_yaw
+  //     - goal_pose_yaw); return angle_difference / (3.141519 / 4.0);
+  //   });
+
   //  Distance to goal
   soft_constraints_.emplace_back(
     [&](
@@ -85,13 +90,23 @@ SamplingPlannerModule::SamplingPlannerModule(
       const auto & goal_pose = input_data.goal_pose;
       const auto & ego_pose = input_data.ego_pose;
       const auto & last_point = path.points.back();
-      const double distance =
-        std::hypot(goal_pose.position.x - last_point.x(), goal_pose.position.y - last_point.y());
-      const double distance_ego_to_pose = std::hypot(
+
+      const double distance_ego_to_goal_pose = std::hypot(
         goal_pose.position.x - ego_pose.position.x, goal_pose.position.y - ego_pose.position.y);
-      const double epsilon = 0.001;
-      return (distance_ego_to_pose > epsilon) ? distance / distance_ego_to_pose : 0.0;
-      // return 100.0 * distance;
+      const double distance_path_to_goal =
+        std::hypot(goal_pose.position.x - last_point.x(), goal_pose.position.y - last_point.y());
+      constexpr double epsilon = 0.001;
+      if (distance_ego_to_goal_pose < epsilon) return 0.0;
+      const double max_target_length = *std::max_element(
+        internal_params_->sampling.target_lengths.begin(),
+        internal_params_->sampling.target_lengths.end());
+      if (distance_ego_to_goal_pose > max_target_length)
+        return distance_path_to_goal / distance_ego_to_goal_pose;
+      constexpr double pi = 3.141519;
+      const auto & goal_pose_yaw = tier4_autoware_utils::getRPY(input_data.goal_pose.orientation).z;
+      const auto & last_point_yaw = path.yaws.back();
+      const double angle_difference = std::abs(last_point_yaw - goal_pose_yaw);
+      return (distance_path_to_goal / distance_ego_to_goal_pose) + (angle_difference / (pi / 4.0));
     });
 
   // Curvature cost
@@ -294,7 +309,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   auto frenet_paths =
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
-
   if (prev_sampling_path_) {
     const auto prev_path = prev_sampling_path_.value();
     frenet_paths.push_back(prev_path);
@@ -441,33 +455,28 @@ void SamplingPlannerModule::updateDebugMarkers()
   // }
   // debug_marker_.markers.push_back(m);
   // info_marker_.markers.push_back(m);
-  // m.type = m.LINE_STRIP;
-  // m.ns = "obstacles";
-  // m.id = 0UL;
-  // m.color.r = 1.0;
-  // m.color.g = 0.0;
-  // m.color.b = 0.0;
-  // for (const auto & obs : debug_data_.obstacles) {
-  //   m.points.clear();
-  //   for (const auto & p : obs.outer())
-  //     m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
-  //   debug_marker_.markers.push_back(m);
-  //   info_marker_.markers.push_back(m);
-  //   ++m.id;
-  // }
-  // m.action = m.DELETE;
-  // m.ns = "candidates";
-  // for (m.id = debug_data_.sampled_candidates.size();
-  //      static_cast<size_t>(m.id) < debug_data_.previous_sampled_candidates_nb; ++m.id) {
-  //   debug_marker_.markers.push_back(m);
-  //   info_marker_.markers.push_back(m);
-  // }
+  m.type = m.LINE_STRIP;
+  m.ns = "obstacles";
+  m.id = 0UL;
+  m.color.r = 1.0;
+  m.color.g = 0.0;
+  m.color.b = 0.0;
+  for (const auto & obs : debug_data_.obstacles) {
+    m.points.clear();
+    for (const auto & p : obs.outer())
+      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+    debug_marker_.markers.push_back(m);
+    info_marker_.markers.push_back(m);
+    ++m.id;
+  }
+  m.action = m.DELETE;
+  m.ns = "candidates";
+  for (m.id = debug_data_.sampled_candidates.size();
+       static_cast<size_t>(m.id) < debug_data_.previous_sampled_candidates_nb; ++m.id) {
+    debug_marker_.markers.push_back(m);
+    info_marker_.markers.push_back(m);
+  }
 }
-
-// lanelet::ConstLanelets NormalLaneChange::getCurrentLanes() const
-// {
-//   return utils::getCurrentLanesFromPath(prev_module_path_, planner_data_);
-// }
 
 void SamplingPlannerModule::extendOutputDrivableArea(BehaviorModuleOutput & output)
 {
