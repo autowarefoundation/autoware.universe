@@ -274,14 +274,13 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   frenet_planner::FrenetState frenet_initial_state;
   frenet_planner::SamplingParameters sampling_parameters;
-  {
-    const auto & pose = planner_data_->self_odometry->pose.pose;
-    sampler_common::State initial_state =
-      behavior_path_planner::getInitialState(pose, reference_spline);
-    sampling_parameters =
-      prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
-    frenet_initial_state.position = initial_state.frenet;
-  }
+
+  const auto & pose = planner_data_->self_odometry->pose.pose;
+  sampler_common::State initial_state =
+    behavior_path_planner::getInitialState(pose, reference_spline);
+  sampling_parameters =
+    prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
+  frenet_initial_state.position = initial_state.frenet;
 
   std::vector<DrivableLanes> drivable_lanes{};
   {
@@ -309,9 +308,54 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   auto frenet_paths =
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
-  if (prev_sampling_path_) {
-    const auto prev_path = prev_sampling_path_.value();
-    frenet_paths.push_back(prev_path);
+  // if (prev_sampling_path_) {
+  //   const auto prev_path = prev_sampling_path_.value();
+  //   frenet_paths.push_back(prev_path);
+  // }
+
+  // EXTEND prev path
+  if (prev_sampling_path_ && prev_sampling_path_->lengths.size() > 1) {
+    // Update previous path
+    frenet_planner::Path prev_path_frenet = prev_sampling_path_.value();
+    frenet_paths.push_back(prev_path_frenet);
+
+    double x = prev_path_frenet.points.back().x();
+    double x_pose = pose.position.x;
+    if (std::abs(x - x_pose) < 90.0) {
+      // sampler_common::State reuse_state;
+      // reuse_state.curvature = reused_path->curvatures.back();
+      // reuse_state.pose = reused_path->points.back();
+      // reuse_state.heading = reused_path->yaws.back();
+      // reuse_state.frenet = reference_spline.frenet(reuse_state.pose);
+      auto quaternion_from_rpy = [](double roll, double pitch, double yaw) -> tf2::Quaternion {
+        tf2::Quaternion quaternion_tf2;
+        quaternion_tf2.setRPY(roll, pitch, yaw);
+        return quaternion_tf2;
+      };
+
+      geometry_msgs::msg::Pose future_pose;
+      future_pose.position.x = prev_path_frenet.points.back().x();
+      future_pose.position.y = prev_path_frenet.points.back().y();
+      future_pose.position.z = pose.position.z;
+
+      const auto future_pose_quaternion =
+        quaternion_from_rpy(0.0, 0.0, prev_path_frenet.yaws.back());
+      future_pose.orientation.w = future_pose_quaternion.w();
+      future_pose.orientation.x = future_pose_quaternion.x();
+      future_pose.orientation.y = future_pose_quaternion.y();
+      future_pose.orientation.z = future_pose_quaternion.z();
+
+      sampler_common::State future_state =
+        behavior_path_planner::getInitialState(future_pose, reference_spline);
+      frenet_planner::FrenetState frenet_reuse_state;
+      frenet_reuse_state.position = prev_path_frenet.frenet_points.back();
+
+      frenet_planner::SamplingParameters extension_sampling_parameters =
+        prepareSamplingParameters(future_state, reference_spline, *internal_params_);
+      auto extension_frenet_paths = frenet_planner::generatePaths(
+        reference_spline, frenet_reuse_state, extension_sampling_parameters);
+      for (auto & p : extension_frenet_paths) frenet_paths.push_back(prev_path_frenet.extend(p));
+    }
   }
 
   SoftConstraintsInputs soft_constraints_input;
