@@ -33,7 +33,6 @@ StartPlannerModuleManager::StartPlannerModuleManager(
 
   std::string ns = "start_planner.";
 
-  p.verbose = node->declare_parameter<bool>(ns + "verbose");
   p.th_arrived_distance = node->declare_parameter<double>(ns + "th_arrived_distance");
   p.th_stopped_velocity = node->declare_parameter<double>(ns + "th_stopped_velocity");
   p.th_stopped_time = node->declare_parameter<double>(ns + "th_stopped_time");
@@ -274,6 +273,12 @@ StartPlannerModuleManager::StartPlannerModuleManager(
       node->declare_parameter<double>(rss_ns + "longitudinal_distance_min_threshold");
     p.safety_check_params.rss_params.longitudinal_velocity_delta_time =
       node->declare_parameter<double>(rss_ns + "longitudinal_velocity_delta_time");
+  }
+
+  // debug
+  std::string debug_ns = ns + "debug.";
+  {
+    p.print_debug_info = node->declare_parameter<bool>(debug_ns + "print_debug_info");
   }
 
   // validation of parameters

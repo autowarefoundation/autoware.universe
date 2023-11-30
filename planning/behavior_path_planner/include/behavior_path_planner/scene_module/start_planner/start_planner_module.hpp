@@ -129,6 +129,11 @@ private:
 
   bool canTransitIdleToRunningState() override;
 
+  /**
+   * @brief init member variables.
+   */
+  void initVariables();
+
   void initializeSafetyCheckParameters();
 
   bool receivedNewRoute() const;
@@ -200,7 +205,8 @@ private:
   PredictedObjects filterStopObjectsInPullOutLanes(
     const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
   bool hasFinishedPullOut() const;
-  bool isBackwardDrivingComplete() const;
+  bool hasFinishedBackwardDriving() const;
+  bool checkCollisionWithDynamicObjects() const;
   bool isStopped();
   bool isStuck();
   bool hasFinishedCurrentPath();
