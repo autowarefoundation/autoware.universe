@@ -16,7 +16,7 @@
         },
         "port": {
           "type": "integer",
-          "description": "Port to connect to on the device",
+          "description": "Port number to connect to L2ping service on the host",
           "default": 7640
         },
         "timeout": {
