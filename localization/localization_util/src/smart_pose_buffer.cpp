@@ -26,31 +26,33 @@ SmartPoseBuffer::SmartPoseBuffer(
 std::optional<SmartPoseBuffer::InterpolateResult> SmartPoseBuffer::interpolate(
   const rclcpp::Time & target_ros_time)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
-  if (pose_buffer_.size() < 2) {
-    RCLCPP_INFO(logger_, "pose_buffer_.size() < 2");
-    return std::nullopt;
-  }
-
-  const rclcpp::Time time_first = pose_buffer_.front()->header.stamp;
-  const rclcpp::Time time_last = pose_buffer_.back()->header.stamp;
-
-  if (target_ros_time < time_first || time_last < target_ros_time) {
-    return std::nullopt;
-  }
-
   InterpolateResult result;
 
-  // get the nearest poses
-  result.old_pose = *pose_buffer_.front();
-  for (const PoseWithCovarianceStamped::ConstSharedPtr & pose_cov_msg_ptr : pose_buffer_) {
-    result.new_pose = *pose_cov_msg_ptr;
-    const rclcpp::Time pose_time_stamp = result.new_pose.header.stamp;
-    if (pose_time_stamp > target_ros_time) {
-      break;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (pose_buffer_.size() < 2) {
+      RCLCPP_INFO(logger_, "pose_buffer_.size() < 2");
+      return std::nullopt;
     }
-    result.old_pose = *pose_cov_msg_ptr;
+
+    const rclcpp::Time time_first = pose_buffer_.front()->header.stamp;
+    const rclcpp::Time time_last = pose_buffer_.back()->header.stamp;
+
+    if (target_ros_time < time_first || time_last < target_ros_time) {
+      return std::nullopt;
+    }
+
+    // get the nearest poses
+    result.old_pose = *pose_buffer_.front();
+    for (const PoseWithCovarianceStamped::ConstSharedPtr & pose_cov_msg_ptr : pose_buffer_) {
+      result.new_pose = *pose_cov_msg_ptr;
+      const rclcpp::Time pose_time_stamp = result.new_pose.header.stamp;
+      if (pose_time_stamp > target_ros_time) {
+        break;
+      }
+      result.old_pose = *pose_cov_msg_ptr;
+    }
   }
 
   // check the time stamp
