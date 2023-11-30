@@ -120,7 +120,7 @@ bool SmartPoseBuffer::validate_time_stamp_difference(
   const double time_tolerance_sec) const
 {
   const double dt = std::abs((target_time - reference_time).seconds());
-  bool success = dt < time_tolerance_sec;
+  const bool success = dt < time_tolerance_sec;
   if (!success) {
     RCLCPP_WARN(
       logger_,
@@ -135,8 +135,8 @@ bool SmartPoseBuffer::validate_position_difference(
   const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point,
   const double distance_tolerance_m_) const
 {
-  double distance = norm(target_point, reference_point);
-  bool success = distance < distance_tolerance_m_;
+  const double distance = norm(target_point, reference_point);
+  const bool success = distance < distance_tolerance_m_;
   if (!success) {
     RCLCPP_WARN(
       logger_,
