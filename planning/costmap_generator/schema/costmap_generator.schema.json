@@ -29,7 +29,7 @@
         },
         "activate_by_scenario": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "If true, activate by scenario = parking. Otherwise, activate if vehicle is inside parking lot."
         },
         "grid_min_value": {
