@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
 #include "sampler_common/structures.hpp"
+#include "sampler_common/transform/spline_transform.hpp"
 
 #include <any>
 #include <functional>
@@ -73,6 +74,19 @@ inline void evaluateHardConstraints(
 
   path.constraints_satisfied = constraints_passed;
   return;
+}
+
+inline sampler_common::State getInitialState(
+  const geometry_msgs::msg::Pose & pose,
+  const sampler_common::transform::Spline2D & reference_spline)
+{
+  sampler_common::State initial_state;
+  Point2d initial_state_pose{pose.position.x, pose.position.y};
+  const auto rpy = tier4_autoware_utils::getRPY(pose.orientation);
+  initial_state.pose = initial_state_pose;
+  initial_state.frenet = reference_spline.frenet({pose.position.x, pose.position.y});
+  initial_state.heading = rpy.z;
+  return initial_state;
 }
 
 }  // namespace behavior_path_planner

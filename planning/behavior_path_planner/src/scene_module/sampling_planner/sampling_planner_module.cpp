@@ -266,17 +266,18 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     return {x, y};
   }();
 
-  const auto pose = planner_data_->self_odometry->pose.pose;
-  lanelet::ConstLanelet closest_lanelet;
-  planner_data_->route_handler->getClosestLaneletWithinRoute(pose, &closest_lanelet);
+  const auto & pose = planner_data_->self_odometry->pose.pose;
+  // lanelet::ConstLanelet closest_lanelet;
+  // planner_data_->route_handler->getClosestLaneletWithinRoute(pose, &closest_lanelet);
 
-  sampler_common::State initial_state;
-  Point2d initial_state_pose{pose.position.x, pose.position.y};
-  const auto rpy =
-    tier4_autoware_utils::getRPY(planner_data_->self_odometry->pose.pose.orientation);
-  initial_state.pose = initial_state_pose;
-  initial_state.frenet = reference_spline.frenet({pose.position.x, pose.position.y});
-  initial_state.heading = rpy.z;
+  sampler_common::State initial_state =
+    behavior_path_planner::getInitialState(pose, reference_spline);
+  // Point2d initial_state_pose{pose.position.x, pose.position.y};
+  // const auto rpy =
+  //   tier4_autoware_utils::getRPY(planner_data_->self_odometry->pose.pose.orientation);
+  // initial_state.pose = initial_state_pose;
+  // initial_state.frenet = reference_spline.frenet({pose.position.x, pose.position.y});
+  // initial_state.heading = rpy.z;
 
   frenet_planner::SamplingParameters sampling_parameters =
     prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
