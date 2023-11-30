@@ -399,7 +399,7 @@ bool checkSafetyWithRSS(
   const BehaviorPathPlannerParameters & parameters, const RSSparams & rss_params,
   const bool check_all_predicted_path, const double hysteresis_factor)
 {
-    // Check for collisions with each predicted path of the object
+  // Check for collisions with each predicted path of the object
   const bool is_safe = !std::any_of(objects.begin(), objects.end(), [&](const auto & object) {
     auto current_debug_data = utils::path_safety_checker::createObjectDebug(object);
 
