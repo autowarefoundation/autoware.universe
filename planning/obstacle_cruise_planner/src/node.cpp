@@ -374,7 +374,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
 
   // debug publisher
-  debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
+  debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/processing_time_ms", 1);
   debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/debug/cruise/virtual_wall", 1);
   debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
   debug_slow_down_wall_marker_pub_ =
@@ -557,13 +557,16 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
   const double step_length = p.decimate_trajectory_step_length;
   const double time_to_convergence = p.time_to_convergence;
 
-  std::vector<Polygon2d> polygons;
-  const double current_ego_lat_error =
-    motion_utils::calcLateralOffset(traj_points, current_ego_pose.position);
-  const double current_ego_yaw_error =
-    motion_utils::calcYawDeviation(traj_points, current_ego_pose);
+  const size_t nearest_idx =
+    motion_utils::findNearestSegmentIndex(traj_points, current_ego_pose.position);
+  const auto nearest_pose = traj_points.at(nearest_idx).pose;
+  const auto current_ego_pose_error =
+    tier4_autoware_utils::inverseTransformPose(current_ego_pose, nearest_pose);
+  const double current_ego_lat_error = current_ego_pose_error.position.y;
+  const double current_ego_yaw_error = tf2::getYaw(current_ego_pose_error.orientation);
   double time_elapsed = 0.0;
 
+  std::vector<Polygon2d> polygons;
   std::vector<geometry_msgs::msg::Pose> last_poses = {traj_points.at(0).pose};
   if (is_enable_current_pose_consideration) {
     last_poses.push_back(current_ego_pose);
@@ -586,7 +589,7 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
         tier4_autoware_utils::transformPose(indexed_pose_err, traj_points.at(i).pose));
 
       if (traj_points.at(i).longitudinal_velocity_mps != 0.0) {
-        time_elapsed += step_length / traj_points.at(i).longitudinal_velocity_mps;
+        time_elapsed += step_length / std::abs(traj_points.at(i).longitudinal_velocity_mps);
       } else {
         time_elapsed = std::numeric_limits<double>::max();
       }
@@ -1175,9 +1178,9 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   }
 
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
-  return SlowDownObstacle{obstacle.uuid,         obstacle.stamp,      obstacle.pose,
-                          tangent_vel,           normal_vel,          precise_lat_dist,
-                          front_collision_point, back_collision_point};
+  return SlowDownObstacle{obstacle.uuid,    obstacle.stamp,        obstacle.classification,
+                          obstacle.pose,    tangent_vel,           normal_vel,
+                          precise_lat_dist, front_collision_point, back_collision_point};
 }
 
 void ObstacleCruisePlannerNode::checkConsistency(

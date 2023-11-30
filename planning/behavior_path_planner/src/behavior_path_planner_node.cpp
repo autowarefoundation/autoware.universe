@@ -15,8 +15,14 @@
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/scene_module/avoidance/manager.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
+#include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
-#include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
+#include "behavior_path_planner/scene_module/lane_change/manager.hpp"
+#include "behavior_path_planner/scene_module/side_shift/manager.hpp"
+#include "behavior_path_planner/scene_module/start_planner/manager.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>
@@ -26,7 +32,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace
@@ -74,8 +79,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
-  debug_lane_change_msg_array_publisher_ =
-    create_publisher<LaneChangeDebugMsgArray>("~/debug/lane_change_debug_message_array", 1);
 
   if (planner_data_->parameters.visualize_maximum_drivable_area) {
     debug_maximum_drivable_area_publisher_ =
@@ -102,6 +105,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   costmap_subscriber_ = create_subscription<OccupancyGrid>(
     "~/input/costmap", 1, std::bind(&BehaviorPathPlannerNode::onCostMap, this, _1),
     createSubscriptionOptions(this));
+  traffic_signals_subscriber_ =
+    this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+      "~/input/traffic_signals", 1, std::bind(&BehaviorPathPlannerNode::onTrafficSignals, this, _1),
+      createSubscriptionOptions(this));
   lateral_offset_subscriber_ = this->create_subscription<LateralOffset>(
     "~/input/lateral_offset", 1, std::bind(&BehaviorPathPlannerNode::onLateralOffset, this, _1),
     createSubscriptionOptions(this));
@@ -132,7 +139,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
 
     const auto & p = planner_data_->parameters;
-    planner_manager_ = std::make_shared<PlannerManager>(*this, p.verbose);
+    planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num, p.verbose);
 
     const auto register_and_create_publisher =
       [&](const auto & manager, const bool create_publishers) {
@@ -272,6 +279,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   BehaviorPathPlannerParameters p{};
 
   p.verbose = declare_parameter<bool>("verbose");
+  p.max_iteration_num = declare_parameter<int>("max_iteration_num");
+  p.traffic_light_signal_timeout = declare_parameter<double>("traffic_light_signal_timeout");
 
   const auto get_scene_module_manager_param = [&](std::string && ns) {
     ModuleConfigParameters config;
@@ -335,6 +344,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   // lane change parameters
   p.backward_length_buffer_for_end_of_lane =
     declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
+  p.backward_length_buffer_for_blocking_object =
+    declare_parameter<double>("lane_change.backward_length_buffer_for_blocking_object");
   p.lane_changing_lateral_jerk =
     declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
   p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
@@ -579,6 +590,7 @@ void BehaviorPathPlannerNode::run()
   lk_pd.unlock();  // release planner_data_
 
   planner_manager_->print();
+  planner_manager_->publishProcessingTime();
   planner_manager_->publishMarker();
   planner_manager_->publishVirtualWall();
   lk_manager.unlock();  // release planner_manager_
@@ -633,7 +645,7 @@ void BehaviorPathPlannerNode::publish_steering_factor(
 
     steering_factor_interface_ptr_->updateSteeringFactor(
       {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
-      SteeringFactor::INTERSECTION, steering_factor_direction, steering_factor_state, "");
+      PlanningBehavior::INTERSECTION, steering_factor_direction, steering_factor_state, "");
   } else {
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
@@ -770,11 +782,6 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
   const auto avoidance_debug_message = debug_messages_data_ptr->getAvoidanceModuleDebugMsg();
   if (avoidance_debug_message) {
     debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
-  }
-
-  const auto lane_change_debug_message = debug_messages_data_ptr->getLaneChangeModuleDebugMsg();
-  if (lane_change_debug_message) {
-    debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
   }
 }
 
@@ -926,6 +933,17 @@ void BehaviorPathPlannerNode::onCostMap(const OccupancyGrid::ConstSharedPtr msg)
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->costmap = msg;
 }
+void BehaviorPathPlannerNode::onTrafficSignals(const TrafficSignalArray::ConstSharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_pd_);
+
+  for (const auto & signal : msg->signals) {
+    TrafficSignalStamped traffic_signal;
+    traffic_signal.stamp = msg->stamp;
+    traffic_signal.signal = signal;
+    planner_data_->traffic_light_id_map[signal.traffic_signal_id] = traffic_signal;
+  }
+}
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_map_);
@@ -1003,26 +1021,20 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, DrivableAreaExpansionParameters::AVOID_DYN_OBJECTS_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_dynamic_objects);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::EXPANSION_METHOD_PARAM,
-      planner_data_->drivable_area_expansion_parameters.expansion_method);
-    updateParam(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_TYPES_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
     updateParam(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_DIST_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_dist);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_FRONT,
-      planner_data_->drivable_area_expansion_parameters.ego_extra_front_offset);
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_FRONT_OVERHANG,
+      planner_data_->drivable_area_expansion_parameters.extra_front_overhang);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_REAR,
-      planner_data_->drivable_area_expansion_parameters.ego_extra_rear_offset);
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_WHEELBASE,
+      planner_data_->drivable_area_expansion_parameters.extra_wheelbase);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_LEFT,
-      planner_data_->drivable_area_expansion_parameters.ego_extra_left_offset);
-    updateParam(
-      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_RIGHT,
-      planner_data_->drivable_area_expansion_parameters.ego_extra_right_offset);
+      parameters, DrivableAreaExpansionParameters::EGO_EXTRA_WIDTH,
+      planner_data_->drivable_area_expansion_parameters.extra_width);
     updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_FRONT,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_front_offset);
@@ -1045,14 +1057,20 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, DrivableAreaExpansionParameters::RESAMPLE_INTERVAL_PARAM,
       planner_data_->drivable_area_expansion_parameters.resample_interval);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::EXTRA_ARC_LENGTH_PARAM,
+      parameters, DrivableAreaExpansionParameters::MAX_REUSE_DEVIATION_PARAM,
+      planner_data_->drivable_area_expansion_parameters.max_reuse_deviation);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::SMOOTHING_CURVATURE_WINDOW_PARAM,
+      planner_data_->drivable_area_expansion_parameters.curvature_average_window);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::SMOOTHING_MAX_BOUND_RATE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.max_bound_rate);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::SMOOTHING_EXTRA_ARC_LENGTH_PARAM,
       planner_data_->drivable_area_expansion_parameters.extra_arc_length);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::COMPENSATE_PARAM,
-      planner_data_->drivable_area_expansion_parameters.compensate_uncrossable_lines);
-    updateParam(
-      parameters, DrivableAreaExpansionParameters::EXTRA_COMPENSATE_PARAM,
-      planner_data_->drivable_area_expansion_parameters.compensate_extra_dist);
+      parameters, DrivableAreaExpansionParameters::PRINT_RUNTIME_PARAM,
+      planner_data_->drivable_area_expansion_parameters.print_runtime);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();

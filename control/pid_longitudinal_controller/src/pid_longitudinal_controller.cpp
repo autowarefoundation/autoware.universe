@@ -100,8 +100,13 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
     const double lpf_vel_error_gain{node.declare_parameter<double>("lpf_vel_error_gain")};
     m_lpf_vel_error = std::make_shared<LowpassFilter1d>(0.0, lpf_vel_error_gain);
 
+    m_enable_integration_at_low_speed =
+      node.declare_parameter<bool>("enable_integration_at_low_speed");
     m_current_vel_threshold_pid_integrate =
       node.declare_parameter<double>("current_vel_threshold_pid_integration");  // [m/s]
+
+    m_time_threshold_before_pid_integrate =
+      node.declare_parameter<double>("time_threshold_before_pid_integration");  // [s]
 
     m_enable_brake_keeping_before_stop =
       node.declare_parameter<bool>("enable_brake_keeping_before_stop");         // [-]
@@ -284,6 +289,7 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
     m_pid_vel.setLimits(max_pid, min_pid, max_p, min_p, max_i, min_i, max_d, min_d);
 
     update_param("current_vel_threshold_pid_integration", m_current_vel_threshold_pid_integrate);
+    update_param("time_threshold_before_pid_integration", m_time_threshold_before_pid_integrate);
   }
 
   // stopping state
@@ -497,13 +503,35 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     stop_dist > p.drive_state_stop_dist + p.drive_state_offset_stop_dist;
   const bool departure_condition_from_stopped = stop_dist > p.drive_state_stop_dist;
 
-  const bool keep_stopped_condition =
-    m_enable_keep_stopped_until_steer_convergence && !lateral_sync_data_.is_steer_converged;
+  // NOTE: the same velocity threshold as motion_utils::searchZeroVelocity
+  static constexpr double vel_epsilon = 1e-3;
+
+  // Let vehicle start after the steering is converged for control accuracy
+  const bool keep_stopped_condition = std::fabs(current_vel) < vel_epsilon &&
+                                      m_enable_keep_stopped_until_steer_convergence &&
+                                      !lateral_sync_data_.is_steer_converged;
 
   const bool stopping_condition = stop_dist < p.stopping_state_stop_dist;
-  if (
-    std::fabs(current_vel) > p.stopped_state_entry_vel ||
-    std::fabs(current_acc) > p.stopped_state_entry_acc) {
+
+  const bool is_stopped = std::abs(current_vel) < p.stopped_state_entry_vel &&
+                          std::abs(current_acc) < p.stopped_state_entry_acc;
+  // Case where the ego slips in the opposite direction of the gear due to e.g. a slope is also
+  // considered as a stop
+  const bool is_not_running = [&]() {
+    if (control_data.shift == Shift::Forward) {
+      if (is_stopped || current_vel < 0.0) {
+        // NOTE: Stopped or moving backward
+        return true;
+      }
+    } else {
+      if (is_stopped || 0.0 < current_vel) {
+        // NOTE: Stopped or moving forward
+        return true;
+      }
+    }
+    return false;
+  }();
+  if (!is_not_running) {
     m_last_running_time = std::make_shared<rclcpp::Time>(clock_->now());
   }
   const bool stopped_condition =
@@ -511,8 +539,6 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
       ? (clock_->now() - *m_last_running_time).seconds() > p.stopped_state_entry_duration_time
       : false;
 
-  static constexpr double vel_epsilon =
-    1e-3;  // NOTE: the same velocity threshold as motion_utils::searchZeroVelocity
   const double current_vel_cmd =
     std::fabs(m_trajectory.points.at(control_data.nearest_idx).longitudinal_velocity_mps);
   const bool emergency_condition = m_enable_overshoot_emergency &&
@@ -536,6 +562,11 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
   const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
                                 m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
 
+  if (is_under_control != m_prev_vehicle_is_under_control) {
+    m_prev_vehicle_is_under_control = is_under_control;
+    m_under_control_starting_time =
+      is_under_control ? std::make_shared<rclcpp::Time>(clock_->now()) : nullptr;
+  }
   // transit state
   // in DRIVE state
   if (m_control_state == ControlState::DRIVE) {
@@ -939,8 +970,15 @@ double PidLongitudinalController::applyVelocityFeedback(
   const double diff_vel = (target_motion.vel - current_vel) * vel_sign;
   const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
                                 m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
+
+  const bool vehicle_is_moving = std::abs(current_vel) > m_current_vel_threshold_pid_integrate;
+  const double time_under_control = getTimeUnderControl();
+  const bool vehicle_is_stuck =
+    !vehicle_is_moving && time_under_control > m_time_threshold_before_pid_integrate;
+
   const bool enable_integration =
-    (std::abs(current_vel) > m_current_vel_threshold_pid_integrate) && is_under_control;
+    (vehicle_is_moving || (m_enable_integration_at_low_speed && vehicle_is_stuck)) &&
+    is_under_control;
   const double error_vel_filtered = m_lpf_vel_error->filter(diff_vel);
 
   std::vector<double> pid_contributions(3);
@@ -1037,6 +1075,12 @@ void PidLongitudinalController::checkControlState(
     "rotation deviation threshold", "%lf", m_state_transition_params.emergency_state_traj_rot_dev);
   stat.addf("rotation deviation", "%lf", m_diagnostic_data.rot_deviation);
   stat.summary(level, msg);
+}
+
+double PidLongitudinalController::getTimeUnderControl()
+{
+  if (!m_under_control_starting_time) return 0.0;
+  return (clock_->now() - *m_under_control_starting_time).seconds();
 }
 
 }  // namespace autoware::motion::control::pid_longitudinal_controller

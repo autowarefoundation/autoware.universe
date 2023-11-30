@@ -33,6 +33,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
 
   std::string ns = "start_planner.";
 
+  p.verbose = node->declare_parameter<bool>(ns + "verbose");
   p.th_arrived_distance = node->declare_parameter<double>(ns + "th_arrived_distance");
   p.th_stopped_velocity = node->declare_parameter<double>(ns + "th_stopped_velocity");
   p.th_stopped_time = node->declare_parameter<double>(ns + "th_stopped_time");
@@ -320,7 +321,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
     const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
 
     // Currently simultaneous execution with other modules is not supported while backward driving
-    if (!start_planner_ptr->isBackFinished()) {
+    if (!start_planner_ptr->isDrivingForward()) {
       return false;
     }
 
@@ -349,7 +350,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() cons
     const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
 
     // Currently simultaneous execution with other modules is not supported while backward driving
-    if (!start_planner_ptr->isBackFinished()) {
+    if (start_planner_ptr->isDrivingForward()) {
       return false;
     }
 

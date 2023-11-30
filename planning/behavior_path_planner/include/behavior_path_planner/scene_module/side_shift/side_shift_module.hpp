@@ -43,14 +43,14 @@ public:
   SideShiftModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<SideShiftParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   bool isReadyForNextRequest(
     const double & min_request_time_sec, bool override_requests = false) const noexcept;
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] ModuleStatus updateState() override;
   void updateData() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
@@ -70,32 +70,12 @@ public:
   {
   }
 
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] BehaviorModuleOutput run() override
-  {
-    updateData();
-
-    if (!isWaitingApproval()) {
-      return plan();
-    }
-
-    // module is waiting approval. Check it.
-    if (isActivated()) {
-      RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
-      return plan();
-    } else {
-      RCLCPP_DEBUG(getLogger(), "keep waiting approval... Do planCandidate().");
-      return planWaitingApproval();
-    }
-  }
-
 private:
-  bool canTransitSuccessState() override { return false; }
+  bool canTransitSuccessState() override;
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return false; }
-  rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
+  bool canTransitIdleToRunningState() override { return true; }
 
   void initVariables();
 

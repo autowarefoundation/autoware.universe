@@ -2,6 +2,7 @@
   ros__parameters:
     enable_delay_compensation: true
     prediction_time_horizon: 10.0 #[s]
+    lateral_control_time_horizon: 5.0 #[s]
     prediction_sampling_delta_time: 0.5 #[s]
     min_velocity_for_map_based_prediction: 1.39 #[m/s]
     min_crosswalk_user_velocity: 1.39 #[m/s]
@@ -28,5 +29,6 @@
         diff_dist_threshold_to_left_bound: 0.29 #[m]
         diff_dist_threshold_to_right_bound: -0.29 #[m]
       num_continuous_state_transition: 3
+      consider_only_routable_neighbours: false
 
     reference_path_resolution: 0.5 #[m]
