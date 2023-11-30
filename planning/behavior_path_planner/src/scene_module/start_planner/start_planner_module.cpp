@@ -1040,34 +1040,6 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   return turn_signal;
 }
 
-bool StartPlannerModule::checkSafetyWithRSS(
-  const PathWithLaneId & planned_path,
-  const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
-  const std::vector<ExtendedPredictedObject> & objects, const double hysteresis_factor) const
-{
-  // Check for collisions with each predicted path of the object
-  const bool is_safe = !std::any_of(objects.begin(), objects.end(), [&](const auto & object) {
-    auto current_debug_data = marker_utils::createObjectDebug(object);
-
-    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
-      object, objects_filtering_params_->check_all_predicted_path);
-
-    return std::any_of(
-      obj_predicted_paths.begin(), obj_predicted_paths.end(), [&](const auto & obj_path) {
-        const bool has_collision = !utils::path_safety_checker::checkCollision(
-          planned_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
-          safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second);
-
-        marker_utils::updateCollisionCheckDebugMap(
-          start_planner_data_.collision_check, current_debug_data, !has_collision);
-
-        return has_collision;
-      });
-  });
-
-  return is_safe;
-}
-
 bool StartPlannerModule::isSafePath() const
 {
   // TODO(Sugahara): should safety check for backward path
@@ -1119,8 +1091,11 @@ bool StartPlannerModule::isSafePath() const
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     start_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
 
-  return checkSafetyWithRSS(
-    pull_out_path, ego_predicted_path, target_objects_on_lane.on_current_lane, hysteresis_factor);
+  return behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
+    pull_out_path, ego_predicted_path, target_objects_on_lane.on_current_lane,
+    start_planner_data_.collision_check, planner_data_->parameters,
+    safety_check_params_->rss_params, objects_filtering_params_->use_all_predicted_path,
+    hysteresis_factor);
 }
 
 bool StartPlannerModule::isGoalBehindOfEgoInSameRouteSegment() const
