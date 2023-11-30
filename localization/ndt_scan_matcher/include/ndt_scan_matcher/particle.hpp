@@ -34,8 +34,8 @@ struct Particle
   int iteration;
 };
 
-visualization_msgs::msg::MarkerArray make_debug_markers(
-  const builtin_interfaces::msg::Time & stamp, const std::string & map_frame_,
-  const geometry_msgs::msg::Vector3 & scale, const Particle & particle, const size_t i);
+void push_debug_markers(
+  visualization_msgs::msg::MarkerArray & marker_array, const builtin_interfaces::msg::Time & stamp,
+  const std::string & map_frame_, const Particle & particle, const size_t i);
 
 #endif  // NDT_SCAN_MATCHER__PARTICLE_HPP_
