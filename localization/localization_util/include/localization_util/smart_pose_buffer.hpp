@@ -49,8 +49,6 @@ public:
 
   void clear();
 
-  bool detect_time_jump_to_past(const rclcpp::Time & target_ros_time);
-
 private:
   rclcpp::Logger logger_;
   std::deque<PoseWithCovarianceStamped::ConstSharedPtr> pose_buffer_;

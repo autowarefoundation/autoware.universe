@@ -104,52 +104,6 @@ TEST_F(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
   EXPECT_NEAR(rpy.z * 180 / M_PI, 45.0, 1e-6);
 }
 
-TEST_F(TestSmartPoseBuffer, detect_time_jump_to_past)  // NOLINT
-{
-  rclcpp::Logger logger = rclcpp::get_logger("test_logger");
-  const double pose_timeout_sec = 10.0;
-  const double pose_distance_tolerance_meters = 100.0;
-  SmartPoseBuffer smart_pose_buffer(logger, pose_timeout_sec, pose_distance_tolerance_meters);
-
-  // if the buffer is empty, it should return false
-  builtin_interfaces::msg::Time target_ros_time_msg;
-  target_ros_time_msg.sec = 15;
-  target_ros_time_msg.nanosec = 0;
-  EXPECT_FALSE(smart_pose_buffer.detect_time_jump_to_past(target_ros_time_msg));
-
-  // first data
-  PoseWithCovarianceStamped::SharedPtr old_pose_ptr = std::make_shared<PoseWithCovarianceStamped>();
-  old_pose_ptr->header.stamp.sec = 10;
-  old_pose_ptr->header.stamp.nanosec = 0;
-  old_pose_ptr->pose.pose.position.x = 10.0;
-  old_pose_ptr->pose.pose.position.y = 20.0;
-  old_pose_ptr->pose.pose.position.z = 0.0;
-  old_pose_ptr->pose.pose.orientation = rpy_deg_to_quaternion(0.0, 0.0, 0.0);
-  smart_pose_buffer.push_back(old_pose_ptr);
-
-  // second data
-  PoseWithCovarianceStamped::SharedPtr new_pose_ptr = std::make_shared<PoseWithCovarianceStamped>();
-  new_pose_ptr->header.stamp.sec = 20;
-  new_pose_ptr->header.stamp.nanosec = 0;
-  new_pose_ptr->pose.pose.position.x = 20.0;
-  new_pose_ptr->pose.pose.position.y = 40.0;
-  new_pose_ptr->pose.pose.position.z = 0.0;
-  new_pose_ptr->pose.pose.orientation = rpy_deg_to_quaternion(0.0, 0.0, 90.0);
-  smart_pose_buffer.push_back(new_pose_ptr);
-
-  // If a timestamp older than first data is given, it is determined to as a jump.
-  builtin_interfaces::msg::Time target_ros_time_msg_2;
-  target_ros_time_msg_2.sec = 5;
-  target_ros_time_msg_2.nanosec = 0;
-  EXPECT_TRUE(smart_pose_buffer.detect_time_jump_to_past(target_ros_time_msg_2));
-
-  // If a timestamp newer than first data is given, it is not determined as a jump.
-  builtin_interfaces::msg::Time target_ros_time_msg_3;
-  target_ros_time_msg_3.sec = 15;
-  target_ros_time_msg_3.nanosec = 0;
-  EXPECT_FALSE(smart_pose_buffer.detect_time_jump_to_past(target_ros_time_msg_3));
-}
-
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

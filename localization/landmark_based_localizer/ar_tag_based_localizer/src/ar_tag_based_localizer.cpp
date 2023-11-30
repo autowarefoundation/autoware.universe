@@ -298,10 +298,6 @@ void ArTagBasedLocalizer::cam_info_callback(const CameraInfo::ConstSharedPtr & m
 
 void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  if (ekf_pose_buffer_->detect_time_jump_to_past(msg->header.stamp)) {
-    ekf_pose_buffer_->clear();
-  }
-
   if (msg->header.frame_id == "map") {
     ekf_pose_buffer_->push_back(msg);
   } else {

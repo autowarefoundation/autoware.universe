@@ -85,6 +85,16 @@ std::optional<SmartPoseBuffer::InterpolateResult> SmartPoseBuffer::interpolate(
 void SmartPoseBuffer::push_back(const PoseWithCovarianceStamped::ConstSharedPtr & pose_msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  if (!pose_buffer_.empty()) {
+    // Check for non-chronological timestamp order
+    // This situation can arise when replaying a rosbag multiple times
+    const rclcpp::Time end_time = pose_buffer_.back()->header.stamp;
+    const rclcpp::Time msg_time = pose_msg_ptr->header.stamp;
+    if (msg_time < end_time) {
+      // Clear the buffer if timestamps are reversed to maintain chronological order
+      pose_buffer_.clear();
+    }
+  }
   pose_buffer_.push_back(pose_msg_ptr);
 }
 
@@ -103,16 +113,6 @@ void SmartPoseBuffer::clear()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   pose_buffer_.clear();
-}
-
-bool SmartPoseBuffer::detect_time_jump_to_past(const rclcpp::Time & target_ros_time)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  if (pose_buffer_.empty()) {
-    return false;
-  }
-  const rclcpp::Time time_first = pose_buffer_.front()->header.stamp;
-  return target_ros_time < time_first;
 }
 
 bool SmartPoseBuffer::validate_time_stamp_difference(
