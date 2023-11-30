@@ -152,20 +152,20 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const auto bumper_pose = tier4_autoware_utils::calcOffsetPose(
     traj_points.at(collision_info->first).pose, x_diff_to_bumper, 0.0, 0.0);
 
-  std::optional<double> max_collison_length = std::nullopt;
-  std::optional<geometry_msgs::msg::Point> max_collison_point = std::nullopt;
+  std::optional<double> max_collision_length = std::nullopt;
+  std::optional<geometry_msgs::msg::Point> max_collision_point = std::nullopt;
   for (const auto & poly_vertex : collision_info->second) {
     const double dist_from_bumper =
       std::abs(tier4_autoware_utils::inverseTransformPoint(poly_vertex.point, bumper_pose).x);
 
-    if (!max_collison_length.has_value() || dist_from_bumper > *max_collison_length) {
-      max_collison_length = dist_from_bumper;
-      max_collison_point = poly_vertex.point;
+    if (!max_collision_length.has_value() || dist_from_bumper > *max_collision_length) {
+      max_collision_length = dist_from_bumper;
+      max_collision_point = poly_vertex.point;
     }
   }
   return std::make_pair(
-    *max_collison_point, motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first) -
-                           *max_collison_length);
+    *max_collision_point, motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first) -
+                            *max_collision_length);
 }
 
 // NOTE: max_lat_dist is used for efficient calculation to suppress boost::geometry's polygon

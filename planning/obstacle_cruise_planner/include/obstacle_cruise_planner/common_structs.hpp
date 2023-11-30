@@ -120,7 +120,7 @@ struct StopObstacle : public TargetObstacleInterface
   }
   Shape shape;
   geometry_msgs::msg::Point
-    collision_point;  // TODO: takagi; this member variable still used in
+    collision_point;  // TODO(yuki_takagi): this member variable still used in
                       // calculateMarginFromObstacleOnCurve() and  should be removed as it can be
                       // replaced by ”dist_to_collide_on_decimated_traj”
   double dist_to_collide_on_decimated_traj;
