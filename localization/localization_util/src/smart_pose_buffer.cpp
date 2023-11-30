@@ -54,13 +54,13 @@ std::optional<SmartPoseBuffer::InterpolateResult> SmartPoseBuffer::interpolate(
   }
 
   // check the time stamp
-  bool is_old_pose_valid = validate_time_stamp_difference(
+  const bool is_old_pose_valid = validate_time_stamp_difference(
     result.old_pose.header.stamp, target_ros_time, pose_timeout_sec_);
-  bool is_new_pose_valid = validate_time_stamp_difference(
+  const bool is_new_pose_valid = validate_time_stamp_difference(
     result.new_pose.header.stamp, target_ros_time, pose_timeout_sec_);
 
   // check the position jumping (ex. immediately after the initial pose estimation)
-  bool is_pose_diff_valid = validate_position_difference(
+  const bool is_pose_diff_valid = validate_position_difference(
     result.old_pose.pose.pose.position, result.new_pose.pose.pose.position,
     pose_distance_tolerance_meters_);
 
