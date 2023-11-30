@@ -54,7 +54,9 @@ using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 
 struct ObjectParameter
 {
-  bool is_target{false};
+  bool is_avoidance_target{false};
+
+  bool is_safety_check_target{false};
 
   size_t execute_num{1};
 
@@ -159,6 +161,7 @@ struct AvoidanceParameters
   double object_check_min_forward_distance{0.0};
   double object_check_max_forward_distance{0.0};
   double object_check_backward_distance{0.0};
+  double object_check_yaw_deviation{0.0};
 
   // if the distance between object and goal position is less than this parameter, the module ignore
   // the object.
@@ -394,8 +397,7 @@ struct ObjectData  // avoidance target
   std::string reason{""};
 
   // lateral avoid margin
-  // NOTE: If margin is less than the minimum margin threshold, boost::none will be set.
-  boost::optional<double> avoid_margin{boost::none};
+  std::optional<double> avoid_margin{std::nullopt};
 };
 using ObjectDataArray = std::vector<ObjectData>;
 
@@ -414,10 +416,10 @@ struct AvoidLine : public ShiftLine
   double end_longitudinal = 0.0;
 
   // for unique_id
-  uint64_t id = 0;
+  UUID id{};
 
   // for the case the point is created by merge other points
-  std::vector<uint64_t> parent_ids{};
+  std::vector<UUID> parent_ids{};
 
   // corresponding object
   ObjectData object{};
@@ -482,6 +484,7 @@ struct AvoidancePlanningData
 
   // current driving lanelet
   lanelet::ConstLanelets current_lanelets;
+  lanelet::ConstLanelets extend_lanelets;
 
   // output path
   ShiftedPath candidate_path;
@@ -494,9 +497,6 @@ struct AvoidancePlanningData
 
   // nearest object that should be avoid
   boost::optional<ObjectData> stop_target_object{boost::none};
-
-  // raw shift point
-  AvoidLineArray raw_shift_line{};
 
   // new shift point
   AvoidLineArray new_shift_line{};

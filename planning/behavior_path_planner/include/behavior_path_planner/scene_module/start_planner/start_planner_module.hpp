@@ -80,7 +80,9 @@ public:
   StartPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<StartPlannerParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -129,6 +131,8 @@ private:
   bool canTransitIdleToRunningState() override;
 
   void initializeSafetyCheckParameters();
+
+  bool receivedNewRoute() const;
 
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
@@ -212,7 +216,7 @@ private:
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
 
   // check if the goal is located behind the ego in the same route segment.
-  bool IsGoalBehindOfEgoInSameRouteSegment() const;
+  bool isGoalBehindOfEgoInSameRouteSegment() const;
 
   // generate BehaviorPathOutput with stopping path and update status
   BehaviorModuleOutput generateStopOutput();
@@ -223,6 +227,7 @@ private:
   bool planFreespacePath();
 
   void setDebugData() const;
+  void logPullOutStatus(rclcpp::Logger::Level log_level = rclcpp::Logger::Level::Info) const;
 };
 }  // namespace behavior_path_planner
 

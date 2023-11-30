@@ -44,8 +44,10 @@ namespace behavior_path_planner
 StartPlannerModule::StartPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<StartPlannerParameters> & parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
@@ -128,11 +130,7 @@ void StartPlannerModule::updateData()
     status_.backward_driving_complete = false;
   }
 
-  const bool has_received_new_route =
-    !planner_data_->prev_route_id ||
-    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
-
-  if (has_received_new_route) {
+  if (receivedNewRoute()) {
     status_ = PullOutStatus();
   }
   // check safety status when driving forward
@@ -141,6 +139,12 @@ void StartPlannerModule::updateData()
   } else {
     status_.is_safe_dynamic_objects = true;
   }
+}
+
+bool StartPlannerModule::receivedNewRoute() const
+{
+  return !planner_data_->prev_route_id ||
+         *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
 }
 
 bool StartPlannerModule::isExecutionRequested() const
@@ -161,7 +165,7 @@ bool StartPlannerModule::isExecutionRequested() const
   }
 
   // Check if the goal is behind the ego vehicle within the same route segment.
-  if (IsGoalBehindOfEgoInSameRouteSegment()) {
+  if (isGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
     return false;
@@ -1119,7 +1123,7 @@ bool StartPlannerModule::isSafePath() const
     pull_out_path, ego_predicted_path, target_objects_on_lane.on_current_lane, hysteresis_factor);
 }
 
-bool StartPlannerModule::IsGoalBehindOfEgoInSameRouteSegment() const
+bool StartPlannerModule::isGoalBehindOfEgoInSameRouteSegment() const
 {
   const auto & rh = planner_data_->route_handler;
 
@@ -1307,5 +1311,67 @@ void StartPlannerModule::setDebugData() const
     planner_type_marker_array.markers.push_back(marker);
     add(planner_type_marker_array);
   }
+  if (parameters_->verbose) {
+    logPullOutStatus();
+  }
+}
+
+void StartPlannerModule::logPullOutStatus(rclcpp::Logger::Level log_level) const
+{
+  const auto logger = getLogger();
+  auto logFunc = [&logger, log_level](const char * format, ...) {
+    char buffer[1024];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+    switch (log_level) {
+      case rclcpp::Logger::Level::Debug:
+        RCLCPP_DEBUG(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Info:
+        RCLCPP_INFO(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Warn:
+        RCLCPP_WARN(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Error:
+        RCLCPP_ERROR(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Fatal:
+        RCLCPP_FATAL(logger, "%s", buffer);
+        break;
+      default:
+        RCLCPP_INFO(logger, "%s", buffer);
+        break;
+    }
+  };
+
+  logFunc("======== PullOutStatus Report ========");
+
+  logFunc("[Path Info]");
+  logFunc("  Current Path Index: %zu", status_.current_path_idx);
+
+  logFunc("[Planner Info]");
+  logFunc("  Planner Type: %s", magic_enum::enum_name(status_.planner_type).data());
+
+  logFunc("[Safety and Direction Info]");
+  logFunc("  Found Pull Out Path: %s", status_.found_pull_out_path ? "true" : "false");
+  logFunc(
+    "  Is Safe Against Dynamic Objects: %s", status_.is_safe_dynamic_objects ? "true" : "false");
+  logFunc(
+    "  Previous Is Safe Dynamic Objects: %s",
+    status_.prev_is_safe_dynamic_objects ? "true" : "false");
+  logFunc("  Driving Forward: %s", status_.driving_forward ? "true" : "false");
+  logFunc("  Backward Driving Complete: %s", status_.backward_driving_complete ? "true" : "false");
+  logFunc("  Has Stop Point: %s", status_.has_stop_point ? "true" : "false");
+
+  logFunc("[Module State]");
+  logFunc("  isActivated: %s", isActivated() ? "true" : "false");
+  logFunc("  isWaitingForApproval: %s", isWaitingApproval() ? "true" : "false");
+  const std::string current_status = magic_enum::enum_name(getCurrentStatus()).data();
+  logFunc("  ModuleStatus: %s", current_status.c_str());
+
+  logFunc("=======================================");
 }
 }  // namespace behavior_path_planner

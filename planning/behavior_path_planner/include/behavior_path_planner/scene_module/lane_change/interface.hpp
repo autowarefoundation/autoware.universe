@@ -56,7 +56,9 @@ class LaneChangeInterface : public SceneModuleInterface
 public:
   LaneChangeInterface(
     const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map,
     std::unique_ptr<LaneChangeBase> && module_type);
 
   LaneChangeInterface(const LaneChangeInterface &) = delete;
@@ -157,7 +159,9 @@ public:
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<LaneChangeParameters> & parameters,
     const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   bool isExecutionRequested() const override;
 

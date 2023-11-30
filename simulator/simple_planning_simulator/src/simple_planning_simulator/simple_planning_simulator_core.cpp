@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -261,6 +262,22 @@ void SimplePlanningSimulator::initialize_vehicle_model()
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band,
       debug_acc_scaling_factor, debug_steer_scaling_factor);
+  } else if (vehicle_model_type_str == "DELAY_STEER_MAP_ACC_GEARED") {
+    vehicle_model_type_ = VehicleModelType::DELAY_STEER_MAP_ACC_GEARED;
+    const std::string acceleration_map_path =
+      declare_parameter<std::string>("acceleration_map_path");
+    if (!std::filesystem::exists(acceleration_map_path)) {
+      throw std::runtime_error(
+        "`acceleration_map_path` parameter is necessary for `DELAY_STEER_MAP_ACC_GEARED` simulator "
+        "model, but " +
+        acceleration_map_path +
+        " does not exist. Please confirm that the parameter is set correctly in "
+        "{simulator_model.param.yaml}.");
+    }
+    vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerMapAccGeared>(
+      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
+      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant,
+      acceleration_map_path);
   } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
@@ -331,8 +348,9 @@ void SimplePlanningSimulator::on_timer()
 
   // calculate longitudinal acceleration by slope
   constexpr double gravity_acceleration = -9.81;
-  const double ego_pitch_angle = enable_road_slope_simulation_ ? calculate_ego_pitch() : 0.0;
-  const double acc_by_slope = gravity_acceleration * std::sin(ego_pitch_angle);
+  const double ego_pitch_angle = calculate_ego_pitch();
+  const double slope_angle = enable_road_slope_simulation_ ? -ego_pitch_angle : 0.0;
+  const double acc_by_slope = gravity_acceleration * std::sin(slope_angle);
 
   // update vehicle dynamics
   {
@@ -463,7 +481,8 @@ void SimplePlanningSimulator::set_input(
     input << acc, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_MAP_ACC_GEARED) {
     input << acc, steer;
   }
   vehicle_model_ptr_->setInput(input);
@@ -559,7 +578,8 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     state << x, y, yaw, vx, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_MAP_ACC_GEARED) {
     state << x, y, yaw, vx, steer, accx;
   }
   vehicle_model_ptr_->setState(state);
