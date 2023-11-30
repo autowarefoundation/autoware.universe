@@ -100,7 +100,8 @@ std::optional<StopObstacle> getClosestStopObstacle(const std::vector<StopObstacl
   std::optional<StopObstacle> candidate_obstacle = std::nullopt;
   for (const auto & stop_obstacle : stop_obstacles) {
     if (
-      !candidate_obstacle || stop_obstacle.dist_to_collide_on_decimated_traj < candidate_obstacle->dist_to_collide_on_decimated_traj) {
+      !candidate_obstacle || stop_obstacle.dist_to_collide_on_decimated_traj <
+                               candidate_obstacle->dist_to_collide_on_decimated_traj) {
       candidate_obstacle = stop_obstacle;
     }
   }
