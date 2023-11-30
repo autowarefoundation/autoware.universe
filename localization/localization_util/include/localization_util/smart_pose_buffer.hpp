@@ -54,7 +54,7 @@ public:
 private:
   rclcpp::Logger logger_;
   std::deque<PoseWithCovarianceStamped::ConstSharedPtr> pose_buffer_;
-  std::mutex mutex_;
+  std::mutex mutex_;  // This mutex is for pose_buffer_
 
   const double pose_timeout_sec_;
   const double pose_distance_tolerance_meters_;
