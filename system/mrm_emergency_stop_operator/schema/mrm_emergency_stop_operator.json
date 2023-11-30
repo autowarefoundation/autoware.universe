@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for mrm_emergency_stop_operator",
+  "type": "object",
+  "definitions": {
+    "velodyne_monitor": {
+      "type": "object",
+      "properties": {
+        "update_rate": {
+          "type": "number",
+          "default": 30,
+          "description": "Timer callback frequency [Hz]."
+        },
+        "target_acceleration": {
+          "type": "number",
+          "default": -2.5,
+          "description": "Target acceleration for emergency stop [m/s^2]."
+        },
+        "target_jerk": {
+          "type": "number",
+          "default": -1.5,
+          "description": "Target jerk for emergency stop [m/s^3] ."
+        }
+      },
+      "required": ["update_rate", "target_jerk", "target_acceleration"]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/mrm_emergency_stop_operator"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
