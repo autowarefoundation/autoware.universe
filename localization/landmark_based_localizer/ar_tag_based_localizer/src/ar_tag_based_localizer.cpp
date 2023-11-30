@@ -178,19 +178,16 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
     return;
   }
 
-  // get self pose
   const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
-  Pose self_pose;
-  {
-    // get self-position on map
-    const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
-      ekf_pose_buffer_->interpolate(sensor_stamp);
-    if (!interpolate_result) {
-      return;
-    }
-    ekf_pose_buffer_->pop_old(sensor_stamp);
-    self_pose = interpolate_result.value().interpolated_pose.pose.pose;
+
+  // get self pose
+  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
+    ekf_pose_buffer_->interpolate(sensor_stamp);
+  if (!interpolate_result) {
+    return;
   }
+  ekf_pose_buffer_->pop_old(sensor_stamp);
+  const Pose self_pose = interpolate_result.value().interpolated_pose.pose.pose;
 
   // detect
   const std::vector<landmark_manager::Landmark> landmarks = detect_landmarks(msg);
