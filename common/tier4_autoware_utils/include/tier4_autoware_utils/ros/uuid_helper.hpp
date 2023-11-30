@@ -44,14 +44,14 @@ inline std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
   return ss.str();
 }
 
-static inline boost::uuids::uuid toBoostUUID(const unique_identifier_msgs::msg::UUID & id)
+inline boost::uuids::uuid toBoostUUID(const unique_identifier_msgs::msg::UUID & id)
 {
   boost::uuids::uuid boost_uuid{};
   std::copy(id.uuid.begin(), id.uuid.end(), boost_uuid.begin());
   return boost_uuid;
 }
 
-static inline unique_identifier_msgs::msg::UUID toUUIDMsg(const boost::uuids::uuid & id)
+inline unique_identifier_msgs::msg::UUID toUUIDMsg(const boost::uuids::uuid & id)
 {
   unique_identifier_msgs::msg::UUID ros_uuid{};
   std::copy(id.begin(), id.end(), ros_uuid.uuid.begin());
