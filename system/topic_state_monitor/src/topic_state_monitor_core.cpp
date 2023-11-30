@@ -42,10 +42,10 @@ TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_op
   using std::placeholders::_1;
 
   // Parameter
-  node_param_.update_rate = declare_parameter<double>("update_rate", 10.0);
+  node_param_.update_rate = declare_parameter<double>("update_rate");
   node_param_.topic = declare_parameter<std::string>("topic");
-  node_param_.transient_local = declare_parameter<bool>("transient_local", false);
-  node_param_.best_effort = declare_parameter<bool>("best_effort", false);
+  node_param_.transient_local = declare_parameter<bool>("transient_local");
+  node_param_.best_effort = declare_parameter<bool>("best_effort");
   node_param_.diag_name = declare_parameter<std::string>("diag_name");
   node_param_.is_transform = (node_param_.topic == "/tf" || node_param_.topic == "/tf_static");
 
