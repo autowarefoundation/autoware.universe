@@ -17,7 +17,7 @@
           "description": "map loading mode selection, true for dynamic map loading, false for static map loading, recommended for no-split map pointcloud"
         },
         "downsize_ratio_z_axis": {
-          "type": "boolean",
+          "type": "number",
           "default": "0.5",
           "description": "Positive ratio to reduce voxel_leaf_size and neighbor point distance threshold in z axis"
         }
