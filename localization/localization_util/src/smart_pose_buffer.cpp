@@ -74,6 +74,8 @@ std::optional<SmartPoseBuffer::InterpolateResult> SmartPoseBuffer::interpolate(
     interpolate_pose(result.old_pose, result.new_pose, target_ros_time);
   result.interpolated_pose.header = interpolated_pose_msg.header;
   result.interpolated_pose.pose.pose = interpolated_pose_msg.pose;
+  // This does not interpolate the covariance.
+  // interpolated_pose.pose.covariance is always set to old_pose.covariance
   result.interpolated_pose.pose.covariance = result.old_pose.pose.covariance;
   return result;
 }
