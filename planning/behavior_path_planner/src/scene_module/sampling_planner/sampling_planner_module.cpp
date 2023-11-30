@@ -280,7 +280,28 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     behavior_path_planner::getInitialState(pose, reference_spline);
   sampling_parameters =
     prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
-  frenet_initial_state.position = initial_state.frenet;
+  {
+    frenet_initial_state.position = initial_state.frenet;
+    const auto frenet_yaw = initial_state.heading - reference_spline.yaw(initial_state.frenet.s);
+    const auto path_curvature = reference_spline.curvature(initial_state.frenet.s);
+    constexpr auto delta_s = 0.001;
+    frenet_initial_state.lateral_velocity =
+      (1 - path_curvature * initial_state.frenet.d) * std::tan(frenet_yaw);
+    const auto path_curvature_deriv =
+      (reference_spline.curvature(initial_state.frenet.s + delta_s) - path_curvature) / delta_s;
+    const auto cos_yaw = std::cos(frenet_yaw);
+    if (cos_yaw == 0.0) {
+      frenet_initial_state.lateral_acceleration = 0.0;
+    } else {
+      frenet_initial_state.lateral_acceleration =
+        -(path_curvature_deriv * initial_state.frenet.d +
+          path_curvature * frenet_initial_state.lateral_velocity) *
+          std::tan(frenet_yaw) +
+        ((1 - path_curvature * initial_state.frenet.d) / (cos_yaw * cos_yaw)) *
+          (initial_state.curvature * ((1 - path_curvature * initial_state.frenet.d) / cos_yaw) -
+           path_curvature);
+    }
+  }
 
   std::vector<DrivableLanes> drivable_lanes{};
   {
