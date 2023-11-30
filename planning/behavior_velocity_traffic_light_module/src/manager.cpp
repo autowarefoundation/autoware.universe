@@ -14,6 +14,7 @@
 
 #include "manager.hpp"
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
 #include <tf2/utils.h>
@@ -24,7 +25,6 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-
 namespace behavior_velocity_planner
 {
 using lanelet::TrafficLight;
@@ -73,7 +73,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
 
     // The velocity factor must be called after modifyPathVelocity.
     const auto velocity_factor = traffic_light_scene_module->getVelocityFactor();
-    if (velocity_factor.type != VelocityFactor::UNKNOWN) {
+    if (velocity_factor.behavior != PlanningBehavior::UNKNOWN) {
       velocity_factor_array.factors.emplace_back(velocity_factor);
     }
     if (stop_reason.reason != "") {

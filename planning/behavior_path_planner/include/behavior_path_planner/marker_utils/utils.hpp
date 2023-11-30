@@ -18,16 +18,15 @@
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
-
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/Forward.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -41,6 +40,7 @@ using behavior_path_planner::ShiftLineArray;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugPair;
 using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
+using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Polygon;
 using geometry_msgs::msg::Pose;
@@ -55,11 +55,6 @@ inline int64_t bitShift(int64_t original_id)
 {
   return original_id << (sizeof(int32_t) * 8 / 2);
 }
-
-CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);
-
-void updateCollisionCheckDebugMap(
-  CollisionCheckDebugMap & debug_map, CollisionCheckDebugPair & object_debug, bool is_safe);
 
 MarkerArray createPoseMarkerArray(
   const Pose & pose, std::string && ns, const int32_t & id, const float & r, const float & g,
@@ -108,6 +103,10 @@ MarkerArray showPolygon(const CollisionCheckDebugMap & obj_debug_vec, std::strin
 MarkerArray showPredictedPath(const CollisionCheckDebugMap & obj_debug_vec, std::string && ns);
 
 MarkerArray showSafetyCheckInfo(const CollisionCheckDebugMap & obj_debug_vec, std::string && ns);
+
+MarkerArray showFilteredObjects(
+  const ExtendedPredictedObjects & predicted_objects, const std::string & ns,
+  const ColorRGBA & color, int32_t id);
 }  // namespace marker_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__MARKER_UTILS__UTILS_HPP_

@@ -16,9 +16,9 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__UTIL_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
-#include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 
 #include <route_handler/route_handler.hpp>
 
@@ -28,11 +28,10 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 
-#include <lanelet2_core/primitives/Primitive.h>
+#include <lanelet2_core/Forward.h>
 
 #include <memory>
 #include <utility>
-#include <vector>
 
 namespace behavior_path_planner::start_planner_utils
 {
@@ -44,7 +43,6 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using route_handler::RouteHandler;
 
-PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2);
 PathWithLaneId getBackwardPath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & current_pose, const Pose & backed_pose, const double velocity);

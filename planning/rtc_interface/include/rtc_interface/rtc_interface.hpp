@@ -55,6 +55,7 @@ public:
   void clearCooperateStatus();
   bool isActivated(const UUID & uuid) const;
   bool isRegistered(const UUID & uuid) const;
+  bool isRTCEnabled(const UUID & uuid) const;
   void lockCommandUpdate();
   void unlockCommandUpdate();
 
@@ -85,7 +86,7 @@ private:
 
   std::string cooperate_status_namespace_ = "/planning/cooperate_status";
   std::string cooperate_commands_namespace_ = "/planning/cooperate_commands";
-  std::string enable_auto_mode_namespace_ = "/planning/enable_auto_mode/internal";
+  std::string enable_auto_mode_namespace_ = "/planning/enable_auto_mode";
 
   mutable std::mutex mutex_;
 };

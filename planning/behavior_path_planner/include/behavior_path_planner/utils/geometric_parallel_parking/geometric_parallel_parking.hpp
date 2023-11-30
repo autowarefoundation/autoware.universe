@@ -28,12 +28,9 @@
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_core/Forward.h>
 
-#include <algorithm>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -47,29 +44,28 @@ using geometry_msgs::msg::PoseArray;
 
 struct ParallelParkingParameters
 {
-  double th_arrived_distance;
-  double th_stopped_velocity;
-  double maximum_deceleration;
+  // common
+  double center_line_path_interval{0.0};
 
   // forward parking
-  double after_forward_parking_straight_distance;
-  double forward_parking_velocity;
-  double forward_parking_lane_departure_margin;
-  double forward_parking_path_interval;
-  double forward_parking_max_steer_angle;
+  double after_forward_parking_straight_distance{0.0};
+  double forward_parking_velocity{0.0};
+  double forward_parking_lane_departure_margin{0.0};
+  double forward_parking_path_interval{0.0};
+  double forward_parking_max_steer_angle{0.0};
 
   // backward parking
-  double after_backward_parking_straight_distance;
-  double backward_parking_velocity;
-  double backward_parking_lane_departure_margin;
-  double backward_parking_path_interval;
-  double backward_parking_max_steer_angle;
+  double after_backward_parking_straight_distance{0.0};
+  double backward_parking_velocity{0.0};
+  double backward_parking_lane_departure_margin{0.0};
+  double backward_parking_path_interval{0.0};
+  double backward_parking_max_steer_angle{0.0};
 
   // pull_out
-  double pull_out_velocity;
-  double pull_out_lane_departure_margin;
-  double pull_out_path_interval;
-  double pull_out_max_steer_angle;
+  double pull_out_velocity{0.0};
+  double pull_out_lane_departure_margin{0.0};
+  double pull_out_path_interval{0.0};
+  double pull_out_max_steer_angle{0.0};
 };
 
 class GeometricParallelParking
@@ -78,10 +74,11 @@ public:
   bool isParking() const;
   bool planPullOver(
     const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-    const lanelet::ConstLanelets & shoulder_lanes, const bool is_forward);
+    const lanelet::ConstLanelets & shoulder_lanes, const bool is_forward,
+    const bool left_side_parking);
   bool planPullOut(
     const Pose & start_pose, const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-    const lanelet::ConstLanelets & shoulder_lanes);
+    const lanelet::ConstLanelets & shoulder_lanes, const bool left_side_start);
   void setParameters(const ParallelParkingParameters & parameters) { parameters_ = parameters; }
   void setPlannerData(const std::shared_ptr<const PlannerData> & planner_data)
   {
@@ -108,11 +105,11 @@ public:
   Pose getArcEndPose() const { return arc_end_pose_; }
 
 private:
-  std::shared_ptr<const PlannerData> planner_data_;
-  ParallelParkingParameters parameters_;
+  std::shared_ptr<const PlannerData> planner_data_{nullptr};
+  ParallelParkingParameters parameters_{};
 
-  double R_E_min_;   // base_link
-  double R_Bl_min_;  // front_left
+  double R_E_min_{0.0};   // base_link
+  double R_Bl_min_{0.0};  // front_left
 
   std::vector<PathWithLaneId> arc_paths_;
   std::vector<PathWithLaneId> paths_;
@@ -121,10 +118,10 @@ private:
 
   void clearPaths();
   std::vector<PathWithLaneId> planOneTrial(
-    const Pose & start_pose, const Pose & goal_pose, const double R_E_r,
+    const Pose & start_pose, const Pose & goal_pose, const double R_E_far,
     const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
-    bool is_forward, const double end_pose_offset, const double lane_departure_margin,
-    const double arc_path_interval);
+    const bool is_forward, const bool left_side_parking, const double end_pose_offset,
+    const double lane_departure_margin, const double arc_path_interval);
   PathWithLaneId generateArcPath(
     const Pose & center, const double radius, const double start_yaw, double end_yaw,
     const double arc_path_interval, const bool is_left_turn, const bool is_forward);
@@ -133,21 +130,23 @@ private:
     const bool is_forward);
   boost::optional<Pose> calcStartPose(
     const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-    const double start_pose_offset, const double R_E_r, const bool is_forward);
+    const double start_pose_offset, const double R_E_far, const bool is_forward,
+    const bool left_side_parking);
   std::vector<PathWithLaneId> generatePullOverPaths(
-    const Pose & start_pose, const Pose & goal_pose, const double R_E_r,
+    const Pose & start_pose, const Pose & goal_pose, const double R_E_far,
     const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
-    const bool is_forward, const double end_pose_offset, const double velocity);
+    const bool is_forward, const bool left_side_parking, const double end_pose_offset,
+    const double velocity);
   PathWithLaneId generateStraightPath(
     const Pose & start_pose, const lanelet::ConstLanelets & road_lanes);
   void setVelocityToArcPaths(
     std::vector<PathWithLaneId> & arc_paths, const double velocity, const bool set_stop_end);
 
   // debug
-  Pose Cr_;
-  Pose Cl_;
-  Pose start_pose_;
-  Pose arc_end_pose_;
+  Pose Cr_{};
+  Pose Cl_{};
+  Pose start_pose_{};
+  Pose arc_end_pose_{};
 };
 }  // namespace behavior_path_planner
 

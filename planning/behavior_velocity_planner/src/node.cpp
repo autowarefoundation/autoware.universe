@@ -18,6 +18,7 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
+#include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <tier4_autoware_utils/ros/wait_for_param.hpp>
 #include <tier4_autoware_utils/transform/transforms.hpp>
 
@@ -27,7 +28,6 @@
 #include <lanelet2_routing/Route.h>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
@@ -75,6 +75,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   planner_data_(*this)
 {
   using std::placeholders::_1;
+  using std::placeholders::_2;
+
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
     this->create_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
@@ -118,6 +120,12 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     "~/input/occupancy_grid", 1, std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1),
     createSubscriptionOptions(this));
 
+  srv_load_plugin_ = create_service<LoadPlugin>(
+    "~/service/load_plugin", std::bind(&BehaviorVelocityPlannerNode::onLoadPlugin, this, _1, _2));
+  srv_unload_plugin_ = create_service<UnloadPlugin>(
+    "~/service/unload_plugin",
+    std::bind(&BehaviorVelocityPlannerNode::onUnloadPlugin, this, _1, _2));
+
   // set velocity smoother param
   onParam();
 
@@ -128,21 +136,37 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   debug_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/path", 1);
 
   // Parameters
-  forward_path_length_ = this->declare_parameter<double>("forward_path_length");
-  backward_path_length_ = this->declare_parameter<double>("backward_path_length");
-  planner_data_.stop_line_extend_length =
-    this->declare_parameter<double>("stop_line_extend_length");
+  forward_path_length_ = declare_parameter<double>("forward_path_length");
+  backward_path_length_ = declare_parameter<double>("backward_path_length");
+  planner_data_.stop_line_extend_length = declare_parameter<double>("stop_line_extend_length");
 
   // nearest search
   planner_data_.ego_nearest_dist_threshold =
-    this->declare_parameter<double>("ego_nearest_dist_threshold");
-  planner_data_.ego_nearest_yaw_threshold =
-    this->declare_parameter<double>("ego_nearest_yaw_threshold");
+    declare_parameter<double>("ego_nearest_dist_threshold");
+  planner_data_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
     planner_manager_.launchScenePlugin(*this, name);
   }
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+}
+
+void BehaviorVelocityPlannerNode::onLoadPlugin(
+  const LoadPlugin::Request::SharedPtr request,
+  [[maybe_unused]] const LoadPlugin::Response::SharedPtr response)
+{
+  std::unique_lock<std::mutex> lk(mutex_);
+  planner_manager_.launchScenePlugin(*this, request->plugin_name);
+}
+
+void BehaviorVelocityPlannerNode::onUnloadPlugin(
+  const UnloadPlugin::Request::SharedPtr request,
+  [[maybe_unused]] const UnloadPlugin::Response::SharedPtr response)
+{
+  std::unique_lock<std::mutex> lk(mutex_);
+  planner_manager_.removeScenePlugin(*this, request->plugin_name);
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading

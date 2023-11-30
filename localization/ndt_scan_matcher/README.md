@@ -34,10 +34,13 @@ One optional function is regularization. Please see the regularization chapter i
 | `points_aligned`                  | `sensor_msgs::msg::PointCloud2`                 | [debug topic] pointcloud aligned by scan matching                                                                                        |
 | `points_aligned_no_ground`        | `sensor_msgs::msg::PointCloud2`                 | [debug topic] de-grounded pointcloud aligned by scan matching                                                                            |
 | `initial_pose_with_covariance`    | `geometry_msgs::msg::PoseWithCovarianceStamped` | [debug topic] initial pose used in scan matching                                                                                         |
+| `multi_ndt_pose`                  | `geometry_msgs::msg::PoseArray`                 | [debug topic] estimated poses from multiple initial poses in real-time covariance estimation                                             |
+| `multi_initial_pose`              | `geometry_msgs::msg::PoseArray`                 | [debug topic] initial poses for real-time covariance estimation                                                                          |
 | `exe_time_ms`                     | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] execution time for scan matching [ms]                                                                                      |
 | `transform_probability`           | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching                                                                                                     |
 | `no_ground_transform_probability` | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching based on de-grounded LiDAR scan                                                                     |
 | `iteration_num`                   | `tier4_debug_msgs::msg::Int32Stamped`           | [debug topic] number of scan matching iterations                                                                                         |
+| `initial_to_result_relative_pose` | `geometry_msgs::msg::PoseStamped`               | [debug topic] relative pose between the initial point and the convergence point                                                          |
 | `initial_to_result_distance`      | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the initial point and the convergence point [m]                                                |
 | `initial_to_result_distance_old`  | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the older of the two initial points used in linear interpolation and the convergence point [m] |
 | `initial_to_result_distance_new`  | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the newer of the two initial points used in linear interpolation and the convergence point [m] |
@@ -54,18 +57,26 @@ One optional function is regularization. Please see the regularization chapter i
 
 ### Core Parameters
 
-| Name                                    | Type   | Description                                                                                     |
-| --------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| `base_frame`                            | string | Vehicle reference frame                                                                         |
-| `input_sensor_points_queue_size`        | int    | Subscriber queue size                                                                           |
-| `trans_epsilon`                         | double | The maximum difference between two consecutive transformations in order to consider convergence |
-| `step_size`                             | double | The newton line search maximum step length                                                      |
-| `resolution`                            | double | The ND voxel grid resolution [m]                                                                |
-| `max_iterations`                        | int    | The number of iterations required to calculate alignment                                        |
-| `converged_param_type`                  | int    | The type of indicators for scan matching score (0: TP, 1: NVTL)                                 |
-| `converged_param_transform_probability` | double | Threshold for deciding whether to trust the estimation result                                   |
-| `lidar_topic_timeout_sec`               | double | Tolerance of timestamp difference between current time and sensor pointcloud                    |
-| `num_threads`                           | int    | Number of threads used for parallel computing                                                   |
+| Name                                                      | Type                   | Description                                                                                        |
+| --------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
+| `base_frame`                                              | string                 | Vehicle reference frame                                                                            |
+| `ndt_base_frame`                                          | string                 | NDT reference frame                                                                                |
+| `map_frame`                                               | string                 | map frame                                                                                          |
+| `input_sensor_points_queue_size`                          | int                    | Subscriber queue size                                                                              |
+| `trans_epsilon`                                           | double                 | The max difference between two consecutive transformations to consider convergence                 |
+| `step_size`                                               | double                 | The newton line search maximum step length                                                         |
+| `resolution`                                              | double                 | The ND voxel grid resolution [m]                                                                   |
+| `max_iterations`                                          | int                    | The number of iterations required to calculate alignment                                           |
+| `converged_param_type`                                    | int                    | The type of indicators for scan matching score (0: TP, 1: NVTL)                                    |
+| `converged_param_transform_probability`                   | double                 | TP threshold for deciding whether to trust the estimation result (when converged_param_type = 0)   |
+| `converged_param_nearest_voxel_transformation_likelihood` | double                 | NVTL threshold for deciding whether to trust the estimation result (when converged_param_type = 1) |
+| `initial_estimate_particles_num`                          | int                    | The number of particles to estimate initial pose                                                   |
+| `n_startup_trials`                                        | int                    | The number of initial random trials in the TPE (Tree-Structured Parzen Estimator).                 |
+| `lidar_topic_timeout_sec`                                 | double                 | Tolerance of timestamp difference between current time and sensor pointcloud                       |
+| `initial_pose_timeout_sec`                                | int                    | Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]                |
+| `initial_pose_distance_tolerance_m`                       | double                 | Tolerance of distance difference between two initial poses used for linear interpolation. [m]      |
+| `num_threads`                                             | int                    | Number of threads used for parallel computing                                                      |
+| `output_pose_covariance`                                  | std::array<double, 36> | The covariance of output pose                                                                      |
 
 (TP: Transform Probability, NVTL: Nearest Voxel Transform Probability)
 
@@ -237,7 +248,7 @@ Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample
 
 ### Abstract
 
-This is a function that using de-grounded LiDAR scan estimate scan matching score.This score can more accurately reflect the current localization performance.
+This is a function that uses de-grounded LiDAR scan to estimate the scan matching score. This score can reflect the current localization performance more accurately.
 [related issue](https://github.com/autowarefoundation/autoware.universe/issues/2044).
 
 ### Parameters
@@ -248,3 +259,26 @@ This is a function that using de-grounded LiDAR scan estimate scan matching scor
 | ------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
 | `estimate_scores_for_degrounded_scan` | bool   | Flag for using scan matching score based on de-grounded LiDAR scan (FALSE by default) |
 | `z_margin_for_ground_removal`         | double | Z-value margin for removal ground points                                              |
+
+## 2D real-time covariance estimation
+
+### Abstract
+
+Calculate 2D covariance (xx, xy, yx, yy) in real time using the NDT convergence from multiple initial poses.
+The arrangement of multiple initial poses is efficiently limited by the Hessian matrix of the NDT score function.
+In this implementation, the number of initial positions is fixed to simplify the code.
+The covariance can be seen as error ellipse from ndt_pose_with_covariance setting on rviz2.
+[original paper](https://www.fujipress.jp/jrm/rb/robot003500020435/).
+
+Note that this function may spoil healthy system behavior if it consumes much calculation resources.
+
+### Parameters
+
+initial_pose_offset_model is rotated around (x,y) = (0,0) in the direction of the first principal component of the Hessian matrix.
+initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
+
+| Name                          | Type                | Description                                                       |
+| ----------------------------- | ------------------- | ----------------------------------------------------------------- |
+| `use_covariance_estimation`   | bool                | Flag for using real-time covariance estimation (FALSE by default) |
+| `initial_pose_offset_model_x` | std::vector<double> | X-axis offset [m]                                                 |
+| `initial_pose_offset_model_y` | std::vector<double> | Y-axis offset [m]                                                 |

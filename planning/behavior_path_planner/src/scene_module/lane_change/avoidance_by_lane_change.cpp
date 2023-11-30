@@ -19,6 +19,10 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+
+#include <boost/geometry/algorithms/centroid.hpp>
+#include <boost/geometry/strategies/cartesian/centroid_bashein_detmer.hpp>
 
 #include <utility>
 
@@ -138,7 +142,8 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
 
   const auto [object_within_target_lane, object_outside_target_lane] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      *planner_data_->dynamic_object, data.current_lanelets);
+      *planner_data_->dynamic_object, data.current_lanelets,
+      utils::path_safety_checker::isPolygonOverlapLanelet);
 
   // Assume that the maximum allocation for data.other object is the sum of
   // objects_within_target_lane and object_outside_target_lane. The maximum allocation for

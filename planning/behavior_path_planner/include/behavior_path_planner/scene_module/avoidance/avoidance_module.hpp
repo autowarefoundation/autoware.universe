@@ -19,6 +19,7 @@
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/avoidance/helper.hpp"
+#include "behavior_path_planner/utils/avoidance/shift_line_generator.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -44,12 +45,16 @@ using motion_utils::findNearestIndex;
 
 using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 
+using helper::avoidance::AvoidanceHelper;
+
 class AvoidanceModule : public SceneModuleInterface
 {
 public:
   AvoidanceModule(
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
@@ -118,7 +123,7 @@ private:
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
           {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-          SteeringFactor::AVOIDANCE_PATH_CHANGE, SteeringFactor::LEFT, SteeringFactor::TURNING, "");
+          PlanningBehavior::AVOIDANCE, SteeringFactor::LEFT, SteeringFactor::TURNING, "");
       }
     }
 
@@ -132,8 +137,7 @@ private:
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
           {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-          SteeringFactor::AVOIDANCE_PATH_CHANGE, SteeringFactor::RIGHT, SteeringFactor::TURNING,
-          "");
+          PlanningBehavior::AVOIDANCE, SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
       }
     }
   }
@@ -220,6 +224,13 @@ private:
   void insertStopPoint(const bool use_constraints_for_decel, ShiftedPath & shifted_path) const;
 
   /**
+   * @brief insert stop point in return path to original lane.
+   * @param flag. if it is true, the ego decelerates within accel/jerk constraints.
+   * @param target path.
+   */
+  void insertReturnDeadLine(const bool use_constraints_for_decel, ShiftedPath & shifted_path) const;
+
+  /**
    * @brief insert stop point in output path.
    * @param target path.
    */
@@ -263,10 +274,10 @@ private:
    * @brief fill candidate shift lines.
    * @param avoidance data.
    * @param debug data.
-   * @details in this function, three shift line sets are generated.
+   * @details in this function, following two shift line arrays are generated.
    * - unapproved raw shift lines.
    * - unapproved new shift lines.
-   * - safe new shift lines. (avoidance path is generated from this shift line set.)
+   * and check whether the new shift lines are safe or not.
    */
   void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
 
@@ -285,145 +296,10 @@ private:
   void fillDebugData(const AvoidancePlanningData & data, DebugData & debug) const;
 
   /**
-   * @brief update registered shift lines.
-   * @param current shift lines.
-   */
-  void registerRawShiftLines(const AvoidLineArray & future_registered);
-
-  /**
-   * @brief update path index of the registered objects. remove old objects whose end point is
-   * behind ego pose.
-   */
-  void updateRegisteredRawShiftLines();
-
-  /**
    * @brief check whether the ego can transit yield maneuver.
    * @param avoidance data.
    */
   bool canYieldManeuver(const AvoidancePlanningData & data) const;
-
-  // shift line generation
-
-  /**
-   * @brief Calculate the shift points (start/end point, shift length) from the object lateral
-   * and longitudinal positions in the Frenet coordinate. The jerk limit is also considered here.
-   * @param avoidance data.
-   * @param debug data.
-   * @return processed shift lines.
-   */
-  AvoidLineArray calcRawShiftLinesFromObjects(
-    AvoidancePlanningData & data, DebugData & debug) const;
-
-  /**
-   * @brief clean up raw shift lines.
-   * @param target shift lines.
-   * @param debug data.
-   * @return processed shift lines.
-   * @details process flow:
-   * 1. combine raw shirt lines and previous registered shift lines.
-   * 2. add return shift line.
-   * 3. merge raw shirt lines.
-   * 4. trim unnecessary shift lines.
-   */
-  AvoidLineArray applyPreProcess(
-    AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
-
-  /*
-   * @brief fill gap among shift lines.
-   * @param original shift lines.
-   * @param debug data.
-   * @return processed shift lines.
-   */
-  AvoidLineArray applyFillGapProcess(const AvoidLineArray & shift_lines, DebugData & debug) const;
-
-  /*
-   * @brief merge negative & positive shift lines.
-   * @param original shift lines.
-   * @param debug data.
-   * @return processed shift lines.
-   */
-  AvoidLineArray applyMergeProcess(const AvoidLineArray & shift_lines, DebugData & debug) const;
-
-  /*
-   * @brief add return shift line from ego position.
-   * @param shift lines which the return shift is added.
-   * Pick up the last shift point, which is the most farthest from ego, from the current candidate
-   * avoidance points and registered points in the shifter. If the last shift length of the point is
-   * non-zero, add a return-shift to center line from the point. If there is no shift point in
-   * candidate avoidance points nor registered points, and base_shift > 0, add a return-shift to
-   * center line from ego.
-   */
-  AvoidLineArray addReturnShiftLine(const AvoidLineArray & shift_lines, DebugData & debug) const;
-
-  /*
-   * @brief extract shift lines from total shift lines based on their gradient.
-   * @param shift length data.
-   * @return extracted shift lines.
-   */
-  AvoidLineArray extractShiftLinesFromLine(ShiftLineData & shift_line_data) const;
-
-  /*
-   * @brief remove unnecessary avoid points
-   * @param original shift lines.
-   * @param debug data.
-   * @return processed shift lines.
-   * @details
-   * - Combine avoid points that have almost same gradient
-   * - Quantize the shift length to reduce the shift point noise
-   * - Change the shift length to the previous one if the deviation is small.
-   * - Remove unnecessary return shift (back to the center line).
-   */
-  AvoidLineArray applyTrimProcess(const AvoidLineArray & shift_lines, DebugData & debug) const;
-
-  /*
-   * @brief extract new shift lines based on current shifted path. the module makes a RTC request
-   * for those new shift lines.
-   * @param candidate shift lines.
-   * @return new shift lines.
-   */
-  AvoidLineArray findNewShiftLine(const AvoidLineArray & shift_lines) const;
-
-  /*
-   * @brief fill gap between two shift lines.
-   * @param original shift lines.
-   */
-  void fillShiftLineGap(AvoidLineArray & shift_lines) const;
-
-  /*
-   * @brief generate total shift line. total shift line has shift length and gradient array.
-   * @param raw shift lines.
-   * @param total shift line.
-   */
-  void generateTotalShiftLine(
-    const AvoidLineArray & avoid_points, ShiftLineData & shift_line_data) const;
-
-  /*
-   * @brief quantize shift line length.
-   * @param target shift lines.
-   * @param threshold. shift length is quantized by this value. (if it is 0.3[m], the output shift
-   * length is 0.0, 0.3, 0.6...)
-   */
-  void applyQuantizeProcess(AvoidLineArray & shift_lines, const double threshold) const;
-
-  /*
-   * @brief trim shift line whose relative longitudinal distance is less than threshold.
-   * @param target shift lines.
-   * @param threshold.
-   */
-  void applySmallShiftFilter(AvoidLineArray & shift_lines, const double threshold) const;
-
-  /*
-   * @brief merge multiple shift lines whose relative gradient is less than threshold.
-   * @param target shift lines.
-   * @param threshold.
-   */
-  void applySimilarGradFilter(AvoidLineArray & shift_lines, const double threshold) const;
-
-  /*
-   * @brief trim invalid shift lines whose gradient it too large to follow.
-   * @param target shift lines.
-   */
-  void applySharpShiftFilter(AvoidLineArray & shift_lines, const double threshold) const;
 
   /**
    * @brief add new shift line to path shifter if the RTC status is activated.
@@ -455,13 +331,6 @@ private:
    */
   TurnSignalInfo calcTurnSignalInfo(const ShiftedPath & path) const;
 
-  // TODO(murooka) judge when and which way to extend drivable area. current implementation is keep
-  // extending during avoidance module
-  // TODO(murooka) freespace during turning in intersection where there is no neighbor lanes
-  // NOTE: Assume that there is no situation where there is an object in the middle lane of more
-  // than two lanes since which way to avoid is not obvious
-  void generateExtendedDrivableArea(BehaviorModuleOutput & output) const;
-
   /**
    * @brief fill debug markers.
    */
@@ -487,15 +356,6 @@ private:
    * @return result.
    */
   bool isSafePath(ShiftedPath & shifted_path, DebugData & debug) const;
-
-  bool isComfortable(const AvoidLineArray & shift_lines) const
-  {
-    return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
-      return PathShifter::calcJerkFromLatLonDistance(
-               line.getRelativeLength(), line.getRelativeLongitudinal(),
-               helper_.getAvoidanceEgoSpeed()) < helper_.getLateralMaxJerkLimit();
-    });
-  }
 
   // post process
 
@@ -526,8 +386,7 @@ private:
       removeRTCStatus();
     }
 
-    current_raw_shift_lines_.clear();
-    registered_raw_shift_lines_.clear();
+    generator_.reset();
     path_shifter_.setShiftLines(ShiftLineArray{});
   }
 
@@ -540,15 +399,6 @@ private:
     const size_t idx = planner_data_->findEgoIndex(path_shifter_.getReferencePath().points);
     path_shifter_.removeBehindShiftLineAndSetBaseOffset(idx);
   }
-
-  // misc functions
-
-  double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
-
-  // TODO(Horibe): think later.
-  // for unique ID
-  mutable uint64_t original_unique_id = 0;  // TODO(Horibe) remove mutable
-  uint64_t getOriginalShiftLineUniqueId() const { return original_unique_id++; }
 
   struct RegisteredShiftLine
   {
@@ -565,9 +415,11 @@ private:
 
   bool safe_{true};
 
+  std::shared_ptr<AvoidanceHelper> helper_;
+
   std::shared_ptr<AvoidanceParameters> parameters_;
 
-  helper::avoidance::AvoidanceHelper helper_;
+  utils::avoidance::ShiftLineGenerator generator_;
 
   AvoidancePlanningData avoid_data_;
 
@@ -576,10 +428,6 @@ private:
   RegisteredShiftLineArray left_shift_array_;
 
   RegisteredShiftLineArray right_shift_array_;
-
-  AvoidLineArray registered_raw_shift_lines_;
-
-  AvoidLineArray current_raw_shift_lines_;
 
   UUID candidate_uuid_;
 

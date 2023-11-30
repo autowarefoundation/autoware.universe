@@ -22,6 +22,8 @@
 #include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
 
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/strategies/strategies.hpp>
 namespace
 {
 StopSpeedExceeded createStopSpeedExceededMsg(
@@ -89,7 +91,7 @@ VelocityFactorArray makeVelocityFactorArray(
   if (pose) {
     using distance_type = VelocityFactor::_distance_type;
     VelocityFactor velocity_factor;
-    velocity_factor.type = VelocityFactor::ROUTE_OBSTACLE;
+    velocity_factor.behavior = PlanningBehavior::ROUTE_OBSTACLE;
     velocity_factor.pose = pose.value();
     velocity_factor.distance = std::numeric_limits<distance_type>::quiet_NaN();
     velocity_factor.status = VelocityFactor::UNKNOWN;
@@ -378,7 +380,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     // virtual wall marker for stop obstacle
     const auto markers = motion_utils::createStopVirtualWallMarker(
       output_traj_points.at(*zero_vel_idx).pose, "obstacle stop", planner_data.current_time, 0,
-      abs_ego_offset);
+      abs_ego_offset, "", planner_data.is_driving_forward);
     tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->stop_wall_marker);
     debug_data_ptr_->obstacles_to_stop.push_back(*closest_stop_obstacle);
 
@@ -559,9 +561,17 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     const auto & obstacle = obstacles.at(i);
     const auto prev_output = getObjectFromUuid(prev_slow_down_output_, obstacle.uuid);
 
+    const bool is_obstacle_moving = [&]() -> bool {
+      const auto object_vel_norm = std::hypot(obstacle.velocity, obstacle.lat_velocity);
+      if (!prev_output) return object_vel_norm > moving_object_speed_threshold;
+      if (prev_output->is_moving)
+        return object_vel_norm > moving_object_speed_threshold - moving_object_hysteresis_range;
+      return object_vel_norm > moving_object_speed_threshold + moving_object_hysteresis_range;
+    }();
+
     // calculate slow down start distance, and insert slow down velocity
     const auto dist_vec_to_slow_down = calculateDistanceToSlowDownWithConstraints(
-      planner_data, slow_down_traj_points, obstacle, prev_output, dist_to_ego);
+      planner_data, slow_down_traj_points, obstacle, prev_output, dist_to_ego, is_obstacle_moving);
     if (!dist_vec_to_slow_down) {
       RCLCPP_INFO_EXPRESSION(
         rclcpp::get_logger("ObstacleCruisePlanner::PlannerInterface"), enable_debug_info_,
@@ -621,7 +631,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
 
       const auto markers = motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(slow_down_wall_idx).pose, "obstacle slow down",
-        planner_data.current_time, i, abs_ego_offset);
+        planner_data.current_time, i, abs_ego_offset, "", planner_data.is_driving_forward);
       tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
     }
 
@@ -629,14 +639,14 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     if (slow_down_start_idx) {
       const auto markers = motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(*slow_down_start_idx).pose, "obstacle slow down start",
-        planner_data.current_time, i * 2, abs_ego_offset);
+        planner_data.current_time, i * 2, abs_ego_offset, "", planner_data.is_driving_forward);
       tier4_autoware_utils::appendMarkerArray(
         markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
     if (slow_down_end_idx) {
       const auto markers = motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(*slow_down_end_idx).pose, "obstacle slow down end",
-        planner_data.current_time, i * 2 + 1, abs_ego_offset);
+        planner_data.current_time, i * 2 + 1, abs_ego_offset, "", planner_data.is_driving_forward);
       tier4_autoware_utils::appendMarkerArray(
         markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
@@ -646,7 +656,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     // update prev_slow_down_output_
     new_prev_slow_down_output.push_back(SlowDownOutput{
       obstacle.uuid, slow_down_traj_points, slow_down_start_idx, slow_down_end_idx,
-      stable_slow_down_vel, feasible_slow_down_vel, obstacle.precise_lat_dist});
+      stable_slow_down_vel, feasible_slow_down_vel, obstacle.precise_lat_dist, is_obstacle_moving});
   }
 
   // update prev_slow_down_output_
@@ -661,10 +671,11 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
 }
 
 double PlannerInterface::calculateSlowDownVelocity(
-  const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const
+  const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
+  const bool is_obstacle_moving) const
 {
-  const auto & p = slow_down_param_;
-
+  const auto & p =
+    slow_down_param_.getObstacleParamByLabel(obstacle.classification, is_obstacle_moving);
   const double stable_precise_lat_dist = [&]() {
     if (prev_output) {
       return signal_processing::lowpassFilter(
@@ -687,16 +698,14 @@ std::optional<std::tuple<double, double, double>>
 PlannerInterface::calculateDistanceToSlowDownWithConstraints(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
   const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
-  const double dist_to_ego) const
+  const double dist_to_ego, const bool is_obstacle_moving) const
 {
-  const auto & p = slow_down_param_;
   const double abs_ego_offset = planner_data.is_driving_forward
                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
   const double obstacle_vel = obstacle.velocity;
-
   // calculate slow down velocity
-  const double slow_down_vel = calculateSlowDownVelocity(obstacle, prev_output);
+  const double slow_down_vel = calculateSlowDownVelocity(obstacle, prev_output, is_obstacle_moving);
 
   // calculate distance to collision points
   const double dist_to_front_collision =
@@ -726,8 +735,8 @@ PlannerInterface::calculateDistanceToSlowDownWithConstraints(
 
   // calculate distance during deceleration, slow down preparation, and slow down
   const double min_slow_down_prepare_dist = 3.0;
-  const double slow_down_prepare_dist =
-    std::max(min_slow_down_prepare_dist, slow_down_vel * p.time_margin_on_target_velocity);
+  const double slow_down_prepare_dist = std::max(
+    min_slow_down_prepare_dist, slow_down_vel * slow_down_param_.time_margin_on_target_velocity);
   const double deceleration_dist = offset_dist_to_collision + dist_to_front_collision -
                                    abs_ego_offset - dist_to_ego - slow_down_prepare_dist;
   const double slow_down_dist =

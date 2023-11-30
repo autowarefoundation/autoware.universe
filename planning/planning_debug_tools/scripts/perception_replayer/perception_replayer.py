@@ -169,7 +169,7 @@ class PerceptionReplayer(PerceptionReplayerCommon):
             0.06853892326654787,
         ]
 
-        self.recorded_ego_pub.publish(recorded_ego_pose)
+        self.recorded_ego_pub_as_initialpose.publish(recorded_ego_pose)
         print("Published recorded ego pose as /initialpose")
 
 
@@ -181,6 +181,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-t", "--tracked-object", help="publish tracked object", action="store_true"
+    )
+    parser.add_argument(
+        "-f", "--rosbag-format", help="rosbag data format (default is db3)", default="db3"
     )
     args = parser.parse_args()
 

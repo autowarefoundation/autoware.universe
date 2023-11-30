@@ -25,8 +25,7 @@
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_core/Forward.h>
 
 #include <string>
 #include <vector>
@@ -40,6 +39,7 @@ using behavior_path_planner::AvoidanceState;
 using behavior_path_planner::AvoidLineArray;
 using behavior_path_planner::DebugData;
 using behavior_path_planner::ObjectDataArray;
+using behavior_path_planner::PathShifter;
 using behavior_path_planner::ShiftLineArray;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Polygon;
@@ -66,6 +66,8 @@ MarkerArray createOverhangFurthestLineStringMarkerArray(
   const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float & r,
   const float & g, const float & b);
 
+MarkerArray createDebugMarkerArray(
+  const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug);
 }  // namespace marker_utils::avoidance_marker
 
 std::string toStrInfo(const behavior_path_planner::ShiftLineArray & sp_arr);

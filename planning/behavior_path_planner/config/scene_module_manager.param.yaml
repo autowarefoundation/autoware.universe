@@ -4,8 +4,7 @@
 /**:
   ros__parameters:
     external_request_lane_change_left:
-      enable_module: false
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: false
       enable_simultaneous_execution_as_candidate_module: true
       keep_last: false
@@ -13,8 +12,7 @@
       max_module_size: 1
 
     external_request_lane_change_right:
-      enable_module: false
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: false
       enable_simultaneous_execution_as_candidate_module: true
       keep_last: false
@@ -22,8 +20,7 @@
       max_module_size: 1
 
     lane_change_left:
-      enable_module: true
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: true
       enable_simultaneous_execution_as_candidate_module: true
       keep_last: false
@@ -31,8 +28,7 @@
       max_module_size: 1
 
     lane_change_right:
-      enable_module: true
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: true
       enable_simultaneous_execution_as_candidate_module: true
       keep_last: false
@@ -40,8 +36,7 @@
       max_module_size: 1
 
     start_planner:
-      enable_module: true
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: false
       enable_simultaneous_execution_as_candidate_module: false
       keep_last: false
@@ -49,8 +44,7 @@
       max_module_size: 1
 
     side_shift:
-      enable_module: true
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: false
       enable_simultaneous_execution_as_candidate_module: false
       keep_last: false
@@ -58,8 +52,7 @@
       max_module_size: 1
 
     goal_planner:
-      enable_module: true
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: false
       enable_simultaneous_execution_as_candidate_module: false
       keep_last: true
@@ -67,8 +60,7 @@
       max_module_size: 1
 
     avoidance:
-      enable_module: true
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: true
       enable_simultaneous_execution_as_candidate_module: false
       keep_last: false
@@ -76,8 +68,7 @@
       max_module_size: 1
 
     avoidance_by_lc:
-      enable_module: false
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: false
       enable_simultaneous_execution_as_candidate_module: false
       keep_last: false
@@ -85,8 +76,7 @@
       max_module_size: 1
 
     dynamic_avoidance:
-      enable_module: false
-      enable_rtc: true
+      enable_rtc: false
       enable_simultaneous_execution_as_approved_module: true
       enable_simultaneous_execution_as_candidate_module: true
       keep_last: false

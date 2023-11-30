@@ -14,6 +14,7 @@
 
 #include "surround_obstacle_checker/debug_marker.hpp"
 
+#include <motion_utils/marker/marker_helper.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -229,7 +230,7 @@ VelocityFactorArray SurroundObstacleCheckerDebugNode::makeVelocityFactorArray()
   if (stop_pose_ptr_) {
     using distance_type = VelocityFactor::_distance_type;
     VelocityFactor velocity_factor;
-    velocity_factor.type = VelocityFactor::SURROUNDING_OBSTACLE;
+    velocity_factor.behavior = PlanningBehavior::SURROUNDING_OBSTACLE;
     velocity_factor.pose = *stop_pose_ptr_;
     velocity_factor.distance = std::numeric_limits<distance_type>::quiet_NaN();
     velocity_factor.status = VelocityFactor::UNKNOWN;

@@ -14,11 +14,13 @@
 
 #include "behavior_path_planner/planner_manager.hpp"
 
+#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "tier4_autoware_utils/ros/debug_publisher.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 #include <magic_enum.hpp>
 
 #include <boost/format.hpp>
@@ -28,12 +30,15 @@
 
 namespace behavior_path_planner
 {
-PlannerManager::PlannerManager(rclcpp::Node & node, const bool verbose)
+PlannerManager::PlannerManager(
+  rclcpp::Node & node, const size_t max_iteration_num, const bool verbose)
 : logger_(node.get_logger().get_child("planner_manager")),
   clock_(*node.get_clock()),
+  max_iteration_num_{max_iteration_num},
   verbose_{verbose}
 {
   processing_time_.emplace("total_time", 0.0);
+  debug_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
 }
 
 BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & data)
@@ -80,7 +85,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       return output;
     }
 
-    while (rclcpp::ok()) {
+    for (size_t itr_num = 1;; ++itr_num) {
       /**
        * STEP1: get approved modules' output
        */
@@ -126,8 +131,17 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       addApprovedModule(highest_priority_module);
       clearCandidateModules();
       debug_info_.emplace_back(highest_priority_module, Action::ADD, "To Approval");
+
+      if (itr_num >= max_iteration_num_) {
+        RCLCPP_WARN_THROTTLE(
+          logger_, clock_, 1000, "Reach iteration limit (max: %ld). Output current result.",
+          max_iteration_num_);
+        processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
+        return candidate_modules_output;
+      }
     }
-    return BehaviorModuleOutput{};
+
+    return BehaviorModuleOutput{};  // something wrong.
   }();
 
   std::for_each(
@@ -340,6 +354,34 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
   }
 
   return request_modules;
+}
+
+BehaviorModuleOutput PlannerManager::getReferencePath(
+  const std::shared_ptr<PlannerData> & data) const
+{
+  const auto & route_handler = data->route_handler;
+  const auto & pose = data->self_odometry->pose.pose;
+  const auto p = data->parameters;
+
+  constexpr double extra_margin = 10.0;
+  const auto backward_length =
+    std::max(p.backward_path_length, p.backward_path_length + extra_margin);
+
+  const auto lanelet_sequence = route_handler->getLaneletSequence(
+    root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
+
+  lanelet::ConstLanelet closest_lane{};
+  if (lanelet::utils::query::getClosestLaneletWithConstrains(
+        lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+        p.ego_nearest_yaw_threshold)) {
+    return utils::getReferencePath(closest_lane, data);
+  }
+
+  if (lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
+    return utils::getReferencePath(closest_lane, data);
+  }
+
+  return {};  // something wrong.
 }
 
 SceneModulePtr PlannerManager::selectHighestPriorityModule(
@@ -859,6 +901,14 @@ void PlannerManager::print() const
   }
 
   RCLCPP_INFO_STREAM(logger_, string_stream.str());
+}
+
+void PlannerManager::publishProcessingTime() const
+{
+  for (const auto & t : processing_time_) {
+    std::string name = t.first + std::string("/processing_time_ms");
+    debug_publisher_ptr_->publish<DebugDoubleMsg>(name, t.second);
+  }
 }
 
 std::shared_ptr<SceneModuleVisitor> PlannerManager::getDebugMsg()

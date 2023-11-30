@@ -68,13 +68,20 @@ class PerceptionReplayerCommon(Node):
         self.pointcloud_pub = self.create_publisher(
             PointCloud2, "/perception/obstacle_segmentation/pointcloud", 1
         )
-        self.recorded_ego_pub = self.create_publisher(PoseWithCovarianceStamped, "/initialpose", 1)
+        self.recorded_ego_pub_as_initialpose = self.create_publisher(
+            PoseWithCovarianceStamped, "/initialpose", 1
+        )
+
+        self.recorded_ego_pub = self.create_publisher(
+            Odometry, "/perception_reproducer/rosbag_ego_odom", 1
+        )
 
         # load rosbag
         print("Stared loading rosbag")
         if os.path.isdir(args.bag):
             for bag_file in sorted(os.listdir(args.bag)):
-                self.load_rosbag(args.bag + "/" + bag_file)
+                if bag_file.endswith(self.args.rosbag_format):
+                    self.load_rosbag(args.bag + "/" + bag_file)
         else:
             self.load_rosbag(args.bag)
         print("Ended loading rosbag")
@@ -145,26 +152,32 @@ class PerceptionReplayerCommon(Node):
             except CalledProcessError:
                 pass
 
+    def binary_search(self, data, timestamp):
+        if data[-1][0] < timestamp:
+            return data[-1][1]
+        elif data[0][0] > timestamp:
+            return data[0][1]
+
+        low, high = 0, len(data) - 1
+
+        while low <= high:
+            mid = (low + high) // 2
+            if data[mid][0] < timestamp:
+                low = mid + 1
+            elif data[mid][0] > timestamp:
+                high = mid - 1
+            else:
+                return data[mid][1]
+
+        # Return the next timestamp's data if available
+        if low < len(data):
+            return data[low][1]
+        return None
+
     def find_topics_by_timestamp(self, timestamp):
-        objects_data = None
-        for data in self.rosbag_objects_data:
-            if timestamp < data[0]:
-                objects_data = data[1]
-                break
-
-        traffic_signals_data = None
-        for data in self.rosbag_traffic_signals_data:
-            if timestamp < data[0]:
-                traffic_signals_data = data[1]
-                break
-
+        objects_data = self.binary_search(self.rosbag_objects_data, timestamp)
+        traffic_signals_data = self.binary_search(self.rosbag_traffic_signals_data, timestamp)
         return objects_data, traffic_signals_data
 
     def find_ego_odom_by_timestamp(self, timestamp):
-        ego_odom_data = None
-        for data in self.rosbag_ego_odom_data:
-            if timestamp < data[0]:
-                ego_odom_data = data[1]
-                break
-
-        return ego_odom_data
+        return self.binary_search(self.rosbag_ego_odom_data, timestamp)
