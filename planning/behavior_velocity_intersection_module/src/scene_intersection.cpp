@@ -95,7 +95,7 @@ static bool isTargetCollisionVehicleType(
 IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id,
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
-  const PlannerParam & planner_param, const std::set<int> & associative_ids,
+  const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
   const std::string & turn_direction, const bool has_traffic_light,
   const bool enable_occlusion_detection, const bool is_private_area, rclcpp::Node & node,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
@@ -110,7 +110,7 @@ IntersectionModule::IntersectionModule(
   is_private_area_(is_private_area),
   occlusion_uuid_(tier4_autoware_utils::generateUUID())
 {
-  velocity_factor_.init(VelocityFactor::INTERSECTION);
+  velocity_factor_.init(PlanningBehavior::INTERSECTION);
   planner_param_ = planner_param;
 
   {
@@ -424,7 +424,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (
@@ -440,7 +440,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,
-        path->points.at(occlusion_stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(occlusion_stop_line_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -472,7 +472,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -501,7 +501,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
@@ -515,7 +515,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -544,7 +544,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
@@ -566,7 +566,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -609,7 +609,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(occlusion_peeking_stopline).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(occlusion_peeking_stop_line).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_default_approved) {
@@ -623,7 +623,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -652,7 +652,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stop_line_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
@@ -670,7 +670,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -699,7 +699,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_occlusion_approved && decision_result.temporal_stop_before_attention_required) {
@@ -713,7 +713,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_occlusion_approved && !decision_result.temporal_stop_before_attention_required) {
@@ -751,7 +751,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
@@ -765,7 +765,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -794,7 +794,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
@@ -808,7 +808,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stopline_idx).point.pose, VelocityFactor::INTERSECTION);
+        path->points.at(stop_line_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
