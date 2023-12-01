@@ -146,6 +146,32 @@ void DataAssociation::assign(
   }
 }
 
+void DataAssociation::filterBySize(
+  const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
+  autoware_auto_perception_msgs::msg::DetectedObjects & filtered_measurements,
+  autoware_auto_perception_msgs::msg::DetectedObjects & unexpected_measurements)
+{
+  // copy header
+  filtered_measurements.header = measurements.header;
+  unexpected_measurements.header = measurements.header;
+  filtered_measurements.objects.clear();
+  unexpected_measurements.objects.clear();
+
+  // filter objects by its size
+  for (const auto & measurement : measurements.objects) {
+    const std::uint8_t measurement_label =
+      object_recognition_utils::getHighestProbLabel(measurement.classification);
+    const double area = tier4_autoware_utils::getArea(measurement.shape);
+    const double max_area = max_area_matrix_(measurement_label, measurement_label);
+    const double min_area = min_area_matrix_(measurement_label, measurement_label);
+    if (area < min_area || max_area < area) {
+      unexpected_measurements.objects.push_back(measurement);
+    } else {
+      filtered_measurements.objects.push_back(measurement);
+    }
+  }
+}
+
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
   const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
   const std::list<std::shared_ptr<Tracker>> & trackers)
@@ -178,13 +204,6 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         // dist gate
         if (passed_gate) {
           if (max_dist < dist) passed_gate = false;
-        }
-        // area gate
-        if (passed_gate) {
-          const double max_area = max_area_matrix_(tracker_label, measurement_label);
-          const double min_area = min_area_matrix_(tracker_label, measurement_label);
-          const double area = tier4_autoware_utils::getArea(measurement_object.shape);
-          if (area < min_area || max_area < area) passed_gate = false;
         }
         // angle gate
         if (passed_gate) {
