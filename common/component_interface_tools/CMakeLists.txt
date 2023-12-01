@@ -4,4 +4,19 @@ project(component_interface_tools)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 ament_auto_add_executable(service_log_checker src/service_log_checker.cpp)
+
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/service_log_checker.cpp
+)
+
+if(BUILD_TESTING)
+  ament_add_ros_isolated_gtest(test_service_log_checker
+    test/test_service_log_checker.cpp
+  )
+
+  target_link_libraries(test_service_log_checker
+  component_interface_tools
+  )
+  target_include_directories(test_service_log_checker PRIVATE src)
+endif()
 ament_auto_package(INSTALL_TO_SHARE launch)

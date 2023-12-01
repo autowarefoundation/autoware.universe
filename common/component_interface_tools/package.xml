@@ -15,9 +15,11 @@
   <depend>diagnostic_updater</depend>
   <depend>fmt</depend>
   <depend>rclcpp</depend>
+  <depend>service_log_checker</depend>
   <depend>tier4_system_msgs</depend>
   <depend>yaml_cpp_vendor</depend>
 
+  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 
