@@ -17,8 +17,8 @@
 
 #include <route_handler/route_handler.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -91,7 +91,7 @@ struct Slowdown
 struct SlowdownToInsert
 {
   Slowdown slowdown;
-  autoware_auto_planning_msgs::msg::PathWithLaneId::_points_type::value_type point;
+  autoware_planning_msgs::msg::PathWithLaneId::_points_type::value_type point;
 };
 
 /// @brief bound of an overlap range (either the first, or last bound)
@@ -135,7 +135,7 @@ struct OtherLane
 /// @brief data related to the ego vehicle
 struct EgoData
 {
-  autoware_auto_planning_msgs::msg::PathWithLaneId path{};
+  autoware_planning_msgs::msg::PathWithLaneId path{};
   size_t first_path_idx{};
   double velocity{};   // [m/s]
   double max_decel{};  // [m/s²]

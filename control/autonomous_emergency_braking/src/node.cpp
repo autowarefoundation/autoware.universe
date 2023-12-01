@@ -181,7 +181,7 @@ void AEB::onImu(const Imu::ConstSharedPtr input_msg)
 }
 
 void AEB::onPredictedTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg)
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg)
 {
   predicted_traj_ptr_ = input_msg;
 }

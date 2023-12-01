@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -55,13 +55,13 @@ public:
   bool isDataReady();
   void onTimer();
   void onLaneDrivingTrajectory(
-    const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
-  void onParkingTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
-  void publishTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+    const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void onParkingTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void publishTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 
   void updateCurrentScenario();
   std::string selectScenarioByPosition();
-  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr getScenarioTrajectory(
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr getScenarioTrajectory(
     const std::string & scenario);
 
 private:
@@ -70,16 +70,16 @@ private:
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
     sub_lane_driving_trajectory_;
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
     sub_parking_trajectory_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_parking_state_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
   rclcpp::Publisher<tier4_planning_msgs::msg::Scenario>::SharedPtr pub_scenario_;
 
-  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr lane_driving_trajectory_;
-  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr parking_trajectory_;
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr lane_driving_trajectory_;
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr parking_trajectory_;
   autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route_;
   nav_msgs::msg::Odometry::ConstSharedPtr current_pose_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;

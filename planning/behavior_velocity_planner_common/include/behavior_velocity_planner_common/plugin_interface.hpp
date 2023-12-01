@@ -18,7 +18,7 @@
 #include <behavior_velocity_planner_common/planner_data.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 
@@ -30,10 +30,10 @@ class PluginInterface
 public:
   virtual ~PluginInterface() = default;
   virtual void init(rclcpp::Node & node) = 0;
-  virtual void plan(autoware_auto_planning_msgs::msg::PathWithLaneId * path) = 0;
+  virtual void plan(autoware_planning_msgs::msg::PathWithLaneId * path) = 0;
   virtual void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & planner_data,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
+    const autoware_planning_msgs::msg::PathWithLaneId & path) = 0;
   virtual boost::optional<int> getFirstStopPathPointIndex() = 0;
   virtual const char * getModuleName() = 0;
 };

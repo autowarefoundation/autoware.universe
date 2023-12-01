@@ -21,7 +21,7 @@
 #include <geometry/convex_hull.hpp>
 
 #include <autoware_auto_perception_msgs/msg/bounding_box.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
 
 #include <algorithm>
@@ -46,7 +46,7 @@ using autoware::common::geometry::minus_2d;
 using autoware::common::geometry::norm_2d;
 using autoware::common::geometry::times_2d;
 using autoware_auto_perception_msgs::msg::BoundingBox;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 
 using Point = geometry_msgs::msg::Point32;
 

@@ -16,12 +16,12 @@
 
 import argparse
 
-from autoware_auto_planning_msgs.msg import Path
-from autoware_auto_planning_msgs.msg import PathPoint
-from autoware_auto_planning_msgs.msg import PathPointWithLaneId
-from autoware_auto_planning_msgs.msg import PathWithLaneId
-from autoware_auto_planning_msgs.msg import Trajectory
-from autoware_auto_planning_msgs.msg import TrajectoryPoint
+from autoware_planning_msgs.msg import Path
+from autoware_planning_msgs.msg import PathPoint
+from autoware_planning_msgs.msg import PathPointWithLaneId
+from autoware_planning_msgs.msg import PathWithLaneId
+from autoware_planning_msgs.msg import Trajectory
+from autoware_planning_msgs.msg import TrajectoryPoint
 from autoware_auto_vehicle_msgs.msg import VelocityReport
 from geometry_msgs.msg import Pose
 from matplotlib import animation

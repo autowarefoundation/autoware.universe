@@ -63,8 +63,8 @@ void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base);
 /// @param[in] min_vel minimum velocity for an object to be masked
 /// @return polygon masks around dynamic objects
 multi_polygon_t createPolygonMasks(
-  const autoware_perception_msgs::msg::PredictedObjects & dynamic_obstacles, const Float buffer,
-  const Float min_vel);
+  const autoware_perception_msgs::msg::PredictedObjects & dynamic_obstacles,
+  const Float buffer, const Float min_vel);
 
 /// @brief create footprint polygons from projection lines
 /// @details A footprint is create for each group of lines. Each group of lines is assumed to share

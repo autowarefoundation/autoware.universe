@@ -41,7 +41,7 @@
 namespace
 {
 double calcInterpolatedZ(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
+  const autoware_planning_msgs::msg::PathWithLaneId & input,
   const geometry_msgs::msg::Point target_pos, const size_t seg_idx)
 {
   const double closest_to_target_dist = motion_utils::calcSignedArcLength(
@@ -59,7 +59,7 @@ double calcInterpolatedZ(
 }
 
 double calcInterpolatedVelocity(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const size_t seg_idx)
+  const autoware_planning_msgs::msg::PathWithLaneId & input, const size_t seg_idx)
 {
   const double seg_dist = motion_utils::calcSignedArcLength(input.points, seg_idx, seg_idx + 1);
 
@@ -742,7 +742,7 @@ bool exists(std::vector<T> vec, T element)
 }
 
 boost::optional<size_t> findIndexOutOfGoalSearchRange(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points,
   const Pose & goal, const int64_t goal_lane_id,
   const double max_dist = std::numeric_limits<double>::max())
 {

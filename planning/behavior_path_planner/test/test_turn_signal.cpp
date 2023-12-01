@@ -16,14 +16,14 @@
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include "autoware_auto_planning_msgs/msg/path_point.hpp"
+#include "autoware_planning_msgs/msg/path_point.hpp"
 #include <geometry_msgs/msg/twist.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+using autoware_planning_msgs::msg::PathPoint;
+using autoware_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using behavior_path_planner::PathWithLaneId;

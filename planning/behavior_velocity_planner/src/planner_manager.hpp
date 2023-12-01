@@ -20,10 +20,10 @@
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -45,9 +45,9 @@ public:
   void launchScenePlugin(rclcpp::Node & node, const std::string & name);
   void removeScenePlugin(rclcpp::Node & node, const std::string & name);
 
-  autoware_auto_planning_msgs::msg::PathWithLaneId planPathVelocity(
+  autoware_planning_msgs::msg::PathWithLaneId planPathVelocity(
     const std::shared_ptr<const PlannerData> & planner_data,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg);
+    const autoware_planning_msgs::msg::PathWithLaneId & input_path_msg);
 
   diagnostic_msgs::msg::DiagnosticStatus getStopReasonDiag() const;
 

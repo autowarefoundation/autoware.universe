@@ -89,8 +89,8 @@ private:
 
   bool isTrafficSignalStop(const TrafficSignal & tl_state) const;
 
-  autoware_auto_planning_msgs::msg::PathWithLaneId insertStopPose(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
+  autoware_planning_msgs::msg::PathWithLaneId insertStopPose(
+    const autoware_planning_msgs::msg::PathWithLaneId & input,
     const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
     tier4_planning_msgs::msg::StopReason * stop_reason);
 

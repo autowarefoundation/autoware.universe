@@ -26,8 +26,8 @@
 
 namespace
 {
-using autoware_auto_planning_msgs::msg::Trajectory;
-using TrajectoryPointArray = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
+using autoware_planning_msgs::msg::Trajectory;
+using TrajectoryPointArray = std::vector<autoware_planning_msgs::msg::TrajectoryPoint>;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::createQuaternionFromRPY;
 using tier4_autoware_utils::transformPoint;
@@ -69,7 +69,7 @@ TrajectoryPointArray generateTestTrajectoryPointArray(
   const size_t num_points, const double point_interval, const double vel = 0.0,
   const double init_theta = 0.0, const double delta_theta = 0.0)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   TrajectoryPointArray traj;
   for (size_t i = 0; i < num_points; ++i) {
     const double theta = init_theta + i * delta_theta;
@@ -106,7 +106,7 @@ TEST(trajectory, validateNonEmpty)
 
 TEST(trajectory, validateNonSharpAngle_DefaultThreshold)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using motion_utils::validateNonSharpAngle;
 
   TrajectoryPoint p1;
@@ -135,7 +135,7 @@ TEST(trajectory, validateNonSharpAngle_DefaultThreshold)
 
 TEST(trajectory, validateNonSharpAngle_SetThreshold)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using motion_utils::validateNonSharpAngle;
   using tier4_autoware_utils::pi;
 
@@ -1310,7 +1310,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex)
 
 TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using motion_utils::calcArcLength;
   using motion_utils::calcLongitudinalOffsetPose;
   using tier4_autoware_utils::deg2rad;
@@ -1396,7 +1396,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
 
 TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using motion_utils::calcArcLength;
   using motion_utils::calcLongitudinalOffsetPose;
   using tier4_autoware_utils::deg2rad;
@@ -1574,7 +1574,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint)
 
 TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatInterpolation)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using motion_utils::calcArcLength;
   using motion_utils::calcLongitudinalOffsetPose;
   using motion_utils::calcLongitudinalOffsetToSegment;
@@ -1648,7 +1648,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatInterpolation)
 
 TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using motion_utils::calcArcLength;
   using motion_utils::calcLongitudinalOffsetPose;
   using motion_utils::calcLongitudinalOffsetToSegment;
@@ -5428,7 +5428,7 @@ TEST(Trajectory, removeInvalidOrientationPoints)
 
 TEST(trajectory, calcYawDeviation)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using motion_utils::calcYawDeviation;
 
   constexpr double tolerance = 1e-3;
@@ -5455,7 +5455,7 @@ TEST(trajectory, calcYawDeviation)
 
 TEST(trajectory, isTargetPointFront)
 {
-  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using motion_utils::isTargetPointFront;
   using tier4_autoware_utils::createPoint;
 

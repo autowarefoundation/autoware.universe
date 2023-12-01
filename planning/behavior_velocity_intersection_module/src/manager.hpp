@@ -23,7 +23,7 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_api_msgs/msg/intersection_status.hpp>
 
 #include <functional>
@@ -46,10 +46,10 @@ private:
   RTCInterface occlusion_rtc_interface_;
   std::unordered_map<int64_t, UUID> occlusion_map_uuid_;
 
-  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+    const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 
@@ -57,7 +57,7 @@ private:
   void sendRTC(const Time & stamp) override;
   void setActivation() override;
   /* called from SceneModuleInterface::updateSceneModuleInstances */
-  void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  void deleteExpiredModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
 class MergeFromPrivateModuleManager : public SceneModuleManagerInterface
@@ -70,10 +70,10 @@ public:
 private:
   MergeFromPrivateRoadModule::PlannerParam merge_from_private_area_param_;
 
-  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+    const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 };

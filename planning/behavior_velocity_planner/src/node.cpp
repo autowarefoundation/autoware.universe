@@ -57,10 +57,10 @@ namespace behavior_velocity_planner
 namespace
 {
 
-autoware_auto_planning_msgs::msg::Path to_path(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_with_id)
+autoware_planning_msgs::msg::Path to_path(
+  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id)
 {
-  autoware_auto_planning_msgs::msg::Path path;
+  autoware_planning_msgs::msg::Path path;
   for (const auto & path_point : path_with_id.points) {
     path.points.push_back(path_point.point);
   }
@@ -79,7 +79,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
-    this->create_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+    this->create_subscription<autoware_planning_msgs::msg::PathWithLaneId>(
       "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1),
       createSubscriptionOptions(this));
 
@@ -130,7 +130,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   onParam();
 
   // Publishers
-  path_pub_ = this->create_publisher<autoware_auto_planning_msgs::msg::Path>("~/output/path", 1);
+  path_pub_ = this->create_publisher<autoware_planning_msgs::msg::Path>("~/output/path", 1);
   stop_reason_diag_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
   debug_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/path", 1);
@@ -342,7 +342,7 @@ void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
 }
 
 void BehaviorVelocityPlannerNode::onTrigger(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
+  const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
@@ -365,7 +365,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
     return;
   }
 
-  const autoware_auto_planning_msgs::msg::Path output_path_msg =
+  const autoware_planning_msgs::msg::Path output_path_msg =
     generatePath(input_path_msg, planner_data_);
 
   lk.unlock();
@@ -378,11 +378,11 @@ void BehaviorVelocityPlannerNode::onTrigger(
   }
 }
 
-autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
+autoware_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
+  const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
   const PlannerData & planner_data)
 {
-  autoware_auto_planning_msgs::msg::Path output_path_msg;
+  autoware_planning_msgs::msg::Path output_path_msg;
 
   // TODO(someone): support backward path
   const auto is_driving_forward = motion_utils::isDrivingForward(input_path_msg->points);
@@ -423,7 +423,7 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
 }
 
 void BehaviorVelocityPlannerNode::publishDebugMarker(
-  const autoware_auto_planning_msgs::msg::Path & path)
+  const autoware_planning_msgs::msg::Path & path)
 {
   visualization_msgs::msg::MarkerArray output_msg;
   for (size_t i = 0; i < path.points.size(); ++i) {

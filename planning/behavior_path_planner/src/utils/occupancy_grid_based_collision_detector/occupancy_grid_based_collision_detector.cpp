@@ -193,7 +193,7 @@ bool OccupancyGridBasedCollisionDetector::hasObstacleOnPath(
 }
 
 bool OccupancyGridBasedCollisionDetector::hasObstacleOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
   const bool check_out_of_range) const
 {
   for (const auto & p : path.points) {

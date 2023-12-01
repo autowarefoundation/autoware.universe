@@ -346,6 +346,7 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
   return marker_ptr;
 }
 
+
 visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
@@ -410,6 +411,7 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   return marker_ptr;
 }
 
+
 void calc_bounding_box_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
@@ -727,6 +729,7 @@ void calc_2d_bounding_box_bottom_line_list(
   point.z = -shape.dimensions.z / 2.0;
   points.push_back(point);
 }
+
 
 void calc_cylinder_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,

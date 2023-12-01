@@ -29,7 +29,7 @@ See more details in the [models.md](models.md).
 | Name          | Type                                                  | Description      |
 | ------------- | ----------------------------------------------------- | ---------------- |
 | `~/input`     | `autoware_auto_perception_msgs::msg::DetectedObjects` | Detected objects |
-| `/vector/map` | `autoware_map_msgs::msg::LaneletMapBin`               | Map data         |
+| `/vector/map` | `autoware_map_msgs::msg::LaneletMapBin`                  | Map data         |
 
 ### Output
 

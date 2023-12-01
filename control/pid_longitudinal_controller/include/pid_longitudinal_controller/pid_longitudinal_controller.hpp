@@ -33,7 +33,7 @@
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -92,7 +92,7 @@ private:
   // pointers for ros topic
   nav_msgs::msg::Odometry m_current_kinematic_state;
   geometry_msgs::msg::AccelWithCovarianceStamped m_current_accel;
-  autoware_auto_planning_msgs::msg::Trajectory m_trajectory;
+  autoware_planning_msgs::msg::Trajectory m_trajectory;
   OperationModeState m_current_operation_mode;
 
   // vehicle info
@@ -241,7 +241,7 @@ private:
    * @brief set reference trajectory with received message
    * @param [in] msg trajectory message
    */
-  void setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory & msg);
+  void setTrajectory(const autoware_planning_msgs::msg::Trajectory & msg);
 
   bool isReady(const trajectory_follower::InputData & input_data) override;
 
@@ -336,7 +336,7 @@ private:
    * @param [in] motion delay compensated target motion
    */
   Motion keepBrakeBeforeStop(
-    const autoware_auto_planning_msgs::msg::Trajectory & traj, const Motion & target_motion,
+    const autoware_planning_msgs::msg::Trajectory & traj, const Motion & target_motion,
     const size_t nearest_idx) const;
 
   /**
@@ -345,8 +345,8 @@ private:
    * @param [in] point vehicle position
    * @param [in] nearest_idx index of the trajectory point nearest to the vehicle position
    */
-  autoware_auto_planning_msgs::msg::TrajectoryPoint calcInterpolatedTargetValue(
-    const autoware_auto_planning_msgs::msg::Trajectory & traj,
+  autoware_planning_msgs::msg::TrajectoryPoint calcInterpolatedTargetValue(
+    const autoware_planning_msgs::msg::Trajectory & traj,
     const geometry_msgs::msg::Pose & pose) const;
 
   /**

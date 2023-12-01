@@ -24,8 +24,9 @@ class EmptyObjectsPublisher : public rclcpp::Node
 public:
   EmptyObjectsPublisher() : Node("empty_objects_publisher")
   {
-    empty_objects_pub_ = this->create_publisher<autoware_perception_msgs::msg::PredictedObjects>(
-      "~/output/objects", 1);
+    empty_objects_pub_ =
+      this->create_publisher<autoware_perception_msgs::msg::PredictedObjects>(
+        "~/output/objects", 1);
 
     using std::chrono_literals::operator""ms;
     timer_ = rclcpp::create_timer(
@@ -33,7 +34,8 @@ public:
   }
 
 private:
-  rclcpp::Publisher<autoware_perception_msgs::msg::PredictedObjects>::SharedPtr empty_objects_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::PredictedObjects>::SharedPtr
+    empty_objects_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   void timerCallback()

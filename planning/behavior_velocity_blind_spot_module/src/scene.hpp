@@ -20,9 +20,9 @@
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
 #include <boost/optional.hpp>
@@ -107,7 +107,7 @@ private:
   bool checkObstacleInBlindSpot(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_planning_msgs::msg::PathWithLaneId & path,
     const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const geometry_msgs::msg::Pose & stop_line_pose) const;
 
@@ -131,7 +131,7 @@ private:
   boost::optional<BlindSpotPolygons> generateBlindSpotPolygons(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
     const geometry_msgs::msg::Pose & pose) const;
 
   /**
@@ -173,7 +173,7 @@ private:
    */
   bool generateStopLine(
     const lanelet::ConstLanelets straight_lanelets,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx) const;
+    autoware_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx) const;
 
   /**
    * @brief Insert a point to target path
@@ -183,8 +183,8 @@ private:
    * @return inserted point idx in target path, return -1 when could not find valid index
    */
   int insertPoint(
-    const int insert_idx_ip, const autoware_auto_planning_msgs::msg::PathWithLaneId path_ip,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path) const;
+    const int insert_idx_ip, const autoware_planning_msgs::msg::PathWithLaneId path_ip,
+    autoware_planning_msgs::msg::PathWithLaneId * path) const;
 
   /**
    * @brief Calculate first path index that is conflicting lanelets.
@@ -193,7 +193,7 @@ private:
    * @return path point index
    */
   boost::optional<int> getFirstPointConflictingLanelets(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::ConstLanelets & lanelets) const;
 
   /**
@@ -216,7 +216,8 @@ private:
    * @param time_thr    time threshold to cut path
    */
   void cutPredictPathWithDuration(
-    autoware_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const;
+    autoware_perception_msgs::msg::PredictedObjects * objects_ptr,
+    const double time_thr) const;
 
   StateMachine state_machine_;  //! for state
 

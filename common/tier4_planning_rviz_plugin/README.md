@@ -13,8 +13,8 @@ This plugin displays the path, trajectory, and maximum speed.
 
 | Name                                               | Type                                           | Description                                |
 | -------------------------------------------------- | ---------------------------------------------- | ------------------------------------------ |
-| `/input/path`                                      | `autoware_auto_planning_msgs::msg::Path`       | The topic on which to subscribe path       |
-| `/input/trajectory`                                | `autoware_auto_planning_msgs::msg::Trajectory` | The topic on which to subscribe trajectory |
+| `/input/path`                                      | `autoware_planning_msgs::msg::Path`       | The topic on which to subscribe path       |
+| `/input/trajectory`                                | `autoware_planning_msgs::msg::Trajectory` | The topic on which to subscribe trajectory |
 | `/planning/scenario_planning/current_max_velocity` | `tier4_planning_msgs/msg/VelocityLimit`        | The topic on which to publish max velocity |
 
 ### Output
