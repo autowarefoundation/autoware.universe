@@ -114,7 +114,7 @@ public:
    */
   boost::optional<lanelet::ConstLanelet> getRightLanelet(
     const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false,
-    const bool get_shoulder_lane = false) const;
+    const bool get_shoulder_lane = true) const;
 
   /**
    * @brief Check if same-direction lane is available at the left side of the lanelet
@@ -125,7 +125,7 @@ public:
    */
   boost::optional<lanelet::ConstLanelet> getLeftLanelet(
     const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false,
-    const bool get_shoulder_lane = false) const;
+    const bool get_shoulder_lane = true) const;
   lanelet::ConstLanelets getNextLanelets(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getPreviousLanelets(const lanelet::ConstLanelet & lanelet) const;
 
