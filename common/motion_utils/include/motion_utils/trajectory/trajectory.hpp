@@ -412,7 +412,7 @@ double calcLongitudinalOffsetToSegment(
       throw e;
     }
     log_error(
-      e.what() +
+      std::string(e.what()) +
       " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
@@ -439,7 +439,7 @@ double calcLongitudinalOffsetToSegment(
       throw e;
     }
     log_error(
-      e.what() +
+      std::string(e.what()) +
       " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
@@ -587,7 +587,7 @@ double calcLateralOffset(
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
       log_error(
-        e.what() +
+        std::string(e.what()) +
         " Return NaN since no_throw option is enabled. The maintainer must check the code.");
       return std::nan("");
     }
@@ -602,7 +602,7 @@ double calcLateralOffset(
       throw e;
     }
     log_error(
-      e.what() +
+      std::string(e.what()) +
       " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
@@ -655,7 +655,7 @@ double calcLateralOffset(
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
       log_error(
-        e.what() +
+        std::string(e.what()) +
         " Return NaN since no_throw option is enabled. The maintainer must check the code.");
       return std::nan("");
     }
@@ -670,7 +670,7 @@ double calcLateralOffset(
       throw e;
     }
     log_error(
-      e.what() +
+      std::string(e.what()) +
       " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
@@ -1079,7 +1079,7 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
       throw e;
     }
     log_error(
-      e.what() +
+      std::string(e.what()) +
       " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return {};
   }
@@ -1147,7 +1147,7 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    log_error("Failed to calculate longitudinal offset: " + e.what());
+    log_error("Failed to calculate longitudinal offset: " + std::string(e.what()));
     return {};
   }
 
@@ -1195,7 +1195,7 @@ boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    log_error("Failed to calculate longitudinal offset: " + e.what());
+    log_error("Failed to calculate longitudinal offset: " + std::string(e.what()));
     return {};
   }
 
@@ -1214,7 +1214,7 @@ boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   }
 
   if (points.size() == 1) {
-    log_error("Failed to calculate longitudinal offset: " + "points size is one.");
+    log_error("Failed to calculate longitudinal offset: points size is one.");
     return {};
   }
 
@@ -2228,7 +2228,7 @@ boost::optional<double> calcDistanceToForwardStopPoint(
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    log_error("Failed to calculate stop distance" + e.what());
+    log_error("Failed to calculate stop distance" + std::string(e.what()));
     return {};
   }
 
@@ -2426,7 +2426,7 @@ double calcYawDeviation(
       throw e;
     }
     log_error(
-      e.what() + " Return 0 since no_throw option is enabled. The maintainer must check the code.");
+      std::string(e.what()) + " Return 0 since no_throw option is enabled. The maintainer must check the code.");
     return 0.0;
   }
 
