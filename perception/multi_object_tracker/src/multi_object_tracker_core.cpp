@@ -81,6 +81,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate", 30.0);
   world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
   bool enable_delay_compensation{declare_parameter("enable_delay_compensation", false)};
+  pass_through_unknown_objects_ = declare_parameter("pass_through_unknown_objects", false);
+  publish_untracked_objects_ = declare_parameter("publish_untracked_objects", false);
 
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
     this->get_node_base_interface(), this->get_node_timers_interface());
@@ -178,9 +180,19 @@ void MultiObjectTracker::onMeasurement(
     if (reverse_assignment.find(i) != reverse_assignment.end()) {  // found
       continue;
     }
-    std::shared_ptr<Tracker> tracker =
-      createNewTracker(filtered_objects.objects.at(i), measurement_time, *self_transform);
-    if (tracker) list_tracker_.push_back(tracker);
+    // If the objects condition is not satisfied, do not spawn a new tracker.
+    if (shouldPassThroughThisObject(filtered_objects.objects.at(i))) {
+      list_pass_trough_objects_.push_back(filtered_objects.objects.at(i));
+    } else {
+      std::shared_ptr<Tracker> tracker =
+        createNewTracker(filtered_objects.objects.at(i), measurement_time, *self_transform);
+      if (tracker) list_tracker_.push_back(tracker);
+    }
+  }
+
+  /* catch unexpected objects */
+  for (size_t i = 0; i < unexpected_objects.objects.size(); ++i) {
+    list_untracked_objects_.push_back(unexpected_objects.objects.at(i));
   }
 
   if (publish_timer_ == nullptr) {
@@ -318,6 +330,17 @@ void MultiObjectTracker::sanitizeTracker(
   }
 }
 
+bool MultiObjectTracker::shouldPassThroughThisObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object) const
+{
+  // pass through unknown objects
+  const auto & label = object_recognition_utils::getHighestProbLabel(object.classification);
+  if (label == Label::UNKNOWN) {
+    return true;
+  }
+  return false;
+}
+
 inline bool MultiObjectTracker::shouldTrackerPublish(
   const std::shared_ptr<const Tracker> tracker) const
 {
@@ -328,7 +351,7 @@ inline bool MultiObjectTracker::shouldTrackerPublish(
   return true;
 }
 
-void MultiObjectTracker::publish(const rclcpp::Time & time) const
+void MultiObjectTracker::publish(const rclcpp::Time & time)
 {
   const auto subscriber_count = tracked_objects_pub_->get_subscription_count() +
                                 tracked_objects_pub_->get_intra_process_subscription_count();
@@ -347,6 +370,19 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     (*itr)->getTrackedObject(time, object);
     output_msg.objects.push_back(object);
   }
+  // add pass through objects
+  for (auto pass_through_object : list_pass_trough_objects_) {
+    output_msg.objects.push_back(object_recognition_utils::toTrackedObject(pass_through_object));
+  }
+  // add untracked objects
+  if (publish_untracked_objects_) {
+    for (auto untracked_object : list_untracked_objects_) {
+      output_msg.objects.push_back(object_recognition_utils::toTrackedObject(untracked_object));
+    }
+  }
+  // clear std::list
+  list_pass_trough_objects_.clear();
+  list_untracked_objects_.clear();
 
   // Publish
   tracked_objects_pub_->publish(output_msg);

@@ -71,6 +71,10 @@ private:
   std::string world_frame_id_;  // tracking frame
   std::list<std::shared_ptr<Tracker>> list_tracker_;
   std::unique_ptr<DataAssociation> data_association_;
+  std::list<autoware_auto_perception_msgs::msg::DetectedObject> list_untracked_objects_;
+  std::list<autoware_auto_perception_msgs::msg::DetectedObject> list_pass_trough_objects_;
+  bool pass_through_unknown_objects_;
+  bool publish_untracked_objects_;
 
   void checkTrackerLifeCycle(
     std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time,
@@ -80,8 +84,9 @@ private:
   std::shared_ptr<Tracker> createNewTracker(
     const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) const;
-
-  void publish(const rclcpp::Time & time) const;
+  bool shouldPassThroughThisObject(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object) const;
+  void publish(const rclcpp::Time & time);
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
 };
 
