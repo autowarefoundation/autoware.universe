@@ -2424,7 +2424,8 @@ double calcYawDeviation(
       throw e;
     }
     log_error(
-      std::string(e.what()) + " Return 0 since no_throw option is enabled. The maintainer must check the code.");
+      std::string(e.what()) +
+      " Return 0 since no_throw option is enabled. The maintainer must check the code.");
     return 0.0;
   }
 
