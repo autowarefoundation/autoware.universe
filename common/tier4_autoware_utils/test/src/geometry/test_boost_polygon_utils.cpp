@@ -137,8 +137,8 @@ TEST(boost_geometry, boost_toPolygon2d)
     const double y = 1.0;
 
     const auto pose = createPose(1.0, 1.0, M_PI_4);
-    autoware_auto_perception_msgs::msg::Shape shape;
-    shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+    autoware_perception_msgs::msg::Shape shape;
+    shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
     shape.dimensions.x = x;
     shape.dimensions.y = y;
 
@@ -159,8 +159,8 @@ TEST(boost_geometry, boost_toPolygon2d)
     const double diameter = 1.0;
 
     const auto pose = createPose(1.0, 1.0, M_PI_4);
-    autoware_auto_perception_msgs::msg::Shape shape;
-    shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
+    autoware_perception_msgs::msg::Shape shape;
+    shape.type = autoware_perception_msgs::msg::Shape::CYLINDER;
     shape.dimensions.x = diameter;
 
     const auto poly = toPolygon2d(pose, shape);
@@ -183,8 +183,8 @@ TEST(boost_geometry, boost_toPolygon2d)
     const double y = 0.5;
 
     const auto pose = createPose(1.0, 1.0, M_PI_4);
-    autoware_auto_perception_msgs::msg::Shape shape;
-    shape.type = autoware_auto_perception_msgs::msg::Shape::POLYGON;
+    autoware_perception_msgs::msg::Shape shape;
+    shape.type = autoware_perception_msgs::msg::Shape::POLYGON;
     shape.footprint.points.push_back(createPoint32(-x, -y));
     shape.footprint.points.push_back(createPoint32(-x, y));
     shape.footprint.points.push_back(createPoint32(x, y));

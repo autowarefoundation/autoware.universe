@@ -362,7 +362,7 @@ private:
   bool IntersectionModule::checkFrontVehicleDeceleration(
     lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
     const Polygon2d & stuck_vehicle_detect_area,
-    const autoware_auto_perception_msgs::msg::PredictedObject & object,
+    const autoware_perception_msgs::msg::PredictedObject & object,
     const double assumed_front_car_decel);
   */
 

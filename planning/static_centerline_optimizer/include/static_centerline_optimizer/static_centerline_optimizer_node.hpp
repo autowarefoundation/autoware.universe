@@ -61,11 +61,11 @@ private:
     const std::string & lanelet2_output_file_path, const std::vector<unsigned int> & route_lane_ids,
     const std::vector<TrajectoryPoint> & optimized_traj_points);
 
-  HADMapBin::ConstSharedPtr map_bin_ptr_{nullptr};
+  LaneletMapBin::ConstSharedPtr map_bin_ptr_{nullptr};
   std::shared_ptr<RouteHandler> route_handler_ptr_{nullptr};
 
   // publisher
-  rclcpp::Publisher<HADMapBin>::SharedPtr pub_map_bin_{nullptr};
+  rclcpp::Publisher<LaneletMapBin>::SharedPtr pub_map_bin_{nullptr};
   rclcpp::Publisher<PathWithLaneId>::SharedPtr pub_raw_path_with_lane_id_{nullptr};
   rclcpp::Publisher<Path>::SharedPtr pub_raw_path_{nullptr};
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_unsafe_footprints_{nullptr};

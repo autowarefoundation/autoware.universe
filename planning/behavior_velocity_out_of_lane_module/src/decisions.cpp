@@ -62,7 +62,7 @@ bool object_is_incoming(
 }
 
 std::optional<std::pair<double, double>> object_time_to_range(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
+  const autoware_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
   const std::shared_ptr<route_handler::RouteHandler> route_handler, const rclcpp::Logger & logger)
 {
   // skip the dynamic object if it is not in a lane preceding the overlapped lane
@@ -144,7 +144,7 @@ std::optional<std::pair<double, double>> object_time_to_range(
 }
 
 std::optional<std::pair<double, double>> object_time_to_range(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
+  const autoware_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
   const DecisionInputs & inputs, const rclcpp::Logger & logger)
 {
   const auto & p = object.kinematics.initial_pose_with_covariance.pose.position;

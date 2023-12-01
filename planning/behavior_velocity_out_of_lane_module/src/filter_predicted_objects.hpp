@@ -28,16 +28,16 @@ namespace behavior_velocity_planner::out_of_lane
 /// @param [in] ego_data ego data
 /// @param [in] params parameters
 /// @return filtered predicted objects
-autoware_auto_perception_msgs::msg::PredictedObjects filter_predicted_objects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const EgoData & ego_data,
+autoware_perception_msgs::msg::PredictedObjects filter_predicted_objects(
+  const autoware_perception_msgs::msg::PredictedObjects & objects, const EgoData & ego_data,
   const PlannerParam & params)
 {
-  autoware_auto_perception_msgs::msg::PredictedObjects filtered_objects;
+  autoware_perception_msgs::msg::PredictedObjects filtered_objects;
   filtered_objects.header = objects.header;
   for (const auto & object : objects.objects) {
     const auto is_pedestrian =
       std::find_if(object.classification.begin(), object.classification.end(), [](const auto & c) {
-        return c.label == autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+        return c.label == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
       }) != object.classification.end();
     if (is_pedestrian) continue;
 

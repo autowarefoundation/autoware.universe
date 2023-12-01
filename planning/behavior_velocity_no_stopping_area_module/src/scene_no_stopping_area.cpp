@@ -220,8 +220,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
 
 bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
   const Polygon2d & poly,
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr &
-    predicted_obj_arr_ptr)
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr & predicted_obj_arr_ptr)
 {
   // stuck points by predicted objects
   for (const auto & object : predicted_obj_arr_ptr->objects) {
@@ -348,19 +347,19 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
 }
 
 bool NoStoppingAreaModule::isTargetStuckVehicleType(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
+  const autoware_perception_msgs::msg::PredictedObject & object) const
 {
   if (
     object.classification.front().label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+      autoware_perception_msgs::msg::ObjectClassification::CAR ||
     object.classification.front().label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
+      autoware_perception_msgs::msg::ObjectClassification::BUS ||
     object.classification.front().label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+      autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
     object.classification.front().label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
+      autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
     object.classification.front().label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
+      autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
     return true;
   }
   return false;

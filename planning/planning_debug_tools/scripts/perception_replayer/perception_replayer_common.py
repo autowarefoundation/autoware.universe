@@ -19,11 +19,11 @@ from subprocess import CalledProcessError
 from subprocess import check_output
 import time
 
-from autoware_auto_perception_msgs.msg import DetectedObjects
-from autoware_auto_perception_msgs.msg import PredictedObjects
-from autoware_auto_perception_msgs.msg import TrackedObjects
-from autoware_auto_perception_msgs.msg import TrafficSignalArray as AutoTrafficSignalArray
+from autoware_perception_msgs.msg import DetectedObjects
+from autoware_perception_msgs.msg import PredictedObjects
+from autoware_perception_msgs.msg import TrackedObjects
 from autoware_perception_msgs.msg import TrafficSignalArray
+from autoware_perception_msgs.msg import TrafficSignalArray as AutoTrafficSignalArray
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 import psutil
@@ -131,9 +131,7 @@ class PerceptionReplayerCommon(Node):
                 self.rosbag_ego_odom_data.append((stamp, msg))
             if topic == traffic_signals_topic:
                 self.rosbag_traffic_signals_data.append((stamp, msg))
-                self.is_auto_traffic_signals = (
-                    "autoware_auto_perception_msgs" in type(msg).__module__
-                )
+                self.is_auto_traffic_signals = "autoware_perception_msgs" in type(msg).__module__
 
     def kill_online_perception_node(self):
         # kill node if required

@@ -178,6 +178,23 @@ protected:
   }
 
   template <typename ClassificationContainerT>
+  std::optional<Marker::SharedPtr> get_shape_marker_ptr(
+    const autoware_perception_msgs::msg::Shape & shape_msg,
+    const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
+    const ClassificationContainerT & labels, const double & line_width) const
+  {
+    const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
+    if (m_display_type_property->getOptionInt() == 0) {
+      return detail::get_shape_marker_ptr(shape_msg, centroid, orientation, color_rgba, line_width);
+    } else if (m_display_type_property->getOptionInt() == 1) {
+      return detail::get_2d_shape_marker_ptr(
+        shape_msg, centroid, orientation, color_rgba, line_width);
+    } else {
+      return std::nullopt;
+    }
+  }
+
+  template <typename ClassificationContainerT>
   visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
     const autoware_auto_perception_msgs::msg::Shape & shape_msg,
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
@@ -278,10 +295,38 @@ protected:
       return std::nullopt;
     }
   }
+  std::optional<Marker::SharedPtr> get_predicted_path_marker_ptr(
+    const unique_identifier_msgs::msg::UUID & uuid,
+    const autoware_perception_msgs::msg::Shape & shape,
+    const autoware_perception_msgs::msg::PredictedPath & predicted_path) const
+  {
+    if (m_display_predicted_paths_property.getBool()) {
+      const std::string uuid_str = uuid_to_string(uuid);
+      const std_msgs::msg::ColorRGBA predicted_path_color = get_color_from_uuid(uuid_str);
+      return detail::get_predicted_path_marker_ptr(
+        shape, predicted_path, predicted_path_color,
+        m_simple_visualize_mode_property->getOptionInt() == 1);
+    } else {
+      return std::nullopt;
+    }
+  }
 
   std::optional<Marker::SharedPtr> get_path_confidence_marker_ptr(
     const unique_identifier_msgs::msg::UUID & uuid,
     const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path) const
+  {
+    if (m_display_path_confidence_property.getBool()) {
+      const std::string uuid_str = uuid_to_string(uuid);
+      const std_msgs::msg::ColorRGBA path_confidence_color = get_color_from_uuid(uuid_str);
+      return detail::get_path_confidence_marker_ptr(predicted_path, path_confidence_color);
+    } else {
+      return std::nullopt;
+    }
+  }
+
+  std::optional<Marker::SharedPtr> get_path_confidence_marker_ptr(
+    const unique_identifier_msgs::msg::UUID & uuid,
+    const autoware_perception_msgs::msg::PredictedPath & predicted_path) const
   {
     if (m_display_path_confidence_property.getBool()) {
       const std::string uuid_str = uuid_to_string(uuid);

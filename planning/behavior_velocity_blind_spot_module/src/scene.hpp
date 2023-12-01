@@ -20,9 +20,9 @@
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
 #include <boost/optional.hpp>
@@ -54,7 +54,7 @@ public:
     geometry_msgs::msg::Pose judge_point_pose;
     std::vector<lanelet::CompoundPolygon3d> conflict_areas_for_blind_spot;
     std::vector<lanelet::CompoundPolygon3d> detection_areas_for_blind_spot;
-    autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
+    autoware_perception_msgs::msg::PredictedObjects conflicting_targets;
   };
 
 public:
@@ -108,7 +108,7 @@ private:
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+    const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const geometry_msgs::msg::Pose & stop_line_pose) const;
 
   /**
@@ -150,7 +150,7 @@ private:
    * @param object Dynamic object
    * @return True when object belong to targeted classes
    */
-  bool isTargetObjectType(const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
+  bool isTargetObjectType(const autoware_perception_msgs::msg::PredictedObject & object) const;
 
   /**
    * @brief Check if at least one of object's predicted position is in area
@@ -159,7 +159,7 @@ private:
    * @return True when at least one of object's predicted position is in area
    */
   bool isPredictedPathInArea(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object,
+    const autoware_perception_msgs::msg::PredictedObject & object,
     const std::vector<lanelet::CompoundPolygon3d> & areas, geometry_msgs::msg::Pose ego_pose) const;
 
   /**
@@ -216,8 +216,7 @@ private:
    * @param time_thr    time threshold to cut path
    */
   void cutPredictPathWithDuration(
-    autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
-    const double time_thr) const;
+    autoware_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const;
 
   StateMachine state_machine_;  //! for state
 

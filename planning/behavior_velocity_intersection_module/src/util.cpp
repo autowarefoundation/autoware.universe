@@ -1116,7 +1116,7 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
 
 // from here
 geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
-  const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state)
+  const autoware_perception_msgs::msg::PredictedObjectKinematics & obj_state)
 {
   if (obj_state.initial_twist_with_covariance.twist.linear.x >= 0) {
     return obj_state.initial_pose_with_covariance.pose;
@@ -1132,27 +1132,24 @@ geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   return obj_pose;
 }
 
-static bool isTargetStuckVehicleType(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object)
+static bool isTargetStuckVehicleType(const autoware_perception_msgs::msg::PredictedObject & object)
 {
   if (
+    object.classification.at(0).label == autoware_perception_msgs::msg::ObjectClassification::CAR ||
+    object.classification.at(0).label == autoware_perception_msgs::msg::ObjectClassification::BUS ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+      autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
+      autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
     object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
-    object.classification.at(0).label ==
-      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
+      autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
     return true;
   }
   return false;
 }
 
 bool checkStuckVehicleInIntersection(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const Polygon2d & stuck_vehicle_detect_area, const double stuck_vehicle_vel_thr,
   DebugData * debug_data)
 {
@@ -1179,7 +1176,7 @@ bool checkStuckVehicleInIntersection(
 }
 
 bool checkYieldStuckVehicleInIntersection(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const lanelet::BasicPolygon2d & ego_poly, const lanelet::CompoundPolygon3d & first_attention_area,
   const double stuck_vehicle_vel_thr, const double yield_stuck_distance_thr, DebugData * debug_data)
 {

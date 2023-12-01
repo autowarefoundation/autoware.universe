@@ -40,7 +40,7 @@
 
 namespace motion_planning
 {
-using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObject;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcLongitudinalOffsetToSegment;
 using motion_utils::calcSignedArcLength;
@@ -625,7 +625,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
         Polygon2d one_step_move_slow_down_range;
         bool found_slow_down_object = false;
         Polygon2d object_polygon{};
-        if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+        if (obj.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
           object_polygon = convertCylindricalObjectToGeometryPolygon(
             obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
           createOneStepPolygon(
@@ -633,7 +633,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
             slow_down_param_.pedestrian_lateral_margin);
           found_slow_down_object = bg::intersects(one_step_move_slow_down_range, object_polygon);
 
-        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+        } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
           createOneStepPolygon(
             p_front, p_back, one_step_move_slow_down_range, vehicle_info,
             slow_down_param_.vehicle_lateral_margin);
@@ -644,7 +644,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
 
           found_slow_down_object = bg::intersects(one_step_move_slow_down_range, object_polygon);
 
-        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+        } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
           createOneStepPolygon(
             p_front, p_back, one_step_move_slow_down_range, vehicle_info,
             slow_down_param_.unknown_lateral_margin);
@@ -719,15 +719,15 @@ void ObstacleStopPlannerNode::searchPredictedObject(
         Polygon2d one_step_move_slow_down_vehicle_polygon;
 
         const auto & obj = filtered_objects.objects.at(nearest_slow_down_object_index);
-        if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+        if (obj.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
           createOneStepPolygon(
             p_front, p_back, one_step_move_slow_down_vehicle_polygon, vehicle_info,
             slow_down_param_.pedestrian_lateral_margin);
-        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+        } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
           createOneStepPolygon(
             p_front, p_back, one_step_move_slow_down_vehicle_polygon, vehicle_info,
             slow_down_param_.vehicle_lateral_margin);
-        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+        } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
           createOneStepPolygon(
             p_front, p_back, one_step_move_slow_down_vehicle_polygon, vehicle_info,
             slow_down_param_.unknown_lateral_margin);
@@ -764,7 +764,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
         Polygon2d one_step_move_collision_polygon;
         bool found_collision_object = false;
         Polygon2d object_polygon{};
-        if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+        if (obj.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
           object_polygon = convertCylindricalObjectToGeometryPolygon(
             obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
 
@@ -773,7 +773,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
             stop_param.pedestrian_lateral_margin);
 
           found_collision_object = bg::intersects(one_step_move_collision_polygon, object_polygon);
-        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+        } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
           const double & length_m = obj.shape.dimensions.x / 2;
           const double & width_m = obj.shape.dimensions.y / 2;
           object_polygon = convertBoundingBoxObjectToGeometryPolygon(
@@ -783,7 +783,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
             stop_param.vehicle_lateral_margin);
 
           found_collision_object = bg::intersects(one_step_move_collision_polygon, object_polygon);
-        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+        } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
           object_polygon = convertPolygonObjectToGeometryPolygon(
             obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
           createOneStepPolygon(
@@ -880,17 +880,17 @@ void ObstacleStopPlannerNode::searchPredictedObject(
       collision_point.y() = predicted_object_history_.at(j).point.y;
       Polygon2d one_step_move_vehicle_polygon;
       // create one step polygon for vehicle
-      if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+      if (obj.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.pedestrian_lateral_margin);
 
-      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+      } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.vehicle_lateral_margin);
 
-      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+      } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.unknown_lateral_margin);
@@ -928,13 +928,13 @@ void ObstacleStopPlannerNode::searchPredictedObject(
       Polygon2d object_polygon{};
 
       const auto & obj = predicted_object_history_.at(nearest_collision_object_index).object;
-      if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+      if (obj.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.pedestrian_lateral_margin);
         object_polygon = convertCylindricalObjectToGeometryPolygon(
           obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
-      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+      } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.vehicle_lateral_margin);
@@ -943,7 +943,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
         object_polygon = convertBoundingBoxObjectToGeometryPolygon(
           obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
 
-      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+      } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.unknown_lateral_margin);
@@ -1133,7 +1133,7 @@ void ObstacleStopPlannerNode::insertVelocity(
       if (node_param_.use_predicted_objects) {
         if (
           planner_data.slow_down_object_shape.type ==
-          autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+          autoware_perception_msgs::msg::Shape::CYLINDER) {
           slow_down_velocity =
             slow_down_param_.min_slow_down_velocity +
             (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
@@ -1141,7 +1141,7 @@ void ObstacleStopPlannerNode::insertVelocity(
               slow_down_param_.pedestrian_lateral_margin;
         } else if (
           planner_data.slow_down_object_shape.type ==
-          autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+          autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
           slow_down_velocity =
             slow_down_param_.min_slow_down_velocity +
             (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
@@ -1149,7 +1149,7 @@ void ObstacleStopPlannerNode::insertVelocity(
               slow_down_param_.vehicle_lateral_margin;
         } else if (
           planner_data.slow_down_object_shape.type ==
-          autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+          autoware_perception_msgs::msg::Shape::POLYGON) {
           slow_down_velocity =
             slow_down_param_.min_slow_down_velocity +
             (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *

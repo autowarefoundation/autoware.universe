@@ -45,9 +45,9 @@ Overwrite tracking results with detection results.
 
 #### Input Types
 
-| Name | Type                                                   | Description             |
-| ---- | ------------------------------------------------------ | ----------------------- |
-|      | `autoware_auto_perception_msgs::msg::PredictedObjects` | prediction result array |
+| Name | Type                                              | Description             |
+| ---- | ------------------------------------------------- | ----------------------- |
+|      | `autoware_perception_msgs::msg::PredictedObjects` | prediction result array |
 
 #### Visualization Result
 
