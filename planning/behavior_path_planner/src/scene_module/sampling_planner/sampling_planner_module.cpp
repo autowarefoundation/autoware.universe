@@ -466,6 +466,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 void SamplingPlannerModule::updateDebugMarkers()
 {
   debug_marker_.markers.clear();
+  info_marker_.markers.clear();
 
   const auto header = planner_data_->route_handler->getRouteHeader();
   visualization_msgs::msg::Marker m;
