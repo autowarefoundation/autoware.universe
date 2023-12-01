@@ -24,7 +24,7 @@
   <arg name="model_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/$(var model_name).param.yaml"/>
   <arg name="class_remapper_param_path" default="$(find-pkg-share lidar_centerpoint)/config/detection_class_remapper.param.yaml"/>
   <arg name="sync_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/roi_sync.param.yaml"/>
-  <arg name="build_only" default="true" description="shutdown node after TensorRT engine file is built"/>
+  <arg name="build_only" default="false" description="shutdown node after TensorRT engine file is built"/>
 
   <!-- for eval variable-->
   <arg name="input_rois_number" default="$(var input/rois_number)"/>
