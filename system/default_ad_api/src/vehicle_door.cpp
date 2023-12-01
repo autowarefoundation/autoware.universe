@@ -22,8 +22,8 @@ VehicleDoorNode::VehicleDoorNode(const rclcpp::NodeOptions & options)
 {
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  adaptor.relay_service(cli_command_, srv_command_, group_cli_);
-  adaptor.relay_service(cli_layout_, srv_layout_, group_cli_);
+  adaptor.relay_service(cli_command_, srv_command_, group_cli_, 3.0);
+  adaptor.relay_service(cli_layout_, srv_layout_, group_cli_, 3.0);
   adaptor.relay_message(pub_status_, sub_status_);
 }
 

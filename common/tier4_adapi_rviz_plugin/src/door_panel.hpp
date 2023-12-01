@@ -15,15 +15,13 @@
 #ifndef DOOR_PANEL_HPP_
 #define DOOR_PANEL_HPP_
 
-#include <QCheckBox>
-#include <QGroupBox>
+#include <QGridLayout>
+#include <QLabel>
 #include <QPushButton>
-#include <autoware_ad_api_specs/routing.hpp>
+#include <autoware_ad_api_specs/vehicle.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
-
-#include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <vector>
 
@@ -33,33 +31,32 @@ namespace tier4_adapi_rviz_plugins
 class DoorPanel : public rviz_common::Panel
 {
   Q_OBJECT
-  using ClearRoute = autoware_ad_api::routing::ClearRoute;
-  using SetRoutePoints = autoware_ad_api::routing::SetRoutePoints;
-  using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using DoorCommand = autoware_ad_api::vehicle::DoorCommand;
+  using DoorLayout = autoware_ad_api::vehicle::DoorLayout;
+  using DoorStatus = autoware_ad_api::vehicle::DoorStatus;
 
 public:
   explicit DoorPanel(QWidget * parent = nullptr);
   void onInitialize() override;
 
 private:
-  QPushButton * waypoints_mode_;
-  QPushButton * waypoints_reset_;
-  QPushButton * waypoints_apply_;
-  QGroupBox * waypoints_group_;
-  QCheckBox * allow_goal_modification_;
+  component_interface_utils::Client<DoorCommand>::SharedPtr cli_command_;
+  component_interface_utils::Client<DoorLayout>::SharedPtr cli_layout_;
+  component_interface_utils::Subscription<DoorStatus>::SharedPtr sub_status_;
 
-  rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
-  std::vector<PoseStamped> waypoints_;
-  void onPose(const PoseStamped::ConstSharedPtr msg);
-
-  component_interface_utils::Client<ClearRoute>::SharedPtr cli_clear_;
-  component_interface_utils::Client<SetRoutePoints>::SharedPtr cli_route_;
-  void setRoute(const PoseStamped & pose);
+  struct DoorUI
+  {
+    QLabel * description;
+    QLabel * status;
+    QPushButton * open;
+    QPushButton * close;
+  };
+  QGridLayout * layout_;
+  QLabel * status_;
+  std::vector<DoorUI> doors_;
 
 private slots:
-  void onWaypointsMode(bool clicked);
-  void onWaypointsReset();
-  void onWaypointsApply();
+  void on_button(uint32_t index, uint8_t command);
 };
 
 }  // namespace tier4_adapi_rviz_plugins

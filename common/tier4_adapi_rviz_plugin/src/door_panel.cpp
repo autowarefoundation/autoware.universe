@@ -14,8 +14,6 @@
 
 #include "door_panel.hpp"
 
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
 
 #include <memory>
@@ -25,113 +23,93 @@ namespace tier4_adapi_rviz_plugins
 
 DoorPanel::DoorPanel(QWidget * parent) : rviz_common::Panel(parent)
 {
-  waypoints_mode_ = new QPushButton("mode");
-  waypoints_reset_ = new QPushButton("reset");
-  waypoints_apply_ = new QPushButton("apply");
-  allow_goal_modification_ = new QCheckBox("allow goal modification");
-
-  waypoints_mode_->setCheckable(true);
-  waypoints_reset_->setDisabled(true);
-  waypoints_apply_->setDisabled(true);
-  connect(waypoints_mode_, &QPushButton::clicked, this, &DoorPanel::onWaypointsMode);
-  connect(waypoints_reset_, &QPushButton::clicked, this, &DoorPanel::onWaypointsReset);
-  connect(waypoints_apply_, &QPushButton::clicked, this, &DoorPanel::onWaypointsApply);
-
-  const auto layout = new QVBoxLayout();
-  setLayout(layout);
-
-  // waypoints group
-  {
-    const auto group = new QGroupBox("waypoints");
-    const auto local = new QHBoxLayout();
-    local->addWidget(waypoints_mode_);
-    local->addWidget(waypoints_reset_);
-    local->addWidget(waypoints_apply_);
-    group->setLayout(local);
-    layout->addWidget(group);
-    waypoints_group_ = group;
-  }
-
-  // options group
-  {
-    const auto group = new QGroupBox("options");
-    const auto local = new QHBoxLayout();
-    local->addWidget(allow_goal_modification_);
-    group->setLayout(local);
-    layout->addWidget(group);
-  }
+  status_ = new QLabel("Trying to get door layout.");
+  layout_ = new QGridLayout();
+  layout_->addWidget(status_, 0, 0, 1, 4);
+  setLayout(layout_);
 }
 
 void DoorPanel::onInitialize()
 {
+  const auto on_layout = [this](const rclcpp::Client<DoorLayout::Service>::SharedFuture future) {
+    const auto res = future.get();
+    if (!res->status.success) {
+      status_->setText(QString::fromStdString("failed to get layout: " + res->status.message));
+      return;
+    }
+    const auto & layouts = res->doors;
+    for (size_t index = 0; index < layouts.size(); ++index) {
+      const auto & layout = layouts[index];
+      DoorUI door;
+      door.description = new QLabel(QString::fromStdString(layout.description));
+      door.status = new QLabel("unknown");
+      door.open = new QPushButton("open");
+      door.close = new QPushButton("close");
+      doors_.push_back(door);
+
+      layout_->addWidget(door.description, index + 1, 0);
+      layout_->addWidget(door.status, index + 1, 1);
+      layout_->addWidget(door.open, index + 1, 2);
+      layout_->addWidget(door.close, index + 1, 3);
+
+      using Command = autoware_adapi_v1_msgs::msg::DoorCommand;
+      const auto on_open = [this, index] { on_button(index, Command::OPEN); };
+      const auto on_close = [this, index] { on_button(index, Command::CLOSE); };
+      connect(door.open, &QPushButton::clicked, on_open);
+      connect(door.close, &QPushButton::clicked, on_close);
+    }
+    status_->hide();
+  };
+
+  const auto on_status = [this](const DoorStatus::Message::ConstSharedPtr msg) {
+    using Status = autoware_adapi_v1_msgs::msg::DoorStatus;
+    if (doors_.size() != msg->doors.size()) {
+      return;
+    }
+    for (size_t index = 0; index < doors_.size(); ++index) {
+      const auto & label = doors_[index].status;
+      switch (msg->doors[index].status) {
+        case Status::NOT_AVAILABLE:
+          label->setText("not available");
+          break;
+        case Status::OPENED:
+          label->setText("opened");
+          break;
+        case Status::CLOSED:
+          label->setText("closed");
+          break;
+        case Status::OPENING:
+          label->setText("opening");
+          break;
+        case Status::CLOSING:
+          label->setText("closing");
+          break;
+        default:
+          label->setText("unknown");
+          break;
+      }
+    }
+  };
+
   auto lock = getDisplayContext()->getRosNodeAbstraction().lock();
   auto node = lock->get_raw_node();
 
-  sub_pose_ = node->create_subscription<PoseStamped>(
-    "/rviz/routing/pose", rclcpp::QoS(1),
-    std::bind(&DoorPanel::onPose, this, std::placeholders::_1));
-
   const auto adaptor = component_interface_utils::NodeAdaptor(node.get());
-  adaptor.init_cli(cli_clear_);
-  adaptor.init_cli(cli_route_);
+  adaptor.init_cli(cli_command_);
+  adaptor.init_cli(cli_layout_);
+  adaptor.init_sub(sub_status_, on_status);
+
+  const auto req = std::make_shared<DoorLayout::Service::Request>();
+  cli_layout_->async_send_request(req, on_layout);
 }
 
-void DoorPanel::setRoute(const PoseStamped & pose)
+void DoorPanel::on_button(uint32_t index, uint8_t command)
 {
-  const auto req = std::make_shared<ClearRoute::Service::Request>();
-  cli_clear_->async_send_request(req, [this, pose](auto) {
-    const auto req = std::make_shared<SetRoutePoints::Service::Request>();
-    req->header = pose.header;
-    req->goal = pose.pose;
-    req->option.allow_goal_modification = allow_goal_modification_->isChecked();
-    cli_route_->async_send_request(req);
-  });
-}
-
-void DoorPanel::onPose(const PoseStamped::ConstSharedPtr msg)
-{
-  if (!waypoints_mode_->isChecked()) {
-    setRoute(*msg);
-  } else {
-    waypoints_.push_back(*msg);
-    waypoints_group_->setTitle(QString("waypoints (count: %1)").arg(waypoints_.size()));
-  }
-}
-
-void DoorPanel::onWaypointsMode(bool clicked)
-{
-  waypoints_reset_->setEnabled(clicked);
-  waypoints_apply_->setEnabled(clicked);
-
-  if (clicked) {
-    onWaypointsReset();
-  } else {
-    waypoints_group_->setTitle("waypoints");
-  }
-}
-
-void DoorPanel::onWaypointsReset()
-{
-  waypoints_.clear();
-  waypoints_group_->setTitle(QString("waypoints (count: %1)").arg(waypoints_.size()));
-}
-
-void DoorPanel::onWaypointsApply()
-{
-  if (waypoints_.empty()) return;
-
-  const auto req = std::make_shared<ClearRoute::Service::Request>();
-  cli_clear_->async_send_request(req, [this](auto) {
-    const auto req = std::make_shared<SetRoutePoints::Service::Request>();
-    req->header = waypoints_.back().header;
-    req->goal = waypoints_.back().pose;
-    for (size_t i = 0; i + 1 < waypoints_.size(); ++i) {
-      req->waypoints.push_back(waypoints_[i].pose);
-    }
-    req->option.allow_goal_modification = allow_goal_modification_->isChecked();
-    cli_route_->async_send_request(req);
-    onWaypointsReset();
-  });
+  const auto req = std::make_shared<DoorCommand::Service::Request>();
+  req->doors.resize(1);
+  req->doors.back().index = index;
+  req->doors.back().command = command;
+  cli_command_->async_send_request(req);
 }
 
 }  // namespace tier4_adapi_rviz_plugins
