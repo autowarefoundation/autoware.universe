@@ -275,6 +275,8 @@ When the traffic light color/shape is RED/Arrow, occlusion detection is skipped.
 
 To avoid sudden braking, if deceleration and jerk more than the threshold (`common.max_accel` and `common.max_jerk`) is required to stop at first_attention_stopline, this module does not command to stop once it passed the default_stopline position.
 
+If ego passed pass_judge_line, then ego does not stop anymore. If ego passed pass_judge_line while ego is stopping for dangerous decision, then ego stops while the situation is judged as dangerous. Once the judgement turned safe, ego restarts and does not stop anymore.
+
 The position of the pass judge line depends on the occlusion detection configuration and the existence of the associated traffic light of the intersection lane.
 
 - If `occlusion.enable` is false, the pass judge line before the `first_attention_stopline` by the braking distance $v_{ego}^{2} / 2a_{max}$.
