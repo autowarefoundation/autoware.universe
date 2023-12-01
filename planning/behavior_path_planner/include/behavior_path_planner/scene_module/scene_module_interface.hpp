@@ -34,6 +34,7 @@
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
@@ -45,9 +46,7 @@
 
 #include <algorithm>
 #include <any>
-#include <limits>
 #include <memory>
-#include <random>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -55,6 +54,7 @@
 
 namespace behavior_path_planner
 {
+using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using objects_of_interest_marker_interface::ColorName;
@@ -101,6 +101,10 @@ public:
     }
   }
 
+  SceneModuleInterface(const SceneModuleInterface &) = delete;
+  SceneModuleInterface(SceneModuleInterface &&) = delete;
+  SceneModuleInterface & operator=(const SceneModuleInterface &) = delete;
+  SceneModuleInterface & operator=(SceneModuleInterface &&) = delete;
   virtual ~SceneModuleInterface() = default;
 
   virtual void updateModuleParams(const std::any & parameters) = 0;
@@ -363,10 +367,6 @@ private:
   BehaviorModuleOutput previous_module_output_;
 
   StopReason stop_reason_;
-
-  bool is_simultaneously_executable_as_approved_module_{false};
-
-  bool is_simultaneously_executable_as_candidate_module_{false};
 
   bool is_locked_new_module_launch_{false};
 
