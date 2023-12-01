@@ -33,19 +33,26 @@ public:
   {
     eagleye_is_enabled_ = true;
     pub_pose_ = node->create_publisher<PoseCovStamped>("~/output/eagleye/pose_with_covariance", 5);
+
+    shared_data_->eagleye_output_pose_cov.set_callback(
+      [this](PoseCovStamped::ConstSharedPtr msg) -> void {
+        if (eagleye_is_enabled_) {
+          pub_pose_->publish(*msg);
+        }
+      });
   }
 
   void set_enable(bool enabled) override { eagleye_is_enabled_ = enabled; }
 
-  void callback() override
-  {
-    if (!shared_data_->eagleye_output_pose_cov.updated) {
-      return;
-    }
-    if (eagleye_is_enabled_) {
-      pub_pose_->publish(*shared_data_->eagleye_output_pose_cov());
-    }
-  }
+  // void callback() override
+  // {
+  //   if (!shared_data_->eagleye_output_pose_cov.updated) {
+  //     return;
+  //   }
+  //   if (eagleye_is_enabled_) {
+  //     pub_pose_->publish(*shared_data_->eagleye_output_pose_cov());
+  //   }
+  // }
 
 private:
   bool eagleye_is_enabled_;

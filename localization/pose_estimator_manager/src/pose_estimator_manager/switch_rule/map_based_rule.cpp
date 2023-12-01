@@ -35,6 +35,11 @@ MapBasedRule::MapBasedRule(
   }
   if (running_estimator_list.count(PoseEstimatorName::eagleye)) {
     eagleye_area_ = std::make_unique<rule_helper::EagleyeArea>(&node);
+
+    shared_data_->vector_map.set_callback(
+      [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
+        eagleye_area_->init(msg);
+      });
   }
 }
 
@@ -45,12 +50,6 @@ bool MapBasedRule::eagleye_is_available() const
   }
   // Below this line, eagleye_area is guaranteed not to be nullptr.
   assert(eagleye_area_ != nullptr);
-
-  if (shared_data_->vector_map.has_value()) {
-    if (!eagleye_area_->vector_map_initialized()) {
-      eagleye_area_->init(shared_data_->vector_map());
-    }
-  }
 
   if (!shared_data_->eagleye_output_pose_cov.has_value()) {
     return false;

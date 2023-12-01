@@ -45,7 +45,8 @@ private:
   rclcpp::Logger logger_;
   const std::shared_ptr<const SharedData> shared_data_;
 
-  bool shared_data_is_ready() const;
+  // bool shared_data_is_ready() const;
+  bool shared_data_is_ready_;
 };
 }  // namespace pose_estimator_manager::rule_helper
 

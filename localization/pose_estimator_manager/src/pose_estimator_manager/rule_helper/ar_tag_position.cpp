@@ -33,7 +33,8 @@ struct ArTagPosition::Impl
 
 ArTagPosition::ArTagPosition(
   rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
-: logger_(node->get_logger()), shared_data_(shared_data)
+: logger_(node->get_logger()), shared_data_(shared_data), shared_data_is_ready_(false)
+
 {
   // The landmark_based_localizer has available landmarks IDs, and we can confirm the names of
   // these landmarks by inspecting the parameters held by the tag_based_localizer. Here we get the
@@ -57,34 +58,47 @@ ArTagPosition::ArTagPosition(
   impl_->params_tf_caster = rclcpp::AsyncParametersClient::make_shared(node, ar_tag_node_name);
   impl_->params_tf_caster->wait_for_service();
   impl_->params_tf_caster->get_parameters({target_tag_ids_parameter_name}, callback);
+
+  shared_data_->vector_map.set_callback([this](HADMapBin::ConstSharedPtr msg) -> void {
+    const std::vector<landmark_manager::Landmark> landmarks =
+      landmark_manager::parse_landmarks(msg, "apriltag_16h5", logger_);
+
+    std::map<std::string, Pose> landmark_map;
+    for (const landmark_manager::Landmark & landmark : landmarks) {
+      landmark_map[landmark.id] = landmark.pose;
+    }
+    impl_->landmark_map = landmark_map;
+
+    this->shared_data_is_ready_ = true;
+  });
 }
 
-bool ArTagPosition::shared_data_is_ready() const
-{
-  if (!shared_data_->vector_map.has_value()) {
-    return false;
-  }
+// bool ArTagPosition::shared_data_is_ready() const
+// {
+//   if (!shared_data_->vector_map.has_value()) {
+//     return false;
+//   }
 
-  if (impl_->landmark_map) {
-    return true;
-  }
+//   if (impl_->landmark_map) {
+//     return true;
+//   }
 
-  const std::vector<landmark_manager::Landmark> landmarks =
-    landmark_manager::parse_landmarks(shared_data_->vector_map(), "apriltag_16h5", logger_);
+//   const std::vector<landmark_manager::Landmark> landmarks =
+//     landmark_manager::parse_landmarks(shared_data_->vector_map(), "apriltag_16h5", logger_);
 
-  std::map<std::string, Pose> landmark_map;
-  for (const landmark_manager::Landmark & landmark : landmarks) {
-    landmark_map[landmark.id] = landmark.pose;
-  }
-  impl_->landmark_map = landmark_map;
+//   std::map<std::string, Pose> landmark_map;
+//   for (const landmark_manager::Landmark & landmark : landmarks) {
+//     landmark_map[landmark.id] = landmark.pose;
+//   }
+//   impl_->landmark_map = landmark_map;
 
-  return true;
-}
+//   return true;
+// }
 
 double ArTagPosition::distance_to_nearest_ar_tag_around_ego(
   const geometry_msgs::msg::Point & ego_position) const
 {
-  if (!shared_data_is_ready()) {
+  if (!shared_data_is_ready_) {
     return std::numeric_limits<double>::max();
   }
 

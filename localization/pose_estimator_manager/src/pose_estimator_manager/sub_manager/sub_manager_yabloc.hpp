@@ -44,6 +44,12 @@ public:
     while (!enable_service_client_->wait_for_service(1s) && rclcpp::ok()) {
       RCLCPP_INFO_STREAM(node->get_logger(), "Waiting for service... ");
     }
+
+    shared_data_->yabloc_input_image.set_callback([this](Image::ConstSharedPtr msg) -> void {
+      if (yabloc_is_enabled_) {
+        pub_image_->publish(*msg);
+      }
+    });
   }
 
   void set_enable(bool enabled) override
@@ -54,15 +60,15 @@ public:
     yabloc_is_enabled_ = enabled;
   }
 
-  void callback() override
-  {
-    if (!shared_data_->yabloc_input_image.updated) {
-      return;
-    }
-    if (yabloc_is_enabled_) {
-      pub_image_->publish(*shared_data_->yabloc_input_image());
-    }
-  }
+  // void callback() override
+  // {
+  //   if (!shared_data_->yabloc_input_image.updated) {
+  //     return;
+  //   }
+  //   if (yabloc_is_enabled_) {
+  //     pub_image_->publish(*shared_data_->yabloc_input_image());
+  //   }
+  // }
 
 protected:
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;

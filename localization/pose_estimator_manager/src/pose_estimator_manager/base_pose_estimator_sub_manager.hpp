@@ -37,7 +37,6 @@ public:
   void enable() { set_enable(true); }
   void disable() { set_enable(false); }
 
-  virtual void callback() = 0;
   virtual void set_enable(bool enabled) = 0;
 
 protected:

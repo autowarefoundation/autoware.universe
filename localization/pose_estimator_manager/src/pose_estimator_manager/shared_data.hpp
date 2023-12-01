@@ -27,28 +27,53 @@
 namespace pose_estimator_manager
 {
 template <typename T>
-struct TrackableData
+struct CallbackInvolvingVariable
 {
-  explicit TrackableData(T initial_data) : updated(false) { data = initial_data; }
-  TrackableData() : updated(false) {}
+  CallbackInvolvingVariable() {}
+  explicit CallbackInvolvingVariable(T initial_data) : data(initial_data) {}
 
-  void set(const T & new_data)
+  void set(T value)
   {
-    data = new_data;
-    updated = true;
+    data = value;
+    for (const auto & c : callbacks) {
+      c(data.value());
+    }
   }
-
-  void reset_update_flag() { updated = false; }
 
   bool has_value() const { return data.has_value(); }
 
   const T operator()() const { return data.value(); }
 
-  bool updated;
+  void set_callback(std::function<void(T)> callback) const { callbacks.push_back(callback); }
 
 private:
   std::optional<T> data{std::nullopt};
+  mutable std::vector<std::function<void(T)>> callbacks;
 };
+
+// template <typename T>
+// struct TrackableData
+// {
+//   explicit TrackableData(T initial_data) : updated(false) { data = initial_data; }
+//   TrackableData() : updated(false) {}
+
+//   void set(const T & new_data)
+//   {
+//     data = new_data;
+//     updated = true;
+//   }
+
+//   void reset_update_flag() { updated = false; }
+
+//   bool has_value() const { return data.has_value(); }
+
+//   const T operator()() const { return data.value(); }
+
+//   bool updated;
+
+// private:
+//   std::optional<T> data{std::nullopt};
+// };
 
 struct SharedData
 {
@@ -62,29 +87,29 @@ public:
   SharedData() {}
 
   // Used for sub manager
-  TrackableData<PoseCovStamped::ConstSharedPtr> eagleye_output_pose_cov;
-  TrackableData<Image::ConstSharedPtr> artag_input_image;
-  TrackableData<PointCloud2::ConstSharedPtr> ndt_input_points;
-  TrackableData<Image::ConstSharedPtr> yabloc_input_image;
+  CallbackInvolvingVariable<PoseCovStamped::ConstSharedPtr> eagleye_output_pose_cov;
+  CallbackInvolvingVariable<Image::ConstSharedPtr> artag_input_image;
+  CallbackInvolvingVariable<PointCloud2::ConstSharedPtr> ndt_input_points;
+  CallbackInvolvingVariable<Image::ConstSharedPtr> yabloc_input_image;
   // Used for switch rule
-  TrackableData<PoseCovStamped::ConstSharedPtr> localization_pose_cov;
-  TrackableData<PointCloud2::ConstSharedPtr> point_cloud_map;
-  TrackableData<HADMapBin::ConstSharedPtr> vector_map;
-  TrackableData<InitializationState::ConstSharedPtr> initialization_state{
+  CallbackInvolvingVariable<PoseCovStamped::ConstSharedPtr> localization_pose_cov;
+  CallbackInvolvingVariable<PointCloud2::ConstSharedPtr> point_cloud_map;
+  CallbackInvolvingVariable<HADMapBin::ConstSharedPtr> vector_map;
+  CallbackInvolvingVariable<InitializationState::ConstSharedPtr> initialization_state{
     std::make_shared<InitializationState>(
       InitializationState{}.set__state(InitializationState::UNINITIALIZED))};
 
   void reset_update_flag()
   {
-    eagleye_output_pose_cov.reset_update_flag();
-    artag_input_image.reset_update_flag();
-    ndt_input_points.reset_update_flag();
-    yabloc_input_image.reset_update_flag();
+    // eagleye_output_pose_cov.reset_update_flag();
+    // artag_input_image.reset_update_flag();
+    // ndt_input_points.reset_update_flag();
+    // yabloc_input_image.reset_update_flag();
 
-    localization_pose_cov.reset_update_flag();
-    point_cloud_map.reset_update_flag();
-    vector_map.reset_update_flag();
-    initialization_state.reset_update_flag();
+    // localization_pose_cov.reset_update_flag();
+    // point_cloud_map.reset_update_flag();
+    // vector_map.reset_update_flag();
+    // initialization_state.reset_update_flag();
   }
 };
 

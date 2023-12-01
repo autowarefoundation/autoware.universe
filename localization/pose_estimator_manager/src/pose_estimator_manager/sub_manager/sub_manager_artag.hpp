@@ -34,19 +34,25 @@ public:
   {
     ar_tag_is_enabled_ = true;
     pub_image_ = node->create_publisher<Image>("~/output/artag/image", rclcpp::SensorDataQoS());
+
+    shared_data_->artag_input_image.set_callback([this](Image::ConstSharedPtr msg) -> void {
+      if (ar_tag_is_enabled_) {
+        pub_image_->publish(*msg);
+      }
+    });
   }
 
   void set_enable(bool enabled) override { ar_tag_is_enabled_ = enabled; }
 
-  void callback() override
-  {
-    if (!shared_data_->artag_input_image.updated) {
-      return;
-    }
-    if (ar_tag_is_enabled_) {
-      pub_image_->publish(*shared_data_->artag_input_image());
-    }
-  }
+  // void callback() override
+  // {
+  //   if (!shared_data_->artag_input_image.updated) {
+  //     return;
+  //   }
+  //   if (ar_tag_is_enabled_) {
+  //     pub_image_->publish(*shared_data_->artag_input_image());
+  //   }
+  // }
 
 protected:
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;

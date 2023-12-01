@@ -33,19 +33,25 @@ public:
     ndt_is_enabled_ = true;
     pub_pointcloud_ = node->create_publisher<PointCloud2>(
       "~/output/ndt/pointcloud", rclcpp::SensorDataQoS().keep_last(10));
+
+    shared_data_->ndt_input_points.set_callback([this](PointCloud2::ConstSharedPtr msg) -> void {
+      if (ndt_is_enabled_) {
+        pub_pointcloud_->publish(*msg);
+      }
+    });
   }
 
   void set_enable(bool enabled) override { ndt_is_enabled_ = enabled; }
 
-  void callback() override
-  {
-    if (!shared_data_->ndt_input_points.updated) {
-      return;
-    }
-    if (ndt_is_enabled_) {
-      pub_pointcloud_->publish(*shared_data_->ndt_input_points());
-    }
-  }
+  // void callback() override
+  // {
+  //   if (!shared_data_->ndt_input_points.updated) {
+  //     return;
+  //   }
+  //   if (ndt_is_enabled_) {
+  //     pub_pointcloud_->publish(*shared_data_->ndt_input_points());
+  //   }
+  // }
 
 private:
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_;

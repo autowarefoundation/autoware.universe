@@ -211,35 +211,35 @@ void PoseEstimatorManager::on_timer()
   publish_diagnostics();
 }
 
-void PoseEstimatorManager::call_all_callback()
-{
-  for (auto & [name, manager] : sub_managers_) {
-    manager->callback();
-  }
-}
+// void PoseEstimatorManager::call_all_callback()
+// {
+//   for (auto & [name, manager] : sub_managers_) {
+//     manager->callback();
+//   }
+// }
 
 void PoseEstimatorManager::on_yabloc_input(Image::ConstSharedPtr msg)
 {
   shared_data_->yabloc_input_image.set(msg);
-  call_all_callback();
+  // call_all_callback();
   shared_data_->reset_update_flag();
 }
 void PoseEstimatorManager::on_artag_input(Image::ConstSharedPtr msg)
 {
   shared_data_->artag_input_image.set(msg);
-  call_all_callback();
+  // call_all_callback();
   shared_data_->reset_update_flag();
 }
 void PoseEstimatorManager::on_ndt_input(PointCloud2::ConstSharedPtr msg)
 {
   shared_data_->ndt_input_points.set(msg);
-  call_all_callback();
+  // call_all_callback();
   shared_data_->reset_update_flag();
 }
 void PoseEstimatorManager::on_eagleye_output(PoseCovStamped::ConstSharedPtr msg)
 {
   shared_data_->eagleye_output_pose_cov.set(msg);
-  call_all_callback();
+  // call_all_callback();
   shared_data_->reset_update_flag();
 }
 
