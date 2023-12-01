@@ -36,9 +36,9 @@
 #include <utility>
 #include <vector>
 
+using behavior_path_planner::utils::start_goal_planner_common::initializeCollisionCheckDebugMap;
 using motion_utils::calcLongitudinalOffsetPose;
 using tier4_autoware_utils::calcOffsetPose;
-using behavior_path_planner::utils::start_goal_planner_common::initializeCollisionCheckDebugMap;
 
 // set as macro so that calling function name will be printed.
 // debug print is heavy. turn on only when debugging.
