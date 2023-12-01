@@ -248,12 +248,12 @@ double calcMinimumLongitudinalLength(
   return rss_params.longitudinal_velocity_delta_time * std::abs(max_vel) + lon_threshold;
 }
 
-boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
+std::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
   const std::vector<PoseWithVelocityStamped> & path, const double relative_time)
 {
   // Check if relative time is in the valid range
   if (path.empty() || relative_time < 0.0) {
-    return boost::none;
+    return std::nullopt;
   }
 
   constexpr double epsilon = 1e-6;
@@ -272,10 +272,10 @@ boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
     }
   }
 
-  return boost::none;
+  return std::nullopt;
 }
 
-boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+std::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
   const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
   const VehicleInfo & ego_info)
 {
@@ -298,7 +298,7 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
   return PoseWithVelocityAndPolygonStamped{current_time, pose, velocity, ego_polygon};
 }
 
-boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+std::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
   const std::vector<PoseWithVelocityAndPolygonStamped> & pred_path, const double current_time,
   const Shape & shape)
 {
@@ -390,6 +390,36 @@ ExtendedPredictedObjects filterObjectPredictedPathByTimeHorizon(
   }
 
   return filtered_objects;
+}
+
+bool checkSafetyWithRSS(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
+  const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & debug_map,
+  const BehaviorPathPlannerParameters & parameters, const RSSparams & rss_params,
+  const bool check_all_predicted_path, const double hysteresis_factor)
+{
+  // Check for collisions with each predicted path of the object
+  const bool is_safe = !std::any_of(objects.begin(), objects.end(), [&](const auto & object) {
+    auto current_debug_data = utils::path_safety_checker::createObjectDebug(object);
+
+    const auto obj_predicted_paths =
+      utils::path_safety_checker::getPredictedPathFromObj(object, check_all_predicted_path);
+
+    return std::any_of(
+      obj_predicted_paths.begin(), obj_predicted_paths.end(), [&](const auto & obj_path) {
+        const bool has_collision = !utils::path_safety_checker::checkCollision(
+          planned_path, ego_predicted_path, object, obj_path, parameters, rss_params,
+          hysteresis_factor, current_debug_data.second);
+
+        utils::path_safety_checker::updateCollisionCheckDebugMap(
+          debug_map, current_debug_data, !has_collision);
+
+        return has_collision;
+      });
+  });
+
+  return is_safe;
 }
 
 bool checkSafetyWithIntegralPredictedPolygon(

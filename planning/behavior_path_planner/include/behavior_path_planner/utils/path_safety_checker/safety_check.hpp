@@ -79,13 +79,13 @@ double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
   const RSSparams & rss_params);
 
-boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
+std::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
   const std::vector<PoseWithVelocityStamped> & path, const double relative_time);
 
-boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+std::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
   const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
   const VehicleInfo & ego_info);
-boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+std::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
   const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
   const Shape & shape);
 template <typename T, typename F>
@@ -99,6 +99,14 @@ ExtendedPredictedObject filterObjectPredictedPathByTimeHorizon(
 ExtendedPredictedObjects filterObjectPredictedPathByTimeHorizon(
   const ExtendedPredictedObjects & objects, const double time_horizon,
   const bool check_all_predicted_path);
+
+bool checkSafetyWithRSS(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
+  const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & debug_map,
+  const BehaviorPathPlannerParameters & parameters, const RSSparams & rss_params,
+  const bool check_all_predicted_path, const double hysteresis_factor);
+
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.

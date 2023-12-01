@@ -225,7 +225,7 @@ If the nearest occlusion cell value is below the threshold `occlusion.occlusion_
 
 ### Occlusion source estimation at intersection with traffic light
 
-At intersection with traffic light, the whereabout of occlusion is estimated by checking if there are any objects between ego and the nearest occlusion cell. While the occlusion is estimated to be caused by some object (DYNAMICALLY occluded), intersection_wall is at all times. If no objects are found between ego and the nearest occlusion cell (STATICALLY occluded), after ego stopped for the duration of `occlusion.static_occlusion_with_traffic_light_timeout` plus `occlusion.occlusion_detection_hold_time`, occlusion is intentionally ignored to avoid stuck.
+At intersection with traffic light, the whereabout of occlusion is estimated by checking if there are any objects between ego and the nearest occlusion cell. While the occlusion is estimated to be caused by some object (DYNAMICALLY occluded), intersection_wall appears at all times. If no objects are found between ego and the nearest occlusion cell (STATICALLY occluded), after ego stopped for the duration of `occlusion.static_occlusion_with_traffic_light_timeout` plus `occlusion.occlusion_detection_hold_time`, occlusion is intentionally ignored to avoid stuck.
 
 ![occlusion_detection](./docs/occlusion-with-tl.drawio.svg)
 

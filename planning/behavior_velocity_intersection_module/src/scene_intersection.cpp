@@ -440,7 +440,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,
-        path->points.at(occlusion_stop_line_idx).point.pose, VelocityFactor::UNKNOWN);
+        path->points.at(occlusion_stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -609,7 +609,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(occlusion_peeking_stop_line).point.pose, VelocityFactor::UNKNOWN);
+        path->points.at(occlusion_peeking_stopline).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_default_approved) {
@@ -652,7 +652,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stop_line_idx).point.pose, VelocityFactor::UNKNOWN);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
@@ -808,7 +808,7 @@ void reactRTCApprovalByDecisionResult(
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
-        path->points.at(stop_line_idx).point.pose, VelocityFactor::UNKNOWN);
+        path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
   return;
@@ -1124,8 +1124,11 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // filter objects
   auto target_objects = generateTargetObjects(intersection_lanelets, intersection_area);
 
+  const double is_amber_or_red =
+    (traffic_prioritized_level == util::TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED) ||
+    (traffic_prioritized_level == util::TrafficPrioritizedLevel::FULLY_PRIORITIZED);
   auto occlusion_status =
-    (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !is_prioritized)
+    (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !is_amber_or_red)
       ? getOcclusionStatus(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
           first_attention_area, interpolated_path_info, occlusion_attention_divisions,
