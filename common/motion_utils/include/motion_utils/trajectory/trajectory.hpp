@@ -36,9 +36,7 @@
 #include <vector>
 namespace motion_utils
 {
-#define ANSI_RED "\033[31m "
-#define ANSI_RESET " \033[0m"
-#define log_error(message) std::cerr << ANSI_RED << message << ANSI_RESET << std::endl;
+#define log_error(message) std::cerr << "\033[31m " << message << " \033[0m" << std::endl;
 
 /**
  * @brief validate if points container is empty or not

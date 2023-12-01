@@ -26,9 +26,7 @@
 namespace resample_utils
 {
 constexpr double CLOSE_S_THRESHOLD = 1e-6;
-#define COLOR_RED "\033[31m "
-#define COLOR_RESET " \033[0m"
-#define log_error(message) std::cerr << ANSI_RED << message << ANSI_RESET << std::endl;
+#define log_error(message) std::cerr << "\033[31m " << message << " \033[0m" << std::endl;
 
 template <class T>
 bool validate_size(const T & points)
