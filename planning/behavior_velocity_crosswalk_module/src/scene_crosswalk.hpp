@@ -49,11 +49,11 @@
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::TrafficSignalElement;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using lanelet::autoware::Crosswalk;
 using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_autoware_utils::Polygon2d;

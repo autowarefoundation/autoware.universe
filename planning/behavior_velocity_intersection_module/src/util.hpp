@@ -37,12 +37,12 @@ namespace util
 {
 std::optional<size_t> insertPoint(
   const geometry_msgs::msg::Pose & in_pose,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
+  autoware_planning_msgs::msg::PathWithLaneId * inout_path);
 
 bool hasLaneIds(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const std::set<int> & ids);
+  const autoware_planning_msgs::msg::PathPointWithLaneId & p, const std::set<int> & ids);
 std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const std::set<int> & ids);
+  const autoware_planning_msgs::msg::PathWithLaneId & p, const std::set<int> & ids);
 
 /**
  * @brief get objective polygons for detection area
@@ -65,7 +65,7 @@ std::optional<size_t> generateStuckStopLine(
   const lanelet::CompoundPolygon3d & first_conflicting_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
-  const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
+  const bool use_stuck_stopline, autoware_planning_msgs::msg::PathWithLaneId * original_path);
 
 std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::CompoundPolygon3d & first_conflicting_area,
@@ -75,10 +75,10 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
   const double stop_line_margin, const double max_accel, const double max_jerk,
   const double delay_response_time, const double peeking_offset,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
+  autoware_planning_msgs::msg::PathWithLaneId * original_path);
 
 std::optional<size_t> getFirstPointInsidePolygon(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon,
   const bool search_forward = true);
 
@@ -90,11 +90,11 @@ std::optional<size_t> getFirstPointInsidePolygon(
  * @return true if ego is over the target_idx
  */
 bool isOverTargetIndex(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const int target_idx);
 
 bool isBeforeTargetIndex(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const int target_idx);
 
 /*
@@ -118,7 +118,7 @@ std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const int lane_id, const std::set<int> & associative_lane_ids,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
+  const autoware_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
   const rclcpp::Logger logger);
 
 geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
@@ -148,7 +148,7 @@ void cutPredictPathWithDuration(
   const double time_thr);
 
 TimeDistanceArray calcIntersectionPassingTime(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> & planner_data, const lanelet::Id lane_id,
   const std::set<int> & associative_ids, const size_t closest_idx,
   const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
@@ -158,7 +158,7 @@ TimeDistanceArray calcIntersectionPassingTime(
 
 double calcDistanceUntilIntersectionLanelet(
   const lanelet::ConstLanelet & assigned_lanelet,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx);
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx);
 
 lanelet::ConstLanelet generatePathLanelet(
   const PathWithLaneId & path, const size_t start_idx, const size_t end_idx, const double width,

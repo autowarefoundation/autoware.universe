@@ -596,7 +596,7 @@ boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
 
 void RunOutModule::insertStopPoint(
   const boost::optional<geometry_msgs::msg::Pose> stop_point,
-  autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   // no stop point
   if (!stop_point) {
@@ -617,7 +617,7 @@ void RunOutModule::insertStopPoint(
   }
 
   // to PathPointWithLaneId
-  autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
+  autoware_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
   stop_point_with_lane_id = path.points.at(nearest_seg_idx);
   stop_point_with_lane_id.point.pose = *stop_point;
 
@@ -723,7 +723,7 @@ void RunOutModule::insertApproachingVelocity(
 
   // to PathPointWithLaneId
   // use lane id of point behind inserted point
-  autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
+  autoware_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
   stop_point_with_lane_id = output_path.points.at(nearest_seg_idx_stop);
   stop_point_with_lane_id.point.pose = *stop_point;
 

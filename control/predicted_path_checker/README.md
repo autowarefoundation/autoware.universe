@@ -57,8 +57,8 @@ make the vehicle stop.
 
 | Name                                  | Type                                                  | Description                                         |
 | ------------------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
-| `~/input/reference_trajectory`        | `autoware_auto_planning_msgs::msg::Trajectory`        | Reference trajectory                                |
-| `~/input/predicted_trajectory`        | `autoware_auto_planning_msgs::msg::Trajectory`        | Predicted trajectory                                |
+| `~/input/reference_trajectory`        | `autoware_planning_msgs::msg::Trajectory`             | Reference trajectory                                |
+| `~/input/predicted_trajectory`        | `autoware_planning_msgs::msg::Trajectory`             | Predicted trajectory                                |
 | `~/input/objects`                     | `autoware_auto_perception_msgs::msg::PredictedObject` | Dynamic objects in the environment                  |
 | `~/input/odometry`                    | `nav_msgs::msg::Odometry`                             | Odometry message of vehicle to get current velocity |
 | `~/input/current_accel`               | `geometry_msgs::msg::AccelWithCovarianceStamped`      | Current acceleration                                |

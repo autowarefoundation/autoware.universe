@@ -22,7 +22,7 @@
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 
@@ -325,7 +325,7 @@ private:
 
   void initializeRTCStatus();
   void prepareRTCStatus(
-    const DecisionResult &, const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
+    const DecisionResult &, const autoware_planning_msgs::msg::PathWithLaneId & path);
 
   DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
 
@@ -343,10 +343,10 @@ private:
     const std::optional<Polygon2d> & intersection_area) const;
 
   bool checkCollision(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    util::TargetObjects * target_objects, const util::PathLanelets & path_lanelets,
-    const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
-    const double time_delay, const util::TrafficPrioritizedLevel & traffic_prioritized_level);
+    const autoware_planning_msgs::msg::PathWithLaneId & path, util::TargetObjects * target_objects,
+    const util::PathLanelets & path_lanelets, const size_t closest_idx,
+    const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
+    const util::TrafficPrioritizedLevel & traffic_prioritized_level);
 
   OcclusionType getOcclusionStatus(
     const nav_msgs::msg::OccupancyGrid & occ_grid,

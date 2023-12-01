@@ -24,8 +24,8 @@
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -37,8 +37,8 @@
 namespace control_performance_analysis
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using autoware_planning_msgs::msg::Trajectory;
 using control_performance_analysis::msg::DrivingMonitorStamped;
 using control_performance_analysis::msg::ErrorStamped;
 using geometry_msgs::msg::PoseStamped;

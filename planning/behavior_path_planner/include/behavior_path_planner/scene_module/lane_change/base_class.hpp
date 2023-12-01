@@ -29,7 +29,7 @@
 
 #include "tier4_planning_msgs/msg/lane_change_debug_msg.hpp"
 #include "tier4_planning_msgs/msg/lane_change_debug_msg_array.hpp"
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 
@@ -42,7 +42,7 @@
 
 namespace behavior_path_planner
 {
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;

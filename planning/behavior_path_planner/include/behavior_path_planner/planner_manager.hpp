@@ -23,7 +23,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -38,7 +38,7 @@
 namespace behavior_path_planner
 {
 
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::StopWatch;
 using tier4_planning_msgs::msg::StopReasonArray;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;

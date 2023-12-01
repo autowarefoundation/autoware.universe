@@ -21,9 +21,9 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
-#include "autoware_auto_planning_msgs/msg/path.hpp"
-#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_planning_msgs/msg/path.hpp"
+#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/float64_multi_array_stamped.hpp"
 
@@ -35,9 +35,9 @@
 
 namespace planning_debug_tools
 {
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::Path;
+using autoware_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::Trajectory;
 using nav_msgs::msg::Odometry;
 using planning_debug_tools::msg::TrajectoryDebugInfo;
 

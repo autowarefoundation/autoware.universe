@@ -19,18 +19,18 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
-#include "autoware_auto_planning_msgs/msg/path.hpp"
-#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_planning_msgs/msg/path.hpp"
+#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
 
 #include <vector>
 
 namespace planning_debug_tools
 {
 
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::PathPoint;
+using autoware_planning_msgs::msg::PathPointWithLaneId;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getRPY;

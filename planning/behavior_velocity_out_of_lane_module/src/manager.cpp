@@ -77,7 +77,7 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
 }
 
 void OutOfLaneModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) return;
   // general
@@ -89,7 +89,7 @@ void OutOfLaneModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 OutOfLaneModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   return [path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return false;

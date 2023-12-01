@@ -22,9 +22,9 @@
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -84,8 +84,8 @@ private:
   const int64_t lane_id_;
   const std::set<int> associative_ids_;
 
-  autoware_auto_planning_msgs::msg::PathWithLaneId extractPathNearExitOfPrivateRoad(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double extend_length);
+  autoware_planning_msgs::msg::PathWithLaneId extractPathNearExitOfPrivateRoad(
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const double extend_length);
 
   // Parameter
   PlannerParam planner_param_;

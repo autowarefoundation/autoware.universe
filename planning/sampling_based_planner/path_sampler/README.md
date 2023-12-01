@@ -21,15 +21,15 @@ Note that the velocity is just taken over from the input path.
 
 | Name               | Type                                          | Description                                        |
 | ------------------ | --------------------------------------------- | -------------------------------------------------- |
-| `~/input/path`     | autoware_auto_planning_msgs/msg/Path          | Reference path and the corresponding drivable area |
+| `~/input/path`     | autoware_planning_msgs/msg/Path               | Reference path and the corresponding drivable area |
 | `~/input/odometry` | nav_msgs/msg/Odometry                         | Current state of the ego vehicle                   |
 | `~/input/objects`  | autoware_perception_msgs/msg/PredictedObjects | objects to avoid                                   |
 
 ### output
 
-| Name                  | Type                                       | Description                                                       |
-| --------------------- | ------------------------------------------ | ----------------------------------------------------------------- |
-| `~/output/trajectory` | autoware_auto_planning_msgs/msg/Trajectory | generated trajectory that is feasible to drive and collision-free |
+| Name                  | Type                                  | Description                                                       |
+| --------------------- | ------------------------------------- | ----------------------------------------------------------------- |
+| `~/output/trajectory` | autoware_planning_msgs/msg/Trajectory | generated trajectory that is feasible to drive and collision-free |
 
 ## Algorithm
 

@@ -31,7 +31,7 @@
 #include <vehicle_info_util/vehicle_info.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <tf2/utils.h>
 

@@ -29,9 +29,9 @@
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_planning_msgs::msg::PathPointWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using run_out_utils::PlannerParam;
 using run_out_utils::PoseWithRange;
 using tier4_debug_msgs::msg::Float32Stamped;
@@ -113,7 +113,7 @@ private:
 
   void insertStopPoint(
     const boost::optional<geometry_msgs::msg::Pose> stop_point,
-    autoware_auto_planning_msgs::msg::PathWithLaneId & path);
+    autoware_planning_msgs::msg::PathWithLaneId & path);
 
   void insertVelocityForState(
     const boost::optional<DynamicObstacle> & dynamic_obstacle, const PlannerData planner_data,

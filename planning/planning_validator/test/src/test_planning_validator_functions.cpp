@@ -20,7 +20,7 @@
 
 #include <string>
 
-using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::Trajectory;
 using planning_validator::PlanningValidator;
 
 TEST(PlanningValidatorTestSuite, checkValidFiniteValueFunction)

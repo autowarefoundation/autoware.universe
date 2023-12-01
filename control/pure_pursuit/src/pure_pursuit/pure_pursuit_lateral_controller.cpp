@@ -95,7 +95,7 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
     "~/debug/ld_outputs", rclcpp::QoS{1});
 
   // Publish predicted trajectory
-  pub_predicted_trajectory_ = node.create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
+  pub_predicted_trajectory_ = node.create_publisher<autoware_planning_msgs::msg::Trajectory>(
     "~/output/predicted_trajectory", 1);
 }
 
@@ -164,7 +164,7 @@ void PurePursuitLateralController::setResampledTrajectory()
     out_arclength.push_back(s);
   }
   trajectory_resampled_ =
-    std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(motion_utils::resampleTrajectory(
+    std::make_shared<autoware_planning_msgs::msg::Trajectory>(motion_utils::resampleTrajectory(
       motion_utils::convertToTrajectory(input_tp_array), out_arclength));
   trajectory_resampled_->points.back() = trajectory_.points.back();
   trajectory_resampled_->header = trajectory_.header;
@@ -215,14 +215,14 @@ double PurePursuitLateralController::calcCurvature(const size_t closest_idx)
 }
 
 void PurePursuitLateralController::averageFilterTrajectory(
-  autoware_auto_planning_msgs::msg::Trajectory & u)
+  autoware_planning_msgs::msg::Trajectory & u)
 {
   if (static_cast<int>(u.points.size()) <= 2 * param_.path_filter_moving_ave_num) {
     RCLCPP_ERROR(logger_, "Cannot smooth path! Trajectory size is too low!");
     return;
   }
 
-  autoware_auto_planning_msgs::msg::Trajectory filtered_trajectory(u);
+  autoware_planning_msgs::msg::Trajectory filtered_trajectory(u);
 
   for (int64_t i = 0; i < static_cast<int64_t>(u.points.size()); ++i) {
     TrajectoryPoint tmp{};

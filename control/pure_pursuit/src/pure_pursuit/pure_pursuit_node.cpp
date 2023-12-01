@@ -73,7 +73,7 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
 
   // Subscribers
   using std::placeholders::_1;
-  sub_trajectory_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+  sub_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "input/reference_trajectory", 1, std::bind(&PurePursuitNode::onTrajectory, this, _1));
   sub_current_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "input/current_odometry", 1, std::bind(&PurePursuitNode::onCurrentOdometry, this, _1));
@@ -124,7 +124,7 @@ void PurePursuitNode::onCurrentOdometry(const nav_msgs::msg::Odometry::ConstShar
 }
 
 void PurePursuitNode::onTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
 {
   trajectory_ = msg;
 }
@@ -211,8 +211,8 @@ boost::optional<double> PurePursuitNode::calcTargetCurvature()
   return kappa;
 }
 
-boost::optional<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-PurePursuitNode::calcTargetPoint() const
+boost::optional<autoware_planning_msgs::msg::TrajectoryPoint> PurePursuitNode::calcTargetPoint()
+  const
 {
   const auto closest_idx_result = planning_utils::findClosestIdxWithDistAngThr(
     planning_utils::extractPoses(*trajectory_), current_pose_->pose, 3.0, M_PI_4);

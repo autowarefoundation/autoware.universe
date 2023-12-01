@@ -65,7 +65,7 @@ The tracking is not accurate if the first point of the reference trajectory is a
 
 Set the following from the [controller_node](../trajectory_follower_node/README.md)
 
-- `autoware_auto_planning_msgs/Trajectory` : reference trajectory to follow.
+- `autoware_planning_msgs/Trajectory` : reference trajectory to follow.
 - `nav_msgs/Odometry`: current odometry
 - `autoware_auto_vehicle_msgs/SteeringReport`: current steering
 

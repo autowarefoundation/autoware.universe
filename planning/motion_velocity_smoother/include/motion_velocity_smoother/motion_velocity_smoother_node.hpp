@@ -35,8 +35,8 @@
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
@@ -53,8 +53,8 @@
 
 namespace motion_velocity_smoother
 {
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using geometry_msgs::msg::AccelWithCovarianceStamped;

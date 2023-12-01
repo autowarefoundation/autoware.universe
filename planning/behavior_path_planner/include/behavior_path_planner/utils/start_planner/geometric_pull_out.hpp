@@ -19,7 +19,7 @@
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_planner_base.hpp"
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 namespace behavior_path_planner
 {

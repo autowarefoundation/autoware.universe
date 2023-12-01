@@ -26,7 +26,7 @@
 
 namespace behavior_velocity_planner
 {
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 
 class SpeedBumpModule : public SceneModuleInterface
 {

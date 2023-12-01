@@ -29,7 +29,7 @@ if(BUILD_TESTING)
   ament_target_dependencies(${GEOMETRY_GTEST}
     "autoware_auto_common"
     "autoware_auto_geometry_msgs"
-    "autoware_auto_planning_msgs"
+    "autoware_planning_msgs"
     "autoware_auto_vehicle_msgs"
     "geometry_msgs"
     "osrf_testing_tools_cpp")

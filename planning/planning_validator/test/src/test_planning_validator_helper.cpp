@@ -16,8 +16,8 @@
 
 #include <math.h>
 
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 
 Trajectory generateTrajectory(double interval_distance)
 {

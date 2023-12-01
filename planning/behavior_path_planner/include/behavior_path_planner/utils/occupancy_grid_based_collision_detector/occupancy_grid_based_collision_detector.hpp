@@ -17,7 +17,7 @@
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
@@ -102,8 +102,7 @@ public:
   bool hasObstacleOnPath(
     const geometry_msgs::msg::PoseArray & path, const bool check_out_of_range) const;
   bool hasObstacleOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const bool check_out_of_range) const;
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const bool check_out_of_range) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
   bool detectCollision(const IndexXYT & base_index, const bool check_out_of_range) const;
   virtual ~OccupancyGridBasedCollisionDetector() {}

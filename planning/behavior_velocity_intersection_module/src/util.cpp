@@ -68,8 +68,7 @@ namespace util
 {
 
 static std::optional<size_t> getDuplicatedPointIdx(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point)
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point)
 {
   for (size_t i = 0; i < path.points.size(); i++) {
     const auto & p = path.points.at(i).point.pose.position;
@@ -85,8 +84,8 @@ static std::optional<size_t> getDuplicatedPointIdx(
 
 static std::optional<size_t> insertPointIndex(
   const geometry_msgs::msg::Pose & in_pose,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path,
-  const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold)
+  autoware_planning_msgs::msg::PathWithLaneId * inout_path, const double ego_nearest_dist_threshold,
+  const double ego_nearest_yaw_threshold)
 {
   const auto duplicate_idx_opt = getDuplicatedPointIdx(*inout_path, in_pose.position);
   if (duplicate_idx_opt) {
@@ -98,7 +97,7 @@ static std::optional<size_t> insertPointIndex(
   // vector.insert(i) inserts element on the left side of v[i]
   // the velocity need to be zero order hold(from prior point)
   int insert_idx = closest_idx;
-  autoware_auto_planning_msgs::msg::PathPointWithLaneId inserted_point =
+  autoware_planning_msgs::msg::PathPointWithLaneId inserted_point =
     inout_path->points.at(closest_idx);
   if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
@@ -117,7 +116,7 @@ static std::optional<size_t> insertPointIndex(
 }
 
 bool hasLaneIds(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const std::set<int> & ids)
+  const autoware_planning_msgs::msg::PathPointWithLaneId & p, const std::set<int> & ids)
 {
   for (const auto & pid : p.lane_ids) {
     if (ids.find(pid) != ids.end()) {
@@ -128,7 +127,7 @@ bool hasLaneIds(
 }
 
 std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const std::set<int> & ids)
+  const autoware_planning_msgs::msg::PathWithLaneId & p, const std::set<int> & ids)
 {
   bool found = false;
   size_t start = 0;
@@ -270,7 +269,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
   const double stop_line_margin, const double max_accel, const double max_jerk,
   const double delay_response_time, const double peeking_offset,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+  autoware_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
   const double ds = interpolated_path_info.ds;
@@ -451,7 +450,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
 }
 
 std::optional<size_t> getFirstPointInsidePolygon(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon,
   const bool search_forward)
 {
@@ -490,7 +489,7 @@ std::optional<size_t> getFirstPointInsidePolygon(
 
 static std::optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>
 getFirstPointInsidePolygons(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval,
   const std::vector<lanelet::CompoundPolygon3d> & polygons, const bool search_forward = true)
 {
@@ -537,7 +536,7 @@ std::optional<size_t> generateStuckStopLine(
   const lanelet::CompoundPolygon3d & conflicting_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
-  const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+  const bool use_stuck_stopline, autoware_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
   const double ds = interpolated_path_info.ds;
@@ -880,7 +879,7 @@ IntersectionLanelets getObjectiveLanelets(
 }
 
 bool isOverTargetIndex(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const int target_idx)
 {
   if (closest_idx == target_idx) {
@@ -891,7 +890,7 @@ bool isOverTargetIndex(
 }
 
 bool isBeforeTargetIndex(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const int target_idx)
 {
   if (closest_idx == target_idx) {
@@ -1099,7 +1098,7 @@ std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const int lane_id, const std::set<int> & associative_lane_ids,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
+  const autoware_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
   const rclcpp::Logger logger)
 {
   InterpolatedPathInfo interpolated_path_info;
@@ -1310,7 +1309,7 @@ void cutPredictPathWithDuration(
 }
 
 TimeDistanceArray calcIntersectionPassingTime(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> & planner_data, const lanelet::Id lane_id,
   const std::set<int> & associative_ids, const size_t closest_idx,
   const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
@@ -1443,7 +1442,7 @@ TimeDistanceArray calcIntersectionPassingTime(
 
 double calcDistanceUntilIntersectionLanelet(
   const lanelet::ConstLanelet & assigned_lanelet,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx)
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx)
 {
   const auto lane_id = assigned_lanelet.id();
   const auto intersection_first_itr =

@@ -17,15 +17,15 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 constexpr double NOMINAL_INTERVAL = 1.0;
 constexpr double ERROR_INTERVAL = 1000.0;
 constexpr double ERROR_CURVATURE = 2.0;
 
-using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::Trajectory;
 using nav_msgs::msg::Odometry;
 
 Trajectory generateTrajectory(double interval_distance);

@@ -22,7 +22,7 @@
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <memory>
@@ -65,7 +65,7 @@ private:
 
   using AckermannControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
   using Odometry = nav_msgs::msg::Odometry;
-  using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
+  using Trajectory = autoware_planning_msgs::msg::Trajectory;
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_control_cmd_;
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_trajectory_follower_control_cmd_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;

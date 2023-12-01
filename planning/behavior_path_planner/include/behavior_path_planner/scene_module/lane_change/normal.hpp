@@ -25,7 +25,7 @@
 
 namespace behavior_path_planner
 {
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;

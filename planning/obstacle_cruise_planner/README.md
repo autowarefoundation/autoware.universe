@@ -17,7 +17,7 @@ The `obstacle_cruise_planner` package has following modules.
 
 | Name                 | Type                                       | Description      |
 | -------------------- | ------------------------------------------ | ---------------- |
-| `~/input/trajectory` | autoware_auto_planning_msgs::Trajectory    | input trajectory |
+| `~/input/trajectory` | autoware_planning_msgs::Trajectory         | input trajectory |
 | `~/input/objects`    | autoware_perception_msgs::PredictedObjects | dynamic objects  |
 | `~/input/odometry`   | nav_msgs::msg::Odometry                    | ego odometry     |
 
@@ -25,7 +25,7 @@ The `obstacle_cruise_planner` package has following modules.
 
 | Name                            | Type                                           | Description                           |
 | ------------------------------- | ---------------------------------------------- | ------------------------------------- |
-| `~/output/trajectory`           | autoware_auto_planning_msgs::Trajectory        | output trajectory                     |
+| `~/output/trajectory`           | autoware_planning_msgs::Trajectory             | output trajectory                     |
 | `~/output/velocity_limit`       | tier4_planning_msgs::VelocityLimit             | velocity limit for cruising           |
 | `~/output/clear_velocity_limit` | tier4_planning_msgs::VelocityLimitClearCommand | clear command for velocity limit      |
 | `~/output/stop_reasons`         | tier4_planning_msgs::StopReasonArray           | reasons that make the vehicle to stop |
@@ -46,7 +46,7 @@ This planner data is created first, and then sent to the planning algorithm.
 struct PlannerData
 {
   rclcpp::Time current_time;
-  autoware_auto_planning_msgs::msg::Trajectory traj;
+  autoware_planning_msgs::msg::Trajectory traj;
   geometry_msgs::msg::Pose current_pose;
   double ego_vel;
   double current_acc;

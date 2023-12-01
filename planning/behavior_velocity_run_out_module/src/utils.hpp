@@ -19,8 +19,8 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
+#include <autoware_planning_msgs/msg/path_point.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
 #include <string>
@@ -31,18 +31,18 @@ namespace behavior_velocity_planner
 namespace run_out_utils
 {
 namespace bg = boost::geometry;
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
+using autoware_planning_msgs::msg::PathPoint;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::Box2d;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_debug_msgs::msg::Float32Stamped;
 using vehicle_info_util::VehicleInfo;
-using PathPointsWithLaneId = std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>;
+using PathPointsWithLaneId = std::vector<autoware_planning_msgs::msg::PathPointWithLaneId>;
 struct CommonParam
 {
   double normal_min_jerk;  // min jerk limit for mild stop [m/sss]

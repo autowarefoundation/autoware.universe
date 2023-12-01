@@ -148,7 +148,7 @@ For example a value of `1` means all trajectory points will be evaluated while a
 
 | Name                          | Type                                        | Description                                        |
 | ----------------------------- | ------------------------------------------- | -------------------------------------------------- |
-| `~/input/trajectory`          | `autoware_auto_planning_msgs/Trajectory`    | Reference trajectory                               |
+| `~/input/trajectory`          | `autoware_planning_msgs/Trajectory`         | Reference trajectory                               |
 | `~/input/occupancy_grid`      | `nav_msgs/OccupancyGrid`                    | Occupancy grid with obstacle information           |
 | `~/input/obstacle_pointcloud` | `sensor_msgs/PointCloud2`                   | Pointcloud containing only obstacle points         |
 | `~/input/dynamic_obstacles`   | `autoware_perception_msgs/PredictedObjects` | Dynamic objects                                    |
@@ -157,11 +157,11 @@ For example a value of `1` means all trajectory points will be evaluated while a
 
 ### Outputs
 
-| Name                            | Type                                     | Description                                              |
-| ------------------------------- | ---------------------------------------- | -------------------------------------------------------- |
-| `~/output/trajectory`           | `autoware_auto_planning_msgs/Trajectory` | Trajectory with adjusted velocities                      |
-| `~/output/debug_markers`        | `visualization_msgs/MarkerArray`         | Debug markers (envelopes, obstacle polygons)             |
-| `~/output/runtime_microseconds` | `tier4_debug_msgs/Float64`               | Time taken to calculate the trajectory (in microseconds) |
+| Name                            | Type                                | Description                                              |
+| ------------------------------- | ----------------------------------- | -------------------------------------------------------- |
+| `~/output/trajectory`           | `autoware_planning_msgs/Trajectory` | Trajectory with adjusted velocities                      |
+| `~/output/debug_markers`        | `visualization_msgs/MarkerArray`    | Debug markers (envelopes, obstacle polygons)             |
+| `~/output/runtime_microseconds` | `tier4_debug_msgs/Float64`          | Time taken to calculate the trajectory (in microseconds) |
 
 ## Parameters
 

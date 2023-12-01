@@ -42,7 +42,7 @@
 #include <motion_utils/trajectory/trajectory.hpp>
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -57,8 +57,8 @@ using autoware::motion::control::trajectory_follower::InputData;
 using autoware::motion::control::trajectory_follower::LateralControllerBase;
 using autoware::motion::control::trajectory_follower::LateralOutput;
 using autoware_auto_control_msgs::msg::AckermannLateralCommand;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 
 namespace pure_pursuit
 {
@@ -107,8 +107,8 @@ private:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
   std::vector<TrajectoryPoint> output_tp_array_;
-  autoware_auto_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
-  autoware_auto_planning_msgs::msg::Trajectory trajectory_;
+  autoware_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
+  autoware_planning_msgs::msg::Trajectory trajectory_;
   nav_msgs::msg::Odometry current_odometry_;
   autoware_auto_vehicle_msgs::msg::SteeringReport current_steering_;
   boost::optional<AckermannLateralCommand> prev_cmd_;
@@ -117,10 +117,9 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_marker_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
   // Predicted Trajectory publish
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
-    pub_predicted_trajectory_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_predicted_trajectory_;
 
-  void onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void onTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 
   void onCurrentOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
@@ -170,7 +169,7 @@ private:
 
   double calcCurvature(const size_t closest_idx);
 
-  void averageFilterTrajectory(autoware_auto_planning_msgs::msg::Trajectory & u);
+  void averageFilterTrajectory(autoware_planning_msgs::msg::Trajectory & u);
 
   // Debug
   mutable DebugData debug_data_;

@@ -22,9 +22,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path.hpp>
-#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/primitives/LaneletSequence.h>
@@ -42,10 +42,10 @@
 
 namespace
 {
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::LaneletPrimitive;
+using autoware_planning_msgs::msg::Path;
+using autoware_planning_msgs::msg::PathPointWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using lanelet::utils::to2D;
 
