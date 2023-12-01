@@ -28,10 +28,12 @@ struct ArTagPosition::Impl
 {
   std::vector<std::string> target_tag_ids;
   rclcpp::AsyncParametersClient::SharedPtr params_tf_caster;
-  std::map<std::string, Pose> landmark_map;
+  std::optional<std::map<std::string, Pose>> landmark_map{std::nullopt};
 };
 
-ArTagPosition::ArTagPosition(rclcpp::Node * node) : logger_(node->get_logger())
+ArTagPosition::ArTagPosition(
+  rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+: logger_(node->get_logger()), shared_data_(shared_data)
 {
   // The landmark_based_localizer has available landmarks IDs, and we can confirm the names of
   // these landmarks by inspecting the parameters held by the tag_based_localizer. Here we get the
@@ -57,37 +59,45 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node) : logger_(node->get_logger())
   impl_->params_tf_caster->get_parameters({target_tag_ids_parameter_name}, callback);
 }
 
-void ArTagPosition::init(HADMapBin::ConstSharedPtr msg)
+bool ArTagPosition::shared_data_is_ready() const
 {
-  vector_map_is_initialized_ = true;
-  const std::vector<landmark_manager::Landmark> landmarks =
-    landmark_manager::parse_landmarks(msg, "apriltag_16h5", logger_);
+  if (!shared_data_->vector_map.has_value()) {
+    return false;
+  }
 
-  auto & landmark_map = impl_->landmark_map;
-  landmark_map.clear();
+  if (impl_->landmark_map) {
+    return true;
+  }
+
+  const std::vector<landmark_manager::Landmark> landmarks =
+    landmark_manager::parse_landmarks(shared_data_->vector_map(), "apriltag_16h5", logger_);
+
+  std::map<std::string, Pose> landmark_map;
   for (const landmark_manager::Landmark & landmark : landmarks) {
     landmark_map[landmark.id] = landmark.pose;
   }
-}
+  impl_->landmark_map = landmark_map;
 
-bool ArTagPosition::vector_map_initialized() const
-{
-  return vector_map_is_initialized_;
+  return true;
 }
 
 double ArTagPosition::distance_to_nearest_ar_tag_around_ego(
   const geometry_msgs::msg::Point & ego_position) const
 {
+  if (!shared_data_is_ready()) {
+    return std::numeric_limits<double>::max();
+  }
+
   double distance_to_nearest_marker = std::numeric_limits<double>::max();
   const Eigen::Vector3d ego_vector(ego_position.x, ego_position.y, ego_position.z);
 
   for (const std::string & tag_id : impl_->target_tag_ids) {
-    if (impl_->landmark_map.count(tag_id) == 0) {
+    if (impl_->landmark_map->count(tag_id) == 0) {
       RCLCPP_INFO_STREAM(logger_, "tag_id(" << tag_id << ") is not in landmark_map_");
       continue;
     }
 
-    const Pose & map_to_tag = impl_->landmark_map.at(tag_id);
+    const Pose & map_to_tag = impl_->landmark_map->at(tag_id);
     const auto & t = map_to_tag.position;
     const Eigen::Vector3d marker_vector(t.x, t.y, t.z);
 

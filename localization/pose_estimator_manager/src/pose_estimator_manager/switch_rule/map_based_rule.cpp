@@ -31,7 +31,7 @@ MapBasedRule::MapBasedRule(
     pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
   }
   if (running_estimator_list.count(PoseEstimatorName::artag)) {
-    ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node);
+    ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node, shared_data_);
   }
   if (running_estimator_list.count(PoseEstimatorName::eagleye)) {
     eagleye_area_ = std::make_unique<rule_helper::EagleyeArea>(&node);
@@ -105,12 +105,6 @@ bool MapBasedRule::artag_is_available() const
   }
   // Below this line, ar_tag_position_ is guaranteed not to be nullptr.
   assert(ar_tag_position_ != nullptr);
-
-  if (shared_data_->vector_map.has_value()) {
-    if (!ar_tag_position_->vector_map_initialized()) {
-      ar_tag_position_->init(shared_data_->vector_map());
-    }
-  }
 
   if (!shared_data_->localization_pose_cov.has_value()) {
     return false;

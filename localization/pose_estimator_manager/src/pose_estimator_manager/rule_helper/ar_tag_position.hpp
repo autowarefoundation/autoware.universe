@@ -15,6 +15,8 @@
 #ifndef POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_
 #define POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_
 
+#include "pose_estimator_manager/shared_data.hpp"
+
 #include <rclcpp/logger.hpp>
 #include <rclcpp/node.hpp>
 
@@ -33,17 +35,17 @@ public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Pose = geometry_msgs::msg::Pose;
 
-  explicit ArTagPosition(rclcpp::Node * node);
+  explicit ArTagPosition(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data);
 
   double distance_to_nearest_ar_tag_around_ego(const geometry_msgs::msg::Point & ego_point) const;
-  void init(const HADMapBin::ConstSharedPtr msg);
-  bool vector_map_initialized() const;
 
 private:
   struct Impl;
   std::shared_ptr<Impl> impl_;
   rclcpp::Logger logger_;
-  bool vector_map_is_initialized_{false};
+  const std::shared_ptr<const SharedData> shared_data_;
+
+  bool shared_data_is_ready() const;
 };
 }  // namespace pose_estimator_manager::rule_helper
 
