@@ -107,6 +107,8 @@ private:
     const double nearest_dist_threshold, const double nearest_yaw_threshold);
 
   geometry_msgs::msg::Pose get_required_end_point(const lanelet::ConstLineString3d & centerline);
+  geometry_msgs::msg::Pose get_straight_lane_required_end_point(
+    const lanelet::ConstLineString3d & centerline);
 
   bool use_prior_turn_signal(
     const double dist_to_prior_required_start, const double dist_to_prior_required_end,
