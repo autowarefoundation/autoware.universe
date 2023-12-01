@@ -280,6 +280,12 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     behavior_path_planner::getInitialState(pose, reference_spline);
   sampling_parameters =
     prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
+
+  auto set_frenet_state = [](
+                            const sampler_common::State & initial_state,
+                            const sampler_common::transform::Spline2D & reference_spline,
+                            frenet_planner::FrenetState & frenet_initial_state)
+
   {
     frenet_initial_state.position = initial_state.frenet;
     const auto frenet_yaw = initial_state.heading - reference_spline.yaw(initial_state.frenet.s);
@@ -301,7 +307,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
           (initial_state.curvature * ((1 - path_curvature * initial_state.frenet.d) / cos_yaw) -
            path_curvature);
     }
-  }
+  };
+  set_frenet_state(initial_state, reference_spline, frenet_initial_state);
 
   std::vector<DrivableLanes> drivable_lanes{};
   {
@@ -369,7 +376,10 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
       sampler_common::State future_state =
         behavior_path_planner::getInitialState(future_pose, reference_spline);
       frenet_planner::FrenetState frenet_reuse_state;
-      frenet_reuse_state.position = prev_path_frenet.frenet_points.back();
+
+      set_frenet_state(future_state, reference_spline, frenet_reuse_state);
+
+      // frenet_reuse_state.position = prev_path_frenet.frenet_points.back();
 
       frenet_planner::SamplingParameters extension_sampling_parameters =
         prepareSamplingParameters(future_state, reference_spline, *internal_params_);
