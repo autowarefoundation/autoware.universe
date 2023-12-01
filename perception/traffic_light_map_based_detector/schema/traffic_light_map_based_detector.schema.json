@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Traffic Light Map Based Detector",
+  "type": "object",
+  "definitions": {
+    "traffic_light_map_based_detector": {
+      "type": "object",
+      "properties": {
+        "max_vibration_pitch": {
+          "type": "number",
+          "default": 0.01745329251,
+          "description": "Maximum error in pitch direction. If -5~+5, it will be 10."
+        },
+        "max_vibration_yaw": {
+          "type": "number",
+          "default": 0.01745329251,
+          "description": "Maximum error in yaw direction. If -5~+5, it will be 10."
+        },
+        "max_vibration_height": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Maximum error in height direction. If -5~+5, it will be 10."
+        },
+        "max_vibration_width": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Maximum error in width direction. If -5~+5, it will be 10."
+        },
+        "max_vibration_depth": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Maximum error in depth direction. If -5~+5, it will be 10."
+        },
+        "max_detection_range": {
+          "type": "number",
+          "default": 200.0,
+          "description": "Maximum detection range in meters. Must be positive"
+        },
+        "min_timestamp_offset": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Minimum timestamp offset when searching for corresponding tf"
+        },
+        "max_timestamp_offset": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Maximum timestamp offset when searching for corresponding tf"
+        },
+        "timestamp_sample_len": {
+          "type": "number",
+          "default": 0.01,
+          "description": "sampling length between min_timestamp_offset and max_timestamp_offset"
+        }
+      },
+      "required": [
+        "max_vibration_pitch",
+        "max_vibration_yaw",
+        "max_vibration_height",
+        "max_vibration_width",
+        "max_vibration_depth",
+        "max_detection_range",
+        "min_timestamp_offset",
+        "max_timestamp_offset",
+        "timestamp_sample_len"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/traffic_light_map_based_detector"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
