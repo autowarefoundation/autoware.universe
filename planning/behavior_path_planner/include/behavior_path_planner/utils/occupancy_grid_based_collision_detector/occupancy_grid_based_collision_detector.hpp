@@ -102,8 +102,7 @@ public:
   bool hasObstacleOnPath(
     const geometry_msgs::msg::PoseArray & path, const bool check_out_of_range) const;
   bool hasObstacleOnPath(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
-    const bool check_out_of_range) const;
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const bool check_out_of_range) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
   bool detectCollision(const IndexXYT & base_index, const bool check_out_of_range) const;
   virtual ~OccupancyGridBasedCollisionDetector() {}

@@ -140,10 +140,9 @@ autoware_planning_msgs::msg::PathWithLaneId resamplePath(
  * @return resampled path
  */
 autoware_planning_msgs::msg::PathWithLaneId resamplePath(
-  const autoware_planning_msgs::msg::PathWithLaneId & input_path,
-  const double resample_interval, const bool use_akima_spline_for_xy = false,
-  const bool use_lerp_for_z = true, const bool use_zero_order_hold_for_v = true,
-  const bool resample_input_path_stop_point = true);
+  const autoware_planning_msgs::msg::PathWithLaneId & input_path, const double resample_interval,
+  const bool use_akima_spline_for_xy = false, const bool use_lerp_for_z = true,
+  const bool use_zero_order_hold_for_v = true, const bool resample_input_path_stop_point = true);
 
 /**
  * @brief A resampling function for a path. Note that in a default setting, position xy are
@@ -233,9 +232,9 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
  * @return resampled trajectory
  */
 autoware_planning_msgs::msg::Trajectory resampleTrajectory(
-  const autoware_planning_msgs::msg::Trajectory & input_trajectory,
-  const double resample_interval, const bool use_akima_spline_for_xy = false,
-  const bool use_lerp_for_z = true, const bool use_zero_order_hold_for_twist = true,
+  const autoware_planning_msgs::msg::Trajectory & input_trajectory, const double resample_interval,
+  const bool use_akima_spline_for_xy = false, const bool use_lerp_for_z = true,
+  const bool use_zero_order_hold_for_twist = true,
   const bool resample_input_trajectory_stop_point = true);
 }  // namespace motion_utils
 

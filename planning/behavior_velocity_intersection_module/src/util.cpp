@@ -68,8 +68,7 @@ namespace util
 {
 
 static std::optional<size_t> getDuplicatedPointIdx(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point)
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point)
 {
   for (size_t i = 0; i < path.points.size(); i++) {
     const auto & p = path.points.at(i).point.pose.position;
@@ -85,8 +84,8 @@ static std::optional<size_t> getDuplicatedPointIdx(
 
 static std::optional<size_t> insertPointIndex(
   const geometry_msgs::msg::Pose & in_pose,
-  autoware_planning_msgs::msg::PathWithLaneId * inout_path,
-  const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold)
+  autoware_planning_msgs::msg::PathWithLaneId * inout_path, const double ego_nearest_dist_threshold,
+  const double ego_nearest_yaw_threshold)
 {
   const auto duplicate_idx_opt = getDuplicatedPointIdx(*inout_path, in_pose.position);
   if (duplicate_idx_opt) {
@@ -1132,14 +1131,11 @@ geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   return obj_pose;
 }
 
-static bool isTargetStuckVehicleType(
-  const autoware_perception_msgs::msg::PredictedObject & object)
+static bool isTargetStuckVehicleType(const autoware_perception_msgs::msg::PredictedObject & object)
 {
   if (
-    object.classification.at(0).label ==
-      autoware_perception_msgs::msg::ObjectClassification::CAR ||
-    object.classification.at(0).label ==
-      autoware_perception_msgs::msg::ObjectClassification::BUS ||
+    object.classification.at(0).label == autoware_perception_msgs::msg::ObjectClassification::CAR ||
+    object.classification.at(0).label == autoware_perception_msgs::msg::ObjectClassification::BUS ||
     object.classification.at(0).label ==
       autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
     object.classification.at(0).label ==

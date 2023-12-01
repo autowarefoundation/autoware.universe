@@ -111,8 +111,7 @@ private:
    */
   bool checkStuckVehiclesInNoStoppingArea(
     const Polygon2d & poly,
-    const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr &
-      predicted_obj_arr_ptr);
+    const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr & predicted_obj_arr_ptr);
 
   /**
    * @brief Check if there is a stop line in "stop line detect area".
@@ -144,8 +143,7 @@ private:
    * @return generated stop line
    */
   boost::optional<LineString2d> getStopLineGeometry2d(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
-    const double stop_line_margin) const;
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const double stop_line_margin) const;
 
   /**
    * @brief Calculate if it's possible for ego-vehicle to stop before area consider jerk limit

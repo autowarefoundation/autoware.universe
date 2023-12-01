@@ -211,8 +211,8 @@ boost::optional<double> PurePursuitNode::calcTargetCurvature()
   return kappa;
 }
 
-boost::optional<autoware_planning_msgs::msg::TrajectoryPoint>
-PurePursuitNode::calcTargetPoint() const
+boost::optional<autoware_planning_msgs::msg::TrajectoryPoint> PurePursuitNode::calcTargetPoint()
+  const
 {
   const auto closest_idx_result = planning_utils::findClosestIdxWithDistAngThr(
     planning_utils::extractPoses(*trajectory_), current_pose_->pose, 3.0, M_PI_4);

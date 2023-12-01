@@ -120,8 +120,8 @@ bool isStopped(
 
 }  // namespace
 
-autoware_planning_msgs::msg::Trajectory::ConstSharedPtr
-ScenarioSelectorNode::getScenarioTrajectory(const std::string & scenario)
+autoware_planning_msgs::msg::Trajectory::ConstSharedPtr ScenarioSelectorNode::getScenarioTrajectory(
+  const std::string & scenario)
 {
   if (scenario == tier4_planning_msgs::msg::Scenario::LANEDRIVING) {
     return lane_driving_trajectory_;
@@ -338,10 +338,9 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
   is_parking_completed_(false)
 {
   // Input
-  sub_lane_driving_trajectory_ =
-    this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-      "input/lane_driving/trajectory", rclcpp::QoS{1},
-      std::bind(&ScenarioSelectorNode::onLaneDrivingTrajectory, this, std::placeholders::_1));
+  sub_lane_driving_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+    "input/lane_driving/trajectory", rclcpp::QoS{1},
+    std::bind(&ScenarioSelectorNode::onLaneDrivingTrajectory, this, std::placeholders::_1));
 
   sub_parking_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "input/parking/trajectory", rclcpp::QoS{1},

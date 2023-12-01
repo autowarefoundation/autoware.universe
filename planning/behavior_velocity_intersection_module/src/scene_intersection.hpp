@@ -343,10 +343,10 @@ private:
     const std::optional<Polygon2d> & intersection_area) const;
 
   bool checkCollision(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
-    util::TargetObjects * target_objects, const util::PathLanelets & path_lanelets,
-    const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
-    const double time_delay, const util::TrafficPrioritizedLevel & traffic_prioritized_level);
+    const autoware_planning_msgs::msg::PathWithLaneId & path, util::TargetObjects * target_objects,
+    const util::PathLanelets & path_lanelets, const size_t closest_idx,
+    const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
+    const util::TrafficPrioritizedLevel & traffic_prioritized_level);
 
   OcclusionType getOcclusionStatus(
     const nav_msgs::msg::OccupancyGrid & occ_grid,

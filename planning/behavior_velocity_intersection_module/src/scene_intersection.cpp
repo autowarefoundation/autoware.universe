@@ -75,10 +75,8 @@ static bool isTargetCollisionVehicleType(
   const autoware_perception_msgs::msg::PredictedObject & object)
 {
   if (
-    object.classification.at(0).label ==
-      autoware_perception_msgs::msg::ObjectClassification::CAR ||
-    object.classification.at(0).label ==
-      autoware_perception_msgs::msg::ObjectClassification::BUS ||
+    object.classification.at(0).label == autoware_perception_msgs::msg::ObjectClassification::CAR ||
+    object.classification.at(0).label == autoware_perception_msgs::msg::ObjectClassification::BUS ||
     object.classification.at(0).label ==
       autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
     object.classification.at(0).label ==
@@ -167,9 +165,8 @@ VisitorSwitch(Ts...) -> VisitorSwitch<Ts...>;
 
 template <typename T>
 void prepareRTCByDecisionResult(
-  const T & result, const autoware_planning_msgs::msg::PathWithLaneId & path,
-  bool * default_safety, double * default_distance, bool * occlusion_safety,
-  double * occlusion_distance)
+  const T & result, const autoware_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
 {
   static_assert("Unsupported type passed to prepareRTCByDecisionResult");
   return;
@@ -315,9 +312,9 @@ void prepareRTCByDecisionResult(
 
 template <>
 void prepareRTCByDecisionResult(
-  const IntersectionModule::Safe & result,
-  const autoware_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
+  const IntersectionModule::Safe & result, const autoware_planning_msgs::msg::PathWithLaneId & path,
+  bool * default_safety, double * default_distance, bool * occlusion_safety,
+  double * occlusion_distance)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "Safe");
   const auto closest_idx = result.closest_idx;
@@ -352,8 +349,7 @@ void prepareRTCByDecisionResult(
 }
 
 void IntersectionModule::prepareRTCStatus(
-  const DecisionResult & decision_result,
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const DecisionResult & decision_result, const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   bool default_safety = true;
   double default_distance = std::numeric_limits<double>::lowest();
@@ -1480,10 +1476,10 @@ util::TargetObjects IntersectionModule::generateTargetObjects(
 }
 
 bool IntersectionModule::checkCollision(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
-  util::TargetObjects * target_objects, const util::PathLanelets & path_lanelets,
-  const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
-  const double time_delay, const util::TrafficPrioritizedLevel & traffic_prioritized_level)
+  const autoware_planning_msgs::msg::PathWithLaneId & path, util::TargetObjects * target_objects,
+  const util::PathLanelets & path_lanelets, const size_t closest_idx,
+  const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
+  const util::TrafficPrioritizedLevel & traffic_prioritized_level)
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;

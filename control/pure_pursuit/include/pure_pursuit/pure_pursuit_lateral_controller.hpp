@@ -117,8 +117,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_marker_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
   // Predicted Trajectory publish
-  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr
-    pub_predicted_trajectory_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_predicted_trajectory_;
 
   void onTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 

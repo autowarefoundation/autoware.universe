@@ -155,8 +155,7 @@ inline geometry_msgs::msg::Point getPoint(
 // }
 
 template <>
-inline geometry_msgs::msg::Point getPoint(
-  const autoware_planning_msgs::msg::TrajectoryPoint & p)
+inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose.position;
 }
@@ -200,8 +199,7 @@ inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::PathP
 // }
 
 template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.pose;
 }
@@ -245,8 +243,7 @@ inline double getLongitudinalVelocity(const autoware_planning_msgs::msg::PathPoi
 // }
 
 template <>
-inline double getLongitudinalVelocity(
-  const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+inline double getLongitudinalVelocity(const autoware_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.longitudinal_velocity_mps;
 }

@@ -98,8 +98,7 @@ boost::optional<geometry_msgs::msg::Point> checkCollision(
 }
 
 boost::optional<PathIndexWithOffset> findOffsetSegment(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t index,
-  const double offset)
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t index, const double offset)
 {
   if (offset >= 0) {
     return findForwardOffsetSegment(path, index, offset);

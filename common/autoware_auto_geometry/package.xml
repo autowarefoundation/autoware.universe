@@ -14,9 +14,9 @@
 
   <depend>autoware_auto_common</depend>
   <depend>autoware_auto_geometry_msgs</depend>
-  <depend>autoware_planning_msgs</depend>
   <depend>autoware_auto_tf2</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_planning_msgs</depend>
   <depend>geometry_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>

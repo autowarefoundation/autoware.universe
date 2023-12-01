@@ -27,12 +27,12 @@ boost::optional<std::pair<size_t, size_t>> getPathIndexRangeWithLaneId(
   const autoware_planning_msgs::msg::PathWithLaneId & path, const int64_t target_lane_id);
 
 size_t findNearestIndexFromLaneId(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & pos, const int64_t lane_id);
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & pos,
+  const int64_t lane_id);
 
 size_t findNearestSegmentIndexFromLaneId(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & pos, const int64_t lane_id);
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & pos,
+  const int64_t lane_id);
 
 // @brief Calculates the path to be followed by the rear wheel center in order to make the vehicle
 // center follow the input path

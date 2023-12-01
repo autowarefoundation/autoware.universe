@@ -13,21 +13,21 @@
 
 ### Input topics
 
-| Name                        | Type                                            | Description         |
-| --------------------------- | ----------------------------------------------- | ------------------- |
-| `~/input/pointcloud`        | sensor_msgs::PointCloud2                        | obstacle pointcloud |
+| Name                        | Type                                       | Description         |
+| --------------------------- | ------------------------------------------ | ------------------- |
+| `~/input/pointcloud`        | sensor_msgs::PointCloud2                   | obstacle pointcloud |
 | `~/input/trajectory`        | autoware_planning_msgs::Trajectory         | trajectory          |
-| `~/input/vector_map`        | autoware_map_msgs::msg::LaneletMapBin           | vector map          |
-| `~/input/odometry`          | nav_msgs::Odometry                              | vehicle velocity    |
+| `~/input/vector_map`        | autoware_map_msgs::msg::LaneletMapBin      | vector map          |
+| `~/input/odometry`          | nav_msgs::Odometry                         | vehicle velocity    |
 | `~/input/dynamic_objects`   | autoware_perception_msgs::PredictedObjects | dynamic objects     |
-| `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange       | expand stop range   |
+| `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange  | expand stop range   |
 
 ### Output topics
 
-| Name                   | Type                                    | Description                            |
-| ---------------------- | --------------------------------------- | -------------------------------------- |
-| `~output/trajectory`   | autoware_planning_msgs::Trajectory | trajectory to be followed              |
-| `~output/stop_reasons` | tier4_planning_msgs::StopReasonArray    | reasons that cause the vehicle to stop |
+| Name                   | Type                                 | Description                            |
+| ---------------------- | ------------------------------------ | -------------------------------------- |
+| `~output/trajectory`   | autoware_planning_msgs::Trajectory   | trajectory to be followed              |
+| `~output/stop_reasons` | tier4_planning_msgs::StopReasonArray | reasons that cause the vehicle to stop |
 
 ### Common Parameter
 

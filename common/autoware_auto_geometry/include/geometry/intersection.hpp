@@ -21,8 +21,8 @@
 #include <geometry/convex_hull.hpp>
 
 #include <autoware_auto_perception_msgs/msg/bounding_box.hpp>
-#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
 #include <algorithm>
 #include <iostream>

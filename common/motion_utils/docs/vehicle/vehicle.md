@@ -83,9 +83,9 @@ This class check whether the vehicle arrive at stop point based on localization 
 
 #### Subscribed Topics
 
-| Name                                     | Type                                           | Description      |
-| ---------------------------------------- | ---------------------------------------------- | ---------------- |
-| `/localization/kinematic_state`          | `nav_msgs::msg::Odometry`                      | vehicle odometry |
+| Name                                     | Type                                      | Description      |
+| ---------------------------------------- | ----------------------------------------- | ---------------- |
+| `/localization/kinematic_state`          | `nav_msgs::msg::Odometry`                 | vehicle odometry |
 | `/planning/scenario_planning/trajectory` | `autoware_planning_msgs::msg::Trajectory` | trajectory       |
 
 #### Parameters

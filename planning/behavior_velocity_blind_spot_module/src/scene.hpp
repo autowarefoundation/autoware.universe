@@ -216,8 +216,7 @@ private:
    * @param time_thr    time threshold to cut path
    */
   void cutPredictPathWithDuration(
-    autoware_perception_msgs::msg::PredictedObjects * objects_ptr,
-    const double time_thr) const;
+    autoware_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const;
 
   StateMachine state_machine_;  //! for state
 

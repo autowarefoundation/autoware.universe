@@ -422,8 +422,7 @@ autoware_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
   return output_path_msg;
 }
 
-void BehaviorVelocityPlannerNode::publishDebugMarker(
-  const autoware_planning_msgs::msg::Path & path)
+void BehaviorVelocityPlannerNode::publishDebugMarker(const autoware_planning_msgs::msg::Path & path)
 {
   visualization_msgs::msg::MarkerArray output_msg;
   for (size_t i = 0; i < path.points.size(); ++i) {

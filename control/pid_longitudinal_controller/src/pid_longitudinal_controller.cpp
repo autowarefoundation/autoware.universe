@@ -209,8 +209,7 @@ void PidLongitudinalController::setCurrentOperationMode(const OperationModeState
   m_current_operation_mode = msg;
 }
 
-void PidLongitudinalController::setTrajectory(
-  const autoware_planning_msgs::msg::Trajectory & msg)
+void PidLongitudinalController::setTrajectory(const autoware_planning_msgs::msg::Trajectory & msg)
 {
   if (!longitudinal_utils::isValidTrajectory(msg)) {
     RCLCPP_ERROR_THROTTLE(logger_, *clock_, 3000, "received invalid trajectory. ignore.");
@@ -889,10 +888,8 @@ PidLongitudinalController::Motion PidLongitudinalController::keepBrakeBeforeStop
   return output_motion;
 }
 
-autoware_planning_msgs::msg::TrajectoryPoint
-PidLongitudinalController::calcInterpolatedTargetValue(
-  const autoware_planning_msgs::msg::Trajectory & traj,
-  const geometry_msgs::msg::Pose & pose) const
+autoware_planning_msgs::msg::TrajectoryPoint PidLongitudinalController::calcInterpolatedTargetValue(
+  const autoware_planning_msgs::msg::Trajectory & traj, const geometry_msgs::msg::Pose & pose) const
 {
   if (traj.points.size() == 1) {
     return traj.points.at(0);

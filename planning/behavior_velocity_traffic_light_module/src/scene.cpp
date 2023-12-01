@@ -383,9 +383,8 @@ bool TrafficLightModule::findValidTrafficSignal(TrafficSignal & valid_traffic_si
 }
 
 autoware_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
-  const autoware_planning_msgs::msg::PathWithLaneId & input,
-  const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+  const autoware_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
+  const Eigen::Vector2d & target_point, tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   autoware_planning_msgs::msg::PathWithLaneId modified_path;
   modified_path = input;

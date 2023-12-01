@@ -25,8 +25,8 @@
 #include <rclcpp/time.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/twist.hpp>
@@ -39,8 +39,8 @@
 namespace control_performance_analysis
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using autoware_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using autoware_planning_msgs::msg::Trajectory;
 using control_performance_analysis::msg::DrivingMonitorStamped;
 using control_performance_analysis::msg::Error;
 using control_performance_analysis::msg::ErrorStamped;

@@ -22,10 +22,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-using autoware_planning_msgs::msg::PathPoint;
-using autoware_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_planning_msgs::msg::PathPoint;
+using autoware_planning_msgs::msg::PathPointWithLaneId;
 using behavior_path_planner::PathWithLaneId;
 using behavior_path_planner::Pose;
 using behavior_path_planner::TurnSignalDecider;

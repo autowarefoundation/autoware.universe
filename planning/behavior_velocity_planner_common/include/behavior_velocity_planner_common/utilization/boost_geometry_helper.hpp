@@ -37,11 +37,11 @@ BOOST_GEOMETRY_REGISTER_POINT_3D(
   geometry_msgs::msg::PoseWithCovarianceStamped, double, cs::cartesian, pose.pose.position.x,
   pose.pose.position.y, pose.pose.position.z)
 BOOST_GEOMETRY_REGISTER_POINT_3D(
-  autoware_planning_msgs::msg::PathPoint, double, cs::cartesian, pose.position.x,
-  pose.position.y, pose.position.z)
+  autoware_planning_msgs::msg::PathPoint, double, cs::cartesian, pose.position.x, pose.position.y,
+  pose.position.z)
 BOOST_GEOMETRY_REGISTER_POINT_3D(
-  autoware_planning_msgs::msg::PathPointWithLaneId, double, cs::cartesian,
-  point.pose.position.x, point.pose.position.y, point.pose.position.z)
+  autoware_planning_msgs::msg::PathPointWithLaneId, double, cs::cartesian, point.pose.position.x,
+  point.pose.position.y, point.pose.position.z)
 BOOST_GEOMETRY_REGISTER_POINT_3D(
   autoware_planning_msgs::msg::TrajectoryPoint, double, cs::cartesian, pose.position.x,
   pose.position.y, pose.position.z)
