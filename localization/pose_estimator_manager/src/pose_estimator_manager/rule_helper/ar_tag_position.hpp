@@ -35,17 +35,17 @@ public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Pose = geometry_msgs::msg::Pose;
 
-  explicit ArTagPosition(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data);
+  explicit ArTagPosition(rclcpp::Node * node);
 
   double distance_to_nearest_ar_tag_around_ego(const geometry_msgs::msg::Point & ego_point) const;
+
+  void init(HADMapBin::ConstSharedPtr msg);
 
 private:
   struct Impl;
   std::shared_ptr<Impl> impl_;
   rclcpp::Logger logger_;
-  const std::shared_ptr<const SharedData> shared_data_;
 
-  // bool shared_data_is_ready() const;
   bool shared_data_is_ready_;
 };
 }  // namespace pose_estimator_manager::rule_helper

@@ -29,13 +29,26 @@ MapBasedRule::MapBasedRule(
 
   if (running_estimator_list.count(PoseEstimatorName::ndt)) {
     pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
+
+    // Register callback
+    shared_data_->point_cloud_map.set_callback(
+      [this](sensor_msgs::msg::PointCloud2::ConstSharedPtr msg) -> void {
+        pcd_occupancy_->init(msg);
+      });
   }
   if (running_estimator_list.count(PoseEstimatorName::artag)) {
-    ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node, shared_data_);
+    ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node);
+
+    // Register callback
+    shared_data_->vector_map.set_callback(
+      [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
+        ar_tag_position_->init(msg);
+      });
   }
   if (running_estimator_list.count(PoseEstimatorName::eagleye)) {
     eagleye_area_ = std::make_unique<rule_helper::EagleyeArea>(&node);
 
+    // Register callback
     shared_data_->vector_map.set_callback(
       [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
         eagleye_area_->init(msg);
@@ -123,10 +136,6 @@ bool MapBasedRule::ndt_is_more_suitable_than_yabloc(std::string * optional_messa
 
   if (!shared_data_->localization_pose_cov.has_value()) {
     return false;
-  }
-
-  if (shared_data_->point_cloud_map.has_value()) {
-    pcd_occupancy_->init(shared_data_->point_cloud_map());
   }
 
   const auto position = shared_data_->localization_pose_cov()->pose.pose.position;

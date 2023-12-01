@@ -99,16 +99,16 @@ PoseEstimatorManager::PoseEstimatorManager()
 
     // subscriber for switch rule
     auto on_vector_map = [this](HADMapBin::ConstSharedPtr msg) -> void {
-      shared_data_->vector_map.set(msg);
+      shared_data_->vector_map.set_and_invoke(msg);
     };
     auto on_point_cloud_map = [this](PointCloud2::ConstSharedPtr msg) -> void {
-      shared_data_->point_cloud_map.set(msg);
+      shared_data_->point_cloud_map.set_and_invoke(msg);
     };
     auto on_localization_pose_cov = [this](PoseCovStamped::ConstSharedPtr msg) -> void {
-      shared_data_->localization_pose_cov.set(msg);
+      shared_data_->localization_pose_cov.set_and_invoke(msg);
     };
     auto on_initialization_state = [this](InitializationState::ConstSharedPtr msg) -> void {
-      shared_data_->initialization_state.set(msg);
+      shared_data_->initialization_state.set_and_invoke(msg);
     };
     sub_localization_pose_cov_ = create_subscription<PoseCovStamped>(
       "~/input/pose_with_covariance", 5, on_localization_pose_cov);
@@ -211,36 +211,21 @@ void PoseEstimatorManager::on_timer()
   publish_diagnostics();
 }
 
-// void PoseEstimatorManager::call_all_callback()
-// {
-//   for (auto & [name, manager] : sub_managers_) {
-//     manager->callback();
-//   }
-// }
-
 void PoseEstimatorManager::on_yabloc_input(Image::ConstSharedPtr msg)
 {
-  shared_data_->yabloc_input_image.set(msg);
-  // call_all_callback();
-  shared_data_->reset_update_flag();
+  shared_data_->yabloc_input_image.set_and_invoke(msg);
 }
 void PoseEstimatorManager::on_artag_input(Image::ConstSharedPtr msg)
 {
-  shared_data_->artag_input_image.set(msg);
-  // call_all_callback();
-  shared_data_->reset_update_flag();
+  shared_data_->artag_input_image.set_and_invoke(msg);
 }
 void PoseEstimatorManager::on_ndt_input(PointCloud2::ConstSharedPtr msg)
 {
-  shared_data_->ndt_input_points.set(msg);
-  // call_all_callback();
-  shared_data_->reset_update_flag();
+  shared_data_->ndt_input_points.set_and_invoke(msg);
 }
 void PoseEstimatorManager::on_eagleye_output(PoseCovStamped::ConstSharedPtr msg)
 {
-  shared_data_->eagleye_output_pose_cov.set(msg);
-  // call_all_callback();
-  shared_data_->reset_update_flag();
+  shared_data_->eagleye_output_pose_cov.set_and_invoke(msg);
 }
 
 }  // namespace pose_estimator_manager
