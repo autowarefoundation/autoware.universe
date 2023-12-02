@@ -148,15 +148,6 @@ StopFactor createStopFactor(
   return stop_factor;
 }
 
-std::optional<geometry_msgs::msg::Pose> toStdOptional(
-  const boost::optional<geometry_msgs::msg::Pose> & boost_pose)
-{
-  if (boost_pose) {
-    return *boost_pose;
-  }
-  return std::nullopt;
-}
-
 tier4_debug_msgs::msg::StringStamped createStringStampedMessage(
   const rclcpp::Time & now, const int64_t module_id_,
   const std::vector<std::tuple<std::string, CollisionPoint, CollisionState>> & collision_points)
@@ -176,15 +167,16 @@ tier4_debug_msgs::msg::StringStamped createStringStampedMessage(
 }  // namespace
 
 CrosswalkModule::CrosswalkModule(
-  rclcpp::Node & node, const int64_t module_id, const std::optional<int64_t> & reg_elem_id,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr, const PlannerParam & planner_param,
-  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
+  rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
+  const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+  const PlannerParam & planner_param, const rclcpp::Logger & logger,
+  const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   module_id_(module_id),
   planner_param_(planner_param),
   use_regulatory_element_(reg_elem_id)
 {
-  velocity_factor_.init(VelocityFactor::CROSSWALK);
+  velocity_factor_.init(PlanningBehavior::CROSSWALK);
   passed_safety_slow_point_ = false;
 
   if (use_regulatory_element_) {
@@ -199,6 +191,8 @@ CrosswalkModule::CrosswalkModule(
     }
     crosswalk_ = lanelet_map_ptr->laneletLayer.get(module_id);
   }
+
+  road_ = lanelet_map_ptr->laneletLayer.get(lane_id);
 
   collision_info_pub_ =
     node.create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/collision_info", 1);
@@ -242,8 +236,8 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   std::optional<geometry_msgs::msg::Pose> default_stop_pose = std::nullopt;
   if (p_stop_line.has_value()) {
-    default_stop_pose = toStdOptional(
-      calcLongitudinalOffsetPose(path->points, p_stop_line->first, p_stop_line->second));
+    default_stop_pose =
+      calcLongitudinalOffsetPose(path->points, p_stop_line->first, p_stop_line->second);
   }
 
   // Resample path sparsely for less computation cost
@@ -486,8 +480,8 @@ std::pair<double, double> CrosswalkModule::clampAttentionRangeByNeighborCrosswal
     return std::make_pair(near_attention_range, far_attention_range);
   }
 
-  const auto near_idx = findNearestSegmentIndex(ego_path.points, p_near.get());
-  const auto far_idx = findNearestSegmentIndex(ego_path.points, p_far.get()) + 1;
+  const auto near_idx = findNearestSegmentIndex(ego_path.points, p_near.value());
+  const auto far_idx = findNearestSegmentIndex(ego_path.points, p_far.value()) + 1;
 
   std::set<int64_t> lane_ids;
   for (size_t i = near_idx; i < far_idx; ++i) {
@@ -575,8 +569,8 @@ std::pair<double, double> CrosswalkModule::clampAttentionRangeByNeighborCrosswal
     calcLongitudinalOffsetPoint(ego_path.points, ego_pos, far_attention_range);
 
   if (update_p_near && update_p_far) {
-    debug_data_.range_near_point = update_p_near.get();
-    debug_data_.range_far_point = update_p_far.get();
+    debug_data_.range_near_point = update_p_near.value();
+    debug_data_.range_far_point = update_p_far.value();
   }
 
   RCLCPP_INFO_EXPRESSION(
@@ -732,7 +726,7 @@ void CrosswalkModule::applySafetySlowDownSpeed(
     const auto & p_safety_slow =
       calcLongitudinalOffsetPoint(ego_path.points, ego_pos, safety_slow_point_range);
 
-    insertDecelPointWithDebugInfo(p_safety_slow.get(), safety_slow_down_speed, output);
+    insertDecelPointWithDebugInfo(p_safety_slow.value(), safety_slow_down_speed, output);
 
     if (safety_slow_point_range < 0.0) {
       passed_safety_slow_point_ = true;
@@ -801,6 +795,16 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
 
   if (path_intersects.size() < 2 || !stop_pose) {
     return {};
+  }
+
+  // skip stuck vehicle checking for crosswalk which is in intersection.
+  if (!p.enable_stuck_check_in_intersection) {
+    std::string turn_direction = road_.attributeOr("turn_direction", "else");
+    if (turn_direction == "right" || turn_direction == "left" || turn_direction == "straight") {
+      if (!road_.regulatoryElementsAs<const lanelet::TrafficLight>().empty()) {
+        return {};
+      }
+    }
   }
 
   for (const auto & object : objects) {

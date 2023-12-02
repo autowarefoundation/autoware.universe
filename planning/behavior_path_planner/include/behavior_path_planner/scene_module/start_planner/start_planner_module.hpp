@@ -17,15 +17,15 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
 #include "behavior_path_planner/utils/start_planner/freespace_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/geometric_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/shift_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
@@ -59,7 +59,6 @@ struct PullOutStatus
   size_t current_path_idx{0};
   PlannerType planner_type{PlannerType::NONE};
   PathWithLaneId backward_path{};
-  lanelet::ConstLanelets pull_out_lanes{};
   bool found_pull_out_path{false};      // current path is safe against static objects
   bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool driving_forward{false};          // if ego is driving on backward path, this is set to false
@@ -80,7 +79,9 @@ public:
   StartPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<StartPlannerParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -92,8 +93,6 @@ public:
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] void updateCurrentState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -124,13 +123,21 @@ public:
   bool isFreespacePlanning() const { return status_.planner_type == PlannerType::FREESPACE; }
 
 private:
-  bool canTransitSuccessState() override { return false; }
+  bool canTransitSuccessState() override;
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return false; }
+  bool canTransitIdleToRunningState() override;
 
   void initializeSafetyCheckParameters();
+
+  bool receivedNewRoute() const;
+
+  bool isModuleRunning() const;
+  bool isCurrentPoseOnMiddleOfTheRoad() const;
+  bool isCloseToOriginalStartPose() const;
+  bool hasArrivedAtGoal() const;
+  bool isMoving() const;
 
   PriorityOrder determinePriorityOrder(
     const std::string & search_priority, const size_t candidates_size);
@@ -171,8 +178,9 @@ private:
   std::mutex mutex_;
 
   PathWithLaneId getFullPath() const;
-  PathWithLaneId calcStartPoseCandidatesBackwardPath() const;
-  std::vector<Pose> searchPullOutStartPoses(const PathWithLaneId & start_pose_candidates) const;
+  PathWithLaneId calcBackwardPathFromStartPose() const;
+  std::vector<Pose> searchPullOutStartPoseCandidates(
+    const PathWithLaneId & back_path_from_start_pose) const;
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
@@ -189,9 +197,8 @@ private:
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   void updateStatusAfterBackwardDriving();
-  static bool isOverlappedWithLane(
-    const lanelet::ConstLanelet & candidate_lanelet,
-    const tier4_autoware_utils::LinearRing2d & vehicle_footprint);
+  PredictedObjects filterStopObjectsInPullOutLanes(
+    const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
   bool hasFinishedPullOut() const;
   bool isBackwardDrivingComplete() const;
   bool isStopped();
@@ -204,7 +211,7 @@ private:
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
 
   // check if the goal is located behind the ego in the same route segment.
-  bool IsGoalBehindOfEgoInSameRouteSegment() const;
+  bool isGoalBehindOfEgoInSameRouteSegment() const;
 
   // generate BehaviorPathOutput with stopping path and update status
   BehaviorModuleOutput generateStopOutput();
@@ -215,6 +222,7 @@ private:
   bool planFreespacePath();
 
   void setDebugData() const;
+  void logPullOutStatus(rclcpp::Logger::Level log_level = rclcpp::Logger::Level::Info) const;
 };
 }  // namespace behavior_path_planner
 

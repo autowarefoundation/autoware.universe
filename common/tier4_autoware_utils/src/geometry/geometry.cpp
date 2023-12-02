@@ -327,12 +327,13 @@ double calcCurvature(
  * pose.
  */
 geometry_msgs::msg::Pose calcOffsetPose(
-  const geometry_msgs::msg::Pose & p, const double x, const double y, const double z)
+  const geometry_msgs::msg::Pose & p, const double x, const double y, const double z,
+  const double yaw)
 {
   geometry_msgs::msg::Pose pose;
   geometry_msgs::msg::Transform transform;
   transform.translation = createTranslation(x, y, z);
-  transform.rotation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+  transform.rotation = createQuaternionFromYaw(yaw);
   tf2::Transform tf_pose;
   tf2::Transform tf_offset;
   tf2::fromMsg(transform, tf_offset);
@@ -378,6 +379,7 @@ std::optional<geometry_msgs::msg::Point> intersect(
   geometry_msgs::msg::Point intersect_point;
   intersect_point.x = t * p1.x + (1.0 - t) * p2.x;
   intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
+  intersect_point.z = t * p1.z + (1.0 - t) * p2.z;
   return intersect_point;
 }
 

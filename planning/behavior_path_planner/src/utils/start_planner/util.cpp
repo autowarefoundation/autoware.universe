@@ -14,10 +14,10 @@
 
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 
-#include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
@@ -89,15 +89,14 @@ lanelet::ConstLanelets getPullOutLanes(
 {
   const double & vehicle_width = planner_data->parameters.vehicle_width;
   const auto & route_handler = planner_data->route_handler;
-  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto start_pose = planner_data->route_handler->getOriginalStartPose();
 
   lanelet::ConstLanelet current_shoulder_lane;
   lanelet::ConstLanelets shoulder_lanes;
   if (route_handler->getPullOutStartLane(
-        route_handler->getShoulderLanelets(), current_pose, vehicle_width,
-        &current_shoulder_lane)) {
+        route_handler->getShoulderLanelets(), start_pose, vehicle_width, &current_shoulder_lane)) {
     // pull out from shoulder lane
-    return route_handler->getShoulderLaneletSequence(current_shoulder_lane, current_pose);
+    return route_handler->getShoulderLaneletSequence(current_shoulder_lane, start_pose);
   }
 
   // pull out from road lane

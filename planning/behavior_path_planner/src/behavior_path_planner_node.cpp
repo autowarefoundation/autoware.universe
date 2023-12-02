@@ -14,7 +14,6 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
@@ -22,7 +21,9 @@
 #include "behavior_path_planner/scene_module/lane_change/manager.hpp"
 #include "behavior_path_planner/scene_module/side_shift/manager.hpp"
 #include "behavior_path_planner/scene_module/start_planner/manager.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -78,8 +79,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
-  debug_lane_change_msg_array_publisher_ =
-    create_publisher<LaneChangeDebugMsgArray>("~/debug/lane_change_debug_message_array", 1);
 
   if (planner_data_->parameters.visualize_maximum_drivable_area) {
     debug_maximum_drivable_area_publisher_ =
@@ -106,6 +105,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   costmap_subscriber_ = create_subscription<OccupancyGrid>(
     "~/input/costmap", 1, std::bind(&BehaviorPathPlannerNode::onCostMap, this, _1),
     createSubscriptionOptions(this));
+  traffic_signals_subscriber_ =
+    this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+      "~/input/traffic_signals", 1, std::bind(&BehaviorPathPlannerNode::onTrafficSignals, this, _1),
+      createSubscriptionOptions(this));
   lateral_offset_subscriber_ = this->create_subscription<LateralOffset>(
     "~/input/lateral_offset", 1, std::bind(&BehaviorPathPlannerNode::onLateralOffset, this, _1),
     createSubscriptionOptions(this));
@@ -277,6 +280,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 
   p.verbose = declare_parameter<bool>("verbose");
   p.max_iteration_num = declare_parameter<int>("max_iteration_num");
+  p.traffic_light_signal_timeout = declare_parameter<double>("traffic_light_signal_timeout");
 
   const auto get_scene_module_manager_param = [&](std::string && ns) {
     ModuleConfigParameters config;
@@ -340,6 +344,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   // lane change parameters
   p.backward_length_buffer_for_end_of_lane =
     declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
+  p.backward_length_buffer_for_blocking_object =
+    declare_parameter<double>("lane_change.backward_length_buffer_for_blocking_object");
   p.lane_changing_lateral_jerk =
     declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
   p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
@@ -639,7 +645,7 @@ void BehaviorPathPlannerNode::publish_steering_factor(
 
     steering_factor_interface_ptr_->updateSteeringFactor(
       {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
-      SteeringFactor::INTERSECTION, steering_factor_direction, steering_factor_state, "");
+      PlanningBehavior::INTERSECTION, steering_factor_direction, steering_factor_state, "");
   } else {
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
@@ -776,11 +782,6 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
   const auto avoidance_debug_message = debug_messages_data_ptr->getAvoidanceModuleDebugMsg();
   if (avoidance_debug_message) {
     debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
-  }
-
-  const auto lane_change_debug_message = debug_messages_data_ptr->getLaneChangeModuleDebugMsg();
-  if (lane_change_debug_message) {
-    debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
   }
 }
 
@@ -931,6 +932,17 @@ void BehaviorPathPlannerNode::onCostMap(const OccupancyGrid::ConstSharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->costmap = msg;
+}
+void BehaviorPathPlannerNode::onTrafficSignals(const TrafficSignalArray::ConstSharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_pd_);
+
+  for (const auto & signal : msg->signals) {
+    TrafficSignalStamped traffic_signal;
+    traffic_signal.stamp = msg->stamp;
+    traffic_signal.signal = signal;
+    planner_data_->traffic_light_id_map[signal.traffic_signal_id] = traffic_signal;
+  }
 }
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {

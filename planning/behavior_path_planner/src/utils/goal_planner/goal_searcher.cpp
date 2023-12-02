@@ -15,15 +15,14 @@
 #include "behavior_path_planner/utils/goal_planner/goal_searcher.hpp"
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "lanelet2_extension/regulatory_elements/no_parking_area.hpp"
 #include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <boost/geometry/algorithms/union.hpp>
-#include <boost/optional.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 
@@ -466,6 +465,32 @@ bool GoalSearcher::isInAreas(const LinearRing2d & footprint, const BasicPolygons
     }
   }
   return false;
+}
+
+GoalCandidate GoalSearcher::getClosetGoalCandidateAlongLanes(
+  const GoalCandidates & goal_candidates) const
+{
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
+    /*forward_only_in_route*/ false);
+
+  // Define a lambda function to compute the arc length for a given goal candidate.
+  auto getGoalArcLength = [&current_lanes](const auto & candidate) {
+    return lanelet::utils::getArcCoordinates(current_lanes, candidate.goal_pose).length;
+  };
+
+  // Find the closest goal candidate by comparing the arc lengths of each candidate.
+  const auto closest_goal_candidate = std::min_element(
+    goal_candidates.begin(), goal_candidates.end(),
+    [&getGoalArcLength](const auto & a, const auto & b) {
+      return getGoalArcLength(a) < getGoalArcLength(b);
+    });
+
+  if (closest_goal_candidate == goal_candidates.end()) {
+    return {};  // return empty GoalCandidate in case no valid candidates are found.
+  }
+
+  return *closest_goal_candidate;
 }
 
 }  // namespace behavior_path_planner

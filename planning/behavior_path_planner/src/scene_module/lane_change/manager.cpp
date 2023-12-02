@@ -84,6 +84,8 @@ LaneChangeModuleManager::LaneChangeModuleManager(
   p.regulate_on_crosswalk = getOrDeclareParameter<bool>(*node, parameter("regulation.crosswalk"));
   p.regulate_on_intersection =
     getOrDeclareParameter<bool>(*node, parameter("regulation.intersection"));
+  p.regulate_on_traffic_light =
+    getOrDeclareParameter<bool>(*node, parameter("regulation.traffic_light"));
 
   // ego vehicle stuck detection
   p.stop_velocity_threshold =
@@ -219,10 +221,12 @@ std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneMod
   if (type_ == LaneChangeModuleType::NORMAL) {
     return std::make_unique<LaneChangeInterface>(
       name_, *node_, parameters_, rtc_interface_ptr_map_,
+      objects_of_interest_marker_interface_ptr_map_,
       std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
   }
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_,
     std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
 }
 
@@ -275,15 +279,12 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_planning");
     p.resample_interval_for_output =
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
-    p.enable_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<bool>(*node, ns + "enable_force_avoidance_for_stopped_vehicle");
   }
 
   // target object
   {
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
-      param.is_target = getOrDeclareParameter<bool>(*node, ns + "is_target");
       param.execute_num = getOrDeclareParameter<int>(*node, ns + "execute_num");
       param.moving_speed_threshold =
         getOrDeclareParameter<double>(*node, ns + "moving_speed_threshold");
@@ -319,15 +320,24 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
 
   // target filtering
   {
+    const auto set_target_flag = [&](const uint8_t & object_type, const std::string & ns) {
+      if (p.object_parameters.count(object_type) == 0) {
+        return;
+      }
+      p.object_parameters.at(object_type).is_avoidance_target =
+        getOrDeclareParameter<bool>(*node, ns);
+    };
+
     std::string ns = "avoidance.target_filtering.";
-    p.threshold_time_force_avoidance_for_stopped_vehicle = getOrDeclareParameter<double>(
-      *node, ns + "threshold_time_force_avoidance_for_stopped_vehicle");
-    p.object_ignore_section_traffic_light_in_front_distance = getOrDeclareParameter<double>(
-      *node, ns + "object_ignore_section_traffic_light_in_front_distance");
-    p.object_ignore_section_crosswalk_in_front_distance = getOrDeclareParameter<double>(
-      *node, ns + "object_ignore_section_crosswalk_in_front_distance");
-    p.object_ignore_section_crosswalk_behind_distance =
-      getOrDeclareParameter<double>(*node, ns + "object_ignore_section_crosswalk_behind_distance");
+    set_target_flag(ObjectClassification::CAR, ns + "target_type.car");
+    set_target_flag(ObjectClassification::TRUCK, ns + "target_type.truck");
+    set_target_flag(ObjectClassification::TRAILER, ns + "target_type.trailer");
+    set_target_flag(ObjectClassification::BUS, ns + "target_type.bus");
+    set_target_flag(ObjectClassification::PEDESTRIAN, ns + "target_type.pedestrian");
+    set_target_flag(ObjectClassification::BICYCLE, ns + "target_type.bicycle");
+    set_target_flag(ObjectClassification::MOTORCYCLE, ns + "target_type.motorcycle");
+    set_target_flag(ObjectClassification::UNKNOWN, ns + "target_type.unknown");
+
     p.object_check_goal_distance =
       getOrDeclareParameter<double>(*node, ns + "object_check_goal_distance");
     p.threshold_distance_object_is_on_center =
@@ -338,6 +348,20 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
       getOrDeclareParameter<double>(*node, ns + "object_check_min_road_shoulder_width");
     p.object_last_seen_threshold =
       getOrDeclareParameter<double>(*node, ns + "object_last_seen_threshold");
+  }
+
+  {
+    std::string ns = "avoidance.target_filtering.force_avoidance.";
+    p.enable_force_avoidance_for_stopped_vehicle =
+      getOrDeclareParameter<bool>(*node, ns + "enable");
+    p.threshold_time_force_avoidance_for_stopped_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "time_threshold");
+    p.object_ignore_section_traffic_light_in_front_distance =
+      getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
+    p.object_ignore_section_crosswalk_in_front_distance =
+      getOrDeclareParameter<double>(*node, ns + "ignore_area.crosswalk.front_distance");
+    p.object_ignore_section_crosswalk_behind_distance =
+      getOrDeclareParameter<double>(*node, ns + "ignore_area.crosswalk.behind_distance");
   }
 
   {
@@ -365,7 +389,8 @@ std::unique_ptr<SceneModuleInterface>
 AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<AvoidanceByLaneChangeInterface>(
-    name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_);
+    name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_);
 }
 
 }  // namespace behavior_path_planner
