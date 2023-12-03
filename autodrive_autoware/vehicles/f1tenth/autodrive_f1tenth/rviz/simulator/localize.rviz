@@ -3,7 +3,8 @@ Panels:
     Help Height: 0
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /TF1/Frames1
       Splitter Ratio: 0.5411764979362488
     Tree Height: 532
   - Class: rviz_common/Selection
@@ -45,8 +46,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 11.643219947814941
-        Min Value: 8.906988143920898
+        Max Value: 10.101244926452637
+        Min Value: -0.5458173751831055
         Value: true
       Axis: X
       Channel Name: intensity
@@ -115,6 +116,8 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
+        pf:
+          Value: false
         rear_left_wheel:
           Value: true
         rear_right_wheel:
@@ -131,9 +134,29 @@ Visualization Manager:
       Tree:
         world:
           f1tenth_1:
-            {}
+            front_camera:
+              {}
+            front_left_wheel:
+              {}
+            front_right_wheel:
+              {}
+            imu:
+              {}
+            ips:
+              {}
+            left_encoder:
+              {}
+            lidar:
+              {}
+            rear_left_wheel:
+              {}
+            rear_right_wheel:
+              {}
+            right_encoder:
+              {}
           map:
-            {}
+            pf:
+              {}
           odom:
             {}
       Update Interval: 0
@@ -231,7 +254,7 @@ Visualization Manager:
       Axes Length: 0.30000001192092896
       Axes Radius: 0.009999999776482582
       Class: rviz_default_plugins/PoseArray
-      Color: 0; 255; 0
+      Color: 255; 0; 255
       Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
@@ -245,7 +268,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /pf/viz/particles
+        Value: /particle_filter/viz/pose_particles
       Value: true
   Enabled: true
   Global Options:

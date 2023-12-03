@@ -50,8 +50,8 @@ AutoDRIVETrajectoryFollower::AutoDRIVETrajectoryFollower(const rclcpp::NodeOptio
 
   // Nigel
   if(vehicle_name_=="nigel" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin" || controller_mode_=="testbed")){
-    nigel_simulator_throttle_pub_ = create_publisher<Float32>("/autodrive/nigel_1/throttle_command", 1);
-    nigel_simulator_steering_pub_ = create_publisher<Float32>("/autodrive/nigel_1/steering_command", 1);
+    nigel_digitaltwin_throttle_pub_ = create_publisher<Float32>("/autodrive/nigel_1/throttle_command", 1);
+    nigel_digitaltwin_steering_pub_ = create_publisher<Float32>("/autodrive/nigel_1/steering_command", 1);
   }
   
   // F1TENTH
@@ -61,6 +61,15 @@ AutoDRIVETrajectoryFollower::AutoDRIVETrajectoryFollower(const rclcpp::NodeOptio
   }
   if(vehicle_name_=="f1tenth" && (controller_mode_=="gym_rviz" || controller_mode_=="testbed")){
     f1tenth_testbed_gym_rviz_pub_ = create_publisher<AckermannDriveStamped>("/drive", 1);
+  }
+
+  // Hunter SE
+  if(vehicle_name_=="hunter" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin")){
+    hunter_simulator_throttle_pub_ = create_publisher<Float32>("/autodrive/hunter_1/throttle_command", 1);
+    hunter_simulator_steering_pub_ = create_publisher<Float32>("/autodrive/hunter_1/steering_command", 1);
+  }
+  if(vehicle_name_=="hunter" && (controller_mode_=="testbed")){
+    hunter_testbed_pub_ = create_publisher<Twist>("/cmd_vel", 1);
   }
 
   traj_marker_pub_ = create_publisher<Marker>("/traj_marker", 1);
@@ -153,8 +162,8 @@ void AutoDRIVETrajectoryFollower::onTimer()
     std_msgs::msg::Float32 steering_msg;
     throttle_msg.data = cmd.longitudinal.acceleration;
     steering_msg.data = cmd.lateral.steering_tire_angle;
-    nigel_simulator_throttle_pub_->publish(throttle_msg);
-    nigel_simulator_steering_pub_->publish(steering_msg);
+    nigel_digitaltwin_throttle_pub_->publish(throttle_msg);
+    nigel_digitaltwin_steering_pub_->publish(steering_msg);
   }
   
   // F1TEHTH
@@ -173,6 +182,22 @@ void AutoDRIVETrajectoryFollower::onTimer()
     f1tenth_testbed_gym_rviz_pub_->publish(ackermann_msg);
   }
 
+  // Hunter SE
+  if(vehicle_name_=="hunter" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin")){
+    std_msgs::msg::Float32 throttle_msg;
+    std_msgs::msg::Float32 steering_msg;
+    throttle_msg.data = cmd.longitudinal.acceleration;
+    steering_msg.data = cmd.lateral.steering_tire_angle;
+    hunter_simulator_throttle_pub_->publish(throttle_msg);
+    hunter_simulator_steering_pub_->publish(steering_msg);
+  }
+  if(vehicle_name_=="hunter" && (controller_mode_=="testbed")){
+    geometry_msgs::msg::Twist twist_msg;
+    twist_msg.linear.x = cmd.longitudinal.speed * 0.2;
+    twist_msg.angular.z = cmd.lateral.steering_tire_angle * 10;
+    hunter_testbed_pub_->publish(twist_msg);
+  }
+
 }
 
 void AutoDRIVETrajectoryFollower::updateClosest()
@@ -188,7 +213,7 @@ double AutoDRIVETrajectoryFollower::calcAccCmd()
   const auto ego_vel = odometry_->twist.twist.linear.x;
   const auto target_vel = use_external_target_vel_ ? external_target_vel_ : traj_vel;
   const auto vel_err = ego_vel - target_vel;
-  const auto acc = std::clamp(-kp_lon_ * vel_err, -acc_lim_, acc_lim_);
+  const auto acc = std::clamp(-kp_lon_ * vel_err, 0.01/*-acc_lim_*/, acc_lim_);
   return acc;
 }
 

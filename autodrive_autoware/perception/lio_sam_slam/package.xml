@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>lio_sam</name>
+  <version>1.0.0</version>
+  <description>Tightly-Coupled LIDAR Inertial Odometry via Smoothing and Mapping</description>
+
+  <!-- Original Maintainer -->
+  <maintainer email="shant@mit.edu">Tixiao Shan</maintainer>
+  <!-- ROS 2 & Autoware Integration Maintainers -->
+  <maintainer email="tsamak@clemson.edu">Tanmay Vilas Samak</maintainer>
+  <maintainer email="csamak@clemson.edu">Chinmay Vilas Samak</maintainer>
+
+  <license>BSD3</license>
+
+  <url type="repository">https://autodrive-ecosystem.github.io</url>
+  <url type="repository">https://github.com/Tinker-Twins/AutoDRIVE</url>
+  <url type="bugtracker">https://github.com/Tinker-Twins/AutoDRIVE/issues</url>
+
+  <!-- Original Author -->
+  <author>Tixiao Shan</author>
+  <!-- ROS 2 & Autoware Integration Authors -->
+  <author email="tsamak@clemson.edu">Tanmay Vilas Samak</author>
+  <author email="csamak@clemson.edu">Chinmay Vilas Samak</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+  <build_depend>rclcpp</build_depend>
+  <build_depend>rclpy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
+  <build_depend>tf2_sensor_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>pcl_msgs</build_depend>
+  <build_depend>tf2_eigen</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>OpenCV</build_depend>
+  <build_depend>PCL</build_depend>
+  <build_depend>GTSAM</build_depend>
+  <build_depend>Eigen</build_depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>pcl_msgs</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
+  <exec_depend>tf2_sensor_msgs</exec_depend>
+  <exec_depend>tf2_eigen</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>OpenCV</exec_depend>
+  <exec_depend>PCL</exec_depend>
+  <exec_depend>GTSAM</exec_depend>
+  <exec_depend>Eigen</exec_depend>
+  
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

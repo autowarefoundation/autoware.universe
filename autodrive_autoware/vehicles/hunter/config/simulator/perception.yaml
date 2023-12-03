@@ -1,0 +1,44 @@
+particle_filter:
+  ros__parameters:
+    # Topic Names
+    laserscan_topic: '/scan_out'
+    odometry_topic: '/autodrive/hunter_1/odom' # /particle_filter/pose/odom
+    # Frame IDs
+    map_frame_id: '/map'
+    pf_frame_id: '/pf'
+    # Range Data Downsampling
+    angle_step: 18
+    max_particles: 1500
+    squash_factor: 2.2
+    # Visualization
+    viz: 1
+    max_viz_particles: 60
+    # Ray Marching Method
+    range_method: 'rmgpu'
+    theta_discretization: 112
+    # Range Data Filtering
+    max_range: 10
+    fine_timing: 0
+    publish_odom: 1
+    # Sensor Model Constants
+    z_short: 0.01
+    z_max: 0.07
+    z_rand: 0.12
+    z_hit: 0.75
+    sigma_hit: 8.0
+    # Motion Model Dispersion Constants
+    motion_dispersion_x: 0.05
+    motion_dispersion_y: 0.025
+    motion_dispersion_theta: 0.25
+    # Sensor Model Variant (variant 2 good for rmgpu, 3 doesn't work for rmgpu)
+    rangelib_variant: 2
+
+map_server:
+  ros__parameters:
+    # Assuming Map File is in `maps` Directory
+    map: 'tiny_town'
+
+pcd_map_loader:
+  ros__parameters:
+    # Assuming Map File is in `maps` Directory
+    map: 'tiny_town'

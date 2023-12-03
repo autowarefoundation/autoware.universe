@@ -53,13 +53,18 @@ public:
 
 private:
   // Nigel
-  rclcpp::Publisher<Float32>::SharedPtr nigel_simulator_throttle_pub_;
-  rclcpp::Publisher<Float32>::SharedPtr nigel_simulator_steering_pub_;
+  rclcpp::Publisher<Float32>::SharedPtr nigel_digitaltwin_throttle_pub_;
+  rclcpp::Publisher<Float32>::SharedPtr nigel_digitaltwin_steering_pub_;
 
   // F1TENTH
   rclcpp::Publisher<Float32>::SharedPtr f1tenth_simulator_throttle_pub_;
   rclcpp::Publisher<Float32>::SharedPtr f1tenth_simulator_steering_pub_;
   rclcpp::Publisher<AckermannDriveStamped>::SharedPtr f1tenth_testbed_gym_rviz_pub_;
+
+  // Hunter SE
+  rclcpp::Publisher<Float32>::SharedPtr hunter_simulator_throttle_pub_;
+  rclcpp::Publisher<Float32>::SharedPtr hunter_simulator_steering_pub_;
+  rclcpp::Publisher<Twist>::SharedPtr hunter_testbed_pub_;
 
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;

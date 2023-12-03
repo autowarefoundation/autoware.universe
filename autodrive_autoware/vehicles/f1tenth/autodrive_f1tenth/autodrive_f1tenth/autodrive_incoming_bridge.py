@@ -290,8 +290,8 @@ def bridge(sid, data):
         publish_odom_data(position, orientation_quaternion, angular_velocity, linear_acceleration)
         # Cooordinate transforms
         broadcast_transform("f1tenth_1", "world", position, orientation_quaternion) # Vehicle frame defined at center of rear axle
-        broadcast_transform("left_encoder", "f1tenth_1", np.asarray([0.0, 0.12, 0.0]), quaternion_from_euler(0.0, 120*encoder_angles[0]%6.283, 0.0))
-        broadcast_transform("right_encoder", "f1tenth_1", np.asarray([0.0, -0.12, 0.0]), quaternion_from_euler(0.0, 120*encoder_angles[1]%6.283, 0.0))
+        broadcast_transform("left_encoder", "f1tenth_1", np.asarray([0.0, 0.118, 0.0]), quaternion_from_euler(0.0, 120*encoder_angles[0]%6.283, 0.0))
+        broadcast_transform("right_encoder", "f1tenth_1", np.asarray([0.0, -0.118, 0.0]), quaternion_from_euler(0.0, 120*encoder_angles[1]%6.283, 0.0))
         broadcast_transform("ips", "f1tenth_1", np.asarray([0.08, 0.0, 0.055]), np.asarray([0.0, 0.0, 0.0, 1.0]))
         broadcast_transform("imu", "f1tenth_1", np.asarray([0.08, 0.0, 0.055]), np.asarray([0.0, 0.0, 0.0, 1.0]))
         broadcast_transform("lidar", "f1tenth_1", np.asarray([0.2733, 0.0, 0.096]), np.asarray([0.0, 0.0, 0.0, 1.0]))
