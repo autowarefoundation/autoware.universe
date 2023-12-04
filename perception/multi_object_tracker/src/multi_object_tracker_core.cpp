@@ -81,6 +81,19 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate", 30.0);
   world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
   bool enable_delay_compensation{declare_parameter("enable_delay_compensation", false)};
+  debug_flag_ = declare_parameter<bool>("debug_flag", false);
+
+  // Debug publishers
+  stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
+  stop_watch_ptr_->tic("cyclic_time");
+  stop_watch_ptr_->tic("processing_time");
+  if (debug_flag_) {
+    debug_publisher_ =
+      std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "multi_object_tracker");
+    debug_tentative_objects_pub_ =
+      create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>(
+        "debug/tentative_objects", rclcpp::QoS{1});
+  }
 
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
     this->get_node_base_interface(), this->get_node_timers_interface());
@@ -126,6 +139,9 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 void MultiObjectTracker::onMeasurement(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg)
 {
+  /* keep the latest input stamp and check transform*/
+  last_input_stamp_ = rclcpp::Time(input_objects_msg->header.stamp);
+  stop_watch_ptr_->toc("processing_time", true);
   const auto self_transform = getTransformAnonymous(
     tf_buffer_, "base_link", world_frame_id_, input_objects_msg->header.stamp);
   if (!self_transform) {
@@ -332,11 +348,16 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     return;
   }
   // Create output msg
-  autoware_auto_perception_msgs::msg::TrackedObjects output_msg;
+  autoware_auto_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
   output_msg.header.stamp = time;
+  tentative_objects_msg.header = output_msg.header;
+
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    if (!shouldTrackerPublish(*itr)) {
+    if (!shouldTrackerPublish(*itr)) {  // for debug purpose
+      autoware_auto_perception_msgs::msg::TrackedObject object;
+      (*itr)->getTrackedObject(time, object);
+      tentative_objects_msg.objects.push_back(object);
       continue;
     }
     autoware_auto_perception_msgs::msg::TrackedObject object;
@@ -346,6 +367,25 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
 
   // Publish
   tracked_objects_pub_->publish(output_msg);
+
+  if (debug_flag_) {
+    // Publish debug info
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+
+    // Publish delay time
+    const rclcpp::Time current_time = this->now();
+    const double elapsed_time_from_sensor_input = (current_time - last_input_stamp_).nanoseconds();
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/elapsed_time_from_sensor_input_ms", elapsed_time_from_sensor_input * 1e-6);
+
+    // Publish tentative objects
+    debug_tentative_objects_pub_->publish(tentative_objects_msg);
+  }
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)
