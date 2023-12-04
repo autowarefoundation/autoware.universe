@@ -26,20 +26,17 @@
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
 import yaml
 
-from launch.actions import IncludeLaunchDescription
-from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-
 def generate_launch_description():
-    config = os.path.join(get_package_share_directory('autodrive_hunter'), 'config/simulator', 'perception.yaml')
-    bog_map_name = yaml.safe_load(open(config, 'r'))['map_server']['ros__parameters']['map']
-
+    config = os.path.join(get_package_share_directory('autodrive_hunter'), 'config/simulator', 'perception_3d.yaml')
     pcd_map_name = yaml.safe_load(open(config, 'r'))['pcd_map_loader']['ros__parameters']['map']
     pcd_map_path = os.path.join(get_package_share_directory('autodrive_hunter'), 'maps', pcd_map_name + '.pcd')
-    
+
     autodrive_incoming_bridge = Node(
             package='autodrive_hunter',
             executable='autodrive_incoming_bridge',
@@ -55,7 +52,7 @@ def generate_launch_description():
             emulate_tty=True,
             output='screen',
     )
-
+    
     world_to_map_tf = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
@@ -74,62 +71,6 @@ def generate_launch_description():
                          'world', 'odom']
     )
 
-    pointcloud_to_laserscan_node = Node(
-            package='pointcloud_to_laserscan',
-            executable='pointcloud_to_laserscan_node',
-            name='pointcloud_to_laserscan',
-            remappings=[
-                ('~/input/pointcloud', '/autodrive/hunter_1/lidar'),
-                ('~/output/laserscan', '/scan_out'),
-                ('~/output/pointcloud', '/cloud_out'),
-                ('~/output/ray', '/ray_out'),
-                ('~/output/stixel', '/stixel_out')
-            ],
-            parameters=[{
-                'target_frame': 'lidar',
-                'transform_tolerance': 0.01, # Time tolerance for transform lookups (sec)
-                'min_height': 0.525, # 0.625 - 0.1 (0.625 is z coordinate of LIDAR frame), Minimum height to sample in the point cloud in meters
-                'max_height': 0.725, # 0.625 + 0.1 (0.625 is z coordinate of LIDAR frame), Maximum height to sample in the point cloud in meters
-                'angle_min': -3.1417, # -PI, Minimum scan angle in radians
-                'angle_max': 3.1417, # PI, Maximum scan angle in radians
-                'angle_increment': 0.01745, # PI/180, Resolution of laser scan in radians per ray
-                'scan_time': 0.1, # 1/10 sec (10 Hz), Scan rate in seconds
-                'range_min': 0.1, # Minimum ranges to return in meters
-                'range_max': 20.0, # Maximum ranges to return in meters
-                'use_inf': True # If disabled, report infinite range (no obstacle) as (range_max + 1). Otherwise report infinite range as (inf)
-            }]
-    )
-
-    map_server_node = Node(
-        package='nav2_map_server',
-        executable='map_server',
-        name='map_server',
-        emulate_tty=True,
-        parameters=[{'yaml_filename': os.path.join(get_package_share_directory('autodrive_hunter'), 'maps', bog_map_name + '.yaml')},
-                    {'topic': 'map'},
-                    {'frame_id': 'map'},
-                    {'output': 'screen'},
-                    {'use_sim_time': True}]
-    )
-    
-    nav_lifecycle_node = Node(
-        package='nav2_lifecycle_manager',
-        executable='lifecycle_manager',
-        name='lifecycle_manager_localization',
-        output='screen',
-        emulate_tty=True,
-        parameters=[{'use_sim_time': True},
-                    {'autostart': True},
-                    {'node_names': ['map_server']}]
-    )
-
-    particle_filter_node = Node(
-        package='particle_filter',
-        executable='particle_filter',
-        name='particle_filter',
-        parameters=[config]
-    )
-
     pointcloud_map_loader = IncludeLaunchDescription(
         XMLLaunchDescriptionSource(
             os.path.join(get_package_share_directory("map_loader"),
@@ -140,12 +81,37 @@ def generate_launch_description():
             'pointcloud_map_path' : pcd_map_path,
             }.items(),
     )
-    
+
+    planning_node = Node(
+        package="recordreplay_planner_nodes",
+        executable="recordreplay_planner_node_exe",
+        name="recordreplay_planner",
+        namespace="planning",
+        output="screen",
+        emulate_tty=True,
+        parameters=["{}/config/simulator/planning.yaml".format(get_package_share_directory('autodrive_hunter')),
+        ],
+    )
+
+    control_node = Node(
+        package="autodrive_trajectory_follower",
+        executable="autodrive_trajectory_follower_exe",
+        name="autodrive_trajectory_follower",
+        output='screen',
+        emulate_tty=True,
+        parameters=["{}/config/simulator/control.yaml".format(get_package_share_directory('autodrive_hunter')),
+        ],
+        remappings=[
+            ("input/kinematics", "/autodrive/hunter_1/odom"),
+            ("input/trajectory", "/planning/trajectory"),
+        ],
+    )
+
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz',
-        arguments=['-d', os.path.join(get_package_share_directory('autodrive_hunter'), 'rviz/simulator', 'localize.rviz')]
+        arguments=['-d', os.path.join(get_package_share_directory('autodrive_hunter'), 'rviz/simulator', 'replay_3d.rviz')]
     )
 
     ld = LaunchDescription()
@@ -153,10 +119,8 @@ def generate_launch_description():
     ld.add_action(autodrive_outgoing_bridge)
     ld.add_action(world_to_map_tf)
     ld.add_action(world_to_odom_tf)
-    ld.add_action(pointcloud_to_laserscan_node)
-    ld.add_action(particle_filter_node)
-    ld.add_action(map_server_node)
-    ld.add_action(nav_lifecycle_node)
     ld.add_action(pointcloud_map_loader)
+    ld.add_action(planning_node)
+    ld.add_action(control_node)
     ld.add_action(rviz_node)
     return ld

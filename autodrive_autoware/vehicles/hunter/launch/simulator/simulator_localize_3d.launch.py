@@ -26,14 +26,17 @@
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
 import yaml
 
 def generate_launch_description():
-    config = os.path.join(get_package_share_directory('autodrive_hunter'), 'config/simulator', 'perception.yaml')
-    map_name = yaml.safe_load(open(config, 'r'))['map_server']['ros__parameters']['map']
-
+    config = os.path.join(get_package_share_directory('autodrive_hunter'), 'config/simulator', 'perception_3d.yaml')
+    pcd_map_name = yaml.safe_load(open(config, 'r'))['pcd_map_loader']['ros__parameters']['map']
+    pcd_map_path = os.path.join(get_package_share_directory('autodrive_hunter'), 'maps', pcd_map_name + '.pcd')
+    
     autodrive_incoming_bridge = Node(
             package='autodrive_hunter',
             executable='autodrive_incoming_bridge',
@@ -49,7 +52,7 @@ def generate_launch_description():
             emulate_tty=True,
             output='screen',
     )
-    
+
     world_to_map_tf = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
@@ -68,66 +71,22 @@ def generate_launch_description():
                          'world', 'odom']
     )
 
-    map_server_node = Node(
-        package='nav2_map_server',
-        executable='map_server',
-        name='map_server',
-        emulate_tty=True,
-        parameters=[{'yaml_filename': os.path.join(get_package_share_directory('autodrive_hunter'), 'maps', map_name + '.yaml')},
-                    {'topic': 'map'},
-                    {'frame_id': 'map'},
-                    {'output': 'screen'},
-                    {'use_sim_time': True}]
+    pointcloud_map_loader = IncludeLaunchDescription(
+        XMLLaunchDescriptionSource(
+            os.path.join(get_package_share_directory("map_loader"),
+                "launch/pointcloud_map_loader.launch.xml",
+            )
+        ),
+        launch_arguments = {
+            'pointcloud_map_path' : pcd_map_path,
+            }.items(),
     )
     
-    nav_lifecycle_node = Node(
-        package='nav2_lifecycle_manager',
-        executable='lifecycle_manager',
-        name='lifecycle_manager_localization',
-        output='screen',
-        emulate_tty=True,
-        parameters=[{'use_sim_time': True},
-                    {'autostart': True},
-                    {'node_names': ['map_server']}]
-    )
-
-    perception_node = Node(
-        package='particle_filter',
-        executable='particle_filter',
-        name='particle_filter',
-        parameters=[config]
-    )
-
-    planning_node = Node(
-        package="recordreplay_planner_nodes",
-        executable="recordreplay_planner_node_exe",
-        name="recordreplay_planner",
-        namespace="planning",
-        output="screen",
-        emulate_tty=True,
-        parameters=["{}/config/simulator/planning.yaml".format(get_package_share_directory('autodrive_hunter')),
-        ],
-    )
-
-    control_node = Node(
-        package="autodrive_trajectory_follower",
-        executable="autodrive_trajectory_follower_exe",
-        name="autodrive_trajectory_follower",
-        output='screen',
-        emulate_tty=True,
-        parameters=["{}/config/simulator/control.yaml".format(get_package_share_directory('autodrive_hunter')),
-        ],
-        remappings=[
-            ("input/kinematics", "/autodrive/hunter_1/odom"),
-            ("input/trajectory", "/planning/trajectory"),
-        ],
-    )
-
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz',
-        arguments=['-d', os.path.join(get_package_share_directory('autodrive_hunter'), 'rviz/simulator', 'replay.rviz')]
+        arguments=['-d', os.path.join(get_package_share_directory('autodrive_hunter'), 'rviz/simulator', 'localize_3d.rviz')]
     )
 
     ld = LaunchDescription()
@@ -135,10 +94,6 @@ def generate_launch_description():
     ld.add_action(autodrive_outgoing_bridge)
     ld.add_action(world_to_map_tf)
     ld.add_action(world_to_odom_tf)
-    ld.add_action(map_server_node)
-    ld.add_action(nav_lifecycle_node)
-    ld.add_action(perception_node)
-    ld.add_action(planning_node)
-    ld.add_action(control_node)
+    ld.add_action(pointcloud_map_loader)
     ld.add_action(rviz_node)
     return ld

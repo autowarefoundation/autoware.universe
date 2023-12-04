@@ -26,36 +26,49 @@
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
-from launch.actions import ExecuteProcess
 from ament_index_python.packages import get_package_share_directory
+import os
+import yaml
 
 def generate_launch_description():
+    config = os.path.join(get_package_share_directory('autodrive_hunter'), 'config/simulator', 'perception_2d.yaml')
+    bog_map_name = yaml.safe_load(open(config, 'r'))['map_server']['ros__parameters']['map']
 
-    return LaunchDescription([
-        Node(
+    autodrive_incoming_bridge = Node(
             package='autodrive_hunter',
             executable='autodrive_incoming_bridge',
             name='autodrive_incoming_bridge',
             emulate_tty=True,
             output='screen',
-        ),
-        Node(
+    )
+
+    autodrive_outgoing_bridge = Node(
             package='autodrive_hunter',
             executable='autodrive_outgoing_bridge',
             name='autodrive_outgoing_bridge',
             emulate_tty=True,
             output='screen',
-        ),
-        Node(
+    )
+    
+    world_to_map_tf = Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='world_to_map_tf',
+            arguments = ['0.000', '0.000', '0.000', # (X, Y, Z) translation
+                         '0.000', '0.000', '0.000', # (Yaw, Pitch, Roll) body-fixed axis rotation
+                         'world', 'map']
+    )
+
+    world_to_odom_tf = Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             name='world_to_odom_tf',
             arguments = ['-1.1', '0.15', '0.03', # (X, Y, Z) translation
                          '0.00', '0.00', '0.00', # (Yaw, Pitch, Roll) body-fixed axis rotation
                          'world', 'odom']
-        ),
-        Node(
+    )
+
+    pointcloud_to_laserscan_node = Node(
             package='pointcloud_to_laserscan',
             executable='pointcloud_to_laserscan_node',
             name='pointcloud_to_laserscan',
@@ -79,15 +92,80 @@ def generate_launch_description():
                 'range_max': 20.0, # Maximum ranges to return in meters
                 'use_inf': True # If disabled, report infinite range (no obstacle) as (range_max + 1). Otherwise report infinite range as (inf)
             }]
-        ),
-        ExecuteProcess(
-            cmd=[['ros2 launch slam_toolbox online_async_launch.py slam_params_file:={}/config/simulator/mapping.yaml'.format(get_package_share_directory('autodrive_hunter'))]],
-            shell=True,
-        ),
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz',
-            arguments=['-d', [FindPackageShare("autodrive_hunter"), '/rviz/simulator', '/slam.rviz',]]
-        ),
-    ])
+    )
+
+    map_server_node = Node(
+        package='nav2_map_server',
+        executable='map_server',
+        name='map_server',
+        emulate_tty=True,
+        parameters=[{'yaml_filename': os.path.join(get_package_share_directory('autodrive_hunter'), 'maps', bog_map_name + '.yaml')},
+                    {'topic': 'map'},
+                    {'frame_id': 'map'},
+                    {'output': 'screen'},
+                    {'use_sim_time': True}]
+    )
+    
+    nav_lifecycle_node = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        emulate_tty=True,
+        parameters=[{'use_sim_time': True},
+                    {'autostart': True},
+                    {'node_names': ['map_server']}]
+    )
+
+    perception_node = Node(
+        package='particle_filter',
+        executable='particle_filter',
+        name='particle_filter',
+        parameters=[config]
+    )
+
+    planning_node = Node(
+        package="recordreplay_planner_nodes",
+        executable="recordreplay_planner_node_exe",
+        name="recordreplay_planner",
+        namespace="planning",
+        output="screen",
+        emulate_tty=True,
+        parameters=["{}/config/simulator/planning.yaml".format(get_package_share_directory('autodrive_hunter')),
+        ],
+    )
+
+    control_node = Node(
+        package="autodrive_trajectory_follower",
+        executable="autodrive_trajectory_follower_exe",
+        name="autodrive_trajectory_follower",
+        output='screen',
+        emulate_tty=True,
+        parameters=["{}/config/simulator/control.yaml".format(get_package_share_directory('autodrive_hunter')),
+        ],
+        remappings=[
+            ("input/kinematics", "/autodrive/hunter_1/odom"),
+            ("input/trajectory", "/planning/trajectory"),
+        ],
+    )
+
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz',
+        arguments=['-d', os.path.join(get_package_share_directory('autodrive_hunter'), 'rviz/simulator', 'replay_2d.rviz')]
+    )
+
+    ld = LaunchDescription()
+    ld.add_action(autodrive_incoming_bridge)
+    ld.add_action(autodrive_outgoing_bridge)
+    ld.add_action(world_to_map_tf)
+    ld.add_action(world_to_odom_tf)
+    ld.add_action(map_server_node)
+    ld.add_action(nav_lifecycle_node)
+    ld.add_action(pointcloud_to_laserscan_node)
+    ld.add_action(perception_node)
+    ld.add_action(planning_node)
+    ld.add_action(control_node)
+    ld.add_action(rviz_node)
+    return ld
