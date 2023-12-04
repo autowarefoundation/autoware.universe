@@ -14,8 +14,8 @@
 
 #include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 
-#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 
@@ -248,8 +248,10 @@ double calcDistanceToSegment(
 DynamicAvoidanceModule::DynamicAvoidanceModule(
   const std::string & name, rclcpp::Node & node,
   std::shared_ptr<DynamicAvoidanceParameters> parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{std::move(parameters)},
   target_objects_manager_{TargetObjectsManager(
     parameters_->successive_num_to_entry_dynamic_avoidance_condition,
@@ -502,7 +504,9 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const bool is_object_aligned_to_path =
       std::abs(obj_angle) < parameters_->max_front_object_angle ||
       M_PI - parameters_->max_front_object_angle < std::abs(obj_angle);
-    if (object.is_object_on_ego_path && is_object_aligned_to_path) {
+    if (
+      object.is_object_on_ego_path && is_object_aligned_to_path &&
+      parameters_->min_front_object_vel < object.vel) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
         "[DynamicAvoidance] Ignore obstacle (%s) since it is to be followed.", obj_uuid.c_str());
@@ -591,11 +595,20 @@ void DynamicAvoidanceModule::updateTargetObjects()
       path_points_for_object_polygon, object.pose, obj_points, object.vel, obj_path, object.shape,
       time_to_collision);
     const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoid(
-      path_points_for_object_polygon, obj_points, is_collision_left, object.lat_vel, prev_object);
+      path_points_for_object_polygon, obj_points, object.vel, is_collision_left, object.lat_vel,
+      prev_object);
+    if (!lat_offset_to_avoid) {
+      RCLCPP_INFO_EXPRESSION(
+        getLogger(), parameters_->enable_debug_info,
+        "[DynamicAvoidance] Ignore obstacle (%s) since the object laterally covers the ego's path "
+        "enough",
+        obj_uuid.c_str());
+      continue;
+    }
 
     const bool should_be_avoided = true;
     target_objects_manager_.updateObject(
-      obj_uuid, lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided,
+      obj_uuid, lon_offset_to_avoid, *lat_offset_to_avoid, is_collision_left, should_be_avoided,
       polygon_generation_method);
   }
 }
@@ -675,6 +688,11 @@ bool DynamicAvoidanceModule::willObjectCutIn(
   const double obj_tangent_vel, const LatLonOffset & lat_lon_offset,
   PolygonGenerationMethod & polygon_generation_method) const
 {
+  // Ignore oncoming object
+  if (obj_tangent_vel < parameters_->min_cut_in_object_vel) {
+    return false;
+  }
+
   // Check if ego's path and object's path are close.
   const bool will_object_cut_in = [&]() {
     for (const auto & predicted_path_point : predicted_path.path) {
@@ -714,7 +732,7 @@ DynamicAvoidanceModule::DecisionWithReason DynamicAvoidanceModule::willObjectCut
   const std::optional<DynamicAvoidanceObject> & prev_object) const
 {
   // Ignore oncoming object
-  if (obj_tangent_vel < 0) {
+  if (obj_tangent_vel < parameters_->min_cut_out_object_vel) {
     return DecisionWithReason{false};
   }
 
@@ -772,13 +790,13 @@ std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> DynamicAvoidanceModule
     // left lane
     const auto opt_left_lane = rh->getLeftLanelet(lane);
     if (opt_left_lane) {
-      left_lanes.push_back(opt_left_lane.get());
+      left_lanes.push_back(opt_left_lane.value());
     }
 
     // right lane
     const auto opt_right_lane = rh->getRightLanelet(lane);
     if (opt_right_lane) {
-      right_lanes.push_back(opt_right_lane.get());
+      right_lanes.push_back(opt_right_lane.value());
     }
 
     const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
@@ -869,7 +887,7 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
 
   if (obj_vel < 0) {
     const double valid_start_length_to_avoid =
-      calcValidStartLengthToAvoid(path_points_for_object_polygon, obj_seg_idx, obj_path, obj_shape);
+      calcValidStartLengthToAvoid(obj_path, obj_pose, obj_shape);
     return MinMaxValue{
       std::max(obj_lon_offset.min_value - start_length_to_avoid, valid_start_length_to_avoid),
       obj_lon_offset.max_value + end_length_to_avoid};
@@ -880,9 +898,13 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
 }
 
 double DynamicAvoidanceModule::calcValidStartLengthToAvoid(
-  const std::vector<PathPointWithLaneId> & path_points_for_object_polygon, const size_t obj_seg_idx,
-  const PredictedPath & obj_path, const autoware_auto_perception_msgs::msg::Shape & obj_shape) const
+  const PredictedPath & obj_path, const geometry_msgs::msg::Pose & obj_pose,
+  const autoware_auto_perception_msgs::msg::Shape & obj_shape) const
 {
+  const auto prev_module_path_points = getPreviousModuleOutput().path->points;
+  const size_t obj_seg_idx =
+    motion_utils::findNearestSegmentIndex(prev_module_path_points, obj_pose.position);
+
   const size_t valid_obj_path_end_idx = [&]() {
     int ego_path_idx = obj_seg_idx + 1;
     for (size_t obj_path_idx = 0; obj_path_idx < obj_path.path.size(); ++obj_path_idx) {
@@ -890,8 +912,8 @@ double DynamicAvoidanceModule::calcValidStartLengthToAvoid(
       for (; 0 < ego_path_idx; --ego_path_idx) {
         const double dist_to_segment = calcDistanceToSegment(
           obj_path.path.at(obj_path_idx).position,
-          path_points_for_object_polygon.at(ego_path_idx).point.pose.position,
-          path_points_for_object_polygon.at(ego_path_idx - 1).point.pose.position);
+          prev_module_path_points.at(ego_path_idx).point.pose.position,
+          prev_module_path_points.at(ego_path_idx - 1).point.pose.position);
         if (
           dist_to_segment < planner_data_->parameters.vehicle_width / 2.0 +
                               parameters_->lat_offset_from_obstacle +
@@ -910,10 +932,10 @@ double DynamicAvoidanceModule::calcValidStartLengthToAvoid(
   return -motion_utils::calcSignedArcLength(obj_path.path, 0, valid_obj_path_end_idx);
 }
 
-MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
+std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
   const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
-  const Polygon2d & obj_points, const bool is_collision_left, const double obj_normal_vel,
-  const std::optional<DynamicAvoidanceObject> & prev_object) const
+  const Polygon2d & obj_points, const double obj_vel, const bool is_collision_left,
+  const double obj_normal_vel, const std::optional<DynamicAvoidanceObject> & prev_object) const
 {
   // calculate min/max lateral offset from object to path
   const auto obj_lat_abs_offset = [&]() {
@@ -924,12 +946,24 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
         motion_utils::findNearestSegmentIndex(path_points_for_object_polygon, geom_obj_point);
       const double obj_point_lat_offset = motion_utils::calcLateralOffset(
         path_points_for_object_polygon, geom_obj_point, obj_point_seg_idx);
-      obj_lat_abs_offset_vec.push_back(std::abs(obj_point_lat_offset));
+      obj_lat_abs_offset_vec.push_back(obj_point_lat_offset);
     }
     return getMinMaxValues(obj_lat_abs_offset_vec);
   }();
   const double min_obj_lat_abs_offset = obj_lat_abs_offset.min_value;
   const double max_obj_lat_abs_offset = obj_lat_abs_offset.max_value;
+
+  if (parameters_->min_front_object_vel < obj_vel) {
+    const double obj_width_on_ego_path =
+      std::min(max_obj_lat_abs_offset, planner_data_->parameters.vehicle_width / 2.0) -
+      std::max(min_obj_lat_abs_offset, -planner_data_->parameters.vehicle_width / 2.0);
+    if (
+      planner_data_->parameters.vehicle_width *
+        parameters_->max_front_object_ego_path_lat_cover_ratio <
+      obj_width_on_ego_path) {
+      return std::nullopt;
+    }
+  }
 
   // calculate bound min and max lateral offset
   const double min_bound_lat_offset = [&]() {
@@ -937,15 +971,20 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
       std::max(0.0, obj_normal_vel * (is_collision_left ? -1.0 : 1.0)) *
       parameters_->max_time_for_lat_shift;
     const double raw_min_bound_lat_offset =
-      min_obj_lat_abs_offset - parameters_->lat_offset_from_obstacle - lat_abs_offset_to_shift;
+      (is_collision_left ? min_obj_lat_abs_offset : max_obj_lat_abs_offset) -
+      (parameters_->lat_offset_from_obstacle + lat_abs_offset_to_shift) *
+        (is_collision_left ? 1.0 : -1.0);
     const double min_bound_lat_abs_offset_limit =
       planner_data_->parameters.vehicle_width / 2.0 - parameters_->max_lat_offset_to_avoid;
-    return std::max(raw_min_bound_lat_offset, min_bound_lat_abs_offset_limit) *
-           (is_collision_left ? 1.0 : -1.0);
+
+    if (is_collision_left) {
+      return std::max(raw_min_bound_lat_offset, min_bound_lat_abs_offset_limit);
+    }
+    return std::min(raw_min_bound_lat_offset, -min_bound_lat_abs_offset_limit);
   }();
   const double max_bound_lat_offset =
-    (max_obj_lat_abs_offset + parameters_->lat_offset_from_obstacle) *
-    (is_collision_left ? 1.0 : -1.0);
+    (is_collision_left ? max_obj_lat_abs_offset : min_obj_lat_abs_offset) +
+    (is_collision_left ? 1.0 : -1.0) * parameters_->lat_offset_from_obstacle;
 
   // filter min_bound_lat_offset
   const auto prev_min_lat_avoid_to_offset = [&]() -> std::optional<double> {

@@ -195,7 +195,7 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   lane_(lane),
   planner_param_(planner_param)
 {
-  velocity_factor_.init(VelocityFactor::V2I_GATE_CONTROL_ENTER);
+  velocity_factor_.init(PlanningBehavior::VIRTUAL_TRAFFIC_LIGHT);
 
   // Get map data
   const auto instrument = reg_elem_.getVirtualTrafficLight();
@@ -555,7 +555,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
         motion_utils::calcLongitudinalOffsetPoint(path->points, ego_pose.position, 0.0);
 
       if (ego_pos_on_path) {
-        new_collision.point = ego_pos_on_path.get();
+        new_collision.point = ego_pos_on_path.value();
         new_collision.index = ego_seg_idx;
         insertStopVelocityAtCollision(new_collision, 0.0, path);
       }

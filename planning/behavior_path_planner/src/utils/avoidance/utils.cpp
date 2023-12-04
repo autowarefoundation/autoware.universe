@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/avoidance/utils.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/traffic_light_utils.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
@@ -235,7 +235,7 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 
 namespace filtering_utils
 {
-bool isTargetObjectType(
+bool isAvoidanceTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   const auto object_type = utils::getHighestProbLabel(object.classification);
@@ -244,7 +244,19 @@ bool isTargetObjectType(
     return false;
   }
 
-  return parameters->object_parameters.at(object_type).is_target;
+  return parameters->object_parameters.at(object_type).is_avoidance_target;
+}
+
+bool isSafetyCheckTargetObjectType(
+  const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  const auto object_type = utils::getHighestProbLabel(object.classification);
+
+  if (parameters->object_parameters.count(object_type) == 0) {
+    return false;
+  }
+
+  return parameters->object_parameters.at(object_type).is_safety_check_target;
 }
 
 bool isVehicleTypeObject(const ObjectData & object)
@@ -500,7 +512,7 @@ bool isSatisfiedWithCommonCondition(
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   // Step1. filtered by target object type.
-  if (!isTargetObjectType(object.object, parameters)) {
+  if (!isAvoidanceTargetObjectType(object.object, parameters)) {
     object.reason = AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE;
     return false;
   }
@@ -741,22 +753,24 @@ size_t findPathIndexFromArclength(
   return path_arclength_arr.size() - 1;
 }
 
-std::vector<size_t> concatParentIds(
-  const std::vector<size_t> & ids1, const std::vector<size_t> & ids2)
+std::vector<UUID> concatParentIds(const std::vector<UUID> & ids1, const std::vector<UUID> & ids2)
 {
-  std::set<size_t> id_set{ids1.begin(), ids1.end()};
-  for (const auto id : ids2) {
-    id_set.insert(id);
+  std::vector<UUID> ret;
+  for (const auto id2 : ids2) {
+    if (std::any_of(ids1.begin(), ids1.end(), [&id2](const auto & id1) { return id1 == id2; })) {
+      continue;
+    }
+    ret.push_back(id2);
   }
-  const auto v = std::vector<size_t>{id_set.begin(), id_set.end()};
-  return v;
+
+  return ret;
 }
 
-std::vector<size_t> calcParentIds(const AvoidLineArray & lines1, const AvoidLine & lines2)
+std::vector<UUID> calcParentIds(const AvoidLineArray & lines1, const AvoidLine & lines2)
 {
   // Get the ID of the original AP whose transition area overlaps with the given AP,
   // and set it to the parent id.
-  std::set<uint64_t> ids;
+  std::vector<UUID> ret;
   for (const auto & al : lines1) {
     const auto p_s = al.start_longitudinal;
     const auto p_e = al.end_longitudinal;
@@ -766,9 +780,9 @@ std::vector<size_t> calcParentIds(const AvoidLineArray & lines1, const AvoidLine
       continue;
     }
 
-    ids.insert(al.id);
+    ret.push_back(al.id);
   }
-  return std::vector<size_t>(ids.begin(), ids.end());
+  return ret;
 }
 
 double lerpShiftLengthOnArc(double arc, const AvoidLine & ap)
@@ -961,14 +975,14 @@ lanelet::ConstLanelets getTargetLanelets(
 
     const auto opt_left_lane = rh->getLeftLanelet(lane);
     if (opt_left_lane) {
-      target_lanelets.push_back(opt_left_lane.get());
+      target_lanelets.push_back(opt_left_lane.value());
     } else {
       l_offset = left_offset;
     }
 
     const auto opt_right_lane = rh->getRightLanelet(lane);
     if (opt_right_lane) {
-      target_lanelets.push_back(opt_right_lane.get());
+      target_lanelets.push_back(opt_right_lane.value());
     } else {
       r_offset = right_offset;
     }
@@ -1033,7 +1047,7 @@ lanelet::ConstLanelets getExtendLanes(
 
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
-  boost::optional<Pose> & p_out)
+  std::optional<Pose> & p_out)
 {
   const auto decel_point = calcLongitudinalOffsetPoint(path.points, p_src, offset);
 
@@ -1042,8 +1056,8 @@ void insertDecelPoint(
     return;
   }
 
-  const auto seg_idx = findNearestSegmentIndex(path.points, decel_point.get());
-  const auto insert_idx = insertTargetPoint(seg_idx, decel_point.get(), path.points);
+  const auto seg_idx = findNearestSegmentIndex(path.points, decel_point.value());
+  const auto insert_idx = insertTargetPoint(seg_idx, decel_point.value(), path.points);
 
   if (!insert_idx) {
     // TODO(Satoshi OTA)  Think later the process in the case of no decel point found.
@@ -1051,7 +1065,7 @@ void insertDecelPoint(
   }
 
   const auto insertVelocity = [&insert_idx](PathWithLaneId & path, const float v) {
-    for (size_t i = insert_idx.get(); i < path.points.size(); ++i) {
+    for (size_t i = insert_idx.value(); i < path.points.size(); ++i) {
       const auto & original_velocity = path.points.at(i).point.longitudinal_velocity_mps;
       path.points.at(i).point.longitudinal_velocity_mps = std::min(original_velocity, v);
     }
@@ -1059,7 +1073,7 @@ void insertDecelPoint(
 
   insertVelocity(path, velocity);
 
-  p_out = getPose(path.points.at(insert_idx.get()));
+  p_out = getPose(path.points.at(insert_idx.value()));
 }
 
 void fillObjectEnvelopePolygon(
@@ -1663,12 +1677,12 @@ lanelet::ConstLanelets getAdjacentLane(
   for (const auto & lane : ego_succeeding_lanes) {
     const auto opt_left_lane = rh->getLeftLanelet(lane);
     if (!is_right_shift && opt_left_lane) {
-      lanes.push_back(opt_left_lane.get());
+      lanes.push_back(opt_left_lane.value());
     }
 
     const auto opt_right_lane = rh->getRightLanelet(lane);
     if (is_right_shift && opt_right_lane) {
-      lanes.push_back(opt_right_lane.get());
+      lanes.push_back(opt_right_lane.value());
     }
 
     const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
@@ -1703,10 +1717,12 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
     });
   };
 
-  const auto to_predicted_objects = [&p](const auto & objects) {
+  const auto to_predicted_objects = [&p, &parameters](const auto & objects) {
     PredictedObjects ret{};
-    std::for_each(objects.begin(), objects.end(), [&p, &ret](const auto & object) {
-      ret.objects.push_back(object.object);
+    std::for_each(objects.begin(), objects.end(), [&p, &ret, &parameters](const auto & object) {
+      if (filtering_utils::isSafetyCheckTargetObjectType(object.object, parameters)) {
+        ret.objects.push_back(object.object);
+      }
     });
     return ret;
   };

@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -54,7 +54,9 @@ using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 
 struct ObjectParameter
 {
-  bool is_target{false};
+  bool is_avoidance_target{false};
+
+  bool is_safety_check_target{false};
 
   size_t execute_num{1};
 
@@ -284,6 +286,9 @@ struct AvoidanceParameters
   bool use_shorten_margin_immediately{false};
 
   // policy
+  std::string policy_approval{"per_shift_line"};
+
+  // policy
   std::string policy_deceleration{"best_effort"};
 
   // policy
@@ -414,10 +419,10 @@ struct AvoidLine : public ShiftLine
   double end_longitudinal = 0.0;
 
   // for unique_id
-  uint64_t id = 0;
+  UUID id{};
 
   // for the case the point is created by merge other points
-  std::vector<uint64_t> parent_ids{};
+  std::vector<UUID> parent_ids{};
 
   // corresponding object
   ObjectData object{};
@@ -494,10 +499,7 @@ struct AvoidancePlanningData
   ObjectDataArray other_objects;
 
   // nearest object that should be avoid
-  boost::optional<ObjectData> stop_target_object{boost::none};
-
-  // raw shift point
-  AvoidLineArray raw_shift_line{};
+  std::optional<ObjectData> stop_target_object{std::nullopt};
 
   // new shift point
   AvoidLineArray new_shift_line{};

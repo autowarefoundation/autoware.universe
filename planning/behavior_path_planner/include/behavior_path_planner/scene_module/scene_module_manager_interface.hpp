@@ -65,6 +65,8 @@ public:
         rtc_type == "" ? snake_case_name : snake_case_name + "_" + rtc_type;
       rtc_interface_ptr_map_.emplace(
         rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name, enable_rtc_));
+      objects_of_interest_marker_interface_ptr_map_.emplace(
+        rtc_type, std::make_shared<ObjectsOfInterestMarkerInterface>(node, rtc_interface_name));
     }
 
     pub_info_marker_ = node->create_publisher<MarkerArray>("~/info/" + name, 20);
@@ -134,21 +136,21 @@ public:
       const auto opt_stop_pose = m.lock()->getStopPose();
       if (!!opt_stop_pose) {
         const auto virtual_wall = createStopVirtualWallMarker(
-          opt_stop_pose.get(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
+          opt_stop_pose.value(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
         appendMarkerArray(virtual_wall, &markers);
       }
 
       const auto opt_slow_pose = m.lock()->getSlowPose();
       if (!!opt_slow_pose) {
         const auto virtual_wall = createSlowDownVirtualWallMarker(
-          opt_slow_pose.get(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
+          opt_slow_pose.value(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
         appendMarkerArray(virtual_wall, &markers);
       }
 
       const auto opt_dead_pose = m.lock()->getDeadPose();
       if (!!opt_dead_pose) {
         const auto virtual_wall = createDeadLineVirtualWallMarker(
-          opt_dead_pose.get(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
+          opt_dead_pose.value(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
         appendMarkerArray(virtual_wall, &markers);
       }
 
@@ -304,6 +306,9 @@ protected:
   std::unique_ptr<SceneModuleInterface> idle_module_ptr_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
+
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
+    objects_of_interest_marker_interface_ptr_map_;
 
   bool enable_simultaneous_execution_as_approved_module_{false};
 

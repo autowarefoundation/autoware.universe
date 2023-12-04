@@ -16,8 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/utils/side_shift/side_shift_parameters.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -43,7 +43,9 @@ public:
   SideShiftModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<SideShiftParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
