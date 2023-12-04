@@ -60,8 +60,8 @@ nav:
       - 'Frenet Planner': planning/sampling_based_planner/frenet_planner
       - 'Bezier Sampler': planning/sampling_based_planner/bezier_sampler
     - 'Surround Obstacle Checker':
-      - 'About': planning/surround_obstacle_checker
-      - 'About(日本語)': planning/surround_obstacle_checker/surround_obstacle_checker-design.ja
+      - 'About Surround Obstacle Checker': planning/surround_obstacle_checker
+      - 'About Surround Obstacle Checker (Japanese)': planning/surround_obstacle_checker/surround_obstacle_checker-design.ja
     - 'Motion Velocity Smoother':
       - 'About Motion Velocity Smoother': planning/motion_velocity_smoother
       - 'About Motion Velocity Smoother (Japanese)': planning/motion_velocity_smoother/README.ja
