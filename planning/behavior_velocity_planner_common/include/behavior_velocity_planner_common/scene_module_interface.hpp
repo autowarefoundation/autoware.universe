@@ -19,6 +19,7 @@
 #include <behavior_velocity_planner_common/velocity_factor_interface.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rtc_interface/rtc_interface.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 
@@ -47,6 +48,8 @@ namespace behavior_velocity_planner
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using builtin_interfaces::msg::Time;
+using objects_of_interest_marker_interface::ColorName;
+using objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
 using rtc_interface::RTCInterface;
 using tier4_autoware_utils::DebugPublisher;
 using tier4_debug_msgs::msg::Float64Stamped;
@@ -199,6 +202,8 @@ public:
 protected:
   RTCInterface rtc_interface_;
   std::unordered_map<int64_t, UUID> map_uuid_;
+
+  ObjectsOfInterestMarkerInterface objects_of_interest_marker_interface_;
 
   virtual void sendRTC(const Time & stamp);
 

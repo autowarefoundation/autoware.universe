@@ -192,7 +192,9 @@ void SceneModuleManagerInterface::unregisterModule(
 
 SceneModuleManagerInterfaceWithRTC::SceneModuleManagerInterfaceWithRTC(
   rclcpp::Node & node, const char * module_name, const bool enable_rtc)
-: SceneModuleManagerInterface(node, module_name), rtc_interface_(&node, module_name, enable_rtc)
+: SceneModuleManagerInterface(node, module_name),
+  rtc_interface_(&node, module_name, enable_rtc),
+  objects_of_interest_marker_interface_(&node, module_name)
 {
 }
 
