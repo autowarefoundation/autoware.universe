@@ -34,6 +34,8 @@ struct PlannerParam
   double minimum_object_velocity;
   double stop_distance_buffer;
   double time_horizon;
+  double hysteresis;
+  double decision_duration_buffer;
   double ego_longitudinal_offset;
   double ego_lateral_offset;
 };

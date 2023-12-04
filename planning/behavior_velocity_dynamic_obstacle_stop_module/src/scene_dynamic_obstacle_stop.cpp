@@ -45,12 +45,14 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), params_(std::move(planner_param))
 {
+  prev_stop_decision_time_ = rclcpp::Time(int64_t{0}, clock->get_clock_type());
   velocity_factor_.init(VelocityFactor::UNKNOWN);
 }
 
 std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicted_objects(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & params)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & params,
+  const double hysteresis)
 {
   std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filtered_objects;
   for (const auto & object : objects.objects) {
@@ -59,7 +61,7 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
     const auto front_position = tier4_autoware_utils::transformPoint(
       tier4_autoware_utils::createPoint(object.shape.dimensions.x / 2.0, 0.0, 0.0),
       object.kinematics.initial_pose_with_covariance.pose);
-    const auto lateral_offset_limit = width / 2 + params.ego_lateral_offset;
+    const auto lateral_offset_limit = width / 2 + params.ego_lateral_offset + hysteresis;
     const auto is_close_to_path = [&](const auto & p) {
       return std::abs(motion_utils::calcLateralOffset(path.points, p)) < lateral_offset_limit;
     };
@@ -124,13 +126,17 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   ego_data.longitudinal_offset_to_first_path_idx = motion_utils::calcLongitudinalOffsetToSegment(
     ego_data.path.points, ego_data.first_path_idx, ego_data.pose.position);
   const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
+  const auto has_decided_to_stop =
+    (clock_->now() - prev_stop_decision_time_).seconds() < params_.decision_duration_buffer;
+  double hysteresis = has_decided_to_stop ? params_.hysteresis : 0.0;
 
   stopwatch.tic("filter");
   const auto dynamic_obstacles =
-    filter_predicted_objects(*planner_data_->predicted_objects, ego_data.path, params_);
+    filter_predicted_objects(*planner_data_->predicted_objects, ego_data.path, params_, hysteresis);
   const auto filter_duration_us = stopwatch.toc("filter");
   stopwatch.tic("footprints");
-  const auto obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_);
+  const auto obstacle_forward_footprints =
+    make_forward_footprints(dynamic_obstacles, params_, hysteresis);
   const auto footprints_duration_us = stopwatch.toc("footprints");
   const auto min_stop_distance =
     motion_utils::calcDecelDistWithJerkAndAccConstraints(
@@ -158,6 +164,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     if (stop_pose) {
       debug_data_.stop_pose = *stop_pose;
       motion_utils::insertStopPoint(*stop_pose, 0.0, path->points);
+      prev_stop_decision_time_ = clock_->now();
     }
   }
 

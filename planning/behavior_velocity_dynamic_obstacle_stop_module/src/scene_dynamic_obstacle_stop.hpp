@@ -47,6 +47,8 @@ public:
 
 private:
   PlannerParam params_;
+  rclcpp::Time prev_stop_decision_time_;
+  geometry_msgs::msg::Pose prev_stop_pose_;
 
 protected:
   int64_t module_id_{};

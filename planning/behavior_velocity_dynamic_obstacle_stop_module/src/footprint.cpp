@@ -27,24 +27,25 @@ namespace behavior_velocity_planner::dynamic_obstacle_stop
 {
 tier4_autoware_utils::MultiPolygon2d make_forward_footprints(
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & obstacles,
-  const PlannerParam & params)
+  const PlannerParam & params, const double hysteresis)
 {
   tier4_autoware_utils::MultiPolygon2d forward_footprints;
   for (const auto & obstacle : obstacles)
     forward_footprints.push_back(project_to_pose(
-      make_forward_footprint(obstacle, params),
+      make_forward_footprint(obstacle, params, hysteresis),
       obstacle.kinematics.initial_pose_with_covariance.pose));
   return forward_footprints;
 }
 
 tier4_autoware_utils::Polygon2d make_forward_footprint(
-  const autoware_auto_perception_msgs::msg::PredictedObject & obstacle, const PlannerParam & params)
+  const autoware_auto_perception_msgs::msg::PredictedObject & obstacle, const PlannerParam & params,
+  const double hysteresis)
 {
   const auto & shape = obstacle.shape.dimensions;
   const auto longitudinal_offset =
     shape.x / 2.0 +
     obstacle.kinematics.initial_twist_with_covariance.twist.linear.x * params.time_horizon;
-  const auto lateral_offset = (shape.y + params.extra_object_width) / 2.0;
+  const auto lateral_offset = (shape.y + params.extra_object_width) / 2.0 + hysteresis;
   return tier4_autoware_utils::Polygon2d{
     {{longitudinal_offset, -lateral_offset},
      {longitudinal_offset, lateral_offset},
