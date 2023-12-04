@@ -132,7 +132,7 @@ public:
     std::for_each(manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->reset(); });
     approved_module_ptrs_.clear();
     candidate_module_ptrs_.clear();
-    root_lanelet_ = boost::none;
+    root_lanelet_ = std::nullopt;
     resetProcessingTime();
   }
 
@@ -275,6 +275,8 @@ private:
 
     module_ptr->publishRTCStatus();
 
+    module_ptr->publishObjectsOfInterestMarker();
+
     processing_time_.at(module_ptr->name()) += stop_watch_.toc(module_ptr->name(), true);
 
     return result;
@@ -298,6 +300,7 @@ private:
   {
     module_ptr->onExit();
     module_ptr->publishRTCStatus();
+    module_ptr->publishObjectsOfInterestMarker();
     module_ptr.reset();
   }
 
@@ -421,7 +424,7 @@ private:
 
   std::string getNames(const std::vector<SceneModulePtr> & modules) const;
 
-  boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
+  std::optional<lanelet::ConstLanelet> root_lanelet_{std::nullopt};
 
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
 
