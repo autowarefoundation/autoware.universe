@@ -20,6 +20,7 @@
 
 #include <behavior_velocity_planner_common/utilization/debug.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <motion_utils/distance/distance.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -76,13 +77,6 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
   return filtered_objects;
 }
 
-double calculate_min_stop_distance(const EgoData & ego_data)
-{
-  // TODO(Maxime): simplify;
-  const auto time_to_stop_at_max_decel = ego_data.velocity / ego_data.max_decel;
-  return (ego_data.velocity / 2) * time_to_stop_at_max_decel;
-}
-
 std::optional<geometry_msgs::msg::Point> find_earliest_collision(
   const EgoData & ego_data,
   const tier4_autoware_utils::MultiPolygon2d & obstacle_forward_footprints, DebugData & debug_data)
@@ -129,8 +123,6 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     motion_utils::findNearestSegmentIndex(ego_data.path.points, ego_data.pose.position);
   ego_data.longitudinal_offset_to_first_path_idx = motion_utils::calcLongitudinalOffsetToSegment(
     ego_data.path.points, ego_data.first_path_idx, ego_data.pose.position);
-  ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
-  ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;
   const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
 
   stopwatch.tic("filter");
@@ -140,7 +132,13 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   stopwatch.tic("footprints");
   const auto obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_);
   const auto footprints_duration_us = stopwatch.toc("footprints");
-  const auto min_stop_distance = calculate_min_stop_distance(ego_data);
+  const auto min_stop_distance =
+    motion_utils::calcDecelDistWithJerkAndAccConstraints(
+      planner_data_->current_velocity->twist.linear.x, 0.0,
+      planner_data_->current_acceleration->accel.accel.linear.x,
+      planner_data_->max_stop_acceleration_threshold, -planner_data_->max_stop_jerk_threshold,
+      planner_data_->max_stop_jerk_threshold)
+      .get_value_or(0.0);
   stopwatch.tic("collisions");
   const auto collision =
     find_earliest_collision(ego_data, obstacle_forward_footprints, debug_data_);
