@@ -25,6 +25,7 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -48,7 +49,7 @@ public:
 private:
   PlannerParam params_;
   rclcpp::Time prev_stop_decision_time_;
-  geometry_msgs::msg::Pose prev_stop_pose_;
+  std::optional<geometry_msgs::msg::Pose> current_stop_pose_;
 
 protected:
   int64_t module_id_{};

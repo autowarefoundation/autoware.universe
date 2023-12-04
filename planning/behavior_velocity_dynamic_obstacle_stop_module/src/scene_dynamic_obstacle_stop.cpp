@@ -129,6 +129,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   const auto has_decided_to_stop =
     (clock_->now() - prev_stop_decision_time_).seconds() < params_.decision_duration_buffer;
   double hysteresis = has_decided_to_stop ? params_.hysteresis : 0.0;
+  if (!has_decided_to_stop) current_stop_pose_.reset();
 
   stopwatch.tic("filter");
   const auto dynamic_obstacles =
@@ -162,11 +163,15 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
                              : motion_utils::calcLongitudinalOffsetPose(
                                  ego_data.path.points, ego_data.pose.position, min_stop_distance);
     if (stop_pose) {
-      debug_data_.stop_pose = *stop_pose;
-      motion_utils::insertStopPoint(*stop_pose, 0.0, path->points);
+      const auto use_new_stop_pose = !has_decided_to_stop || motion_utils::calcSignedArcLength(
+                                                               path->points, stop_pose->position,
+                                                               current_stop_pose_->position) > 0.0;
+      if (use_new_stop_pose) current_stop_pose_ = *stop_pose;
       prev_stop_decision_time_ = clock_->now();
     }
   }
+
+  if (current_stop_pose_) motion_utils::insertStopPoint(*current_stop_pose_, 0.0, path->points);
 
   const auto total_time_us = stopwatch.toc();
   // TODO(Maxime): set to DEBUG
@@ -217,13 +222,16 @@ MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
 
 motion_utils::VirtualWalls DynamicObstacleStopModule::createVirtualWalls()
 {
-  if (!debug_data_.stop_pose) return {};
-  motion_utils::VirtualWall virtual_wall;
-  virtual_wall.text = "dynamic_obstacle_stop";
-  virtual_wall.longitudinal_offset = params_.ego_longitudinal_offset;
-  virtual_wall.style = motion_utils::VirtualWallType::stop;
-  virtual_wall.pose = *debug_data_.stop_pose;
-  return {virtual_wall};
+  motion_utils::VirtualWalls virtual_walls{};
+  if (current_stop_pose_) {
+    motion_utils::VirtualWall virtual_wall;
+    virtual_wall.text = "dynamic_obstacle_stop";
+    virtual_wall.longitudinal_offset = params_.ego_longitudinal_offset;
+    virtual_wall.style = motion_utils::VirtualWallType::stop;
+    virtual_wall.pose = *current_stop_pose_;
+    virtual_walls.push_back(virtual_wall);
+  }
+  return virtual_walls;
 }
 
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop
