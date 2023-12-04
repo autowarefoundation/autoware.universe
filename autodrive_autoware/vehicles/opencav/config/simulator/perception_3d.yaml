@@ -1,0 +1,4 @@
+pcd_map_loader:
+  ros__parameters:
+    # Assuming Map File is in `maps` Directory
+    map: 'city_downtown'

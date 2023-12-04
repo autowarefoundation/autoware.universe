@@ -7,7 +7,7 @@
     goal_distance_threshold_m: 0.75
     goal_angle_threshold_rad: 1.57
     loop_trajectory: False
-    loop_max_gap_m: 0.6 # Twice car-length
+    loop_max_gap_m: 1.634 # Twice car-length
     skip_first_velocity: False
     # ROS Parameters
     vehicle_state: '/autodrive/hunter_1/odom' # /particle_filter/pose/odom

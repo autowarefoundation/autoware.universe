@@ -57,7 +57,7 @@ pub_sub_dict = AttrDict({
         {'topic': '/autodrive/hunter_1/steering', 'type': Float32, 'name': 'pub_steering'},
         {'topic': '/autodrive/hunter_1/left_encoder', 'type': JointState, 'name': 'pub_left_encoder'},
         {'topic': '/autodrive/hunter_1/right_encoder', 'type': JointState, 'name': 'pub_right_encoder'},
-        {'topic': '/autodrive/hunter_1/ips', 'type': Point, 'name': 'pub_ips'},
+        {'topic': '/autodrive/hunter_1/gnss', 'type': Point, 'name': 'pub_gnss'},
         {'topic': '/autodrive/hunter_1/imu', 'type': Imu, 'name': 'pub_imu'},
         {'topic': '/autodrive/hunter_1/odom', 'type': Odometry, 'name': 'pub_odom'},
         {'topic': '/autodrive/hunter_1/lidar', 'type': PointCloud2, 'name': 'pub_lidar'},

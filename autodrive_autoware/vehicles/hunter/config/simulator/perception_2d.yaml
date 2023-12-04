@@ -17,7 +17,7 @@ particle_filter:
     range_method: 'rmgpu'
     theta_discretization: 112
     # Range Data Filtering
-    max_range: 10
+    max_range: 20
     fine_timing: 0
     publish_odom: 1
     # Sensor Model Constants

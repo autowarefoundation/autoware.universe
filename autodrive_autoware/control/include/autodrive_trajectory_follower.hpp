@@ -66,6 +66,12 @@ private:
   rclcpp::Publisher<Float32>::SharedPtr hunter_simulator_steering_pub_;
   rclcpp::Publisher<Twist>::SharedPtr hunter_testbed_pub_;
 
+  // OpenCAV
+  rclcpp::Publisher<Float32>::SharedPtr opencav_digitaltwin_throttle_pub_;
+  rclcpp::Publisher<Float32>::SharedPtr opencav_digitaltwin_steering_pub_;
+  rclcpp::Publisher<Float32>::SharedPtr opencav_digitaltwin_brake_pub_;
+  rclcpp::Publisher<Float32>::SharedPtr opencav_digitaltwin_handbrake_pub_;
+
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
   rclcpp::Publisher<Marker>::SharedPtr traj_marker_pub_;

@@ -234,8 +234,8 @@ def publish_encoder_data(encoder_angles):
     publishers['pub_left_encoder'].publish(create_joint_state_msg(encoder_angles[0], "left_encoder", "left_encoder"))
     publishers['pub_right_encoder'].publish(create_joint_state_msg(encoder_angles[1], "right_encoder", "right_encoder"))
 
-def publish_ips_data(position):
-    publishers['pub_ips'].publish(create_point_msg(position))
+def publish_gnss_data(position):
+    publishers['pub_gnss'].publish(create_point_msg(position))
 
 def publish_imu_data(orientation_quaternion, angular_velocity, linear_acceleration):
     publishers['pub_imu'].publish(create_imu_msg(orientation_quaternion, angular_velocity, linear_acceleration))
@@ -309,9 +309,9 @@ def bridge(sid, data):
         # Wheel encoders
         encoder_angles = np.fromstring(data["V1 Encoder Angles"], dtype=float, sep=' ')
         publish_encoder_data(encoder_angles)
-        # IPS
+        # GNSS
         position = np.fromstring(data["V1 Position"], dtype=float, sep=' ')
-        publish_ips_data(position)
+        publish_gnss_data(position)
         # IMU
         orientation_quaternion = np.fromstring(data["V1 Orientation Quaternion"], dtype=float, sep=' ')
         angular_velocity = np.fromstring(data["V1 Angular Velocity"], dtype=float, sep=' ')
@@ -323,7 +323,7 @@ def bridge(sid, data):
         broadcast_transform("hunter_1", "world", position, orientation_quaternion) # Vehicle frame defined at center of rear axle
         broadcast_transform("left_encoder", "hunter_1", np.asarray([0.0, 0.26, 0.0]), quaternion_from_euler(0.0, 120*encoder_angles[0]%6.283, 0.0))
         broadcast_transform("right_encoder", "hunter_1", np.asarray([0.0, -0.26, 0.0]), quaternion_from_euler(0.0, 120*encoder_angles[1]%6.283, 0.0))
-        broadcast_transform("ips", "hunter_1", np.asarray([0.04, 0.0, 0.358]), np.asarray([0.0, 0.0, 0.0, 1.0]))
+        broadcast_transform("gnss", "hunter_1", np.asarray([0.04, 0.0, 0.358]), np.asarray([0.0, 0.0, 0.0, 1.0]))
         broadcast_transform("imu", "hunter_1", np.asarray([0.04, 0.0, 0.358]), np.asarray([0.0, 0.0, 0.0, 1.0]))
         broadcast_transform("lidar", "hunter_1", np.asarray([0.275, 0.0, 0.625]), np.asarray([0.0, 0.0, 0.0, 1.0]))
         broadcast_transform("front_camera", "hunter_1", np.asarray([0.475, 0.0, 0.453]), np.asarray([0.0, 0.0871557, 0.0, 0.9961947]))

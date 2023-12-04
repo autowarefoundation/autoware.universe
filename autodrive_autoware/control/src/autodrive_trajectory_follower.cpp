@@ -72,6 +72,14 @@ AutoDRIVETrajectoryFollower::AutoDRIVETrajectoryFollower(const rclcpp::NodeOptio
     hunter_testbed_pub_ = create_publisher<Twist>("/cmd_vel", 1);
   }
 
+  // OpenCAV
+  if(vehicle_name_=="opencav" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin" || controller_mode_=="testbed")){
+    opencav_digitaltwin_throttle_pub_ = create_publisher<Float32>("/autodrive/opencav_1/throttle_command", 1);
+    opencav_digitaltwin_steering_pub_ = create_publisher<Float32>("/autodrive/opencav_1/steering_command", 1);
+    opencav_digitaltwin_brake_pub_ = create_publisher<Float32>("/autodrive/opencav_1/brake_command", 1);
+    opencav_digitaltwin_handbrake_pub_ = create_publisher<Float32>("/autodrive/opencav_1/handbrake_command", 1);
+  }
+
   traj_marker_pub_ = create_publisher<Marker>("/traj_marker", 1);
   goal_marker_pub_ = create_publisher<Marker>("/goal_marker", 1);
 
@@ -196,6 +204,24 @@ void AutoDRIVETrajectoryFollower::onTimer()
     twist_msg.linear.x = cmd.longitudinal.speed * 0.2;
     twist_msg.angular.z = cmd.lateral.steering_tire_angle * 10;
     hunter_testbed_pub_->publish(twist_msg);
+  }
+
+  // OpenCAV
+  if(vehicle_name_=="opencav" && (controller_mode_=="simulator" || controller_mode_=="digitaltwin" || controller_mode_=="testbed")){
+    std_msgs::msg::Float32 throttle_msg;
+    std_msgs::msg::Float32 steering_msg;
+    std_msgs::msg::Float32 brake_msg;
+    std_msgs::msg::Float32 handbrake_msg;
+    throttle_msg.data = cmd.longitudinal.acceleration;
+    steering_msg.data = cmd.lateral.steering_tire_angle;
+    if(cmd.longitudinal.acceleration==0.0 && cmd.longitudinal.speed==0.0){
+      brake_msg.data = 1.0;
+      handbrake_msg.data = 1.0;
+    }
+    opencav_digitaltwin_throttle_pub_->publish(throttle_msg);
+    opencav_digitaltwin_steering_pub_->publish(steering_msg);
+    opencav_digitaltwin_brake_pub_->publish(brake_msg);
+    opencav_digitaltwin_handbrake_pub_->publish(handbrake_msg);
   }
 
 }
