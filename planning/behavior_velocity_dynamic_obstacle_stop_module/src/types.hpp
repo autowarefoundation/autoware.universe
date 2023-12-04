@@ -21,11 +21,17 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
+#include <boost/geometry/index/rtree.hpp>
+
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner::dynamic_obstacle_stop
 {
+typedef std::pair<tier4_autoware_utils::Box2d, size_t> BoxIndexPair;
+typedef boost::geometry::index::rtree<BoxIndexPair, boost::geometry::index::rstar<16, 4>> Rtree;
+
 /// @brief parameters for the "out of lane" module
 struct PlannerParam
 {
@@ -46,21 +52,25 @@ struct EgoData
   size_t first_path_idx{};
   double longitudinal_offset_to_first_path_idx;  // [m]
   geometry_msgs::msg::Pose pose;
+  tier4_autoware_utils::MultiPolygon2d path_footprints;
+  Rtree rtree;
 };
 
 /// @brief debug data
 struct DebugData
 {
-  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> dynamic_obstacles{};
   tier4_autoware_utils::MultiPolygon2d obstacle_footprints{};
   size_t prev_dynamic_obstacles_nb{};
-  tier4_autoware_utils::MultiPoint2d collisions{};
+  tier4_autoware_utils::MultiPolygon2d collisions{};
+  size_t prev_collisions_nb{};
+  tier4_autoware_utils::MultiPolygon2d ego_footprints{};
+  size_t prev_ego_footprints_nb{};
   std::optional<geometry_msgs::msg::Pose> stop_pose{};
   void reset_data()
   {
-    dynamic_obstacles.clear();
     obstacle_footprints.clear();
     collisions.clear();
+    ego_footprints.clear();
     stop_pose.reset();
   }
 };

@@ -22,10 +22,12 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
+#include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
 
 #include <limits>
@@ -50,62 +52,81 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
 }
 
 std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicted_objects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & params,
-  const double hysteresis)
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double min_vel)
 {
   std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filtered_objects;
-  for (const auto & object : objects.objects) {
-    const auto vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
-    const auto width = object.shape.dimensions.y + params.extra_object_width;
-    const auto front_position = tier4_autoware_utils::transformPoint(
-      tier4_autoware_utils::createPoint(object.shape.dimensions.x / 2.0, 0.0, 0.0),
-      object.kinematics.initial_pose_with_covariance.pose);
-    const auto lateral_offset_limit = width / 2 + params.ego_lateral_offset + hysteresis;
-    const auto is_close_to_path = [&](const auto & p) {
-      return std::abs(motion_utils::calcLateralOffset(path.points, p)) < lateral_offset_limit;
-    };
-    const auto is_driving_toward_ego = [&]() {
-      return motion_utils::calcSignedArcLength(
-               path.points, object.kinematics.initial_pose_with_covariance.pose.position,
-               front_position) < 0.0;
-    };
+  const auto is_vehicle = [](const auto & o) {
+    return std::find_if(o.classification.begin(), o.classification.end(), [](const auto & c) {
+             return c.label == autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
+                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
+                    c.label ==
+                      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
+                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
+           }) != o.classification.end();
+  };
+  for (const auto & object : objects.objects)
     if (
-      vel >= params.minimum_object_velocity && is_driving_toward_ego() &&
-      is_close_to_path(object.kinematics.initial_pose_with_covariance.pose.position) &&
-      is_close_to_path(front_position))
+      is_vehicle(object) &&
+      object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_vel)
       filtered_objects.push_back(object);
-  }
   return filtered_objects;
 }
 
 std::optional<geometry_msgs::msg::Point> find_earliest_collision(
   const EgoData & ego_data,
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
   const tier4_autoware_utils::MultiPolygon2d & obstacle_forward_footprints, DebugData & debug_data)
 {
-  std::optional<geometry_msgs::msg::Point> earliest_collision;
-  tier4_autoware_utils::LineString2d path_ls;
-  for (auto i = ego_data.first_path_idx + 1; i < ego_data.path.points.size(); ++i) {
-    const auto & p = ego_data.path.points[i].point.pose.position;
-    path_ls.emplace_back(p.x, p.y);
-  }
-  if (!path_ls.empty() && boost::geometry::within(path_ls.front(), obstacle_forward_footprints))
-    return geometry_msgs::msg::Point().set__x(path_ls.front().x()).set__y(path_ls.front().y());
-  // TODO(Maxime): if need better perf, check collisions for each segment of the path_ls
-  tier4_autoware_utils::MultiPoint2d collision_points;
-  boost::geometry::intersection(path_ls, obstacle_forward_footprints, collision_points);
-  debug_data.collisions = collision_points;
-  auto min_l = std::numeric_limits<double>::max();
-  for (const auto & p : collision_points) {
-    const auto collision = geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y());
-    const auto l = motion_utils::calcSignedArcLength(
-      ego_data.path.points, ego_data.path.points.front().point.pose.position, collision);
-    if (l < min_l) {
-      min_l = l;
-      earliest_collision = collision;
+  auto earliest_idx = ego_data.path_footprints.size();
+  auto earliest_arc_length = motion_utils::calcArcLength(ego_data.path.points);
+  std::optional<geometry_msgs::msg::Point> earliest_collision_point;
+  debug_data.collisions.clear();
+  std::vector<BoxIndexPair> rough_collisions;
+  for (auto obstacle_idx = 0UL; obstacle_idx < objects.size(); ++obstacle_idx) {
+    rough_collisions.clear();
+    const auto & obstacle_pose = objects[obstacle_idx].kinematics.initial_pose_with_covariance.pose;
+    const auto & obstacle_footprint = obstacle_forward_footprints[obstacle_idx];
+    ego_data.rtree.query(
+      boost::geometry::index::intersects(obstacle_footprint), std::back_inserter(rough_collisions));
+    for (const auto & rough_collision : rough_collisions) {
+      const auto path_idx = rough_collision.second;
+      const auto & ego_footprint = ego_data.path_footprints[path_idx];
+      const auto & ego_pose = ego_data.path.points[ego_data.first_path_idx + path_idx].point.pose;
+      const auto angle_diff = tier4_autoware_utils::normalizeRadian(
+        tf2::getYaw(ego_pose.orientation) - tf2::getYaw(obstacle_pose.orientation));
+      if (path_idx <= earliest_idx && std::abs(angle_diff) > (M_PI_2 + M_PI_4)) {
+        tier4_autoware_utils::MultiPoint2d collision_points;
+        boost::geometry::intersection(
+          obstacle_footprint.outer(), ego_footprint.outer(), collision_points);
+        earliest_idx = path_idx;
+        for (const auto & coll_p : collision_points) {
+          auto p = geometry_msgs::msg::Point().set__x(coll_p.x()).set__y(coll_p.y());
+          const auto arc_length =
+            motion_utils::calcSignedArcLength(ego_data.path.points, ego_data.first_path_idx, p);
+          if (arc_length < earliest_arc_length) {
+            earliest_arc_length = arc_length;
+            debug_data.collisions = {obstacle_footprint, ego_footprint};
+            earliest_collision_point = p;
+          }
+        }
+      }
     }
   }
-  return earliest_collision;
+  return earliest_collision_point;
+}
+
+void make_ego_footprint_rtree(EgoData & ego_data, const PlannerParam & params)
+{
+  for (const auto & p : ego_data.path.points)
+    ego_data.path_footprints.push_back(tier4_autoware_utils::toFootprint(
+      p.point.pose, params.ego_longitudinal_offset, 0.0, params.ego_lateral_offset * 2.0));
+  for (auto i = 0UL; i < ego_data.path_footprints.size(); ++i) {
+    const auto box =
+      boost::geometry::return_envelope<tier4_autoware_utils::Box2d>(ego_data.path_footprints[i]);
+    ego_data.rtree.insert(std::make_pair(box, i));
+  }
 }
 
 bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -125,16 +146,16 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     motion_utils::findNearestSegmentIndex(ego_data.path.points, ego_data.pose.position);
   ego_data.longitudinal_offset_to_first_path_idx = motion_utils::calcLongitudinalOffsetToSegment(
     ego_data.path.points, ego_data.first_path_idx, ego_data.pose.position);
-  const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
+  const auto dynamic_obstacles =
+    filter_predicted_objects(*planner_data_->predicted_objects, params_.minimum_object_velocity);
+  make_ego_footprint_rtree(ego_data, params_);
   const auto has_decided_to_stop =
     (clock_->now() - prev_stop_decision_time_).seconds() < params_.decision_duration_buffer;
   double hysteresis = has_decided_to_stop ? params_.hysteresis : 0.0;
   if (!has_decided_to_stop) current_stop_pose_.reset();
 
-  stopwatch.tic("filter");
-  const auto dynamic_obstacles =
-    filter_predicted_objects(*planner_data_->predicted_objects, ego_data.path, params_, hysteresis);
-  const auto filter_duration_us = stopwatch.toc("filter");
+  const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
+
   stopwatch.tic("footprints");
   const auto obstacle_forward_footprints =
     make_forward_footprints(dynamic_obstacles, params_, hysteresis);
@@ -148,7 +169,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
       .get_value_or(0.0);
   stopwatch.tic("collisions");
   const auto collision =
-    find_earliest_collision(ego_data, obstacle_forward_footprints, debug_data_);
+    find_earliest_collision(ego_data, dynamic_obstacles, obstacle_forward_footprints, debug_data_);
   const auto collisions_duration_us = stopwatch.toc("collisions");
   if (collision) {
     const auto arc_length_diff =
@@ -177,11 +198,10 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   // TODO(Maxime): set to DEBUG
   RCLCPP_WARN(
     logger_,
-    "Total time = %2.2fus\n\tpreprocessing = %2.2fus\n\tfilter = %2.2fus\n\tfootprints = "
+    "Total time = %2.2fus\n\tpreprocessing = %2.2fus\n\tfootprints = "
     "%2.2fus\n\tcollisions = %2.2fus\n",
-    total_time_us, preprocessing_duration_us, filter_duration_us, footprints_duration_us,
-    collisions_duration_us);
-  debug_data_.dynamic_obstacles = dynamic_obstacles;
+    total_time_us, preprocessing_duration_us, footprints_duration_us, collisions_duration_us);
+  debug_data_.ego_footprints = ego_data.path_footprints;
   debug_data_.obstacle_footprints = obstacle_forward_footprints;
   return true;
 }
@@ -190,15 +210,6 @@ MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
 {
   constexpr auto z = 0.0;
   MarkerArray debug_marker_array;
-  // dynamic obstacles
-  const auto obstacle_markers = debug::make_dynamic_obstacle_markers(debug_data_.dynamic_obstacles);
-  debug_marker_array.markers.insert(
-    debug_marker_array.markers.end(), obstacle_markers.begin(), obstacle_markers.end());
-  const auto delete_obstacle_markers = debug::make_delete_markers(
-    obstacle_markers.size(), debug_data_.prev_dynamic_obstacles_nb, "dynamic_obstacles");
-  debug_marker_array.markers.insert(
-    debug_marker_array.markers.end(), delete_obstacle_markers.begin(),
-    delete_obstacle_markers.end());
   // dynamic obstacles footprints
   const auto obstacle_footprint_markers =
     debug::make_polygon_markers(debug_data_.obstacle_footprints, "dynamic_obstacles_footprints", z);
@@ -211,12 +222,30 @@ MarkerArray DynamicObstacleStopModule::createDebugMarkerArray()
   debug_marker_array.markers.insert(
     debug_marker_array.markers.end(), delete_footprint_markers.begin(),
     delete_footprint_markers.end());
+  // ego path footprints
+  const auto ego_footprint_markers =
+    debug::make_polygon_markers(debug_data_.ego_footprints, "ego_footprints", z);
+  debug_marker_array.markers.insert(
+    debug_marker_array.markers.end(), ego_footprint_markers.begin(), ego_footprint_markers.end());
+  const auto delete_ego_footprint_markers = debug::make_delete_markers(
+    ego_footprint_markers.size(), debug_data_.prev_ego_footprints_nb, "ego_footprints");
+  debug_marker_array.markers.insert(
+    debug_marker_array.markers.end(), delete_ego_footprint_markers.begin(),
+    delete_ego_footprint_markers.end());
   // collisions
-  const auto collision_markers = debug::make_collision_markers(debug_data_.collisions, z);
+  auto collision_markers = debug::make_polygon_markers(debug_data_.collisions, "collisions", z);
+  for (auto & m : collision_markers) m.color.r = 1.0;
   debug_marker_array.markers.insert(
     debug_marker_array.markers.end(), collision_markers.begin(), collision_markers.end());
+  const auto delete_collision_markers = debug::make_delete_markers(
+    collision_markers.size(), debug_data_.prev_collisions_nb, "collisions");
+  debug_marker_array.markers.insert(
+    debug_marker_array.markers.end(), delete_collision_markers.begin(),
+    delete_collision_markers.end());
 
-  debug_data_.prev_dynamic_obstacles_nb = obstacle_markers.size();
+  debug_data_.prev_dynamic_obstacles_nb = obstacle_footprint_markers.size();
+  debug_data_.prev_collisions_nb = collision_markers.size();
+  debug_data_.prev_ego_footprints_nb = ego_footprint_markers.size();
   return debug_marker_array;
 }
 

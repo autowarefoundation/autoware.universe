@@ -84,28 +84,4 @@ std::vector<visualization_msgs::msg::Marker> make_polygon_markers(
   }
   return markers;
 }
-
-std::vector<visualization_msgs::msg::Marker> make_collision_markers(
-  const tier4_autoware_utils::MultiPoint2d & collisions, const double z)
-{
-  std::vector<visualization_msgs::msg::Marker> markers;
-  visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "map";
-  marker.header.stamp = rclcpp::Time(0);
-  marker.ns = "collisions";
-  marker.id = 0;
-  marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 1.0, 10.0);
-  marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0);
-  auto collision = geometry_msgs::msg::Point().set__z(z);
-  for (const auto & p : collisions) {
-    collision.x = p.x();
-    collision.y = p.y();
-    marker.points.push_back(collision);
-  }
-  markers.push_back(marker);
-  return markers;
-}
-
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop::debug
