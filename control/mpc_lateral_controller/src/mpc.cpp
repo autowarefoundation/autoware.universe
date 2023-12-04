@@ -17,6 +17,7 @@
 #include "interpolation/linear_interpolation.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "mpc_lateral_controller/mpc_utils.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <algorithm>
@@ -27,6 +28,12 @@ namespace autoware::motion::control::mpc_lateral_controller
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::normalizeRadian;
 using tier4_autoware_utils::rad2deg;
+
+MPC::MPC(rclcpp::Node & node)
+{
+  m_debug_frenet_predicted_trajectory_pub = node.create_publisher<Trajectory>(
+    "~/debug/predicted_trajectory_in_frenet_coordinate", rclcpp::QoS(1));
+}
 
 bool MPC::calculateMPC(
   const SteeringReport & current_steer, const Odometry & current_kinematics,
@@ -774,9 +781,10 @@ Trajectory MPC::calculatePredictedTrajectory(
   const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
   const MPCTrajectory & reference_trajectory, const double dt) const
 {
-  const auto predicted_mpc_trajectory = m_vehicle_model_ptr->calculatePredictedTrajectory(
-    mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
-    dt);
+  const auto predicted_mpc_trajectory =
+    m_vehicle_model_ptr->calculatePredictedTrajectoryInWorldCoordinate(
+      mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
+      dt);
 
   // do not over the reference trajectory
   const auto predicted_length = MPCUtils::calcMPCTrajectoryArcLength(reference_trajectory);
@@ -784,6 +792,17 @@ Trajectory MPC::calculatePredictedTrajectory(
     MPCUtils::clipTrajectoryByLength(predicted_mpc_trajectory, predicted_length);
 
   const auto predicted_trajectory = MPCUtils::convertToAutowareTrajectory(clipped_trajectory);
+
+  // Publish trajectory in relative coordinate for debug purpose.
+  if (m_debug_publish_predicted_trajectory) {
+    const auto frenet = m_vehicle_model_ptr->calculatePredictedTrajectoryInFrenetCoordinate(
+      mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
+      dt);
+    const auto frenet_clipped = MPCUtils::convertToAutowareTrajectory(
+      MPCUtils::clipTrajectoryByLength(frenet, predicted_length));
+    m_debug_frenet_predicted_trajectory_pub->publish(frenet_clipped);
+  }
+
   return predicted_trajectory;
 }
 

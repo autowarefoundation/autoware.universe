@@ -19,6 +19,7 @@
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
@@ -180,7 +181,8 @@ protected:
 /* cppcheck-suppress syntaxError */
 TEST_F(MPCTest, InitializeAndCalculate)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   EXPECT_FALSE(mpc.hasVehicleModel());
   EXPECT_FALSE(mpc.hasQPSolver());
 
@@ -208,7 +210,8 @@ TEST_F(MPCTest, InitializeAndCalculate)
 
 TEST_F(MPCTest, InitializeAndCalculateRightTurn)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   EXPECT_FALSE(mpc.hasVehicleModel());
   EXPECT_FALSE(mpc.hasQPSolver());
 
@@ -239,7 +242,8 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
 
 TEST_F(MPCTest, OsqpCalculate)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   initializeMPC(mpc);
   const auto current_kinematics = makeOdometry(dummy_straight_trajectory.points.front().pose, 0.0);
   mpc.setReferenceTrajectory(dummy_straight_trajectory, trajectory_param, current_kinematics);
@@ -265,7 +269,8 @@ TEST_F(MPCTest, OsqpCalculate)
 
 TEST_F(MPCTest, OsqpCalculateRightTurn)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   initializeMPC(mpc);
   const auto current_kinematics =
     makeOdometry(dummy_right_turn_trajectory.points.front().pose, 0.0);
@@ -292,7 +297,8 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
 
 TEST_F(MPCTest, KinematicsNoDelayCalculate)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   initializeMPC(mpc);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
@@ -321,7 +327,8 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
 
 TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   initializeMPC(mpc);
   const auto current_kinematics =
     makeOdometry(dummy_right_turn_trajectory.points.front().pose, 0.0);
@@ -351,7 +358,8 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
 
 TEST_F(MPCTest, DynamicCalculate)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   initializeMPC(mpc);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
@@ -375,7 +383,8 @@ TEST_F(MPCTest, DynamicCalculate)
 
 TEST_F(MPCTest, MultiSolveWithBuffer)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
   mpc.setVehicleModel(vehicle_model_ptr);
@@ -412,7 +421,8 @@ TEST_F(MPCTest, MultiSolveWithBuffer)
 
 TEST_F(MPCTest, FailureCases)
 {
-  MPC mpc;
+  auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
+  MPC mpc(node);
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
     std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
   mpc.setVehicleModel(vehicle_model_ptr);

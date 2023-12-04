@@ -221,6 +221,7 @@ private:
 
   double m_min_prediction_length = 5.0;  // Minimum prediction distance.
 
+  rclcpp::Publisher<Trajectory>::SharedPtr m_debug_frenet_predicted_trajectory_pub;
   /**
    * @brief Get variables for MPC calculation.
    * @param trajectory The reference trajectory.
@@ -425,8 +426,10 @@ public:
   double ego_nearest_dist_threshold = 3.0;  // Threshold for nearest index search based on distance.
   double ego_nearest_yaw_threshold = M_PI_2;  // Threshold for nearest index search based on yaw.
 
+  bool m_debug_publish_predicted_trajectory = false;  // Flag to publish debug predicted trajectory
+
   //!< Constructor.
-  MPC() = default;
+  explicit MPC(rclcpp::Node & node);
 
   /**
    * @brief Calculate control command using the MPC algorithm.

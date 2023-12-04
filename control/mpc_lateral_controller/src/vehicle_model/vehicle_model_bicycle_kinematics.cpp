@@ -69,7 +69,7 @@ void KinematicsBicycleModel::calculateReferenceInput(Eigen::MatrixXd & u_ref)
   u_ref(0, 0) = std::atan(m_wheelbase * m_curvature);
 }
 
-MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectory(
+MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordinate(
   [[maybe_unused]] const Eigen::MatrixXd & a_d, [[maybe_unused]] const Eigen::MatrixXd & b_d,
   [[maybe_unused]] const Eigen::MatrixXd & c_d, [[maybe_unused]] const Eigen::MatrixXd & w_d,
   const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
@@ -121,6 +121,31 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectory(
     mpc_predicted_trajectory.push_back(
       state_w(0), state_w(1), t.z.at(i), state_w(2), t.vx.at(i), t.k.at(i), t.smooth_k.at(i),
       t.relative_time.at(i));
+  }
+  return mpc_predicted_trajectory;
+}
+
+MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInFrenetCoordinate(
+  const Eigen::MatrixXd & a_d, const Eigen::MatrixXd & b_d,
+  [[maybe_unused]] const Eigen::MatrixXd & c_d, const Eigen::MatrixXd & w_d,
+  const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
+  const MPCTrajectory & reference_trajectory, [[maybe_unused]] const double dt) const
+{
+  // Relative coordinate x = [lat_err, yaw_err, steer]
+
+  Eigen::VectorXd Xex = a_d * x0 + b_d * Uex + w_d;
+  MPCTrajectory mpc_predicted_trajectory;
+  const auto DIM_X = getDimX();
+  const auto & t = reference_trajectory;
+
+  for (size_t i = 0; i < reference_trajectory.size(); ++i) {
+    const auto lateral_error = Xex(i * DIM_X);  // model dependent
+    const auto yaw_error = Xex(i * DIM_X + 1);  // model dependent
+    const auto x = t.x.at(i) - std::sin(t.yaw.at(i)) * lateral_error;
+    const auto y = t.y.at(i) + std::cos(t.yaw.at(i)) * lateral_error;
+    const auto yaw = t.yaw.at(i) + yaw_error;
+    mpc_predicted_trajectory.push_back(
+      x, y, t.z.at(i), yaw, t.vx.at(i), t.k.at(i), t.smooth_k.at(i), t.relative_time.at(i));
   }
   return mpc_predicted_trajectory;
 }

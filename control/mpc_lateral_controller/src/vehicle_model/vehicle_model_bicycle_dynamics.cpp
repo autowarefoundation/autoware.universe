@@ -87,15 +87,26 @@ void DynamicsBicycleModel::calculateReferenceInput(Eigen::MatrixXd & u_ref)
   u_ref(0, 0) = m_wheelbase * m_curvature + Kv * vel * vel * m_curvature;
 }
 
-MPCTrajectory DynamicsBicycleModel::calculatePredictedTrajectory(
+MPCTrajectory DynamicsBicycleModel::calculatePredictedTrajectoryInWorldCoordinate(
   const Eigen::MatrixXd & a_d, const Eigen::MatrixXd & b_d,
   [[maybe_unused]] const Eigen::MatrixXd & c_d, const Eigen::MatrixXd & w_d,
   const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
   const MPCTrajectory & reference_trajectory, [[maybe_unused]] const double dt) const
 {
-  // Calculate in the relative coordinate for the reference trajectory.
-  // TODO(someone): It is better to integrate in the world coordinate.
+  RCLCPP_ERROR(
+    rclcpp::get_logger("control.trajectory_follower.lateral_controller"),
+    "Predicted trajectory calculation in world coordinate is not supported in dynamic model. "
+    "Calculate in the Frenet coordinate instead.");
+  return calculatePredictedTrajectoryInFrenetCoordinate(
+    a_d, b_d, c_d, w_d, x0, Uex, reference_trajectory, dt);
+}
 
+MPCTrajectory DynamicsBicycleModel::calculatePredictedTrajectoryInFrenetCoordinate(
+  const Eigen::MatrixXd & a_d, const Eigen::MatrixXd & b_d,
+  [[maybe_unused]] const Eigen::MatrixXd & c_d, const Eigen::MatrixXd & w_d,
+  const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
+  const MPCTrajectory & reference_trajectory, [[maybe_unused]] const double dt) const
+{
   // state = [e, de, th, dth]
   // e      : lateral error
   // de     : derivative of lateral error
