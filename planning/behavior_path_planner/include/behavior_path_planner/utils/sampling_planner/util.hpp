@@ -30,6 +30,8 @@ struct SoftConstraintsInputs
 {
   Pose goal_pose;
   Pose ego_pose;
+  behavior_path_planner::PlanResult reference_path;
+  behavior_path_planner::PlanResult prev_module_path;
   std::optional<sampler_common::Path> prev_path;
   lanelet::ConstLanelets current_lanes;
 };
@@ -46,7 +48,6 @@ inline void evaluateSoftConstraints(
   std::vector<double> & constraints_results)
 {
   constraints_results.clear();
-  constraints_results.resize(soft_constraints.size());
   double constraints_evaluation = 0.0;
   for (const auto & f : soft_constraints) {
     const auto value = f(path, constraints, input_data);
@@ -63,13 +64,12 @@ inline void evaluateHardConstraints(
   std::vector<bool> & constraints_results)
 {
   constraints_results.clear();
-  constraints_results.resize(hard_constraints.size());
   bool constraints_passed = true;
   int idx = 0;
   for (const auto & f : hard_constraints) {
     const bool constraint_check = f(path, constraints, footprint);
     constraints_passed &= constraint_check;
-    constraints_results[idx] = constraint_check;
+    constraints_results.push_back(constraint_check);
     ++idx;
   }
 
