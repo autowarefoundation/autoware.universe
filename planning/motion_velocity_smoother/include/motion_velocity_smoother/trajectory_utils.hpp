@@ -77,7 +77,6 @@ std::vector<double> calcVelocityProfileWithConstantJerkAndAccelerationLimit(
 
 double calcStopDistance(const TrajectoryPoints & trajectory, const size_t closest);
 
-} // namespace motion_velocity_smoother::trajectory_utils
-
+}  // namespace motion_velocity_smoother::trajectory_utils
 
 #endif  // MOTION_VELOCITY_SMOOTHER__TRAJECTORY_UTILS_HPP_
