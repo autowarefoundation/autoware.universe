@@ -34,12 +34,23 @@ struct Landmark
   geometry_msgs::msg::Pose pose;
 };
 
-std::vector<Landmark> parse_landmarks(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
-  const std::string & target_subtype, const rclcpp::Logger & logger);
+class LandmarkManager
+{
+public:
+  void parse_landmarks(
+    const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
+    const std::string & target_subtype, const rclcpp::Logger & logger);
 
-visualization_msgs::msg::MarkerArray convert_landmarks_to_marker_array_msg(
-  const std::vector<Landmark> & landmarks);
+  visualization_msgs::msg::MarkerArray get_landmarks_as_marker_array_msg() const;
+
+  geometry_msgs::msg::Pose calculate_new_self_pose(
+    const std::vector<landmark_manager::Landmark> & detected_landmarks,
+    const geometry_msgs::msg::Pose & self_pose) const;
+
+private:
+  // landmarks_map_["<id>"] = [pose0, pose1, ...]
+  std::map<std::string, std::vector<geometry_msgs::msg::Pose>> landmarks_map_;
+};
 
 }  // namespace landmark_manager
 
