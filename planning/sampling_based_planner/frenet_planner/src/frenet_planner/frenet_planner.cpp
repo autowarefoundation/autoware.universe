@@ -23,6 +23,9 @@
 #include <sampler_common/transform/spline_transform.hpp>
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
+#include <tf2/utils.h>
 
 #include <algorithm>
 #include <cmath>

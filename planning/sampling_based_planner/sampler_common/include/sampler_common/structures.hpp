@@ -20,6 +20,8 @@
 #include <eigen3/Eigen/Core>
 #include <interpolation/linear_interpolation.hpp>
 
+#include <geometry_msgs/msg/pose.hpp>
+
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
