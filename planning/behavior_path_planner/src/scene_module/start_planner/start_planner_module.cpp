@@ -14,11 +14,11 @@
 
 #include "behavior_path_planner/scene_module/start_planner/start_planner_module.hpp"
 
-#include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
+#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
@@ -329,7 +329,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
     // TODO(tkhmy) add handle status TRYING
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
+      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
       SteeringFactor::TURNING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
@@ -339,7 +339,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
     // TODO(tkhmy) add handle status TRYING
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      SteeringFactor::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
+      PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
   }
 
   setDebugData();
@@ -442,7 +442,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     updateRTCStatus(start_distance, finish_distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
+      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
       SteeringFactor::APPROACHING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
@@ -451,7 +451,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     updateRTCStatus(0.0, distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      SteeringFactor::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
+      PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
   }
 
   setDebugData();
@@ -1091,35 +1091,11 @@ bool StartPlannerModule::isSafePath() const
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     start_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
 
-  bool is_safe_dynamic_objects = true;
-  // Check for collisions with each predicted path of the object
-  for (const auto & object : target_objects_on_lane.on_current_lane) {
-    auto current_debug_data = utils::path_safety_checker::createObjectDebug(object);
-
-    bool is_safe_dynamic_object = true;
-
-    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
-      object, objects_filtering_params_->check_all_predicted_path);
-
-    // If a collision is detected, mark the object as unsafe and break the loop
-    for (const auto & obj_path : obj_predicted_paths) {
-      if (!utils::path_safety_checker::checkCollision(
-            pull_out_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
-            safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second)) {
-        utils::path_safety_checker::updateCollisionCheckDebugMap(
-          start_planner_data_.collision_check, current_debug_data, false);
-        is_safe_dynamic_objects = false;
-        is_safe_dynamic_object = false;
-        break;
-      }
-    }
-    if (is_safe_dynamic_object) {
-      utils::path_safety_checker::updateCollisionCheckDebugMap(
-        start_planner_data_.collision_check, current_debug_data, is_safe_dynamic_object);
-    }
-  }
-
-  return is_safe_dynamic_objects;
+  return behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
+    pull_out_path, ego_predicted_path, target_objects_on_lane.on_current_lane,
+    start_planner_data_.collision_check, planner_data_->parameters,
+    safety_check_params_->rss_params, objects_filtering_params_->use_all_predicted_path,
+    hysteresis_factor);
 }
 
 bool StartPlannerModule::isGoalBehindOfEgoInSameRouteSegment() const

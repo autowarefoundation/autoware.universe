@@ -50,7 +50,7 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   no_stopping_area_reg_elem_(no_stopping_area_reg_elem),
   planner_param_(planner_param)
 {
-  velocity_factor_.init(VelocityFactor::NO_STOPPING_AREA);
+  velocity_factor_.init(PlanningBehavior::NO_STOPPING_AREA);
   state_machine_.setState(StateMachine::State::GO);
   state_machine_.setMarginTime(planner_param_.state_clear_time);
 }
@@ -298,7 +298,7 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
       logger_, *clock_, 1000 /* ms */, "motion_utils::findNearestIndex fail");
     return ego_area;
   }
-  const size_t closest_idx = closest_idx_opt.get();
+  const size_t closest_idx = closest_idx_opt.value();
 
   const int num_ignore_nearest = 1;  // Do not consider nearest lane polygon
   size_t ego_area_start_idx = closest_idx + num_ignore_nearest;

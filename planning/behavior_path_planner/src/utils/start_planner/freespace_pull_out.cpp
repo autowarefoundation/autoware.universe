@@ -14,9 +14,9 @@
 
 #include "behavior_path_planner/utils/start_planner/freespace_pull_out.hpp"
 
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 
@@ -44,7 +44,7 @@ FreespacePullOut::FreespacePullOut(
   }
 }
 
-boost::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const Pose & end_pose)
+std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const Pose & end_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
   const double backward_path_length = planner_data_->parameters.backward_path_length;

@@ -14,11 +14,11 @@
 
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/side_shift/util.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 
@@ -122,7 +122,7 @@ bool SideShiftModule::canTransitSuccessState()
   const auto isOffsetDiffAlmostZero = [this]() noexcept {
     const auto last_sp = path_shifter_.getLastShiftLine();
     if (last_sp) {
-      const auto length = std::fabs(last_sp.get().end_shift_length);
+      const auto length = std::fabs(last_sp.value().end_shift_length);
       const auto lateral_offset = std::fabs(requested_lateral_offset_);
       const auto offset_diff = lateral_offset - length;
       if (!isAlmostZero(offset_diff)) {

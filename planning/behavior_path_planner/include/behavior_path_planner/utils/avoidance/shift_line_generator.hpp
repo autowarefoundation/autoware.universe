@@ -15,10 +15,10 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__SHIFT_LINE_GENERATOR_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__SHIFT_LINE_GENERATOR_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/avoidance/helper.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -55,7 +55,7 @@ public:
     if (path_shifter.getShiftLines().empty()) {
       last_ = std::nullopt;
     } else {
-      last_ = path_shifter.getLastShiftLine().get();
+      last_ = path_shifter.getLastShiftLine().value();
     }
   }
 

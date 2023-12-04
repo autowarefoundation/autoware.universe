@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -286,6 +286,9 @@ struct AvoidanceParameters
   bool use_shorten_margin_immediately{false};
 
   // policy
+  std::string policy_approval{"per_shift_line"};
+
+  // policy
   std::string policy_deceleration{"best_effort"};
 
   // policy
@@ -496,7 +499,7 @@ struct AvoidancePlanningData
   ObjectDataArray other_objects;
 
   // nearest object that should be avoid
-  boost::optional<ObjectData> stop_target_object{boost::none};
+  std::optional<ObjectData> stop_target_object{std::nullopt};
 
   // new shift point
   AvoidLineArray new_shift_line{};

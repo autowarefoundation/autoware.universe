@@ -15,15 +15,13 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__PULL_OUT_PLANNER_BASE_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__PULL_OUT_PLANNER_BASE_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-
-#include <boost/optional.hpp>
 
 #include <memory>
 
@@ -58,7 +56,7 @@ public:
   }
 
   virtual PlannerType getPlannerType() = 0;
-  virtual boost::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) = 0;
+  virtual std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) = 0;
 
 protected:
   std::shared_ptr<const PlannerData> planner_data_;
