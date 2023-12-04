@@ -22,6 +22,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -48,6 +49,8 @@ public:
     const geometry_msgs::msg::Pose & self_pose) const;
 
 private:
+  // To allow multiple landmarks with the same id to be registered on a vector_map,
+  // manage vectors by having them in a std::map.
   // landmarks_map_["<id>"] = [pose0, pose1, ...]
   std::map<std::string, std::vector<geometry_msgs::msg::Pose>> landmarks_map_;
 };
