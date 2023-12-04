@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <omp.h>
 
 namespace ground_segmentation
 {
@@ -55,6 +56,7 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     split_height_distance_ = declare_parameter("split_height_distance", 0.2);
     use_virtual_ground_point_ = declare_parameter("use_virtual_ground_point", true);
     use_recheck_ground_cluster_ = declare_parameter("use_recheck_ground_cluster", true);
+    omp_num_threads_ = declare_parameter("omp_num_threads", 1);
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
     vehicle_info_ = VehicleInfoUtil(*this).getVehicleInfo();
 
@@ -288,7 +290,12 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
   pcl::PointIndices & out_no_ground_indices)
 {
   out_no_ground_indices.indices.clear();
+  std::vector<pcl::PointIndices> ground_indices;
+  ground_indices.resize(in_radial_ordered_clouds.size());
+  omp_set_num_threads(omp_num_threads_);
+  #pragma omp parallel for
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
+    auto & ground_indices_private = ground_indices[i];
     PointsCentroid ground_cluster;
     ground_cluster.initialize();
     std::vector<GridCenter> gnd_grids;
@@ -299,10 +306,9 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       continue;
     }
 
-    // check the first point in ray
-    auto * p = &in_radial_ordered_clouds[i][0];
-    PointRef * prev_p;
-    prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
+    // // check the first point in ray
+    auto p = &in_radial_ordered_clouds[i][0];
+    auto prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
 
     bool initialized_first_gnd_grid = false;
     bool prev_list_init = false;
@@ -319,7 +325,10 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       if (
         !initialized_first_gnd_grid && global_slope_p >= global_slope_max_angle_rad_ &&
         p->orig_point->z > non_ground_height_threshold_local) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        // #pragma omp critical
+        {
+          ground_indices_private.indices.push_back(p->orig_index);
+        }
         p->point_state = PointLabel::NON_GROUND;
         prev_p = p;
         continue;
@@ -358,7 +367,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       if (p->grid_id > prev_p->grid_id && ground_cluster.getAverageRadius() > 0.0) {
         // check if the prev grid have ground point cloud
         if (use_recheck_ground_cluster_) {
-          recheckGroundCluster(ground_cluster, non_ground_height_threshold_, out_no_ground_indices);
+          recheckGroundCluster(ground_cluster, non_ground_height_threshold_, ground_indices_private);
         }
         curr_gnd_grid.radius = ground_cluster.getAverageRadius();
         curr_gnd_grid.avg_height = ground_cluster.getAverageHeight();
@@ -380,13 +389,13 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         points_xy_distance < split_points_distance_tolerance_ &&
         p->orig_point->z > prev_p->orig_point->z) {
         p->point_state = PointLabel::NON_GROUND;
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        ground_indices_private.indices.push_back(p->orig_index);
         prev_p = p;
         continue;
       }
 
       if (global_slope_p > global_slope_max_angle_rad_) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        ground_indices_private.indices.push_back(p->orig_index);
         prev_p = p;
         continue;
       }
@@ -401,14 +410,30 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       } else if (p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * p->grid_size) {
         checkDiscontinuousGndGrid(*p, gnd_grids);
       } else {
-        checkBreakGndGrid(*p, gnd_grids);
+        // checkBreakGndGrid(*p, gnd_grids);
+        {
+          float tmp_delta_avg_z = p->orig_point->z - gnd_grids.back().avg_height;
+          float tmp_delta_radius = p->radius - gnd_grids.back().radius;
+          float local_slope = std::atan(tmp_delta_avg_z / tmp_delta_radius);
+          if (abs(local_slope) < global_slope_max_angle_rad_) {
+            p->point_state = PointLabel::GROUND;
+          } else if (local_slope > global_slope_max_angle_rad_) {
+            p->point_state = PointLabel::NON_GROUND;
+          }
+        }
       }
       if (p->point_state == PointLabel::NON_GROUND) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        ground_indices_private.indices.push_back(p->orig_index);
       } else if (p->point_state == PointLabel::GROUND) {
         ground_cluster.addPoint(p->radius, p->orig_point->z, p->orig_index);
       }
-      prev_p = p;
+    prev_p = p;
+    }
+  }
+
+  for(size_t i = 0; i < in_radial_ordered_clouds.size();++i){
+    if(ground_indices.at(i).indices.size() > 0){
+      out_no_ground_indices.indices.insert(out_no_ground_indices.indices.end(),ground_indices.at(i).indices.begin(),ground_indices.at(i).indices.end());
     }
   }
 }

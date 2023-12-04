@@ -174,6 +174,7 @@ private:
   bool use_virtual_ground_point_;
   bool use_recheck_ground_cluster_;  // to enable recheck ground cluster
   size_t radial_dividers_num_;
+  int omp_num_threads_{1};
   VehicleInfo vehicle_info_;
 
   /*!
