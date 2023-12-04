@@ -71,9 +71,13 @@ struct DynamicAvoidanceParameters
 
   double min_time_to_start_cut_in{0.0};
   double min_lon_offset_ego_to_cut_in_object{0.0};
+  double min_cut_in_object_vel{0.0};
   double max_time_from_outside_ego_path_for_cut_out{0.0};
   double min_cut_out_object_lat_vel{0.0};
+  double min_cut_out_object_vel{0.0};
   double max_front_object_angle{0.0};
+  double min_front_object_vel{0.0};
+  double max_front_object_ego_path_lat_cover_ratio{0.0};
   double min_overtaking_crossing_object_vel{0.0};
   double max_overtaking_crossing_object_angle{0.0};
   double min_oncoming_crossing_object_vel{0.0};
@@ -266,36 +270,18 @@ public:
   DynamicAvoidanceModule(
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<DynamicAvoidanceParameters> parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   void updateModuleParams(const std::any & parameters) override
   {
     parameters_ = std::any_cast<std::shared_ptr<DynamicAvoidanceParameters>>(parameters);
   }
 
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] BehaviorModuleOutput run() override
-  {
-    updateData();
-
-    if (!isWaitingApproval()) {
-      return plan();
-    }
-
-    // module is waiting approval. Check it.
-    if (isActivated()) {
-      RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
-      return plan();
-    } else {
-      RCLCPP_DEBUG(getLogger(), "keep waiting approval... Do planCandidate().");
-      return planWaitingApproval();
-    }
-  }
-
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   // TODO(someone): remove this, and use base class function
-  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -315,7 +301,7 @@ private:
     const double min_lon_offset;
   };
 
-  bool canTransitSuccessState() override { return false; }
+  bool canTransitSuccessState() override;
 
   bool canTransitFailureState() override { return false; }
 
@@ -340,14 +326,18 @@ private:
   LatLonOffset getLateralLongitudinalOffset(
     const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
     const autoware_auto_perception_msgs::msg::Shape & obj_shape) const;
+  double calcValidStartLengthToAvoid(
+    const PredictedPath & obj_path, const geometry_msgs::msg::Pose & obj_pose,
+    const autoware_auto_perception_msgs::msg::Shape & obj_shape) const;
   MinMaxValue calcMinMaxLongitudinalOffsetToAvoid(
     const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
     const geometry_msgs::msg::Pose & obj_pose, const Polygon2d & obj_points, const double obj_vel,
+    const PredictedPath & obj_path, const autoware_auto_perception_msgs::msg::Shape & obj_shape,
     const double time_to_collision) const;
-  MinMaxValue calcMinMaxLateralOffsetToAvoid(
+  std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoid(
     const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
-    const Polygon2d & obj_points, const bool is_collision_left, const double obj_normal_vel,
-    const std::optional<DynamicAvoidanceObject> & prev_object) const;
+    const Polygon2d & obj_points, const double obj_vel, const bool is_collision_left,
+    const double obj_normal_vel, const std::optional<DynamicAvoidanceObject> & prev_object) const;
 
   std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;

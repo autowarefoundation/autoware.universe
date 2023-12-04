@@ -14,11 +14,11 @@
 
 #include "behavior_path_planner/scene_module/start_planner/start_planner_module.hpp"
 
-#include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
+#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
@@ -44,8 +44,10 @@ namespace behavior_path_planner
 StartPlannerModule::StartPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<StartPlannerParameters> & parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
@@ -128,11 +130,7 @@ void StartPlannerModule::updateData()
     status_.backward_driving_complete = false;
   }
 
-  const bool has_received_new_route =
-    !planner_data_->prev_route_id ||
-    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
-
-  if (has_received_new_route) {
+  if (receivedNewRoute()) {
     status_ = PullOutStatus();
   }
   // check safety status when driving forward
@@ -141,6 +139,12 @@ void StartPlannerModule::updateData()
   } else {
     status_.is_safe_dynamic_objects = true;
   }
+}
+
+bool StartPlannerModule::receivedNewRoute() const
+{
+  return !planner_data_->prev_route_id ||
+         *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
 }
 
 bool StartPlannerModule::isExecutionRequested() const
@@ -161,7 +165,7 @@ bool StartPlannerModule::isExecutionRequested() const
   }
 
   // Check if the goal is behind the ego vehicle within the same route segment.
-  if (IsGoalBehindOfEgoInSameRouteSegment()) {
+  if (isGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
     return false;
@@ -172,7 +176,7 @@ bool StartPlannerModule::isExecutionRequested() const
 
 bool StartPlannerModule::isModuleRunning() const
 {
-  return current_state_ == ModuleStatus::RUNNING;
+  return getCurrentStatus() == ModuleStatus::RUNNING;
 }
 
 bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
@@ -228,33 +232,14 @@ bool StartPlannerModule::isExecutionReady() const
   return true;
 }
 
-void StartPlannerModule::updateCurrentState()
+bool StartPlannerModule::canTransitSuccessState()
 {
-  RCLCPP_DEBUG(getLogger(), "START_PLANNER updateCurrentState");
+  return hasFinishedPullOut();
+}
 
-  const auto print = [this](const auto & from, const auto & to) {
-    RCLCPP_DEBUG(getLogger(), "[start_planner] Transit from %s to %s.", from.data(), to.data());
-  };
-
-  const auto & from = current_state_;
-  // current_state_ = updateState();
-
-  if (isActivated() && !isWaitingApproval()) {
-    current_state_ = ModuleStatus::RUNNING;
-  } else {
-    current_state_ = ModuleStatus::IDLE;
-  }
-
-  // TODO(someone): move to canTransitSuccessState
-  if (hasFinishedPullOut()) {
-    current_state_ = ModuleStatus::SUCCESS;
-  }
-  // TODO(someone): move to canTransitSuccessState
-  if (status_.backward_driving_complete) {
-    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
-  }
-
-  print(magic_enum::enum_name(from), magic_enum::enum_name(current_state_));
+bool StartPlannerModule::canTransitIdleToRunningState()
+{
+  return isActivated() && !isWaitingApproval();
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
@@ -278,7 +263,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
   PathWithLaneId path;
 
   // Check if backward motion is finished
-  if (status_.driving_forward) {
+  if (status_.driving_forward || status_.backward_driving_complete) {
     // Increment path index if the current path is finished
     if (hasFinishedCurrentPath()) {
       RCLCPP_INFO(getLogger(), "Increment path index");
@@ -344,7 +329,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
     // TODO(tkhmy) add handle status TRYING
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
+      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
       SteeringFactor::TURNING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
@@ -354,7 +339,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
     // TODO(tkhmy) add handle status TRYING
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      SteeringFactor::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
+      PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
   }
 
   setDebugData();
@@ -457,7 +442,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     updateRTCStatus(start_distance, finish_distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
+      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
       SteeringFactor::APPROACHING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
@@ -466,7 +451,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     updateRTCStatus(0.0, distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      SteeringFactor::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
+      PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
   }
 
   setDebugData();
@@ -718,7 +703,7 @@ void StartPlannerModule::updatePullOutStatus()
   // refine start pose with pull out lanes.
   // 1) backward driving is not allowed: use refined pose just as start pose.
   // 2) backward driving is allowed: use refined pose to check if backward driving is needed.
-  const PathWithLaneId start_pose_candidates_path = calcStartPoseCandidatesBackwardPath();
+  const PathWithLaneId start_pose_candidates_path = calcBackwardPathFromStartPose();
   const auto refined_start_pose = calcLongitudinalOffsetPose(
     start_pose_candidates_path.points, planner_data_->self_odometry->pose.pose.position, 0.0);
   if (!refined_start_pose) return;
@@ -726,7 +711,7 @@ void StartPlannerModule::updatePullOutStatus()
   // search pull out start candidates backward
   const std::vector<Pose> start_pose_candidates = std::invoke([&]() -> std::vector<Pose> {
     if (parameters_->enable_back) {
-      return searchPullOutStartPoses(start_pose_candidates_path);
+      return searchPullOutStartPoseCandidates(start_pose_candidates_path);
     }
     return {*refined_start_pose};
   });
@@ -739,7 +724,6 @@ void StartPlannerModule::updatePullOutStatus()
 
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
-    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   } else {
     status_.backward_path = start_planner_utils::getBackwardPath(
       *route_handler, pull_out_lanes, current_pose, status_.pull_out_start_pose,
@@ -760,71 +744,66 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
   }
 }
 
-PathWithLaneId StartPlannerModule::calcStartPoseCandidatesBackwardPath() const
+PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
 {
-  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
-
+  const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
-  // get backward shoulder path
-  const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, current_pose);
-  const double check_distance = parameters_->max_back_distance + 30.0;  // buffer
-  auto path = planner_data_->route_handler->getCenterLinePath(
-    pull_out_lanes, arc_position_pose.length - check_distance,
-    arc_position_pose.length + check_distance);
+  const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose);
 
-  // lateral shift to current_pose
-  const double distance_from_center_line = arc_position_pose.distance;
-  for (auto & p : path.points) {
-    p.point.pose = calcOffsetPose(p.point.pose, 0, distance_from_center_line, 0);
+  // common buffer distance for both front and back
+  static constexpr double buffer = 30.0;
+  const double check_distance = parameters_->max_back_distance + buffer;
+
+  const double start_distance = arc_position_pose.length - check_distance;
+  const double end_distance = arc_position_pose.length + buffer;
+
+  auto path =
+    planner_data_->route_handler->getCenterLinePath(pull_out_lanes, start_distance, end_distance);
+
+  // shift all path points laterally to align with the start pose
+  for (auto & path_point : path.points) {
+    path_point.point.pose = calcOffsetPose(path_point.point.pose, 0, arc_position_pose.distance, 0);
   }
 
   return path;
 }
 
-std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
-  const PathWithLaneId & start_pose_candidates) const
+std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
+  const PathWithLaneId & back_path_from_start_pose) const
 {
-  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
-
-  std::vector<Pose> pull_out_start_pose{};
-
+  std::vector<Pose> pull_out_start_pose_candidates{};
+  const auto start_pose = planner_data_->route_handler->getOriginalStartPose();
+  const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
-  // filter pull out lanes stop objects
-  const auto [pull_out_lane_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(
-      *planner_data_->dynamic_object, pull_out_lanes,
-      utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    pull_out_lane_objects, parameters_->th_moving_object_velocity);
+  const auto stop_objects_in_pull_out_lanes =
+    filterStopObjectsInPullOutLanes(pull_out_lanes, parameters_->th_moving_object_velocity);
 
   // Set the maximum backward distance less than the distance from the vehicle's base_link to the
   // lane's rearmost point to prevent lane departure.
-  const double s_current = lanelet::utils::getArcCoordinates(pull_out_lanes, current_pose).length;
-  const double max_back_distance = std::clamp(
-    s_current - planner_data_->parameters.base_link2rear, 0.0, parameters_->max_back_distance);
+  const double current_arc_length =
+    lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose).length;
+  const double allowed_backward_distance = std::clamp(
+    current_arc_length - planner_data_->parameters.base_link2rear, 0.0,
+    parameters_->max_back_distance);
 
-  // check collision between footprint and object at the backed pose
-  const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
-  for (double back_distance = 0.0; back_distance <= max_back_distance;
+  for (double back_distance = 0.0; back_distance <= allowed_backward_distance;
        back_distance += parameters_->backward_search_resolution) {
     const auto backed_pose = calcLongitudinalOffsetPose(
-      start_pose_candidates.points, current_pose.position, -back_distance);
+      back_path_from_start_pose.points, start_pose.position, -back_distance);
     if (!backed_pose) {
       continue;
     }
 
-    // check the back pose is near the lane end
-    const double length_to_backed_pose =
+    const double backed_pose_arc_length =
       lanelet::utils::getArcCoordinates(pull_out_lanes, *backed_pose).length;
-
     const double length_to_lane_end = std::accumulate(
       std::begin(pull_out_lanes), std::end(pull_out_lanes), 0.0,
       [](double acc, const auto & lane) { return acc + lanelet::utils::getLaneletLength2d(lane); });
-    const double distance_from_lane_end = length_to_lane_end - length_to_backed_pose;
+    const double distance_from_lane_end = length_to_lane_end - backed_pose_arc_length;
     if (distance_from_lane_end < parameters_->ignore_distance_from_lane_end) {
       RCLCPP_WARN_THROTTLE(
         getLogger(), *clock_, 5000,
@@ -833,27 +812,28 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
     }
 
     if (utils::checkCollisionBetweenFootprintAndObjects(
-          local_vehicle_footprint, *backed_pose, pull_out_lane_stop_objects,
+          local_vehicle_footprint, *backed_pose, stop_objects_in_pull_out_lanes,
           parameters_->collision_check_margin)) {
       break;  // poses behind this has a collision, so break.
     }
 
-    pull_out_start_pose.push_back(*backed_pose);
+    pull_out_start_pose_candidates.push_back(*backed_pose);
   }
-  return pull_out_start_pose;
+  return pull_out_start_pose_candidates;
 }
 
-bool StartPlannerModule::isOverlappedWithLane(
-  const lanelet::ConstLanelet & candidate_lanelet,
-  const tier4_autoware_utils::LinearRing2d & vehicle_footprint)
+PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
+  const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const
 {
-  for (const auto & point : vehicle_footprint) {
-    if (boost::geometry::within(point, candidate_lanelet.polygon2d().basicPolygon())) {
-      return true;
-    }
-  }
+  const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    *planner_data_->dynamic_object, velocity_threshold);
 
-  return false;
+  // filter for objects located in pull_out_lanes and moving at a speed below the threshold
+  const auto [stop_objects_in_pull_out_lanes, others] =
+    utils::path_safety_checker::separateObjectsByLanelets(
+      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
+
+  return stop_objects_in_pull_out_lanes;
 }
 
 bool StartPlannerModule::hasFinishedPullOut() const
@@ -1098,11 +1078,11 @@ bool StartPlannerModule::isSafePath() const
       is_object_front, limit_to_max_velocity);
 
   // filtering objects with velocity, position and class
-  const auto & filtered_objects = utils::path_safety_checker::filterObjects(
+  const auto filtered_objects = utils::path_safety_checker::filterObjects(
     dynamic_object, route_handler, current_lanes, current_pose.position, objects_filtering_params_);
 
   // filtering objects based on the current position's lane
-  const auto & target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
+  const auto target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
     current_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
   const double hysteresis_factor =
@@ -1111,38 +1091,14 @@ bool StartPlannerModule::isSafePath() const
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     start_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
 
-  bool is_safe_dynamic_objects = true;
-  // Check for collisions with each predicted path of the object
-  for (const auto & object : target_objects_on_lane.on_current_lane) {
-    auto current_debug_data = marker_utils::createObjectDebug(object);
-
-    bool is_safe_dynamic_object = true;
-
-    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
-      object, objects_filtering_params_->check_all_predicted_path);
-
-    // If a collision is detected, mark the object as unsafe and break the loop
-    for (const auto & obj_path : obj_predicted_paths) {
-      if (!utils::path_safety_checker::checkCollision(
-            pull_out_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
-            safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second)) {
-        marker_utils::updateCollisionCheckDebugMap(
-          start_planner_data_.collision_check, current_debug_data, false);
-        is_safe_dynamic_objects = false;
-        is_safe_dynamic_object = false;
-        break;
-      }
-    }
-    if (is_safe_dynamic_object) {
-      marker_utils::updateCollisionCheckDebugMap(
-        start_planner_data_.collision_check, current_debug_data, is_safe_dynamic_object);
-    }
-  }
-
-  return is_safe_dynamic_objects;
+  return behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
+    pull_out_path, ego_predicted_path, target_objects_on_lane.on_current_lane,
+    start_planner_data_.collision_check, planner_data_->parameters,
+    safety_check_params_->rss_params, objects_filtering_params_->use_all_predicted_path,
+    hysteresis_factor);
 }
 
-bool StartPlannerModule::IsGoalBehindOfEgoInSameRouteSegment() const
+bool StartPlannerModule::isGoalBehindOfEgoInSameRouteSegment() const
 {
   const auto & rh = planner_data_->route_handler;
 
@@ -1330,5 +1286,67 @@ void StartPlannerModule::setDebugData() const
     planner_type_marker_array.markers.push_back(marker);
     add(planner_type_marker_array);
   }
+  if (parameters_->verbose) {
+    logPullOutStatus();
+  }
+}
+
+void StartPlannerModule::logPullOutStatus(rclcpp::Logger::Level log_level) const
+{
+  const auto logger = getLogger();
+  auto logFunc = [&logger, log_level](const char * format, ...) {
+    char buffer[1024];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+    switch (log_level) {
+      case rclcpp::Logger::Level::Debug:
+        RCLCPP_DEBUG(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Info:
+        RCLCPP_INFO(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Warn:
+        RCLCPP_WARN(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Error:
+        RCLCPP_ERROR(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Fatal:
+        RCLCPP_FATAL(logger, "%s", buffer);
+        break;
+      default:
+        RCLCPP_INFO(logger, "%s", buffer);
+        break;
+    }
+  };
+
+  logFunc("======== PullOutStatus Report ========");
+
+  logFunc("[Path Info]");
+  logFunc("  Current Path Index: %zu", status_.current_path_idx);
+
+  logFunc("[Planner Info]");
+  logFunc("  Planner Type: %s", magic_enum::enum_name(status_.planner_type).data());
+
+  logFunc("[Safety and Direction Info]");
+  logFunc("  Found Pull Out Path: %s", status_.found_pull_out_path ? "true" : "false");
+  logFunc(
+    "  Is Safe Against Dynamic Objects: %s", status_.is_safe_dynamic_objects ? "true" : "false");
+  logFunc(
+    "  Previous Is Safe Dynamic Objects: %s",
+    status_.prev_is_safe_dynamic_objects ? "true" : "false");
+  logFunc("  Driving Forward: %s", status_.driving_forward ? "true" : "false");
+  logFunc("  Backward Driving Complete: %s", status_.backward_driving_complete ? "true" : "false");
+  logFunc("  Has Stop Point: %s", status_.has_stop_point ? "true" : "false");
+
+  logFunc("[Module State]");
+  logFunc("  isActivated: %s", isActivated() ? "true" : "false");
+  logFunc("  isWaitingForApproval: %s", isWaitingApproval() ? "true" : "false");
+  const std::string current_status = magic_enum::enum_name(getCurrentStatus()).data();
+  logFunc("  ModuleStatus: %s", current_status.c_str());
+
+  logFunc("=======================================");
 }
 }  // namespace behavior_path_planner

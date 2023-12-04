@@ -15,7 +15,8 @@
 #include "behavior_path_planner/utils/goal_planner/shift_pull_over.hpp"
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -35,7 +36,7 @@ ShiftPullOver::ShiftPullOver(
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
 }
-boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
+std::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
   const double min_jerk = parameters_.minimum_lateral_jerk;
@@ -98,7 +99,7 @@ PathWithLaneId ShiftPullOver::generateReferencePath(
   return road_lane_reference_path;
 }
 
-boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
+std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
   const Pose & goal_pose, const double lateral_jerk) const
 {

@@ -15,7 +15,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <lanelet2_core/primitives/Lanelet.h>
 
@@ -65,6 +65,7 @@ struct LaneChangeParameters
   // regulatory elements
   bool regulate_on_crosswalk{false};
   bool regulate_on_intersection{false};
+  bool regulate_on_traffic_light{false};
 
   // ego vehicle stuck detection
   double stop_velocity_threshold{0.1};
