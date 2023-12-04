@@ -28,12 +28,12 @@
 #include <lanelet2_routing/Forward.h>
 
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <optional>
 
 namespace behavior_velocity_planner
 {
