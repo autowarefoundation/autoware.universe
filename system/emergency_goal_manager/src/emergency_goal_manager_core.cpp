@@ -35,7 +35,7 @@ EmergencyGoalManager::EmergencyGoalManager() : Node("emergency_goal_manager")
     rmw_qos_profile_services_default, client_set_mrm_route_points_callback_group_);
   client_clear_mrm_route_callback_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_clear_mrm_route_ = create_client<std_srvs::srv::Trigger>(
+  client_clear_mrm_route_ = create_client<ClearRoute>(
     "/planning/mission_planning/mission_planner/srv/clear_mrm_route",
     rmw_qos_profile_services_default, client_clear_mrm_route_callback_group_);
 
@@ -122,7 +122,7 @@ void EmergencyGoalManager::callSetMrmRoutePoints()
 
 void EmergencyGoalManager::callClearMrmRoute()
 {
-  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  auto request = std::make_shared<ClearRoute::Request>();
   const auto duration = std::chrono::duration<double, std::ratio<1>>(10);
 
   while (true) {
@@ -132,7 +132,7 @@ void EmergencyGoalManager::callClearMrmRoute()
       RCLCPP_WARN(get_logger(), "Clear MRM Route service timeout.");
       return;
     } else {
-      if (future.get()->success) {
+      if (future.get()->status.success) {
         RCLCPP_INFO(get_logger(), "Clear MRM Route has been successfully sent.");
         return;
       } else {

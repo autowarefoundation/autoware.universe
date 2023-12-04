@@ -16,6 +16,7 @@
 #define EMERGENCY_GOAL_MANAGER_CORE_HPP_
 
 // Autoware
+#include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 #include <tier4_system_msgs/msg/emergency_goals_clear_command.hpp>
 #include <tier4_system_msgs/msg/emergency_goals_stamped.hpp>
@@ -39,6 +40,7 @@ public:
 
 private:
   using SetRoutePoints = autoware_adapi_v1_msgs::srv::SetRoutePoints;
+  using ClearRoute = autoware_adapi_v1_msgs::srv::ClearRoute;
 
   // Subscriber
   rclcpp::Subscription<tier4_system_msgs::msg::EmergencyGoalsStamped>::SharedPtr
@@ -54,7 +56,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr client_set_mrm_route_points_callback_group_;
   rclcpp::Client<SetRoutePoints>::SharedPtr client_set_mrm_route_points_;
   rclcpp::CallbackGroup::SharedPtr client_clear_mrm_route_callback_group_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_clear_mrm_route_;
+  rclcpp::Client<ClearRoute>::SharedPtr client_clear_mrm_route_;
 
   // Variables
   std::unordered_map<std::string, std::queue<geometry_msgs::msg::Pose>> emergency_goals_map_;
