@@ -79,6 +79,8 @@ struct Path
   std::vector<double> curvatures{};
   std::vector<double> yaws{};
   std::vector<double> lengths{};
+  std::vector<geometry_msgs::msg::Pose> poses{};
+
   bool constraints_satisfied;
   ConstraintResults constraint_results{};
   double cost{};

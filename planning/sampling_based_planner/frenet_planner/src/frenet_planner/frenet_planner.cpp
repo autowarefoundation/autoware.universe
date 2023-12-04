@@ -22,6 +22,8 @@
 #include <sampler_common/structures.hpp>
 #include <sampler_common/transform/spline_transform.hpp>
 
+#include "autoware_auto_planning_msgs/msg/path.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -145,11 +147,17 @@ Path generateCandidate(
 
 void calculateCartesian(const sampler_common::transform::Spline2D & reference, Path & path)
 {
+  auto quaternion_from_rpy = [](double roll, double pitch, double yaw) -> tf2::Quaternion {
+    tf2::Quaternion quaternion_tf2;
+    quaternion_tf2.setRPY(roll, pitch, yaw);
+    return quaternion_tf2;
+  };
   if (!path.frenet_points.empty()) {
     path.points.reserve(path.frenet_points.size());
     path.yaws.reserve(path.frenet_points.size());
     path.lengths.reserve(path.frenet_points.size());
     path.curvatures.reserve(path.frenet_points.size());
+    path.poses.reserve(path.frenet_points.size());
     // Calculate cartesian positions
     for (const auto & fp : path.frenet_points) {
       path.points.push_back(reference.cartesian(fp));
@@ -161,8 +169,21 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
     for (auto it = path.points.begin(); it != std::prev(path.points.end()); ++it) {
       const auto dx = std::next(it)->x() - it->x();
       const auto dy = std::next(it)->y() - it->y();
-      path.yaws.push_back(std::atan2(dy, dx));
+      const auto yaw = std::atan2(dy, dx);
+      path.yaws.push_back(yaw);
       path.lengths.push_back(path.lengths.back() + std::hypot(dx, dy));
+
+      geometry_msgs::msg::Pose pose;
+      pose.position.x = it->x();
+      pose.position.y = it->y();
+      pose.position.z = 0.0;
+
+      const auto pose_quaternion = quaternion_from_rpy(0.0, 0.0, yaw);
+      pose.orientation.w = pose_quaternion.w();
+      pose.orientation.x = pose_quaternion.x();
+      pose.orientation.y = pose_quaternion.y();
+      pose.orientation.z = pose_quaternion.z();
+      path.poses.push_back(pose);
     }
     path.yaws.push_back(path.yaws.back());
     // Calculate curvatures
