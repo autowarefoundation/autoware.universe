@@ -109,6 +109,24 @@ SamplingPlannerModule::SamplingPlannerModule(
       return (distance_path_to_goal / distance_ego_to_goal_pose) + (angle_difference / (pi / 4.0));
     });
 
+  // Avg. distance to centerline
+  soft_constraints_.emplace_back(
+    [&](
+      [[maybe_unused]] sampler_common::Path & path,
+      [[maybe_unused]] const sampler_common::Constraints & constraints,
+      [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
+      if (path.poses.empty()) return 0.0;
+      double distance_average{0.0};
+      for (const auto pose : path.poses) {
+        const double lateral_distance_to_center_lane =
+          lanelet::utils::getArcCoordinates(input_data.current_lanes, pose).distance;
+        distance_average += lateral_distance_to_center_lane;
+      }
+      distance_average = distance_average / path.poses.size();
+      const double acceptable_width = constraints.ego_width / 2.0;
+      return distance_average / acceptable_width;
+    });
+
   // Curvature cost
   soft_constraints_.emplace_back(
     [](
@@ -392,6 +410,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   SoftConstraintsInputs soft_constraints_input;
   soft_constraints_input.goal_pose = planner_data_->route_handler->getGoalPose();
   soft_constraints_input.ego_pose = planner_data_->self_odometry->pose.pose;
+  soft_constraints_input.current_lanes = utils::getCurrentLanes(planner_data_);
 
   debug_data_.footprints.clear();
   for (auto & path : frenet_paths) {
