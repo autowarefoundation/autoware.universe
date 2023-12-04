@@ -44,7 +44,6 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 : rclcpp::Node(node_name, node_options),
   warning_(std::make_shared<Warning>(this)),
   params_(this),
-  ekf_rate_(params_.ekf_rate),
   ekf_dt_(params_.ekf_dt),
   pose_queue_(params_.pose_smoothing_steps),
   twist_queue_(params_.twist_smoothing_steps)
@@ -111,12 +110,13 @@ void EKFLocalizer::updatePredictFrequency()
     } else {
       /* Measure dt */
       ekf_dt_ = (get_clock()->now() - *last_predict_time_).seconds();
-      ekf_rate_ = 1 / ekf_dt_;
-      DEBUG_INFO(get_logger(), "[EKF] update ekf_dt_ to %f seconds (= %f hz)", ekf_dt_, ekf_rate_);
+      DEBUG_INFO(get_logger(), "[EKF] update ekf_dt_ to %f seconds (= %f hz)", ekf_dt_, 1 / ekf_dt_);
 
       if (ekf_dt_ > 10.0) {
         ekf_dt_ = 10.0;
-        DEBUG_INFO(get_logger(), "Large ekf_dt_ detected. Capped to 10.0 seconds");
+        RCLCPP_WARN(get_logger(), "Large ekf_dt_ detected!! (%f sec) Capped to 10.0 seconds", ekf_dt_);
+      } else if (ekf_dt_ > params_.pose_smoothing_steps / params_.ekf_rate) {
+        RCLCPP_WARN(get_logger(), "EKF period may be too slow to finish pose smoothing!! (%f sec) ", ekf_dt_);
       }
 
       /* Register dt and accumulate time delay */
