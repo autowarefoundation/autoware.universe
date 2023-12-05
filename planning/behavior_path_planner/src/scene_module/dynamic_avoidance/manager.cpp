@@ -24,21 +24,34 @@
 
 namespace behavior_path_planner
 {
-
-DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
-: SceneModuleManagerInterface(node, name, config, {""})
+namespace
 {
+PolygonGenerationMethod convertToPolygonGenerationMethod(const std::string & str)
+{
+  if (str == "ego_path_base") {
+    return PolygonGenerationMethod::EGO_PATH_BASE;
+  } else if (str == "object_path_base") {
+    return PolygonGenerationMethod::OBJECT_PATH_BASE;
+  }
+  throw std::logic_error("The polygon_generation_method's string is invalid.");
+}
+}  // namespace
+
+void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
+{
+  // init manager interface
+  initInterface(node, {""});
+
   DynamicAvoidanceParameters p{};
 
   {  // common
-    std::string ns = "dynamic_avoidance.common.";
+    const std::string ns = "dynamic_avoidance.common.";
     p.enable_debug_info = node->declare_parameter<bool>(ns + "enable_debug_info");
     p.use_hatched_road_markings = node->declare_parameter<bool>(ns + "use_hatched_road_markings");
   }
 
   {  // target object
-    std::string ns = "dynamic_avoidance.target_object.";
+    const std::string ns = "dynamic_avoidance.target_object.";
     p.avoid_car = node->declare_parameter<bool>(ns + "car");
     p.avoid_truck = node->declare_parameter<bool>(ns + "truck");
     p.avoid_bus = node->declare_parameter<bool>(ns + "bus");
@@ -89,7 +102,9 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
   }
 
   {  // drivable_area_generation
-    std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    const std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    p.polygon_generation_method = convertToPolygonGenerationMethod(
+      node->declare_parameter<std::string>(ns + "polygon_generation_method"));
     p.min_obj_path_based_lon_polygon_margin =
       node->declare_parameter<double>(ns + "object_path_base.min_longitudinal_polygon_margin");
     p.lat_offset_from_obstacle = node->declare_parameter<double>(ns + "lat_offset_from_obstacle");
@@ -196,6 +211,12 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
 
   {  // drivable_area_generation
     const std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    std::string polygon_generation_method_str;
+    if (updateParam<std::string>(
+          parameters, ns + "polygon_generation_method", polygon_generation_method_str)) {
+      p->polygon_generation_method =
+        convertToPolygonGenerationMethod(polygon_generation_method_str);
+    }
     updateParam<double>(
       parameters, ns + "object_path_base.min_longitudinal_polygon_margin",
       p->min_obj_path_based_lon_polygon_margin);
@@ -235,3 +256,8 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
   });
 }
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::DynamicAvoidanceModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
