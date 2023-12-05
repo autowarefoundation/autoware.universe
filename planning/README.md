@@ -12,6 +12,8 @@ The Autoware.Universe Planning Modules represent a cutting-edge component within
 
 If you use the Jerk Constrained Velocity Planning algorithm in motion velocity smoother module from the planning component, please cite this work in your papers!
 
+<!-- cspell:ignore Shimizu, Horibe, Watanabe, Kato -->
+
 Y. Shimizu, T. Horibe, F. Watanabe and S. Kato, "[Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach](https://arxiv.org/abs/2202.10029)," 2022 International Conference on Robotics and Automation (ICRA)
 
 ```tex
