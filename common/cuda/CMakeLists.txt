@@ -1,4 +1,4 @@
 cmake_minimum_required(VERSION 3.5)
-project(cuda_virtual)
+project(cuda)
 
 ament_package()

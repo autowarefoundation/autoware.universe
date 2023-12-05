@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>cuda_virtual</name>
+  <name>cuda</name>
   <version>0.0.1</version>
   <description>cuda utility library</description>
 
   <author email="esteve.fernandez@tier4.jp">Esteve Fernandez</author>
+  <maintainer email="esteve.fernandez@tier4.jp">Esteve Fernandez</maintainer>
 
   <license>Apache License 2.0</license>
 
