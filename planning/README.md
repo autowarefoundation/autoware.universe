@@ -22,8 +22,6 @@ Y. Shimizu, T. Horibe, F. Watanabe and S. Kato, "[Jerk Constrained Velocity Plan
   booktitle={2022 International Conference on Robotics and Automation (ICRA)},
   title={Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach},
   year={2022},
-  volume={},
-  number={},
   pages={5814-5820},
   doi={10.1109/ICRA46639.2022.9812155}}
 ```
