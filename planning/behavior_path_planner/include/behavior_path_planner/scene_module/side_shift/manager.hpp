@@ -31,8 +31,9 @@ namespace behavior_path_planner
 class SideShiftModuleManager : public SceneModuleManagerInterface
 {
 public:
-  SideShiftModuleManager(
-    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
+  SideShiftModuleManager() : SceneModuleManagerInterface{"side_shift"} {}
+
+  void init(rclcpp::Node * node) override;
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
