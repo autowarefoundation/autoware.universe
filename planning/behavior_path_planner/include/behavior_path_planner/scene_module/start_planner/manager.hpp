@@ -30,8 +30,9 @@ namespace behavior_path_planner
 class StartPlannerModuleManager : public SceneModuleManagerInterface
 {
 public:
-  StartPlannerModuleManager(
-    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
+  StartPlannerModuleManager() : SceneModuleManagerInterface{"start_planner"} {}
+
+  void init(rclcpp::Node * node) override;
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {

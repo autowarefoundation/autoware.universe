@@ -24,11 +24,11 @@
 
 namespace behavior_path_planner
 {
-
-StartPlannerModuleManager::StartPlannerModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
-: SceneModuleManagerInterface(node, name, config, {""})
+void StartPlannerModuleManager::init(rclcpp::Node * node)
 {
+  // init manager interface
+  initInterface(node, {""});
+
   StartPlannerParameters p;
 
   std::string ns = "start_planner.";
@@ -279,9 +279,10 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   // validation of parameters
   if (p.lateral_acceleration_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      logger_, "lateral_acceleration_sampling_num must be positive integer. Given parameter: "
-                 << p.lateral_acceleration_sampling_num << std::endl
-                 << "Terminating the program...");
+      node->get_logger().get_child(name()),
+      "lateral_acceleration_sampling_num must be positive integer. Given parameter: "
+        << p.lateral_acceleration_sampling_num << std::endl
+        << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 
@@ -310,12 +311,12 @@ void StartPlannerModuleManager::updateModuleParams(
 bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 {
   if (observers_.empty()) {
-    return enable_simultaneous_execution_as_approved_module_;
+    return config_.enable_simultaneous_execution_as_approved_module;
   }
 
   const auto checker = [this](const SceneModuleObserver & observer) {
     if (observer.expired()) {
-      return enable_simultaneous_execution_as_approved_module_;
+      return config_.enable_simultaneous_execution_as_approved_module;
     }
 
     const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
@@ -330,7 +331,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
       return false;
     }
 
-    return enable_simultaneous_execution_as_approved_module_;
+    return config_.enable_simultaneous_execution_as_approved_module;
   };
 
   return std::all_of(observers_.begin(), observers_.end(), checker);
@@ -339,12 +340,12 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
 {
   if (observers_.empty()) {
-    return enable_simultaneous_execution_as_candidate_module_;
+    return config_.enable_simultaneous_execution_as_candidate_module;
   }
 
   const auto checker = [this](const SceneModuleObserver & observer) {
     if (observer.expired()) {
-      return enable_simultaneous_execution_as_candidate_module_;
+      return config_.enable_simultaneous_execution_as_candidate_module;
     }
 
     const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
@@ -359,9 +360,14 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() cons
       return false;
     }
 
-    return enable_simultaneous_execution_as_candidate_module_;
+    return config_.enable_simultaneous_execution_as_candidate_module;
   };
 
   return std::all_of(observers_.begin(), observers_.end(), checker);
 }
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::StartPlannerModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
