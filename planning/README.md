@@ -8,29 +8,13 @@ The Autoware.Universe Planning Modules represent a cutting-edge component within
 - To understand how Planning Components interacts with other components, please refer to [Planning Component Interface Document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/planning/)
 - The [Node Diagram](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/node-diagram/) illustrates the interactions, inputs, and outputs of all modules in the Autoware.Universe, including planning modules.
 
-## Citations
+## Planning Module
 
-If you use the Jerk Constrained Velocity Planning algorithm in motion velocity smoother module from the planning component, please cite this work in your papers!
+The **Module** in the Planning Component refers to the various components that collectively form the planning system of the software. These modules cover a range of functionalities necessary for autonomous vehicle planning. Autoware's planning modules are modularized, meaning users can customize which functions are enabled by changing the configuration. This modular design allows for flexibility and adaptability to different scenarios and requirements in autonomous vehicle operations.
 
-<!-- cspell:ignore Shimizu, Horibe, Watanabe, Kato -->
+### How to Enable or Disable Planning Module
 
-Y. Shimizu, T. Horibe, F. Watanabe and S. Kato, "[Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach](https://arxiv.org/abs/2202.10029)," 2022 International Conference on Robotics and Automation (ICRA)
-
-```tex
-@inproceedings{shimizu2022,
-  author={Shimizu, Yutaka and Horibe, Takamasa and Watanabe, Fumiya and Kato, Shinpei},
-  booktitle={2022 International Conference on Robotics and Automation (ICRA)},
-  title={Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach},
-  year={2022},
-  pages={5814-5820},
-  doi={10.1109/ICRA46639.2022.9812155}}
-```
-
-## How to Enable or Disable Modules, and Parameter Configuration
-
-### Enabling and Disabling Module
-
-Enabling and disabling modules in Planning Component, involves managing settings in key configuration and launch files.
+Enabling and disabling modules involves managing settings in key configuration and launch files.
 
 ### Key Files for Configuration
 
@@ -116,3 +100,23 @@ Meeting Details:
 - **Agenda:** Discuss current progress, plan future developments. You can view and comment on the minutes of past meetings [here](https://github.com/orgs/autowarefoundation/discussions?discussions_q=is%3Aopen+label%3Ameeting%3Aplanning-control-wg+).
 
 Interested in joining our meetings? We’d love to have you! For more information on how to participate, visit the following link: [How to participate in the working group](https://github.com/autowarefoundation/autoware-projects/wiki/Autoware-Planning-Control-Working-Group#how-to-participate-in-the-working-group).
+
+### Citations
+
+Occasionally, we publish papers specific to the Planning Component in Autoware. We encourage you to explore these publications and find valuable insights for your work. If you find them useful and incorporate any of our methodologies or algorithms in your projects, citing our papers would be immensely helpful. This support allows us to reach a broader audience and continue contributing to the field.
+
+If you use the Jerk Constrained Velocity Planning algorithm in [Motion Velocity Smoother](./motion_velocity_smoother/README.md) module in the Planning Component, we kindly request you to cite the relevant paper.
+
+<!-- cspell:ignore Shimizu, Horibe, Watanabe, Kato -->
+
+Y. Shimizu, T. Horibe, F. Watanabe and S. Kato, "[Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach](https://arxiv.org/abs/2202.10029)," 2022 International Conference on Robotics and Automation (ICRA)
+
+```tex
+@inproceedings{shimizu2022,
+  author={Shimizu, Yutaka and Horibe, Takamasa and Watanabe, Fumiya and Kato, Shinpei},
+  booktitle={2022 International Conference on Robotics and Automation (ICRA)},
+  title={Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach},
+  year={2022},
+  pages={5814-5820},
+  doi={10.1109/ICRA46639.2022.9812155}}
+```
