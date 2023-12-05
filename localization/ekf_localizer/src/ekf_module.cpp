@@ -219,7 +219,7 @@ bool EKFModule::measurementUpdatePose(
   if (delay_step >= params_.extend_state_step) {
     pose_diag_info.is_passed_delay_gate = false;
     warning_->warnThrottle(
-      poseDelayStepWarningMessage(delay_time, params_.extend_state_step, params_.ekf_dt), 2000);
+      poseDelayStepWarningMessage(pose_diag_info.delay_time, pose_diag_info.delay_time_threshold), 2000);
     return false;
   }
 
@@ -307,11 +307,11 @@ bool EKFModule::measurementUpdateTwist(
   const int delay_step = static_cast<int>(find_closest_delay_time_index(delay_time));
 
   twist_diag_info.delay_time = std::max(delay_time, twist_diag_info.delay_time);
-  twist_diag_info.delay_time_threshold = params_.extend_state_step * params_.ekf_dt;
+  twist_diag_info.delay_time_threshold = accumulated_delay_times_.back();
   if (delay_step >= params_.extend_state_step) {
     twist_diag_info.is_passed_delay_gate = false;
     warning_->warnThrottle(
-      twistDelayStepWarningMessage(delay_time, params_.extend_state_step, params_.ekf_dt), 2000);
+      twistDelayStepWarningMessage(twist_diag_info.delay_time, twist_diag_info.delay_time_threshold), 2000);
     return false;
   }
 
