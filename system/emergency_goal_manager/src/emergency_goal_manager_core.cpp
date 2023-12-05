@@ -142,9 +142,9 @@ void EmergencyGoalManager::callClearMrmRoute()
         RCLCPP_INFO(get_logger(), "Clear MRM Route has been successfully sent.");
         return;
       } else {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         RCLCPP_WARN(get_logger(), "Clear MRM Route has failed.");
         continue;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
   }
