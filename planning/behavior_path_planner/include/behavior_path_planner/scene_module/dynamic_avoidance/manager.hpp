@@ -31,8 +31,9 @@ namespace behavior_path_planner
 class DynamicAvoidanceModuleManager : public SceneModuleManagerInterface
 {
 public:
-  DynamicAvoidanceModuleManager(
-    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
+  DynamicAvoidanceModuleManager() : SceneModuleManagerInterface{"dynamic_avoidance"} {}
+
+  void init(rclcpp::Node * node) override;
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {

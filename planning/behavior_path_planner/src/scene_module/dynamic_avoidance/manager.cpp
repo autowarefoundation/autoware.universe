@@ -25,10 +25,11 @@
 namespace behavior_path_planner
 {
 
-DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
-: SceneModuleManagerInterface(node, name, config, {""})
+void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
 {
+  // init manager interface
+  initInterface(node, {""});
+
   DynamicAvoidanceParameters p{};
 
   {  // common
@@ -235,3 +236,8 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
   });
 }
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::DynamicAvoidanceModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
