@@ -518,8 +518,8 @@ void DynamicAvoidanceModule::updateTargetObjects()
       getLateralLongitudinalOffset(input_path->points, object.pose, object.shape);
 
     // 2.c. check if object will not cut in
-    const bool will_object_cut_in = willObjectCutIn(
-      input_path->points, obj_path, object.vel, lat_lon_offset);
+    const bool will_object_cut_in =
+      willObjectCutIn(input_path->points, obj_path, object.vel, lat_lon_offset);
     if (will_object_cut_in) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
