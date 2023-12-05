@@ -136,7 +136,7 @@ bool RunOutModule::modifyPathVelocity(
   return true;
 }
 
-boost::optional<DynamicObstacle> RunOutModule::detectCollision(
+std::optional<DynamicObstacle> RunOutModule::detectCollision(
   const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path)
 {
   if (path.points.size() < 2) {
@@ -197,7 +197,7 @@ boost::optional<DynamicObstacle> RunOutModule::detectCollision(
   return {};
 }
 
-boost::optional<DynamicObstacle> RunOutModule::findNearestCollisionObstacle(
+std::optional<DynamicObstacle> RunOutModule::findNearestCollisionObstacle(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & base_pose,
   std::vector<DynamicObstacle> & dynamic_obstacles) const
 {
@@ -337,7 +337,7 @@ std::vector<DynamicObstacle> RunOutModule::checkCollisionWithObstacles(
 
 // calculate the predicted pose of the obstacle on the predicted path with given travel time
 // assume that the obstacle moves with constant velocity
-boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcPredictedObstaclePose(
+std::optional<geometry_msgs::msg::Pose> RunOutModule::calcPredictedObstaclePose(
   const std::vector<PredictedPath> & predicted_paths, const float travel_time,
   const float velocity_mps) const
 {
@@ -508,8 +508,8 @@ bool RunOutModule::checkCollisionWithPolygon() const
   return false;
 }
 
-boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
-  const boost::optional<DynamicObstacle> & dynamic_obstacle, const PathWithLaneId & path,
+std::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
+  const std::optional<DynamicObstacle> & dynamic_obstacle, const PathWithLaneId & path,
   const geometry_msgs::msg::Pose & current_pose, const float current_vel,
   const float current_acc) const
 {
@@ -558,7 +558,7 @@ boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
     RCLCPP_WARN_STREAM(logger_, "failed to calculate stop distance.");
 
     // force to insert zero velocity
-    stop_dist = boost::make_optional<double>(dist_to_collision);
+    stop_dist = std::make_optional<double>(dist_to_collision);
   }
 
   debug_ptr_->setDebugValues(DebugValues::TYPE::STOP_DISTANCE, *stop_dist);
@@ -595,7 +595,7 @@ boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
 }
 
 void RunOutModule::insertStopPoint(
-  const boost::optional<geometry_msgs::msg::Pose> stop_point,
+  const std::optional<geometry_msgs::msg::Pose> stop_point,
   autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   // no stop point
@@ -625,7 +625,7 @@ void RunOutModule::insertStopPoint(
 }
 
 void RunOutModule::insertVelocityForState(
-  const boost::optional<DynamicObstacle> & dynamic_obstacle, const PlannerData planner_data,
+  const std::optional<DynamicObstacle> & dynamic_obstacle, const PlannerData planner_data,
   const PlannerParam & planner_param, const PathWithLaneId & smoothed_path,
   PathWithLaneId & output_path)
 {
@@ -684,7 +684,7 @@ void RunOutModule::insertVelocityForState(
 }
 
 void RunOutModule::insertStoppingVelocity(
-  const boost::optional<DynamicObstacle> & dynamic_obstacle,
+  const std::optional<DynamicObstacle> & dynamic_obstacle,
   const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
   PathWithLaneId & output_path)
 {
@@ -739,7 +739,7 @@ void RunOutModule::applyMaxJerkLimit(
     return;
   }
 
-  const auto stop_point = path.points.at(stop_point_idx.get()).point.pose.position;
+  const auto stop_point = path.points.at(stop_point_idx.value()).point.pose.position;
   const auto dist_to_stop_point =
     motion_utils::calcSignedArcLength(path.points, current_pose.position, stop_point);
 
@@ -749,7 +749,7 @@ void RunOutModule::applyMaxJerkLimit(
     current_vel, dist_to_stop_point);
 
   // overwrite velocity with limited velocity
-  run_out_utils::insertPathVelocityFromIndex(stop_point_idx.get(), jerk_limited_vel, path.points);
+  run_out_utils::insertPathVelocityFromIndex(stop_point_idx.value(), jerk_limited_vel, path.points);
 }
 
 std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOutSideOfPartition(
@@ -782,7 +782,7 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOutSideOfPartition(
 
 void RunOutModule::publishDebugValue(
   const PathWithLaneId & path, const std::vector<DynamicObstacle> extracted_obstacles,
-  const boost::optional<DynamicObstacle> & dynamic_obstacle,
+  const std::optional<DynamicObstacle> & dynamic_obstacle,
   const geometry_msgs::msg::Pose & current_pose) const
 {
   if (dynamic_obstacle) {

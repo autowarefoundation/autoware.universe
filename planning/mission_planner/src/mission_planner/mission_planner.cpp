@@ -487,9 +487,12 @@ void MissionPlanner::on_clear_mrm_route(
   if (!mrm_route_) {
     throw component_interface_utils::NoEffectWarning("MRM route is not set");
   }
-  if (reroute_availability_ && !reroute_availability_->availability) {
+  if (
+    state_.state == RouteState::Message::SET && reroute_availability_ &&
+    !reroute_availability_->availability) {
     throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
+      ResponseCode::ERROR_INVALID_STATE,
+      "Cannot clear MRM route as the planner is not lane following before arriving at the goal.");
   }
 
   change_state(RouteState::Message::CHANGING);
@@ -497,7 +500,7 @@ void MissionPlanner::on_clear_mrm_route(
   if (!normal_route_) {
     clear_mrm_route();
     change_state(RouteState::Message::UNSET);
-    res->success = true;
+    res->status.success = true;
     return;
   }
 
@@ -506,7 +509,7 @@ void MissionPlanner::on_clear_mrm_route(
     clear_mrm_route();
     change_route(*normal_route_);
     change_state(RouteState::Message::SET);
-    res->success = true;
+    res->status.success = true;
     return;
   }
 
@@ -523,12 +526,12 @@ void MissionPlanner::on_clear_mrm_route(
     change_mrm_route(*mrm_route_);
     change_route(*normal_route_);
     change_state(RouteState::Message::SET);
-    res->success = false;
+    res->status.success = false;
   } else {
     clear_mrm_route();
     change_route(new_route);
     change_state(RouteState::Message::SET);
-    res->success = true;
+    res->status.success = true;
   }
 }
 
@@ -563,7 +566,7 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
     if (new_route.segments.empty()) {
       change_mrm_route(*mrm_route_);
       change_state(RouteState::Message::SET);
-      RCLCPP_ERROR(get_logger(), "The planned route is empty.");
+      RCLCPP_ERROR(get_logger(), "The planned MRM route is empty.");
       return;
     }
 
@@ -726,9 +729,6 @@ bool MissionPlanner::check_reroute_safety(
     return false;
   }
 
-  // find the index of the original route that has same idx with the front segment of the new route
-  const auto target_front_primitives = target_route.segments.front().primitives;
-
   auto hasSamePrimitives = [](
                              const std::vector<LaneletPrimitive> & original_primitives,
                              const std::vector<LaneletPrimitive> & target_primitives) {
@@ -745,15 +745,55 @@ bool MissionPlanner::check_reroute_safety(
     return is_same;
   };
 
-  // find idx that matches the target primitives
-  size_t start_idx = original_route.segments.size();
-  for (size_t i = 0; i < original_route.segments.size(); ++i) {
-    const auto & original_primitives = original_route.segments.at(i).primitives;
-    if (hasSamePrimitives(original_primitives, target_front_primitives)) {
-      start_idx = i;
-      break;
+  // find idx of original primitives that matches the target primitives
+  const auto start_idx_opt = std::invoke([&]() -> std::optional<size_t> {
+    /*
+     * find the index of the original route that has same idx with the front segment of the new
+     * route
+     *
+     *                          start_idx
+     * +-----------+-----------+-----------+-----------+-----------+
+     * |           |           |           |           |           |
+     * +-----------+-----------+-----------+-----------+-----------+
+     * |           |           |           |           |           |
+     * +-----------+-----------+-----------+-----------+-----------+
+     *  original    original    original    original    original
+     *                          target      target      target
+     */
+    const auto target_front_primitives = target_route.segments.front().primitives;
+    for (size_t i = 0; i < original_route.segments.size(); ++i) {
+      const auto & original_primitives = original_route.segments.at(i).primitives;
+      if (hasSamePrimitives(original_primitives, target_front_primitives)) {
+        return i;
+      }
     }
+
+    /*
+     * find the target route that has same idx with the front segment of the original route
+     *
+     *                          start_idx
+     * +-----------+-----------+-----------+-----------+-----------+
+     * |           |           |           |           |           |
+     * +-----------+-----------+-----------+-----------+-----------+
+     * |           |           |           |           |           |
+     * +-----------+-----------+-----------+-----------+-----------+
+     * 　　　　　　　　　　　　　　　original    original    original
+     *  target      target      target      target      target
+     */
+    const auto original_front_primitives = original_route.segments.front().primitives;
+    for (size_t i = 0; i < target_route.segments.size(); ++i) {
+      const auto & target_primitives = target_route.segments.at(i).primitives;
+      if (hasSamePrimitives(target_primitives, original_front_primitives)) {
+        return 0;
+      }
+    }
+
+    return std::nullopt;
+  });
+  if (!start_idx_opt.has_value()) {
+    return false;
   }
+  const size_t start_idx = start_idx_opt.value();
 
   // find last idx that matches the target primitives
   size_t end_idx = start_idx;

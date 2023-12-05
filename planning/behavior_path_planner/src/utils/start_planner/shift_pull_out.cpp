@@ -14,11 +14,11 @@
 
 #include "behavior_path_planner/utils/start_planner/shift_pull_out.hpp"
 
-#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
@@ -42,7 +42,7 @@ ShiftPullOut::ShiftPullOut(
 {
 }
 
-boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
+std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;
@@ -52,7 +52,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const P
     planner_data_->parameters.backward_path_length + parameters_.max_back_distance;
   const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
   if (pull_out_lanes.empty()) {
-    return boost::none;
+    return std::nullopt;
   }
 
   const auto road_lanes = utils::getExtendedCurrentLanes(
@@ -61,7 +61,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const P
   // find candidate paths
   auto pull_out_paths = calcPullOutPaths(*route_handler, road_lanes, start_pose, goal_pose);
   if (pull_out_paths.empty()) {
-    return boost::none;
+    return std::nullopt;
   }
 
   // extract stop objects in pull out lane for collision check
@@ -155,7 +155,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const P
     return pull_out_path;
   }
 
-  return boost::none;
+  return std::nullopt;
 }
 
 std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
