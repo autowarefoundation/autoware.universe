@@ -145,16 +145,6 @@ SamplingPlannerModule::SamplingPlannerModule(
       const double min_target_length = *std::min_element(
         internal_params_->sampling.target_lengths.begin(),
         internal_params_->sampling.target_lengths.end());
-
-      // double distance_average{0.0};
-      // for (const auto pose : path.poses) {
-      //   const auto & path_point_arc =
-      //     lanelet::utils::getArcCoordinates(input_data.current_lanes, pose);
-      //   const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);
-      //   const double lateral_distance_to_center_lane =
-      //     (distance_point_to_goal < min_target_length) ? 0.0 : std::abs(path_point_arc.distance);
-      //   distance_average += lateral_distance_to_center_lane;
-      // }
       const auto & path_point_arc =
         lanelet::utils::getArcCoordinates(input_data.current_lanes, path.poses.back());
       const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);

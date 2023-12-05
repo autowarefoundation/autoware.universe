@@ -148,6 +148,8 @@ private:
   {
     const auto ego_pose = planner_data_->self_odometry->pose.pose;
     const auto prev_module_path = getPreviousModuleOutput().path;
+    const auto prev_module_reference_path = getPreviousModuleOutput().reference_path;
+
     const auto current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
     const auto ego_arc = lanelet::utils::getArcCoordinates(current_lanes, ego_pose);
     const auto goal_pose = planner_data_->route_handler->getGoalPose();
@@ -156,8 +158,26 @@ private:
     const double min_target_length = *std::min_element(
       internal_params_->sampling.target_lengths.begin(),
       internal_params_->sampling.target_lengths.end());
-    return isReferencePathSafe() &&
-           ((std::abs(ego_arc.distance) < 1.5) || (length_to_goal < min_target_length));
+    const auto nearest_index =
+      motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
+    double yaw_difference = 0.0;
+    if (nearest_index) {
+      auto toYaw = [](const geometry_msgs::msg::Quaternion & quat) -> double {
+        geometry_msgs::msg::Vector3 rpy;
+        tf2::Quaternion q(quat.x, quat.y, quat.z, quat.w);
+        tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
+        return rpy.z;
+      };
+      const auto quat = prev_module_reference_path->points[*nearest_index].point.pose.orientation;
+      const double ref_path_yaw = toYaw(quat);
+      const double ego_yaw = toYaw(ego_pose.orientation);
+      yaw_difference = std::abs(ego_yaw - ref_path_yaw);
+    }
+    constexpr double pi = 3.14159;
+    const bool merged_back_to_path =
+      ((length_to_goal < min_target_length) || (std::abs(ego_arc.distance)) < 1.5) &&
+      (yaw_difference < pi / 18.0);
+    return isReferencePathSafe() && (merged_back_to_path);
   }
 
   bool canTransitFailureState() override { return false; }
