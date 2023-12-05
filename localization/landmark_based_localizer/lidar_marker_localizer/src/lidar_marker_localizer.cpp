@@ -153,10 +153,10 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
   }
 
   // (3) calculate diff pose
-  const Pose diff_pose = calculate_diff_pose(detected_landmarks, self_pose);
+  const Pose new_self_pose = calculate_new_self_pose(detected_landmarks, self_pose);
 
-  const double diff_x = diff_pose.position.x;
-  const double diff_y = diff_pose.position.y;
+  const double diff_x = new_self_pose.position.x - self_pose.position.x;
+  const double diff_y = new_self_pose.position.y - self_pose.position.y;
 
   const double diff_norm = std::hypot(diff_x, diff_y);
   const bool is_exist_marker_within_lanelet2_map =
@@ -176,8 +176,8 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
   PoseWithCovarianceStamped result;
   result.header.stamp = sensor_ros_time;
   result.header.frame_id = "map";
-  result.pose.pose.position.x = self_pose.position.x + diff_x;
-  result.pose.pose.position.y = self_pose.position.y + diff_y;
+  result.pose.pose.position.x = new_self_pose.position.x;
+  result.pose.pose.position.y = new_self_pose.position.y;
   result.pose.pose.position.z = self_pose.position.z;
   result.pose.pose.orientation = self_pose.orientation;
 
@@ -345,10 +345,10 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   return detected_landmarks;
 }
 
-geometry_msgs::msg::Pose LidarMarkerLocalizer::calculate_diff_pose(
+geometry_msgs::msg::Pose LidarMarkerLocalizer::calculate_new_self_pose(
   const std::vector<landmark_manager::Landmark> & detected_landmarks, const Pose & self_pose)
 {
-  Pose min_diff_pose;
+  Pose min_new_self_pose;
   double min_distance = std::numeric_limits<double>::max();
 
   for (const landmark_manager::Landmark & landmark : detected_landmarks) {
@@ -374,18 +374,21 @@ geometry_msgs::msg::Pose LidarMarkerLocalizer::calculate_diff_pose(
       continue;
     }
 
-    // initialize inverse to get relative orientation
-    Pose diff_pose =
-      tier4_autoware_utils::inverseTransformPose(mapped_marker_on_map, detected_marker_on_map);
+    // calculate position diff on map
+    const double diff_x = mapped_marker_on_map.position.x - detected_marker_on_map.position.x;
+    const double diff_y = mapped_marker_on_map.position.y - detected_marker_on_map.position.y;
+    const double diff_z = mapped_marker_on_map.position.z - detected_marker_on_map.position.z;
 
-    // recalculate position diff on map
-    diff_pose.position.x = mapped_marker_on_map.position.x - detected_marker_on_map.position.x;
-    diff_pose.position.y = mapped_marker_on_map.position.y - detected_marker_on_map.position.y;
-    diff_pose.position.z = mapped_marker_on_map.position.z - detected_marker_on_map.position.z;
+    // calculate new self pose
+    Pose new_self_pose;
+    new_self_pose.position.x = self_pose.position.x + diff_x;
+    new_self_pose.position.y = self_pose.position.y + diff_y;
+    new_self_pose.position.z = self_pose.position.z + diff_z;
+    new_self_pose.orientation = self_pose.orientation;
 
     // update
     min_distance = curr_distance;
-    min_diff_pose = diff_pose;
+    min_new_self_pose = new_self_pose;
 
     // for debug
     PoseStamped pose_to_publish;
@@ -395,5 +398,5 @@ geometry_msgs::msg::Pose LidarMarkerLocalizer::calculate_diff_pose(
     pub_marker_pose_on_map_from_self_pose_->publish(pose_to_publish);
   }
 
-  return min_diff_pose;
+  return min_new_self_pose;
 }

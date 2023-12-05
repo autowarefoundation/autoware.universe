@@ -89,7 +89,7 @@ private:
 
   std::vector<landmark_manager::Landmark> detect_landmarks(
     const PointCloud2::ConstSharedPtr & points_msg_ptr);
-  Pose calculate_diff_pose(
+  Pose calculate_new_self_pose(
     const std::vector<landmark_manager::Landmark> & detected_landmarks, const Pose & self_pose);
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
