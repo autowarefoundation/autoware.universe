@@ -6,7 +6,7 @@ The Autoware.Universe Planning Modules represent a cutting-edge component within
 - To understand how Planning Components interacts with other components, please refer to [Planning Component Interface Document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/planning/)
 - The [Node Diagram](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/node-diagram/) illustrates the interactions, inputs, and outputs of all modules in the Autoware.Universe, including planning modules.
 
-## How to Enable or Disable Modules, and Parameter Configuration in Planning Component
+## How to Enable or Disable Modules, and Parameter Configuration
 
 ### Enabling and Disabling Module
 
@@ -39,7 +39,7 @@ There are multiple parameters available for configuration, and users have the op
 
 This guide outlines the steps for integrating your custom module into Autoware:
 
-- Add your modules to the 'default_present.yaml' file. For example
+- Add your modules to the `default_present.yaml` file. For example
 
 ```yaml
 - arg:
@@ -59,7 +59,7 @@ This guide outlines the steps for integrating your custom module into Autoware:
 />
 ```
 
-- If applicable, place your parameter folder within the appropriate existing parameter folder. For example [intersection_module's parameters](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/intersection.param.yaml) is in [behavior_velocity_planner](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner):
+- If applicable, place your parameter folder within the appropriate existing parameter folder. For example [intersection_module's parameters](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/intersection.param.yaml) is in [behavior_velocity_planner](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner).
 - Insert the path of your parameters in the [tier4_planning_component.launch.xml](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/launch/components/tier4_planning_component.launch.xml). For example `behavior_velocity_planner_intersection_module_param_path` is used.
 
 ```xml
