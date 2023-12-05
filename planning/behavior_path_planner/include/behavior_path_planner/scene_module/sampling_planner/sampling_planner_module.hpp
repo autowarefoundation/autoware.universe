@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/drivable_area_expansion.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/sampling_planner/sampling_planner_parameters.hpp"
 #include "behavior_path_planner/utils/sampling_planner/util.hpp"
@@ -176,7 +177,7 @@ private:
     constexpr double pi = 3.14159;
     const bool merged_back_to_path =
       ((length_to_goal < min_target_length) || (std::abs(ego_arc.distance)) < 1.5) &&
-      (yaw_difference < pi / 18.0);
+      (yaw_difference < pi / 18.0);  // TODO(Daniel) magic numbers
     return isReferencePathSafe() && (merged_back_to_path);
   }
 

@@ -88,13 +88,8 @@ SamplingPlannerModule::SamplingPlannerModule(
       sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.points.empty()) return 0.0;
-      if (!std::any_of(
-            input_data.current_lanes.begin(), input_data.current_lanes.end(),
-            [&](const auto & lane) {
-              return lanelet::utils::isInLanelet(input_data.goal_pose, lane);
-            }))
-        return 0.0;
       if (path.poses.empty()) return 0.0;
+
       const auto & goal_pose = input_data.goal_pose;
       const auto & ego_pose = input_data.ego_pose;
       const auto & path_last_pose = path.poses.back();
@@ -133,13 +128,6 @@ SamplingPlannerModule::SamplingPlannerModule(
       [[maybe_unused]] const sampler_common::Constraints & constraints,
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.poses.empty()) return 0.0;
-      if (!std::any_of(
-            input_data.current_lanes.begin(), input_data.current_lanes.end(),
-            [&](const auto & lane) {
-              return lanelet::utils::isInLanelet(input_data.goal_pose, lane);
-            }))
-        return 0.0;
-
       const auto & goal_pose = input_data.goal_pose;
       const auto goal_arc = lanelet::utils::getArcCoordinates(input_data.current_lanes, goal_pose);
       const double min_target_length = *std::min_element(
@@ -193,9 +181,19 @@ bool SamplingPlannerModule::isExecutionRequested() const
 bool SamplingPlannerModule::isReferencePathSafe() const
 {
   std::vector<DrivableLanes> drivable_lanes{};
-
   const auto & prev_module_path = getPreviousModuleOutput().path;
-  const auto & current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+  const auto & p = planner_data_->parameters;
+  const auto ego_pose = planner_data_->self_odometry->pose.pose;
+  lanelet::ConstLanelet current_lane;
+
+  if (!planner_data_->route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+      "failed to find closest lanelet within route!!!");
+    return {};
+  }
+  const auto current_lanes = planner_data_->route_handler->getLaneletSequence(
+    current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
   // expand drivable lanes
   std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
     auto d = generateExpandDrivableLanes(lanelet, planner_data_);
@@ -420,7 +418,20 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   std::vector<DrivableLanes> drivable_lanes{};
 
   const auto & prev_module_path = getPreviousModuleOutput().path;
-  const auto & current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+  // const auto & current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+
+  const auto & p = planner_data_->parameters;
+  const auto ego_pose = planner_data_->self_odometry->pose.pose;
+  lanelet::ConstLanelet current_lane;
+
+  if (!planner_data_->route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+      "failed to find closest lanelet within route!!!");
+    return {};
+  }
+  const auto current_lanes = planner_data_->route_handler->getLaneletSequence(
+    current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
   // expand drivable lanes
   std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
     drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
@@ -442,10 +453,25 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   auto frenet_paths =
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
-  // if (prev_sampling_path_) {
-  //   const auto prev_path = prev_sampling_path_.value();
-  //   frenet_paths.push_back(prev_path);
-  // }
+
+  auto get_goal_pose = [&]() {
+    auto goal_pose = planner_data_->route_handler->getGoalPose();
+    if (!std::any_of(current_lanes.begin(), current_lanes.end(), [&](const auto & lane) {
+          return lanelet::utils::isInLanelet(goal_pose, lane);
+        })) {
+      // std::cerr << "goal not in current lanes. Finidng farthest path point to use as goal\n";
+      for (auto it = reference_path_ptr->points.rbegin(); it < reference_path_ptr->points.rend();
+           it++) {
+        if (std::any_of(current_lanes.begin(), current_lanes.end(), [&](const auto & lane) {
+              return lanelet::utils::isInLanelet(it->point.pose, lane);
+            })) {
+          goal_pose = it->point.pose;
+          break;
+        }
+      }
+    }
+    return goal_pose;
+  };
 
   // EXTEND prev path
   if (prev_sampling_path_ && prev_sampling_path_->lengths.size() > 1) {
@@ -455,7 +481,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
     geometry_msgs::msg::Pose future_pose = prev_path_frenet.poses.back();
     const double length_path = lanelet::utils::getArcCoordinates(current_lanes, future_pose).length;
-    const auto goal_pose = planner_data_->route_handler->getGoalPose();
+    const auto goal_pose = get_goal_pose();
     const double length_goal = lanelet::utils::getArcCoordinates(current_lanes, goal_pose).length;
 
     const double min_target_length = *std::min_element(
@@ -464,7 +490,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
     // double x = prev_path_frenet.points.back().x();
     // double x_pose = pose.position.x;
-    if (std::abs(length_goal - length_path) > min_target_length) {
+    if (std::abs(length_goal - length_path) > min_target_length / 2.0) {
       // sampler_common::State reuse_state;
       // reuse_state.curvature = reused_path->curvatures.back();
       // reuse_state.pose = reused_path->points.back();
@@ -504,8 +530,9 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   }
 
   SoftConstraintsInputs soft_constraints_input;
-  soft_constraints_input.goal_pose = planner_data_->route_handler->getGoalPose();
+  soft_constraints_input.goal_pose = get_goal_pose();
   soft_constraints_input.ego_pose = planner_data_->self_odometry->pose.pose;
+  ;
   soft_constraints_input.current_lanes = current_lanes;
   soft_constraints_input.reference_path = reference_path_ptr;
   soft_constraints_input.prev_module_path = prev_module_path;
@@ -580,7 +607,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   const auto road_lanes =
     utils::getExtendedCurrentLanes(planner_data_, max_length, max_length, false);
   auto out_path = convertFrenetPathToPathWithLaneID(
-    best_path, road_lanes, soft_constraints_input.goal_pose.position.z);
+    best_path, road_lanes, planner_data_->route_handler->getGoalPose().position.z);
 
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(out_path);
@@ -684,8 +711,19 @@ void SamplingPlannerModule::updateDebugMarkers()
 void SamplingPlannerModule::extendOutputDrivableArea(BehaviorModuleOutput & output)
 {
   const auto prev_module_path = getPreviousModuleOutput().path;
-  const auto current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+  // const auto current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+  const auto & p = planner_data_->parameters;
+  const auto ego_pose = planner_data_->self_odometry->pose.pose;
+  lanelet::ConstLanelet current_lane;
 
+  if (!planner_data_->route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+      "failed to find closest lanelet within route!!!");
+    return;
+  }
+  const auto current_lanes = planner_data_->route_handler->getLaneletSequence(
+    current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
   std::vector<DrivableLanes> drivable_lanes{};
   // expand drivable lanes
   std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
