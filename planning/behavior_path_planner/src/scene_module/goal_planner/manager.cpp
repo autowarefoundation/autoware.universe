@@ -25,11 +25,11 @@
 
 namespace behavior_path_planner
 {
-
-GoalPlannerModuleManager::GoalPlannerModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
-: SceneModuleManagerInterface(node, name, config, {""})
+void GoalPlannerModuleManager::init(rclcpp::Node * node)
 {
+  // init manager interface
+  initInterface(node, {""});
+
   GoalPlannerParameters p;
 
   const std::string base_ns = "goal_planner.";
@@ -70,7 +70,8 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
       p.parking_policy = ParkingPolicy::RIGHT_SIDE;
     } else {
       RCLCPP_ERROR_STREAM(
-        logger_, "[goal_planner] invalid parking_policy: " << parking_policy_name << std::endl);
+        node->get_logger().get_child(name()),
+        "[goal_planner] invalid parking_policy: " << parking_policy_name << std::endl);
       exit(EXIT_FAILURE);
     }
   }
@@ -384,16 +385,18 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
   // validation of parameters
   if (p.shift_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      logger_, "shift_sampling_num must be positive integer. Given parameter: "
-                 << p.shift_sampling_num << std::endl
-                 << "Terminating the program...");
+      node->get_logger().get_child(name()),
+      "shift_sampling_num must be positive integer. Given parameter: "
+        << p.shift_sampling_num << std::endl
+        << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
   if (p.maximum_deceleration < 0.0) {
     RCLCPP_FATAL_STREAM(
-      logger_, "maximum_deceleration cannot be negative value. Given parameter: "
-                 << p.maximum_deceleration << std::endl
-                 << "Terminating the program...");
+      node->get_logger().get_child(name()),
+      "maximum_deceleration cannot be negative value. Given parameter: "
+        << p.maximum_deceleration << std::endl
+        << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 
@@ -437,7 +440,7 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
     return true;
   }
 
-  return enable_simultaneous_execution_as_approved_module_;
+  return config_.enable_simultaneous_execution_as_approved_module;
 }
 
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
@@ -452,7 +455,12 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
     return true;
   }
 
-  return enable_simultaneous_execution_as_candidate_module_;
+  return config_.enable_simultaneous_execution_as_candidate_module;
 }
 
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::GoalPlannerModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
