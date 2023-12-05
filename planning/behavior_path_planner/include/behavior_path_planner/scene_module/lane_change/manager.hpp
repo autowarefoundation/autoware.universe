@@ -16,7 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__MANAGER_HPP_
 
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
-#include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
+#include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 #include "route_handler/route_handler.hpp"
 
 #include <rclcpp/rclcpp.hpp>

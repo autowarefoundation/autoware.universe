@@ -11,9 +11,7 @@ pluginlib_export_plugin_description_file(${PROJECT_NAME} plugins.xml)
 
 ament_auto_add_library(${PROJECT_NAME}_lib SHARED
   src/planner_manager.cpp
-  src/steering_factor_interface.cpp
   src/behavior_path_planner_node.cpp
-  src/scene_module/scene_module_visitor.cpp
   src/scene_module/avoidance/avoidance_module.cpp
   src/scene_module/avoidance/manager.cpp
   src/scene_module/dynamic_avoidance/dynamic_avoidance_module.cpp

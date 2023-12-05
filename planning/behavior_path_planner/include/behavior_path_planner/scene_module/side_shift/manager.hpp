@@ -15,8 +15,8 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__MANAGER_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__MANAGER_HPP_
 
-#include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
+#include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
