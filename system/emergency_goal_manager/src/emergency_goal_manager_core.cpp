@@ -92,7 +92,7 @@ void EmergencyGoalManager::callSetMrmRoutePoints()
     auto goals = emergency_goals_map_.begin();
 
     auto sender = goals->first;
-    auto goal_queue = goals->second;
+    auto & goal_queue = goals->second;
     if (goal_queue.empty()) {
       emergency_goals_map_.erase(sender);
       continue;
