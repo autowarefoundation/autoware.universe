@@ -1,10 +1,30 @@
 # Planning Components
 
+## Getting Started
+
 The Autoware.Universe Planning Modules represent a cutting-edge component within the broader open-source autonomous driving software stack. These modules play a pivotal role in autonomous vehicle navigation, skillfully handling route planning, dynamic obstacle avoidance, and real-time adaptation to varied traffic conditions.
 
 - For high level concept of Planning Components, please refer to [Planning Component Design Document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/)
 - To understand how Planning Components interacts with other components, please refer to [Planning Component Interface Document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/planning/)
 - The [Node Diagram](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/node-diagram/) illustrates the interactions, inputs, and outputs of all modules in the Autoware.Universe, including planning modules.
+
+## Citations
+
+If you use the Jerk Constrained Velocity Planning algorithm in motion velocity smoother module from the planning component, please cite this work in your papers!
+
+Y. Shimizu, T. Horibe, F. Watanabe and S. Kato, "[Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach](https://arxiv.org/abs/2202.10029)," 2022 International Conference on Robotics and Automation (ICRA)
+
+```tex
+@inproceedings{shimizu2022,
+  author={Shimizu, Yutaka and Horibe, Takamasa and Watanabe, Fumiya and Kato, Shinpei},
+  booktitle={2022 International Conference on Robotics and Automation (ICRA)},
+  title={Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach},
+  year={2022},
+  volume={},
+  number={},
+  pages={5814-5820},
+  doi={10.1109/ICRA46639.2022.9812155}}
+```
 
 ## How to Enable or Disable Modules, and Parameter Configuration
 
