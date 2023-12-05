@@ -124,10 +124,15 @@ void EmergencyGoalManager::callClearMrmRoute()
 {
   auto request = std::make_shared<ClearRoute::Request>();
   const auto duration = std::chrono::duration<double, std::ratio<1>>(10);
+  const auto start_time = std::chrono::steady_clock::now();
 
   while (rclcpp::ok()) {
-    auto future = client_clear_mrm_route_->async_send_request(request);
+    if (std::chrono::steady_clock::now() - start_time > duration) {
+      RCLCPP_WARN(get_logger(), "Clear MRM Route service timeout.");
+      return;
+    }
 
+    auto future = client_clear_mrm_route_->async_send_request(request);
     if (future.wait_for(duration) != std::future_status::ready) {
       RCLCPP_WARN(get_logger(), "Clear MRM Route service timeout.");
       return;
