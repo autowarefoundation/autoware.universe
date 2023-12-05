@@ -1,0 +1,225 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for ground_segmentation",
+  "type": "object",
+  "definitions": {
+    "velodyne_monitor": {
+      "type": "object",
+      "properties": {
+        "base_frame": {
+          "type": "string",
+          "default": "base_link"
+        },
+        "unit_axis": {
+          "type": "string",
+          "default": "z"
+        },
+        "max_iterations": {
+          "type": "number",
+          "default": 1000
+        },
+        "min_inliers": {
+          "type": "number",
+          "default": 5000
+        },
+        "min_points": {
+          "type": "number",
+          "default": 1000
+        },
+        "outlier_threshold": {
+          "type": "number",
+          "default": 0.01
+        },
+        "plane_slope_threshold": {
+          "type": "number",
+          "default": 10.0
+        },
+        "voxel_size_x": {
+          "type": "number",
+          "default": 0.04
+        },
+        "voxel_size_y": {
+          "type": "number",
+          "default": 0.04
+        },
+        "voxel_size_z": {
+          "type": "number",
+          "default": 0.04
+        },
+        "height_threshold": {
+          "type": "number",
+          "default": 0.01
+        },
+        "debug": {
+          "type": "boolean",
+          "default": "false"
+        },
+        "min_x": {
+          "type": "number",
+          "default": -0.01
+        },
+        "max_x": {
+          "type": "number",
+          "default": 0.01
+        },
+        "min_y": {
+          "type": "number",
+          "default": -0.01
+        },
+        "max_y": {
+          "type": "number",
+          "default": 0.01
+        },
+        "use_vehicle_footprint": {
+          "type": "boolean",
+          "default": "false"
+        },
+        "general_max_slope": {
+          "type": "number",
+          "default": 8.0
+        },
+        "local_max_slope": {
+          "type": "number",
+          "default": 6.0
+        },
+        "initial_max_slope": {
+          "type": "number",
+          "default": 3.0
+        },
+        "radial_divider_angle": {
+          "type": "number",
+          "default": 1.0
+        },
+        "min_height_threshold": {
+          "type": "number",
+          "default": 0.15
+        },
+        "concentric_divider_distance": {
+          "type": "number",
+          "default": 0.0
+        },
+        "reclass_distance_threshold": {
+          "type": "number",
+          "default": 0.1
+        },
+        "low_priority_region_x": {
+          "type": "number",
+          "default": -20.0
+        },
+        "detection_range_z_max": {
+          "type": "number",
+          "default": 2.5
+        },
+        "center_pcl_shift": {
+          "type": "number",
+          "default": 0.0
+        },
+        "non_ground_height_threshold": {
+          "type": "number",
+          "default": 0.2
+        },
+        "grid_mode_switch_radius": {
+          "type": "number",
+          "default": 20.0
+        },
+        "grid_size_m": {
+          "type": "number",
+          "default": 0.5
+        },
+        "gnd_grid_buffer_size": {
+          "type": "number",
+          "default": 4
+        },
+        "elevation_grid_mode": {
+          "type": "boolean",
+          "default": "true"
+        },
+        "global_slope_max_angle_rad": {
+          "type": "number",
+          "default": 8.0
+        },
+        "local_slope_max_angle_rad": {
+          "type": "number",
+          "default": 10.0
+        },
+        "radial_divider_angle_rad": {
+          "type": "number",
+          "default": 1.0
+        },
+        "split_points_distance_tolerance": {
+          "type": "number",
+          "default": 0.2
+        },
+        "split_height_distance": {
+          "type": "number",
+          "default": 0.2
+        },
+        "use_virtual_ground_point": {
+          "type": "boolean",
+          "default": "true"
+        },
+        "use_recheck_ground_cluster": {
+          "type": "boolean",
+          "default": "true"
+        },
+        "radial_dividers_num": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "base_frame",
+        "unit_axis",
+        "max_iterations",
+        "min_inliers",
+        "min_points",
+        "outlier_threshold",
+        "plane_slope_threshold",
+        "voxel_size_x",
+        "voxel_size_y",
+        "voxel_size_z",
+        "height_threshold",
+        "debug",
+        "min_x",
+        "min_y",
+        "max_x",
+        "max_y",
+        "use_vehicle_footprint",
+        "general_max_slope",
+        "local_max_slope",
+        "initial_max_slope",
+        "radial_divider_angle",
+        "min_height_threshold",
+        "concentric_divider_distance",
+        "reclass_distance_threshold",
+        "low_priority_region_x",
+        "detection_range_z_max",
+        "center_pcl_shift",
+        "non_ground_height_threshold",
+        "grid_mode_switch_radius",
+        "grid_size_m",
+        "gnd_grid_buffer_size",
+        "elevation_grid_mode",
+        "global_slope_max_angle_rad",
+        "local_slope_max_angle_rad",
+        "radial_divider_angle_rad",
+        "split_points_distance_tolerance",
+        "split_height_distance",
+        "use_virtual_ground_point",
+        "use_recheck_ground_cluster",
+        "radial_dividers_num"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/ground_segmentation"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
