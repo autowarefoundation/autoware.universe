@@ -212,9 +212,11 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
   {  // drivable_area_generation
     const std::string ns = "dynamic_avoidance.drivable_area_generation.";
     std::string polygon_generation_method_str;
-    updateParam<std::string>(
-      parameters, ns + "polygon_generation_method", polygon_generation_method_str);
-    p->polygon_generation_method = convertToPolygonGenerationMethod(polygon_generation_method_str);
+    if (updateParam<std::string>(
+          parameters, ns + "polygon_generation_method", polygon_generation_method_str)) {
+      p->polygon_generation_method =
+        convertToPolygonGenerationMethod(polygon_generation_method_str);
+    }
     updateParam<double>(
       parameters, ns + "object_path_base.min_longitudinal_polygon_margin",
       p->min_obj_path_based_lon_polygon_margin);
