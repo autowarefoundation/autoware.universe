@@ -18,8 +18,7 @@
 
 #include <string>
 
-std::string poseDelayStepWarningMessage(
-  const double delay_time, const double delay_time_threshold)
+std::string poseDelayStepWarningMessage(const double delay_time, const double delay_time_threshold)
 {
   const std::string s =
     "Pose delay exceeds the compensation limit, ignored. "
@@ -27,8 +26,7 @@ std::string poseDelayStepWarningMessage(
   return fmt::format(s, delay_time, delay_time_threshold);
 }
 
-std::string twistDelayStepWarningMessage(
-  const double delay_time, const double delay_time_threshold)
+std::string twistDelayStepWarningMessage(const double delay_time, const double delay_time_threshold)
 {
   const std::string s =
     "Twist delay exceeds the compensation limit, ignored. "

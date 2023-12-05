@@ -17,8 +17,7 @@
 
 #include <string>
 
-std::string poseDelayStepWarningMessage(
-  const double delay_time, const double delay_time_threshold);
+std::string poseDelayStepWarningMessage(const double delay_time, const double delay_time_threshold);
 std::string twistDelayStepWarningMessage(
   const double delay_time, const double delay_time_threshold);
 std::string poseDelayTimeWarningMessage(const double delay_time);
