@@ -45,11 +45,10 @@ bool position_filter(
   return (backward_distance < dist_ego_to_obj && dist_ego_to_obj < forward_distance);
 }
 
-bool position_filter(
-  const PredictedObject & object, const geometry_msgs::msg::Point & reference_point,
+bool is_within_circle(
+  const geometry_msgs::msg::Point & object_pos, const geometry_msgs::msg::Point & reference_point,
   const double search_radius)
 {
-  const auto & object_pos = object.kinematics.initial_pose_with_covariance.pose.position;
   const double dist =
     std::hypot(reference_point.x - object_pos.x, reference_point.y - object_pos.y);
   return dist < search_radius;
@@ -143,7 +142,8 @@ void filterObjectsWithinRadius(
   const double search_radius)
 {
   const auto filter = [&](const auto & object) {
-    return filter::position_filter(object, reference_point, search_radius);
+    return filter::is_within_circle(
+      object.kinematics.initial_pose_with_covariance.pose.position, reference_point, search_radius);
   };
 
   filterObjects(objects, filter);
