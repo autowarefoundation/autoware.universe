@@ -17,7 +17,7 @@
   <buildtool_depend>cudnn_cmake_module</buildtool_depend>
   <buildtool_depend>tensorrt_cmake_module</buildtool_depend>
 
-  <depend>cuda</depend>
+  <depend>cuda_virtual</depend>
   <depend>rclcpp</depend>
 
   <test_depend>ament_lint_auto</test_depend>

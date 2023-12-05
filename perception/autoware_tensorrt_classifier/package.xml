@@ -22,6 +22,7 @@
   <depend>autoware_cuda_utils</depend>
   <depend>autoware_tensorrt_common</depend>
   <depend>cuda</depend>
+  <depend>cuda_virtual</depend>
   <depend>cuda_utils</depend>
   <depend>libopencv-dev</depend>
   <depend>rclcpp</depend>
