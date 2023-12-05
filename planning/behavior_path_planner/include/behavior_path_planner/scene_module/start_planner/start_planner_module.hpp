@@ -136,6 +136,7 @@ private:
 
   void initializeSafetyCheckParameters();
 
+  bool requiresDynamicObjectsCollisionDetection() const;
   bool receivedNewRoute() const;
 
   bool isModuleRunning() const;
@@ -206,7 +207,7 @@ private:
     const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
   bool hasFinishedPullOut() const;
   bool hasFinishedBackwardDriving() const;
-  bool checkCollisionWithDynamicObjects() const;
+  bool hasCollisionWithDynamicObjects() const;
   bool isStopped();
   bool isStuck();
   bool hasFinishedCurrentPath();

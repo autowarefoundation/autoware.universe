@@ -144,7 +144,9 @@ void StartPlannerModule::updateData()
     status_.backward_driving_complete = false;
   }
 
-  status_.is_safe_dynamic_objects = checkCollisionWithDynamicObjects();
+  if (requiresDynamicObjectsCollisionDetection()) {
+    status_.is_safe_dynamic_objects = !hasCollisionWithDynamicObjects();
+  }
 }
 
 bool StartPlannerModule::hasFinishedBackwardDriving() const
@@ -172,10 +174,16 @@ bool StartPlannerModule::receivedNewRoute() const
          *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
 }
 
-bool StartPlannerModule::checkCollisionWithDynamicObjects() const
+bool StartPlannerModule::requiresDynamicObjectsCollisionDetection() const
 {
-  return !(parameters_->safety_check_params.enable_safety_check && status_.driving_forward) ||
-         isSafePath();
+  return parameters_->safety_check_params.enable_safety_check && status_.driving_forward;
+}
+
+bool StartPlannerModule::hasCollisionWithDynamicObjects() const
+{
+  // TODO(Sugahara): update path, params for predicted path and so on in this function to avoid
+  // mutable
+  return !isSafePath();
 }
 
 bool StartPlannerModule::isExecutionRequested() const
@@ -262,11 +270,18 @@ bool StartPlannerModule::isStopped()
 
 bool StartPlannerModule::isExecutionReady() const
 {
+  bool is_safe = true;
+
   // Evaluate safety. The situation is not safe if any of the following conditions are met:
   // 1. pull out path has not been found
   // 2. waiting for approval and there is a collision with dynamic objects
-  const bool is_safe =
-    status_.found_pull_out_path && (!isWaitingApproval() || checkCollisionWithDynamicObjects());
+  if (!status_.found_pull_out_path) {
+    is_safe = false;
+  }
+
+  if (requiresDynamicObjectsCollisionDetection()) {
+    is_safe = !hasCollisionWithDynamicObjects();
+  }
 
   if (!is_safe) stop_pose_ = planner_data_->self_odometry->pose.pose;
 
