@@ -14,8 +14,8 @@
 
 #include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 
-#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 
@@ -504,7 +504,9 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const bool is_object_aligned_to_path =
       std::abs(obj_angle) < parameters_->max_front_object_angle ||
       M_PI - parameters_->max_front_object_angle < std::abs(obj_angle);
-    if (object.is_object_on_ego_path && is_object_aligned_to_path) {
+    if (
+      object.is_object_on_ego_path && is_object_aligned_to_path &&
+      parameters_->min_front_object_vel < object.vel) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
         "[DynamicAvoidance] Ignore obstacle (%s) since it is to be followed.", obj_uuid.c_str());
@@ -686,6 +688,11 @@ bool DynamicAvoidanceModule::willObjectCutIn(
   const double obj_tangent_vel, const LatLonOffset & lat_lon_offset,
   PolygonGenerationMethod & polygon_generation_method) const
 {
+  // Ignore oncoming object
+  if (obj_tangent_vel < parameters_->min_cut_in_object_vel) {
+    return false;
+  }
+
   // Check if ego's path and object's path are close.
   const bool will_object_cut_in = [&]() {
     for (const auto & predicted_path_point : predicted_path.path) {
@@ -725,7 +732,7 @@ DynamicAvoidanceModule::DecisionWithReason DynamicAvoidanceModule::willObjectCut
   const std::optional<DynamicAvoidanceObject> & prev_object) const
 {
   // Ignore oncoming object
-  if (obj_tangent_vel < 0) {
+  if (obj_tangent_vel < parameters_->min_cut_out_object_vel) {
     return DecisionWithReason{false};
   }
 
@@ -783,13 +790,13 @@ std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> DynamicAvoidanceModule
     // left lane
     const auto opt_left_lane = rh->getLeftLanelet(lane);
     if (opt_left_lane) {
-      left_lanes.push_back(opt_left_lane.get());
+      left_lanes.push_back(opt_left_lane.value());
     }
 
     // right lane
     const auto opt_right_lane = rh->getRightLanelet(lane);
     if (opt_right_lane) {
-      right_lanes.push_back(opt_right_lane.get());
+      right_lanes.push_back(opt_right_lane.value());
     }
 
     const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
@@ -880,7 +887,7 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
 
   if (obj_vel < 0) {
     const double valid_start_length_to_avoid =
-      calcValidStartLengthToAvoid(path_points_for_object_polygon, obj_seg_idx, obj_path, obj_shape);
+      calcValidStartLengthToAvoid(obj_path, obj_pose, obj_shape);
     return MinMaxValue{
       std::max(obj_lon_offset.min_value - start_length_to_avoid, valid_start_length_to_avoid),
       obj_lon_offset.max_value + end_length_to_avoid};
@@ -891,9 +898,13 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
 }
 
 double DynamicAvoidanceModule::calcValidStartLengthToAvoid(
-  const std::vector<PathPointWithLaneId> & path_points_for_object_polygon, const size_t obj_seg_idx,
-  const PredictedPath & obj_path, const autoware_auto_perception_msgs::msg::Shape & obj_shape) const
+  const PredictedPath & obj_path, const geometry_msgs::msg::Pose & obj_pose,
+  const autoware_auto_perception_msgs::msg::Shape & obj_shape) const
 {
+  const auto prev_module_path_points = getPreviousModuleOutput().path->points;
+  const size_t obj_seg_idx =
+    motion_utils::findNearestSegmentIndex(prev_module_path_points, obj_pose.position);
+
   const size_t valid_obj_path_end_idx = [&]() {
     int ego_path_idx = obj_seg_idx + 1;
     for (size_t obj_path_idx = 0; obj_path_idx < obj_path.path.size(); ++obj_path_idx) {
@@ -901,8 +912,8 @@ double DynamicAvoidanceModule::calcValidStartLengthToAvoid(
       for (; 0 < ego_path_idx; --ego_path_idx) {
         const double dist_to_segment = calcDistanceToSegment(
           obj_path.path.at(obj_path_idx).position,
-          path_points_for_object_polygon.at(ego_path_idx).point.pose.position,
-          path_points_for_object_polygon.at(ego_path_idx - 1).point.pose.position);
+          prev_module_path_points.at(ego_path_idx).point.pose.position,
+          prev_module_path_points.at(ego_path_idx - 1).point.pose.position);
         if (
           dist_to_segment < planner_data_->parameters.vehicle_width / 2.0 +
                               parameters_->lat_offset_from_obstacle +

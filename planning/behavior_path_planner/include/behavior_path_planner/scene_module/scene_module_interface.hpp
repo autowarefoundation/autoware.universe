@@ -15,13 +15,13 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <behavior_path_planner/steering_factor_interface.hpp>
-#include <behavior_path_planner/turn_signal_decider.hpp>
+#include <behavior_path_planner_common/turn_signal_decider.hpp>
 #include <magic_enum.hpp>
 #include <motion_utils/marker/marker_helper.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
@@ -34,6 +34,7 @@
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
@@ -45,9 +46,7 @@
 
 #include <algorithm>
 #include <any>
-#include <limits>
 #include <memory>
-#include <random>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -55,6 +54,7 @@
 
 namespace behavior_path_planner
 {
+using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using objects_of_interest_marker_interface::ColorName;
@@ -101,6 +101,10 @@ public:
     }
   }
 
+  SceneModuleInterface(const SceneModuleInterface &) = delete;
+  SceneModuleInterface(SceneModuleInterface &&) = delete;
+  SceneModuleInterface & operator=(const SceneModuleInterface &) = delete;
+  SceneModuleInterface & operator=(SceneModuleInterface &&) = delete;
   virtual ~SceneModuleInterface() = default;
 
   virtual void updateModuleParams(const std::any & parameters) = 0;
@@ -275,41 +279,41 @@ public:
 
   std::string name() const { return name_; }
 
-  boost::optional<Pose> getStopPose() const
+  std::optional<Pose> getStopPose() const
   {
     if (!stop_pose_) {
       return {};
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(stop_pose_.get(), base_link2front, 0.0, 0.0);
+    return calcOffsetPose(stop_pose_.value(), base_link2front, 0.0, 0.0);
   }
 
-  boost::optional<Pose> getSlowPose() const
+  std::optional<Pose> getSlowPose() const
   {
     if (!slow_pose_) {
       return {};
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(slow_pose_.get(), base_link2front, 0.0, 0.0);
+    return calcOffsetPose(slow_pose_.value(), base_link2front, 0.0, 0.0);
   }
 
-  boost::optional<Pose> getDeadPose() const
+  std::optional<Pose> getDeadPose() const
   {
     if (!dead_pose_) {
       return {};
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(dead_pose_.get(), base_link2front, 0.0, 0.0);
+    return calcOffsetPose(dead_pose_.value(), base_link2front, 0.0, 0.0);
   }
 
   void resetWallPoses() const
   {
-    stop_pose_ = boost::none;
-    slow_pose_ = boost::none;
-    dead_pose_ = boost::none;
+    stop_pose_ = std::nullopt;
+    slow_pose_ = std::nullopt;
+    dead_pose_ = std::nullopt;
   }
 
   rclcpp::Logger getLogger() const { return logger_; }
@@ -363,10 +367,6 @@ private:
   BehaviorModuleOutput previous_module_output_;
 
   StopReason stop_reason_;
-
-  bool is_simultaneously_executable_as_approved_module_{false};
-
-  bool is_simultaneously_executable_as_candidate_module_{false};
 
   bool is_locked_new_module_launch_{false};
 
@@ -536,9 +536,9 @@ protected:
     }
 
     StopFactor stop_factor;
-    stop_factor.stop_pose = stop_pose_.get();
+    stop_factor.stop_pose = stop_pose_.value();
     stop_factor.dist_to_stop_pose =
-      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), stop_pose_.get().position);
+      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), stop_pose_.value().position);
     stop_reason_.stop_factors.push_back(stop_factor);
   }
 
@@ -601,11 +601,11 @@ protected:
 
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
-  mutable boost::optional<Pose> stop_pose_{boost::none};
+  mutable std::optional<Pose> stop_pose_{std::nullopt};
 
-  mutable boost::optional<Pose> slow_pose_{boost::none};
+  mutable std::optional<Pose> slow_pose_{std::nullopt};
 
-  mutable boost::optional<Pose> dead_pose_{boost::none};
+  mutable std::optional<Pose> dead_pose_{std::nullopt};
 
   mutable MarkerArray info_marker_;
 

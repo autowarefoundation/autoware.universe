@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_PATH_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_PATH_HPP_
 
-#include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/turn_signal_decider.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -42,8 +42,8 @@ struct LaneChangeStatus
   LaneChangePath lane_change_path{};
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets target_lanes{};
-  std::vector<uint64_t> lane_follow_lane_ids{};
-  std::vector<uint64_t> lane_change_lane_ids{};
+  std::vector<lanelet::Id> lane_follow_lane_ids{};
+  std::vector<lanelet::Id> lane_change_lane_ids{};
   bool is_safe{false};
   bool is_valid_path{true};
   double start_distance{0.0};

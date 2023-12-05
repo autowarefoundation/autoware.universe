@@ -14,14 +14,16 @@
 
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
 
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+
+#include <optional>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
@@ -326,7 +328,7 @@ bool GeometricParallelParking::planPullOut(
   return false;
 }
 
-boost::optional<Pose> GeometricParallelParking::calcStartPose(
+std::optional<Pose> GeometricParallelParking::calcStartPose(
   const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes, const double start_pose_offset,
   const double R_E_far, const bool is_forward, const bool left_side_parking)
 {
@@ -341,7 +343,7 @@ boost::optional<Pose> GeometricParallelParking::calcStartPose(
                       : std::pow(R_E_far, 2) - std::pow(arc_coordinates.distance / 2 + R_E_far, 2);
   if (squared_distance_to_arc_connect < 0) {
     // may be current_pose is behind the lane
-    return boost::none;
+    return std::nullopt;
   }
   const double dx_sign = is_forward ? -1 : 1;
   const double dx = 2 * std::sqrt(squared_distance_to_arc_connect) * dx_sign;

@@ -44,7 +44,6 @@
 
 #include "ar_tag_based_localizer.hpp"
 
-#include "localization_util/pose_array_interpolator.hpp"
 #include "localization_util/util_func.hpp"
 
 #include <Eigen/Core>
@@ -94,6 +93,8 @@ bool ArTagBasedLocalizer::setup()
     RCLCPP_ERROR_STREAM(this->get_logger(), "Invalid detection_mode: " << detection_mode);
     return false;
   }
+  ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+    this->get_logger(), ekf_time_tolerance_, ekf_position_tolerance_);
 
   /*
     Log parameter info
@@ -153,13 +154,8 @@ bool ArTagBasedLocalizer::setup()
 
 void ArTagBasedLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
 {
-  const std::vector<landmark_manager::Landmark> landmarks =
-    landmark_manager::parse_landmarks(msg, "apriltag_16h5", this->get_logger());
-  for (const landmark_manager::Landmark & landmark : landmarks) {
-    landmark_map_[landmark.id] = landmark.pose;
-  }
-
-  const MarkerArray marker_msg = landmark_manager::convert_landmarks_to_marker_array_msg(landmarks);
+  landmark_manager_.parse_landmarks(msg, "apriltag_16h5", this->get_logger());
+  const MarkerArray marker_msg = landmark_manager_.get_landmarks_as_marker_array_msg();
   marker_pub_->publish(marker_msg);
 }
 
@@ -177,24 +173,16 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
     return;
   }
 
-  // get self pose
   const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
-  Pose self_pose;
-  {
-    // get self-position on map
-    std::unique_lock<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
-    if (self_pose_msg_ptr_array_.size() <= 1) {
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
-      return;
-    }
-    PoseArrayInterpolator interpolator(
-      this, sensor_stamp, self_pose_msg_ptr_array_, ekf_time_tolerance_, ekf_position_tolerance_);
-    if (!interpolator.is_success()) {
-      return;
-    }
-    pop_old_pose(self_pose_msg_ptr_array_, sensor_stamp);
-    self_pose = interpolator.get_current_pose().pose.pose;
+
+  // get self pose
+  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
+    ekf_pose_buffer_->interpolate(sensor_stamp);
+  if (!interpolate_result) {
+    return;
   }
+  ekf_pose_buffer_->pop_old(sensor_stamp);
+  const Pose self_pose = interpolate_result.value().interpolated_pose.pose.pose;
 
   // detect
   const std::vector<landmark_manager::Landmark> landmarks = detect_landmarks(msg);
@@ -216,7 +204,7 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
   }
 
   // calc new_self_pose
-  const Pose new_self_pose = calculate_new_self_pose(landmarks, self_pose);
+  const Pose new_self_pose = landmark_manager_.calculate_new_self_pose(landmarks, self_pose);
   const Pose diff_pose = tier4_autoware_utils::inverseTransformPose(new_self_pose, self_pose);
   const double distance =
     std::hypot(diff_pose.position.x, diff_pose.position.y, diff_pose.position.z);
@@ -305,37 +293,14 @@ void ArTagBasedLocalizer::cam_info_callback(const CameraInfo::ConstSharedPtr & m
 
 void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  // lock mutex for initial pose
-  std::lock_guard<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
-  // if rosbag restart, clear buffer
-  if (!self_pose_msg_ptr_array_.empty()) {
-    const builtin_interfaces::msg::Time & t_front = self_pose_msg_ptr_array_.front()->header.stamp;
-    const builtin_interfaces::msg::Time & t_msg = msg->header.stamp;
-    if (t_front.sec > t_msg.sec || (t_front.sec == t_msg.sec && t_front.nanosec > t_msg.nanosec)) {
-      self_pose_msg_ptr_array_.clear();
-    }
-  }
-
   if (msg->header.frame_id == "map") {
-    self_pose_msg_ptr_array_.push_back(msg);
+    ekf_pose_buffer_->push_back(msg);
   } else {
-    TransformStamped transform_self_pose_frame_to_map;
-    try {
-      transform_self_pose_frame_to_map = tf_buffer_->lookupTransform(
-        "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
-
-      // transform self_pose_frame to map_frame
-      auto self_pose_on_map_ptr = std::make_shared<PoseWithCovarianceStamped>();
-      self_pose_on_map_ptr->pose.pose =
-        tier4_autoware_utils::transformPose(msg->pose.pose, transform_self_pose_frame_to_map);
-      // self_pose_on_map_ptr->pose.covariance;  // TODO(YamatoAndo)
-      self_pose_on_map_ptr->header.stamp = msg->header.stamp;
-      self_pose_msg_ptr_array_.push_back(self_pose_on_map_ptr);
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN(
-        get_logger(), "cannot get map to %s transform. %s", msg->header.frame_id.c_str(),
-        ex.what());
-    }
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      get_logger(), *this->get_clock(), 1000,
+      "Received initial pose message with frame_id "
+        << msg->header.frame_id << ", but expected map. "
+        << "Please check the frame_id in the input topic and ensure it is correct.");
   }
 }
 
@@ -403,46 +368,4 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
   }
 
   return landmarks;
-}
-
-geometry_msgs::msg::Pose ArTagBasedLocalizer::calculate_new_self_pose(
-  const std::vector<landmark_manager::Landmark> & detected_landmarks, const Pose & self_pose)
-{
-  Pose min_new_self_pose;
-  double min_distance = std::numeric_limits<double>::max();
-
-  for (const landmark_manager::Landmark & landmark : detected_landmarks) {
-    // Firstly, landmark pose is base_link
-    const Pose & detected_marker_on_base_link = landmark.pose;
-
-    // convert base_link to map
-    const Pose detected_marker_on_map =
-      tier4_autoware_utils::transformPose(detected_marker_on_base_link, self_pose);
-
-    // match to map
-    if (landmark_map_.count(landmark.id) == 0) {
-      continue;
-    }
-    const Pose mapped_marker_on_map = landmark_map_[landmark.id];
-
-    // check distance
-    const double curr_distance = tier4_autoware_utils::calcDistance3d(
-      mapped_marker_on_map.position, detected_marker_on_map.position);
-    if (curr_distance > min_distance) {
-      continue;
-    }
-
-    const Eigen::Affine3d marker_pose = pose_to_affine3d(mapped_marker_on_map);
-    const Eigen::Affine3d marker_to_base_link =
-      pose_to_affine3d(detected_marker_on_base_link).inverse();
-    const Eigen::Affine3d new_self_pose_eigen = marker_pose * marker_to_base_link;
-
-    const Pose new_self_pose = matrix4f_to_pose(new_self_pose_eigen.matrix().cast<float>());
-
-    // update
-    min_distance = curr_distance;
-    min_new_self_pose = new_self_pose;
-  }
-
-  return min_new_self_pose;
 }

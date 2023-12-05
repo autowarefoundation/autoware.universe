@@ -71,8 +71,10 @@ struct DynamicAvoidanceParameters
 
   double min_time_to_start_cut_in{0.0};
   double min_lon_offset_ego_to_cut_in_object{0.0};
+  double min_cut_in_object_vel{0.0};
   double max_time_from_outside_ego_path_for_cut_out{0.0};
   double min_cut_out_object_lat_vel{0.0};
+  double min_cut_out_object_vel{0.0};
   double max_front_object_angle{0.0};
   double min_front_object_vel{0.0};
   double max_front_object_ego_path_lat_cover_ratio{0.0};
@@ -325,8 +327,7 @@ private:
     const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
     const autoware_auto_perception_msgs::msg::Shape & obj_shape) const;
   double calcValidStartLengthToAvoid(
-    const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
-    const size_t obj_seg_idx, const PredictedPath & obj_path,
+    const PredictedPath & obj_path, const geometry_msgs::msg::Pose & obj_pose,
     const autoware_auto_perception_msgs::msg::Shape & obj_shape) const;
   MinMaxValue calcMinMaxLongitudinalOffsetToAvoid(
     const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
