@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Traffic Light Map Based Detector",
+  "type": "object",
+  "definitions": {
+    "radar_threshold_filter": {
+      "type": "object",
+      "properties": {
+        "is_amplitude_filter": {
+          "type": "boolean",
+          "default": true,
+          "description": "if this parameter is true, apply amplitude filter (publish amplitude_min < amplitude < amplitude_max)"
+        },
+        "amplitude_min": {
+          "type": "number",
+          "default": -10.0,
+          "description": "Minimum value"
+        },
+        "amplitude_max": {
+          "type": "number",
+          "default": 100.0,
+          "description": "Maximum value"
+        },
+        "is_range_filter": {
+          "type": "boolean",
+          "default": false,
+          "description": "if this parameter is true, apply range filter (publish range_min < range < range_max)"
+        },
+        "range_min": {
+          "type": "number",
+          "default": 20.0,
+          "description": "Maximum value"
+        },
+        "range_max": {
+          "type": "number",
+          "default": 300.0,
+          "description": "Maximum value"
+        },
+        "is_azimuth_filter": {
+          "type": "boolean",
+          "default": true,
+          "description": "if this parameter is true, apply angle filter (publish azimuth_min < range < azimuth_max)"
+        },
+        "azimuth_min": {
+          "type": "number",
+          "default": -1.2,
+          "description": "Minimum value"
+        },
+        "azimuth_max": {
+          "type": "number",
+          "default": 1.2,
+          "description": "Maximum value"
+        }
+      },
+      "required": [
+        "is_amplitude_filter",
+        "amplitude_min",
+        "amplitude_max",
+        "is_range_filter",
+        "range_min",
+        "range_max",
+        "is_azimuth_filter",
+        "azimuth_min",
+        "azimuth_max"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/radar_threshold_filter"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
