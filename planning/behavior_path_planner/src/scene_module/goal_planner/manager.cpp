@@ -248,10 +248,10 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
       node->declare_parameter<double>(base_ns + "stop_condition.maximum_jerk_for_stop");
   }
 
-  std::string path_safety_check_ns = "goal_planner.path_safety_check.";
+  const std::string path_safety_check_ns = "goal_planner.path_safety_check.";
 
   // EgoPredictedPath
-  std::string ego_path_ns = path_safety_check_ns + "ego_predicted_path.";
+  const std::string ego_path_ns = path_safety_check_ns + "ego_predicted_path.";
   {
     p.ego_predicted_path_params.min_velocity =
       node->declare_parameter<double>(ego_path_ns + "min_velocity");
@@ -270,7 +270,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // ObjectFilteringParams
-  std::string obj_filter_ns = path_safety_check_ns + "target_filtering.";
+  const std::string obj_filter_ns = path_safety_check_ns + "target_filtering.";
   {
     p.objects_filtering_params.safety_check_time_horizon =
       node->declare_parameter<double>(obj_filter_ns + "safety_check_time_horizon");
@@ -295,7 +295,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // ObjectTypesToCheck
-  std::string obj_types_ns = obj_filter_ns + "object_types_to_check.";
+  const std::string obj_types_ns = obj_filter_ns + "object_types_to_check.";
   {
     p.objects_filtering_params.object_types_to_check.check_car =
       node->declare_parameter<bool>(obj_types_ns + "check_car");
@@ -316,7 +316,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // ObjectLaneConfiguration
-  std::string obj_lane_ns = obj_filter_ns + "object_lane_configuration.";
+  const std::string obj_lane_ns = obj_filter_ns + "object_lane_configuration.";
   {
     p.objects_filtering_params.object_lane_configuration.check_current_lane =
       node->declare_parameter<bool>(obj_lane_ns + "check_current_lane");
@@ -331,7 +331,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // SafetyCheckParams
-  std::string safety_check_ns = path_safety_check_ns + "safety_check_params.";
+  const std::string safety_check_ns = path_safety_check_ns + "safety_check_params.";
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
@@ -349,7 +349,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // RSSparams
-  std::string rss_ns = safety_check_ns + "rss_params.";
+  const std::string rss_ns = safety_check_ns + "rss_params.";
   {
     p.safety_check_params.rss_params.rear_vehicle_reaction_time =
       node->declare_parameter<double>(rss_ns + "rear_vehicle_reaction_time");
@@ -364,7 +364,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // IntegralPredictedPolygonParams
-  std::string integral_ns = safety_check_ns + "integral_predicted_polygon_params.";
+  const std::string integral_ns = safety_check_ns + "integral_predicted_polygon_params.";
   {
     p.safety_check_params.integral_predicted_polygon_params.forward_margin =
       node->declare_parameter<double>(integral_ns + "forward_margin");
@@ -410,7 +410,7 @@ void GoalPlannerModuleManager::updateModuleParams(
 
   auto & p = parameters_;
 
-  [[maybe_unused]] std::string ns = name_ + ".";
+  [[maybe_unused]] const std::string ns = name_ + ".";
 
   std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
     if (!observer.expired()) observer.lock()->updateModuleParams(p);

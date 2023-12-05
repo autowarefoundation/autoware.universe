@@ -33,13 +33,13 @@ void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
   DynamicAvoidanceParameters p{};
 
   {  // common
-    std::string ns = "dynamic_avoidance.common.";
+    const std::string ns = "dynamic_avoidance.common.";
     p.enable_debug_info = node->declare_parameter<bool>(ns + "enable_debug_info");
     p.use_hatched_road_markings = node->declare_parameter<bool>(ns + "use_hatched_road_markings");
   }
 
   {  // target object
-    std::string ns = "dynamic_avoidance.target_object.";
+    const std::string ns = "dynamic_avoidance.target_object.";
     p.avoid_car = node->declare_parameter<bool>(ns + "car");
     p.avoid_truck = node->declare_parameter<bool>(ns + "truck");
     p.avoid_bus = node->declare_parameter<bool>(ns + "bus");
@@ -90,7 +90,7 @@ void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
   }
 
   {  // drivable_area_generation
-    std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    const std::string ns = "dynamic_avoidance.drivable_area_generation.";
     p.min_obj_path_based_lon_polygon_margin =
       node->declare_parameter<double>(ns + "object_path_base.min_longitudinal_polygon_margin");
     p.lat_offset_from_obstacle = node->declare_parameter<double>(ns + "lat_offset_from_obstacle");

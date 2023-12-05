@@ -143,7 +143,7 @@ void LaneChangeModuleManager::init(rclcpp::Node * node)
 
   // target object
   {
-    std::string ns = "lane_change.target_object.";
+    const std::string ns = "lane_change.target_object.";
     p.object_types_to_check.check_car = getOrDeclareParameter<bool>(*node, ns + "car");
     p.object_types_to_check.check_truck = getOrDeclareParameter<bool>(*node, ns + "truck");
     p.object_types_to_check.check_bus = getOrDeclareParameter<bool>(*node, ns + "bus");
@@ -260,7 +260,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   AvoidanceByLCParameters p{};
   // unique parameters
   {
-    std::string ns = "avoidance_by_lane_change.";
+    const std::string ns = "avoidance_by_lane_change.";
     p.execute_object_longitudinal_margin =
       getOrDeclareParameter<double>(*node, ns + "execute_object_longitudinal_margin");
     p.execute_only_when_lane_change_finish_before_object =
@@ -269,7 +269,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
 
   // general params
   {
-    std::string ns = "avoidance.";
+    const std::string ns = "avoidance.";
     p.resample_interval_for_planning =
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_planning");
     p.resample_interval_for_output =
@@ -323,7 +323,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
         getOrDeclareParameter<bool>(*node, ns);
     };
 
-    std::string ns = "avoidance.target_filtering.";
+    const std::string ns = "avoidance.target_filtering.";
     set_target_flag(ObjectClassification::CAR, ns + "target_type.car");
     set_target_flag(ObjectClassification::TRUCK, ns + "target_type.truck");
     set_target_flag(ObjectClassification::TRAILER, ns + "target_type.trailer");
@@ -346,7 +346,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   }
 
   {
-    std::string ns = "avoidance.target_filtering.force_avoidance.";
+    const std::string ns = "avoidance.target_filtering.force_avoidance.";
     p.enable_force_avoidance_for_stopped_vehicle =
       getOrDeclareParameter<bool>(*node, ns + "enable");
     p.threshold_time_force_avoidance_for_stopped_vehicle =
@@ -360,7 +360,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   }
 
   {
-    std::string ns = "avoidance.target_filtering.detection_area.";
+    const std::string ns = "avoidance.target_filtering.detection_area.";
     p.use_static_detection_area = getOrDeclareParameter<bool>(*node, ns + "static");
     p.object_check_min_forward_distance =
       getOrDeclareParameter<double>(*node, ns + "min_forward_distance");
@@ -372,7 +372,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
 
   // safety check
   {
-    std::string ns = "avoidance.safety_check.";
+    const std::string ns = "avoidance.safety_check.";
     p.hysteresis_factor_expand_rate =
       getOrDeclareParameter<double>(*node, ns + "hysteresis_factor_expand_rate");
   }

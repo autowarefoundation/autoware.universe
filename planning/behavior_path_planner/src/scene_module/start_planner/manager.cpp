@@ -31,7 +31,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
 
   StartPlannerParameters p;
 
-  std::string ns = "start_planner.";
+  const std::string ns = "start_planner.";
 
   p.verbose = node->declare_parameter<bool>(ns + "verbose");
   p.th_arrived_distance = node->declare_parameter<double>(ns + "th_arrived_distance");
@@ -88,7 +88,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
     node->declare_parameter<double>(ns + "ignore_distance_from_lane_end");
   // freespace planner general params
   {
-    std::string ns = "start_planner.freespace_planner.";
+    const std::string ns = "start_planner.freespace_planner.";
     p.enable_freespace_planner = node->declare_parameter<bool>(ns + "enable_freespace_planner");
     p.freespace_planner_algorithm =
       node->declare_parameter<std::string>(ns + "freespace_planner_algorithm");
@@ -115,7 +115,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
   //  freespace planner search config
   {
-    std::string ns = "start_planner.freespace_planner.search_configs.";
+    const std::string ns = "start_planner.freespace_planner.search_configs.";
     p.freespace_planner_common_parameters.theta_size =
       node->declare_parameter<int>(ns + "theta_size");
     p.freespace_planner_common_parameters.angle_goal_range =
@@ -131,13 +131,13 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
   //  freespace planner costmap configs
   {
-    std::string ns = "start_planner.freespace_planner.costmap_configs.";
+    const std::string ns = "start_planner.freespace_planner.costmap_configs.";
     p.freespace_planner_common_parameters.obstacle_threshold =
       node->declare_parameter<int>(ns + "obstacle_threshold");
   }
   //  freespace planner astar
   {
-    std::string ns = "start_planner.freespace_planner.astar.";
+    const std::string ns = "start_planner.freespace_planner.astar.";
     p.astar_parameters.only_behind_solutions =
       node->declare_parameter<bool>(ns + "only_behind_solutions");
     p.astar_parameters.use_back = node->declare_parameter<bool>(ns + "use_back");
@@ -146,7 +146,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
   //   freespace planner rrtstar
   {
-    std::string ns = "start_planner.freespace_planner.rrtstar.";
+    const std::string ns = "start_planner.freespace_planner.rrtstar.";
     p.rrt_star_parameters.enable_update = node->declare_parameter<bool>(ns + "enable_update");
     p.rrt_star_parameters.use_informed_sampling =
       node->declare_parameter<bool>(ns + "use_informed_sampling");
@@ -164,10 +164,10 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
       node->declare_parameter<double>(ns + "stop_condition.maximum_jerk_for_stop");
   }
 
-  std::string base_ns = "start_planner.path_safety_check.";
+  const std::string base_ns = "start_planner.path_safety_check.";
 
   // EgoPredictedPath
-  std::string ego_path_ns = base_ns + "ego_predicted_path.";
+  const std::string ego_path_ns = base_ns + "ego_predicted_path.";
   {
     p.ego_predicted_path_params.min_velocity =
       node->declare_parameter<double>(ego_path_ns + "min_velocity");
@@ -186,7 +186,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // ObjectFilteringParams
-  std::string obj_filter_ns = base_ns + "target_filtering.";
+  const std::string obj_filter_ns = base_ns + "target_filtering.";
   {
     p.objects_filtering_params.safety_check_time_horizon =
       node->declare_parameter<double>(obj_filter_ns + "safety_check_time_horizon");
@@ -211,7 +211,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // ObjectTypesToCheck
-  std::string obj_types_ns = obj_filter_ns + "object_types_to_check.";
+  const std::string obj_types_ns = obj_filter_ns + "object_types_to_check.";
   {
     p.objects_filtering_params.object_types_to_check.check_car =
       node->declare_parameter<bool>(obj_types_ns + "check_car");
@@ -232,7 +232,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // ObjectLaneConfiguration
-  std::string obj_lane_ns = obj_filter_ns + "object_lane_configuration.";
+  const std::string obj_lane_ns = obj_filter_ns + "object_lane_configuration.";
   {
     p.objects_filtering_params.object_lane_configuration.check_current_lane =
       node->declare_parameter<bool>(obj_lane_ns + "check_current_lane");
@@ -247,7 +247,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // SafetyCheckParams
-  std::string safety_check_ns = base_ns + "safety_check_params.";
+  const std::string safety_check_ns = base_ns + "safety_check_params.";
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
@@ -262,7 +262,7 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
 
   // RSSparams
-  std::string rss_ns = safety_check_ns + "rss_params.";
+  const std::string rss_ns = safety_check_ns + "rss_params.";
   {
     p.safety_check_params.rss_params.rear_vehicle_reaction_time =
       node->declare_parameter<double>(rss_ns + "rear_vehicle_reaction_time");
@@ -296,7 +296,7 @@ void StartPlannerModuleManager::updateModuleParams(
 
   auto & p = parameters_;
 
-  [[maybe_unused]] std::string ns = name_ + ".";
+  [[maybe_unused]] const std::string ns = name_ + ".";
 
   std::for_each(observers_.begin(), observers_.end(), [&](const auto & observer) {
     if (!observer.expired()) {

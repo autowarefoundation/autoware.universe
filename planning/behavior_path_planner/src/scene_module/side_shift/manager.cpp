@@ -32,7 +32,7 @@ void SideShiftModuleManager::init(rclcpp::Node * node)
 
   SideShiftParameters p{};
 
-  std::string ns = "side_shift.";
+  const std::string ns = "side_shift.";
   p.min_distance_to_start_shifting =
     node->declare_parameter<double>(ns + "min_distance_to_start_shifting");
   p.time_to_start_shifting = node->declare_parameter<double>(ns + "time_to_start_shifting");
@@ -52,7 +52,7 @@ void SideShiftModuleManager::updateModuleParams(
 
   [[maybe_unused]] auto p = parameters_;
 
-  [[maybe_unused]] std::string ns = "side_shift.";
+  [[maybe_unused]] const std::string ns = "side_shift.";
   // updateParam<bool>(parameters, ns + ..., ...);
 
   std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
