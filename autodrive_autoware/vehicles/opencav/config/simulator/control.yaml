@@ -5,15 +5,15 @@
     controller_mode: 'simulator'
     loop_trajectory: False
     use_external_target_vel: True
-    external_target_vel: 0.5
+    external_target_vel: 0.75
     lateral_deviation: 0.0
     # Longitudinal Controller Parameters
-    kp_longitudinal: 0.2
-    acceleration_limit: 0.16
+    kp_longitudinal: 0.1 # 0.2
+    acceleration_limit: 0.085 # 0.16
     # Lateral Controller Parameters
     wheel_base: 3.09
     lookahead_time: 3.0
     min_lookahead: 3.0
-    kp_lateral: 1.16
-    kd_lateral: 6.9
+    kp_lateral: 2.69 # 1.16
+    kd_lateral: 3.36 # 6.9
     steer_limit: 1.0
