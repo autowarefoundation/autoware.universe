@@ -25,13 +25,13 @@
 
 namespace behavior_path_planner
 {
-
-AvoidanceModuleManager::AvoidanceModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
-: SceneModuleManagerInterface(node, name, config, {"left", "right"})
+void AvoidanceModuleManager::init(rclcpp::Node * node)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::getOrDeclareParameter;
+
+  // init manager interface
+  initInterface(node, {"left", "right"});
 
   AvoidanceParameters p{};
   // general params
@@ -486,3 +486,7 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
   });
 }
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::AvoidanceModuleManager, behavior_path_planner::SceneModuleManagerInterface)
