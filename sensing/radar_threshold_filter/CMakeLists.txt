@@ -5,6 +5,8 @@ project(radar_threshold_filter)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(Boost REQUIRED)
+
 ## Targets
 ament_auto_add_library(radar_threshold_filter_node_component SHARED
   src/radar_threshold_filter_node/radar_threshold_filter_node.cpp
@@ -17,10 +19,18 @@ rclcpp_components_register_node(radar_threshold_filter_node_component
 
 ## Tests
 if(BUILD_TESTING)
+  find_package(ament_cmake_ros REQUIRED)
   list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  file(GLOB_RECURSE test_files test/**/*.cpp)
+  ament_add_ros_isolated_gtest(radar_threshold_filter ${test_files})  # ament_add_ros_isolated_gtest から変更
+
+  target_link_libraries(radar_threshold_filter
+    radar_threshold_filter_node_component
+  )
 endif()
 
 ## Package
