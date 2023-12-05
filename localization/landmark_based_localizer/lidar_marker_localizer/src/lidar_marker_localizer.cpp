@@ -101,13 +101,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
 
 void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
 {
-  const std::vector<landmark_manager::Landmark> landmarks =
-    landmark_manager::parse_landmarks(msg, "reflective_paint_marker", this->get_logger());
-  for (const landmark_manager::Landmark & landmark : landmarks) {
-    marker_pose_on_map_array_.push_back(landmark.pose);
-  }
-
-  const MarkerArray marker_msg = landmark_manager::convert_landmarks_to_marker_array_msg(landmarks);
+  landmark_manager_.parse_landmarks(msg, "reflective_paint_marker", this->get_logger());
+  const MarkerArray marker_msg = landmark_manager_.get_landmarks_as_marker_array_msg();
   pub_marker_->publish(marker_msg);
 }
 
@@ -153,7 +148,8 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
   }
 
   // (3) calculate diff pose
-  const Pose new_self_pose = calculate_new_self_pose(detected_landmarks, self_pose);
+  const Pose new_self_pose =
+    landmark_manager_.calculate_new_self_pose(detected_landmarks, self_pose, false);
 
   const double diff_x = new_self_pose.position.x - self_pose.position.x;
   const double diff_y = new_self_pose.position.y - self_pose.position.y;
@@ -337,66 +333,9 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
       marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO(YamatoAndo)
       marker_pose_on_base_link.orientation =
         tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO(YamatoAndo)
-      detected_landmarks.push_back(
-        landmark_manager::Landmark{"lidar_marker", marker_pose_on_base_link});
+      detected_landmarks.push_back(landmark_manager::Landmark{"0", marker_pose_on_base_link});
     }
   }
 
   return detected_landmarks;
-}
-
-geometry_msgs::msg::Pose LidarMarkerLocalizer::calculate_new_self_pose(
-  const std::vector<landmark_manager::Landmark> & detected_landmarks, const Pose & self_pose)
-{
-  Pose min_new_self_pose;
-  double min_distance = std::numeric_limits<double>::max();
-
-  for (const landmark_manager::Landmark & landmark : detected_landmarks) {
-    // Firstly, landmark pose is base_link
-    const Pose & detected_marker_on_base_link = landmark.pose;
-
-    // convert base_link to map
-    const Pose detected_marker_on_map =
-      tier4_autoware_utils::transformPose(detected_marker_on_base_link, self_pose);
-
-    // match to nearest marker on map
-    const Pose mapped_marker_on_map = *std::min_element(
-      std::begin(marker_pose_on_map_array_), std::end(marker_pose_on_map_array_),
-      [&detected_marker_on_map](const Pose & lhs, const Pose & rhs) {
-        return tier4_autoware_utils::calcDistance3d(lhs.position, detected_marker_on_map.position) <
-               tier4_autoware_utils::calcDistance3d(rhs.position, detected_marker_on_map.position);
-      });
-
-    // check distance
-    const double curr_distance = tier4_autoware_utils::calcDistance3d(
-      mapped_marker_on_map.position, detected_marker_on_map.position);
-    if (curr_distance > min_distance) {
-      continue;
-    }
-
-    // calculate position diff on map
-    const double diff_x = mapped_marker_on_map.position.x - detected_marker_on_map.position.x;
-    const double diff_y = mapped_marker_on_map.position.y - detected_marker_on_map.position.y;
-    const double diff_z = mapped_marker_on_map.position.z - detected_marker_on_map.position.z;
-
-    // calculate new self pose
-    Pose new_self_pose;
-    new_self_pose.position.x = self_pose.position.x + diff_x;
-    new_self_pose.position.y = self_pose.position.y + diff_y;
-    new_self_pose.position.z = self_pose.position.z + diff_z;
-    new_self_pose.orientation = self_pose.orientation;
-
-    // update
-    min_distance = curr_distance;
-    min_new_self_pose = new_self_pose;
-
-    // for debug
-    PoseStamped pose_to_publish;
-    pose_to_publish.header.frame_id = "map";
-    pose_to_publish.header.stamp = this->now();
-    pose_to_publish.pose = detected_marker_on_map;
-    pub_marker_pose_on_map_from_self_pose_->publish(pose_to_publish);
-  }
-
-  return min_new_self_pose;
 }

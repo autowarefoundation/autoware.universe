@@ -89,8 +89,6 @@ private:
 
   std::vector<landmark_manager::Landmark> detect_landmarks(
     const PointCloud2::ConstSharedPtr & points_msg_ptr);
-  Pose calculate_new_self_pose(
-    const std::vector<landmark_manager::Landmark> & detected_landmarks, const Pose & self_pose);
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -113,7 +111,7 @@ private:
   bool is_exist_marker_within_self_pose_;
   std::unique_ptr<SmartPoseBuffer> ekf_pose_buffer_;
 
-  std::vector<Pose> marker_pose_on_map_array_;
+  landmark_manager::LandmarkManager landmark_manager_;
 };
 
 #endif  // LIDAR_MARKER_LOCALIZER_HPP_
