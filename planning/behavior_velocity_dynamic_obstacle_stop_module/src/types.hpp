@@ -44,6 +44,7 @@ struct PlannerParam
   double decision_duration_buffer;
   double ego_longitudinal_offset;
   double ego_lateral_offset;
+  double minimum_object_distance_from_ego_path;
 };
 
 struct EgoData

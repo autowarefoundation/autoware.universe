@@ -52,7 +52,8 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
 }
 
 std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicted_objects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double min_vel)
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const EgoData & ego_data,
+  const PlannerParam & params, const double hysteresis)
 {
   std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filtered_objects;
   const auto is_vehicle = [](const auto & o) {
@@ -66,10 +67,23 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
                     c.label == autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
            }) != o.classification.end();
   };
+  const auto is_in_range = [&](const auto & o) {
+    for (const auto & p : ego_data.path.points) {
+      const auto distance = tier4_autoware_utils::calcDistance2d(
+        o.kinematics.initial_pose_with_covariance.pose, p.point.pose);
+      if (
+        distance <= params.minimum_object_distance_from_ego_path + params.ego_lateral_offset +
+                      o.shape.dimensions.y / 2.0 + hysteresis)
+        return true;
+    }
+    return false;
+  };
   for (const auto & object : objects.objects)
     if (
       is_vehicle(object) &&
-      object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_vel)
+      object.kinematics.initial_twist_with_covariance.twist.linear.x >=
+        params.minimum_object_velocity &&
+      is_in_range(object))
       filtered_objects.push_back(object);
   return filtered_objects;
 }
@@ -146,13 +160,13 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     motion_utils::findNearestSegmentIndex(ego_data.path.points, ego_data.pose.position);
   ego_data.longitudinal_offset_to_first_path_idx = motion_utils::calcLongitudinalOffsetToSegment(
     ego_data.path.points, ego_data.first_path_idx, ego_data.pose.position);
-  const auto dynamic_obstacles =
-    filter_predicted_objects(*planner_data_->predicted_objects, params_.minimum_object_velocity);
   make_ego_footprint_rtree(ego_data, params_);
   const auto has_decided_to_stop =
     (clock_->now() - prev_stop_decision_time_).seconds() < params_.decision_duration_buffer;
-  double hysteresis = has_decided_to_stop ? params_.hysteresis : 0.0;
   if (!has_decided_to_stop) current_stop_pose_.reset();
+  double hysteresis = has_decided_to_stop ? params_.hysteresis : 0.0;
+  const auto dynamic_obstacles =
+    filter_predicted_objects(*planner_data_->predicted_objects, ego_data, params_, hysteresis);
 
   const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
 

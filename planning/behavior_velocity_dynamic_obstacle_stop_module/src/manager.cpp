@@ -38,6 +38,8 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   pp.hysteresis = getOrDeclareParameter<double>(node, ns + ".hysteresis");
   pp.decision_duration_buffer =
     getOrDeclareParameter<double>(node, ns + ".decision_duration_buffer");
+  pp.minimum_object_distance_from_ego_path =
+    getOrDeclareParameter<double>(node, ns + ".minimum_object_distance_from_ego_path");
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   pp.ego_lateral_offset =

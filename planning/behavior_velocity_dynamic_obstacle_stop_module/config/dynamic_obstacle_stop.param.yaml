@@ -8,3 +8,4 @@
       time_horizon: 5.0  # [s] time horizon used for collision checks
       hysteresis: 1.0  # [m] once a collision has been detected, this hysteresis is used on the collision detection
       decision_duration_buffer : 1.0  # [s] duration between no collision being detected and the stop decision being cancelled:w
+      minimum_object_distance_from_ego_path: 2.0
