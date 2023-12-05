@@ -55,18 +55,27 @@ For reliable stopping, the target acceleration calculated by the FeedForward sys
 
 Based on the slope information, a compensation term is added to the target acceleration.
 
-There are two sources of the slope information, which can be switched by a parameter.
+There are two sources of the slope information, both sources are used in controller with respect to state of the node.
 
-- Pitch of the estimated ego-pose (default)
+- Pitch of the estimated ego-pose
+  - Only used when `slope_source` is "raw_pitch"
   - Calculates the current slope from the pitch angle of the estimated ego-pose
   - Pros: Easily available
   - Cons: Cannot extract accurate slope information due to the influence of vehicle vibration.
+  - Cons: Can not be used in combination with delay compensation.
 - Z coordinate on the trajectory
-  - Calculates the road slope from the difference of z-coordinates between the front and rear wheel positions in the target trajectory
-  - Pros: More accurate than pitch information, if the z-coordinates of the route are properly maintained
-  - Pros: Can be used in combination with delay compensation (not yet implemented)
+  - Only used when `slope_source` is "trajectory_pitch"
+  - Calculates the road slope from the difference of z-coordinates between the front and rear wheel positions in the target trajectory.
+  - Pros: More accurate than pitch information, if the z-coordinates of the route are properly maintained.
+  - Pros: Can be used in combination with delay compensation.
   - Cons: z-coordinates of high-precision map is needed.
-  - Cons: Does not support free space planning (for now)
+  - Cons: Does not support free space planning (for now).
+- Adaptive pitch information
+  - Only used when `slope_source` is "trajectory_adaptive"
+  - It switches the slope sources with respect to velocity of the ego vehicle
+  - The trajectory_pitch is used when the vehicle's velocity is higher than `adaptive_trajectory_velocity_th` otherwise pitch of the estimated ego-pose is used for slope value.
+  - Pros: Can be used in combination with delay compensation for high speeds
+  - Cons: There might be a loss of comfort when slope source is switched
 
 **Notation:** This function works correctly only in a vehicle system that does not have acceleration feedback in the low-level control system.
 
@@ -107,23 +116,6 @@ At high speeds, the delay of actuator systems such as gas pedals and brakes has 
 Depending on the actuating principle of the vehicle, the mechanism that physically controls the gas pedal and brake typically has a delay of about a hundred millisecond.
 
 In this controller, the predicted ego-velocity and the target velocity after the delay time are calculated and used for the feedback to address the time delay problem.
-
-### Slope compensation
-
-Based on the slope information, a compensation term is added to the target acceleration.
-
-There are two sources of the slope information, which can be switched by a parameter.
-
-- Pitch of the estimated ego-pose (default)
-  - Calculates the current slope from the pitch angle of the estimated ego-pose
-  - Pros: Easily available
-  - Cons: Cannot extract accurate slope information due to the influence of vehicle vibration.
-- Z coordinate on the trajectory
-  - Calculates the road slope from the difference of z-coordinates between the front and rear wheel positions in the target trajectory
-  - Pros: More accurate than pitch information, if the z-coordinates of the route are properly maintained
-  - Pros: Can be used in combination with delay compensation (not yet implemented)
-  - Cons: z-coordinates of high-precision map is needed.
-  - Cons: Does not support free space planning (for now)
 
 ## Assumptions / Known limits
 
@@ -178,7 +170,8 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 | min_acc                                     | double | min value of output acceleration [m/s^2]                                                                                                                                                | -5.0          |
 | max_jerk                                    | double | max value of jerk of output acceleration [m/s^3]                                                                                                                                        | 2.0           |
 | min_jerk                                    | double | min value of jerk of output acceleration [m/s^3]                                                                                                                                        | -5.0          |
-| use_trajectory_for_pitch_calculation        | bool   | If true, the slope is estimated from trajectory z-level. Otherwise the pitch angle of the ego pose is used.                                                                             | false         |
+| slope_source                                | string | It defines the slope source for the vehicle. Available options: "raw_pitch", "trajectory_pitch" or "trajectory_adaptive"                                                                | "raw_pitch"   |
+| adaptive_trajectory_velocity_th             | double | Threshold velocity value for state transition of slope sources. Only usable when `slope_source` is "trajectory_adaptive". [m/s]                                                         | 1.0           |
 | lpf_pitch_gain                              | double | gain of low-pass filter for pitch estimation                                                                                                                                            | 0.95          |
 | max_pitch_rad                               | double | max value of estimated pitch [rad]                                                                                                                                                      | 0.1           |
 | min_pitch_rad                               | double | min value of estimated pitch [rad]                                                                                                                                                      | -0.1          |
