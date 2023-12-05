@@ -78,7 +78,7 @@ This guide outlines the steps for integrating your custom module into Autoware:
 
 ## Join Our Community-Driven Effort
 
-Autoware thrive on community collaboration. Every contribution, big or small, is invaluable to us. Whether it's reporting bugs, suggesting improvements, offering new ideas, or anything else you can think of – we welcome it all with open arms.
+Autoware thrives on community collaboration. Every contribution, big or small, is invaluable to us. Whether it's reporting bugs, suggesting improvements, offering new ideas, or anything else you can think of – we welcome it all with open arms.
 
 ### How to Contribute?
 
