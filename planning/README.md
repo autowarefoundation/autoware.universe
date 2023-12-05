@@ -82,7 +82,7 @@ Autoware thrives on community collaboration. Every contribution, big or small, i
 
 ### How to Contribute?
 
-Ready to contribute? Great! To get started, simply visit our [Contributing Guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/) where you'll find all the information you need to jump in. This includes how to submit bug reports, propose feature enhancements, and even contribute to the codebase.
+Ready to contribute? Great! To get started, simply visit our [Contributing Guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/) where you'll find all the information you need to jump in. This includes instructions on submitting bug reports, proposing feature enhancements, and even contributing to the codebase.
 
 ### Join Our Planning & Control Working Group Meetings
 
