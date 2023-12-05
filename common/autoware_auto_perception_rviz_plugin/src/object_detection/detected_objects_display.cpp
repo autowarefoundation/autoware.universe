@@ -57,6 +57,17 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       add_marker(label_marker_ptr);
     }
 
+    // Get marker for existence probability
+    auto existance_prob_marker = get_existence_probability_marker_ptr(
+      object.kinematics.pose_with_covariance.pose.position,
+      object.kinematics.pose_with_covariance.pose.orientation, object, object.classification);
+    if (existance_prob_marker) {
+      auto existance_prob_marker_ptr = existance_prob_marker.value();
+      existance_prob_marker_ptr->header = msg->header;
+      existance_prob_marker_ptr->id = id++;
+      add_marker(existance_prob_marker_ptr);
+    }
+
     // Get marker for velocity text
     geometry_msgs::msg::Point vel_vis_position;
     vel_vis_position.x = object.kinematics.pose_with_covariance.pose.position.x - 0.5;
