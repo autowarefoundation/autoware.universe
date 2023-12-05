@@ -64,6 +64,7 @@
   <depend>object_recognition_utils</depend>
   <depend>objects_of_interest_marker_interface</depend>
   <depend>planning_test_utils</depend>
+  <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>
