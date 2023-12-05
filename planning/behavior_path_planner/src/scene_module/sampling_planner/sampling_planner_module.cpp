@@ -68,6 +68,7 @@ SamplingPlannerModule::SamplingPlannerModule(
 
   // TODO(Daniel): Maybe add a soft cost for average distance to centerline?
   // TODO(Daniel): Think of methods to prevent chattering
+  // TODO(Daniel): Add penalty for not ending up on the same line as ref path?
 
   //  Yaw difference
   // soft_constraints_.emplace_back(
