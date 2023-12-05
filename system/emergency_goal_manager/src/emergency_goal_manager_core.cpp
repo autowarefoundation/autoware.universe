@@ -129,7 +129,7 @@ void EmergencyGoalManager::callClearMrmRoute()
 
   while (rclcpp::ok()) {
     if (std::chrono::steady_clock::now() - start_time > duration) {
-      RCLCPP_WARN(get_logger(), "Clear MRM Route service timeout.");
+      RCLCPP_WARN(get_logger(), "Clear MRM Route operation timeout.");
       return;
     }
 
