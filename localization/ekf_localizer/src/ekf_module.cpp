@@ -135,7 +135,7 @@ double EKFModule::getYawBias() const
 size_t EKFModule::find_closest_delay_time_index(double target_value) const
 {
   // If target_value is too large, return last index + 1
-  if (target_value > params_.ekf_dt * params_.extend_state_step) {
+  if (target_value > accumulated_delay_times_.back()) {
     return accumulated_delay_times_.size();
   }
 
@@ -215,7 +215,7 @@ bool EKFModule::measurementUpdatePose(
   const int delay_step = static_cast<int>(find_closest_delay_time_index(delay_time));
 
   pose_diag_info.delay_time = std::max(delay_time, pose_diag_info.delay_time);
-  pose_diag_info.delay_time_threshold = params_.extend_state_step * params_.ekf_dt;
+  pose_diag_info.delay_time_threshold = accumulated_delay_times_.back();
   if (delay_step >= params_.extend_state_step) {
     pose_diag_info.is_passed_delay_gate = false;
     warning_->warnThrottle(
