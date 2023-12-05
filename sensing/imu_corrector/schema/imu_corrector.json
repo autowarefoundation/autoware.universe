@@ -12,7 +12,7 @@
         },
         "angular_velocity_offset_y": {
           "type": "number",
-          "description": "itch rate offset imu_link [rad/s]."
+          "description": "pitch rate offset imu_link [rad/s]."
         },
         "angular_velocity_offset_z": {
           "type": "number",
