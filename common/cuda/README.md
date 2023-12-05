@@ -1,4 +1,4 @@
-# cuda_virtual
+# cuda
 
 ## Purpose
 
