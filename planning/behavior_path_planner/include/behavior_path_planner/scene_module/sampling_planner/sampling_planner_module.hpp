@@ -140,15 +140,31 @@ public:
 private:
   SamplingPlannerData createPlannerData(
     const PlanResult & path, const std::vector<geometry_msgs::msg::Point> & left_bound,
-    const std::vector<geometry_msgs::msg::Point> & right_bound);
+    const std::vector<geometry_msgs::msg::Point> & right_bound) const;
 
   PlanResult generatePath();
 
-  bool canTransitSuccessState() override { return false; }
+  bool canTransitSuccessState() override
+  {
+    const auto ego_pose = planner_data_->self_odometry->pose.pose;
+    const auto prev_module_path = getPreviousModuleOutput().path;
+    const auto current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+    const auto ego_arc = lanelet::utils::getArcCoordinates(current_lanes, ego_pose);
+    const auto goal_pose = planner_data_->route_handler->getGoalPose();
+    const auto goal_arc = lanelet::utils::getArcCoordinates(current_lanes, goal_pose);
+    const double length_to_goal = std::abs(goal_arc.length - ego_arc.length);
+    const double min_target_length = *std::min_element(
+      internal_params_->sampling.target_lengths.begin(),
+      internal_params_->sampling.target_lengths.end());
+    return isReferencePathSafe() &&
+           ((std::abs(ego_arc.distance) < 1.5) || (length_to_goal < min_target_length));
+  }
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return false; }
+  bool canTransitIdleToRunningState() override { return prev_sampling_path_.has_value(); }
+
+  bool isReferencePathSafe() const;
 
   void updateDebugMarkers();
 
@@ -156,7 +172,7 @@ private:
     sampler_common::Constraints & constraints,
     const PredictedObjects::ConstSharedPtr & predicted_objects,
     const std::vector<geometry_msgs::msg::Point> & left_bound,
-    const std::vector<geometry_msgs::msg::Point> & right_bound);
+    const std::vector<geometry_msgs::msg::Point> & right_bound) const;
 
   frenet_planner::SamplingParameters prepareSamplingParameters(
     const sampler_common::State & initial_state,
@@ -176,9 +192,10 @@ private:
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output);
   bool isEndPointsConnected(
-    const lanelet::ConstLanelet & left_lane, const lanelet::ConstLanelet & right_lane);
+    const lanelet::ConstLanelet & left_lane, const lanelet::ConstLanelet & right_lane) const;
   DrivableLanes generateExpandDrivableLanes(
-    const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data);
+    const lanelet::ConstLanelet & lanelet,
+    const std::shared_ptr<const PlannerData> & planner_data) const;
 };
 
 }  // namespace behavior_path_planner

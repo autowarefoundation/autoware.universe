@@ -57,6 +57,7 @@ SamplingPlannerModule::SamplingPlannerModule(
     [](
       sampler_common::Path & path, const sampler_common::Constraints & constraints,
       [[maybe_unused]] const MultiPoint2d & footprint) -> bool {
+      if (path.curvatures.empty()) return true;
       const bool curvatures_satisfied =
         std::all_of(path.curvatures.begin(), path.curvatures.end(), [&](const auto & v) -> bool {
           return (v > constraints.hard.min_curvature) && (v < constraints.hard.max_curvature);
@@ -107,18 +108,7 @@ SamplingPlannerModule::SamplingPlannerModule(
 
       constexpr double epsilon = 0.001;
       if (distance_ego_to_goal_pose < epsilon) return 0.0;
-      // const double distance_ego_to_goal_pose = std::hypot(
-      //   goal_pose.position.x - ego_pose.position.x, goal_pose.position.y - ego_pose.position.y);
-      // const double distance_path_to_goal =
-      //   std::hypot(goal_pose.position.x - last_point.x(), goal_pose.position.y - last_point.y());
-      // constexpr double epsilon = 0.001;
-      // if (distance_ego_to_goal_pose < epsilon) return 0.0;
-
-      // if (distance_path_to_goal < max_target_length)
-      //   return std::abs(path_last_arc.distance - goal_arc.distance);
       const double length_path_to_goal = std::abs(path_last_arc.length - goal_arc.length);
-      // if (distance_ego_to_goal_pose > max_target_length)
-      //   return length_path_to_goal / distance_ego_to_goal_pose;
       const double lateral_distance_to_goal = std::abs(path_last_arc.distance - goal_arc.distance);
 
       const double max_target_distance = *std::max_element(
@@ -136,39 +126,46 @@ SamplingPlannerModule::SamplingPlannerModule(
               reference_max_distance);  // + (angle_difference / (pi / 4.0));
     });
 
-  // Avg. distance to centerline
-  // soft_constraints_.emplace_back(
-  //   [&](
-  //     [[maybe_unused]] sampler_common::Path & path,
-  //     [[maybe_unused]] const sampler_common::Constraints & constraints,
-  //     [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
-  //     if (path.poses.empty()) return 0.0;
-  //     if (!std::any_of(
-  //           input_data.current_lanes.begin(), input_data.current_lanes.end(),
-  //           [&](const auto & lane) {
-  //             return lanelet::utils::isInLanelet(input_data.goal_pose, lane);
-  //           }))
-  //       return 0.0;
+  // Distance to centerline
+  soft_constraints_.emplace_back(
+    [&](
+      [[maybe_unused]] sampler_common::Path & path,
+      [[maybe_unused]] const sampler_common::Constraints & constraints,
+      [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
+      if (path.poses.empty()) return 0.0;
+      if (!std::any_of(
+            input_data.current_lanes.begin(), input_data.current_lanes.end(),
+            [&](const auto & lane) {
+              return lanelet::utils::isInLanelet(input_data.goal_pose, lane);
+            }))
+        return 0.0;
 
-  //     const auto & goal_pose = input_data.goal_pose;
-  //     const auto goal_arc = lanelet::utils::getArcCoordinates(input_data.current_lanes,
-  //     goal_pose); const double min_target_length = *std::min_element(
-  //       internal_params_->sampling.target_lengths.begin(),
-  //       internal_params_->sampling.target_lengths.end());
+      const auto & goal_pose = input_data.goal_pose;
+      const auto goal_arc = lanelet::utils::getArcCoordinates(input_data.current_lanes, goal_pose);
+      const double min_target_length = *std::min_element(
+        internal_params_->sampling.target_lengths.begin(),
+        internal_params_->sampling.target_lengths.end());
 
-  //     double distance_average{0.0};
-  //     for (const auto pose : path.poses) {
-  //       const auto & path_point_arc =
-  //         lanelet::utils::getArcCoordinates(input_data.current_lanes, pose);
-  //       const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);
-  //       const double lateral_distance_to_center_lane =
-  //         (distance_point_to_goal < min_target_length) ? 0.0 : std::abs(path_point_arc.distance);
-  //       distance_average += lateral_distance_to_center_lane;
-  //     }
-  //     distance_average = distance_average / path.poses.size();
-  //     const double acceptable_width = constraints.ego_width / 2.0;
-  //     return distance_average / acceptable_width;
-  //   });
+      // double distance_average{0.0};
+      // for (const auto pose : path.poses) {
+      //   const auto & path_point_arc =
+      //     lanelet::utils::getArcCoordinates(input_data.current_lanes, pose);
+      //   const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);
+      //   const double lateral_distance_to_center_lane =
+      //     (distance_point_to_goal < min_target_length) ? 0.0 : std::abs(path_point_arc.distance);
+      //   distance_average += lateral_distance_to_center_lane;
+      // }
+      const auto & path_point_arc =
+        lanelet::utils::getArcCoordinates(input_data.current_lanes, path.poses.back());
+      const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);
+      const double lateral_distance_to_center_lane =
+        (distance_point_to_goal < min_target_length) ? 0.0 : std::abs(path_point_arc.distance);
+      // distance_average += lateral_distance_to_center_lane;
+      // distance_average = distance_average / path.poses.size();
+      const double acceptable_width = constraints.ego_width / 2.0;
+      // return distance_average / acceptable_width;
+      return lateral_distance_to_center_lane / acceptable_width;
+    });
 
   // // Curvature cost
   soft_constraints_.emplace_back(
@@ -183,7 +180,7 @@ SamplingPlannerModule::SamplingPlannerModule(
       const auto curvature_average = curvature_sum / static_cast<double>(path.curvatures.size());
       const auto max_curvature =
         (curvature_average > 0.0) ? constraints.hard.max_curvature : constraints.hard.min_curvature;
-      return 100.0 * curvature_average / max_curvature;
+      return 1000.0 * curvature_average / max_curvature;
       // return constraints.soft.curvature_weight * curvature_sum /
       //        static_cast<double>(path.curvatures.size());
     });
@@ -200,13 +197,73 @@ bool SamplingPlannerModule::isExecutionRequested() const
     return false;
   }
 
-  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
-  const auto & ego_pose = planner_data_->self_odometry->pose.pose;
-  const double distance_to_goal = std::hypot(
-    ego_pose.position.x - goal_pose.position.x, ego_pose.position.y - goal_pose.position.y);
-  if (distance_to_goal < 8.0) return false;
+  return !isReferencePathSafe();
+}
 
-  return true;
+bool SamplingPlannerModule::isReferencePathSafe() const
+{
+  std::vector<DrivableLanes> drivable_lanes{};
+
+  const auto & prev_module_path = getPreviousModuleOutput().path;
+  const auto & current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+  // expand drivable lanes
+  std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
+    auto d = generateExpandDrivableLanes(lanelet, planner_data_);
+    drivable_lanes.push_back(d);
+  });
+
+  {
+    const auto left_bound =
+      (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, true));
+    const auto right_bound =
+      (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, false));
+
+    const auto sampling_planner_data =
+      createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
+
+    prepareConstraints(
+      internal_params_->constraints, planner_data_->dynamic_object,
+      sampling_planner_data.left_bound, sampling_planner_data.right_bound);
+  }
+
+  std::vector<bool> hard_constraints_results;
+  auto transform_to_sampling_path = [](const PlanResult plan) {
+    sampler_common::Path path;
+    for (size_t i = 0; i < plan->points.size(); ++i) {
+      // plan->points[i].point.pose
+
+      const auto x = plan->points[i].point.pose.position.x;
+      const auto y = plan->points[i].point.pose.position.y;
+      const auto quat = plan->points[i].point.pose.orientation;
+      // tf2::Quaternion quaternion(q.x,q.y,q.z,q.w);
+      geometry_msgs::msg::Vector3 rpy;
+      tf2::Quaternion q(quat.x, quat.y, quat.z, quat.w);
+      tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
+      // const auto z = plan->points[0].point.pose.position.z;
+      path.points.emplace_back(Point2d{x, y});
+      path.poses.emplace_back(plan->points[i].point.pose);
+      path.yaws.emplace_back(rpy.z);
+    }
+    return path;
+  };
+  sampler_common::Path reference_path =
+    transform_to_sampling_path(getPreviousModuleOutput().reference_path);
+  const auto footprint = sampler_common::constraints::buildFootprintPoints(
+    reference_path, internal_params_->constraints);
+
+  behavior_path_planner::HardConstraintsFunctionVector hard_constraints_reference_path;
+  hard_constraints_reference_path.emplace_back(
+    [](
+      sampler_common::Path & path, const sampler_common::Constraints & constraints,
+      const MultiPoint2d & footprint) -> bool {
+      path.constraint_results.collision =
+        !sampler_common::constraints::has_collision(footprint, constraints.obstacle_polygons);
+      return path.constraint_results.collision;
+    });
+  behavior_path_planner::evaluateHardConstraints(
+    reference_path, internal_params_->constraints, footprint, hard_constraints_reference_path,
+    hard_constraints_results);
+  return reference_path.constraints_satisfied;
 }
 
 bool SamplingPlannerModule::isExecutionReady() const
@@ -216,7 +273,7 @@ bool SamplingPlannerModule::isExecutionReady() const
 
 SamplingPlannerData SamplingPlannerModule::createPlannerData(
   const PlanResult & path, const std::vector<geometry_msgs::msg::Point> & left_bound,
-  const std::vector<geometry_msgs::msg::Point> & right_bound)
+  const std::vector<geometry_msgs::msg::Point> & right_bound) const
 {
   // create planner data
   SamplingPlannerData data;
@@ -289,7 +346,7 @@ void SamplingPlannerModule::prepareConstraints(
   sampler_common::Constraints & constraints,
   const PredictedObjects::ConstSharedPtr & predicted_objects,
   const std::vector<geometry_msgs::msg::Point> & left_bound,
-  const std::vector<geometry_msgs::msg::Point> & right_bound)
+  const std::vector<geometry_msgs::msg::Point> & right_bound) const
 {
   constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
   for (const auto & o : predicted_objects->objects)
@@ -678,7 +735,7 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 }
 
 bool SamplingPlannerModule::isEndPointsConnected(
-  const lanelet::ConstLanelet & left_lane, const lanelet::ConstLanelet & right_lane)
+  const lanelet::ConstLanelet & left_lane, const lanelet::ConstLanelet & right_lane) const
 {
   const auto & left_back_point_2d = right_lane.leftBound2d().back().basicPoint();
   const auto & right_back_point_2d = left_lane.rightBound2d().back().basicPoint();
@@ -688,7 +745,8 @@ bool SamplingPlannerModule::isEndPointsConnected(
 }
 
 DrivableLanes SamplingPlannerModule::generateExpandDrivableLanes(
-  const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data)
+  const lanelet::ConstLanelet & lanelet,
+  const std::shared_ptr<const PlannerData> & planner_data) const
 {
   const auto & route_handler = planner_data->route_handler;
 
