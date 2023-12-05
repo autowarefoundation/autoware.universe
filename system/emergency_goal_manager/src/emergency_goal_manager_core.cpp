@@ -112,6 +112,7 @@ void EmergencyGoalManager::callSetMrmRoutePoints()
         return;
       } else {
         RCLCPP_WARN(get_logger(), "MRM Route service has failed.");
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         continue;
       }
     }
@@ -143,6 +144,7 @@ void EmergencyGoalManager::callClearMrmRoute()
       } else {
         RCLCPP_WARN(get_logger(), "Clear MRM Route has failed.");
         continue;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
   }
