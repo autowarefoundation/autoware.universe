@@ -3,7 +3,7 @@
   "title": "Parameters for lidar_apollo_instance_segmentation",
   "type": "object",
   "definitions": {
-    "velodyne_monitor": {
+    "lidar_apollo_instance_segmentation": {
       "type": "object",
       "properties": {
         "score_threshold": {
