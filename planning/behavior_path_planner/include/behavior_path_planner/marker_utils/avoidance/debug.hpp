@@ -15,8 +15,8 @@
 #ifndef BEHAVIOR_PATH_PLANNER__MARKER_UTILS__AVOIDANCE__DEBUG_HPP_
 #define BEHAVIOR_PATH_PLANNER__MARKER_UTILS__AVOIDANCE__DEBUG_HPP_
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
@@ -39,6 +39,7 @@ using behavior_path_planner::AvoidanceState;
 using behavior_path_planner::AvoidLineArray;
 using behavior_path_planner::DebugData;
 using behavior_path_planner::ObjectDataArray;
+using behavior_path_planner::PathShifter;
 using behavior_path_planner::ShiftLineArray;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Polygon;
@@ -65,6 +66,8 @@ MarkerArray createOverhangFurthestLineStringMarkerArray(
   const lanelet::ConstLineStrings3d & linestrings, std::string && ns, const float & r,
   const float & g, const float & b);
 
+MarkerArray createDebugMarkerArray(
+  const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug);
 }  // namespace marker_utils::avoidance_marker
 
 std::string toStrInfo(const behavior_path_planner::ShiftLineArray & sp_arr);
