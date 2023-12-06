@@ -148,11 +148,36 @@ private:
 
   bool canTransitSuccessState() override
   {
-    const auto ego_pose = planner_data_->self_odometry->pose.pose;
-    const auto prev_module_path = getPreviousModuleOutput().path;
+    std::vector<DrivableLanes> drivable_lanes{};
+    const auto & prev_module_path = getPreviousModuleOutput().path;
     const auto prev_module_reference_path = getPreviousModuleOutput().reference_path;
 
-    const auto current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+    const auto & p = planner_data_->parameters;
+    const auto ego_pose = planner_data_->self_odometry->pose.pose;
+    lanelet::ConstLanelet current_lane;
+
+    if (!planner_data_->route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
+      RCLCPP_ERROR(
+        rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+        "failed to find closest lanelet within route!!!");
+      return {};
+    }
+    const auto current_lane_sequence = planner_data_->route_handler->getLaneletSequence(
+      current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
+    // expand drivable lanes
+    std::for_each(
+      current_lane_sequence.begin(), current_lane_sequence.end(), [&](const auto & lanelet) {
+        drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
+      });
+
+    lanelet::ConstLanelets current_lanes;
+
+    for (auto & d : drivable_lanes) {
+      current_lanes.push_back(d.right_lane);
+      current_lanes.push_back(d.left_lane);
+      current_lanes.insert(current_lanes.end(), d.middle_lanes.begin(), d.middle_lanes.end());
+    }
+
     const auto ego_arc = lanelet::utils::getArcCoordinates(current_lanes, ego_pose);
     const auto goal_pose = planner_data_->route_handler->getGoalPose();
     const auto goal_arc = lanelet::utils::getArcCoordinates(current_lanes, goal_pose);
@@ -175,9 +200,15 @@ private:
     const double ego_yaw = toYaw(ego_pose.orientation);
     yaw_difference = std::abs(ego_yaw - ref_path_yaw);
     constexpr double pi = 3.14159;
+
+    lanelet::ConstLanelet closest_lanelet_to_ego;
+    lanelet::utils::query::getClosestLanelet(current_lanes, ego_pose, &closest_lanelet_to_ego);
+    lanelet::ConstLanelet closest_lanelet_to_goal;
+    lanelet::utils::query::getClosestLanelet(current_lanes, goal_pose, &closest_lanelet_to_goal);
     const bool merged_back_to_path =
       ((length_to_goal < min_target_length) || (std::abs(ego_arc.distance)) < 0.5) &&
-      (yaw_difference < pi / 36.0);  // TODO(Daniel) magic numbers
+      (yaw_difference < pi / 36.0) &&
+      (closest_lanelet_to_goal.id() == closest_lanelet_to_ego.id());  // TODO(Daniel) magic numbers
     return isReferencePathSafe() && (merged_back_to_path);
   }
 

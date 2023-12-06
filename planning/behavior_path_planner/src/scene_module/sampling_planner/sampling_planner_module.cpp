@@ -106,21 +106,23 @@ SamplingPlannerModule::SamplingPlannerModule(
       constexpr double epsilon = 0.001;
       if (distance_ego_to_goal_pose < epsilon) return 0.0;
       const double length_path_to_goal = std::abs(path_last_arc.length - goal_arc.length);
-      const double lateral_distance_to_goal = std::abs(path_last_arc.distance - goal_arc.distance);
+      // const double lateral_distance_to_goal = std::abs(path_last_arc.distance -
+      // goal_arc.distance);
 
-      const double max_target_distance = *std::max_element(
-        internal_params_->sampling.target_lateral_positions.begin(),
-        internal_params_->sampling.target_lateral_positions.end());
+      // const double max_target_distance = *std::max_element(
+      //   internal_params_->sampling.target_lateral_positions.begin(),
+      //   internal_params_->sampling.target_lateral_positions.end());
 
       const double max_target_length = *std::max_element(
         internal_params_->sampling.target_lengths.begin(),
         internal_params_->sampling.target_lengths.end());
 
-      const double reference_max_distance = std::hypot(max_target_length, max_target_distance);
+      // const double reference_max_distance = std::hypot(max_target_length, max_target_distance);
 
-      return (length_path_to_goal / reference_max_distance) +
-             (lateral_distance_to_goal /
-              reference_max_distance);  // + (angle_difference / (pi / 4.0));
+      // return (length_path_to_goal / reference_max_distance) +
+      //        (lateral_distance_to_goal /
+      //         reference_max_distance);  // + (angle_difference / (pi / 4.0));
+      return length_path_to_goal / max_target_length;
     });
 
   // Distance to centerline
@@ -144,7 +146,8 @@ SamplingPlannerModule::SamplingPlannerModule(
         lanelet::utils::getArcCoordinates(closest_lanelets_to_goal, path.poses.back());
       // const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);
       // const double lateral_distance_to_center_lane =
-      //   (distance_point_to_goal < min_target_length) ? 0.0 : std::abs(path_point_arc.distance);
+      //   (distance_point_to_goal < min_target_length) ? 0.0 :
+      std::abs(path_point_arc.distance);
       // distance_average += lateral_distance_to_center_lane;
       // distance_average = distance_average / path.poses.size();
       const double lateral_distance_to_center_lane = std::abs(path_point_arc.distance);
@@ -167,7 +170,7 @@ SamplingPlannerModule::SamplingPlannerModule(
       const auto curvature_average = curvature_sum / static_cast<double>(path.curvatures.size());
       const auto max_curvature =
         (curvature_average > 0.0) ? constraints.hard.max_curvature : constraints.hard.min_curvature;
-      return 1000.0 * curvature_average / max_curvature;
+      return 50.0 * curvature_average / max_curvature;
       // return constraints.soft.curvature_weight * curvature_sum /
       //        static_cast<double>(path.curvatures.size());
     });
@@ -177,19 +180,16 @@ SamplingPlannerModule::SamplingPlannerModule(
   //     sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints &
   //     constraints,
   //     [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
-  //     if (path.points.empty()) return 0.0;
-  //     // double curvature_sum = 0.0;
-  //     // for (const auto curvature : path.curvatures) {
-  //     //   curvature_sum += std::abs(curvature);
-  //     // }
-  //     // const auto curvature_average = curvature_sum /
-  //     static_cast<double>(path.curvatures.size());
-  //     // const auto max_curvature =
-  //     //   (curvature_average > 0.0) ? constraints.hard.max_curvature :
-  //     //   constraints.hard.min_curvature;
-  //     // return 1000.0 * curvature_average / max_curvature;
-  //     // // return constraints.soft.curvature_weight * curvature_sum /
-  //     // //        static_cast<double>(path.curvatures.size());
+  //     if (path.poses.empty()) return 0.0;
+
+  //     const auto & goal_pose = input_data.goal_pose;
+  //     lanelet::ConstLanelet closest_lanelet_to_goal;
+  //     lanelet::utils::query::getClosestLanelet(
+  //       input_data.current_lanes, goal_pose, &closest_lanelet_to_goal);
+  //     lanelet::ConstLanelet closest_lanelet_to_path_end;
+  //     lanelet::utils::query::getClosestLanelet(
+  //       input_data.current_lanes, path.poses.back(), &closest_lanelet_to_path_end);
+  //     return (closest_lanelet_to_goal.id() == closest_lanelet_to_path_end.id()) ? 0.0 : 0.5;
   //   });
 }
 
@@ -221,13 +221,21 @@ bool SamplingPlannerModule::isReferencePathSafe() const
       "failed to find closest lanelet within route!!!");
     return {};
   }
-  const auto current_lanes = planner_data_->route_handler->getLaneletSequence(
+  const auto current_lane_sequence = planner_data_->route_handler->getLaneletSequence(
     current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
   // expand drivable lanes
-  std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
-    auto d = generateExpandDrivableLanes(lanelet, planner_data_);
-    drivable_lanes.push_back(d);
-  });
+  std::for_each(
+    current_lane_sequence.begin(), current_lane_sequence.end(), [&](const auto & lanelet) {
+      drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
+    });
+
+  lanelet::ConstLanelets current_lanes;
+
+  for (auto & d : drivable_lanes) {
+    current_lanes.push_back(d.right_lane);
+    current_lanes.push_back(d.left_lane);
+    current_lanes.insert(current_lanes.end(), d.middle_lanes.begin(), d.middle_lanes.end());
+  }
 
   {
     const auto left_bound =
@@ -459,12 +467,21 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
       "failed to find closest lanelet within route!!!");
     return {};
   }
-  const auto current_lanes = planner_data_->route_handler->getLaneletSequence(
+  const auto current_lane_sequence = planner_data_->route_handler->getLaneletSequence(
     current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
   // expand drivable lanes
-  std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
-    drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
-  });
+  std::for_each(
+    current_lane_sequence.begin(), current_lane_sequence.end(), [&](const auto & lanelet) {
+      drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
+    });
+
+  lanelet::ConstLanelets current_lanes;
+
+  for (auto & d : drivable_lanes) {
+    current_lanes.push_back(d.right_lane);
+    current_lanes.push_back(d.left_lane);
+    current_lanes.insert(current_lanes.end(), d.middle_lanes.begin(), d.middle_lanes.end());
+  }
 
   {
     const auto left_bound =
@@ -517,15 +534,13 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
       internal_params_->sampling.target_lengths.begin(),
       internal_params_->sampling.target_lengths.end());
 
-    const double max_target_length = *std::max_element(
-      internal_params_->sampling.target_lengths.begin(),
-      internal_params_->sampling.target_lengths.end());
+    // const double max_target_length = *std::max_element(
+    //   internal_params_->sampling.target_lengths.begin(),
+    //   internal_params_->sampling.target_lengths.end());
 
     // double x = prev_path_frenet.points.back().x();
     // double x_pose = pose.position.x;
-    if (
-      std::abs(length_goal - length_path) > min_target_length / 2.0 &&
-      length_path < 2.0 * max_target_length) {
+    if (std::abs(length_goal - length_path) > min_target_length) {
       // sampler_common::State reuse_state;
       // reuse_state.curvature = reused_path->curvatures.back();
       // reuse_state.pose = reused_path->points.back();
@@ -633,7 +648,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   std::cerr << "\n";
 
   std::cerr << "Poses " << best_path.poses.size() << "\n";
-
+  std::cerr << "Length of best " << best_path.lengths.back() << "\n";
   prev_sampling_path_ = best_path;
 
   const double max_length = *std::max_element(
