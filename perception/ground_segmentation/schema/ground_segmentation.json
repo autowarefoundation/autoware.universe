@@ -3,7 +3,7 @@
   "title": "Parameters for ground_segmentation",
   "type": "object",
   "definitions": {
-    "velodyne_monitor": {
+    "ground_segmentation": {
       "type": "object",
       "properties": {
         "base_frame": {
