@@ -3,7 +3,7 @@
   "title": "Parameters for tensorrt_yolo",
   "type": "object",
   "definitions": {
-    "velodyne_monitor": {
+    "tensorrt_yolo": {
       "type": "object",
       "properties": {
         "num_anchors": {
