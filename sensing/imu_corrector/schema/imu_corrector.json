@@ -3,7 +3,7 @@
   "title": "Parameters for imu_corrector",
   "type": "object",
   "definitions": {
-    "velodyne_monitor": {
+    "imu_corrector": {
       "type": "object",
       "properties": {
         "angular_velocity_offset_x": {
