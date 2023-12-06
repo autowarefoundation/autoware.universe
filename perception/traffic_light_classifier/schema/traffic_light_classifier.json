@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for traffic_light_classifier",
+  "type": "object",
+  "definitions": {
+    "traffic_light_classifier": {
+      "type": "object",
+      "properties": {
+        "classifier_label_path": {
+          "type": "string",
+          "default": "labels.txt",
+          "description": "path to the model file."
+        },
+        "classifier_model_path": {
+          "type": "string",
+          "default": "model.onnx",
+          "description": "path to the label file."
+        },
+        "classifier_precision": {
+          "type": "string",
+          "default": "fp16",
+          "description": "TensorRT precision, `fp16` or `int8."
+        },
+        "classifier_mean": {
+          "type": "number",
+          "default": 123.675,
+          "description": "3-channel input image mean."
+        },
+        "classifier_std": {
+          "type": "number",
+          "default": 58.395,
+          "description": "3-channel input image std."
+        },
+        "apply_softmax": {
+          "type": "boolean",
+          "description": "whether or not apply softmax."
+        },
+        "green_min_h": {
+          "type": "number",
+          "default": 10,
+          "description": "the minimum hue of green color."
+        },
+        "green_min_s": {
+          "type": "number",
+          "default": 100,
+          "description": "the minimum saturation of green color."
+        },
+        "green_min_v": {
+          "type": "number",
+          "default": 150,
+          "description": "the minimum value (brightness) of green color."
+        },
+        "green_max_h": {
+          "type": "number",
+          "default": 120,
+          "description": "the maximum hue of green color."
+        },
+        "green_max_s": {
+          "type": "number",
+          "default": 200,
+          "description": "the maximum saturation of green color."
+        },
+        "green_max_v": {
+          "type": "number",
+          "default": 255,
+          "description": "the maximum value (brightness) of green color."
+        },
+        "yellow_min_h": {
+          "type": "number",
+          "default": 0,
+          "description": "the minimum hue of yellow color."
+        },
+        "yellow_min_s": {
+          "type": "number",
+          "default": 80,
+          "description": "the minimum saturation of yellow color."
+        },
+        "yellow_min_v": {
+          "type": "number",
+          "default": 150,
+          "description": "the minimum value (brightness) of yellow color."
+        },
+        "yellow_max_h": {
+          "type": "number",
+          "default": 50,
+          "description": "the maximum hue of yellow color."
+        },
+        "yellow_max_s": {
+          "type": "number",
+          "default": 200,
+          "description": "the maximum saturation of yellow color."
+        },
+        "yellow_max_v": {
+          "type": "number",
+          "default": 255,
+          "description": "the maximum value (brightness) of yellow color."
+        },
+        "red_min_h": {
+          "type": "number",
+          "default": 160,
+          "description": "the minimum hue of red color."
+        },
+        "red_min_s": {
+          "type": "number",
+          "default": 100,
+          "description": "the minimum saturation of red color."
+        },
+        "red_min_v": {
+          "type": "number",
+          "default": 150,
+          "description": "the minimum value (brightness) of red color."
+        },
+        "red_max_h": {
+          "type": "number",
+          "default": 180,
+          "description": "the maximum hue of red color."
+        },
+        "red_max_s": {
+          "type": "number",
+          "default": 255,
+          "description": "the maximum saturation of red color."
+        },
+        "red_max_v": {
+          "type": "number",
+          "default": 255,
+          "description": "the maximum value (brightness) of red color."
+        }
+      },
+      "required": [
+        "warn_rate",
+        "window_size",
+        "timeout",
+        "error_rate",
+        "update_rate",
+        "topic",
+        "transient_local",
+        "best_effort",
+        "diag_name"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/traffic_light_classifier"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
