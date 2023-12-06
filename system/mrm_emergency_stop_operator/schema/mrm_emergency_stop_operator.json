@@ -3,7 +3,7 @@
   "title": "Parameters for mrm_emergency_stop_operator",
   "type": "object",
   "definitions": {
-    "velodyne_monitor": {
+    "mrm_emergency_stop_operator": {
       "type": "object",
       "properties": {
         "update_rate": {
