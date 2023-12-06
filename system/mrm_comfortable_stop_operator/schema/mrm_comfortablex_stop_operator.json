@@ -3,7 +3,7 @@
   "title": "Parameters for mrm_comfortable_stop_operator",
   "type": "object",
   "definitions": {
-    "velodyne_monitor": {
+    "mrm_comfortable_stop_operator": {
       "type": "object",
       "properties": {
         "update_rate": {
