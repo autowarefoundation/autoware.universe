@@ -2,7 +2,7 @@
 <package format="3">
   <name>cuda</name>
   <version>0.0.1</version>
-  <description>cuda utility library</description>
+  <description>Virtual package that provides an empty cuda stub package</description>
 
   <author email="esteve.fernandez@tier4.jp">Esteve Fernandez</author>
   <maintainer email="esteve.fernandez@tier4.jp">Esteve Fernandez</maintainer>
