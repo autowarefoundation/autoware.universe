@@ -69,6 +69,7 @@ SamplingPlannerModule::SamplingPlannerModule(
   // TODO(Daniel): Maybe add a soft cost for average distance to centerline?
   // TODO(Daniel): Think of methods to prevent chattering
   // TODO(Daniel): Add penalty for not ending up on the same line as ref path?
+  // TODO(Daniel): Length increasing curvature cost, increase curvature cost the longer the path is
 
   //  Yaw difference
   // soft_constraints_.emplace_back(
@@ -130,17 +131,23 @@ SamplingPlannerModule::SamplingPlannerModule(
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.poses.empty()) return 0.0;
       const auto & goal_pose = input_data.goal_pose;
-      const auto goal_arc = lanelet::utils::getArcCoordinates(input_data.current_lanes, goal_pose);
-      const double min_target_length = *std::min_element(
-        internal_params_->sampling.target_lengths.begin(),
-        internal_params_->sampling.target_lengths.end());
+      lanelet::ConstLanelet closest_lanelet;
+      lanelet::utils::query::getClosestLanelet(
+        input_data.current_lanes, goal_pose, &closest_lanelet);
+      lanelet::ConstLanelets closest_lanelets{closest_lanelet};
+      // const auto goal_arc = lanelet::utils::getArcCoordinates(input_data.current_lanes,
+      // goal_pose);
+      // const double min_target_length = *std::min_element(
+      //   internal_params_->sampling.target_lengths.begin(),
+      //   internal_params_->sampling.target_lengths.end());
       const auto & path_point_arc =
-        lanelet::utils::getArcCoordinates(input_data.current_lanes, path.poses.back());
-      const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);
-      const double lateral_distance_to_center_lane =
-        (distance_point_to_goal < min_target_length) ? 0.0 : std::abs(path_point_arc.distance);
+        lanelet::utils::getArcCoordinates(closest_lanelets, path.poses.back());
+      // const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);
+      // const double lateral_distance_to_center_lane =
+      //   (distance_point_to_goal < min_target_length) ? 0.0 : std::abs(path_point_arc.distance);
       // distance_average += lateral_distance_to_center_lane;
       // distance_average = distance_average / path.poses.size();
+      const double lateral_distance_to_center_lane = std::abs(path_point_arc.distance);
       const double acceptable_width = constraints.ego_width / 2.0;
       // return distance_average / acceptable_width;
       return lateral_distance_to_center_lane / acceptable_width;
