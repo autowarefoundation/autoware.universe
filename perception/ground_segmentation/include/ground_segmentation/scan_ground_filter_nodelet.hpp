@@ -174,7 +174,6 @@ private:
   bool use_virtual_ground_point_;
   bool use_recheck_ground_cluster_;  // to enable recheck ground cluster
   size_t radial_dividers_num_;
-  int omp_num_threads_{1};
   VehicleInfo vehicle_info_;
 
   /*!
@@ -220,10 +219,10 @@ private:
   void checkBreakGndGrid(PointRef & p, const std::vector<GridCenter> & gnd_grids_list);
   void classifyPointCloud(
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
-    pcl::PointIndices & out_no_ground_indices);
+    std::vector<pcl::PointIndices> & out_no_ground_indices);
   void classifyPointCloudGridScan(
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
-    pcl::PointIndices & out_no_ground_indices);
+    std::vector<pcl::PointIndices> & out_no_ground_indices);
   /*!
    * Re-classifies point of ground cluster based on their height
    * @param gnd_cluster Input ground cluster for re-checking
@@ -241,7 +240,8 @@ private:
    * @param out_object_cloud_ptr Resulting PointCloud with the indices kept
    */
   void extractObjectPoints(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr, const pcl::PointIndices & in_indices,
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
+    const std::vector<pcl::PointIndices> & in_indices,
     pcl::PointCloud<pcl::PointXYZ>::Ptr out_object_cloud_ptr);
 
   /** \brief Parameter service callback result : needed to be hold */
