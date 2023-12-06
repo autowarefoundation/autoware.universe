@@ -146,6 +146,8 @@ void StartPlannerModule::updateData()
 
   if (requiresDynamicObjectsCollisionDetection()) {
     status_.is_safe_dynamic_objects = !hasCollisionWithDynamicObjects();
+  } else {
+    status_.is_safe_dynamic_objects = true;
   }
 }
 
@@ -286,24 +288,23 @@ bool StartPlannerModule::isStopped()
 bool StartPlannerModule::isExecutionReady() const
 {
   bool is_safe = true;
-
   // Evaluate safety. The situation is not safe if any of the following conditions are met:
   // 1. pull out path has not been found
   // 2. there is a moving objects around ego
   // 3. waiting for approval and there is a collision with dynamic objects
   if (!status_.found_pull_out_path) {
     is_safe = false;
+  } else if (isWaitingApproval()) {
+    if (!noMovingObjectsAround()) {
+      is_safe = false;
+    } else if (requiresDynamicObjectsCollisionDetection() && hasCollisionWithDynamicObjects()) {
+      is_safe = false;
+    }
   }
 
-  if (isWaitingApproval()) {
-    is_safe = noMovingObjectsAround();
+  if (!is_safe) {
+    stop_pose_ = planner_data_->self_odometry->pose.pose;
   }
-
-  if (requiresDynamicObjectsCollisionDetection()) {
-    is_safe = !hasCollisionWithDynamicObjects();
-  }
-
-  if (!is_safe) stop_pose_ = planner_data_->self_odometry->pose.pose;
 
   return is_safe;
 }
