@@ -3,7 +3,7 @@
   "title": "Parameters for lane_departure_checker",
   "type": "object",
   "definitions": {
-    "velodyne_monitor": {
+    "lane_departure_checker": {
       "type": "object",
       "properties": {
         "footprint_margin_scale": {
