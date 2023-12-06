@@ -33,7 +33,7 @@ SimModelPymodels::SimModelPymodels(
   steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT)),
   steer_dead_band_(steer_dead_band)
 {
-  //initializeInputQueue(dt);
+  std::cout << dt << std::endl;
 }
 
 double SimModelPymodels::getX()
@@ -71,7 +71,7 @@ double SimModelPymodels::getSteer()
 void SimModelPymodels::update(const double & dt)
 {
   Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
-
+  std::cout << dt << std::endl;
   vx_input_queue_.push_back(input_(IDX_U::VX_DES));
   delayed_input(IDX_U::VX_DES) = vx_input_queue_.front();
   vx_input_queue_.pop_front();
