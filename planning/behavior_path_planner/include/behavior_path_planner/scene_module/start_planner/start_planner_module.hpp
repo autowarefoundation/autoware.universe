@@ -15,17 +15,17 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__START_PLANNER__START_PLANNER_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__START_PLANNER__START_PLANNER_MODULE_HPP_
 
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
 #include "behavior_path_planner/utils/start_planner/freespace_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/geometric_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/shift_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
@@ -79,7 +79,9 @@ public:
   StartPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<StartPlannerParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -127,8 +129,14 @@ private:
 
   bool canTransitIdleToRunningState() override;
 
+  /**
+   * @brief init member variables.
+   */
+  void initVariables();
+
   void initializeSafetyCheckParameters();
 
+  bool requiresDynamicObjectsCollisionDetection() const;
   bool receivedNewRoute() const;
 
   bool isModuleRunning() const;
@@ -198,7 +206,8 @@ private:
   PredictedObjects filterStopObjectsInPullOutLanes(
     const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
   bool hasFinishedPullOut() const;
-  bool isBackwardDrivingComplete() const;
+  bool hasFinishedBackwardDriving() const;
+  bool hasCollisionWithDynamicObjects() const;
   bool isStopped();
   bool isStuck();
   bool hasFinishedCurrentPath();

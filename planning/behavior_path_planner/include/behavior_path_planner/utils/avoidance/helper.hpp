@@ -241,10 +241,19 @@ public:
       getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
 
     if (!!ret) {
-      return ret.get();
+      return ret.value();
     }
 
     return std::numeric_limits<double>::max();
+  }
+
+  bool isComfortable(const AvoidLineArray & shift_lines) const
+  {
+    return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
+      return PathShifter::calcJerkFromLatLonDistance(
+               line.getRelativeLength(), line.getRelativeLongitudinal(), getAvoidanceEgoSpeed()) <
+             getLateralMaxJerkLimit();
+    });
   }
 
   bool isShifted() const

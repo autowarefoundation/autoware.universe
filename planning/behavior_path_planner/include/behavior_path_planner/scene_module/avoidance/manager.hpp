@@ -16,8 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__MANAGER_HPP_
 
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
-#include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -32,12 +32,15 @@ namespace behavior_path_planner
 class AvoidanceModuleManager : public SceneModuleManagerInterface
 {
 public:
-  AvoidanceModuleManager(
-    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
+  AvoidanceModuleManager() : SceneModuleManagerInterface{"avoidance"} {}
+
+  void init(rclcpp::Node * node) override;
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
-    return std::make_unique<AvoidanceModule>(name_, *node_, parameters_, rtc_interface_ptr_map_);
+    return std::make_unique<AvoidanceModule>(
+      name_, *node_, parameters_, rtc_interface_ptr_map_,
+      objects_of_interest_marker_interface_ptr_map_);
   }
 
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;

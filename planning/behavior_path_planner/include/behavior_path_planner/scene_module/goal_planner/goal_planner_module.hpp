@@ -15,7 +15,6 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__GOAL_PLANNER__GOAL_PLANNER_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__GOAL_PLANNER__GOAL_PLANNER_MODULE_HPP_
 
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
 #include "behavior_path_planner/utils/goal_planner/default_fixed_goal_planner.hpp"
 #include "behavior_path_planner/utils/goal_planner/freespace_pull_over.hpp"
@@ -24,9 +23,10 @@
 #include "behavior_path_planner/utils/goal_planner/goal_searcher.hpp"
 #include "behavior_path_planner/utils/goal_planner/shift_pull_over.hpp"
 #include "behavior_path_planner/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <freespace_planning_algorithms/astar_search.hpp>
 #include <freespace_planning_algorithms/rrtstar.hpp>
@@ -62,7 +62,6 @@ using freespace_planning_algorithms::RRTStar;
 using freespace_planning_algorithms::RRTStarParam;
 
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
-using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
@@ -233,18 +232,26 @@ struct LastApprovalData
 
 struct PreviousPullOverData
 {
+  struct SafetyStatus
+  {
+    std::optional<rclcpp::Time> safe_start_time{};
+    bool is_safe{false};
+  };
+
   void reset()
   {
     stop_path = nullptr;
     stop_path_after_approval = nullptr;
     found_path = false;
-    is_safe = false;
+    safety_status = SafetyStatus{};
+    has_decided_path = false;
   }
 
   std::shared_ptr<PathWithLaneId> stop_path{nullptr};
   std::shared_ptr<PathWithLaneId> stop_path_after_approval{nullptr};
   bool found_path{false};
-  bool is_safe{false};
+  SafetyStatus safety_status{};
+  bool has_decided_path{false};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -253,7 +260,9 @@ public:
   GoalPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<GoalPlannerParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -471,11 +480,13 @@ private:
   void updateSafetyCheckTargetObjectsData(
     const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
-  bool isSafePath() const;
-  bool checkSafetyWithRSS(
-    const PathWithLaneId & planned_path,
-    const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
-    const std::vector<ExtendedPredictedObject> & objects, const double hysteresis_factor) const;
+  /**
+   * @brief Checks if the current path is safe.
+   * @return std::pair<bool, bool>
+   *         first: If the path is safe for a certain period of time, true.
+   *         second: If the path is safe in the current state, true.
+   */
+  std::pair<bool, bool> isSafePath() const;
 
   // debug
   void setDebugData();

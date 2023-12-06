@@ -19,7 +19,7 @@ namespace behavior_path_planner::utils::start_goal_planner_common
 
 using motion_utils::calcDecelDistWithJerkAndAccConstraints;
 
-boost::optional<double> calcFeasibleDecelDistance(
+std::optional<double> calcFeasibleDecelDistance(
   std::shared_ptr<const PlannerData> planner_data, const double acc_lim, const double jerk_lim,
   const double target_velocity)
 {
@@ -133,8 +133,7 @@ void updatePathProperty(
 {
   // If acceleration is close to 0, the ego predicted path will be too short, so a minimum value is
   // necessary to ensure a reasonable path length.
-  // TODO(Sugahara): define them as parameter
-  const double min_accel_for_ego_predicted_path = 1.0;
+  const double min_accel_for_ego_predicted_path = ego_predicted_path_params->min_acceleration;
   const double acceleration =
     std::max(pairs_terminal_velocity_and_accel.second, min_accel_for_ego_predicted_path);
 
