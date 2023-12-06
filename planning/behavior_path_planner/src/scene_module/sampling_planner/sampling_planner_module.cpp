@@ -170,7 +170,7 @@ SamplingPlannerModule::SamplingPlannerModule(
       const auto curvature_average = curvature_sum / static_cast<double>(path.curvatures.size());
       const auto max_curvature =
         (curvature_average > 0.0) ? constraints.hard.max_curvature : constraints.hard.min_curvature;
-      return 50.0 * curvature_average / max_curvature;
+      return 500.0 * curvature_average / max_curvature;
       // return constraints.soft.curvature_weight * curvature_sum /
       //        static_cast<double>(path.curvatures.size());
     });
