@@ -160,7 +160,7 @@ Detailed process
 | -------------------------------------- | ---------------------------------------------------- | ---------------------- |
 | `/control/command/control_mode_cmd`    | `autoware_auto_vehicle_msgs/ControlModeCommand`      | for [Test Case #1]     |
 | `/control/command/gear_cmd`            | `autoware_auto_vehicle_msgs/GearCommand`             | for [Test Case #2]     |
-| `/control/command/control_cmd`         | `autoware_auto_vehicle_msgs/AckermannControlCommand` | for [Test Case #3, #4] |
+| `/control/command/control_cmd`         | `autoware_control_msgs/Control`                      | for [Test Case #3, #4] |
 | `/vehicle/status/steering_status`      | `autoware_auto_vehicle_msgs/TurnIndicatorsCommand`   | for [Test Case #5]     |
 | `/control/command/turn_indicators_cmd` | `autoware_auto_vehicle_msgs/HazardLightsCommand`     | for [Test Case #6]     |
 

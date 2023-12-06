@@ -20,7 +20,7 @@
 #include "simple_planning_simulator/visibility_control.hpp"
 #include "tier4_api_utils/tier4_api_utils.hpp"
 
-#include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
+#include "autoware_control_msgs/msg/control.hpp"
 #include "autoware_auto_geometry_msgs/msg/complex32.hpp"
 #include "autoware_auto_vehicle_msgs/msg/control_mode_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/control_mode_report.hpp"
@@ -62,7 +62,7 @@ namespace simulation
 namespace simple_planning_simulator
 {
 
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 using autoware_auto_geometry_msgs::msg::Complex32;
 using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 using autoware_auto_vehicle_msgs::msg::Engage;
@@ -144,8 +144,8 @@ private:
   rclcpp::Subscription<TurnIndicatorsCommand>::SharedPtr sub_turn_indicators_cmd_;
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr sub_hazard_lights_cmd_;
   rclcpp::Subscription<VehicleControlCommand>::SharedPtr sub_vehicle_cmd_;
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_ackermann_cmd_;
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_manual_ackermann_cmd_;
+  rclcpp::Subscription<Control>::SharedPtr sub_ackermann_cmd_;
+  rclcpp::Subscription<Control>::SharedPtr sub_manual_ackermann_cmd_;
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_init_pose_;
   rclcpp::Subscription<TwistStamped>::SharedPtr sub_init_twist_;
@@ -176,8 +176,8 @@ private:
   VelocityReport current_velocity_{};
   Odometry current_odometry_{};
   SteeringReport current_steer_{};
-  AckermannControlCommand current_ackermann_cmd_{};
-  AckermannControlCommand current_manual_ackermann_cmd_{};
+  Control current_ackermann_cmd_{};
+  Control current_manual_ackermann_cmd_{};
   GearCommand current_gear_cmd_{};
   GearCommand current_manual_gear_cmd_{};
   TurnIndicatorsCommand::ConstSharedPtr current_turn_indicators_cmd_ptr_{};
@@ -221,7 +221,7 @@ private:
   /**
    * @brief set input steering, velocity, and acceleration of the vehicle model
    */
-  void set_input(const AckermannControlCommand & cmd, const double acc_by_slope);
+  void set_input(const Control & cmd, const double acc_by_slope);
 
   /**
    * @brief set current_vehicle_state_ with received message

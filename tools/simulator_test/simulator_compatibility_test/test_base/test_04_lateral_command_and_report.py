@@ -1,8 +1,8 @@
-import time
+import timeLateral
 
-from autoware_auto_control_msgs.msg import AckermannControlCommand
-from autoware_auto_control_msgs.msg import AckermannLateralCommand
-from autoware_auto_control_msgs.msg import LongitudinalCommand
+from autoware_control_msgs.msg import Control
+from autoware_control_msgs.msg import Lateral
+from autoware_control_msgs.msg import Longitudinal
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
@@ -38,13 +38,13 @@ class Test04LateralCommandAndReportBase:
         }
         cls.node = rclpy.create_node("test_04_lateral_command_and_report_base")
         cls.sub = cls.node.create_subscription(
-            AckermannControlCommand,
+            Control,
             "/control/command/control_cmd",
             lambda msg: cls.msgs_rx.append(msg),
             10,
         )
         cls.pub = cls.node.create_publisher(
-            AckermannControlCommand, "/control/command/control_cmd", QOS_RKL10TL
+            Control, "/control/command/control_cmd", QOS_RKL10TL
         )
         cls.sub_steering_report = SubscriberSteeringReport()
         cls.executor = MultiThreadedExecutor()
@@ -70,9 +70,9 @@ class Test04LateralCommandAndReportBase:
 
     def generate_control_msg(self, control_cmd):
         stamp = self.node.get_clock().now().to_msg()
-        msg = AckermannControlCommand()
-        lateral_cmd = AckermannLateralCommand()
-        longitudinal_cmd = LongitudinalCommand()
+        msg = Control()
+        lateral_cmd = Lateral()
+        longitudinal_cmd = Longitudinal()
         lateral_cmd.stamp.sec = stamp.sec
         lateral_cmd.stamp.nanosec = stamp.nanosec
         lateral_cmd.steering_tire_angle = control_cmd["lateral"]["steering_tire_angle"]

@@ -23,8 +23,8 @@ The `control_validator` takes in the following inputs:
 | Name                           | Type                                  | Description                                                                    |
 | ------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------ |
 | `~/input/kinematics`           | nav_msgs/Odometry                     | ego pose and twist                                                             |
-| `~/input/reference_trajectory` | autoware_auto_control_msgs/Trajectory | reference trajectory which is outputted from planning module to to be followed |
-| `~/input/predicted_trajectory` | autoware_auto_control_msgs/Trajectory | predicted trajectory which is outputted from control module                    |
+| `~/input/reference_trajectory` | autoware_planning_msgs/Trajectory     | reference trajectory which is outputted from planning module to to be followed |
+| `~/input/predicted_trajectory` | autoware_planning_msgs/Trajectory     | predicted trajectory which is outputted from control module                    |
 
 ### Outputs
 

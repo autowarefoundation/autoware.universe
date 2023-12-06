@@ -27,7 +27,7 @@ in the `autoware_auto_msgs_adapter/config` directory. Example configuration:
 ```yaml
 /**:
   ros__parameters:
-    msg_type_target: "autoware_auto_control_msgs/msg/AckermannControlCommand"
+    msg_type_target: "autoware_control_msgs/msg/Control"
     topic_name_source: "/control/command/control_cmd"
     topic_name_target: "/control/command/control_cmd_auto"
 ```

@@ -115,12 +115,12 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     "input/initialpose", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
   sub_init_twist_ = create_subscription<TwistStamped>(
     "input/initialtwist", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialtwist, this, _1));
-  sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
+  sub_ackermann_cmd_ = create_subscription<Control>(
     "input/ackermann_control_command", QoS{1},
-    [this](const AckermannControlCommand::ConstSharedPtr msg) { current_ackermann_cmd_ = *msg; });
-  sub_manual_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
+    [this](const Control::ConstSharedPtr msg) { current_ackermann_cmd_ = *msg; });
+  sub_manual_ackermann_cmd_ = create_subscription<Control>(
     "input/manual_ackermann_control_command", QoS{1},
-    [this](const AckermannControlCommand::ConstSharedPtr msg) {
+    [this](const Control::ConstSharedPtr msg) {
       current_manual_ackermann_cmd_ = *msg;
     });
   sub_gear_cmd_ = create_subscription<GearCommand>(
@@ -434,10 +434,10 @@ void SimplePlanningSimulator::on_set_pose(
 }
 
 void SimplePlanningSimulator::set_input(
-  const AckermannControlCommand & cmd, const double acc_by_slope)
+  const Control & cmd, const double acc_by_slope)
 {
   const auto steer = cmd.lateral.steering_tire_angle;
-  const auto vel = cmd.longitudinal.speed;
+  const auto vel = cmd.longitudinal.velocity;
   const auto accel = cmd.longitudinal.acceleration;
 
   using autoware_auto_vehicle_msgs::msg::GearCommand;

@@ -73,7 +73,7 @@ Set the following from the [controller_node](../trajectory_follower_node/README.
 
 Return LateralOutput which contains the following to the controller node
 
-- `autoware_auto_control_msgs/AckermannLateralCommand`
+- `autoware_control_msgs/Lateral`
 - LateralSyncData
   - steer angle convergence
 

@@ -29,8 +29,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
-#include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
+#include "autoware_control_msgs/msg/control.hpp"
+#include "autoware_control_msgs/msg/longitudinal.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/accel_stamped.hpp"
@@ -80,7 +80,7 @@ private:
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr sub_steering_;
   rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_accel_;
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+  rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr
     control_cmd_pub_;
   rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_lat_ms_;
   rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_lon_ms_;

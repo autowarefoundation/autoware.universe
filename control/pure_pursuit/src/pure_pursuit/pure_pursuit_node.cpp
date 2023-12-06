@@ -79,7 +79,7 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
     "input/current_odometry", 1, std::bind(&PurePursuitNode::onCurrentOdometry, this, _1));
 
   // Publishers
-  pub_ctrl_cmd_ = this->create_publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>(
+  pub_ctrl_cmd_ = this->create_publisher<autoware_control_msgs::msg::Lateral>(
     "output/control_raw", 1);
 
   // Debug Publishers
@@ -150,7 +150,7 @@ void PurePursuitNode::onTimer()
 
 void PurePursuitNode::publishCommand(const double target_curvature)
 {
-  autoware_auto_control_msgs::msg::AckermannLateralCommand cmd;
+  autoware_control_msgs::msg::Lateral cmd;
   cmd.stamp = get_clock()->now();
   cmd.steering_tire_angle =
     planning_utils::convertCurvatureToSteeringAngle(param_.wheel_base, target_curvature);

@@ -13,7 +13,7 @@ Set the following from the [controller_node](../trajectory_follower_node/README.
 
 Return LateralOutput which contains the following to the controller node
 
-- `autoware_auto_control_msgs/AckermannLateralCommand`: target steering angle
+- `autoware_control_msgs/Lateral`: target steering angle
 - LateralSyncData
   - steer angle convergence
 - `autoware_planning_msgs/Trajectory`: predicted path for ego vehicle

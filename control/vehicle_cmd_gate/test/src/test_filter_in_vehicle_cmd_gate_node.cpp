@@ -58,7 +58,7 @@ using vehicle_cmd_gate::VehicleCmdGate;
 
 using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
@@ -75,9 +75,9 @@ class PubSubNode : public rclcpp::Node
 public:
   PubSubNode() : Node{"test_vehicle_cmd_gate_filter_pubsub"}
   {
-    sub_cmd_ = create_subscription<AckermannControlCommand>(
+    sub_cmd_ = create_subscription<Control>(
       "output/control_cmd", rclcpp::QoS{1},
-      [this](const AckermannControlCommand::ConstSharedPtr msg) {
+      [this](const Control::ConstSharedPtr msg) {
         cmd_history_.push_back(msg);
         cmd_received_times_.push_back(now());
         checkFilter();
@@ -97,7 +97,7 @@ public:
     pub_mrm_state_ = create_publisher<MrmState>("input/mrm_state", qos);
 
     pub_auto_control_cmd_ =
-      create_publisher<AckermannControlCommand>("input/auto/control_cmd", qos);
+      create_publisher<Control>("input/auto/control_cmd", qos);
     pub_auto_turn_indicator_cmd_ =
       create_publisher<TurnIndicatorsCommand>("input/auto/turn_indicators_cmd", qos);
     pub_auto_hazard_light_cmd_ =
@@ -105,7 +105,7 @@ public:
     pub_auto_gear_cmd_ = create_publisher<GearCommand>("input/auto/gear_cmd", qos);
   }
 
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_cmd_;
+  rclcpp::Subscription<Control>::SharedPtr sub_cmd_;
 
   rclcpp::Publisher<Heartbeat>::SharedPtr pub_external_emergency_stop_heartbeat_;
   rclcpp::Publisher<EngageMsg>::SharedPtr pub_engage_;
@@ -115,13 +115,13 @@ public:
   rclcpp::Publisher<SteeringReport>::SharedPtr pub_steer_;
   rclcpp::Publisher<OperationModeState>::SharedPtr pub_operation_mode_;
   rclcpp::Publisher<MrmState>::SharedPtr pub_mrm_state_;
-  rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_auto_control_cmd_;
+  rclcpp::Publisher<Control>::SharedPtr pub_auto_control_cmd_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr pub_auto_turn_indicator_cmd_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr pub_auto_hazard_light_cmd_;
   rclcpp::Publisher<GearCommand>::SharedPtr pub_auto_gear_cmd_;
 
-  std::vector<AckermannControlCommand::ConstSharedPtr> cmd_history_;
-  std::vector<AckermannControlCommand::ConstSharedPtr> raw_cmd_history_;
+  std::vector<Control::ConstSharedPtr> cmd_history_;
+  std::vector<Control::ConstSharedPtr> raw_cmd_history_;
   std::vector<rclcpp::Time> cmd_received_times_;
 
   // publish except for the control_cmd
@@ -151,7 +151,7 @@ public:
       msg.twist.twist.linear.x = 0.0;
       if (!cmd_history_.empty()) {  // ego moves as commanded.
         msg.twist.twist.linear.x =
-          cmd_history_.back()->longitudinal.speed;  // ego moves as commanded.
+          cmd_history_.back()->longitudinal.velocity;  // ego moves as commanded.
       }
       pub_odom_->publish(msg);
     }
@@ -208,11 +208,11 @@ public:
     }
   }
 
-  void publishControlCommand(AckermannControlCommand msg)
+  void publishControlCommand(Control msg)
   {
     msg.stamp = now();
     pub_auto_control_cmd_->publish(msg);
-    raw_cmd_history_.push_back(std::make_shared<AckermannControlCommand>(msg));
+    raw_cmd_history_.push_back(std::make_shared<Control>(msg));
   }
 
   void checkFilter()
@@ -234,7 +234,7 @@ public:
     const auto max_lat_jerk_lim = *std::max_element(lat_jerk_lim.begin(), lat_jerk_lim.end());
 
     const auto dt = (cmd_received_times_.at(i_curr) - cmd_received_times_.at(i_prev)).seconds();
-    const auto lon_vel = cmd_curr->longitudinal.speed;
+    const auto lon_vel = cmd_curr->longitudinal.velocity;
     const auto lon_acc = cmd_curr->longitudinal.acceleration;
     const auto lon_jerk = (lon_acc - cmd_prev->longitudinal.acceleration) / dt;
     const auto lat_acc =
@@ -293,7 +293,7 @@ public:
 
   // generate ControlCommand with sin wave format.
   // TODO(Horibe): implement steering_rate and jerk command.
-  AckermannControlCommand calcSinWaveCommand(bool reset_clock = false)
+  Control calcSinWaveCommand(bool reset_clock = false)
   {
     if (reset_clock) {
       start_time_ = Clock::now();
@@ -307,9 +307,9 @@ public:
       return amp * std::sin(2.0 * M_PI * freq * dt_s + bias);
     };
 
-    AckermannControlCommand cmd;
+    Control cmd;
     cmd.lateral.steering_tire_angle = sinWave(p_.steering.max, p_.steering.freq, p_.steering.bias);
-    cmd.longitudinal.speed =
+    cmd.longitudinal.velocity =
       sinWave(p_.velocity.max, p_.velocity.freq, p_.velocity.bias) + p_.velocity.max;
     cmd.longitudinal.acceleration =
       sinWave(p_.acceleration.max, p_.acceleration.freq, p_.acceleration.bias);

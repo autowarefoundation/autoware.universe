@@ -21,7 +21,7 @@
 
 #include <trajectory_follower_node/longitudinal_controller_node.hpp>
 
-#include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
+#include "autoware_control_msgs/msg/longitudinal.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -33,7 +33,7 @@
 
 using LongitudinalController =
   autoware::motion::control::trajectory_follower_node::LongitudinalController;
-using LongitudinalCommand = autoware_auto_control_msgs::msg::LongitudinalCommand;
+using LongitudinalCommand = autoware_control_msgs::msg::Longitudinal;
 using Trajectory = autoware_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
 using VehicleOdometry = nav_msgs::msg::Odometry;
