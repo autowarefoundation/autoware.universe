@@ -278,7 +278,12 @@ void SimplePlanningSimulator::initialize_vehicle_model()
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant,
       acceleration_map_path);
-  } else {
+  } else if (vehicle_model_type_str == "PYMODELS"){
+    vehicle_model_type_ = VehicleModelType::PYMODELS;
+    vehicle_model_ptr_ = std::make_shared<SimModelPymodels>(
+      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
+      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant, steer_dead_band);
+  }else{
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
 }
@@ -473,7 +478,8 @@ void SimplePlanningSimulator::set_input(
 
   if (
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL ||
+    vehicle_model_type_ == VehicleModelType::PYMODELS) {
     input << vel, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
@@ -574,7 +580,8 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED) {
     state << x, y, yaw, vx;
   } else if (  // NOLINT
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL ||
+    vehicle_model_type_ == VehicleModelType::PYMODELS) {
     state << x, y, yaw, vx, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||

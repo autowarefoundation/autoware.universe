@@ -27,7 +27,7 @@
  * @class SimModelPymodels
  * @brief calculate delay steering dynamics
  */
-class SimModelPymodels : public SimModelInterface
+class SimModelPymodels : public SimModelInterface /*delay steer velocity*/
 {
 public:
   /**
