@@ -78,12 +78,23 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
     }
     return false;
   };
+  const auto is_not_too_close = [&](const auto & o) {
+    const auto obj_arc_length = motion_utils::calcSignedArcLength(
+      ego_data.path.points, ego_data.pose.position,
+      o.kinematics.initial_pose_with_covariance.pose.position);
+    std::cout << obj_arc_length << " > "
+              << ego_data.longitudinal_offset_to_first_path_idx + params.ego_longitudinal_offset +
+                   o.shape.dimensions.x / 2.0
+              << std::endl;
+    return obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
+                              params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
+  };
   for (const auto & object : objects.objects)
     if (
       is_vehicle(object) &&
       object.kinematics.initial_twist_with_covariance.twist.linear.x >=
         params.minimum_object_velocity &&
-      is_in_range(object))
+      is_in_range(object) && is_not_too_close(object))
       filtered_objects.push_back(object);
   return filtered_objects;
 }
