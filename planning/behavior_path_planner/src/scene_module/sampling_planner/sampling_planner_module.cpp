@@ -137,23 +137,11 @@ SamplingPlannerModule::SamplingPlannerModule(
       lanelet::utils::query::getClosestLanelet(
         input_data.current_lanes, goal_pose, &closest_lanelet_to_goal);
       lanelet::ConstLanelets closest_lanelets_to_goal{closest_lanelet_to_goal};
-      // const auto goal_arc = lanelet::utils::getArcCoordinates(input_data.current_lanes,
-      // goal_pose);
-      // const double min_target_length = *std::min_element(
-      //   internal_params_->sampling.target_lengths.begin(),
-      //   internal_params_->sampling.target_lengths.end());
       const auto & path_point_arc =
         lanelet::utils::getArcCoordinates(closest_lanelets_to_goal, path.poses.back());
-      // const double distance_point_to_goal = std::abs(path_point_arc.length - goal_arc.length);
-      // const double lateral_distance_to_center_lane =
-      //   (distance_point_to_goal < min_target_length) ? 0.0 :
-      std::abs(path_point_arc.distance);
-      // distance_average += lateral_distance_to_center_lane;
-      // distance_average = distance_average / path.poses.size();
-      const double lateral_distance_to_center_lane = std::abs(path_point_arc.distance);
 
-      // const double acceptable_width = constraints.ego_width / 2.0;
-      // return distance_average / acceptable_width;
+      std::abs(path_point_arc.distance);
+      const double lateral_distance_to_center_lane = std::abs(path_point_arc.distance);
       return lateral_distance_to_center_lane;
     });
 
@@ -170,7 +158,7 @@ SamplingPlannerModule::SamplingPlannerModule(
       const auto curvature_average = curvature_sum / static_cast<double>(path.curvatures.size());
       const auto max_curvature =
         (curvature_average > 0.0) ? constraints.hard.max_curvature : constraints.hard.min_curvature;
-      return 500.0 * curvature_average / max_curvature;
+      return curvature_average / max_curvature;
       // return constraints.soft.curvature_weight * curvature_sum /
       //        static_cast<double>(path.curvatures.size());
     });
@@ -520,7 +508,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   };
 
   // EXTEND prev path
-  if (prev_sampling_path_ && prev_sampling_path_->lengths.size() > 1) {
+  if (prev_sampling_path_ && prev_sampling_path_->points.size() > 100000) {
     // Update previous path
     frenet_planner::Path prev_path_frenet = prev_sampling_path_.value();
     frenet_paths.push_back(prev_path_frenet);
@@ -541,11 +529,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     // double x = prev_path_frenet.points.back().x();
     // double x_pose = pose.position.x;
     if (std::abs(length_goal - length_path) > min_target_length) {
-      // sampler_common::State reuse_state;
-      // reuse_state.curvature = reused_path->curvatures.back();
-      // reuse_state.pose = reused_path->points.back();
-      // reuse_state.heading = reused_path->yaws.back();
-      // reuse_state.frenet = reference_spline.frenet(reuse_state.pose);
       auto quaternion_from_rpy = [](double roll, double pitch, double yaw) -> tf2::Quaternion {
         tf2::Quaternion quaternion_tf2;
         quaternion_tf2.setRPY(roll, pitch, yaw);
@@ -582,7 +565,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   SoftConstraintsInputs soft_constraints_input;
   soft_constraints_input.goal_pose = get_goal_pose();
   soft_constraints_input.ego_pose = planner_data_->self_odometry->pose.pose;
-  ;
+
   soft_constraints_input.current_lanes = current_lanes;
   soft_constraints_input.reference_path = reference_path_ptr;
   soft_constraints_input.prev_module_path = prev_module_path;
@@ -618,6 +601,12 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   debug_data_.obstacles = internal_params_->constraints.obstacle_polygons;
   updateDebugMarkers();
 
+  const double max_length = *std::max_element(
+    internal_params_->sampling.target_lengths.begin(),
+    internal_params_->sampling.target_lengths.end());
+  const auto road_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, max_length, max_length, false);  // Do these max lengths make sense?
+
   const auto best_path_idx = [](const auto & paths) {
     auto min_cost = std::numeric_limits<double>::max();
     size_t best_path_idx = 0;
@@ -630,11 +619,19 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     return min_cost < std::numeric_limits<double>::max() ? std::optional<size_t>(best_path_idx)
                                                          : std::nullopt;
   };
+
   const auto selected_path_idx = best_path_idx(frenet_paths);
 
   if (!selected_path_idx) {
     BehaviorModuleOutput out;
-    out.path = getPreviousModuleOutput().path;
+    PathWithLaneId out_path = (prev_sampling_path_)
+                                ? convertFrenetPathToPathWithLaneID(
+                                    prev_sampling_path_.value(), road_lanes,
+                                    planner_data_->route_handler->getGoalPose().position.z)
+                                : PathWithLaneId{};
+
+    out.path = (prev_sampling_path_) ? std::make_shared<PathWithLaneId>(out_path)
+                                     : getPreviousModuleOutput().path;
     out.reference_path = getPreviousModuleOutput().reference_path;
     out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
     return out;
@@ -651,11 +648,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   std::cerr << "Length of best " << best_path.lengths.back() << "\n";
   prev_sampling_path_ = best_path;
 
-  const double max_length = *std::max_element(
-    internal_params_->sampling.target_lengths.begin(),
-    internal_params_->sampling.target_lengths.end());
-  const auto road_lanes =
-    utils::getExtendedCurrentLanes(planner_data_, max_length, max_length, false);
   auto out_path = convertFrenetPathToPathWithLaneID(
     best_path, road_lanes, planner_data_->route_handler->getGoalPose().position.z);
 

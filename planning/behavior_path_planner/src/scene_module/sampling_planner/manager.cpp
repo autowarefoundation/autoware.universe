@@ -38,6 +38,7 @@ SamplingPlannerModuleManager::SamplingPlannerModuleManager(
     p.lateral_deviation_weight = node->declare_parameter<double>(ns + ".lateral_deviation_weight");
     p.length_weight = node->declare_parameter<double>(ns + ".length_weight");
     p.curvature_weight = node->declare_parameter<double>(ns + ".curvature_weight");
+    p.weights = node->declare_parameter<std::vector<double>>(ns + ".weights");
   }
   {
     std::string ns{"sampling"};
@@ -83,6 +84,7 @@ void SamplingPlannerModuleManager::updateModuleParams(
     updateParam<double>(parameters, ns + ".lateral_deviation_weight", p->lateral_deviation_weight);
     updateParam<double>(parameters, ns + ".length_weight", p->length_weight);
     updateParam<double>(parameters, ns + ".curvature_weight", p->curvature_weight);
+    updateParam<std::vector<double>>(parameters, ns + ".weights", p->weights);
   }
   {
     std::string ns{"sampling"};

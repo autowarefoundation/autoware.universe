@@ -35,6 +35,7 @@ struct SamplingPlannerParameters
   double lateral_deviation_weight;
   double length_weight;
   double curvature_weight;
+  std::vector<double> weights;
 
   // sampling
   bool enable_frenet;
