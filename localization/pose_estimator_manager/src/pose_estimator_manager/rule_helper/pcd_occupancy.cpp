@@ -37,7 +37,7 @@ bool PcdOccupancy::ndt_can_operate(
 {
   if (!kdtree_) {
     if (optional_message) {
-      *optional_message = "enable YabLoc\npcd is not subscribed yet";
+      *optional_message = "pcd is not subscribed yet";
     }
     return false;
   }
@@ -54,12 +54,7 @@ bool PcdOccupancy::ndt_can_operate(
   last_is_ndt_mode = is_ndt_mode;
 
   std::stringstream ss;
-  if (is_ndt_mode) {
-    ss << "enable NDT";
-  } else {
-    ss << "enable YabLoc";
-  }
-  ss << "\npcd occupancy: " << count << " > "
+  ss << "pcd occupancy: " << count << " > "
      << (last_is_ndt_mode ? pcd_density_lower_threshold_ : pcd_density_upper_threshold_);
   *optional_message = ss.str();
 

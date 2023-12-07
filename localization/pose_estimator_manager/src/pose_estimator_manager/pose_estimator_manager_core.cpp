@@ -26,7 +26,7 @@ namespace pose_estimator_manager
 {
 
 static std::unordered_set<PoseEstimatorName> parse_estimator_name_args(
-  const std::vector<std::string> & arg)
+  const std::vector<std::string> & arg, const rclcpp::Logger & logger)
 {
   std::unordered_set<PoseEstimatorName> running_estimator_list;
   for (const auto & estimator_name : arg) {
@@ -34,9 +34,7 @@ static std::unordered_set<PoseEstimatorName> parse_estimator_name_args(
     if (estimator.has_value()) {
       running_estimator_list.insert(estimator.value());
     } else {
-      RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("pose_estimator_manager"),
-        "invalid pose_estimator_name is spciefied: " << estimator_name);
+      RCLCPP_ERROR_STREAM(logger, "invalid pose_estimator_name is spciefied: " << estimator_name);
     }
   }
 
@@ -45,8 +43,9 @@ static std::unordered_set<PoseEstimatorName> parse_estimator_name_args(
 
 PoseEstimatorManager::PoseEstimatorManager()
 : Node("pose_estimator_manager"),
-  running_estimator_list_(
-    parse_estimator_name_args(declare_parameter<std::vector<std::string>>("pose_sources")))
+  running_estimator_list_(parse_estimator_name_args(
+    declare_parameter<std::vector<std::string>>("pose_sources"), get_logger())),
+  logger_configure_(std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this))
 {
   // Publisher
   pub_diag_ = create_publisher<DiagnosticArray>("/diagnostics", 10);
@@ -154,8 +153,6 @@ void PoseEstimatorManager::toggle_each(
 
 void PoseEstimatorManager::toggle_all(bool enabled)
 {
-  RCLCPP_INFO_STREAM(get_logger(), (enabled ? "Enable" : "Disable") << " all pose estimators");
-
   std::unordered_map<PoseEstimatorName, bool> toggle_list;
   for (auto s : sub_managers_) {
     toggle_list.emplace(s.first, enabled);
@@ -187,7 +184,6 @@ void PoseEstimatorManager::publish_diagnostics()
 void PoseEstimatorManager::on_timer()
 {
   auto now = rclcpp::Clock().now();
-  RCLCPP_WARN_STREAM(get_logger(), "debug " << now.seconds() << " " << now.nanoseconds());
 
   if (switch_rule_) {
     auto toggle_list = switch_rule_->update();

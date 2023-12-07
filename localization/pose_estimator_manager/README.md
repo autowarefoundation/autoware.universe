@@ -104,6 +104,30 @@ For swithing rule:
 | `/output/debug/marker_array`           | visualization_msgs::msg::MarkerArray          | [debug topic] everything for visualization             |
 | `/output/debug/string`                 | visualization_msgs::msg::MarkerArray          | [debug topic] debug information such as current status |
 
+## Trouble Shooting
+
+If it does not work, users can get more information in the following ways.
+
+* visualize debug log
+
+```bash
+ros2 service call /localization/pose_estimator_manager/config_logger logging_demo/srv/ConfigLogger \
+  '{logger_name: localization.pose_estimator_manager, level: debug}'
+```
+
+* check diagnostics
+
+```bash
+ros2 run rqt_runtime_monitor rqt_runtime_monitor
+# Then, select `localization: pose_estimator_manager`
+```
+
+* check debug string topic
+
+```bash
+ros2 topic echo /localization/pose_estimator_manager/debug/string
+```
+
 ## Architecture
 
 ### Case of running a single pose estimator

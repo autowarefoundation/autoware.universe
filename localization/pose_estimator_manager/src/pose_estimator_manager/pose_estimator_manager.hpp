@@ -20,6 +20,7 @@
 #include "pose_estimator_manager/switch_rule/base_switch_rule.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -49,6 +50,7 @@ public:
 
 private:
   const std::unordered_set<PoseEstimatorName> running_estimator_list_;
+  const std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
   std::shared_ptr<SharedData> shared_data_{nullptr};
 
