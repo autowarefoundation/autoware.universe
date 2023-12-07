@@ -115,13 +115,6 @@ ros2 service call /localization/pose_estimator_manager/config_logger logging_dem
   '{logger_name: localization.pose_estimator_manager, level: debug}'
 ```
 
-* check diagnostics
-
-```bash
-ros2 run rqt_runtime_monitor rqt_runtime_monitor
-# Then, select `localization: pose_estimator_manager`
-```
-
 * check debug string topic
 
 ```bash

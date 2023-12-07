@@ -58,39 +58,31 @@ MapBasedRule::MapBasedRule(
 
 bool MapBasedRule::eagleye_is_available() const
 {
-  if (running_estimator_list_.count(PoseEstimatorName::eagleye) == 0) {
-    return false;
-  }
   // Below this line, eagleye_area is guaranteed not to be nullptr.
   assert(eagleye_area_ != nullptr);
+  assert(shared_data_->localization_pose_cov.has_value());
+  if (!eagleye_area_) {
+    throw std::runtime_error("eagleye_area_ is not initialized");
+  }
 
   if (!shared_data_->eagleye_output_pose_cov.has_value()) {
     return false;
   }
 
-  if (!shared_data_->localization_pose_cov.has_value()) {
-    return false;
-  }
-
-  if (!eagleye_area_) {
-    throw std::runtime_error("eagleye_area_ is not initialized");
-  }
-
   return eagleye_area_->within(shared_data_->localization_pose_cov()->pose.pose.position);
-}
-bool MapBasedRule::yabloc_is_available() const
-{
-  return running_estimator_list_.count(PoseEstimatorName::yabloc) != 0;
-}
-
-bool MapBasedRule::ndt_is_available() const
-{
-  return running_estimator_list_.count(PoseEstimatorName::ndt) != 0;
 }
 
 std::string MapBasedRule::debug_string()
 {
-  return debug_string_;
+  // concatenate all debug string entry
+  std::stringstream ss;
+  for (const auto & [label, value] : debug_string_dictionary_) {
+    if (!ss.str().empty()) {
+      ss << std::endl;
+    }
+    ss << label << ": " << value;
+  }
+  return ss.str();
 }
 
 MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
@@ -117,14 +109,15 @@ bool MapBasedRule::artag_is_available() const
   }
   // Below this line, ar_tag_position_ is guaranteed not to be nullptr.
   assert(ar_tag_position_ != nullptr);
-
-  if (!shared_data_->localization_pose_cov.has_value()) {
-    return false;
-  }
+  assert(shared_data_->localization_pose_cov.has_value());
 
   const auto position = shared_data_->localization_pose_cov()->pose.pose.position;
   const double distance_to_marker =
     ar_tag_position_->distance_to_nearest_ar_tag_around_ego(position);
+
+  debug_string_dictionary_["artag"] =
+    "distance to the nearest marker is " + std::to_string(distance_to_marker);
+
   return distance_to_marker < ar_marker_available_distance_;
 }
 

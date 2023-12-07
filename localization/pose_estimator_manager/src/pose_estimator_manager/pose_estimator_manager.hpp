@@ -80,9 +80,7 @@ private:
 
   void load_switch_rule();
 
-  void call_all_callback();
-
-  void publish_diagnostics();
+  void publish_diagnostics() const;
 
   // Timer callback
   void on_timer();

@@ -52,11 +52,11 @@ protected:
   std::unique_ptr<rule_helper::PcdOccupancy> pcd_occupancy_{nullptr};
   std::unique_ptr<rule_helper::EagleyeArea> eagleye_area_{nullptr};
 
-  std::string debug_string_;
+  mutable std::unordered_map<std::string, std::string> debug_string_dictionary_;
+
+  std::unordered_map<PoseEstimatorName, bool> update_impl() const;
 
   bool eagleye_is_available() const;
-  bool yabloc_is_available() const;
-  bool ndt_is_available() const;
   bool artag_is_available() const;
   bool ndt_is_more_suitable_than_yabloc(std::string * optional_message = nullptr) const;
 };

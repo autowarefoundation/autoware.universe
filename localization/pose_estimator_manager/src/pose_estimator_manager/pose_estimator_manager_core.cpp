@@ -160,19 +160,21 @@ void PoseEstimatorManager::toggle_all(bool enabled)
   toggle_each(toggle_list);
 }
 
-void PoseEstimatorManager::publish_diagnostics()
+void PoseEstimatorManager::publish_diagnostics() const
 {
   diagnostic_msgs::msg::DiagnosticStatus diag_status;
-  diag_status.name = "localization: " + std::string(this->get_name());
-  diag_status.hardware_id = this->get_name();
+  {
+    diag_status.name = "localization: " + std::string(this->get_name());
+    diag_status.hardware_id = this->get_name();
 
-  diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  diag_status.message = "Diagnostics is not implemented.";
+    diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+    diag_status.message = "OK";
 
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "Something important information";
-  key_value.value = "not implemented";
-  diag_status.values.push_back(key_value);
+    diagnostic_msgs::msg::KeyValue key_value_msg;
+    key_value_msg.key = "state";
+    key_value_msg.value = "Diagnostics is not implemented.";
+    diag_status.values.push_back(key_value_msg);
+  }
 
   DiagnosticArray diag_msg;
   diag_msg.header.stamp = this->now();
@@ -204,6 +206,8 @@ void PoseEstimatorManager::on_timer()
       get_logger(), "swtich_rule is not activated. Therefore, enable all pose_estimators");
     toggle_all(true);
   }
+
+  //
   publish_diagnostics();
 }
 
