@@ -14,14 +14,14 @@
 
 #include "behavior_path_planner/scene_module/lane_change/normal.hpp"
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/traffic_light_utils.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -126,6 +126,13 @@ bool NormalLaneChange::isLaneChangeRequired() const
   const auto target_lanes = getLaneChangeLanes(current_lanes, direction_);
 
   return !target_lanes.empty();
+}
+
+bool NormalLaneChange::isStoppedAtRedTrafficLight() const
+{
+  return utils::traffic_light::isStoppedAtRedTrafficLightWithinDistance(
+    status_.current_lanes, status_.lane_change_path.path, planner_data_,
+    status_.lane_change_path.info.length.sum());
 }
 
 LaneChangePath NormalLaneChange::getLaneChangePath() const
@@ -476,7 +483,7 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
   const auto backward_length = lane_change_parameters_->backward_lane_length;
 
   return route_handler->getLaneletSequence(
-    lane_change_lane.get(), getEgoPose(), backward_length, forward_length);
+    lane_change_lane.value(), getEgoPose(), backward_length, forward_length);
 }
 
 bool NormalLaneChange::isNearEndOfCurrentLanes(
@@ -1364,9 +1371,16 @@ bool NormalLaneChange::getLaneChangePaths(
         if (
           lane_change_parameters_->regulate_on_traffic_light &&
           !hasEnoughLengthToTrafficLight(*candidate_path, current_lanes)) {
+          debug_print("Reject: regulate on traffic light!!");
           continue;
         }
 
+        if (utils::traffic_light::isStoppedAtRedTrafficLightWithinDistance(
+              lane_change_info.current_lanes, candidate_path.value().path, planner_data_,
+              lane_change_info.length.sum())) {
+          debug_print("Ego is stopping near traffic light. Do not allow lane change");
+          continue;
+        }
         candidate_paths->push_back(*candidate_path);
 
         std::vector<ExtendedPredictedObject> filtered_objects =

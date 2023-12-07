@@ -15,10 +15,10 @@
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
 #include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
+#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
@@ -108,6 +108,14 @@ ModuleStatus LaneChangeInterface::updateState()
   if (module_type_->hasFinishedLaneChange()) {
     log_warn_throttled("Completed lane change.");
     return ModuleStatus::SUCCESS;
+  }
+
+  if (module_type_->isEgoOnPreparePhase() && module_type_->isStoppedAtRedTrafficLight()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
+      "Ego stopped at traffic light. Canceling lane change");
+    module_type_->toCancelState();
+    return isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::SUCCESS;
   }
 
   const auto [is_safe, is_object_coming_from_rear] = module_type_->isApprovedPathSafe();
@@ -320,27 +328,6 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   }
 }
 
-std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeInterface::get_debug_msg_array() const
-{
-  const auto debug_data = module_type_->getDebugData();
-  LaneChangeDebugMsgArray debug_msg_array;
-  debug_msg_array.lane_change_info.reserve(debug_data.size());
-  for (const auto & [uuid, debug_data] : debug_data) {
-    LaneChangeDebugMsg debug_msg;
-    debug_msg.object_id = uuid;
-    debug_msg.allow_lane_change = debug_data.is_safe;
-    debug_msg.is_front = debug_data.is_front;
-    debug_msg.failed_reason = debug_data.unsafe_reason;
-    debug_msg.velocity =
-      std::hypot(debug_data.object_twist.linear.x, debug_data.object_twist.linear.y);
-    debug_msg_array.lane_change_info.push_back(debug_msg);
-  }
-  lane_change_debug_msg_array_ = debug_msg_array;
-
-  lane_change_debug_msg_array_.header.stamp = clock_->now();
-  return std::make_shared<LaneChangeDebugMsgArray>(lane_change_debug_msg_array_);
-}
-
 MarkerArray LaneChangeInterface::getModuleVirtualWall()
 {
   using marker_utils::lane_change_markers::createLaneChangingVirtualWallMarker;
@@ -385,7 +372,6 @@ void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & o
   const auto finish_distance = motion_utils::calcSignedArcLength(
     output.path->points, current_position, status.lane_change_path.info.shift_line.end.position);
 
-  // TODO(tkhmy) add handle status TRYING
   steering_factor_interface_ptr_->updateSteeringFactor(
     {status.lane_change_path.info.shift_line.start, status.lane_change_path.info.shift_line.end},
     {start_distance, finish_distance}, PlanningBehavior::LANE_CHANGE, steering_factor_direction,
@@ -406,12 +392,6 @@ void LaneChangeInterface::updateSteeringFactorPtr(
     {selected_path.info.shift_line.start, selected_path.info.shift_line.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     PlanningBehavior::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
-}
-void LaneChangeInterface::acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
-{
-  if (visitor) {
-    visitor->visitLaneChangeInterface(this);
-  }
 }
 
 TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
@@ -492,44 +472,5 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
 
   // not in the vicinity of the end of the path. return original
   return original_turn_signal_info;
-}
-
-void SceneModuleVisitor::visitLaneChangeInterface(const LaneChangeInterface * interface) const
-{
-  lane_change_visitor_ = interface->get_debug_msg_array();
-}
-
-AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
-  const std::string & name, rclcpp::Node & node,
-  const std::shared_ptr<LaneChangeParameters> & parameters,
-  const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
-  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: LaneChangeInterface{
-    name,
-    node,
-    parameters,
-    rtc_interface_ptr_map,
-    objects_of_interest_marker_interface_ptr_map,
-    std::make_unique<AvoidanceByLaneChange>(parameters, avoidance_by_lane_change_parameters)}
-{
-}
-
-bool AvoidanceByLaneChangeInterface::isExecutionRequested() const
-{
-  return module_type_->specialRequiredCheck() && module_type_->isLaneChangeRequired();
-}
-
-void AvoidanceByLaneChangeInterface::updateRTCStatus(
-  const double start_distance, const double finish_distance)
-{
-  const auto direction = std::invoke([&]() -> std::string {
-    const auto dir = module_type_->getDirection();
-    return (dir == Direction::LEFT) ? "left" : "right";
-  });
-
-  rtc_interface_ptr_map_.at(direction)->updateCooperateStatus(
-    uuid_map_.at(direction), isExecutionReady(), start_distance, finish_distance, clock_->now());
 }
 }  // namespace behavior_path_planner

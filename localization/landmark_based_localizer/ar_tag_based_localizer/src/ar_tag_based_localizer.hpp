@@ -90,14 +90,13 @@ private:
   void cam_info_callback(const CameraInfo::ConstSharedPtr & msg);
   void ekf_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & msg);
   std::vector<landmark_manager::Landmark> detect_landmarks(const Image::ConstSharedPtr & msg);
-  Pose calculate_new_self_pose(
-    const std::vector<landmark_manager::Landmark> & detected_landmarks, const Pose & self_pose);
 
   // Parameters
   float marker_size_{};
   std::vector<std::string> target_tag_ids_;
   std::vector<double> base_covariance_;
   double distance_threshold_{};
+  bool consider_orientation_{};
   double ekf_time_tolerance_{};
   double ekf_position_tolerance_{};
 
@@ -126,7 +125,7 @@ private:
   aruco::CameraParameters cam_param_;
   bool cam_info_received_;
   std::unique_ptr<SmartPoseBuffer> ekf_pose_buffer_;
-  std::map<std::string, Pose> landmark_map_;
+  landmark_manager::LandmarkManager landmark_manager_;
 };
 
 #endif  // AR_TAG_BASED_LOCALIZER_HPP_
