@@ -17,7 +17,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__START_PLANNER_PARAMETERS_HPP_
 
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <freespace_planning_algorithms/abstract_algorithm.hpp>
 #include <freespace_planning_algorithms/astar_search.hpp>
@@ -46,7 +46,6 @@ struct StartPlannerParameters
   double collision_check_distance_from_end{0.0};
   double th_moving_object_velocity{0.0};
   double center_line_path_interval{0.0};
-  bool verbose{false};
 
   // shift pull out
   bool enable_shift_pull_out{false};
@@ -93,6 +92,14 @@ struct StartPlannerParameters
   utils::path_safety_checker::EgoPredictedPathParams ego_predicted_path_params{};
   utils::path_safety_checker::ObjectsFilteringParams objects_filtering_params{};
   utils::path_safety_checker::SafetyCheckParams safety_check_params{};
+
+  // surround moving obstacle check
+  double search_radius{0.0};
+  double th_moving_obstacle_velocity{0.0};
+  behavior_path_planner::utils::path_safety_checker::ObjectTypesToCheck
+    surround_moving_obstacles_type_to_check{};
+
+  bool print_debug_info{false};
 };
 
 }  // namespace behavior_path_planner

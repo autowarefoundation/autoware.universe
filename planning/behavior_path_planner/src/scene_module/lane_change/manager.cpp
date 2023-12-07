@@ -26,15 +26,12 @@
 namespace behavior_path_planner
 {
 
-using route_handler::Direction;
-using utils::convertToSnakeCase;
-
-LaneChangeModuleManager::LaneChangeModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
-  const Direction direction, const LaneChangeModuleType type)
-: SceneModuleManagerInterface(node, name, config, {""}), direction_{direction}, type_{type}
+void LaneChangeModuleManager::init(rclcpp::Node * node)
 {
   using tier4_autoware_utils::getOrDeclareParameter;
+
+  // init manager interface
+  initInterface(node, {""});
 
   LaneChangeParameters p{};
 
@@ -146,7 +143,7 @@ LaneChangeModuleManager::LaneChangeModuleManager(
 
   // target object
   {
-    std::string ns = "lane_change.target_object.";
+    const std::string ns = "lane_change.target_object.";
     p.object_types_to_check.check_car = getOrDeclareParameter<bool>(*node, ns + "car");
     p.object_types_to_check.check_truck = getOrDeclareParameter<bool>(*node, ns + "truck");
     p.object_types_to_check.check_bus = getOrDeclareParameter<bool>(*node, ns + "bus");
@@ -180,10 +177,11 @@ LaneChangeModuleManager::LaneChangeModuleManager(
   // validation of parameters
   if (p.longitudinal_acc_sampling_num < 1 || p.lateral_acc_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      logger_, "lane_change_sampling_num must be positive integer. Given longitudinal parameter: "
-                 << p.longitudinal_acc_sampling_num
-                 << "Given lateral parameter: " << p.lateral_acc_sampling_num << std::endl
-                 << "Terminating the program...");
+      node->get_logger().get_child(name()),
+      "lane_change_sampling_num must be positive integer. Given longitudinal parameter: "
+        << p.longitudinal_acc_sampling_num
+        << "Given lateral parameter: " << p.lateral_acc_sampling_num << std::endl
+        << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 
@@ -203,14 +201,17 @@ LaneChangeModuleManager::LaneChangeModuleManager(
         p.rss_params_for_abort.longitudinal_distance_min_threshold ||
       p.rss_params.longitudinal_velocity_delta_time >
         p.rss_params_for_abort.longitudinal_velocity_delta_time) {
-      RCLCPP_FATAL_STREAM(logger_, "abort parameter might be loose... Terminating the program...");
+      RCLCPP_FATAL_STREAM(
+        node->get_logger().get_child(name()),
+        "abort parameter might be loose... Terminating the program...");
       exit(EXIT_FAILURE);
     }
   }
   if (p.cancel.delta_time < 1.0) {
     RCLCPP_WARN_STREAM(
-      logger_, "cancel.delta_time: " << p.cancel.delta_time
-                                     << ", is too short. This could cause a danger behavior.");
+      node->get_logger().get_child(name()),
+      "cancel.delta_time: " << p.cancel.delta_time
+                            << ", is too short. This could cause a danger behavior.");
   }
 
   parameters_ = std::make_shared<LaneChangeParameters>(p);
@@ -221,10 +222,12 @@ std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneMod
   if (type_ == LaneChangeModuleType::NORMAL) {
     return std::make_unique<LaneChangeInterface>(
       name_, *node_, parameters_, rtc_interface_ptr_map_,
+      objects_of_interest_marker_interface_ptr_map_,
       std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
   }
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_,
     std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
 }
 
@@ -243,135 +246,18 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
   });
 }
 
-AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
-: LaneChangeModuleManager(
-    node, name, config, Direction::NONE, LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE)
-{
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
-  using tier4_autoware_utils::getOrDeclareParameter;
-
-  rtc_interface_ptr_map_.clear();
-  const std::vector<std::string> rtc_types = {"left", "right"};
-  for (const auto & rtc_type : rtc_types) {
-    const auto snake_case_name = convertToSnakeCase(name);
-    const std::string rtc_interface_name = snake_case_name + "_" + rtc_type;
-    rtc_interface_ptr_map_.emplace(
-      rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name));
-  }
-
-  AvoidanceByLCParameters p{};
-  // unique parameters
-  {
-    std::string ns = "avoidance_by_lane_change.";
-    p.execute_object_longitudinal_margin =
-      getOrDeclareParameter<double>(*node, ns + "execute_object_longitudinal_margin");
-    p.execute_only_when_lane_change_finish_before_object =
-      getOrDeclareParameter<bool>(*node, ns + "execute_only_when_lane_change_finish_before_object");
-  }
-
-  // general params
-  {
-    std::string ns = "avoidance.";
-    p.resample_interval_for_planning =
-      getOrDeclareParameter<double>(*node, ns + "resample_interval_for_planning");
-    p.resample_interval_for_output =
-      getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
-  }
-
-  // target object
-  {
-    const auto get_object_param = [&](std::string && ns) {
-      ObjectParameter param{};
-      param.is_target = getOrDeclareParameter<bool>(*node, ns + "is_target");
-      param.execute_num = getOrDeclareParameter<int>(*node, ns + "execute_num");
-      param.moving_speed_threshold =
-        getOrDeclareParameter<double>(*node, ns + "moving_speed_threshold");
-      param.moving_time_threshold =
-        getOrDeclareParameter<double>(*node, ns + "moving_time_threshold");
-      param.max_expand_ratio = getOrDeclareParameter<double>(*node, ns + "max_expand_ratio");
-      param.envelope_buffer_margin =
-        getOrDeclareParameter<double>(*node, ns + "envelope_buffer_margin");
-      param.avoid_margin_lateral =
-        getOrDeclareParameter<double>(*node, ns + "avoid_margin_lateral");
-      param.safety_buffer_lateral =
-        getOrDeclareParameter<double>(*node, ns + "safety_buffer_lateral");
-      return param;
-    };
-
-    const std::string ns = "avoidance_by_lane_change.target_object.";
-    p.object_parameters.emplace(
-      ObjectClassification::MOTORCYCLE, get_object_param(ns + "motorcycle."));
-    p.object_parameters.emplace(ObjectClassification::CAR, get_object_param(ns + "car."));
-    p.object_parameters.emplace(ObjectClassification::TRUCK, get_object_param(ns + "truck."));
-    p.object_parameters.emplace(ObjectClassification::TRAILER, get_object_param(ns + "trailer."));
-    p.object_parameters.emplace(ObjectClassification::BUS, get_object_param(ns + "bus."));
-    p.object_parameters.emplace(
-      ObjectClassification::PEDESTRIAN, get_object_param(ns + "pedestrian."));
-    p.object_parameters.emplace(ObjectClassification::BICYCLE, get_object_param(ns + "bicycle."));
-    p.object_parameters.emplace(ObjectClassification::UNKNOWN, get_object_param(ns + "unknown."));
-
-    p.lower_distance_for_polygon_expansion =
-      getOrDeclareParameter<double>(*node, ns + "lower_distance_for_polygon_expansion");
-    p.upper_distance_for_polygon_expansion =
-      getOrDeclareParameter<double>(*node, ns + "upper_distance_for_polygon_expansion");
-  }
-
-  // target filtering
-  {
-    std::string ns = "avoidance.target_filtering.";
-    p.object_check_goal_distance =
-      getOrDeclareParameter<double>(*node, ns + "object_check_goal_distance");
-    p.threshold_distance_object_is_on_center =
-      getOrDeclareParameter<double>(*node, ns + "threshold_distance_object_is_on_center");
-    p.object_check_shiftable_ratio =
-      getOrDeclareParameter<double>(*node, ns + "object_check_shiftable_ratio");
-    p.object_check_min_road_shoulder_width =
-      getOrDeclareParameter<double>(*node, ns + "object_check_min_road_shoulder_width");
-    p.object_last_seen_threshold =
-      getOrDeclareParameter<double>(*node, ns + "object_last_seen_threshold");
-  }
-
-  {
-    std::string ns = "avoidance.target_filtering.force_avoidance.";
-    p.enable_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<bool>(*node, ns + "enable");
-    p.threshold_time_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<double>(*node, ns + "time_threshold");
-    p.object_ignore_section_traffic_light_in_front_distance =
-      getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
-    p.object_ignore_section_crosswalk_in_front_distance =
-      getOrDeclareParameter<double>(*node, ns + "ignore_area.crosswalk.front_distance");
-    p.object_ignore_section_crosswalk_behind_distance =
-      getOrDeclareParameter<double>(*node, ns + "ignore_area.crosswalk.behind_distance");
-  }
-
-  {
-    std::string ns = "avoidance.target_filtering.detection_area.";
-    p.use_static_detection_area = getOrDeclareParameter<bool>(*node, ns + "static");
-    p.object_check_min_forward_distance =
-      getOrDeclareParameter<double>(*node, ns + "min_forward_distance");
-    p.object_check_max_forward_distance =
-      getOrDeclareParameter<double>(*node, ns + "max_forward_distance");
-    p.object_check_backward_distance =
-      getOrDeclareParameter<double>(*node, ns + "backward_distance");
-  }
-
-  // safety check
-  {
-    std::string ns = "avoidance.safety_check.";
-    p.hysteresis_factor_expand_rate =
-      getOrDeclareParameter<double>(*node, ns + "hysteresis_factor_expand_rate");
-  }
-
-  avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
-}
-
-std::unique_ptr<SceneModuleInterface>
-AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
-{
-  return std::make_unique<AvoidanceByLaneChangeInterface>(
-    name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_);
-}
-
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::LaneChangeRightModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::LaneChangeLeftModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::ExternalRequestLaneChangeRightModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)

@@ -43,6 +43,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <glog/logging.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -718,6 +720,8 @@ void replaceObjectYawWithLaneletsYaw(
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
 {
+  google::InitGoogleLogging("map_based_prediction_node");
+  google::InstallFailureSignalHandler();
   enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
   prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
   lateral_control_time_horizon_ =
@@ -991,6 +995,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         for (auto & predicted_path : predicted_paths) {
           predicted_path.confidence = predicted_path.confidence / sum_confidence;
+          if (predicted_object.kinematics.predicted_paths.size() >= 100) break;
           predicted_object.kinematics.predicted_paths.push_back(predicted_path);
         }
         output.objects.push_back(predicted_object);

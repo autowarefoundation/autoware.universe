@@ -24,16 +24,15 @@
 
 namespace behavior_path_planner
 {
-
-StartPlannerModuleManager::StartPlannerModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
-: SceneModuleManagerInterface(node, name, config, {""})
+void StartPlannerModuleManager::init(rclcpp::Node * node)
 {
+  // init manager interface
+  initInterface(node, {""});
+
   StartPlannerParameters p;
 
-  std::string ns = "start_planner.";
+  const std::string ns = "start_planner.";
 
-  p.verbose = node->declare_parameter<bool>(ns + "verbose");
   p.th_arrived_distance = node->declare_parameter<double>(ns + "th_arrived_distance");
   p.th_stopped_velocity = node->declare_parameter<double>(ns + "th_stopped_velocity");
   p.th_stopped_time = node->declare_parameter<double>(ns + "th_stopped_time");
@@ -88,7 +87,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
     node->declare_parameter<double>(ns + "ignore_distance_from_lane_end");
   // freespace planner general params
   {
-    std::string ns = "start_planner.freespace_planner.";
+    const std::string ns = "start_planner.freespace_planner.";
     p.enable_freespace_planner = node->declare_parameter<bool>(ns + "enable_freespace_planner");
     p.freespace_planner_algorithm =
       node->declare_parameter<std::string>(ns + "freespace_planner_algorithm");
@@ -115,7 +114,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
   //  freespace planner search config
   {
-    std::string ns = "start_planner.freespace_planner.search_configs.";
+    const std::string ns = "start_planner.freespace_planner.search_configs.";
     p.freespace_planner_common_parameters.theta_size =
       node->declare_parameter<int>(ns + "theta_size");
     p.freespace_planner_common_parameters.angle_goal_range =
@@ -131,13 +130,13 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
   //  freespace planner costmap configs
   {
-    std::string ns = "start_planner.freespace_planner.costmap_configs.";
+    const std::string ns = "start_planner.freespace_planner.costmap_configs.";
     p.freespace_planner_common_parameters.obstacle_threshold =
       node->declare_parameter<int>(ns + "obstacle_threshold");
   }
   //  freespace planner astar
   {
-    std::string ns = "start_planner.freespace_planner.astar.";
+    const std::string ns = "start_planner.freespace_planner.astar.";
     p.astar_parameters.only_behind_solutions =
       node->declare_parameter<bool>(ns + "only_behind_solutions");
     p.astar_parameters.use_back = node->declare_parameter<bool>(ns + "use_back");
@@ -146,7 +145,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
   //   freespace planner rrtstar
   {
-    std::string ns = "start_planner.freespace_planner.rrtstar.";
+    const std::string ns = "start_planner.freespace_planner.rrtstar.";
     p.rrt_star_parameters.enable_update = node->declare_parameter<bool>(ns + "enable_update");
     p.rrt_star_parameters.use_informed_sampling =
       node->declare_parameter<bool>(ns + "use_informed_sampling");
@@ -164,17 +163,15 @@ StartPlannerModuleManager::StartPlannerModuleManager(
       node->declare_parameter<double>(ns + "stop_condition.maximum_jerk_for_stop");
   }
 
-  std::string base_ns = "start_planner.path_safety_check.";
+  const std::string base_ns = "start_planner.path_safety_check.";
 
   // EgoPredictedPath
-  std::string ego_path_ns = base_ns + "ego_predicted_path.";
+  const std::string ego_path_ns = base_ns + "ego_predicted_path.";
   {
     p.ego_predicted_path_params.min_velocity =
       node->declare_parameter<double>(ego_path_ns + "min_velocity");
     p.ego_predicted_path_params.acceleration =
-      node->declare_parameter<double>(ego_path_ns + "acceleration");
-    p.ego_predicted_path_params.max_velocity =
-      node->declare_parameter<double>(ego_path_ns + "max_velocity");
+      node->declare_parameter<double>(ego_path_ns + "min_acceleration");
     p.ego_predicted_path_params.time_horizon_for_front_object =
       node->declare_parameter<double>(ego_path_ns + "time_horizon_for_front_object");
     p.ego_predicted_path_params.time_horizon_for_rear_object =
@@ -186,7 +183,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
 
   // ObjectFilteringParams
-  std::string obj_filter_ns = base_ns + "target_filtering.";
+  const std::string obj_filter_ns = base_ns + "target_filtering.";
   {
     p.objects_filtering_params.safety_check_time_horizon =
       node->declare_parameter<double>(obj_filter_ns + "safety_check_time_horizon");
@@ -211,7 +208,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
 
   // ObjectTypesToCheck
-  std::string obj_types_ns = obj_filter_ns + "object_types_to_check.";
+  const std::string obj_types_ns = obj_filter_ns + "object_types_to_check.";
   {
     p.objects_filtering_params.object_types_to_check.check_car =
       node->declare_parameter<bool>(obj_types_ns + "check_car");
@@ -232,7 +229,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
 
   // ObjectLaneConfiguration
-  std::string obj_lane_ns = obj_filter_ns + "object_lane_configuration.";
+  const std::string obj_lane_ns = obj_filter_ns + "object_lane_configuration.";
   {
     p.objects_filtering_params.object_lane_configuration.check_current_lane =
       node->declare_parameter<bool>(obj_lane_ns + "check_current_lane");
@@ -247,7 +244,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
 
   // SafetyCheckParams
-  std::string safety_check_ns = base_ns + "safety_check_params.";
+  const std::string safety_check_ns = base_ns + "safety_check_params.";
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
@@ -262,7 +259,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
 
   // RSSparams
-  std::string rss_ns = safety_check_ns + "rss_params.";
+  const std::string rss_ns = safety_check_ns + "rss_params.";
   {
     p.safety_check_params.rss_params.rear_vehicle_reaction_time =
       node->declare_parameter<double>(rss_ns + "rear_vehicle_reaction_time");
@@ -276,12 +273,48 @@ StartPlannerModuleManager::StartPlannerModuleManager(
       node->declare_parameter<double>(rss_ns + "longitudinal_velocity_delta_time");
   }
 
+  // surround moving obstacle check
+  std::string surround_moving_obstacle_check_ns = ns + "surround_moving_obstacle_check.";
+  {
+    p.search_radius =
+      node->declare_parameter<double>(surround_moving_obstacle_check_ns + "search_radius");
+    p.th_moving_obstacle_velocity = node->declare_parameter<double>(
+      surround_moving_obstacle_check_ns + "th_moving_obstacle_velocity");
+    // ObjectTypesToCheck
+    std::string obj_types_ns = surround_moving_obstacle_check_ns + "object_types_to_check.";
+    {
+      p.surround_moving_obstacles_type_to_check.check_car =
+        node->declare_parameter<bool>(obj_types_ns + "check_car");
+      p.surround_moving_obstacles_type_to_check.check_truck =
+        node->declare_parameter<bool>(obj_types_ns + "check_truck");
+      p.surround_moving_obstacles_type_to_check.check_bus =
+        node->declare_parameter<bool>(obj_types_ns + "check_bus");
+      p.surround_moving_obstacles_type_to_check.check_trailer =
+        node->declare_parameter<bool>(obj_types_ns + "check_trailer");
+      p.surround_moving_obstacles_type_to_check.check_unknown =
+        node->declare_parameter<bool>(obj_types_ns + "check_unknown");
+      p.surround_moving_obstacles_type_to_check.check_bicycle =
+        node->declare_parameter<bool>(obj_types_ns + "check_bicycle");
+      p.surround_moving_obstacles_type_to_check.check_motorcycle =
+        node->declare_parameter<bool>(obj_types_ns + "check_motorcycle");
+      p.surround_moving_obstacles_type_to_check.check_pedestrian =
+        node->declare_parameter<bool>(obj_types_ns + "check_pedestrian");
+    }
+  }
+
+  // debug
+  std::string debug_ns = ns + "debug.";
+  {
+    p.print_debug_info = node->declare_parameter<bool>(debug_ns + "print_debug_info");
+  }
+
   // validation of parameters
   if (p.lateral_acceleration_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      logger_, "lateral_acceleration_sampling_num must be positive integer. Given parameter: "
-                 << p.lateral_acceleration_sampling_num << std::endl
-                 << "Terminating the program...");
+      node->get_logger().get_child(name()),
+      "lateral_acceleration_sampling_num must be positive integer. Given parameter: "
+        << p.lateral_acceleration_sampling_num << std::endl
+        << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 
@@ -295,7 +328,7 @@ void StartPlannerModuleManager::updateModuleParams(
 
   auto & p = parameters_;
 
-  [[maybe_unused]] std::string ns = name_ + ".";
+  [[maybe_unused]] const std::string ns = name_ + ".";
 
   std::for_each(observers_.begin(), observers_.end(), [&](const auto & observer) {
     if (!observer.expired()) {
@@ -310,12 +343,12 @@ void StartPlannerModuleManager::updateModuleParams(
 bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 {
   if (observers_.empty()) {
-    return enable_simultaneous_execution_as_approved_module_;
+    return config_.enable_simultaneous_execution_as_approved_module;
   }
 
   const auto checker = [this](const SceneModuleObserver & observer) {
     if (observer.expired()) {
-      return enable_simultaneous_execution_as_approved_module_;
+      return config_.enable_simultaneous_execution_as_approved_module;
     }
 
     const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
@@ -330,7 +363,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
       return false;
     }
 
-    return enable_simultaneous_execution_as_approved_module_;
+    return config_.enable_simultaneous_execution_as_approved_module;
   };
 
   return std::all_of(observers_.begin(), observers_.end(), checker);
@@ -339,12 +372,12 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
 {
   if (observers_.empty()) {
-    return enable_simultaneous_execution_as_candidate_module_;
+    return config_.enable_simultaneous_execution_as_candidate_module;
   }
 
   const auto checker = [this](const SceneModuleObserver & observer) {
     if (observer.expired()) {
-      return enable_simultaneous_execution_as_candidate_module_;
+      return config_.enable_simultaneous_execution_as_candidate_module;
     }
 
     const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
@@ -359,9 +392,14 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() cons
       return false;
     }
 
-    return enable_simultaneous_execution_as_candidate_module_;
+    return config_.enable_simultaneous_execution_as_candidate_module;
   };
 
   return std::all_of(observers_.begin(), observers_.end(), checker);
 }
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::StartPlannerModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
