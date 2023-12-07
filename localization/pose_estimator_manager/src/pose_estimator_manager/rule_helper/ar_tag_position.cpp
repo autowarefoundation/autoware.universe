@@ -61,8 +61,22 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node)
 
 void ArTagPosition::init(HADMapBin::ConstSharedPtr msg)
 {
-  const std::vector<landmark_manager::Landmark> landmarks =
-    landmark_manager::parse_landmarks(msg, "apriltag_16h5", logger_);
+  std::vector<landmark_manager::Landmark> landmarks;
+  {
+    // NOTE: tmp implementation
+    landmark_manager::LandmarkManager manager;
+    manager.parse_landmarks(msg, "apriltag_16h5", logger_);
+    const auto marker_array = manager.get_landmarks_as_marker_array_msg();
+    for (const auto & marker : marker_array.markers) {
+      if (marker.ns != "landmark_text") {
+        continue;
+      }
+      landmark_manager::Landmark landmark;
+      landmark.pose = marker.pose;
+      landmark.id = marker.text.substr(1, marker.text.size() - 2);
+      landmarks.push_back(landmark);
+    }
+  }
 
   std::map<std::string, Pose> landmark_map;
   for (const landmark_manager::Landmark & landmark : landmarks) {
