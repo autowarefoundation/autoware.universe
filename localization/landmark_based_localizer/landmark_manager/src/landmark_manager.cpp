@@ -29,83 +29,12 @@ namespace landmark_manager
 
 void LandmarkManager::parse_landmarks(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
-  const std::string & target_subtype, const rclcpp::Logger & logger)
+  const std::string & target_subtype)
 {
-  RCLCPP_INFO_STREAM(logger, "msg->format_version: " << msg->format_version);
-  RCLCPP_INFO_STREAM(logger, "msg->map_format: " << msg->map_format);
-  RCLCPP_INFO_STREAM(logger, "msg->map_version: " << msg->map_version);
-  RCLCPP_INFO_STREAM(logger, "msg->data.size(): " << msg->data.size());
-  lanelet::LaneletMapPtr lanelet_map_ptr{std::make_shared<lanelet::LaneletMap>()};
-  lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_ptr);
-
-  for (const auto & poly : lanelet_map_ptr->polygonLayer) {
-    const std::string type{poly.attributeOr(lanelet::AttributeName::Type, "none")};
-    if (type != "pose_marker") {
-      continue;
-    }
-    const std::string subtype{poly.attributeOr(lanelet::AttributeName::Subtype, "none")};
-    if (subtype != target_subtype) {
-      continue;
-    }
-
-    // Get landmark_id
-    const std::string landmark_id = poly.attributeOr("marker_id", "none");
-
-    // Get 4 vertices
-    const auto & vertices = poly.basicPolygon();
-    if (vertices.size() != 4) {
-      RCLCPP_WARN_STREAM(logger, "vertices.size() (" << vertices.size() << ") != 4");
-      continue;
-    }
-
-    // 4 vertices represent the landmark vertices in counterclockwise order
-    // Calculate the volume by considering it as a tetrahedron
-    const auto & v0 = vertices[0];
-    const auto & v1 = vertices[1];
-    const auto & v2 = vertices[2];
-    const auto & v3 = vertices[3];
-    const double volume = (v1 - v0).cross(v2 - v0).dot(v3 - v0) / 6.0;
-    RCLCPP_INFO_STREAM(logger, "volume = " << volume);
-    const double volume_threshold = 1e-5;
-    if (volume > volume_threshold) {
-      RCLCPP_WARN_STREAM(
-        logger,
-        "volume (" << volume << ") > threshold (" << volume_threshold << "), This is not plane.");
-      continue;
-    }
-
-    // Calculate the center of the quadrilateral
-    const auto center = (v0 + v1 + v2 + v3) / 4.0;
-
-    // Define axes
-    const auto x_axis = (v1 - v0).normalized();
-    const auto y_axis = (v2 - v1).normalized();
-    const auto z_axis = x_axis.cross(y_axis).normalized();
-
-    // Construct rotation matrix and convert it to quaternion
-    Eigen::Matrix3d rotation_matrix;
-    rotation_matrix << x_axis, y_axis, z_axis;
-    const Eigen::Quaterniond q{rotation_matrix};
-
-    // Create Pose
-    geometry_msgs::msg::Pose pose;
-    pose.position.x = center.x();
-    pose.position.y = center.y();
-    pose.position.z = center.z();
-    pose.orientation.x = q.x();
-    pose.orientation.y = q.y();
-    pose.orientation.z = q.z();
-    pose.orientation.w = q.w();
-
-    // Add
-    landmarks_map_[landmark_id].push_back(pose);
-    RCLCPP_INFO_STREAM(logger, "id: " << landmark_id);
-    RCLCPP_INFO_STREAM(
-      logger,
-      "(x, y, z) = " << pose.position.x << ", " << pose.position.y << ", " << pose.position.z);
-    RCLCPP_INFO_STREAM(
-      logger, "q = " << pose.orientation.x << ", " << pose.orientation.y << ", "
-                     << pose.orientation.z << ", " << pose.orientation.w);
+  std::vector<lanelet::localization::Landmark> landmarks =
+    lanelet::localization::parseLandmarks(msg, target_subtype);
+  for (const lanelet::localization::Landmark & landmark : landmarks) {
+    landmarks_map_[landmark.id].push_back(landmark.pose);
   }
 }
 
@@ -157,7 +86,7 @@ visualization_msgs::msg::MarkerArray LandmarkManager::get_landmarks_as_marker_ar
 }
 
 geometry_msgs::msg::Pose LandmarkManager::calculate_new_self_pose(
-  const std::vector<landmark_manager::Landmark> & detected_landmarks,
+  const std::vector<lanelet::localization::Landmark> & detected_landmarks,
   const geometry_msgs::msg::Pose & self_pose, const bool consider_orientation) const
 {
   using Pose = geometry_msgs::msg::Pose;
@@ -165,7 +94,7 @@ geometry_msgs::msg::Pose LandmarkManager::calculate_new_self_pose(
   Pose min_new_self_pose;
   double min_distance = std::numeric_limits<double>::max();
 
-  for (const landmark_manager::Landmark & landmark : detected_landmarks) {
+  for (const lanelet::localization::Landmark & landmark : detected_landmarks) {
     // Firstly, landmark pose is base_link
     const Pose & detected_landmark_on_base_link = landmark.pose;
 

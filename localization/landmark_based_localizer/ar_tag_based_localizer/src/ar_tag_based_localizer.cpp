@@ -155,7 +155,7 @@ bool ArTagBasedLocalizer::setup()
 
 void ArTagBasedLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
 {
-  landmark_manager_.parse_landmarks(msg, "apriltag_16h5", this->get_logger());
+  landmark_manager_.parse_landmarks(msg, "apriltag_16h5");
   const MarkerArray marker_msg = landmark_manager_.get_landmarks_as_marker_array_msg();
   marker_pub_->publish(marker_msg);
 }
@@ -186,7 +186,7 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
   const Pose self_pose = interpolate_result.value().interpolated_pose.pose.pose;
 
   // detect
-  const std::vector<landmark_manager::Landmark> landmarks = detect_landmarks(msg);
+  const std::vector<Landmark> landmarks = detect_landmarks(msg);
   if (landmarks.empty()) {
     return;
   }
@@ -196,7 +196,7 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
     PoseArray pose_array_msg;
     pose_array_msg.header.stamp = sensor_stamp;
     pose_array_msg.header.frame_id = "map";
-    for (const landmark_manager::Landmark & landmark : landmarks) {
+    for (const Landmark & landmark : landmarks) {
       const Pose detected_marker_on_map =
         tier4_autoware_utils::transformPose(landmark.pose, self_pose);
       pose_array_msg.poses.push_back(detected_marker_on_map);
@@ -306,7 +306,7 @@ void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::Con
   }
 }
 
-std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
+std::vector<lanelet::localization::Landmark> ArTagBasedLocalizer::detect_landmarks(
   const Image::ConstSharedPtr & msg)
 {
   const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
@@ -318,7 +318,7 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
     cv_ptr->image.copyTo(in_image);
   } catch (cv_bridge::Exception & e) {
     RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
-    return std::vector<landmark_manager::Landmark>{};
+    return std::vector<Landmark>{};
   }
 
   // get transform from base_link to camera
@@ -328,7 +328,7 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
       tf_buffer_->lookupTransform("base_link", msg->header.frame_id, sensor_stamp);
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "Could not transform base_link to camera: %s", ex.what());
-    return std::vector<landmark_manager::Landmark>{};
+    return std::vector<Landmark>{};
   }
 
   // detect
@@ -336,7 +336,7 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
   detector_.detect(in_image, markers, cam_param_, marker_size_, false);
 
   // parse
-  std::vector<landmark_manager::Landmark> landmarks;
+  std::vector<Landmark> landmarks;
 
   for (aruco::Marker & marker : markers) {
     // convert marker pose to tf
@@ -352,7 +352,7 @@ std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
     const double distance = std::hypot(pose.position.x, pose.position.y, pose.position.z);
     if (distance <= distance_threshold_) {
       tf2::doTransform(pose, pose, transform_sensor_to_base_link);
-      landmarks.push_back(landmark_manager::Landmark{std::to_string(marker.id), pose});
+      landmarks.push_back(Landmark{std::to_string(marker.id), pose});
     }
 
     // for debug, drawing the detected markers
