@@ -73,7 +73,7 @@ You can download the onnx format of trained models by clicking on the links belo
 ### Overview
 
 This guide provides instructions on training a CenterPoint model using the **mmdetection3d** repository
-and seamlessly deploying it within the Autoware.
+and seamlessly deploying it within Autoware.
 
 ### Installation
 
@@ -90,7 +90,7 @@ conda activate train-centerpoint
 
 **Step 3.** Install PyTorch
 
-Please ensure you have PyTorch installed, compatible with CUDA 11.6, as it is a requirement for current Autoware.
+Please ensure you have PyTorch installed, and compatible with CUDA 11.6, as it is a requirement for current Autoware.
 
 ```bash
 conda install pytorch==1.13.1 torchvision==0.14.1 pytorch-cuda=11.6 -c pytorch -c nvidia
@@ -98,7 +98,7 @@ conda install pytorch==1.13.1 torchvision==0.14.1 pytorch-cuda=11.6 -c pytorch -
 
 #### Install mmdetection3d
 
-**Step 1.** Install MMEngine, MMCV and MMDetection using MIM
+**Step 1.** Install MMEngine, MMCV, and MMDetection using MIM
 
 ```bash
 pip install -U openmim
@@ -114,7 +114,7 @@ Notably, we've made the PointPillar z voxel feature input optional to maintain c
 In addition, we've integrated a PyTorch to ONNX converter and a Tier4 Dataset format reader for added functionality.
 
 ```bash
-git clone https://github.com/autowarefoundation/mmdetection3d.git -b dev-1.x-autoware
+git clone https://github.com/autowarefoundation/mmdetection3d.git
 cd mmdetection3d
 pip install -v -e .
 ```
@@ -157,25 +157,25 @@ python tools/train.py configs/centerpoint/centerpoint_custom.py --work-dir ./wor
 
 #### Evaluation of the trained model
 
-For evaluation purposes, we have included a sample dataset captured from vehicle which consists of the following LiDAR sensors:
+For evaluation purposes, we have included a sample dataset captured from the vehicle which consists of the following LiDAR sensors:
 1 x Velodyne VLS128, 4 x Velodyne VLP16, and 1 x Robosense RS Bpearl. This dataset comprises 600 LiDAR frames and encompasses 5 distinct classes, 6905 cars, 3951 pedestrians,
-75 cyclists, 162 buses, and 326 trucks 3D annotation. In the sample dataset, frames annotatated as a 2 frame, each second. You can employ this dataset for a wide range of purposes,
+75 cyclists, 162 buses, and 326 trucks 3D annotation. In the sample dataset, frames are annotated as 2 frames for each second. You can employ this dataset for a wide range of purposes,
 including training, evaluation, and fine-tuning of models. It is organized in the Tier4Dataset format.
 
 ##### Download the sample dataset
 
 ```bash
-TODO(kaancolak): add the link to the sample dataset
 
+wget https://autoware-files.s3.us-west-2.amazonaws.com/dataset/lidar_detection_sample_dataset.tar.gz
 #Extract the dataset to a folder of your choice
-
+tar -xvf lidar_detection_sample_dataset.tar.gz
 #Create a symbolic link to the dataset folder
 ln -s /PATH/TO/DATASET/ /PATH/TO/mmdetection3d/data/tier4_dataset/
 ```
 
 ##### Prepare dataset and evaluate trained model
 
-Create .pkl files for the purposes of training, evaluation, and testing.
+Create .pkl files for training, evaluation, and testing.
 
 ```bash
 
@@ -188,7 +188,7 @@ Run evaluation
 python tools/test.py ./configs/centerpoint/test-centerpoint.py /PATH/OF/THE/CHECKPOINT  --task lidar_det
 ```
 
-Evaluation result could be relatively low because of the e to variations in sensor modalities between the sample dataset
+Evaluation results could be relatively low because of the e to variations in sensor modalities between the sample dataset
 and the training dataset. The model's training parameters are originally tailored to the NuScenes dataset, which employs a single lidar
 sensor positioned atop the vehicle. In contrast, the provided sample dataset comprises concatenated point clouds positioned at
 the base link location of the vehicle.
@@ -199,14 +199,14 @@ the base link location of the vehicle.
 
 The lidar_centerpoint implementation requires two ONNX models as input the voxel encoder and the backbone-neck-head of the CenterPoint model, other aspects of the network,
 such as preprocessing operations, are implemented externally. Under the fork of the mmdetection3d repository,
-we have included a script that converts the CenterPoint model to Autoware compitible ONNX format.
+we have included a script that converts the CenterPoint model to Autoware compatible ONNX format.
 You can find it in `mmdetection3d/tools/centerpoint_onnx_converter.py` file.
 
 ```bash
 python tools/centerpoint_onnx_converter.py --cfg configs/centerpoint/centerpoint_custom.py --ckpt work_dirs/centerpoint_custom/YOUR_BEST_MODEL.pth -work-dir ./work_dirs/onnx_models
 ```
 
-#### Create the config file for custom model
+#### Create the config file for the custom model
 
 Create a new config file named **centerpoint_custom.param.yaml** under the config file directory of the lidar_centerpoint node. Sets the parameters of the config file like
 point_cloud_range, point_feature_size, voxel_size, etc. according to the training config file.
