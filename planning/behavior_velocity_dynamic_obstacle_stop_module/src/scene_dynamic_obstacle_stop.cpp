@@ -48,7 +48,7 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
 : SceneModuleInterface(module_id, logger, clock), params_(std::move(planner_param))
 {
   prev_stop_decision_time_ = rclcpp::Time(int64_t{0}, clock->get_clock_type());
-  velocity_factor_.init(VelocityFactor::UNKNOWN);
+  velocity_factor_.init(PlanningBehavior::UNKNOWN);
 }
 
 std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicted_objects(
@@ -191,7 +191,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
       planner_data_->current_acceleration->accel.accel.linear.x,
       planner_data_->max_stop_acceleration_threshold, -planner_data_->max_stop_jerk_threshold,
       planner_data_->max_stop_jerk_threshold)
-      .get_value_or(0.0);
+      .value_or(0.0);
   stopwatch.tic("collisions");
   const auto collision =
     find_earliest_collision(ego_data, dynamic_obstacles, obstacle_forward_footprints, debug_data_);
