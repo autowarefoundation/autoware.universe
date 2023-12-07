@@ -91,7 +91,7 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
   min_inliers_ = declare_parameter<int>("min_trial");
   min_points_ = declare_parameter<int>("min_points");
   outlier_threshold_ = declare_parameter<double>("outlier_threshold");
-  plane_slope_threshold_ = declare_parameter(<double>"plane_slope_threshold");
+  plane_slope_threshold_ = declare_parameter<double>("plane_slope_threshold");
   voxel_size_x_ = declare_parameter<double>("voxel_size_x");
   voxel_size_y_ = declare_parameter<double>("voxel_size_y");
   voxel_size_z_ = declare_parameter<double>("voxel_size_z");
