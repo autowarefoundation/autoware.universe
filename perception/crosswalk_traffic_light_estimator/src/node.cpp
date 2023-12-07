@@ -161,10 +161,13 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
 
   TrafficLightIdMap traffic_light_id_map;
   for (const auto & traffic_signal : msg->signals) {
-    traffic_light_id_map[traffic_signal.traffic_signal_id] =
-      std::pair<TrafficSignal, rclcpp::Time>(traffic_signal, get_clock()->now());
+    if (!traffic_signal.elements.empty()) {
+      traffic_light_id_map[traffic_signal.traffic_signal_id] =
+        std::pair<TrafficSignal, rclcpp::Time>(traffic_signal, get_clock()->now());
+    }
   }
   for (const auto & crosswalk : conflicting_crosswalks_) {
+    // std::cout << "crosswalk id: " << crosswalk.id() << std::endl;
     constexpr int VEHICLE_GRAPH_ID = 0;
     const auto conflict_lls = overall_graphs_ptr_->conflictingInGraph(crosswalk, VEHICLE_GRAPH_ID);
     const auto non_red_lanelets = getNonRedLanelets(conflict_lls, traffic_light_id_map);
@@ -284,7 +287,9 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
 
   for (size_t i = 0; i < msg.signals.size(); ++i) {
     auto signal = msg.signals[i];
-    valid_id2idx_map[signal.traffic_signal_id] = i;
+    if (!signal.elements.empty()) {
+      valid_id2idx_map[signal.traffic_signal_id] = i;
+    }
   }
 
   for (const auto & tl_reg_elem : tl_reg_elems) {
@@ -297,6 +302,10 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
       // update output msg according to flashing and current state
       output.signals[idx].elements[0].color = updateState(signal);
       // output.signals[idx].elements[0].status =
+    }
+    // if the estimation is unknown, do not overwirte
+    else if (color == TrafficSignalElement::UNKNOWN) {
+      continue;
     } else {
       TrafficSignal output_traffic_signal;
       TrafficSignalElement output_traffic_signal_element;
@@ -333,7 +342,7 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
   // flashing green
   if (
     signal.elements.front().color == TrafficSignalElement::UNKNOWN &&
-    signal.elements.front().confidence != 0 &&  // not due to occlusion
+    signal.elements.front().confidence != 0 &&  // not due to occlusion or not detected
     current_state_.at(id) != TrafficSignalElement::UNKNOWN) {
     is_flashing_.at(id) = true;
     return;
@@ -389,7 +398,7 @@ lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getNonRedLanelets(
   const lanelet::ConstLanelets & lanelets, const TrafficLightIdMap & traffic_light_id_map) const
 {
   lanelet::ConstLanelets non_red_lanelets{};
-
+  // std::cout << "\nnon red landelets: ";
   for (const auto & lanelet : lanelets) {
     const auto tl_reg_elems = lanelet.regulatoryElementsAs<const lanelet::TrafficLight>();
 
@@ -431,6 +440,7 @@ lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getNonRedLanelets(
     }
 
     non_red_lanelets.push_back(lanelet);
+    // std::cout << lanelet.id() << ",";
   }
 
   return non_red_lanelets;
