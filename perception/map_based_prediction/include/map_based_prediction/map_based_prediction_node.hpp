@@ -22,6 +22,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
@@ -361,6 +362,46 @@ private:
     }
     return true;
   };
+  struct ObjectAccelerationMonitor
+  {
+    std::vector<TrackedObject> tracked_objects_;
+    double smoothing_factor_ = 0.5;
+
+    template <typename T>
+    std::optional<T> getObjectFromUuid(
+      const std::vector<T> & objects, const std::string & target_uuid)
+    {
+      const auto itr = std::find_if(objects.begin(), objects.end(), [&](const auto & object) {
+        return tier4_autoware_utils::toHexString(object.object_id) == target_uuid;
+      });
+
+      if (itr == objects.end()) {
+        return std::nullopt;
+      }
+      return itr;
+    }
+    double getFilteredAcceleration(const TrackedObject & object)
+    {
+      const auto uuid = tier4_autoware_utils::toHexString(object.object_id);
+      const double current_acceleration = std::hypot(
+        object.kinematics.acceleration_with_covariance.accel.linear.x,
+        object.kinematics.acceleration_with_covariance.accel.linear.y);
+      const auto prev_object_info = getObjectFromUuid(tracked_objects_, uuid);
+
+      if (prev_object_info == tracked_objects_.end()) {
+        tracked_objects_.push_back(object);
+        return current_acceleration;
+      }
+      const double prev_acceleration = std::hypot(
+        *prev_object_info.value().kinematics.acceleration_with_covariance.accel.linear.x,
+        *prev_object_info.value().kinematics.acceleration_with_covariance.accel.linear.y);
+      const double filtered_acceleration =
+        smoothing_factor_ * current_acceleration + (1.0 - smoothing_factor_) * prev_acceleration;
+      *prev_object_info.value() = object;
+      return filtered_acceleration;
+    }
+  };
+  ObjectAccelerationMonitor object_acceleration_monitor_;
 };
 }  // namespace map_based_prediction
 

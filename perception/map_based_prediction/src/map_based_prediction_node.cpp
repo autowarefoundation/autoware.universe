@@ -24,7 +24,6 @@
 #include <tier4_autoware_utils/math/constants.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
@@ -1555,10 +1554,26 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     object.kinematics.twist_with_covariance.twist.linear.x,
     object.kinematics.twist_with_covariance.twist.linear.y);
 
+  // Use a filtered-decaying acceleration model
+  const double filtered_obj_acc = object_acceleration_monitor_.getFilteredAcceleration(object);
+  const double exponential_half_life = prediction_time_horizon_ / 2.0;
+  // The decay constant λ = ln(2) / exponential_half_life
+  const double λ = std::log(2) / exponential_half_life;
+
+  // a(t) = filtered_obj_acc - filtered_obj_acc(1-e^(-λt)) = filtered_obj_acc(e^(-λt))
+  // V(t) = Vo + filtered_obj_acc(1/λ)(1-e^(-λt))
+  // x(t) = Xo + Vo * t + t * filtered_obj_acc(1/λ) + filtered_obj_acc(1/λ^2)e^(-λt)
+  // x(t) = Xo + (Vo + filtered_obj_acc(1/λ)) * t  + filtered_obj_acc(1/λ^2)e^(-λt)
+  // acceleration_distance = filtered_obj_acc(1/λ) * t  + filtered_obj_acc(1/λ^2)e^(-λt)
+
+  const double acceleration_distance =
+    filtered_obj_acc * (1.0 / λ) * prediction_time_horizon_ +
+    filtered_obj_acc * (1.0 / std::pow(λ, 2)) * std::exp(-λ * prediction_time_horizon_);
+
   std::vector<PredictedRefPath> all_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
     // parameter for lanelet::routing::PossiblePathsParams
-    const double search_dist = prediction_time_horizon_ * obj_vel +
+    const double search_dist = acceleration_distance + prediction_time_horizon_ * obj_vel +
                                lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
     lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
     const double validate_time_horizon =
