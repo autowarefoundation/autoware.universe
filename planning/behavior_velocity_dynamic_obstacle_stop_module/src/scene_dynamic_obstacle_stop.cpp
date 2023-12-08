@@ -68,24 +68,21 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
            }) != o.classification.end();
   };
   const auto is_in_range = [&](const auto & o) {
-    for (const auto & p : ego_data.path.points) {
-      const auto distance = tier4_autoware_utils::calcDistance2d(
-        o.kinematics.initial_pose_with_covariance.pose, p.point.pose);
-      if (
-        distance <= params.minimum_object_distance_from_ego_path + params.ego_lateral_offset +
-                      o.shape.dimensions.y / 2.0 + hysteresis)
-        return true;
-    }
-    return false;
+    const auto distance = std::abs(motion_utils::calcLateralOffset(
+      ego_data.path.points, o.kinematics.initial_pose_with_covariance.pose.position));
+    std::printf(
+      "dist = %2.2f < %2.2f + %2.2f + %2.2f + %2.2f (= %2.2f)\n", distance,
+      params.minimum_object_distance_from_ego_path, params.ego_lateral_offset,
+      o.shape.dimensions.y / 2.0, hysteresis,
+      params.minimum_object_distance_from_ego_path + params.ego_lateral_offset +
+        o.shape.dimensions.y / 2.0 + hysteresis);
+    return distance <= params.minimum_object_distance_from_ego_path + params.ego_lateral_offset +
+                         o.shape.dimensions.y / 2.0 + hysteresis;
   };
   const auto is_not_too_close = [&](const auto & o) {
     const auto obj_arc_length = motion_utils::calcSignedArcLength(
       ego_data.path.points, ego_data.pose.position,
       o.kinematics.initial_pose_with_covariance.pose.position);
-    std::cout << obj_arc_length << " > "
-              << ego_data.longitudinal_offset_to_first_path_idx + params.ego_longitudinal_offset +
-                   o.shape.dimensions.x / 2.0
-              << std::endl;
     return obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
                               params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
   };
@@ -171,6 +168,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     motion_utils::findNearestSegmentIndex(ego_data.path.points, ego_data.pose.position);
   ego_data.longitudinal_offset_to_first_path_idx = motion_utils::calcLongitudinalOffsetToSegment(
     ego_data.path.points, ego_data.first_path_idx, ego_data.pose.position);
+
   make_ego_footprint_rtree(ego_data, params_);
   const auto has_decided_to_stop =
     (clock_->now() - prev_stop_decision_time_).seconds() < params_.decision_duration_buffer;
