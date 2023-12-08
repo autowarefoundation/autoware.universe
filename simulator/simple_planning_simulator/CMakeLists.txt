@@ -4,8 +4,8 @@ project(simple_planning_simulator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-#find_package(Python REQUIRED)  # Python testing
-#include_directories(${Python_INCLUDE_DIRS})
+find_package(Python REQUIRED)  # Python testing
+include_directories(${Python_INCLUDE_DIRS})
 include_directories("/usr/include/python3.10")
 
 # Component
