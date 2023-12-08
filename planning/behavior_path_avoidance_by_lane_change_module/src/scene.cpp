@@ -53,44 +53,41 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
     return false;
   }
 
+  if (data.target_objects.empty()) {
+    return false;
+  }
+
+  if (status_.current_lanes.empty()) {
+    return false;
+  }
+
   const auto & object_parameters = avoidance_parameters_->object_parameters;
-  const auto is_more_than_threshold =
-    std::any_of(object_parameters.begin(), object_parameters.end(), [&](const auto & p) {
-      const auto & objects = avoidance_data_.target_objects;
 
-      const size_t num = std::count_if(objects.begin(), objects.end(), [&p](const auto & object) {
-        const auto target_class =
-          utils::getHighestProbLabel(object.object.classification) == p.first;
-        return target_class && object.avoid_required;
-      });
+  const auto count_target_object = [&](const auto sum, const auto & p) {
+    const auto & objects = avoidance_data_.target_objects;
 
-      return num >= p.second.execute_num;
-    });
+    const auto is_avoidance_target = [&p](const auto & object) {
+      const auto target_class = utils::getHighestProbLabel(object.object.classification) == p.first;
+      return target_class && object.avoid_required;
+    };
 
-  if (!is_more_than_threshold) {
+    return sum + std::count_if(objects.begin(), objects.end(), is_avoidance_target);
+  };
+  const auto num_of_avoidance_targets =
+    std::accumulate(object_parameters.begin(), object_parameters.end(), 0UL, count_target_object);
+
+  if (num_of_avoidance_targets < 1) {
     return false;
   }
 
   const auto & front_object = data.target_objects.front();
 
-  const auto THRESHOLD = avoidance_parameters_->execute_object_longitudinal_margin;
-  if (front_object.longitudinal < THRESHOLD) {
-    return false;
-  }
+  const auto shift_intervals =
+    getRouteHandler()->getLateralIntervalsToPreferredLane(status_.current_lanes.back(), direction_);
+  const double minimum_lane_change_length = utils::calcMinimumLaneChangeLength(
+    getCommonParam(), shift_intervals, getCommonParam().backward_length_buffer_for_end_of_lane);
 
-  const auto path = status_.lane_change_path.path;
-  const auto to_lc_end = motion_utils::calcSignedArcLength(
-    status_.lane_change_path.path.points, getEgoPose().position,
-    status_.lane_change_path.info.shift_line.end.position);
-  const auto execute_only_when_lane_change_finish_before_object =
-    avoidance_parameters_->execute_only_when_lane_change_finish_before_object;
-  const auto not_enough_distance = front_object.longitudinal < to_lc_end;
-
-  if (execute_only_when_lane_change_finish_before_object && not_enough_distance) {
-    return false;
-  }
-
-  return true;
+  return (front_object.longitudinal > minimum_lane_change_length);
 }
 
 bool AvoidanceByLaneChange::specialExpiredCheck() const
