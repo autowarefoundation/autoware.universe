@@ -15,10 +15,10 @@
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
 #include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
+#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
@@ -372,7 +372,6 @@ void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & o
   const auto finish_distance = motion_utils::calcSignedArcLength(
     output.path->points, current_position, status.lane_change_path.info.shift_line.end.position);
 
-  // TODO(tkhmy) add handle status TRYING
   steering_factor_interface_ptr_->updateSteeringFactor(
     {status.lane_change_path.info.shift_line.start, status.lane_change_path.info.shift_line.end},
     {start_distance, finish_distance}, PlanningBehavior::LANE_CHANGE, steering_factor_direction,
@@ -473,39 +472,5 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
 
   // not in the vicinity of the end of the path. return original
   return original_turn_signal_info;
-}
-
-AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
-  const std::string & name, rclcpp::Node & node,
-  const std::shared_ptr<LaneChangeParameters> & parameters,
-  const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
-  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: LaneChangeInterface{
-    name,
-    node,
-    parameters,
-    rtc_interface_ptr_map,
-    objects_of_interest_marker_interface_ptr_map,
-    std::make_unique<AvoidanceByLaneChange>(parameters, avoidance_by_lane_change_parameters)}
-{
-}
-
-bool AvoidanceByLaneChangeInterface::isExecutionRequested() const
-{
-  return module_type_->specialRequiredCheck() && module_type_->isLaneChangeRequired();
-}
-
-void AvoidanceByLaneChangeInterface::updateRTCStatus(
-  const double start_distance, const double finish_distance)
-{
-  const auto direction = std::invoke([&]() -> std::string {
-    const auto dir = module_type_->getDirection();
-    return (dir == Direction::LEFT) ? "left" : "right";
-  });
-
-  rtc_interface_ptr_map_.at(direction)->updateCooperateStatus(
-    uuid_map_.at(direction), isExecutionReady(), start_distance, finish_distance, clock_->now());
 }
 }  // namespace behavior_path_planner

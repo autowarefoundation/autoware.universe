@@ -14,14 +14,14 @@
 
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
+#include "behavior_path_planner_common/parameters.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
@@ -438,8 +438,8 @@ std::vector<DrivableLanes> generateDrivableLanes(
     drivable_lanes.at(i).left_lane = current_lane;
     drivable_lanes.at(i).right_lane = current_lane;
 
-    const auto left_lane = route_handler.getLeftLanelet(current_lane);
-    const auto right_lane = route_handler.getRightLanelet(current_lane);
+    const auto left_lane = route_handler.getLeftLanelet(current_lane, false, false);
+    const auto right_lane = route_handler.getRightLanelet(current_lane, false, false);
     if (!left_lane && !right_lane) {
       continue;
     }
