@@ -14,15 +14,15 @@
 
 #include "radar_threshold_filter/radar_threshold_filter_node.hpp"
 
-#include <gtest/gtest.h>
-
 #include <radar_msgs/msg/radar_scan.hpp>
 
+#include <gtest/gtest.h>
 
-TEST(RadarThresholdFilter, isWithinThreshold){
+TEST(RadarThresholdFilter, isWithinThreshold)
+{
   rclcpp::init(0, nullptr);
-  using radar_threshold_filter::RadarThresholdFilterNode;
   using radar_msgs::msg::RadarReturn;
+  using radar_threshold_filter::RadarThresholdFilterNode;
 
   const double amplitude_min = -10.0;
   const double amplitude_max = 100.0;
@@ -35,8 +35,7 @@ TEST(RadarThresholdFilter, isWithinThreshold){
   // amplitude filter
   {
     rclcpp::NodeOptions node_options;
-    node_options.parameter_overrides(
-    {
+    node_options.parameter_overrides({
       {"node_params.is_amplitude_filter", true},
       {"node_params.amplitude_min", amplitude_min},
       {"node_params.amplitude_max", amplitude_max},
@@ -66,8 +65,7 @@ TEST(RadarThresholdFilter, isWithinThreshold){
   // range filter
   {
     rclcpp::NodeOptions node_options;
-    node_options.parameter_overrides(
-    {
+    node_options.parameter_overrides({
       {"node_params.is_amplitude_filter", false},
       {"node_params.amplitude_min", amplitude_min},
       {"node_params.amplitude_max", amplitude_max},
@@ -93,11 +91,10 @@ TEST(RadarThresholdFilter, isWithinThreshold){
     EXPECT_FALSE(node.isWithinThreshold(radar_return));
   }
 
-    // azimuth filter
-    {
-      rclcpp::NodeOptions node_options;
-    node_options.parameter_overrides(
-    {
+  // azimuth filter
+  {
+    rclcpp::NodeOptions node_options;
+    node_options.parameter_overrides({
       {"node_params.is_amplitude_filter", false},
       {"node_params.amplitude_min", amplitude_min},
       {"node_params.amplitude_max", amplitude_max},
@@ -112,45 +109,43 @@ TEST(RadarThresholdFilter, isWithinThreshold){
       {"node_params.z_max", z_max},
     });
 
-      RadarThresholdFilterNode node(node_options);
-      RadarReturn radar_return;
-      radar_return.azimuth = -10.0;
-      EXPECT_FALSE(node.isWithinThreshold(radar_return));
-      radar_return.azimuth = 0.0;
-      EXPECT_TRUE(node.isWithinThreshold(radar_return));
-      radar_return.azimuth = 10.0;
-      EXPECT_FALSE(node.isWithinThreshold(radar_return));
-    }
+    RadarThresholdFilterNode node(node_options);
+    RadarReturn radar_return;
+    radar_return.azimuth = -10.0;
+    EXPECT_FALSE(node.isWithinThreshold(radar_return));
+    radar_return.azimuth = 0.0;
+    EXPECT_TRUE(node.isWithinThreshold(radar_return));
+    radar_return.azimuth = 10.0;
+    EXPECT_FALSE(node.isWithinThreshold(radar_return));
+  }
 
-    // z
-    {
-      rclcpp::NodeOptions node_options;
-      node_options.parameter_overrides(
-      {
-        {"node_params.is_amplitude_filter", false},
-        {"node_params.amplitude_min", amplitude_min},
-        {"node_params.amplitude_max", amplitude_max},
-        {"node_params.is_range_filter", false},
-        {"node_params.range_min", range_min},
-        {"node_params.range_max", range_max},
-        {"node_params.is_azimuth_filter", false},
-        {"node_params.azimuth_min", azimuth_min},
-        {"node_params.azimuth_max", azimuth_max},
-        {"node_params.is_z_filter", true},
-        {"node_params.z_min", z_min},
-        {"node_params.z_max", z_max},
-      });
+  // z
+  {
+    rclcpp::NodeOptions node_options;
+    node_options.parameter_overrides({
+      {"node_params.is_amplitude_filter", false},
+      {"node_params.amplitude_min", amplitude_min},
+      {"node_params.amplitude_max", amplitude_max},
+      {"node_params.is_range_filter", false},
+      {"node_params.range_min", range_min},
+      {"node_params.range_max", range_max},
+      {"node_params.is_azimuth_filter", false},
+      {"node_params.azimuth_min", azimuth_min},
+      {"node_params.azimuth_max", azimuth_max},
+      {"node_params.is_z_filter", true},
+      {"node_params.z_min", z_min},
+      {"node_params.z_max", z_max},
+    });
 
-      RadarThresholdFilterNode node(node_options);
-      RadarReturn radar_return;
-      radar_return.elevation = M_PI/2;
-      // range =  z / std::sin(radar_return.elevation)
-      radar_return.range = -10.0;
-      EXPECT_FALSE(node.isWithinThreshold(radar_return));
-      radar_return.range = 0.0;
-      EXPECT_TRUE(node.isWithinThreshold(radar_return));
-      radar_return.range = 10.0;
-      EXPECT_FALSE(node.isWithinThreshold(radar_return));
-    }
+    RadarThresholdFilterNode node(node_options);
+    RadarReturn radar_return;
+    radar_return.elevation = M_PI / 2;
+    // range =  z / std::sin(radar_return.elevation)
+    radar_return.range = -10.0;
+    EXPECT_FALSE(node.isWithinThreshold(radar_return));
+    radar_return.range = 0.0;
+    EXPECT_TRUE(node.isWithinThreshold(radar_return));
+    radar_return.range = 10.0;
+    EXPECT_FALSE(node.isWithinThreshold(radar_return));
+  }
 }
-
