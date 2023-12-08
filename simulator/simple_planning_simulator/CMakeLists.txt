@@ -4,6 +4,10 @@ project(simple_planning_simulator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+#find_package(Python REQUIRED)  # Python testing
+#include_directories(${Python_INCLUDE_DIRS})
+include_directories("/usr/include/python3.10")
+
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
   include/simple_planning_simulator/simple_planning_simulator_core.hpp
@@ -29,6 +33,8 @@ rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "simulation::simple_planning_simulator::SimplePlanningSimulator"
   EXECUTABLE ${PROJECT_NAME}_exe
 )
+
+target_link_libraries(${PROJECT_NAME} ${Python_LIBRARIES})
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_simple_planning_simulator

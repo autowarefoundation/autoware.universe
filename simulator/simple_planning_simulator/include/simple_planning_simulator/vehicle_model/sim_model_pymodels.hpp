@@ -23,6 +23,9 @@
 #include <deque>
 #include <iostream>
 #include <queue>
+
+#include <Python.h>
+
 /**
  * @class SimModelPymodels
  * @brief calculate delay steering dynamics
