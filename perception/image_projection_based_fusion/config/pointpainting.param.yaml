@@ -10,6 +10,7 @@
       downsample_factor: 1
       encoder_in_feature_size: 12
       yaw_norm_thresholds: [0.3, 0.3, 0.3, 0.3, 0.0]
+      has_twist: false
     densification_params:
       world_frame_id: "map"
       num_past_frames: 0
@@ -19,6 +20,7 @@
       iou_nms_target_class_names: ["CAR"]
       iou_nms_search_distance_2d: 10.0
       iou_nms_threshold: 0.1
+      score_threshold: 0.4
     omp_params:
       # omp params
-      omp_num_threads: 1
+      num_threads: 1

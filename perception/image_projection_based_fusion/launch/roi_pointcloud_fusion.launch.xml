@@ -36,7 +36,7 @@
   <group>
     <node pkg="image_projection_based_fusion" exec="roi_pointcloud_fusion_node" name="roi_pointcloud_fusion" output="screen">
       <param name="rois_number" value="$(var input/rois_number)"/>
-      <param from="(var param_path)"/>
+      <param from="$(var param_path)"/>
       <param from="$(var sync_param_path)"/>
       <remap from="input" to="$(var input/pointcloud)"/>
       <remap from="output" to="$(var output/pointcloud)"/>
