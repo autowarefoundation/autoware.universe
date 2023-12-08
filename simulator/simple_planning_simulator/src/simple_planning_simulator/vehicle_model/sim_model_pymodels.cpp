@@ -15,6 +15,7 @@
 #include "simple_planning_simulator/vehicle_model/sim_model_pymodels.hpp"
 
 #include <algorithm>
+#include <Python.h>
 
 SimModelPymodels::SimModelPymodels(
   double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
