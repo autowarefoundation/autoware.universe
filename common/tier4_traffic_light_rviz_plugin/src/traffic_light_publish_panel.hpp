@@ -18,6 +18,7 @@
 #define TRAFFIC_LIGHT_PUBLISH_PANEL_HPP_
 
 #ifndef Q_MOC_RUN
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <qt5/QtWidgets/QComboBox>
 #include <qt5/QtWidgets/QPushButton>
 #include <qt5/QtWidgets/QSpinBox>
@@ -28,6 +29,9 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <map>
 #endif
 
 #include <set>
@@ -57,11 +61,14 @@ protected:
   void onTimer();
   void createWallTimer();
   void onVectorMap(const HADMapBin::ConstSharedPtr msg);
+  void onTrafficLightSignal(const TrafficSignalArray::ConstSharedPtr msg);
 
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::TimerBase::SharedPtr pub_timer_;
   rclcpp::Publisher<TrafficSignalArray>::SharedPtr pub_traffic_signals_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_light_marker_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
+  rclcpp::Subscription<TrafficSignalArray>::SharedPtr sub_traffic_signals_;
 
   QSpinBox * publishing_rate_input_;
   QComboBox * traffic_light_id_input_;
@@ -77,8 +84,9 @@ protected:
   TrafficSignalArray extra_traffic_signals_;
 
   bool enable_publish_{false};
-  std::set<int> traffic_light_ids_;
-  bool received_vector_map_{false};
+  std::set<lanelet::Id> traffic_light_ids_;
+  lanelet::LaneletMapPtr lanelet_map_ptr_{nullptr};
+  std::map<lanelet::Id, lanelet::AutowareTrafficLightConstPtr> tl_reg_elems_map_;
 };
 
 }  // namespace rviz_plugins

@@ -220,14 +220,18 @@ void TrafficLightPublishPanel::onInitialize()
 
   pub_traffic_signals_ = raw_node_->create_publisher<TrafficSignalArray>(
     "/perception/traffic_light_recognition/traffic_signals", rclcpp::QoS(1));
+  pub_light_marker_ = raw_node_->create_publisher<visualization_msgs::msg::MarkerArray>(
+    "/perception/traffic_light_recognition/traffic_signals/markers", rclcpp::QoS(1));
 
   sub_vector_map_ = raw_node_->create_subscription<HADMapBin>(
     "/map/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&TrafficLightPublishPanel::onVectorMap, this, _1));
+  sub_traffic_signals_ = raw_node_->create_subscription<TrafficSignalArray>(
+    "/perception/traffic_light_recognition/traffic_signals", rclcpp::QoS{1}.transient_local(),
+    std::bind(&TrafficLightPublishPanel::onTrafficLightSignal, this, _1));
   createWallTimer();
 
   enable_publish_ = false;
-  received_vector_map_ = false;
 }
 
 void TrafficLightPublishPanel::onRateChanged(int new_rate)
@@ -363,27 +367,102 @@ void TrafficLightPublishPanel::onTimer()
 
 void TrafficLightPublishPanel::onVectorMap(const HADMapBin::ConstSharedPtr msg)
 {
-  if (received_vector_map_) return;
-  // NOTE: examples from map_loader/lanelet2_map_visualization_node.cpp
-  lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
-  lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map);
-  lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map);
-  std::vector<lanelet::TrafficLightConstPtr> tl_reg_elems =
-    lanelet::utils::query::trafficLights(all_lanelets);
-  std::string info = "Fetching traffic lights :";
-  std::string delim = " ";
-  for (auto && tl_reg_elem_ptr : tl_reg_elems) {
-    auto id = static_cast<int>(tl_reg_elem_ptr->id());
-    info += (std::exchange(delim, ", ") + std::to_string(id));
+  if (lanelet_map_ptr_) return;
+  lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
+  lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_ptr_);
+  lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
+  const auto tl_reg_elems = lanelet::utils::query::autowareTrafficLights(all_lanelets);
+  for (auto && tl_reg_elem : tl_reg_elems) {
+    auto id = static_cast<int>(tl_reg_elem->id());
     traffic_light_ids_.insert(id);
+    tl_reg_elems_map_[id] = tl_reg_elem;
   }
-  RCLCPP_INFO_STREAM(raw_node_->get_logger(), info);
-  received_vector_map_ = true;
 
-  for (auto && traffic_light_id : traffic_light_ids_) {
-    traffic_light_id_input_->addItem(QString::fromStdString(std::to_string(traffic_light_id)));
+  for (auto && [id, ptr] : tl_reg_elems_map_) {
+    traffic_light_id_input_->addItem(QString::fromStdString(std::to_string(id)));
   }
 }
+
+static visualization_msgs::msg::Marker lightAsMarker(
+  lanelet::ConstPoint3d point, const std::string & color, const std::string ns,
+  const rclcpp::Time & current_time)
+{
+  visualization_msgs::msg::Marker marker;
+
+  marker.header.frame_id = "map";
+  marker.header.stamp = current_time;
+  marker.frame_locked = true;
+  marker.ns = ns;
+  marker.id = point.id();
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker.type = visualization_msgs::msg::Marker::SPHERE;
+  marker.pose.position.x = point.x();
+  marker.pose.position.y = point.y();
+  marker.pose.position.z = point.z();
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+
+  float s = 0.3;
+
+  marker.scale.x = s;
+  marker.scale.y = s;
+  marker.scale.z = s;
+
+  marker.color.r = 0.0f;
+  marker.color.g = 0.0f;
+  marker.color.b = 0.0f;
+  marker.color.a = 0.999f;
+
+  if (color.compare("red") == 0) {
+    marker.color.r = 1.0f;
+    marker.color.g = 0.0f;
+    marker.color.b = 0.0f;
+  } else if (color == "green") {
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+  } else if (color == "yellow") {
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+  } else {
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 1.0f;
+  }
+  return marker;
+}
+
+void TrafficLightPublishPanel::onTrafficLightSignal(const TrafficSignalArray::ConstSharedPtr msg)
+{
+  visualization_msgs::msg::MarkerArray output_msg;
+  const auto current_time = raw_node_->now();
+
+  for (const auto & msg_traffic_signal : msg->signals) {
+    const auto msg_traffic_light_it = tl_reg_elems_map_.find(msg_traffic_signal.traffic_signal_id);
+    if (msg_traffic_light_it == tl_reg_elems_map_.end()) {
+      continue;
+    }
+    const auto msg_traffic_light = msg_traffic_light_it->second;
+    for (const auto & bulbs : msg_traffic_light->lightBulbs()) {
+      for (const auto & bulb : bulbs) {
+        const std::string color = bulb.attributeOr("color", "none");
+        if (color.compare("none") == 0) {
+          continue;
+        }
+        for (const auto & element : msg_traffic_signal.elements) {
+          if (color.compare("red") == 0 && element.color == TrafficSignalElement::RED) {
+            output_msg.markers.push_back(lightAsMarker(bulb, "red", "traffic_light", current_time));
+          }
+        }
+      }
+    }
+  }
+  pub_light_marker_->publish(output_msg);
+}
+
 }  // namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
