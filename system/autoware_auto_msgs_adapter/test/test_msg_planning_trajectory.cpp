@@ -20,7 +20,7 @@
 
 autoware_planning_msgs::msg::Trajectory generate_planning_msg()
 {   
-    using Point_auto = autoware_planning_msgs::msg::TrajectoryPoint;
+    using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
     // generate deterministic random int
     std::mt19937 gen(0);
     std::uniform_int_distribution<> dis_int(0, 1000000);
@@ -30,7 +30,7 @@ autoware_planning_msgs::msg::Trajectory generate_planning_msg()
     msg_planning.header.stamp = rclcpp::Time(rand_int());
     msg_planning.header.frame_id = "test_frame";
 
-    Point point;
+    TrajectoryPoint point;
     geometry_msgs::msg::Pose pose;
     pose.position.x = 0.0;
     pose.position.y = 0.0;
