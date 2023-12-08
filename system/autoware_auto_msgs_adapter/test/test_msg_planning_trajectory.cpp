@@ -20,7 +20,7 @@
 
 autoware_planning_msgs::msg::Trajectory generate_planning_msg()
 {   
-    using Point_auto = autoware_auto_planning_msgs::msg::TrajectoryPoint;
+    using Point_auto = autoware_planning_msgs::msg::TrajectoryPoint;
     // generate deterministic random int
     std::mt19937 gen(0);
     std::uniform_int_distribution<> dis_int(0, 1000000);
@@ -30,7 +30,7 @@ autoware_planning_msgs::msg::Trajectory generate_planning_msg()
     msg_planning.header.stamp = rclcpp::Time(rand_int());
     msg_planning.header.frame_id = "test_frame";
 
-    Point_auto point;
+    Point point;
     geometry_msgs::msg::Pose pose;
     pose.position.x = 0.0;
     pose.position.y = 0.0;
@@ -40,17 +40,19 @@ autoware_planning_msgs::msg::Trajectory generate_planning_msg()
     pose.orientation.z = 0.0;
     pose.orientation.w = 1.0;
 
-    for(size_t i=0;i<msg_planning.points.size();i++)
+    for(size_t i=0;i<100;i++)
     {
-        msg_planning.points.at(i).longitudinal_velocity_mps = 1.0;
-        msg_planning.points.at(i).time_from_start = rclcpp::Duration::from_seconds(0.0);
-        msg_planning.points.at(i).pose = pose;
-        msg_planning.points.at(i).longitudinal_velocity_mps = 20.0;
-        msg_planning.points.at(i).lateral_velocity_mps = 0.0;
-        msg_planning.points.at(i).acceleration_mps2 = 1.0;
-        msg_planning.points.at(i).heading_rate_rps = 2.0;
-        msg_planning.points.at(i).front_wheel_angle_rad = 8.0;
-        msg_planning.points.at(i).rear_wheel_angle_rad = 10.0;
+        point.longitudinal_velocity_mps = 1.0;
+        point.time_from_start = rclcpp::Duration::from_seconds(0.0);
+        point.pose = pose;
+        point.longitudinal_velocity_mps = 20.0;
+        point.lateral_velocity_mps = 0.0;
+        point.acceleration_mps2 = 1.0;
+        point.heading_rate_rps = 2.0;
+        point.front_wheel_angle_rad = 8.0;
+        point.rear_wheel_angle_rad = 10.0;
+
+        msg_planning.points.push_back(point);
     }
 
     return msg_planning;
