@@ -81,6 +81,10 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
   node_param_.update_rate_hz = declare_parameter<double>("update_rate_hz", 20.0);
   node_param_.new_frame_id = declare_parameter<std::string>("new_frame_id", "base_link");
   node_param_.use_twist_compensation = declare_parameter<bool>("use_twist_compensation", false);
+  node_param_.use_groundspeed_filter = declare_parameter<bool>("use_groundspeed_filter", false);
+  node_param_.groundspeed_threshold = declare_parameter<double>("groundspeed_threshold", 1.0);
+  node_param_.long_lat_speed_ratio_threshold =
+    declare_parameter<double>("long_lat_speed_ratio_threshold", 2.0);
 
   // Subscriber
   sub_radar_ = create_subscription<RadarTracks>(
@@ -125,6 +129,9 @@ rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetPara
       update_param(params, "update_rate_hz", p.update_rate_hz);
       update_param(params, "new_frame_id", p.new_frame_id);
       update_param(params, "use_twist_compensation", p.use_twist_compensation);
+      update_param(params, "use_groundspeed_filter", p.use_groundspeed_filter);
+      update_param(params, "groundspeed_threshold", p.groundspeed_threshold);
+      update_param(params, "long_lat_speed_ratio_threshold", p.long_lat_speed_ratio_threshold);
     }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
@@ -209,39 +216,9 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     tracked_object.shape.type = Shape::BOUNDING_BOX;
     tracked_object.shape.dimensions = radar_track.size;
 
-    // kinematics setting
-    TrackedObjectKinematics kinematics;
-    kinematics.orientation_availability = TrackedObjectKinematics::AVAILABLE;
-    kinematics.is_stationary = false;
-
-    geometry_msgs::msg::Vector3 compensated_velocity{};
-    {
-      double rotate_yaw = tf2::getYaw(transform_->transform.rotation);
-      const geometry_msgs::msg::Vector3 & vel = radar_track.velocity;
-      compensated_velocity.x = vel.x * std::cos(rotate_yaw) - vel.y * std::sin(rotate_yaw);
-      compensated_velocity.y = vel.x * std::sin(rotate_yaw) + vel.y * std::cos(rotate_yaw);
-      compensated_velocity.z = radar_track.velocity.z;
-    }
-
-    if (node_param_.use_twist_compensation) {
-      if (odometry_data_) {
-        compensated_velocity.x += odometry_data_->twist.twist.linear.x;
-        compensated_velocity.y += odometry_data_->twist.twist.linear.y;
-        compensated_velocity.z += odometry_data_->twist.twist.linear.z;
-      } else {
-        RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Odometry data is not coming");
-      }
-    }
-    kinematics.twist_with_covariance.twist.linear.x = std::sqrt(
-      compensated_velocity.x * compensated_velocity.x +
-      compensated_velocity.y * compensated_velocity.y);
-
     // Pose conversion
     geometry_msgs::msg::PoseStamped radar_pose_stamped{};
     radar_pose_stamped.pose.position = radar_track.position;
-
-    double yaw = tier4_autoware_utils::normalizeRadian(
-      std::atan2(compensated_velocity.y, compensated_velocity.x));
 
     geometry_msgs::msg::PoseStamped transformed_pose_stamped{};
     if (transform_ == nullptr) {
@@ -250,9 +227,79 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
       return tracked_objects;
     }
     tf2::doTransform(radar_pose_stamped, transformed_pose_stamped, *transform_);
+    const auto & position_from_veh = transformed_pose_stamped.pose.position;
+
+    // Velocity conversion
+    geometry_msgs::msg::Vector3 compensated_velocity{};
+    // Compensate radar coordinate
+    // radar track velocity is defined in the radar coordinate
+    // compensate radar coordinate to vehicle coordinate
+    {
+      double rotate_yaw = tf2::getYaw(transform_->transform.rotation);
+      const geometry_msgs::msg::Vector3 & vel = radar_track.velocity;
+      compensated_velocity.x = vel.x * std::cos(rotate_yaw) - vel.y * std::sin(rotate_yaw);
+      compensated_velocity.y = vel.x * std::sin(rotate_yaw) + vel.y * std::cos(rotate_yaw);
+      compensated_velocity.z = vel.z;
+    }
+
+    // Compensate ego vehicle motion (twist)
+    if (node_param_.use_twist_compensation) {
+      if (odometry_data_) {
+        // linear compensation
+        compensated_velocity.x += odometry_data_->twist.twist.linear.x;
+        compensated_velocity.y += odometry_data_->twist.twist.linear.y;
+        compensated_velocity.z += odometry_data_->twist.twist.linear.z;
+        // angular compensation
+        const float veh_yaw = odometry_data_->twist.twist.angular.z;
+        compensated_velocity.x += -position_from_veh.y * veh_yaw;
+        compensated_velocity.y += position_from_veh.x * veh_yaw;
+      } else {
+        RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Odometry data is not coming");
+      }
+    }
+    
+    // filters
+    if (
+      node_param_.use_twist_compensation && odometry_data_ && node_param_.use_groundspeed_filter) {
+      // filter static object by ground speed
+      const float azimuth = std::atan2(radar_track.position.y, radar_track.position.x);
+      const float longitudinal_speed =
+        compensated_velocity.x * std::cos(azimuth) + compensated_velocity.y * std::sin(azimuth);
+      if (std::fabs(longitudinal_speed) < node_param_.groundspeed_threshold)  // lateral speed is
+                                                                              // larger than
+                                                                              // longitudinal speed
+      {
+        continue;
+      }
+      // filter crossing objects, which cannot detected by radar
+      const float lateral_speed =
+        -compensated_velocity.x * std::sin(azimuth) + compensated_velocity.y * std::cos(azimuth);
+      const float long_lat_ratio = std::fabs(longitudinal_speed / lateral_speed);
+      if (long_lat_ratio < node_param_.long_lat_speed_ratio_threshold) {
+        continue;
+      }
+    }
+
+    // Yaw
+    // vehicle heading is obtained from ground velocity
+    double yaw = tier4_autoware_utils::normalizeRadian(
+      std::atan2(compensated_velocity.y, compensated_velocity.x));
+
+    // kinematics setting
+    TrackedObjectKinematics kinematics;
+    kinematics.orientation_availability = TrackedObjectKinematics::AVAILABLE;
+    kinematics.is_stationary = false;
     kinematics.pose_with_covariance.pose = transformed_pose_stamped.pose;
+
+    // kinematics of object is defined in the object coordinate
+    // velocity of object is only x-axis (longitudinal direction)
+    kinematics.twist_with_covariance.twist.linear.x = std::sqrt(
+      compensated_velocity.x * compensated_velocity.x +
+      compensated_velocity.y * compensated_velocity.y);
+    // heading is obtained from ground velocity
     kinematics.pose_with_covariance.pose.orientation =
       tier4_autoware_utils::createQuaternionFromYaw(yaw);
+    
     {
       auto & pose_cov = kinematics.pose_with_covariance.covariance;
       auto & radar_position_cov = radar_track.position_covariance;
@@ -266,7 +313,6 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
       pose_cov[POSE_IDX::Z_Y] = radar_position_cov[RADAR_IDX::Y_Z];
       pose_cov[POSE_IDX::Z_Z] = radar_position_cov[RADAR_IDX::Z_Z];
     }
-
     {
       auto & twist_cov = kinematics.twist_with_covariance.covariance;
       auto & radar_vel_cov = radar_track.velocity_covariance;

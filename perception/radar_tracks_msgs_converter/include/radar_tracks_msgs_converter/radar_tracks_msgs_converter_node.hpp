@@ -55,6 +55,9 @@ public:
     double update_rate_hz{};
     std::string new_frame_id{};
     bool use_twist_compensation{};
+    bool use_groundspeed_filter{};
+    double groundspeed_threshold{};
+    double long_lat_speed_ratio_threshold{};
   };
 
 private:
