@@ -30,6 +30,9 @@ struct SoftConstraintsInputs
 {
   Pose goal_pose;
   Pose ego_pose;
+  lanelet::ArcCoordinates ego_arc;
+  lanelet::ArcCoordinates goal_arc;
+  lanelet::ConstLanelets closest_lanelets_to_goal;
   behavior_path_planner::PlanResult reference_path;
   behavior_path_planner::PlanResult prev_module_path;
   std::optional<sampler_common::Path> prev_path;

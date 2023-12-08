@@ -91,37 +91,17 @@ SamplingPlannerModule::SamplingPlannerModule(
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.points.empty()) return 0.0;
       if (path.poses.empty()) return 0.0;
-
-      const auto & goal_pose = input_data.goal_pose;
-      const auto & ego_pose = input_data.ego_pose;
-      const auto & path_last_pose = path.poses.back();
-
-      const auto ego_arc = lanelet::utils::getArcCoordinates(input_data.current_lanes, ego_pose);
-      const auto goal_arc = lanelet::utils::getArcCoordinates(input_data.current_lanes, goal_pose);
-      const auto path_last_arc =
-        lanelet::utils::getArcCoordinates(input_data.current_lanes, path_last_pose);
-
-      const double distance_ego_to_goal_pose = std::abs(ego_arc.length - goal_arc.length);
+      const double distance_ego_to_goal_pose =
+        std::abs(input_data.ego_arc.length - input_data.goal_arc.length);
 
       constexpr double epsilon = 0.001;
       if (distance_ego_to_goal_pose < epsilon) return 0.0;
-      const double length_path_to_goal = std::abs(path_last_arc.length - goal_arc.length);
-      // const double lateral_distance_to_goal = std::abs(path_last_arc.distance -
-      // goal_arc.distance);
-
-      // const double max_target_distance = *std::max_element(
-      //   internal_params_->sampling.target_lateral_positions.begin(),
-      //   internal_params_->sampling.target_lateral_positions.end());
-
+      const double length_last_point_on_path = input_data.ego_arc.length + path.lengths.back();
+      const double length_path_to_goal =
+        std::abs(length_last_point_on_path - input_data.goal_arc.length);
       const double max_target_length = *std::max_element(
         internal_params_->sampling.target_lengths.begin(),
         internal_params_->sampling.target_lengths.end());
-
-      // const double reference_max_distance = std::hypot(max_target_length, max_target_distance);
-
-      // return (length_path_to_goal / reference_max_distance) +
-      //        (lateral_distance_to_goal /
-      //         reference_max_distance);  // + (angle_difference / (pi / 4.0));
       return length_path_to_goal / max_target_length;
     });
 
@@ -132,15 +112,8 @@ SamplingPlannerModule::SamplingPlannerModule(
       [[maybe_unused]] const sampler_common::Constraints & constraints,
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.poses.empty()) return 0.0;
-      const auto & goal_pose = input_data.goal_pose;
-      lanelet::ConstLanelet closest_lanelet_to_goal;
-      lanelet::utils::query::getClosestLanelet(
-        input_data.current_lanes, goal_pose, &closest_lanelet_to_goal);
-      lanelet::ConstLanelets closest_lanelets_to_goal{closest_lanelet_to_goal};
       const auto & path_point_arc =
-        lanelet::utils::getArcCoordinates(closest_lanelets_to_goal, path.poses.back());
-
-      std::abs(path_point_arc.distance);
+        lanelet::utils::getArcCoordinates(input_data.closest_lanelets_to_goal, path.poses.back());
       const double lateral_distance_to_center_lane = std::abs(path_point_arc.distance);
       return lateral_distance_to_center_lane;
     });
@@ -162,7 +135,7 @@ SamplingPlannerModule::SamplingPlannerModule(
       // return constraints.soft.curvature_weight * curvature_sum /
       //        static_cast<double>(path.curvatures.size());
     });
-  //  Same lane as goal cost
+  //  Same lane as goal cost Still in testing dont delete
   // soft_constraints_.emplace_back(
   //   [](
   //     sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints &
@@ -508,7 +481,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   };
 
   // EXTEND prev path
-  if (prev_sampling_path_ && prev_sampling_path_->points.size() > 100000) {
+  if (prev_sampling_path_ && prev_sampling_path_->points.size()) {
     // Update previous path
     frenet_planner::Path prev_path_frenet = prev_sampling_path_.value();
     frenet_paths.push_back(prev_path_frenet);
@@ -563,12 +536,19 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   }
 
   SoftConstraintsInputs soft_constraints_input;
-  soft_constraints_input.goal_pose = get_goal_pose();
-  soft_constraints_input.ego_pose = planner_data_->self_odometry->pose.pose;
+  const auto & goal_pose = get_goal_pose();
+  soft_constraints_input.goal_pose = soft_constraints_input.ego_pose =
+    planner_data_->self_odometry->pose.pose;
 
   soft_constraints_input.current_lanes = current_lanes;
   soft_constraints_input.reference_path = reference_path_ptr;
   soft_constraints_input.prev_module_path = prev_module_path;
+
+  soft_constraints_input.ego_arc = lanelet::utils::getArcCoordinates(current_lanes, ego_pose);
+  soft_constraints_input.goal_arc = lanelet::utils::getArcCoordinates(current_lanes, goal_pose);
+  lanelet::ConstLanelet closest_lanelet_to_goal;
+  lanelet::utils::query::getClosestLanelet(current_lanes, goal_pose, &closest_lanelet_to_goal);
+  soft_constraints_input.closest_lanelets_to_goal = {closest_lanelet_to_goal};
 
   debug_data_.footprints.clear();
   std::vector<std::vector<bool>> hard_constraints_results_full;
