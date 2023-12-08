@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2022-2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -81,10 +81,8 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
   node_param_.update_rate_hz = declare_parameter<double>("update_rate_hz", 20.0);
   node_param_.new_frame_id = declare_parameter<std::string>("new_frame_id", "base_link");
   node_param_.use_twist_compensation = declare_parameter<bool>("use_twist_compensation", false);
-  node_param_.use_groundspeed_filter = declare_parameter<bool>("use_groundspeed_filter", false);
-  node_param_.groundspeed_threshold = declare_parameter<double>("groundspeed_threshold", 1.0);
-  node_param_.long_lat_speed_ratio_threshold =
-    declare_parameter<double>("long_lat_speed_ratio_threshold", 2.0);
+  node_param_.static_obj_speed_threshold =
+    declare_parameter<double>("static_obj_speed_threshold", 1.0);
 
   // Subscriber
   sub_radar_ = create_subscription<RadarTracks>(
@@ -129,9 +127,7 @@ rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetPara
       update_param(params, "update_rate_hz", p.update_rate_hz);
       update_param(params, "new_frame_id", p.new_frame_id);
       update_param(params, "use_twist_compensation", p.use_twist_compensation);
-      update_param(params, "use_groundspeed_filter", p.use_groundspeed_filter);
-      update_param(params, "groundspeed_threshold", p.groundspeed_threshold);
-      update_param(params, "long_lat_speed_ratio_threshold", p.long_lat_speed_ratio_threshold);
+      update_param(params, "static_obj_speed_threshold", p.static_obj_speed_threshold);
     }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
@@ -204,8 +200,6 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
   TrackedObjects tracked_objects;
   tracked_objects.header = radar_data_->header;
   tracked_objects.header.frame_id = node_param_.new_frame_id;
-  using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-  using RADAR_IDX = tier4_autoware_utils::xyz_upper_covariance_index::XYZ_UPPER_COV_IDX;
 
   for (auto & radar_track : radar_data_->tracks) {
     TrackedObject tracked_object;
@@ -230,116 +224,35 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     const auto & position_from_veh = transformed_pose_stamped.pose.position;
 
     // Velocity conversion
-    geometry_msgs::msg::Vector3 compensated_velocity{};
-    // Compensate radar coordinate
-    // radar track velocity is defined in the radar coordinate
-    // compensate radar coordinate to vehicle coordinate
-    {
-      double rotate_yaw = tf2::getYaw(transform_->transform.rotation);
-      const geometry_msgs::msg::Vector3 & vel = radar_track.velocity;
-      compensated_velocity.x = vel.x * std::cos(rotate_yaw) - vel.y * std::sin(rotate_yaw);
-      compensated_velocity.y = vel.x * std::sin(rotate_yaw) + vel.y * std::cos(rotate_yaw);
-      compensated_velocity.z = vel.z;
+    const auto compensated_velocity = compensateVelocity(radar_track, position_from_veh);
+
+    // determine static object
+    bool is_static_object = false;
+    if (node_param_.use_twist_compensation && odometry_data_) {
+      is_static_object = !isDynamicObject(radar_track, compensated_velocity);
     }
 
-    // Compensate ego vehicle motion (twist)
-    if (node_param_.use_twist_compensation) {
-      if (odometry_data_) {
-        // linear compensation
-        compensated_velocity.x += odometry_data_->twist.twist.linear.x;
-        compensated_velocity.y += odometry_data_->twist.twist.linear.y;
-        compensated_velocity.z += odometry_data_->twist.twist.linear.z;
-        // angular compensation
-        const float veh_yaw = odometry_data_->twist.twist.angular.z;
-        compensated_velocity.x += -position_from_veh.y * veh_yaw;
-        compensated_velocity.y += position_from_veh.x * veh_yaw;
-      } else {
-        RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Odometry data is not coming");
-      }
-    }
-    
-    // filters
-    if (
-      node_param_.use_twist_compensation && odometry_data_ && node_param_.use_groundspeed_filter) {
-      // filter static object by ground speed
-      const float azimuth = std::atan2(radar_track.position.y, radar_track.position.x);
-      const float longitudinal_speed =
-        compensated_velocity.x * std::cos(azimuth) + compensated_velocity.y * std::sin(azimuth);
-      if (std::fabs(longitudinal_speed) < node_param_.groundspeed_threshold)  // lateral speed is
-                                                                              // larger than
-                                                                              // longitudinal speed
-      {
-        continue;
-      }
-      // filter crossing objects, which cannot detected by radar
-      const float lateral_speed =
-        -compensated_velocity.x * std::sin(azimuth) + compensated_velocity.y * std::cos(azimuth);
-      const float long_lat_ratio = std::fabs(longitudinal_speed / lateral_speed);
-      if (long_lat_ratio < node_param_.long_lat_speed_ratio_threshold) {
-        continue;
-      }
-    }
-
-    // Yaw
-    // vehicle heading is obtained from ground velocity
+    // yaw angle (vehicle heading) is obtained from ground velocity
     double yaw = tier4_autoware_utils::normalizeRadian(
       std::atan2(compensated_velocity.y, compensated_velocity.x));
 
     // kinematics setting
     TrackedObjectKinematics kinematics;
     kinematics.orientation_availability = TrackedObjectKinematics::AVAILABLE;
-    kinematics.is_stationary = false;
+    kinematics.is_stationary = is_static_object;
     kinematics.pose_with_covariance.pose = transformed_pose_stamped.pose;
-
-    // kinematics of object is defined in the object coordinate
-    // velocity of object is only x-axis (longitudinal direction)
-    kinematics.twist_with_covariance.twist.linear.x = std::sqrt(
-      compensated_velocity.x * compensated_velocity.x +
-      compensated_velocity.y * compensated_velocity.y);
+    // velocity of object is defined in the object coordinate
     // heading is obtained from ground velocity
     kinematics.pose_with_covariance.pose.orientation =
       tier4_autoware_utils::createQuaternionFromYaw(yaw);
-    
-    {
-      auto & pose_cov = kinematics.pose_with_covariance.covariance;
-      auto & radar_position_cov = radar_track.position_covariance;
-      pose_cov[POSE_IDX::X_X] = radar_position_cov[RADAR_IDX::X_X];
-      pose_cov[POSE_IDX::X_Y] = radar_position_cov[RADAR_IDX::X_Y];
-      pose_cov[POSE_IDX::X_Z] = radar_position_cov[RADAR_IDX::X_Z];
-      pose_cov[POSE_IDX::Y_X] = radar_position_cov[RADAR_IDX::X_Y];
-      pose_cov[POSE_IDX::Y_Y] = radar_position_cov[RADAR_IDX::Y_Y];
-      pose_cov[POSE_IDX::Y_Z] = radar_position_cov[RADAR_IDX::Y_Z];
-      pose_cov[POSE_IDX::Z_X] = radar_position_cov[RADAR_IDX::X_Z];
-      pose_cov[POSE_IDX::Z_Y] = radar_position_cov[RADAR_IDX::Y_Z];
-      pose_cov[POSE_IDX::Z_Z] = radar_position_cov[RADAR_IDX::Z_Z];
-    }
-    {
-      auto & twist_cov = kinematics.twist_with_covariance.covariance;
-      auto & radar_vel_cov = radar_track.velocity_covariance;
-      twist_cov[POSE_IDX::X_X] = radar_vel_cov[RADAR_IDX::X_X];
-      twist_cov[POSE_IDX::X_Y] = radar_vel_cov[RADAR_IDX::X_Y];
-      twist_cov[POSE_IDX::X_Z] = radar_vel_cov[RADAR_IDX::X_Z];
-      twist_cov[POSE_IDX::Y_X] = radar_vel_cov[RADAR_IDX::X_Y];
-      twist_cov[POSE_IDX::Y_Y] = radar_vel_cov[RADAR_IDX::Y_Y];
-      twist_cov[POSE_IDX::Y_Z] = radar_vel_cov[RADAR_IDX::Y_Z];
-      twist_cov[POSE_IDX::Z_X] = radar_vel_cov[RADAR_IDX::X_Z];
-      twist_cov[POSE_IDX::Z_Y] = radar_vel_cov[RADAR_IDX::Y_Z];
-      twist_cov[POSE_IDX::Z_Z] = radar_vel_cov[RADAR_IDX::Z_Z];
-    }
-    {
-      auto & accel_cov = kinematics.acceleration_with_covariance.covariance;
-      auto & radar_accel_cov = radar_track.acceleration_covariance;
-      accel_cov[POSE_IDX::X_X] = radar_accel_cov[RADAR_IDX::X_X];
-      accel_cov[POSE_IDX::X_Y] = radar_accel_cov[RADAR_IDX::X_Y];
-      accel_cov[POSE_IDX::X_Z] = radar_accel_cov[RADAR_IDX::X_Z];
-      accel_cov[POSE_IDX::Y_X] = radar_accel_cov[RADAR_IDX::X_Y];
-      accel_cov[POSE_IDX::Y_Y] = radar_accel_cov[RADAR_IDX::Y_Y];
-      accel_cov[POSE_IDX::Y_Z] = radar_accel_cov[RADAR_IDX::Y_Z];
-      accel_cov[POSE_IDX::Z_X] = radar_accel_cov[RADAR_IDX::X_Z];
-      accel_cov[POSE_IDX::Z_Y] = radar_accel_cov[RADAR_IDX::Y_Z];
-      accel_cov[POSE_IDX::Z_Z] = radar_accel_cov[RADAR_IDX::Z_Z];
-    }
-
+    // longitudinal velocity is the length of the velocity vector
+    kinematics.twist_with_covariance.twist.linear.x = std::sqrt(
+      compensated_velocity.x * compensated_velocity.x +
+      compensated_velocity.y * compensated_velocity.y);
+    // lateral velocity is zero, use default value
+    // convert covariance matrices
+    convertCovarianceMatrix(radar_track, kinematics);
+    // fill the kinematics to the tracked object
     tracked_object.kinematics = kinematics;
 
     // classification
@@ -351,6 +264,104 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     tracked_objects.objects.emplace_back(tracked_object);
   }
   return tracked_objects;
+}
+
+geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocity(
+  const radar_msgs::msg::RadarTrack & radar_track,
+  const geometry_msgs::msg::Point & position_from_veh)
+{
+  // initialize compensated velocity
+  geometry_msgs::msg::Vector3 compensated_velocity{};
+
+  // 1: Compensate radar coordinate
+  // radar track velocity is defined in the radar coordinate
+  // compensate radar coordinate to vehicle coordinate
+  {
+    const double sensor_yaw = tf2::getYaw(transform_->transform.rotation);
+    const geometry_msgs::msg::Vector3 & vel = radar_track.velocity;
+    compensated_velocity.x = vel.x * std::cos(sensor_yaw) - vel.y * std::sin(sensor_yaw);
+    compensated_velocity.y = vel.x * std::sin(sensor_yaw) + vel.y * std::cos(sensor_yaw);
+    compensated_velocity.z = vel.z;
+  }
+
+  // 2: Compensate ego vehicle motion (twist)
+  if (node_param_.use_twist_compensation && odometry_data_) {
+    // linear compensation
+    compensated_velocity.x += odometry_data_->twist.twist.linear.x;
+    compensated_velocity.y += odometry_data_->twist.twist.linear.y;
+    compensated_velocity.z += odometry_data_->twist.twist.linear.z;
+    // angular compensation
+    const float veh_yaw = odometry_data_->twist.twist.angular.z;
+    compensated_velocity.x += -position_from_veh.y * veh_yaw;
+    compensated_velocity.y += position_from_veh.x * veh_yaw;
+  } else if (node_param_.use_twist_compensation && !odometry_data_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Odometry data is not available");
+  }
+
+  return compensated_velocity;
+}
+
+bool RadarTracksMsgsConverterNode::isDynamicObject(
+  const radar_msgs::msg::RadarTrack & radar_track,
+  const geometry_msgs::msg::Vector3 & compensated_velocity)
+{
+  // Calculate azimuth angle of the object in the vehicle coordinate
+  const double sensor_yaw = tf2::getYaw(transform_->transform.rotation);
+  const float radar_azimuth = std::atan2(radar_track.position.y, radar_track.position.x);
+  float azimuth = radar_azimuth + static_cast<float>(sensor_yaw);
+
+  // Calculate longitudinal speed
+  const float longitudinal_speed =
+    compensated_velocity.x * std::cos(azimuth) + compensated_velocity.y * std::sin(azimuth);
+
+  // Check if the object is static
+  return std::fabs(longitudinal_speed) > node_param_.static_obj_speed_threshold;
+}
+
+void RadarTracksMsgsConverterNode::convertCovarianceMatrix(
+  const radar_msgs::msg::RadarTrack & radar_track, TrackedObjectKinematics & kinematics)
+{
+  using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using RADAR_IDX = tier4_autoware_utils::xyz_upper_covariance_index::XYZ_UPPER_COV_IDX;
+  {
+    auto & radar_position_cov = radar_track.position_covariance;
+    auto & pose_cov = kinematics.pose_with_covariance.covariance;
+    pose_cov[POSE_IDX::X_X] = radar_position_cov[RADAR_IDX::X_X];
+    pose_cov[POSE_IDX::X_Y] = radar_position_cov[RADAR_IDX::X_Y];
+    pose_cov[POSE_IDX::X_Z] = radar_position_cov[RADAR_IDX::X_Z];
+    pose_cov[POSE_IDX::Y_X] = radar_position_cov[RADAR_IDX::X_Y];
+    pose_cov[POSE_IDX::Y_Y] = radar_position_cov[RADAR_IDX::Y_Y];
+    pose_cov[POSE_IDX::Y_Z] = radar_position_cov[RADAR_IDX::Y_Z];
+    pose_cov[POSE_IDX::Z_X] = radar_position_cov[RADAR_IDX::X_Z];
+    pose_cov[POSE_IDX::Z_Y] = radar_position_cov[RADAR_IDX::Y_Z];
+    pose_cov[POSE_IDX::Z_Z] = radar_position_cov[RADAR_IDX::Z_Z];
+  }
+  {
+    auto & radar_vel_cov = radar_track.velocity_covariance;
+    auto & twist_cov = kinematics.twist_with_covariance.covariance;
+    twist_cov[POSE_IDX::X_X] = radar_vel_cov[RADAR_IDX::X_X];
+    twist_cov[POSE_IDX::X_Y] = radar_vel_cov[RADAR_IDX::X_Y];
+    twist_cov[POSE_IDX::X_Z] = radar_vel_cov[RADAR_IDX::X_Z];
+    twist_cov[POSE_IDX::Y_X] = radar_vel_cov[RADAR_IDX::X_Y];
+    twist_cov[POSE_IDX::Y_Y] = radar_vel_cov[RADAR_IDX::Y_Y];
+    twist_cov[POSE_IDX::Y_Z] = radar_vel_cov[RADAR_IDX::Y_Z];
+    twist_cov[POSE_IDX::Z_X] = radar_vel_cov[RADAR_IDX::X_Z];
+    twist_cov[POSE_IDX::Z_Y] = radar_vel_cov[RADAR_IDX::Y_Z];
+    twist_cov[POSE_IDX::Z_Z] = radar_vel_cov[RADAR_IDX::Z_Z];
+  }
+  {
+    auto & radar_accel_cov = radar_track.acceleration_covariance;
+    auto & accel_cov = kinematics.acceleration_with_covariance.covariance;
+    accel_cov[POSE_IDX::X_X] = radar_accel_cov[RADAR_IDX::X_X];
+    accel_cov[POSE_IDX::X_Y] = radar_accel_cov[RADAR_IDX::X_Y];
+    accel_cov[POSE_IDX::X_Z] = radar_accel_cov[RADAR_IDX::X_Z];
+    accel_cov[POSE_IDX::Y_X] = radar_accel_cov[RADAR_IDX::X_Y];
+    accel_cov[POSE_IDX::Y_Y] = radar_accel_cov[RADAR_IDX::Y_Y];
+    accel_cov[POSE_IDX::Y_Z] = radar_accel_cov[RADAR_IDX::Y_Z];
+    accel_cov[POSE_IDX::Z_X] = radar_accel_cov[RADAR_IDX::X_Z];
+    accel_cov[POSE_IDX::Z_Y] = radar_accel_cov[RADAR_IDX::Y_Z];
+    accel_cov[POSE_IDX::Z_Z] = radar_accel_cov[RADAR_IDX::Z_Z];
+  }
 }
 
 uint8_t RadarTracksMsgsConverterNode::convertClassification(const uint16_t classification)
