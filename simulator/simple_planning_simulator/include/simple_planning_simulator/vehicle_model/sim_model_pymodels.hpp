@@ -25,6 +25,7 @@
 #include <queue>
 
 #include <Python.h>
+#include </usr/include/python3.10/pyconfig.h>
 
 /**
  * @class SimModelPymodels
@@ -89,6 +90,20 @@ private:
   const double
     steer_time_constant_;  //!< @brief time constant for 1D model of angular-velocity dynamics
   const double steer_dead_band_;  //!< @brief dead band for steering angle [rad]
+
+
+  PyObject *steer_base_model;
+
+  int num_states_steering;
+  int num_inputs_steering;
+
+  // Create vectors to store system input and state (C++)
+  Eigen::VectorXd state_steering;
+  Eigen::VectorXd input_steering;
+
+  // Create vectors to store system input and state (python)
+  PyObject *py_state_steering, *py_input_steering;
+  
 
   /**
    * @brief set queue buffer for input command
