@@ -27,6 +27,11 @@
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_routing/Route.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
+#include <lanelet2_core/Forward.h>
+#include <lanelet2_core/utility/Optional.h>
+#include <lanelet2_routing/LaneletPath.h>
 
 #include <vector>
 
