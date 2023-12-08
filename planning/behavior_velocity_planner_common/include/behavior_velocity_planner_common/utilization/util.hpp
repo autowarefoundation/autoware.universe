@@ -27,9 +27,8 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/Forward.h>
 
-#include <algorithm>
-#include <limits>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -133,7 +132,7 @@ std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & 
   return concat_vec;
 }
 
-boost::optional<int64_t> getNearestLaneId(
+std::optional<int64_t> getNearestLaneId(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose);
 
@@ -198,7 +197,7 @@ std::set<int64_t> getLaneletIdSetOnPath(
   return id_set;
 }
 
-boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
+std::optional<geometry_msgs::msg::Pose> insertDecelPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output,
   const float target_velocity);
 
@@ -215,22 +214,22 @@ bool isOverLine(
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose,
   const double offset = 0.0);
 
-boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+std::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output);
-boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+std::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output);
 
 /*
   @brief return 'associative' lanes in the intersection. 'associative' means that a lane shares same
   or lane-changeable parent lanes with `lane` and has same turn_direction value.
  */
-std::set<int> getAssociativeIntersectionLanelets(
+std::set<lanelet::Id> getAssociativeIntersectionLanelets(
   lanelet::ConstLanelet lane, const lanelet::LaneletMapPtr lanelet_map,
   const lanelet::routing::RoutingGraphPtr routing_graph);
 
 template <template <class> class Container>
 lanelet::ConstLanelets getConstLaneletsFromIds(
-  lanelet::LaneletMapConstPtr map, const Container<int> & ids)
+  lanelet::LaneletMapConstPtr map, const Container<lanelet::Id> & ids)
 {
   lanelet::ConstLanelets ret{};
   for (const auto & id : ids) {

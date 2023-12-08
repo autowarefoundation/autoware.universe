@@ -14,13 +14,14 @@
 
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
+#include "behavior_path_planner_common/parameters.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
+#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
@@ -66,17 +67,43 @@ double calcLaneChangeResampleInterval(
     lane_changing_length / min_resampling_points, lane_changing_velocity * resampling_dt);
 }
 
+double calcMinimumLaneChangeLength(
+  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals,
+  const double length_to_intersection)
+{
+  if (shift_intervals.empty()) {
+    return 0.0;
+  }
+
+  const double & vel = lane_change_parameters.minimum_lane_changing_velocity;
+  const auto lat_acc = lane_change_parameters.lane_change_lat_acc_map.find(vel);
+  const double & max_lateral_acc = lat_acc.second;
+  const double & lateral_jerk = lane_change_parameters.lane_changing_lateral_jerk;
+  const double & finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
+  const double & backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
+
+  double accumulated_length = length_to_intersection;
+  for (const auto & shift_interval : shift_intervals) {
+    const double t =
+      PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
+    accumulated_length += vel * t + finish_judge_buffer;
+  }
+  accumulated_length += backward_buffer * (shift_intervals.size() - 1.0);
+
+  return accumulated_length;
+}
+
 double calcMaximumLaneChangeLength(
-  const double current_velocity, const BehaviorPathPlannerParameters & common_param,
+  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
   const std::vector<double> & shift_intervals, const double max_acc)
 {
   if (shift_intervals.empty()) {
     return 0.0;
   }
 
-  const double & finish_judge_buffer = common_param.lane_change_finish_judge_buffer;
-  const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
-  const double & t_prepare = common_param.lane_change_prepare_duration;
+  const double & finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
+  const double & lateral_jerk = lane_change_parameters.lane_changing_lateral_jerk;
+  const double & t_prepare = lane_change_parameters.lane_change_prepare_duration;
 
   double vel = current_velocity;
   double accumulated_length = 0.0;
@@ -86,7 +113,7 @@ double calcMaximumLaneChangeLength(
     vel = vel + max_acc * t_prepare;
 
     // lane changing section
-    const auto lat_acc = common_param.lane_change_lat_acc_map.find(vel);
+    const auto lat_acc = lane_change_parameters.lane_change_lat_acc_map.find(vel);
     const double t_lane_changing =
       PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, lat_acc.second);
     const double lane_changing_length =
@@ -96,26 +123,26 @@ double calcMaximumLaneChangeLength(
     vel = vel + max_acc * t_lane_changing;
   }
   accumulated_length +=
-    common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
+    lane_change_parameters.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
 
   return accumulated_length;
 }
 
 double calcMinimumAcceleration(
   const double current_velocity, const double min_longitudinal_acc,
-  const BehaviorPathPlannerParameters & params)
+  const LaneChangeParameters & lane_change_parameters)
 {
-  const double min_lane_changing_velocity = params.minimum_lane_changing_velocity;
-  const double prepare_duration = params.lane_change_prepare_duration;
+  const double min_lane_changing_velocity = lane_change_parameters.minimum_lane_changing_velocity;
+  const double prepare_duration = lane_change_parameters.lane_change_prepare_duration;
   const double acc = (min_lane_changing_velocity - current_velocity) / prepare_duration;
   return std::clamp(acc, -std::abs(min_longitudinal_acc), -std::numeric_limits<double>::epsilon());
 }
 
 double calcMaximumAcceleration(
   const double current_velocity, const double current_max_velocity,
-  const double max_longitudinal_acc, const BehaviorPathPlannerParameters & params)
+  const double max_longitudinal_acc, const LaneChangeParameters & lane_change_parameters)
 {
-  const double prepare_duration = params.lane_change_prepare_duration;
+  const double prepare_duration = lane_change_parameters.lane_change_prepare_duration;
   const double acc = (current_max_velocity - current_velocity) / prepare_duration;
   return std::clamp(acc, 0.0, max_longitudinal_acc);
 }
@@ -437,8 +464,8 @@ std::vector<DrivableLanes> generateDrivableLanes(
     drivable_lanes.at(i).left_lane = current_lane;
     drivable_lanes.at(i).right_lane = current_lane;
 
-    const auto left_lane = route_handler.getLeftLanelet(current_lane);
-    const auto right_lane = route_handler.getRightLanelet(current_lane);
+    const auto left_lane = route_handler.getLeftLanelet(current_lane, false, false);
+    const auto right_lane = route_handler.getRightLanelet(current_lane, false, false);
     if (!left_lane && !right_lane) {
       continue;
     }
@@ -600,12 +627,12 @@ double getLateralShift(const LaneChangePath & path)
 bool hasEnoughLengthToLaneChangeAfterAbort(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const Pose & current_pose, const double abort_return_dist,
-  const BehaviorPathPlannerParameters & common_param, const Direction direction)
+  const LaneChangeParameters & lane_change_parameters, const Direction direction)
 {
   const auto shift_intervals =
     route_handler.getLateralIntervalsToPreferredLane(current_lanes.back(), direction);
-  const double minimum_lane_change_length = utils::calcMinimumLaneChangeLength(
-    common_param, shift_intervals, common_param.backward_length_buffer_for_end_of_lane);
+  const double minimum_lane_change_length =
+    calcMinimumLaneChangeLength(lane_change_parameters, shift_intervals);
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
@@ -751,7 +778,7 @@ CandidateOutput assignToCandidate(
   return candidate_output;
 }
 
-boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
+std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType type, const Direction & direction)
 {
@@ -764,7 +791,8 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const BehaviorPathPlannerParameters & common_parameters, const double resolution)
+  const BehaviorPathPlannerParameters & common_parameters,
+  const LaneChangeParameters & lane_change_parameters, const double resolution)
 {
   if (lane_change_path.path.points.empty()) {
     return {};
@@ -775,7 +803,8 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const auto lane_changing_acc = lane_change_path.info.longitudinal_acceleration.lane_changing;
   const auto duration = lane_change_path.info.duration.sum();
   const auto prepare_time = lane_change_path.info.duration.prepare;
-  const auto & minimum_lane_changing_velocity = common_parameters.minimum_lane_changing_velocity;
+  const auto & minimum_lane_changing_velocity =
+    lane_change_parameters.minimum_lane_changing_velocity;
 
   const auto nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     path.points, vehicle_pose, common_parameters.ego_nearest_dist_threshold,
@@ -963,7 +992,7 @@ bool passParkedObject(
   }
 
   const auto & leading_obj = objects.at(*leading_obj_idx);
-  auto debug = marker_utils::createObjectDebug(leading_obj);
+  auto debug = utils::path_safety_checker::createObjectDebug(leading_obj);
   const auto leading_obj_poly =
     tier4_autoware_utils::toPolygon2d(leading_obj.initial_pose.pose, leading_obj.shape);
   if (leading_obj_poly.outer().empty()) {
@@ -988,14 +1017,14 @@ bool passParkedObject(
   // If there are still enough length after the target object, we delay the lane change
   if (min_dist_to_end_of_current_lane > minimum_lane_change_length) {
     debug.second.unsafe_reason = "delay lane change";
-    marker_utils::updateCollisionCheckDebugMap(object_debug, debug, false);
+    utils::path_safety_checker::updateCollisionCheckDebugMap(object_debug, debug, false);
     return true;
   }
 
   return false;
 }
 
-boost::optional<size_t> getLeadingStaticObjectIdx(
+std::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const std::vector<ExtendedPredictedObject> & objects,
   const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold)
@@ -1010,7 +1039,7 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
   const auto & path_end = path.points.back();
 
   double dist_lc_start_to_leading_obj = 0.0;
-  boost::optional<size_t> leading_obj_idx = boost::none;
+  std::optional<size_t> leading_obj_idx = std::nullopt;
   for (size_t obj_idx = 0; obj_idx < objects.size(); ++obj_idx) {
     const auto & obj = objects.at(obj_idx);
     const auto & obj_pose = obj.initial_pose.pose;
@@ -1064,7 +1093,8 @@ std::optional<lanelet::BasicPolygon2d> createPolygon(
 }
 
 ExtendedPredictedObject transform(
-  const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
+  const PredictedObject & object,
+  [[maybe_unused]] const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters)
 {
   ExtendedPredictedObject extended_object;
@@ -1077,7 +1107,7 @@ ExtendedPredictedObject transform(
   const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
   const auto & check_at_prepare_phase =
     lane_change_parameters.enable_prepare_segment_collision_check;
-  const auto & prepare_duration = common_parameters.lane_change_prepare_duration;
+  const auto & prepare_duration = lane_change_parameters.lane_change_prepare_duration;
   const auto & velocity_threshold =
     lane_change_parameters.prepare_segment_ignore_object_velocity_thresh;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
