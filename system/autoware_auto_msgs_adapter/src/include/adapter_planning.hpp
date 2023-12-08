@@ -25,11 +25,11 @@
  
 namespace autoware_auto_msgs_adapter
 {
-using Trajectory_auto = autoware_auto_planning_msgs::msg::Trajectory;
-using Point_auto = autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using TrajectoryAuto = autoware_auto_planning_msgs::msg::Trajectory;
+using PointAuto = autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using Trajectory = autoware_planning_msgs::msg::Trajectory;
 
-class AdapterPlanning : public autoware_auto_msgs_adapter::AdapterBase<Trajectory, Trajectory_auto>
+class AdapterPlanning : public autoware_auto_msgs_adapter::AdapterBase<Trajectory, TrajectoryAuto>
 {
 public:
   AdapterPlanning(
@@ -43,11 +43,11 @@ public:
   }
 
 protected:
-  Trajectory_auto convert(const Trajectory & msg_source) override
+  TrajectoryAuto convert(const Trajectory & msg_source) override
   {
-    Trajectory_auto msg_auto;
+    TrajectoryAuto msg_auto;
     msg_auto.header = msg_source.header;
-    Point_auto TrajectoryPoint_auto;
+    PointAuto TrajectoryPoint_auto;
     msg_auto.points.reserve(msg_source.points.size());
     for(size_t i = 0;i < msg_source.points.size();i++)
     {       
