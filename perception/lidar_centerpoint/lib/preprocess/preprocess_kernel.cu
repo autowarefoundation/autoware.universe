@@ -130,7 +130,8 @@ cudaError_t generateBaseFeatures_launch(
     (grid_x_size + threads.x - 1) / threads.x, (grid_y_size + threads.y - 1) / threads.y};
 
   generateBaseFeatures_kernel<<<blocks, threads, 0, stream>>>(
-    mask, voxels, grid_y_size, grid_x_size, max_voxel_size, pillar_num, voxel_features, voxel_num, voxel_idxs);
+    mask, voxels, grid_y_size, grid_x_size, max_voxel_size, pillar_num, voxel_features, voxel_num,
+    voxel_idxs);
   cudaError_t err = cudaGetLastError();
   return err;
 }
