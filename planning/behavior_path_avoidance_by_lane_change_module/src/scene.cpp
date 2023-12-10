@@ -84,8 +84,8 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
 
   const auto shift_intervals =
     getRouteHandler()->getLateralIntervalsToPreferredLane(status_.current_lanes.back(), direction_);
-  const double minimum_lane_change_length = utils::calcMinimumLaneChangeLength(
-    getCommonParam(), shift_intervals, getCommonParam().backward_length_buffer_for_end_of_lane);
+  const double minimum_lane_change_length = utils::lane_change::calcMinimumLaneChangeLength(
+    *lane_change_parameters_, shift_intervals, lane_change_parameters_->backward_length_buffer_for_end_of_lane);
 
   return (front_object.longitudinal > minimum_lane_change_length);
 }
