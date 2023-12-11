@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DETECTION_BY_TRACKER__UTILS__UTILS_HPP_
-#define DETECTION_BY_TRACKER__UTILS__UTILS_HPP_
+#ifndef DETECTION_BY_TRACKER__UTILS_HPP_
+#define DETECTION_BY_TRACKER__UTILS_HPP_
 
 #include <cstdint>
 
@@ -36,4 +36,4 @@ struct TrackerIgnoreLabel
 }  // namespace utils
 }  // namespace detection_by_tracker
 
-#endif  // DETECTION_BY_TRACKER__UTILS__UTILS_HPP_
+#endif  // DETECTION_BY_TRACKER__UTILS_HPP_
