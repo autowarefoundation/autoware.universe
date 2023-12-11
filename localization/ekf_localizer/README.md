@@ -37,7 +37,7 @@ This package includes the following features:
 ### Subscribed Topics
 
 | Name                             | Type                                             | Description                                                                                                                              |
-|----------------------------------|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| -------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `measured_pose_with_covariance`  | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Input pose source with the measurement covariance matrix.                                                                                |
 | `measured_twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | Input twist source with the measurement covariance matrix.                                                                               |
 | `initialpose`                    | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Initial pose for EKF. The estimated pose is initialized with zeros at the start. It is initialized with this message whenever published. |
@@ -45,7 +45,7 @@ This package includes the following features:
 ### Published Topics
 
 | Name                              | Type                                             | Description                                           |
-|-----------------------------------|--------------------------------------------------|-------------------------------------------------------|
+| --------------------------------- | ------------------------------------------------ | ----------------------------------------------------- |
 | `ekf_odom`                        | `nav_msgs::msg::Odometry`                        | Estimated odometry.                                   |
 | `ekf_pose`                        | `geometry_msgs::msg::PoseStamped`                | Estimated pose.                                       |
 | `ekf_pose_with_covariance`        | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Estimated pose with covariance.                       |
@@ -79,7 +79,7 @@ The parameters are set in `launch/ekf_localizer.launch` .
 ### For Node
 
 | Name                       | Type   | Description                                                                               | Default value |
-|:---------------------------|:-------|:------------------------------------------------------------------------------------------|:--------------|
+| :------------------------- | :----- | :---------------------------------------------------------------------------------------- | :------------ |
 | show_debug_info            | bool   | Flag to display debug info                                                                | false         |
 | predict_frequency          | double | Frequency for filtering and publishing [Hz]                                               | 50.0          |
 | tf_rate                    | double | Frequency for tf broadcasting [Hz]                                                        | 10.0          |
@@ -89,7 +89,7 @@ The parameters are set in `launch/ekf_localizer.launch` .
 ### For pose measurement
 
 | Name                          | Type   | Description                                                   | Default value |
-|:------------------------------|:-------|:--------------------------------------------------------------|:--------------|
+| :---------------------------- | :----- | :------------------------------------------------------------ | :------------ |
 | pose_additional_delay         | double | Additional delay time for pose measurement [s]                | 0.0           |
 | pose_measure_uncertainty_time | double | Measured time uncertainty used for covariance calculation [s] | 0.01          |
 | pose_smoothing_steps          | int    | A value for smoothing steps                                   | 5             |
@@ -98,7 +98,7 @@ The parameters are set in `launch/ekf_localizer.launch` .
 ### For twist measurement
 
 | Name                   | Type   | Description                                               | Default value |
-|:-----------------------|:-------|:----------------------------------------------------------|:--------------|
+| :--------------------- | :----- | :-------------------------------------------------------- | :------------ |
 | twist_additional_delay | double | Additional delay time for twist [s]                       | 0.0           |
 | twist_smoothing_steps  | int    | A value for smoothing steps                               | 2             |
 | twist_gate_dist        | double | Limit of Mahalanobis distance used for outliers detection | 10000.0       |
@@ -106,7 +106,7 @@ The parameters are set in `launch/ekf_localizer.launch` .
 ### For process noise
 
 | Name                   | Type   | Description                                                                                                      | Default value |
-|:-----------------------|:-------|:-----------------------------------------------------------------------------------------------------------------|:--------------|
+| :--------------------- | :----- | :--------------------------------------------------------------------------------------------------------------- | :------------ |
 | proc_stddev_vx_c       | double | Standard deviation of process noise in time differentiation expression of linear velocity x, noise for d_vx = 0  | 2.0           |
 | proc_stddev_wz_c       | double | Standard deviation of process noise in time differentiation expression of angular velocity z, noise for d_wz = 0 | 0.2           |
 | proc_stddev_yaw_c      | double | Standard deviation of process noise in time differentiation expression of yaw, noise for d_yaw = omega           | 0.005         |
@@ -117,7 +117,7 @@ note: process noise for positions x & y are calculated automatically from nonlin
 ### For diagnostics
 
 | Name                                  | Type   | Description                                                                                                                                | Default value |
-|:--------------------------------------|:-------|:-------------------------------------------------------------------------------------------------------------------------------------------|:--------------|
+| :------------------------------------ | :----- | :----------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
 | pose_no_update_count_threshold_warn   | size_t | The threshold at which a WARN state is triggered due to the Pose Topic update not happening continuously for a certain number of times.    | 50            |
 | pose_no_update_count_threshold_error  | size_t | The threshold at which an ERROR state is triggered due to the Pose Topic update not happening continuously for a certain number of times.  | 250           |
 | twist_no_update_count_threshold_warn  | size_t | The threshold at which a WARN state is triggered due to the Twist Topic update not happening continuously for a certain number of times.   | 50            |
@@ -126,7 +126,7 @@ note: process noise for positions x & y are calculated automatically from nonlin
 ### Misc
 
 | Name                              | Type   | Description                                                                                        | Default value  |
-|:----------------------------------|:-------|:---------------------------------------------------------------------------------------------------|:---------------|
+| :-------------------------------- | :----- | :------------------------------------------------------------------------------------------------- | :------------- |
 | threshold_observable_velocity_mps | double | Minimum value for velocity that will be used for EKF. Mainly used for dead zone in velocity sensor | 0.0 (disabled) |
 
 ## How to tune EKF parameters
