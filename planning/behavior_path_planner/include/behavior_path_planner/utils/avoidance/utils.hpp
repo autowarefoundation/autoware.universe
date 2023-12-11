@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__UTILS_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__UTILS_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <memory>
 #include <utility>
@@ -33,18 +33,6 @@ using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygo
 
 bool isOnRight(const ObjectData & obj);
 
-bool isVehicleTypeObject(const ObjectData & object);
-
-bool isWithinCrosswalk(
-  const ObjectData & object,
-  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
-
-bool isWithinIntersection(
-  const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler);
-
-bool isTargetObjectType(
-  const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters);
-
 double calcShiftLength(
   const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
 
@@ -59,10 +47,9 @@ ShiftedPath toShiftedPath(const PathWithLaneId & path);
 
 ShiftLineArray toShiftLineArray(const AvoidLineArray & avoid_points);
 
-std::vector<size_t> concatParentIds(
-  const std::vector<size_t> & ids1, const std::vector<size_t> & ids2);
+std::vector<UUID> concatParentIds(const std::vector<UUID> & ids1, const std::vector<UUID> & ids2);
 
-std::vector<size_t> calcParentIds(const AvoidLineArray & lines1, const AvoidLine & lines2);
+std::vector<UUID> calcParentIds(const AvoidLineArray & lines1, const AvoidLine & lines2);
 
 double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
 
@@ -106,9 +93,13 @@ lanelet::ConstLanelets getTargetLanelets(
 lanelet::ConstLanelets getCurrentLanesFromPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data);
 
+lanelet::ConstLanelets getExtendLanes(
+  const lanelet::ConstLanelets & lanelets, const Pose & ego_pose,
+  const std::shared_ptr<const PlannerData> & planner_data);
+
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
-  boost::optional<Pose> & p_out);
+  std::optional<Pose> & p_out);
 
 void fillObjectEnvelopePolygon(
   ObjectData & object_data, const ObjectDataArray & registered_objects, const Pose & closest_pose,
@@ -136,6 +127,11 @@ void compensateDetectionLost(
 
 void filterTargetObjects(
   ObjectDataArray & objects, AvoidancePlanningData & data, DebugData & debug,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
+
+double getRoadShoulderDistance(
+  ObjectData & object, const AvoidancePlanningData & data,
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 

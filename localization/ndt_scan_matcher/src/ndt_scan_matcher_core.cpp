@@ -15,7 +15,6 @@
 #include "ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 
 #include "localization_util/matrix_type.hpp"
-#include "localization_util/pose_array_interpolator.hpp"
 #include "localization_util/util_func.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 #include "tree_structured_parzen_estimator/tree_structured_parzen_estimator.hpp"
@@ -53,19 +52,6 @@ tier4_debug_msgs::msg::Int32Stamped make_int32_stamped(
   return tier4_debug_msgs::build<T>().stamp(stamp).data(data);
 }
 
-std::vector<Eigen::Vector2d> create_initial_pose_offset_model(
-  const std::vector<double> & x, const std::vector<double> & y)
-{
-  int size = x.size();
-  std::vector<Eigen::Vector2d> initial_pose_offset_model(size);
-  for (int i = 0; i < size; i++) {
-    initial_pose_offset_model[i].x() = x[i];
-    initial_pose_offset_model[i].y() = y[i];
-  }
-
-  return initial_pose_offset_model;
-}
-
 Eigen::Matrix2d find_rotation_matrix_aligning_covariance_to_principal_axes(
   const Eigen::Matrix2d & matrix)
 {
@@ -74,9 +60,8 @@ Eigen::Matrix2d find_rotation_matrix_aligning_covariance_to_principal_axes(
     const Eigen::Vector2d eigen_vec = eigensolver.eigenvectors().col(0);
     const double th = std::atan2(eigen_vec.y(), eigen_vec.x());
     return Eigen::Rotation2Dd(th).toRotationMatrix();
-  } else {
-    throw std::runtime_error("Eigen solver failed. Return output_pose_covariance value.");
   }
+  throw std::runtime_error("Eigen solver failed. Return output_pose_covariance value.");
 }
 
 bool validate_local_optimal_solution_oscillation(
@@ -115,14 +100,15 @@ NDTScanMatcher::NDTScanMatcher()
   state_ptr_(new std::map<std::string, std::string>),
   inversion_vector_threshold_(-0.9),  // Not necessary to extract to ndt_scan_matcher.param.yaml
   oscillation_threshold_(10),         // Not necessary to extract to ndt_scan_matcher.param.yaml
+  output_pose_covariance_({}),
   regularization_enabled_(declare_parameter<bool>("regularization_enabled"))
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
 
-  int points_queue_size = this->declare_parameter<int>("input_sensor_points_queue_size");
-  points_queue_size = std::max(points_queue_size, 0);
-  RCLCPP_INFO(get_logger(), "points_queue_size: %d", points_queue_size);
+  int64_t points_queue_size = this->declare_parameter<int64_t>("input_sensor_points_queue_size");
+  points_queue_size = std::max(points_queue_size, (int64_t)0);
+  RCLCPP_INFO(get_logger(), "points_queue_size: %ld", points_queue_size);
 
   base_frame_ = this->declare_parameter<std::string>("base_frame");
   RCLCPP_INFO(get_logger(), "base_frame_id: %s", base_frame_.c_str());
@@ -137,8 +123,8 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_params.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
   ndt_params.step_size = this->declare_parameter<double>("step_size");
   ndt_params.resolution = this->declare_parameter<double>("resolution");
-  ndt_params.max_iterations = this->declare_parameter<int>("max_iterations");
-  ndt_params.num_threads = this->declare_parameter<int>("num_threads");
+  ndt_params.max_iterations = static_cast<int>(this->declare_parameter<int64_t>("max_iterations"));
+  ndt_params.num_threads = static_cast<int>(this->declare_parameter<int64_t>("num_threads"));
   ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
   ndt_params.regularization_scale_factor =
     static_cast<float>(this->declare_parameter<float>("regularization_scale_factor"));
@@ -149,7 +135,7 @@ NDTScanMatcher::NDTScanMatcher()
     ndt_params.trans_epsilon, ndt_params.step_size, ndt_params.resolution,
     ndt_params.max_iterations);
 
-  int converged_param_type_tmp = this->declare_parameter<int>("converged_param_type");
+  const int64_t converged_param_type_tmp = this->declare_parameter<int64_t>("converged_param_type");
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
 
   converged_param_transform_probability_ =
@@ -160,12 +146,15 @@ NDTScanMatcher::NDTScanMatcher()
   lidar_topic_timeout_sec_ = this->declare_parameter<double>("lidar_topic_timeout_sec");
 
   critical_upper_bound_exe_time_ms_ =
-    this->declare_parameter<int>("critical_upper_bound_exe_time_ms");
+    this->declare_parameter<int64_t>("critical_upper_bound_exe_time_ms");
 
   initial_pose_timeout_sec_ = this->declare_parameter<double>("initial_pose_timeout_sec");
 
   initial_pose_distance_tolerance_m_ =
     this->declare_parameter<double>("initial_pose_distance_tolerance_m");
+
+  initial_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+    this->get_logger(), initial_pose_timeout_sec_, initial_pose_distance_tolerance_m_);
 
   use_cov_estimation_ = this->declare_parameter<bool>("use_covariance_estimation");
   if (use_cov_estimation_) {
@@ -175,8 +164,12 @@ NDTScanMatcher::NDTScanMatcher()
       this->declare_parameter<std::vector<double>>("initial_pose_offset_model_y");
 
     if (initial_pose_offset_model_x.size() == initial_pose_offset_model_y.size()) {
-      initial_pose_offset_model_ =
-        create_initial_pose_offset_model(initial_pose_offset_model_x, initial_pose_offset_model_y);
+      const size_t size = initial_pose_offset_model_x.size();
+      initial_pose_offset_model_.resize(size);
+      for (size_t i = 0; i < size; i++) {
+        initial_pose_offset_model_[i].x() = initial_pose_offset_model_x[i];
+        initial_pose_offset_model_[i].y() = initial_pose_offset_model_y[i];
+      }
     } else {
       RCLCPP_WARN(
         get_logger(),
@@ -191,8 +184,9 @@ NDTScanMatcher::NDTScanMatcher()
     output_pose_covariance_[i] = output_pose_covariance[i];
   }
 
-  initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
-  n_startup_trials_ = this->declare_parameter<int>("n_startup_trials");
+  initial_estimate_particles_num_ =
+    this->declare_parameter<int64_t>("initial_estimate_particles_num");
+  n_startup_trials_ = this->declare_parameter<int64_t>("n_startup_trials");
 
   estimate_scores_for_degrounded_scan_ =
     this->declare_parameter<bool>("estimate_scores_for_degrounded_scan");
@@ -232,6 +226,9 @@ NDTScanMatcher::NDTScanMatcher()
         "regularization_pose_with_covariance", 10,
         std::bind(&NDTScanMatcher::callback_regularization_pose, this, std::placeholders::_1),
         initial_pose_sub_opt);
+    const double value_as_unlimited = 1000.0;
+    regularization_pose_buffer_ =
+      std::make_unique<SmartPoseBuffer>(this->get_logger(), value_as_unlimited, value_as_unlimited);
   }
 
   sensor_aligned_pose_pub_ =
@@ -350,7 +347,8 @@ void NDTScanMatcher::publish_diagnostic()
   }
   if (
     state_ptr_->count("execution_time") &&
-    std::stod((*state_ptr_)["execution_time"]) >= critical_upper_bound_exe_time_ms_) {
+    std::stod((*state_ptr_)["execution_time"]) >=
+      static_cast<double>(critical_upper_bound_exe_time_ms_)) {
     diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     diag_status_msg.message +=
       "NDT exe time is too long. (took " + (*state_ptr_)["execution_time"] + " [ms])";
@@ -375,42 +373,21 @@ void NDTScanMatcher::callback_initial_pose(
 {
   if (!is_activated_) return;
 
-  // lock mutex for initial pose
-  std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
-  // if rosbag restart, clear buffer
-  if (!initial_pose_msg_ptr_array_.empty()) {
-    const builtin_interfaces::msg::Time & t_front =
-      initial_pose_msg_ptr_array_.front()->header.stamp;
-    const builtin_interfaces::msg::Time & t_msg = initial_pose_msg_ptr->header.stamp;
-    if (t_front.sec > t_msg.sec || (t_front.sec == t_msg.sec && t_front.nanosec > t_msg.nanosec)) {
-      initial_pose_msg_ptr_array_.clear();
-    }
-  }
-
   if (initial_pose_msg_ptr->header.frame_id == map_frame_) {
-    initial_pose_msg_ptr_array_.push_back(initial_pose_msg_ptr);
+    initial_pose_buffer_->push_back(initial_pose_msg_ptr);
   } else {
-    // get TF from pose_frame to map_frame
-    auto tf_pose_to_map_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
-    tf2_listener_module_->get_transform(
-      this->now(), map_frame_, initial_pose_msg_ptr->header.frame_id, tf_pose_to_map_ptr);
-
-    // transform pose_frame to map_frame
-    auto initial_pose_msg_in_map_ptr =
-      std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-    *initial_pose_msg_in_map_ptr = transform(*initial_pose_msg_ptr, *tf_pose_to_map_ptr);
-    initial_pose_msg_in_map_ptr->header.stamp = initial_pose_msg_ptr->header.stamp;
-    initial_pose_msg_ptr_array_.push_back(initial_pose_msg_in_map_ptr);
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      get_logger(), *this->get_clock(), 1000,
+      "Received initial pose message with frame_id "
+        << initial_pose_msg_ptr->header.frame_id << ", but expected " << map_frame_
+        << ". Please check the frame_id in the input topic and ensure it is correct.");
   }
 }
 
 void NDTScanMatcher::callback_regularization_pose(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr)
 {
-  // Get lock for regularization_pose_msg_ptr_array_
-  std::lock_guard<std::mutex> lock(regularization_mutex_);
-  regularization_pose_msg_ptr_array_.push_back(pose_conv_msg_ptr);
-  // Release lock for regularization_pose_msg_ptr_array_
+  regularization_pose_buffer_->push_back(pose_conv_msg_ptr);
 }
 
 void NDTScanMatcher::callback_sensor_points(
@@ -459,17 +436,15 @@ void NDTScanMatcher::callback_sensor_points(
   if (!is_activated_) return;
 
   // calculate initial pose
-  std::unique_lock<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
-  if (initial_pose_msg_ptr_array_.size() <= 1) {
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
+  std::optional<SmartPoseBuffer::InterpolateResult> interpolation_result_opt =
+    initial_pose_buffer_->interpolate(sensor_ros_time);
+  if (!interpolation_result_opt) {
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No interpolated pose!");
     return;
   }
-  PoseArrayInterpolator interpolator(
-    this, sensor_ros_time, initial_pose_msg_ptr_array_, initial_pose_timeout_sec_,
-    initial_pose_distance_tolerance_m_);
-  if (!interpolator.is_success()) return;
-  pop_old_pose(initial_pose_msg_ptr_array_, sensor_ros_time);
-  initial_pose_array_lock.unlock();
+  initial_pose_buffer_->pop_old(sensor_ros_time);
+  const SmartPoseBuffer::InterpolateResult & interpolation_result =
+    interpolation_result_opt.value();
 
   // if regularization is enabled and available, set pose to NDT for regularization
   if (regularization_enabled_) {
@@ -483,7 +458,7 @@ void NDTScanMatcher::callback_sensor_points(
 
   // perform ndt scan matching
   const Eigen::Matrix4f initial_pose_matrix =
-    pose_to_matrix4f(interpolator.get_current_pose().pose.pose);
+    pose_to_matrix4f(interpolation_result.interpolated_pose.pose.pose);
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
   const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
@@ -528,7 +503,7 @@ void NDTScanMatcher::callback_sensor_points(
   const auto exe_time = static_cast<float>(duration_micro_sec) / 1000.0f;
 
   // publish
-  initial_pose_with_covariance_pub_->publish(interpolator.get_current_pose());
+  initial_pose_with_covariance_pub_->publish(interpolation_result.interpolated_pose);
   exe_time_pub_->publish(make_float32_stamped(sensor_ros_time, exe_time));
   transform_probability_pub_->publish(
     make_float32_stamped(sensor_ros_time, ndt_result.transform_probability));
@@ -539,8 +514,8 @@ void NDTScanMatcher::callback_sensor_points(
   publish_pose(sensor_ros_time, result_pose_msg, ndt_covariance, is_converged);
   publish_marker(sensor_ros_time, transformation_msg_array);
   publish_initial_to_result(
-    sensor_ros_time, result_pose_msg, interpolator.get_current_pose(), interpolator.get_old_pose(),
-    interpolator.get_new_pose());
+    sensor_ros_time, result_pose_msg, interpolation_result.interpolated_pose,
+    interpolation_result.old_pose, interpolation_result.new_pose);
 
   pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_in_map_ptr(
     new pcl::PointCloud<PointSource>);
@@ -765,12 +740,12 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     rot = find_rotation_matrix_aligning_covariance_to_principal_axes(
       ndt_result.hessian.inverse().block(0, 0, 2, 2));
   } catch (const std::exception & e) {
-    RCLCPP_WARN(get_logger(), e.what());
+    RCLCPP_WARN(get_logger(), "Error in Eigen solver: %s", e.what());
     return output_pose_covariance_;
   }
 
   // first result is added to mean
-  const int n = initial_pose_offset_model_.size() + 1;
+  const int n = static_cast<int>(initial_pose_offset_model_.size()) + 1;
   const Eigen::Vector2d ndt_pose_2d(ndt_result.pose(0, 3), ndt_result.pose(1, 3));
   Eigen::Vector2d mean = ndt_pose_2d;
   std::vector<Eigen::Vector2d> ndt_pose_2d_vec;
@@ -828,42 +803,20 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
   return ndt_covariance;
 }
 
-std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolate_regularization_pose(
-  const rclcpp::Time & sensor_ros_time)
-{
-  std::shared_ptr<PoseArrayInterpolator> interpolator = nullptr;
-  {
-    // Get lock for regularization_pose_msg_ptr_array_
-    std::lock_guard<std::mutex> lock(regularization_mutex_);
-
-    if (regularization_pose_msg_ptr_array_.empty()) {
-      return std::nullopt;
-    }
-
-    interpolator = std::make_shared<PoseArrayInterpolator>(
-      this, sensor_ros_time, regularization_pose_msg_ptr_array_);
-
-    // Remove old poses to make next interpolation more efficient
-    pop_old_pose(regularization_pose_msg_ptr_array_, sensor_ros_time);
-
-    // Release lock for regularization_pose_msg_ptr_array_
-  }
-
-  if (!interpolator || !interpolator->is_success()) {
-    return std::nullopt;
-  }
-
-  return pose_to_matrix4f(interpolator->get_current_pose().pose.pose);
-}
-
 void NDTScanMatcher::add_regularization_pose(const rclcpp::Time & sensor_ros_time)
 {
   ndt_ptr_->unsetRegularizationPose();
-  std::optional<Eigen::Matrix4f> pose_opt = interpolate_regularization_pose(sensor_ros_time);
-  if (pose_opt.has_value()) {
-    ndt_ptr_->setRegularizationPose(pose_opt.value());
-    RCLCPP_DEBUG_STREAM(get_logger(), "Regularization pose is set to NDT");
+  std::optional<SmartPoseBuffer::InterpolateResult> interpolation_result_opt =
+    regularization_pose_buffer_->interpolate(sensor_ros_time);
+  if (!interpolation_result_opt) {
+    return;
   }
+  regularization_pose_buffer_->pop_old(sensor_ros_time);
+  const SmartPoseBuffer::InterpolateResult & interpolation_result =
+    interpolation_result_opt.value();
+  const Eigen::Matrix4f pose = pose_to_matrix4f(interpolation_result.interpolated_pose.pose.pose);
+  ndt_ptr_->setRegularizationPose(pose);
+  RCLCPP_DEBUG_STREAM(get_logger(), "Regularization pose is set to NDT");
 }
 
 void NDTScanMatcher::service_trigger_node(
@@ -872,8 +825,7 @@ void NDTScanMatcher::service_trigger_node(
 {
   is_activated_ = req->data;
   if (is_activated_) {
-    std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
-    initial_pose_msg_ptr_array_.clear();
+    initial_pose_buffer_->clear();
   }
   res->success = true;
 }
@@ -936,16 +888,16 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   // The range taken by 2 * phi(x) - 1 is [-1, 1], so it can be used as a uniform distribution in
   // TPE. Let u = 2 * phi(x) - 1, then x = sqrt(2) * erf_inv(u). Computationally, it is not a good
   // to give erf_inv -1 and 1, so it is rounded off at (-1 + eps, 1 - eps).
-  const double SQRT2 = std::sqrt(2);
-  auto uniform_to_normal = [&SQRT2](const double uniform) {
+  const double sqrt2 = std::sqrt(2);
+  auto uniform_to_normal = [&sqrt2](const double uniform) {
     assert(-1.0 <= uniform && uniform <= 1.0);
     constexpr double epsilon = 1.0e-6;
     const double clamped = std::clamp(uniform, -1.0 + epsilon, 1.0 - epsilon);
-    return boost::math::erf_inv(clamped) * SQRT2;
+    return boost::math::erf_inv(clamped) * sqrt2;
   };
 
-  auto normal_to_uniform = [&SQRT2](const double normal) {
-    return boost::math::erf(normal / SQRT2);
+  auto normal_to_uniform = [&sqrt2](const double normal) {
+    return boost::math::erf(normal / sqrt2);
   };
 
   // Optimizing (x, y, z, roll, pitch, yaw) 6 dimensions.
@@ -960,7 +912,12 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   std::vector<Particle> particle_array;
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
 
-  for (int i = 0; i < initial_estimate_particles_num_; i++) {
+  // publish the estimated poses in 20 times to see the progress and to avoid dropping data
+  visualization_msgs::msg::MarkerArray marker_array;
+  constexpr int64_t publish_num = 20;
+  const int64_t publish_interval = initial_estimate_particles_num_ / publish_num;
+
+  for (int64_t i = 0; i < initial_estimate_particles_num_; i++) {
     const TreeStructuredParzenEstimator::Input input = tpe.get_next_input();
 
     geometry_msgs::msg::Pose initial_pose;
@@ -986,10 +943,11 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
       initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
       ndt_result.iteration_num);
     particle_array.push_back(particle);
-    const auto marker_array = make_debug_markers(
-      get_clock()->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1),
-      particle, i);
-    ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
+    push_debug_markers(marker_array, get_clock()->now(), map_frame_, particle, i);
+    if ((i + 1) % publish_interval == 0 || (i + 1) == initial_estimate_particles_num_) {
+      ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
+      marker_array.markers.clear();
+    }
 
     const geometry_msgs::msg::Pose pose = matrix4f_to_pose(ndt_result.pose);
     const geometry_msgs::msg::Vector3 rpy = get_rpy(pose);

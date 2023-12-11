@@ -15,8 +15,8 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__GEOMETRIC_PARALLEL_PARKING__GEOMETRIC_PARALLEL_PARKING_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__GEOMETRIC_PARALLEL_PARKING__GEOMETRIC_PARALLEL_PARKING_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/parameters.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -128,7 +128,7 @@ private:
   PathPointWithLaneId generateArcPathPoint(
     const Pose & center, const double radius, const double yaw, const bool is_left_turn,
     const bool is_forward);
-  boost::optional<Pose> calcStartPose(
+  std::optional<Pose> calcStartPose(
     const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
     const double start_pose_offset, const double R_E_far, const bool is_forward,
     const bool left_side_parking);
