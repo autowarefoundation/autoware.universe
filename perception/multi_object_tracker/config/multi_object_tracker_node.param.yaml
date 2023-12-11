@@ -15,3 +15,6 @@
     enable_delay_compensation: false
     pass_through_unknown_objects: false
     publish_untracked_objects: false
+    # debug parameters
+    publish_processing_time: false
+    publish_tentative_objects: false
