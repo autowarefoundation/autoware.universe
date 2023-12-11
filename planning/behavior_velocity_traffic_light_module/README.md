@@ -19,13 +19,13 @@ This module is activated when there is traffic light in ego lane.
 
 1. Obtains a traffic light mapped to the route and a stop line correspond to the traffic light from a map information.
 
-- If a corresponding traffic light signal have never been found, it treats as a signal to pass.
+   - If a corresponding traffic light signal have never been found, it treats as a signal to pass.
 
-- If a corresponding traffic light signal is found but timed out, it treats as a signal to stop.
+   - If a corresponding traffic light signal is found but timed out, it treats as a signal to stop.
 
 2. Uses the highest reliability one of the traffic light recognition result and if the color of that was not green or corresponding arrow signal, generates a stop point.
 
-- If an elapsed time to receive stop signal is less than `stop_time_hysteresis`, it treats as a signal to pass. This feature is to prevent chattering.
+   - If an elapsed time to receive stop signal is less than `stop_time_hysteresis`, it treats as a signal to pass. This feature is to prevent chattering.
 
 3. When vehicle current velocity is
 
