@@ -49,15 +49,7 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
 {
   const auto & data = avoidance_data_;
 
-  if (!status_.is_safe) {
-    return false;
-  }
-
   if (data.target_objects.empty()) {
-    return false;
-  }
-
-  if (status_.current_lanes.empty()) {
     return false;
   }
 
@@ -82,10 +74,15 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
 
   const auto & front_object = data.target_objects.front();
 
+  const auto current_lanes = getCurrentLanes();
+  if (current_lanes.empty()) {
+    return false;
+  }
   const auto shift_intervals =
-    getRouteHandler()->getLateralIntervalsToPreferredLane(status_.current_lanes.back(), direction_);
+    getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back(), direction_);
   const double minimum_lane_change_length = utils::lane_change::calcMinimumLaneChangeLength(
-    *lane_change_parameters_, shift_intervals, lane_change_parameters_->backward_length_buffer_for_end_of_lane);
+    *lane_change_parameters_, shift_intervals,
+    lane_change_parameters_->backward_length_buffer_for_end_of_lane);
 
   return (front_object.longitudinal > minimum_lane_change_length);
 }
