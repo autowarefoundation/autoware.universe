@@ -46,6 +46,10 @@ tier4_autoware_utils::Polygon2d make_forward_footprint(
 /// @return footprint projected to the given pose
 tier4_autoware_utils::Polygon2d project_to_pose(
   const tier4_autoware_utils::Polygon2d & base_footprint, const geometry_msgs::msg::Pose & pose);
+/// @brief create the rtree indexing the ego footprint along the path
+/// @param [inout] ego_data ego data with its path and the rtree to populate
+/// @param [in] params parameters
+void make_ego_footprint_rtree(EgoData & ego_data, const PlannerParam & params);
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop
 
 #endif  // FOOTPRINT_HPP_

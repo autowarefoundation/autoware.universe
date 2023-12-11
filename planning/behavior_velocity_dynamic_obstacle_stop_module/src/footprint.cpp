@@ -18,9 +18,12 @@
 
 #include <geometry_msgs/msg/pose.hpp>
 
+#include <boost/geometry/algorithms/envelope.hpp>
+
 #include <lanelet2_core/geometry/Polygon.h>
 #include <tf2/utils.h>
 
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner::dynamic_obstacle_stop
@@ -65,4 +68,17 @@ tier4_autoware_utils::Polygon2d project_to_pose(
     footprint.outer().emplace_back(p.x() + pose.position.x, p.y() + pose.position.y);
   return footprint;
 }
+
+void make_ego_footprint_rtree(EgoData & ego_data, const PlannerParam & params)
+{
+  for (const auto & p : ego_data.path.points)
+    ego_data.path_footprints.push_back(tier4_autoware_utils::toFootprint(
+      p.point.pose, params.ego_longitudinal_offset, 0.0, params.ego_lateral_offset * 2.0));
+  for (auto i = 0UL; i < ego_data.path_footprints.size(); ++i) {
+    const auto box =
+      boost::geometry::return_envelope<tier4_autoware_utils::Box2d>(ego_data.path_footprints[i]);
+    ego_data.rtree.insert(std::make_pair(box, i));
+  }
+}
+
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop

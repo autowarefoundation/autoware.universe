@@ -35,7 +35,6 @@ typedef boost::geometry::index::rtree<BoxIndexPair, boost::geometry::index::rsta
 /// @brief parameters for the "out of lane" module
 struct PlannerParam
 {
-  bool print_runtimes;
   double extra_object_width;
   double minimum_object_velocity;
   double stop_distance_buffer;

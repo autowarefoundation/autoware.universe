@@ -30,7 +30,6 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   const std::string ns(getModuleName());
   auto & pp = planner_param_;
 
-  pp.print_runtimes = getOrDeclareParameter<bool>(node, ns + ".print_runtimes");
   pp.extra_object_width = getOrDeclareParameter<double>(node, ns + ".extra_object_width");
   pp.minimum_object_velocity = getOrDeclareParameter<double>(node, ns + ".minimum_object_velocity");
   pp.stop_distance_buffer = getOrDeclareParameter<double>(node, ns + ".stop_distance_buffer");

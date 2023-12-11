@@ -14,21 +14,18 @@
 
 #include "scene_dynamic_obstacle_stop.hpp"
 
+#include "collision.hpp"
 #include "debug.hpp"
 #include "footprint.hpp"
+#include "object_filtering.hpp"
 #include "types.hpp"
 
 #include <behavior_velocity_planner_common/utilization/debug.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
-
-#include <boost/geometry.hpp>
-#include <boost/geometry/algorithms/intersection.hpp>
 
 #include <limits>
 #include <memory>
@@ -49,106 +46,6 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
 {
   prev_stop_decision_time_ = rclcpp::Time(int64_t{0}, clock->get_clock_type());
   velocity_factor_.init(PlanningBehavior::UNKNOWN);
-}
-
-std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicted_objects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const EgoData & ego_data,
-  const PlannerParam & params, const double hysteresis)
-{
-  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filtered_objects;
-  const auto is_vehicle = [](const auto & o) {
-    return std::find_if(o.classification.begin(), o.classification.end(), [](const auto & c) {
-             return c.label == autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
-                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
-                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
-                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
-                    c.label ==
-                      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
-                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
-           }) != o.classification.end();
-  };
-  const auto is_in_range = [&](const auto & o) {
-    const auto distance = std::abs(motion_utils::calcLateralOffset(
-      ego_data.path.points, o.kinematics.initial_pose_with_covariance.pose.position));
-    std::printf(
-      "dist = %2.2f < %2.2f + %2.2f + %2.2f + %2.2f (= %2.2f)\n", distance,
-      params.minimum_object_distance_from_ego_path, params.ego_lateral_offset,
-      o.shape.dimensions.y / 2.0, hysteresis,
-      params.minimum_object_distance_from_ego_path + params.ego_lateral_offset +
-        o.shape.dimensions.y / 2.0 + hysteresis);
-    return distance <= params.minimum_object_distance_from_ego_path + params.ego_lateral_offset +
-                         o.shape.dimensions.y / 2.0 + hysteresis;
-  };
-  const auto is_not_too_close = [&](const auto & o) {
-    const auto obj_arc_length = motion_utils::calcSignedArcLength(
-      ego_data.path.points, ego_data.pose.position,
-      o.kinematics.initial_pose_with_covariance.pose.position);
-    return obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
-                              params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
-  };
-  for (const auto & object : objects.objects)
-    if (
-      is_vehicle(object) &&
-      object.kinematics.initial_twist_with_covariance.twist.linear.x >=
-        params.minimum_object_velocity &&
-      is_in_range(object) && is_not_too_close(object))
-      filtered_objects.push_back(object);
-  return filtered_objects;
-}
-
-std::optional<geometry_msgs::msg::Point> find_earliest_collision(
-  const EgoData & ego_data,
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
-  const tier4_autoware_utils::MultiPolygon2d & obstacle_forward_footprints, DebugData & debug_data)
-{
-  auto earliest_idx = ego_data.path_footprints.size();
-  auto earliest_arc_length = motion_utils::calcArcLength(ego_data.path.points);
-  std::optional<geometry_msgs::msg::Point> earliest_collision_point;
-  debug_data.collisions.clear();
-  std::vector<BoxIndexPair> rough_collisions;
-  for (auto obstacle_idx = 0UL; obstacle_idx < objects.size(); ++obstacle_idx) {
-    rough_collisions.clear();
-    const auto & obstacle_pose = objects[obstacle_idx].kinematics.initial_pose_with_covariance.pose;
-    const auto & obstacle_footprint = obstacle_forward_footprints[obstacle_idx];
-    ego_data.rtree.query(
-      boost::geometry::index::intersects(obstacle_footprint), std::back_inserter(rough_collisions));
-    for (const auto & rough_collision : rough_collisions) {
-      const auto path_idx = rough_collision.second;
-      const auto & ego_footprint = ego_data.path_footprints[path_idx];
-      const auto & ego_pose = ego_data.path.points[ego_data.first_path_idx + path_idx].point.pose;
-      const auto angle_diff = tier4_autoware_utils::normalizeRadian(
-        tf2::getYaw(ego_pose.orientation) - tf2::getYaw(obstacle_pose.orientation));
-      if (path_idx <= earliest_idx && std::abs(angle_diff) > (M_PI_2 + M_PI_4)) {
-        tier4_autoware_utils::MultiPoint2d collision_points;
-        boost::geometry::intersection(
-          obstacle_footprint.outer(), ego_footprint.outer(), collision_points);
-        earliest_idx = path_idx;
-        for (const auto & coll_p : collision_points) {
-          auto p = geometry_msgs::msg::Point().set__x(coll_p.x()).set__y(coll_p.y());
-          const auto arc_length =
-            motion_utils::calcSignedArcLength(ego_data.path.points, ego_data.first_path_idx, p);
-          if (arc_length < earliest_arc_length) {
-            earliest_arc_length = arc_length;
-            debug_data.collisions = {obstacle_footprint, ego_footprint};
-            earliest_collision_point = p;
-          }
-        }
-      }
-    }
-  }
-  return earliest_collision_point;
-}
-
-void make_ego_footprint_rtree(EgoData & ego_data, const PlannerParam & params)
-{
-  for (const auto & p : ego_data.path.points)
-    ego_data.path_footprints.push_back(tier4_autoware_utils::toFootprint(
-      p.point.pose, params.ego_longitudinal_offset, 0.0, params.ego_lateral_offset * 2.0));
-  for (auto i = 0UL; i < ego_data.path_footprints.size(); ++i) {
-    const auto box =
-      boost::geometry::return_envelope<tier4_autoware_utils::Box2d>(ego_data.path_footprints[i]);
-    ego_data.rtree.insert(std::make_pair(box, i));
-  }
 }
 
 bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -218,8 +115,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   if (current_stop_pose_) motion_utils::insertStopPoint(*current_stop_pose_, 0.0, path->points);
 
   const auto total_time_us = stopwatch.toc();
-  // TODO(Maxime): set to DEBUG
-  RCLCPP_WARN(
+  RCLCPP_DEBUG(
     logger_,
     "Total time = %2.2fus\n\tpreprocessing = %2.2fus\n\tfootprints = "
     "%2.2fus\n\tcollisions = %2.2fus\n",
