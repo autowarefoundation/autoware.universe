@@ -135,6 +135,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num, p.verbose);
 
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+      if (name == "null") {
+        RCLCPP_INFO(get_logger(), "No modules are registered.");
+        break;
+      }
       planner_manager_->launchScenePlugin(*this, name);
     }
 

@@ -147,6 +147,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+    if (name == "null") {
+      RCLCPP_INFO(get_logger(), "No modules are registered.");
+      break;
+    }
     planner_manager_.launchScenePlugin(*this, name);
   }
 
