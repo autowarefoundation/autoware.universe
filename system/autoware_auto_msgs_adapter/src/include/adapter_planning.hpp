@@ -22,7 +22,7 @@
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 
 #include <string>
- 
+
 namespace autoware_auto_msgs_adapter
 {
 using TrajectoryAuto = autoware_auto_planning_msgs::msg::Trajectory;
@@ -49,17 +49,17 @@ protected:
     msg_auto.header = msg_source.header;
     PointAuto trajectory_point_auto;
     msg_auto.points.reserve(msg_source.points.size());
-    for(size_t i = 0;i < msg_source.points.size();i++)
-    {       
-        trajectory_point_auto.time_from_start = msg_source.points.at(i).time_from_start;
-        trajectory_point_auto.pose = msg_source.points.at(i).pose;
-        trajectory_point_auto.longitudinal_velocity_mps = msg_source.points.at(i).longitudinal_velocity_mps;
-        trajectory_point_auto.lateral_velocity_mps = msg_source.points.at(i).lateral_velocity_mps;
-        trajectory_point_auto.acceleration_mps2 = msg_source.points.at(i).acceleration_mps2;
-        trajectory_point_auto.heading_rate_rps = msg_source.points.at(i).heading_rate_rps;
-        trajectory_point_auto.front_wheel_angle_rad = msg_source.points.at(i).front_wheel_angle_rad;
-        trajectory_point_auto.rear_wheel_angle_rad = msg_source.points.at(i).rear_wheel_angle_rad;
-        msg_auto.points.push_back(trajectory_point_auto);
+    for (size_t i = 0; i < msg_source.points.size(); i++) {
+      trajectory_point_auto.time_from_start = msg_source.points.at(i).time_from_start;
+      trajectory_point_auto.pose = msg_source.points.at(i).pose;
+      trajectory_point_auto.longitudinal_velocity_mps =
+        msg_source.points.at(i).longitudinal_velocity_mps;
+      trajectory_point_auto.lateral_velocity_mps = msg_source.points.at(i).lateral_velocity_mps;
+      trajectory_point_auto.acceleration_mps2 = msg_source.points.at(i).acceleration_mps2;
+      trajectory_point_auto.heading_rate_rps = msg_source.points.at(i).heading_rate_rps;
+      trajectory_point_auto.front_wheel_angle_rad = msg_source.points.at(i).front_wheel_angle_rad;
+      trajectory_point_auto.rear_wheel_angle_rad = msg_source.points.at(i).rear_wheel_angle_rad;
+      msg_auto.points.push_back(trajectory_point_auto);
     }
 
     return msg_auto;
