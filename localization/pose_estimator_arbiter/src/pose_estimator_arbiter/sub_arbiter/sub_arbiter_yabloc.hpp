@@ -34,8 +34,9 @@ public:
   : BasePoseEstimatorSubArbiter(node, shared_data)
   {
     yabloc_is_enabled_ = true;
-    pub_image_ = node->create_publisher<Image>("~/output/yabloc/image", 5);
+    pub_image_ = node->create_publisher<Image>("~/output/yabloc/image", rclcpp::SensorDataQoS());
 
+    // Prepare suspend service server
     using namespace std::literals::chrono_literals;
     service_callback_group_ =
       node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -46,7 +47,7 @@ public:
     }
 
     // Register callback
-    shared_data_->yabloc_input_image.set_callback([this](Image::ConstSharedPtr msg) -> void {
+    shared_data_->artag_input_image.set_callback([this](Image::ConstSharedPtr msg) -> void {
       if (yabloc_is_enabled_) {
         pub_image_->publish(*msg);
       }

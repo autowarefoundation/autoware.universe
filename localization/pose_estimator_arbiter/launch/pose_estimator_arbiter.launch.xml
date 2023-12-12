@@ -10,10 +10,10 @@
 
     <!-- artag -->
     <remap from="~/input/artag/image" to="/sensing/camera/traffic_light/image_raw"/>
-    <remap from="~/output/artag/image" to="/sensing/camera/traffic_light/image_raw/relay"/>
+    <remap from="~/output/artag/image" to="/sensing/camera/traffic_light/image_raw/artag_relay"/>
     <!-- yabloc -->
-    <remap from="~/input/yabloc/image" to="/localization/pose_estimator/yabloc/image_processing/undistorted/image_raw"/>
-    <remap from="~/output/yabloc/image" to="/localization/pose_estimator/yabloc/image_processing/undistorted/image_raw/relay"/>
+    <remap from="~/input/yabloc/image" to="/sensing/camera/traffic_light/image_raw"/>
+    <remap from="~/output/yabloc/image" to="/sensing/camera/traffic_light/image_raw/yabloc_relay"/>
     <remap from="~/yabloc_suspend_srv" to="/yabloc_suspend_srv"/>
     <!-- eagleye -->
     <remap from="~/input/eagleye/pose_with_covariance" to="/localization/eagleye/pose_with_covariance/to_relay"/>

@@ -87,8 +87,11 @@ PoseEstimatorArbiter::PoseEstimatorArbiter()
     auto on_artag_input = std::bind(&PoseEstimatorArbiter::on_artag_input, this, _1);
     sub_artag_input_ =
       create_subscription<Image>("~/input/artag/image", sensor_qos, on_artag_input);
+
     auto on_yabloc_input = std::bind(&PoseEstimatorArbiter::on_yabloc_input, this, _1);
-    sub_yabloc_input_ = create_subscription<Image>("~/input/yabloc/image", 5, on_yabloc_input);
+    sub_yabloc_input_ =
+      create_subscription<Image>("~/input/yabloc/image", sensor_qos, on_yabloc_input);
+
     auto on_ndt_input = std::bind(&PoseEstimatorArbiter::on_ndt_input, this, _1);
     sub_ndt_input_ =
       create_subscription<PointCloud2>("~/input/ndt/pointcloud", sensor_qos, on_ndt_input);

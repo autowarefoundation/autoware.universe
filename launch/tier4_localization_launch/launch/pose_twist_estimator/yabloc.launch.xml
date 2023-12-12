@@ -3,7 +3,8 @@
   <arg name="multi_localizer_mode" default="false" description="Set to true when multiple pose_estimators are run simultaneously."/>
 
   <!-- source camera image topics -->
-  <arg name="src_image" default="/sensing/camera/traffic_light/image_raw"/>
+  <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/yabloc_relay" if="$(var multi_localizer_mode)"/>
+  <arg name="src_image" default="/sensing/camera/traffic_light/image_raw" unless="$(var multi_localizer_mode)"/>
   <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
 
   <!-- default parameter path -->
