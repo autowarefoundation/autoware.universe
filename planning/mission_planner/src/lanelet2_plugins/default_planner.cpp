@@ -154,6 +154,7 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
   param_.consider_no_drivable_lanes = node_->declare_parameter<bool>("consider_no_drivable_lanes");
   param_.check_footprint_inside_lanes =
     node_->declare_parameter<bool>("check_footprint_inside_lanes");
+  param_.prioritize_start_footprint = node_->declare_parameter<bool>("prioritize_start_footprint");
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
@@ -409,7 +410,8 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto goal_check_point = points.at(i);
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_check_point, goal_check_point, &path_lanelets, param_.consider_no_drivable_lanes)) {
+          start_check_point, goal_check_point, &path_lanelets, &vehicle_info_,
+          param_.prioritize_start_footprint, param_.consider_no_drivable_lanes)) {
       RCLCPP_WARN(logger, "Failed to plan route.");
       return route_msg;
     }

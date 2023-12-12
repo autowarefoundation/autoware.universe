@@ -16,6 +16,7 @@
 #define ROUTE_HANDLER__ROUTE_HANDLER_HPP_
 
 #include <rclcpp/logger.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -81,7 +82,10 @@ public:
   // for routing
   bool planPathLaneletsBetweenCheckpoints(
     const Pose & start_checkpoint, const Pose & goal_checkpoint,
-    lanelet::ConstLanelets * path_lanelets, const bool consider_no_drivable_lanes = false) const;
+    lanelet::ConstLanelets * path_lanelets,
+    const vehicle_info_util::VehicleInfo * vehicle_info = nullptr,
+    const bool prioritize_start_footprint = false,
+    const bool consider_no_drivable_lanes = false) const;
   std::vector<LaneletSegment> createMapSegments(const lanelet::ConstLanelets & path_lanelets) const;
   static bool isRouteLooped(const RouteSections & route_sections);
 

@@ -39,6 +39,7 @@ struct DefaultPlannerParameters
   bool enable_correct_goal_pose;
   bool consider_no_drivable_lanes;
   bool check_footprint_inside_lanes;
+  bool prioritize_start_footprint;
 };
 
 class DefaultPlanner : public mission_planner::PlannerPlugin

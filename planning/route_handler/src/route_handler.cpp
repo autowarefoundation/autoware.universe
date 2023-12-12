@@ -129,6 +129,109 @@ std::string toString(const geometry_msgs::msg::Pose & pose)
   return ss.str();
 }
 
+lanelet::ConstLanelet combine_lanelets(const lanelet::ConstLanelets & lanelets)
+{
+  lanelet::Points3d lefts;
+  lanelet::Points3d rights;
+  lanelet::Points3d centers;
+  std::vector<uint64_t> left_bound_ids;
+  std::vector<uint64_t> right_bound_ids;
+
+  for (const auto & llt : lanelets) {
+    if (llt.id() != 0) {
+      left_bound_ids.push_back(llt.leftBound().id());
+      right_bound_ids.push_back(llt.rightBound().id());
+    }
+  }
+
+  for (const auto & llt : lanelets) {
+    if (std::count(right_bound_ids.begin(), right_bound_ids.end(), llt.leftBound().id()) < 1) {
+      for (const auto & pt : llt.leftBound()) {
+        lefts.push_back(lanelet::Point3d(pt));
+      }
+    }
+    if (std::count(left_bound_ids.begin(), left_bound_ids.end(), llt.rightBound().id()) < 1) {
+      for (const auto & pt : llt.rightBound()) {
+        rights.push_back(lanelet::Point3d(pt));
+      }
+    }
+  }
+  const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
+  const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
+  auto combined_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
+  return std::move(combined_lanelet);
+}
+
+bool is_pose_footprint_inside_path_lanelets(
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr,
+  const lanelet::routing::LaneletPath & lanelet_path, const Pose & pose,
+  const vehicle_info_util::VehicleInfo * vehicle_info, const double search_margin = 2.0)
+{
+  // Redefine is_within function for an easier usage
+  const auto is_within =
+    [](const tier4_autoware_utils::LinearRing2d & ring, const lanelet::ConstLanelet & lanelet) {
+      return boost::geometry::within(ring, lanelet.polygon2d().basicPolygon());
+    };
+
+  // Create vehicle footprint projected into pose
+  const auto local_footprint = vehicle_info->createFootprint();
+  tier4_autoware_utils::LinearRing2d pose_footprint =
+    transformVector(local_footprint, tier4_autoware_utils::pose2transform(pose));
+
+  // Create combined path lanelet
+  lanelet::ConstLanelets path_lanelets;
+  path_lanelets.reserve(lanelet_path.size());
+  for (const auto & llt : lanelet_path) {
+    path_lanelets.push_back(llt);
+  }
+  auto const combined_path_lanelet = combine_lanelets(path_lanelets);
+
+  // Check if pose footprint is inside combined path lanelet
+  if (is_within(pose_footprint, combined_path_lanelet)) {
+    return true;
+  }
+
+  double min_expand_length = vehicle_info->vehicle_length_m + search_margin;
+
+  // Expand path start backwards by vehicle length + search_margin
+  double backward_expanded_path_length = 0.0;
+  for (const auto & previous_lanelet : routing_graph_ptr->previous(path_lanelets.front())) {
+    path_lanelets.insert(path_lanelets.begin(), previous_lanelet);
+    backward_expanded_path_length += lanelet::utils::getLaneletLength2d(previous_lanelet);
+
+    if (min_expand_length < backward_expanded_path_length) {
+      break;
+    }
+  }
+
+  // Expand path end forward by vehicle length + search_margin
+  double forward_expanded_path_length = 0.0;
+  for (const auto & next_lanelet : routing_graph_ptr->following(path_lanelets.back())) {
+    path_lanelets.push_back(next_lanelet);
+    forward_expanded_path_length += lanelet::utils::getLaneletLength2d(next_lanelet);
+
+    if (min_expand_length < forward_expanded_path_length) {
+      break;
+    }
+  }
+
+  if (backward_expanded_path_length > 0.0 || forward_expanded_path_length > 0.0) {
+    // Create combined expanded path lanelet
+    path_lanelets.reserve(lanelet_path.size());
+    for (const auto & llt : lanelet_path) {
+      path_lanelets.push_back(llt);
+    }
+    auto const combined_expanded_path_lanelet = combine_lanelets(path_lanelets);
+
+    // Check if pose footprint is inside combined expanded path lanelet
+    if (is_within(pose_footprint, combined_expanded_path_lanelet)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 }  // namespace
 
 namespace route_handler
@@ -2090,20 +2193,21 @@ lanelet::ConstLanelets RouteHandler::getNextLaneSequence(
 
 bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   const Pose & start_checkpoint, const Pose & goal_checkpoint,
-  lanelet::ConstLanelets * path_lanelets, const bool consider_no_drivable_lanes) const
+  lanelet::ConstLanelets * path_lanelets, const vehicle_info_util::VehicleInfo * vehicle_info,
+  const bool prioritize_start_footprint, const bool consider_no_drivable_lanes) const
 {
   // Find lanelets for start point. First, find all lanelets containing the start point to calculate
   // all possible route later. It fails when the point is not located on any road_lanelet (e.g. the
   // start point is located out of any lanelets or road_shoulder lanelet which is not contained in
   // road_lanelet). In that case, find the closest lanelet instead.
-  lanelet::ConstLanelet start_lanelet;
   lanelet::ConstLanelets start_lanelets;
   if (!lanelet::utils::query::getCurrentLanelets(
         road_lanelets_, start_checkpoint, &start_lanelets)) {
+    lanelet::ConstLanelet start_lanelet;
     if (!lanelet::utils::query::getClosestLanelet(
           road_lanelets_, start_checkpoint, &start_lanelet)) {
       RCLCPP_WARN_STREAM(
-        logger_, "Failed to find current lanelet."
+        logger_, "Failed to find start lanelet."
                    << std::endl
                    << " - start checkpoint: " << toString(start_checkpoint) << std::endl
                    << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
@@ -2123,15 +2227,15 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     return false;
   }
 
-  lanelet::Optional<lanelet::routing::Route> optional_route;
-  std::vector<lanelet::ConstLanelets> candidate_paths;
-  lanelet::routing::LaneletPath shortest_path;
+  struct PathInfo
+  {
+    lanelet::ConstLanelet start_lanelet;
+    lanelet::routing::LaneletPath lanelet_path;
+    double path_length2d = std::numeric_limits<double>::max();
+  };
+  std::vector<PathInfo> candidate_paths;
+
   bool is_route_found = false;
-
-  lanelet::routing::LaneletPath drivable_lane_path;
-  bool drivable_lane_path_found = false;
-  double shortest_path_length2d = std::numeric_limits<double>::max();
-
   for (const auto & st_llt : start_lanelets) {
     // check if the angle difference between start_checkpoint and start lanelet center line
     // orientation is in yaw_threshold range
@@ -2147,7 +2251,8 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
       }
     }
 
-    optional_route = routing_graph_ptr_->getRoute(st_llt, goal_lanelet, 0);
+    // Find the shortest route available from start lanelet to goal lanelet
+    auto optional_route = routing_graph_ptr_->getRoute(st_llt, goal_lanelet, 0);
     if (!optional_route || !is_proper_angle) {
       RCLCPP_ERROR_STREAM(
         logger_, "Failed to find a proper route!"
@@ -2158,35 +2263,49 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
                    << " - goal lane id: " << goal_lanelet.id() << std::endl);
     } else {
       is_route_found = true;
-
-      if (optional_route->length2d() < shortest_path_length2d) {
-        shortest_path_length2d = optional_route->length2d();
-        shortest_path = optional_route->shortestPath();
-        start_lanelet = st_llt;
-      }
+      PathInfo candidate_path{st_llt, optional_route->shortestPath(), optional_route->length2d()};
+      candidate_paths.push_back(candidate_path);
     }
   }
 
   if (is_route_found) {
-    lanelet::routing::LaneletPath path;
+    // sort by shortest path length
+    std::sort(candidate_paths.begin(), candidate_paths.end(), [](const PathInfo & x, PathInfo & y) {
+      return x.path_length2d < y.path_length2d;
+    });
+
+    // Pick as preferred path the shortest path among the candidate paths
+    PathInfo preferred_path = candidate_paths.front();
+
+    // Prioritize the candidate path which start footprint is inside of path lanelets
+    if (vehicle_info != nullptr && prioritize_start_footprint) {
+      for (const auto & candidate_path : candidate_paths) {
+        //
+        if (is_pose_footprint_inside_path_lanelets(
+              routing_graph_ptr_, candidate_path.lanelet_path, start_checkpoint, vehicle_info)) {
+          preferred_path = candidate_path;
+          break;
+        }
+      }
+    }
+
     if (consider_no_drivable_lanes) {
-      bool shortest_path_has_no_drivable_lane = hasNoDrivableLaneInPath(shortest_path);
+      lanelet::routing::LaneletPath drivable_lane_path;
+      auto drivable_lane_path_found = false;
+      auto shortest_path_has_no_drivable_lane =
+        hasNoDrivableLaneInPath(preferred_path.lanelet_path);
       if (shortest_path_has_no_drivable_lane) {
         drivable_lane_path_found =
-          findDrivableLanePath(start_lanelet, goal_lanelet, drivable_lane_path);
+          findDrivableLanePath(preferred_path.start_lanelet, goal_lanelet, drivable_lane_path);
       }
 
       if (drivable_lane_path_found) {
-        path = drivable_lane_path;
-      } else {
-        path = shortest_path;
+        preferred_path.lanelet_path = drivable_lane_path;
       }
-    } else {
-      path = shortest_path;
     }
 
-    path_lanelets->reserve(path.size());
-    for (const auto & llt : path) {
+    path_lanelets->reserve(preferred_path.lanelet_path.size());
+    for (const auto & llt : preferred_path.lanelet_path) {
       path_lanelets->push_back(llt);
     }
   }
