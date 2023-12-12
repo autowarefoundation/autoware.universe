@@ -81,8 +81,10 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
   node_param_.update_rate_hz = declare_parameter<double>("update_rate_hz", 20.0);
   node_param_.new_frame_id = declare_parameter<std::string>("new_frame_id", "base_link");
   node_param_.use_twist_compensation = declare_parameter<bool>("use_twist_compensation", false);
+  node_param_.use_twist_yaw_compensation =
+    declare_parameter<bool>("use_twist_yaw_compensation", false);
   node_param_.static_obj_speed_threshold =
-    declare_parameter<double>("static_obj_speed_threshold", 1.0);
+    declare_parameter<float>("static_obj_speed_threshold", 1.0);
 
   // Subscriber
   sub_radar_ = create_subscription<RadarTracks>(
@@ -127,6 +129,7 @@ rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetPara
       update_param(params, "update_rate_hz", p.update_rate_hz);
       update_param(params, "new_frame_id", p.new_frame_id);
       update_param(params, "use_twist_compensation", p.use_twist_compensation);
+      update_param(params, "use_twist_yaw_compensation", p.use_twist_yaw_compensation);
       update_param(params, "static_obj_speed_threshold", p.static_obj_speed_threshold);
     }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
@@ -224,7 +227,18 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     const auto & position_from_veh = transformed_pose_stamped.pose.position;
 
     // Velocity conversion
-    const auto compensated_velocity = compensateVelocity(radar_track, position_from_veh);
+    // 1: Compensate radar coordinate
+    // radar track velocity is defined in the radar coordinate
+    // compensate radar coordinate to vehicle coordinate
+    auto compensated_velocity = compensateVelocity(radar_track);
+    // 2: Compensate ego motion
+    if (node_param_.use_twist_compensation && odometry_data_) {
+      compensateEgoMotion(compensated_velocity, position_from_veh);
+    } else if (node_param_.use_twist_compensation && !odometry_data_) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000,
+        "Odometry data is not available. Radar track velocity will not be compensated.");
+    }
 
     // determine static object
     bool is_static_object = false;
@@ -267,38 +281,33 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
 }
 
 geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocity(
-  const radar_msgs::msg::RadarTrack & radar_track,
-  const geometry_msgs::msg::Point & position_from_veh)
+  const radar_msgs::msg::RadarTrack & radar_track)
 {
   // initialize compensated velocity
   geometry_msgs::msg::Vector3 compensated_velocity{};
 
-  // 1: Compensate radar coordinate
-  // radar track velocity is defined in the radar coordinate
-  // compensate radar coordinate to vehicle coordinate
-  {
-    const double sensor_yaw = tf2::getYaw(transform_->transform.rotation);
-    const geometry_msgs::msg::Vector3 & vel = radar_track.velocity;
-    compensated_velocity.x = vel.x * std::cos(sensor_yaw) - vel.y * std::sin(sensor_yaw);
-    compensated_velocity.y = vel.x * std::sin(sensor_yaw) + vel.y * std::cos(sensor_yaw);
-    compensated_velocity.z = vel.z;
-  }
-
-  // 2: Compensate ego vehicle motion (twist)
-  if (node_param_.use_twist_compensation && odometry_data_) {
-    // linear compensation
-    compensated_velocity.x += odometry_data_->twist.twist.linear.x;
-    compensated_velocity.y += odometry_data_->twist.twist.linear.y;
-    compensated_velocity.z += odometry_data_->twist.twist.linear.z;
-    // angular compensation
-    const float veh_yaw = odometry_data_->twist.twist.angular.z;
-    compensated_velocity.x += -position_from_veh.y * veh_yaw;
-    compensated_velocity.y += position_from_veh.x * veh_yaw;
-  } else if (node_param_.use_twist_compensation && !odometry_data_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Odometry data is not available");
-  }
+  const double sensor_yaw = tf2::getYaw(transform_->transform.rotation);
+  const geometry_msgs::msg::Vector3 & vel = radar_track.velocity;
+  compensated_velocity.x = vel.x * std::cos(sensor_yaw) - vel.y * std::sin(sensor_yaw);
+  compensated_velocity.y = vel.x * std::sin(sensor_yaw) + vel.y * std::cos(sensor_yaw);
+  compensated_velocity.z = vel.z;
 
   return compensated_velocity;
+}
+
+void RadarTracksMsgsConverterNode::compensateEgoMotion(
+  geometry_msgs::msg::Vector3 & velocity, const geometry_msgs::msg::Point & position_from_veh)
+{
+  // linear compensation
+  velocity.x += odometry_data_->twist.twist.linear.x;
+  velocity.y += odometry_data_->twist.twist.linear.y;
+  velocity.z += odometry_data_->twist.twist.linear.z;
+  if (node_param_.use_twist_yaw_compensation) {
+    // angular compensation
+    const float veh_yaw = odometry_data_->twist.twist.angular.z;
+    velocity.x += -position_from_veh.y * veh_yaw;
+    velocity.y += position_from_veh.x * veh_yaw;
+  }
 }
 
 bool RadarTracksMsgsConverterNode::isDynamicObject(

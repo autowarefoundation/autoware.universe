@@ -56,7 +56,8 @@ public:
     double update_rate_hz{};
     std::string new_frame_id{};
     bool use_twist_compensation{};
-    double static_obj_speed_threshold{};
+    bool use_twist_yaw_compensation{};
+    float static_obj_speed_threshold{};
   };
 
 private:
@@ -96,9 +97,9 @@ private:
   geometry_msgs::msg::PoseWithCovariance convertPoseWithCovariance();
   TrackedObjects convertRadarTrackToTrackedObjects();
   DetectedObjects convertTrackedObjectsToDetectedObjects(TrackedObjects & objects);
-  geometry_msgs::msg::Vector3 compensateVelocity(
-    const radar_msgs::msg::RadarTrack & radar_track,
-    const geometry_msgs::msg::Point & position_from_veh);
+  geometry_msgs::msg::Vector3 compensateVelocity(const radar_msgs::msg::RadarTrack & radar_track);
+  void compensateEgoMotion(
+    geometry_msgs::msg::Vector3 & velocity, const geometry_msgs::msg::Point & position_from_veh);
   bool isDynamicObject(
     const radar_msgs::msg::RadarTrack & radar_track,
     const geometry_msgs::msg::Vector3 & compensated_velocity);
