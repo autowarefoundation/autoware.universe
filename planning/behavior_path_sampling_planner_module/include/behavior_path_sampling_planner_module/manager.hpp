@@ -15,9 +15,9 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__MANAGER_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__MANAGER_HPP_
 
-#include "behavior_path_planner/scene_module/sampling_planner/sampling_planner_module.hpp"
-#include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
-#include "behavior_path_planner/utils/sampling_planner/sampling_planner_parameters.hpp"
+#include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
+#include "behavior_path_sampling_planner_module/sampling_planner_module.hpp"
+#include "behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -32,13 +32,14 @@ namespace behavior_path_planner
 class SamplingPlannerModuleManager : public SceneModuleManagerInterface
 {
 public:
-  SamplingPlannerModuleManager(
-    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
+  SamplingPlannerModuleManager() : SceneModuleManagerInterface{"side_shift"} {}
+  void init(rclcpp::Node * node) override;
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
     return std::make_unique<SamplingPlannerModule>(
-      name_, *node_, parameters_, rtc_interface_ptr_map_);
+      name_, *node_, parameters_, rtc_interface_ptr_map_,
+      objects_of_interest_marker_interface_ptr_map_);
   }
 
   void updateModuleParams(

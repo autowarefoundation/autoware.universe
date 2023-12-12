@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/sampling_planner/sampling_planner_module.hpp"
+#include "behavior_path_sampling_planner_module/sampling_planner_module.hpp"
 
 #include <boost/geometry/algorithms/within.hpp>
 
@@ -31,8 +31,10 @@ using utils::toPath;
 SamplingPlannerModule::SamplingPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<SamplingPlannerParameters> & parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
   internal_params_ =

@@ -15,13 +15,13 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__SAMPLING_PLANNER_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__SAMPLING_PLANNER_MODULE_HPP_
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/utils/drivable_area_expansion/drivable_area_expansion.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/sampling_planner/sampling_planner_parameters.hpp"
-#include "behavior_path_planner/utils/sampling_planner/util.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/include/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/include/behavior_path_planner_common/marker_utils/utils.hpp"
+#include "behavior_path_planner_common/include/behavior_path_planner_common/utils/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "behavior_path_planner_common/include/behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/include/behavior_path_planner_common/utils/utils.hpp"
+#include "behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
+#include "behavior_path_sampling_planner_module/util.hpp"
 #include "bezier_sampler/bezier_sampling.hpp"
 #include "frenet_planner/frenet_planner.hpp"
 #include "lanelet2_extension/utility/query.hpp"
