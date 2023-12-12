@@ -150,6 +150,7 @@ public:
     double traffic_light_state_timeout;
     // param for target area & object
     double crosswalk_attention_range;
+    double vehicle_object_cross_angle_threshold;
     bool look_unknown;
     bool look_bicycle;
     bool look_motorcycle;
@@ -366,7 +367,8 @@ private:
   CollisionPoint createCollisionPoint(
     const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
     const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
-    const geometry_msgs::msg::Vector3 & obj_vel) const;
+    const geometry_msgs::msg::Vector3 & obj_vel,
+    const double object_crosswalk_passage_direction) const;
 
   float calcTargetVelocity(
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;

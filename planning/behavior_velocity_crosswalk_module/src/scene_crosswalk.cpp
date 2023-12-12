@@ -316,6 +316,14 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   const double ego_vel = planner_data_->current_velocity->twist.linear.x;
   const double ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
 
+  const std::optional<double> ego_crosswalk_passage_direction = [&]() -> std::optional<double> {
+    if (path_intersects.size() < 2) {
+      return std::nullopt;
+    }
+    const auto & front = path_intersects.front();
+    const auto & back = path_intersects.back();
+    return std::atan2(back.y - front.y, back.x - front.x);
+  }();
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   const auto dist_ego_to_stop =
     calcSignedArcLength(ego_path.points, ego_pos, p_stop_line->first) + p_stop_line->second;
@@ -357,6 +365,14 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
       const auto & collision_state = object.collision_state;
       if (collision_state != CollisionState::YIELD) {
         continue;
+      }
+      if (ego_crosswalk_passage_direction) {
+        const double direction_diff = tier4_autoware_utils::normalizeRadian(
+          collision_point.value().crosswalk_passage_direction -
+          ego_crosswalk_passage_direction.value());
+        if (direction_diff < planner_param_.vehicle_object_cross_angle_threshold) {
+          continue;
+        }
       }
 
       stop_factor_points.push_back(object.position);
@@ -625,6 +641,10 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
       // Calculate multi-step object polygon, and reset start_idx
       const size_t start_idx_with_margin = std::max(static_cast<int>(start_idx) - 1, 0);
       const size_t end_idx_with_margin = std::min(i + 1, obj_path.path.size() - 1);
+      const auto &start_idx_point = obj_path.path.at(start_idx_with_margin).position,
+                 end_idx_point = obj_path.path.at(end_idx_with_margin).position;
+      const double object_crosswalk_passage_direction =
+        std::atan2(end_idx_point.y - start_idx_point.y, end_idx_point.x - start_idx_point.x);
       const auto obj_multi_step_polygon = createMultiStepPolygon(
         obj_path.path, obj_polygon, start_idx_with_margin, end_idx_with_margin);
       is_start_idx_initialized = false;
@@ -660,7 +680,8 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
       if (dist_ego2cp < minimum_stop_dist) {
         minimum_stop_dist = dist_ego2cp;
         nearest_collision_point = createCollisionPoint(
-          intersection_center_point, dist_ego2cp, dist_obj2cp, ego_vel, obj_vel);
+          intersection_center_point, dist_ego2cp, dist_obj2cp, ego_vel, obj_vel,
+          object_crosswalk_passage_direction);
         debug_data_.obj_polygons.push_back(
           toGeometryPointVector(obj_multi_step_polygon, ego_pos.z));
       }
@@ -679,7 +700,8 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
 CollisionPoint CrosswalkModule::createCollisionPoint(
   const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
   const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
-  const geometry_msgs::msg::Vector3 & obj_vel) const
+  const geometry_msgs::msg::Vector3 & obj_vel,
+  const double object_crosswalk_passage_direction) const
 {
   constexpr double min_ego_velocity = 1.38;  // [m/s]
 
@@ -690,6 +712,7 @@ CollisionPoint CrosswalkModule::createCollisionPoint(
 
   CollisionPoint collision_point{};
   collision_point.collision_point = nearest_collision_point;
+  collision_point.crosswalk_passage_direction = object_crosswalk_passage_direction;
   collision_point.time_to_collision =
     std::max(0.0, dist_ego2cp - planner_param_.stop_distance_from_object - base_link2front) /
     std::max(ego_vel.x, min_ego_velocity);
