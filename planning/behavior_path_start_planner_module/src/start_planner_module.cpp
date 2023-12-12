@@ -631,13 +631,11 @@ bool StartPlannerModule::findPullOutPath(
   const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
 
   // If no path is found, return false
-  if (!pull_out_path) {
-    return false;
-  }
+  if (pull_out_path.empty()) return false;
 
   // If driving forward, update status with the current path and return true
   if (is_driving_forward) {
-    updateStatusWithCurrentPath(*pull_out_path, pull_out_start_pose, planner->getPlannerType());
+    updateStatusWithCurrentPath(pull_out_path.at(0), pull_out_start_pose, planner->getPlannerType());
     return true;
   }
 
@@ -648,11 +646,11 @@ bool StartPlannerModule::findPullOutPath(
   const auto next_pull_out_path = planner->plan(next_pull_out_start_pose, goal_pose);
 
   // If no next path is found, return false
-  if (!next_pull_out_path) return false;
+  if (next_pull_out_path.empty()) return false;
 
   // Update status with the next path and return true
   updateStatusWithNextPath(
-    *next_pull_out_path, next_pull_out_start_pose, planner->getPlannerType());
+    next_pull_out_path.at(0), next_pull_out_start_pose, planner->getPlannerType());
   return true;
 }
 
@@ -1234,12 +1232,12 @@ bool StartPlannerModule::planFreespacePath()
     freespace_planner_->setPlannerData(planner_data_);
     auto freespace_path = freespace_planner_->plan(current_pose, end_pose);
 
-    if (!freespace_path) {
+    if (freespace_path.empty()) {
       continue;
     }
 
     const std::lock_guard<std::mutex> lock(mutex_);
-    status_.pull_out_path = *freespace_path;
+    status_.pull_out_path = freespace_path.at(0);
     status_.pull_out_start_pose = current_pose;
     status_.planner_type = freespace_planner_->getPlannerType();
     status_.found_pull_out_path = true;

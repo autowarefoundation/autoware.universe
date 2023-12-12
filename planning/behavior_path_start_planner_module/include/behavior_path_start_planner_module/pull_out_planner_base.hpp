@@ -56,7 +56,7 @@ public:
   }
 
   virtual PlannerType getPlannerType() = 0;
-  virtual std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) = 0;
+  virtual std::vector<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) = 0;
 
 protected:
   std::shared_ptr<const PlannerData> planner_data_;

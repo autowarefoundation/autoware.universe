@@ -26,6 +26,7 @@
 
 namespace behavior_path_planner
 {
+
 FreespacePullOut::FreespacePullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
   const vehicle_info_util::VehicleInfo & vehicle_info)
@@ -45,7 +46,7 @@ FreespacePullOut::FreespacePullOut(
   }
 }
 
-std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const Pose & end_pose)
+std::vector<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const Pose & end_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
   const double backward_path_length = planner_data_->parameters.backward_path_length;
@@ -53,8 +54,7 @@ std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const
 
   planner_->setMap(*planner_data_->costmap);
 
-  const bool found_path = planner_->makePlan(start_pose, end_pose);
-  if (!found_path) {
+  if (!planner_->makePlan(start_pose, end_pose)) {
     return {};
   }
 
@@ -112,6 +112,9 @@ std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const
   pull_out_path.start_pose = start_pose;
   pull_out_path.end_pose = end_pose;
 
-  return pull_out_path;
+  std::vector<PullOutPath> pull_out_path_candidates;
+  pull_out_path_candidates.push_back(pull_out_path);
+
+  return pull_out_path_candidates;
 }
 }  // namespace behavior_path_planner

@@ -37,7 +37,7 @@ GeometricPullOut::GeometricPullOut(rclcpp::Node & node, const StartPlannerParame
   planner_.setParameters(parallel_parking_parameters_);
 }
 
-std::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
+std::vector<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
 {
   PullOutPath output;
 
@@ -55,9 +55,8 @@ std::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const
   planner_.setTurningRadius(
     planner_data_->parameters, parallel_parking_parameters_.pull_out_max_steer_angle);
   planner_.setPlannerData(planner_data_);
-  const bool found_valid_path =
-    planner_.planPullOut(start_pose, goal_pose, road_lanes, pull_out_lanes, left_side_start);
-  if (!found_valid_path) {
+
+  if (!planner_.planPullOut(start_pose, goal_pose, road_lanes, pull_out_lanes, left_side_start)) {
     return {};
   }
 
@@ -120,7 +119,9 @@ std::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const
 
   output.start_pose = planner_.getArcPaths().at(0).points.front().point.pose;
   output.end_pose = planner_.getArcPaths().at(1).points.back().point.pose;
+  std::vector<PullOutPath> pull_out_path_candidates;
+  pull_out_path_candidates.push_back(output);
 
-  return output;
+  return pull_out_path_candidates;
 }
 }  // namespace behavior_path_planner

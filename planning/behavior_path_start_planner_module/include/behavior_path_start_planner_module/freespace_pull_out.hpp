@@ -40,7 +40,7 @@ public:
 
   PlannerType getPlannerType() override { return PlannerType::FREESPACE; }
 
-  std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & end_pose) override;
+  std::vector<PullOutPath> plan(const Pose & start_pose, const Pose & end_pose) override;
 
 protected:
   std::unique_ptr<AbstractPlanningAlgorithm> planner_;

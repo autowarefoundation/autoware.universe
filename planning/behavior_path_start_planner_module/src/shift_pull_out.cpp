@@ -42,8 +42,10 @@ ShiftPullOut::ShiftPullOut(
 {
 }
 
-std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
+std::vector<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
 {
+  std::vector<PullOutPath> pull_out_path_candidates;
+
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;
   const auto & dynamic_objects = planner_data_->dynamic_object;
@@ -52,7 +54,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     planner_data_->parameters.backward_path_length + parameters_.max_back_distance;
   const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
   if (pull_out_lanes.empty()) {
-    return std::nullopt;
+    return pull_out_path_candidates;
   }
 
   const auto road_lanes = utils::getExtendedCurrentLanes(
@@ -61,7 +63,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
   // find candidate paths
   auto pull_out_paths = calcPullOutPaths(*route_handler, road_lanes, start_pose, goal_pose);
   if (pull_out_paths.empty()) {
-    return std::nullopt;
+    return pull_out_path_candidates;
   }
 
   // extract stop objects in pull out lane for collision check
@@ -71,7 +73,6 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
   const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     pull_out_lane_objects, parameters_.th_moving_object_velocity);
 
-  // get safe path
   for (auto & pull_out_path : pull_out_paths) {
     auto & shift_path =
       pull_out_path.partial_paths.front();  // shift path is not separate but only one.
@@ -152,10 +153,10 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
 
     shift_path.header = planner_data_->route_handler->getRouteHeader();
 
-    return pull_out_path;
+    pull_out_path_candidates.push_back(pull_out_path);
   }
 
-  return std::nullopt;
+  return pull_out_path_candidates;
 }
 
 std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
