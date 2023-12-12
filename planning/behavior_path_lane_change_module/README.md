@@ -15,7 +15,7 @@ The Lane Change module is activated when lane change is needed and can be safely
 
 The lane change candidate path is divided into two phases: preparation and lane-changing. The following figure illustrates each phase of the lane change candidate path.
 
-![lane-change-phases](../image/lane_change/lane_change-lane_change_phases.png)
+![lane-change-phases](./images/lane_change-lane_change_phases.png)
 
 ### Preparation phase
 
@@ -62,7 +62,7 @@ Note that when the `current_velocity` is lower than `minimum_lane_changing_veloc
 
 The following figure illustrates when `longitudinal_acceleration_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
 
-![path_samples](../image/lane_change/lane_change-candidate_path_samples.png)
+![path_samples](./images/lane_change-candidate_path_samples.png)
 
 Which path will be chosen will depend on validity and collision check.
 
@@ -161,7 +161,7 @@ See [safety check utils explanation](../docs/behavior_path_planner_safety_check.
 
 First, we divide the target objects into obstacles in the target lane, obstacles in the current lane, and obstacles in other lanes. Target lane indicates the lane that the ego vehicle is going to reach after the lane change and current lane mean the current lane where the ego vehicle is following before the lane change. Other lanes are lanes that do not belong to the target and current lanes. The following picture describes objects on each lane. Note that users can remove objects either on current and other lanes from safety check by changing the flag, which are `check_objects_on_current_lanes` and `check_objects_on_other_lanes`.
 
-![object lanes](../image/lane_change/lane_objects.drawio.svg)
+![object lanes](./images/lane_objects.drawio.svg)
 
 Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light.　The explanation for parked car detection is written in [documentation for avoidance module](../docs/behavior_path_planner_avoidance_design.md).
 
@@ -169,7 +169,7 @@ Furthermore, to change lanes behind a vehicle waiting at a traffic light, we ski
 
 The ego vehicle may need to secure ample inter-vehicle distance ahead of the target vehicle before attempting a lane change. The flag `enable_collision_check_at_prepare_phase` can be enabled to gain this behavior. The following image illustrates the differences between the `false` and `true` cases.
 
-![enable collision check at prepare phase](../image/lane_change/lane_change-enable_collision_check_at_prepare_phase.png)
+![enable collision check at prepare phase](./images/lane_change-enable_collision_check_at_prepare_phase.png)
 
 The parameter `prepare_phase_ignore_target_speed_thresh` can be configured to ignore the prepare phase collision check for targets whose speeds are less than a specific threshold, such as stationary or very slow-moving objects.
 
@@ -184,7 +184,7 @@ minimum_lane_change_distance = minimum_prepare_length + minimum_lane_changing_ve
 
 The following figure illustrates when the lane is blocked in multiple lane changes cases.
 
-![multiple-lane-changes](../image/lane_change/lane_change-when_cannot_change_lanes.png)
+![multiple-lane-changes](./images/lane_change-when_cannot_change_lanes.png)
 
 #### Stopping position when an object exists ahead
 
@@ -195,25 +195,25 @@ The position to be stopped depends on the situation, such as when the lane chang
 
 Regardless of the presence or absence of objects in the lane change target lane, stop by keeping the distance necessary for lane change to the object ahead.
 
-![stop_at_terminal_no_block](../image/lane_change/lane_change-stop_at_terminal_no_block.drawio.svg)
+![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
 
-![stop_at_terminal](../image/lane_change/lane_change-stop_at_terminal.drawio.svg)
+![stop_at_terminal](./images/lane_change-stop_at_terminal.drawio.svg)
 
 ##### When the ego vehicle is not near the end of the lane change
 
 If there are NO objects in the lane change section of the target lane, stop by keeping the distance necessary for lane change to the object ahead.
 
-![stop_not_at_terminal_no_blocking_object](../image/lane_change/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
+![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
 
 If there are objects in the lane change section of the target lane, stop WITHOUT keeping the distance necessary for lane change to the object ahead.
 
-![stop_not_at_terminal](../image/lane_change/lane_change-stop_not_at_terminal.drawio.svg)
+![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
 ##### When the target lane is far away
 
 When the target lane for lane change is far away and not next to the current lane, do not keep the distance necessary for lane change to the object ahead.
 
-![stop_far_from_target_lane](../image/lane_change/lane_change-stop_far_from_target_lane.drawio.svg)
+![stop_far_from_target_lane](./images/lane_change-stop_far_from_target_lane.drawio.svg)
 
 ### Lane Change When Stuck
 
@@ -292,19 +292,19 @@ The function can be enabled by setting `enable_on_prepare_phase` to `true`.
 
 The following image illustrates the cancel process.
 
-![cancel](../image/lane_change/cancel_and_abort/lane_change-cancel.png)
+![cancel](./images/lane_change-cancel.png)
 
 #### Abort
 
 Assume the ego vehicle has already departed from the current lane. In that case, it is dangerous to cancel the path, and it will cause the ego vehicle to change the heading direction abruptly. In this case, planning a trajectory that allows the ego vehicle to return to the current path while minimizing the heading changes is necessary. In this case, the lane change module will generate an abort path. The following images show an example of the abort path. Do note that the function DOESN'T GUARANTEE a safe abort process, as it didn't check the presence of the surrounding objects and/or their reactions. The function can be enable manually by setting both `enable_on_prepare_phase` and `enable_on_lane_changing_phase` to `true`. The parameter `max_lateral_jerk` need to be set to a high value in order for it to work.
 
-![abort](../image/lane_change/cancel_and_abort/lane_change-abort.png)
+![abort](./images/lane_change-abort.png)
 
 #### Stop/Cruise
 
 The last behavior will also occur if the ego vehicle has departed from the current lane. If the abort function is disabled or the abort is no longer possible, the ego vehicle will attempt to stop or transition to the obstacle cruise mode. Do note that the module DOESN'T GUARANTEE safe maneuver due to the unexpected behavior that might've occurred during these critical scenarios. The following images illustrate the situation.
 
-![stop](../image/lane_change/cancel_and_abort/lane_change-cant_cancel_no_abort.png)
+![stop](./images/lane_change-cant_cancel_no_abort.png)
 
 ## Parameters
 
@@ -451,11 +451,11 @@ Then add the marker
 
 in `rviz2`.
 
-![debug](../image/lane_change/lane_change-debug-1.png)
+![debug](./images/lane_change-debug-1.png)
 
-![debug2](../image/lane_change/lane_change-debug-2.png)
+![debug2](./images/lane_change-debug-2.png)
 
-![debug3](../image/lane_change/lane_change-debug-3.png)
+![debug3](./images/lane_change-debug-3.png)
 
 Available information
 
