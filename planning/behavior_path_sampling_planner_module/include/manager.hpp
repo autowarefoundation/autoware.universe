@@ -32,13 +32,18 @@ namespace behavior_path_planner
 class SamplingPlannerModuleManager : public SceneModuleManagerInterface
 {
 public:
+  SamplingPlannerModuleManager() : SceneModuleManagerInterface{"sampling_planner"} {}
+
+  void init(rclcpp::Node * node) override;
+
   SamplingPlannerModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
     return std::make_unique<SamplingPlannerModule>(
-      name_, *node_, parameters_, rtc_interface_ptr_map_);
+      name_, *node_, parameters_, rtc_interface_ptr_map_,
+      objects_of_interest_marker_interface_ptr_map_);
   }
 
   void updateModuleParams(

@@ -87,6 +87,10 @@ public:
   CandidateOutput planCandidate() const override;
   void updateData() override;
 
+  //    void processOnEntry() override;
+  //   void processOnExit() override;
+  // BehaviorModuleOutput planWaitingApproval() override;
+
   void updateModuleParams(const std::any & parameters) override
   {
     std::shared_ptr<SamplingPlannerParameters> user_params_ =
