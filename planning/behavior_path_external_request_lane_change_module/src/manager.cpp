@@ -21,7 +21,7 @@ namespace behavior_path_planner
 {
 
 std::unique_ptr<SceneModuleInterface>
-ExternalRequestLaneChangeLeftModuleManager::createNewSceneModuleInstance()
+ExternalRequestLaneChangeRightModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
@@ -30,13 +30,14 @@ ExternalRequestLaneChangeLeftModuleManager::createNewSceneModuleInstance()
 }
 
 std::unique_ptr<SceneModuleInterface>
-ExternalRequestLaneChangeRightModuleManager::createNewSceneModuleInstance()
+ExternalRequestLaneChangeLeftModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
     objects_of_interest_marker_interface_ptr_map_,
     std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
 }
+
 }  // namespace behavior_path_planner
 
 #include <pluginlib/class_list_macros.hpp>

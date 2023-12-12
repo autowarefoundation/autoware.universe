@@ -51,8 +51,6 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
   std::vector<std::string> module_names;
   module_names.emplace_back("behavior_path_planner::LaneChangeRightModuleManager");
   module_names.emplace_back("behavior_path_planner::LaneChangeLeftModuleManager");
-  module_names.emplace_back("behavior_path_planner::ExternalRequestLaneChangeRightModuleManager");
-  module_names.emplace_back("behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager");
 
   std::vector<rclcpp::Parameter> params;
   params.emplace_back("launch_modules", module_names);
