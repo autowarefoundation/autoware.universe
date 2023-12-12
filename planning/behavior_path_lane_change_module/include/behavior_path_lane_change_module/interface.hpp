@@ -15,10 +15,10 @@
 #ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
 
-#include "behavior_path_lane_change_module/utils/base_class.hpp"
 #include "behavior_path_lane_change_module/scene.hpp"
-#include "behavior_path_lane_change_module/utils/structs.hpp"
+#include "behavior_path_lane_change_module/utils/base_class.hpp"
 #include "behavior_path_lane_change_module/utils/path.hpp"
+#include "behavior_path_lane_change_module/utils/structs.hpp"
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "behavior_path_planner_common/turn_signal_decider.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__EXTERNAL_REQUEST_HPP_
-#define BEHAVIOR_PATH_LANE_CHANGE_MODULE__EXTERNAL_REQUEST_HPP_
+#ifndef BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__SCENE_HPP_
+#define BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__SCENE_HPP_
 
-#include "behavior_path_planner/scene_module/lane_change/normal.hpp"
+#include "behavior_path_lane_change_module/scene.hpp"
 
 #include <memory>
 
@@ -35,4 +35,4 @@ public:
 };
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__EXTERNAL_REQUEST_HPP_
+#endif  // BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__SCENE_HPP_

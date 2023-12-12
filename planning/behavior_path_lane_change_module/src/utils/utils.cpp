@@ -14,8 +14,8 @@
 
 #include "behavior_path_lane_change_module/utils/utils.hpp"
 
-#include "behavior_path_lane_change_module/utils/structs.hpp"
 #include "behavior_path_lane_change_module/utils/path.hpp"
+#include "behavior_path_lane_change_module/utils/structs.hpp"
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/parameters.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
