@@ -482,6 +482,12 @@ void updateOnlyClassification(TrackedObject & main_obj, const TrackedObject & su
 
 void updateWholeTrackedObject(TrackedObject & main_obj, const TrackedObject & sub_obj)
 {
+  if (!objectsHaveSameMotionDirections(main_obj, sub_obj)) {
+    // warning
+    std::cerr << "[object_tracking_merger]: motion direction is different in "
+                 "updateWholeTrackedObject function."
+              << std::endl;
+  }
   main_obj = sub_obj;
 }
 
