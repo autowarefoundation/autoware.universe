@@ -15,16 +15,13 @@
 #ifndef BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__MANAGER_HPP_
 #define BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__MANAGER_HPP_
 
-#include "behavior_path_lane_change_module/interface.hpp"
 #include "behavior_path_lane_change_module/manager.hpp"
-#include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 #include "route_handler/route_handler.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace behavior_path_planner
 {
@@ -37,17 +34,20 @@ public:
       LaneChangeModuleType::EXTERNAL_REQUEST)
   {
   }
+  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
 };
 
 class ExternalRequestLaneChangeLeftModuleManager : public LaneChangeModuleManager
 {
 public:
   ExternalRequestLaneChangeLeftModuleManager()
+
   : LaneChangeModuleManager(
       "external_request_lane_change_left", route_handler::Direction::LEFT,
       LaneChangeModuleType::EXTERNAL_REQUEST)
   {
   }
+  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
 };
 }  // namespace behavior_path_planner
 

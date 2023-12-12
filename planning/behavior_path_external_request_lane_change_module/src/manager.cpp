@@ -14,6 +14,31 @@
 
 #include "behavior_path_external_request_lane_change_module/manager.hpp"
 
+#include "behavior_path_external_request_lane_change_module/scene.hpp"
+#include "behavior_path_lane_change_module/interface.hpp"
+
+namespace behavior_path_planner
+{
+
+std::unique_ptr<SceneModuleInterface>
+ExternalRequestLaneChangeLeftModuleManager::createNewSceneModuleInstance()
+{
+  return std::make_unique<LaneChangeInterface>(
+    name_, *node_, parameters_, rtc_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_,
+    std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
+}
+
+std::unique_ptr<SceneModuleInterface>
+ExternalRequestLaneChangeRightModuleManager::createNewSceneModuleInstance()
+{
+  return std::make_unique<LaneChangeInterface>(
+    name_, *node_, parameters_, rtc_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_,
+    std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
+}
+}  // namespace behavior_path_planner
+
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
   behavior_path_planner::ExternalRequestLaneChangeRightModuleManager,
