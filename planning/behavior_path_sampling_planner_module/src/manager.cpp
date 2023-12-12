@@ -129,3 +129,8 @@ void SamplingPlannerModuleManager::updateModuleParams(
 }
 
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::SamplingPlannerModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
