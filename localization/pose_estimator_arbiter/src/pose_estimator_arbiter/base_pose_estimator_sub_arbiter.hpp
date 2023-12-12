@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_MANAGER__BASE_POSE_ESTIMATOR_SUB_MANAGER_HPP_
-#define POSE_ESTIMATOR_MANAGER__BASE_POSE_ESTIMATOR_SUB_MANAGER_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__BASE_POSE_ESTIMATOR_SUB_ARBITER_HPP_
+#define POSE_ESTIMATOR_ARBITER__BASE_POSE_ESTIMATOR_SUB_ARBITER_HPP_
 
 #include "shared_data.hpp"
 
@@ -45,4 +45,4 @@ protected:
 };
 }  // namespace pose_estimator_arbiter
 
-#endif  // POSE_ESTIMATOR_MANAGER__BASE_POSE_ESTIMATOR_SUB_MANAGER_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__BASE_POSE_ESTIMATOR_SUB_ARBITER_HPP_

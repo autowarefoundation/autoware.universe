@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_MANAGER__RULE_HELPER__PCD_OCCUPANCY_HPP_
-#define POSE_ESTIMATOR_MANAGER__RULE_HELPER__PCD_OCCUPANCY_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__RULE_HELPER__PCD_OCCUPANCY_HPP_
+#define POSE_ESTIMATOR_ARBITER__RULE_HELPER__PCD_OCCUPANCY_HPP_
 
 #include <rclcpp/node.hpp>
 
@@ -49,4 +49,4 @@ private:
 
 }  // namespace pose_estimator_arbiter::rule_helper
 
-#endif  // POSE_ESTIMATOR_MANAGER__RULE_HELPER__PCD_OCCUPANCY_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__RULE_HELPER__PCD_OCCUPANCY_HPP_

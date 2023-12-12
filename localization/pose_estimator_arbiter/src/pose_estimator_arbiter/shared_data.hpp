@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_MANAGER__SHARED_DATA_HPP_
-#define POSE_ESTIMATOR_MANAGER__SHARED_DATA_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__SHARED_DATA_HPP_
+#define POSE_ESTIMATOR_ARBITER__SHARED_DATA_HPP_
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -77,4 +77,4 @@ public:
 };
 
 }  // namespace pose_estimator_arbiter
-#endif  // POSE_ESTIMATOR_MANAGER__SHARED_DATA_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__SHARED_DATA_HPP_

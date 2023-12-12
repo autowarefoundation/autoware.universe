@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_MANAGER__SWITCH_RULE__MAP_BASED_RULE_HPP_
-#define POSE_ESTIMATOR_MANAGER__SWITCH_RULE__MAP_BASED_RULE_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__SWITCH_RULE__MAP_BASED_RULE_HPP_
+#define POSE_ESTIMATOR_ARBITER__SWITCH_RULE__MAP_BASED_RULE_HPP_
 
 #include "pose_estimator_arbiter/pose_estimator_name.hpp"
 #include "pose_estimator_arbiter/rule_helper/ar_tag_position.hpp"
@@ -62,4 +62,4 @@ protected:
 };
 }  // namespace pose_estimator_arbiter::switch_rule
 
-#endif  // POSE_ESTIMATOR_MANAGER__SWITCH_RULE__MAP_BASED_RULE_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__SWITCH_RULE__MAP_BASED_RULE_HPP_

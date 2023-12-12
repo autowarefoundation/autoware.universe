@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_
-#define POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__POSE_ESTIMATOR_NAME_HPP_
+#define POSE_ESTIMATOR_ARBITER__POSE_ESTIMATOR_NAME_HPP_
 
 namespace pose_estimator_arbiter
 {
 enum class PoseEstimatorName : int { ndt = 1, yabloc = 2, eagleye = 4, artag = 8 };
 }
 
-#endif  // POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__POSE_ESTIMATOR_NAME_HPP_

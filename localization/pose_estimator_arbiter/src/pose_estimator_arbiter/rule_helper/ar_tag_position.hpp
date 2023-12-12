@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_
-#define POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__RULE_HELPER__AR_TAG_POSITION_HPP_
+#define POSE_ESTIMATOR_ARBITER__RULE_HELPER__AR_TAG_POSITION_HPP_
 
 #include "pose_estimator_arbiter/shared_data.hpp"
 
@@ -50,4 +50,4 @@ private:
 };
 }  // namespace pose_estimator_arbiter::rule_helper
 
-#endif  // POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__RULE_HELPER__AR_TAG_POSITION_HPP_

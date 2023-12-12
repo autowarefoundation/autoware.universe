@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_MANAGER__RULE_HELPER__GRID_INFO_HPP_
-#define POSE_ESTIMATOR_MANAGER__RULE_HELPER__GRID_INFO_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__RULE_HELPER__GRID_INFO_HPP_
+#define POSE_ESTIMATOR_ARBITER__RULE_HELPER__GRID_INFO_HPP_
 #include <boost/functional/hash.hpp>
 
 #include <pcl/point_types.h>
@@ -65,4 +65,4 @@ public:
 };
 }  // namespace std
 
-#endif  // POSE_ESTIMATOR_MANAGER__RULE_HELPER__GRID_INFO_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__RULE_HELPER__GRID_INFO_HPP_

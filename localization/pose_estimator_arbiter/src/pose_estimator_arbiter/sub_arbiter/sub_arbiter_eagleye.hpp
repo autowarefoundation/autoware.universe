@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_EAGLEYE_HPP_
-#define POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_EAGLEYE_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_EAGLEYE_HPP_
+#define POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_EAGLEYE_HPP_
 #include "pose_estimator_arbiter/base_pose_estimator_sub_arbiter.hpp"
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -51,4 +51,4 @@ private:
 };
 }  // namespace pose_estimator_arbiter::sub_arbiter
 
-#endif  // POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_EAGLEYE_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_EAGLEYE_HPP_

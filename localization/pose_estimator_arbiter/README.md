@@ -2,20 +2,20 @@
 
 Table of contents:
 
-* [Purpose](#purpose)
-* [Interface](#interfaces)
-* [Architecture](#architecture)
-* [How to launch](#how-to-launch)
-* [Switching Rules](#switching-rules)
-* [Pose Initialization](#pose-initialization)
-* [Future Plans](#future-plans)
+- [Purpose](#purpose)
+- [Interface](#interfaces)
+- [Architecture](#architecture)
+- [How to launch](#how-to-launch)
+- [Switching Rules](#switching-rules)
+- [Pose Initialization](#pose-initialization)
+- [Future Plans](#future-plans)
 
 ## Abstract
 
 This package launches multiple pose estimators and provides the capability to stop or resume specific pose estimators based on the situation.
 It provides provisional switching rules and will be adaptable to a wide variety of rules in the future.
 
-Please refer to [this discussion](https://github.com/orgs/autowarefoundation/discussions/3878)  about other ideas on implementation.
+Please refer to [this discussion](https://github.com/orgs/autowarefoundation/discussions/3878) about other ideas on implementation.
 
 ### Why do we need a stop/resume mechanism?
 
@@ -27,10 +27,10 @@ Also, even if both can be activated at the same time, the Kalman Filter may be a
 
 ### Supporting pose_estimators
 
-* [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher)
-* [eagleye](https://autowarefoundation.github.io/autoware-documentation/main/how-to-guides/integrating-autoware/launch-autoware/localization-methods/eagleye-guide/)
-* [yabloc](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/yabloc)
-* [landmark_based_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/landmark_based_localizer)
+- [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher)
+- [eagleye](https://autowarefoundation.github.io/autoware-documentation/main/how-to-guides/integrating-autoware/launch-autoware/localization-methods/eagleye-guide/)
+- [yabloc](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/yabloc)
+- [landmark_based_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/landmark_based_localizer)
 
 ### Demonstration
 
@@ -42,8 +42,8 @@ TODO: change the video
 
 Users can reproduce the demonstration using the following data and launch command:
 
-* rosbag: TODO:
-* map: TODO:
+- rosbag: TODO:
+- map: TODO:
 
 ```bash
 ros2 launch autoware_launch logging_simulator.launch.xml \
@@ -58,7 +58,7 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
 ### Parameters
 
 | Name                                             | Type   | Description                                                                                 |
-|--------------------------------------------------|--------|---------------------------------------------------------------------------------------------|
+| ------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------- |
 | `pcd_occupancy_rule/pcd_density_upper_threshold` | double | If the number of occupied voxel around the self-position exceeds this, NDT is allowd        |
 | `pcd_occupancy_rule/pcd_density_lower_threshold` | double | If the number of occupied voxel around the self-position is less than this, NDT is disabled |
 | `ar_marker_rule/ar_marker_available_distance`    | double | If the distance to the nearest AR marker exceeds this, disable artag-based-localizer        |
@@ -70,7 +70,7 @@ There are no service server.
 ### Clients
 
 | Name                  | Type                  | Description                       |
-|-----------------------|-----------------------|-----------------------------------|
+| --------------------- | --------------------- | --------------------------------- |
 | `/yabloc_suspend_srv` | std_srv::srv::SetBool | service to stop or restart yabloc |
 
 ### Subscriptions
@@ -78,7 +78,7 @@ There are no service server.
 For pose estimator arbitration:
 
 | Name                                  | Type                                          | Description    |
-|---------------------------------------|-----------------------------------------------|----------------|
+| ------------------------------------- | --------------------------------------------- | -------------- |
 | `/input/artag/image`                  | sensor_msgs::msg::Image                       | ArTag input    |
 | `/input/yabloc/image`                 | sensor_msgs::msg::Image                       | YabLoc input   |
 | `/input/eagleye/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped | Eagleye output |
@@ -87,7 +87,7 @@ For pose estimator arbitration:
 For swithing rule:
 
 | Name                          | Type                                                         | Description                       |
-|-------------------------------|--------------------------------------------------------------|-----------------------------------|
+| ----------------------------- | ------------------------------------------------------------ | --------------------------------- |
 | `/input/pointcloud_map`       | sensor_msgs::msg::PointCloud2                                | point cloud map                   |
 | `/input/vector_map`           | autoware_auto_mapping_msgs::msg::HADMapBin                   | vector map                        |
 | `/input/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped                | localization final output         |
@@ -96,7 +96,7 @@ For swithing rule:
 ### Publications
 
 | Name                                   | Type                                          | Description                                            |
-|----------------------------------------|-----------------------------------------------|--------------------------------------------------------|
+| -------------------------------------- | --------------------------------------------- | ------------------------------------------------------ |
 | `/output/artag/image`                  | sensor_msgs::msg::Image                       | relayed ArTag input                                    |
 | `/output/yabloc/image`                 | sensor_msgs::msg::Image                       | relayed YabLoc input                                   |
 | `/output/eagleye/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped | relayed Eagleye output                                 |
@@ -108,14 +108,14 @@ For swithing rule:
 
 If it does not work, users can get more information in the following ways.
 
-* visualize debug log
+- visualize debug log
 
 ```bash
 ros2 service call /localization/pose_estimator_arbiter/config_logger logging_demo/srv/ConfigLogger \
   '{logger_name: localization.pose_estimator_arbiter, level: debug}'
 ```
 
-* check debug string topic
+- check debug string topic
 
 ```bash
 ros2 topic echo /localization/pose_estimator_arbiter/debug/string
@@ -135,8 +135,8 @@ Following figure shows the node configuration when NDT, YabLoc Eagleye and AR-Ta
 When running multiple pose_estimators, pose_estimator_arbiter is executed.
 It comprises a **switching rule** and **sub arbiters** corresponding to each pose_estimator.
 
-* Sub arbiters controls the pose_estimator activity by relaying inputs or outputs, or by requesting a suspend service.
-* Switching rules determine which pose_estimator to use.
+- Sub arbiters controls the pose_estimator activity by relaying inputs or outputs, or by requesting a suspend service.
+- Switching rules determine which pose_estimator to use.
 
 Which sub arbiters and switching rules are instantiated depends on the runtime arguments at startup.
 
@@ -144,23 +144,23 @@ Following figure shows the node configuration when all pose_estiamtor are run si
 
 <img src="./media/architecture.drawio.svg" alt="drawing" width="800"/>
 
-* **NDT**
+- **NDT**
 
 The NDT sub-arbiter relays topics in the frontside of the point cloud pre-processor.
 
-* **YabLoc**
+- **YabLoc**
 
 The YabLoc sub-arbiter relays input image topics in the frontend of the image pre-processor.
 YabLoc includes a particle filter process that operates on a timer, and even when image topics are not streamed, the particle prediction process continues to work.
 To address this, the YabLoc sub-arbiter also has a service client for explicitly stopping and resuming YabLoc.
 
-* **Eagleye**
+- **Eagleye**
 
 The Eagleye sub-arbiter relays Eagleye's output pose topics in the backend of Eagleye's estimation process.
 Eagleye performs time-series processing internally, and it can't afford to stop the input stream.
 Furthermore, Eagleye's estimation process is lightweight enough to be run continuously without a significant load, so the relay is inserted in the backend.
 
-* **ArTag**
+- **ArTag**
 
 The ArTag sub-arbiter relays image topics in the frontside of the landmark localizer.
 
@@ -180,14 +180,13 @@ Even if `pose_source` includes an unexpected string, it will be filtered appropr
 Please see the table below for details.
 
 | given runtime argument                       | parsed pose_estimator_arbiter's param (pose_sources) |
-|----------------------------------------------|------------------------------------------------------|
+| -------------------------------------------- | ---------------------------------------------------- |
 | `pose_source:=ndt`                           | `["ndt"]`                                            |
 | `pose_source:=hoge`                          | `[]`                                                 |
 | `pose_source:=yabloc_ndt`                    | `["ndt","yabloc"]`                                   |
 | `pose_source:=yabloc_ndt_ndt_ndt`            | `["ndt","yabloc"]`                                   |
 | `pose_source:=ndt_yabloc_eagleye`            | `["ndt","yabloc","eagleye"]`                         |
 | `pose_source:=ndt_yabloc_hoge_eagleye_artag` | `["ndt","yabloc","eagleye","artag"]`                 |
-
 
 ## Switching Rules
 
@@ -219,23 +218,23 @@ flowchart LR
 In the flowchart, any pose_estimators which are not enabled are disabled.
 This rule basically allows only one pose_estimator to be activated.
 
-| branch | condition description                                                                                                                                                                    |
-|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1      | If localization initialization state is not `INITIALIZED`, enable all pose_estimators. This is because system does not know which pose_estimator is  available for initial localization. |
-| 2      | If ego-position is not subscribed yet, enable all pose_estimators. This is bacause it is not possible to determine which pose_estimators are available.                                  |
-| 3      | If ego-position enters Eagleye area, enable Eagley. See [Eagleye area](#eagleye-area) for more details                                                                                   |
-| 4      | If there are landmarks in the surrounding area, enable AR tag based estimation.                                                                                                          |
-| 5      | If YabLoc is not enabled as a runtime argument, enable NDT.                                                                                                                              |
-| 6      | If NDT is not enabled as a runtime argument, enable YabLoc.                                                                                                                              |
-| 7      | If PCD occupancy is above the threshold, enable NDT. See [PCD occupancy](#pcd-occupancy) for more details.                                                                               |
+| branch | condition description                                                                                                                                                                   |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1      | If localization initialization state is not `INITIALIZED`, enable all pose_estimators. This is because system does not know which pose_estimator is available for initial localization. |
+| 2      | If ego-position is not subscribed yet, enable all pose_estimators. This is bacause it is not possible to determine which pose_estimators are available.                                 |
+| 3      | If ego-position enters Eagleye area, enable Eagley. See [Eagleye area](#eagleye-area) for more details                                                                                  |
+| 4      | If there are landmarks in the surrounding area, enable AR tag based estimation.                                                                                                         |
+| 5      | If YabLoc is not enabled as a runtime argument, enable NDT.                                                                                                                             |
+| 6      | If NDT is not enabled as a runtime argument, enable YabLoc.                                                                                                                             |
+| 7      | If PCD occupancy is above the threshold, enable NDT. See [PCD occupancy](#pcd-occupancy) for more details.                                                                              |
 
 ### Rule helpers
 
 Rule helpers are auxiliary tools for describing switching rules.
 
-* [PCD occupancy](#pcd-occupancy)
-* [Eagleye area](#eagleye-area)
-* [AR tag position](#ar-tag-position)
+- [PCD occupancy](#pcd-occupancy)
+- [Eagleye area](#eagleye-area)
+- [AR tag position](#ar-tag-position)
 
 #### PCD occupancy
 
@@ -301,14 +300,14 @@ To avoid making the application too complicated, a priority is established so th
 
 This table's usage is described from three perspectives:
 
-* **Autoware Users:** Autoware users do not need to consult this table.
+- **Autoware Users:** Autoware users do not need to consult this table.
   They simply provide the desired combinations of pose_estimators, and the appropriate parameters are automatically provided to the pose_initializer.
-* **Autoware Developers:** Autoware developers can consult this table to know which parameters are assigned.
-* **Who implements New Pose Estimator Switching:**
+- **Autoware Developers:** Autoware developers can consult this table to know which parameters are assigned.
+- **Who implements New Pose Estimator Switching:**
   Developers must extend this table and implement the assignment of appropriate parameters to the pose_initializer.
 
 |         pose_source         | invoked initialization method | `ndt_enabled` | `yabloc_enabled` | `gnss_enabled` | `sub_gnss_pose_cov`                          |
-|:---------------------------:|-------------------------------|---------------|------------------|----------------|----------------------------------------------|
+| :-------------------------: | ----------------------------- | ------------- | ---------------- | -------------- | -------------------------------------------- |
 |             ndt             | ndt                           | true          | false            | true           | /sensing/gnss/pose_with_covariance           |
 |           yabloc            | yabloc                        | false         | true             | true           | /sensing/gnss/pose_with_covariance           |
 |           eagleye           | vehicle needs run for a while | false         | false            | true           | /localization/pose_estimator/eagleye/...     |
