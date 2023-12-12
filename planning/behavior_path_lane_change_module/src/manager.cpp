@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/lane_change/manager.hpp"
+#include "behavior_path_lane_change_module/manager.hpp"
 
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
@@ -262,16 +262,10 @@ void LaneChangeModuleManager::init(rclcpp::Node * node)
 
 std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
 {
-  if (type_ == LaneChangeModuleType::NORMAL) {
     return std::make_unique<LaneChangeInterface>(
       name_, *node_, parameters_, rtc_interface_ptr_map_,
       objects_of_interest_marker_interface_ptr_map_,
       std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
-  }
-  return std::make_unique<LaneChangeInterface>(
-    name_, *node_, parameters_, rtc_interface_ptr_map_,
-    objects_of_interest_marker_interface_ptr_map_,
-    std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
 }
 
 void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Parameter> & parameters)
@@ -297,10 +291,4 @@ PLUGINLIB_EXPORT_CLASS(
   behavior_path_planner::SceneModuleManagerInterface)
 PLUGINLIB_EXPORT_CLASS(
   behavior_path_planner::LaneChangeLeftModuleManager,
-  behavior_path_planner::SceneModuleManagerInterface)
-PLUGINLIB_EXPORT_CLASS(
-  behavior_path_planner::ExternalRequestLaneChangeRightModuleManager,
-  behavior_path_planner::SceneModuleManagerInterface)
-PLUGINLIB_EXPORT_CLASS(
-  behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager,
   behavior_path_planner::SceneModuleManagerInterface)

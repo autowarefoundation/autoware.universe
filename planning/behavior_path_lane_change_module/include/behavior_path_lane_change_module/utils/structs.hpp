@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
+#ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__STRUCTS_HPP_
+#define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__STRUCTS_HPP_
 
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
@@ -211,4 +211,4 @@ struct PathSafetyStatus
 };
 }  // namespace behavior_path_planner::data::lane_change
 
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
+#endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__STRUCTS_HPP_

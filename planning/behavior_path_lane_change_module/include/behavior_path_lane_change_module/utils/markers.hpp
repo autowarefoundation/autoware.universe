@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__MARKER_UTILS__LANE_CHANGE__DEBUG_HPP_
-#define BEHAVIOR_PATH_PLANNER__MARKER_UTILS__LANE_CHANGE__DEBUG_HPP_
+#ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__MARKERS_HPP_
+#define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__MARKERS_HPP_
 
-#include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
+#include "behavior_path_lane_change_module/utils/path.hpp"
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace marker_utils::lane_change_markers
 {
@@ -38,4 +36,4 @@ MarkerArray showFilteredObjects(
   const ExtendedPredictedObjects & target_lane_objects,
   const ExtendedPredictedObjects & other_lane_objects, const std::string & ns);
 }  // namespace marker_utils::lane_change_markers
-#endif  // BEHAVIOR_PATH_PLANNER__MARKER_UTILS__LANE_CHANGE__DEBUG_HPP_
+#endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__MARKERS_HPP_

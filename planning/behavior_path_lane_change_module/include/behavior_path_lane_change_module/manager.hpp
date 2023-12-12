@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__MANAGER_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__MANAGER_HPP_
+#ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__MANAGER_HPP_
+#define BEHAVIOR_PATH_LANE_CHANGE_MODULE__MANAGER_HPP_
 
-#include "behavior_path_planner/scene_module/lane_change/interface.hpp"
+#include "behavior_path_lane_change_module/interface.hpp"
 #include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 #include "route_handler/route_handler.hpp"
 
@@ -96,4 +96,4 @@ public:
 };
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__MANAGER_HPP_
+#endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__MANAGER_HPP_

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/lane_change/interface.hpp"
+#include "behavior_path_lane_change_module/interface.hpp"
 
-#include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
-#include "behavior_path_planner/utils/lane_change/utils.hpp"
+#include "behavior_path_lane_change_module/utils/markers.hpp"
+#include "behavior_path_lane_change_module/utils/utils.hpp"
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
@@ -26,7 +26,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace behavior_path_planner
 {

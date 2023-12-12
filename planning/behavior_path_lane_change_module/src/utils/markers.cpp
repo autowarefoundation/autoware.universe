@@ -16,7 +16,7 @@
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
-#include <behavior_path_planner/marker_utils/lane_change/debug.hpp>
+#include <behavior_path_lane_change_module/utils/markers.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>

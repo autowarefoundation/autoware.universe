@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/lane_change/normal.hpp"
+#include "behavior_path_lane_change_module/scene.hpp"
 
-#include "behavior_path_planner/utils/lane_change/utils.hpp"
+#include "behavior_path_lane_change_module/utils/utils.hpp"
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"

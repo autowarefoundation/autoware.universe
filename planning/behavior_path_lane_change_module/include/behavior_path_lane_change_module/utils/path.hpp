@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_PATH_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_PATH_HPP_
+#ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
+#define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
 
-#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_lane_change_module/utils/structs.hpp"
 #include "behavior_path_planner_common/turn_signal_decider.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
@@ -50,4 +50,4 @@ struct LaneChangeStatus
 };
 
 }  // namespace behavior_path_planner
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_PATH_HPP_
+#endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_

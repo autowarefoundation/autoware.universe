@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
+#ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
+#define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
 
-#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
+#include "behavior_path_lane_change_module/utils/structs.hpp"
+#include "behavior_path_lane_change_module/utils/path.hpp"
 #include "behavior_path_planner_common/parameters.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
@@ -208,4 +208,4 @@ lanelet::ConstLanelets generateExpandedLanelets(
   const double right_offset);
 
 }  // namespace behavior_path_planner::utils::lane_change
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
+#endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

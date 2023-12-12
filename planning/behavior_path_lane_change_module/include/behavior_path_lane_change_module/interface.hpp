@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__INTERFACE_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__INTERFACE_HPP_
+#ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
+#define BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
 
-#include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
-#include "behavior_path_planner/scene_module/lane_change/external_request.hpp"
-#include "behavior_path_planner/scene_module/lane_change/normal.hpp"
-#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
+#include "behavior_path_lane_change_module/utils/base_class.hpp"
+#include "behavior_path_lane_change_module/scene.hpp"
+#include "behavior_path_lane_change_module/utils/structs.hpp"
+#include "behavior_path_lane_change_module/utils/path.hpp"
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "behavior_path_planner_common/turn_signal_decider.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
@@ -146,4 +145,4 @@ protected:
 };
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__INTERFACE_HPP_
+#endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
