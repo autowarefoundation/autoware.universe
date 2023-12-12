@@ -3,14 +3,14 @@
   <group>
     <push-ros-namespace namespace="ar_tag_based_localizer"/>
 
-    <arg name="redundant_mode" default="false"/>
-    <let name="input_image" value="/sensing/camera/traffic_light/image_raw" unless="$(var redundant_mode)"/>
-    <let name="input_image" value="/sensing/camera/traffic_light/image_raw/relay" if="$(var redundant_mode)"/>
+    <arg name="multi_localizer_mode" default="false" description="Set to true when multiple pose_estimators are run simultaneously."/>
+    <let name="input_image" value="/sensing/camera/traffic_light/image_raw" unless="$(var multi_localizer_mode)"/>
+    <let name="input_image" value="/sensing/camera/traffic_light/image_raw/relay" if="$(var multi_localizer_mode)"/>
 
     <group>
       <include file="$(find-pkg-share ar_tag_based_localizer)/launch/ar_tag_based_localizer.launch.xml">
         <arg name="input_lanelet2_map" value="/map/vector_map"/>
-        <arg name="input_image" value="/sensing/camera/traffic_light/image_raw"/>
+        <arg name="input_image" value="$(var input_image)"/>
         <arg name="input_camera_info" value="/sensing/camera/traffic_light/camera_info"/>
         <arg name="input_ekf_pose" value="/localization/pose_twist_fusion_filter/biased_pose_with_covariance"/>
         <arg name="output_image" value="/localization/pose_estimator/ar_tag_detected_image"/>

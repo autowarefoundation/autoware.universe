@@ -1,10 +1,10 @@
 <launch>
   <arg name="src_image"/>
   <arg name="src_info"/>
-  <arg name="redundant_mode" default="false"/>
+  <arg name="multi_localizer_mode" default="false"/>
 
-  <let name="resized_image" value="undistorted/image_raw" unless="$(var redundant_mode)"/>
-  <let name="resized_image" value="undistorted/image_raw/relay" if="$(var redundant_mode)"/>
+  <let name="resized_image" value="undistorted/image_raw" unless="$(var multi_localizer_mode)"/>
+  <let name="resized_image" value="undistorted/image_raw/relay" if="$(var multi_localizer_mode)"/>
 
   <arg name="resized_info" default="undistorted/camera_info"/>
   <arg name="input_pose" default="undistorted"/>

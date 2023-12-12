@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+  <!-- only when running with a real vehicle, the pose_initializer judges the stop -->
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='online'&quot;)" value="true"/>
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='logging_simulation'&quot;)" value="false"/>
 
@@ -7,9 +8,9 @@
   <let name="available_args" value="[\'ndt\',\'yabloc\',\'eagleye\',\'artag\']"/>
   <let name="split_function" value="list(set('$(var pose_source)'.split('_')).intersection($(var available_args)))"/>
   <let name="pose_sources" value="$(eval $(var split_function))"/>
-  <let name="redundant_mode" value="$(eval &quot;len($(var pose_sources))> 1&quot;)"/>
+  <let name="multi_localizer_mode" value="$(eval &quot;len($(var pose_sources))> 1&quot;)"/>
 
-  <!-- split string with underscores -->
+  <!-- organizes flags for which nodes to activate -->
   <let name="use_ndt_pose" value="$(eval &quot;'ndt' in $(var pose_sources)&quot;)"/>
   <let name="use_yabloc_pose" value="$(eval &quot;'yabloc' in $(var pose_sources)&quot;)"/>
   <let name="use_artag_pose" value="$(eval &quot;'artag' in $(var pose_sources)&quot;)"/>
@@ -27,7 +28,7 @@
   <group if="$(var use_yabloc_pose)">
     <push-ros-namespace namespace="pose_estimator"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/yabloc.launch.xml">
-      <arg name="redundant_mode" value="$(var redundant_mode)"/>
+      <arg name="multi_localizer_mode" value="$(var multi_localizer_mode)"/>
     </include>
   </group>
 
@@ -42,8 +43,8 @@
     <let name="eagleye_name_space" value="pose_twist_estimator"/>
     <let name="eagleye_name_space" value="twist_estimator" unless="$(var use_eagleye_pose)"/>
     <let name="eagleye_name_space" value="pose_estimator" unless="$(var use_eagleye_twist)"/>
-    <let name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance" unless="$(var redundant_mode)"/>
-    <let name="output_pose_with_cov_name" value="/localization/eagleye/pose_with_covariance/to_relay" if="$(var redundant_mode)"/>
+    <let name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance" unless="$(var multi_localizer_mode)"/>
+    <let name="output_pose_with_cov_name" value="/localization/eagleye/pose_with_covariance/to_relay" if="$(var multi_localizer_mode)"/>
 
     <push-ros-namespace namespace="$(var eagleye_name_space)"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
@@ -54,15 +55,16 @@
     </include>
   </group>
 
+  <!-- AR Tag Based Localizer (as pose estimator) -->
   <group if="$(var use_artag_pose)">
     <push-ros-namespace namespace="pose_estimator"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/ar_tag_based_localizer.launch.xml">
-      <arg name="redundant_mode" value="$(var redundant_mode)"/>
+      <arg name="multi_localizer_mode" value="$(var multi_localizer_mode)"/>
     </include>
   </group>
 
-  <!-- Pose Estimator Manager Launch -->
-  <group if="$(var redundant_mode)">
+  <!-- Pose Estimator Arbiter Launch -->
+  <group if="$(var multi_localizer_mode)">
     <include file="$(find-pkg-share pose_estimator_arbiter)/launch/pose_estimator_arbiter.launch.xml">
       <arg name="pose_sources" value="$(var pose_sources)"/>
     </include>
@@ -72,9 +74,10 @@
   <group>
     <push-ros-namespace namespace="util"/>
 
+    <!-- pose_initializer -->
     <let name="sub_gnss_pose_cov" value="/sensing/gnss/pose_with_covariance"/>
     <group if="$(var use_eagleye_pose)" scoped="false">
-      <let name="sub_gnss_pose_cov" value="/localization/pose_estimator/pose_with_covariance" unless="$(var redundant_mode)"/>
+      <let name="sub_gnss_pose_cov" value="/localization/pose_estimator/pose_with_covariance" unless="$(var multi_localizer_mode)"/>
     </group>
 
     <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
@@ -87,11 +90,14 @@
       <arg name="sub_gnss_pose_cov" value="$(var sub_gnss_pose_cov)"/>
     </include>
 
-    <let name="override_input_pointcloud" value="$(var input_pointcloud)"/>
-    <let name="override_input_pointcloud" value="$(var input_pointcloud)/relay" if="$(var redundant_mode)"/>
+    <!-- automatic_pose_initializer -->
     <group if="$(var gnss_enabled)">
       <include file="$(find-pkg-share automatic_pose_initializer)/launch/automatic_pose_initializer.launch.xml"/>
     </group>
+
+    <!-- pointcloud_downsampling -->
+    <let name="override_input_pointcloud" value="$(var input_pointcloud)"/>
+    <let name="override_input_pointcloud" value="$(var input_pointcloud)/relay" if="$(var multi_localizer_mode)"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/util/util.launch.py" if="$(var use_ndt_pose)">
       <arg name="input_pointcloud" value="$(var override_input_pointcloud)"/>
     </include>
