@@ -91,7 +91,9 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node)
 void TrackerDebugger::setupDiagnostics()
 {
   diagnostic_updater_.setHardwareID(node_.get_name());
-  diagnostic_updater_.add("Delay Check", this, &TrackerDebugger::checkDelay);
+  diagnostic_updater_.add(
+    "Perception delay check from original header stamp", this, &TrackerDebugger::checkDelay);
+  diagnostic_updater_.setPeriod(0.1);
 }
 
 void TrackerDebugger::loadParameters()
@@ -109,8 +111,8 @@ void TrackerDebugger::loadParameters()
     RCLCPP_WARN(node_.get_logger(), "Failed to declare parameter: %s", e.what());
     debug_settings_.publish_processing_time = false;
     debug_settings_.publish_tentative_objects = false;
-    debug_settings_.diagnostics_warn_delay = 0.4;
-    debug_settings_.diagnostics_error_delay = 0.8;
+    debug_settings_.diagnostics_warn_delay = 0.5;
+    debug_settings_.diagnostics_error_delay = 1.0;
   }
 }
 
