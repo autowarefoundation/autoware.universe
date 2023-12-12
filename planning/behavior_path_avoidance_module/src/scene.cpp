@@ -1292,6 +1292,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(
 
   constexpr double THRESHOLD = 0.1;
   const auto & p = planner_data_->parameters;
+  const auto & rh = planner_data_->route_handler;
 
   if (shift_line.start_idx + 1 > path.shift_length.size()) {
     return {};
@@ -1310,8 +1311,9 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(
   }
 
   const auto current_shift_length = helper_->getEgoShift();
-  const auto relative_shift_length =
-    path.shift_length.at(shift_line.end_idx) - path.shift_length.at(shift_line.start_idx);
+  const auto start_shift_length = path.shift_length.at(shift_line.start_idx);
+  const auto end_shift_length = path.shift_length.at(shift_line.end_idx);
+  const auto relative_shift_length = end_shift_length - start_shift_length;
 
   // If shift length is shorter than the threshold, it does not need to turn on blinkers
   if (std::fabs(relative_shift_length) < p.turn_signal_shift_length_threshold) {
@@ -1355,23 +1357,83 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(
     return turn_signal_info;
   }
 
-  const auto current_lanes = utils::getCurrentLanes(planner_data_);
-  const auto local_vehicle_footprint = createVehicleFootprint(p.vehicle_info);
+  lanelet::ConstLanelet lanelet;
+  if (!rh->getClosestLaneletWithinRoute(shift_line.end, &lanelet)) {
+    return {};
+  }
 
-  boost::geometry::model::ring<tier4_autoware_utils::Point2d> shifted_vehicle_footprint;
-  for (const auto & cl : current_lanes) {
-    // get left and right bounds of current lane
-    const auto lane_left_bound = cl.leftBound2d().basicLineString();
-    const auto lane_right_bound = cl.rightBound2d().basicLineString();
+  const auto left_lanelets = rh->getAllLeftSharedLinestringLanelets(lanelet, true, true);
+  const auto right_lanelets = rh->getAllRightSharedLinestringLanelets(lanelet, true, true);
+
+  const auto avoid_shift =
+    std::abs(start_shift_length) < THRESHOLD && std::abs(end_shift_length) > THRESHOLD;
+  if (avoid_shift) {
+    // Left avoid. But there is no adjacent lane. No need blinker.
+    if (relative_shift_length > 0.0 && left_lanelets.empty()) {
+      return {};
+    }
+
+    // Right avoid. But there is no adjacent lane. No need blinker.
+    if (relative_shift_length < 0.0 && right_lanelets.empty()) {
+      return {};
+    }
+  }
+
+  const auto return_shift =
+    std::abs(start_shift_length) > THRESHOLD && std::abs(end_shift_length) < THRESHOLD;
+  if (return_shift) {
+    // Right return. But there is no adjacent lane. No need blinker.
+    if (relative_shift_length > 0.0 && right_lanelets.empty()) {
+      return {};
+    }
+
+    // Left return. But there is no adjacent lane. No need blinker.
+    if (relative_shift_length < 0.0 && left_lanelets.empty()) {
+      return {};
+    }
+  }
+
+  const auto left_middle_shift = start_shift_length > THRESHOLD && end_shift_length > THRESHOLD;
+  if (left_middle_shift) {
+    // Left avoid. But there is no adjacent lane. No need blinker.
+    if (relative_shift_length > 0.0 && left_lanelets.empty()) {
+      return {};
+    }
+
+    // Left return. But there is no adjacent lane. No need blinker.
+    if (relative_shift_length < 0.0 && left_lanelets.empty()) {
+      return {};
+    }
+  }
+
+  const auto right_middle_shift = start_shift_length < THRESHOLD && end_shift_length < THRESHOLD;
+  if (right_middle_shift) {
+    // Right avoid. But there is no adjacent lane. No need blinker.
+    if (relative_shift_length < 0.0 && right_lanelets.empty()) {
+      return {};
+    }
+
+    // Left avoid. But there is no adjacent lane. No need blinker.
+    if (relative_shift_length > 0.0 && right_lanelets.empty()) {
+      return {};
+    }
+  }
+
+  const auto footprint = createVehicleFootprint(p.vehicle_info);
+  for (const auto & lane : avoid_data_.current_lanelets) {
     for (size_t i = shift_line.start_idx; i < shift_line.end_idx; ++i) {
-      // transform vehicle footprint onto path points
-      shifted_vehicle_footprint = transformVector(
-        local_vehicle_footprint,
-        tier4_autoware_utils::pose2transform(path.path.points.at(i).point.pose));
-      if (
-        intersects(lane_left_bound, shifted_vehicle_footprint) ||
-        intersects(lane_right_bound, shifted_vehicle_footprint)) {
+      const auto transform =
+        tier4_autoware_utils::pose2transform(path.path.points.at(i).point.pose);
+      const auto shifted_vehicle_footprint = transformVector(footprint, transform);
+
+      if (intersects(lane.leftBound2d().basicLineString(), shifted_vehicle_footprint)) {
         turn_signal_info.turn_signal.command = get_command(relative_shift_length);
+        break;
+      }
+
+      if (intersects(lane.rightBound2d().basicLineString(), shifted_vehicle_footprint)) {
+        turn_signal_info.turn_signal.command = get_command(relative_shift_length);
+        break;
       }
     }
   }
