@@ -147,6 +147,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+    // workaround: Since ROS 2 can't get empty list, launcher set ['null'] on the parameter.
     if (name == "null") {
       RCLCPP_INFO(get_logger(), "No modules are registered.");
       break;
