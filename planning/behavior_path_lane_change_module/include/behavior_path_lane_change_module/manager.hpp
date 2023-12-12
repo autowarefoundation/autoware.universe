@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__MANAGER_HPP_
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__MANAGER_HPP_
 
-#include "behavior_path_lane_change_module/interface.hpp"
+#include "behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 #include "route_handler/route_handler.hpp"
 
@@ -23,7 +23,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace behavior_path_planner
@@ -69,28 +68,6 @@ public:
   LaneChangeLeftModuleManager()
   : LaneChangeModuleManager(
       "lane_change_left", route_handler::Direction::LEFT, LaneChangeModuleType::NORMAL)
-  {
-  }
-};
-
-class ExternalRequestLaneChangeRightModuleManager : public LaneChangeModuleManager
-{
-public:
-  ExternalRequestLaneChangeRightModuleManager()
-  : LaneChangeModuleManager(
-      "external_request_lane_change_right", route_handler::Direction::RIGHT,
-      LaneChangeModuleType::EXTERNAL_REQUEST)
-  {
-  }
-};
-
-class ExternalRequestLaneChangeLeftModuleManager : public LaneChangeModuleManager
-{
-public:
-  ExternalRequestLaneChangeLeftModuleManager()
-  : LaneChangeModuleManager(
-      "external_request_lane_change_left", route_handler::Direction::LEFT,
-      LaneChangeModuleType::EXTERNAL_REQUEST)
   {
   }
 };

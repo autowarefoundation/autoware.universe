@@ -14,6 +14,7 @@
 
 #include "behavior_path_lane_change_module/manager.hpp"
 
+#include "behavior_path_lane_change_module/interface.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 

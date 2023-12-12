@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__MANAGER_HPP_
 
 #include "behavior_path_lane_change_module/interface.hpp"
+#include "behavior_path_lane_change_module/manager.hpp"
 #include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 #include "route_handler/route_handler.hpp"
 
@@ -27,51 +28,6 @@
 
 namespace behavior_path_planner
 {
-using route_handler::Direction;
-
-class LaneChangeModuleManager : public SceneModuleManagerInterface
-{
-public:
-  LaneChangeModuleManager(
-    const std::string & name, const Direction direction, const LaneChangeModuleType type)
-  : SceneModuleManagerInterface{name}, direction_{direction}, type_{type}
-  {
-  }
-
-  void init(rclcpp::Node * node) override;
-
-  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
-
-  void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
-
-protected:
-  std::shared_ptr<LaneChangeParameters> parameters_;
-
-  Direction direction_;
-
-  LaneChangeModuleType type_;
-};
-
-class LaneChangeRightModuleManager : public LaneChangeModuleManager
-{
-public:
-  LaneChangeRightModuleManager()
-  : LaneChangeModuleManager(
-      "lane_change_right", route_handler::Direction::RIGHT, LaneChangeModuleType::NORMAL)
-  {
-  }
-};
-
-class LaneChangeLeftModuleManager : public LaneChangeModuleManager
-{
-public:
-  LaneChangeLeftModuleManager()
-  : LaneChangeModuleManager(
-      "lane_change_left", route_handler::Direction::LEFT, LaneChangeModuleType::NORMAL)
-  {
-  }
-};
-
 class ExternalRequestLaneChangeRightModuleManager : public LaneChangeModuleManager
 {
 public:

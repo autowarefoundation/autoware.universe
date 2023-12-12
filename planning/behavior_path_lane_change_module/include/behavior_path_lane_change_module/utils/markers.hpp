@@ -16,10 +16,12 @@
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__MARKERS_HPP_
 
 #include "behavior_path_lane_change_module/utils/path.hpp"
-#include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
+#include <visualization_msgs/msg/marker_array.hpp>
+
 #include <string>
+#include <vector>
 
 namespace marker_utils::lane_change_markers
 {
