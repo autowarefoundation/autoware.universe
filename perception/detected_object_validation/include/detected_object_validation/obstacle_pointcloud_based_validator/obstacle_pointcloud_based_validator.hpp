@@ -15,7 +15,7 @@
 #ifndef OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
 #define OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
 
-#include "obstacle_pointcloud_based_validator/debugger.hpp"
+#include "detected_object_validation/obstacle_pointcloud_based_validator/debugger.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
