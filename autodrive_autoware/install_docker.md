@@ -2,7 +2,9 @@
 
 This documentation covers `Docker Installation of Autoware` and testing the installation with `Autoware Planning Simulation`.
 
-> **Note**: Installation was tested with Host-PC running Ubuntu 20.04 (with ROS 1 Noetic, ROS 2 Foxy & ROS 2 Galactic) and Docker-Container running Ubuntu 22.04 (with ROS 2 Humble).
+> **Note 1**: Installation was tested with Host-PC running Ubuntu 20.04 (with ROS 1 Noetic, ROS 2 Foxy & ROS 2 Galactic) and Docker-Container running Ubuntu 22.04 (with ROS 2 Humble).
+
+> **Note 2**: A dedicated `Autoware_WS` was created on Host-PC to organize `autoware_maps`, `autoware_docker` installation (with ROS 2 Humble) and `autoware_local` installation (with ROS 2 Galactic).
 
 ## Official Documentation:
 
