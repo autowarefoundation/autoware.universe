@@ -21,7 +21,8 @@ user@host-pc:~$ # Setting up the build environment can take up to 1 hour.
 
 user@host-pc:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN and TensorRT NVIDIA libraries which have end-user license agreements that should be reviewed before installation.
                         # Install NVIDIA libraries? [y/N]
-                        N
+                        N # On certain systems, modifying any existing NVIDIA libraries can break things!
+                        y # If you are confident about your system dependencies, you may choose to proceed with the installation of NVIDIA libraries.
 user@host-pc:~$ cd ..
 
 user@host-pc:~$ mkdir -p autoware_map
