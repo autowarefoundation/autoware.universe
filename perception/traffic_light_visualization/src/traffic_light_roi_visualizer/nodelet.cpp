@@ -14,11 +14,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
-#include <traffic_light_roi_visualizer/nodelet.hpp>
 
 #include <memory>
 #include <string>
 #include <utility>
+
+#include "traffic_light_visualizer/traffic_light_roi_visualizer/nodelet.hpp"
 
 namespace traffic_light
 {
