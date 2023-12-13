@@ -3,9 +3,10 @@
 <package format="3">
   <name>behavior_velocity_dynamic_obstacle_stop_module</name>
   <version>0.1.0</version>
-  <description>The behavior_velocity_dynamic_obstacle_stop_module package</description>
+  <description>dynamic_obstacle_stop module to stop ego when in the immediate path of a dynamic object</description>
 
   <maintainer email="maxime.clement@tier4.jp">Maxime Clement</maintainer>
+  <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
 
   <license>Apache License 2.0</license>
 
