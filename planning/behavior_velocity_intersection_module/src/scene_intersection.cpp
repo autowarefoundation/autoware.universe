@@ -1070,15 +1070,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     }
   }
 
-  // yield stuck vehicle detection is viable even if attention area is empty
-  // so this needs to be checked before attention area validation
-  const bool yield_stuck_detected = checkYieldStuckVehicle(
-    planner_data_, path_lanelets, intersection_lanelets.first_attention_area());
-  if (yield_stuck_detected && stuck_stopline_idx_opt) {
-    const auto stuck_stopline_idx = stuck_stopline_idx_opt.value();
-    return IntersectionModule::YieldStuckStop{closest_idx, stuck_stopline_idx};
-  }
-
   // if attention area is empty, collision/occlusion detection is impossible
   if (!first_attention_area_opt) {
     return IntersectionModule::Indecisive{"attention area is empty"};
@@ -1123,6 +1114,15 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
   // filter objects
   auto target_objects = generateTargetObjects(intersection_lanelets, intersection_area);
+
+  // yield stuck vehicle detection is viable even if attention area is empty
+  // so this needs to be checked before attention area validation
+  const bool yield_stuck_detected = checkYieldStuckVehicle(
+    target_objects, interpolated_path_info, intersection_lanelets.attention_non_preceding_);
+  if (yield_stuck_detected && stuck_stopline_idx_opt) {
+    const auto stuck_stopline_idx = stuck_stopline_idx_opt.value();
+    return IntersectionModule::YieldStuckStop{closest_idx, stuck_stopline_idx};
+  }
 
   const double is_amber_or_red =
     (traffic_prioritized_level == util::TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED) ||
@@ -1376,13 +1376,10 @@ bool IntersectionModule::checkStuckVehicle(
 }
 
 bool IntersectionModule::checkYieldStuckVehicle(
-  const std::shared_ptr<const PlannerData> & planner_data, const util::PathLanelets & path_lanelets,
-  const std::optional<lanelet::CompoundPolygon3d> & first_attention_area)
+  const util::TargetObjects & target_objects,
+  const util::InterpolatedPathInfo & interpolated_path_info,
+  const lanelet::ConstLanelets & attention_lanelets)
 {
-  if (!first_attention_area) {
-    return false;
-  }
-
   const bool yield_stuck_detection_direction = [&]() {
     return (turn_direction_ == "left" && planner_param_.yield_stuck.turn_direction.left) ||
            (turn_direction_ == "right" && planner_param_.yield_stuck.turn_direction.right) ||
@@ -1392,13 +1389,8 @@ bool IntersectionModule::checkYieldStuckVehicle(
     return false;
   }
 
-  const auto & objects_ptr = planner_data->predicted_objects;
-
-  const auto & ego_lane = path_lanelets.ego_or_entry2exit;
-  const auto ego_poly = ego_lane.polygon2d().basicPolygon();
-
   return util::checkYieldStuckVehicleInIntersection(
-    objects_ptr, ego_poly, first_attention_area.value(),
+    target_objects, interpolated_path_info, attention_lanelets,
     planner_param_.stuck_vehicle.stuck_vehicle_velocity_threshold,
     planner_param_.yield_stuck.distance_threshold, &debug_data_);
 }

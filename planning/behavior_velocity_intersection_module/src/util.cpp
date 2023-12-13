@@ -1180,10 +1180,13 @@ bool checkStuckVehicleInIntersection(
 }
 
 bool checkYieldStuckVehicleInIntersection(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-  const lanelet::BasicPolygon2d & ego_poly, const lanelet::CompoundPolygon3d & first_attention_area,
-  const double stuck_vehicle_vel_thr, const double yield_stuck_distance_thr, DebugData * debug_data)
+  [[maybe_unused]] const util::TargetObjects & target_objects,
+  [[maybe_unused]] const util::InterpolatedPathInfo & interpolated_path_info,
+  [[maybe_unused]] const lanelet::ConstLanelets & attention_lanelets,
+  [[maybe_unused]] const double stuck_vehicle_vel_thr,
+  [[maybe_unused]] const double yield_stuck_distance_thr, [[maybe_unused]] DebugData * debug_data)
 {
+  /*
   const auto first_attention_area_2d = lanelet::utils::to2D(first_attention_area);
   Polygon2d first_attention_area_poly;
   for (const auto & p : first_attention_area_2d) {
@@ -1215,6 +1218,7 @@ bool checkYieldStuckVehicleInIntersection(
       return true;
     }
   }
+  */
   return false;
 }
 
