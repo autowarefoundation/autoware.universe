@@ -10,7 +10,7 @@ For official Autoware installation guide, see [Autoware Installation Guide](http
 
 ---
 
-### From Host Computer:
+## Host PC:
 
 ```bash
 user@host-pc:~$ mkdir -p Autoware_WS
@@ -46,7 +46,7 @@ user@host-pc:~$ docker pull ghcr.io/autowarefoundation/autoware-universe:latest-
 user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume $HOME/Autoware_WS/autoware_docker --volume $HOME/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 ```
 
-### Within Docker Container:
+## Docker Container:
 
 ```bash
 user@container-id:~$ cd Autoware_WS/autoware_docker/
