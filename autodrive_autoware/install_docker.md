@@ -8,6 +8,8 @@ For official Autoware installation guide, see [Autoware Installation Guide](http
   - [Local (Source) Installation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/)
   - [Docker Installation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/docker-installation/)
 
+For official Docker installation guide, see [Get Docker](https://docs.docker.com/get-docker/), and particularly for Ubuntu, see [Docker Ubuntu Installation](https://docs.docker.com/desktop/install/ubuntu/).
+
 > **Note 1**: This documentation covers `Docker Installation of Autoware` and testing the installation with `Autoware Planning Simulation`.
 
 ---
