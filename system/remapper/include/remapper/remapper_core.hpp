@@ -17,9 +17,9 @@
 
 # include <rclcpp/rclcpp.hpp>
 
-#include <can_msgs/msg/frame.hpp>
-#include <watchdog_system_msgs/msg/switch_status.hpp>
 #include <tier4_system_msgs/msg/operation_mode_availability.hpp>
+#include <can_msgs/msg/frame.hpp>
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -83,9 +83,9 @@ private:
   void onOperationModeAvailability(const tier4_system_msgs::msg::OperationModeAvailability::ConstSharedPtr msg);
   void onToCanBus(const can_msgs::msg::Frame::ConstSharedPtr msg);
   void onControlCmd(const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
-  void onTransform(const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg);
+  void onTransform(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg);
 
-  void onOperationModeState(const autoware_adapi_v1_msgs::msg::LocalizationInitializationState::ConstSharedPtr msg);
+  void onOperationModeState(const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg);
   void onLocalizationInitializationState(const autoware_adapi_v1_msgs::msg::LocalizationInitializationState::ConstSharedPtr msg);
   void onPoseWithCovarianceStamped(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg);
   void onRouteState(const autoware_adapi_v1_msgs::msg::RouteState::ConstSharedPtr msg);
