@@ -213,6 +213,7 @@ private:
       ((length_to_goal < min_target_length) || (std::abs(ego_arc.distance)) < 0.5) &&
       (yaw_difference < pi / 36.0) &&
       (closest_lanelet_to_goal.id() == closest_lanelet_to_ego.id());  // TODO(Daniel) magic numbers
+    std::cerr << __func__ << " Am  I reaching the end of this \n";
     return isReferencePathSafe() && (merged_back_to_path);
   }
 

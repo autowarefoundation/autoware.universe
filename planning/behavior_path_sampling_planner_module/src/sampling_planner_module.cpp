@@ -72,7 +72,8 @@ SamplingPlannerModule::SamplingPlannerModule(
   // TODO(Daniel): Think of methods to prevent chattering
   // TODO(Daniel): Add penalty for not ending up on the same line as ref path?
   // TODO(Daniel): Length increasing curvature cost, increase curvature cost the longer the path is
-
+  // TODO(Daniel): in frenet path to path with laneID transform assign the laneid to the points from
+  // end to start -> that will prevent cases were some points on the output dont have a laneID
   //  Yaw difference
   // soft_constraints_.emplace_back(
   //   [&](
@@ -377,6 +378,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     }
     return {x, y};
   }();
+
   frenet_planner::FrenetState frenet_initial_state;
   frenet_planner::SamplingParameters sampling_parameters;
 
@@ -413,6 +415,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
            path_curvature);
     }
   };
+
   set_frenet_state(initial_state, reference_spline, frenet_initial_state);
 
   std::vector<DrivableLanes> drivable_lanes{};
@@ -631,8 +634,10 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   prev_sampling_path_ = best_path;
 
   auto out_path = convertFrenetPathToPathWithLaneID(
-    best_path, road_lanes, planner_data_->route_handler->getGoalPose().position.z);
+    best_path, current_lanes, planner_data_->route_handler->getGoalPose().position.z);
 
+  std::cerr << "road_lanes size " << road_lanes.size() << "\n";
+  std::cerr << "First lane ID size " << out_path.points.at(0).lane_ids.size() << "\n";
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(out_path);
   out.reference_path = reference_path_ptr;
