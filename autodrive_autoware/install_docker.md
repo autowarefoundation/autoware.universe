@@ -28,27 +28,34 @@ This documentation covers `Docker Installation of Autoware` and testing the inst
 
 ## Set Up Autoware Development Environment:
 
+1. Create a dedicated workspace for Autoware called `Autoware_WS` on Host-PC to organize different Autoware installations, maps, data, etc and move to the directory.
 ```bash
 user@host-pc:~$ mkdir -p Autoware_WS
-
 user@host-pc:~$ cd Autoware_WS
+```
 
+2. Clone the [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_docker` (to differentiate it from `autoware_local` installation, if any) and move to the directory.
+```bash
 user@host-pc:~$ git clone https://github.com/autowarefoundation/autoware.git
-
 user@host-pc:~$ sudo mv $HOME/Autoware_WS/autoware $HOME/Autoware_WS/autoware_docker
-
 user@host-pc:~$ cd autoware_docker
+```
 
-user@host-pc:~$ ./setup-dev-env.sh docker
-
+3. Install the Required Dependencies (Autoware uses [Ansible](https://www.ansible.com/) scripts to automate dependency and configuration management).
+```bash
+user@host-pc:~$ ./setup-dev-env.sh docker # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
 user@host-pc:~$ # Setting up the build environment can take up to 1 hour.
                         # >  Are you sure you want to run setup? [y/N]
                         y
-
 user@host-pc:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN and TensorRT NVIDIA libraries which have end-user license agreements that should be reviewed before installation.
                         # Install NVIDIA libraries? [y/N]
                         N # On certain systems, modifying any existing NVIDIA libraries can break things!
                         y # If you are confident about your system dependencies, you may choose to proceed with the installation of NVIDIA libraries.
+```
+
+
+
+```bash
 user@host-pc:~$ cd ..
 
 user@host-pc:~$ mkdir -p autoware_map
