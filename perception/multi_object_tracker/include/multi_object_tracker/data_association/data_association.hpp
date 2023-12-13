@@ -54,6 +54,10 @@ public:
   void assign(
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);
+  void filterMeasurementsBySize(
+    const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
+    autoware_auto_perception_msgs::msg::DetectedObjects & filtered_measurements,
+    autoware_auto_perception_msgs::msg::DetectedObjects & unexpected_measurements);
   Eigen::MatrixXd calcScoreMatrix(
     const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
     const std::list<std::shared_ptr<Tracker>> & trackers);
