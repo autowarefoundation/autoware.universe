@@ -104,7 +104,6 @@ user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml m
 1. To access the container while it is running, execute the following command in a new terminal window to start a new bash session inside the container:
 ```bash
 $ docker exec -it <CONTAINER NAME> bash
-$ docker exec -it singaboat_vrx bash
 ```
 
 2. To exit the bash session(s), simply execute:
@@ -112,24 +111,22 @@ $ docker exec -it singaboat_vrx bash
 $ exit
 ```
 
-3. To kill the container, execute the following command in a new terminal window:
+3. To kill the container, execute the following command:
 ```bash
 $ docker kill <CONTAINER NAME>
-$ docker kill singaboat_vrx
 ```
 
-4. To remove the container,  simply execute:
+4. To remove the container, simply execute:
 ```bash
 $ docker rm <CONTAINER NAME>
-$ docker rm singaboat_vrx
 ```
 
-5. Running or caching multiple docker images or containers can quickly eat up a lot of disk space. Hence, it is always a good idea to frequently check docker disk utilization:
+5. Running or caching multiple docker images, containers, volumes, and networks can quickly consume a lot of disk space. Hence, it is always a good idea to frequently check docker disk utilization:
 ```bash
 $ docker system df
 ```
 
-6. In order to avoid utilizing a lot of disk space, it is a good idea to frequently purge docker resources such as images, containers, volumes and networks that are unused or dangling (i.e. not tagged or associated with a container). There are a number of ways with a lot of options to achieve this, please refer appropriate documentation. The easiest way (but a potentially dangerous one) is to use a single command to clean up all the docker resources (dangling or otherwise):
+6. To avoid utilizing a lot of disk space, it is a good idea to frequently purge docker resources such as images, containers, volumes, and networks that are unused or dangling (i.e. not tagged or associated with a container). There are several ways with many options to achieve this, please refer to appropriate documentation. The easiest way (but a potentially dangerous one) is to use a single command to clean up all the docker resources (dangling or otherwise):
 ```bash
 $ docker system prune -a
 ```
