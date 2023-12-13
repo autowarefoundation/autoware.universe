@@ -61,9 +61,12 @@ user@host-pc:~$ gdown -O ~/Autoware_WS/autoware_map/ 'https://docs.google.com/uc
 user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/sample-map-planning.zip
 ```
 
+5. Pull [`autowarefoundation/autoware-universe`](https://github.com/autowarefoundation/autoware/pkgs/container/autoware-universe) image from [GitHub Packages](https://github.com/features/packages).
 ```bash
 user@host-pc:~$ docker pull ghcr.io/autowarefoundation/autoware-universe:latest-cuda
+```
 
+```bash
 user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 ```
 
