@@ -61,6 +61,24 @@ public:
 private:
   const double MIN_TIME_CONSTANT;  //!< @brief minimum time constant   --> TODO what is this?
 
+  /* 
+  Specify string names for states and inputs. So we can automatically map states and 
+  inputs of this model to states and inputs of the python submodels.
+  In order not to compare strings each iteration, we compute mappings between the states 
+  and inputs of this model and python submodels.
+  */
+  const char* STATE_NAMES[5] = {"POS_X", "POS_Y", "YAW", "VX", "STEER"};
+  const char* INPUT_NAMES[2] = {"VX_DES", "STEER_DES"};
+
+  /* 
+  Index means state or input in this model. First 5 indexes are states, last 2 indexes are inputs.
+  ----------------------------  {      STATES      }{INPUTS} */
+  int MAP_TO_PYSTEER_INPUT[7] = {-1, -1, -1, -1, -1, -1, -1};  // <<- Value means index of the input in python steer model. -1 means not used.
+  /* 
+  Index means state in this model.
+  -------------------------------  {      STATES      }*/
+  int MAP_FROM_PYSTEER_OUTPUT[5] = {-1, -1, -1, -1, -1};  // <<- Value means index of the output in python steer model. -1 means not used.
+
   enum IDX {
     X = 0,
     Y,
@@ -72,6 +90,7 @@ private:
     VX_DES = 0,
     STEER_DES,
   };
+  
 
   const double vx_lim_;          //!< @brief velocity limit
   const double vx_rate_lim_;     //!< @brief acceleration limit
@@ -92,7 +111,7 @@ private:
   const double steer_dead_band_;  //!< @brief dead band for steering angle [rad]
 
 
-  PyObject *steer_base_model;
+  //PyObject *steer_base_model;
 
   int num_states_steering;
   int num_inputs_steering;
@@ -102,7 +121,7 @@ private:
   Eigen::VectorXd input_steering;
 
   // Create vectors to store system input and state (python)
-  PyObject *py_state_steering, *py_input_steering;
+  //PyObject *py_state_steering, *py_input_steering;
   
 
   /**

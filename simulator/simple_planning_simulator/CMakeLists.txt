@@ -4,9 +4,17 @@ project(simple_planning_simulator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(Python REQUIRED)  # Python testing
-include_directories(${Python_INCLUDE_DIRS})
-include_directories("/usr/include/python3.10")
+find_package(Python3 COMPONENTS Interpreter Development)
+find_package(pybind11 CONFIG)
+
+message("Pybind11_FOUND:${pybind11_FOUND}")
+message("Pybind11_Version:${pybind11_VERSION}")
+
+message("Python_FOUND:${Python3_FOUND}")
+message("Python_VERSION:${Python3_VERSION}")
+message("Python_Development_FOUND:${Python3_Development_FOUND}")
+message("Python_LIBRARIES:${Python3_LIBRARIES}")
+
 
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -26,6 +34,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
 
+
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast) # RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
 
 # Node executable
@@ -34,7 +43,11 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_exe
 )
 
-target_link_libraries(${PROJECT_NAME} ${Python_LIBRARIES})
+# target_link_options(${PROJECT_NAME} PRIVATE -shared -fPIC -export-dynamic)  # 
+
+# target_link_libraries(${PROJECT_NAME} ${Python3_LIBRARIES})  3
+# /usr/lib/x86_64-linux-gnu/libpython3.10.so
+target_link_libraries(${PROJECT_NAME} pybind11::embed ${Python3_LIBRARIES})
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_simple_planning_simulator
