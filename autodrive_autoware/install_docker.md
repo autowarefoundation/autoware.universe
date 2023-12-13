@@ -6,6 +6,8 @@ This documentation covers `Docker Installation of Autoware` and testing the inst
 
 > **Note 2**: A dedicated `Autoware_WS` was created on Host-PC to organize `autoware_maps`, `autoware_docker` installation (with ROS 2 Humble) and `autoware_local` installation (with ROS 2 Galactic).
 
+> **Note 3**: Pay close attention to `user@host-pc` (when executing commands from Host-PC) and `container-id` (when executing commands from Docker-Container).
+
 ## Official Documentation:
 
 - For Autoware's general documentation, see [Autoware Documentation](https://autowarefoundation.github.io/autoware-documentation/).
@@ -22,7 +24,7 @@ This documentation covers `Docker Installation of Autoware` and testing the inst
 
 ---
 
-## Host PC:
+## Set Up Autoware Development Environment:
 
 ```bash
 user@host-pc:~$ mkdir -p Autoware_WS
