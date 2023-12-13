@@ -51,7 +51,7 @@ private:
   // classified point label
   // (0: not classified, 1: ground, 2: not ground, 3: follow previous point,
   //  4: unkown(currently not used), 5: virtual ground)
-  enum class PointLabel {
+  enum class PointLabel : uint16_t {
     INIT = 0,
     GROUND,
     NON_GROUND,
@@ -60,15 +60,13 @@ private:
     VIRTUAL_GROUND,
     OUT_OF_RANGE
   };
+
   struct PointData
   {
-    float grid_size;  // radius of grid
-    float radius;     // cylindrical coords on XY Plane
+    float radius;  // cylindrical coords on XY Plane
     PointLabel point_state{PointLabel::INIT};
-    size_t radial_div;           // index of the radial division to which this point belongs to
-    size_t orig_index;           // index of this point in the source pointcloud
-    Eigen::Vector3f orig_point;  
-    uint16_t grid_id;            // id of grid in vertical
+    uint16_t grid_id;   // id of grid in vertical
+    size_t orig_index;  // index of this point in the source pointcloud
   };
   using PointCloudVector = std::vector<PointData>;
 
@@ -150,6 +148,7 @@ private:
 
   void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
+
   // TODO(taisa1): Temporary Implementation: Remove this interface when all the filter nodes
   // conform to new API
   virtual void faster_filter(
@@ -165,6 +164,11 @@ private:
   int intensity_offset_;
   bool offset_initialized_;
 
+  void set_field_offsets(const PointCloud2ConstPtr & input);
+
+  void get_point_from_global_offset(
+    const PointCloud2ConstPtr & input, pcl::PointXYZ & point, size_t global_offset);
+
   const uint16_t gnd_grid_continual_thresh_ = 3;
   bool elevation_grid_mode_;
   float non_ground_height_threshold_;
@@ -176,10 +180,12 @@ private:
   float grid_mode_switch_angle_rad_;
   float virtual_lidar_z_;
   float detection_range_z_max_;
-  float center_pcl_shift_;                  // virtual center of pcl to center mass
-  float grid_mode_switch_radius_;           // non linear grid size switching distance
-  double global_slope_max_angle_rad_;       // radians
-  double local_slope_max_angle_rad_;        // radians
+  float center_pcl_shift_;             // virtual center of pcl to center mass
+  float grid_mode_switch_radius_;      // non linear grid size switching distance
+  double global_slope_max_angle_rad_;  // radians
+  double local_slope_max_angle_rad_;   // radians
+  double global_slope_max_ratio_;
+  double local_slope_max_ratio_;
   double radial_divider_angle_rad_;         // distance in rads between dividers
   double split_points_distance_tolerance_;  // distance in meters between concentric divisions
   double                                    // minimum height threshold regardless the slope,
@@ -199,7 +205,7 @@ private:
    */
 
   /*!
-   * Convert pcl::PointCloud to sorted PointCloudVector
+   * Convert sensor_msgs::msg::PointCloud2 to sorted PointCloudVector
    * @param[in] in_cloud Input Point Cloud to be organized in radial segments
    * @param[out] out_radial_ordered_points_manager Vector of Points Clouds,
    *     each element will contain the points ordered
@@ -214,7 +220,7 @@ private:
    * Output ground center of front wheels as the virtual ground point
    * @param[out] point Virtual ground origin point
    */
-  void calcVirtualGroundOrigin(Eigen::Vector3f & point);
+  void calcVirtualGroundOrigin(pcl::PointXYZ & point);
 
   /*!
    * Classifies Points in the PointCloud as Ground and Not Ground
@@ -227,13 +233,18 @@ private:
   void initializeFirstGndGrids(
     const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids);
 
-  void checkContinuousGndGrid(PointData & p, const std::vector<GridCenter> & gnd_grids_list);
-  void checkDiscontinuousGndGrid(PointData & p, const std::vector<GridCenter> & gnd_grids_list);
-  void checkBreakGndGrid(PointData & p, const std::vector<GridCenter> & gnd_grids_list);
+  void checkContinuousGndGrid(
+    PointData & p, pcl::PointXYZ & orig_point, const std::vector<GridCenter> & gnd_grids_list);
+  void checkDiscontinuousGndGrid(
+    PointData & p, pcl::PointXYZ & orig_point, const std::vector<GridCenter> & gnd_grids_list);
+  void checkBreakGndGrid(
+    PointData & p, pcl::PointXYZ & orig_point, const std::vector<GridCenter> & gnd_grids_list);
   void classifyPointCloud(
+    const PointCloud2ConstPtr & in_cloud_ptr,
     std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   void classifyPointCloudGridScan(
+    const PointCloud2ConstPtr & in_cloud_ptr,
     std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   /*!
@@ -266,37 +277,6 @@ private:
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{
     nullptr};
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_ptr_{nullptr};
-
-  inline Eigen::Vector3f get_point_from_global_offset(
-    const PointCloud2ConstPtr & input, size_t global_offset)
-  {
-    Eigen::Vector3f point(
-      *reinterpret_cast<const float *>(&input->data[global_offset + x_offset_]),
-      *reinterpret_cast<const float *>(&input->data[global_offset + y_offset_]),
-      *reinterpret_cast<const float *>(&input->data[global_offset + z_offset_]));
-    return point;
-  }
-
-  inline void set_field_offsets(const PointCloud2ConstPtr & input)
-  {
-    x_offset_ = input->fields[pcl::getFieldIndex(*input, "x")].offset;
-    y_offset_ = input->fields[pcl::getFieldIndex(*input, "y")].offset;
-    z_offset_ = input->fields[pcl::getFieldIndex(*input, "z")].offset;
-    int intensity_index = pcl::getFieldIndex(*input, "intensity");
-    if (intensity_index != -1) {
-      intensity_offset_ = input->fields[intensity_index].offset;
-    } else {
-      intensity_offset_ = z_offset_ + sizeof(float);
-    }
-    offset_initialized_ = true;
-  }
-
-  // for calcdistance3d
-  inline float calcDistance3dVec3f(const Eigen::Vector3f & point1, const Eigen::Vector3f & point2)
-  {
-    return std::hypot(
-      std::hypot(point1.x() - point2.x(), point1.y() - point2.y()), point1.z() - point2.z());
-  }
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
