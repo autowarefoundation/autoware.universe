@@ -1,5 +1,11 @@
 # Autoware Docker Installation Guide
 
+This documentation covers `Docker Installation of Autoware` and testing the installation with `Autoware Planning Simulation`.
+
+> **Note**: Installation was tested with Host-PC running Ubuntu 20.04 (with ROS 1 Noetic, ROS 2 Foxy & ROS 2 Galactic) and Docker-Container running Ubuntu 22.04 (with ROS 2 Humble).
+
+## Official Documentation:
+
 For Autoware's general documentation, see [Autoware Documentation](https://autowarefoundation.github.io/autoware-documentation/).
 
 For detailed documents of Autoware Universe components, see [Autoware Universe Documentation](https://autowarefoundation.github.io/autoware.universe/).
@@ -9,8 +15,6 @@ For official Autoware installation guide, see [Autoware Installation Guide](http
   - [Docker Installation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/docker-installation/)
 
 For official Docker installation guide, see [Get Docker](https://docs.docker.com/get-docker/), and particularly for Ubuntu, see [Docker Ubuntu Installation](https://docs.docker.com/desktop/install/ubuntu/).
-
-> **Note 1**: This documentation covers `Docker Installation of Autoware` and testing the installation with `Autoware Planning Simulation`.
 
 ---
 
