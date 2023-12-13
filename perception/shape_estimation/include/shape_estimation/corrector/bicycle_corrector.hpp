@@ -29,7 +29,7 @@ public:
     params.max_width = 1.2;
     params.default_width = (params.min_width + params.max_width) * 0.5;
     params.min_length = 1.0;
-    params.max_length = 2.6;
+    params.max_length = 2.8;
     params.default_length = (params.min_length + params.max_length) * 0.5;
     setParams(params);
   }
