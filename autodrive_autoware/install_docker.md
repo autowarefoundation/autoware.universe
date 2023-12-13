@@ -100,7 +100,7 @@ user@container-id:~$ source ~/Autoware_WS/autoware_docker/install/setup.bash
 user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
 ```
 
-## Docker Tips
+## Docker Tips:
 1. To access the container while it is running, execute the following command in a new terminal window to start a new bash session inside the container:
 ```bash
 $ docker exec -it <CONTAINER NAME> bash
