@@ -122,7 +122,7 @@ bool ShapeEstimator::applyCorrector(
     corrector_ptr.reset(new TrailerCorrector(use_reference_yaw));
   } else if (label == Label::MOTORCYCLE || label == Label::BICYCLE) {
     corrector_ptr.reset(new BicycleCorrector(use_reference_yaw));
-  }else {
+  } else {
     corrector_ptr.reset(new NoCorrector);
   }
 

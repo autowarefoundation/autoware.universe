@@ -21,7 +21,8 @@
 class BicycleCorrector : public VehicleCorrector
 {
 public:
-  explicit BicycleCorrector(const bool use_reference_yaw = false) : VehicleCorrector(use_reference_yaw)
+  explicit BicycleCorrector(const bool use_reference_yaw = false)
+  : VehicleCorrector(use_reference_yaw)
   {
     corrector_utils::CorrectionBBParameters params;
     params.min_width = 0.3;
