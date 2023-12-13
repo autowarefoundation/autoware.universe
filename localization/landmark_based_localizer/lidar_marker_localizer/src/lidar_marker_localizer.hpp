@@ -40,9 +40,10 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
-
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <landmark_manager/landmark_manager.hpp>
+
+#include <geometry_msgs/msg/pose_array.hpp>
 
 #include <pcl/point_types.h>
 
@@ -53,6 +54,7 @@ class LidarMarkerLocalizer : public rclcpp::Node
   using Pose = geometry_msgs::msg::Pose;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using PoseArray = geometry_msgs::msg::PoseArray;
   using TransformStamped = geometry_msgs::msg::TransformStamped;
   using Vector3 = geometry_msgs::msg::Vector3;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
@@ -97,11 +99,11 @@ private:
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_self_pose_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_bin_;
 
-  rclcpp::Publisher<PoseStamped>::SharedPtr pub_marker_pose_on_map_from_self_pose_;
   rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr
     pub_base_link_pose_with_covariance_on_map_;
   rclcpp::Service<SetBool>::SharedPtr service_trigger_node_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_mapped_;
+  rclcpp::Publisher<PoseArray>::SharedPtr pub_marker_detected_;
 
   diagnostic_updater::Updater diag_updater_;
 

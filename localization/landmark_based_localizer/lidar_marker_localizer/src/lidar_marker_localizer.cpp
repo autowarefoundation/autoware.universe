@@ -79,14 +79,13 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     "/map/vector_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&LidarMarkerLocalizer::map_bin_callback, this, _1));
 
-  pub_marker_pose_on_map_from_self_pose_ =
-    this->create_publisher<PoseStamped>("marker_pose_on_map_from_self_pose", 10);
   pub_base_link_pose_with_covariance_on_map_ = this->create_publisher<PoseWithCovarianceStamped>(
     "/localization/pose_estimator/pose_with_covariance", 10);
   rclcpp::QoS qos_marker = rclcpp::QoS(rclcpp::KeepLast(10));
   qos_marker.transient_local();
   qos_marker.reliable();
-  pub_marker_ = this->create_publisher<MarkerArray>("~/debug/marker", qos_marker);
+  pub_marker_mapped_ = this->create_publisher<MarkerArray>("~/debug/marker_mapped", qos_marker);
+  pub_marker_detected_ = this->create_publisher<PoseArray>("~/debug/marker_detected", 10);
 
   service_trigger_node_ = this->create_service<SetBool>(
     "trigger_node_srv", std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
@@ -103,7 +102,7 @@ void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & ms
 {
   landmark_manager_.parse_landmarks(msg, "reflective_paint_marker", this->get_logger());
   const MarkerArray marker_msg = landmark_manager_.get_landmarks_as_marker_array_msg();
-  pub_marker_->publish(marker_msg);
+  pub_marker_mapped_->publish(marker_msg);
 }
 
 void LidarMarkerLocalizer::self_pose_callback(
@@ -145,6 +144,19 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1, "Could not detect marker");
     return;
+  }
+
+  // for debug
+  if (pub_marker_detected_->get_subscription_count() > 0) {
+    PoseArray pose_array_msg;
+    pose_array_msg.header.stamp = sensor_ros_time;
+    pose_array_msg.header.frame_id = "map";
+    for (const landmark_manager::Landmark & landmark : detected_landmarks) {
+      const Pose detected_marker_on_map =
+        tier4_autoware_utils::transformPose(landmark.pose, self_pose);
+      pose_array_msg.poses.push_back(detected_marker_on_map);
+    }
+    pub_marker_detected_->publish(pose_array_msg);
   }
 
   // (3) calculate diff pose
