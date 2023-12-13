@@ -185,6 +185,10 @@ public:
       return parameters_->object_check_max_forward_distance;
     }
 
+    if (isShifted()) {
+      return parameters_->object_check_max_forward_distance;
+    }
+
     const auto max_shift_length = std::max(
       std::abs(parameters_->max_right_shift_length), std::abs(parameters_->max_left_shift_length));
     const auto dynamic_distance = PathShifter::calcLongitudinalDistFromJerk(
