@@ -1,7 +1,14 @@
 <launch>
-  <!-- Topics -->
-  <arg name="input/pointcloud" default="/sensing/lidar/top/rectified/pointcloud_ex" description="input topic name"/>
-  <arg name="output/pointcloud" default="filtered/pointcloud_ex" description="final output topic name"/>
+  <arg name="param_file" default="$(find-pkg-share lidar_marker_localizer)/config/lidar_marker_localizer.param.yaml"/>
+
+  <!-- Topic names -->
+  <arg name="input_lanelet2_map" default="~/input/lanelet2_map"/>
+  <arg name="input_ekf_pose" default="~/input/ekf_pose"/>
+  <arg name="input_pointcloud" default="~/input/pointcloud"/>
+
+  <arg name="output_pose_with_covariance" default="~/output/pose_with_covariance"/>
+
+  <arg name="service_trigger_node_srv" default="~/service/trigger_node_srv"/>
 
   <!-- container -->
   <arg name="use_pointcloud_container" default="True" description="launch pointcloud container"/>
@@ -10,14 +17,10 @@
   <!-- option -->
   <arg name="use_intra_process" default="true" description="use ROS 2 component container communication"/>
 
-  <arg name="param_file" default="$(find-pkg-share lidar_marker_localizer)/config/lidar_marker_localizer.param.yaml"/>
-
-  <!-- <arg name="param_file" default="$(find-pkg-share lidar_marker_localizer)/config/lidar_marker_localizer.param.yaml"/> -->
-
   <group>
     <include file="$(find-pkg-share lidar_marker_localizer)/launch/util.launch.py">
-      <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
-      <arg name="output/pointcloud" value="$(var output/pointcloud)"/>
+      <arg name="input/pointcloud" value="$(var input_pointcloud)"/>
+      <arg name="output/pointcloud" value="filtered/pointcloud_ex"/>
       <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
       <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
       <arg name="use_intra_process" value="$(var use_intra_process)"/>
@@ -25,8 +28,13 @@
   </group>
 
   <node pkg="lidar_marker_localizer" exec="lidar_marker_localizer" name="lidar_marker_localizer" output="log">
-    <!-- <param from="$(var param_file)"/> -->
-    <remap from="input/pointcloud_ex" to="ring_filter/pointcloud_ex"/>
+    <remap from="~/input/pointcloud_ex" to="ring_filter/pointcloud_ex"/>
+    <remap from="~/input/ekf_pose" to="$(var input_ekf_pose)"/>
+    <remap from="~/input/lanelet2_map" to="$(var input_lanelet2_map)"/>
+
+    <remap from="~/output/pose_with_covariance" to="$(var output_pose_with_covariance)"/>
+
+    <remap from="~/service/trigger_node_srv" to="$(var service_trigger_node_srv)"/>
 
     <param from="$(var param_file)"/>
   </node>

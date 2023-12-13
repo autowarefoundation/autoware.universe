@@ -64,7 +64,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   auto points_sub_opt = rclcpp::SubscriptionOptions();
   points_sub_opt.callback_group = points_callback_group;
   sub_points_ = this->create_subscription<PointCloud2>(
-    "input/pointcloud_ex", rclcpp::QoS(1).best_effort(),
+    "~/input/pointcloud_ex", rclcpp::QoS(1).best_effort(),
     std::bind(&LidarMarkerLocalizer::points_callback, this, _1), points_sub_opt);
 
   rclcpp::CallbackGroup::SharedPtr self_pose_callback_group;
@@ -73,14 +73,14 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   auto self_pose_sub_opt = rclcpp::SubscriptionOptions();
   points_sub_opt.callback_group = self_pose_callback_group;
   sub_self_pose_ = this->create_subscription<PoseWithCovarianceStamped>(
-    "/localization/pose_twist_fusion_filter/biased_pose_with_covariance", rclcpp::QoS(1),
+    "~/input/ekf_pose", rclcpp::QoS(1),
     std::bind(&LidarMarkerLocalizer::self_pose_callback, this, _1), points_sub_opt);
   sub_map_bin_ = this->create_subscription<HADMapBin>(
-    "/map/vector_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
+    "~/input/lanelet2_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&LidarMarkerLocalizer::map_bin_callback, this, _1));
 
-  pub_base_link_pose_with_covariance_on_map_ = this->create_publisher<PoseWithCovarianceStamped>(
-    "/localization/pose_estimator/pose_with_covariance", 10);
+  pub_base_link_pose_with_covariance_on_map_ =
+    this->create_publisher<PoseWithCovarianceStamped>("~/output/pose_with_covariance", 10);
   rclcpp::QoS qos_marker = rclcpp::QoS(rclcpp::KeepLast(10));
   qos_marker.transient_local();
   qos_marker.reliable();
@@ -88,7 +88,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   pub_marker_detected_ = this->create_publisher<PoseArray>("~/debug/marker_detected", 10);
 
   service_trigger_node_ = this->create_service<SetBool>(
-    "trigger_node_srv", std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
+    "~/service/trigger_node_srv",
+    std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), points_callback_group);
 
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
