@@ -14,9 +14,9 @@
 
 #include "behavior_path_planner/planner_manager.hpp"
 
-#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
 #include "tier4_autoware_utils/ros/debug_publisher.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
@@ -32,13 +32,54 @@ namespace behavior_path_planner
 {
 PlannerManager::PlannerManager(
   rclcpp::Node & node, const size_t max_iteration_num, const bool verbose)
-: logger_(node.get_logger().get_child("planner_manager")),
+: plugin_loader_("behavior_path_planner", "behavior_path_planner::SceneModuleManagerInterface"),
+  logger_(node.get_logger().get_child("planner_manager")),
   clock_(*node.get_clock()),
   max_iteration_num_{max_iteration_num},
   verbose_{verbose}
 {
   processing_time_.emplace("total_time", 0.0);
   debug_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
+}
+
+void PlannerManager::launchScenePlugin(rclcpp::Node & node, const std::string & name)
+{
+  if (plugin_loader_.isClassAvailable(name)) {
+    const auto plugin = plugin_loader_.createSharedInstance(name);
+    plugin->init(&node);
+
+    // Check if the plugin is already registered.
+    for (const auto & running_plugin : manager_ptrs_) {
+      if (plugin->name() == running_plugin->name()) {
+        RCLCPP_WARN_STREAM(node.get_logger(), "The plugin '" << name << "' is already loaded.");
+        return;
+      }
+    }
+
+    // register
+    manager_ptrs_.push_back(plugin);
+    processing_time_.emplace(plugin->name(), 0.0);
+    RCLCPP_INFO_STREAM(node.get_logger(), "The scene plugin '" << name << "' is loaded.");
+  } else {
+    RCLCPP_ERROR_STREAM(node.get_logger(), "The scene plugin '" << name << "' is not available.");
+  }
+}
+
+void PlannerManager::removeScenePlugin(rclcpp::Node & node, const std::string & name)
+{
+  auto it = std::remove_if(manager_ptrs_.begin(), manager_ptrs_.end(), [&](const auto plugin) {
+    return plugin->name() == name;
+  });
+
+  if (it == manager_ptrs_.end()) {
+    RCLCPP_WARN_STREAM(
+      node.get_logger(),
+      "The scene plugin '" << name << "' is not found in the registered modules.");
+  } else {
+    manager_ptrs_.erase(it, manager_ptrs_.end());
+    processing_time_.erase(name);
+    RCLCPP_INFO_STREAM(node.get_logger(), "The scene plugin '" << name << "' is unloaded.");
+  }
 }
 
 BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & data)
@@ -222,10 +263,7 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
     // Condition 1: always executable module can be added regardless of the existence of other
     // modules, so skip checking the existence of other modules.
     // in other cases, need to check the existence of other modules and which module can be added.
-    const bool has_non_always_executable_module = std::any_of(
-      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
-      [this](const auto & m) { return !getManager(m)->isAlwaysExecutableModule(); });
-    if (!manager_ptr->isAlwaysExecutableModule() && has_non_always_executable_module) {
+    if (!manager_ptr->isAlwaysExecutableModule() && hasNonAlwaysExecutableApprovedModules()) {
       // pairs of find_block_module and is_executable
       std::vector<std::pair<std::function<bool(const SceneModulePtr &)>, std::function<bool()>>>
         conditions;
