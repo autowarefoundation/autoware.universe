@@ -41,7 +41,7 @@ user@host-pc:~$ sudo mv ~/Autoware_WS/autoware ~/Autoware_WS/autoware_docker
 user@host-pc:~$ cd autoware_docker
 ```
 
-3. Install the required dependencies (Autoware uses [Ansible](https://www.ansible.com/) scripts to automate dependency and configuration management).
+3. Install the required dependencies (Autoware uses [`Ansible`](https://www.ansible.com/) scripts to automate dependency and configuration management).
 ```bash
 user@host-pc:~$ ./setup-dev-env.sh docker # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
 user@host-pc:~$ # Setting up the build environment can take up to 1 hour.
@@ -66,6 +66,7 @@ user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/s
 user@host-pc:~$ docker pull ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 ```
 
+6. Run the pulled Docker image as a container (Autoware uses [`rocker`](https://github.com/osrf/rocker) to run Docker images with customized local support).
 ```bash
 user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 ```
