@@ -28,7 +28,7 @@ This documentation covers `Docker Installation of Autoware` and testing the inst
 
 ## Set Up Autoware Development Environment:
 
-1. Create a dedicated workspace for Autoware called `Autoware_WS` on Host-PC to organize different Autoware installations, maps, data, etc and move to the directory.
+1. Create a dedicated workspace for Autoware called `Autoware_WS` on Host-PC to organize different Autoware installations, maps, data, etc., and move to the directory.
 ```bash
 user@host-pc:~$ mkdir -p Autoware_WS
 user@host-pc:~$ cd Autoware_WS
@@ -37,11 +37,11 @@ user@host-pc:~$ cd Autoware_WS
 2. Clone the [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_docker` (to differentiate it from `autoware_local` installation, if any) and move to the directory.
 ```bash
 user@host-pc:~$ git clone https://github.com/autowarefoundation/autoware.git
-user@host-pc:~$ sudo mv $HOME/Autoware_WS/autoware $HOME/Autoware_WS/autoware_docker
+user@host-pc:~$ sudo mv ~/Autoware_WS/autoware ~/Autoware_WS/autoware_docker
 user@host-pc:~$ cd autoware_docker
 ```
 
-3. Install the Required Dependencies (Autoware uses [Ansible](https://www.ansible.com/) scripts to automate dependency and configuration management).
+3. Install the required dependencies (Autoware uses [Ansible](https://www.ansible.com/) scripts to automate dependency and configuration management).
 ```bash
 user@host-pc:~$ ./setup-dev-env.sh docker # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
 user@host-pc:~$ # Setting up the build environment can take up to 1 hour.
@@ -53,20 +53,18 @@ user@host-pc:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN a
                         y # If you are confident about your system dependencies, you may choose to proceed with the installation of NVIDIA libraries.
 ```
 
-
+4. Create `autoware_map` directory within `Autoware_WS` to store map files, and download & unzip `sample-map-planning` (later used for planning simulation) within this directory.
+```bash
+user@host-pc:~$ cd .. # cd ~/Autoware_WS
+user@host-pc:~$ mkdir -p autoware_map
+user@host-pc:~$ gdown -O ~/Autoware_WS/autoware_map/ 'https://docs.google.com/uc?export=download&id=1499_nsbUbIeturZaDj7jhUownh5fvXHd'
+user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/sample-map-planning.zip
+```
 
 ```bash
-user@host-pc:~$ cd ..
-
-user@host-pc:~$ mkdir -p autoware_map
-
-user@host-pc:~$ gdown -O ~/Autoware_WS/autoware_map/ 'https://docs.google.com/uc?export=download&id=1499_nsbUbIeturZaDj7jhUownh5fvXHd'
-
-user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/sample-map-planning.zip
-
 user@host-pc:~$ docker pull ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 
-user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume $HOME/Autoware_WS/autoware_docker --volume $HOME/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
+user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 ```
 
 ## Docker Container:
@@ -89,9 +87,9 @@ user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_T
 
 ## Planning Simulation:
 ```bash
-user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume $HOME/Autoware_WS/autoware_docker --volume $HOME/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
+user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 
 user@container-id:~$ source ~/Autoware_WS/autoware_docker/install/setup.bash
 
-user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=$HOME/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
+user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
 ```
