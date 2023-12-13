@@ -67,7 +67,8 @@ private:
   Polygons2d createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const;
 
   std::optional<DynamicObstacle> detectCollision(
-    const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path_points);
+    const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
+    const PathWithLaneId & raw_path);
 
   float calcCollisionPositionOfVehicleSide(
     const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & base_pose) const;
@@ -77,7 +78,8 @@ private:
 
   std::vector<DynamicObstacle> checkCollisionWithObstacles(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
-    std::vector<geometry_msgs::msg::Point> poly, const float travel_time) const;
+    std::vector<geometry_msgs::msg::Point> poly, const float travel_time,
+    PathWithLaneId path) const;
 
   std::optional<DynamicObstacle> findNearestCollisionObstacle(
     const PathWithLaneId & path, const geometry_msgs::msg::Pose & base_pose,
@@ -89,7 +91,7 @@ private:
 
   bool checkCollisionWithShape(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
-    std::vector<geometry_msgs::msg::Point> & collision_points) const;
+    const PathWithLaneId path, std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithCylinder(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
