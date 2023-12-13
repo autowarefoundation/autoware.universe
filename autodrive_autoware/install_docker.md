@@ -37,6 +37,10 @@ user@host-pc:~$ cd ..
 
 user@host-pc:~$ mkdir -p autoware_map
 
+user@host-pc:~$ gdown -O ~/Autoware_WS/autoware_map/ 'https://docs.google.com/uc?export=download&id=1499_nsbUbIeturZaDj7jhUownh5fvXHd'
+
+user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/sample-map-planning.zip
+
 user@host-pc:~$ docker pull ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 
 user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume $HOME/Autoware_WS/autoware_docker --volume $HOME/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
