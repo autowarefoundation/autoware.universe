@@ -32,7 +32,7 @@ namespace behavior_path_planner
 class SamplingPlannerModuleManager : public SceneModuleManagerInterface
 {
 public:
-  SamplingPlannerModuleManager() : SceneModuleManagerInterface{"side_shift"} {}
+  SamplingPlannerModuleManager() : SceneModuleManagerInterface{"sampling_planner"} {}
   void init(rclcpp::Node * node) override;
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
