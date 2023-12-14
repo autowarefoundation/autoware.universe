@@ -317,14 +317,8 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   const double ego_vel = planner_data_->current_velocity->twist.linear.x;
   const double ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
 
-  const std::optional<double> ego_crosswalk_passage_direction = [&]() -> std::optional<double> {
-    if (path_intersects.size() < 2) {
-      return std::nullopt;
-    }
-    const auto & front = path_intersects.front();
-    const auto & back = path_intersects.back();
-    return std::atan2(back.y - front.y, back.x - front.x);
-  }();
+  const std::optional<double> ego_crosswalk_passage_direction =
+    findEgoPassageDirectionAlongPath(sparse_resample_path);
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   const auto dist_ego_to_stop =
     calcSignedArcLength(ego_path.points, ego_pos, p_stop_line->first) + p_stop_line->second;
@@ -377,6 +371,12 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
         const double direction_diff = tier4_autoware_utils::normalizeRadian(
           collision_point.crosswalk_passage_direction.value() -
           ego_crosswalk_passage_direction.value());
+        RCLCPP_INFO(
+          rclcpp::get_logger("temp"),
+          "collision_point.crosswalk_passage_direction = %f, ego_crosswalk_passage_direction = %f, "
+          "direction_diff = %f",
+          collision_point.crosswalk_passage_direction.value(),
+          ego_crosswalk_passage_direction.value(), direction_diff);
         if (std::fabs(direction_diff) < planner_param_.vehicle_object_cross_angle_threshold) {
           continue;
         }
@@ -602,45 +602,67 @@ std::pair<double, double> CrosswalkModule::clampAttentionRangeByNeighborCrosswal
   return std::make_pair(clamped_near_attention_range, clamped_far_attention_range);
 }
 
+std::optional<double> CrosswalkModule::findEgoPassageDirectionAlongPath(
+  const PathWithLaneId & path) const
+{
+  auto findIntersectPoint = [&](const lanelet::ConstLineString3d line)
+    -> std::optional<std::pair<size_t, geometry_msgs::msg::Point>> {
+    const auto line_start =
+      tier4_autoware_utils::createPoint(line.front().x(), line.front().y(), line.front().z());
+    const auto line_end =
+      tier4_autoware_utils::createPoint(line.back().x(), line.back().y(), line.back().z());
+    for (unsigned i = 0; i < path.points.size() - 1; ++i) {
+      const auto & start = path.points.at(i).point.pose.position;
+      const auto & end = path.points.at(i + 1).point.pose.position;
+      if (const auto intersect = tier4_autoware_utils::intersect(line_start, line_end, start, end);
+          intersect.has_value()) {
+        return std::make_optional(std::make_pair(i, intersect.value()));
+      }
+    }
+    return std::nullopt;
+  };
+  const auto intersect_pt1 = findIntersectPoint(crosswalk_.leftBound());
+  const auto intersect_pt2 = findIntersectPoint(crosswalk_.rightBound());
+
+  if (!intersect_pt1 || !intersect_pt2) {
+    return std::nullopt;
+  }
+  const auto idx1 = intersect_pt1.value().first, idx2 = intersect_pt2.value().first;
+  const auto & front = idx1 > idx2 ? intersect_pt2.value().second : intersect_pt1.value().second;
+  const auto & back = idx1 > idx2 ? intersect_pt1.value().second : intersect_pt2.value().second;
+  return std::atan2(back.y - front.y, back.x - front.x);
+}
+
 std::optional<double> CrosswalkModule::findObjectPassageDirectionAlongVehicleLane(
   const autoware_auto_perception_msgs::msg::PredictedPath & path) const
 {
   using tier4_autoware_utils::Segment2d;
 
-  auto findIntersectIdx = [&](const lanelet::ConstLineString3d line) {
+  auto findIntersectPoint = [&](const lanelet::ConstLineString3d line)
+    -> std::optional<std::pair<size_t, geometry_msgs::msg::Point>> {
     const auto line_start =
       tier4_autoware_utils::createPoint(line.front().x(), line.front().y(), line.front().z());
     const auto line_end =
-      tier4_autoware_utils::createPoint(line.back().x(), line.back().y(), line.front().z());
-    std::optional<size_t> intersect_idx = std::nullopt;
+      tier4_autoware_utils::createPoint(line.back().x(), line.back().y(), line.back().z());
     for (unsigned i = 0; i < path.path.size() - 1; ++i) {
       const auto & start = path.path.at(i).position;
-      const auto & end = path.path.at(i).position;
-      if (tier4_autoware_utils::intersect(line_start, line_end, start, end)) {
-        intersect_idx = i;
-        break;
+      const auto & end = path.path.at(i + 1).position;
+      if (const auto intersect = tier4_autoware_utils::intersect(line_start, line_end, start, end);
+          intersect.has_value()) {
+        return std::make_optional(std::make_pair(i, intersect.value()));
       }
     }
-    return intersect_idx;
+    return std::nullopt;
   };
-  const auto intersect_idx1 = findIntersectIdx(crosswalk_.leftBound());
-  const auto intersect_idx2 = findIntersectIdx(crosswalk_.rightBound());
+  const auto intersect_pt1 = findIntersectPoint(crosswalk_.leftBound());
+  const auto intersect_pt2 = findIntersectPoint(crosswalk_.rightBound());
 
-  if (!intersect_idx1) {
-    if (!intersect_idx2) {
-      return std::nullopt;
-    }
-    return tier4_autoware_utils::getRPY(path.path.at(intersect_idx2.value()).orientation).z;
-  } else if (!intersect_idx2) {
-    return tier4_autoware_utils::getRPY(path.path.at(intersect_idx1.value()).orientation).z;
+  if (!intersect_pt1 || !intersect_pt2) {
+    return std::nullopt;
   }
-  if (intersect_idx1.value() == intersect_idx2.value()) {
-    return tier4_autoware_utils::getRPY(path.path.at(intersect_idx2.value()).orientation).z;
-  }
-  const auto & front =
-    path.path.at(std::min(intersect_idx1.value(), intersect_idx2.value())).position;
-  const auto & back =
-    path.path.at(std::max(intersect_idx1.value(), intersect_idx2.value())).position;
+  const auto idx1 = intersect_pt1.value().first, idx2 = intersect_pt2.value().first;
+  const auto & front = idx1 > idx2 ? intersect_pt2.value().second : intersect_pt1.value().second;
+  const auto & back = idx1 > idx2 ? intersect_pt1.value().second : intersect_pt2.value().second;
   return std::atan2(back.y - front.y, back.x - front.x);
 }
 

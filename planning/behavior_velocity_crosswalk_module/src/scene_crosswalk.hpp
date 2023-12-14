@@ -333,6 +333,8 @@ private:
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
 
+  std::optional<double> findEgoPassageDirectionAlongPath(
+    const PathWithLaneId & sparse_resample_path) const;
   std::optional<double> findObjectPassageDirectionAlongVehicleLane(
     const autoware_auto_perception_msgs::msg::PredictedPath & path) const;
 
