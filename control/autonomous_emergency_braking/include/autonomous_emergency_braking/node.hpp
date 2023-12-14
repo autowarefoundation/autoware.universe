@@ -20,7 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
+#include <autoware_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
@@ -47,7 +47,7 @@
 namespace autoware::motion::control::autonomous_emergency_braking
 {
 
-using autoware_auto_system_msgs::msg::AutowareState;
+using autoware_system_msgs::msg::AutowareState;
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using autoware_planning_msgs::msg::Trajectory;
 using nav_msgs::msg::Odometry;

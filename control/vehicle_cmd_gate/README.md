@@ -31,7 +31,7 @@
 
 | Name                                   | Type                                                       | Description                                              |
 | -------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
-| `~/output/vehicle_cmd_emergency`       | `autoware_auto_system_msgs::msg::EmergencyState`           | emergency state which was originally in vehicle command  |
+| `~/output/vehicle_cmd_emergency`       | `tier4_vehicle_msgs::msg::VehicleEmergencyStamped`         | emergency state which was originally in vehicle command  |
 | `~/output/command/control_cmd`         | `autoware_control_msgs::msg::Control`                      | command for lateral and longitudinal velocity to vehicle |
 | `~/output/command/turn_indicators_cmd` | `autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand`   | turn indicators command to vehicle                       |
 | `~/output/command/hazard_lights_cmd`   | `autoware_auto_vehicle_msgs::msg::HazardLightsCommand`     | hazard lights command to vehicle                         |

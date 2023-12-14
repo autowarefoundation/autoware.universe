@@ -93,7 +93,7 @@ endif
 | Name                         | Type                                                 | Description                                                                                                        |
 | ---------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `/diagnostics_agg`           | `diagnostic_msgs::msg::DiagnosticArray`              | Diagnostic information aggregated based [diagnostic_aggregator setting](./config/diagnostic_aggregator) is used to |
-| `/autoware/state`            | `autoware_auto_system_msgs::msg::AutowareState`      | Required to ignore error during Route, Planning and Finalizing.                                                    |
+| `/autoware/state`            | `autoware_system_msgs::msg::AutowareState`      | Required to ignore error during Route, Planning and Finalizing.                                                    |
 | `/control/current_gate_mode` | `tier4_control_msgs::msg::GateMode`                  | Required to select the appropriate module from `autonomous_driving` or `external_control`                          |
 | `/vehicle/control_mode`      | `autoware_auto_vehicle_msgs::msg::ControlModeReport` | Required to not hold emergency during manual driving                                                               |
 
@@ -101,7 +101,7 @@ endif
 
 | Name                              | Type                                                  | Description                                                                          |
 | --------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `/system/emergency/hazard_status` | `autoware_auto_system_msgs::msg::HazardStatusStamped` | HazardStatus contains system hazard level, emergency hold status and failure details |
+| `/system/emergency/hazard_status` | `autoware_system_msgs::msg::HazardStatusStamped` | HazardStatus contains system hazard level, emergency hold status and failure details |
 | `/diagnostics_err`                | `diagnostic_msgs::msg::DiagnosticArray`               | This has the same contents as HazardStatus. This is used for visualization           |
 
 ## Parameters

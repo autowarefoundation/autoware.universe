@@ -8,4 +8,4 @@ This plugin display the Hazard information from Autoware; and output notices whe
 
 | Name                              | Type                                                  | Description                                                  |
 | --------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
-| `/system/emergency/hazard_status` | `autoware_auto_system_msgs::msg::HazardStatusStamped` | The topic represents the emergency information from Autoware |
+| `/system/emergency/hazard_status` | `autoware_system_msgs::msg::HazardStatusStamped`      | The topic represents the emergency information from Autoware |

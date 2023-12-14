@@ -33,7 +33,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 
   // Subscriber
   sub_hazard_status_stamped_ =
-    create_subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>(
+    create_subscription<autoware_system_msgs::msg::HazardStatusStamped>(
       "~/input/hazard_status", rclcpp::QoS{1},
       std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
   sub_prev_control_command_ =
@@ -93,7 +93,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 }
 
 void EmergencyHandler::onHazardStatusStamped(
-  const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg)
+  const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg)
 {
   hazard_status_stamped_ = msg;
   stamp_hazard_status_ = this->now();
@@ -429,7 +429,7 @@ void EmergencyHandler::updateMrmState()
 autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurrentMrmBehavior()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
-  using autoware_auto_system_msgs::msg::HazardStatus;
+  using autoware_system_msgs::msg::HazardStatus;
 
   // Get hazard level
   const auto level = hazard_status_stamped_->status.level;
@@ -456,7 +456,7 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurre
 }
 
 bool EmergencyHandler::isEmergency(
-  const autoware_auto_system_msgs::msg::HazardStatus & hazard_status)
+  const autoware_system_msgs::msg::HazardStatus & hazard_status)
 {
   return hazard_status.emergency || hazard_status.emergency_holding;
 }
