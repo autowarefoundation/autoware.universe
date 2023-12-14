@@ -166,7 +166,7 @@ bool ShiftPullOut::refineShiftedPathToStartPose(
   constexpr size_t MAX_ITERATION = 100;
 
   // Lambda to check if change is above tolerance
-  auto is_whithin_tolerance =
+  auto is_within_tolerance =
     [](const auto & prev_val, const auto & current_val, const auto & tolerance) {
       return std::abs(current_val - prev_val) < tolerance;
     };
@@ -194,7 +194,7 @@ bool ShiftPullOut::refineShiftedPathToStartPose(
       return false;
     }
 
-    if (is_whithin_tolerance(
+    if (is_within_tolerance(
           lateral_offset,
           motion_utils::calcLateralOffset(shifted_path.path.points, start_pose.position),
           TOLERANCE)) {
