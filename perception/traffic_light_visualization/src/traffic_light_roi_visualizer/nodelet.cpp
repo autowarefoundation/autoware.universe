@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traffic_light_visualization/traffic_light_visualizer/traffic_light_roi_visualizer/nodelet.hpp"  // NOLINT(whitespace/line_length)
+#include "traffic_light_visualization/traffic_light_roi_visualizer/nodelet.hpp"  // NOLINT(whitespace/line_length)
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
