@@ -26,6 +26,7 @@
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -40,15 +41,12 @@
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
-#include <boost/optional.hpp>
-
 #include <cxxabi.h>
 #include <lanelet2_io/Io.h>
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
 #include <yaml-cpp/yaml.h>
 
-#include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
@@ -57,6 +55,7 @@
 
 namespace test_utils
 {
+using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
@@ -268,7 +267,7 @@ Scenario makeScenarioMsg(const std::string scenario)
   return scenario_msg;
 }
 
-Pose createPoseFromLaneID(const int & lane_id)
+Pose createPoseFromLaneID(const lanelet::Id & lane_id)
 {
   auto map_bin_msg = makeMapBinMsg();
   // create route_handler
@@ -299,7 +298,7 @@ Pose createPoseFromLaneID(const int & lane_id)
   return middle_pose;
 }
 
-Odometry makeInitialPoseFromLaneId(const int & lane_id)
+Odometry makeInitialPoseFromLaneId(const lanelet::Id & lane_id)
 {
   Odometry current_odometry;
   current_odometry.pose.pose = createPoseFromLaneID(lane_id);
@@ -399,12 +398,9 @@ void createPublisherWithQoS(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
   std::shared_ptr<rclcpp::Publisher<T>> & publisher)
 {
-  if constexpr (std::is_same_v<T, LaneletRoute>) {
-    rclcpp::QoS custom_qos_profile{rclcpp::KeepLast(1)};
-    custom_qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    custom_qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-    publisher = rclcpp::create_publisher<T>(test_node, topic_name, custom_qos_profile);
-  } else if constexpr (std::is_same_v<T, HADMapBin>) {
+  if constexpr (
+    std::is_same_v<T, LaneletRoute> || std::is_same_v<T, HADMapBin> ||
+    std::is_same_v<T, OperationModeState>) {
     rclcpp::QoS qos(rclcpp::KeepLast(1));
     qos.reliable();
     qos.transient_local();

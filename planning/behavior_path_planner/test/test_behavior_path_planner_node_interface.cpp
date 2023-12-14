@@ -48,6 +48,17 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
   const auto behavior_path_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
 
+  std::vector<std::string> module_names;
+  module_names.emplace_back("behavior_path_planner::DynamicAvoidanceModuleManager");
+  module_names.emplace_back("behavior_path_planner::LaneChangeRightModuleManager");
+  module_names.emplace_back("behavior_path_planner::LaneChangeLeftModuleManager");
+  module_names.emplace_back("behavior_path_planner::ExternalRequestLaneChangeRightModuleManager");
+  module_names.emplace_back("behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager");
+
+  std::vector<rclcpp::Parameter> params;
+  params.emplace_back("launch_modules", module_names);
+  node_options.parameter_overrides(params);
+
   test_utils::updateNodeOptions(
     node_options,
     {planning_test_utils_dir + "/config/test_common.param.yaml",
@@ -56,13 +67,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
      behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
      behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
      behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-     behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
      behavior_path_planner_dir + "/config/dynamic_avoidance/dynamic_avoidance.param.yaml",
-     behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
-     behavior_path_planner_dir + "/config/start_planner/start_planner.param.yaml",
-     behavior_path_planner_dir + "/config/goal_planner/goal_planner.param.yaml",
-     behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
-     behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+     behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml"});
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }

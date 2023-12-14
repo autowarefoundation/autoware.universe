@@ -34,19 +34,17 @@ public:
   Graph();
   ~Graph();
 
-  void init(const std::string & file, const std::string & mode);
-  void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
-  void update(const rclcpp::Time & stamp);
-  DiagnosticGraph message() const;
-  std::vector<BaseNode *> nodes() const;
-
+  void init(const std::string & file);
+  void callback(const rclcpp::Time & stamp, const DiagnosticArray & array);
   void debug();
+  DiagnosticGraph report(const rclcpp::Time & stamp);
+  std::vector<BaseUnit *> nodes() const;
 
 private:
-  std::vector<std::unique_ptr<BaseNode>> nodes_;
-  std::unordered_map<std::string, DiagNode *> diags_;
-  UnknownNode * unknown_;
-  rclcpp::Time stamp_;
+  std::vector<std::unique_ptr<BaseUnit>> nodes_;
+  std::vector<BaseUnit *> units_;
+  std::unordered_map<std::string, DiagUnit *> diags_;
+  std::unordered_map<std::string, DiagnosticLevel> unknowns_;
 };
 
 }  // namespace system_diagnostic_graph

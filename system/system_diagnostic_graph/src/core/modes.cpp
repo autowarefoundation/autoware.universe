@@ -15,7 +15,8 @@
 #include "modes.hpp"
 
 #include "config.hpp"
-#include "nodes.hpp"
+#include "error.hpp"
+#include "units.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -24,22 +25,22 @@
 namespace system_diagnostic_graph
 {
 
-OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseNode *> & graph)
+OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseUnit *> & graph)
 {
   pub_ = node.create_publisher<Availability>("/system/operation_mode/availability", rclcpp::QoS(1));
 
-  using PathNodes = std::unordered_map<std::string, BaseNode *>;
-  PathNodes paths;
+  using PathDict = std::unordered_map<std::string, BaseUnit *>;
+  PathDict paths;
   for (const auto & node : graph) {
     paths[node->path()] = node;
   }
 
-  const auto find_node = [](const PathNodes & paths, const std::string & name) {
+  const auto find_node = [](const PathDict & paths, const std::string & name) {
     const auto iter = paths.find(name);
     if (iter != paths.end()) {
       return iter->second;
     }
-    throw ConfigError("summary node '" + name + "' does node exist");
+    throw error<PathNotFound>("summary node is not found", name);
   };
 
   // clang-format off
@@ -47,15 +48,15 @@ OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseNode *
   autonomous_mode_ =      find_node(paths, "/autoware/modes/autonomous");
   local_mode_ =           find_node(paths, "/autoware/modes/local");
   remote_mode_ =          find_node(paths, "/autoware/modes/remote");
-  emergency_stop_mrm_ =   find_node(paths, "/autoware/modes/emergency-stop");
-  comfortable_stop_mrm_ = find_node(paths, "/autoware/modes/comfortable-stop");
-  pull_over_mrm_ =        find_node(paths, "/autoware/modes/pull-over");
+  emergency_stop_mrm_ =   find_node(paths, "/autoware/modes/emergency_stop");
+  comfortable_stop_mrm_ = find_node(paths, "/autoware/modes/comfortable_stop");
+  pull_over_mrm_ =        find_node(paths, "/autoware/modes/pull_over");
   // clang-format on
 }
 
 void OperationModes::update(const rclcpp::Time & stamp) const
 {
-  const auto is_ok = [](const BaseNode * node) { return node->level() == DiagnosticStatus::OK; };
+  const auto is_ok = [](const BaseUnit * node) { return node->level() == DiagnosticStatus::OK; };
 
   // clang-format off
   Availability message;

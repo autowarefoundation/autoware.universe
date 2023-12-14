@@ -15,8 +15,8 @@
 #include "debug.hpp"
 
 #include "graph.hpp"
-#include "nodes.hpp"
 #include "types.hpp"
+#include "units.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -26,17 +26,32 @@
 namespace system_diagnostic_graph
 {
 
-const std::unordered_map<DiagnosticLevel, std::string> level_names = {
-  {DiagnosticStatus::OK, "OK"},
-  {DiagnosticStatus::WARN, "WARN"},
-  {DiagnosticStatus::ERROR, "ERROR"},
-  {DiagnosticStatus::STALE, "STALE"}};
+std::string get_level_text(DiagnosticLevel level)
+{
+  switch (level) {
+    case DiagnosticStatus::OK:
+      return "OK";
+    case DiagnosticStatus::WARN:
+      return "WARN";
+    case DiagnosticStatus::ERROR:
+      return "ERROR";
+    case DiagnosticStatus::STALE:
+      return "STALE";
+  }
+  return "UNKNOWN";
+}
 
 void Graph::debug()
 {
   std::vector<DiagDebugData> lines;
   for (const auto & node : nodes_) {
-    lines.push_back(node->debug());
+    const auto level_name = get_level_text(node->level());
+    const auto index_name = std::to_string(node->index());
+    lines.push_back({index_name, level_name, node->path(), node->type()});
+  }
+  for (const auto & [name, level] : unknowns_) {
+    const auto level_name = get_level_text(level);
+    lines.push_back({"*", level_name, name, "unknown"});
   }
 
   std::array<size_t, diag_debug_size> widths = {};
@@ -55,27 +70,6 @@ void Graph::debug()
     }
     std::cout << "|" << std::endl;
   }
-}
-
-DiagDebugData UnitNode::debug() const
-{
-  const auto level_name = level_names.at(level());
-  const auto index_name = std::to_string(index());
-  return {"unit", index_name, level_name, path_, "-----"};
-}
-
-DiagDebugData DiagNode::debug() const
-{
-  const auto level_name = level_names.at(level());
-  const auto index_name = std::to_string(index());
-  return {"diag", index_name, level_name, path_, name_};
-}
-
-DiagDebugData UnknownNode::debug() const
-{
-  const auto level_name = level_names.at(level());
-  const auto index_name = std::to_string(index());
-  return {"test", index_name, level_name, path_, "-----"};
 }
 
 }  // namespace system_diagnostic_graph

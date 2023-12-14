@@ -19,93 +19,110 @@
 
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace system_diagnostic_graph
 {
 
-struct ConfigError : public std::runtime_error
+struct ConfigData
 {
-  using runtime_error::runtime_error;
-};
+  explicit ConfigData(const std::string & file);
+  ConfigData load(YAML::Node yaml);
+  ConfigData type(const std::string & name) const;
+  ConfigData node(const size_t index) const;
 
-class ErrorMarker
-{
-public:
-  explicit ErrorMarker(const std::string & file = "");
-  std::string str() const;
-  ErrorMarker type(const std::string & type) const;
-  ErrorMarker index(size_t index) const;
+  template <class T>
+  T take(const std::string & name, const T & fail)
+  {
+    const auto yaml = take_yaml(name);
+    return yaml ? yaml.value().as<T>() : fail;
+  }
 
-private:
-  std::string file_;
-  std::string type_;
-  std::vector<size_t> indices_;
-};
-
-class ConfigObject
-{
-public:
-  ConfigObject(const ErrorMarker & mark, YAML::Node yaml, const std::string & type);
-  ErrorMarker mark() const;
   std::optional<YAML::Node> take_yaml(const std::string & name);
   std::string take_text(const std::string & name);
   std::string take_text(const std::string & name, const std::string & fail);
   std::vector<YAML::Node> take_list(const std::string & name);
 
-private:
-  ErrorMarker mark_;
-  std::string type_;
-  std::unordered_map<std::string, YAML::Node> dict_;
+  std::string file;
+  std::string mark;
+  std::unordered_map<std::string, YAML::Node> object;
 };
 
-struct ConfigFilter
+struct BaseConfig
 {
-  bool check(const std::string & mode) const;
-  std::unordered_set<std::string> excludes;
-  std::unordered_set<std::string> includes;
+  explicit BaseConfig(const ConfigData & data) : data(data) {}
+  ConfigData data;
 };
 
-struct ExprConfig
+struct PathConfig : public BaseConfig
 {
+  using SharedPtr = std::shared_ptr<PathConfig>;
+  using BaseConfig::BaseConfig;
+  std::string original;
+  std::string resolved;
+};
+
+struct UnitConfig : public BaseConfig
+{
+  using SharedPtr = std::shared_ptr<UnitConfig>;
+  using BaseConfig::BaseConfig;
   std::string type;
-  ConfigFilter mode;
-  ConfigObject dict;
-};
-
-struct NodeConfig
-{
   std::string path;
-  ConfigFilter mode;
-  ConfigObject dict;
+  std::vector<UnitConfig::SharedPtr> children;
 };
 
-struct FileConfig
+struct EditConfig : public BaseConfig
 {
-  ErrorMarker mark;
+  using SharedPtr = std::shared_ptr<EditConfig>;
+  using BaseConfig::BaseConfig;
+  std::string type;
   std::string path;
 };
 
-struct ConfigFile
+struct FileConfig : public BaseConfig
 {
-  explicit ConfigFile(const ErrorMarker & mark) : mark(mark) {}
-  ErrorMarker mark;
-  std::vector<FileConfig> files;
-  std::vector<NodeConfig> units;
-  std::vector<NodeConfig> diags;
+  using SharedPtr = std::shared_ptr<FileConfig>;
+  using BaseConfig::BaseConfig;
+  std::vector<PathConfig::SharedPtr> paths;
+  std::vector<UnitConfig::SharedPtr> nodes;
+  std::vector<EditConfig::SharedPtr> edits;
 };
 
-using ConfigDict = std::unordered_map<std::string, YAML::Node>;
+struct RootConfig
+{
+  std::vector<FileConfig::SharedPtr> files;
+  std::vector<UnitConfig::SharedPtr> nodes;
+  std::vector<EditConfig::SharedPtr> edits;
+};
 
-ConfigError create_error(const ErrorMarker & mark, const std::string & message);
-ConfigFile load_config_root(const std::string & path);
+template <class T>
+T error(const std::string & text, const ConfigData & data)
+{
+  const auto hint = data.mark.empty() ? data.file : data.mark + ":" + data.file;
+  return T(text + " (" + hint + ")");
+}
 
-ExprConfig parse_expr_config(const ErrorMarker & mark, YAML::Node yaml);
-ExprConfig parse_expr_config(ConfigObject & dict);
+template <class T>
+T error(const std::string & text)
+{
+  return T(text);
+}
+
+template <class T>
+T error(const std::string & text, const std::string & value, const ConfigData & data)
+{
+  return error<T>(text + ": " + value, data);
+}
+
+template <class T>
+T error(const std::string & text, const std::string & value)
+{
+  return error<T>(text + ": " + value);
+}
+
+RootConfig load_root_config(const std::string & path);
 
 }  // namespace system_diagnostic_graph
 

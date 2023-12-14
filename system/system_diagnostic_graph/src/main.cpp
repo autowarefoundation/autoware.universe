@@ -25,13 +25,11 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
   // Init diagnostics graph.
   {
     const auto file = declare_parameter<std::string>("graph_file");
-    const auto mode = declare_parameter<std::string>("mode");
-    graph_.init(file, mode);
-    graph_.debug();
+    graph_.init(file);
   }
 
-  // Init plugins
-  if (declare_parameter<bool>("mode_availability")) {
+  // Init plugins.
+  if (declare_parameter<bool>("use_operation_mode_availability")) {
     modes_ = std::make_unique<OperationModes>(*this, graph_.nodes());
   }
 
@@ -48,6 +46,9 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
     const auto rate = rclcpp::Rate(declare_parameter<double>("rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
   }
+
+  // Init debug mode.
+  debug_ = declare_parameter<bool>("use_debug_mode");
 }
 
 MainNode::~MainNode()
@@ -58,16 +59,14 @@ MainNode::~MainNode()
 void MainNode::on_timer()
 {
   const auto stamp = now();
-  graph_.update(stamp);
-  graph_.debug();
-  pub_graph_->publish(graph_.message());
-
+  pub_graph_->publish(graph_.report(stamp));
+  if (debug_) graph_.debug();
   if (modes_) modes_->update(stamp);
 }
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)
 {
-  graph_.callback(*msg, now());
+  graph_.callback(now(), *msg);
 }
 
 }  // namespace system_diagnostic_graph
