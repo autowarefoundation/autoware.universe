@@ -235,11 +235,11 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
   auto tmp_path = getPreviousModuleOutput().path;
   const auto shorten_lanes = utils::cutOverlappedLanes(tmp_path, data.drivable_lanes);
   data.left_bound = toLineString3d(utils::calcBound(
-    planner_data_->route_handler, shorten_lanes, parameters_->use_hatched_road_markings,
-    parameters_->use_intersection_areas, true));
+    getPreviousModuleOutput().path, planner_data_, shorten_lanes,
+    parameters_->use_hatched_road_markings, parameters_->use_intersection_areas, true));
   data.right_bound = toLineString3d(utils::calcBound(
-    planner_data_->route_handler, shorten_lanes, parameters_->use_hatched_road_markings,
-    parameters_->use_intersection_areas, false));
+    getPreviousModuleOutput().path, planner_data_, shorten_lanes,
+    parameters_->use_hatched_road_markings, parameters_->use_intersection_areas, false));
 
   // reference path
   if (isDrivingSameLane(helper_->getPreviousDrivingLanes(), data.current_lanelets)) {
