@@ -1,7 +1,6 @@
 <launch>
   <arg name="hostname" default="$(env HOSTNAME default)"/>
 
-
   <arg name="input_operation_mode_availability" default="/system/operation_mode/availability"/>
   <arg name="input_to_can_bus" default="/j6/to_can_bus"/>
   <arg name="input_control_cmd" default="/control/command/control_cmd"/>
@@ -24,12 +23,10 @@
   <arg name="input_diagnostics_graph_supervisor" default="/diagnostics_graph/supervisor"/>
   
  <group>
-    <let name="is_main" if="$(eval &quot;'$(var hostname)'=='autoware'&quot;)" value="true"/>
     <let name="ecu_name" if="$(eval &quot;'$(var hostname)'=='autoware'&quot;)" value="main"/>
-    <let name="ecu_name" if="$(eval &quot;'$(var hostname)'=='sub'&quot;)" value="sub"/>
+    <let name="ecu_name" unless="$(eval &quot;'$(var hostname)'=='autoware'&quot;)" value="sub"/>
 
     <node pkg="remapper" exec="remapper" name="remapper" output="screen">
-      <param name="is_main" value="$(var is_main)"/>
     <!-- input -->
   	  <remap from="~/input/system/operation_mode/availability" to="$(var input_operation_mode_availability)"/>
       <remap from="~/input/j6/to_can_bus" to="$(var input_to_can_bus)"/>
@@ -49,23 +46,23 @@
       <remap from="~/input/diagnostics_graph" to="$(var input_diagnostics_graph)"/>
       <remap from="~/input/diagnostics_graph/supervisor" to="$(var input_diagnostics_graph_supervisor)"/>
     <!-- output -->
-  	  <remap from="~/output/system/operation_mode/availability" to="/$(var ecu_name)/$(var input_operation_mode_availability)"/>
-      <remap from="~/output/j6/to_can_bus" to="/$(var ecu_name)/$(var input_to_can_bus)"/>
-      <remap from="~/output/control/command/control_cmd" to="/$(var ecu_name)/$(var input_control_cmd)"/>
-      <remap from="~/output/tf" to="/$(var ecu_name)/$(var input_tf)"/>
+  	  <remap from="~/output/system/operation_mode/availability" to="/$(var ecu_name)$(var input_operation_mode_availability)"/>
+      <remap from="~/output/j6/to_can_bus" to="/$(var ecu_name)$(var input_to_can_bus)"/>
+      <remap from="~/output/control/command/control_cmd" to="/$(var ecu_name)$(var input_control_cmd)"/>
+      <remap from="~/output/tf" to="/$(var ecu_name)$(var input_tf)"/>
 
-      <remap from="~/output/api/operation_mode/state" to="/$(var ecu_name)/$(var input_operation_mode_state)"/>
-      <remap from="~/output/api/localization/initialization_state" to="/$(var ecu_name)/$(var input_initialization_state)"/>
-      <remap from="~/output/localization/pose_with_covariance" to="/$(var ecu_name)/$(var input_pose_with_covariance)"/>
-      <remap from="~/output/api/routing/state" to="/$(var ecu_name)/$(var input_routing_state)"/>
-      <remap from="~/output/api/routing/route" to="/$(var ecu_name)/$(var input_routing_route)"/>
+      <remap from="~/output/api/operation_mode/state" to="/$(var ecu_name)$(var input_operation_mode_state)"/>
+      <remap from="~/output/api/localization/initialization_state" to="/$(var ecu_name)$(var input_initialization_state)"/>
+      <remap from="~/output/localization/pose_with_covariance" to="/$(var ecu_name)$(var input_pose_with_covariance)"/>
+      <remap from="~/output/api/routing/state" to="/$(var ecu_name)$(var input_routing_state)"/>
+      <remap from="~/output/api/routing/route" to="/$(var ecu_name)$(var input_routing_route)"/>
 
-      <remap from="~/output/autoware/state" to="/$(var ecu_name)/$(var input_autoware_state)"/>
-      <remap from="~/output/vehicle/status/control_mode" to="/$(var ecu_name)/$(var input_controle_mode)"/>
-      <remap from="~/output/api/external/get/emergency" to="/$(var ecu_name)/$(var input_get_emergency)"/>
-      <remap from="~/output/api/fail_safe/mrm_state" to="/$(var ecu_name)/$(var input_mrm_state)"/>
-      <remap from="~/output/diagnostics_graph" to="/$(var ecu_name)/$(var input_diagnostics_graph)"/>
-      <remap from="~/output/diagnostics_graph/supervisor" to="/$(var ecu_name)/$(var input_diagnostics_graph_supervisor)"/>
+      <remap from="~/output/autoware/state" to="/$(var ecu_name)$(var input_autoware_state)"/>
+      <remap from="~/output/vehicle/status/control_mode" to="/$(var ecu_name)$(var input_controle_mode)"/>
+      <remap from="~/output/api/external/get/emergency" to="/$(var ecu_name)$(var input_get_emergency)"/>
+      <remap from="~/output/api/fail_safe/mrm_state" to="/$(var ecu_name)$(var input_mrm_state)"/>
+      <remap from="~/output/diagnostics_graph" to="/$(var ecu_name)$(var input_diagnostics_graph)"/>
+      <remap from="~/output/diagnostics_graph/supervisor" to="/$(var ecu_name)$(var input_diagnostics_graph_supervisor)"/>
     </node>
   </group>
 </launch>
