@@ -213,11 +213,11 @@ Using the feature, `ndt_scan_matcher` can theoretically handle any large size ma
 
 ### Parameters
 
-| Name                                  | Type   | Description                                                          |
-| ------------------------------------- | ------ | -------------------------------------------------------------------- |
-| `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s)                                 |
-| `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                                  |
-| `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis)         |
+| Name                                  | Type   | Description                                                  |
+| ------------------------------------- | ------ | ------------------------------------------------------------ |
+| `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s)                         |
+| `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                          |
+| `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis) |
 
 ### Enabling the dynamic map loading feature
 
