@@ -51,8 +51,6 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     static_cast<double>(this->declare_parameter<double>("self_pose_timeout_sec"));
   param_.self_pose_distance_tolerance_m =
     static_cast<double>(this->declare_parameter<double>("self_pose_distance_tolerance_m"));
-  param_.limit_distance_from_self_pose_to_marker_from_lanelet2 = static_cast<double>(
-    this->declare_parameter<double>("limit_distance_from_self_pose_to_marker_from_lanelet2"));
   param_.limit_distance_from_self_pose_to_marker =
     static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker"));
   param_.base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
