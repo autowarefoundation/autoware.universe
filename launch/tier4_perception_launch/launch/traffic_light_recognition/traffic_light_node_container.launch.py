@@ -107,15 +107,6 @@ def generate_launch_description():
                 name="traffic_light_classifier_car",
                 namespace="classification",
                 parameters=[
-                    # create_parameter_dict(
-                    #     "approximate_sync",
-                    #     "classifier_type",
-                    #     "classifier_model_path",
-                    #     "classifier_label_path",
-                    #     "classifier_precision",
-                    #     "classifier_mean",
-                    #     "classifier_std",
-                    # )
                     {
                         "approximate_sync": LaunchConfiguration("approximate_sync"),
                         "classifier_type": LaunchConfiguration("classifier_type"),
@@ -141,18 +132,6 @@ def generate_launch_description():
                 name="traffic_light_classifier_ped",
                 namespace="classification",
                 parameters=[
-                    # create_parameter_dict(
-                    #     "approximate_sync",
-                    #     "classifier_type",
-                    #     # "classifier_model_path",
-                    #     # "classifier_label_path",
-                    #     "classifier_precision",
-                    #     "classifier_mean",
-                    #     "classifier_std",
-                    # ).update({
-                    #     "classifier_model_path": LaunchConfiguration("classifier_model_path_ped"),
-                    #     "classifier_label_path": LaunchConfiguration("classifier_label_path_ped"),
-                    #     })
                     {
                         "approximate_sync": LaunchConfiguration("approximate_sync"),
                         "classifier_type": LaunchConfiguration("classifier_type"),
@@ -181,9 +160,7 @@ def generate_launch_description():
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", LaunchConfiguration("output/rois")),
                     ("~/input/rough/rois", "detection/rough/rois"),
-                    # ("~/input/traffic_signals", LaunchConfiguration("output/traffic_signals")),
-                    ("~/input/traffic_signals", "/perception/traffic_light_recognition/camera6/classification/classified/traffic_signals_ped"),
-                    # ("~/input/traffic_signals", "/perception/traffic_light_recognition/internal/traffic_signals"),
+                    ("~/input/traffic_signals", LaunchConfiguration("output/traffic_signals")),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
                     ("~/output/image/compressedDepth", "debug/rois/compressedDepth"),
