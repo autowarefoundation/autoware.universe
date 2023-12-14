@@ -175,7 +175,7 @@ void EmergencyHandler::onMrmEmergencyStopStatus(
 }
 
 void EmergencyHandler::onOperationModeState(
-    const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg)
+  const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg)
 {
   operation_mode_state_ = msg;
 }
@@ -600,7 +600,7 @@ bool EmergencyHandler::isArrivedAtGoal()
 {
   using autoware_adapi_v1_msgs::msg::OperationModeState;
 
-  if (operation_mode_state_->mode == OperationModeState::STOP){
+  if (operation_mode_state_->mode == OperationModeState::STOP) {
     return true;
   }
 
