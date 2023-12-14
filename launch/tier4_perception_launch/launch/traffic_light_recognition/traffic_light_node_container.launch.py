@@ -74,13 +74,16 @@ def generate_launch_description():
     )
     add_launch_arg(
         "classifier_model_path_ped",
-        os.path.join(classifier_share_dir, "data", "ped_traffic_light_classifier_efficientNet_b1.onnx"),
+        os.path.join(
+            classifier_share_dir, "data", "ped_traffic_light_classifier_efficientNet_b1.onnx"
+        ),
     )
     add_launch_arg(
         "classifier_label_path_car", os.path.join(classifier_share_dir, "data", "lamp_labels.txt")
     )
     add_launch_arg(
-        "classifier_label_path_ped", os.path.join(classifier_share_dir, "data", "lamp_labels_ped.txt")
+        "classifier_label_path_ped",
+        os.path.join(classifier_share_dir, "data", "lamp_labels_ped.txt"),
     )
     add_launch_arg("classifier_precision", "fp16")
     add_launch_arg("classifier_mean", "[123.675, 116.28, 103.53]")
