@@ -1,1 +1,0 @@
-# AutoDRIVE-Autoware Integration
