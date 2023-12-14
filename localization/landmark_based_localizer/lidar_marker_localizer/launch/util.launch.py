@@ -120,10 +120,4 @@ def generate_launch_description():
         "container name",
     )
 
-    add_launch_arg(
-        "output/pointcloud",
-        "downsample/pointcloud",
-        "final output topic name",
-    )
-
     return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
