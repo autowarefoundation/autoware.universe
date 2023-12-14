@@ -23,8 +23,8 @@ namespace lanelet::projection
 class DummyProjector : public Projector
 {
 public:
-  BasicPoint3d forward(const GPSPoint & gps) const override { return {}; }  // NOLINT
-  GPSPoint reverse(const BasicPoint3d & point) const override { return {}; }
+  BasicPoint3d forward(const GPSPoint &) const override { return {}; }  // NOLINT
+  GPSPoint reverse(const BasicPoint3d &) const override { return {}; }
 };
 
 }  // namespace lanelet::projection
