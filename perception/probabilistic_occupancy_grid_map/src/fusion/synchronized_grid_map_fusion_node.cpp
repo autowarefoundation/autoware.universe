@@ -32,8 +32,8 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
   /* load input parameters */
   {
     // get input topics
-    declare_parameter("input_ogm_topics", std::vector<std::string>{});
-    input_topics_ = get_parameter("input_ogm_topics").as_string_array();
+    declare_parameter("fusion_input_ogm_topics", std::vector<std::string>{});
+    input_topics_ = get_parameter("fusion_input_ogm_topics").as_string_array();
     if (input_topics_.empty()) {
       throw std::runtime_error("The number of input topics must larger than 0.");
     }
