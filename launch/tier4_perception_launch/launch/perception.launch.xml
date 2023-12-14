@@ -77,7 +77,7 @@
   <arg name="use_traffic_light_recognition" default="true"/>
   <arg name="traffic_light_recognition/enable_fine_detection" default="true"/>
   <arg name="traffic_light_recognition/fusion_only" default="false"/>
-  <arg name="traffic_light_image_number" default="2" description="choose traffic light image raw number(1-2)"/>
+  <arg name="traffic_light_image_number" default="1" description="choose traffic light image raw number(1-2)"/>
   <arg
     name="traffic_light_fine_detector_model_path"
     default="$(var data_path)/traffic_light_fine_detector"
