@@ -15,7 +15,7 @@
 #include "obstacle_cruise_planner/node.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <planning_test_utils/planning_interface_test_manager/planning_interface_test_manager.hpp>
+#include <planning_test_utils/planning_interface_test_manager.hpp>
 #include <planning_test_utils/planning_interface_test_manager/planning_interface_test_manager_utils.hpp>
 
 #include <gtest/gtest.h>
