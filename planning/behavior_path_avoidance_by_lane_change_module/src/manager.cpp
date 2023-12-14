@@ -139,6 +139,18 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "ignore_area.crosswalk.behind_distance");
   }
 
+  // avoidance maneuver (longitudinal)
+  {
+    const std::string ns = "avoidance.avoidance.longitudinal.";
+    p.min_prepare_time = getOrDeclareParameter<double>(*node, ns + "min_prepare_time");
+    p.max_prepare_time = getOrDeclareParameter<double>(*node, ns + "max_prepare_time");
+    p.min_prepare_distance = getOrDeclareParameter<double>(*node, ns + "min_prepare_distance");
+    p.min_slow_down_speed = getOrDeclareParameter<double>(*node, ns + "min_slow_down_speed");
+    p.buf_slow_down_speed = getOrDeclareParameter<double>(*node, ns + "buf_slow_down_speed");
+    p.nominal_avoidance_speed =
+      getOrDeclareParameter<double>(*node, ns + "nominal_avoidance_speed");
+  }
+
   {
     const std::string ns = "avoidance.target_filtering.detection_area.";
     p.use_static_detection_area = getOrDeclareParameter<bool>(*node, ns + "static");
@@ -148,6 +160,34 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "max_forward_distance");
     p.object_check_backward_distance =
       getOrDeclareParameter<double>(*node, ns + "backward_distance");
+  }
+
+  // constraints (lateral)
+  {
+    const std::string ns = "avoidance_by_lane_change.constraints.lateral.";
+    p.velocity_map = getOrDeclareParameter<std::vector<double>>(*node, ns + "velocity");
+    p.lateral_max_accel_map =
+      getOrDeclareParameter<std::vector<double>>(*node, ns + "max_accel_values");
+    p.lateral_min_jerk_map =
+      getOrDeclareParameter<std::vector<double>>(*node, ns + "min_jerk_values");
+    p.lateral_max_jerk_map =
+      getOrDeclareParameter<std::vector<double>>(*node, ns + "max_jerk_values");
+
+    if (p.velocity_map.empty()) {
+      throw std::domain_error("invalid velocity map.");
+    }
+
+    if (p.velocity_map.size() != p.lateral_max_accel_map.size()) {
+      throw std::domain_error("inconsistency among the constraints map.");
+    }
+
+    if (p.velocity_map.size() != p.lateral_min_jerk_map.size()) {
+      throw std::domain_error("inconsistency among the constraints map.");
+    }
+
+    if (p.velocity_map.size() != p.lateral_max_jerk_map.size()) {
+      throw std::domain_error("inconsistency among the constraints map.");
+    }
   }
 
   // safety check

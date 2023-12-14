@@ -686,6 +686,7 @@ double calcShiftLength(
 {
   const auto shift_length =
     is_object_on_right ? (overhang_dist + avoid_margin) : (overhang_dist - avoid_margin);
+  std::cerr << __func__ << " " << shift_length << '\n';
   return std::fabs(shift_length) > 1e-3 ? shift_length : 0.0;
 }
 

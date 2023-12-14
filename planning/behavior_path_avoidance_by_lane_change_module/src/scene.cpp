@@ -41,7 +41,8 @@ AvoidanceByLaneChange::AvoidanceByLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters,
   std::shared_ptr<AvoidanceByLCParameters> avoidance_parameters)
 : NormalLaneChange(parameters, LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE, Direction::NONE),
-  avoidance_parameters_(std::move(avoidance_parameters))
+  avoidance_parameters_(std::move(avoidance_parameters)),
+  avoidance_helper_{std::make_shared<AvoidanceHelper>(avoidance_parameters_)}
 {
 }
 
@@ -72,19 +73,39 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
     return false;
   }
 
-  const auto & front_object = data.target_objects.front();
-
   const auto current_lanes = getCurrentLanes();
   if (current_lanes.empty()) {
     return false;
   }
+
+  const auto & nearest_object = data.target_objects.front();
+
+  // get minimum lane change distance
   const auto shift_intervals =
     getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back(), direction_);
   const double minimum_lane_change_length = utils::lane_change::calcMinimumLaneChangeLength(
     *lane_change_parameters_, shift_intervals,
     lane_change_parameters_->backward_length_buffer_for_end_of_lane);
 
-  return (front_object.longitudinal > minimum_lane_change_length);
+  // get minimum avoid distance
+
+  const auto ego_width = getCommonParam().vehicle_width;
+  const auto nearest_object_type = utils::getHighestProbLabel(nearest_object.object.classification);
+  const auto nearest_object_parameter =
+    avoidance_parameters_->object_parameters.at(nearest_object_type);
+  const auto avoid_margin =
+    nearest_object_parameter.safety_buffer_lateral * nearest_object.distance_factor +
+    nearest_object_parameter.avoid_margin_lateral + 0.5 * ego_width;
+
+  avoidance_helper_->setData(planner_data_);
+  const auto shift_length = avoidance_helper_->getShiftLength(
+    nearest_object, utils::avoidance::isOnRight(nearest_object), avoid_margin);
+
+  const auto maximum_avoid_distance = avoidance_helper_->getMaxAvoidanceDistance(shift_length);
+  std::cerr << "min lc " << minimum_lane_change_length << " maximum avoid "
+            << maximum_avoid_distance << '\n';
+
+  return nearest_object.longitudinal > std::max(minimum_lane_change_length, maximum_avoid_distance);
 }
 
 bool AvoidanceByLaneChange::specialExpiredCheck() const

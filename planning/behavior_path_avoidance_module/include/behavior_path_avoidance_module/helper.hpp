@@ -89,6 +89,7 @@ public:
   double getAvoidanceEgoSpeed() const
   {
     const auto & values = parameters_->velocity_map;
+
     const auto idx = getConstraintsMapIndex(getEgoSpeed(), values);
     return std::max(getEgoSpeed(), values.at(idx));
   }
