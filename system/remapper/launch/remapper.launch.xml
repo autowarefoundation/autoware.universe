@@ -21,14 +21,14 @@
   <arg name="input_mrm_state" default="/api/fail_safe/mrm_state"/>
   <arg name="input_diagnostics_graph" default="/diagnostics_graph"/>
   <arg name="input_diagnostics_graph_supervisor" default="/diagnostics_graph/supervisor"/>
-  
- <group>
+
+  <group>
     <let name="ecu_name" if="$(eval &quot;'$(var hostname)'=='autoware'&quot;)" value="main"/>
     <let name="ecu_name" unless="$(eval &quot;'$(var hostname)'=='autoware'&quot;)" value="sub"/>
 
     <node pkg="remapper" exec="remapper" name="remapper" output="screen">
-    <!-- input -->
-  	  <remap from="~/input/system/operation_mode/availability" to="$(var input_operation_mode_availability)"/>
+      <!-- input -->
+      <remap from="~/input/system/operation_mode/availability" to="$(var input_operation_mode_availability)"/>
       <remap from="~/input/j6/to_can_bus" to="$(var input_to_can_bus)"/>
       <remap from="~/input/control/command/control_cmd" to="$(var input_control_cmd)"/>
       <remap from="~/input/tf" to="$(var input_tf)"/>
@@ -45,8 +45,8 @@
       <remap from="~/input/api/fail_safe/mrm_state" to="$(var input_mrm_state)"/>
       <remap from="~/input/diagnostics_graph" to="$(var input_diagnostics_graph)"/>
       <remap from="~/input/diagnostics_graph/supervisor" to="$(var input_diagnostics_graph_supervisor)"/>
-    <!-- output -->
-  	  <remap from="~/output/system/operation_mode/availability" to="/$(var ecu_name)$(var input_operation_mode_availability)"/>
+      <!-- output -->
+      <remap from="~/output/system/operation_mode/availability" to="/$(var ecu_name)$(var input_operation_mode_availability)"/>
       <remap from="~/output/j6/to_can_bus" to="/$(var ecu_name)$(var input_to_can_bus)"/>
       <remap from="~/output/control/command/control_cmd" to="/$(var ecu_name)$(var input_control_cmd)"/>
       <remap from="~/output/tf" to="/$(var ecu_name)$(var input_tf)"/>

@@ -10,16 +10,16 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <depend>rclcpp</depend>
-  <depend>can_msgs</depend>
-  <depend>autoware_auto_control_msgs</depend>
-  <depend>tier4_system_msgs</depend>
-  <depend>tf2_msgs</depend>
   <depend>autoware_adapi_v1_msgs</depend>
-  <depend>geometry_msgs</depend>
+  <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>can_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>tf2_msgs</depend>
   <depend>tier4_external_api_msgs</depend>
+  <depend>tier4_system_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
