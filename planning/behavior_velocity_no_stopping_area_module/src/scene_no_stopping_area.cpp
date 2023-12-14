@@ -230,7 +230,7 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
     }
     const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
     if (obj_v > planner_param_.stuck_vehicle_vel_thr) {
-      insertObjectData(
+      setObjectsOfInterestData(
         object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::GREEN);
       continue;  // not stop vehicle
     }
@@ -239,7 +239,7 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, poly);
     if (is_in_stuck_area) {
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
-      insertObjectData(
+      setObjectsOfInterestData(
         object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::RED);
       for (const auto & p : obj_footprint.outer()) {
         geometry_msgs::msg::Point point;

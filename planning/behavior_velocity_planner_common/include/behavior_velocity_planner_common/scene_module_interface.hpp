@@ -137,7 +137,7 @@ protected:
   void setDistance(const double distance) { distance_ = distance; }
   void syncActivation() { setActivation(isSafe()); }
 
-  void insertObjectData(
+  void setObjectsOfInterestData(
     const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape,
     const ColorName & color_name)
   {
