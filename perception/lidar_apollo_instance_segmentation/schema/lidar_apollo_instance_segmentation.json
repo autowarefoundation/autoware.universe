@@ -48,7 +48,7 @@
         "z_offset": {
           "type": "number",
           "default": -2.0,
-          "description": " z offset from target frame. [m]."
+          "description": "z offset from target frame. [m]."
         }
       },
       "required": [
