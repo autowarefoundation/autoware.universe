@@ -51,6 +51,7 @@ The purpose of this simulator is for the integration test of planning and contro
 | vel_noise_stddev      | double | Standard deviation for longitudinal velocity noise                                                                                         | 0.0                  |
 | angvel_noise_stddev   | double | Standard deviation for angular velocity noise                                                                                              | 0.0                  |
 | steer_noise_stddev    | double | Standard deviation for steering angle noise                                                                                                | 0.0001               |
+| measurement_steer_bias | double | Measurement bias for steering angle                                                                                                       | 0.0                  |
 
 ### Vehicle Model Parameters
 
