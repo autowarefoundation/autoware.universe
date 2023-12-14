@@ -700,13 +700,6 @@ bool isSatisfiedWithCommonCondition(
     return false;
   }
 
-  if (
-    object.longitudinal + object.length / 2 + parameters->object_check_goal_distance >
-    to_goal_distance) {
-    object.reason = "TooNearToGoal";
-    return false;
-  }
-
   return true;
 }
 
@@ -1686,7 +1679,9 @@ void fillAdditionalInfoFromLongitudinal(
 {
   for (auto & outline : outlines) {
     fillAdditionalInfoFromLongitudinal(data, outline.avoid_line);
-    fillAdditionalInfoFromLongitudinal(data, outline.return_line);
+    if (outline.return_line.has_value()) {
+      fillAdditionalInfoFromLongitudinal(data, outline.return_line.value());
+    }
 
     std::for_each(outline.middle_lines.begin(), outline.middle_lines.end(), [&](auto & line) {
       fillAdditionalInfoFromLongitudinal(data, line);
@@ -2165,17 +2160,6 @@ double calcDistanceToReturnDeadLine(
       distance_to_return_dead_line = std::min(
         distance_to_return_dead_line,
         to_traffic_light.value() - parameters->dead_line_buffer_for_traffic_light);
-    }
-  }
-
-  // dead line for goal
-  if (parameters->enable_dead_line_for_goal) {
-    if (planner_data->route_handler->isInGoalRouteSection(lanelets.back())) {
-      const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
-      const auto to_goal_distance =
-        calcSignedArcLength(path.points, ego_pos, path.points.size() - 1);
-      distance_to_return_dead_line = std::min(
-        distance_to_return_dead_line, to_goal_distance - parameters->dead_line_buffer_for_goal);
     }
   }
 

@@ -122,6 +122,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
 
     p.object_check_goal_distance =
       getOrDeclareParameter<double>(*node, ns + "object_check_goal_distance");
+    p.object_check_return_pose_distance =
+      getOrDeclareParameter<double>(*node, ns + "object_check_return_pose_distance");
     p.threshold_distance_object_is_on_center =
       getOrDeclareParameter<double>(*node, ns + "threshold_distance_object_is_on_center");
     p.object_check_shiftable_ratio =
@@ -270,10 +272,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // avoidance maneuver (return shift dead line)
   {
     const std::string ns = "avoidance.avoidance.return_dead_line.";
-    p.enable_dead_line_for_goal = getOrDeclareParameter<bool>(*node, ns + "goal.enable");
     p.enable_dead_line_for_traffic_light =
       getOrDeclareParameter<bool>(*node, ns + "traffic_light.enable");
-    p.dead_line_buffer_for_goal = getOrDeclareParameter<double>(*node, ns + "goal.buffer");
     p.dead_line_buffer_for_traffic_light =
       getOrDeclareParameter<double>(*node, ns + "traffic_light.buffer");
   }

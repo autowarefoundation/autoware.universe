@@ -43,6 +43,11 @@ public:
 protected:
   PathWithLaneId generateReferencePath(
     const lanelet::ConstLanelets & road_lanes, const Pose & end_pose) const;
+  std::optional<PathWithLaneId> extendPrevModulePath(
+    const PathWithLaneId & road_lane_reference_path_to_shift_end, const Pose & shift_end_pose,
+    const PathWithLaneId & prev_module_path) const;
+  std::optional<PathWithLaneId> cropPrevModulePath(
+    const PathWithLaneId & prev_module_path, const Pose & shift_end_pose) const;
   std::optional<PullOverPath> generatePullOverPath(
     const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
     const Pose & goal_pose, const double lateral_jerk) const;

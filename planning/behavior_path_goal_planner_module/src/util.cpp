@@ -214,4 +214,72 @@ bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_h
   return false;
 }
 
+double calcLateralDeviationBetweenPaths(
+  const PathWithLaneId & reference_path, const PathWithLaneId & target_path)
+{
+  double lateral_deviation = 0.0;
+  for (const auto & target_point : target_path.points) {
+    const size_t nearest_index =
+      motion_utils::findNearestIndex(reference_path.points, target_point.point.pose.position);
+    lateral_deviation = std::max(
+      lateral_deviation,
+      std::abs(tier4_autoware_utils::calcLateralDeviation(
+        reference_path.points[nearest_index].point.pose, target_point.point.pose.position)));
+  }
+  return lateral_deviation;
+}
+
+bool isReferencePath(
+  const PathWithLaneId & reference_path, const PathWithLaneId & target_path,
+  const double lateral_deviation_threshold)
+{
+  return calcLateralDeviationBetweenPaths(reference_path, target_path) <
+         lateral_deviation_threshold;
+}
+
+PathWithLaneId extendPath(
+  const PathWithLaneId & target_path, const PathWithLaneId & reference_path,
+  const double extend_length)
+{
+  const auto & target_terminal_pose = target_path.points.back().point.pose;
+
+  // generate clipped road lane reference path from previous module path terminal pose to shift end
+  const size_t target_path_terminal_idx =
+    motion_utils::findNearestSegmentIndex(reference_path.points, target_terminal_pose.position) + 1;
+
+  PathWithLaneId clipped_path{};
+  clipped_path.points = motion_utils::cropPoints(
+    reference_path.points, target_terminal_pose.position, target_path_terminal_idx, extend_length,
+    0.0);
+
+  // shift clipped path to previous module path terminal pose
+  const double lateral_shift_from_reference_path =
+    motion_utils::calcLateralOffset(reference_path.points, target_terminal_pose.position);
+  for (auto & p : clipped_path.points) {
+    p.point.pose =
+      tier4_autoware_utils::calcOffsetPose(p.point.pose, 0, lateral_shift_from_reference_path, 0);
+  }
+
+  auto extended_path = target_path;
+  for (const auto & p : clipped_path.points) {
+    extended_path.points.push_back(p);
+  }
+  extended_path.points = motion_utils::removeOverlapPoints(extended_path.points);
+
+  return extended_path;
+}
+
+PathWithLaneId extendPath(
+  const PathWithLaneId & target_path, const PathWithLaneId & reference_path,
+  const Pose & extend_pose)
+{
+  const auto & target_terminal_pose = target_path.points.back().point.pose;
+  const size_t target_path_terminal_idx =
+    motion_utils::findNearestSegmentIndex(reference_path.points, target_terminal_pose.position) + 1;
+  const double extend_distance = motion_utils::calcSignedArcLength(
+    reference_path.points, target_path_terminal_idx, extend_pose.position);
+
+  return extendPath(reference_path, target_path, extend_distance);
+}
+
 }  // namespace behavior_path_planner::goal_planner_utils
