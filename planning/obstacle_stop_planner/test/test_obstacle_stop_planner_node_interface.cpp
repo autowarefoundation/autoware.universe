@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "obstacle_stop_planner/node.hpp"
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <planning_test_utils/planning_interface_test_manager/planning_interface_test_manager.hpp>
 #include <planning_test_utils/planning_interface_test_manager/planning_interface_test_manager_utils.hpp>
@@ -19,8 +21,6 @@
 #include <gtest/gtest.h>
 
 #include <vector>
-
-#include "obstacle_stop_planner/node.hpp"
 
 using motion_planning::ObstacleStopPlannerNode;
 using planning_test_utils::PlanningInterfaceTestManager;
