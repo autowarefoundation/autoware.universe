@@ -215,7 +215,6 @@ Using the feature, `ndt_scan_matcher` can theoretically handle any large size ma
 
 | Name                                  | Type   | Description                                                          |
 | ------------------------------------- | ------ | -------------------------------------------------------------------- |
-| `use_dynamic_map_loading`             | bool   | Flag to enable dynamic map loading feature for NDT (TRUE by default) |
 | `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s)                                 |
 | `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                                  |
 | `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis)         |
@@ -235,14 +234,12 @@ Note that the dynamic map loading may FAIL if the map is split into two or more 
 
 Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample-map-rosbag_split.zip`](https://github.com/autowarefoundation/autoware.universe/files/10349104/sample-map-rosbag_split.zip)
 
-|   PCD files    | `use_dynamic_map_loading` | `enable_differential_load` | How NDT loads map(s) |
-| :------------: | :-----------------------: | :------------------------: | :------------------: |
-|  single file   |           true            |            true            |  at once (standard)  |
-|  single file   |           true            |           false            |  **does NOT work**   |
-|  single file   |           false           |         true/false         |  at once (standard)  |
-| multiple files |           true            |            true            |     dynamically      |
-| multiple files |           true            |           false            |  **does NOT work**   |
-| multiple files |           false           |         true/false         |  at once (standard)  |
+|   PCD files    | `enable_differential_load` | How NDT loads map(s) |
+| :------------: | :------------------------: | :------------------: |
+|  single file   |            true            |  at once (standard)  |
+|  single file   |           false            |  **does NOT work**   |
+| multiple files |            true            |     dynamically      |
+| multiple files |           false            |  **does NOT work**   |
 
 ## Scan matching score based on de-grounded LiDAR scan
 

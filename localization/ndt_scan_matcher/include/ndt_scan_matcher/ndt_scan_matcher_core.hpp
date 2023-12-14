@@ -19,7 +19,6 @@
 
 #include "localization_util/smart_pose_buffer.hpp"
 #include "localization_util/tf2_listener_module.hpp"
-#include "ndt_scan_matcher/map_module.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -206,15 +205,12 @@ private:
 
   bool is_activated_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
-  std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
   // cspell: ignore degrounded
   bool estimate_scores_for_degrounded_scan_;
   double z_margin_for_ground_removal_;
-
-  bool use_dynamic_map_loading_;
 
   // The execution time which means probably NDT cannot matches scans properly
   int64_t critical_upper_bound_exe_time_ms_;

@@ -289,13 +289,8 @@ NDTScanMatcher::NDTScanMatcher()
 
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
 
-  use_dynamic_map_loading_ = this->declare_parameter<bool>("use_dynamic_map_loading");
-  if (use_dynamic_map_loading_) {
-    map_update_module_ = std::make_unique<MapUpdateModule>(
-      this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group);
-  } else {
-    map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
-  }
+  map_update_module_ = std::make_unique<MapUpdateModule>(
+    this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group);
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
@@ -842,9 +837,7 @@ void NDTScanMatcher::service_ndt_align(
   // transform pose_frame to map_frame
   const auto initial_pose_msg_in_map_frame =
     transform(req->pose_with_covariance, *tf_pose_to_map_ptr);
-  if (use_dynamic_map_loading_) {
-    map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
-  }
+  map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
 
   // mutex Map
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
