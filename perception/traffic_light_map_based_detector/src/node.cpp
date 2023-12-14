@@ -394,26 +394,16 @@ void MapBasedDetector::mapCallback(
   std::vector<lanelet::AutowareTrafficLightConstPtr> all_lanelet_traffic_lights =
     lanelet::utils::query::autowareTrafficLights(all_lanelets);
   all_traffic_lights_ptr_ = std::make_shared<MapBasedDetector::TrafficLightSet>();
-  std::cout << "all_lanelet_traffic_lights.size():" << all_lanelet_traffic_lights.size()
-            << std::endl;
-  // std::cout << std::endl << "tl->id():";
   for (auto tl_itr = all_lanelet_traffic_lights.begin(); tl_itr != all_lanelet_traffic_lights.end();
        ++tl_itr) {
     lanelet::AutowareTrafficLightConstPtr tl = *tl_itr;
-    // std::cout << tl->id() << ",";
     auto lights = tl->trafficLights();
-    // std::cout << std::endl << "lights:";
     for (auto lsp : lights) {
       if (!lsp.isLineString()) {  // traffic lights must be linestrings
         continue;
       }
       all_traffic_lights_ptr_->insert(static_cast<lanelet::ConstLineString3d>(lsp));
-      // std::cout << lsp.id() << ",";
     }
-    // std::cout << "lightBulbs:";
-    // for (auto ls : (*tl_itr)->lightBulbs()) {
-    //   std::cout << ls.id() << ",";
-    // }
   }
 
   // crosswalk
@@ -428,33 +418,6 @@ void MapBasedDetector::mapCallback(
   lanelet::routing::RoutingGraphContainer overall_graphs({vehicle_graph, pedestrian_graph});
   overall_graphs_ptr_ =
     std::make_shared<const lanelet::routing::RoutingGraphContainer>(overall_graphs);
-
-  lanelet::ConstLanelets crosswalk_lanelets =
-    lanelet::utils::query::crosswalkLanelets(all_lanelets);
-  std::cout << "crosswalk_lanelets.size():" << crosswalk_lanelets.size() << std::endl;
-  std::vector<lanelet::AutowareTrafficLightConstPtr> crosswalk_traffic_lights =
-    lanelet::utils::query::autowareTrafficLights(crosswalk_lanelets);
-  std::cout << "crosswalk_traffic_lights.size():" << crosswalk_traffic_lights.size() << std::endl;
-  // std::cout << "crosswalk tl->id():";
-  // for (auto cw_tl_itr = crosswalk_traffic_lights.begin();
-  //      cw_tl_itr != crosswalk_traffic_lights.end(); ++cw_tl_itr) {
-  //   std::cout << "," << std::endl;
-  //   lanelet::AutowareTrafficLightConstPtr cw_tl = *cw_tl_itr;
-  //   std::cout << +cw_tl->id() << ",";
-  // }
-
-  lanelet::ConstLanelets road_lanelets = lanelet::utils::query::roadLanelets(all_lanelets);
-  std::cout << "road_lanelets.size():" << road_lanelets.size() << std::endl;
-  std::vector<lanelet::AutowareTrafficLightConstPtr> road_traffic_lights =
-    lanelet::utils::query::autowareTrafficLights(road_lanelets);
-  std::cout << "road_traffic_lights.size():" << road_traffic_lights.size() << std::endl;
-  // std::cout << "road tl->id():";
-  // for (auto road_tl_itr = road_traffic_lights.begin(); road_tl_itr != road_traffic_lights.end();
-  //      ++road_tl_itr) {
-  //   std::cout << "," << std::endl;
-  //   lanelet::AutowareTrafficLightConstPtr road_tl = *road_tl_itr;
-  //   std::cout << +road_tl->id() << ",";
-  // }
 }
 
 void MapBasedDetector::routeCallback(
@@ -502,9 +465,6 @@ void MapBasedDetector::routeCallback(
       conflicting_crosswalks.push_back(lanelet);
     }
   }
-  std::cout << "MapBasedDetector::routeCallback conflicting_crosswalks_ size:"
-            << conflicting_crosswalks.size() << std::endl;
-  std::cout << "pedestrian_tl_id:";
   std::vector<lanelet::AutowareTrafficLightConstPtr> crosswalk_lanelet_traffic_lights =
     lanelet::utils::query::autowareTrafficLights(conflicting_crosswalks);
   for (auto tl_itr = crosswalk_lanelet_traffic_lights.begin();
@@ -518,10 +478,8 @@ void MapBasedDetector::routeCallback(
       }
       route_traffic_lights_ptr_->insert(static_cast<lanelet::ConstLineString3d>(lsp));
       pedestrian_tl_id_.insert(lsp.id());
-      std::cout << lsp.id() << ",";
     }
   }
-  std::cout << std::endl;
 }
 
 void MapBasedDetector::getVisibleTrafficLights(
