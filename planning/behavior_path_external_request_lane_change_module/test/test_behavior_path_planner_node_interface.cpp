@@ -47,6 +47,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
     ament_index_cpp::get_package_share_directory("planning_test_utils");
   const auto behavior_path_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
+  const auto behavior_path_lane_change_module_dir =
+    ament_index_cpp::get_package_share_directory("behavior_path_lane_change_module");
 
   std::vector<std::string> module_names;
   module_names.emplace_back("behavior_path_planner::ExternalRequestLaneChangeRightModuleManager");
@@ -57,17 +59,15 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
   node_options.parameter_overrides(params);
 
   test_utils::updateNodeOptions(
-    node_options,
-    {
-      planning_test_utils_dir + "/config/test_common.param.yaml",
-      planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
-      planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-      behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
-      behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
-      behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-      ament_index_cpp::get_package_share_directory("behavior_path_lane_change_module") +
-        "/config/lane_change.param.yaml",
-    });
+    node_options, {
+                    planning_test_utils_dir + "/config/test_common.param.yaml",
+                    planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
+                    planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
+                    behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
+                    behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
+                    behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
+                    behavior_path_lane_change_module_dir + "/config/lane_change.param.yaml",
+                  });
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }

@@ -47,6 +47,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
     ament_index_cpp::get_package_share_directory("planning_test_utils");
   const auto behavior_path_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
+  const auto behavior_path_lane_change_module_dir =
+    ament_index_cpp::get_package_share_directory("behavior_path_lane_change_module");
 
   std::vector<std::string> module_names;
   module_names.emplace_back("behavior_path_planner::LaneChangeRightModuleManager");
@@ -63,7 +65,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
                    behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
                    behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
                    behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-                   behavior_path_planner_dir + "/config/lane_change.param.yaml"});
+                   behavior_path_lane_change_module_dir + "/config/lane_change.param.yaml"});
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }
