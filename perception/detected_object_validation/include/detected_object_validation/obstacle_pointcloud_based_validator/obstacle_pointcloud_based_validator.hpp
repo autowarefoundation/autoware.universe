@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOLINTBEGIN(whitespace/line_length)
 #ifndef DETECTED_OBJECT_VALIDATION__OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
 #define DETECTED_OBJECT_VALIDATION__OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
+// NOLINTEND(whitespace/line_length)
 
 #include "detected_object_validation/obstacle_pointcloud_based_validator/debugger.hpp"
 
@@ -152,4 +154,6 @@ private:
 };
 }  // namespace obstacle_pointcloud_based_validator
 
+// NOLINTBEGIN(whitespace/line_length)
 #endif  // DETECTED_OBJECT_VALIDATION__OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
+// NOLINTEND(whitespace/line_length)
