@@ -127,7 +127,6 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
   std::vector<int> occlusion_ratios;
   if (in_cloud_msg == nullptr || in_cam_info_msg == nullptr || in_roi_msg == nullptr) {
     occlusion_ratios.resize(in_signal_msg->signals.size(), 0);
-    // return;
   } else {
     tier4_perception_msgs::msg::TrafficLightRoiArray selected_roi_msg;
     selected_roi_msg.rois.reserve(in_roi_msg->rois.size());

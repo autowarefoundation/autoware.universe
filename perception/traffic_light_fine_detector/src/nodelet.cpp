@@ -323,7 +323,6 @@ bool TrafficLightFineDetectorNodelet::fitInFrame(
 bool TrafficLightFineDetectorNodelet::readLabelFile(
   const std::string & filepath, std::vector<int> & tlr_label_id_, int & num_class)
 {
-  // tlr_label_id_ = -1;
   std::ifstream labelsFile(filepath);
   if (!labelsFile.is_open()) {
     RCLCPP_ERROR(this->get_logger(), "Could not open label file. [%s]", filepath.c_str());
