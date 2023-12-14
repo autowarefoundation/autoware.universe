@@ -74,13 +74,16 @@ def generate_launch_description():
     )
     add_launch_arg(
         "classifier_model_path_ped",
-        os.path.join(classifier_share_dir, "data", "ped_traffic_light_classifier_efficientNet_b1.onnx"),
+        os.path.join(
+            classifier_share_dir, "data", "ped_traffic_light_classifier_efficientNet_b1.onnx"
+        ),
     )
     add_launch_arg(
         "classifier_label_path_car", os.path.join(classifier_share_dir, "data", "lamp_labels.txt")
     )
     add_launch_arg(
-        "classifier_label_path_ped", os.path.join(classifier_share_dir, "data", "lamp_labels_ped.txt")
+        "classifier_label_path_ped",
+        os.path.join(classifier_share_dir, "data", "lamp_labels_ped.txt"),
     )
     add_launch_arg("classifier_precision", "fp16")
     add_launch_arg("classifier_mean", "[123.675, 116.28, 103.53]")
@@ -182,7 +185,10 @@ def generate_launch_description():
                     ("~/input/rois", LaunchConfiguration("output/rois")),
                     ("~/input/rough/rois", "detection/rough/rois"),
                     # ("~/input/traffic_signals", LaunchConfiguration("output/traffic_signals")),
-                    ("~/input/traffic_signals", "/perception/traffic_light_recognition/camera6/classification/classified/traffic_signals_ped"),
+                    (
+                        "~/input/traffic_signals",
+                        "/perception/traffic_light_recognition/camera6/classification/classified/traffic_signals_ped",
+                    ),
                     # ("~/input/traffic_signals", "/perception/traffic_light_recognition/internal/traffic_signals"),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
