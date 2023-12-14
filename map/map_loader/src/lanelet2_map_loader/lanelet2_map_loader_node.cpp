@@ -33,7 +33,7 @@
 
 #include "map_loader/lanelet2_map_loader_node.hpp"
 
-#include "lanelet2_dummy_projector.hpp"
+#include "lanelet2_local_projector.hpp"
 
 #include <ament_index_cpp/get_package_prefix.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
@@ -102,7 +102,7 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
       return map;
     }
   } else {
-    const lanelet::projection::DummyProjector projector;
+    const lanelet::projection::LocalProjector projector;
     const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
 
     // overwrite local_x, local_y

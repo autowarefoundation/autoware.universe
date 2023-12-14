@@ -12,21 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LANELET2_MAP_LOADER__LANELET2_DUMMY_PROJECTOR_HPP_
-#define LANELET2_MAP_LOADER__LANELET2_DUMMY_PROJECTOR_HPP_
+#ifndef LANELET2_MAP_LOADER__LANELET2_LOCAL_PROJECTOR_HPP_
+#define LANELET2_MAP_LOADER__LANELET2_LOCAL_PROJECTOR_HPP_
 
 #include <lanelet2_io/Projection.h>
 
 namespace lanelet::projection
 {
 
-class DummyProjector : public Projector
+class LocalProjector : public Projector
 {
 public:
-  BasicPoint3d forward(const GPSPoint &) const override { return {}; }  // NOLINT
+  LocalProjector() : Projector(Origin(GPSPoint{})) {}
+
+  BasicPoint3d forward(const GPSPoint & gps) const override  // NOLINT
+  {
+    return BasicPoint3d{0.0, 0.0, gps.ele};
+  }
+
   GPSPoint reverse(const BasicPoint3d &) const override { return {}; }
 };
 
 }  // namespace lanelet::projection
 
-#endif  // LANELET2_MAP_LOADER__LANELET2_DUMMY_PROJECTOR_HPP_
+#endif  // LANELET2_MAP_LOADER__LANELET2_LOCAL_PROJECTOR_HPP_
