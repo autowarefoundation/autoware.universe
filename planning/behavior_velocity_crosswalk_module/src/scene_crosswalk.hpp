@@ -161,6 +161,7 @@ public:
   {
     CollisionState collision_state{};
     std::optional<rclcpp::Time> time_to_start_stopped{std::nullopt};
+    uint8_t classification{ObjectClassification::UNKNOWN};
 
     geometry_msgs::msg::Point position{};
     std::optional<CollisionPoint> collision_point{};
@@ -243,8 +244,8 @@ public:
     void update(
       const std::string & uuid, const geometry_msgs::msg::Point & position, const double vel,
       const rclcpp::Time & now, const bool is_ego_yielding, const bool has_traffic_light,
-      const std::optional<CollisionPoint> & collision_point, const PlannerParam & planner_param,
-      const lanelet::BasicPolygon2d & crosswalk_polygon)
+      const std::optional<CollisionPoint> & collision_point, const uint8_t classification,
+      const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon)
     {
       // update current uuids
       current_uuids_.push_back(uuid);
@@ -266,6 +267,7 @@ public:
         crosswalk_polygon);
       objects.at(uuid).collision_point = collision_point;
       objects.at(uuid).position = position;
+      objects.at(uuid).classification = classification;
     }
     void finalize()
     {
@@ -331,6 +333,9 @@ private:
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
 
+  std::optional<double> findObjectPassageDirectionAlongVehicleLane(
+    const autoware_auto_perception_msgs::msg::PredictedPath & path) const;
+
   std::optional<CollisionPoint> getCollisionPoint(
     const PathWithLaneId & ego_path, const PredictedObject & object,
     const std::pair<double, double> & crosswalk_attention_range, const Polygon2d & attention_area);
@@ -368,7 +373,7 @@ private:
     const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
     const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
     const geometry_msgs::msg::Vector3 & obj_vel,
-    const double object_crosswalk_passage_direction) const;
+    const std::optional<double> object_crosswalk_passage_direction) const;
 
   float calcTargetVelocity(
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
