@@ -30,6 +30,7 @@
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/msg/operation_mode_availability.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 
 // ROS 2 core
 #include <rclcpp/create_timer.hpp>
@@ -77,6 +78,8 @@ private:
     sub_mrm_comfortable_stop_status_;
   rclcpp::Subscription<tier4_system_msgs::msg::MrmBehaviorStatus>::SharedPtr
     sub_mrm_emergency_stop_status_;
+  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::OperationModeState>::SharedPtr
+    sub_operation_mode_state_;
 
   autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr prev_control_command_;
   nav_msgs::msg::Odometry::ConstSharedPtr odom_;
@@ -85,6 +88,7 @@ private:
   tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr mrm_pull_over_status_;
   tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr mrm_comfortable_stop_status_;
   tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr mrm_emergency_stop_status_;
+  autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr operation_mode_state_;
 
   void onPrevControlCommand(
     const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
@@ -97,6 +101,8 @@ private:
     const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
   void onMrmEmergencyStopStatus(
     const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
+  void onOperationModeState(
+    const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg);
 
   // Publisher
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
@@ -156,6 +162,7 @@ private:
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
   bool isEmergency() const;
+  bool isArrivedAtGoal();
 };
 
 #endif  // EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_
