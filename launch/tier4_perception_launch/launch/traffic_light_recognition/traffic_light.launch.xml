@@ -37,6 +37,8 @@
     <let name="input/image" value="/sensing/camera/$(var namespace1)/image_raw"/>
     <let name="input/camera_info" value="/sensing/camera/$(var namespace1)/camera_info"/>
     <let name="output/rois1" value="/perception/traffic_light_recognition/$(var namespace1)/detection/rois"/>
+    <let name="output/rois1_car" value="/perception/traffic_light_recognition/$(var namespace1)/detection/rois_car"/>
+    <let name="output/rois1_ped" value="/perception/traffic_light_recognition/$(var namespace1)/detection/rois_ped"/>
     <let name="output/traffic_signals1" value="/perception/traffic_light_recognition/$(var namespace1)/classification/traffic_signals"/>
     <let name="output/traffic_signals1_car" value="/perception/traffic_light_recognition/$(var namespace1)/classification/traffic_signals_car"/>
     <let name="output/traffic_signals1_ped" value="/perception/traffic_light_recognition/$(var namespace1)/classification/traffic_signals_ped"/>
@@ -60,15 +62,18 @@
         <arg name="input/image" value="$(var input/image)"/>
         <arg name="enable_image_decompressor" value="$(var enable_image_decompressor)"/>
         <arg name="enable_fine_detection" value="$(var enable_fine_detection)"/>
+        <arg name="use_crosswalk_traffic_light_estimator" value="$(var use_crosswalk_traffic_light_estimator)"/>
         <arg name="use_intra_process" value="true"/>
         <arg name="use_multithread" value="true"/>
         <arg name="fine_detector_label_path" value="$(var fine_detector_label_path)"/>
         <arg name="fine_detector_model_path" value="$(var fine_detector_model_path)"/>
-        <arg name="classifier_label_path_car" value="$(var classifier_label_path_car)"/>
+        <arg name="classifier_label_path)car" value="$(var classifier_label_path_car)"/>
         <arg name="classifier_label_path_ped" value="$(var classifier_label_path_ped)"/>
         <arg name="classifier_model_path_car" value="$(var classifier_model_path_car)"/>
         <arg name="classifier_model_path_ped" value="$(var classifier_model_path_ped)"/>
         <arg name="output/rois" value="$(var output/rois1)"/>
+        <arg name="output/rois_car" value="$(var output/rois1_car)"/>
+        <arg name="output/rois_ped" value="$(var output/rois1_ped)"/>
         <arg name="output/traffic_signals" value="$(var output/traffic_signals1)"/>
         <arg name="output/traffic_signals_car" value="$(var output/traffic_signals1_car)"/>
         <arg name="output/traffic_signals_ped" value="$(var output/traffic_signals1_ped)"/>
@@ -80,10 +85,12 @@
       <include file="$(find-pkg-share traffic_light_occlusion_predictor)/launch/traffic_light_occlusion_predictor.launch.xml">
         <arg name="input/camera_info" value="$(var input/camera_info)"/>
         <arg name="input/cloud" value="$(var input/cloud)"/>
-        <arg name="input/rois" value="$(var output/rois1)"/>
+        <arg name="input/rois_car" value="$(var output/rois1_car)"/>
+        <arg name="input/rois_ped" value="$(var output/rois1_ped)"/>
         <arg name="input/traffic_signals_car" value="classified/traffic_signals_car"/>
         <arg name="input/traffic_signals_ped" value="classified/traffic_signals_ped"/>
         <arg name="output/traffic_signals" value="$(var output/traffic_signals1)"/>
+        <arg name="output/rois" value="$(var output/rois1)"/>
       </include>
     </group>
   </group>
@@ -115,6 +122,7 @@
         <arg name="input/image" value="$(var input/image)"/>
         <arg name="enable_image_decompressor" value="$(var enable_image_decompressor)"/>
         <arg name="enable_fine_detection" value="$(var enable_fine_detection)"/>
+        <arg name="use_crosswalk_traffic_light_estimator" value="$(var use_crosswalk_traffic_light_estimator)"/>
         <arg name="use_intra_process" value="true"/>
         <arg name="use_multithread" value="true"/>
         <arg name="fine_detector_label_path" value="$(var fine_detector_label_path)"/>
@@ -123,8 +131,6 @@
         <arg name="classifier_model_path" value="$(var classifier_model_path)"/>
         <arg name="output/rois" value="$(var output/rois2)"/>
         <arg name="output/traffic_signals" value="$(var output/traffic_signals2)"/>
-        <arg name="output/traffic_signals_car" value="$(var output/traffic_signals2_car)"/>
-        <arg name="output/traffic_signals_ped" value="$(var output/traffic_signals2_ped)"/>
       </include>
     </group>
 
@@ -134,8 +140,7 @@
         <arg name="input/camera_info" value="$(var input/camera_info)"/>
         <arg name="input/cloud" value="$(var input/cloud)"/>
         <arg name="input/rois" value="$(var output/rois2)"/>
-        <arg name="input/traffic_signals_car" value="classified/traffic_signals_car"/>
-        <arg name="input/traffic_signals_ped" value="classified/traffic_signals_ped"/>
+        <arg name="input/traffic_signals" value="classified/traffic_signals"/>
         <arg name="output/traffic_signals" value="$(var output/traffic_signals2)"/>
       </include>
     </group>

@@ -99,7 +99,6 @@ private:
   std::shared_ptr<SynchronizerType> synchronizer_;
   std::shared_ptr<SynchronizerType> synchronizer_ped_;
 
-  std::vector<bool> subscribed_;
   std::vector<int> occlusion_ratios_;
   tier4_perception_msgs::msg::TrafficSignalArray out_msg_;
 };
