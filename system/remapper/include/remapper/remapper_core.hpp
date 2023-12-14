@@ -35,7 +35,7 @@
 class Remapper : public rclcpp::Node
 {
 public:
-  explicit Remapper();
+  Remapper();
 
 private:
   // Subscriber
