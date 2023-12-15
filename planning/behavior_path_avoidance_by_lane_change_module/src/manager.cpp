@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "behavior_path_avoidance_by_lane_change_module/manager.hpp"
+
 #include "behavior_path_avoidance_by_lane_change_module/data_structs.hpp"
 #include "behavior_path_avoidance_module/parameter_helper.hpp"
-
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
@@ -164,34 +164,6 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "max_forward_distance");
     p.object_check_backward_distance =
       getOrDeclareParameter<double>(*node, ns + "backward_distance");
-  }
-
-  // constraints (lateral)
-  {
-    const std::string ns = "avoidance_by_lane_change.constraints.lateral.";
-    p.velocity_map = getOrDeclareParameter<std::vector<double>>(*node, ns + "velocity");
-    p.lateral_max_accel_map =
-      getOrDeclareParameter<std::vector<double>>(*node, ns + "max_accel_values");
-    p.lateral_min_jerk_map =
-      getOrDeclareParameter<std::vector<double>>(*node, ns + "min_jerk_values");
-    p.lateral_max_jerk_map =
-      getOrDeclareParameter<std::vector<double>>(*node, ns + "max_jerk_values");
-
-    if (p.velocity_map.empty()) {
-      throw std::domain_error("invalid velocity map.");
-    }
-
-    if (p.velocity_map.size() != p.lateral_max_accel_map.size()) {
-      throw std::domain_error("inconsistency among the constraints map.");
-    }
-
-    if (p.velocity_map.size() != p.lateral_min_jerk_map.size()) {
-      throw std::domain_error("inconsistency among the constraints map.");
-    }
-
-    if (p.velocity_map.size() != p.lateral_max_jerk_map.size()) {
-      throw std::domain_error("inconsistency among the constraints map.");
-    }
   }
 
   // safety check

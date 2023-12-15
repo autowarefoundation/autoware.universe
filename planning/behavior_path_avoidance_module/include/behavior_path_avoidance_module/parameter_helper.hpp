@@ -11,36 +11,42 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef BEHAVIOUR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
-#define BEHAVIOUR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
+#ifndef BEHAVIOR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
+#define BEHAVIOR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
 
 #include "tier4_autoware_utils/ros/parameter.hpp"
 
-#include <rclcpp/node.hpp>
 #include <behavior_path_avoidance_module/data_structs.hpp>
+#include <rclcpp/node.hpp>
+
 #include <autoware_auto_perception_msgs/msg/detail/object_classification__struct.hpp>
 
-namespace behavior_path_planner {
-  using tier4_autoware_utils::getOrDeclareParameter;
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+#include <string>
+#include <vector>
 
-AvoidanceParameters getParameter(rclcpp::Node * node){
-    AvoidanceParameters p{};
-    // general params
-    {
-      const std::string ns = "avoidance.";
-      p.resample_interval_for_planning =
-        getOrDeclareParameter<double>(*node, ns + "resample_interval_for_planning");
-      p.resample_interval_for_output =
-        getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
-      p.enable_bound_clipping = getOrDeclareParameter<bool>(*node, ns + "enable_bound_clipping");
-      p.enable_cancel_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_cancel_maneuver");
-      p.enable_yield_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_yield_maneuver");
-      p.enable_yield_maneuver_during_shifting =
-        getOrDeclareParameter<bool>(*node, ns + "enable_yield_maneuver_during_shifting");
-      p.disable_path_update = getOrDeclareParameter<bool>(*node, ns + "disable_path_update");
-      p.publish_debug_marker = getOrDeclareParameter<bool>(*node, ns + "publish_debug_marker");
-      p.print_debug_info = getOrDeclareParameter<bool>(*node, ns + "print_debug_info");
+namespace behavior_path_planner
+{
+using autoware_auto_perception_msgs::msg::ObjectClassification;
+using tier4_autoware_utils::getOrDeclareParameter;
+
+AvoidanceParameters getParameter(rclcpp::Node * node)
+{
+  AvoidanceParameters p{};
+  // general params
+  {
+    const std::string ns = "avoidance.";
+    p.resample_interval_for_planning =
+      getOrDeclareParameter<double>(*node, ns + "resample_interval_for_planning");
+    p.resample_interval_for_output =
+      getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
+    p.enable_bound_clipping = getOrDeclareParameter<bool>(*node, ns + "enable_bound_clipping");
+    p.enable_cancel_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_cancel_maneuver");
+    p.enable_yield_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_yield_maneuver");
+    p.enable_yield_maneuver_during_shifting =
+      getOrDeclareParameter<bool>(*node, ns + "enable_yield_maneuver_during_shifting");
+    p.disable_path_update = getOrDeclareParameter<bool>(*node, ns + "disable_path_update");
+    p.publish_debug_marker = getOrDeclareParameter<bool>(*node, ns + "publish_debug_marker");
+    p.print_debug_info = getOrDeclareParameter<bool>(*node, ns + "print_debug_info");
   }
 
   // drivable area
@@ -353,6 +359,6 @@ AvoidanceParameters getParameter(rclcpp::Node * node){
   }
   return p;
 }
-} // namespace behavior_path_planner
+}  // namespace behavior_path_planner
 
-#endif /* BEHAVIOUR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_ */
+#endif  // BEHAVIOR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_

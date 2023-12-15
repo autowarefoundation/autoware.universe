@@ -102,8 +102,6 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
     nearest_object, utils::avoidance::isOnRight(nearest_object), avoid_margin);
 
   const auto maximum_avoid_distance = avoidance_helper_->getMaxAvoidanceDistance(shift_length);
-  std::cerr << "min lc " << minimum_lane_change_length << " maximum avoid "
-            << maximum_avoid_distance << '\n';
 
   return nearest_object.longitudinal > std::max(minimum_lane_change_length, maximum_avoid_distance);
 }
