@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "behavior_path_avoidance_by_lane_change_module/manager.hpp"
+#include "behavior_path_avoidance_by_lane_change_module/data_structs.hpp"
+#include "behavior_path_avoidance_module/parameter_helper.hpp"
 
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
@@ -37,7 +39,9 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   // init lane change manager
   LaneChangeModuleManager::init(node);
 
-  AvoidanceByLCParameters p{};
+  const auto avoidance_params = getParameter(node);
+  AvoidanceByLCParameters p(avoidance_params);
+
   // unique parameters
   {
     const std::string ns = "avoidance_by_lane_change.";
