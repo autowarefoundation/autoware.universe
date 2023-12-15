@@ -133,8 +133,9 @@ bool checkStuckVehicleInIntersection(
 bool checkYieldStuckVehicleInIntersection(
   const util::TargetObjects & target_objects,
   const util::InterpolatedPathInfo & interpolated_path_info,
-  const lanelet::ConstLanelets & attention_lanelets, const double stuck_vehicle_vel_thr,
-  const double yield_stuck_distance_thr, DebugData * debug_data);
+  const lanelet::ConstLanelets & attention_lanelets, const std::string & turn_direction,
+  const double width, const double stuck_vehicle_vel_thr, const double yield_stuck_distance_thr,
+  DebugData * debug_data);
 
 Polygon2d generateStuckVehicleDetectAreaPolygon(
   const util::PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist);

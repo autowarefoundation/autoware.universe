@@ -1390,7 +1390,8 @@ bool IntersectionModule::checkYieldStuckVehicle(
   }
 
   return util::checkYieldStuckVehicleInIntersection(
-    target_objects, interpolated_path_info, attention_lanelets,
+    target_objects, interpolated_path_info, attention_lanelets, turn_direction_,
+    planner_data_->vehicle_info_.vehicle_width_m,
     planner_param_.stuck_vehicle.stuck_vehicle_velocity_threshold,
     planner_param_.yield_stuck.distance_threshold, &debug_data_);
 }
