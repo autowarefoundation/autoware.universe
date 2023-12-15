@@ -233,8 +233,8 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
     });
 
   // calc drivable bound
-  const auto shorten_lanes =
-    utils::cutOverlappedLanes(*getPreviousModuleOutput().path, data.drivable_lanes);
+  auto tmp_path = *getPreviousModuleOutput().path;
+  const auto shorten_lanes = utils::cutOverlappedLanes(tmp_path, data.drivable_lanes);
   data.left_bound = toLineString3d(utils::calcBound(
     planner_data_->route_handler, shorten_lanes, parameters_->use_hatched_road_markings,
     parameters_->use_intersection_areas, true));
