@@ -635,7 +635,8 @@ bool StartPlannerModule::findPullOutPath(
 
   // If driving forward, update status with the current path and return true
   if (is_driving_forward) {
-    updateStatusWithCurrentPath(pull_out_path.at(0), pull_out_start_pose, planner->getPlannerType());
+    updateStatusWithCurrentPath(
+      pull_out_path.at(0), pull_out_start_pose, planner->getPlannerType());
     return true;
   }
 
