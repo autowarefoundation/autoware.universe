@@ -111,7 +111,8 @@ geometry_msgs::msg::Pose get_closest_centerline_pose(
   vehicle_info_util::VehicleInfo vehicle_info)
 {
   lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLaneletWithConstrains(road_lanelets, point, &closest_lanelet, 0.0)) {
+  if (!lanelet::utils::query::getClosestLaneletWithConstrains(
+        road_lanelets, point, &closest_lanelet, 0.0)) {
     // point is not on any lanelet.
     return point;
   }
