@@ -93,6 +93,7 @@ user@container-id:~$ rosdep install -y --from-paths src --ignore-src --rosdistro
 ```bash
 user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
+> **Note:** You can ignore the `stderr` warnings (if any) during the `colcon` build process.
 
 ## Planning Simulation:
 ```bash
