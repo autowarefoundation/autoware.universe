@@ -119,6 +119,7 @@ user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml m
 
 4. Tinker around with the `planning_simulator` and explore the depths of Autoware stack!
    ![Autoware-Planning-Simulation](https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/Autoware-Planning-Simulation/Autoware-Planning-Simulation.gif)
+> **Note:** Check out the official [Planning Simulation Documentation](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/planning-simulation/) for more details.
 
 ## Generally Helpful Docker Tips:
 1. To access the container while it is running, execute the following command in a new terminal window to start a new bash session inside the container:
