@@ -99,7 +99,7 @@ user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_T
 
 > **Note 3:** Use `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of (re)building the entire workspace to avoid large (re)build times.
 
-## Planning Simulation:
+## Test Autoware Installation with Planning Simulation:
 
 1. Run the pulled Docker image as a container (if not already running).
 ```bash
@@ -117,7 +117,10 @@ user@container-id:~$ source ~/Autoware_WS/autoware_docker/install/setup.bash
 user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
 ```
 
-## Docker Tips:
+4. Tinker around with the `planning_simulator` and explore the depths of Autoware stack!
+   ![Autoware-Planning-Simulation](https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/Autoware-Planning-Simulation/Autoware-Planning-Simulation.gif)
+
+## Generally Helpful Docker Tips:
 1. To access the container while it is running, execute the following command in a new terminal window to start a new bash session inside the container:
 ```bash
 $ docker exec -it <container_name> bash
