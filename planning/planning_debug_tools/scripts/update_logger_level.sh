@@ -25,6 +25,16 @@ logger_name_dict["obstacle_avoidance_planner"]=/planning/scenario_planning/lane_
 node_name_dict["motion_velocity_smoother"]=/planning/scenario_planning/motion_velocity_smoother
 logger_name_dict["motion_velocity_smoother"]=/planning/scenario_planning/motion_velocity_smoother
 
+if [ -z "${node_name_dict[$1]}" ]; then
+    echo "[ERROR] $1 is not found."
+    echo -n "[ERROR] The available modules are [ "
+    for node_name in "${!node_name_dict[@]}"; do
+        echo -n "${node_name} "
+    done
+    echo "]"
+    exit 0
+fi
+
 # update logger
 node_name=${node_name_dict[$1]}
 logger_name=${logger_name_dict[$1]}
