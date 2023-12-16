@@ -2,7 +2,7 @@
 <img src="media/AutoDRIVE-Logo.png" alt="AutoDRIVE" width="478"/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="media/Autoware-Logo.png" alt="Autoware" width="478"/>
 </p>
 
-## Deployments:
+## Deployments
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-TinyTown-Simulator/Replay-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-TinyTown-Simulator/Replay-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
