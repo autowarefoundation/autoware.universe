@@ -112,7 +112,7 @@ user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml m
 ## Docker Tips:
 1. To access the container while it is running, execute the following command in a new terminal window to start a new bash session inside the container:
 ```bash
-$ docker exec -it <CONTAINER NAME> bash
+$ docker exec -it <container_name> bash
 ```
 
 2. To exit the bash session(s), simply execute:
@@ -122,12 +122,12 @@ $ exit
 
 3. To kill the container, execute the following command:
 ```bash
-$ docker kill <CONTAINER NAME>
+$ docker kill <container_name>
 ```
 
 4. To remove the container, simply execute:
 ```bash
-$ docker rm <CONTAINER NAME>
+$ docker rm <container_name>
 ```
 
 5. Running or caching multiple docker images, containers, volumes, and networks can quickly consume a lot of disk space. Hence, it is always a good idea to frequently check docker disk utilization:
