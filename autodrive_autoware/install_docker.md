@@ -97,7 +97,7 @@ user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_T
 
 > **Note 2:** For more advanced build options, refer to the [colcon documentation](https://colcon.readthedocs.io/).
 
-> **Note 3:** You might want to use the command `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of building the entire workspace, which can be time-consuming.
+> **Note 3:** Use the command `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of (re)building the entire workspace to avoid large (re)build times.
 
 ## Planning Simulation:
 
