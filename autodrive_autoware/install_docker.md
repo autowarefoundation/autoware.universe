@@ -88,6 +88,7 @@ user@container-id:~$ sudo apt update
 user@container-id:~$ rosdep update
 user@container-id:~$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
 ```
+> **Note:** You can ignore the `Invalid version` errors (if any) during `rosdep` installation process.
 
 ```bash
 user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
