@@ -110,7 +110,7 @@ user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autowa
 ```bash
 user@container-id:~$ source ~/Autoware_WS/autoware_docker/install/setup.bash
 ```
-> **Note:** You can also write the above line to the `~/.bashrc` file so that it is automatically executed when a new terminal instance is created.
+> **Note:** You can write the above line to the `~/.bashrc` file so that it is automatically executed when a new terminal instance is created.
 
 ```
 user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
