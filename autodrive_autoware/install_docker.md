@@ -81,13 +81,15 @@ user@container-id:~$ cd Autoware_WS/autoware_docker/
 user@container-id:~$ mkdir src
 user@container-id:~$ vcs import src < autoware.repos
 ```
-```
+
+2. Install the required dependencies (Autoware uses [`rosdep`](https://github.com/ros-infrastructure/rosdep) to manage dependencies).
+```bash
 user@container-id:~$ sudo apt update
-
 user@container-id:~$ rosdep update
-
 user@container-id:~$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+```
 
+```bash
 user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
