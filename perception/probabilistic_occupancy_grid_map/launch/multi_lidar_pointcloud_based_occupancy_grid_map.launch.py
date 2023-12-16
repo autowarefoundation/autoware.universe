@@ -195,7 +195,7 @@ def generate_launch_description():
             add_launch_arg(
                 "multi_lidar_fusion_config_file",
                 get_package_share_directory("probabilistic_occupancy_grid_map")
-                + "/config/multi_lidar_pointclouds_based_fusion_config.param.yaml",
+                + "/config/multi_lidar_pointcloud_based_occupancy_grid_map.param.yaml",
             ),
             add_launch_arg("updater_type", "binary_bayes_filter"),
             add_launch_arg(

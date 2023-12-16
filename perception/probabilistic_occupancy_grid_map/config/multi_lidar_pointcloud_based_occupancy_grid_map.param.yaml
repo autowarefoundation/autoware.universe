@@ -36,9 +36,9 @@
         # Setting1: tune ogm creation parameters
         obstacle_pointcloud_topic: "/perception/obstacle_segmentation/single_frame/pointcloud_raw"
         raw_pointcloud_topics: # put each sensor's pointcloud topic
-          - "/sensing/lidar/top/outlier_filtered/pointcloud_synchronized"
-          - "/sensing/lidar/left/outlier_filtered/pointcloud_synchronized"
-          - "/sensing/lidar/right/outlier_filtered/pointcloud_synchronized"
+          - "/sensing/lidar/top/pointcloud_synchronized"
+          - "/sensing/lidar/left/pointcloud_synchronized"
+          - "/sensing/lidar/right/pointcloud_synchronized"
         fusion_input_ogm_topics:
           - "/perception/occupancy_grid_map/top_lidar/map"
           - "/perception/occupancy_grid_map/left_lidar/map"
