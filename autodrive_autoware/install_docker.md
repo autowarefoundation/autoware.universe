@@ -90,10 +90,15 @@ user@container-id:~$ rosdep install -y --from-paths src --ignore-src --rosdistro
 ```
 > **Note:** You can ignore the `Invalid version` errors (if any) during `rosdep` installation process.
 
+3. Build the workspace (Autoware uses [colcon](https://github.com/colcon) to build workspaces).
 ```bash
 user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
-> **Note:** You can ignore the `stderr` warnings (if any) during the `colcon` build process.
+> **Note 1:** You can ignore the `stderr` warnings (if any) during the `colcon` build process.
+
+> **Note 2:** For more advanced build options, refer to the [colcon documentation](https://colcon.readthedocs.io/).
+
+> **Note 3:** You might want to use the command `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of building the entire workspace, which can be time-consuming.
 
 ## Planning Simulation:
 ```bash
