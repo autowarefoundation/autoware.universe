@@ -73,15 +73,15 @@ user@host-pc:~$ docker pull ghcr.io/autowarefoundation/autoware-universe:latest-
 user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 ```
 
-## Docker Container:
+## Set Up Autoware Workspace:
 
+1. Create an `src` directory within the `autoware_docker` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
 ```bash
 user@container-id:~$ cd Autoware_WS/autoware_docker/
-
 user@container-id:~$ mkdir src
-
 user@container-id:~$ vcs import src < autoware.repos
-
+```
+```
 user@container-id:~$ sudo apt update
 
 user@container-id:~$ rosdep update
