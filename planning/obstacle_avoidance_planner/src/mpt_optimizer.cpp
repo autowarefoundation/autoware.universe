@@ -1423,8 +1423,11 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   for (const size_t i : fixed_points_indices) {
     A.block(A_rows_end, D_x * i, D_x, D_x) = Eigen::MatrixXd::Identity(D_x, D_x);
 
-    lb.segment(A_rows_end, D_x) = ref_points.at(i).fixed_kinematic_state->toEigenVector();
-    ub.segment(A_rows_end, D_x) = ref_points.at(i).fixed_kinematic_state->toEigenVector();
+    const Eigen::VectorXd epsilon_vec = Eigen::VectorXd::Constant(D_x, 1e-9);
+    lb.segment(A_rows_end, D_x) =
+      ref_points.at(i).fixed_kinematic_state->toEigenVector() - epsilon_vec;
+    ub.segment(A_rows_end, D_x) =
+      ref_points.at(i).fixed_kinematic_state->toEigenVector() + epsilon_vec;
 
     A_rows_end += D_x;
   }
