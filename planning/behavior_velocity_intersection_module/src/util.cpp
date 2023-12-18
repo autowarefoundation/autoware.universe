@@ -1633,7 +1633,7 @@ lanelet::ConstLanelet generatePathLanelet(
     const double yaw = tf2::getYaw(p.orientation);
     const double x = p.position.x;
     const double y = p.position.y;
-    // NOTE(Mamoru Sobue): maybe this is opposite
+    // NOTE: maybe this is opposite
     const double left_x = x + width / 2 * std::sin(yaw);
     const double left_y = y - width / 2 * std::cos(yaw);
     const double right_x = x - width / 2 * std::sin(yaw);
