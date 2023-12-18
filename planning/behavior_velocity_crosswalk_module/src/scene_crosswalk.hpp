@@ -430,6 +430,9 @@ private:
 
   // whether use regulatory element
   const bool use_regulatory_element_;
+
+  // occluded space time buffer
+  std::optional<rclcpp::Time> current_occlusion_start_time_;
 };
 }  // namespace behavior_velocity_planner
 

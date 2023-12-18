@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020-2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "scene_crosswalk.hpp"
+
+#include "occluded_object.hpp"
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
@@ -666,8 +668,6 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
 {
   stop_watch_.tic(__func__);
 
-  std::vector<CollisionPoint> ret{};
-
   const auto & obj_vel = object.kinematics.initial_twist_with_covariance.twist.linear;
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
@@ -1050,6 +1050,32 @@ void CrosswalkModule::updateObjectState(
     setObjectsOfInterestData(
       object.kinematics.initial_pose_with_covariance.pose, object.shape,
       getLabelColor(collision_state));
+  }
+
+  constexpr auto use_occluded_pedestrian = true;  // TODO(Maxime): param
+  constexpr auto time_buffer = 1.0;               // TODO(Maxime): param
+  // Update the virtual object
+  if (use_occluded_pedestrian) {
+    const auto & ego_pos = planner_data_->current_odometry->pose.position;
+    const auto occluded_object = create_occluded_object(
+      attention_area, crosswalk_, *planner_data_->occupancy_grid, sparse_resample_path, ego_pos);
+    if (occluded_object) {
+      if (!current_occlusion_start_time_) current_occlusion_start_time_ = clock_->now();
+      if (
+        current_occlusion_start_time_ &&
+        (clock_->now() - *current_occlusion_start_time_).seconds() >= time_buffer) {
+        const auto collision_point = getCollisionPoint(
+          sparse_resample_path, *occluded_object, crosswalk_attention_range, attention_area);
+        object_info_manager_.update(
+          "virtual", occluded_object->kinematics.initial_pose_with_covariance.pose.position,
+          occluded_object->kinematics.initial_twist_with_covariance.twist.linear.x, clock_->now(),
+          is_ego_yielding, has_traffic_light, collision_point,
+          autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN, planner_param_,
+          crosswalk_.polygon2d().basicPolygon());
+      }
+    } else {
+      current_occlusion_start_time_.reset();
+    }
   }
   object_info_manager_.finalize();
 }
