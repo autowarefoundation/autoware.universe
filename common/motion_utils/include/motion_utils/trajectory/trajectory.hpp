@@ -602,7 +602,8 @@ double calcLateralOffset(
       throw std::runtime_error(error_message);
     }
     log_error(
-      error_message + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -669,7 +670,8 @@ double calcLateralOffset(
       throw std::runtime_error(error_message);
     }
     log_error(
-      error_message + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -1076,7 +1078,8 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
       throw std::out_of_range(error_message);
     }
     log_error(
-      error_message + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return {};
   }
 
@@ -2419,7 +2422,8 @@ double calcYawDeviation(
       throw std::runtime_error(error_message);
     }
     log_error(
-      error_message + " Return 0 since no_throw option is enabled. The maintainer must check the code.");
+      error_message +
+      " Return 0 since no_throw option is enabled. The maintainer must check the code.");
     return 0.0;
   }
 
