@@ -27,6 +27,8 @@
 
 namespace motion_utils
 {
+using TrajectoryPoints = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
+
 /**
  * @brief Convert std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> to
  * autoware_auto_planning_msgs::msg::Trajectory. This function is temporarily added for porting to
@@ -48,13 +50,13 @@ autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
 std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPointArray(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory);
 
-Path toPath(const PathWithLaneId & input);
+autoware_auto_planning_msgs::msg::Path toPath(const autoware_auto_planning_msgs::msg::PathWithLaneId & input);
 
-TrajectoryPoints convertPathToTrajectoryPoints(const PathWithLaneId & path);
+TrajectoryPoints convertPathToTrajectoryPoints(const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
-PathWithLaneId convertTrajectoryPointsToPath(const TrajectoryPoints & trajectory);
+autoware_auto_planning_msgs::msg::PathWithLaneId convertTrajectoryPointsToPath(const TrajectoryPoints & trajectory);
 
-Quaternion lerpOrientation(const Quaternion & o_from, const Quaternion & o_to, const double ratio);
+geometry_msgs::msg::Quaternion lerpOrientation(const geometry_msgs::msg::Quaternion & o_from, const geometry_msgs::msg::Quaternion & o_to, const double ratio);
 
 }  // namespace motion_utils
 
