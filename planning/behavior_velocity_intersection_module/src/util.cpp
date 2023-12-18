@@ -299,7 +299,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     const auto path_footprint = tier4_autoware_utils::transformVector(
       local_footprint, tier4_autoware_utils::pose2transform(base_pose));
     if (bg::intersects(path_footprint, first_attention_lane_centerline.basicLineString())) {
-      // TODO(Mamoru Sobue): maybe consideration of braking dist is necessary
+      // NOTE: maybe consideration of braking dist is necessary
       first_footprint_attention_centerline_ip_opt = i;
       break;
     }
