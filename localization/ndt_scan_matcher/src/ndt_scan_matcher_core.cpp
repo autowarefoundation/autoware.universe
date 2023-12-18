@@ -263,12 +263,6 @@ void NDTScanMatcher::publish_diagnostic()
     diag_status_msg.message += "Initializing State. ";
   }
   if (
-    state_ptr_->count("lidar_topic_delay_time_sec") &&
-    std::stod((*state_ptr_)["lidar_topic_delay_time_sec"]) > lidar_topic_timeout_sec_) {
-    diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_status_msg.message += "lidar_topic_delay_time_sec exceed limit. ";
-  }
-  if (
     state_ptr_->count("skipping_publish_num") &&
     std::stoi((*state_ptr_)["skipping_publish_num"]) > 1 &&
     std::stoi((*state_ptr_)["skipping_publish_num"]) < 5) {
@@ -287,13 +281,6 @@ void NDTScanMatcher::publish_diagnostic()
       converged_param_nearest_voxel_transformation_likelihood_) {
     diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     diag_status_msg.message += "NDT score is unreliably low. ";
-  }
-  if (
-    state_ptr_->count("execution_time") &&
-    std::stod((*state_ptr_)["execution_time"]) >= critical_upper_bound_exe_time_ms_) {
-    diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_status_msg.message +=
-      "NDT exe time is too long. (took " + (*state_ptr_)["execution_time"] + " [ms])";
   }
   // Ignore local optimal solution
   if (
@@ -509,7 +496,6 @@ void NDTScanMatcher::callback_sensor_points(
   } else {
     (*state_ptr_)["is_local_optimal_solution_oscillation"] = "0";
   }
-  (*state_ptr_)["execution_time"] = std::to_string(exe_time);
 
   publish_diagnostic();
 }
@@ -740,7 +726,10 @@ void NDTScanMatcher::service_ndt_align(
     return;
   }
 
-  res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
+  // mutex Map
+  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
+
+  res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, initial_pose_msg_in_map_frame);
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
