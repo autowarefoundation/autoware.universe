@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -68,7 +69,7 @@ private:
 
   std::optional<DynamicObstacle> detectCollision(
     const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
-    const PathWithLaneId & raw_path);
+    const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets);
 
   float calcCollisionPositionOfVehicleSide(
     const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & base_pose) const;
@@ -79,7 +80,7 @@ private:
   std::vector<DynamicObstacle> checkCollisionWithObstacles(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
     std::vector<geometry_msgs::msg::Point> poly, const float travel_time,
-    PathWithLaneId path) const;
+    const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets) const;
 
   std::optional<DynamicObstacle> findNearestCollisionObstacle(
     const PathWithLaneId & path, const geometry_msgs::msg::Pose & base_pose,
@@ -91,7 +92,8 @@ private:
 
   bool checkCollisionWithShape(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
-    const PathWithLaneId path, std::vector<geometry_msgs::msg::Point> & collision_points) const;
+    const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets,
+    std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithCylinder(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
