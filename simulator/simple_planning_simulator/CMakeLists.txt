@@ -4,16 +4,11 @@ project(simple_planning_simulator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(Python3 COMPONENTS Interpreter Development)
-find_package(pybind11 CONFIG)
+find_package(learned_model REQUIRED)
 
-message("Pybind11_FOUND:${pybind11_FOUND}")
-message("Pybind11_Version:${pybind11_VERSION}")
-
-message("Python_FOUND:${Python3_FOUND}")
-message("Python_VERSION:${Python3_VERSION}")
-message("Python_Development_FOUND:${Python3_Development_FOUND}")
-message("Python_LIBRARIES:${Python3_LIBRARIES}")
+message("learned_model_FOUND: ${learned_model_FOUND}")
+message("learned_model_LIBRARIES: ${learned_model_LIBRARIES}")
+message("learned_model_INCLUDE_DIRS: ${learned_model_INCLUDE_DIRS}")
 
 
 # Component
@@ -34,8 +29,10 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
 
+ament_target_dependencies(${PROJECT_NAME} learned_model)
 
-target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast) # RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
+
+target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast  -fvisibility=hidden) # RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
 
 # Node executable
 rclcpp_components_register_node(${PROJECT_NAME}
@@ -43,11 +40,6 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_exe
 )
 
-# target_link_options(${PROJECT_NAME} PRIVATE -shared -fPIC -export-dynamic)  # 
-
-# target_link_libraries(${PROJECT_NAME} ${Python3_LIBRARIES})  3
-# /usr/lib/x86_64-linux-gnu/libpython3.10.so
-target_link_libraries(${PROJECT_NAME} pybind11::embed ${Python3_LIBRARIES})
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_simple_planning_simulator

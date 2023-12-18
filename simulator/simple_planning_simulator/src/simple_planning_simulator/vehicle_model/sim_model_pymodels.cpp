@@ -17,8 +17,11 @@
 #include <algorithm>
 // #include <Python.h>
 // #include <dlfcn.h>
-#include <pybind11/embed.h>
-namespace py = pybind11;
+// #include <pybind11/embed.h>
+// #include <pybind11/stl.h>
+// namespace py = pybind11;
+
+#include <learned_model/sim_pymodel_steer_vel.hpp>
 
 SimModelPymodels::SimModelPymodels(
   double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
@@ -39,9 +42,7 @@ SimModelPymodels::SimModelPymodels(
 {
   
   // Initialize python library
-  //dlopen("libpython3.10.so", RTLD_GLOBAL | RTLD_NOW); // Manually load libpython3.10.so as we need it for python.h.
-
-  
+  // dlopen("libpython3.10.so", RTLD_GLOBAL | RTLD_NOW); // Manually load libpython3.10.so as we need it for python.h.
   /*
   More about the line above here:
     https://stackoverflow.com/questions/60719987/embedding-python-which-uses-numpy-in-c-doesnt-work-in-library-dynamically-loa
@@ -49,102 +50,68 @@ SimModelPymodels::SimModelPymodels(
     https://stackoverflow.com/questions/67891197/ctypes-cpython-39-x86-64-linux-gnu-so-undefined-symbol-pyfloat-type-in-embedd
     https://man7.org/linux/man-pages/man3/dlopen.3.html
   */
-  // Py_Initialize();
-  // PyObject *py_module, *py_module_dict, *python_class;
-
+ // start the interpreter and keep it alive
+  
   // char *model_save_path = (char*)"/home/tomas/f1tenth/ws_testing/base_model_save"; 
 
-  // Import python module
-  // py_module = PyImport_Import(PyUnicode_FromString((char*)"control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis"));
+  // // Import python module
+  // py::module_ steering_model_module = py::module_::import("control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis");
 
-  // if (py_module == nullptr) {
-  //     PyErr_Print();
-  //     return;
-  // }
-
-  //  py_module_dict = PyModule_GetDict(py_module); 
-  //  if (py_module_dict == nullptr) {
-  //      PyErr_Print();
-  //      return;
-  //  }
-
-  // python_class = PyDict_GetItemString(py_module_dict, "SimpleSteeringHyst");
-  // if (python_class == nullptr) {
-  //     PyErr_Print();
-  //     return;
-  // }
-
-  // if (PyCallable_Check(python_class)) {
-  //     steer_base_model = PyObject_CallObject(python_class, nullptr);
-  //     Py_DECREF(python_class);
-  // } else {
-  //     Py_DECREF(python_class);
-  //     return;
-  // }
+  // steering_module_class = steering_model_module.attr("SimpleSteeringHyst")(nullptr);
 
 
-  // TODO call function to get model signal names
-  // From the names create a mapping table for correctly pass arguments to the python models
-
-  // PyObject *py_sig_state_names = PyObject_CallMethodObjArgs(steer_base_model, PyUnicode_FromString((char*)"get_sig_state_names"), NULL);
+  // // TODO call function to get model signal names
+  // // From the names create a mapping table for correctly pass arguments to the python models
+  // py::object sig_state_names = steering_module_class.attr("get_sig_state_names")();
 
   // char *my_result;
-
-  // PyObject * temp_bytes = PyUnicode_AsEncodedString(PyList_GetItem(py_sig_state_names, 0), "UTF-8", "strict");
+  // PyObject *temp_bytes = PyUnicode_AsEncodedString(PyList_GetItem(sig_state_names.ptr(), 0), "UTF-8", "strict");
   // my_result = PyBytes_AS_STRING(temp_bytes);
   // my_result = strdup(my_result);
   // Py_DECREF(temp_bytes);
 
-  // wcstombs(buffer, PyList_GetItem(py_sig_state_names, 0), sizeof(buffer));
+  // // wcstombs(buffer, PyList_GetItem(py_sig_state_names, 0), sizeof(buffer));
 
-  // int len_ = PyList_Size(py_sig_state_names);
+  // // int len_ = PyList_Size(py_sig_state_names);
   // std::cout << "STATE NAMES:  -" <<  my_result << "-" << std::endl;
-  // std::cout << "STEER:  " << len_ << std::endl;
-  // std::cout << "STEER:  " << strcmp(my_result, "STEER") << std::endl;
-  // std::cout << "STEER:  " << strcmp(my_result, STATE_NAMES[4]) << std::endl;
-  // std::cout << "STEERR:  " << strcmp(my_result, "STEERR") << std::endl;
+  // // std::cout << "STEER:  " << len_ << std::endl;
+  // // std::cout << "STEER:  " << strcmp(my_result, "STEER") << std::endl;
+  // // std::cout << "STEER:  " << strcmp(my_result, STATE_NAMES[4]) << std::endl;
+  // // std::cout << "STEERR:  " << strcmp(my_result, "STEERR") << std::endl;
 
 
-  // Load model params
-  // PyObject *load_params_succ = PyObject_CallMethodObjArgs(steer_base_model, PyUnicode_FromString((char*)"load_params"), PyUnicode_FromString(model_save_path), NULL);
+  // // Load model params
+  // py::object load_params_succ = steering_module_class.attr("load_params")(model_save_path);
 
-  // if(!PyBool_Check(load_params_succ)){
-  //     return;
-  // }
 
-  // Reset the python model after loading the parameter file
-  // PyObject_CallMethodObjArgs(steer_base_model, PyUnicode_FromString((char*)"reset"), NULL);
+  // // Reset the python model after loading the parameter file
+  // steering_module_class.attr("reset")();
   
 
-  // Set number model states and inputs
+  // // Set number model states and inputs
   // num_states_steering = 1;
   // num_inputs_steering = 1;
 
   // // Initialize state and input vectors
-  // state_steering = Eigen::VectorXd::Zero(num_states_steering);
-  // input_steering = Eigen::VectorXd::Zero(num_inputs_steering);
-  
-  
-  // py_state_steering = PyList_New(num_states_steering);
-  // py_input_steering = PyList_New(num_inputs_steering);
-
-  // for (int state_idx = 0; state_idx < num_states_steering; state_idx++){
-  //     PyList_SetItem(py_state_steering, state_idx, PyFloat_FromDouble(state_steering(state_idx)));
+  // for (int i = 0; i < num_inputs_steering; i++){
+  //   input_steering.push_back(0.0);
   // }
 
-  // for (int input_idx = 0; input_idx < num_inputs_steering; input_idx++){
-  //     PyList_SetItem(py_input_steering, input_idx, PyFloat_FromDouble(input_steering(input_idx)));
+  // for (int i = 0; i < num_states_steering; i++){
+  //   state_steering.push_back(0.0);
   // }
 
-  py::scoped_interpreter guard{}; // start the interpreter and keep it alive
 
-  py::print("Testing py::print"); // use the Python API
+  // std::vector<double> state_steering(num_states_steering, 0);
+  // std::vector<double> input_steering(num_inputs_steering, 0);
+  
+  // std::cout << action_delayed[0]<< std::endl;
+ 
+  SimPymodelSteerVel test_;
+  std::cout << "----->  " << test_.test_variable << std::endl;
 
-  // py::module_ sys = py::module_::import("control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis");
 
-  py::module_ torch = py::module_::import("torch");
-
-  // py::object result = torch.attr("add")(1, 2);
+  // py::print("Testing py::print"); // use the Python API
 
   std::cout << dt << std::endl;
   std::cout << "OKAAAAAYYYYYYY" << std::endl;
@@ -192,11 +159,6 @@ void SimModelPymodels::update(const double & dt)
   delayed_input(IDX_U::VX_DES) = vx_input_queue_.front();
   vx_input_queue_.pop_front();
 
-  // Model the delay of steering  --  TODO remove this after implementing python models
-  steer_input_queue_.push_back(input_(IDX_U::STEER_DES));
-  delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
-  steer_input_queue_.pop_front();
-
   // Simulate the system (car kinematics and dynamics)
   // do not use deadzone_delta_steer (Steer IF does not exist in this model)
   updateRungeKutta(dt, delayed_input);
@@ -210,29 +172,23 @@ void SimModelPymodels::update(const double & dt)
     - IDX_U::STEER_DES
     - IDX::VX
   */
-  // input_steering(0) = 0;
-
-
-  // for (int input_idx = 0; input_idx < num_inputs_steering; input_idx++){
-  //     PyList_SetItem(py_input_steering, input_idx, PyFloat_FromDouble(input_steering(input_idx)));
-  // }
-
-  // Call forward() of the python model
-  // PyObject *value = PyObject_CallMethodObjArgs(steer_base_model, PyUnicode_FromString((char*)"forward"), py_input_steering, py_state_steering, NULL);
-  // py_state_steering = PyTuple_GetItem(value, 0);  // The first output of the model forward is the next state
-  // PyObject *py_delayed_input = PyTuple_GetItem(value, 1);  // The second output of the model forward is delayed input
+  // input_steering[0] = input_(IDX_U::STEER_DES);
   
-  // State vector from python to C++
-  // for (int state_idx = 0; state_idx < num_states_steering; state_idx++){
-  //     state_steering(state_idx) = PyFloat_AsDouble(PyList_GetItem(PyList_GetItem(py_state_steering, 0), state_idx));
-  // }
-  //std::cout << "Required steer:  " << input_(IDX_U::STEER_DES) << "   State steering:  " << state_steering(0) << std::endl;
+
+  // // Call forward() of the python model
+  // py::tuple res = steering_module_class.attr("forward")(state_steering, input_steering);
+  
+  // std::vector<double> next_state = res[0].cast<std::vector<std::vector<double>>>()[0];
+  // state_steering[0] = next_state[0];
+  // std::vector<double> action_delayed = res[1].cast<std::vector<std::vector<double>>>()[0];
+  // std::cout << next_state[0]<< std::endl;
   
   // TODO: define outputs of the model in a more general way
   /*
   Following outputs from the steering system can be used:
     - IDX::STEER
   */
+  // state_(IDX::STEER) = next_state[0];
   state_(IDX::STEER) = 0;
 
   // Calculate
