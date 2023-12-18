@@ -669,6 +669,11 @@ bool isSatisfiedWithVehicleCondition(
     return true;
   }
 
+  std::string turn_direction = object.overhang_lanelet.attributeOr("turn_direction", "else");
+  if (turn_direction == "straight") {
+    return true;
+  }
+
   if (object.behavior == ObjectData::Behavior::NONE) {
     object.reason = "ParallelToEgoLane";
     return false;
