@@ -123,7 +123,7 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
 
 visualization_msgs::msg::Marker::SharedPtr get_velocity_text_marker_ptr(
   const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
-  const std_msgs::msg::ColorRGBA & color_rgba)
+  const std_msgs::msg::ColorRGBA & color_rgba, const bool has_valid_orientation)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -134,7 +134,11 @@ visualization_msgs::msg::Marker::SharedPtr get_velocity_text_marker_ptr(
   double vel = std::sqrt(
     twist.linear.x * twist.linear.x + twist.linear.y * twist.linear.y +
     twist.linear.z * twist.linear.z);
-  marker_ptr->text = std::to_string(static_cast<int>(vel * 3.6)) + std::string("[km/h]");
+  if (has_valid_orientation) {
+    marker_ptr->text = std::to_string(static_cast<int>(vel * 3.6)) + std::string("[km/h]");
+  } else {
+    marker_ptr->text = std::to_string(static_cast<int>(vel * 3.6)) + std::string("*[km/h]*");
+  }
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose.position = vis_pos;
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.2);

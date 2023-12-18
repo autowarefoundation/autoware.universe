@@ -62,8 +62,13 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
     vel_vis_position.x = object.kinematics.pose_with_covariance.pose.position.x - 0.5;
     vel_vis_position.y = object.kinematics.pose_with_covariance.pose.position.y;
     vel_vis_position.z = object.kinematics.pose_with_covariance.pose.position.z - 0.5;
+
+    bool has_valid_orientation =
+      object.kinematics.orientation_availability !=
+      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
     auto velocity_text_marker = get_velocity_text_marker_ptr(
-      object.kinematics.twist_with_covariance.twist, vel_vis_position, object.classification);
+      object.kinematics.twist_with_covariance.twist, vel_vis_position, object.classification,
+      has_valid_orientation);
     if (velocity_text_marker) {
       auto velocity_text_marker_ptr = velocity_text_marker.value();
       velocity_text_marker_ptr->header = msg->header;

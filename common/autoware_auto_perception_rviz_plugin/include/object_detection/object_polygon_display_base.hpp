@@ -229,11 +229,12 @@ protected:
   template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_velocity_text_marker_ptr(
     const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
-    const ClassificationContainerT & labels) const
+    const ClassificationContainerT & labels, const bool has_valid_orientation = true) const
   {
     if (m_display_velocity_text_property.getBool()) {
       const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
-      return detail::get_velocity_text_marker_ptr(twist, vis_pos, color_rgba);
+      return detail::get_velocity_text_marker_ptr(
+        twist, vis_pos, color_rgba, has_valid_orientation);
     } else {
       return std::nullopt;
     }

@@ -110,7 +110,7 @@ get_pose_with_covariance_marker_ptr(
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_velocity_text_marker_ptr(
   const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
-  const std_msgs::msg::ColorRGBA & color_rgba);
+  const std_msgs::msg::ColorRGBA & color_rgba, const bool has_valid_orientation);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_acceleration_text_marker_ptr(
