@@ -75,14 +75,6 @@ Pose calcPoseAfterTimeDelay(
   const double current_acc);
 
 /**
- * @brief apply linear interpolation to orientation
- * @param [in] o_from first orientation
- * @param [in] o_to second orientation
- * @param [in] ratio ratio between o_from and o_to for interpolation
- */
-Quaternion lerpOrientation(const Quaternion & o_from, const Quaternion & o_to, const double ratio);
-
-/**
  * @brief apply linear interpolation to trajectory point that is nearest to a certain point
  * @param [in] points trajectory points
  * @param [in] point Interpolated point is nearest to this point.
