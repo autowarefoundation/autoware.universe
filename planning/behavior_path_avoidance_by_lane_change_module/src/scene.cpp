@@ -20,6 +20,8 @@
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
+#include <rclcpp/logging.hpp>
+
 #include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/strategies/cartesian/centroid_bashein_detmer.hpp>
 
@@ -102,6 +104,12 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
     nearest_object, utils::avoidance::isOnRight(nearest_object), avoid_margin);
 
   const auto maximum_avoid_distance = avoidance_helper_->getMaxAvoidanceDistance(shift_length);
+
+  RCLCPP_DEBUG(
+    logger_,
+    "nearest_object.longitudinal %.3f, minimum_lane_change_length %.3f, maximum_avoid_distance "
+    "%.3f",
+    nearest_object.longitudinal, minimum_lane_change_length, maximum_avoid_distance);
 
   return nearest_object.longitudinal > std::max(minimum_lane_change_length, maximum_avoid_distance);
 }
