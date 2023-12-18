@@ -43,6 +43,8 @@ autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
 std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPointArray(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory);
 
+Path toPath(const PathWithLaneId & input);
+
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__TRAJECTORY__CONVERSION_HPP_

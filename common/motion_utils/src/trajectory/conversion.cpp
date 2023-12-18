@@ -49,4 +49,17 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajecto
   return output;
 }
 
+Path toPath(const PathWithLaneId & input)
+{
+  Path output{};
+  output.header = input.header;
+  output.left_bound = input.left_bound;
+  output.right_bound = input.right_bound;
+  output.points.resize(input.points.size());
+  for (size_t i = 0; i < input.points.size(); ++i) {
+    output.points.at(i) = input.points.at(i).point;
+  }
+  return output;
+}
+
 }  // namespace motion_utils
