@@ -403,16 +403,17 @@ double calcLongitudinalOffsetToSegment(
   const bool throw_exception = false)
 {
   if (seg_idx >= points.size() - 1) {
-    const std::string e(
+    const std::string error_message(
       "[motion_utils] " + std::string(__func__) +
       ": Failed to calculate longitudinal offset because the given segment index is out of the "
       "points size.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw std::out_of_range(e);
+      throw std::out_of_range(error_message);
     }
     log_error(
-      e + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -430,15 +431,16 @@ double calcLongitudinalOffsetToSegment(
   }
 
   if (seg_idx >= overlap_removed_points.size() - 1) {
-    const std::string e(
+    const std::string error_message(
       "[motion_utils] " + std::string(__func__) +
       ": Longitudinal offset calculation is not supported for the same points.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw std::runtime_error(e);
+      throw std::runtime_error(error_message);
     }
     log_error(
-      e + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -592,15 +594,15 @@ double calcLateralOffset(
   }
 
   if (overlap_removed_points.size() == 1) {
-    const std::string e(
+    const std::string error_message(
       "[motion_utils] " + std::string(__func__) +
       ": Lateral offset calculation is not supported for the same points.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw std::runtime_error(e);
+      throw std::runtime_error(error_message);
     }
     log_error(
-      e + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+      error_message + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -659,15 +661,15 @@ double calcLateralOffset(
   }
 
   if (overlap_removed_points.size() == 1) {
-    const std::string e(
+    const std::string error_message(
       "[motion_utils] " + std::string(__func__) +
       ": Lateral offset calculation is not supported for the same points.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw std::runtime_error(e);
+      throw std::runtime_error(error_message);
     }
     log_error(
-      e + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+      error_message + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -1065,16 +1067,16 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   }
 
   if (points.size() - 1 < src_idx) {
-    const std::string e(
+    const std::string error_message(
       "[motion_utils] " + std::string(__func__) +
       " error: The given source index is out of the points size. Failed to calculate longitudinal "
       "offset.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw std::out_of_range(e);
+      throw std::out_of_range(error_message);
     }
     log_error(
-      e + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+      error_message + " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return {};
   }
 
@@ -1194,15 +1196,15 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   }
 
   if (points.size() - 1 < src_idx) {
-    const std::string e(
+    const std::string error_message(
       "[motion_utils] " + std::string(__func__) +
       " error: The given source index is out of the points size. Failed to calculate longitudinal "
       "offset.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw std::out_of_range(e);
+      throw std::out_of_range(error_message);
     }
-    log_error(e);
+    log_error(error_message);
     return {};
   }
 
@@ -2409,15 +2411,15 @@ double calcYawDeviation(
   }
 
   if (overlap_removed_points.size() <= 1) {
-    const std::string e(
+    const std::string error_message(
       "[motion_utils] " + std::string(__func__) +
       " Given points size is less than 2. Failed to calculate yaw deviation.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw std::runtime_error(e);
+      throw std::runtime_error(error_message);
     }
     log_error(
-      e + " Return 0 since no_throw option is enabled. The maintainer must check the code.");
+      error_message + " Return 0 since no_throw option is enabled. The maintainer must check the code.");
     return 0.0;
   }
 
