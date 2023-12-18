@@ -30,6 +30,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -176,9 +177,9 @@ private:
    * @param pass_judge_line_idx  generated pass judge line index
    * @return false when generation failed
    */
-  bool generateStopLine(
+  std::optional<std::pair<size_t, size_t>> generateStopLine(
     const lanelet::ConstLanelets straight_lanelets,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx) const;
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path) const;
 
   /**
    * @brief Insert a point to target path

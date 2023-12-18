@@ -105,16 +105,18 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* set stop-line and stop-judgement-line for base_link */
-  int stop_line_idx = -1;
   const auto straight_lanelets = getStraightLanelets(lanelet_map_ptr, routing_graph_ptr, lane_id_);
-  if (!generateStopLine(straight_lanelets, path, &stop_line_idx)) {
+  const auto stoplines_idx_opt = generateStopLine(straight_lanelets, path);
+  if (!stoplines_idx_opt) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "[BlindSpotModule::run] setStopLineIdx fail");
     *path = input_path;  // reset path
     return false;
   }
 
-  if (stop_line_idx <= 0) {
+  const auto [default_stopline_idx, critical_stopline_idx] = stoplines_idx_opt.value();
+
+  if (default_stopline_idx <= 0) {
     RCLCPP_DEBUG(
       logger_, "[Blind Spot] stop line or pass judge line is at path[0], ignore planning.");
     *path = input_path;  // reset path
@@ -133,6 +135,8 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     return false;
   }
   const size_t closest_idx = closest_idx_opt.value();
+  const auto stop_line_idx =
+    closest_idx > default_stopline_idx ? critical_stopline_idx : default_stopline_idx;
 
   /* set judge line dist */
   const double current_vel = planner_data_->current_velocity->twist.linear.x;
@@ -156,9 +160,6 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   debug_data_.virtual_wall_pose = stop_line_pose;
   const auto stop_pose = path->points.at(stop_line_idx).point.pose;
   debug_data_.stop_point_pose = stop_pose;
-  auto offset_pose = motion_utils::calcLongitudinalOffsetPose(
-    path->points, stop_pose.position, -pass_judge_line_dist);
-  if (offset_pose) debug_data_.judge_point_pose = *offset_pose;
 
   /* if current_state = GO, and current_pose is over judge_line, ignore planning. */
   if (planner_param_.use_pass_judge_line) {
@@ -235,69 +236,41 @@ std::optional<int> BlindSpotModule::getFirstPointConflictingLanelets(
   }
 }
 
-bool BlindSpotModule::generateStopLine(
+std::optional<std::pair<size_t, size_t>> BlindSpotModule::generateStopLine(
   const lanelet::ConstLanelets straight_lanelets,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx) const
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path) const
 {
   /* set parameters */
   constexpr double interval = 0.2;
   const int margin_idx_dist = std::ceil(planner_param_.stop_line_margin / interval);
-  const int base2front_idx_dist =
-    std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m / interval);
+  // const int base2front_idx_dist =
+  //  std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m / interval);
 
   /* spline interpolation */
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
   if (!splineInterpolate(*path, interval, path_ip, logger_)) {
-    return false;
+    return std::nullopt;
   }
 
   /* generate stop point */
-  int stop_idx_ip = 0;  // stop point index for interpolated path.
+  size_t stop_idx_default_ip = 0;  // stop point index for interpolated path.
+  size_t stop_idx_critical_ip = 0;
   if (straight_lanelets.size() > 0) {
     std::optional<int> first_idx_conflicting_lane_opt =
       getFirstPointConflictingLanelets(path_ip, straight_lanelets);
     if (!first_idx_conflicting_lane_opt) {
       RCLCPP_DEBUG(logger_, "No conflicting line found.");
-      return false;
+      return std::nullopt;
     }
-    stop_idx_ip = std::max(
-      first_idx_conflicting_lane_opt.value() - 1 - margin_idx_dist - base2front_idx_dist, 0);
-  } else {
-    std::optional<geometry_msgs::msg::Pose> intersection_enter_point_opt =
-      getStartPointFromLaneLet(lane_id_);
-    if (!intersection_enter_point_opt) {
-      RCLCPP_DEBUG(logger_, "No intersection enter point found.");
-      return false;
-    }
-
-    geometry_msgs::msg::Pose intersection_enter_pose;
-    intersection_enter_pose = intersection_enter_point_opt.value();
-    const auto stop_idx_ip_opt =
-      motion_utils::findNearestIndex(path_ip.points, intersection_enter_pose, 10.0, M_PI_4);
-    if (stop_idx_ip_opt) {
-      stop_idx_ip = stop_idx_ip_opt.value();
-    }
-
-    stop_idx_ip = std::max(stop_idx_ip - base2front_idx_dist, 0);
+    stop_idx_default_ip = std::max(first_idx_conflicting_lane_opt.value() - 1 - margin_idx_dist, 0);
+    stop_idx_critical_ip = std::max(first_idx_conflicting_lane_opt.value() - 1, 0);
   }
 
   /* insert stop_point to use interpolated path*/
-  *stop_line_idx = insertPoint(stop_idx_ip, path_ip, path);
+  const size_t stopline_idx_default = insertPoint(stop_idx_default_ip, path_ip, path);
+  const size_t stopline_idx_critical = insertPoint(stop_idx_critical_ip, path_ip, path);
 
-  /* if another stop point exist before intersection stop_line, disable judge_line. */
-  bool has_prior_stopline = false;
-  for (int i = 0; i < *stop_line_idx; ++i) {
-    if (std::fabs(path->points.at(i).point.longitudinal_velocity_mps) < 0.1) {
-      has_prior_stopline = true;
-      break;
-    }
-  }
-
-  RCLCPP_DEBUG(
-    logger_, "generateStopLine() : stop_idx = %d, stop_idx_ip = %d, has_prior_stopline = %d",
-    *stop_line_idx, stop_idx_ip, has_prior_stopline);
-
-  return true;
+  return std::make_pair(stopline_idx_default, stopline_idx_critical);
 }
 
 void BlindSpotModule::cutPredictPathWithDuration(
@@ -424,7 +397,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
             lanelet::utils::to2D(area));
         });
       const bool exist_in_detection_area =
-        exist_in_detection_area || exist_in_opposite_detection_area;
+        exist_in_right_detection_area || exist_in_opposite_detection_area;
       if (!exist_in_detection_area) {
         continue;
       }
@@ -773,7 +746,7 @@ lanelet::ConstLanelets BlindSpotModule::getStraightLanelets(
   const auto next_lanelets = routing_graph_ptr->following(prev_intersection_lanelets.front());
   for (const auto & ll : next_lanelets) {
     const std::string turn_direction = ll.attributeOr("turn_direction", "else");
-    if (!turn_direction.compare("straight")) {
+    if (turn_direction.compare("straight") == 0) {
       straight_lanelets.push_back(ll);
     }
   }
