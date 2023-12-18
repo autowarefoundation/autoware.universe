@@ -25,27 +25,21 @@
 
 namespace resample_utils
 {
-constexpr double CLOSE_S_THRESHOLD = 1e-6;
+constexpr double close_s_threshold = 1e-6;
+
 #define log_error(message) std::cerr << "\033[31m " << message << " \033[0m" << std::endl;
 
 template <class T>
 bool validate_size(const T & points)
 {
-  if (points.size() < 2) {
-    return false;
-  }
-  return true;
+  return points.size() >= 2;
 }
 
 template <class T>
 bool validate_resampling_range(const T & points, const std::vector<double> & resampling_intervals)
 {
   const double points_length = motion_utils::calcArcLength(points);
-  if (points_length < resampling_intervals.back()) {
-    return false;
-  }
-
-  return true;
+  return points_length >= resampling_intervals.back();
 }
 
 template <class T>
@@ -55,7 +49,7 @@ bool validate_points_duplication(const T & points)
     const auto & curr_pt = tier4_autoware_utils::getPoint(points.at(i));
     const auto & next_pt = tier4_autoware_utils::getPoint(points.at(i + 1));
     const double ds = tier4_autoware_utils::calcDistance2d(curr_pt, next_pt);
-    if (ds < CLOSE_S_THRESHOLD) {
+    if (ds < close_s_threshold) {
       return false;
     }
   }
@@ -71,7 +65,8 @@ bool validate_arguments(const T & input_points, const std::vector<double> & resa
     log_error("[resample_utils] invalid argument: The number of input points is less than 2");
     tier4_autoware_utils::print_backtrace();
     return false;
-  } else if (!validate_size(resampling_intervals)) {
+  }
+  if (!validate_size(resampling_intervals)) {
     log_error(
       "[resample_utils] invalid argument: The number of resampling intervals is less than 2");
     tier4_autoware_utils::print_backtrace();

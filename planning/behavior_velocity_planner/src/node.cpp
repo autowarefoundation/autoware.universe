@@ -147,6 +147,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+    // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
+    if (name == "") {
+      break;
+    }
     planner_manager_.launchScenePlugin(*this, name);
   }
 
@@ -384,7 +388,7 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
 
   // TODO(someone): support backward path
   const auto is_driving_forward = motion_utils::isDrivingForward(input_path_msg->points);
-  is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+  is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
   if (!is_driving_forward_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 3000,
