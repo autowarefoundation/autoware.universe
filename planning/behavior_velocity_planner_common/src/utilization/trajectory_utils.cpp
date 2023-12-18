@@ -21,6 +21,8 @@
 #include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 
+#include "../../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
+
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -52,7 +54,7 @@ bool smoothPath(
   const auto & external_v_limit = planner_data->external_velocity_limit;
   const auto & smoother = planner_data->velocity_smoother_;
 
-  auto trajectory = convertPathToTrajectoryPoints(in_path);
+  auto trajectory = motion_utils::convertPathToTrajectoryPoints(in_path);
   const auto traj_lateral_acc_filtered = smoother->applyLateralAccelerationFilter(trajectory);
 
   const auto traj_steering_rate_limited =
