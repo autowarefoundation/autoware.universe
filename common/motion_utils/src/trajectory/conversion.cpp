@@ -62,4 +62,40 @@ Path toPath(const PathWithLaneId & input)
   return output;
 }
 
+TrajectoryPoints convertPathToTrajectoryPoints(const PathWithLaneId & path)
+{
+  TrajectoryPoints tps;
+  for (const auto & p : path.points) {
+    TrajectoryPoint tp;
+    tp.pose = p.point.pose;
+    tp.longitudinal_velocity_mps = p.point.longitudinal_velocity_mps;
+    // since path point doesn't have acc for now
+    tp.acceleration_mps2 = 0;
+    tps.emplace_back(tp);
+  }
+  return tps;
+}
+
+PathWithLaneId convertTrajectoryPointsToPath(const TrajectoryPoints & trajectory)
+{
+  PathWithLaneId path;
+  for (const auto & p : trajectory) {
+    PathPointWithLaneId pp;
+    pp.point.pose = p.pose;
+    pp.point.longitudinal_velocity_mps = p.longitudinal_velocity_mps;
+    path.points.emplace_back(pp);
+  }
+  return path;
+}
+
+Quaternion lerpOrientation(const Quaternion & o_from, const Quaternion & o_to, const double ratio)
+{
+  tf2::Quaternion q_from, q_to;
+  tf2::fromMsg(o_from, q_from);
+  tf2::fromMsg(o_to, q_to);
+
+  const auto q_interpolated = q_from.slerp(q_to, ratio);
+  return tf2::toMsg(q_interpolated);
+}
+
 }  // namespace motion_utils
