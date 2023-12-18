@@ -1056,17 +1056,30 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // stuck vehicle detection is viable even if attention area is empty
   // so this needs to be checked before attention area validation
   const bool stuck_detected = checkStuckVehicle(planner_data_, path_lanelets);
-  if (stuck_detected && stuck_stopline_idx_opt) {
-    auto stuck_stopline_idx = stuck_stopline_idx_opt.value();
+  if (stuck_detected) {
     if (is_private_area_ && planner_param_.stuck_vehicle.enable_private_area_stuck_disregard) {
-      if (
-        default_stopline_idx_opt &&
-        fromEgoDist(stuck_stopline_idx) < -planner_param_.common.stopline_overshoot_margin) {
-        stuck_stopline_idx = default_stopline_idx_opt.value();
-      }
     } else {
-      return IntersectionModule::StuckStop{
-        closest_idx, stuck_stopline_idx, occlusion_peeking_stopline_idx_opt};
+      std::optional<size_t> stopline_idx = std::nullopt;
+      if (stuck_stopline_idx_opt) {
+        const bool is_over_stuck_stopline = fromEgoDist(stuck_stopline_idx_opt.value()) <
+                                            -planner_param_.common.stopline_overshoot_margin;
+        if (!is_over_stuck_stopline) {
+          stopline_idx = stuck_stopline_idx_opt.value();
+        }
+      }
+      if (!stopline_idx) {
+        if (default_stopline_idx_opt && fromEgoDist(default_stopline_idx_opt.value()) >= 0.0) {
+          stopline_idx = default_stopline_idx_opt.value();
+        } else if (
+          first_attention_stopline_idx_opt &&
+          fromEgoDist(first_attention_stopline_idx_opt.value()) >= 0.0) {
+          stopline_idx = closest_idx;
+        }
+      }
+      if (stopline_idx) {
+        return IntersectionModule::StuckStop{
+          closest_idx, stopline_idx.value(), occlusion_peeking_stopline_idx_opt};
+      }
     }
   }
 
@@ -1115,13 +1128,30 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // filter objects
   auto target_objects = generateTargetObjects(intersection_lanelets, intersection_area);
 
-  // yield stuck vehicle detection is viable even if attention area is empty
-  // so this needs to be checked before attention area validation
   const bool yield_stuck_detected = checkYieldStuckVehicle(
     target_objects, interpolated_path_info, intersection_lanelets.attention_non_preceding_);
-  if (yield_stuck_detected && stuck_stopline_idx_opt) {
-    const auto stuck_stopline_idx = stuck_stopline_idx_opt.value();
-    return IntersectionModule::YieldStuckStop{closest_idx, stuck_stopline_idx};
+  if (yield_stuck_detected) {
+    std::optional<size_t> stopline_idx = std::nullopt;
+    const bool is_before_default_stopline = fromEgoDist(default_stopline_idx) >= 0.0;
+    const bool is_before_first_attention_stopline =
+      fromEgoDist(first_attention_stopline_idx) >= 0.0;
+    if (stuck_stopline_idx_opt) {
+      const bool is_over_stuck_stopline = fromEgoDist(stuck_stopline_idx_opt.value()) <
+                                          -planner_param_.common.stopline_overshoot_margin;
+      if (!is_over_stuck_stopline) {
+        stopline_idx = stuck_stopline_idx_opt.value();
+      }
+    }
+    if (!stopline_idx) {
+      if (is_before_default_stopline) {
+        stopline_idx = default_stopline_idx;
+      } else if (is_before_first_attention_stopline) {
+        stopline_idx = closest_idx;
+      }
+    }
+    if (stopline_idx) {
+      return IntersectionModule::YieldStuckStop{closest_idx, stopline_idx.value()};
+    }
   }
 
   const double is_amber_or_red =

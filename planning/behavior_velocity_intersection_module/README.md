@@ -186,7 +186,7 @@ If there is any object on the path inside the intersection and at the exit of th
 
 ## Yield stuck vehicle detection
 
-If there is any stopped object on the attention lanelet between the intersection point with ego path and the position which is `yield_stuck.distance_threshold` before that position, the object is regarded as yielding to ego vehicle. In this case ego is given the right-of-way by the yielding object but this module inserts stopline to prevent entry into the intersection.
+If there is any stopped object on the attention lanelet between the intersection point with ego path and the position which is `yield_stuck.distance_threshold` before that position, the object is regarded as yielding to ego vehicle. In this case ego is given the right-of-way by the yielding object but this module inserts stopline to prevent entry into the intersection. This scene happens when the object is yieling against ego or the object is waiting before the crosswalk around the exit of the intersection.
 
 ![yield_stuck_detection](./docs/yield-stuck.drawio.svg)
 
