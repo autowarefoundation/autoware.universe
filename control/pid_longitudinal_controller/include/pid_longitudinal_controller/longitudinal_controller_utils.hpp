@@ -26,6 +26,8 @@
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
+#include "../../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
+
 #include <cmath>
 #include <limits>
 
@@ -99,7 +101,7 @@ TrajectoryPoint lerpTrajectoryPoint(
       points.at(i).pose.position.x, points.at(i + 1).pose.position.x, interpolate_ratio);
     interpolated_point.pose.position.y = interpolation::lerp(
       points.at(i).pose.position.y, points.at(i + 1).pose.position.y, interpolate_ratio);
-    interpolated_point.pose.orientation = lerpOrientation(
+    interpolated_point.pose.orientation = motion_utils::lerpOrientation(
       points.at(i).pose.orientation, points.at(i + 1).pose.orientation, interpolate_ratio);
     interpolated_point.longitudinal_velocity_mps = interpolation::lerp(
       points.at(i).longitudinal_velocity_mps, points.at(i + 1).longitudinal_velocity_mps,
