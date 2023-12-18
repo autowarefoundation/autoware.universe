@@ -152,7 +152,6 @@ BigVehicleTracker::BigVehicleTracker(
   setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 
   // Set lf, lr
-  // double point_ratio = 0.2;  // under steered if smaller than 0.5
   lf_ = bounding_box_.length * 0.3; // 30% front from the center
   lr_ = bounding_box_.length * 0.25; // 25% rear from the center 
 }
@@ -393,6 +392,7 @@ bool BigVehicleTracker::measureWithShape(
   // update lf, lr
   lf_ = bounding_box_.length * 0.3; // 30% front from the center
   lr_ = bounding_box_.length * 0.25; // 25% rear from the center 
+
   return true;
 }
 
