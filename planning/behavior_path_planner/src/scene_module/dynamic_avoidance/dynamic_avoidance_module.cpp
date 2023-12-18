@@ -519,7 +519,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
       object.predicted_paths.begin(), object.predicted_paths.end(),
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
-    const auto & ref_path_points_for_obj_poly = input_path->points;
+    const auto & ref_path_points_for_obj_poly = input_path.points;
 
     // 2.a. check if object is not to be followed by ego
     const double obj_angle = calcDiffAngleAgainstPath(input_path.points, object.pose);

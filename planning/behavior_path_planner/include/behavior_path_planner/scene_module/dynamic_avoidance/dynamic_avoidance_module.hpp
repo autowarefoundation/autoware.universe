@@ -143,12 +143,12 @@ public:
     std::optional<MinMaxValue> lat_offset_to_avoid{std::nullopt};
     bool is_collision_left{false};
     bool should_be_avoided{false};
+    std::vector<PathPointWithLaneId> ref_path_points_for_obj_poly;
 
     void update(
       const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
       const bool arg_is_collision_left, const bool arg_should_be_avoided,
       const std::vector<PathPointWithLaneId> & arg_ref_path_points_for_obj_poly)
-      std::vector<PathPointWithLaneId> ref_path_points_for_obj_poly;
     {
       lon_offset_to_avoid = arg_lon_offset_to_avoid;
       lat_offset_to_avoid = arg_lat_offset_to_avoid;
