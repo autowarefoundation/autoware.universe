@@ -163,20 +163,17 @@ bool BigVehicleTracker::predict(const rclcpp::Time & time)
     RCLCPP_WARN(logger_, "dt is negative. (%f)", dt);
     return false;
   }
-  bool ret = false;
-
   // if dt is too large, shorten dt and repeat prediction
   const double dt_max = 0.11;
   const uint32_t repeat = std::ceil(dt / dt_max);
   const double dt_ = dt / repeat;
-
-  for (uint32_t i = 0; i < repeat * 2; ++i) {
+  bool ret = false;
+  for (uint32_t i = 0; i < repeat; ++i) {
     ret = predict(dt_, ekf_);
     if (!ret) {
       return false;
     }
   }
-  // bool ret = predict(dt, ekf_);
   if (ret) {
     last_update_time_ = time;
   }
