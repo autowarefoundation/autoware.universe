@@ -43,10 +43,10 @@ using namespace std::literals::chrono_literals;
 namespace
 {
 
-autoware_auto_vehicle_msgs::msg::VelocityReport to_velocity_report(
+autoware_vehicle_msgs::msg::VelocityReport to_velocity_report(
   const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
 {
-  autoware_auto_vehicle_msgs::msg::VelocityReport velocity;
+  autoware_vehicle_msgs::msg::VelocityReport velocity;
   velocity.longitudinal_velocity = static_cast<double>(vehicle_model_ptr->getVx());
   velocity.lateral_velocity = 0.0F;
   velocity.heading_rate = static_cast<double>(vehicle_model_ptr->getWz());
@@ -67,10 +67,10 @@ nav_msgs::msg::Odometry to_odometry(
   return odometry;
 }
 
-autoware_auto_vehicle_msgs::msg::SteeringReport to_steering_report(
+autoware_vehicle_msgs::msg::SteeringReport to_steering_report(
   const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
 {
-  autoware_auto_vehicle_msgs::msg::SteeringReport steer;
+  autoware_vehicle_msgs::msg::SteeringReport steer;
   steer.steering_tire_angle = static_cast<double>(vehicle_model_ptr->getSteer());
   return steer;
 }
@@ -440,7 +440,7 @@ void SimplePlanningSimulator::set_input(
   const auto vel = cmd.longitudinal.velocity;
   const auto accel = cmd.longitudinal.acceleration;
 
-  using autoware_auto_vehicle_msgs::msg::GearCommand;
+  using autoware_vehicle_msgs::msg::GearCommand;
   Eigen::VectorXd input(vehicle_model_ptr_->getDimU());
   const auto gear = vehicle_model_ptr_->getGear();
 

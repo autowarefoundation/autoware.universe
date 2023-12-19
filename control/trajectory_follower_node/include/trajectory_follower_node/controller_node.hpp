@@ -31,7 +31,7 @@
 
 #include "autoware_control_msgs/msg/control.hpp"
 #include "autoware_control_msgs/msg/longitudinal.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+#include "autoware_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/accel_stamped.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
@@ -77,7 +77,7 @@ private:
 
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_ref_path_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr sub_steering_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::SteeringReport>::SharedPtr sub_steering_;
   rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_accel_;
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
   rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr
@@ -88,7 +88,7 @@ private:
 
   autoware_planning_msgs::msg::Trajectory::SharedPtr current_trajectory_ptr_;
   nav_msgs::msg::Odometry::SharedPtr current_odometry_ptr_;
-  autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr current_steering_ptr_;
+  autoware_vehicle_msgs::msg::SteeringReport::SharedPtr current_steering_ptr_;
   geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr current_accel_ptr_;
   OperationModeState::SharedPtr current_operation_mode_ptr_;
 
@@ -109,7 +109,7 @@ private:
   void callbackTimerControl();
   void onTrajectory(const autoware_planning_msgs::msg::Trajectory::SharedPtr);
   void onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void onSteering(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg);
+  void onSteering(const autoware_vehicle_msgs::msg::SteeringReport::SharedPtr msg);
   void onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg);
   bool isTimeOut(const LongitudinalOutput & lon_out, const LateralOutput & lat_out);
   LateralControllerMode getLateralControllerMode(const std::string & algorithm_name) const;

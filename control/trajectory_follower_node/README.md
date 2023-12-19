@@ -131,7 +131,7 @@ Giving the longitudinal controller information about steer convergence allows it
 
 - `autoware_planning_msgs/Trajectory` : reference trajectory to follow.
 - `nav_msgs/Odometry`: current odometry
-- `autoware_auto_vehicle_msgs/SteeringReport` current steering
+- `autoware_vehicle_msgs/SteeringReport` current steering
 
 #### Outputs
 

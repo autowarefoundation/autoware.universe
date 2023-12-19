@@ -67,7 +67,7 @@ Set the following from the [controller_node](../trajectory_follower_node/README.
 
 - `autoware_planning_msgs/Trajectory` : reference trajectory to follow.
 - `nav_msgs/Odometry`: current odometry
-- `autoware_auto_vehicle_msgs/SteeringReport`: current steering
+- `autoware_vehicle_msgs/SteeringReport`: current steering
 
 ### Outputs
 

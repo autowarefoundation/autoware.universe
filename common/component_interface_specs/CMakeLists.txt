@@ -13,7 +13,7 @@ include_directories(
   ${autoware_adapi_v1_msgs_INCLUDE_DIRS}
   ${autoware_auto_planning_msgs_INCLUDE_DIRS}
   ${autoware_planning_msgs_INCLUDE_DIRS}
-  ${autoware_auto_vehicle_msgs_INCLUDE_DIRS}
+  ${autoware_vehicle_msgs_INCLUDE_DIRS}
   ${tier4_control_msgs_INCLUDE_DIRS}
   ${nav_msgs_INCLUDE_DIRS}
   ${tier4_system_msgs_INCLUDE_DIRS}

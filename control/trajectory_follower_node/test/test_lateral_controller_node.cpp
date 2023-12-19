@@ -22,8 +22,8 @@
 #include <trajectory_follower_node/lateral_controller_node.hpp>
 
 #include "autoware_control_msgs/msg/lateral.hpp"
-#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+#include "autoware_vehicle_msgs/msg/steering_report.hpp"
+#include "autoware_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -38,7 +38,7 @@ using LateralCommand = autoware_control_msgs::msg::Lateral;
 using Trajectory = autoware_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
 using VehicleOdometry = nav_msgs::msg::Odometry;
-using SteeringReport = autoware_auto_vehicle_msgs::msg::SteeringReport;
+using SteeringReport = autoware_vehicle_msgs::msg::SteeringReport;
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 

@@ -17,8 +17,8 @@
 import time
 
 from autoware_control_msgs.msg import Control
-from autoware_auto_vehicle_msgs.msg import Engage
-from autoware_auto_vehicle_msgs.msg import VelocityReport
+from autoware_vehicle_msgs.msg import Engage
+from autoware_vehicle_msgs.msg import VelocityReport
 from autoware_planning_msgs.msg import Path
 from autoware_planning_msgs.msg import PathWithLaneId
 from autoware_planning_msgs.msg import Trajectory

@@ -21,7 +21,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_vehicle_msgs/msg/gear_command.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_external_api_msgs/msg/control_command_stamped.hpp>
@@ -32,7 +32,7 @@
 
 namespace external_cmd_converter
 {
-using GearCommand = autoware_auto_vehicle_msgs::msg::GearCommand;
+using GearCommand = autoware_vehicle_msgs::msg::GearCommand;
 using Control = autoware_control_msgs::msg::Control;
 using ExternalControlCommand = tier4_external_api_msgs::msg::ControlCommandStamped;
 using Odometry = nav_msgs::msg::Odometry;

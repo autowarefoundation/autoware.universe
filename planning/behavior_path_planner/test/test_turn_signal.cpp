@@ -22,8 +22,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
-using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_planning_msgs::msg::PathPoint;
 using autoware_planning_msgs::msg::PathPointWithLaneId;
 using behavior_path_planner::PathWithLaneId;

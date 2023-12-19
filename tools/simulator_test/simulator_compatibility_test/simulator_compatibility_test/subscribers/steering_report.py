@@ -1,4 +1,4 @@
-from autoware_auto_vehicle_msgs.msg import SteeringReport
+from autoware_vehicle_msgs.msg import SteeringReport
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy

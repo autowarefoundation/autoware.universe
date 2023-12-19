@@ -1,6 +1,6 @@
 import time
 
-from autoware_auto_vehicle_msgs.msg import GearCommand
+from autoware_vehicle_msgs.msg import GearCommand
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.qos import QoSDurabilityPolicy

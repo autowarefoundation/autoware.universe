@@ -1,6 +1,6 @@
 from enum import Enum
 
-from autoware_auto_vehicle_msgs.msg import HazardLightsReport
+from autoware_vehicle_msgs.msg import HazardLightsReport
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy

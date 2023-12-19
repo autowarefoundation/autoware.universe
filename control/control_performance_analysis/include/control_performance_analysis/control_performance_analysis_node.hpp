@@ -24,7 +24,7 @@
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>
-#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -37,7 +37,7 @@
 namespace control_performance_analysis
 {
 using autoware_control_msgs::msg::Control;
-using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_planning_msgs::msg::Trajectory;
 using control_performance_analysis::msg::DrivingMonitorStamped;
 using control_performance_analysis::msg::ErrorStamped;

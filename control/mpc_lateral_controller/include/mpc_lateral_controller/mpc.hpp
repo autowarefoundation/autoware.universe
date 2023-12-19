@@ -23,7 +23,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/lateral.hpp"
-#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
+#include "autoware_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -39,7 +39,7 @@ namespace autoware::motion::control::mpc_lateral_controller
 {
 
 using autoware_control_msgs::msg::Lateral;
-using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;

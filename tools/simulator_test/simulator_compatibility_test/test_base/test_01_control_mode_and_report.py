@@ -1,7 +1,7 @@
 from enum import Enum
 import time
 
-from autoware_auto_vehicle_msgs.msg import ControlModeCommand
+from autoware_vehicle_msgs.msg import ControlModeCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor

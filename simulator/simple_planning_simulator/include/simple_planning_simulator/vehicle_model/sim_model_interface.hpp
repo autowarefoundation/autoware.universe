@@ -17,7 +17,7 @@
 
 #include <Eigen/Core>
 
-#include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
+#include "autoware_vehicle_msgs/msg/gear_command.hpp"
 
 /**
  * @class SimModelInterface
@@ -32,7 +32,7 @@ protected:
   Eigen::VectorXd input_;  //!< @brief vehicle input vector
 
   //!< @brief gear command defined in autoware_auto_msgs/GearCommand
-  uint8_t gear_ = autoware_auto_vehicle_msgs::msg::GearCommand::DRIVE;
+  uint8_t gear_ = autoware_vehicle_msgs::msg::GearCommand::DRIVE;
 
 public:
   /**

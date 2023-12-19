@@ -64,7 +64,7 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
 
   sub_ref_path_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "~/input/reference_trajectory", rclcpp::QoS{1}, std::bind(&Controller::onTrajectory, this, _1));
-  sub_steering_ = create_subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>(
+  sub_steering_ = create_subscription<autoware_vehicle_msgs::msg::SteeringReport>(
     "~/input/current_steering", rclcpp::QoS{1}, std::bind(&Controller::onSteering, this, _1));
   sub_odometry_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/current_odometry", rclcpp::QoS{1}, std::bind(&Controller::onOdometry, this, _1));
@@ -120,7 +120,7 @@ void Controller::onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg)
   current_odometry_ptr_ = msg;
 }
 
-void Controller::onSteering(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg)
+void Controller::onSteering(const autoware_vehicle_msgs::msg::SteeringReport::SharedPtr msg)
 {
   current_steering_ptr_ = msg;
 }

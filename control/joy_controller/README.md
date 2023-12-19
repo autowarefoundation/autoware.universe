@@ -23,7 +23,7 @@
 | `~/output/turn_signal`              | tier4_external_api_msgs::msg::TurnSignalStamped          | turn signal command                      |
 | `~/output/gate_mode`                | tier4_control_msgs::msg::GateMode                        | gate mode (Auto or External)             |
 | `~/output/heartbeat`                | tier4_external_api_msgs::msg::Heartbeat                  | heartbeat                                |
-| `~/output/vehicle_engage`           | autoware_auto_vehicle_msgs::msg::Engage                  | vehicle engage                           |
+| `~/output/vehicle_engage`           | autoware_vehicle_msgs::msg::Engage                  | vehicle engage                           |
 
 ## Parameters
 

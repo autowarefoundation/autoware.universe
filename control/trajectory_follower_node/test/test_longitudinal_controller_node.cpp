@@ -22,7 +22,7 @@
 #include <trajectory_follower_node/longitudinal_controller_node.hpp>
 
 #include "autoware_control_msgs/msg/longitudinal.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+#include "autoware_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"

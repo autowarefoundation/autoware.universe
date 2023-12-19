@@ -1,6 +1,6 @@
 from enum import Enum
 
-from autoware_auto_vehicle_msgs.msg import GearReport
+from autoware_vehicle_msgs.msg import GearReport
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy

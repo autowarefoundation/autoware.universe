@@ -1,7 +1,7 @@
 from enum import Enum
 import time
 
-from autoware_auto_vehicle_msgs.msg import TurnIndicatorsCommand
+from autoware_vehicle_msgs.msg import TurnIndicatorsCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor

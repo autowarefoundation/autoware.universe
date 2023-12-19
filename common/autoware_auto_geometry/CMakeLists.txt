@@ -30,7 +30,7 @@ if(BUILD_TESTING)
     "autoware_auto_common"
     "autoware_auto_geometry_msgs"
     "autoware_planning_msgs"
-    "autoware_auto_vehicle_msgs"
+    "autoware_vehicle_msgs"
     "geometry_msgs"
     "osrf_testing_tools_cpp")
   target_link_libraries(${GEOMETRY_GTEST} ${PROJECT_NAME})

@@ -16,7 +16,7 @@
 
 import argparse
 
-from autoware_auto_vehicle_msgs.msg import VelocityReport
+from autoware_vehicle_msgs.msg import VelocityReport
 from autoware_planning_msgs.msg import Path
 from autoware_planning_msgs.msg import PathPoint
 from autoware_planning_msgs.msg import PathPointWithLaneId

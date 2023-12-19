@@ -423,7 +423,7 @@ void AutowareJoyControllerNode::publishAutowareEngage()
 
 void AutowareJoyControllerNode::publishVehicleEngage()
 {
-  autoware_auto_vehicle_msgs::msg::Engage engage;
+  autoware_vehicle_msgs::msg::Engage engage;
 
   if (joy_->vehicle_engage()) {
     engage.engage = true;
@@ -497,7 +497,7 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   pub_heartbeat_ =
     this->create_publisher<tier4_external_api_msgs::msg::Heartbeat>("output/heartbeat", 1);
   pub_vehicle_engage_ =
-    this->create_publisher<autoware_auto_vehicle_msgs::msg::Engage>("output/vehicle_engage", 1);
+    this->create_publisher<autoware_vehicle_msgs::msg::Engage>("output/vehicle_engage", 1);
 
   // Service Client
   client_emergency_stop_ = this->create_client<tier4_external_api_msgs::srv::SetEmergency>(

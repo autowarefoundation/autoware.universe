@@ -19,8 +19,8 @@
 
 #include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_system_msgs/msg/autoware_state.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <autoware_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_vehicle_msgs/msg/gear_report.hpp>
 
 #include <memory>
 
@@ -33,24 +33,24 @@ private:
   void onTimer();
   void onControlCmd(autoware_control_msgs::msg::Control::SharedPtr msg);
   void onAutowareState(autoware_system_msgs::msg::AutowareState::SharedPtr msg);
-  void onCurrentGear(autoware_auto_vehicle_msgs::msg::GearReport::SharedPtr msg);
+  void onCurrentGear(autoware_vehicle_msgs::msg::GearReport::SharedPtr msg);
   void updateCurrentShiftCmd();
   void initTimer(double period_s);
 
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_shift_cmd_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::GearCommand>::SharedPtr pub_shift_cmd_;
   rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr
     sub_control_cmd_;
   rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr
     sub_autoware_state_;
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr sub_current_gear_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::GearReport>::SharedPtr sub_current_gear_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
   autoware_control_msgs::msg::Control::SharedPtr control_cmd_;
   autoware_system_msgs::msg::AutowareState::SharedPtr autoware_state_;
-  autoware_auto_vehicle_msgs::msg::GearCommand shift_cmd_;
-  autoware_auto_vehicle_msgs::msg::GearReport::SharedPtr current_gear_ptr_;
-  uint8_t prev_shift_command = autoware_auto_vehicle_msgs::msg::GearCommand::PARK;
+  autoware_vehicle_msgs::msg::GearCommand shift_cmd_;
+  autoware_vehicle_msgs::msg::GearReport::SharedPtr current_gear_ptr_;
+  uint8_t prev_shift_command = autoware_vehicle_msgs::msg::GearCommand::PARK;
 
   bool park_on_goal_;
 };

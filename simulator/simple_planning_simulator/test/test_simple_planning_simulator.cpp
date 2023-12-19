@@ -25,7 +25,7 @@
 #include <memory>
 
 using autoware_control_msgs::msg::Control;
-using autoware_auto_vehicle_msgs::msg::GearCommand;
+using autoware_vehicle_msgs::msg::GearCommand;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
 using nav_msgs::msg::Odometry;
 

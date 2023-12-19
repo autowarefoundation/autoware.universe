@@ -22,7 +22,7 @@
 
 #include <autoware_system_msgs/msg/autoware_state.hpp>
 #include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
-#include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode_report.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
@@ -104,11 +104,11 @@ private:
   rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr
     sub_autoware_state_;
   rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_current_gate_mode_;
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     sub_control_mode_;
   void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onCurrentGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
-  void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
+  void onControlMode(const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
   void onDiagArray(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg);
 
   const size_t diag_buffer_size_ = 100;
@@ -116,7 +116,7 @@ private:
   diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_array_;
   autoware_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_;
   tier4_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
-  autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
+  autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
 
   // Publisher
   rclcpp::Publisher<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr

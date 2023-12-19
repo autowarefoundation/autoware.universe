@@ -1,7 +1,7 @@
 from enum import Enum
 import time
 
-from autoware_auto_vehicle_msgs.msg import HazardLightsCommand
+from autoware_vehicle_msgs.msg import HazardLightsCommand
 import pytest
 import rclpy
 from rclpy.executors import MultiThreadedExecutor

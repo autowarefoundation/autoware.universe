@@ -17,10 +17,10 @@
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
-#include <autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp>
-#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
-#include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
+#include <autoware_vehicle_msgs/msg/gear_report.hpp>
+#include <autoware_vehicle_msgs/msg/hazard_lights_report.hpp>
+#include <autoware_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_vehicle_msgs/msg/turn_indicators_report.hpp>
 #include <tier4_vehicle_msgs/msg/battery_status.hpp>
 
 namespace vehicle_interface
@@ -28,7 +28,7 @@ namespace vehicle_interface
 
 struct SteeringStatus
 {
-  using Message = autoware_auto_vehicle_msgs::msg::SteeringReport;
+  using Message = autoware_vehicle_msgs::msg::SteeringReport;
   static constexpr char name[] = "/vehicle/status/steering_status";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
@@ -37,7 +37,7 @@ struct SteeringStatus
 
 struct GearStatus
 {
-  using Message = autoware_auto_vehicle_msgs::msg::GearReport;
+  using Message = autoware_vehicle_msgs::msg::GearReport;
   static constexpr char name[] = "/vehicle/status/gear_status";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
@@ -46,7 +46,7 @@ struct GearStatus
 
 struct TurnIndicatorStatus
 {
-  using Message = autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport;
+  using Message = autoware_vehicle_msgs::msg::TurnIndicatorsReport;
   static constexpr char name[] = "/vehicle/status/turn_indicators_status";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
@@ -55,7 +55,7 @@ struct TurnIndicatorStatus
 
 struct HazardLightStatus
 {
-  using Message = autoware_auto_vehicle_msgs::msg::HazardLightsReport;
+  using Message = autoware_vehicle_msgs::msg::HazardLightsReport;
   static constexpr char name[] = "/vehicle/status/hazard_lights_status";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;

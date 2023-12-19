@@ -38,9 +38,9 @@ autoware_planning_msgs::msg::Trajectory convertToTrajectory(
   autoware_planning_msgs::msg::Trajectory output{};
   for (const auto & pt : trajectory) {
     output.points.push_back(pt);
-    if (output.points.size() >= output.CAPACITY) {
-      break;
-    }
+    // if (output.points.size() >= output.CAPACITY) {
+    //   break;
+    // }
   }
   return output;
 }

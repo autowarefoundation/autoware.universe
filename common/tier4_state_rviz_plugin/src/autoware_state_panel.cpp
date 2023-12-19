@@ -269,7 +269,7 @@ void AutowareStatePanel::onInitialize()
     std::bind(&AutowareStatePanel::onMRMState, this, _1));
 
   // Others
-  sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
+  sub_gear_ = raw_node_->create_subscription<autoware_vehicle_msgs::msg::GearReport>(
     "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
 
   sub_emergency_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::Emergency>(
@@ -523,22 +523,22 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
 }
 
 void AutowareStatePanel::onShift(
-  const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg)
+  const autoware_vehicle_msgs::msg::GearReport::ConstSharedPtr msg)
 {
   switch (msg->report) {
-    case autoware_auto_vehicle_msgs::msg::GearReport::PARK:
+    case autoware_vehicle_msgs::msg::GearReport::PARK:
       gear_label_ptr_->setText("PARKING");
       break;
-    case autoware_auto_vehicle_msgs::msg::GearReport::REVERSE:
+    case autoware_vehicle_msgs::msg::GearReport::REVERSE:
       gear_label_ptr_->setText("REVERSE");
       break;
-    case autoware_auto_vehicle_msgs::msg::GearReport::DRIVE:
+    case autoware_vehicle_msgs::msg::GearReport::DRIVE:
       gear_label_ptr_->setText("DRIVE");
       break;
-    case autoware_auto_vehicle_msgs::msg::GearReport::NEUTRAL:
+    case autoware_vehicle_msgs::msg::GearReport::NEUTRAL:
       gear_label_ptr_->setText("NEUTRAL");
       break;
-    case autoware_auto_vehicle_msgs::msg::GearReport::LOW:
+    case autoware_vehicle_msgs::msg::GearReport::LOW:
       gear_label_ptr_->setText("LOW");
       break;
   }

@@ -35,7 +35,7 @@
 #include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <autoware_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
@@ -85,12 +85,12 @@ protected:
   QGroupBox * makeMotionGroup();
   QGroupBox * makeFailSafeGroup();
 
-  void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
+  void onShift(const autoware_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
   void onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg);
 
   rclcpp::Node::SharedPtr raw_node_;
 
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr sub_gear_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::GearReport>::SharedPtr sub_gear_;
 
   rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr client_emergency_stop_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::Emergency>::SharedPtr sub_emergency_;

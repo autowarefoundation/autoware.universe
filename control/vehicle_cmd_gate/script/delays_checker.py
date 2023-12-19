@@ -15,7 +15,7 @@
 # limitations under the License.
 
 from autoware_control_msgs.msg import Control
-from autoware_auto_vehicle_msgs.msg import Engage
+from autoware_vehicle_msgs.msg import Engage
 from geometry_msgs.msg import AccelWithCovarianceStamped
 from nav_msgs.msg import Odometry
 import rclpy

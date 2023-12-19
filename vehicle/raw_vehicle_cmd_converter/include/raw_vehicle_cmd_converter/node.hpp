@@ -24,7 +24,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>
-#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
@@ -41,7 +41,7 @@ using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_vehicle_msgs::msg::ActuationCommandStamped;
 using TwistStamped = geometry_msgs::msg::TwistStamped;
 using Odometry = nav_msgs::msg::Odometry;
-using Steering = autoware_auto_vehicle_msgs::msg::SteeringReport;
+using Steering = autoware_vehicle_msgs::msg::SteeringReport;
 
 class DebugValues
 {

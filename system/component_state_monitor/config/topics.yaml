@@ -4,7 +4,7 @@
   args:
     node_name_suffix: vector_map
     topic: /map/vector_map
-    topic_type: autoware_auto_mapping_msgs/msg/HADMapBin
+    topic_type: autoware_map_msgs/msg/LaneletMapBin
     best_effort: false
     transient_local: true
     warn_rate: 0.0
@@ -69,7 +69,7 @@
   args:
     node_name_suffix: object_recognition_objects
     topic: /perception/object_recognition/objects
-    topic_type: autoware_auto_perception_msgs/msg/PredictedObjects
+    topic_type: autoware_perception_msgs/msg/PredictedObjects
     best_effort: false
     transient_local: false
     warn_rate: 5.0
@@ -134,7 +134,7 @@
   args:
     node_name_suffix: vehicle_status_velocity_status
     topic: /vehicle/status/velocity_status
-    topic_type: autoware_auto_vehicle_msgs/msg/VelocityReport
+    topic_type: autoware_vehicle_msgs/msg/VelocityReport
     best_effort: false
     transient_local: false
     warn_rate: 5.0
@@ -147,7 +147,7 @@
   args:
     node_name_suffix: vehicle_status_steering_status
     topic: /vehicle/status/steering_status
-    topic_type: autoware_auto_vehicle_msgs/msg/SteeringReport
+    topic_type: autoware_vehicle_msgs/msg/SteeringReport
     best_effort: false
     transient_local: false
     warn_rate: 5.0

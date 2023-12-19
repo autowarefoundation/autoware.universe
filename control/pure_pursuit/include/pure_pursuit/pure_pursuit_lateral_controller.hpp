@@ -110,7 +110,7 @@ private:
   autoware_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
   autoware_planning_msgs::msg::Trajectory trajectory_;
   nav_msgs::msg::Odometry current_odometry_;
-  autoware_auto_vehicle_msgs::msg::SteeringReport current_steering_;
+  autoware_vehicle_msgs::msg::SteeringReport current_steering_;
   boost::optional<Lateral> prev_cmd_;
 
   // Debug Publisher

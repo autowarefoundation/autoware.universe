@@ -240,7 +240,7 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   sub_autoware_state_ = create_subscription<autoware_system_msgs::msg::AutowareState>(
     "~/input/autoware_state", rclcpp::QoS{1},
     std::bind(&AutowareErrorMonitor::onAutowareState, this, _1));
-  sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+  sub_control_mode_ = create_subscription<autoware_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1},
     std::bind(&AutowareErrorMonitor::onControlMode, this, _1));
 
@@ -256,9 +256,9 @@ AutowareErrorMonitor::AutowareErrorMonitor()
     std::bind(&AutowareErrorMonitor::onClearEmergencyService, this, _1, _2));
 
   // Initialize
-  autoware_auto_vehicle_msgs::msg::ControlModeReport vehicle_state_report;
-  vehicle_state_report.mode = autoware_auto_vehicle_msgs::msg::ControlModeReport::MANUAL;
-  control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+  autoware_vehicle_msgs::msg::ControlModeReport vehicle_state_report;
+  vehicle_state_report.mode = autoware_vehicle_msgs::msg::ControlModeReport::MANUAL;
+  control_mode_ = std::make_shared<const autoware_vehicle_msgs::msg::ControlModeReport>(
     vehicle_state_report);
 
   // Timer
@@ -372,7 +372,7 @@ void AutowareErrorMonitor::onAutowareState(
 }
 
 void AutowareErrorMonitor::onControlMode(
-  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
+  const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
   control_mode_ = msg;
 
@@ -663,7 +663,7 @@ bool AutowareErrorMonitor::isEmergencyHoldingRequired() const
 
   // Don't hold status during manual driving
   const bool is_manual_driving =
-    (control_mode_->mode == autoware_auto_vehicle_msgs::msg::ControlModeReport::MANUAL);
+    (control_mode_->mode == autoware_vehicle_msgs::msg::ControlModeReport::MANUAL);
   const auto no_hold_condition =
     (!params_.use_emergency_hold_in_manual_driving && is_manual_driving);
   if (no_hold_condition) {

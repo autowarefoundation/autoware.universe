@@ -33,12 +33,12 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
   park_on_goal_ = declare_parameter<bool>("park_on_goal");
 
   pub_shift_cmd_ =
-    create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("output/gear_cmd", durable_qos);
+    create_publisher<autoware_vehicle_msgs::msg::GearCommand>("output/gear_cmd", durable_qos);
   sub_control_cmd_ = create_subscription<autoware_control_msgs::msg::Control>(
     "input/control_cmd", queue_size, std::bind(&ShiftDecider::onControlCmd, this, _1));
   sub_autoware_state_ = create_subscription<autoware_system_msgs::msg::AutowareState>(
     "input/state", queue_size, std::bind(&ShiftDecider::onAutowareState, this, _1));
-  sub_current_gear_ = create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
+  sub_current_gear_ = create_subscription<autoware_vehicle_msgs::msg::GearReport>(
     "input/current_gear", queue_size, std::bind(&ShiftDecider::onCurrentGear, this, _1));
 
   initTimer(0.1);
@@ -55,7 +55,7 @@ void ShiftDecider::onAutowareState(autoware_system_msgs::msg::AutowareState::Sha
   autoware_state_ = msg;
 }
 
-void ShiftDecider::onCurrentGear(autoware_auto_vehicle_msgs::msg::GearReport::SharedPtr msg)
+void ShiftDecider::onCurrentGear(autoware_vehicle_msgs::msg::GearReport::SharedPtr msg)
 {
   current_gear_ptr_ = msg;
 }
@@ -73,7 +73,7 @@ void ShiftDecider::onTimer()
 void ShiftDecider::updateCurrentShiftCmd()
 {
   using autoware_system_msgs::msg::AutowareState;
-  using autoware_auto_vehicle_msgs::msg::GearCommand;
+  using autoware_vehicle_msgs::msg::GearCommand;
 
   shift_cmd_.stamp = now();
   static constexpr double vel_threshold = 0.01;  // to prevent chattering

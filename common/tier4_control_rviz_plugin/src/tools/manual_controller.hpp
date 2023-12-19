@@ -24,12 +24,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
-#include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
+#include "autoware_vehicle_msgs/msg/velocity_report.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include <autoware_control_msgs/msg/control.hpp>
-#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <autoware_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
 
@@ -38,13 +38,13 @@
 namespace rviz_plugins
 {
 using autoware_control_msgs::msg::Control;
-using autoware_auto_vehicle_msgs::msg::GearCommand;
-using autoware_auto_vehicle_msgs::msg::VelocityReport;
+using autoware_vehicle_msgs::msg::GearCommand;
+using autoware_vehicle_msgs::msg::VelocityReport;
 using geometry_msgs::msg::Twist;
 using tier4_control_msgs::msg::GateMode;
 using EngageSrv = tier4_external_api_msgs::srv::Engage;
-using autoware_auto_vehicle_msgs::msg::Engage;
-using autoware_auto_vehicle_msgs::msg::GearReport;
+using autoware_vehicle_msgs::msg::Engage;
+using autoware_vehicle_msgs::msg::GearReport;
 
 class ManualController : public rviz_common::Panel
 {
