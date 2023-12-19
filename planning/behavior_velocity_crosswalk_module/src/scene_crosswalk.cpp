@@ -25,6 +25,7 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
+#include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
@@ -148,15 +149,6 @@ StopFactor createStopFactor(
   return stop_factor;
 }
 
-std::optional<geometry_msgs::msg::Pose> toStdOptional(
-  const boost::optional<geometry_msgs::msg::Pose> & boost_pose)
-{
-  if (boost_pose) {
-    return *boost_pose;
-  }
-  return std::nullopt;
-}
-
 tier4_debug_msgs::msg::StringStamped createStringStampedMessage(
   const rclcpp::Time & now, const int64_t module_id_,
   const std::vector<std::tuple<std::string, CollisionPoint, CollisionState>> & collision_points)
@@ -176,15 +168,16 @@ tier4_debug_msgs::msg::StringStamped createStringStampedMessage(
 }  // namespace
 
 CrosswalkModule::CrosswalkModule(
-  rclcpp::Node & node, const int64_t module_id, const std::optional<int64_t> & reg_elem_id,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr, const PlannerParam & planner_param,
-  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
+  rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
+  const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+  const PlannerParam & planner_param, const rclcpp::Logger & logger,
+  const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   module_id_(module_id),
   planner_param_(planner_param),
   use_regulatory_element_(reg_elem_id)
 {
-  velocity_factor_.init(VelocityFactor::CROSSWALK);
+  velocity_factor_.init(PlanningBehavior::CROSSWALK);
   passed_safety_slow_point_ = false;
 
   if (use_regulatory_element_) {
@@ -199,6 +192,8 @@ CrosswalkModule::CrosswalkModule(
     }
     crosswalk_ = lanelet_map_ptr->laneletLayer.get(module_id);
   }
+
+  road_ = lanelet_map_ptr->laneletLayer.get(lane_id);
 
   collision_info_pub_ =
     node.create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/collision_info", 1);
@@ -242,8 +237,8 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   std::optional<geometry_msgs::msg::Pose> default_stop_pose = std::nullopt;
   if (p_stop_line.has_value()) {
-    default_stop_pose = toStdOptional(
-      calcLongitudinalOffsetPose(path->points, p_stop_line->first, p_stop_line->second));
+    default_stop_pose =
+      calcLongitudinalOffsetPose(path->points, p_stop_line->first, p_stop_line->second);
   }
 
   // Resample path sparsely for less computation cost
@@ -322,6 +317,8 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   const double ego_vel = planner_data_->current_velocity->twist.linear.x;
   const double ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
 
+  const std::optional<double> ego_crosswalk_passage_direction =
+    findEgoPassageDirectionAlongPath(sparse_resample_path);
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   const auto dist_ego_to_stop =
     calcSignedArcLength(ego_path.points, ego_pos, p_stop_line->first) + p_stop_line->second;
@@ -355,25 +352,38 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
 
   // Check pedestrian for stop
   // NOTE: first stop point and its minimum distance from ego to stop
+  auto isVehicleType = [](const uint8_t label) {
+    return label == ObjectClassification::MOTORCYCLE || label == ObjectClassification::BICYCLE;
+  };
   std::optional<std::pair<geometry_msgs::msg::Point, double>> nearest_stop_info;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
   for (const auto & object : object_info_manager_.getObject()) {
-    const auto & collision_point = object.collision_point;
-    if (collision_point) {
+    const auto & collision_point_opt = object.collision_point;
+    if (collision_point_opt) {
+      const auto & collision_point = collision_point_opt.value();
       const auto & collision_state = object.collision_state;
       if (collision_state != CollisionState::YIELD) {
         continue;
+      }
+      if (
+        isVehicleType(object.classification) && ego_crosswalk_passage_direction &&
+        collision_point.crosswalk_passage_direction) {
+        const double direction_diff = tier4_autoware_utils::normalizeRadian(
+          collision_point.crosswalk_passage_direction.value() -
+          ego_crosswalk_passage_direction.value());
+        if (std::fabs(direction_diff) < planner_param_.vehicle_object_cross_angle_threshold) {
+          continue;
+        }
       }
 
       stop_factor_points.push_back(object.position);
 
       const auto dist_ego2cp =
-        calcSignedArcLength(
-          sparse_resample_path.points, ego_pos, collision_point->collision_point) -
+        calcSignedArcLength(sparse_resample_path.points, ego_pos, collision_point.collision_point) -
         planner_param_.stop_distance_from_object;
       if (!nearest_stop_info || dist_ego2cp - base_link2front < nearest_stop_info->second) {
         nearest_stop_info =
-          std::make_pair(collision_point->collision_point, dist_ego2cp - base_link2front);
+          std::make_pair(collision_point.collision_point, dist_ego2cp - base_link2front);
       }
     }
   }
@@ -486,8 +496,8 @@ std::pair<double, double> CrosswalkModule::clampAttentionRangeByNeighborCrosswal
     return std::make_pair(near_attention_range, far_attention_range);
   }
 
-  const auto near_idx = findNearestSegmentIndex(ego_path.points, p_near.get());
-  const auto far_idx = findNearestSegmentIndex(ego_path.points, p_far.get()) + 1;
+  const auto near_idx = findNearestSegmentIndex(ego_path.points, p_near.value());
+  const auto far_idx = findNearestSegmentIndex(ego_path.points, p_far.value()) + 1;
 
   std::set<int64_t> lane_ids;
   for (size_t i = near_idx; i < far_idx; ++i) {
@@ -575,8 +585,8 @@ std::pair<double, double> CrosswalkModule::clampAttentionRangeByNeighborCrosswal
     calcLongitudinalOffsetPoint(ego_path.points, ego_pos, far_attention_range);
 
   if (update_p_near && update_p_far) {
-    debug_data_.range_near_point = update_p_near.get();
-    debug_data_.range_far_point = update_p_far.get();
+    debug_data_.range_near_point = update_p_near.value();
+    debug_data_.range_far_point = update_p_far.value();
   }
 
   RCLCPP_INFO_EXPRESSION(
@@ -584,6 +594,70 @@ std::pair<double, double> CrosswalkModule::clampAttentionRangeByNeighborCrosswal
     stop_watch_.toc(__func__, true));
 
   return std::make_pair(clamped_near_attention_range, clamped_far_attention_range);
+}
+
+std::optional<double> CrosswalkModule::findEgoPassageDirectionAlongPath(
+  const PathWithLaneId & path) const
+{
+  auto findIntersectPoint = [&](const lanelet::ConstLineString3d line)
+    -> std::optional<std::pair<size_t, geometry_msgs::msg::Point>> {
+    const auto line_start =
+      tier4_autoware_utils::createPoint(line.front().x(), line.front().y(), line.front().z());
+    const auto line_end =
+      tier4_autoware_utils::createPoint(line.back().x(), line.back().y(), line.back().z());
+    for (unsigned i = 0; i < path.points.size() - 1; ++i) {
+      const auto & start = path.points.at(i).point.pose.position;
+      const auto & end = path.points.at(i + 1).point.pose.position;
+      if (const auto intersect = tier4_autoware_utils::intersect(line_start, line_end, start, end);
+          intersect.has_value()) {
+        return std::make_optional(std::make_pair(i, intersect.value()));
+      }
+    }
+    return std::nullopt;
+  };
+  const auto intersect_pt1 = findIntersectPoint(crosswalk_.leftBound());
+  const auto intersect_pt2 = findIntersectPoint(crosswalk_.rightBound());
+
+  if (!intersect_pt1 || !intersect_pt2) {
+    return std::nullopt;
+  }
+  const auto idx1 = intersect_pt1.value().first, idx2 = intersect_pt2.value().first;
+  const auto & front = idx1 > idx2 ? intersect_pt2.value().second : intersect_pt1.value().second;
+  const auto & back = idx1 > idx2 ? intersect_pt1.value().second : intersect_pt2.value().second;
+  return std::atan2(back.y - front.y, back.x - front.x);
+}
+
+std::optional<double> CrosswalkModule::findObjectPassageDirectionAlongVehicleLane(
+  const autoware_auto_perception_msgs::msg::PredictedPath & path) const
+{
+  using tier4_autoware_utils::Segment2d;
+
+  auto findIntersectPoint = [&](const lanelet::ConstLineString3d line)
+    -> std::optional<std::pair<size_t, geometry_msgs::msg::Point>> {
+    const auto line_start =
+      tier4_autoware_utils::createPoint(line.front().x(), line.front().y(), line.front().z());
+    const auto line_end =
+      tier4_autoware_utils::createPoint(line.back().x(), line.back().y(), line.back().z());
+    for (unsigned i = 0; i < path.path.size() - 1; ++i) {
+      const auto & start = path.path.at(i).position;
+      const auto & end = path.path.at(i + 1).position;
+      if (const auto intersect = tier4_autoware_utils::intersect(line_start, line_end, start, end);
+          intersect.has_value()) {
+        return std::make_optional(std::make_pair(i, intersect.value()));
+      }
+    }
+    return std::nullopt;
+  };
+  const auto intersect_pt1 = findIntersectPoint(crosswalk_.leftBound());
+  const auto intersect_pt2 = findIntersectPoint(crosswalk_.rightBound());
+
+  if (!intersect_pt1 || !intersect_pt2) {
+    return std::nullopt;
+  }
+  const auto idx1 = intersect_pt1.value().first, idx2 = intersect_pt2.value().first;
+  const auto & front = idx1 > idx2 ? intersect_pt2.value().second : intersect_pt1.value().second;
+  const auto & back = idx1 > idx2 ? intersect_pt1.value().second : intersect_pt2.value().second;
+  return std::atan2(back.y - front.y, back.x - front.x);
 }
 
 std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
@@ -631,6 +705,8 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
       // Calculate multi-step object polygon, and reset start_idx
       const size_t start_idx_with_margin = std::max(static_cast<int>(start_idx) - 1, 0);
       const size_t end_idx_with_margin = std::min(i + 1, obj_path.path.size() - 1);
+      const auto object_crosswalk_passage_direction =
+        findObjectPassageDirectionAlongVehicleLane(obj_path);
       const auto obj_multi_step_polygon = createMultiStepPolygon(
         obj_path.path, obj_polygon, start_idx_with_margin, end_idx_with_margin);
       is_start_idx_initialized = false;
@@ -666,7 +742,8 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
       if (dist_ego2cp < minimum_stop_dist) {
         minimum_stop_dist = dist_ego2cp;
         nearest_collision_point = createCollisionPoint(
-          intersection_center_point, dist_ego2cp, dist_obj2cp, ego_vel, obj_vel);
+          intersection_center_point, dist_ego2cp, dist_obj2cp, ego_vel, obj_vel,
+          object_crosswalk_passage_direction);
         debug_data_.obj_polygons.push_back(
           toGeometryPointVector(obj_multi_step_polygon, ego_pos.z));
       }
@@ -685,17 +762,18 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
 CollisionPoint CrosswalkModule::createCollisionPoint(
   const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
   const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
-  const geometry_msgs::msg::Vector3 & obj_vel) const
+  const geometry_msgs::msg::Vector3 & obj_vel,
+  const std::optional<double> object_crosswalk_passage_direction) const
 {
   constexpr double min_ego_velocity = 1.38;  // [m/s]
-
-  const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
+  const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
   const auto estimated_velocity = std::hypot(obj_vel.x, obj_vel.y);
   const auto velocity = std::max(planner_param_.min_object_velocity, estimated_velocity);
 
   CollisionPoint collision_point{};
   collision_point.collision_point = nearest_collision_point;
+  collision_point.crosswalk_passage_direction = object_crosswalk_passage_direction;
   collision_point.time_to_collision =
     std::max(0.0, dist_ego2cp - planner_param_.stop_distance_from_object - base_link2front) /
     std::max(ego_vel.x, min_ego_velocity);
@@ -732,7 +810,7 @@ void CrosswalkModule::applySafetySlowDownSpeed(
     const auto & p_safety_slow =
       calcLongitudinalOffsetPoint(ego_path.points, ego_pos, safety_slow_point_range);
 
-    insertDecelPointWithDebugInfo(p_safety_slow.get(), safety_slow_down_speed, output);
+    insertDecelPointWithDebugInfo(p_safety_slow.value(), safety_slow_down_speed, output);
 
     if (safety_slow_point_range < 0.0) {
       passed_safety_slow_point_ = true;
@@ -801,6 +879,16 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
 
   if (path_intersects.size() < 2 || !stop_pose) {
     return {};
+  }
+
+  // skip stuck vehicle checking for crosswalk which is in intersection.
+  if (!p.enable_stuck_check_in_intersection) {
+    std::string turn_direction = road_.attributeOr("turn_direction", "else");
+    if (turn_direction == "right" || turn_direction == "left" || turn_direction == "straight") {
+      if (!road_.regulatoryElementsAs<const lanelet::TrafficLight>().empty()) {
+        return {};
+      }
+    }
   }
 
   for (const auto & object : objects) {
@@ -927,7 +1015,8 @@ void CrosswalkModule::updateObjectState(
       getCollisionPoint(sparse_resample_path, object, crosswalk_attention_range, attention_area);
     object_info_manager_.update(
       obj_uuid, obj_pos, std::hypot(obj_vel.x, obj_vel.y), clock_->now(), is_ego_yielding,
-      has_traffic_light, collision_point, planner_param_, crosswalk_.polygon2d().basicPolygon());
+      has_traffic_light, collision_point, object.classification.front().label, planner_param_,
+      crosswalk_.polygon2d().basicPolygon());
 
     if (collision_point) {
       const auto collision_state = object_info_manager_.getCollisionState(obj_uuid);

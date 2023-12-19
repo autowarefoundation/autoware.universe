@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__DYNAMIC_AVOIDANCE__DYNAMIC_AVOIDANCE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__DYNAMIC_AVOIDANCE__DYNAMIC_AVOIDANCE_MODULE_HPP_
 
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -46,6 +46,11 @@ struct MinMaxValue
   double max_value{0.0};
 };
 
+enum class PolygonGenerationMethod {
+  EGO_PATH_BASE = 0,
+  OBJECT_PATH_BASE,
+};
+
 struct DynamicAvoidanceParameters
 {
   // common
@@ -71,15 +76,20 @@ struct DynamicAvoidanceParameters
 
   double min_time_to_start_cut_in{0.0};
   double min_lon_offset_ego_to_cut_in_object{0.0};
+  double min_cut_in_object_vel{0.0};
   double max_time_from_outside_ego_path_for_cut_out{0.0};
   double min_cut_out_object_lat_vel{0.0};
+  double min_cut_out_object_vel{0.0};
   double max_front_object_angle{0.0};
+  double min_front_object_vel{0.0};
+  double max_front_object_ego_path_lat_cover_ratio{0.0};
   double min_overtaking_crossing_object_vel{0.0};
   double max_overtaking_crossing_object_angle{0.0};
   double min_oncoming_crossing_object_vel{0.0};
   double max_oncoming_crossing_object_angle{0.0};
 
   // drivable area generation
+  PolygonGenerationMethod polygon_generation_method{};
   double min_obj_path_based_lon_polygon_margin{0.0};
   double lat_offset_from_obstacle{0.0};
   double max_lat_offset_to_avoid{0.0};
@@ -99,10 +109,6 @@ struct DynamicAvoidanceParameters
 class DynamicAvoidanceModule : public SceneModuleInterface
 {
 public:
-  enum class PolygonGenerationMethod {
-    EGO_PATH_BASE = 0,
-    OBJECT_PATH_BASE,
-  };
   struct DynamicAvoidanceObject
   {
     DynamicAvoidanceObject(
@@ -137,18 +143,18 @@ public:
     std::optional<MinMaxValue> lat_offset_to_avoid{std::nullopt};
     bool is_collision_left{false};
     bool should_be_avoided{false};
-    PolygonGenerationMethod polygon_generation_method{PolygonGenerationMethod::OBJECT_PATH_BASE};
+    std::vector<PathPointWithLaneId> ref_path_points_for_obj_poly;
 
     void update(
       const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
       const bool arg_is_collision_left, const bool arg_should_be_avoided,
-      const PolygonGenerationMethod & arg_polygon_generation_method)
+      const std::vector<PathPointWithLaneId> & arg_ref_path_points_for_obj_poly)
     {
       lon_offset_to_avoid = arg_lon_offset_to_avoid;
       lat_offset_to_avoid = arg_lat_offset_to_avoid;
       is_collision_left = arg_is_collision_left;
       should_be_avoided = arg_should_be_avoided;
-      polygon_generation_method = arg_polygon_generation_method;
+      ref_path_points_for_obj_poly = arg_ref_path_points_for_obj_poly;
     }
   };
 
@@ -242,12 +248,13 @@ public:
     void updateObject(
       const std::string & uuid, const MinMaxValue & lon_offset_to_avoid,
       const MinMaxValue & lat_offset_to_avoid, const bool is_collision_left,
-      const bool should_be_avoided, const PolygonGenerationMethod & polygon_generation_method)
+      const bool should_be_avoided,
+      const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly)
     {
       if (object_map_.count(uuid) != 0) {
         object_map_.at(uuid).update(
           lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided,
-          polygon_generation_method);
+          ref_path_points_for_obj_poly);
       }
     }
 
@@ -266,7 +273,9 @@ public:
   DynamicAvoidanceModule(
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<DynamicAvoidanceParameters> parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -303,13 +312,16 @@ private:
 
   bool isLabelTargetObstacle(const uint8_t label) const;
   void updateTargetObjects();
+  void updateRefPathBeforeLaneChange(const std::vector<PathPointWithLaneId> & ego_ref_path_points);
   bool willObjectCutIn(
     const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & predicted_path,
-    const double obj_tangent_vel, const LatLonOffset & lat_lon_offset,
-    PolygonGenerationMethod & polygon_generation_method) const;
+    const double obj_tangent_vel, const LatLonOffset & lat_lon_offset) const;
   DecisionWithReason willObjectCutOut(
     const double obj_tangent_vel, const double obj_normal_vel, const bool is_object_left,
     const std::optional<DynamicAvoidanceObject> & prev_object) const;
+  bool willObjectBeOutsideEgoChangingPath(
+    const geometry_msgs::msg::Pose & obj_pose,
+    const autoware_auto_perception_msgs::msg::Shape & obj_shape, const double obj_vel) const;
   bool isObjectFarFromPath(
     const PredictedObject & predicted_object, const double obj_dist_to_path) const;
   double calcTimeToCollision(
@@ -320,14 +332,18 @@ private:
   LatLonOffset getLateralLongitudinalOffset(
     const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
     const autoware_auto_perception_msgs::msg::Shape & obj_shape) const;
+  double calcValidLengthToAvoid(
+    const PredictedPath & obj_path, const geometry_msgs::msg::Pose & obj_pose,
+    const autoware_auto_perception_msgs::msg::Shape & obj_shape) const;
   MinMaxValue calcMinMaxLongitudinalOffsetToAvoid(
-    const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
+    const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
     const geometry_msgs::msg::Pose & obj_pose, const Polygon2d & obj_points, const double obj_vel,
+    const PredictedPath & obj_path, const autoware_auto_perception_msgs::msg::Shape & obj_shape,
     const double time_to_collision) const;
-  MinMaxValue calcMinMaxLateralOffsetToAvoid(
-    const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
-    const Polygon2d & obj_points, const bool is_collision_left, const double obj_normal_vel,
-    const std::optional<DynamicAvoidanceObject> & prev_object) const;
+  std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoid(
+    const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
+    const Polygon2d & obj_points, const double obj_vel, const bool is_collision_left,
+    const double obj_normal_vel, const std::optional<DynamicAvoidanceObject> & prev_object) const;
 
   std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;
@@ -346,6 +362,8 @@ private:
 
   std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> target_objects_;
   // std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> prev_target_objects_;
+  std::optional<std::vector<PathPointWithLaneId>> prev_input_ref_path_points_{std::nullopt};
+  std::optional<std::vector<PathPointWithLaneId>> ref_path_before_lane_change_{std::nullopt};
   std::shared_ptr<DynamicAvoidanceParameters> parameters_;
 
   TargetObjectsManager target_objects_manager_;

@@ -45,6 +45,7 @@ struct DebugData
   std::optional<lanelet::CompoundPolygon3d> ego_lane{std::nullopt};
   std::optional<std::vector<lanelet::CompoundPolygon3d>> adjacent_area{std::nullopt};
   std::optional<geometry_msgs::msg::Polygon> stuck_vehicle_detect_area{std::nullopt};
+  std::optional<std::vector<lanelet::CompoundPolygon3d>> yield_stuck_detect_area{std::nullopt};
   std::optional<geometry_msgs::msg::Polygon> candidate_collision_ego_lane_polygon{std::nullopt};
   std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
   autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
@@ -64,8 +65,8 @@ struct InterpolatedPathInfo
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId path;
   double ds{0.0};
-  int lane_id{0};
-  std::set<int> associative_lane_ids{};
+  lanelet::Id lane_id{0};
+  std::set<lanelet::Id> associative_lane_ids{};
   std::optional<std::pair<size_t, size_t>> lane_id_interval{std::nullopt};
 };
 
@@ -79,9 +80,9 @@ public:
   {
     return is_prioritized_ ? attention_non_preceding_ : attention_;
   }
-  const std::vector<std::optional<lanelet::ConstLineString3d>> & attention_stop_lines() const
+  const std::vector<std::optional<lanelet::ConstLineString3d>> & attention_stoplines() const
   {
-    return is_prioritized_ ? attention_non_preceding_stop_lines_ : attention_stop_lines_;
+    return is_prioritized_ ? attention_non_preceding_stoplines_ : attention_stoplines_;
   }
   const lanelet::ConstLanelets & conflicting() const { return conflicting_; }
   const lanelet::ConstLanelets & adjacent() const { return adjacent_; }
@@ -121,11 +122,11 @@ public:
 
   lanelet::ConstLanelets attention_;  // topologically merged lanelets
   std::vector<std::optional<lanelet::ConstLineString3d>>
-    attention_stop_lines_;  // the stop lines for each attention_ lanelets
+    attention_stoplines_;  // the stop lines for each attention_ lanelets
   lanelet::ConstLanelets attention_non_preceding_;
   std::vector<std::optional<lanelet::ConstLineString3d>>
-    attention_non_preceding_stop_lines_;  // the stop lines for each attention_non_preceding_
-                                          // lanelets
+    attention_non_preceding_stoplines_;  // the stop lines for each attention_non_preceding_
+                                         // lanelets
   lanelet::ConstLanelets conflicting_;
   lanelet::ConstLanelets adjacent_;
   lanelet::ConstLanelets occlusion_attention_;    // topologically merged lanelets
@@ -151,13 +152,13 @@ struct IntersectionStopLines
   // NOTE: for baselink
   size_t closest_idx{0};
   // NOTE: null if path does not conflict with first_conflicting_area
-  std::optional<size_t> stuck_stop_line{std::nullopt};
-  // NOTE: null if path is over map stop_line OR its value is calculated negative
-  std::optional<size_t> default_stop_line{std::nullopt};
+  std::optional<size_t> stuck_stopline{std::nullopt};
+  // NOTE: null if path is over map stopline OR its value is calculated negative
+  std::optional<size_t> default_stopline{std::nullopt};
   // NOTE: null if the index is calculated negative
-  std::optional<size_t> first_attention_stop_line{std::nullopt};
+  std::optional<size_t> first_attention_stopline{std::nullopt};
   // NOTE: null if footprints do not change from outside to inside of detection area
-  std::optional<size_t> occlusion_peeking_stop_line{std::nullopt};
+  std::optional<size_t> occlusion_peeking_stopline{std::nullopt};
   // if the value is calculated negative, its value is 0
   size_t pass_judge_line{0};
   size_t occlusion_wo_tl_pass_judge_line{0};
@@ -175,16 +176,17 @@ struct PathLanelets
   lanelet::ConstLanelets all;
   lanelet::ConstLanelets
     conflicting_interval_and_remaining;  // the left/right-most interval of path conflicting with
-                                         // conflicting lanelets plus the next lane part of the path
+                                         // conflicting lanelets plus the next lane part of the
+                                         // path
 };
 
 struct TargetObject
 {
   autoware_auto_perception_msgs::msg::PredictedObject object;
   std::optional<lanelet::ConstLanelet> attention_lanelet{std::nullopt};
-  std::optional<lanelet::ConstLineString3d> stop_line{std::nullopt};
-  std::optional<double> dist_to_stop_line{std::nullopt};
-  void calc_dist_to_stop_line();
+  std::optional<lanelet::ConstLineString3d> stopline{std::nullopt};
+  std::optional<double> dist_to_stopline{std::nullopt};
+  void calc_dist_to_stopline();
 };
 
 struct TargetObjects

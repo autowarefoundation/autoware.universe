@@ -40,9 +40,10 @@ std::optional<size_t> insertPoint(
   autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
 
 bool hasLaneIds(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const std::set<int> & ids);
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p,
+  const std::set<lanelet::Id> & ids);
 std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const std::set<int> & ids);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const std::set<lanelet::Id> & ids);
 
 /**
  * @brief get objective polygons for detection area
@@ -50,7 +51,7 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
 IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path,
-  const std::set<int> & associative_ids, const double detection_area_length,
+  const std::set<lanelet::Id> & associative_ids, const double detection_area_length,
   const double occlusion_detection_area_length, const bool consider_wrong_direction_vehicle);
 
 /**
@@ -64,7 +65,7 @@ IntersectionLanelets getObjectiveLanelets(
 std::optional<size_t> generateStuckStopLine(
   const lanelet::CompoundPolygon3d & first_conflicting_area,
   const std::shared_ptr<const PlannerData> & planner_data,
-  const InterpolatedPathInfo & interpolated_path_info, const double stop_line_margin,
+  const InterpolatedPathInfo & interpolated_path_info, const double stopline_margin,
   const bool use_stuck_stopline, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
 std::optional<IntersectionStopLines> generateIntersectionStopLines(
@@ -73,7 +74,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::ConstLineString2d & first_attention_lane_centerline,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
-  const double stop_line_margin, const double max_accel, const double max_jerk,
+  const double stopline_margin, const double max_accel, const double max_jerk,
   const double delay_response_time, const double peeking_offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
@@ -117,7 +118,7 @@ std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
   const double curvature_threshold, const double curvature_calculation_ds);
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(
-  const int lane_id, const std::set<int> & associative_lane_ids,
+  const lanelet::Id lane_id, const std::set<lanelet::Id> & associative_lane_ids,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
   const rclcpp::Logger logger);
 
@@ -130,9 +131,10 @@ bool checkStuckVehicleInIntersection(
   DebugData * debug_data);
 
 bool checkYieldStuckVehicleInIntersection(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-  const lanelet::BasicPolygon2d & ego_poly, const lanelet::CompoundPolygon3d & first_attention_area,
-  const double stuck_vehicle_vel_thr, const double yield_stuck_distance_thr,
+  const util::TargetObjects & target_objects,
+  const util::InterpolatedPathInfo & interpolated_path_info,
+  const lanelet::ConstLanelets & attention_lanelets, const std::string & turn_direction,
+  const double width, const double stuck_vehicle_vel_thr, const double yield_stuck_distance_thr,
   DebugData * debug_data);
 
 Polygon2d generateStuckVehicleDetectAreaPolygon(
@@ -150,8 +152,8 @@ void cutPredictPathWithDuration(
 TimeDistanceArray calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> & planner_data, const lanelet::Id lane_id,
-  const std::set<int> & associative_ids, const size_t closest_idx,
-  const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
+  const std::set<lanelet::Id> & associative_ids, const size_t closest_idx,
+  const size_t last_intersection_stopline_candidate_idx, const double time_delay,
   const double intersection_velocity, const double minimum_ego_velocity,
   const bool use_upstream_velocity, const double minimum_upstream_velocity,
   tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
@@ -166,7 +168,8 @@ lanelet::ConstLanelet generatePathLanelet(
 
 std::optional<PathLanelets> generatePathLanelets(
   const lanelet::ConstLanelets & lanelets_on_path,
-  const util::InterpolatedPathInfo & interpolated_path_info, const std::set<int> & associative_ids,
+  const util::InterpolatedPathInfo & interpolated_path_info,
+  const std::set<lanelet::Id> & associative_ids,
   const lanelet::CompoundPolygon3d & first_conflicting_area,
   const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
