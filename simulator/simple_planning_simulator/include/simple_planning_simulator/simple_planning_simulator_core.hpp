@@ -195,6 +195,9 @@ private:
   bool is_initialized_ = false;         //!< @brief flag to check the initial position is set
   bool add_measurement_noise_ = false;  //!< @brief flag to add measurement noise
 
+  /* measurement bias */
+  double measurement_steer_bias_ = 0.0;  //!< @brief measurement bias for steering measurement
+
   DeltaTime delta_time_{};  //!< @brief to calculate delta time
 
   MeasurementNoiseGenerator measurement_noise_{};  //!< @brief for measurement noise
@@ -209,7 +212,8 @@ private:
     DELAY_STEER_ACC = 2,
     DELAY_STEER_ACC_GEARED = 3,
     IDEAL_STEER_VEL = 4,
-    DELAY_STEER_VEL = 5
+    DELAY_STEER_VEL = 5,
+    DELAY_STEER_MAP_ACC_GEARED = 6
   } vehicle_model_type_;  //!< @brief vehicle model type to decide the model dynamics
   std::shared_ptr<SimModelInterface> vehicle_model_ptr_;  //!< @brief vehicle model pointer
 

@@ -24,21 +24,34 @@
 
 namespace behavior_path_planner
 {
-
-DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
-: SceneModuleManagerInterface(node, name, config, {""})
+namespace
 {
+PolygonGenerationMethod convertToPolygonGenerationMethod(const std::string & str)
+{
+  if (str == "ego_path_base") {
+    return PolygonGenerationMethod::EGO_PATH_BASE;
+  } else if (str == "object_path_base") {
+    return PolygonGenerationMethod::OBJECT_PATH_BASE;
+  }
+  throw std::logic_error("The polygon_generation_method's string is invalid.");
+}
+}  // namespace
+
+void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
+{
+  // init manager interface
+  initInterface(node, {""});
+
   DynamicAvoidanceParameters p{};
 
   {  // common
-    std::string ns = "dynamic_avoidance.common.";
+    const std::string ns = "dynamic_avoidance.common.";
     p.enable_debug_info = node->declare_parameter<bool>(ns + "enable_debug_info");
     p.use_hatched_road_markings = node->declare_parameter<bool>(ns + "use_hatched_road_markings");
   }
 
   {  // target object
-    std::string ns = "dynamic_avoidance.target_object.";
+    const std::string ns = "dynamic_avoidance.target_object.";
     p.avoid_car = node->declare_parameter<bool>(ns + "car");
     p.avoid_truck = node->declare_parameter<bool>(ns + "truck");
     p.avoid_bus = node->declare_parameter<bool>(ns + "bus");
@@ -63,14 +76,20 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
       node->declare_parameter<double>(ns + "cut_in_object.min_time_to_start_cut_in");
     p.min_lon_offset_ego_to_cut_in_object =
       node->declare_parameter<double>(ns + "cut_in_object.min_lon_offset_ego_to_object");
+    p.min_cut_in_object_vel = node->declare_parameter<double>(ns + "cut_in_object.min_object_vel");
 
     p.max_time_from_outside_ego_path_for_cut_out =
       node->declare_parameter<double>(ns + "cut_out_object.max_time_from_outside_ego_path");
     p.min_cut_out_object_lat_vel =
       node->declare_parameter<double>(ns + "cut_out_object.min_object_lat_vel");
+    p.min_cut_out_object_vel =
+      node->declare_parameter<double>(ns + "cut_out_object.min_object_vel");
 
     p.max_front_object_angle =
       node->declare_parameter<double>(ns + "front_object.max_object_angle");
+    p.max_front_object_ego_path_lat_cover_ratio =
+      node->declare_parameter<double>(ns + "front_object.max_ego_path_lat_cover_ratio");
+    p.min_front_object_vel = node->declare_parameter<double>(ns + "front_object.min_object_vel");
 
     p.min_overtaking_crossing_object_vel =
       node->declare_parameter<double>(ns + "crossing_object.min_overtaking_object_vel");
@@ -83,7 +102,9 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
   }
 
   {  // drivable_area_generation
-    std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    const std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    p.polygon_generation_method = convertToPolygonGenerationMethod(
+      node->declare_parameter<std::string>(ns + "polygon_generation_method"));
     p.min_obj_path_based_lon_polygon_margin =
       node->declare_parameter<double>(ns + "object_path_base.min_longitudinal_polygon_margin");
     p.lat_offset_from_obstacle = node->declare_parameter<double>(ns + "lat_offset_from_obstacle");
@@ -157,15 +178,22 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "cut_in_object.min_lon_offset_ego_to_object",
       p->min_lon_offset_ego_to_cut_in_object);
+    updateParam<double>(parameters, ns + "cut_in_object.min_object_vel", p->min_cut_in_object_vel);
 
     updateParam<double>(
       parameters, ns + "cut_out_object.max_time_from_outside_ego_path",
       p->max_time_from_outside_ego_path_for_cut_out);
     updateParam<double>(
       parameters, ns + "cut_out_object.min_object_lat_vel", p->min_cut_out_object_lat_vel);
+    updateParam<double>(
+      parameters, ns + "cut_out_object.min_object_vel", p->min_cut_out_object_vel);
 
     updateParam<double>(
       parameters, ns + "front_object.max_object_angle", p->max_front_object_angle);
+    updateParam<double>(
+      parameters, ns + "front_object.max_ego_path_lat_cover_ratio",
+      p->max_front_object_ego_path_lat_cover_ratio);
+    updateParam<double>(parameters, ns + "front_object.min_object_vel", p->min_front_object_vel);
 
     updateParam<double>(
       parameters, ns + "crossing_object.min_overtaking_object_vel",
@@ -183,6 +211,12 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
 
   {  // drivable_area_generation
     const std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    std::string polygon_generation_method_str;
+    if (updateParam<std::string>(
+          parameters, ns + "polygon_generation_method", polygon_generation_method_str)) {
+      p->polygon_generation_method =
+        convertToPolygonGenerationMethod(polygon_generation_method_str);
+    }
     updateParam<double>(
       parameters, ns + "object_path_base.min_longitudinal_polygon_margin",
       p->min_obj_path_based_lon_polygon_margin);
@@ -221,4 +255,14 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
     if (!observer.expired()) observer.lock()->updateModuleParams(p);
   });
 }
+
+bool DynamicAvoidanceModuleManager::isAlwaysExecutableModule() const
+{
+  return true;
+}
 }  // namespace behavior_path_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::DynamicAvoidanceModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)
