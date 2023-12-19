@@ -43,6 +43,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <glog/logging.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -718,6 +720,8 @@ void replaceObjectYawWithLaneletsYaw(
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
 {
+  google::InitGoogleLogging("map_based_prediction_node");
+  google::InstallFailureSignalHandler();
   enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
   prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
   lateral_control_time_horizon_ =
@@ -760,6 +764,9 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
 
     num_continuous_state_transition_ =
       declare_parameter<int>("lane_change_detection.num_continuous_state_transition");
+
+    consider_only_routable_neighbours_ =
+      declare_parameter<bool>("lane_change_detection.consider_only_routable_neighbours");
   }
   reference_path_resolution_ = declare_parameter<double>("reference_path_resolution");
   /* prediction path will disabled when the estimated path length exceeds lanelet length. This
@@ -988,6 +995,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         for (auto & predicted_path : predicted_paths) {
           predicted_path.confidence = predicted_path.confidence / sum_confidence;
+          if (predicted_object.kinematics.predicted_paths.size() >= 100) break;
           predicted_object.kinematics.predicted_paths.push_back(predicted_path);
         }
         output.objects.push_back(predicted_object);
@@ -1514,19 +1522,22 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       if (!!opt) {
         return *opt;
       }
-      const auto adjacent = get_left ? routing_graph_ptr_->adjacentLeft(lanelet)
-                                     : routing_graph_ptr_->adjacentRight(lanelet);
-      if (!!adjacent) {
-        return *adjacent;
+      if (!consider_only_routable_neighbours_) {
+        const auto adjacent = get_left ? routing_graph_ptr_->adjacentLeft(lanelet)
+                                       : routing_graph_ptr_->adjacentRight(lanelet);
+        if (!!adjacent) {
+          return *adjacent;
+        }
+        // search for unconnected lanelet
+        const auto unconnected_lanelets =
+          get_left ? getLeftLineSharingLanelets(lanelet, lanelet_map_ptr_)
+                   : getRightLineSharingLanelets(lanelet, lanelet_map_ptr_);
+        // just return first candidate of unconnected lanelet for now
+        if (!unconnected_lanelets.empty()) {
+          return unconnected_lanelets.front();
+        }
       }
-      // search for unconnected lanelet
-      const auto unconnected_lanelets = get_left
-                                          ? getLeftLineSharingLanelets(lanelet, lanelet_map_ptr_)
-                                          : getRightLineSharingLanelets(lanelet, lanelet_map_ptr_);
-      // just return first candidate of unconnected lanelet for now
-      if (!unconnected_lanelets.empty()) {
-        return unconnected_lanelets.front();
-      }
+
       // if no candidate lanelet found, return empty
       return std::nullopt;
     };

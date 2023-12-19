@@ -121,6 +121,7 @@ public:
     double max_slow_down_accel;
     double no_relax_velocity;
     // param for stuck vehicle
+    bool enable_stuck_check_in_intersection{false};
     double stuck_vehicle_velocity;
     double max_stuck_vehicle_lateral_offset;
     double stuck_vehicle_attention_range;
@@ -149,6 +150,7 @@ public:
     double traffic_light_state_timeout;
     // param for target area & object
     double crosswalk_attention_range;
+    double vehicle_object_cross_angle_threshold;
     bool look_unknown;
     bool look_bicycle;
     bool look_motorcycle;
@@ -159,6 +161,7 @@ public:
   {
     CollisionState collision_state{};
     std::optional<rclcpp::Time> time_to_start_stopped{std::nullopt};
+    uint8_t classification{ObjectClassification::UNKNOWN};
 
     geometry_msgs::msg::Point position{};
     std::optional<CollisionPoint> collision_point{};
@@ -241,8 +244,8 @@ public:
     void update(
       const std::string & uuid, const geometry_msgs::msg::Point & position, const double vel,
       const rclcpp::Time & now, const bool is_ego_yielding, const bool has_traffic_light,
-      const std::optional<CollisionPoint> & collision_point, const PlannerParam & planner_param,
-      const lanelet::BasicPolygon2d & crosswalk_polygon)
+      const std::optional<CollisionPoint> & collision_point, const uint8_t classification,
+      const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon)
     {
       // update current uuids
       current_uuids_.push_back(uuid);
@@ -264,6 +267,7 @@ public:
         crosswalk_polygon);
       objects.at(uuid).collision_point = collision_point;
       objects.at(uuid).position = position;
+      objects.at(uuid).classification = classification;
     }
     void finalize()
     {
@@ -299,9 +303,10 @@ public:
   };
 
   CrosswalkModule(
-    rclcpp::Node & node, const int64_t module_id, const std::optional<int64_t> & reg_elem_id,
-    const lanelet::LaneletMapPtr & lanelet_map_ptr, const PlannerParam & planner_param,
-    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
+    rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
+    const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+    const PlannerParam & planner_param, const rclcpp::Logger & logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
@@ -327,6 +332,11 @@ private:
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
+
+  std::optional<double> findEgoPassageDirectionAlongPath(
+    const PathWithLaneId & sparse_resample_path) const;
+  std::optional<double> findObjectPassageDirectionAlongVehicleLane(
+    const autoware_auto_perception_msgs::msg::PredictedPath & path) const;
 
   std::optional<CollisionPoint> getCollisionPoint(
     const PathWithLaneId & ego_path, const PredictedObject & object,
@@ -364,7 +374,8 @@ private:
   CollisionPoint createCollisionPoint(
     const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
     const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
-    const geometry_msgs::msg::Vector3 & obj_vel) const;
+    const geometry_msgs::msg::Vector3 & obj_vel,
+    const std::optional<double> object_crosswalk_passage_direction) const;
 
   float calcTargetVelocity(
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
@@ -405,6 +416,8 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr collision_info_pub_;
 
   lanelet::ConstLanelet crosswalk_;
+
+  lanelet::ConstLanelet road_;
 
   lanelet::ConstLineStrings3d stop_lines_;
 
