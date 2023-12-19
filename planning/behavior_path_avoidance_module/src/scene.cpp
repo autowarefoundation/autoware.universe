@@ -379,6 +379,9 @@ ObjectData AvoidanceModule::createObjectData(
   // Calc moving time.
   utils::avoidance::fillObjectMovingTime(object_data, stopped_objects_, parameters_);
 
+  // Fill init pose.
+  utils::avoidance::fillInitialPose(object_data, detected_objects_);
+
   // Calc lateral deviation from path to target object.
   object_data.lateral = calcLateralDeviation(object_closest_pose, object_pose.position);
 
