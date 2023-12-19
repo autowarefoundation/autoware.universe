@@ -26,7 +26,7 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
   using std::placeholders::_1;
   using std::placeholders::_2;
   is_approximate_sync_ = this->declare_parameter("approximate_sync", false);
-  backlight_threshold_ = this->declare_parameter<double>("backlight_threshold", 0.85);
+  backlight_threshold_ = this->declare_parameter<double>("backlight_threshold");
 
   if (is_approximate_sync_) {
     approximate_sync_.reset(new ApproximateSync(ApproximateSyncPolicy(10), image_sub_, roi_sub_));
