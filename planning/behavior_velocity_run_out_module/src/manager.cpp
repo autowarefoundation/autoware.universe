@@ -58,6 +58,7 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     auto & p = planner_param_.run_out;
     p.detection_method = getOrDeclareParameter<std::string>(node, ns + ".detection_method");
     p.use_partition_lanelet = getOrDeclareParameter<bool>(node, ns + ".use_partition_lanelet");
+    p.suppress_on_crosswalk = getOrDeclareParameter<bool>(node, ns + ".suppress_on_crosswalk");
     p.specify_decel_jerk = getOrDeclareParameter<bool>(node, ns + ".specify_decel_jerk");
     p.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
     p.passing_margin = getOrDeclareParameter<double>(node, ns + ".passing_margin");
@@ -84,8 +85,13 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     auto & p = planner_param_.dynamic_obstacle;
     const std::string ns_do = ns + ".dynamic_obstacle";
     p.use_mandatory_area = getOrDeclareParameter<bool>(node, ns_do + ".use_mandatory_area");
-    p.min_vel_kmph = getOrDeclareParameter<double>(node, ns_do + ".min_vel_kmph");
-    p.max_vel_kmph = getOrDeclareParameter<double>(node, ns_do + ".max_vel_kmph");
+    p.assume_fixed_velocity =
+      getOrDeclareParameter<bool>(node, ns_do + ".assume_fixed_velocity.enable");
+    p.min_vel_kmph =
+      getOrDeclareParameter<double>(node, ns_do + ".assume_fixed_velocity.min_vel_kmph");
+    p.max_vel_kmph =
+      getOrDeclareParameter<double>(node, ns_do + ".assume_fixed_velocity.max_vel_kmph");
+    p.std_dev_multiplier = getOrDeclareParameter<double>(node, ns_do + ".std_dev_multiplier");
     p.diameter = getOrDeclareParameter<double>(node, ns_do + ".diameter");
     p.height = getOrDeclareParameter<double>(node, ns_do + ".height");
     p.max_prediction_time = getOrDeclareParameter<double>(node, ns_do + ".max_prediction_time");

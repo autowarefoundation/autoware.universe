@@ -698,14 +698,14 @@ void MotionVelocitySmootherNode::insertBehindVelocity(
           prev_output_, output.at(i).pose, node_param_.ego_nearest_dist_threshold,
           node_param_.ego_nearest_yaw_threshold);
         if (opt_nearest_seg_idx) {
-          return opt_nearest_seg_idx.get();
+          return opt_nearest_seg_idx.value();
         }
 
         // with distance threshold
         const auto opt_second_nearest_seg_idx = motion_utils::findNearestSegmentIndex(
           prev_output_, output.at(i).pose, node_param_.ego_nearest_dist_threshold);
         if (opt_second_nearest_seg_idx) {
-          return opt_second_nearest_seg_idx.get();
+          return opt_second_nearest_seg_idx.value();
         }
 
         return motion_utils::findNearestSegmentIndex(prev_output_, output.at(i).pose.position);
@@ -799,7 +799,8 @@ MotionVelocitySmootherNode::calcInitialMotion(
   // use ego velocity/acceleration in the planning for smooth transition from MANUAL to AUTONOMOUS.
   if (node_param_.plan_from_ego_speed_on_manual_mode) {  // could be false for debug purpose
     const bool is_in_autonomous_control = operation_mode_.is_autoware_control_enabled &&
-                                          operation_mode_.mode == OperationModeState::AUTONOMOUS;
+                                          (operation_mode_.mode == OperationModeState::AUTONOMOUS ||
+                                           operation_mode_.mode == OperationModeState::STOP);
     if (!is_in_autonomous_control) {
       RCLCPP_INFO_THROTTLE(
         get_logger(), *clock_, 10000, "Not in autonomous control. Plan from ego velocity.");
