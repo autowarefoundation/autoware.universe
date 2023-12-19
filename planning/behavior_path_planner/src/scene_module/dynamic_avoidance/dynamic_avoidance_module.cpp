@@ -172,7 +172,7 @@ double calcDiffAngleAgainstPath(
   return diff_yaw;
 }
 
-double calcDiffAngleBetweenPaths(
+[[maybe_unused]] double calcDiffAngleBetweenPaths(
   const std::vector<PathPointWithLaneId> & path_points, const PredictedPath & predicted_path)
 {
   const size_t nearest_idx =
