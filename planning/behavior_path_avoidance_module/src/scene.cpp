@@ -17,7 +17,6 @@
 #include "behavior_path_avoidance_module/debug.hpp"
 #include "behavior_path_avoidance_module/utils.hpp"
 #include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
@@ -893,8 +892,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
     output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   } else {
     const auto original_signal = getPreviousModuleOutput().turn_signal_info;
-    const auto new_signal =
-      calcTurnSignalInfo(linear_shift_path, path_shifter_.getShiftLines().front());
+    const auto new_signal = utils::avoidance::calcTurnSignalInfo(
+      linear_shift_path, path_shifter_.getShiftLines().front(), helper_->getEgoShift(), avoid_data_,
+      planner_data_);
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
     output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
       spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
@@ -1283,162 +1283,6 @@ void AvoidanceModule::updateRTCData()
   output.finish_distance_to_path_change = sl_back.end_longitudinal;
 
   updateCandidateRTCStatus(output);
-}
-
-TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(
-  const ShiftedPath & path, const ShiftLine & shift_line) const
-{
-  using boost::geometry::intersects;
-
-  constexpr double THRESHOLD = 0.1;
-  const auto & p = planner_data_->parameters;
-  const auto & rh = planner_data_->route_handler;
-
-  if (shift_line.start_idx + 1 > path.shift_length.size()) {
-    return {};
-  }
-
-  if (shift_line.start_idx + 1 > path.path.points.size()) {
-    return {};
-  }
-
-  if (shift_line.end_idx + 1 > path.shift_length.size()) {
-    return {};
-  }
-
-  if (shift_line.end_idx + 1 > path.path.points.size()) {
-    return {};
-  }
-
-  const auto current_shift_length = helper_->getEgoShift();
-  const auto start_shift_length = path.shift_length.at(shift_line.start_idx);
-  const auto end_shift_length = path.shift_length.at(shift_line.end_idx);
-  const auto relative_shift_length = end_shift_length - start_shift_length;
-
-  // If shift length is shorter than the threshold, it does not need to turn on blinkers
-  if (std::fabs(relative_shift_length) < p.turn_signal_shift_length_threshold) {
-    return {};
-  }
-
-  // If the vehicle does not shift anymore, we turn off the blinker
-  if (std::fabs(path.shift_length.at(shift_line.end_idx) - current_shift_length) < THRESHOLD) {
-    return {};
-  }
-
-  const auto get_command = [](const auto & shift_length) {
-    return shift_length > 0.0 ? TurnIndicatorsCommand::ENABLE_LEFT
-                              : TurnIndicatorsCommand::ENABLE_RIGHT;
-  };
-
-  const auto signal_prepare_distance =
-    std::max(getEgoSpeed() * p.turn_signal_search_time, p.turn_signal_minimum_search_distance);
-  const auto ego_front_to_shift_start =
-    calcSignedArcLength(path.path.points, getEgoPosition(), shift_line.start_idx) -
-    p.vehicle_info.max_longitudinal_offset_m;
-
-  if (signal_prepare_distance < ego_front_to_shift_start) {
-    return {};
-  }
-
-  const auto blinker_start_pose = path.path.points.at(shift_line.start_idx).point.pose;
-  const auto blinker_end_pose = path.path.points.at(shift_line.end_idx).point.pose;
-  const auto get_start_pose = [&](const auto & ego_to_shift_start) {
-    return ego_to_shift_start ? getEgoPose() : blinker_start_pose;
-  };
-
-  TurnSignalInfo turn_signal_info{};
-  turn_signal_info.desired_start_point = get_start_pose(ego_front_to_shift_start);
-  turn_signal_info.desired_end_point = blinker_end_pose;
-  turn_signal_info.required_start_point = blinker_start_pose;
-  turn_signal_info.required_end_point = blinker_end_pose;
-
-  if (!p.turn_signal_on_swerving) {
-    turn_signal_info.turn_signal.command = get_command(relative_shift_length);
-    return turn_signal_info;
-  }
-
-  lanelet::ConstLanelet lanelet;
-  if (!rh->getClosestLaneletWithinRoute(shift_line.end, &lanelet)) {
-    return {};
-  }
-
-  const auto left_lanelets = rh->getAllLeftSharedLinestringLanelets(lanelet, true, true);
-  const auto right_lanelets = rh->getAllRightSharedLinestringLanelets(lanelet, true, true);
-
-  const auto avoid_shift =
-    std::abs(start_shift_length) < THRESHOLD && std::abs(end_shift_length) > THRESHOLD;
-  if (avoid_shift) {
-    // Left avoid. But there is no adjacent lane. No need blinker.
-    if (relative_shift_length > 0.0 && left_lanelets.empty()) {
-      return {};
-    }
-
-    // Right avoid. But there is no adjacent lane. No need blinker.
-    if (relative_shift_length < 0.0 && right_lanelets.empty()) {
-      return {};
-    }
-  }
-
-  const auto return_shift =
-    std::abs(start_shift_length) > THRESHOLD && std::abs(end_shift_length) < THRESHOLD;
-  if (return_shift) {
-    // Right return. But there is no adjacent lane. No need blinker.
-    if (relative_shift_length > 0.0 && right_lanelets.empty()) {
-      return {};
-    }
-
-    // Left return. But there is no adjacent lane. No need blinker.
-    if (relative_shift_length < 0.0 && left_lanelets.empty()) {
-      return {};
-    }
-  }
-
-  const auto left_middle_shift = start_shift_length > THRESHOLD && end_shift_length > THRESHOLD;
-  if (left_middle_shift) {
-    // Left avoid. But there is no adjacent lane. No need blinker.
-    if (relative_shift_length > 0.0 && left_lanelets.empty()) {
-      return {};
-    }
-
-    // Left return. But there is no adjacent lane. No need blinker.
-    if (relative_shift_length < 0.0 && left_lanelets.empty()) {
-      return {};
-    }
-  }
-
-  const auto right_middle_shift = start_shift_length < THRESHOLD && end_shift_length < THRESHOLD;
-  if (right_middle_shift) {
-    // Right avoid. But there is no adjacent lane. No need blinker.
-    if (relative_shift_length < 0.0 && right_lanelets.empty()) {
-      return {};
-    }
-
-    // Left avoid. But there is no adjacent lane. No need blinker.
-    if (relative_shift_length > 0.0 && right_lanelets.empty()) {
-      return {};
-    }
-  }
-
-  const auto footprint = createVehicleFootprint(p.vehicle_info);
-  for (const auto & lane : avoid_data_.current_lanelets) {
-    for (size_t i = shift_line.start_idx; i < shift_line.end_idx; ++i) {
-      const auto transform =
-        tier4_autoware_utils::pose2transform(path.path.points.at(i).point.pose);
-      const auto shifted_vehicle_footprint = transformVector(footprint, transform);
-
-      if (intersects(lane.leftBound2d().basicLineString(), shifted_vehicle_footprint)) {
-        turn_signal_info.turn_signal.command = get_command(relative_shift_length);
-        break;
-      }
-
-      if (intersects(lane.rightBound2d().basicLineString(), shifted_vehicle_footprint)) {
-        turn_signal_info.turn_signal.command = get_command(relative_shift_length);
-        break;
-      }
-    }
-  }
-
-  return turn_signal_info;
 }
 
 void AvoidanceModule::updateInfoMarker(const AvoidancePlanningData & data) const
