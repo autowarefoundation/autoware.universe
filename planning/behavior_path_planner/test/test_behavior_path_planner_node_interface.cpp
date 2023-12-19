@@ -48,17 +48,11 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
   const auto behavior_path_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
 
+  std::vector<std::string> module_names;
+  module_names.emplace_back("behavior_path_planner::DynamicAvoidanceModuleManager");
+
   std::vector<rclcpp::Parameter> params;
-  params.emplace_back("avoidance.enable_module", true);
-  params.emplace_back("avoidance_by_lc.enable_module", true);
-  params.emplace_back("dynamic_avoidance.enable_module", true);
-  params.emplace_back("lane_change_right.enable_module", true);
-  params.emplace_back("lane_change_left.enable_module", true);
-  params.emplace_back("external_request_lane_change_right.enable_module", true);
-  params.emplace_back("external_request_lane_change_left.enable_module", true);
-  params.emplace_back("goal_planner.enable_module", true);
-  params.emplace_back("start_planner.enable_module", true);
-  params.emplace_back("side_shift.enable_module", true);
+  params.emplace_back("launch_modules", module_names);
   node_options.parameter_overrides(params);
 
   test_utils::updateNodeOptions(
@@ -69,13 +63,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
      behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
      behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
      behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-     behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
-     behavior_path_planner_dir + "/config/dynamic_avoidance/dynamic_avoidance.param.yaml",
-     behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
-     behavior_path_planner_dir + "/config/start_planner/start_planner.param.yaml",
-     behavior_path_planner_dir + "/config/goal_planner/goal_planner.param.yaml",
-     behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
-     behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+     behavior_path_planner_dir + "/config/dynamic_avoidance/dynamic_avoidance.param.yaml"});
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }
