@@ -444,6 +444,7 @@ void MissionPlanner::on_set_mrm_route(
       res->status.success = false;
     }
     change_state(RouteState::Message::SET);
+    RCLCPP_INFO(get_logger(), "Route is successfully changed with the modified goal");
     return;
   }
 
@@ -452,6 +453,7 @@ void MissionPlanner::on_set_mrm_route(
     change_mrm_route(new_route);
     change_state(RouteState::Message::SET);
     res->status.success = true;
+    RCLCPP_INFO(get_logger(), "MRM route is successfully changed with the modified goal");
     return;
   }
 
@@ -522,9 +524,8 @@ void MissionPlanner::on_clear_mrm_route(
   // check new route safety
   if (new_route.segments.empty() || !check_reroute_safety(*mrm_route_, new_route)) {
     // failed to create a new route
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "Reroute with normal goal failed.");
+    RCLCPP_ERROR(get_logger(), "Reroute with normal goal failed.");
     change_mrm_route(*mrm_route_);
-    change_route(*normal_route_);
     change_state(RouteState::Message::SET);
     res->status.success = false;
   } else {
@@ -537,6 +538,8 @@ void MissionPlanner::on_clear_mrm_route(
 
 void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg)
 {
+  RCLCPP_INFO(get_logger(), "Received modified goal.");
+
   if (state_.state != RouteState::Message::SET) {
     RCLCPP_ERROR(get_logger(), "The route hasn't set yet. Cannot reroute.");
     return;
@@ -572,6 +575,7 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
 
     change_mrm_route(new_route);
     change_state(RouteState::Message::SET);
+    RCLCPP_INFO(get_logger(), "Changed the MRM route with the modified goal");
     return;
   }
 
@@ -593,6 +597,7 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
 
     change_route(new_route);
     change_state(RouteState::Message::SET);
+    RCLCPP_INFO(get_logger(), "Changed the route with the modified goal");
     return;
   }
 
@@ -727,6 +732,13 @@ bool MissionPlanner::check_reroute_safety(
 {
   if (original_route.segments.empty() || target_route.segments.empty() || !map_ptr_ || !odometry_) {
     return false;
+  }
+
+  const auto current_velocity = odometry_->twist.twist.linear.x;
+
+  // if vehicle is stopped, do not check safety
+  if (current_velocity < 0.01) {
+    return true;
   }
 
   auto hasSamePrimitives = [](
@@ -873,13 +885,17 @@ bool MissionPlanner::check_reroute_safety(
   }
 
   // check safety
-  const auto current_velocity = odometry_->twist.twist.linear.x;
   const double safety_length =
     std::max(current_velocity * reroute_time_threshold_, minimum_reroute_length_);
   if (accumulated_length > safety_length) {
     return true;
   }
 
+  RCLCPP_WARN(
+    get_logger(),
+    "Length of lane where original and B target (= %f) is less than safety length (= %f), so "
+    "reroute is not safe.",
+    accumulated_length, safety_length);
   return false;
 }
 }  // namespace mission_planner

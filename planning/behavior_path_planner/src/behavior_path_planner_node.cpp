@@ -135,6 +135,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num, p.verbose);
 
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+      // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
+      if (name == "") {
+        break;
+      }
       planner_manager_->launchScenePlugin(*this, name);
     }
 
@@ -238,39 +242,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.min_acc = declare_parameter<double>("normal.min_acc");
   p.max_acc = declare_parameter<double>("normal.max_acc");
 
-  // lane change parameters
-  p.backward_length_buffer_for_end_of_lane =
-    declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
-  p.backward_length_buffer_for_blocking_object =
-    declare_parameter<double>("lane_change.backward_length_buffer_for_blocking_object");
-  p.lane_changing_lateral_jerk =
-    declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
-  p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
-  p.minimum_lane_changing_velocity =
-    declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
-  p.minimum_lane_changing_velocity =
-    std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
-  p.lane_change_finish_judge_buffer =
-    declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
-
-  // lateral acceleration map for lane change
-  const auto lateral_acc_velocity =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.velocity");
-  const auto min_lateral_acc =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.min_values");
-  const auto max_lateral_acc =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.max_values");
-  if (
-    lateral_acc_velocity.size() != min_lateral_acc.size() ||
-    lateral_acc_velocity.size() != max_lateral_acc.size()) {
-    RCLCPP_ERROR(get_logger(), "Lane change lateral acceleration map has invalid size.");
-    exit(EXIT_FAILURE);
-  }
-  for (size_t i = 0; i < lateral_acc_velocity.size(); ++i) {
-    p.lane_change_lat_acc_map.add(
-      lateral_acc_velocity.at(i), min_lateral_acc.at(i), max_lateral_acc.at(i));
-  }
-
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
@@ -297,10 +268,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
-  if (p.backward_length_buffer_for_end_of_lane < 1.0) {
-    RCLCPP_WARN_STREAM(
-      get_logger(), "Lane change buffer must be more than 1 meter. Modifying the buffer.");
-  }
   return p;
 }
 
@@ -408,7 +375,9 @@ void BehaviorPathPlannerNode::run()
     // Reset behavior tree when new route is received,
     // so that the each modules do not have to care about the "route jump".
     if (!is_first_time && !has_same_route_id) {
+      RCLCPP_INFO(get_logger(), "New uuid route is received. Resetting modules.");
       planner_manager_->reset();
+      planner_data_->prev_modified_goal.reset();
     }
   }
 
@@ -549,18 +518,14 @@ void BehaviorPathPlannerNode::publish_steering_factor(
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
 }
 
-void BehaviorPathPlannerNode::publish_reroute_availability()
+void BehaviorPathPlannerNode::publish_reroute_availability() const
 {
-  const bool has_approved_modules = planner_manager_->hasApprovedModules();
-  const bool has_candidate_modules = planner_manager_->hasCandidateModules();
-
-  // In the current behavior path planner, we might get unexpected behavior when rerouting while
-  // modules other than lane follow are active. Therefore, rerouting will be allowed only when the
-  // lane follow module is running Note that if there is a approved module or candidate module, it
-  // means non-lane-following modules are runnning.
+  // In the current behavior path planner, we might encounter unexpected behavior when rerouting
+  // while modules other than lane following are active. If non-lane-following module except
+  // always-executable module is approved and running, rerouting will not be　possible.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
-  if (has_approved_modules || has_candidate_modules) {
+  if (planner_manager_->hasNonAlwaysExecutableApprovedModules()) {
     is_reroute_available.availability = false;
   } else {
     is_reroute_available.availability = true;
@@ -773,7 +738,8 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
 {
   // TODO(Horibe) do some error handling when path is not available.
 
-  auto path = output.path ? output.path : planner_data->prev_output_path;
+  auto path = !output.path.points.empty() ? std::make_shared<PathWithLaneId>(output.path)
+                                          : planner_data->prev_output_path;
   path->header = planner_data->route_handler->getRouteHeader();
   path->header.stamp = this->now();
 
