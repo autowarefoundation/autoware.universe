@@ -46,15 +46,15 @@
         },
         "onnx_file": {
           "type": "string",
-          "description": "The onnx file name for yolo model"
+          "description": "The onnx file name for yolo model."
         },
         "engine_file": {
           "type": "string",
-          "description": "The tensorrt engine file name for yolo model"
+          "description": "The tensorrt engine file name for yolo model."
         },
         "label_file": {
           "type": "string",
-          "description": "The label file with label names for detected objects written on it"
+          "description": "The label file with label names for detected objects written on it."
         },
         "calib_image_directory": {
           "type": "string",
@@ -67,7 +67,7 @@
         "mode": {
           "type": "string",
           "default": "FP32",
-          "description": "The inference mode: FP32, FP16, INT8"
+          "description": "The inference mode: FP32, FP16, INT8."
         },
         "gpu_id": {
           "type": "number",
