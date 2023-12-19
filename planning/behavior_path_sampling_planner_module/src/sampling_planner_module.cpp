@@ -74,7 +74,8 @@ SamplingPlannerModule::SamplingPlannerModule(
   // TODO(Daniel): Length increasing curvature cost, increase curvature cost the longer the path is
   // TODO(Daniel): in frenet path to path with laneID transform assign the laneid to the points from
   // end to start -> that will prevent cases were some points on the output dont have a laneID
-  //  Yaw difference
+
+  //  Yaw difference soft constraint cost
   // soft_constraints_.emplace_back(
   //   [&](
   //     sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints &
@@ -115,8 +116,9 @@ SamplingPlannerModule::SamplingPlannerModule(
       [[maybe_unused]] const sampler_common::Constraints & constraints,
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.poses.empty()) return 0.0;
-      const auto & path_point_arc =
-        lanelet::utils::getArcCoordinates(input_data.closest_lanelets_to_goal, path.poses.back());
+      const auto & last_pose = path.poses.back();
+      const auto path_point_arc =
+        lanelet::utils::getArcCoordinates(input_data.closest_lanelets_to_goal, last_pose);
       const double lateral_distance_to_center_lane = std::abs(path_point_arc.distance);
       return lateral_distance_to_center_lane;
     });
@@ -159,11 +161,11 @@ SamplingPlannerModule::SamplingPlannerModule(
 
 bool SamplingPlannerModule::isExecutionRequested() const
 {
-  if (getPreviousModuleOutput().reference_path->points.empty()) {
+  if (getPreviousModuleOutput().reference_path.points.empty()) {
     return false;
   }
 
-  if (!motion_utils::isDrivingForward(getPreviousModuleOutput().reference_path->points)) {
+  if (!motion_utils::isDrivingForward(getPreviousModuleOutput().reference_path.points)) {
     RCLCPP_WARN(getLogger(), "Backward path is NOT supported. Just converting path to trajectory");
     return false;
   }
@@ -174,7 +176,10 @@ bool SamplingPlannerModule::isExecutionRequested() const
 bool SamplingPlannerModule::isReferencePathSafe() const
 {
   std::vector<DrivableLanes> drivable_lanes{};
-  const auto & prev_module_path = getPreviousModuleOutput().path;
+  const auto & prev_module_path = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().path);
+  const auto & prev_module_reference_path =
+    std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
+
   const auto & p = planner_data_->parameters;
   const auto ego_pose = planner_data_->self_odometry->pose.pose;
   lanelet::ConstLanelet current_lane;
@@ -235,8 +240,7 @@ bool SamplingPlannerModule::isReferencePathSafe() const
     }
     return path;
   };
-  sampler_common::Path reference_path =
-    transform_to_sampling_path(getPreviousModuleOutput().reference_path);
+  sampler_common::Path reference_path = transform_to_sampling_path(prev_module_reference_path);
   const auto footprint = sampler_common::constraints::buildFootprintPoints(
     reference_path, internal_params_->constraints);
 
@@ -290,7 +294,8 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
 
   PathWithLaneId path;
   const auto header = planner_data_->route_handler->getRouteHeader();
-  const auto reference_path_ptr = getPreviousModuleOutput().reference_path;
+  const auto reference_path_ptr =
+    std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
   for (size_t i = 0; i < frenet_path.points.size(); ++i) {
     const auto & frenet_path_point_position = frenet_path.points.at(i);
@@ -363,7 +368,8 @@ void SamplingPlannerModule::prepareConstraints(
 
 BehaviorModuleOutput SamplingPlannerModule::plan()
 {
-  const auto reference_path_ptr = getPreviousModuleOutput().reference_path;
+  const auto reference_path_ptr =
+    std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
   if (reference_path_ptr->points.empty()) {
     return {};
   }
@@ -420,8 +426,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   std::vector<DrivableLanes> drivable_lanes{};
 
-  const auto & prev_module_path = getPreviousModuleOutput().path;
-  // const auto & current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
+  const auto prev_module_path = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().path);
 
   const auto & p = planner_data_->parameters;
   const auto ego_pose = planner_data_->self_odometry->pose.pose;
@@ -500,38 +505,13 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
       internal_params_->sampling.target_lengths.begin(),
       internal_params_->sampling.target_lengths.end());
 
-    // const double max_target_length = *std::max_element(
-    //   internal_params_->sampling.target_lengths.begin(),
-    //   internal_params_->sampling.target_lengths.end());
-
-    // double x = prev_path_frenet.points.back().x();
-    // double x_pose = pose.position.x;
     if (std::abs(length_goal - length_path) > min_target_length) {
-      auto quaternion_from_rpy = [](double roll, double pitch, double yaw) -> tf2::Quaternion {
-        tf2::Quaternion quaternion_tf2;
-        quaternion_tf2.setRPY(roll, pitch, yaw);
-        return quaternion_tf2;
-      };
-
-      geometry_msgs::msg::Pose future_pose;
-      future_pose.position.x = prev_path_frenet.points.back().x();
-      future_pose.position.y = prev_path_frenet.points.back().y();
-      future_pose.position.z = pose.position.z;
-
-      const auto future_pose_quaternion =
-        quaternion_from_rpy(0.0, 0.0, prev_path_frenet.yaws.back());
-      future_pose.orientation.w = future_pose_quaternion.w();
-      future_pose.orientation.x = future_pose_quaternion.x();
-      future_pose.orientation.y = future_pose_quaternion.y();
-      future_pose.orientation.z = future_pose_quaternion.z();
+      geometry_msgs::msg::Pose future_pose = prev_path_frenet.poses.back();
       sampler_common::State future_state =
         behavior_path_planner::getInitialState(future_pose, reference_spline);
       frenet_planner::FrenetState frenet_reuse_state;
 
       set_frenet_state(future_state, reference_spline, frenet_reuse_state);
-
-      // frenet_reuse_state.position = prev_path_frenet.frenet_points.back();
-
       frenet_planner::SamplingParameters extension_sampling_parameters =
         prepareSamplingParameters(future_state, reference_spline, *internal_params_);
       auto extension_frenet_paths = frenet_planner::generatePaths(
@@ -615,8 +595,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
                                     planner_data_->route_handler->getGoalPose().position.z)
                                 : PathWithLaneId{};
 
-    out.path = (prev_sampling_path_) ? std::make_shared<PathWithLaneId>(out_path)
-                                     : getPreviousModuleOutput().path;
+    out.path = (prev_sampling_path_) ? out_path : getPreviousModuleOutput().path;
     out.reference_path = getPreviousModuleOutput().reference_path;
     out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
     return out;
@@ -639,8 +618,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   std::cerr << "road_lanes size " << road_lanes.size() << "\n";
   std::cerr << "First lane ID size " << out_path.points.at(0).lane_ids.size() << "\n";
   BehaviorModuleOutput out;
-  out.path = std::make_shared<PathWithLaneId>(out_path);
-  out.reference_path = reference_path_ptr;
+  out.path = out_path;
+  out.reference_path = *reference_path_ptr;
   out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
   extendOutputDrivableArea(out);
   return out;
@@ -739,7 +718,7 @@ void SamplingPlannerModule::updateDebugMarkers()
 
 void SamplingPlannerModule::extendOutputDrivableArea(BehaviorModuleOutput & output)
 {
-  const auto prev_module_path = getPreviousModuleOutput().path;
+  const auto prev_module_path = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().path);
   // const auto current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
   const auto & p = planner_data_->parameters;
   const auto ego_pose = planner_data_->self_odometry->pose.pose;

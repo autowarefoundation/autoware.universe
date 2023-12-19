@@ -153,8 +153,10 @@ private:
   bool canTransitSuccessState() override
   {
     std::vector<DrivableLanes> drivable_lanes{};
-    const auto & prev_module_path = getPreviousModuleOutput().path;
-    const auto prev_module_reference_path = getPreviousModuleOutput().reference_path;
+    const auto & prev_module_path =
+      std::make_shared<PathWithLaneId>(getPreviousModuleOutput().path);
+    const auto prev_module_reference_path =
+      std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
     const auto & p = planner_data_->parameters;
     const auto ego_pose = planner_data_->self_odometry->pose.pose;
