@@ -251,10 +251,10 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     // 1: Compensate radar coordinate
     // radar track velocity is defined in the radar coordinate
     // compensate radar coordinate to vehicle coordinate
-    auto compensated_velocity = compensateVelocity(radar_track);
+    auto compensated_velocity = compensateVelocitySensorPosition(radar_track);
     // 2: Compensate ego motion
     if (node_param_.use_twist_compensation && odometry_data_) {
-      compensateEgoMotion(compensated_velocity, position_from_veh);
+      compensated_velocity = compensateVelocityEgoMotion(compensated_velocity, position_from_veh);
     } else if (node_param_.use_twist_compensation && !odometry_data_) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), 5000,
@@ -295,7 +295,7 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
   return tracked_objects;
 }
 
-geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocity(
+geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocitySensorPosition(
   const radar_msgs::msg::RadarTrack & radar_track)
 {
   // initialize compensated velocity
@@ -310,9 +310,11 @@ geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocity(
   return compensated_velocity;
 }
 
-void RadarTracksMsgsConverterNode::compensateEgoMotion(
-  geometry_msgs::msg::Vector3 & velocity, const geometry_msgs::msg::Point & position_from_veh)
+geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocityEgoMotion(
+  const geometry_msgs::msg::Vector3 & velocity_in,
+  const geometry_msgs::msg::Point & position_from_veh)
 {
+  geometry_msgs::msg::Vector3 velocity = velocity_in;
   // linear compensation
   velocity.x += odometry_data_->twist.twist.linear.x;
   velocity.y += odometry_data_->twist.twist.linear.y;
