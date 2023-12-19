@@ -74,6 +74,8 @@ public:
 
   void updateData() override;
 
+  void postProcess() override;
+
   BehaviorModuleOutput plan() override;
 
   BehaviorModuleOutput planWaitingApproval() override;
@@ -118,15 +120,13 @@ protected:
 
   std::unique_ptr<LaneChangeBase> module_type_;
 
-  bool canTransitSuccessState() override { return false; }
+  PathSafetyStatus post_process_safety_status_;
 
-  bool canTransitFailureState() override { return false; }
+  bool canTransitSuccessState() override;
 
-  bool canTransitIdleToRunningState() override { return false; }
+  bool canTransitFailureState() override;
 
-  void resetPathIfAbort();
-
-  void resetLaneChangeModule();
+  bool canTransitIdleToRunningState() override;
 
   void setObjectDebugVisualization() const;
 
