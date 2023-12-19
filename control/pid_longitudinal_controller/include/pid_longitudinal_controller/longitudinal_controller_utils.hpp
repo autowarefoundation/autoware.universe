@@ -15,6 +15,7 @@
 #ifndef PID_LONGITUDINAL_CONTROLLER__LONGITUDINAL_CONTROLLER_UTILS_HPP_
 #define PID_LONGITUDINAL_CONTROLLER__LONGITUDINAL_CONTROLLER_UTILS_HPP_
 
+#include "../../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
 #include "interpolation/linear_interpolation.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tf2/utils.h"
@@ -25,8 +26,6 @@
 
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose.hpp"
-
-#include "../../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
 
 #include <cmath>
 #include <limits>

@@ -13,6 +13,8 @@
 // limitations under the License.
 
 // #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include "../../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
+
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <motion_velocity_smoother/trajectory_utils.hpp>
@@ -20,8 +22,6 @@
 
 #include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
-
-#include "../../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
 
 #include <tf2/utils.h>
 

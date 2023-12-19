@@ -14,9 +14,9 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
+#include "../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>

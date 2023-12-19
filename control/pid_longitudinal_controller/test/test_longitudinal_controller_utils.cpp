@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
 #include "gtest/gtest.h"
 #include "pid_longitudinal_controller/longitudinal_controller_utils.hpp"
 #include "tf2/LinearMath/Quaternion.h"
@@ -21,8 +22,6 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
-
-#include "../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
 
 #ifdef ROS_DISTRO_GALACTIC
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
