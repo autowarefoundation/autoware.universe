@@ -14,16 +14,16 @@
 #ifndef OBJECT_DETECTION__OBJECT_POLYGON_DISPLAY_BASE_HPP_
 #define OBJECT_DETECTION__OBJECT_POLYGON_DISPLAY_BASE_HPP_
 
-#include "common/color_alpha_property.hpp"
+#include "autoware_auto_perception_rviz_plugin/common/color_alpha_property.hpp"
+#include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_detail.hpp"
 
-#include <object_detection/object_polygon_detail.hpp>
 #include <rviz_common/display.hpp>
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/enum_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_default_plugins/displays/marker/marker_common.hpp>
 #include <rviz_default_plugins/displays/marker_array/marker_array_display.hpp>
-#include <visibility_control.hpp>
+#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>

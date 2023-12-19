@@ -17,7 +17,7 @@
 
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <visibility_control.hpp>
+#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object.hpp>
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>

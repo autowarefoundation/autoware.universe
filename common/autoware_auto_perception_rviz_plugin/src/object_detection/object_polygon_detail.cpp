@@ -14,7 +14,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Eigen>
-#include <object_detection/object_polygon_detail.hpp>
+#include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_detail.hpp>
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 

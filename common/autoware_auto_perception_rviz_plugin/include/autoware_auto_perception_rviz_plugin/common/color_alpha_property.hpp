@@ -17,7 +17,7 @@
 #include <rviz_common/display.hpp>
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
-#include <visibility_control.hpp>
+#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp>
 
 #include <std_msgs/msg/color_rgba.hpp>
 
