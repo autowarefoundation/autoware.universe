@@ -636,15 +636,15 @@ bool isSatisfiedWithVehicleCondition(
   object.behavior = getObjectBehavior(object, parameters);
   object.is_within_intersection = isWithinIntersection(object, planner_data->route_handler);
 
+  // from here condition check for vehicle type objects.
+  if (isForceAvoidanceTarget(object, data, planner_data, parameters)) {
+    return true;
+  }
+
   // always ignore all merging objects.
   if (object.behavior == ObjectData::Behavior::MERGING) {
     object.reason = "MergingToEgoLane";
     return false;
-  }
-
-  // from here condition check for vehicle type objects.
-  if (isForceAvoidanceTarget(object, data, planner_data, parameters)) {
-    return true;
   }
 
   // Object is on center line -> ignore.
