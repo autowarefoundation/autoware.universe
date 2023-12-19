@@ -198,6 +198,27 @@ DetectedObjects RadarTracksMsgsConverterNode::convertTrackedObjectsToDetectedObj
   return detected_objects;
 }
 
+bool RadarTracksMsgsConverterNode::isStaticObject(
+  const radar_msgs::msg::RadarTrack & radar_track,
+  const geometry_msgs::msg::Vector3 & compensated_velocity)
+{
+  if (!(node_param_.use_twist_compensation && odometry_data_)) {
+    return false;
+  }
+
+  // Calculate azimuth angle of the object in the vehicle coordinate
+  const double sensor_yaw = tf2::getYaw(transform_->transform.rotation);
+  const float radar_azimuth = std::atan2(radar_track.position.y, radar_track.position.x);
+  float azimuth = radar_azimuth + static_cast<float>(sensor_yaw);
+
+  // Calculate longitudinal speed
+  const float longitudinal_speed =
+    compensated_velocity.x * std::cos(azimuth) + compensated_velocity.y * std::sin(azimuth);
+
+  // Check if the object is static
+  return std::fabs(longitudinal_speed) < node_param_.static_object_speed_threshold;
+}
+
 TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
 {
   TrackedObjects tracked_objects;
@@ -240,12 +261,6 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
         "Odometry data is not available. Radar track velocity will not be compensated.");
     }
 
-    // determine static object
-    bool is_static_object = false;
-    if (node_param_.use_twist_compensation && odometry_data_) {
-      is_static_object = !isDynamicObject(radar_track, compensated_velocity);
-    }
-
     // yaw angle (vehicle heading) is obtained from ground velocity
     double yaw = tier4_autoware_utils::normalizeRadian(
       std::atan2(compensated_velocity.y, compensated_velocity.x));
@@ -253,7 +268,7 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     // kinematics setting
     TrackedObjectKinematics kinematics;
     kinematics.orientation_availability = TrackedObjectKinematics::AVAILABLE;
-    kinematics.is_stationary = is_static_object;
+    kinematics.is_stationary = isStaticObject(radar_track, compensated_velocity);
     kinematics.pose_with_covariance.pose = transformed_pose_stamped.pose;
     // velocity of object is defined in the object coordinate
     // heading is obtained from ground velocity

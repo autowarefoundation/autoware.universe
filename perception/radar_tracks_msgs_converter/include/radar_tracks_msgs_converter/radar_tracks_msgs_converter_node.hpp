@@ -100,7 +100,7 @@ private:
   geometry_msgs::msg::Vector3 compensateVelocity(const radar_msgs::msg::RadarTrack & radar_track);
   void compensateEgoMotion(
     geometry_msgs::msg::Vector3 & velocity, const geometry_msgs::msg::Point & position_from_veh);
-  bool isDynamicObject(
+  bool isStaticObject(
     const radar_msgs::msg::RadarTrack & radar_track,
     const geometry_msgs::msg::Vector3 & compensated_velocity);
   void convertCovarianceMatrix(
