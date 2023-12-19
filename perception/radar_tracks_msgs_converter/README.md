@@ -26,7 +26,7 @@ This package converts from [radar_msgs/msg/RadarTracks](https://github.com/ros-p
   - Default parameter is "false"
 - `use_twist_yaw_compensation` (bool): If the parameter is true, then the ego motion compensation will also consider yaw motion of the ego vehicle.
   - Default parameter is "false"
-- `static_obj_speed_threshold` (float): Specify the threshold for static object speed which determines the flag `is_stationary` [m/s].
+- `static_object_speed_threshold` (float): Specify the threshold for static object speed which determines the flag `is_stationary` [m/s].
   - Default parameter is 1.0
 
 ## Note

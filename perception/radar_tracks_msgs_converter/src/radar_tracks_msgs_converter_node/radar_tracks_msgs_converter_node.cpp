@@ -83,8 +83,8 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
   node_param_.use_twist_compensation = declare_parameter<bool>("use_twist_compensation", false);
   node_param_.use_twist_yaw_compensation =
     declare_parameter<bool>("use_twist_yaw_compensation", false);
-  node_param_.static_obj_speed_threshold =
-    declare_parameter<float>("static_obj_speed_threshold", 1.0);
+  node_param_.static_object_speed_threshold =
+    declare_parameter<float>("static_object_speed_threshold", 1.0);
 
   // Subscriber
   sub_radar_ = create_subscription<RadarTracks>(
@@ -130,7 +130,7 @@ rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetPara
       update_param(params, "new_frame_id", p.new_frame_id);
       update_param(params, "use_twist_compensation", p.use_twist_compensation);
       update_param(params, "use_twist_yaw_compensation", p.use_twist_yaw_compensation);
-      update_param(params, "static_obj_speed_threshold", p.static_obj_speed_threshold);
+      update_param(params, "static_object_speed_threshold", p.static_object_speed_threshold);
     }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;

@@ -57,7 +57,7 @@ public:
     std::string new_frame_id{};
     bool use_twist_compensation{};
     bool use_twist_yaw_compensation{};
-    float static_obj_speed_threshold{};
+    float static_object_speed_threshold{};
   };
 
 private:
