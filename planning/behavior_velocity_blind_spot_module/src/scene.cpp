@@ -548,6 +548,7 @@ std::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
     for (const auto lane_id : point.lane_ids) {
       if (lane_id == lane_id_) {
         found_intersection_lane = true;
+        lane_ids.push_back(lane_id);
         break;
       }
       // make lane_ids unique
