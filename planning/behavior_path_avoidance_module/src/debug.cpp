@@ -14,15 +14,13 @@
 
 #include "behavior_path_avoidance_module/debug.hpp"
 
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <magic_enum.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-
-#include <lanelet2_core/primitives/LineString.h>
-#include <tf2/utils.h>
 
 #include <string>
 #include <vector>
