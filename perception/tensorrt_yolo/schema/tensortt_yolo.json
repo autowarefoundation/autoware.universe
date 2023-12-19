@@ -42,7 +42,7 @@
         "ignore_thresh": {
           "type": "number",
           "default": 0.5,
-          "description": "If the output score is less than this value, ths object is ignored."
+          "description": "If the output score is less than this value, this object is ignored."
         },
         "onnx_file": {
           "type": "string",
