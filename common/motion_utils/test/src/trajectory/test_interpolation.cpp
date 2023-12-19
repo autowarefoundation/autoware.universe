@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "motion_utils/trajectory/interpolation.hpp"
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
