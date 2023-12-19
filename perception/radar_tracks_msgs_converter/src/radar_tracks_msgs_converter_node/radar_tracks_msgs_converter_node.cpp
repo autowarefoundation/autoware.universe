@@ -270,17 +270,21 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     kinematics.orientation_availability = TrackedObjectKinematics::AVAILABLE;
     kinematics.is_stationary = isStaticObject(radar_track, compensated_velocity);
     kinematics.pose_with_covariance.pose = transformed_pose_stamped.pose;
+    kinematics.pose_with_covariance.covariance = convertPoseCovarianceMatrix(radar_track);
     // velocity of object is defined in the object coordinate
     // heading is obtained from ground velocity
     kinematics.pose_with_covariance.pose.orientation =
       tier4_autoware_utils::createQuaternionFromYaw(yaw);
     // longitudinal velocity is the length of the velocity vector
+    // lateral velocity is zero, use default value
     kinematics.twist_with_covariance.twist.linear.x = std::sqrt(
       compensated_velocity.x * compensated_velocity.x +
       compensated_velocity.y * compensated_velocity.y);
-    // lateral velocity is zero, use default value
-    // convert covariance matrices
-    convertCovarianceMatrix(radar_track, kinematics);
+    kinematics.twist_with_covariance.covariance = convertTwistCovarianceMatrix(radar_track);
+    // acceleration is zero, use default value
+    kinematics.acceleration_with_covariance.covariance =
+      convertAccelerationCovarianceMatrix(radar_track);
+
     // fill the kinematics to the tracked object
     tracked_object.kinematics = kinematics;
 
@@ -325,69 +329,59 @@ geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocityEgoM
     velocity.x += -position_from_veh.y * veh_yaw;
     velocity.y += position_from_veh.x * veh_yaw;
   }
+  return velocity;
 }
 
-bool RadarTracksMsgsConverterNode::isDynamicObject(
-  const radar_msgs::msg::RadarTrack & radar_track,
-  const geometry_msgs::msg::Vector3 & compensated_velocity)
-{
-  // Calculate azimuth angle of the object in the vehicle coordinate
-  const double sensor_yaw = tf2::getYaw(transform_->transform.rotation);
-  const float radar_azimuth = std::atan2(radar_track.position.y, radar_track.position.x);
-  float azimuth = radar_azimuth + static_cast<float>(sensor_yaw);
-
-  // Calculate longitudinal speed
-  const float longitudinal_speed =
-    compensated_velocity.x * std::cos(azimuth) + compensated_velocity.y * std::sin(azimuth);
-
-  // Check if the object is static
-  return std::fabs(longitudinal_speed) > node_param_.static_obj_speed_threshold;
-}
-
-void RadarTracksMsgsConverterNode::convertCovarianceMatrix(
-  const radar_msgs::msg::RadarTrack & radar_track, TrackedObjectKinematics & kinematics)
+std::array<double, 36> RadarTracksMsgsConverterNode::convertPoseCovarianceMatrix(
+  const radar_msgs::msg::RadarTrack & radar_track)
 {
   using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   using RADAR_IDX = tier4_autoware_utils::xyz_upper_covariance_index::XYZ_UPPER_COV_IDX;
-  {
-    auto & radar_position_cov = radar_track.position_covariance;
-    auto & pose_cov = kinematics.pose_with_covariance.covariance;
-    pose_cov[POSE_IDX::X_X] = radar_position_cov[RADAR_IDX::X_X];
-    pose_cov[POSE_IDX::X_Y] = radar_position_cov[RADAR_IDX::X_Y];
-    pose_cov[POSE_IDX::X_Z] = radar_position_cov[RADAR_IDX::X_Z];
-    pose_cov[POSE_IDX::Y_X] = radar_position_cov[RADAR_IDX::X_Y];
-    pose_cov[POSE_IDX::Y_Y] = radar_position_cov[RADAR_IDX::Y_Y];
-    pose_cov[POSE_IDX::Y_Z] = radar_position_cov[RADAR_IDX::Y_Z];
-    pose_cov[POSE_IDX::Z_X] = radar_position_cov[RADAR_IDX::X_Z];
-    pose_cov[POSE_IDX::Z_Y] = radar_position_cov[RADAR_IDX::Y_Z];
-    pose_cov[POSE_IDX::Z_Z] = radar_position_cov[RADAR_IDX::Z_Z];
-  }
-  {
-    auto & radar_vel_cov = radar_track.velocity_covariance;
-    auto & twist_cov = kinematics.twist_with_covariance.covariance;
-    twist_cov[POSE_IDX::X_X] = radar_vel_cov[RADAR_IDX::X_X];
-    twist_cov[POSE_IDX::X_Y] = radar_vel_cov[RADAR_IDX::X_Y];
-    twist_cov[POSE_IDX::X_Z] = radar_vel_cov[RADAR_IDX::X_Z];
-    twist_cov[POSE_IDX::Y_X] = radar_vel_cov[RADAR_IDX::X_Y];
-    twist_cov[POSE_IDX::Y_Y] = radar_vel_cov[RADAR_IDX::Y_Y];
-    twist_cov[POSE_IDX::Y_Z] = radar_vel_cov[RADAR_IDX::Y_Z];
-    twist_cov[POSE_IDX::Z_X] = radar_vel_cov[RADAR_IDX::X_Z];
-    twist_cov[POSE_IDX::Z_Y] = radar_vel_cov[RADAR_IDX::Y_Z];
-    twist_cov[POSE_IDX::Z_Z] = radar_vel_cov[RADAR_IDX::Z_Z];
-  }
-  {
-    auto & radar_accel_cov = radar_track.acceleration_covariance;
-    auto & accel_cov = kinematics.acceleration_with_covariance.covariance;
-    accel_cov[POSE_IDX::X_X] = radar_accel_cov[RADAR_IDX::X_X];
-    accel_cov[POSE_IDX::X_Y] = radar_accel_cov[RADAR_IDX::X_Y];
-    accel_cov[POSE_IDX::X_Z] = radar_accel_cov[RADAR_IDX::X_Z];
-    accel_cov[POSE_IDX::Y_X] = radar_accel_cov[RADAR_IDX::X_Y];
-    accel_cov[POSE_IDX::Y_Y] = radar_accel_cov[RADAR_IDX::Y_Y];
-    accel_cov[POSE_IDX::Y_Z] = radar_accel_cov[RADAR_IDX::Y_Z];
-    accel_cov[POSE_IDX::Z_X] = radar_accel_cov[RADAR_IDX::X_Z];
-    accel_cov[POSE_IDX::Z_Y] = radar_accel_cov[RADAR_IDX::Y_Z];
-    accel_cov[POSE_IDX::Z_Z] = radar_accel_cov[RADAR_IDX::Z_Z];
-  }
+  std::array<double, 36> pose_covariance{};
+  pose_covariance[POSE_IDX::X_X] = radar_track.position_covariance[RADAR_IDX::X_X];
+  pose_covariance[POSE_IDX::X_Y] = radar_track.position_covariance[RADAR_IDX::X_Y];
+  pose_covariance[POSE_IDX::X_Z] = radar_track.position_covariance[RADAR_IDX::X_Z];
+  pose_covariance[POSE_IDX::Y_X] = radar_track.position_covariance[RADAR_IDX::X_Y];
+  pose_covariance[POSE_IDX::Y_Y] = radar_track.position_covariance[RADAR_IDX::Y_Y];
+  pose_covariance[POSE_IDX::Y_Z] = radar_track.position_covariance[RADAR_IDX::Y_Z];
+  pose_covariance[POSE_IDX::Z_X] = radar_track.position_covariance[RADAR_IDX::X_Z];
+  pose_covariance[POSE_IDX::Z_Y] = radar_track.position_covariance[RADAR_IDX::Y_Z];
+  pose_covariance[POSE_IDX::Z_Z] = radar_track.position_covariance[RADAR_IDX::Z_Z];
+  return pose_covariance;
+}
+std::array<double, 36> RadarTracksMsgsConverterNode::convertTwistCovarianceMatrix(
+  const radar_msgs::msg::RadarTrack & radar_track)
+{
+  using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using RADAR_IDX = tier4_autoware_utils::xyz_upper_covariance_index::XYZ_UPPER_COV_IDX;
+  std::array<double, 36> twist_covariance{};
+  twist_covariance[POSE_IDX::X_X] = radar_track.velocity_covariance[RADAR_IDX::X_X];
+  twist_covariance[POSE_IDX::X_Y] = radar_track.velocity_covariance[RADAR_IDX::X_Y];
+  twist_covariance[POSE_IDX::X_Z] = radar_track.velocity_covariance[RADAR_IDX::X_Z];
+  twist_covariance[POSE_IDX::Y_X] = radar_track.velocity_covariance[RADAR_IDX::X_Y];
+  twist_covariance[POSE_IDX::Y_Y] = radar_track.velocity_covariance[RADAR_IDX::Y_Y];
+  twist_covariance[POSE_IDX::Y_Z] = radar_track.velocity_covariance[RADAR_IDX::Y_Z];
+  twist_covariance[POSE_IDX::Z_X] = radar_track.velocity_covariance[RADAR_IDX::X_Z];
+  twist_covariance[POSE_IDX::Z_Y] = radar_track.velocity_covariance[RADAR_IDX::Y_Z];
+  twist_covariance[POSE_IDX::Z_Z] = radar_track.velocity_covariance[RADAR_IDX::Z_Z];
+  return twist_covariance;
+}
+std::array<double, 36> RadarTracksMsgsConverterNode::convertAccelerationCovarianceMatrix(
+  const radar_msgs::msg::RadarTrack & radar_track)
+{
+  using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using RADAR_IDX = tier4_autoware_utils::xyz_upper_covariance_index::XYZ_UPPER_COV_IDX;
+  std::array<double, 36> acceleration_covariance{};
+  acceleration_covariance[POSE_IDX::X_X] = radar_track.acceleration_covariance[RADAR_IDX::X_X];
+  acceleration_covariance[POSE_IDX::X_Y] = radar_track.acceleration_covariance[RADAR_IDX::X_Y];
+  acceleration_covariance[POSE_IDX::X_Z] = radar_track.acceleration_covariance[RADAR_IDX::X_Z];
+  acceleration_covariance[POSE_IDX::Y_X] = radar_track.acceleration_covariance[RADAR_IDX::X_Y];
+  acceleration_covariance[POSE_IDX::Y_Y] = radar_track.acceleration_covariance[RADAR_IDX::Y_Y];
+  acceleration_covariance[POSE_IDX::Y_Z] = radar_track.acceleration_covariance[RADAR_IDX::Y_Z];
+  acceleration_covariance[POSE_IDX::Z_X] = radar_track.acceleration_covariance[RADAR_IDX::X_Z];
+  acceleration_covariance[POSE_IDX::Z_Y] = radar_track.acceleration_covariance[RADAR_IDX::Y_Z];
+  acceleration_covariance[POSE_IDX::Z_Z] = radar_track.acceleration_covariance[RADAR_IDX::Z_Z];
+  return acceleration_covariance;
 }
 
 uint8_t RadarTracksMsgsConverterNode::convertClassification(const uint16_t classification)

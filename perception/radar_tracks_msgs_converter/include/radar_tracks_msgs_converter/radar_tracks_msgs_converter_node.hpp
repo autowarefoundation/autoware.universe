@@ -105,8 +105,12 @@ private:
   bool isStaticObject(
     const radar_msgs::msg::RadarTrack & radar_track,
     const geometry_msgs::msg::Vector3 & compensated_velocity);
-  void convertCovarianceMatrix(
-    const radar_msgs::msg::RadarTrack & radar_track, TrackedObjectKinematics & kinematics);
+  std::array<double, 36> convertPoseCovarianceMatrix(
+    const radar_msgs::msg::RadarTrack & radar_track);
+  std::array<double, 36> convertTwistCovarianceMatrix(
+    const radar_msgs::msg::RadarTrack & radar_track);
+  std::array<double, 36> convertAccelerationCovarianceMatrix(
+    const radar_msgs::msg::RadarTrack & radar_track);
   uint8_t convertClassification(const uint16_t classification);
 };
 
