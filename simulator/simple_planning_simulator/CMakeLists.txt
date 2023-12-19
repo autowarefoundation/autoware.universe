@@ -2,14 +2,9 @@ cmake_minimum_required(VERSION 3.14)
 project(simple_planning_simulator)
 
 find_package(autoware_cmake REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development)
+find_package(learned_model)
 autoware_package()
-
-find_package(learned_model REQUIRED)
-
-message("learned_model_FOUND: ${learned_model_FOUND}")
-message("learned_model_LIBRARIES: ${learned_model_LIBRARIES}")
-message("learned_model_INCLUDE_DIRS: ${learned_model_INCLUDE_DIRS}")
-
 
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -27,19 +22,12 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_map_acc_geared.cpp
   src/simple_planning_simulator/utils/csv_loader.cpp
 )
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
-
-ament_target_dependencies(${PROJECT_NAME} learned_model)
-
-
-target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast  -fvisibility=hidden) # RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
-
+target_include_directories(${PROJECT_NAME} PUBLIC ${Python3_INCLUDE_DIRS})
 # Node executable
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "simulation::simple_planning_simulator::SimplePlanningSimulator"
   EXECUTABLE ${PROJECT_NAME}_exe
 )
-
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_simple_planning_simulator
