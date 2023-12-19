@@ -12,7 +12,6 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <build_depend>autoware_cmake</build_depend>
-  <build_depend>learned_model</build_depend>
 
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
@@ -22,6 +21,7 @@
   <depend>geometry_msgs</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_extension</depend>
+  <depend>learned_model</depend>
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
@@ -36,8 +36,6 @@
   <depend>tier4_vehicle_msgs</depend>
   <depend>vehicle_info_util</depend>
 
-
-  <exec_depend>learned_model</exec_depend>
   <exec_depend>launch_ros</exec_depend>
 
   <test_depend>ament_cmake_ros</test_depend>
