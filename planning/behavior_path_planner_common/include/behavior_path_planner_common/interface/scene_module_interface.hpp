@@ -362,8 +362,6 @@ private:
 
   std::string name_;
 
-  rclcpp::Logger logger_;
-
   BehaviorModuleOutput previous_module_output_;
 
   StopReason stop_reason_;
@@ -405,7 +403,7 @@ protected:
   virtual BehaviorModuleOutput planWaitingApproval()
   {
     path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
-    path_reference_ = getPreviousModuleOutput().reference_path;
+    path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
     return getPreviousModuleOutput();
   }
@@ -580,6 +578,8 @@ protected:
   {
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
   }
+
+  rclcpp::Logger logger_;
 
   rclcpp::Clock::SharedPtr clock_;
 
