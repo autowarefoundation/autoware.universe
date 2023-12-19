@@ -21,7 +21,7 @@
 // #include <pybind11/stl.h>
 // namespace py = pybind11;
 
-#include "learned_model/include/sim_pymodel_steer_vel.hpp"
+#include "sim_pymodel_steer_vel.hpp"
 
 SimModelPymodels::SimModelPymodels(
   double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
