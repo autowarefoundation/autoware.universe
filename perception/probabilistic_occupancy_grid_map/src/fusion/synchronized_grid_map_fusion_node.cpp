@@ -112,9 +112,9 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
 
   // pub grid_map
   fused_map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
-    "~/output/occupancy_grid_map", rclcpp::QoS{1}.best_effort());
+    "~/output/occupancy_grid_map", rclcpp::QoS{1}.reliable());
   single_frame_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
-    "~/debug/single_frame_map", rclcpp::QoS{1}.best_effort());
+    "~/debug/single_frame_map", rclcpp::QoS{1}.reliable());
 
   // updater
   occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapLOBFUpdater>(
