@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "gtest/gtest.h"
 #include "pid_longitudinal_controller/longitudinal_controller_utils.hpp"
 #include "tf2/LinearMath/Quaternion.h"
