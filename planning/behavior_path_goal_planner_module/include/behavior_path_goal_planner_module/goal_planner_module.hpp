@@ -21,8 +21,8 @@
 #include "behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "behavior_path_goal_planner_module/goal_searcher.hpp"
 #include "behavior_path_goal_planner_module/shift_pull_over.hpp"
-#include "behavior_path_planner/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 #include "behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
 #include "behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
@@ -475,10 +475,6 @@ private:
   // timer for generating pull over path candidates in a separate thread
   void onTimer();
   void onFreespaceParkingTimer();
-
-  // flag for the interface which do not support `allow_goal_modification`
-  // when the goal is in `road_shoulder`, always allow goal modification.
-  bool checkOriginalGoalIsInShoulder() const;
 
   // steering factor
   void updateSteeringFactor(

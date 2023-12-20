@@ -135,6 +135,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num, p.verbose);
 
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+      // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
+      if (name == "") {
+        break;
+      }
       planner_manager_->launchScenePlugin(*this, name);
     }
 
@@ -734,7 +738,8 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
 {
   // TODO(Horibe) do some error handling when path is not available.
 
-  auto path = output.path ? output.path : planner_data->prev_output_path;
+  auto path = !output.path.points.empty() ? std::make_shared<PathWithLaneId>(output.path)
+                                          : planner_data->prev_output_path;
   path->header = planner_data->route_handler->getRouteHeader();
   path->header.stamp = this->now();
 
