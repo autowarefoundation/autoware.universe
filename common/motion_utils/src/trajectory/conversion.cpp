@@ -13,6 +13,10 @@
 // limitations under the License.
 
 #include "motion_utils/trajectory/conversion.hpp"
+#include "autoware_auto_planning_msgs/msg/detail/path__struct.hpp"
+#include "autoware_auto_planning_msgs/msg/detail/path_with_lane_id__struct.hpp"
+#include "autoware_auto_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <algorithm>
 
@@ -85,7 +89,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId convertTrajectoryPointsToPath(
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId path;
   for (const auto & p : trajectory) {
-    PathPointWithLaneId pp;
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId pp;
     pp.point.pose = p.pose;
     pp.point.longitudinal_velocity_mps = p.longitudinal_velocity_mps;
     path.points.emplace_back(pp);
@@ -97,12 +101,12 @@ geometry_msgs::msg::Quaternion lerpOrientation(
   const geometry_msgs::msg::Quaternion & o_from, const geometry_msgs::msg::Quaternion & o_to,
   const double ratio)
 {
-  geometry_msgs::msg::Quaternion q_from, q_to;
-  lanelet::utils::tf2::fromMsg(o_from, q_from);
-  lanelet::utils::tf2::fromMsg(o_to, q_to);
+  tf2::Quaternion q_from, q_to;
+  tf2::fromMsg(o_from, q_from);
+  tf2::fromMsg(o_to, q_to);
 
   const auto q_interpolated = q_from.slerp(q_to, ratio);
-  return lanelet::utils::tf2::toMsg(q_interpolated);
+  return tf2::toMsg(q_interpolated);
 }
 
 }  // namespace motion_utils
