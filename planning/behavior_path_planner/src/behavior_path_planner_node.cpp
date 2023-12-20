@@ -14,15 +14,9 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/scene_module/avoidance/manager.hpp"
-#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
-#include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
-#include "behavior_path_planner/scene_module/lane_change/interface.hpp"
-#include "behavior_path_planner/scene_module/lane_change/manager.hpp"
-#include "behavior_path_planner/scene_module/side_shift/manager.hpp"
-#include "behavior_path_planner/scene_module/start_planner/manager.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "behavior_path_planner_common/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -78,8 +72,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
-  debug_lane_change_msg_array_publisher_ =
-    create_publisher<LaneChangeDebugMsgArray>("~/debug/lane_change_debug_message_array", 1);
 
   if (planner_data_->parameters.visualize_maximum_drivable_area) {
     debug_maximum_drivable_area_publisher_ =
@@ -90,6 +82,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   bound_publisher_ = create_publisher<MarkerArray>("~/debug/bound", 1);
 
+  const auto qos_transient_local = rclcpp::QoS{1}.transient_local();
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onOdometry, this, _1),
@@ -114,7 +107,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/lateral_offset", 1, std::bind(&BehaviorPathPlannerNode::onLateralOffset, this, _1),
     createSubscriptionOptions(this));
   operation_mode_subscriber_ = create_subscription<OperationModeState>(
-    "/system/operation_mode/state", 1,
+    "/system/operation_mode/state", qos_transient_local,
     std::bind(&BehaviorPathPlannerNode::onOperationMode, this, _1),
     createSubscriptionOptions(this));
   scenario_subscriber_ = create_subscription<Scenario>(
@@ -125,7 +118,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     createSubscriptionOptions(this));
 
   // route_handler
-  auto qos_transient_local = rclcpp::QoS{1}.transient_local();
   vector_map_subscriber_ = create_subscription<HADMapBin>(
     "~/input/vector_map", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onMap, this, _1),
     createSubscriptionOptions(this));
@@ -142,84 +134,19 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     const auto & p = planner_data_->parameters;
     planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num, p.verbose);
 
-    const auto register_and_create_publisher =
-      [&](const auto & manager, const bool create_publishers) {
-        const auto & module_name = manager->name();
-        planner_manager_->registerSceneModuleManager(manager);
-        if (create_publishers) {
-          path_candidate_publishers_.emplace(
-            module_name, create_publisher<Path>(path_candidate_name_space + module_name, 1));
-          path_reference_publishers_.emplace(
-            module_name, create_publisher<Path>(path_reference_name_space + module_name, 1));
-        }
-      };
-
-    if (p.config_start_planner.enable_module) {
-      auto manager =
-        std::make_shared<StartPlannerModuleManager>(this, "start_planner", p.config_start_planner);
-      register_and_create_publisher(manager, true);
+    for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+      // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
+      if (name == "") {
+        break;
+      }
+      planner_manager_->launchScenePlugin(*this, name);
     }
 
-    if (p.config_goal_planner.enable_module) {
-      auto manager =
-        std::make_shared<GoalPlannerModuleManager>(this, "goal_planner", p.config_goal_planner);
-      register_and_create_publisher(manager, true);
-    }
-
-    if (p.config_side_shift.enable_module) {
-      auto manager =
-        std::make_shared<SideShiftModuleManager>(this, "side_shift", p.config_side_shift);
-      register_and_create_publisher(manager, true);
-    }
-
-    if (p.config_lane_change_left.enable_module) {
-      const std::string module_topic = "lane_change_left";
-      auto manager = std::make_shared<LaneChangeModuleManager>(
-        this, module_topic, p.config_lane_change_left, route_handler::Direction::LEFT,
-        LaneChangeModuleType::NORMAL);
-      register_and_create_publisher(manager, true);
-    }
-
-    if (p.config_lane_change_right.enable_module) {
-      const std::string module_topic = "lane_change_right";
-      auto manager = std::make_shared<LaneChangeModuleManager>(
-        this, module_topic, p.config_lane_change_right, route_handler::Direction::RIGHT,
-        LaneChangeModuleType::NORMAL);
-      register_and_create_publisher(manager, true);
-    }
-
-    if (p.config_ext_request_lane_change_right.enable_module) {
-      const std::string module_topic = "external_request_lane_change_right";
-      auto manager = std::make_shared<LaneChangeModuleManager>(
-        this, module_topic, p.config_ext_request_lane_change_right, route_handler::Direction::RIGHT,
-        LaneChangeModuleType::EXTERNAL_REQUEST);
-      register_and_create_publisher(manager, true);
-    }
-
-    if (p.config_ext_request_lane_change_left.enable_module) {
-      const std::string module_topic = "external_request_lane_change_left";
-      auto manager = std::make_shared<LaneChangeModuleManager>(
-        this, module_topic, p.config_ext_request_lane_change_left, route_handler::Direction::LEFT,
-        LaneChangeModuleType::EXTERNAL_REQUEST);
-      register_and_create_publisher(manager, true);
-    }
-
-    if (p.config_avoidance.enable_module) {
-      auto manager =
-        std::make_shared<AvoidanceModuleManager>(this, "avoidance", p.config_avoidance);
-      register_and_create_publisher(manager, true);
-    }
-
-    if (p.config_avoidance_by_lc.enable_module) {
-      auto manager = std::make_shared<AvoidanceByLaneChangeModuleManager>(
-        this, "avoidance_by_lane_change", p.config_avoidance_by_lc);
-      register_and_create_publisher(manager, true);
-    }
-
-    if (p.config_dynamic_avoidance.enable_module) {
-      auto manager = std::make_shared<DynamicAvoidanceModuleManager>(
-        this, "dynamic_avoidance", p.config_dynamic_avoidance);
-      register_and_create_publisher(manager, false);
+    for (const auto & manager : planner_manager_->getSceneModuleManagers()) {
+      path_candidate_publishers_.emplace(
+        manager->name(), create_publisher<Path>(path_candidate_name_space + manager->name(), 1));
+      path_reference_publishers_.emplace(
+        manager->name(), create_publisher<Path>(path_reference_name_space + manager->name(), 1));
     }
   }
 
@@ -283,33 +210,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.max_iteration_num = declare_parameter<int>("max_iteration_num");
   p.traffic_light_signal_timeout = declare_parameter<double>("traffic_light_signal_timeout");
 
-  const auto get_scene_module_manager_param = [&](std::string && ns) {
-    ModuleConfigParameters config;
-    config.enable_module = declare_parameter<bool>(ns + "enable_module");
-    config.enable_rtc = declare_parameter<bool>(ns + "enable_rtc");
-    config.enable_simultaneous_execution_as_approved_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
-    config.enable_simultaneous_execution_as_candidate_module =
-      declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
-    config.keep_last = declare_parameter<bool>(ns + "keep_last");
-    config.priority = declare_parameter<int>(ns + "priority");
-    config.max_module_size = declare_parameter<int>(ns + "max_module_size");
-    return config;
-  };
-
-  p.config_start_planner = get_scene_module_manager_param("start_planner.");
-  p.config_goal_planner = get_scene_module_manager_param("goal_planner.");
-  p.config_side_shift = get_scene_module_manager_param("side_shift.");
-  p.config_lane_change_left = get_scene_module_manager_param("lane_change_left.");
-  p.config_lane_change_right = get_scene_module_manager_param("lane_change_right.");
-  p.config_ext_request_lane_change_right =
-    get_scene_module_manager_param("external_request_lane_change_right.");
-  p.config_ext_request_lane_change_left =
-    get_scene_module_manager_param("external_request_lane_change_left.");
-  p.config_avoidance = get_scene_module_manager_param("avoidance.");
-  p.config_avoidance_by_lc = get_scene_module_manager_param("avoidance_by_lc.");
-  p.config_dynamic_avoidance = get_scene_module_manager_param("dynamic_avoidance.");
-
   // vehicle info
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
   p.vehicle_info = vehicle_info;
@@ -342,39 +242,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.min_acc = declare_parameter<double>("normal.min_acc");
   p.max_acc = declare_parameter<double>("normal.max_acc");
 
-  // lane change parameters
-  p.backward_length_buffer_for_end_of_lane =
-    declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
-  p.backward_length_buffer_for_blocking_object =
-    declare_parameter<double>("lane_change.backward_length_buffer_for_blocking_object");
-  p.lane_changing_lateral_jerk =
-    declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
-  p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
-  p.minimum_lane_changing_velocity =
-    declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
-  p.minimum_lane_changing_velocity =
-    std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
-  p.lane_change_finish_judge_buffer =
-    declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
-
-  // lateral acceleration map for lane change
-  const auto lateral_acc_velocity =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.velocity");
-  const auto min_lateral_acc =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.min_values");
-  const auto max_lateral_acc =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.max_values");
-  if (
-    lateral_acc_velocity.size() != min_lateral_acc.size() ||
-    lateral_acc_velocity.size() != max_lateral_acc.size()) {
-    RCLCPP_ERROR(get_logger(), "Lane change lateral acceleration map has invalid size.");
-    exit(EXIT_FAILURE);
-  }
-  for (size_t i = 0; i < lateral_acc_velocity.size(); ++i) {
-    p.lane_change_lat_acc_map.add(
-      lateral_acc_velocity.at(i), min_lateral_acc.at(i), max_lateral_acc.at(i));
-  }
-
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
@@ -401,10 +268,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
-  if (p.backward_length_buffer_for_end_of_lane < 1.0) {
-    RCLCPP_WARN_STREAM(
-      get_logger(), "Lane change buffer must be more than 1 meter. Modifying the buffer.");
-  }
   return p;
 }
 
@@ -512,7 +375,9 @@ void BehaviorPathPlannerNode::run()
     // Reset behavior tree when new route is received,
     // so that the each modules do not have to care about the "route jump".
     if (!is_first_time && !has_same_route_id) {
+      RCLCPP_INFO(get_logger(), "New uuid route is received. Resetting modules.");
       planner_manager_->reset();
+      planner_data_->prev_modified_goal.reset();
     }
   }
 
@@ -646,25 +511,21 @@ void BehaviorPathPlannerNode::publish_steering_factor(
 
     steering_factor_interface_ptr_->updateSteeringFactor(
       {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
-      SteeringFactor::INTERSECTION, steering_factor_direction, steering_factor_state, "");
+      PlanningBehavior::INTERSECTION, steering_factor_direction, steering_factor_state, "");
   } else {
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
 }
 
-void BehaviorPathPlannerNode::publish_reroute_availability()
+void BehaviorPathPlannerNode::publish_reroute_availability() const
 {
-  const bool has_approved_modules = planner_manager_->hasApprovedModules();
-  const bool has_candidate_modules = planner_manager_->hasCandidateModules();
-
-  // In the current behavior path planner, we might get unexpected behavior when rerouting while
-  // modules other than lane follow are active. Therefore, rerouting will be allowed only when the
-  // lane follow module is running Note that if there is a approved module or candidate module, it
-  // means non-lane-following modules are runnning.
+  // In the current behavior path planner, we might encounter unexpected behavior when rerouting
+  // while modules other than lane following are active. If non-lane-following module except
+  // always-executable module is approved and running, rerouting will not be　possible.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
-  if (has_approved_modules || has_candidate_modules) {
+  if (planner_manager_->hasNonAlwaysExecutableApprovedModules()) {
     is_reroute_available.availability = false;
   } else {
     is_reroute_available.availability = true;
@@ -784,11 +645,6 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
   if (avoidance_debug_message) {
     debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
   }
-
-  const auto lane_change_debug_message = debug_messages_data_ptr->getLaneChangeModuleDebugMsg();
-  if (lane_change_debug_message) {
-    debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
-  }
 }
 
 void BehaviorPathPlannerNode::publishPathCandidate(
@@ -882,7 +738,8 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
 {
   // TODO(Horibe) do some error handling when path is not available.
 
-  auto path = output.path ? output.path : planner_data->prev_output_path;
+  auto path = !output.path.points.empty() ? std::make_shared<PathWithLaneId>(output.path)
+                                          : planner_data->prev_output_path;
   path->header = planner_data->route_handler->getRouteHeader();
   path->header.stamp = this->now();
 

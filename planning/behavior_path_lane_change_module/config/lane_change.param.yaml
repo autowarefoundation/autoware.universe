@@ -1,0 +1,110 @@
+/**:
+  ros__parameters:
+    lane_change:
+      backward_lane_length: 200.0 #[m]
+      prepare_duration: 4.0         # [s]
+
+      backward_length_buffer_for_end_of_lane: 3.0 # [m]
+      backward_length_buffer_for_blocking_object: 3.0 # [m]
+      lane_change_finish_judge_buffer: 2.0      # [m]
+
+      lane_changing_lateral_jerk: 0.5              # [m/s3]
+
+      minimum_lane_changing_velocity: 2.78        # [m/s]
+      prediction_time_resolution: 0.5           # [s]
+      longitudinal_acceleration_sampling_num: 5
+      lateral_acceleration_sampling_num: 3
+
+      # side walk parked vehicle
+      object_check_min_road_shoulder_width: 0.5  # [m]
+      object_shiftable_ratio_threshold: 0.6
+
+      # turn signal
+      min_length_for_turn_signal_activation: 10.0 # [m]
+      length_ratio_for_turn_signal_deactivation: 0.8 # ratio (desired end position)
+
+      # longitudinal acceleration
+      min_longitudinal_acc: -1.0
+      max_longitudinal_acc: 1.0
+
+      # safety check
+      safety_check:
+        allow_loose_check_for_cancel: true
+        execution:
+          expected_front_deceleration: -1.0
+          expected_rear_deceleration: -1.0
+          rear_vehicle_reaction_time: 2.0
+          rear_vehicle_safety_time_margin: 1.0
+          lateral_distance_max_threshold: 2.0
+          longitudinal_distance_min_threshold: 3.0
+          longitudinal_velocity_delta_time: 0.8
+        cancel:
+          expected_front_deceleration: -1.0
+          expected_rear_deceleration: -2.0
+          rear_vehicle_reaction_time: 1.5
+          rear_vehicle_safety_time_margin: 0.8
+          lateral_distance_max_threshold: 1.0
+          longitudinal_distance_min_threshold: 2.5
+          longitudinal_velocity_delta_time: 0.6
+        stuck:
+          expected_front_deceleration: -1.0
+          expected_rear_deceleration: -1.0
+          rear_vehicle_reaction_time: 2.0
+          rear_vehicle_safety_time_margin: 1.0
+          lateral_distance_max_threshold: 2.0
+          longitudinal_distance_min_threshold: 3.0
+          longitudinal_velocity_delta_time: 0.8
+
+        # lane expansion for object filtering
+        lane_expansion:
+          left_offset: 0.0 # [m]
+          right_offset: 0.0 # [m]
+
+      # lateral acceleration map
+      lateral_acceleration:
+        velocity: [0.0, 4.0, 10.0]
+        min_values: [0.15, 0.15, 0.15]
+        max_values: [0.5, 0.5, 0.5]
+
+      # target object
+      target_object:
+        car: true
+        truck: true
+        bus: true
+        trailer: true
+        unknown: true
+        bicycle: true
+        motorcycle: true
+        pedestrian: true
+
+      # lane change regulations
+      regulation:
+        crosswalk: false
+        intersection: false
+        traffic_light: true
+
+      # ego vehicle stuck detection
+      stuck_detection:
+        velocity: 0.1 # [m/s]
+        stop_time: 3.0 # [s]
+
+      # collision check
+      enable_prepare_segment_collision_check: true
+      prepare_segment_ignore_object_velocity_thresh: 0.1 # [m/s]
+      check_objects_on_current_lanes: true
+      check_objects_on_other_lanes: true
+      use_all_predicted_path: true
+
+      # lane change cancel
+      cancel:
+        enable_on_prepare_phase: true
+        enable_on_lane_changing_phase: true
+        delta_time: 1.0                     # [s]
+        duration: 5.0                       # [s]
+        max_lateral_jerk: 1000.0            # [m/s3]
+        overhang_tolerance: 0.0             # [m]
+
+      finish_judge_lateral_threshold: 0.2        # [m]
+
+      # debug
+      publish_debug_marker: false
