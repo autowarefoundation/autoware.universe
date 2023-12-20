@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_display_base.hpp>
+#include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_display_base.hpp"
 
 namespace autoware
 {

@@ -22,7 +22,7 @@
 
 #include <memory>
 
-#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp>
+#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp"
 
 namespace autoware
 {
