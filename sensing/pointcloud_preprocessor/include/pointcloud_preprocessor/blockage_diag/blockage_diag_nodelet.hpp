@@ -80,7 +80,7 @@ private:
   int ground_blockage_count_ = 0;
   int sky_blockage_count_ = 0;
   int blockage_count_threshold_;
-  std::string lidar_model_;
+  bool is_channel_order_top2down_;
   int blockage_buffering_frames_;
   int blockage_buffering_interval_;
   int dust_kernel_size_;
@@ -89,6 +89,8 @@ private:
   int dust_buffering_frame_counter_ = 0;
   int dust_count_threshold_;
   int dust_frame_count_ = 0;
+  double distance_coefficient_{327.67};
+  double horizontal_resolution_{0.4};
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
