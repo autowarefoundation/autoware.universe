@@ -51,6 +51,8 @@ using geometry_msgs::msg::Pose;
 
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 
+using route_handler::Direction;
+
 struct ObjectParameter
 {
   bool is_avoidance_target{false};
@@ -174,6 +176,7 @@ struct AvoidanceParameters
 
   // force avoidance
   double threshold_time_force_avoidance_for_stopped_vehicle{0.0};
+  double force_avoidance_distance_threshold{0.0};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -325,15 +328,17 @@ struct AvoidanceParameters
 struct ObjectData  // avoidance target
 {
   ObjectData() = default;
+  
   ObjectData(PredictedObject obj, double lat, double lon, double len, double overhang)
-  : object(std::move(obj)), lateral(lat), longitudinal(lon), length(len), overhang_dist(overhang)
+  : object(std::move(obj)), to_centerline(lat), longitudinal(lon), length(len), overhang_dist(overhang)
   {
   }
 
   PredictedObject object;
 
   // lateral position of the CoM, in Frenet coordinate from ego-pose
-  double lateral{0.0};
+
+  double to_centerline{0.0};
 
   // longitudinal position of the CoM, in Frenet coordinate from ego-pose
   double longitudinal{0.0};
@@ -365,6 +370,9 @@ struct ObjectData  // avoidance target
   // store the information of the lanelet which the object's overhang is currently occupying
   lanelet::ConstLanelet overhang_lanelet;
 
+  // the position at the detected moment
+  Pose init_pose;
+
   // the position of the overhang
   Pose overhang_pose;
 
@@ -394,6 +402,9 @@ struct ObjectData  // avoidance target
 
   // is within intersection area
   bool is_within_intersection{false};
+
+  // object direction.
+  Direction direction{Direction::NONE};
 
   // unavoidable reason
   std::string reason{};
@@ -565,8 +576,6 @@ struct ShiftLineData
  */
 struct DebugData
 {
-  std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
-
   geometry_msgs::msg::Polygon detection_area;
 
   lanelet::ConstLineStrings3d bounds;
