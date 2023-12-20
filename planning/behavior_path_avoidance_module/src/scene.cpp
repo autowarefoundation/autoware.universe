@@ -1227,7 +1227,6 @@ void AvoidanceModule::initVariables()
   debug_marker_.markers.clear();
   resetPathCandidate();
   resetPathReference();
-  is_avoidance_maneuver_starts_ = false;
   arrived_path_end_ = false;
 }
 
@@ -1264,8 +1263,8 @@ void AvoidanceModule::updateRTCData()
 
   CandidateOutput output;
 
-  const auto sl_front = candidates.front();
-  const auto sl_back = candidates.back();
+  const auto & sl_front = candidates.front();
+  const auto & sl_back = candidates.back();
 
   output.path_candidate = data.candidate_path.path;
   output.lateral_shift = helper_->getRelativeShiftToPath(shift_line);

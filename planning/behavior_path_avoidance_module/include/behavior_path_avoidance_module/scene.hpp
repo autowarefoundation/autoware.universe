@@ -410,8 +410,6 @@ private:
 
   using RegisteredShiftLineArray = std::vector<RegisteredShiftLine>;
 
-  bool is_avoidance_maneuver_starts_;
-
   bool arrived_path_end_{false};
 
   bool safe_{true};
