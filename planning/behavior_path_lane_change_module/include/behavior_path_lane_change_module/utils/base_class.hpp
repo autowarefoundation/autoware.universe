@@ -107,14 +107,13 @@ public:
   virtual bool specialExpiredCheck() const { return false; }
 
   virtual void setPreviousModulePaths(
-    const std::shared_ptr<PathWithLaneId> & prev_module_reference_path,
-    const std::shared_ptr<PathWithLaneId> & prev_module_path)
+    const PathWithLaneId & prev_module_reference_path, const PathWithLaneId & prev_module_path)
   {
-    if (prev_module_reference_path) {
-      prev_module_reference_path_ = *prev_module_reference_path;
+    if (!prev_module_reference_path.points.empty()) {
+      prev_module_reference_path_ = prev_module_reference_path;
     }
-    if (prev_module_path) {
-      prev_module_path_ = *prev_module_path;
+    if (!prev_module_path.points.empty()) {
+      prev_module_path_ = prev_module_path;
     }
   };
 
@@ -265,7 +264,7 @@ protected:
   mutable double object_debug_lifetime_{0.0};
   mutable StopWatch<std::chrono::milliseconds> stop_watch_;
 
-  rclcpp::Logger logger_ = rclcpp::get_logger("lane_change");
+  rclcpp::Logger logger_ = utils::lane_change::getLogger(getModuleTypeStr());
   mutable rclcpp::Clock clock_{RCL_ROS_TIME};
 };
 }  // namespace behavior_path_planner

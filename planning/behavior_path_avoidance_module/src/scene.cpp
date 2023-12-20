@@ -220,7 +220,7 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
 
   // lanelet info
   data.current_lanelets = utils::avoidance::getCurrentLanesFromPath(
-    *getPreviousModuleOutput().reference_path, planner_data_);
+    getPreviousModuleOutput().reference_path, planner_data_);
 
   data.extend_lanelets =
     utils::avoidance::getExtendLanes(data.current_lanelets, getEgoPose(), planner_data_);
@@ -233,8 +233,8 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
     });
 
   // calc drivable bound
-  const auto shorten_lanes =
-    utils::cutOverlappedLanes(*getPreviousModuleOutput().path, data.drivable_lanes);
+  auto tmp_path = getPreviousModuleOutput().path;
+  const auto shorten_lanes = utils::cutOverlappedLanes(tmp_path, data.drivable_lanes);
   data.left_bound = toLineString3d(utils::calcBound(
     planner_data_->route_handler, shorten_lanes, parameters_->use_hatched_road_markings,
     parameters_->use_intersection_areas, true));
@@ -244,9 +244,9 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
 
   // reference path
   if (isDrivingSameLane(helper_->getPreviousDrivingLanes(), data.current_lanelets)) {
-    data.reference_path_rough = extendBackwardLength(*getPreviousModuleOutput().path);
+    data.reference_path_rough = extendBackwardLength(getPreviousModuleOutput().path);
   } else {
-    data.reference_path_rough = *getPreviousModuleOutput().path;
+    data.reference_path_rough = getPreviousModuleOutput().path;
     RCLCPP_WARN(getLogger(), "Previous module lane is updated. Don't use latest reference path.");
   }
 
@@ -328,14 +328,12 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
 
   // debug
   {
-    debug.current_lanelets = std::make_shared<lanelet::ConstLanelets>(data.current_lanelets);
-
     std::vector<AvoidanceDebugMsg> debug_info_array;
     const auto append = [&](const auto & o) {
       AvoidanceDebugMsg debug_info;
       debug_info.object_id = toHexString(o.object.object_id);
       debug_info.longitudinal_distance = o.longitudinal;
-      debug_info.lateral_distance_from_centerline = o.lateral;
+      debug_info.lateral_distance_from_centerline = o.to_centerline;
       debug_info.allow_avoidance = o.reason == "";
       debug_info.failed_reason = o.reason;
       debug_info_array.push_back(debug_info);
@@ -380,7 +378,11 @@ ObjectData AvoidanceModule::createObjectData(
   utils::avoidance::fillObjectMovingTime(object_data, stopped_objects_, parameters_);
 
   // Calc lateral deviation from path to target object.
-  object_data.lateral = calcLateralDeviation(object_closest_pose, object_pose.position);
+  object_data.to_centerline =
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+  object_data.direction = calcLateralDeviation(object_closest_pose, object_pose.position) > 0.0
+                            ? Direction::LEFT
+                            : Direction::RIGHT;
 
   // Find the footprint point closest to the path, set to object_data.overhang_distance.
   object_data.overhang_dist = utils::avoidance::calcEnvelopeOverhangDistance(
@@ -910,17 +912,17 @@ BehaviorModuleOutput AvoidanceModule::plan()
   }
 
   if (isDrivingSameLane(helper_->getPreviousDrivingLanes(), data.current_lanelets)) {
-    output.path = std::make_shared<PathWithLaneId>(spline_shift_path.path);
+    output.path = spline_shift_path.path;
   } else {
     output.path = getPreviousModuleOutput().path;
     RCLCPP_WARN(getLogger(), "Previous module lane is updated. Do nothing.");
   }
 
   output.reference_path = getPreviousModuleOutput().reference_path;
-  path_reference_ = getPreviousModuleOutput().reference_path;
+  path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
-  const size_t ego_idx = planner_data_->findEgoIndex(output.path->points);
-  utils::clipPathLength(*output.path, ego_idx, planner_data_->parameters);
+  const size_t ego_idx = planner_data_->findEgoIndex(output.path.points);
+  utils::clipPathLength(output.path, ego_idx, planner_data_->parameters);
 
   // Drivable area generation.
   {
@@ -995,7 +997,7 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   }
 
   path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
-  path_reference_ = getPreviousModuleOutput().reference_path;
+  path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
   return out;
 }
@@ -1169,11 +1171,11 @@ void AvoidanceModule::updateData()
   helper_->setData(planner_data_);
 
   if (!helper_->isInitialized()) {
-    helper_->setPreviousSplineShiftPath(toShiftedPath(*getPreviousModuleOutput().path));
-    helper_->setPreviousLinearShiftPath(toShiftedPath(*getPreviousModuleOutput().path));
-    helper_->setPreviousReferencePath(*getPreviousModuleOutput().path);
+    helper_->setPreviousSplineShiftPath(toShiftedPath(getPreviousModuleOutput().path));
+    helper_->setPreviousLinearShiftPath(toShiftedPath(getPreviousModuleOutput().path));
+    helper_->setPreviousReferencePath(getPreviousModuleOutput().path);
     helper_->setPreviousDrivingLanes(utils::avoidance::getCurrentLanesFromPath(
-      *getPreviousModuleOutput().reference_path, planner_data_));
+      getPreviousModuleOutput().reference_path, planner_data_));
   }
 
   debug_data_ = DebugData();
