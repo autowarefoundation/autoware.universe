@@ -15,7 +15,7 @@
 #ifndef OBJECT_ASSOCIATION_MERGER__NODE_HPP_
 #define OBJECT_ASSOCIATION_MERGER__NODE_HPP_
 
-#include "object_association_merger/data_association/data_association.hpp"
+#include "object_merger/data_association/data_association.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

@@ -25,7 +25,7 @@
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
-#include "object_association_merger/data_association/solver/gnn_solver.hpp"
+#include "object_merger/data_association/solver/gnn_solver.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
