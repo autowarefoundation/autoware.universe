@@ -30,7 +30,10 @@ public:
     return BasicPoint3d{0.0, 0.0, gps.ele};
   }
 
-  GPSPoint reverse(const BasicPoint3d &) const override { return {}; }
+  GPSPoint reverse(const BasicPoint3d & point) const override
+  {
+    return GPSPoint{0.0, 0.0, point.z()};
+  }
 };
 
 }  // namespace lanelet::projection
