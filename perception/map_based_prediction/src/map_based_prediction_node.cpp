@@ -1569,12 +1569,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   const double acceleration_distance =
     filtered_obj_acc * (1.0 / λ) * prediction_time_horizon_ +
     filtered_obj_acc * (1.0 / std::pow(λ, 2)) * std::exp(-λ * prediction_time_horizon_);
-  std::cerr << "------------------------------------\n";
-  std::cerr << "object " << tier4_autoware_utils::toHexString(object.object_id) << "\n";
-  std::cerr << "acceleration_distance calculated " << acceleration_distance << "\n";
-  std::cerr << "obj_vel " << obj_vel << "\n";
-  std::cerr << "filtered_obj_acc " << filtered_obj_acc << "\n";
-  std::cerr << "prediction_time_horizon_ " << prediction_time_horizon_ << "\n";
+  // std::cerr << "------------------------------------\n";
+  // std::cerr << "object " << tier4_autoware_utils::toHexString(object.object_id) << "\n";
+  // std::cerr << "acceleration_distance calculated " << acceleration_distance << "\n";
+  // std::cerr << "obj_vel " << obj_vel << "\n";
+  // std::cerr << "filtered_obj_acc " << filtered_obj_acc << "\n";
+  // std::cerr << "prediction_time_horizon_ " << prediction_time_horizon_ << "\n";
 
   std::vector<PredictedRefPath> all_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
@@ -1582,7 +1582,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     const double search_dist = acceleration_distance + prediction_time_horizon_ * obj_vel +
                                lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
     lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
-    std::cerr << "search_dist " << search_dist << "\n";
+    // std::cerr << "search_dist " << search_dist << "\n";
     const double validate_time_horizon =
       prediction_time_horizon_ * prediction_time_horizon_rate_for_validate_lane_length_;
 
@@ -1672,7 +1672,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     addReferencePathsLocal(right_paths, Maneuver::RIGHT_LANE_CHANGE);
     addReferencePathsLocal(center_paths, Maneuver::LANE_FOLLOW);
   }
-  std::cerr << "------------------------------------\n";
+  // std::cerr << "------------------------------------\n";
 
   return all_ref_paths;
 }
