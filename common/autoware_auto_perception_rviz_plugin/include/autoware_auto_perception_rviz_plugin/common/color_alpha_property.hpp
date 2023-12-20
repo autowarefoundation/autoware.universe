@@ -14,6 +14,8 @@
 #ifndef AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__COMMON__COLOR_ALPHA_PROPERTY_HPP_
 #define AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__COMMON__COLOR_ALPHA_PROPERTY_HPP_
 
+#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp"
+
 #include <rviz_common/display.hpp>
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
@@ -21,8 +23,6 @@
 #include <std_msgs/msg/color_rgba.hpp>
 
 #include <memory>
-
-#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp"
 
 namespace autoware
 {

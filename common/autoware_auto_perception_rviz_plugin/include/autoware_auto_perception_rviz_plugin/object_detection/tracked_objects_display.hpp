@@ -14,6 +14,8 @@
 #ifndef AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__OBJECT_DETECTION__TRACKED_OBJECTS_DISPLAY_HPP_
 #define AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__OBJECT_DETECTION__TRACKED_OBJECTS_DISPLAY_HPP_
 
+#include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_display_base.hpp"
+
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 
 #include <boost/uuid/uuid.hpp>
@@ -23,8 +25,6 @@
 #include <map>
 #include <string>
 #include <vector>
-
-#include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_display_base.hpp"
 
 namespace autoware
 {

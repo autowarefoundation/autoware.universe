@@ -15,6 +15,8 @@
 #ifndef AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__OBJECT_DETECTION__OBJECT_POLYGON_DETAIL_HPP_
 #define AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__OBJECT_DETECTION__OBJECT_POLYGON_DETAIL_HPP_
 
+#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp"
+
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -32,8 +34,6 @@
 #include <map>
 #include <string>
 #include <vector>
-
-#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp"
 
 namespace autoware
 {

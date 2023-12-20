@@ -16,6 +16,7 @@
 
 #include "autoware_auto_perception_rviz_plugin/common/color_alpha_property.hpp"
 #include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_detail.hpp"
+#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp"
 
 #include <rviz_common/display.hpp>
 #include <rviz_common/properties/color_property.hpp>
@@ -33,10 +34,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "autoware_auto_perception_rviz_plugin/common/color_alpha_property.hpp"
-#include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_detail.hpp"
-#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp"
 
 namespace autoware
 {
