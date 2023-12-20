@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 
 #include <planning_interface_test_manager/planning_interface_test_manager.hpp>
 #include <planning_interface_test_manager/planning_interface_test_manager_utils.hpp>
