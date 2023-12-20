@@ -35,7 +35,7 @@ std::shared_ptr<radar_tracks_noise_filter::RadarTrackCrossingNoiseFilterNode> ge
 radar_msgs::msg::RadarTrack get_radar_track(float velocity_y)
 {
   radar_msgs::msg::RadarTrack radar_track;
-  radar_track.velocity.y = velocity_y;  // 修正: 変数名を radar_track に修正
+  radar_track.velocity.y = velocity_y;
   return radar_track;
 }
 
