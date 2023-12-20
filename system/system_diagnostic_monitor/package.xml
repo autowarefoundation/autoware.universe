@@ -12,7 +12,6 @@
 
   <exec_depend>autoware_adapi_v1_msgs</exec_depend>
   <exec_depend>diagnostic_msgs</exec_depend>
-  <exec_depend>rclpy</exec_depend>
   <exec_depend>system_diagnostic_graph</exec_depend>
   <exec_depend>tier4_system_msgs</exec_depend>
 

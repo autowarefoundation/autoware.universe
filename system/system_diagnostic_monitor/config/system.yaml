@@ -1,8 +1,0 @@
-nodes:
-  - path: /autoware/system
-    type: and
-    list:
-      - { type: link, link: /autoware/system/topic_rate_check/emergency_control_command }
-
-  - path: /autoware/system/topic_rate_check/emergency_control_command
-    diag: "topic_state_monitor_system_emergency_control_cmd: system_topic_status"
