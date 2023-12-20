@@ -42,7 +42,8 @@
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <utils.hpp>
+
+#include "tier4_planning_rviz_plugin/utils.hpp"
 
 namespace
 {
