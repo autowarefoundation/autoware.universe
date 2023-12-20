@@ -1556,7 +1556,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
   // Use a filtered-decaying acceleration model
   const double filtered_obj_acc = object_acceleration_monitor_.getFilteredAcceleration(object);
-  const double exponential_half_life = prediction_time_horizon_ / 2.0;
+  const double exponential_half_life = prediction_time_horizon_ / 4.0;
   // The decay constant λ = ln(2) / exponential_half_life
   const double λ = std::log(2) / exponential_half_life;
 

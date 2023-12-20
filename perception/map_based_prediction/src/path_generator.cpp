@@ -407,7 +407,7 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
     static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y);
 
   // The decay constant λ = ln(2) / exponential_half_life
-  const float exponential_half_life = T / 2.0;
+  const float exponential_half_life = T / 4.0;
   const float λ = std::log(2) / exponential_half_life;
 
   // Vnew * T = Vo * T +  acc(1/λ) * T + acc(1/λ^2)e^(-λT)
