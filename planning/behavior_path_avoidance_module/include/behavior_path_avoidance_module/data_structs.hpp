@@ -328,9 +328,13 @@ struct AvoidanceParameters
 struct ObjectData  // avoidance target
 {
   ObjectData() = default;
-  
+
   ObjectData(PredictedObject obj, double lat, double lon, double len, double overhang)
-  : object(std::move(obj)), to_centerline(lat), longitudinal(lon), length(len), overhang_dist(overhang)
+  : object(std::move(obj)),
+    to_centerline(lat),
+    longitudinal(lon),
+    length(len),
+    overhang_dist(overhang)
   {
   }
 
