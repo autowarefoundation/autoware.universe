@@ -387,6 +387,7 @@ PredictedPath PathGenerator::convertToPredictedPath(
 FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const PosePath & ref_path)
 {
   FrenetPoint frenet_point;
+  const double T = time_horizon_;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
 
   const size_t nearest_segment_idx = motion_utils::findNearestSegmentIndex(ref_path, obj_point);
@@ -400,10 +401,30 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
     static_cast<float>(tf2::getYaw(ref_path.at(nearest_segment_idx).orientation));
   const float delta_yaw = obj_yaw - lane_yaw;
 
+  const float ax =
+    static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.x);
+  const float ay =
+    static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y);
+
+  // The decay constant λ = ln(2) / exponential_half_life
+  const float exponential_half_life = T / 2.0;
+  const float λ = std::log(2) / exponential_half_life;
+
+  // Vnew * T = Vo * T +  acc(1/λ) * T + acc(1/λ^2)e^(-λT)
+  // Vnew = Vo + acc(1/λ) + acc(1/T*λ^2)e^(-λT)
+  const float VX = vx + ax * (1 / λ + std::exp(-λ * T) / (T * std::pow(λ, 2)));
+  const float VY = vy + ay * (1 / λ + std::exp(-λ * T) / (T * std::pow(λ, 2)));
+
+  // a(t) = acc - acc(1-e^(-λt)) = acc(e^(-λt))
+  // V(t) = Vo + acc(1/λ)(1-e^(-λt))
+  // x(t) = Xo + Vo * t + t * acc(1/λ) + acc(1/λ^2)e^(-λt)
+  // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)e^(-λt)
+  // acceleration_distance = acc(1/λ) * t  + acc(1/λ^2)e^(-λt)
+
   frenet_point.s = motion_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
   frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
-  frenet_point.s_vel = vx * std::cos(delta_yaw) - vy * std::sin(delta_yaw);
-  frenet_point.d_vel = vx * std::sin(delta_yaw) + vy * std::cos(delta_yaw);
+  frenet_point.s_vel = VX * std::cos(delta_yaw) - VY * std::sin(delta_yaw);
+  frenet_point.d_vel = VX * std::sin(delta_yaw) + VY * std::cos(delta_yaw);
   frenet_point.s_acc = 0.0;
   frenet_point.d_acc = 0.0;
 
