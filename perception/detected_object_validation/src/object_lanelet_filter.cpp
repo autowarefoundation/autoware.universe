@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "detected_object_filter/object_lanelet_filter.hpp"
+#include "detected_object_validation/detected_object_filter/object_lanelet_filter.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -165,6 +165,9 @@ lanelet::ConstLanelets ObjectLaneletFilterNode::getIntersectedLanelets(
   const LinearRing2d & convex_hull, const lanelet::ConstLanelets & road_lanelets)
 {
   lanelet::ConstLanelets intersected_lanelets;
+
+  // WARNING: This implementation currently iterate all lanelets, which could degrade performance
+  // when handling large sized map.
   for (const auto & road_lanelet : road_lanelets) {
     if (boost::geometry::intersects(convex_hull, road_lanelet.polygon2d().basicPolygon())) {
       intersected_lanelets.emplace_back(road_lanelet);
