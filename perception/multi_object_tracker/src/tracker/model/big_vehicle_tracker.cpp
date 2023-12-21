@@ -52,11 +52,6 @@ BigVehicleTracker::BigVehicleTracker(
   object_ = object;
 
   // initialize params
-  float q_stddev_x = 1.5;                                     // [m/s]
-  float q_stddev_y = 1.5;                                     // [m/s]
-  float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
-  float q_stddev_vx = tier4_autoware_utils::kmph2mps(10);     // [m/(s*s)]
-  float q_stddev_slip = tier4_autoware_utils::deg2rad(5);     // [rad/(s*s)]
   float r_stddev_x = 1.5;                                     // [m]
   float r_stddev_y = 0.5;                                     // [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // [rad]
@@ -66,11 +61,11 @@ BigVehicleTracker::BigVehicleTracker(
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(30);    // [rad]
   float p0_stddev_vx = tier4_autoware_utils::kmph2mps(1000);  // [m/s]
   float p0_stddev_slip = tier4_autoware_utils::deg2rad(10);   // [rad/s]
-  ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
-  ekf_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
-  ekf_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
-  ekf_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
-  ekf_params_.q_cov_slip = std::pow(q_stddev_slip, 2.0);
+  ekf_params_.q_stddev_acc_long = 9.8 * 0.5;  // [m/(s*s)] uncertain longitudinal acceleration
+  ekf_params_.q_stddev_acc_lat = 9.8 * 0.3;   // [m/(s*s)] uncertain lateral acceleration
+  ekf_params_.q_stddev_slip_rate =
+    tier4_autoware_utils::deg2rad(5);  // [rad/s] uncertain head angle change rate
+  ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
@@ -182,24 +177,29 @@ bool BigVehicleTracker::predict(const rclcpp::Time & time)
 
 bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
 {
-  /*  == Nonlinear model == static bicycle model
-   * 
-   * w = vx * sin(slip_k) / l_r
-   * x_{k+1}   = x_k + vx_k * cos(yaw_k + slip_k) * dt - 0.5 * w * vx_k * sin(slip_k) * dt * dt
-   * y_{k+1}   = y_k + vx_k * sin(yaw_k + slip_k) * dt + 0.5 * w * vx_k * cos(slip_k) * dt * dt
-   * yaw_{k+1} = yaw_k + vx_k / l_r * sin(slip_k) * dt
+  /*  static bicycle model (constant slip angle, constant velocity)
+   *
+   * w_k = vx_k * sin(slip_k) / l_r
+   * x_{k+1}   = x_k + vx_k*cos(yaw_k+slip_k)*dt - 0.5*w_k*vx_k*sin(yaw_k+slip_k)*dt*dt
+   * y_{k+1}   = y_k + vx_k*sin(yaw_k+slip_k)*dt + 0.5*w_k*vx_k*cos(yaw_k+slip_k)*dt*dt
+   * yaw_{k+1} = yaw_k + w_k * dt
    * vx_{k+1}  = vx_k
    * slip_{k+1}  = slip_k
    *
    */
 
-  /*  == Linearized model ==
+  /*  Jacobian Matrix
    *
-   * A = [ 1, 0, -vx*sin(yaw+slip)*dt, cos(yaw+slip)*dt - w * sin(slip_k) * dt * dt,  -vx*sin(yaw+slip)*dt - 0.5 * vx_k * vx_k / l_r * (2*sin(slip_k)*cos(slip_k)) * dt * dt]
-   *     [ 0, 1,  vx*cos(yaw+slip)*dt, sin(yaw+slip)*dt + w * cos(slip_k) * dt * dt,   vx*cos(yaw+slip)*dt - 0.5 * vx_k * vx_k / l_r * (1-2*sin(slip_k)*sin(slip_k)) * dt * dt]
-   *     [ 0, 0,                    1,                           1/l_r*sin(slip)*dt,                                                     vx/l_r*cos(slip)*dt]
-   *     [ 0, 0,                    0,                                            1,                                                                       0]
-   *     [ 0, 0,                    0,                                            0,                                                                       1]
+   * A = [ 1, 0, -vx*sin(yaw+slip)*dt - 0.5*w_k*vx_k*cos(yaw+slip)*dt*dt,
+   *   cos(yaw+slip)*dt - w*sin(yaw+slip)*dt*dt,
+   *   -vx*sin(yaw+slip)*dt - 0.5*vx*vx/l_r*(cos(slip)sin(yaw+slip)+sin(slip)cos(yaw+slip))*dt*dt ]
+   *     [ 0, 1,  vx*cos(yaw+slip)*dt - 0.5*w_k*vx_k*sin(yaw+slip)*dt*dt,
+   *   sin(yaw+slip)*dt + w*cos(yaw+slip)*dt*dt,
+   *   vx*cos(yaw+slip)*dt + 0.5*vx*vx/l_r*(cos(slip)cos(yaw+slip)-sin(slip)sin(yaw+slip))*dt*dt ]
+   *     [ 0, 0,  1, 1/l_r*sin(slip)*dt, vx/l_r*cos(slip)*dt]
+   *     [ 0, 0,  0,                  1,                   0]
+   *     [ 0, 0,  0,                  0,                   1]
+   *
    */
 
   // X t
@@ -216,43 +216,45 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   const double vv_dtdt__lr = vx * vx * dt * dt / lr_;
 
   // X t+1
-  Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);                 // predicted state
-  X_next_t(IDX::X) = X_t(IDX::X) + vx * cos_yaw * dt - 0.5 * vx * sin_slip * w_dtdt;             // dx = v * cos(yaw)
-  X_next_t(IDX::Y) = X_t(IDX::Y) + vx * sin_yaw * dt + 0.5 * vx * cos_slip * w_dtdt;             // dy = v * sin(yaw)
-  X_next_t(IDX::YAW) = X_t(IDX::YAW) + vx / lr_ * sin_slip * dt;  // dyaw = omega
+  Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);  // predicted state
+  X_next_t(IDX::X) =
+    X_t(IDX::X) + vx * cos_yaw * dt - 0.5 * vx * sin_slip * w_dtdt;  // dx = v * cos(yaw)
+  X_next_t(IDX::Y) =
+    X_t(IDX::Y) + vx * sin_yaw * dt + 0.5 * vx * cos_slip * w_dtdt;  // dy = v * sin(yaw)
+  X_next_t(IDX::YAW) = X_t(IDX::YAW) + vx / lr_ * sin_slip * dt;     // dyaw = omega
   X_next_t(IDX::VX) = X_t(IDX::VX);
   X_next_t(IDX::SLIP) = X_t(IDX::SLIP);
 
   // A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
-  A(IDX::X, IDX::YAW) = -vx * sin_yaw * dt;
-  A(IDX::X, IDX::VX) = cos_yaw * dt - sin_slip * w_dtdt;
-  A(IDX::X, IDX::SLIP) = -vx * sin_yaw * dt - sin_slip * cos_slip * vv_dtdt__lr;
-  A(IDX::Y, IDX::YAW) = vx * cos_yaw * dt;
-  A(IDX::Y, IDX::VX) = sin_yaw * dt + cos_slip * w_dtdt;
-  A(IDX::Y, IDX::SLIP) = vx * cos_yaw * dt - 0.5 * (1 - 2 * sin_slip * sin_slip)* vv_dtdt__lr;
+  A(IDX::X, IDX::YAW) = -vx * sin_yaw * dt - 0.5 * vx * cos_yaw * w_dtdt;
+  A(IDX::X, IDX::VX) = cos_yaw * dt - sin_yaw * w_dtdt;
+  A(IDX::X, IDX::SLIP) =
+    -vx * sin_yaw * dt - 0.5 * (cos_slip * sin_yaw + sin_slip * cos_yaw) * vv_dtdt__lr;
+  A(IDX::Y, IDX::YAW) = vx * cos_yaw * dt - 0.5 * vx * sin_yaw * w_dtdt;
+  A(IDX::Y, IDX::VX) = sin_yaw * dt + cos_yaw * w_dtdt;
+  A(IDX::Y, IDX::SLIP) =
+    vx * cos_yaw * dt + 0.5 * (cos_slip * cos_yaw - sin_slip * sin_yaw) * vv_dtdt__lr;
   A(IDX::YAW, IDX::VX) = 1.0 / lr_ * sin_slip * dt;
   A(IDX::YAW, IDX::SLIP) = vx / lr_ * cos_slip * dt;
 
   // Q
-  const float q_stddev_acc_long = 9.8 * 0.5;  // [m/(s*s)] maximum longitudinal acceleration
-  const float q_stddev_acc_lat = 9.8 * 0.3;   // [m/(s*s)] maximum lateral acceleration
-  const float q_stddev_yaw_rate = std::min(q_stddev_acc_lat * 2.0 / vx, vx / lr_ / 2.0);  // [rad/s] maximum yaw rate limited by lateral acceleration or slip angle
-  const float q_stddev_slip_rate = tier4_autoware_utils::deg2rad(5);                    // [rad/s] maximum head angle change rate
-  const float q_cov_x = std::pow(q_stddev_acc_long * dt * dt, 2.0);
-  const float q_cov_y = std::pow(q_stddev_acc_lat * dt * dt, 2.0);
+  const float q_stddev_yaw_rate = std::min(
+    ekf_params_.q_stddev_acc_lat * 2.0 / vx,
+    vx / lr_ * std::sin(ekf_params_.q_max_slip_angle));  // [rad/s] uncertain yaw rate limited by
+                                                         // lateral acceleration or slip angle
+  const float q_cov_x = std::pow(ekf_params_.q_stddev_acc_long * dt * dt, 2.0);
+  const float q_cov_y = std::pow(ekf_params_.q_stddev_acc_lat * dt * dt, 2.0);
   const float q_cov_yaw = std::pow(q_stddev_yaw_rate * dt, 2.0);
-  const float q_cov_vx = std::pow(q_stddev_acc_long * dt, 2.0);
-  const float q_cov_slip = std::pow(q_stddev_slip_rate * dt, 2.0);
+  const float q_cov_vx = std::pow(ekf_params_.q_stddev_acc_long * dt, 2.0);
+  const float q_cov_slip = std::pow(ekf_params_.q_stddev_slip_rate * dt, 2.0);
 
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.
-  Q(IDX::X, IDX::X) =
-    (q_cov_x * cos_yaw * cos_yaw + q_cov_y * sin_yaw * sin_yaw);
+  Q(IDX::X, IDX::X) = (q_cov_x * cos_yaw * cos_yaw + q_cov_y * sin_yaw * sin_yaw);
   Q(IDX::X, IDX::Y) = (0.5f * (q_cov_x - q_cov_y) * sin_2yaw);
-  Q(IDX::Y, IDX::Y) =
-    (q_cov_x * sin_yaw * sin_yaw + q_cov_y * cos_yaw * cos_yaw);
+  Q(IDX::Y, IDX::Y) = (q_cov_x * sin_yaw * sin_yaw + q_cov_y * cos_yaw * cos_yaw);
   Q(IDX::Y, IDX::X) = Q(IDX::X, IDX::Y);
   Q(IDX::YAW, IDX::YAW) = q_cov_yaw;
   Q(IDX::VX, IDX::VX) = q_cov_vx;
