@@ -139,8 +139,12 @@ def generate_launch_description():
                     {
                         "approximate_sync": LaunchConfiguration("approximate_sync"),
                         "classifier_type": LaunchConfiguration("classifier_type"),
-                        "classifier_model_path": LaunchConfiguration("pedestrian_classifier_model_path"),
-                        "classifier_label_path": LaunchConfiguration("pedestrian_classifier_label_path"),
+                        "classifier_model_path": LaunchConfiguration(
+                            "pedestrian_classifier_model_path"
+                        ),
+                        "classifier_label_path": LaunchConfiguration(
+                            "pedestrian_classifier_label_path"
+                        ),
                         "classifier_precision": LaunchConfiguration("classifier_precision"),
                         "classifier_mean": LaunchConfiguration("classifier_mean"),
                         "classifier_std": LaunchConfiguration("classifier_std"),
