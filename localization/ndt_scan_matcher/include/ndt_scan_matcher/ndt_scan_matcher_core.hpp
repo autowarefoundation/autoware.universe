@@ -206,6 +206,7 @@ private:
 
   // Keep latest position for dynamic map loading
   // This variable is only used when use_dynamic_map_loading is true
+  std::mutex latest_ekf_position_mtx_;
   std::optional<geometry_msgs::msg::Point> latest_ekf_position_ = std::nullopt;
 
   // variables for regularization

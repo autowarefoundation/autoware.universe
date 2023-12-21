@@ -380,6 +380,7 @@ void NDTScanMatcher::callback_timer()
   if (!use_dynamic_map_loading_) {
     return;
   }
+  std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
   if (latest_ekf_position_ == std::nullopt) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000,
@@ -410,6 +411,7 @@ void NDTScanMatcher::callback_initial_pose(
   }
 
   if (use_dynamic_map_loading_) {
+    std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
     latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
   }
 }
