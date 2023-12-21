@@ -719,7 +719,7 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = motion_utils::toPath(*path_candidate_ptr);
+  output = motion_utils::convertToPath(*path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();
   output.header.stamp = this->now();

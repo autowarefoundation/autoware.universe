@@ -291,7 +291,7 @@ void PlanningInterfaceTestManager::publishNominalPath(
 {
   test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, normal_path_pub_,
-    motion_utils::toPath(test_utils::loadPathWithLaneIdInYaml()), 5);
+    motion_utils::convertToPath(test_utils::loadPathWithLaneIdInYaml()), 5);
 }
 
 void PlanningInterfaceTestManager::publishAbnormalPath(
