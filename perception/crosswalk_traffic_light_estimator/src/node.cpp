@@ -341,7 +341,7 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
     is_flashing_.at(id) = false;
   }
 
-  // no record of detected color in last_color_hold_time_(1.0s)
+  // no record of detected color in last_color_hold_time_
   // keep the current value
   return;
 }
