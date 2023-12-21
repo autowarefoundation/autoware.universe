@@ -456,9 +456,11 @@ void TrafficLightPublishPanel::onTrafficLightSignal(const TrafficSignalArray::Co
           if (color.compare("red") == 0 && element.color == TrafficSignalElement::RED) {
             output_msg.markers.push_back(lightAsMarker(bulb, "red", "traffic_light", current_time));
           } else if (color.compare("green") == 0 && element.color == TrafficSignalElement::GREEN) {
-            output_msg.markers.push_back(lightAsMarker(bulb, "red", "traffic_light", current_time));
+            output_msg.markers.push_back(
+              lightAsMarker(bulb, "green", "traffic_light", current_time));
           } else if (color.compare("yellow") == 0 && element.color == TrafficSignalElement::AMBER) {
-            output_msg.markers.push_back(lightAsMarker(bulb, "red", "traffic_light", current_time));
+            output_msg.markers.push_back(
+              lightAsMarker(bulb, "yellow", "traffic_light", current_time));
           }
         }
       }
