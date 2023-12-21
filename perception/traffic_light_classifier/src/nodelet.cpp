@@ -113,7 +113,6 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
     images.emplace_back(cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
     j++;
   }
-  // if (j == 0) return;
   output_msg.signals.resize(j);
 
   if (!classifier_ptr_->getTrafficSignals(images, output_msg)) {
