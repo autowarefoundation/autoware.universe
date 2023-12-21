@@ -219,15 +219,15 @@ void TrafficLightPublishPanel::onInitialize()
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   pub_traffic_signals_ = raw_node_->create_publisher<TrafficSignalArray>(
-    "/perception/traffic_light_recognition/traffic_signals", rclcpp::QoS(1));
+    "/perception/traffic_light_recognition/traffic_signals", 1);
   pub_light_marker_ = raw_node_->create_publisher<visualization_msgs::msg::MarkerArray>(
-    "/perception/traffic_light_recognition/traffic_signals/markers", rclcpp::QoS(1));
+    "/perception/traffic_light_recognition/traffic_signals/markers", 1);
 
   sub_vector_map_ = raw_node_->create_subscription<HADMapBin>(
     "/map/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&TrafficLightPublishPanel::onVectorMap, this, _1));
   sub_traffic_signals_ = raw_node_->create_subscription<TrafficSignalArray>(
-    "/perception/traffic_light_recognition/traffic_signals", rclcpp::QoS{1}.transient_local(),
+    "/perception/traffic_light_recognition/traffic_signals", 1,
     std::bind(&TrafficLightPublishPanel::onTrafficLightSignal, this, _1));
   createWallTimer();
 
@@ -454,6 +454,10 @@ void TrafficLightPublishPanel::onTrafficLightSignal(const TrafficSignalArray::Co
         }
         for (const auto & element : msg_traffic_signal.elements) {
           if (color.compare("red") == 0 && element.color == TrafficSignalElement::RED) {
+            output_msg.markers.push_back(lightAsMarker(bulb, "red", "traffic_light", current_time));
+          } else if (color.compare("green") == 0 && element.color == TrafficSignalElement::GREEN) {
+            output_msg.markers.push_back(lightAsMarker(bulb, "red", "traffic_light", current_time));
+          } else if (color.compare("yellow") == 0 && element.color == TrafficSignalElement::AMBER) {
             output_msg.markers.push_back(lightAsMarker(bulb, "red", "traffic_light", current_time));
           }
         }
