@@ -31,6 +31,12 @@
 namespace landmark_manager
 {
 
+struct Landmark
+{
+  std::string id;
+  geometry_msgs::msg::Pose pose;
+};
+
 class LandmarkManager
 {
 public:
@@ -41,8 +47,8 @@ public:
   [[nodiscard]] visualization_msgs::msg::MarkerArray get_landmarks_as_marker_array_msg() const;
 
   [[nodiscard]] geometry_msgs::msg::Pose calculate_new_self_pose(
-    const std::vector<lanelet::localization::Landmark> & detected_landmarks,
-    const geometry_msgs::msg::Pose & self_pose, const bool consider_orientation) const;
+    const std::vector<Landmark> & detected_landmarks, const geometry_msgs::msg::Pose & self_pose,
+    const bool consider_orientation) const;
 
 private:
   // To allow multiple landmarks with the same id to be registered on a vector_map,

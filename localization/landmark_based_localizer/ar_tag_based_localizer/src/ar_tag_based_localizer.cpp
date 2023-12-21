@@ -281,7 +281,7 @@ void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::Con
   }
 }
 
-std::vector<lanelet::localization::Landmark> ArTagBasedLocalizer::detect_landmarks(
+std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
   const Image::ConstSharedPtr & msg)
 {
   const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;

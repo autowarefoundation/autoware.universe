@@ -31,10 +31,55 @@ void LandmarkManager::parse_landmarks(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
   const std::string & target_subtype)
 {
-  std::vector<lanelet::localization::Landmark> landmarks =
-    lanelet::localization::parseLandmarks(msg, target_subtype);
-  for (const lanelet::localization::Landmark & landmark : landmarks) {
-    landmarks_map_[landmark.id].push_back(landmark.pose);
+  std::vector<lanelet::Polygon3d> landmarks =
+    lanelet::localization::parseLandmarkPolygons(msg, target_subtype);
+  for (const lanelet::Polygon3d & poly : landmarks) {
+    // Get landmark_id
+    const std::string landmark_id = poly.attributeOr("marker_id", "none");
+
+    // Get 4 vertices
+    const auto & vertices = poly.basicPolygon();
+    if (vertices.size() != 4) {
+      continue;
+    }
+
+    // 4 vertices represent the landmark vertices in counterclockwise order
+    // Calculate the volume by considering it as a tetrahedron
+    const auto & v0 = vertices[0];
+    const auto & v1 = vertices[1];
+    const auto & v2 = vertices[2];
+    const auto & v3 = vertices[3];
+    const double volume = (v1 - v0).cross(v2 - v0).dot(v3 - v0) / 6.0;
+    const double volume_threshold = 1e-5;
+    if (volume > volume_threshold) {
+      continue;
+    }
+
+    // Calculate the center of the quadrilateral
+    const auto center = (v0 + v1 + v2 + v3) / 4.0;
+
+    // Define axes
+    const auto x_axis = (v1 - v0).normalized();
+    const auto y_axis = (v2 - v1).normalized();
+    const auto z_axis = x_axis.cross(y_axis).normalized();
+
+    // Construct rotation matrix and convert it to quaternion
+    Eigen::Matrix3d rotation_matrix;
+    rotation_matrix << x_axis, y_axis, z_axis;
+    const Eigen::Quaterniond q{rotation_matrix};
+
+    // Create Pose
+    geometry_msgs::msg::Pose pose;
+    pose.position.x = center.x();
+    pose.position.y = center.y();
+    pose.position.z = center.z();
+    pose.orientation.x = q.x();
+    pose.orientation.y = q.y();
+    pose.orientation.z = q.z();
+    pose.orientation.w = q.w();
+
+    // Add
+    landmarks_map_[landmark_id].push_back(pose);
   }
 }
 
@@ -86,7 +131,7 @@ visualization_msgs::msg::MarkerArray LandmarkManager::get_landmarks_as_marker_ar
 }
 
 geometry_msgs::msg::Pose LandmarkManager::calculate_new_self_pose(
-  const std::vector<lanelet::localization::Landmark> & detected_landmarks,
+  const std::vector<landmark_manager::Landmark> & detected_landmarks,
   const geometry_msgs::msg::Pose & self_pose, const bool consider_orientation) const
 {
   using Pose = geometry_msgs::msg::Pose;
@@ -94,7 +139,7 @@ geometry_msgs::msg::Pose LandmarkManager::calculate_new_self_pose(
   Pose min_new_self_pose;
   double min_distance = std::numeric_limits<double>::max();
 
-  for (const lanelet::localization::Landmark & landmark : detected_landmarks) {
+  for (const landmark_manager::Landmark & landmark : detected_landmarks) {
     // Firstly, landmark pose is base_link
     const Pose & detected_landmark_on_base_link = landmark.pose;
 

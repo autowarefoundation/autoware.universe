@@ -80,7 +80,7 @@ class ArTagBasedLocalizer : public rclcpp::Node
   using TransformStamped = geometry_msgs::msg::TransformStamped;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
   using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
-  using Landmark = lanelet::localization::Landmark;
+  using Landmark = landmark_manager::Landmark;
 
 public:
   explicit ArTagBasedLocalizer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
