@@ -17,7 +17,7 @@
 
 #include "behavior_path_avoidance_by_lane_change_module/data_structs.hpp"
 #include "behavior_path_avoidance_by_lane_change_module/scene.hpp"
-#include "behavior_path_planner/scene_module/lane_change/interface.hpp"
+#include "behavior_path_lane_change_module/interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -39,6 +39,8 @@ public:
       objects_of_interest_marker_interface_ptr_map);
 
   bool isExecutionRequested() const override;
+
+  void processOnEntry() override;
 
 protected:
   void updateRTCStatus(const double start_distance, const double finish_distance) override;
