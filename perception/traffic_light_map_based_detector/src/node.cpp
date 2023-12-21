@@ -288,9 +288,9 @@ bool MapBasedDetector::getTrafficLightRoi(
 {
   roi.traffic_light_id = traffic_light.id();
   if (pedestrian_tl_id_.find(traffic_light.id()) != pedestrian_tl_id_.end()) {
-    roi.traffic_light_type = tier4_perception_msgs::msg::TrafficLightRoi::PEDESTRIAN_TL;
+    roi.traffic_light_type = tier4_perception_msgs::msg::TrafficLightRoi::PEDESTRIAN_TRAFFIC_LIGHT;
   } else {
-    roi.traffic_light_type = tier4_perception_msgs::msg::TrafficLightRoi::CAR_TL;
+    roi.traffic_light_type = tier4_perception_msgs::msg::TrafficLightRoi::CAR_TRAFFIC_LIGHT;
   }
 
   // for roi.x_offset and roi.y_offset

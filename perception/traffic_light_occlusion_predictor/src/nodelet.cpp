@@ -74,19 +74,23 @@ TrafficLightOcclusionPredictorNodelet::TrafficLightOcclusionPredictorNodelet(
     config_.elevation_occlusion_resolution_deg);
 
   const std::vector<std::string> topics{
-    "~/input/traffic_signals_car", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
+    "~/input/car/traffic_signals", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
   const std::vector<rclcpp::QoS> qos(topics.size(), rclcpp::SensorDataQoS());
   synchronizer_ = std::make_shared<SynchronizerType>(
     this, topics, qos,
-    std::bind(&TrafficLightOcclusionPredictorNodelet::syncCallback, this, _1, _2, _3, _4, 0),
+    std::bind(
+      &TrafficLightOcclusionPredictorNodelet::syncCallback, this, _1, _2, _3, _4,
+      tier4_perception_msgs::msg::TrafficLightRoi::CAR_TRAFFIC_LIGHT),
     config_.max_image_cloud_delay, config_.max_wait_t);
 
   const std::vector<std::string> topics_ped{
-    "~/input/traffic_signals_ped", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
+    "~/input/pedestrian/traffic_signals", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
   const std::vector<rclcpp::QoS> qos_ped(topics_ped.size(), rclcpp::SensorDataQoS());
   synchronizer_ped_ = std::make_shared<SynchronizerType>(
     this, topics_ped, qos_ped,
-    std::bind(&TrafficLightOcclusionPredictorNodelet::syncCallback, this, _1, _2, _3, _4, 1),
+    std::bind(
+      &TrafficLightOcclusionPredictorNodelet::syncCallback, this, _1, _2, _3, _4,
+      tier4_perception_msgs::msg::TrafficLightRoi::PEDESTRIAN_TRAFFIC_LIGHT),
     config_.max_image_cloud_delay, config_.max_wait_t);
 
   subscribed_.resize(2, false);

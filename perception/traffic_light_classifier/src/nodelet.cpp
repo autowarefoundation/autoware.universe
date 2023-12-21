@@ -25,9 +25,9 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
 {
   auto node_name = this->get_name();
   if (strcmp(node_name, "traffic_light_classifier_car") == 0) {
-    classify_tl_type_ = tier4_perception_msgs::msg::TrafficLightRoi::CAR_TL;
-  } else if (strcmp(node_name, "traffic_light_classifier_ped") == 0) {
-    classify_tl_type_ = tier4_perception_msgs::msg::TrafficLightRoi::PEDESTRIAN_TL;
+    classify_tl_type_ = tier4_perception_msgs::msg::TrafficLightRoi::CAR_TRAFFIC_LIGHT;
+  } else if (strcmp(node_name, "traffic_light_classifier_pedestrian") == 0) {
+    classify_tl_type_ = tier4_perception_msgs::msg::TrafficLightRoi::PEDESTRIAN_TRAFFIC_LIGHT;
   }
 
   using std::placeholders::_1;

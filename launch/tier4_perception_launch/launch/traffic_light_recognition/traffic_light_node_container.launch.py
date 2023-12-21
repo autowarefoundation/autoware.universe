@@ -45,10 +45,10 @@ def generate_launch_description():
         "output/traffic_signals", "/perception/traffic_light_recognition/traffic_signals"
     )
     add_launch_arg(
-        "output/traffic_signals_car", "/perception/traffic_light_recognition/traffic_signals_car"
+        "output/car/traffic_signals", "/perception/traffic_light_recognition/car/traffic_signals"
     )
     add_launch_arg(
-        "output/traffic_signals_ped", "/perception/traffic_light_recognition/traffic_signals_ped"
+        "output/pedestrian/traffic_signals", "/perception/traffic_light_recognition/pedestrian/traffic_signals"
     )
 
     # traffic_light_fine_detector
@@ -73,7 +73,7 @@ def generate_launch_description():
         os.path.join(classifier_share_dir, "data", "traffic_light_classifier_efficientNet_b1.onnx"),
     )
     add_launch_arg(
-        "classifier_model_path_ped",
+        "classifier_model_path_pedestrian",
         os.path.join(
             classifier_share_dir, "data", "ped_traffic_light_classifier_efficientNet_b1.onnx"
         ),
@@ -82,7 +82,7 @@ def generate_launch_description():
         "classifier_label_path_car", os.path.join(classifier_share_dir, "data", "lamp_labels.txt")
     )
     add_launch_arg(
-        "classifier_label_path_ped",
+        "classifier_label_path_pedestrian",
         os.path.join(classifier_share_dir, "data", "lamp_labels_ped.txt"),
     )
     add_launch_arg("classifier_precision", "fp16")
@@ -123,7 +123,7 @@ def generate_launch_description():
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", LaunchConfiguration("output/rois")),
-                    ("~/output/traffic_signals", "classified/traffic_signals_car"),
+                    ("~/output/traffic_signals", "classified/car/traffic_signals"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -132,14 +132,14 @@ def generate_launch_description():
             ComposableNode(
                 package="traffic_light_classifier",
                 plugin="traffic_light::TrafficLightClassifierNodelet",
-                name="traffic_light_classifier_ped",
+                name="traffic_light_classifier_pedestrian",
                 namespace="classification",
                 parameters=[
                     {
                         "approximate_sync": LaunchConfiguration("approximate_sync"),
                         "classifier_type": LaunchConfiguration("classifier_type"),
-                        "classifier_model_path": LaunchConfiguration("classifier_model_path_ped"),
-                        "classifier_label_path": LaunchConfiguration("classifier_label_path_ped"),
+                        "classifier_model_path": LaunchConfiguration("classifier_model_path_pedestrian"),
+                        "classifier_label_path": LaunchConfiguration("classifier_label_path_pedestrian"),
                         "classifier_precision": LaunchConfiguration("classifier_precision"),
                         "classifier_mean": LaunchConfiguration("classifier_mean"),
                         "classifier_std": LaunchConfiguration("classifier_std"),
@@ -148,7 +148,7 @@ def generate_launch_description():
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", LaunchConfiguration("output/rois")),
-                    ("~/output/traffic_signals", "classified/traffic_signals_ped"),
+                    ("~/output/traffic_signals", "classified/pedestrian/traffic_signals"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
