@@ -48,7 +48,8 @@ def generate_launch_description():
         "output/car/traffic_signals", "/perception/traffic_light_recognition/car/traffic_signals"
     )
     add_launch_arg(
-        "output/pedestrian/traffic_signals", "/perception/traffic_light_recognition/pedestrian/traffic_signals"
+        "output/pedestrian/traffic_signals",
+        "/perception/traffic_light_recognition/pedestrian/traffic_signals",
     )
 
     # traffic_light_fine_detector
@@ -138,8 +139,12 @@ def generate_launch_description():
                     {
                         "approximate_sync": LaunchConfiguration("approximate_sync"),
                         "classifier_type": LaunchConfiguration("classifier_type"),
-                        "classifier_model_path": LaunchConfiguration("classifier_model_path_pedestrian"),
-                        "classifier_label_path": LaunchConfiguration("classifier_label_path_pedestrian"),
+                        "classifier_model_path": LaunchConfiguration(
+                            "classifier_model_path_pedestrian"
+                        ),
+                        "classifier_label_path": LaunchConfiguration(
+                            "classifier_label_path_pedestrian"
+                        ),
                         "classifier_precision": LaunchConfiguration("classifier_precision"),
                         "classifier_mean": LaunchConfiguration("classifier_mean"),
                         "classifier_std": LaunchConfiguration("classifier_std"),
