@@ -16,6 +16,7 @@
 #define PID_LONGITUDINAL_CONTROLLER__LONGITUDINAL_CONTROLLER_UTILS_HPP_
 
 #include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spherical_linear_interpolation.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tf2/utils.h"
@@ -100,7 +101,7 @@ TrajectoryPoint lerpTrajectoryPoint(
       points.at(i).pose.position.x, points.at(i + 1).pose.position.x, interpolate_ratio);
     interpolated_point.pose.position.y = interpolation::lerp(
       points.at(i).pose.position.y, points.at(i + 1).pose.position.y, interpolate_ratio);
-    interpolated_point.pose.orientation = motion_utils::lerpOrientation(
+    interpolated_point.pose.orientation = interpolation::lerpOrientation(
       points.at(i).pose.orientation, points.at(i + 1).pose.orientation, interpolate_ratio);
     interpolated_point.longitudinal_velocity_mps = interpolation::lerp(
       points.at(i).longitudinal_velocity_mps, points.at(i + 1).longitudinal_velocity_mps,

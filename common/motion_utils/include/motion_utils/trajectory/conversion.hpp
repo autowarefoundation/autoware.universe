@@ -60,10 +60,6 @@ TrajectoryPoints convertPathToTrajectoryPoints(
 autoware_auto_planning_msgs::msg::PathWithLaneId convertTrajectoryPointsToPath(
   const TrajectoryPoints & trajectory);
 
-geometry_msgs::msg::Quaternion lerpOrientation(
-  const geometry_msgs::msg::Quaternion & o_from, const geometry_msgs::msg::Quaternion & o_to,
-  const double ratio);
-
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__TRAJECTORY__CONVERSION_HPP_
