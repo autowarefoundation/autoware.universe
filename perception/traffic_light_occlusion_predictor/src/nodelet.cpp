@@ -135,8 +135,8 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
     tier4_perception_msgs::msg::TrafficLightRoiArray selected_roi_msg;
     selected_roi_msg.rois.reserve(in_roi_msg->rois.size());
     for (size_t i = 0; i < in_roi_msg->rois.size(); ++i) {
-      if (in_roi_msg->rois[i].traffic_light_type == traffic_light_type) {
-        selected_roi_msg.rois.push_back(in_roi_msg->rois[i]);
+      if (in_roi_msg->rois.at(i).traffic_light_type == traffic_light_type) {
+        selected_roi_msg.rois.push_back(in_roi_msg->rois.at(i));
       }
     }
 
