@@ -304,8 +304,6 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
       output_traffic_signal_element.confidence = 1.0;
       output_traffic_signal.elements.push_back(output_traffic_signal_element);
       output_traffic_signal.traffic_signal_id = id;
-      isFlashing(output_traffic_signal);
-      output_traffic_signal.elements[0].color = updateState(output_traffic_signal);
       output.signals.push_back(output_traffic_signal);
     }
   }
