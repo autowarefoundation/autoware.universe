@@ -50,7 +50,7 @@ protected:
     return m_select_object_dynamics_property->getOptionInt();
   }
 
-  bool isObjectToShow(const uint showing_dynamic_status, const TrackedObject & object);
+  static bool is_object_to_show(const uint showing_dynamic_status, const TrackedObject & object);
 
 private:
   // Property to choose object dynamics to visualize

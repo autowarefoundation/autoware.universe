@@ -34,12 +34,13 @@ TrackedObjectsDisplay::TrackedObjectsDisplay() : ObjectPolygonDisplayBase("track
   m_select_object_dynamics_property->addOption("All", 2);
 }
 
-bool TrackedObjectsDisplay::isObjectToShow(
+bool TrackedObjectsDisplay::is_object_to_show(
   const uint showing_dynamic_status, const TrackedObject & object)
 {
   if (showing_dynamic_status == 0 && object.kinematics.is_stationary) {
     return false;  // Show only moving objects
-  } else if (showing_dynamic_status == 1 && !object.kinematics.is_stationary) {
+  }
+  if (showing_dynamic_status == 1 && !object.kinematics.is_stationary) {
     return false;  // Show only stationary objects
   }
   return true;
@@ -53,7 +54,7 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
   const auto showing_dynamic_status = get_object_dynamics_to_visualize();
   for (const auto & object : msg->objects) {
     // Filter by object dynamic status
-    if (!isObjectToShow(showing_dynamic_status, object)) continue;
+    if (!is_object_to_show(showing_dynamic_status, object)) continue;
     const auto line_width = get_line_width();
     // Get marker for shape
     auto shape_marker = get_shape_marker_ptr(
