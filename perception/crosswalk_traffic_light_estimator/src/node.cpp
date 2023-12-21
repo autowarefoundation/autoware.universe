@@ -351,7 +351,7 @@ uint8_t CrosswalkTrafficLightEstimatorNode::updateState(const TrafficSignal & si
   const auto id = signal.traffic_signal_id;
   const auto color = signal.elements[0].color;
 
-  if (current_state_.count(id) == 0) {
+  if (current_color_state_.count(id) == 0) {
     current_state_.insert(std::make_pair(id, color));
   } else if (is_flashing_.at(id) == false) {
     current_state_.at(id) = color;
