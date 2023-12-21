@@ -168,9 +168,10 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
 bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
 {
   /*  == Nonlinear model == static bicycle model
-   *
-   * x_{k+1}   = x_k + vx_k * cos(yaw_k + slip_k) * dt
-   * y_{k+1}   = y_k + vx_k * sin(yaw_k + slip_k) * dt
+   * 
+   * w = vx * sin(slip_k) / l_r
+   * x_{k+1}   = x_k + vx_k * cos(yaw_k + slip_k) * dt - 0.5 * w * vx_k * sin(slip_k) * dt * dt
+   * y_{k+1}   = y_k + vx_k * sin(yaw_k + slip_k) * dt + 0.5 * w * vx_k * cos(slip_k) * dt * dt
    * yaw_{k+1} = yaw_k + vx_k / l_r * sin(slip_k) * dt
    * vx_{k+1}  = vx_k
    * slip_{k+1}  = slip_k
@@ -179,11 +180,11 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
 
   /*  == Linearized model ==
    *
-   * A = [ 1, 0, -vx*sin(yaw+slip)*dt, cos(yaw+slip)*dt,  -vx*sin(yaw+slip)*dt]
-   *     [ 0, 1,  vx*cos(yaw+slip)*dt, sin(yaw+slip)*dt,  vx*cos(yaw+slip)*dt]
-   *     [ 0, 0,               1,    1/l_r*sin(slip)*dt,  vx/l_r*cos(slip)*dt]
-   *     [ 0, 0,               0,                     1,  0]
-   *     [ 0, 0,               0,                     0,  1]
+   * A = [ 1, 0, -vx*sin(yaw+slip)*dt, cos(yaw+slip)*dt - w * sin(slip_k) * dt * dt,  -vx*sin(yaw+slip)*dt - 0.5 * vx_k * vx_k / l_r * (2*sin(slip_k)*cos(slip_k)) * dt * dt]
+   *     [ 0, 1,  vx*cos(yaw+slip)*dt, sin(yaw+slip)*dt + w * cos(slip_k) * dt * dt,   vx*cos(yaw+slip)*dt - 0.5 * vx_k * vx_k / l_r * (1-2*sin(slip_k)*sin(slip_k)) * dt * dt]
+   *     [ 0, 0,                    1,                           1/l_r*sin(slip)*dt,                                                     vx/l_r*cos(slip)*dt]
+   *     [ 0, 0,                    0,                                            1,                                                                       0]
+   *     [ 0, 0,                    0,                                            0,                                                                       1]
    */
 
   // X t
@@ -195,11 +196,14 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   const double sin_slip = std::sin(X_t(IDX::SLIP));
   const double vx = X_t(IDX::VX);
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
+  const double w = vx * sin_slip / lr_;
+  const double w_dtdt = w * dt * dt;
+  const double vv_dtdt__lr = vx * vx * dt * dt / lr_;
 
   // X t+1
   Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);                 // predicted state
-  X_next_t(IDX::X) = X_t(IDX::X) + vx * cos_yaw * dt;             // dx = v * cos(yaw)
-  X_next_t(IDX::Y) = X_t(IDX::Y) + vx * sin_yaw * dt;             // dy = v * sin(yaw)
+  X_next_t(IDX::X) = X_t(IDX::X) + vx * cos_yaw * dt - 0.5 * vx * sin_slip * w_dtdt;             // dx = v * cos(yaw)
+  X_next_t(IDX::Y) = X_t(IDX::Y) + vx * sin_yaw * dt + 0.5 * vx * cos_slip * w_dtdt;             // dy = v * sin(yaw)
   X_next_t(IDX::YAW) = X_t(IDX::YAW) + vx / lr_ * sin_slip * dt;  // dyaw = omega
   X_next_t(IDX::VX) = X_t(IDX::VX);
   X_next_t(IDX::SLIP) = X_t(IDX::SLIP);
@@ -207,27 +211,37 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   // A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
   A(IDX::X, IDX::YAW) = -vx * sin_yaw * dt;
-  A(IDX::X, IDX::VX) = cos_yaw * dt;
-  A(IDX::X, IDX::SLIP) = -vx * sin_yaw * dt;
+  A(IDX::X, IDX::VX) = cos_yaw * dt - sin_slip * w_dtdt;
+  A(IDX::X, IDX::SLIP) = -vx * sin_yaw * dt - sin_slip * cos_slip * vv_dtdt__lr;
   A(IDX::Y, IDX::YAW) = vx * cos_yaw * dt;
-  A(IDX::Y, IDX::VX) = sin_yaw * dt;
-  A(IDX::Y, IDX::SLIP) = vx * cos_yaw * dt;
+  A(IDX::Y, IDX::VX) = sin_yaw * dt + cos_slip * w_dtdt;
+  A(IDX::Y, IDX::SLIP) = vx * cos_yaw * dt - 0.5 * (1 - 2 * sin_slip * sin_slip)* vv_dtdt__lr;
   A(IDX::YAW, IDX::VX) = 1.0 / lr_ * sin_slip * dt;
   A(IDX::YAW, IDX::SLIP) = vx / lr_ * cos_slip * dt;
 
   // Q
+  const float q_stddev_acc_long = 9.8 * 0.5;  // [m/(s*s)] maximum longitudinal acceleration
+  const float q_stddev_acc_lat = 9.8 * 0.3;   // [m/(s*s)] maximum lateral acceleration
+  const float q_stddev_yaw_rate = std::min(q_stddev_acc_lat * 2.0 / vx, vx / lr_ / 2.0);  // [rad/s] maximum yaw rate limited by lateral acceleration or slip angle
+  const float q_stddev_slip_rate = tier4_autoware_utils::deg2rad(5);                    // [rad/s] maximum head angle change rate
+  const float q_cov_x = std::pow(q_stddev_acc_long * dt * dt, 2.0);
+  const float q_cov_y = std::pow(q_stddev_acc_lat * dt * dt, 2.0);
+  const float q_cov_yaw = std::pow(q_stddev_yaw_rate * dt, 2.0);
+  const float q_cov_vx = std::pow(q_stddev_acc_long * dt, 2.0);
+  const float q_cov_slip = std::pow(q_stddev_slip_rate * dt, 2.0);
+
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.
   Q(IDX::X, IDX::X) =
-    (ekf_params_.q_cov_x * cos_yaw * cos_yaw + ekf_params_.q_cov_y * sin_yaw * sin_yaw) * dt * dt;
-  Q(IDX::X, IDX::Y) = (0.5f * (ekf_params_.q_cov_x - ekf_params_.q_cov_y) * sin_2yaw) * dt * dt;
+    (q_cov_x * cos_yaw * cos_yaw + q_cov_y * sin_yaw * sin_yaw);
+  Q(IDX::X, IDX::Y) = (0.5f * (q_cov_x - q_cov_y) * sin_2yaw);
   Q(IDX::Y, IDX::Y) =
-    (ekf_params_.q_cov_x * sin_yaw * sin_yaw + ekf_params_.q_cov_y * cos_yaw * cos_yaw) * dt * dt;
+    (q_cov_x * sin_yaw * sin_yaw + q_cov_y * cos_yaw * cos_yaw);
   Q(IDX::Y, IDX::X) = Q(IDX::X, IDX::Y);
-  Q(IDX::YAW, IDX::YAW) = ekf_params_.q_cov_yaw * dt * dt;
-  Q(IDX::VX, IDX::VX) = ekf_params_.q_cov_vx * dt * dt;
-  Q(IDX::SLIP, IDX::SLIP) = ekf_params_.q_cov_slip * dt * dt;
+  Q(IDX::YAW, IDX::YAW) = q_cov_yaw;
+  Q(IDX::VX, IDX::VX) = q_cov_vx;
+  Q(IDX::SLIP, IDX::SLIP) = q_cov_slip;
   Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
 
