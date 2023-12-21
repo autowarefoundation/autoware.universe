@@ -257,7 +257,7 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignals(
     const auto & id = last_traffic_signal.first;
     for (auto it = last_traffic_signal.second.begin(); it != last_traffic_signal.second.end();) {
       auto sig = (*it).first;
-      auto t = (*it).second;  // rclcpp::Time
+      rclcpp::Time t = (*it).second;
 
       // hold signal recognition results for [last_colors_hold_time_] seconds.
       const auto time_from_last_detected = (get_clock()->now() - t).seconds();
