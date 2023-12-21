@@ -69,9 +69,6 @@ public:
 
   bool isRootLaneletToBeUpdated() const override { return current_state_ == ModuleStatus::SUCCESS; }
 
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] ModuleStatus updateState() override;
-
   void updateData() override;
 
   void postProcess() override;

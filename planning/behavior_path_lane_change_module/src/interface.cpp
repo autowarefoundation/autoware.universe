@@ -190,21 +190,16 @@ void LaneChangeInterface::setData(const std::shared_ptr<const PlannerData> & dat
 bool LaneChangeInterface::canTransitSuccessState()
 {
   auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_DEBUG_STREAM_THROTTLE(getLogger(), *clock_, 3000, message);
+    RCLCPP_WARN(getLogger(), "%s", message.data());
   };
 
-  if(!isWaitingApproval()){
-    log_debug_throttled("Module is not in waiting approval state");
+  if (isWaitingApproval()) {
+    log_debug_throttled("Module is waiting approval");
     return false;
   }
 
   if (module_type_->specialExpiredCheck()) {
     log_debug_throttled("Special expired check has passed and no longer wait for approval.");
-    return true;
-  }
-
-  if (!module_type_->isValidPath()) {
-    log_debug_throttled("Has no valid path.");
     return true;
   }
 
@@ -225,8 +220,19 @@ bool LaneChangeInterface::canTransitSuccessState()
 bool LaneChangeInterface::canTransitFailureState()
 {
   auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_DEBUG_STREAM_THROTTLE(getLogger(), *clock_, 3000, message);
+    RCLCPP_WARN(getLogger(), "%s", message.data());
   };
+
+  log_debug_throttled(__func__);
+  if (!module_type_->isValidPath()) {
+    log_debug_throttled("Has no valid path.");
+    return true;
+  }
+
+  if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
+    log_debug_throttled("Abort process has on going.");
+    return false;
+  }
 
   if (isWaitingApproval()) {
     log_debug_throttled("Can't transit to failure state. Module is WAITING_FOR_APPROVAL");
@@ -289,8 +295,10 @@ bool LaneChangeInterface::canTransitIdleToRunningState()
   setObjectDebugVisualization();
 
   auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_DEBUG_STREAM_THROTTLE(getLogger(), *clock_, 3000, message);
+    RCLCPP_WARN(getLogger(), "%s", message.data());
   };
+
+  log_debug_throttled(__func__);
 
   if (!isActivated() || isWaitingApproval()) {
     log_debug_throttled("Module is idling.");
@@ -298,6 +306,7 @@ bool LaneChangeInterface::canTransitIdleToRunningState()
   }
 
   if (!post_process_safety_status_.is_safe) {
+    log_debug_throttled("path is unsafe.");
     return false;
   }
 
