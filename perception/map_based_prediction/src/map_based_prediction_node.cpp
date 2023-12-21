@@ -740,6 +740,13 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sigma_yaw_angle_deg_ = declare_parameter<double>("sigma_yaw_angle_deg");
   object_buffer_time_length_ = declare_parameter<double>("object_buffer_time_length");
   history_time_length_ = declare_parameter<double>("history_time_length");
+
+  max_lateral_accel_ = declare_parameter<double>("max_lateral_accel");
+  deceleration_distance_before_curve_ =
+    declare_parameter<double>("deceleration_distance_before_curve");
+  deceleration_distance_after_curve_ =
+    declare_parameter<double>("deceleration_distance_after_curve");
+
   {  // lane change detection
     lane_change_detection_method_ = declare_parameter<std::string>("lane_change_detection.method");
 
@@ -789,6 +796,30 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   pub_debug_markers_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
   pub_calculation_time_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
+
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&MapBasedPredictionNode::onParam, this, std::placeholders::_1));
+}
+
+rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+
+  updateParam(parameters, "max_lateral_accel", max_lateral_accel_);
+  updateParam(
+    parameters, "deceleration_distance_before_curve", deceleration_distance_before_curve_);
+  updateParam(parameters, "deceleration_distance_after_curve", deceleration_distance_after_curve_);
+
+  std::cerr << "Params updated! \n";
+  std::cerr << "max_lateral_accel" << max_lateral_accel_ << "\n";
+  std::cerr << "deceleration_distance_before_curve" << deceleration_distance_before_curve_ << "\n";
+  std::cerr << "deceleration_distance_after_curve" << deceleration_distance_after_curve_ << "\n";
+
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+  return result;
 }
 
 PredictedObjectKinematics MapBasedPredictionNode::convertToPredictedKinematics(
@@ -971,6 +1002,10 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           replaceObjectYawWithLaneletsYaw(current_lanelets, yaw_fixed_transformed_object);
         }
         // Generate Predicted Path
+        // Check lat. acceleration constraints
+        std::cerr << "---------- Object " << tier4_autoware_utils::toHexString(object.object_id)
+                  << "---------\n";
+        std::cerr << "Object speed " << abs_obj_speed << "\n";
         std::vector<PredictedPath> predicted_paths;
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
@@ -979,12 +1014,16 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
             continue;
           }
 
-          // Check lat. acceleration constraints
-          if (ref_path.maneuver != Maneuver::LANE_FOLLOW) {
-            const auto trajectory_with_const_velocity =
-              toTrajectoryPoints(predicted_path, abs_obj_speed);
-            if (!isAccelerationConstraintsSatisfied(trajectory_with_const_velocity)) continue;
+          // if (ref_path.maneuver != Maneuver::LANE_FOLLOW) {
+          const auto trajectory_with_const_velocity =
+            toTrajectoryPoints(predicted_path, abs_obj_speed);
+          if (!isAccelerationConstraintsSatisfied(trajectory_with_const_velocity)) {
+            std::cerr << "Path eliminated by Lat acc constraints\n";
+            continue;
           }
+          // }
+          std::cerr << "---------- Object " << tier4_autoware_utils::toHexString(object.object_id)
+                    << "---------\n";
 
           predicted_path.confidence = ref_path.probability;
           predicted_paths.push_back(predicted_path);
