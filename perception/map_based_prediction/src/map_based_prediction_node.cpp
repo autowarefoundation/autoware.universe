@@ -978,6 +978,14 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           if (predicted_path.path.empty()) {
             continue;
           }
+
+          // Check lat. acceleration constraints
+          if (ref_path.maneuver != Maneuver::LANE_FOLLOW) {
+            const auto trajectory_with_const_velocity =
+              toTrajectoryPoints(predicted_path, abs_obj_speed);
+            if (!isAccelerationConstraintsSatisfied(trajectory_with_const_velocity)) continue;
+          }
+
           predicted_path.confidence = ref_path.probability;
           predicted_paths.push_back(predicted_path);
         }

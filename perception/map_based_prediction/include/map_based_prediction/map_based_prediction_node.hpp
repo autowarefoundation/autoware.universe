@@ -16,11 +16,13 @@
 #define MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
 
 #include "map_based_prediction/path_generator.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
+#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
@@ -34,6 +36,7 @@
 #include <lanelet2_routing/Forward.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
 
+#include <algorithm>
 #include <deque>
 #include <memory>
 #include <string>
@@ -99,8 +102,111 @@ using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::StringStamped;
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
+
+inline std::vector<double> calcTrajectoryCurvatureFrom3Points(
+  const TrajectoryPoints & trajectory, size_t idx_dist)
+{
+  using tier4_autoware_utils::calcCurvature;
+  using tier4_autoware_utils::getPoint;
+
+  if (trajectory.size() < 3) {
+    const std::vector<double> k_arr(trajectory.size(), 0.0);
+    return k_arr;
+  }
+
+  // if the idx size is not enough, change the idx_dist
+  const auto max_idx_dist = static_cast<size_t>(std::floor((trajectory.size() - 1) / 2.0));
+  idx_dist = std::max(1ul, std::min(idx_dist, max_idx_dist));
+
+  if (idx_dist < 1) {
+    throw std::logic_error("idx_dist less than 1 is not expected");
+  }
+
+  // calculate curvature by circle fitting from three points
+  std::vector<double> k_arr(trajectory.size(), 0.0);
+
+  for (size_t i = 1; i + 1 < trajectory.size(); i++) {
+    double curvature = 0.0;
+    const auto p0 = getPoint(trajectory.at(i - std::min(idx_dist, i)));
+    const auto p1 = getPoint(trajectory.at(i));
+    const auto p2 = getPoint(trajectory.at(i + std::min(idx_dist, trajectory.size() - 1 - i)));
+    try {
+      curvature = calcCurvature(p0, p1, p2);
+    } catch (std::exception const & e) {
+      // ...code that handles the error...
+      RCLCPP_WARN(
+        rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"), "%s",
+        e.what());
+      if (i > 1) {
+        curvature = k_arr.at(i - 1);  // previous curvature
+      } else {
+        curvature = 0.0;
+      }
+    }
+    k_arr.at(i) = curvature;
+  }
+  // copy curvatures for the last and first points;
+  k_arr.at(0) = k_arr.at(1);
+  k_arr.back() = k_arr.at((trajectory.size() - 2));
+
+  return k_arr;
+}
+
+inline TrajectoryPoints toTrajectoryPoints(const PredictedPath & path, const double velocity)
+{
+  TrajectoryPoints out_trajectory;
+  std::for_each(path.path.begin(), path.path.end(), [&out_trajectory, velocity](const auto & pose) {
+    TrajectoryPoint p;
+    p.pose = pose;
+    p.longitudinal_velocity_mps = velocity;
+    out_trajectory.push_back(p);
+  });
+  return out_trajectory;
+};
+
+inline bool isAccelerationConstraintsSatisfied(
+  const TrajectoryPoints & trajectory [[maybe_unused]], const double points_interval = 1.0)
+{
+  if (trajectory.size() < 3) return false;
+  constexpr double curvature_calculation_distance = 5.0;
+  const size_t idx_dist = static_cast<size_t>(
+    std::max(static_cast<int>((curvature_calculation_distance) / points_interval), 1));
+  // Calculate curvature assuming the trajectory points interval is constant
+  const auto curvature_v = calcTrajectoryCurvatureFrom3Points(trajectory, idx_dist);
+
+  constexpr double max_lateral_accel = 1.0;
+  // constexpr double min_curve_velocity = 3.5;
+  constexpr double deceleration_distance_before_curve = 3.5;
+  constexpr double deceleration_distance_after_curve = 2.0;
+
+  //  Decrease speed according to lateral G
+  const size_t before_decel_index =
+    static_cast<size_t>(std::round(deceleration_distance_before_curve / points_interval));
+  const size_t after_decel_index =
+    static_cast<size_t>(std::round(deceleration_distance_after_curve / points_interval));
+  const double max_lateral_accel_abs = std::fabs(max_lateral_accel);
+
+  for (size_t i = 0; i < trajectory.size(); ++i) {
+    double curvature = 0.0;
+    const size_t start = i > after_decel_index ? i - after_decel_index : 0;
+    const size_t end = std::min(trajectory.size(), i + before_decel_index + 1);
+    for (size_t j = start; j < end; ++j) {
+      if (j >= curvature_v.size()) return true;
+      curvature = std::max(curvature, std::fabs(curvature_v.at(j)));
+    }
+    double v_curvature_max = std::sqrt(max_lateral_accel_abs / std::max(curvature, 1.0E-5));
+    // v_curvature_max = std::max(v_curvature_max, min_curve_velocity);
+
+    if (trajectory.at(i).longitudinal_velocity_mps > v_curvature_max) {
+      return false;
+    }
+  }
+  return true;
+};
 
 class MapBasedPredictionNode : public rclcpp::Node
 {
