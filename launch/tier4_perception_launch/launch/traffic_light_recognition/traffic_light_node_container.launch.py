@@ -69,20 +69,20 @@ def generate_launch_description():
     # traffic_light_classifier
     add_launch_arg("classifier_type", "1")
     add_launch_arg(
-        "classifier_model_path_car",
+        "car_classifier_model_path",
         os.path.join(classifier_share_dir, "data", "traffic_light_classifier_efficientNet_b1.onnx"),
     )
     add_launch_arg(
-        "classifier_model_path_pedestrian",
+        "pedestrian_classifier_model_path",
         os.path.join(
-            classifier_share_dir, "data", "ped_traffic_light_classifier_efficientNet_b1.onnx"
+            classifier_share_dir, "data", "pedestrian_traffic_light_classifier_efficientNet_b1.onnx"
         ),
     )
     add_launch_arg(
-        "classifier_label_path_car", os.path.join(classifier_share_dir, "data", "lamp_labels.txt")
+        "car_classifier_label_path", os.path.join(classifier_share_dir, "data", "lamp_labels.txt")
     )
     add_launch_arg(
-        "classifier_label_path_pedestrian",
+        "pedestrian_classifier_label_path",
         os.path.join(classifier_share_dir, "data", "lamp_labels_ped.txt"),
     )
     add_launch_arg("classifier_precision", "fp16")
@@ -107,14 +107,14 @@ def generate_launch_description():
             ComposableNode(
                 package="traffic_light_classifier",
                 plugin="traffic_light::TrafficLightClassifierNodelet",
-                name="traffic_light_classifier_car",
+                name="car_traffic_light_classifier",
                 namespace="classification",
                 parameters=[
                     {
                         "approximate_sync": LaunchConfiguration("approximate_sync"),
                         "classifier_type": LaunchConfiguration("classifier_type"),
-                        "classifier_model_path": LaunchConfiguration("classifier_model_path_car"),
-                        "classifier_label_path": LaunchConfiguration("classifier_label_path_car"),
+                        "classifier_model_path": LaunchConfiguration("car_classifier_model_path"),
+                        "classifier_label_path": LaunchConfiguration("car_classifier_label_path"),
                         "classifier_precision": LaunchConfiguration("classifier_precision"),
                         "classifier_mean": LaunchConfiguration("classifier_mean"),
                         "classifier_std": LaunchConfiguration("classifier_std"),
@@ -132,14 +132,14 @@ def generate_launch_description():
             ComposableNode(
                 package="traffic_light_classifier",
                 plugin="traffic_light::TrafficLightClassifierNodelet",
-                name="traffic_light_classifier_pedestrian",
+                name="pedestrian_traffic_light_classifier",
                 namespace="classification",
                 parameters=[
                     {
                         "approximate_sync": LaunchConfiguration("approximate_sync"),
                         "classifier_type": LaunchConfiguration("classifier_type"),
-                        "classifier_model_path": LaunchConfiguration("classifier_model_path_pedestrian"),
-                        "classifier_label_path": LaunchConfiguration("classifier_label_path_pedestrian"),
+                        "classifier_model_path": LaunchConfiguration("pedestrian_classifier_model_path"),
+                        "classifier_label_path": LaunchConfiguration("pedestrian_classifier_label_path"),
                         "classifier_precision": LaunchConfiguration("classifier_precision"),
                         "classifier_mean": LaunchConfiguration("classifier_mean"),
                         "classifier_std": LaunchConfiguration("classifier_std"),
