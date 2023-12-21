@@ -313,7 +313,7 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
 {
   const auto id = signal.traffic_signal_id;
 
-  // no record of detected color in last_detect_color_hold_time_(2.0s)
+  // no record of detected color in last_detect_color_hold_time_
   if (is_flashing_.count(id) == 0) {
     is_flashing_.insert(std::make_pair(id, false));
     return;
