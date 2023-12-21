@@ -101,10 +101,10 @@ NDTScanMatcher::NDTScanMatcher()
   inversion_vector_threshold_(-0.9),  // Not necessary to extract to ndt_scan_matcher.param.yaml
   oscillation_threshold_(10),         // Not necessary to extract to ndt_scan_matcher.param.yaml
   output_pose_covariance_({}),
-  regularization_enabled_(declare_parameter<bool>("regularization_enabled"))
+  regularization_enabled_(declare_parameter<bool>("regularization_enabled")),
+  is_activated_(false)
 {
   (*state_ptr_)["state"] = "Initializing";
-  is_activated_ = false;
 
   int64_t points_queue_size = this->declare_parameter<int64_t>("input_sensor_points_queue_size");
   points_queue_size = std::max(points_queue_size, (int64_t)0);

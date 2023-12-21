@@ -213,7 +213,7 @@ private:
   const bool regularization_enabled_;  // whether to use longitudinal regularization
   std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
 
-  bool is_activated_;
+  std::atomic<bool> is_activated_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
