@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
+#include "interpolation/spherical_linear_interpolation.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "pid_longitudinal_controller/longitudinal_controller_utils.hpp"
 #include "tf2/LinearMath/Quaternion.h"
@@ -22,8 +23,6 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
-
-#include "interpolation/spherical_linear_interpolation.hpp"
 
 #ifdef ROS_DISTRO_GALACTIC
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
