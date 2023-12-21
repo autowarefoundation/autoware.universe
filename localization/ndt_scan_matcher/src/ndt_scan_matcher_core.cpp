@@ -377,7 +377,7 @@ void NDTScanMatcher::callback_timer()
   if (!is_activated_) {
     return;
   }
-  if (current_position_ == std::nullopt) {
+  if (latest_ekf_position_ == std::nullopt) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000,
       "Cannot find the reference position for map update. Please check if the EKF odometry is "
@@ -388,9 +388,9 @@ void NDTScanMatcher::callback_timer()
     return;
   }
   // continue only if we should update the map
-  if (map_update_module_->should_update_map(current_position_.value())) {
+  if (map_update_module_->should_update_map(latest_ekf_position_.value())) {
     RCLCPP_INFO(this->get_logger(), "Start updating NDT map (timer_callback)");
-    map_update_module_->update_map(current_position_.value());
+    map_update_module_->update_map(latest_ekf_position_.value());
   }
 }
 
@@ -410,7 +410,7 @@ void NDTScanMatcher::callback_initial_pose(
   }
 
   if (use_dynamic_map_loading_) {
-    current_position_ = initial_pose_msg_ptr->pose.pose.position;
+    latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
   }
 }
 

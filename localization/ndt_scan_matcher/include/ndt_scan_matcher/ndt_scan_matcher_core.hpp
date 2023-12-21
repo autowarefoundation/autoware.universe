@@ -203,7 +203,10 @@ private:
 
   std::mutex ndt_ptr_mtx_;
   std::unique_ptr<SmartPoseBuffer> initial_pose_buffer_;
-  std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
+
+  // Keep latest position for dynamic map loading
+  // This variable is only used when use_dynamic_map_loading is true
+  std::optional<geometry_msgs::msg::Point> latest_ekf_position_ = std::nullopt;
 
   // variables for regularization
   const bool regularization_enabled_;  // whether to use longitudinal regularization
