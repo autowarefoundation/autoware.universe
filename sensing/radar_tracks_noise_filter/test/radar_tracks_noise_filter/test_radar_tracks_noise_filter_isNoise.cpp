@@ -32,12 +32,17 @@ std::shared_ptr<radar_tracks_noise_filter::RadarTrackCrossingNoiseFilterNode> ge
   return node;
 }
 
-radar_msgs::msg::RadarTrack get_radar_track(float velocity_y)
+radar_msgs::msg::RadarTrack getRadarTrack(float velocity_x, float velocity_y)
 {
   radar_msgs::msg::RadarTrack radar_track;
+  radar_track.velocity.x = velocity_x;
   radar_track.velocity.y = velocity_y;
+  radar_track.velocity.z = 0.0;
   return radar_track;
 }
+
+
+
 
 TEST(RadarTracksNoiseFilter, isNoise)
 {
@@ -46,25 +51,25 @@ TEST(RadarTracksNoiseFilter, isNoise)
   rclcpp::init(0, nullptr);
   {
     float velnode_thr = 0.0;
-    float radar_track_vel = 0.0;
+    float radar_track_velocity = 0.0;
     std::shared_ptr<RadarTrackCrossingNoiseFilterNode> node = get_node(velnode_thr);
-    RadarTrack radar_track = get_radar_track(radar_track_vel);
+    RadarTrack radar_track = getRadarTrack(0.0, radar_track_velocity);
     EXPECT_TRUE(node->isNoise(radar_track));
   }
 
   {
     float velnode_thr = -1.0;
-    float radar_track_vel = 3.0;
+    float radar_track_velocity = 3.0;
     std::shared_ptr<RadarTrackCrossingNoiseFilterNode> node = get_node(velnode_thr);
-    RadarTrack radar_track = get_radar_track(radar_track_vel);
+    RadarTrack radar_track = getRadarTrack(0.0, radar_track_velocity);
     EXPECT_TRUE(node->isNoise(radar_track));
   }
 
   {
     float velnode_thr = 3.0;
-    float radar_track_vel = 1.0;
+    float radar_track_velocity = 1.0;
     std::shared_ptr<RadarTrackCrossingNoiseFilterNode> node = get_node(velnode_thr);
-    RadarTrack radar_track = get_radar_track(radar_track_vel);
+    RadarTrack radar_track = getRadarTrack(0.0, radar_track_velocity);
     EXPECT_FALSE(node->isNoise(radar_track));
   }
 }
