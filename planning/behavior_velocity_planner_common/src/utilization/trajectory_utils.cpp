@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
-#include "../../../../common/motion_utils/include/motion_utils/trajectory/conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
