@@ -163,10 +163,6 @@ void CNNClassifier::postProcess(
       boost::algorithm::split(color_and_shape, label, boost::is_any_of("-"));
       element.color = label2state_[color_and_shape.at(0)];
       element.shape = label2state_[color_and_shape.at(1)];
-    } else if (label.find("crosswalk") != std::string::npos) {
-      // found "crosswalk" in label string
-      element.color = label2state_[label.substr(10)];
-      element.shape = tier4_perception_msgs::msg::TrafficLightElement::CIRCLE;
     } else {
       if (label == state2label_[tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN]) {
         element.color = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
