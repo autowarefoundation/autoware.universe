@@ -377,14 +377,14 @@ void NDTScanMatcher::callback_timer()
   if (!is_activated_) {
     return;
   }
+  if (!use_dynamic_map_loading_) {
+    return;
+  }
   if (latest_ekf_position_ == std::nullopt) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000,
       "Cannot find the reference position for map update. Please check if the EKF odometry is "
       "provided to NDT.");
-    return;
-  }
-  if (!use_dynamic_map_loading_) {
     return;
   }
   // continue only if we should update the map
