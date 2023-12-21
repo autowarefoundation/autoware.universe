@@ -204,8 +204,8 @@ NDTScanMatcher::NDTScanMatcher()
   auto sensor_sub_opt = rclcpp::SubscriptionOptions();
   sensor_sub_opt.callback_group = sensor_callback_group;
 
-  const double map_update_dt = 1.0;
-  const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+  constexpr double map_update_dt = 1.0;
+  constexpr auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(map_update_dt));
   map_update_timer_ = rclcpp::create_timer(
     this, this->get_clock(), period_ns, std::bind(&NDTScanMatcher::callback_timer, this),
