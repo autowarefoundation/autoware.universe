@@ -48,7 +48,8 @@ def generate_launch_description():
         "output/car/traffic_signals", "/perception/traffic_light_recognition/car/traffic_signals"
     )
     add_launch_arg(
-        "output/pedestrian/traffic_signals", "/perception/traffic_light_recognition/pedestrian/traffic_signals"
+        "output/pedestrian/traffic_signals",
+        "/perception/traffic_light_recognition/pedestrian/traffic_signals",
     )
 
     # traffic_light_fine_detector
