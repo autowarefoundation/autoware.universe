@@ -21,7 +21,7 @@
 
 #include "system_monitor/system_monitor_utility.hpp"
 
-#include <traffic_reader/traffic_reader_common.hpp>
+#include "system_monitor/traffic_reader/traffic_reader_common.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>

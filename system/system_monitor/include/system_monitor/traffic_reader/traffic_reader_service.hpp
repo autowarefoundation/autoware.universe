@@ -15,7 +15,7 @@
 #ifndef TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
 #define TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
 
-#include "traffic_reader/traffic_reader_common.hpp"
+#include "system_monitor/traffic_reader/traffic_reader_common.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/asio.hpp>
