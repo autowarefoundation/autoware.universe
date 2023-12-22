@@ -193,13 +193,15 @@ bool LaneChangeInterface::canTransitSuccessState()
     RCLCPP_WARN(getLogger(), "%s", message.data());
   };
 
-  if (isWaitingApproval()) {
-    log_debug_throttled("Module is waiting approval");
-    return false;
+  if (module_type_->specialExpiredCheck() && isWaitingApproval()) {
+    log_debug_throttled("Run specialExpiredCheck.");
+    if (isWaitingApproval()) {
+      return true;
+    }
   }
 
-  if (module_type_->specialExpiredCheck()) {
-    log_debug_throttled("Special expired check has passed and no longer wait for approval.");
+  if (!module_type_->isValidPath()) {
+    log_debug_throttled("Has no valid path.");
     return true;
   }
 
@@ -224,10 +226,6 @@ bool LaneChangeInterface::canTransitFailureState()
   };
 
   log_debug_throttled(__func__);
-  if (!module_type_->isValidPath()) {
-    log_debug_throttled("Has no valid path.");
-    return true;
-  }
 
   if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has on going.");
@@ -301,12 +299,10 @@ bool LaneChangeInterface::canTransitIdleToRunningState()
   log_debug_throttled(__func__);
 
   if (!isActivated() || isWaitingApproval()) {
+    if (module_type_->specialRequiredCheck()) {
+      return true;
+    }
     log_debug_throttled("Module is idling.");
-    return false;
-  }
-
-  if (!post_process_safety_status_.is_safe) {
-    log_debug_throttled("path is unsafe.");
     return false;
   }
 
