@@ -21,29 +21,23 @@
 #include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
-#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <motion_utils/trajectory/interpolation.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <geometry_msgs/msg/detail/transform_stamped__struct.hpp>
+#include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
 
-#include <boost/geometry.hpp>
+#include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/union.hpp>
-#include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/strategies/convex_hull.hpp>
 
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
 #include <algorithm>
 #include <limits>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -53,6 +47,7 @@ namespace behavior_path_planner::utils::avoidance
 using autoware_perception_msgs::msg::TrafficSignalElement;
 using behavior_path_planner::utils::traffic_light::calcDistanceToRedTrafficLight;
 using behavior_path_planner::utils::traffic_light::getDistanceToNextTrafficLight;
+using geometry_msgs::msg::TransformStamped;
 using motion_utils::calcLongitudinalOffsetPoint;
 using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestIndex;
@@ -65,7 +60,6 @@ using tier4_autoware_utils::calcYawDeviation;
 using tier4_autoware_utils::createQuaternionFromRPY;
 using tier4_autoware_utils::getPose;
 using tier4_autoware_utils::pose2transform;
-using tier4_autoware_utils::toHexString;
 using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 
@@ -333,6 +327,34 @@ bool isParallelToEgoLane(const ObjectData & object, const double threshold)
   return yaw_deviation < threshold || yaw_deviation > M_PI - threshold;
 }
 
+bool isMergingToEgoLane(const ObjectData & object)
+{
+  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
+  const auto closest_pose =
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
+  const auto yaw_deviation = calcYawDeviation(closest_pose, object_pose);
+
+  if (isOnRight(object)) {
+    if (yaw_deviation < 0.0 && -1.0 * M_PI_2 < yaw_deviation) {
+      return false;
+    }
+
+    if (yaw_deviation > M_PI_2) {
+      return false;
+    }
+  } else {
+    if (yaw_deviation > 0.0 && M_PI_2 > yaw_deviation) {
+      return false;
+    }
+
+    if (yaw_deviation < -1.0 * M_PI_2) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool isObjectOnRoadShoulder(
   ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler,
   const std::shared_ptr<AvoidanceParameters> & parameters)
@@ -463,6 +485,15 @@ bool isForceAvoidanceTarget(
     return false;
   }
 
+  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
+  const auto is_moving_distance_longer_than_threshold =
+    tier4_autoware_utils::calcDistance2d(object.init_pose, object_pose) >
+    parameters->force_avoidance_distance_threshold;
+
+  if (is_moving_distance_longer_than_threshold) {
+    return false;
+  }
+
   if (object.is_within_intersection) {
     RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is in the intersection area.");
     return false;
@@ -478,7 +509,6 @@ bool isForceAvoidanceTarget(
   }
 
   const auto & ego_pose = planner_data->self_odometry->pose.pose;
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
 
   // force avoidance for stopped vehicle
   bool not_parked_object = true;
@@ -579,6 +609,17 @@ bool isSatisfiedWithNonVehicleCondition(
   return true;
 }
 
+ObjectData::Behavior getObjectBehavior(
+  ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  if (isParallelToEgoLane(object, parameters->object_check_yaw_deviation)) {
+    return ObjectData::Behavior::NONE;
+  }
+
+  return isMergingToEgoLane(object) ? ObjectData::Behavior::MERGING
+                                    : ObjectData::Behavior::DEVIATING;
+}
+
 bool isSatisfiedWithVehicleCondition(
   ObjectData & object, const AvoidancePlanningData & data,
   const std::shared_ptr<const PlannerData> & planner_data,
@@ -586,6 +627,7 @@ bool isSatisfiedWithVehicleCondition(
 {
   using boost::geometry::within;
 
+  object.behavior = getObjectBehavior(object, parameters);
   object.is_within_intersection = isWithinIntersection(object, planner_data->route_handler);
 
   // from here condition check for vehicle type objects.
@@ -593,8 +635,14 @@ bool isSatisfiedWithVehicleCondition(
     return true;
   }
 
+  // always ignore all merging objects.
+  if (object.behavior == ObjectData::Behavior::MERGING) {
+    object.reason = "MergingToEgoLane";
+    return false;
+  }
+
   // Object is on center line -> ignore.
-  if (std::abs(object.lateral) < parameters->threshold_distance_object_is_on_center) {
+  if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
     object.reason = AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE;
     return false;
   }
@@ -615,7 +663,12 @@ bool isSatisfiedWithVehicleCondition(
     return true;
   }
 
-  if (isParallelToEgoLane(object, parameters->object_check_yaw_deviation)) {
+  std::string turn_direction = object.overhang_lanelet.attributeOr("turn_direction", "else");
+  if (turn_direction == "straight") {
+    return true;
+  }
+
+  if (object.behavior == ObjectData::Behavior::NONE) {
     object.reason = "ParallelToEgoLane";
     return false;
   }
@@ -678,7 +731,11 @@ std::optional<double> getAvoidMargin(
 
 bool isOnRight(const ObjectData & obj)
 {
-  return obj.lateral < 0.0;
+  if (obj.direction == Direction::NONE) {
+    throw std::logic_error("object direction is not initialized. something wrong.");
+  }
+
+  return obj.direction == Direction::RIGHT;
 }
 
 double calcShiftLength(
@@ -960,9 +1017,8 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
       object.avoid_margin.value() - object_parameter.envelope_buffer_margin - vehicle_width / 2.0;
     const auto obj_poly =
       tier4_autoware_utils::expandPolygon(object.envelope_poly, diff_poly_buffer);
-    const bool is_left = 0 < object.lateral;
     obstacles_for_drivable_area.push_back(
-      {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly, is_left});
+      {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly, !isOnRight(object)});
   }
   return obstacles_for_drivable_area;
 }
@@ -1230,6 +1286,22 @@ void fillAvoidanceNecessity(
 
   // TRUE -> ? (check with hysteresis factor)
   object_data.avoid_required = check_necessity(parameters->hysteresis_factor_expand_rate);
+}
+
+void fillInitialPose(ObjectData & object_data, ObjectDataArray & detected_objects)
+{
+  const auto id = object_data.object.object_id;
+  const auto same_id_obj = std::find_if(
+    detected_objects.begin(), detected_objects.end(),
+    [&id](const auto & o) { return o.object.object_id == id; });
+
+  if (same_id_obj != detected_objects.end()) {
+    object_data.init_pose = same_id_obj->init_pose;
+    return;
+  }
+
+  object_data.init_pose = object_data.object.kinematics.initial_pose_with_covariance.pose;
+  detected_objects.push_back(object_data);
 }
 
 void fillObjectStoppableJudge(
@@ -1582,12 +1654,12 @@ lanelet::ConstLanelets getAdjacentLane(
 
   lanelet::ConstLanelets lanes{};
   for (const auto & lane : ego_succeeding_lanes) {
-    const auto opt_left_lane = rh->getLeftLanelet(lane);
+    const auto opt_left_lane = rh->getLeftLanelet(lane, true, false);
     if (!is_right_shift && opt_left_lane) {
       lanes.push_back(opt_left_lane.value());
     }
 
-    const auto opt_right_lane = rh->getRightLanelet(lane);
+    const auto opt_right_lane = rh->getRightLanelet(lane, true, false);
     if (is_right_shift && opt_right_lane) {
       lanes.push_back(opt_right_lane.value());
     }
@@ -1603,7 +1675,8 @@ lanelet::ConstLanelets getAdjacentLane(
 
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift)
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift,
+  DebugData & debug)
 {
   const auto & p = parameters;
   const auto check_right_lanes =
@@ -1661,6 +1734,9 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
         utils::path_safety_checker::isCentroidWithinLanelet);
       append(targets);
     }
+
+    debug.safety_check_lanes.insert(
+      debug.safety_check_lanes.end(), check_lanes.begin(), check_lanes.end());
   }
 
   // check left lanes
@@ -1680,6 +1756,9 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
         utils::path_safety_checker::isCentroidWithinLanelet);
       append(targets);
     }
+
+    debug.safety_check_lanes.insert(
+      debug.safety_check_lanes.end(), check_lanes.begin(), check_lanes.end());
   }
 
   // check current lanes
@@ -1699,6 +1778,9 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
         utils::path_safety_checker::isCentroidWithinLanelet);
       append(targets);
     }
+
+    debug.safety_check_lanes.insert(
+      debug.safety_check_lanes.end(), check_lanes.begin(), check_lanes.end());
   }
 
   return target_objects;

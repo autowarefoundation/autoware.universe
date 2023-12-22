@@ -117,6 +117,8 @@ void fillObjectStoppableJudge(
   ObjectData & object_data, const ObjectDataArray & registered_objects,
   const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters);
 
+void fillInitialPose(ObjectData & object_data, ObjectDataArray & detected_objects);
+
 void updateRegisteredObject(
   ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);
@@ -151,7 +153,8 @@ AvoidLineArray combineRawShiftLinesWithUniqueCheck(
 
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift);
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift,
+  DebugData & debug);
 
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
