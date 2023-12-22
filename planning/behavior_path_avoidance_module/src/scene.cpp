@@ -738,7 +738,7 @@ bool AvoidanceModule::isSafePath(
   const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
 
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
-    avoid_data_, planner_data_, parameters_, is_right_shift.value());
+    avoid_data_, planner_data_, parameters_, is_right_shift.value(), debug);
 
   for (const auto & object : safety_check_target_objects) {
     auto current_debug_data = utils::path_safety_checker::createObjectDebug(object);
@@ -1207,6 +1207,12 @@ void AvoidanceModule::updateData()
 
   // update rtc status.
   updateRTCData();
+
+  // update interest objects data
+  for (const auto & [uuid, data] : debug_data_.collision_check) {
+    const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
+    setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
+  }
 
   safe_ = avoid_data_.safe;
 }
