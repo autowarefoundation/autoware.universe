@@ -64,6 +64,11 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
       grid_mode_switch_radius_ / grid_size_m_;  // changing the mode of grid division
     virtual_lidar_z_ = vehicle_info_.vehicle_height_m;
     grid_mode_switch_angle_rad_ = std::atan2(grid_mode_switch_radius_, virtual_lidar_z_);
+
+    grid_size_rad_ =
+      normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
+      normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
+    tan_grid_size_rad_ = std::tan(grid_size_rad_);
   }
 
   using std::placeholders::_1;
@@ -109,15 +114,12 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
   out_radial_ordered_points.resize(radial_dividers_num_);
   PointData current_point;
 
-  grid_size_rad_ =
-    normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
-    normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
+  const auto inv_radial_divider_angle_rad = 1.0f / radial_divider_angle_rad_;
+  const auto inv_grid_size_rad = 1.0f / grid_size_rad_;
+  const auto inv_grid_size_m = 1.0f / grid_size_m_;
 
-  const auto radial_divider_angle_rad_inv = 1.0f / radial_divider_angle_rad_;
-  const auto grid_size_rad_inv = 1.0f / grid_size_rad_;
-  const auto grid_size_m_inv = 1.0f / grid_size_m_;
   const auto grid_id_offset =
-    grid_mode_switch_grid_id_ - grid_mode_switch_angle_rad_ * grid_size_rad_inv;
+    grid_mode_switch_grid_id_ - grid_mode_switch_angle_rad_ * inv_grid_size_rad;
   const auto x_shift = vehicle_info_.wheel_base_m / 2.0f + center_pcl_shift_;
 
   size_t point_index = 0;
@@ -132,13 +134,13 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
     auto theta{normalizeRadian(std::atan2(x, input_point.y), 0.0)};
 
     // divide by vertical angle
-    auto radial_div{static_cast<size_t>(std::floor(theta * radial_divider_angle_rad_inv))};
+    auto radial_div{static_cast<size_t>(std::floor(theta * inv_radial_divider_angle_rad))};
     uint16_t grid_id = 0;
     if (radius <= grid_mode_switch_radius_) {
-      grid_id = static_cast<uint16_t>(radius * grid_size_m_inv);
+      grid_id = static_cast<uint16_t>(radius * inv_grid_size_m);
     } else {
       auto gamma{normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
-      grid_id = grid_id_offset + gamma * grid_size_rad_inv;
+      grid_id = grid_id_offset + gamma * inv_grid_size_rad;
     }
     current_point.grid_id = grid_id;
     current_point.radius = radius;
@@ -163,6 +165,7 @@ void ScanGroundFilterComponent::convertPointcloud(
   PointData current_point;
   size_t point_index = 0;
   pcl::PointXYZ input_point;
+  const auto inv_radial_divider_angle_rad = 1.0f / radial_divider_angle_rad_;
 
   for (size_t global_offset = 0; global_offset + in_cloud->point_step <= in_cloud->data.size();
        global_offset += in_cloud->point_step) {
@@ -171,7 +174,7 @@ void ScanGroundFilterComponent::convertPointcloud(
 
     auto radius{static_cast<float>(std::hypot(input_point.x, input_point.y))};
     auto theta{normalizeRadian(std::atan2(input_point.x, input_point.y), 0.0)};
-    auto radial_div{static_cast<size_t>(std::floor(theta / radial_divider_angle_rad_))};
+    auto radial_div{static_cast<size_t>(std::floor(theta * inv_radial_divider_angle_rad))};
 
     current_point.radius = radius;
     current_point.point_state = PointLabel::INIT;
@@ -194,6 +197,21 @@ void ScanGroundFilterComponent::calcVirtualGroundOrigin(pcl::PointXYZ & point)
   point.x = vehicle_info_.wheel_base_m;
   point.y = 0;
   point.z = 0;
+}
+
+inline float ScanGroundFilterComponent::calcGridSize(const PointData & p)
+{
+  float grid_size = grid_size_m_;
+  uint16_t back_steps_num = 1;
+
+  if (
+    p.radius > grid_mode_switch_radius_ && p.grid_id > grid_mode_switch_grid_id_ + back_steps_num) {
+    // equivalent to grid_size = (std::tan(gamma) - std::tan(gamma - grid_size_rad_)) *
+    // virtual_lidar_z_ when gamma = normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)
+    grid_size = p.radius - (p.radius - tan_grid_size_rad_ * virtual_lidar_z_) /
+                             (1 + p.radius * tan_grid_size_rad_ / virtual_lidar_z_);
+  }
+  return grid_size;
 }
 
 void ScanGroundFilterComponent::initializeFirstGndGrids(
@@ -303,12 +321,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
   pcl::PointIndices & out_no_ground_indices)
 {
   out_no_ground_indices.indices.clear();
-  uint16_t back_steps_num = 1;
 
-  grid_size_rad_ =
-    normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
-    normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
-  auto tan_grid_size_rad = std::tan(grid_size_rad_);
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
     PointsCentroid ground_cluster;
     ground_cluster.initialize();
@@ -330,8 +343,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     pcl::PointXYZ p_orig_point, prev_p_orig_point;
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); ++j) {
       p = &in_radial_ordered_clouds[i][j];
-      size_t global_offset = in_cloud->point_step * p->orig_index;
-      get_point_from_global_offset(in_cloud, p_orig_point, global_offset);
+      get_point_from_global_offset(in_cloud, p_orig_point, in_cloud->point_step * p->orig_index);
       float global_slope_ratio_p = p_orig_point.z / p->radius;
       float non_ground_height_threshold_local = non_ground_height_threshold_;
       if (p_orig_point.x < low_priority_region_x_) {
@@ -423,15 +435,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       // gnd grid is continuous, the last gnd grid is close
       uint16_t next_gnd_grid_id_thresh = (gnd_grids.end() - gnd_grid_buffer_size_)->grid_id +
                                          gnd_grid_buffer_size_ + gnd_grid_continual_thresh_;
-      float curr_grid_size = grid_size_m_;
-      if (
-        p->radius > grid_mode_switch_radius_ &&
-        p->grid_id > grid_mode_switch_grid_id_ + back_steps_num) {
-        // equivalent to curr_grid_size = (std::tan(gamma) - std::tan(gamma - grid_size_rad_)) *
-        // virtual_lidar_z_ when gamma = normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)
-        curr_grid_size = p->radius - (p->radius - tan_grid_size_rad * virtual_lidar_z_) /
-                                       (1 + p->radius * tan_grid_size_rad / virtual_lidar_z_);
-      }
+      float curr_grid_size = calcGridSize(*p);
       if (
         p->grid_id < next_gnd_grid_id_thresh &&
         p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
@@ -473,14 +477,12 @@ void ScanGroundFilterComponent::classifyPointCloud(
     PointsCentroid ground_cluster, non_ground_cluster;
     float local_slope = 0.0f;
     PointLabel prev_point_label = PointLabel::INIT;
-    pcl::PointXYZ prev_gnd_point(0, 0, 0);
-    pcl::PointXYZ p_orig_point, prev_p_orig_point;
+    pcl::PointXYZ prev_gnd_point(0, 0, 0), p_orig_point, prev_p_orig_point;
     // loop through each point in the radial div
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); ++j) {
       const float local_slope_max_angle = local_slope_max_angle_rad_;
       auto * p = &in_radial_ordered_clouds[i][j];
-      size_t global_offset = in_cloud->point_step * p->orig_index;
-      get_point_from_global_offset(in_cloud, p_orig_point, global_offset);
+      get_point_from_global_offset(in_cloud, p_orig_point, in_cloud->point_step * p->orig_index);
       if (j == 0) {
         bool is_front_side = (p_orig_point.x > virtual_ground_point.x);
         if (use_virtual_ground_point_ && is_front_side) {

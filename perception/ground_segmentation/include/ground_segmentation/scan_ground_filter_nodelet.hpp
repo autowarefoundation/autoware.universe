@@ -173,6 +173,7 @@ private:
   bool elevation_grid_mode_;
   float non_ground_height_threshold_;
   float grid_size_rad_;
+  float tan_grid_size_rad_;
   float grid_size_m_;
   float low_priority_region_x_;
   uint16_t gnd_grid_buffer_size_;
@@ -222,6 +223,8 @@ private:
    */
   void calcVirtualGroundOrigin(pcl::PointXYZ & point);
 
+  float calcGridSize(const PointData & p);
+
   /*!
    * Classifies Points in the PointCloud as Ground and Not Ground
    * @param in_radial_ordered_clouds Vector of an Ordered PointsCloud
@@ -234,11 +237,11 @@ private:
     const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids);
 
   void checkContinuousGndGrid(
-    PointData & p, pcl::PointXYZ & orig_point, const std::vector<GridCenter> & gnd_grids_list);
+    PointData & p, pcl::PointXYZ & p_orig_point, const std::vector<GridCenter> & gnd_grids_list);
   void checkDiscontinuousGndGrid(
-    PointData & p, pcl::PointXYZ & orig_point, const std::vector<GridCenter> & gnd_grids_list);
+    PointData & p, pcl::PointXYZ & p_orig_point, const std::vector<GridCenter> & gnd_grids_list);
   void checkBreakGndGrid(
-    PointData & p, pcl::PointXYZ & orig_point, const std::vector<GridCenter> & gnd_grids_list);
+    PointData & p, pcl::PointXYZ & p_orig_point, const std::vector<GridCenter> & gnd_grids_list);
   void classifyPointCloud(
     const PointCloud2ConstPtr & in_cloud_ptr,
     std::vector<PointCloudVector> & in_radial_ordered_clouds,
@@ -265,7 +268,7 @@ private:
    */
   void extractObjectPoints(
     const PointCloud2ConstPtr & in_cloud_ptr, const pcl::PointIndices & in_indices,
-    PointCloud2 & out_object_cloud);  // changed
+    PointCloud2 & out_object_cloud);
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
