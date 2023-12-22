@@ -346,14 +346,12 @@ private:
       }
       double v_curvature_max = std::sqrt(max_lateral_accel_abs / std::max(curvature, 1.0E-5));
       // v_curvature_max = std::max(v_curvature_max, min_curve_velocity);
-      min_curv_thing = std::min(v_curvature_max, min_curv_thing);
       if (trajectory.at(i).longitudinal_velocity_mps > v_curvature_max) {
         std::cerr << "False Min curvature thing " << min_curv_thing << "\n";
         std::cerr << "Velocity " << trajectory.at(i).longitudinal_velocity_mps << "\n";
         return false;
       }
     }
-    std::cerr << "True Min curvature thing " << min_curv_thing << "\n";
     std::cerr << "Velocity " << trajectory.back().longitudinal_velocity_mps << "\n";
 
     return true;
