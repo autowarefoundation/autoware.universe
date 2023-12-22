@@ -209,7 +209,8 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   diag_array_stamp_(0, 0, this->get_clock()->get_clock_type()),
   autoware_state_stamp_(0, 0, this->get_clock()->get_clock_type()),
   current_gate_mode_stamp_(0, 0, this->get_clock()->get_clock_type()),
-  control_mode_stamp_(0, 0, this->get_clock()->get_clock_type())
+  control_mode_stamp_(0, 0, this->get_clock()->get_clock_type()),
+  control_mode_activated_(false)
 {
   // Parameter
   get_parameter_or<int>("update_rate", params_.update_rate, 10);
@@ -374,6 +375,11 @@ void AutowareErrorMonitor::onAutowareState(
 void AutowareErrorMonitor::onControlMode(
   const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
+  // used for indicating that onControlMode callback is trigged at least once.
+  if(!control_mode_activated_){
+    control_mode_activated_ = true;
+  }
+
   control_mode_ = msg;
 
   // for Heartbeat
@@ -431,7 +437,7 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
     return true;
   }
 
-  if (isTimeout(control_mode_stamp_, params_.data_heartbeat_timeout)) {
+  if ((isTimeout(control_mode_stamp_, params_.data_heartbeat_timeout)) && (control_mode_activated_)) {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "vehicle_state_report msg is timeout...");
     return true;
