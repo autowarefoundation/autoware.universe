@@ -15,7 +15,7 @@
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
 #include <common/types.hpp>
-#include <geometry/lookup_table.hpp>
+#include "autoware_auto_geometry/lookup_table.hpp>
 
 #include <gtest/gtest.h>
 

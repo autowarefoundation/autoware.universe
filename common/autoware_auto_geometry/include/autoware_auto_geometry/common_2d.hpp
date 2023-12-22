@@ -19,7 +19,7 @@
 #ifndef GEOMETRY__COMMON_2D_HPP_
 #define GEOMETRY__COMMON_2D_HPP_
 
-#include "geometry/interval.hpp"
+#include "autoware_auto_geometry/interval.hpp"
 
 #include <common/types.hpp>
 

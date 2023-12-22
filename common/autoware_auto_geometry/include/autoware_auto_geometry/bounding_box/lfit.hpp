@@ -23,7 +23,7 @@
 #ifndef GEOMETRY__BOUNDING_BOX__LFIT_HPP_
 #define GEOMETRY__BOUNDING_BOX__LFIT_HPP_
 
-#include <geometry/bounding_box/eigenbox_2d.hpp>
+#include "autoware_auto_geometry/bounding_box/eigenbox_2d.hpp>
 
 #include <limits>
 #include <utility>

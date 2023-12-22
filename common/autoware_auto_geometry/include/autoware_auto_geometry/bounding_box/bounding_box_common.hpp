@@ -20,8 +20,8 @@
 #ifndef GEOMETRY__BOUNDING_BOX__BOUNDING_BOX_COMMON_HPP_
 #define GEOMETRY__BOUNDING_BOX__BOUNDING_BOX_COMMON_HPP_
 
-#include <geometry/common_2d.hpp>
-#include <geometry/visibility_control.hpp>
+#include "autoware_auto_geometry/common_2d.hpp>
+#include "autoware_auto_geometry/visibility_control.hpp>
 
 #include <autoware_auto_perception_msgs/msg/bounding_box.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_object.hpp>

@@ -17,8 +17,8 @@
 #ifndef GEOMETRY__INTERSECTION_HPP_
 #define GEOMETRY__INTERSECTION_HPP_
 
-#include <geometry/common_2d.hpp>
-#include <geometry/convex_hull.hpp>
+#include "autoware_auto_geometry/common_2d.hpp>
+#include "autoware_auto_geometry/convex_hull.hpp>
 
 #include <autoware_auto_perception_msgs/msg/bounding_box.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>

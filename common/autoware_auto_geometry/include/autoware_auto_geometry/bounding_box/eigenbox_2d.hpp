@@ -22,7 +22,7 @@
 #ifndef GEOMETRY__BOUNDING_BOX__EIGENBOX_2D_HPP_
 #define GEOMETRY__BOUNDING_BOX__EIGENBOX_2D_HPP_
 
-#include <geometry/bounding_box/bounding_box_common.hpp>
+#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp>
 
 #include <limits>
 #include <utility>

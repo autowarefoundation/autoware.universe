@@ -22,7 +22,7 @@
 #define GEOMETRY__HULL_POCKETS_HPP_
 
 #include <common/types.hpp>
-#include <geometry/common_2d.hpp>
+#include "autoware_auto_geometry/common_2d.hpp>
 
 #include <algorithm>
 #include <iterator>

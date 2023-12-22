@@ -22,7 +22,7 @@
 #define GEOMETRY__CONVEX_HULL_HPP_
 
 #include <common/types.hpp>
-#include <geometry/common_2d.hpp>
+#include "autoware_auto_geometry/common_2d.hpp>
 
 // lint -e537 NOLINT pclint vs cpplint
 #include <algorithm>

@@ -19,7 +19,7 @@
 #ifndef GEOMETRY__COMMON_3D_HPP_
 #define GEOMETRY__COMMON_3D_HPP_
 
-#include <geometry/common_2d.hpp>
+#include "autoware_auto_geometry/common_2d.hpp>
 
 namespace autoware
 {

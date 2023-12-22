@@ -21,7 +21,7 @@
 #define GEOMETRY__LOOKUP_TABLE_HPP_
 
 #include "common/types.hpp"
-#include "geometry/interval.hpp"
+#include "autoware_auto_geometry/interval.hpp"
 
 #include <cmath>
 #include <stdexcept>
