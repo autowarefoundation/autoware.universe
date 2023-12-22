@@ -57,7 +57,7 @@ public:
     std::string new_frame_id{};
     bool use_twist_compensation{};
     bool use_twist_yaw_compensation{};
-    float static_object_speed_threshold{};
+    double static_object_speed_threshold{};
   };
 
 private:
@@ -67,8 +67,8 @@ private:
   std::shared_ptr<tier4_autoware_utils::TransformListener> transform_listener_;
 
   // Callback
-  void onRadarTracks(const RadarTracks::ConstSharedPtr msg);
-  void onTwist(const Odometry::ConstSharedPtr msg);
+  void on_radar_tracks(const RadarTracks::ConstSharedPtr msg);
+  void on_twist(const Odometry::ConstSharedPtr msg);
 
   // Data Buffer
   RadarTracks::ConstSharedPtr radar_data_{};
@@ -82,36 +82,35 @@ private:
   // Timer
   rclcpp::TimerBase::SharedPtr timer_{};
 
-  bool isDataReady();
+  bool is_data_ready();
   void onTimer();
 
   // Parameter Server
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
-  rcl_interfaces::msg::SetParametersResult onSetParam(
+  rcl_interfaces::msg::SetParametersResult on_set_param(
     const std::vector<rclcpp::Parameter> & params);
 
   // Parameter
   NodeParam node_param_{};
 
   // Core
-  geometry_msgs::msg::PoseWithCovariance convertPoseWithCovariance();
-  TrackedObjects convertRadarTrackToTrackedObjects();
-  static DetectedObjects convertTrackedObjectsToDetectedObjects(TrackedObjects & objects);
-  geometry_msgs::msg::Vector3 compensateVelocitySensorPosition(
+  TrackedObjects convert_radar_track_to_tracked_objects();
+  static DetectedObjects convert_tracked_objects_to_detected_objects(TrackedObjects & objects);
+  geometry_msgs::msg::Vector3 compensate_velocity_sensor_position(
     const radar_msgs::msg::RadarTrack & radar_track);
-  geometry_msgs::msg::Vector3 compensateVelocityEgoMotion(
+  geometry_msgs::msg::Vector3 compensate_velocity_ego_motion(
     const geometry_msgs::msg::Vector3 & velocity_in,
     const geometry_msgs::msg::Point & position_from_veh);
-  bool isStaticObject(
+  bool is_static_object(
     const radar_msgs::msg::RadarTrack & radar_track,
     const geometry_msgs::msg::Vector3 & compensated_velocity);
-  static std::array<double, 36> convertPoseCovarianceMatrix(
+  static std::array<double, 36> convert_pose_covariance_matrix(
     const radar_msgs::msg::RadarTrack & radar_track);
-  static std::array<double, 36> convertTwistCovarianceMatrix(
+  static std::array<double, 36> convert_twist_covariance_matrix(
     const radar_msgs::msg::RadarTrack & radar_track);
-  static std::array<double, 36> convertAccelerationCovarianceMatrix(
+  static std::array<double, 36> convert_acceleration_covariance_matrix(
     const radar_msgs::msg::RadarTrack & radar_track);
-  uint8_t convertClassification(const uint16_t classification);
+  uint8_t convert_classification(const uint16_t classification);
 };
 
 }  // namespace radar_tracks_msgs_converter

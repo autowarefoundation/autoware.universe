@@ -31,7 +31,6 @@
 #include <vector>
 
 using namespace std::literals;
-using std::chrono::duration;
 using std::chrono::nanoseconds;
 using std::placeholders::_1;
 
@@ -74,7 +73,7 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
 {
   // Parameter Server
   set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&RadarTracksMsgsConverterNode::onSetParam, this, _1));
+    std::bind(&RadarTracksMsgsConverterNode::on_set_param, this, _1));
 
   // Node Parameter
   node_param_.update_rate_hz = declare_parameter<double>("update_rate_hz", 20.0);
@@ -88,10 +87,10 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
   // Subscriber
   sub_radar_ = create_subscription<RadarTracks>(
     "~/input/radar_objects", rclcpp::QoS{1},
-    std::bind(&RadarTracksMsgsConverterNode::onRadarTracks, this, _1));
+    std::bind(&RadarTracksMsgsConverterNode::on_radar_tracks, this, _1));
   sub_odometry_ = create_subscription<Odometry>(
     "~/input/odometry", rclcpp::QoS{1},
-    std::bind(&RadarTracksMsgsConverterNode::onTwist, this, _1));
+    std::bind(&RadarTracksMsgsConverterNode::on_twist, this, _1));
   transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
 
   // Publisher
@@ -104,17 +103,17 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
     this, get_clock(), update_period_ns, std::bind(&RadarTracksMsgsConverterNode::onTimer, this));
 }
 
-void RadarTracksMsgsConverterNode::onRadarTracks(const RadarTracks::ConstSharedPtr msg)
+void RadarTracksMsgsConverterNode::on_radar_tracks(const RadarTracks::ConstSharedPtr msg)
 {
   radar_data_ = msg;
 }
 
-void RadarTracksMsgsConverterNode::onTwist(const Odometry::ConstSharedPtr msg)
+void RadarTracksMsgsConverterNode::on_twist(const Odometry::ConstSharedPtr msg)
 {
   odometry_data_ = msg;
 }
 
-rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetParam(
+rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::on_set_param(
   const std::vector<rclcpp::Parameter> & params)
 {
   rcl_interfaces::msg::SetParametersResult result;
@@ -142,7 +141,7 @@ rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetPara
   return result;
 }
 
-bool RadarTracksMsgsConverterNode::isDataReady()
+bool RadarTracksMsgsConverterNode::is_data_ready()
 {
   if (!radar_data_) {
     RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "waiting for radar msg...");
@@ -154,22 +153,22 @@ bool RadarTracksMsgsConverterNode::isDataReady()
 
 void RadarTracksMsgsConverterNode::onTimer()
 {
-  if (!isDataReady()) {
+  if (!is_data_ready()) {
     return;
   }
   const auto & header = radar_data_->header;
   transform_ = transform_listener_->getTransform(
     node_param_.new_frame_id, header.frame_id, header.stamp, rclcpp::Duration::from_seconds(0.01));
 
-  TrackedObjects tracked_objects = convertRadarTrackToTrackedObjects();
-  DetectedObjects detected_objects = convertTrackedObjectsToDetectedObjects(tracked_objects);
+  TrackedObjects tracked_objects = convert_radar_track_to_tracked_objects();
+  DetectedObjects detected_objects = convert_tracked_objects_to_detected_objects(tracked_objects);
   if (!tracked_objects.objects.empty()) {
     pub_tracked_objects_->publish(tracked_objects);
     pub_detected_objects_->publish(detected_objects);
   }
 }
 
-DetectedObjects RadarTracksMsgsConverterNode::convertTrackedObjectsToDetectedObjects(
+DetectedObjects RadarTracksMsgsConverterNode::convert_tracked_objects_to_detected_objects(
   TrackedObjects & objects)
 {
   DetectedObjects detected_objects;
@@ -197,7 +196,7 @@ DetectedObjects RadarTracksMsgsConverterNode::convertTrackedObjectsToDetectedObj
   return detected_objects;
 }
 
-bool RadarTracksMsgsConverterNode::isStaticObject(
+bool RadarTracksMsgsConverterNode::is_static_object(
   const radar_msgs::msg::RadarTrack & radar_track,
   const geometry_msgs::msg::Vector3 & compensated_velocity)
 {
@@ -218,7 +217,7 @@ bool RadarTracksMsgsConverterNode::isStaticObject(
   return std::abs(longitudinal_speed) < node_param_.static_object_speed_threshold;
 }
 
-TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
+TrackedObjects RadarTracksMsgsConverterNode::convert_radar_track_to_tracked_objects()
 {
   TrackedObjects tracked_objects;
   tracked_objects.header = radar_data_->header;
@@ -250,10 +249,11 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     // 1: Compensate radar coordinate
     // radar track velocity is defined in the radar coordinate
     // compensate radar coordinate to vehicle coordinate
-    auto compensated_velocity = compensateVelocitySensorPosition(radar_track);
+    auto compensated_velocity = compensate_velocity_sensor_position(radar_track);
     // 2: Compensate ego motion
     if (node_param_.use_twist_compensation && odometry_data_) {
-      compensated_velocity = compensateVelocityEgoMotion(compensated_velocity, position_from_veh);
+      compensated_velocity =
+        compensate_velocity_ego_motion(compensated_velocity, position_from_veh);
     } else if (node_param_.use_twist_compensation && !odometry_data_) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), 5000,
@@ -267,9 +267,9 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     // kinematics setting
     TrackedObjectKinematics kinematics;
     kinematics.orientation_availability = TrackedObjectKinematics::AVAILABLE;
-    kinematics.is_stationary = isStaticObject(radar_track, compensated_velocity);
+    kinematics.is_stationary = is_static_object(radar_track, compensated_velocity);
     kinematics.pose_with_covariance.pose = transformed_pose_stamped.pose;
-    kinematics.pose_with_covariance.covariance = convertPoseCovarianceMatrix(radar_track);
+    kinematics.pose_with_covariance.covariance = convert_pose_covariance_matrix(radar_track);
     // velocity of object is defined in the object coordinate
     // heading is obtained from ground velocity
     kinematics.pose_with_covariance.pose.orientation =
@@ -279,10 +279,10 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     kinematics.twist_with_covariance.twist.linear.x = std::sqrt(
       compensated_velocity.x * compensated_velocity.x +
       compensated_velocity.y * compensated_velocity.y);
-    kinematics.twist_with_covariance.covariance = convertTwistCovarianceMatrix(radar_track);
+    kinematics.twist_with_covariance.covariance = convert_twist_covariance_matrix(radar_track);
     // acceleration is zero, use default value
     kinematics.acceleration_with_covariance.covariance =
-      convertAccelerationCovarianceMatrix(radar_track);
+      convert_acceleration_covariance_matrix(radar_track);
 
     // fill the kinematics to the tracked object
     tracked_object.kinematics = kinematics;
@@ -290,7 +290,7 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     // classification
     ObjectClassification classification;
     classification.probability = 1.0;
-    classification.label = convertClassification(radar_track.classification);
+    classification.label = convert_classification(radar_track.classification);
     tracked_object.classification.emplace_back(classification);
 
     tracked_objects.objects.emplace_back(tracked_object);
@@ -298,7 +298,7 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
   return tracked_objects;
 }
 
-geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocitySensorPosition(
+geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensate_velocity_sensor_position(
   const radar_msgs::msg::RadarTrack & radar_track)
 {
   // initialize compensated velocity
@@ -313,7 +313,7 @@ geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocitySens
   return compensated_velocity;
 }
 
-geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocityEgoMotion(
+geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensate_velocity_ego_motion(
   const geometry_msgs::msg::Vector3 & velocity_in,
   const geometry_msgs::msg::Point & position_from_veh)
 {
@@ -331,7 +331,7 @@ geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocityEgoM
   return velocity;
 }
 
-std::array<double, 36> RadarTracksMsgsConverterNode::convertPoseCovarianceMatrix(
+std::array<double, 36> RadarTracksMsgsConverterNode::convert_pose_covariance_matrix(
   const radar_msgs::msg::RadarTrack & radar_track)
 {
   using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
@@ -348,7 +348,7 @@ std::array<double, 36> RadarTracksMsgsConverterNode::convertPoseCovarianceMatrix
   pose_covariance[POSE_IDX::Z_Z] = radar_track.position_covariance[RADAR_IDX::Z_Z];
   return pose_covariance;
 }
-std::array<double, 36> RadarTracksMsgsConverterNode::convertTwistCovarianceMatrix(
+std::array<double, 36> RadarTracksMsgsConverterNode::convert_twist_covariance_matrix(
   const radar_msgs::msg::RadarTrack & radar_track)
 {
   using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
@@ -365,7 +365,7 @@ std::array<double, 36> RadarTracksMsgsConverterNode::convertTwistCovarianceMatri
   twist_covariance[POSE_IDX::Z_Z] = radar_track.velocity_covariance[RADAR_IDX::Z_Z];
   return twist_covariance;
 }
-std::array<double, 36> RadarTracksMsgsConverterNode::convertAccelerationCovarianceMatrix(
+std::array<double, 36> RadarTracksMsgsConverterNode::convert_acceleration_covariance_matrix(
   const radar_msgs::msg::RadarTrack & radar_track)
 {
   using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
@@ -383,7 +383,7 @@ std::array<double, 36> RadarTracksMsgsConverterNode::convertAccelerationCovarian
   return acceleration_covariance;
 }
 
-uint8_t RadarTracksMsgsConverterNode::convertClassification(const uint16_t classification)
+uint8_t RadarTracksMsgsConverterNode::convert_classification(const uint16_t classification)
 {
   if (classification == static_cast<uint16_t>(RadarTrackObjectID::UNKNOWN)) {
     return ObjectClassification::UNKNOWN;
