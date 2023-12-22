@@ -189,8 +189,9 @@ private:
   double local_slope_max_ratio_;
   double radial_divider_angle_rad_;         // distance in rads between dividers
   double split_points_distance_tolerance_;  // distance in meters between concentric divisions
-  double                                    // minimum height threshold regardless the slope,
-    split_height_distance_;                 // useful for close points
+  double split_points_distance_tolerance_square_;
+  double                     // minimum height threshold regardless the slope,
+    split_height_distance_;  // useful for close points
   bool use_virtual_ground_point_;
   bool use_recheck_ground_cluster_;  // to enable recheck ground cluster
   size_t radial_dividers_num_;

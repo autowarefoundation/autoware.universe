@@ -54,6 +54,8 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     local_slope_max_ratio_ = std::tan(local_slope_max_angle_rad_);
     radial_divider_angle_rad_ = deg2rad(declare_parameter("radial_divider_angle_deg", 1.0));
     split_points_distance_tolerance_ = declare_parameter("split_points_distance_tolerance", 0.2);
+    split_points_distance_tolerance_square_ =
+      split_points_distance_tolerance_ * split_points_distance_tolerance_;
     split_height_distance_ = declare_parameter("split_height_distance", 0.2);
     use_virtual_ground_point_ = declare_parameter("use_virtual_ground_point", true);
     use_recheck_ground_cluster_ = declare_parameter("use_recheck_ground_cluster", true);
@@ -335,8 +337,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
     // check the first point in ray
     auto * p = &in_radial_ordered_clouds[i][0];
-    PointData * prev_p;
-    prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
+    auto * prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
 
     bool initialized_first_gnd_grid = false;
     bool prev_list_init = false;
@@ -351,44 +352,35 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
           non_ground_height_threshold_ * abs(p_orig_point.x / low_priority_region_x_);
       }
       // classify first grid's point cloud
-      if (
-        !initialized_first_gnd_grid && global_slope_ratio_p >= global_slope_max_ratio_ &&
-        p_orig_point.z > non_ground_height_threshold_local) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
-        p->point_state = PointLabel::NON_GROUND;
-        prev_p = p;
-        prev_p_orig_point = p_orig_point;
-        continue;
-      }
-
-      if (
-        !initialized_first_gnd_grid && abs(global_slope_ratio_p) < global_slope_max_ratio_ &&
-        abs(p_orig_point.z) < non_ground_height_threshold_local) {
-        ground_cluster.addPoint(p->radius, p_orig_point.z, p->orig_index);
-        p->point_state = PointLabel::GROUND;
-        initialized_first_gnd_grid = static_cast<bool>(p->grid_id - prev_p->grid_id);
-        prev_p = p;
-        prev_p_orig_point = p_orig_point;
-        continue;
-      }
-
       if (!initialized_first_gnd_grid) {
+        if (
+          global_slope_ratio_p >= global_slope_max_ratio_ &&
+          p_orig_point.z > non_ground_height_threshold_local) {
+          out_no_ground_indices.indices.push_back(p->orig_index);
+          p->point_state = PointLabel::NON_GROUND;
+        }
+        if (
+          abs(global_slope_ratio_p) < global_slope_max_ratio_ &&
+          abs(p_orig_point.z) < non_ground_height_threshold_local) {
+          ground_cluster.addPoint(p->radius, p_orig_point.z, p->orig_index);
+          p->point_state = PointLabel::GROUND;
+          initialized_first_gnd_grid = static_cast<bool>(p->grid_id - prev_p->grid_id);
+        }
         prev_p = p;
         prev_p_orig_point = p_orig_point;
         continue;
       }
 
       // initialize lists of previous gnd grids
-      if (prev_list_init == false && initialized_first_gnd_grid == true) {
-        float h = ground_cluster.getAverageHeight();
-        float r = ground_cluster.getAverageRadius();
-        initializeFirstGndGrids(h, r, p->grid_id, gnd_grids);
-        prev_list_init = true;
-      }
-
-      if (prev_list_init == false && initialized_first_gnd_grid == false) {
-        // assume first gnd grid is zero
-        initializeFirstGndGrids(0.0f, p->radius, p->grid_id, gnd_grids);
+      if (prev_list_init == false) {
+        if (initialized_first_gnd_grid == true) {
+          float h = ground_cluster.getAverageHeight();
+          float r = ground_cluster.getAverageRadius();
+          initializeFirstGndGrids(h, r, p->grid_id, gnd_grids);
+        } else {
+          // assume first gnd grid is zero
+          initializeFirstGndGrids(0.0f, p->radius, p->grid_id, gnd_grids);
+        }
         prev_list_init = true;
       }
 
@@ -417,40 +409,33 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         (p_orig_point.y - prev_p_orig_point.y) * (p_orig_point.y - prev_p_orig_point.y);
       if (
         prev_p->point_state == PointLabel::NON_GROUND &&
-        points_xy_distance_square <
-          split_points_distance_tolerance_ * split_points_distance_tolerance_ &&
+        points_xy_distance_square < split_points_distance_tolerance_square_ &&
         p_orig_point.z > prev_p_orig_point.z) {
         p->point_state = PointLabel::NON_GROUND;
         out_no_ground_indices.indices.push_back(p->orig_index);
-        prev_p = p;
-        prev_p_orig_point = p_orig_point;
-        continue;
-      }
-      if (global_slope_ratio_p > global_slope_max_ratio_) {
+      } else if (global_slope_ratio_p > global_slope_max_ratio_) {
         out_no_ground_indices.indices.push_back(p->orig_index);
-        prev_p = p;
-        prev_p_orig_point = p_orig_point;
-        continue;
-      }
-      // gnd grid is continuous, the last gnd grid is close
-      uint16_t next_gnd_grid_id_thresh = (gnd_grids.end() - gnd_grid_buffer_size_)->grid_id +
-                                         gnd_grid_buffer_size_ + gnd_grid_continual_thresh_;
-      float curr_grid_size = calcGridSize(*p);
-      if (
-        p->grid_id < next_gnd_grid_id_thresh &&
-        p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
-        checkContinuousGndGrid(*p, p_orig_point, gnd_grids);
-
-      } else if (
-        p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
-        checkDiscontinuousGndGrid(*p, p_orig_point, gnd_grids);
       } else {
-        checkBreakGndGrid(*p, p_orig_point, gnd_grids);
-      }
-      if (p->point_state == PointLabel::NON_GROUND) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
-      } else if (p->point_state == PointLabel::GROUND) {
-        ground_cluster.addPoint(p->radius, p_orig_point.z, p->orig_index);
+        // gnd grid is continuous, the last gnd grid is close
+        uint16_t next_gnd_grid_id_thresh = (gnd_grids.end() - gnd_grid_buffer_size_)->grid_id +
+                                           gnd_grid_buffer_size_ + gnd_grid_continual_thresh_;
+        float curr_grid_size = calcGridSize(*p);
+        if (
+          p->grid_id < next_gnd_grid_id_thresh &&
+          p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
+          checkContinuousGndGrid(*p, p_orig_point, gnd_grids);
+
+        } else if (
+          p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
+          checkDiscontinuousGndGrid(*p, p_orig_point, gnd_grids);
+        } else {
+          checkBreakGndGrid(*p, p_orig_point, gnd_grids);
+        }
+        if (p->point_state == PointLabel::NON_GROUND) {
+          out_no_ground_indices.indices.push_back(p->orig_index);
+        } else if (p->point_state == PointLabel::GROUND) {
+          ground_cluster.addPoint(p->radius, p_orig_point.z, p->orig_index);
+        }
       }
       prev_p = p;
       prev_p_orig_point = p_orig_point;
