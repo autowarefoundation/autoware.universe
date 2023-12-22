@@ -47,7 +47,12 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     distance_coefficient_ = declare_parameter<double>("distance_coefficient");
     horizontal_resolution_ = declare_parameter<double>("horizontal_resolution");
   }
-
+  if (vertical_bins_ <= horizontal_ring_id_) {
+    RCLCPP_ERROR(
+      this->get_logger(),
+      "The horizontal_ring_id should be smaller than vertical_bins. Skip blockage diag!");
+    return;
+  }
   updater_.setHardwareID("blockage_diag");
   updater_.add(
     std::string(this->get_namespace()) + ": blockage_validation", this,
