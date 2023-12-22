@@ -132,8 +132,8 @@ BicycleTracker::BicycleTracker(
   ekf_.init(X, P);
 
   // Set lf, lr
-  lf_ = bounding_box_.length * 0.3; // 30% front from the center
-  lr_ = bounding_box_.length * 0.3; // 30% rear from the center 
+  lf_ = bounding_box_.length * 0.3;  // 30% front from the center
+  lr_ = bounding_box_.length * 0.3;  // 30% rear from the center
 }
 
 bool BicycleTracker::predict(const rclcpp::Time & time)
@@ -380,8 +380,8 @@ bool BicycleTracker::measureWithShape(
   bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
 
   // update lf, lr
-  lf_ = bounding_box_.length * 0.3; // 30% front from the center
-  lr_ = bounding_box_.length * 0.3; // 30% rear from the center 
+  lf_ = bounding_box_.length * 0.3;  // 30% front from the center
+  lr_ = bounding_box_.length * 0.3;  // 30% rear from the center
 
   return true;
 }

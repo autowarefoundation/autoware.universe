@@ -147,8 +147,8 @@ NormalVehicleTracker::NormalVehicleTracker(
   setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 
   // Set lf, lr
-  lf_ = bounding_box_.length * 0.3; // 30% front from the center
-  lr_ = bounding_box_.length * 0.25; // 25% rear from the center 
+  lf_ = bounding_box_.length * 0.3;   // 30% front from the center
+  lr_ = bounding_box_.length * 0.25;  // 25% rear from the center
 }
 
 bool NormalVehicleTracker::predict(const rclcpp::Time & time)
@@ -431,8 +431,8 @@ bool NormalVehicleTracker::measureWithShape(
     bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y, bbox_object.shape.dimensions.z};
 
   // update lf, lr
-  lf_ = bounding_box_.length * 0.3; // 30% front from the center
-  lr_ = bounding_box_.length * 0.25; // 25% rear from the center
+  lf_ = bounding_box_.length * 0.3;   // 30% front from the center
+  lr_ = bounding_box_.length * 0.25;  // 25% rear from the center
 
   return true;
 }
