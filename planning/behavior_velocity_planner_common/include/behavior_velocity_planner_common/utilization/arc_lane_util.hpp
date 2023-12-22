@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__ARC_LANE_UTIL_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__ARC_LANE_UTIL_HPP_
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
