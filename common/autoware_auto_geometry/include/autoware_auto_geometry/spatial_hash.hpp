@@ -17,16 +17,17 @@
 /// \brief This file implements a spatial hash for efficient fixed-radius near neighbor queries in
 ///        2D
 
-#ifndef GEOMETRY__SPATIAL_HASH_HPP_
-#define GEOMETRY__SPATIAL_HASH_HPP_
+#ifndef AUTOWARE_AUTO_GEOMETRY__SPATIAL_HASH_HPP_
+#define AUTOWARE_AUTO_GEOMETRY__SPATIAL_HASH_HPP_
 
 #include <common/types.hpp>
-#include "autoware_auto_geometry/spatial_hash_config.hpp>
-#include "autoware_auto_geometry/visibility_control.hpp>
 
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include "autoware_auto_geometry/spatial_hash_config.hpp>
+#include "autoware_auto_geometry/visibility_control.hpp>
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
@@ -328,4 +329,4 @@ using SpatialHash3d = SpatialHash<T, Config3d>;
 }  // namespace common
 }  // namespace autoware
 
-#endif  // GEOMETRY__SPATIAL_HASH_HPP_
+#endif  // AUTOWARE_AUTO_GEOMETRY__SPATIAL_HASH_HPP_

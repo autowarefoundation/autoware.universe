@@ -17,20 +17,21 @@
 /// \brief This file implements a spatial hash for efficient fixed-radius near neighbor queries in
 ///        2D
 
-#ifndef GEOMETRY__SPATIAL_HASH_CONFIG_HPP_
-#define GEOMETRY__SPATIAL_HASH_CONFIG_HPP_
+#ifndef AUTOWARE_AUTO_GEOMETRY__SPATIAL_HASH_CONFIG_HPP_
+#define AUTOWARE_AUTO_GEOMETRY__SPATIAL_HASH_CONFIG_HPP_
 
 #include "helper_functions/crtp.hpp"
 
 #include <common/types.hpp>
-#include "autoware_auto_geometry/common_2d.hpp>
-#include "autoware_auto_geometry/visibility_control.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
 #include <utility>
+
+#include "autoware_auto_geometry/common_2d.hpp>
+#include "autoware_auto_geometry/visibility_control.hpp>
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
@@ -447,4 +448,4 @@ public:
 }  // namespace common
 }  // namespace autoware
 
-#endif  // GEOMETRY__SPATIAL_HASH_CONFIG_HPP_
+#endif  // AUTOWARE_AUTO_GEOMETRY__SPATIAL_HASH_CONFIG_HPP_

@@ -14,8 +14,6 @@
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
-#include "autoware_auto_geometry/common_2d.hpp>
-
 #include <geometry_msgs/msg/point32.hpp>
 
 #include <gtest/gtest.h>
@@ -23,6 +21,8 @@
 #include <list>
 #include <utility>
 #include <vector>
+
+#include "autoware_auto_geometry/common_2d.hpp>
 
 template <typename DataStructure>
 class AreaTest : public ::testing::Test

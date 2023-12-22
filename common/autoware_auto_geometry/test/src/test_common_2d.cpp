@@ -14,8 +14,6 @@
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
-#include "autoware_auto_geometry/common_2d.hpp>
-
 #include <autoware_auto_perception_msgs/msg/point_clusters.hpp>
 #include <geometry_msgs/msg/point32.hpp>
 
@@ -23,6 +21,8 @@
 
 #include <utility>
 #include <vector>
+
+#include "autoware_auto_geometry/common_2d.hpp>
 
 using autoware::common::geometry::point_adapter::xr_;
 using autoware::common::geometry::point_adapter::yr_;

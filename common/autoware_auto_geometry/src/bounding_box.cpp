@@ -15,13 +15,12 @@
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
+
 #include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp>
 #include "autoware_auto_geometry/bounding_box/eigenbox_2d.hpp>
 // cspell: ignore eigenbox
 #include "autoware_auto_geometry/bounding_box/lfit.hpp>
 // cspell: ignore lfit
-#include "autoware_auto_geometry/bounding_box/rotating_calipers.hpp>
-
 #include <geometry_msgs/msg/point32.hpp>
 
 #include <algorithm>
@@ -29,6 +28,8 @@
 #include <list>
 #include <utility>
 #include <vector>
+
+#include "autoware_auto_geometry/bounding_box/rotating_calipers.hpp>
 
 namespace autoware
 {
