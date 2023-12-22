@@ -100,7 +100,7 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
   // Timer
   const auto update_period_ns = rclcpp::Rate(node_param_.update_rate_hz).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), update_period_ns, std::bind(&RadarTracksMsgsConverterNode::onTimer, this));
+    this, get_clock(), update_period_ns, std::bind(&RadarTracksMsgsConverterNode::on_timer, this));
 }
 
 void RadarTracksMsgsConverterNode::on_radar_tracks(const RadarTracks::ConstSharedPtr msg)
@@ -151,7 +151,7 @@ bool RadarTracksMsgsConverterNode::is_data_ready()
   return true;
 }
 
-void RadarTracksMsgsConverterNode::onTimer()
+void RadarTracksMsgsConverterNode::on_timer()
 {
   if (!is_data_ready()) {
     return;
@@ -387,24 +387,30 @@ uint8_t RadarTracksMsgsConverterNode::convert_classification(const uint16_t clas
 {
   if (classification == static_cast<uint16_t>(RadarTrackObjectID::UNKNOWN)) {
     return ObjectClassification::UNKNOWN;
-  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::CAR)) {
-    return ObjectClassification::CAR;
-  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::TRUCK)) {
-    return ObjectClassification::TRUCK;
-  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::BUS)) {
-    return ObjectClassification::BUS;
-  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::TRAILER)) {
-    return ObjectClassification::TRAILER;
-  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::MOTORCYCLE)) {
-    return ObjectClassification::MOTORCYCLE;
-  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::BICYCLE)) {
-    return ObjectClassification::BICYCLE;
-  } else if (classification == static_cast<uint16_t>(RadarTrackObjectID::PEDESTRIAN)) {
-    return ObjectClassification::PEDESTRIAN;
-  } else {
-    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "Receive unknown label for RadarTracks");
-    return ObjectClassification::UNKNOWN;
   }
+  if (classification == static_cast<uint16_t>(RadarTrackObjectID::CAR)) {
+    return ObjectClassification::CAR;
+  }
+  if (classification == static_cast<uint16_t>(RadarTrackObjectID::TRUCK)) {
+    return ObjectClassification::TRUCK;
+  }
+  if (classification == static_cast<uint16_t>(RadarTrackObjectID::BUS)) {
+    return ObjectClassification::BUS;
+  }
+  if (classification == static_cast<uint16_t>(RadarTrackObjectID::TRAILER)) {
+    return ObjectClassification::TRAILER;
+  }
+  if (classification == static_cast<uint16_t>(RadarTrackObjectID::MOTORCYCLE)) {
+    return ObjectClassification::MOTORCYCLE;
+  }
+  if (classification == static_cast<uint16_t>(RadarTrackObjectID::BICYCLE)) {
+    return ObjectClassification::BICYCLE;
+  }
+  if (classification == static_cast<uint16_t>(RadarTrackObjectID::PEDESTRIAN)) {
+    return ObjectClassification::PEDESTRIAN;
+  }
+  RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "Receive unknown label for RadarTracks");
+  return ObjectClassification::UNKNOWN;
 }
 
 }  // namespace radar_tracks_msgs_converter

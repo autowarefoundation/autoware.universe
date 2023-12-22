@@ -83,7 +83,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_{};
 
   bool is_data_ready();
-  void onTimer();
+  void on_timer();
 
   // Parameter Server
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
