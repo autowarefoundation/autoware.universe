@@ -19,14 +19,14 @@
 
 #ifndef AUTOWARE_AUTO_GEOMETRY__BOUNDING_BOX__ROTATING_CALIPERS_HPP_
 #define AUTOWARE_AUTO_GEOMETRY__BOUNDING_BOX__ROTATING_CALIPERS_HPP_
+#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp"
+#include "autoware_auto_geometry/common_2d.hpp"
+#include "autoware_auto_geometry/convex_hull.hpp"
+
 #include <algorithm>
 #include <cstring>
 #include <limits>
 #include <list>
-
-#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp"
-#include "autoware_auto_geometry/common_2d.hpp"
-#include "autoware_auto_geometry/convex_hull.hpp"
 
 namespace autoware
 {

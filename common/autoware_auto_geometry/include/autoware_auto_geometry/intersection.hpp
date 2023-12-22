@@ -17,6 +17,9 @@
 #ifndef AUTOWARE_AUTO_GEOMETRY__INTERSECTION_HPP_
 #define AUTOWARE_AUTO_GEOMETRY__INTERSECTION_HPP_
 
+#include "autoware_auto_geometry/common_2d.hpp"
+#include "autoware_auto_geometry/convex_hull.hpp"
+
 #include <autoware_auto_perception_msgs/msg/bounding_box.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
@@ -28,9 +31,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-#include "autoware_auto_geometry/common_2d.hpp"
-#include "autoware_auto_geometry/convex_hull.hpp"
 
 namespace autoware
 {

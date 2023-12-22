@@ -22,10 +22,10 @@
 #ifndef AUTOWARE_AUTO_GEOMETRY__BOUNDING_BOX__EIGENBOX_2D_HPP_
 #define AUTOWARE_AUTO_GEOMETRY__BOUNDING_BOX__EIGENBOX_2D_HPP_
 
+#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp"
+
 #include <limits>
 #include <utility>
-
-#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp"
 
 namespace autoware
 {

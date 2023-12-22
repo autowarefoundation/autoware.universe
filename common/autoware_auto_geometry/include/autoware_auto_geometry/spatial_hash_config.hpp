@@ -20,6 +20,8 @@
 #ifndef AUTOWARE_AUTO_GEOMETRY__SPATIAL_HASH_CONFIG_HPP_
 #define AUTOWARE_AUTO_GEOMETRY__SPATIAL_HASH_CONFIG_HPP_
 
+#include "autoware_auto_geometry/common_2d.hpp"
+#include "autoware_auto_geometry/visibility_control.hpp"
 #include "helper_functions/crtp.hpp"
 
 #include <common/types.hpp>
@@ -29,9 +31,6 @@
 #include <limits>
 #include <stdexcept>
 #include <utility>
-
-#include "autoware_auto_geometry/common_2d.hpp"
-#include "autoware_auto_geometry/visibility_control.hpp"
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;

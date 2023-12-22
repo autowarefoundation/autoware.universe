@@ -14,12 +14,12 @@
 
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
+#include "autoware_auto_geometry/convex_hull.hpp"
+#include "autoware_auto_geometry/intersection.hpp"
+
 #include <gtest/gtest.h>
 
 #include <list>
-
-#include "autoware_auto_geometry/convex_hull.hpp"
-#include "autoware_auto_geometry/intersection.hpp"
 
 struct TestPoint
 {

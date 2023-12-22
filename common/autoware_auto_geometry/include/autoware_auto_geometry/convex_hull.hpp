@@ -21,9 +21,9 @@
 #ifndef AUTOWARE_AUTO_GEOMETRY__CONVEX_HULL_HPP_
 #define AUTOWARE_AUTO_GEOMETRY__CONVEX_HULL_HPP_
 
-#include <common/types.hpp>
-
 #include "autoware_auto_geometry/common_2d.hpp"
+
+#include <common/types.hpp>
 
 // lint -e537 NOLINT pclint vs cpplint
 #include <algorithm>

@@ -21,6 +21,8 @@
 #ifndef AUTOWARE_AUTO_GEOMETRY__HULL_POCKETS_HPP_
 #define AUTOWARE_AUTO_GEOMETRY__HULL_POCKETS_HPP_
 
+#include "autoware_auto_geometry/common_2d.hpp"
+
 #include <common/types.hpp>
 
 #include <algorithm>
@@ -28,8 +30,6 @@
 #include <limits>
 #include <utility>
 #include <vector>
-
-#include "autoware_auto_geometry/common_2d.hpp"
 
 using autoware::common::types::float32_t;
 

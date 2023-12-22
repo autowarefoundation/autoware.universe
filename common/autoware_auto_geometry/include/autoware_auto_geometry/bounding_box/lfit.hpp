@@ -23,10 +23,10 @@
 #ifndef AUTOWARE_AUTO_GEOMETRY__BOUNDING_BOX__LFIT_HPP_
 #define AUTOWARE_AUTO_GEOMETRY__BOUNDING_BOX__LFIT_HPP_
 
+#include "autoware_auto_geometry/bounding_box/eigenbox_2d.hpp"
+
 #include <limits>
 #include <utility>
-
-#include "autoware_auto_geometry/bounding_box/eigenbox_2d.hpp"
 
 namespace autoware
 {
