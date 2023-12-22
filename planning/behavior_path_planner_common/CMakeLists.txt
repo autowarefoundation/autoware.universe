@@ -4,7 +4,6 @@ project(behavior_path_planner_common)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(OpenCV REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -23,15 +22,12 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/utils/drivable_area_expansion/footprints.cpp
   src/utils/parking_departure/geometric_parallel_parking.cpp
   src/utils/parking_departure/utils.cpp
+  src/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.cpp
   src/marker_utils/utils.cpp
 )
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   ${EIGEN3_INCLUDE_DIR}
-)
-
-target_link_libraries(${PROJECT_NAME}
-  ${OpenCV_LIBRARIES}
 )
 
 if(BUILD_TESTING)
