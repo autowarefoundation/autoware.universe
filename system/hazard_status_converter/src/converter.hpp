@@ -17,9 +17,11 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <tier4_system_msgs/msg/diagnostic_graph.hpp>
-#include <tier4_system_msgs/msg/hazard_status_stamped.hpp>
 
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace hazard_status_converter
@@ -32,10 +34,13 @@ public:
 
 private:
   using DiagnosticGraph = tier4_system_msgs::msg::DiagnosticGraph;
-  using HazardStatusStamped = tier4_system_msgs::msg::HazardStatusStamped;
-  rclcpp::Subscription<DiagnosticGraph>::SharedPtr sub_;
-  rclcpp::Publisher<HazardStatusStamped>::SharedPtr pub_;
-  void on_graph(const DiagnosticGraph::ConstSharedPtr msg);
+  using HazardStatusStamped = autoware_auto_system_msgs::msg::HazardStatusStamped;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<HazardStatusStamped>::SharedPtr pub_hazard_;
+  std::vector<rclcpp::Subscription<DiagnosticGraph>::SharedPtr> sub_graphs_;
+  std::unordered_map<std::string, DiagnosticGraph::ConstSharedPtr> graphs_;
+  void on_timer();
+  void on_graph(const std::string & prefix, const DiagnosticGraph::ConstSharedPtr msg);
 };
 
 }  // namespace hazard_status_converter
