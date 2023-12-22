@@ -14,7 +14,6 @@
 // limitations under the License.
 
 #include "radar_fusion_to_detected_object/radar_fusion_to_detected_object_node.hpp"
-
 #include "rclcpp/rclcpp.hpp"
 
 #include <memory>
