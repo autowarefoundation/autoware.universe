@@ -28,7 +28,20 @@ ament_auto_add_executable(main
   src/utils.cpp
 )
 
+ament_auto_add_executable(main2
+  src/main2.cpp
+  src/bag_centerline_generator_node.cpp
+  src/successive_trajectory_optimizer_node.cpp
+  src/utils.cpp
+)
+
 target_include_directories(main
+  SYSTEM PUBLIC
+    ${OpenCV_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+)
+
+target_include_directories(main2
   SYSTEM PUBLIC
     ${OpenCV_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
@@ -38,13 +51,22 @@ target_link_libraries(main
   ${OpenCV_LIBRARIES}
 )
 
+target_link_libraries(main2
+  ${OpenCV_LIBRARIES}
+)
+
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
     rosidl_target_interfaces(main
+    static_centerline_optimizer "rosidl_typesupport_cpp")
+
+    rosidl_target_interfaces(main2
     static_centerline_optimizer "rosidl_typesupport_cpp")
 else()
     rosidl_get_typesupport_target(
             cpp_typesupport_target static_centerline_optimizer "rosidl_typesupport_cpp")
     target_link_libraries(main "${cpp_typesupport_target}")
+
+    target_link_libraries(main2 "${cpp_typesupport_target}")
 endif()
 
 ament_auto_package(

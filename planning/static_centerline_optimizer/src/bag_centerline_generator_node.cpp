@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "static_centerline_optimizer/static_centerline_optimizer_node.hpp"
+#include "static_centerline_optimizer/bag_centerline_generator_node.hpp"
 
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
@@ -189,8 +189,7 @@ std::vector<lanelet::Id> check_lanelet_connection(
 }
 }  // namespace
 
-StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
-  const rclcpp::NodeOptions & node_options)
+BagCenterlineGeneratorNode::BagCenterlineGeneratorNode(const rclcpp::NodeOptions & node_options)
 : Node("static_centerline_optimizer", node_options)
 {
   // publishers
@@ -210,19 +209,18 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
   srv_load_map_ = create_service<LoadMap>(
     "/planning/static_centerline_optimizer/load_map",
     std::bind(
-      &StaticCenterlineOptimizerNode::on_load_map, this, std::placeholders::_1,
-      std::placeholders::_2),
+      &BagCenterlineGeneratorNode::on_load_map, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default, callback_group_);
   srv_plan_route_ = create_service<PlanRoute>(
     "/planning/static_centerline_optimizer/plan_route",
     std::bind(
-      &StaticCenterlineOptimizerNode::on_plan_route, this, std::placeholders::_1,
+      &BagCenterlineGeneratorNode::on_plan_route, this, std::placeholders::_1,
       std::placeholders::_2),
     rmw_qos_profile_services_default, callback_group_);
   srv_plan_path_ = create_service<PlanPath>(
     "/planning/static_centerline_optimizer/plan_path",
     std::bind(
-      &StaticCenterlineOptimizerNode::on_plan_path, this, std::placeholders::_1,
+      &BagCenterlineGeneratorNode::on_plan_path, this, std::placeholders::_1,
       std::placeholders::_2),
     rmw_qos_profile_services_default, callback_group_);
 
@@ -230,7 +228,7 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
 }
 
-void StaticCenterlineOptimizerNode::run()
+void BagCenterlineGeneratorNode::run()
 {
   // declare planning setting parameters
   const auto lanelet2_input_file_path = declare_parameter<std::string>("lanelet2_input_file_path");
@@ -267,7 +265,7 @@ void StaticCenterlineOptimizerNode::run()
   save_map(lanelet2_output_file_path, route_lane_ids, centerline_traj_points);
 }
 
-std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::generateCenterlineFromBag()
+std::vector<TrajectoryPoint> BagCenterlineGeneratorNode::generateCenterlineFromBag()
 {
   const std::string bag_filename{
     "/home/takayuki/bag/kashiwanoha/"
@@ -314,7 +312,7 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::generateCenterlineFr
   return centerline_traj_points;
 }
 
-void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_file_path)
+void BagCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_file_path)
 {
   const auto map_projector_info = load_info_from_yaml(
     "/home/takayuki/AutonomousDrivingScenarios/map/odaiba_beta/map_projector_info.yaml");
@@ -353,7 +351,7 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
   route_handler_ptr_->setMap(*map_bin_ptr_);
 }
 
-void StaticCenterlineOptimizerNode::on_load_map(
+void BagCenterlineGeneratorNode::on_load_map(
   const LoadMap::Request::SharedPtr request, const LoadMap::Response::SharedPtr response)
 {
   const std::string tmp_lanelet2_input_file_path = "/tmp/input_lanelet2_map.osm";
@@ -374,7 +372,7 @@ void StaticCenterlineOptimizerNode::on_load_map(
   response->message = "InvalidMapFormat";
 }
 
-std::vector<lanelet::Id> StaticCenterlineOptimizerNode::plan_route(
+std::vector<lanelet::Id> BagCenterlineGeneratorNode::plan_route(
   const lanelet::Id start_lanelet_id, const lanelet::Id end_lanelet_id)
 {
   if (!map_bin_ptr_ || !route_handler_ptr_) {
@@ -414,7 +412,7 @@ std::vector<lanelet::Id> StaticCenterlineOptimizerNode::plan_route(
   return route_lane_ids;
 }
 
-void StaticCenterlineOptimizerNode::on_plan_route(
+void BagCenterlineGeneratorNode::on_plan_route(
   const PlanRoute::Request::SharedPtr request, const PlanRoute::Response::SharedPtr response)
 {
   if (!map_bin_ptr_ || !route_handler_ptr_) {
@@ -447,7 +445,7 @@ void StaticCenterlineOptimizerNode::on_plan_route(
   response->lane_ids = lane_ids;
 }
 
-std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
+std::vector<TrajectoryPoint> BagCenterlineGeneratorNode::plan_path(
   const std::vector<lanelet::Id> & route_lane_ids)
 {
   if (!route_handler_ptr_) {
@@ -495,7 +493,7 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
   return optimized_traj_points;
 }
 
-void StaticCenterlineOptimizerNode::on_plan_path(
+void BagCenterlineGeneratorNode::on_plan_path(
   const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response)
 {
   if (!route_handler_ptr_) {
@@ -566,7 +564,7 @@ void StaticCenterlineOptimizerNode::on_plan_path(
   response->message = "";
 }
 
-void StaticCenterlineOptimizerNode::evaluate(
+void BagCenterlineGeneratorNode::evaluate(
   const std::vector<lanelet::Id> & route_lane_ids,
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
@@ -639,7 +637,7 @@ void StaticCenterlineOptimizerNode::evaluate(
   RCLCPP_INFO(get_logger(), "Minimum distance to road is %f [m]", min_dist);
 }
 
-void StaticCenterlineOptimizerNode::save_map(
+void BagCenterlineGeneratorNode::save_map(
   const std::string & lanelet2_output_file_path, const std::vector<lanelet::Id> & route_lane_ids,
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {

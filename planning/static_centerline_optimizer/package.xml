@@ -24,6 +24,7 @@
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
   <depend>map_loader</depend>
+  <depend>map_projection_loader</depend>
   <depend>mission_planner</depend>
   <depend>motion_utils</depend>
   <depend>obstacle_avoidance_planner</depend>
