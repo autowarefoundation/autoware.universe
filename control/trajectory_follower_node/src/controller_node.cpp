@@ -154,27 +154,27 @@ boost::optional<trajectory_follower::InputData> Controller::createInputData(
   rclcpp::Clock & clock) const
 {
   if (!current_trajectory_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for trajectory.");
+    RCLCPP_DEBUG_THROTTLE(get_logger(), clock, 5000, "Waiting for trajectory.");
     return {};
   }
 
   if (!current_odometry_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current odometry.");
+    RCLCPP_DEBUG_THROTTLE(get_logger(), clock, 5000, "Waiting for current odometry.");
     return {};
   }
 
   if (!current_steering_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current steering.");
+    RCLCPP_DEBUG_THROTTLE(get_logger(), clock, 5000, "Waiting for current steering.");
     return {};
   }
 
   if (!current_accel_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current accel.");
+    RCLCPP_DEBUG_THROTTLE(get_logger(), clock, 5000, "Waiting for current accel.");
     return {};
   }
 
   if (!current_operation_mode_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current operation mode.");
+    RCLCPP_DEBUG_THROTTLE(get_logger(), clock, 5000, "Waiting for current operation mode.");
     return {};
   }
 
@@ -193,7 +193,7 @@ void Controller::callbackTimerControl()
   // 1. create input data
   const auto input_data = createInputData(*get_clock());
   if (!input_data) {
-    RCLCPP_INFO_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       get_logger(), *get_clock(), 5000, "Control is skipped since input data is not ready.");
     return;
   }

@@ -299,7 +299,7 @@ void SurroundObstacleCheckerNode::onTimer()
   }
 
   if (use_dynamic_object_ && !object_ptr_) {
-    RCLCPP_INFO_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for dynamic object info...");
   }
 

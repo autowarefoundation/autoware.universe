@@ -88,7 +88,7 @@ private:
 
     static_broadcaster_->sendTransform(static_transformStamped);
 
-    RCLCPP_INFO_STREAM(
+    RCLCPP_DEBUG_STREAM(
       get_logger(), "broadcast static tf. map_frame:"
                       << map_frame_ << ", viewer_frame:" << viewer_frame_ << ", x:" << coordinate_x
                       << ", y:" << coordinate_y << ", z:" << coordinate_z);

@@ -233,28 +233,28 @@ void LaneDepartureCheckerNode::onPredictedTrajectory(const Trajectory::ConstShar
 bool LaneDepartureCheckerNode::isDataReady()
 {
   if (!current_odom_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_twist msg...");
+    RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_twist msg...");
     return false;
   }
 
   if (!lanelet_map_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for lanelet_map msg...");
+    RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for lanelet_map msg...");
     return false;
   }
 
   if (!route_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for route msg...");
+    RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for route msg...");
     return false;
   }
 
   if (!reference_trajectory_) {
-    RCLCPP_INFO_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for reference_trajectory msg...");
     return false;
   }
 
   if (!predicted_trajectory_) {
-    RCLCPP_INFO_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for predicted_trajectory msg...");
     return false;
   }

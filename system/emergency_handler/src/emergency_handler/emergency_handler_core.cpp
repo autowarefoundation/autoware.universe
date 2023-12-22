@@ -285,7 +285,7 @@ void EmergencyHandler::cancelMrmBehavior(
 bool EmergencyHandler::isDataReady()
 {
   if (!hazard_status_stamped_) {
-    RCLCPP_INFO_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for hazard_status_stamped msg...");
     return false;
