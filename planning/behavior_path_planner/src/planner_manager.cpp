@@ -428,7 +428,7 @@ BehaviorModuleOutput PlannerManager::getReferencePath(
     std::max(p.backward_path_length, p.backward_path_length + extra_margin);
 
   const auto lanelet_sequence = route_handler->getLaneletSequence(
-    root_lanelet_.value(), pose, backward_length, std::numeric_limits<double>::max());
+    root_lanelet_.value(), pose, backward_length, p.forward_path_length);
 
   lanelet::ConstLanelet closest_lane{};
   if (lanelet::utils::query::getClosestLaneletWithConstrains(
