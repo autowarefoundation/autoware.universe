@@ -746,6 +746,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     declare_parameter<double>("deceleration_distance_before_curve");
   deceleration_distance_after_curve_ =
     declare_parameter<double>("deceleration_distance_after_curve");
+  min_acceleration_before_curve_ = declare_parameter<double>("min_acceleration_before_curve");
 
   {  // lane change detection
     lane_change_detection_method_ = declare_parameter<std::string>("lane_change_detection.method");
@@ -810,11 +811,7 @@ rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
   updateParam(
     parameters, "deceleration_distance_before_curve", deceleration_distance_before_curve_);
   updateParam(parameters, "deceleration_distance_after_curve", deceleration_distance_after_curve_);
-
-  std::cerr << "Params updated! \n";
-  std::cerr << "max_lateral_accel" << max_lateral_accel_ << "\n";
-  std::cerr << "deceleration_distance_before_curve" << deceleration_distance_before_curve_ << "\n";
-  std::cerr << "deceleration_distance_after_curve" << deceleration_distance_after_curve_ << "\n";
+  updateParam(parameters, "min_acceleration_before_curve", min_acceleration_before_curve_);
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;

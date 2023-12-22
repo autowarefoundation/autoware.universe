@@ -173,6 +173,7 @@ private:
   double max_lateral_accel_;
   double deceleration_distance_before_curve_;
   double deceleration_distance_after_curve_;
+  double min_acceleration_before_curve_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
@@ -334,8 +335,12 @@ private:
     const size_t after_decel_index =
       static_cast<size_t>(std::round(deceleration_distance_after_curve_ / points_interval));
     const double max_lateral_accel_abs = std::fabs(max_lateral_accel_);
+    double arc_length = 0.0;
 
     for (size_t i = 0; i < trajectory.size(); ++i) {
+      if (i > 0)
+        arc_length +=
+          tier4_autoware_utils::calcDistance2d(trajectory.at(i).pose, trajectory.at(i - 1).pose);
       double curvature = 0.0;
       const size_t start = i > after_decel_index ? i - after_decel_index : 0;
       const size_t end = std::min(trajectory.size(), i + before_decel_index + 1);
@@ -343,11 +348,25 @@ private:
         if (j >= curvature_v.size()) return true;
         curvature = std::max(curvature, std::fabs(curvature_v.at(j)));
       }
+      // double curvature = curvature_v.at(i);
       double v_curvature_max = std::sqrt(max_lateral_accel_abs / std::max(curvature, 1.0E-5));
       // v_curvature_max = std::max(v_curvature_max, min_curve_velocity);
-      if (trajectory.at(i).longitudinal_velocity_mps > v_curvature_max) {
-        std::cerr << "Velocity " << trajectory.at(i).longitudinal_velocity_mps << "\n";
-        return false;
+      const double current_speed = trajectory.at(i).longitudinal_velocity_mps;
+      if (current_speed > v_curvature_max) {
+        // v_curvature_max = current_speed + a*t
+        std::cerr << "Current path index " << i << "\n";
+        std::cerr << "current_speed > v_curvature_max  checking if deceleration is possible\n";
+        const double t =
+          (v_curvature_max - current_speed) / min_acceleration_before_curve_;  // acc is negative
+        const double distance_to_slow_down =
+          current_speed * t + 0.5 * min_acceleration_before_curve_ * std::pow(t, 2);
+        std::cerr << "Decel time " << t << "\n";
+        std::cerr << "Decel distance " << distance_to_slow_down << "\n";
+        std::cerr << "Arc length " << arc_length << "\n";
+        std::cerr << "Curvature " << curvature << "\n";
+        bool c = distance_to_slow_down > arc_length;
+        std::cerr << "Check is " << c << "\n";
+        if (distance_to_slow_down > arc_length) return false;
       }
     }
     std::cerr << "Velocity " << trajectory.back().longitudinal_velocity_mps << "\n";
