@@ -335,7 +335,6 @@ private:
       static_cast<size_t>(std::round(deceleration_distance_after_curve_ / points_interval));
     const double max_lateral_accel_abs = std::fabs(max_lateral_accel_);
 
-    double min_curv_thing = 0.0;
     for (size_t i = 0; i < trajectory.size(); ++i) {
       double curvature = 0.0;
       const size_t start = i > after_decel_index ? i - after_decel_index : 0;
