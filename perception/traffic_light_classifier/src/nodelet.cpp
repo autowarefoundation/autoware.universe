@@ -13,6 +13,8 @@
 // limitations under the License.
 #include "traffic_light_classifier/nodelet.hpp"
 
+#include <tier4_perception_msgs/msg/traffic_light_element.hpp>
+
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -94,15 +96,37 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   output_msg.signals.resize(input_rois_msg->rois.size());
 
   std::vector<cv::Mat> images;
+  size_t num_valid_roi = 0;
   for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
+    // skip if the roi is not detected
+    if (input_rois_msg->rois.at(i).roi.height == 0) {
+      continue;
+    }
     output_msg.signals[i].traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;
     const sensor_msgs::msg::RegionOfInterest & roi = input_rois_msg->rois.at(i).roi;
     images.emplace_back(cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
+    num_valid_roi++;
   }
+  output_msg.signals.resize(num_valid_roi);
   if (!classifier_ptr_->getTrafficSignals(images, output_msg)) {
     RCLCPP_ERROR(this->get_logger(), "failed classify image, abort callback");
     return;
   }
+
+  // append the undetected rois as unknown
+  for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
+    if (input_rois_msg->rois.at(i).roi.height == 0) {
+      tier4_perception_msgs::msg::TrafficSignal tlr_sig;
+      tlr_sig.traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;
+      tier4_perception_msgs::msg::TrafficLightElement element;
+      element.color = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
+      element.shape = tier4_perception_msgs::msg::TrafficLightElement::CIRCLE;
+      element.confidence = 0.0;
+      tlr_sig.elements.push_back(element);
+      output_msg.signals.push_back(tlr_sig);
+    }
+  }
+
   output_msg.header = input_image_msg->header;
   traffic_signal_array_pub_->publish(output_msg);
 }
