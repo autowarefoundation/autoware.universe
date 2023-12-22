@@ -808,7 +808,7 @@ TEST(trajectory, convertToTrajectory)
   {
     const auto traj_input = generateTestTrajectoryPointArray(10000, 1.0);
     const auto traj = convertToTrajectory(traj_input);
-    // EXPECT_EQ(traj.points.size(), traj.CAPACITY);
+    EXPECT_EQ(traj.points.size(), traj.CAPACITY);
     // Value check
     for (size_t i = 0; i < traj.points.size(); ++i) {
       EXPECT_EQ(traj.points.at(i), traj_input.at(i));
