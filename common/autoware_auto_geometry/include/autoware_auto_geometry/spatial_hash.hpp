@@ -26,8 +26,8 @@
 #include <utility>
 #include <vector>
 
-#include "autoware_auto_geometry/spatial_hash_config.hpp>
-#include "autoware_auto_geometry/visibility_control.hpp>
+#include "autoware_auto_geometry/spatial_hash_config.hpp"
+#include "autoware_auto_geometry/visibility_control.hpp"
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;

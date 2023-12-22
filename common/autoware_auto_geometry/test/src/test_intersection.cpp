@@ -18,8 +18,8 @@
 
 #include <list>
 
-#include "autoware_auto_geometry/convex_hull.hpp>
-#include "autoware_auto_geometry/intersection.hpp>
+#include "autoware_auto_geometry/convex_hull.hpp"
+#include "autoware_auto_geometry/intersection.hpp"
 
 struct TestPoint
 {

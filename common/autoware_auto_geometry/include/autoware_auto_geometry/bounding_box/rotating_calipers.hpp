@@ -24,9 +24,9 @@
 #include <limits>
 #include <list>
 
-#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp>
-#include "autoware_auto_geometry/common_2d.hpp>
-#include "autoware_auto_geometry/convex_hull.hpp>
+#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp"
+#include "autoware_auto_geometry/common_2d.hpp"
+#include "autoware_auto_geometry/convex_hull.hpp"
 
 namespace autoware
 {

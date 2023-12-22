@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "autoware_auto_geometry/common_2d.hpp>
+#include "autoware_auto_geometry/common_2d.hpp"
 
 template <typename DataStructure>
 class AreaTest : public ::testing::Test

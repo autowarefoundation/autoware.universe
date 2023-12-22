@@ -25,7 +25,7 @@
 #include <limits>
 #include <utility>
 
-#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp>
+#include "autoware_auto_geometry/bounding_box/bounding_box_common.hpp"
 
 namespace autoware
 {

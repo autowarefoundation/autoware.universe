@@ -18,9 +18,9 @@
 #ifndef AUTOWARE_AUTO_GEOMETRY__BOUNDING_BOX_2D_HPP_
 #define AUTOWARE_AUTO_GEOMETRY__BOUNDING_BOX_2D_HPP_
 
-#include "autoware_auto_geometry/bounding_box/eigenbox_2d.hpp>
-#include "autoware_auto_geometry/bounding_box/lfit.hpp>
-#include "autoware_auto_geometry/bounding_box/rotating_calipers.hpp>
+#include "autoware_auto_geometry/bounding_box/eigenbox_2d.hpp"
+#include "autoware_auto_geometry/bounding_box/lfit.hpp"
+#include "autoware_auto_geometry/bounding_box/rotating_calipers.hpp"
 
 namespace autoware
 {

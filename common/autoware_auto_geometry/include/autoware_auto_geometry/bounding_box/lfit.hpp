@@ -26,7 +26,7 @@
 #include <limits>
 #include <utility>
 
-#include "autoware_auto_geometry/bounding_box/eigenbox_2d.hpp>
+#include "autoware_auto_geometry/bounding_box/eigenbox_2d.hpp"
 
 namespace autoware
 {

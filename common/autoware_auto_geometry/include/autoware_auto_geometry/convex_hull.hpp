@@ -23,7 +23,7 @@
 
 #include <common/types.hpp>
 
-#include "autoware_auto_geometry/common_2d.hpp>
+#include "autoware_auto_geometry/common_2d.hpp"
 
 // lint -e537 NOLINT pclint vs cpplint
 #include <algorithm>

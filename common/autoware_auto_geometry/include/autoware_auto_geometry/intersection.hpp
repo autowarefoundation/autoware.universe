@@ -29,8 +29,8 @@
 #include <utility>
 #include <vector>
 
-#include "autoware_auto_geometry/common_2d.hpp>
-#include "autoware_auto_geometry/convex_hull.hpp>
+#include "autoware_auto_geometry/common_2d.hpp"
+#include "autoware_auto_geometry/convex_hull.hpp"
 
 namespace autoware
 {

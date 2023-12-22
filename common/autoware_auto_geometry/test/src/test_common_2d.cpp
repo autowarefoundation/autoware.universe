@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "autoware_auto_geometry/common_2d.hpp>
+#include "autoware_auto_geometry/common_2d.hpp"
 
 using autoware::common::geometry::point_adapter::xr_;
 using autoware::common::geometry::point_adapter::yr_;

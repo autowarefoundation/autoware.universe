@@ -30,8 +30,8 @@
 #include <stdexcept>
 #include <utility>
 
-#include "autoware_auto_geometry/common_2d.hpp>
-#include "autoware_auto_geometry/visibility_control.hpp>
+#include "autoware_auto_geometry/common_2d.hpp"
+#include "autoware_auto_geometry/visibility_control.hpp"
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;

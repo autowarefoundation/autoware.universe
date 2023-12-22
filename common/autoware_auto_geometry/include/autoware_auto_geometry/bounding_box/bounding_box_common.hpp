@@ -29,8 +29,8 @@
 #include <limits>
 #include <vector>
 
-#include "autoware_auto_geometry/common_2d.hpp>
-#include "autoware_auto_geometry/visibility_control.hpp>
+#include "autoware_auto_geometry/common_2d.hpp"
+#include "autoware_auto_geometry/visibility_control.hpp"
 
 namespace autoware
 {
