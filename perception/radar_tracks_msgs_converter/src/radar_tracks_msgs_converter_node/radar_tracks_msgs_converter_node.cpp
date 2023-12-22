@@ -32,7 +32,6 @@
 
 using namespace std::literals;
 using std::chrono::duration;
-using std::chrono::duration_cast;
 using std::chrono::nanoseconds;
 using std::placeholders::_1;
 
@@ -84,7 +83,7 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
   node_param_.use_twist_yaw_compensation =
     declare_parameter<bool>("use_twist_yaw_compensation", false);
   node_param_.static_object_speed_threshold =
-    declare_parameter<float>("static_object_speed_threshold", 1.0);
+    declare_parameter<double>("static_object_speed_threshold", 1.0);
 
   // Subscriber
   sub_radar_ = create_subscription<RadarTracks>(
@@ -208,15 +207,15 @@ bool RadarTracksMsgsConverterNode::isStaticObject(
 
   // Calculate azimuth angle of the object in the vehicle coordinate
   const double sensor_yaw = tf2::getYaw(transform_->transform.rotation);
-  const float radar_azimuth = std::atan2(radar_track.position.y, radar_track.position.x);
-  float azimuth = radar_azimuth + static_cast<float>(sensor_yaw);
+  const double radar_azimuth = std::atan2(radar_track.position.y, radar_track.position.x);
+  const double azimuth = radar_azimuth + sensor_yaw;
 
   // Calculate longitudinal speed
-  const float longitudinal_speed =
+  const double longitudinal_speed =
     compensated_velocity.x * std::cos(azimuth) + compensated_velocity.y * std::sin(azimuth);
 
   // Check if the object is static
-  return std::fabs(longitudinal_speed) < node_param_.static_object_speed_threshold;
+  return std::abs(longitudinal_speed) < node_param_.static_object_speed_threshold;
 }
 
 TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
@@ -325,7 +324,7 @@ geometry_msgs::msg::Vector3 RadarTracksMsgsConverterNode::compensateVelocityEgoM
   velocity.z += odometry_data_->twist.twist.linear.z;
   if (node_param_.use_twist_yaw_compensation) {
     // angular compensation
-    const float veh_yaw = odometry_data_->twist.twist.angular.z;
+    const double veh_yaw = odometry_data_->twist.twist.angular.z;
     velocity.x += -position_from_veh.y * veh_yaw;
     velocity.y += position_from_veh.x * veh_yaw;
   }

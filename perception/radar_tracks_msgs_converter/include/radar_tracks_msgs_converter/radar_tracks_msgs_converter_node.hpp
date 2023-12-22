@@ -96,7 +96,7 @@ private:
   // Core
   geometry_msgs::msg::PoseWithCovariance convertPoseWithCovariance();
   TrackedObjects convertRadarTrackToTrackedObjects();
-  DetectedObjects convertTrackedObjectsToDetectedObjects(TrackedObjects & objects);
+  static DetectedObjects convertTrackedObjectsToDetectedObjects(TrackedObjects & objects);
   geometry_msgs::msg::Vector3 compensateVelocitySensorPosition(
     const radar_msgs::msg::RadarTrack & radar_track);
   geometry_msgs::msg::Vector3 compensateVelocityEgoMotion(
@@ -105,11 +105,11 @@ private:
   bool isStaticObject(
     const radar_msgs::msg::RadarTrack & radar_track,
     const geometry_msgs::msg::Vector3 & compensated_velocity);
-  std::array<double, 36> convertPoseCovarianceMatrix(
+  static std::array<double, 36> convertPoseCovarianceMatrix(
     const radar_msgs::msg::RadarTrack & radar_track);
-  std::array<double, 36> convertTwistCovarianceMatrix(
+  static std::array<double, 36> convertTwistCovarianceMatrix(
     const radar_msgs::msg::RadarTrack & radar_track);
-  std::array<double, 36> convertAccelerationCovarianceMatrix(
+  static std::array<double, 36> convertAccelerationCovarianceMatrix(
     const radar_msgs::msg::RadarTrack & radar_track);
   uint8_t convertClassification(const uint16_t classification);
 };
