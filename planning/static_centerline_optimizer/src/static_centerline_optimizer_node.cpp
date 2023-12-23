@@ -18,7 +18,6 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
-#include "map_projection_loader/map_projection_loader.hpp"
 #include "motion_utils/trajectory/tmp_conversion.hpp"
 #include "static_centerline_optimizer/msg/points_with_lane_id.hpp"
 #include "static_centerline_optimizer/successive_trajectory_optimizer_node.hpp"
@@ -30,7 +29,6 @@
 #include <pluginlib/class_loader.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
-#include <nav_msgs/msg/odometry.hpp>
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
@@ -234,97 +232,26 @@ void StaticCenterlineOptimizerNode::run()
 {
   // declare planning setting parameters
   const auto lanelet2_input_file_path = declare_parameter<std::string>("lanelet2_input_file_path");
-  // const auto lanelet2_input_file_path =
-  //   // "/home/takayuki/AutonomousDrivingScenarios/map/odaiba_beta/lanelet2_map.osm";
-  //   "/home/takayuki/AutonomousDrivingScenarios/map/kashiwanoha/lanelet2_map.osm";
   const auto lanelet2_output_file_path =
     declare_parameter<std::string>("lanelet2_output_file_path");
-  /*
   const lanelet::Id start_lanelet_id = declare_parameter<int64_t>("start_lanelet_id");
   const lanelet::Id end_lanelet_id = declare_parameter<int64_t>("end_lanelet_id");
-  */
 
   // process
   load_map(lanelet2_input_file_path);
-  // const auto optimized_traj_points = plan_path(route_lane_ids);
-  const auto centerline_traj_points = generateCenterlineFromBag();
-  auto centerline_traj = motion_utils::convertToTrajectory(centerline_traj_points);
-  centerline_traj.header.frame_id = "map";
-  pub_optimized_centerline_->publish(centerline_traj);
-
-  const auto start_lanelets =
-    route_handler_ptr_->getClosestLanelets(centerline_traj_points.front().pose);
-  const auto end_lanelets =
-    route_handler_ptr_->getClosestLanelets(centerline_traj_points.back().pose);
-  if (start_lanelets.empty() || end_lanelets.empty()) {
-    RCLCPP_ERROR(get_logger(), "Nearest lanelets to the bag's centerline are not found.");
-    return;
-  }
-  const lanelet::Id start_lanelet_id = start_lanelets.front().id();
-  const lanelet::Id end_lanelet_id = end_lanelets.front().id();
-
   const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
-  save_map(lanelet2_output_file_path, route_lane_ids, centerline_traj_points);
-}
-
-std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::generateCenterlineFromBag()
-{
-  const std::string bag_filename{
-    "/home/takayuki/bag/kashiwanoha/"
-    "d4d1adc7-4fdf-4613-86b3-0daa2d945b9e_2023-12-22-13-35-13_p0900_0.db3"};
-  // "/home/takayuki/bag/1128/left-route-LC1_with-LC/"
-  //   "211130ae-8a64-4311-95ab-1b8406c4499b_2023-11-28-13-28-23_p0900_4.db3"};
-
-  rosbag2_cpp::Reader bag_reader;
-  bag_reader.open(bag_filename);
-
-  rclcpp::Serialization<nav_msgs::msg::Odometry> bag_serialization;
-  std::vector<TrajectoryPoint> centerline_traj_points;
-  while (bag_reader.has_next()) {
-    const rosbag2_storage::SerializedBagMessageSharedPtr msg = bag_reader.read_next();
-
-    if (msg->topic_name != "/localization/kinematic_state") {
-      continue;
-    }
-
-    rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
-    const auto ros_msg = std::make_shared<nav_msgs::msg::Odometry>();
-
-    bag_serialization.deserialize_message(&serialized_msg, ros_msg.get());
-
-    if (!centerline_traj_points.empty()) {
-      constexpr double epsilon = 1e-1;
-      if (
-        std::abs(centerline_traj_points.back().pose.position.x - ros_msg->pose.pose.position.x) <
-          epsilon &&
-        std::abs(centerline_traj_points.back().pose.position.y - ros_msg->pose.pose.position.y) <
-          epsilon) {
-        continue;
-      }
-    }
-    TrajectoryPoint centerline_traj_point;
-    centerline_traj_point.pose.position = ros_msg->pose.pose.position;
-    std::cerr << centerline_traj_point.pose.position.x << " "
-              << centerline_traj_point.pose.position.y << std::endl;
-    centerline_traj_points.push_back(centerline_traj_point);
-  }
-
-  RCLCPP_INFO(get_logger(), "Extracted centerline from the bag.");
-
-  return centerline_traj_points;
+  const auto optimized_traj_points = plan_path(route_lane_ids);
+  save_map(lanelet2_output_file_path, route_lane_ids, optimized_traj_points);
 }
 
 void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_file_path)
 {
-  const auto map_projector_info = load_info_from_yaml(
-    "/home/takayuki/AutonomousDrivingScenarios/map/odaiba_beta/map_projector_info.yaml");
-
   // load map by the map_loader package
   map_bin_ptr_ = [&]() -> HADMapBin::ConstSharedPtr {
     // load map
     lanelet::LaneletMapPtr map_ptr;
-    // tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
-    // map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+    tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
+    map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
     map_ptr = Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
     if (!map_ptr) {
       return nullptr;
