@@ -635,12 +635,7 @@ bool isSatisfiedWithVehicleCondition(
     return true;
   }
 
-  // Object is on center line -> ignore.
-  if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
-    object.reason = AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE;
-    return false;
-  }
-
+  // check vehicle shift ratio
   lanelet::BasicPoint2d object_centroid(object.centroid.x(), object.centroid.y());
   const auto on_ego_driving_lane =
     within(object_centroid, object.overhang_lanelet.polygon2d().basicPolygon());
@@ -651,6 +646,12 @@ bool isSatisfiedWithVehicleCondition(
       object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
       return false;
     }
+  }
+
+  // Object is on center line -> ignore.
+  if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
+    object.reason = AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE;
+    return false;
   }
 
   if (object.is_within_intersection) {
