@@ -1099,7 +1099,7 @@ void extractObstaclesFromDrivableArea(
     const size_t nearest_path_idx =
       motion_utils::findNearestIndex(path.points, obj_pos);  // to get z for object polygon
     std::vector<Point> edge_points;
-    for (size_t i = 0; i < static_cast<int>(obstacle.poly.outer().size()) - 1;
+    for (int i = 0; i < static_cast<int>(obstacle.poly.outer().size()) - 1;
          ++i) {  // NOTE: There is a duplicated points
       edge_points.push_back(tier4_autoware_utils::createPoint(
         obstacle.poly.outer().at(i).x(), obstacle.poly.outer().at(i).y(),
