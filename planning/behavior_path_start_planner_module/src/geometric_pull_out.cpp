@@ -69,11 +69,6 @@ std::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const
     utils::path_safety_checker::separateObjectsByLanelets(
       stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
-  if (utils::checkCollisionBetweenPathFootprintsAndObjects(
-        vehicle_footprint_, arc_path, pull_out_lane_stop_objects,
-        parameters_.collision_check_margin)) {
-    return {};
-  }
   const double velocity = parallel_parking_parameters_.forward_parking_velocity;
 
   if (parameters_.divide_pull_out_path) {
