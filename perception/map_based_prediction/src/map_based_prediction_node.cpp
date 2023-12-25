@@ -1002,7 +1002,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         // Check lat. acceleration constraints
 
         std::vector<PredictedPath> predicted_paths;
-        int count = 0;
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
             yaw_fixed_transformed_object, ref_path.path);
