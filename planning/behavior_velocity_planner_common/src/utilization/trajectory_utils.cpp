@@ -86,7 +86,7 @@ bool smoothPath(
     motion_velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
       traj_resampled_closest, traj_smoothed.size(), external_v_limit->max_velocity, traj_smoothed);
   }
-  out_path = motion_utils::convertTrajectoryPointsToPath<TrajectoryPoints>(traj_smoothed);
+  out_path = motion_utils::convertToPathWithLaneId<TrajectoryPoints>(traj_smoothed);
   return true;
 }
 

@@ -77,7 +77,7 @@ TrajectoryPoints convertToTrajectoryPoints(const T & path)
 }
 
 template <class T>  // previous type: TrajectoryPoints
-autoware_auto_planning_msgs::msg::PathWithLaneId convertTrajectoryPointsToPath(const T & trajectory)
+autoware_auto_planning_msgs::msg::PathWithLaneId convertToPathWithLaneId(const T & trajectory)
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId path;
   for (const auto & p : trajectory) {
