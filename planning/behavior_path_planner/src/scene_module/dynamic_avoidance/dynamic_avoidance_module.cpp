@@ -1009,7 +1009,7 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
            std::abs(relative_velocity) * parameters_->end_duration_to_avoid_overtaking_object;
   }();
 
-  // caluculate valid path for the forked object's path from the ego's path
+  // calculate valid path for the forked object's path from the ego's path
   if (obj_vel < -parameters_->max_stopped_object_vel) {
     const bool is_object_same_direction = false;
     const double valid_length_to_avoid =
