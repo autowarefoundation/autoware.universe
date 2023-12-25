@@ -222,7 +222,7 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
   for (const auto id : erase_id_list) {
     last_detect_color_.erase(id);
     is_flashing_.erase(id);
-    current_state_.erase(id);
+    current_color_state_.erase(id);
   }
 }
 
@@ -309,7 +309,7 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
   }
 }
 
-void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal)
+void CrosswalkTrafficLightEstimatorNode::updateFlashingState(const TrafficSignal & signal)
 {
   const auto id = signal.traffic_signal_id;
 
@@ -323,7 +323,7 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
   if (
     signal.elements.front().color == TrafficSignalElement::UNKNOWN &&
     signal.elements.front().confidence != 0 &&  // not due to occlusion
-    current_state_.at(id) != TrafficSignalElement::UNKNOWN) {
+    current_color_state_.at(id) != TrafficSignalElement::UNKNOWN) {
     is_flashing_.at(id) = true;
     return;
   }
@@ -346,30 +346,33 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
   return;
 }
 
-uint8_t CrosswalkTrafficLightEstimatorNode::updateState(const TrafficSignal & signal)
+uint8_t CrosswalkTrafficLightEstimatorNode::updateAndGetColorState(const TrafficSignal & signal)
 {
   const auto id = signal.traffic_signal_id;
   const auto color = signal.elements[0].color;
 
   if (current_color_state_.count(id) == 0) {
-    current_state_.insert(std::make_pair(id, color));
+    current_color_state_.insert(std::make_pair(id, color));
   } else if (is_flashing_.at(id) == false) {
-    current_state_.at(id) = color;
+    current_color_state_.at(id) = color;
   } else if (is_flashing_.at(id) == true) {
     if (
-      current_state_.at(id) == TrafficSignalElement::GREEN && color == TrafficSignalElement::RED) {
-      current_state_.at(id) = TrafficSignalElement::RED;
+      current_color_state_.at(id) == TrafficSignalElement::GREEN &&
+      color == TrafficSignalElement::RED) {
+      current_color_state_.at(id) = TrafficSignalElement::RED;
     } else if (
-      current_state_.at(id) == TrafficSignalElement::RED && color == TrafficSignalElement::GREEN) {
-      current_state_.at(id) = TrafficSignalElement::GREEN;
-    } else if (current_state_.at(id) == TrafficSignalElement::UNKNOWN) {
+      current_color_state_.at(id) == TrafficSignalElement::RED &&
+      color == TrafficSignalElement::GREEN) {
+      current_color_state_.at(id) = TrafficSignalElement::GREEN;
+    } else if (current_color_state_.at(id) == TrafficSignalElement::UNKNOWN) {
       if (color == TrafficSignalElement::GREEN || color == TrafficSignalElement::UNKNOWN)
-        current_state_.at(id) = TrafficSignalElement::GREEN;
-      if (color == TrafficSignalElement::RED) current_state_.at(id) = TrafficSignalElement::RED;
+        current_color_state_.at(id) = TrafficSignalElement::GREEN;
+      if (color == TrafficSignalElement::RED)
+        current_color_state_.at(id) = TrafficSignalElement::RED;
     }
   }
 
-  return current_state_.at(id);
+  return current_color_state_.at(id);
 }
 
 lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getNonRedLanelets(

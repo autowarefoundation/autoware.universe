@@ -79,8 +79,8 @@ private:
 
   void updateLastDetectedSignal(const TrafficLightIdMap & traffic_signals);
   void updateLastDetectedSignals(const TrafficLightIdMap & traffic_signals);
-  void isFlashing(const TrafficSignal & signal);
-  uint8_t updateState(const TrafficSignal & signal);
+  void updateFlashingState(const TrafficSignal & signal);
+  uint8_t updateAndGetColorState(const TrafficSignal & signal);
   void setCrosswalkTrafficSignal(
     const lanelet::ConstLanelet & crosswalk, const uint8_t color, const TrafficSignalArray & msg,
     TrafficSignalArray & output);
@@ -109,7 +109,7 @@ private:
 
   // State
   std::map<lanelet::Id, bool> is_flashing_;
-  std::map<lanelet::Id, uint8_t> current_state_;
+  std::map<lanelet::Id, uint8_t> current_color_state_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
