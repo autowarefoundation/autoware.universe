@@ -55,32 +55,4 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajecto
   return output;
 }
 
-TrajectoryPoints convertPathToTrajectoryPoints(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
-{
-  TrajectoryPoints tps;
-  for (const auto & p : path.points) {
-    autoware_auto_planning_msgs::msg::TrajectoryPoint tp;
-    tp.pose = p.point.pose;
-    tp.longitudinal_velocity_mps = p.point.longitudinal_velocity_mps;
-    // since path point doesn't have acc for now
-    tp.acceleration_mps2 = 0;
-    tps.emplace_back(tp);
-  }
-  return tps;
-}
-
-autoware_auto_planning_msgs::msg::PathWithLaneId convertTrajectoryPointsToPath(
-  const TrajectoryPoints & trajectory)
-{
-  autoware_auto_planning_msgs::msg::PathWithLaneId path;
-  for (const auto & p : trajectory) {
-    autoware_auto_planning_msgs::msg::PathPointWithLaneId pp;
-    pp.point.pose = p.pose;
-    pp.point.longitudinal_velocity_mps = p.longitudinal_velocity_mps;
-    path.points.emplace_back(pp);
-  }
-  return path;
-}
-
 }  // namespace motion_utils

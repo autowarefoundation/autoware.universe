@@ -54,7 +54,7 @@ bool smoothPath(
   const auto & external_v_limit = planner_data->external_velocity_limit;
   const auto & smoother = planner_data->velocity_smoother_;
 
-  auto trajectory = motion_utils::convertPathToTrajectoryPoints(in_path);
+  auto trajectory = motion_utils::convertToTrajectoryPoints<autoware_auto_planning_msgs::msg::PathWithLaneId>(in_path);
   const auto traj_lateral_acc_filtered = smoother->applyLateralAccelerationFilter(trajectory);
 
   const auto traj_steering_rate_limited =
@@ -84,7 +84,7 @@ bool smoothPath(
     motion_velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
       traj_resampled_closest, traj_smoothed.size(), external_v_limit->max_velocity, traj_smoothed);
   }
-  out_path = motion_utils::convertTrajectoryPointsToPath(traj_smoothed);
+  out_path = motion_utils::convertTrajectoryPointsToPath<TrajectoryPoints>(traj_smoothed);
   return true;
 }
 
