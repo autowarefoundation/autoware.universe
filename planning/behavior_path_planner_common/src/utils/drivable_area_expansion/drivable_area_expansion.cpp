@@ -146,8 +146,8 @@ void calculate_bound_index_mappings(
   }
 }
 
-void apply_extra_arc_length(
-  Expansion & expansion, const std::vector<Point> & bound, const double extra_arc_length,
+void apply_arc_length_range_smoothing(
+  Expansion & expansion, const std::vector<Point> & bound, const double arc_length_range,
   const Side side)
 {
   const auto & bound_indexes =
@@ -160,20 +160,19 @@ void apply_extra_arc_length(
     const auto bound_idx = bound_indexes[path_idx];
     auto arc_length = boost::geometry::distance(
       bound_projections[path_idx].point, convert_point(bound[bound_idx + 1]));
+    const auto update_arc_length_and_bound_expansions = [&](auto idx) {
+      arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
+      bound_expansions[idx] = std::max(bound_expansions[idx], original_expansions[bound_idx]);
+    };
     for (auto up_bound_idx = bound_idx + 2; up_bound_idx < bound.size(); ++up_bound_idx) {
-      arc_length +=
-        tier4_autoware_utils::calcDistance2d(bound[up_bound_idx - 1], bound[up_bound_idx]);
-      if (arc_length > extra_arc_length) break;
-      bound_expansions[up_bound_idx] =
-        std::max(bound_expansions[up_bound_idx], original_expansions[bound_idx]);
+      update_arc_length_and_bound_expansions(up_bound_idx);
+      if (arc_length > arc_length_range) break;
     }
     arc_length =
       boost::geometry::distance(bound_projections[path_idx].point, convert_point(bound[bound_idx]));
     for (auto down_offset_idx = 1LU; down_offset_idx < bound_idx; ++down_offset_idx) {
-      const auto idx = bound_idx - down_offset_idx;
-      arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
-      if (arc_length > extra_arc_length) break;
-      bound_expansions[idx] = std::max(bound_expansions[idx], original_expansions[bound_idx]);
+      update_arc_length_and_bound_expansions(bound_idx - down_offset_idx);
+      if (arc_length > arc_length_range) break;
     }
   }
 }
@@ -401,8 +400,8 @@ void expand_drivable_area(
   const auto max_dist_ms = stop_watch.toc("max_dist");
 
   calculate_expansion_distances(expansion, max_left_expansions, max_right_expansions);
-  apply_extra_arc_length(expansion, path.left_bound, params.extra_arc_length, LEFT);
-  apply_extra_arc_length(expansion, path.right_bound, params.extra_arc_length, RIGHT);
+  apply_arc_length_range_smoothing(expansion, path.left_bound, params.arc_length_range, LEFT);
+  apply_arc_length_range_smoothing(expansion, path.right_bound, params.arc_length_range, RIGHT);
 
   stop_watch.tic("smooth");
   apply_bound_change_rate_limit(expansion.left_distances, path.left_bound, params.max_bound_rate);

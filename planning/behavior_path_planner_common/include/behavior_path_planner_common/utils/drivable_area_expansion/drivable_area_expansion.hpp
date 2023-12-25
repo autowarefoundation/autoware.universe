@@ -66,13 +66,13 @@ void calculate_bound_index_mappings(
   Expansion & expansion, const std::vector<Pose> & path_poses, const std::vector<Point> & bound,
   const Side side);
 
-/// @brief apply expansion distances to all bound points within the given arc length
+/// @brief apply expansion distances to all bound points within the given arc length range
 /// @param [inout] expansion expansion data to update
 /// @param [in] bound drivable area bound
-/// @param [in] extra_arc_length [m] extra arc length to apply around each expansion
+/// @param [in] arc_length_range [m] arc length range where the expansion distances are also applied
 /// @param [in] Side left or right side
-void apply_extra_arc_length(
-  Expansion & expansion, const std::vector<Point> & bound, const double extra_arc_length,
+void apply_arc_length_range_smoothing(
+  Expansion & expansion, const std::vector<Point> & bound, const double arc_length_range,
   const Side side);
 
 /// @brief calculate mappings between path poses and the given drivable area bound
