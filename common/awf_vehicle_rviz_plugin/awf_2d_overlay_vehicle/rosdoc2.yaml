@@ -1,0 +1,10 @@
+type: 'rosdoc2 config'
+version: 1
+---
+settings:
+  output_dir: ""
+builders:
+  - doxygen: {
+    name: doxygen,
+    output_dir: 'generated/doxygen'
+  }
