@@ -75,7 +75,7 @@ void apply_arc_length_range_smoothing(
   Expansion & expansion, const std::vector<Point> & bound, const double arc_length_range,
   const Side side);
 
-/// @brief calculate mappings between path poses and the given drivable area bound
+/// @brief calculate minimum lane widths and mappings between path and and drivable area bounds
 /// @param [in] path_poses path poses
 /// @param [in] left_bound left drivable area bound
 /// @param [in] right_bound right drivable area bound

@@ -222,9 +222,9 @@ std::vector<double> calculate_maximum_distance(
     const auto segment_vector = segment_ls.second - segment_ls.first;
     const auto is_point_on_correct_side = [&](const Point2d & p) {
       const auto point_vector = p - segment_ls.first;
-      return (segment_vector.x() * point_vector.y() - segment_vector.y() * point_vector.x()) *
-               (side == LEFT ? -1.0 : 1.0) <=
-             0.0;
+      const auto cross_product =
+        (segment_vector.x() * point_vector.y() - segment_vector.y() * point_vector.x());
+      return cross_product * (side == LEFT ? -1.0 : 1.0) <= 0.0;
     };
     const auto is_on_correct_side = [&](const Segment2d & segment) {
       return is_point_on_correct_side(segment.first) || is_point_on_correct_side(segment.second);
