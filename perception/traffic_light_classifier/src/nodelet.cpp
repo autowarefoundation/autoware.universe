@@ -23,12 +23,7 @@ namespace traffic_light
 TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeOptions & options)
 : Node("traffic_light_classifier_node", options)
 {
-  auto node_name = this->get_name();
-  if (strcmp(node_name, "traffic_light_classifier_car") == 0) {
-    classify_tl_type_ = tier4_perception_msgs::msg::TrafficLightRoi::CAR_TRAFFIC_LIGHT;
-  } else if (strcmp(node_name, "traffic_light_classifier_pedestrian") == 0) {
-    classify_tl_type_ = tier4_perception_msgs::msg::TrafficLightRoi::PEDESTRIAN_TRAFFIC_LIGHT;
-  }
+  classify_traffic_light_type_ = this->declare_parameter("classify_traffic_light_type", 0);
 
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -104,7 +99,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   size_t j = 0;
   for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
     // skip if not the expected type of roi
-    if (input_rois_msg->rois.at(i).traffic_light_type != classify_tl_type_) {
+    if (input_rois_msg->rois.at(i).traffic_light_type != classify_traffic_light_type_) {
       continue;
     }
     output_msg.signals[j].traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;

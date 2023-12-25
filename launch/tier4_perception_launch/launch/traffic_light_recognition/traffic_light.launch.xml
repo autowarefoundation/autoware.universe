@@ -122,7 +122,7 @@
         <arg name="fine_detector_label_path" value="$(var fine_detector_label_path)"/>
         <arg name="fine_detector_model_path" value="$(var fine_detector_model_path)"/>
         <arg name="car_classifier_label_path" value="$(var car_classifier_label_path)"/>
-        <arg name="pedestrian_classifier_label_path" value="$(var pedestrian_lassifier_label_path)"/>
+        <arg name="pedestrian_classifier_label_path" value="$(var pedestrian_classifier_label_path)"/>
         <arg name="car_classifier_model_path" value="$(var car_classifier_model_path)"/>
         <arg name="pedestrian_classifier_model_path" value="$(var pedestrian_classifier_model_path)"/>
         <arg name="output/rois" value="$(var output/rois2)"/>
