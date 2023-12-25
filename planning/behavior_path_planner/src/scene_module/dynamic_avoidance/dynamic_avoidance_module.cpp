@@ -720,11 +720,11 @@ LatFeasiblePaths DynamicAvoidanceModule::generateLateralFeasiblePaths(
     ego_lat_feasible_paths.right_path.push_back(feasible_right_bound_point);
   }
 
-  appendMarkerArray(
+  tier4_autoware_utils::appendMarkerArray(
     marker_utils::createPointsMarkerArray(
       ego_lat_feasible_paths.left_path, "ego_lat_feasible_left_path", 0, 0.6, 0.9, 0.9),
     &debug_marker_);
-  appendMarkerArray(
+  tier4_autoware_utils::appendMarkerArray(
     marker_utils::createPointsMarkerArray(
       ego_lat_feasible_paths.right_path, "ego_lat_feasible_right_path", 0, 0.6, 0.9, 0.9),
     &debug_marker_);
