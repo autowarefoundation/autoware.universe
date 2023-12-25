@@ -75,77 +75,6 @@ static std::optional<lanelet::ConstLanelet> getFirstConflictingLanelet(
   return std::nullopt;
 }
 
-static std::optional<size_t> getFirstPointInsidePolygonByFootprint(
-  const lanelet::CompoundPolygon3d & polygon,
-  const util::InterpolatedPathInfo & interpolated_path_info,
-  const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length)
-{
-  const auto & path_ip = interpolated_path_info.path;
-  const auto [lane_start, lane_end] = interpolated_path_info.lane_id_interval.value();
-  const size_t vehicle_length_idx = static_cast<size_t>(vehicle_length / interpolated_path_info.ds);
-  const size_t start =
-    static_cast<size_t>(std::max<int>(0, static_cast<int>(lane_start) - vehicle_length_idx));
-  const auto area_2d = lanelet::utils::to2D(polygon).basicPolygon();
-  for (auto i = start; i <= lane_end; ++i) {
-    const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = tier4_autoware_utils::transformVector(
-      footprint, tier4_autoware_utils::pose2transform(base_pose));
-    if (bg::intersects(path_footprint, area_2d)) {
-      return std::make_optional<size_t>(i);
-    }
-  }
-  return std::nullopt;
-}
-
-static std::optional<size_t> getDuplicatedPointIdx(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point)
-{
-  for (size_t i = 0; i < path.points.size(); i++) {
-    const auto & p = path.points.at(i).point.pose.position;
-
-    constexpr double min_dist = 0.001;
-    if (tier4_autoware_utils::calcDistance2d(p, point) < min_dist) {
-      return i;
-    }
-  }
-
-  return std::nullopt;
-}
-
-static std::optional<size_t> insertPointIndex(
-  const geometry_msgs::msg::Pose & in_pose,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path,
-  const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold)
-{
-  const auto duplicate_idx_opt = getDuplicatedPointIdx(*inout_path, in_pose.position);
-  if (duplicate_idx_opt) {
-    return duplicate_idx_opt.value();
-  }
-
-  const size_t closest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    inout_path->points, in_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
-  // vector.insert(i) inserts element on the left side of v[i]
-  // the velocity need to be zero order hold(from prior point)
-  int insert_idx = closest_idx;
-  autoware_auto_planning_msgs::msg::PathPointWithLaneId inserted_point =
-    inout_path->points.at(closest_idx);
-  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
-    ++insert_idx;
-  } else {
-    // copy with velocity from prior point
-    const size_t prior_ind = closest_idx > 0 ? closest_idx - 1 : 0;
-    inserted_point.point.longitudinal_velocity_mps =
-      inout_path->points.at(prior_ind).point.longitudinal_velocity_mps;
-  }
-  inserted_point.point.pose = in_pose;
-
-  auto it = inout_path->points.begin() + insert_idx;
-  inout_path->points.insert(it, inserted_point);
-
-  return insert_idx;
-}
-
 bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_ = DebugData();
@@ -201,7 +130,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
   }
   const auto stopline_idx_ip = first_conflicting_idx_opt.value();
 
-  const auto stopline_idx_opt = insertPointIndex(
+  const auto stopline_idx_opt = util::insertPointIndex(
     interpolated_path_info.path.points.at(stopline_idx_ip).point.pose, path,
     planner_data_->ego_nearest_dist_threshold, planner_data_->ego_nearest_yaw_threshold);
   if (!stopline_idx_opt) {
@@ -286,4 +215,5 @@ MergeFromPrivateRoadModule::extractPathNearExitOfPrivateRoad(
   std::reverse(private_path.points.begin(), private_path.points.end());
   return private_path;
 }
+
 }  // namespace behavior_velocity_planner
