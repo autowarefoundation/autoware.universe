@@ -1,0 +1,12 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <!-- Fonts -->
+        <file>assets/font/Quicksand/static/Quicksand-Regular.ttf</file>
+        <file>assets/font/Quicksand/static/Quicksand-Bold.ttf</file>
+
+        <!-- Images -->
+        <file>assets/images/arrow.png</file>
+        <file>assets/images/wheel.png</file>
+    </qresource>
+</RCC>
