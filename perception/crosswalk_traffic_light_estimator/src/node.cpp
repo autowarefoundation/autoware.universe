@@ -170,7 +170,7 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
     const auto non_red_lanelets = getNonRedLanelets(conflict_lls, traffic_light_id_map);
 
     const auto crosswalk_tl_color = estimateCrosswalkTrafficSignal(crosswalk, non_red_lanelets);
-    setCrosswalkTrafficSignal(crosswalk, crosswalk_tl_color, output, *msg);
+    setCrosswalkTrafficSignal(crosswalk, crosswalk_tl_color, *msg, output);
   }
 
   updateLastDetectedSignal(traffic_light_id_map);
@@ -275,8 +275,8 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignals(
 }
 
 void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
-  const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & output,
-  const TrafficSignalArray & msg)
+  const lanelet::ConstLanelet & crosswalk, const uint8_t color, const TrafficSignalArray & msg,
+  TrafficSignalArray & output)
 {
   const auto tl_reg_elems = crosswalk.regulatoryElementsAs<const lanelet::TrafficLight>();
 
