@@ -44,13 +44,13 @@ The merit of using this model is that it can prevent unintended yaw rotation whe
   - $[x_{k}, y_{k}, \psi_{k}, v_{k}, \beta_{k} ]^\mathrm{T}$
 - **Prediction Equation**
   - $dt$: sampling time
-  - $w_k = \dot{\psi}_k = \frac{ v_{k} \sin \left(\beta_{k}\right) }{ l_r } $ : angular velocity
+  - $w*k = \dot{\psi}\_k = \frac{ v*{k} \sin \left(\beta\_{k}\right) }{ l_r } $ : angular velocity
 
 $$
 \begin{aligned}
 x_{k+1} & = x_{k} + v_{k} \cos \left(\psi_{k}+\beta_{k}\right) {d t}
             -\frac{1}{2}  \left\{ w_k v_k \sin \left(\psi_{k}+\beta_{k}\right) \right\} {d t}^2\\
-y_{k+1} & = y_{k} + v_{k} \sin \left(\psi_{k}+\beta_{k}\right) {d t} 
+y_{k+1} & = y_{k} + v_{k} \sin \left(\psi_{k}+\beta_{k}\right) {d t}
             +\frac{1}{2}  \left\{ w_k v_k \cos \left(\psi_{k}+\beta_{k}\right) \right\} {d t}^2\\
 \psi_{k+1} & =\psi_{k} + w_k {d t} \\
 v_{k+1} & = v_{k} \\
@@ -62,12 +62,12 @@ $$
 
 $$
 \frac{\partial f}{\partial \mathrm x}=\left[\begin{array}{ccccc}
-1 & 0 
- & v \cos (\psi+\beta) {d t} - \frac{1}{2} \left\{ w v \cos \left( \psi+\beta \right) \right\} {d t}^2 
+1 & 0
+ & v \cos (\psi+\beta) {d t} - \frac{1}{2} \left\{ w v \cos \left( \psi+\beta \right) \right\} {d t}^2
  & \sin (\psi+\beta) {d t} - \left\{ w \sin \left( \psi+\beta \right) \right\} {d t}^2
  & -v \sin (\psi+\beta) {d t} - \frac{v^2}{2l_r} \left\{ \cos(\beta)\sin(\psi+\beta)+\sin(\beta)\cos(\psi+\beta) \right\} {d t}^2 \\
-0 & 1 
- & v \sin (\psi+\beta) {d t} - \frac{1}{2} \left\{ w v \sin \left( \psi+\beta \right) \right\} {d t}^2 
+0 & 1
+ & v \sin (\psi+\beta) {d t} - \frac{1}{2} \left\{ w v \sin \left( \psi+\beta \right) \right\} {d t}^2
  & \cos (\psi+\beta) {d t} + \left\{ w \cos \left( \psi+\beta \right) \right\} {d t}^2
  & v \cos (\psi+\beta) {d t} + \frac{v^2}{2l_r} \left\{ \cos(\beta)\cos(\psi+\beta)-\sin(\beta)\sin(\psi+\beta) \right\} {d t}^2 \\
 0 & 0 & 1 & \frac{1}{l_r} \sin \beta {d t} & \frac{v}{l_r} \cos \beta d t \\
