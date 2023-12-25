@@ -326,33 +326,34 @@ void calculate_expansion_distances(
     const auto original_width = expansion.left_projections[path_idx].distance +
                                 expansion.right_projections[path_idx].distance;
     const auto expansion_dist = expansion.min_lane_widths[path_idx] - original_width;
-    if (expansion_dist > 0.0) {
-      const auto left_limit =
-        std::min(max_left_expansions[left_bound_idx], max_left_expansions[left_bound_idx + 1]);
-      const auto right_limit =
-        std::min(max_right_expansions[right_bound_idx], max_right_expansions[right_bound_idx + 1]);
-      if (expansion_dist / 2.0 >= left_limit) {
-        const auto compensation_dist = expansion_dist / 2.0 - left_limit;
-        expansion.left_distances[left_bound_idx] = left_limit;
-        expansion.left_distances[left_bound_idx + 1] = left_limit;
-        expansion.right_distances[right_bound_idx] =
-          std::min(right_limit, expansion_dist / 2.0 + compensation_dist);
-        expansion.right_distances[right_bound_idx + 1] =
-          std::min(right_limit, expansion_dist / 2.0 + compensation_dist);
-      } else if (expansion_dist / 2.0 >= right_limit) {
-        const auto compensation_dist = expansion_dist / 2.0 - right_limit;
-        expansion.left_distances[left_bound_idx] =
-          std::min(left_limit, expansion_dist / 2.0 + compensation_dist);
-        expansion.left_distances[left_bound_idx + 1] =
-          std::min(left_limit, expansion_dist / 2.0 + compensation_dist);
-        expansion.right_distances[right_bound_idx] = right_limit;
-        expansion.right_distances[right_bound_idx + 1] = right_limit;
-      } else {
-        expansion.left_distances[left_bound_idx] = expansion_dist / 2.0;
-        expansion.left_distances[left_bound_idx + 1] = expansion_dist / 2.0;
-        expansion.right_distances[right_bound_idx] = expansion_dist / 2.0;
-        expansion.right_distances[right_bound_idx + 1] = expansion_dist / 2.0;
-      }
+    if (expansion_dist <= 0.0) continue;
+    const auto left_limit =
+      std::min(max_left_expansions[left_bound_idx], max_left_expansions[left_bound_idx + 1]);
+    const auto right_limit =
+      std::min(max_right_expansions[right_bound_idx], max_right_expansions[right_bound_idx + 1]);
+    const auto expansion_fits_on_left_side = expansion_dist / 2.0 < left_limit;
+    const auto expansion_fits_on_right_side = expansion_dist / 2.0 < right_limit;
+    if (expansion_fits_on_left_side && expansion_fits_on_right_side) {
+      expansion.left_distances[left_bound_idx] = expansion_dist / 2.0;
+      expansion.left_distances[left_bound_idx + 1] = expansion_dist / 2.0;
+      expansion.right_distances[right_bound_idx] = expansion_dist / 2.0;
+      expansion.right_distances[right_bound_idx + 1] = expansion_dist / 2.0;
+    } else if (!expansion_fits_on_left_side) {
+      expansion.left_distances[left_bound_idx] = left_limit;
+      expansion.left_distances[left_bound_idx + 1] = left_limit;
+      const auto compensation_dist = expansion_dist / 2.0 - left_limit;
+      expansion.right_distances[right_bound_idx] =
+        std::min(right_limit, expansion_dist / 2.0 + compensation_dist);
+      expansion.right_distances[right_bound_idx + 1] =
+        std::min(right_limit, expansion_dist / 2.0 + compensation_dist);
+    } else if (!expansion_fits_on_right_side) {
+      expansion.right_distances[right_bound_idx] = right_limit;
+      expansion.right_distances[right_bound_idx + 1] = right_limit;
+      const auto compensation_dist = expansion_dist / 2.0 - right_limit;
+      expansion.left_distances[left_bound_idx] =
+        std::min(left_limit, expansion_dist / 2.0 + compensation_dist);
+      expansion.left_distances[left_bound_idx + 1] =
+        std::min(left_limit, expansion_dist / 2.0 + compensation_dist);
     }
   }
 }
