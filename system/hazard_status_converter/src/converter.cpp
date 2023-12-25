@@ -141,7 +141,7 @@ Converter::Converter(const rclcpp::NodeOptions & options) : Node("converter", op
   }
   pub_hazard_ = create_publisher<HazardStatusStamped>("/hazard_status", rclcpp::QoS(1));
 
-  const auto period = rclcpp::Rate(10).period();
+  const auto period = rclcpp::Rate(declare_parameter<double>("rate")).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period, [this] { on_timer(); });
 }
 

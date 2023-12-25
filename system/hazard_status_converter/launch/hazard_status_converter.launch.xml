@@ -1,7 +1,6 @@
 <launch>
-  <arg name="graph_file" default="$(find-pkg-share hazard_status_converter)/config/autoware.yaml"/>
-  <include file="$(find-pkg-share system_diagnostic_graph)/launch/system_diagnostic_graph.launch.xml">
-    <arg name="graph_file" value="$(var graph_file)"/>
-  </include>
-  <node pkg="hazard_status_converter" exec="component_state_diagnostics" name="component_state_diagnostics"/>
+  <arg name="param_path" default="$(find-pkg-share hazard_status_converter)/config/default.param.yaml"/>
+  <node pkg="hazard_status_converter" exec="converter" name="hazard_status_converter">
+    <param from="$(var param_path)"/>
+  </node>
 </launch>
