@@ -85,9 +85,9 @@ NormalVehicleTracker::NormalVehicleTracker(
   X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
   X(IDX::YAW) = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
   if (object.kinematics.has_twist) {
-    X(IDX::VX) = object.kinematics.twist_with_covariance.twist.linear.x;
+    X(IDX::VEL) = object.kinematics.twist_with_covariance.twist.linear.x;
   } else {
-    X(IDX::VX) = 0.0;
+    X(IDX::VEL) = 0.0;
   }
   X(IDX::SLIP) = 0.0;
 
@@ -106,7 +106,7 @@ NormalVehicleTracker::NormalVehicleTracker(
       ekf_params_.p0_cov_x * sin_yaw * sin_yaw + ekf_params_.p0_cov_y * cos_yaw * cos_yaw;
     P(IDX::Y, IDX::X) = P(IDX::X, IDX::Y);
     P(IDX::YAW, IDX::YAW) = ekf_params_.p0_cov_yaw;
-    P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
+    P(IDX::VEL, IDX::VEL) = ekf_params_.p0_cov_vx;
     P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
   } else {
     P(IDX::X, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
@@ -116,10 +116,10 @@ NormalVehicleTracker::NormalVehicleTracker(
     P(IDX::YAW, IDX::YAW) =
       object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
     if (object.kinematics.has_twist_covariance) {
-      P(IDX::VX, IDX::VX) =
+      P(IDX::VEL, IDX::VEL) =
         object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     } else {
-      P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
+      P(IDX::VEL, IDX::VEL) = ekf_params_.p0_cov_vx;
     }
     P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
   }
@@ -209,7 +209,7 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   const double sin_yaw = std::sin(X_t(IDX::YAW) + X_t(IDX::SLIP));
   const double cos_slip = std::cos(X_t(IDX::SLIP));
   const double sin_slip = std::sin(X_t(IDX::SLIP));
-  const double vx = X_t(IDX::VX);
+  const double vx = X_t(IDX::VEL);
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
   const double w = vx * sin_slip / lr_;
   const double w_dtdt = w * dt * dt;
@@ -222,20 +222,20 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   X_next_t(IDX::Y) =
     X_t(IDX::Y) + vx * sin_yaw * dt + 0.5 * vx * cos_slip * w_dtdt;  // dy = v * sin(yaw)
   X_next_t(IDX::YAW) = X_t(IDX::YAW) + vx / lr_ * sin_slip * dt;     // dyaw = omega
-  X_next_t(IDX::VX) = X_t(IDX::VX);
+  X_next_t(IDX::VEL) = X_t(IDX::VEL);
   X_next_t(IDX::SLIP) = X_t(IDX::SLIP);
 
   // A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
   A(IDX::X, IDX::YAW) = -vx * sin_yaw * dt - 0.5 * vx * cos_yaw * w_dtdt;
-  A(IDX::X, IDX::VX) = cos_yaw * dt - sin_yaw * w_dtdt;
+  A(IDX::X, IDX::VEL) = cos_yaw * dt - sin_yaw * w_dtdt;
   A(IDX::X, IDX::SLIP) =
     -vx * sin_yaw * dt - 0.5 * (cos_slip * sin_yaw + sin_slip * cos_yaw) * vv_dtdt__lr;
   A(IDX::Y, IDX::YAW) = vx * cos_yaw * dt - 0.5 * vx * sin_yaw * w_dtdt;
-  A(IDX::Y, IDX::VX) = sin_yaw * dt + cos_yaw * w_dtdt;
+  A(IDX::Y, IDX::VEL) = sin_yaw * dt + cos_yaw * w_dtdt;
   A(IDX::Y, IDX::SLIP) =
     vx * cos_yaw * dt + 0.5 * (cos_slip * cos_yaw - sin_slip * sin_yaw) * vv_dtdt__lr;
-  A(IDX::YAW, IDX::VX) = 1.0 / lr_ * sin_slip * dt;
+  A(IDX::YAW, IDX::VEL) = 1.0 / lr_ * sin_slip * dt;
   A(IDX::YAW, IDX::SLIP) = vx / lr_ * cos_slip * dt;
 
   // Q
@@ -257,7 +257,7 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   Q(IDX::Y, IDX::Y) = (q_cov_x * sin_yaw * sin_yaw + q_cov_y * cos_yaw * cos_yaw);
   Q(IDX::Y, IDX::X) = Q(IDX::X, IDX::Y);
   Q(IDX::YAW, IDX::YAW) = q_cov_yaw;
-  Q(IDX::VX, IDX::VX) = q_cov_vx;
+  Q(IDX::VEL, IDX::VEL) = q_cov_vx;
   Q(IDX::SLIP, IDX::SLIP) = q_cov_slip;
   Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
@@ -298,7 +298,7 @@ bool NormalVehicleTracker::measureWithPose(
   // Decide dimension of measurement vector
   bool enable_velocity_measurement = false;
   if (object.kinematics.has_twist) {
-    const double predicted_vx = X_t(IDX::VX);
+    const double predicted_vx = X_t(IDX::VEL);
     const double observed_vx = object.kinematics.twist_with_covariance.twist.linear.x;
 
     if (std::fabs(predicted_vx - observed_vx) < velocity_deviation_threshold_) {
@@ -371,8 +371,8 @@ bool NormalVehicleTracker::measureWithPose(
 
   // Update the velocity when necessary
   if (dim_y == 4) {
-    Y(IDX::VX, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
-    C(3, IDX::VX) = 1.0;  // for vx
+    Y(IDX::VEL, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
+    C(3, IDX::VEL) = 1.0;  // for vx
 
     if (!object.kinematics.has_twist_covariance) {
       R(3, 3) = ekf_params_.r_cov_vx;  // vx -vx
@@ -393,8 +393,8 @@ bool NormalVehicleTracker::measureWithPose(
     ekf_.getX(X_t);
     ekf_.getP(P_t);
     X_t(IDX::YAW) = tier4_autoware_utils::normalizeRadian(X_t(IDX::YAW));
-    if (!(-max_vx_ <= X_t(IDX::VX) && X_t(IDX::VX) <= max_vx_)) {
-      X_t(IDX::VX) = X_t(IDX::VX) < 0 ? -max_vx_ : max_vx_;
+    if (!(-max_vx_ <= X_t(IDX::VEL) && X_t(IDX::VEL) <= max_vx_)) {
+      X_t(IDX::VEL) = X_t(IDX::VEL) < 0 ? -max_vx_ : max_vx_;
     }
     if (!(-max_slip_ <= X_t(IDX::SLIP) && X_t(IDX::SLIP) <= max_slip_)) {
       X_t(IDX::SLIP) = X_t(IDX::SLIP) < 0 ? -max_slip_ : max_slip_;
@@ -530,20 +530,20 @@ bool NormalVehicleTracker::getTrackedObject(
   pose_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
 
   // twist
-  twist_with_cov.twist.linear.x = X_t(IDX::VX) * std::cos(X_t(IDX::SLIP));
-  twist_with_cov.twist.linear.y = X_t(IDX::VX) * std::sin(X_t(IDX::SLIP));
+  twist_with_cov.twist.linear.x = X_t(IDX::VEL) * std::cos(X_t(IDX::SLIP));
+  twist_with_cov.twist.linear.y = X_t(IDX::VEL) * std::sin(X_t(IDX::SLIP));
   twist_with_cov.twist.angular.z =
-    X_t(IDX::VX) / lr_ * std::sin(X_t(IDX::SLIP));  // yaw_rate = vx_k / l_r * sin(slip_k)
+    X_t(IDX::VEL) / lr_ * std::sin(X_t(IDX::SLIP));  // yaw_rate = vx_k / l_r * sin(slip_k)
   // twist covariance
   constexpr double vy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  twist_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::VX, IDX::VX);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::VEL, IDX::VEL);
   twist_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = vy_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::Z_Z] = vz_cov;
-  twist_with_cov.covariance[utils::MSG_COV_IDX::X_YAW] = P(IDX::VX, IDX::SLIP);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_X] = P(IDX::SLIP, IDX::VX);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::X_YAW] = P(IDX::VEL, IDX::SLIP);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_X] = P(IDX::SLIP, IDX::VEL);
   twist_with_cov.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::SLIP, IDX::SLIP);

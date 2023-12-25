@@ -126,7 +126,7 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_ms
   tf2::Transform tf2_base_link_to_sensor{};
   getTransform(points_msg->header.frame_id, base_link_frame_, &tf2_base_link_to_sensor);
 
-  undistortPointCloud(tf2_base_link_to_sensor, *points_msg);
+  // undistortPointCloud(tf2_base_link_to_sensor, *points_msg);
 
   undistorted_points_pub_->publish(std::move(points_msg));
 

@@ -33,7 +33,7 @@ private:
 private:
   KalmanFilter ekf_;
   rclcpp::Time last_update_time_;
-  enum IDX { X = 0, Y = 1, YAW = 2, VX = 3, SLIP = 4 };
+  enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, SLIP = 4 };
 
   struct EkfParams
   {
