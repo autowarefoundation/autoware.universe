@@ -492,12 +492,11 @@ private:
 
   DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
 
-  bool checkStuckVehicle(
-    const std::shared_ptr<const PlannerData> & planner_data, const PathLanelets & path_lanelets);
+  bool checkStuckVehicleInIntersection(const PathLanelets & path_lanelets, DebugData * debug_data);
 
-  bool checkYieldStuckVehicle(
+  bool checkYieldStuckVehicleInIntersection(
     const TargetObjects & target_objects, const util::InterpolatedPathInfo & interpolated_path_info,
-    const lanelet::ConstLanelets & attention_lanelets);
+    const lanelet::ConstLanelets & attention_lanelets, DebugData * debug_data);
 
   TargetObjects generateTargetObjects(
     const IntersectionLanelets & intersection_lanelets,
@@ -512,84 +511,52 @@ private:
   std::optional<PathLanelets> generatePathLanelets(
     const lanelet::ConstLanelets & lanelets_on_path,
     const util::InterpolatedPathInfo & interpolated_path_info,
-    const std::set<lanelet::Id> & associative_ids,
     const lanelet::CompoundPolygon3d & first_conflicting_area,
     const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
     const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
-    const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx,
-    const double width);
+    const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx);
 
   Polygon2d generateStuckVehicleDetectAreaPolygon(
     const PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist);
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-    const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
-    const double dist_margin, const bool is_parked_vehicle) const;
+    const bool is_parked_vehicle) const;
 
-  void cutPredictPathWithDuration(
-    TargetObjects * target_objects, const rclcpp::Clock::SharedPtr clock, const double time_thr);
+  void cutPredictPathWithDuration(TargetObjects * target_objects, const double time_thr);
 
   TimeDistanceArray calcIntersectionPassingTime(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const std::shared_ptr<const PlannerData> & planner_data, const lanelet::Id lane_id,
-    const std::set<lanelet::Id> & associative_ids, const size_t closest_idx,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
     const size_t last_intersection_stopline_candidate_idx, const double time_delay,
-    const double intersection_velocity, const double minimum_ego_velocity,
-    const bool use_upstream_velocity, const double minimum_upstream_velocity,
     tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
 
-  bool checkYieldStuckVehicleInIntersection(
-    const TargetObjects & target_objects, const util::InterpolatedPathInfo & interpolated_path_info,
-    const lanelet::ConstLanelets & attention_lanelets, const std::string & turn_direction,
-    const double width, const double stuck_vehicle_vel_thr, const double yield_stuck_distance_thr,
-    DebugData * debug_data);
-
-  bool checkStuckVehicleInIntersection(
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const Polygon2d & stuck_vehicle_detect_area, const double stuck_vehicle_vel_thr,
-    DebugData * debug_data);
-
   OcclusionType getOcclusionStatus(
-    const nav_msgs::msg::OccupancyGrid & occ_grid,
     const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
     const lanelet::ConstLanelets & adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_attention_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
     const std::vector<lanelet::ConstLineString3d> & lane_divisions,
-    const TargetObjects & target_objects, const geometry_msgs::msg::Pose & current_pose,
-    const double occlusion_dist_thr);
+    const TargetObjects & target_objects);
 
   IntersectionLanelets getObjectiveLanelets(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path,
-    const std::set<lanelet::Id> & associative_ids, const double detection_area_length,
-    const double occlusion_detection_area_length, const bool consider_wrong_direction_vehicle);
+    const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path);
 
   std::optional<IntersectionStopLines> generateIntersectionStopLines(
+    lanelet::ConstLanelet assigned_lanelet,
     const lanelet::CompoundPolygon3d & first_conflicting_area,
     const lanelet::CompoundPolygon3d & first_attention_area,
     const lanelet::ConstLineString2d & first_attention_lane_centerline,
-    const std::shared_ptr<const PlannerData> & planner_data,
-    const util::InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
-    const double stopline_margin, const double max_accel, const double max_jerk,
-    const double delay_response_time, const double peeking_offset,
+    const util::InterpolatedPathInfo & interpolated_path_info,
     autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
   TrafficPrioritizedLevel getTrafficPrioritizedLevel(
     lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
 
-  std::optional<size_t> generateStuckStopLine(
-    const lanelet::CompoundPolygon3d & first_conflicting_area,
-    const std::shared_ptr<const PlannerData> & planner_data,
-    const util::InterpolatedPathInfo & interpolated_path_info, const double stopline_margin,
-    const bool use_stuck_stopline,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
-
   std::optional<size_t> getStopLineIndexFromMap(
     const util::InterpolatedPathInfo & interpolated_path_info,
-    const std::shared_ptr<const PlannerData> & planner_data);
+    lanelet::ConstLanelet assigned_lanelet);
 
   /*
   bool IntersectionModule::checkFrontVehicleDeceleration(
