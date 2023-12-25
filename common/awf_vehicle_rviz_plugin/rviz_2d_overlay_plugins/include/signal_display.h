@@ -33,8 +33,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-#ifndef SIGNAL_DISPLAY_H
-#define SIGNAL_DISPLAY_H
+#ifndef SIGNAL_DISPLAY_H_
+#define SIGNAL_DISPLAY_H_
 #ifndef Q_MOC_RUN
 #include "GearDisplay.h"
 #include "SpeedDisplay.h"
@@ -124,4 +124,4 @@ private:
 };
 }  // namespace awf_2d_overlay_vehicle
 
-#endif
+#endif  // SIGNAL_DISPLAY_H_

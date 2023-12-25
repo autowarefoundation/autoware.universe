@@ -5,7 +5,7 @@ project(awf_2d_overlay_vehicle)
 find_package(ament_cmake_auto REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(autoware_auto_vehicle_msgs REQUIRED)
-ament_auto_find_build_dependencies() 
+ament_auto_find_build_dependencies()
 # if your cmake has this line it should probably find autoware_auto_vehicle_msgs package if not you should add to ament_target_dependencies()
 
 find_package(rviz_2d_overlay_msgs REQUIRED)
@@ -37,10 +37,10 @@ set(
         src/overlay_text_display.cpp
         src/overlay_utils.cpp
         src/signal_display.cpp
-        src/SteeringWheelDisplay.cpp 
-        src/GearDisplay.cpp          
-        src/SpeedDisplay.cpp         
-        src/TurnSignalsDisplay.cpp   
+        src/SteeringWheelDisplay.cpp
+        src/GearDisplay.cpp
+        src/SpeedDisplay.cpp
+        src/TurnSignalsDisplay.cpp
         ${RESOURCES_RCC} # Add this line
 
 )
