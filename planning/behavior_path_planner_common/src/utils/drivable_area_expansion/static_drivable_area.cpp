@@ -586,48 +586,44 @@ std::vector<DrivableLanes> cutOverlappedLanes(
       [&has_same_id_lane, &p](const auto & lanelet) { return has_same_id_lane(lanelet, p); });
   };
 
+  const auto is_point_in_drivable_lanes = [&has_same_id_lane, &has_same_id_lanes](
+                                            const auto & lanes, const auto & p) {
+    if (has_same_id_lane(lanes.right_lane, p)) {
+      return true;
+    }
+    // check left lane
+    if (has_same_id_lane(lanes.left_lane, p)) {
+      return true;
+    }
+    // check middle lanes
+    if (has_same_id_lanes(lanes.middle_lanes, p)) {
+      return true;
+    }
+    return false;
+  };
+
   // Step1. find first path point within drivable lanes
-  size_t start_point_idx = std::numeric_limits<size_t>::max();
-  for (const auto & lanes : shorten_lanes) {
-    for (size_t i = 0; i < original_points.size(); ++i) {
-      // check right lane
-      if (has_same_id_lane(lanes.right_lane, original_points.at(i))) {
-        start_point_idx = std::min(start_point_idx, i);
-      }
+  size_t start_point_idx = original_points.size();
 
-      // check left lane
-      if (has_same_id_lane(lanes.left_lane, original_points.at(i))) {
-        start_point_idx = std::min(start_point_idx, i);
-      }
-
-      // check middle lanes
-      if (has_same_id_lanes(lanes.middle_lanes, original_points.at(i))) {
-        start_point_idx = std::min(start_point_idx, i);
-      }
+  for (size_t i = 0; i < original_points.size(); ++i) {
+    const bool first_path_point_in_drivable_lane_found = std::any_of(
+      shorten_lanes.begin(), shorten_lanes.end(),
+      [&is_point_in_drivable_lanes, &original_points, i](const auto & lanes) {
+        return is_point_in_drivable_lanes(lanes, original_points.at(i));
+      });
+    if (first_path_point_in_drivable_lane_found) {
+      start_point_idx = i;
+      break;
     }
   }
 
   // Step2. pick up only path points within drivable lanes
   for (const auto & lanes : shorten_lanes) {
     for (size_t i = start_point_idx; i < original_points.size(); ++i) {
-      // check right lane
-      if (has_same_id_lane(lanes.right_lane, original_points.at(i))) {
+      if (is_point_in_drivable_lanes(lanes, original_points.at(i))) {
         path.points.push_back(original_points.at(i));
         continue;
       }
-
-      // check left lane
-      if (has_same_id_lane(lanes.left_lane, original_points.at(i))) {
-        path.points.push_back(original_points.at(i));
-        continue;
-      }
-
-      // check middle lanes
-      if (has_same_id_lanes(lanes.middle_lanes, original_points.at(i))) {
-        path.points.push_back(original_points.at(i));
-        continue;
-      }
-
       start_point_idx = i;
       break;
     }
@@ -1089,13 +1085,17 @@ void extractObstaclesFromDrivableArea(
   std::vector<std::vector<PolygonPoint>> right_polygons;
   std::vector<std::vector<PolygonPoint>> left_polygons;
   for (const auto & obstacle : obstacles) {
+    if (obstacle.poly.outer().empty()) {
+      continue;
+    }
+
     const auto & obj_pos = obstacle.pose.position;
 
     // get edge points of the object
     const size_t nearest_path_idx =
       motion_utils::findNearestIndex(path.points, obj_pos);  // to get z for object polygon
     std::vector<Point> edge_points;
-    for (size_t i = 0; i < obstacle.poly.outer().size() - 1;
+    for (int i = 0; i < static_cast<int>(obstacle.poly.outer().size()) - 1;
          ++i) {  // NOTE: There is a duplicated points
       edge_points.push_back(tier4_autoware_utils::createPoint(
         obstacle.poly.outer().at(i).x(), obstacle.poly.outer().at(i).y(),
@@ -1183,6 +1183,8 @@ std::vector<lanelet::ConstPoint3d> getBoundWithHatchedRoadMarkings(
     } else {
       if (!polygon) {
         will_close_polygon = true;
+      } else if (polygon.value().id() != current_polygon.value().id()) {
+        will_close_polygon = true;
       } else {
         current_polygon_border_indices.push_back(
           get_corresponding_polygon_index(*current_polygon, bound_point.id()));
@@ -1217,6 +1219,17 @@ std::vector<lanelet::ConstPoint3d> getBoundWithHatchedRoadMarkings(
             (*current_polygon)[mod(target_poly_idx, current_polygon_points_num)]);
         }
       }
+
+      if (polygon.has_value() && current_polygon.has_value()) {
+        if (polygon.value().id() != current_polygon.value().id()) {
+          current_polygon = polygon;
+          current_polygon_border_indices.clear();
+          current_polygon_border_indices.push_back(
+            get_corresponding_polygon_index(current_polygon.value(), bound_point.id()));
+          continue;
+        }
+      }
+
       current_polygon = std::nullopt;
       current_polygon_border_indices.clear();
     }

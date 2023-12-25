@@ -173,16 +173,15 @@ size_t getIdxByArclength(
       }
     }
     return path.points.size() - 1;
-  } else {
-    for (size_t i = target_idx; i > 0; --i) {
-      const auto next_i = i - 1;
-      sum_length -= calcDistance2d(path.points.at(i), path.points.at(next_i));
-      if (sum_length < signed_arc) {
-        return next_i;
-      }
-    }
-    return 0;
   }
+  for (size_t i = target_idx; i > 0; --i) {
+    const auto next_i = i - 1;
+    sum_length -= calcDistance2d(path.points.at(i), path.points.at(next_i));
+    if (sum_length < signed_arc) {
+      return next_i;
+    }
+  }
+  return 0;
 }
 
 // TODO(murooka) This function should be replaced with motion_utils::cropPoints
@@ -629,8 +628,8 @@ BehaviorModuleOutput getReferencePath(
     dp.drivable_area_types_to_skip);
 
   BehaviorModuleOutput output;
-  output.path = std::make_shared<PathWithLaneId>(reference_path);
-  output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
+  output.path = reference_path;
+  output.reference_path = reference_path;
   output.drivable_area_info.drivable_lanes = drivable_lanes;
 
   return output;
@@ -679,8 +678,8 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
     point.point.longitudinal_velocity_mps = 0.0;
   }
 
-  output.path = std::make_shared<PathWithLaneId>(reference_path);
-  output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
+  output.path = reference_path;
+  output.reference_path = reference_path;
   output.drivable_area_info.drivable_lanes = drivable_lanes;
 
   return output;
