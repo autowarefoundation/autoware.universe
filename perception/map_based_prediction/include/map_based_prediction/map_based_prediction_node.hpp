@@ -16,6 +16,7 @@
 #define MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
 
 #include "map_based_prediction/path_generator.hpp"
+#include "tf2/LinearMath/Quaternion.h"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
@@ -316,61 +317,58 @@ private:
   };
 
   inline bool isAccelerationConstraintsSatisfied(
-    const TrajectoryPoints & trajectory [[maybe_unused]], const double points_interval = 1.0)
+    const TrajectoryPoints & trajectory [[maybe_unused]], const double delta_time)
   {
-    if (trajectory.size() < 3) return false;
-    constexpr double curvature_calculation_distance = 5.0;
-    const size_t idx_dist = static_cast<size_t>(
-      std::max(static_cast<int>((curvature_calculation_distance) / points_interval), 1));
-    // Calculate curvature assuming the trajectory points interval is constant
-    const auto curvature_v = calcTrajectoryCurvatureFrom3Points(trajectory, idx_dist);
-
-    // constexpr double min_curve_velocity = 3.5;
-    // constexpr double deceleration_distance_before_curve = 3.5;
-    // constexpr double deceleration_distance_after_curve = 2.0;
-
-    //  Decrease speed according to lateral G
-    const size_t before_decel_index =
-      static_cast<size_t>(std::round(deceleration_distance_before_curve_ / points_interval));
-    const size_t after_decel_index =
-      static_cast<size_t>(std::round(deceleration_distance_after_curve_ / points_interval));
+    if (trajectory.size() < 3) return true;
     const double max_lateral_accel_abs = std::fabs(max_lateral_accel_);
+
     double arc_length = 0.0;
+    for (size_t i = 1; i < trajectory.size(); ++i) {
+      const auto current_pose = trajectory.at(i).pose;
+      const auto next_pose = trajectory.at(i - 1).pose;
+      // Compute distance between poses
+      const double delta_s = std::hypot(
+        next_pose.position.x - current_pose.position.x,
+        next_pose.position.y - current_pose.position.y);
+      arc_length += delta_s;
 
-    for (size_t i = 0; i < trajectory.size(); ++i) {
-      if (i > 0)
-        arc_length +=
-          tier4_autoware_utils::calcDistance2d(trajectory.at(i).pose, trajectory.at(i - 1).pose);
-      double curvature = 0.0;
-      const size_t start = i > after_decel_index ? i - after_decel_index : 0;
-      const size_t end = std::min(trajectory.size(), i + before_decel_index + 1);
-      for (size_t j = start; j < end; ++j) {
-        if (j >= curvature_v.size()) return true;
-        curvature = std::max(curvature, std::fabs(curvature_v.at(j)));
+      // Compute change in heading
+      tf2::Quaternion q_current, q_next;
+      tf2::convert(current_pose.orientation, q_current);
+      tf2::convert(next_pose.orientation, q_next);
+      double delta_theta = q_current.angleShortestPath(q_next);
+      // Handle wrap-around
+      if (delta_theta > 3.14159) {
+        delta_theta -= 2.0 * 3.14159;
+      } else if (delta_theta < -3.14159) {
+        delta_theta += 2.0 * 3.14159;
       }
-      // double curvature = curvature_v.at(i);
-      double v_curvature_max = std::sqrt(max_lateral_accel_abs / std::max(curvature, 1.0E-5));
-      // v_curvature_max = std::max(v_curvature_max, min_curve_velocity);
-      const double current_speed = trajectory.at(i).longitudinal_velocity_mps;
-      if (current_speed > v_curvature_max) {
-        // v_curvature_max = current_speed + a*t
-        std::cerr << "Current path index " << i << "\n";
-        std::cerr << "current_speed > v_curvature_max  checking if deceleration is possible\n";
-        const double t =
-          (v_curvature_max - current_speed) / min_acceleration_before_curve_;  // acc is negative
-        const double distance_to_slow_down =
-          current_speed * t + 0.5 * min_acceleration_before_curve_ * std::pow(t, 2);
-        std::cerr << "Decel time " << t << "\n";
-        std::cerr << "Decel distance " << distance_to_slow_down << "\n";
-        std::cerr << "Arc length " << arc_length << "\n";
-        std::cerr << "Curvature " << curvature << "\n";
-        bool c = distance_to_slow_down > arc_length;
-        std::cerr << "Check is " << c << "\n";
-        if (distance_to_slow_down > arc_length) return false;
-      }
+
+      const double yaw_rate = std::max(delta_theta / delta_time, 1.0E-5);
+
+      const double current_speed = std::abs(trajectory.at(i).longitudinal_velocity_mps);
+      // Compute lateral acceleration
+      const double lateral_acceleration = std::abs(current_speed * yaw_rate);
+      if (lateral_acceleration < max_lateral_accel_abs) continue;
+
+      const double v_curvature_max = std::sqrt(max_lateral_accel_abs / yaw_rate);
+      const double t =
+        (v_curvature_max - current_speed) / min_acceleration_before_curve_;  // acc is negative
+      const double distance_to_slow_down =
+        current_speed * t + 0.5 * min_acceleration_before_curve_ * std::pow(t, 2);
+
+      std::cerr << "current_speed > v_curvature_max  checking if deceleration is possible\n";
+      std::cerr << "Current path index " << i << "\n";
+      std::cerr << "Decel time " << t << "\n";
+      std::cerr << "Decel distance " << distance_to_slow_down << "\n";
+      std::cerr << "Arc length " << arc_length << "\n";
+      std::cerr << "yaw_rate " << yaw_rate << "\n";
+      std::cerr << "current_speed " << current_speed << "\n";
+      std::cerr << "v_curvature_max " << v_curvature_max << "\n";
+      bool c = distance_to_slow_down > arc_length;
+      std::cerr << "Check is " << c << "\n";
+      if (distance_to_slow_down > arc_length) return false;
     }
-    std::cerr << "Velocity " << trajectory.back().longitudinal_velocity_mps << "\n";
-
     return true;
   };
 };
