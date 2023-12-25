@@ -44,7 +44,7 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     dust_kernel_size_ = declare_parameter<int>("dust_kernel_size");
     dust_buffering_frames_ = declare_parameter<int>("dust_buffering_frames");
     dust_buffering_interval_ = declare_parameter<int>("dust_buffering_interval");
-    distance_coefficient_ = declare_parameter<double>("distance_coefficient");
+    max_distance_range_ = declare_parameter<double>("max_distance_range");
     horizontal_resolution_ = declare_parameter<double>("horizontal_resolution");
   }
   if (vertical_bins_ <= horizontal_ring_id_) {
@@ -161,11 +161,8 @@ void BlockageDiagComponent::filter(
     static_cast<uint>((angle_range_deg_[1] - angle_range_deg_[0]) / horizontal_resolution_);
   pcl::PointCloud<PointXYZIRADRT>::Ptr pcl_input(new pcl::PointCloud<PointXYZIRADRT>);
   pcl::fromROSMsg(*input, *pcl_input);
-  std::vector<float> horizontal_bin_reference(ideal_horizontal_bins);
-  std::vector<pcl::PointCloud<PointXYZIRADRT>> each_ring_pointcloud(vertical_bins);
   cv::Mat full_size_depth_map(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
-  cv::Mat lidar_depth_map(cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
   cv::Mat lidar_depth_map_8u(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   if (pcl_input->points.empty()) {
@@ -182,24 +179,18 @@ void BlockageDiagComponent::filter(
     sky_blockage_range_deg_[0] = angle_range_deg_[0];
     sky_blockage_range_deg_[1] = angle_range_deg_[1];
   } else {
-    for (int i = 0; i < ideal_horizontal_bins; ++i) {
-      horizontal_bin_reference.at(i) = angle_range_deg_[0] + i * horizontal_resolution_;
-    }
     for (const auto p : pcl_input->points) {
-      for (int horizontal_bin = 0;
-           horizontal_bin < static_cast<int>(horizontal_bin_reference.size()); horizontal_bin++) {
-        if (
-          (p.azimuth / 100 >
-           (horizontal_bin_reference.at(horizontal_bin) - horizontal_resolution_ / 2)) &&
-          (p.azimuth / 100 <=
-           (horizontal_bin_reference.at(horizontal_bin) + horizontal_resolution_ / 2))) {
-          if (is_channel_order_top2down_) {
-            full_size_depth_map.at<uint16_t>(p.ring, horizontal_bin) =
-              UINT16_MAX - distance_coefficient_ * p.distance;
-          } else {
-            full_size_depth_map.at<uint16_t>(vertical_bins - p.ring - 1, horizontal_bin) =
-              UINT16_MAX - distance_coefficient_ * p.distance;
-          }
+      double azimuth_deg = p.azimuth / 100.;
+      if ((azimuth_deg > angle_range_deg_[0]) && (azimuth_deg <= angle_range_deg_[1])) {
+        int horizontal_bin_index =
+          static_cast<int>((azimuth_deg - angle_range_deg_[0]) / horizontal_resolution_);
+        uint16_t depth_intensity =
+          UINT16_MAX * (1.0 - std::min(p.distance / max_distance_range_, 1.0));
+        if (is_channel_order_top2down_) {
+          full_size_depth_map.at<uint16_t>(p.ring, horizontal_bin_index) = depth_intensity;
+        } else {
+          full_size_depth_map.at<uint16_t>(vertical_bins - p.ring - 1, horizontal_bin_index) =
+            depth_intensity;
         }
       }
     }

@@ -89,7 +89,7 @@ private:
   int dust_buffering_frame_counter_ = 0;
   int dust_count_threshold_;
   int dust_frame_count_ = 0;
-  double distance_coefficient_{327.67};
+  double max_distance_range_{200.0};
   double horizontal_resolution_{0.4};
 
 public:
