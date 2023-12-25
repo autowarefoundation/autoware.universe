@@ -357,16 +357,6 @@ private:
       const double distance_to_slow_down =
         current_speed * t + 0.5 * min_acceleration_before_curve_ * std::pow(t, 2);
 
-      std::cerr << "current_speed > v_curvature_max  checking if deceleration is possible\n";
-      std::cerr << "Current path index " << i << "\n";
-      std::cerr << "Decel time " << t << "\n";
-      std::cerr << "Decel distance " << distance_to_slow_down << "\n";
-      std::cerr << "Arc length " << arc_length << "\n";
-      std::cerr << "yaw_rate " << yaw_rate << "\n";
-      std::cerr << "current_speed " << current_speed << "\n";
-      std::cerr << "v_curvature_max " << v_curvature_max << "\n";
-      bool c = distance_to_slow_down > arc_length;
-      std::cerr << "Check is " << c << "\n";
       if (distance_to_slow_down > arc_length) return false;
     }
     return true;

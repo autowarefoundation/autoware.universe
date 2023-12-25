@@ -1000,37 +1000,26 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         }
         // Generate Predicted Path
         // Check lat. acceleration constraints
-        std::cerr << "---------- Object " << tier4_autoware_utils::toHexString(object.object_id)
-                  << "---------\n";
-        std::cerr << "Object speed " << abs_obj_speed << "\n";
+
         std::vector<PredictedPath> predicted_paths;
         int count = 0;
         for (const auto & ref_path : ref_paths) {
-          std::cerr << "---------------Path # -------------" << count << "\n";
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
             yaw_fixed_transformed_object, ref_path.path);
           if (predicted_path.path.empty()) {
             continue;
           }
-          std::cerr << "path prob " << predicted_path.confidence << "\n";
 
-          // if (ref_path.maneuver != Maneuver::LANE_FOLLOW) {
           const auto trajectory_with_const_velocity =
             toTrajectoryPoints(predicted_path, abs_obj_speed);
           if (!isAccelerationConstraintsSatisfied(
                 trajectory_with_const_velocity, prediction_sampling_time_interval_)) {
-            std::cerr << "Path eliminated by Lat acc constraints\n";
-            std::cerr << "---------------Path # -------------" << count++ << "\n";
             continue;
           }
-          // }
 
           predicted_path.confidence = ref_path.probability;
           predicted_paths.push_back(predicted_path);
-          std::cerr << "---------------Path # -------------" << count++ << "\n";
         }
-        std::cerr << "---------- Object " << tier4_autoware_utils::toHexString(object.object_id)
-                  << "---------\n";
 
         // Normalize Path Confidence and output the predicted object
 
