@@ -250,7 +250,6 @@ public:
         if (!isInVector(counter.first, valid_object_uuids_) && max_count_ <= counter.second) {
           valid_object_uuids_.push_back(counter.first);
           object_map_.at(counter.first).ego_lat_feasible_paths = ego_lat_feasible_paths;
-          std::cerr << counter.first << std::endl;
         }
       }
       valid_object_uuids_.erase(
