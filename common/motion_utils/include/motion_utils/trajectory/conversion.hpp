@@ -47,8 +47,19 @@ autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
 std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPointArray(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory);
 
-autoware_auto_planning_msgs::msg::Path convertToPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input);
+template <class T>  //previous type: autoware_auto_planning_msgs::msg::PathWithLaneId
+autoware_auto_planning_msgs::msg::Path convertToPath(const T & input)
+{
+  autoware_auto_planning_msgs::msg::Path output{};
+  output.header = input.header;
+  output.left_bound = input.left_bound;
+  output.right_bound = input.right_bound;
+  output.points.resize(input.points.size());
+  for (size_t i = 0; i < input.points.size(); ++i) {
+    output.points.at(i) = input.points.at(i).point;
+  }
+  return output;
+}
 
 TrajectoryPoints convertPathToTrajectoryPoints(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
