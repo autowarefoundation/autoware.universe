@@ -16,7 +16,7 @@
 
 #include "util.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
@@ -1400,7 +1400,7 @@ bool IntersectionModule::checkStuckVehicle(
   // considering lane change in the intersection, these lanelets are generated from the path
   const auto stuck_vehicle_detect_area = util::generateStuckVehicleDetectAreaPolygon(
     path_lanelets, planner_param_.stuck_vehicle.stuck_vehicle_detect_dist);
-  debug_data_.stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
+  debug_data_.stuck_vehicle_detect_area = tier4_autoware_utils::toGeomPoly(stuck_vehicle_detect_area);
 
   return util::checkStuckVehicleInIntersection(
     objects_ptr, stuck_vehicle_detect_area,
@@ -1720,7 +1720,7 @@ bool IntersectionModule::checkCollision(
         polygon.outer().emplace_back(p.x(), p.y());
       }
       bg::correct(polygon);
-      debug_data_.candidate_collision_ego_lane_polygon = toGeomPoly(polygon);
+      debug_data_.candidate_collision_ego_lane_polygon = tier4_autoware_utils::toGeomPoly(polygon);
 
       for (auto itr = first_itr; itr != last_itr.base(); ++itr) {
         const auto footprint_polygon = tier4_autoware_utils::toPolygon2d(*itr, object.shape);

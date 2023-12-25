@@ -14,7 +14,7 @@
 
 #include "scene.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
@@ -46,7 +46,7 @@ namespace bg = boost::geometry;
 
 namespace
 {
-[[maybe_unused]] geometry_msgs::msg::Polygon toGeomPoly(const lanelet::CompoundPolygon3d & poly)
+[[maybe_unused]] geometry_msgs::msg::Polygon tier4_autoware_utils::toGeomPoly(const lanelet::CompoundPolygon3d & poly)
 {
   geometry_msgs::msg::Polygon geom_poly;
 
