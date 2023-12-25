@@ -135,8 +135,8 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
     tier4_perception_msgs::msg::TrafficLightRoiArray selected_roi_msg;
     selected_roi_msg.rois.reserve(in_roi_msg->rois.size());
     for (size_t i = 0; i < in_roi_msg->rois.size(); ++i) {
-      if (in_roi_msg->rois[i].traffic_light_type == traffic_light_type) {
-        selected_roi_msg.rois.push_back(in_roi_msg->rois[i]);
+      if (in_roi_msg->rois.at(i).traffic_light_type == traffic_light_type) {
+        selected_roi_msg.rois.push_back(in_roi_msg->rois.at(i));
       }
     }
 
@@ -156,10 +156,10 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
   size_t predicted_num = out_msg_.signals.size();
 
   for (size_t i = 0; i < occlusion_ratios.size(); i++) {
-    out_msg_.signals.push_back(in_signal_msg->signals[i]);
+    out_msg_.signals.push_back(in_signal_msg->signals.at(i));
 
     if (occlusion_ratios[i] >= config_.max_occlusion_ratio) {
-      traffic_light_utils::setSignalUnknown(out_msg_.signals[predicted_num + i]);
+      traffic_light_utils::setSignalUnknown(out_msg_.signals.at(predicted_num + i));
     }
   }
   subscribed_.at(traffic_light_type) = true;
