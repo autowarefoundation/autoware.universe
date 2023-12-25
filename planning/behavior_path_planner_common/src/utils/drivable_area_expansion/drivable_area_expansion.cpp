@@ -211,20 +211,30 @@ void apply_bound_change_rate_limit(
 }
 
 std::vector<double> calculate_maximum_distance(
-  const std::vector<Pose> & path_poses, const std::vector<Point> bound,
-  const SegmentRtree & uncrossable_segments, const std::vector<Polygon2d> & uncrossable_polygons,
-  const DrivableAreaExpansionParameters & params)
+  const std::vector<Point> & bound, const SegmentRtree & uncrossable_segments,
+  const std::vector<Polygon2d> & uncrossable_polygons,
+  const DrivableAreaExpansionParameters & params, const Side side)
 {
   std::vector<double> maximum_distances(bound.size(), std::numeric_limits<double>::max());
-  LineString2d path_ls;
   LineString2d bound_ls;
   for (const auto & p : bound) bound_ls.push_back(convert_point(p));
-  for (const auto & p : path_poses) path_ls.push_back(convert_point(p.position));
   for (auto i = 0UL; i + 1 < bound_ls.size(); ++i) {
     const Segment2d segment_ls = {bound_ls[i], bound_ls[i + 1]};
+    const auto segment_vector = segment_ls.second - segment_ls.first;
+    const auto is_point_on_correct_side = [&](const Point2d & p) {
+      const auto point_vector = p - segment_ls.first;
+      return (segment_vector.x() * point_vector.y() - segment_vector.y() * point_vector.x()) *
+               (side == LEFT ? -1.0 : 1.0) <=
+             0.0;
+    };
+    const auto is_on_correct_side = [&](const Segment2d & segment) {
+      return is_point_on_correct_side(segment.first) || is_point_on_correct_side(segment.second);
+    };
     std::vector<Segment2d> query_result;
     boost::geometry::index::query(
-      uncrossable_segments, boost::geometry::index::nearest(segment_ls, 1),
+      uncrossable_segments,
+      boost::geometry::index::nearest(segment_ls, 1) &&
+        boost::geometry::index::satisfies(is_on_correct_side),
       std::back_inserter(query_result));
     if (!query_result.empty()) {
       const auto bound_to_line_dist = boost::geometry::distance(segment_ls, query_result.front());
@@ -233,9 +243,18 @@ std::vector<double> calculate_maximum_distance(
       maximum_distances[i + 1] = std::min(maximum_distances[i + 1], dist_limit);
     }
     for (const auto & uncrossable_poly : uncrossable_polygons) {
-      const auto bound_to_poly_dist = boost::geometry::distance(segment_ls, uncrossable_poly);
-      maximum_distances[i] = std::min(maximum_distances[i], bound_to_poly_dist);
-      maximum_distances[i + 1] = std::min(maximum_distances[i + 1], bound_to_poly_dist);
+      if (boost::geometry::intersects(uncrossable_poly.outer(), segment_ls)) {
+        maximum_distances[i] = 0.0;
+        maximum_distances[i + 1] = 0.0;
+        break;
+      }
+      if (std::all_of(
+            uncrossable_poly.outer().begin(), uncrossable_poly.outer().end(),
+            is_point_on_correct_side)) {
+        const auto bound_to_poly_dist = boost::geometry::distance(segment_ls, uncrossable_poly);
+        maximum_distances[i] = std::min(maximum_distances[i], bound_to_poly_dist);
+        maximum_distances[i + 1] = std::min(maximum_distances[i + 1], bound_to_poly_dist);
+      }
     }
   }
   if (params.max_expansion_distance > 0.0)
@@ -375,9 +394,9 @@ void expand_drivable_area(
 
   stop_watch.tic("max_dist");
   const auto max_left_expansions = calculate_maximum_distance(
-    path_poses, path.left_bound, uncrossable_segments, uncrossable_polygons, params);
+    path.left_bound, uncrossable_segments, uncrossable_polygons, params, LEFT);
   const auto max_right_expansions = calculate_maximum_distance(
-    path_poses, path.right_bound, uncrossable_segments, uncrossable_polygons, params);
+    path.right_bound, uncrossable_segments, uncrossable_polygons, params, RIGHT);
   const auto max_dist_ms = stop_watch.toc("max_dist");
 
   calculate_expansion_distances(expansion, max_left_expansions, max_right_expansions);

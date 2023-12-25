@@ -96,16 +96,16 @@ void apply_bound_change_rate_limit(
   std::vector<double> & distances, const std::vector<Point> & bound, const double max_rate);
 
 /// @brief calculate the maximum distance by which a bound can be expanded
-/// @param [in] path_poses input path
 /// @param [in] bound bound points
 /// @param [in] uncrossable_segments segments that limit the bound expansion, indexed in a Rtree
 /// @param [in] uncrossable_polygons polygons that limit the bound expansion
 /// @param [in] params parameters with the buffer distance to keep with lines,
 /// and the static maximum expansion distance
+/// @param [in] Side left or right side
 std::vector<double> calculate_maximum_distance(
-  const std::vector<Pose> & path_poses, const std::vector<Point> bound,
-  const SegmentRtree & uncrossable_lines, const std::vector<Polygon2d> & uncrossable_polygons,
-  const DrivableAreaExpansionParameters & params);
+  const std::vector<Point> & bound, const SegmentRtree & uncrossable_lines,
+  const std::vector<Polygon2d> & uncrossable_polygons,
+  const DrivableAreaExpansionParameters & params, const Side side);
 
 /// @brief expand a bound by the given lateral distances away from the path
 /// @param [inout] bound bound points to expand
