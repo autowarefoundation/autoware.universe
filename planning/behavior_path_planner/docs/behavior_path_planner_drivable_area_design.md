@@ -39,7 +39,7 @@ Currently, when clipping left bound or right bound, it can clip the bound more t
 | max_expansion_distance                       | [m]   | double       | maximum distance by which the original drivable area can be expanded (no limit if set to 0)             | 0.0                          |
 | smoothing.curvature_average_window           | [-]   | int          | window size used for smoothing the curvatures using a moving window average                             | 3                            |
 | smoothing.max_bound_rate                     | [m/m] | double       | maximum rate of change of the bound lateral distance over its arc length                                | 1.0                          |
-| smoothing.extra_arc_length                   | [m]   | double       | extra arc length where an expansion distance is initially applied                                       | 2.0                          |
+| smoothing.arc_length_range                   | [m]   | double       | arc length range where an expansion distance is initially applied                                       | 2.0                          |
 | ego.extra_wheel_base                         | [m]   | double       | extra ego wheelbase                                                                                     | 0.0                          |
 | ego.extra_front_overhang                     | [m]   | double       | extra ego overhang                                                                                      | 0.5                          |
 | ego.extra_width                              | [m]   | double       | extra ego width                                                                                         | 1.0                          |
