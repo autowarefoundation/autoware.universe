@@ -11,13 +11,13 @@ CTRV model is a model that assumes constant turn rate and velocity magnitude.
 - state transition equation
 
 $$
-\begin{align*}
-x_{k+1}   &= x_k + v_{x_k} \cos(\psi_k) \cdot dt \\
-y_{k+1}   &= y_k + v_{x_k} \sin(\psi_k) \cdot dt \\
-\psi_{k+1} &= \psi_k + \dot{\psi}_k \cdot dt \\
-v_{x_{k+1}}  &= v_{x_k} \\
-\dot{\psi}_{k+1}  &= \dot{\psi}_k \\
-\end{align*}
+\begin{aligned}
+x_{k+1} & = x_{k} + v_{x_k} \cos(\psi_k) \cdot {d t} \\
+y_{k+1} & = y_{k} + v_{x_k} \sin(\psi_k) \cdot {d t} \\
+\psi_{k+1} & = \psi_k + \dot\psi_{k} \cdot {d t} \\
+v_{x_{k+1}} & = v_{x_{k}} \\
+\dot\psi_{k+1} & = \dot\psi_{k} \\
+\end{aligned}
 $$
 
 - jacobian
@@ -44,7 +44,7 @@ The merit of using this model is that it can prevent unintended yaw rotation whe
   - $[x_{k}, y_{k}, \psi_{k}, v_{k}, \beta_{k} ]^\mathrm{T}$
 - **Prediction Equation**
   - $dt$: sampling time
-  - $w_{k} = {\dot{\psi}}_k = \frac{ v_{k} \sin \left( \beta_{k} \right) }{ l_r } $ : angular velocity
+  - $w_{k} = \dot\psi_{k} = \frac{ v_{k} \sin \left( \beta_{k} \right) }{ l_r }$ : angular velocity
 
 $$
 \begin{aligned}
