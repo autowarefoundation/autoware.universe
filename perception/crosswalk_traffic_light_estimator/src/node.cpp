@@ -293,9 +293,9 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
     if (valid_id2idx_map.count(id)) {
       size_t idx = valid_id2idx_map[id];
       auto signal = msg.signals[idx];
-      isFlashing(signal);  // check if it is flashing
+      updateFlashingState(signal);  // check if it is flashing
       // update output msg according to flashing and current state
-      output.signals[idx].elements[0].color = updateState(signal);
+      output.signals[idx].elements[0].color = updateAndGetColorState(signal);
     } else {
       TrafficSignal output_traffic_signal;
       TrafficSignalElement output_traffic_signal_element;
