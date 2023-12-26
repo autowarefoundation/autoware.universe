@@ -14,15 +14,14 @@
 
 #include "behavior_path_avoidance_module/debug.hpp"
 
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
+#include <lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-
-#include <lanelet2_core/primitives/LineString.h>
-#include <tf2/utils.h>
 
 #include <string>
 #include <vector>
@@ -160,7 +159,7 @@ MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::st
       std::ostringstream string_stream;
       string_stream << std::fixed << std::setprecision(2) << std::boolalpha;
       string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
-                    << "lateral:" << object.lateral << " [m]\n"
+                    << "lateral:" << object.to_centerline << " [m]\n"
                     << "necessity:" << object.avoid_required << " [-]\n"
                     << "stoppable:" << object.is_stoppable << " [-]\n"
                     << "stop_factor:" << object.to_stop_factor_distance << " [m]\n"
@@ -495,6 +494,8 @@ MarkerArray createDrivableBounds(
 MarkerArray createDebugMarkerArray(
   const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug)
 {
+  using behavior_path_planner::utils::transformToLanelets;
+  using lanelet::visualization::laneletsAsTriangleMarkerArray;
   using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::createObjectsMarkerArray;
   using marker_utils::createPathMarkerArray;
@@ -554,6 +555,8 @@ MarkerArray createDebugMarkerArray(
     addObjects(data.other_objects, std::string("NotNeedAvoidance"));
     addObjects(data.other_objects, std::string("LessThanExecutionThreshold"));
     addObjects(data.other_objects, std::string("TooNearToGoal"));
+    addObjects(data.other_objects, std::string("ParallelToEgoLane"));
+    addObjects(data.other_objects, std::string("MergingToEgoLane"));
   }
 
   // shift line pre-process
@@ -608,9 +611,15 @@ MarkerArray createDebugMarkerArray(
   // misc
   {
     add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
-    add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
     add(createPolygonMarkerArray(debug.detection_area, "detection_area", 0L, 0.16, 1.0, 0.69, 0.1));
     add(createDrivableBounds(data, "drivable_bound", 1.0, 0.0, 0.42));
+    add(laneletsAsTriangleMarkerArray(
+      "drivable_lanes", transformToLanelets(data.drivable_lanes),
+      createMarkerColor(0.16, 1.0, 0.69, 0.2)));
+    add(laneletsAsTriangleMarkerArray(
+      "current_lanes", data.current_lanelets, createMarkerColor(1.0, 1.0, 1.0, 0.2)));
+    add(laneletsAsTriangleMarkerArray(
+      "safety_check_lanes", debug.safety_check_lanes, createMarkerColor(1.0, 0.0, 0.42, 0.2)));
   }
 
   return msg;
