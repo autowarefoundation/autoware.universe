@@ -376,7 +376,7 @@ void AutowareErrorMonitor::onControlMode(
   const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
   // used for indicating that onControlMode callback is trigged at least once.
-  if(!control_mode_activated_){
+  if (!control_mode_activated_) {
     control_mode_activated_ = true;
   }
 
@@ -437,7 +437,8 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
     return true;
   }
 
-  if ((isTimeout(control_mode_stamp_, params_.data_heartbeat_timeout)) && (control_mode_activated_)) {
+  if (
+    (isTimeout(control_mode_stamp_, params_.data_heartbeat_timeout)) && (control_mode_activated_)) {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "vehicle_state_report msg is timeout...");
     return true;

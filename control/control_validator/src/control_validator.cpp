@@ -47,7 +47,6 @@ ControlValidator::ControlValidator(const rclcpp::NodeOptions & options)
   setupParameters();
 
   setupDiag();
-
 }
 
 void ControlValidator::setupParameters()

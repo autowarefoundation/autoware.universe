@@ -183,7 +183,7 @@ void Lanelet2MapVisualizationNode::onMapBin(
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::pedestrianPolygonMarkingsAsMarkerArray(
                          pedestrian_polygon_markings, cl_pedestrian_markings));
-  
+
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::pedestrianLineMarkingsAsMarkerArray(
                          pedestrian_line_markings, cl_pedestrian_markings));
