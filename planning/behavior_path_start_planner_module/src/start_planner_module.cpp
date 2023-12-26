@@ -886,8 +886,12 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
 {
   std::vector<Pose> pull_out_start_pose_candidates{};
   const auto start_pose = planner_data_->route_handler->getOriginalStartPose();
+  const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+
+  const auto stop_objects_in_pull_out_lanes =
+    filterStopObjectsInPullOutLanes(pull_out_lanes, parameters_->th_moving_object_velocity);
 
   // Set the maximum backward distance less than the distance from the vehicle's base_link to the
   // lane's rearmost point to prevent lane departure.
@@ -916,6 +920,12 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
         getLogger(), *clock_, 5000,
         "the ego is too close to the lane end, so needs backward driving");
       continue;
+    }
+
+    if (utils::checkCollisionBetweenFootprintAndObjects(
+          local_vehicle_footprint, *backed_pose, stop_objects_in_pull_out_lanes,
+          parameters_->collision_check_margin)) {
+      break;  // poses behind this has a collision, so break.
     }
 
     pull_out_start_pose_candidates.push_back(*backed_pose);
