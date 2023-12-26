@@ -116,6 +116,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
     for (auto & element : elements) {
       element.color = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
       element.shape = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
+      element.confidence = 0.0;
     }
   }
 
