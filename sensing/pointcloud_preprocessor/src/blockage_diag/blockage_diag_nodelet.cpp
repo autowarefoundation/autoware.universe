@@ -157,8 +157,12 @@ void BlockageDiagComponent::filter(
   std::scoped_lock lock(mutex_);
   int vertical_bins = vertical_bins_;
   int ideal_horizontal_bins;
-  ideal_horizontal_bins =
-    static_cast<uint>((angle_range_deg_[1] - angle_range_deg_[0]) / horizontal_resolution_);
+  double compensate_angle = 0.0;
+  if (angle_range_deg_[0] > angle_range_deg_[1]) {
+    compensate_angle = 360.0;
+  }
+  ideal_horizontal_bins = static_cast<int>(
+    (angle_range_deg_[1] + compensate_angle - angle_range_deg_[0]) / horizontal_resolution_);
   pcl::PointCloud<PointXYZIRADRT>::Ptr pcl_input(new pcl::PointCloud<PointXYZIRADRT>);
   pcl::fromROSMsg(*input, *pcl_input);
   cv::Mat full_size_depth_map(
@@ -181,9 +185,14 @@ void BlockageDiagComponent::filter(
   } else {
     for (const auto p : pcl_input->points) {
       double azimuth_deg = p.azimuth / 100.;
-      if ((azimuth_deg > angle_range_deg_[0]) && (azimuth_deg <= angle_range_deg_[1])) {
-        int horizontal_bin_index =
-          static_cast<int>((azimuth_deg - angle_range_deg_[0]) / horizontal_resolution_);
+      if (
+        ((azimuth_deg > angle_range_deg_[0]) &&
+         (azimuth_deg <= angle_range_deg_[1] + compensate_angle)) ||
+        ((azimuth_deg + compensate_angle > angle_range_deg_[0]) &&
+         (azimuth_deg < angle_range_deg_[1]))) {
+        double current_angle_range = (azimuth_deg + compensate_angle - angle_range_deg_[0]);
+        int horizontal_bin_index = static_cast<int>(current_angle_range / horizontal_resolution_) %
+                                   static_cast<int>(360.0 / horizontal_resolution_);
         uint16_t depth_intensity =
           UINT16_MAX * (1.0 - std::min(p.distance / max_distance_range_, 1.0));
         if (is_channel_order_top2down_) {
