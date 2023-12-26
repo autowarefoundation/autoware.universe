@@ -999,8 +999,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           replaceObjectYawWithLaneletsYaw(current_lanelets, yaw_fixed_transformed_object);
         }
         // Generate Predicted Path
-        // Check lat. acceleration constraints
-
         std::vector<PredictedPath> predicted_paths;
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
@@ -1008,10 +1006,10 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           if (predicted_path.path.empty()) {
             continue;
           }
-
+          // Check lat. acceleration constraints
           const auto trajectory_with_const_velocity =
             toTrajectoryPoints(predicted_path, abs_obj_speed);
-          if (!isAccelerationConstraintsSatisfied(
+          if (!isLateralAccelerationConstraintSatisfied(
                 trajectory_with_const_velocity, prediction_sampling_time_interval_)) {
             continue;
           }

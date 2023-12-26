@@ -316,7 +316,7 @@ private:
     return out_trajectory;
   };
 
-  inline bool isAccelerationConstraintsSatisfied(
+  inline bool isLateralAccelerationConstraintSatisfied(
     const TrajectoryPoints & trajectory [[maybe_unused]], const double delta_time)
   {
     if (trajectory.size() < 3) return true;
