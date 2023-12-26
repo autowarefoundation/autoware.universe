@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
 #include "occlusion_spot_utils.hpp"
 
 #include "risk_predictive_braking.hpp"
@@ -43,7 +45,7 @@ Polygon2d toFootprintPolygon(const PredictedObject & object, const double scale 
   const Pose & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
   Polygon2d obj_footprint = tier4_autoware_utils::toPolygon2d(object);
   // upscale foot print for noise
-  obj_footprint = upScalePolygon(obj_pose.position, obj_footprint, scale);
+  obj_footprint = tier4_autoware_utils::upScalePolygon(obj_pose.position, obj_footprint, scale);
   return obj_footprint;
 }
 

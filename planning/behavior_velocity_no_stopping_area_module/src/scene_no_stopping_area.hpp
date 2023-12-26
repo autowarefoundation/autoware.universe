@@ -17,6 +17,8 @@
 
 #define EIGEN_MPL2_ONLY
 
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
 #include <Eigen/Core>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
