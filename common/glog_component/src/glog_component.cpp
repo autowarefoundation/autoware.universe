@@ -14,11 +14,20 @@
 
 #include "glog_component/glog_component.hpp"
 
+#include <rclcpp/logging.hpp>
+
+void dump_to_rclcpp_log(const char* data, int size)
+{
+  const std::string message = std::string(data, size);
+  RCLCPP_FATAL_STREAM(rclcpp::get_logger("glog_component"), message);
+}
+
 GlogComponent::GlogComponent(const rclcpp::NodeOptions & node_options)
 : Node("glog_component", node_options)
 {
   google::InitGoogleLogging("glog_component");
   google::InstallFailureSignalHandler();
+  google::InstallFailureWriter(&dump_to_rclcpp_log);
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
