@@ -128,7 +128,7 @@ size_t calcSegmentIndexFromPointIndex(
 Point2d calculateOffsetPoint2d(
   const geometry_msgs::msg::Pose & pose, const double offset_x, const double offset_y)
 {
-  return to_bg2d(calcOffsetPose(pose, offset_x, offset_y, 0.0));
+  return tier4_autoware_utils::to_bg2d(calcOffsetPose(pose, offset_x, offset_y, 0.0));
 }
 
 bool createDetectionAreaPolygons(

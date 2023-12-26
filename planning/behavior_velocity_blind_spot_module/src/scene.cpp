@@ -404,7 +404,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
       const bool exist_in_detection_area =
         std::any_of(detection_areas.begin(), detection_areas.end(), [&object](const auto & area) {
           return bg::within(
-            to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
+            tier4_autoware_utils::to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
             lanelet::utils::to2D(area));
         });
       const bool exist_in_conflict_area =
@@ -436,7 +436,7 @@ bool BlindSpotModule::isPredictedPathInArea(
           return std::any_of(
             path.path.begin(), path.path.end(),
             [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & point) {
-              const auto is_in_area = bg::within(to_bg2d(point.position), area_2d);
+              const auto is_in_area = bg::within(tier4_autoware_utils::to_bg2d(point.position), area_2d);
               const auto match_yaw =
                 std::fabs(ego_yaw - tf2::getYaw(point.orientation)) < threshold_yaw_diff;
               return is_in_area && match_yaw;

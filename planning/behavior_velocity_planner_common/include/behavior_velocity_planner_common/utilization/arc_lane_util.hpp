@@ -29,6 +29,9 @@
 
 namespace behavior_velocity_planner
 {
+using Point2d = tier4_autoware_utils::Point2d;
+using LineString2d = tier4_autoware_utils::LineString2d;
+using Polygon2d = tier4_autoware_utils::Polygon2d;
 namespace
 {
 geometry_msgs::msg::Point convertToGeomPoint(const tier4_autoware_utils::Point2d & p)

@@ -16,7 +16,7 @@
 
 #include "util_type.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
@@ -461,24 +461,24 @@ std::optional<size_t> getFirstPointInsidePolygon(
   const auto polygon_2d = lanelet::utils::to2D(polygon);
   if (search_forward) {
     const auto & p0 = path.points.at(lane_interval.first).point.pose.position;
-    if (bg::within(to_bg2d(p0), polygon_2d)) {
+    if (bg::within(tier4_autoware_utils::to_bg2d(p0), polygon_2d)) {
       return std::nullopt;
     }
     for (size_t i = lane_interval.first; i <= lane_interval.second; ++i) {
       const auto & p = path.points.at(i).point.pose.position;
-      const auto is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+      const auto is_in_lanelet = bg::within(tier4_autoware_utils::to_bg2d(p), polygon_2d);
       if (is_in_lanelet) {
         return std::make_optional<size_t>(i);
       }
     }
   } else {
     const auto & p0 = path.points.at(lane_interval.second).point.pose.position;
-    if (bg::within(to_bg2d(p0), polygon_2d)) {
+    if (bg::within(tier4_autoware_utils::to_bg2d(p0), polygon_2d)) {
       return std::nullopt;
     }
     for (size_t i = lane_interval.second; i >= lane_interval.first; --i) {
       const auto & p = path.points.at(i).point.pose.position;
-      const auto is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+      const auto is_in_lanelet = bg::within(tier4_autoware_utils::to_bg2d(p), polygon_2d);
       if (is_in_lanelet) {
         return std::make_optional<size_t>(i);
       }
@@ -502,7 +502,7 @@ getFirstPointInsidePolygons(
       const auto & p = path.points.at(i).point.pose.position;
       for (const auto & polygon : polygons) {
         const auto polygon_2d = lanelet::utils::to2D(polygon);
-        is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+        is_in_lanelet = bg::within(tier4_autoware_utils::to_bg2d(p), polygon_2d);
         if (is_in_lanelet) {
           return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
             i, polygon);
@@ -518,7 +518,7 @@ getFirstPointInsidePolygons(
       const auto & p = path.points.at(i).point.pose.position;
       for (const auto & polygon : polygons) {
         const auto polygon_2d = lanelet::utils::to2D(polygon);
-        is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+        is_in_lanelet = bg::within(tier4_autoware_utils::to_bg2d(p), polygon_2d);
         if (is_in_lanelet) {
           return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
             i, polygon);
