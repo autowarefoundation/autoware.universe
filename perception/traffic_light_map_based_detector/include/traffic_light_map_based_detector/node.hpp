@@ -58,6 +58,8 @@ private:
     double max_timestamp_offset;
     double timestamp_sample_len;
     double max_detection_range;
+    double car_traffic_light_max_angle_range;
+    double pedestrian_traffic_light_max_angle_range;
   };
 
   struct IdLessThan

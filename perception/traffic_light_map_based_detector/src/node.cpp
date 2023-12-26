@@ -137,6 +137,10 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
   config_.max_timestamp_offset = declare_parameter<double>("max_timestamp_offset", 0.0);
   config_.timestamp_sample_len = declare_parameter<double>("timestamp_sample_len", 0.01);
   config_.max_detection_range = declare_parameter<double>("max_detection_range", 200.0);
+  config_.car_traffic_light_max_angle_range =
+    declare_parameter<double>("car_traffic_light_max_angle_range", 40.0);
+  config_.pedestrian_traffic_light_max_angle_range =
+    declare_parameter<double>("pedestrian_traffic_light_max_angle_range", 80.0);
 
   if (config_.max_detection_range <= 0) {
     RCLCPP_ERROR_STREAM(
@@ -507,9 +511,10 @@ void MapBasedDetector::getVisibleTrafficLights(
     // set different max angle range for ped and car traffic light
     double max_angle_range;
     if (pedestrian_tl_id_.find(traffic_light.id()) != pedestrian_tl_id_.end()) {
-      max_angle_range = tier4_autoware_utils::deg2rad(80.0);
+      max_angle_range =
+        tier4_autoware_utils::deg2rad(config_.pedestrian_traffic_light_max_angle_range);
     } else {
-      max_angle_range = tier4_autoware_utils::deg2rad(40.0);
+      max_angle_range = tier4_autoware_utils::deg2rad(config_.car_traffic_light_max_angle_range);
     }
     // traffic light bottom left
     const auto & tl_bl = traffic_light.front();
