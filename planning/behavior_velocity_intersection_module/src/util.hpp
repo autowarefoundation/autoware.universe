@@ -78,11 +78,6 @@ std::optional<tier4_autoware_utils::Polygon2d> getIntersectionArea(
 
 bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 
-std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
-  lanelet::ConstLanelets detection_lanelets,
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
-  const double curvature_threshold, const double curvature_calculation_ds);
-
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const lanelet::Id lane_id, const std::set<lanelet::Id> & associative_lane_ids,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,

@@ -19,11 +19,9 @@
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <interpolation/spline_interpolation_points_2d.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -38,24 +36,8 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <vector>
-
-namespace tier4_autoware_utils
-{
-
-template <>
-inline geometry_msgs::msg::Point getPoint(const lanelet::ConstPoint3d & p)
-{
-  geometry_msgs::msg::Point point;
-  point.x = p.x();
-  point.y = p.y();
-  point.z = p.z();
-  return point;
-}
-
-}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -421,75 +403,6 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
     break;
   }
   return tl_id.has_value();
-}
-
-double getHighestCurvature(const lanelet::ConstLineString3d & centerline)
-{
-  std::vector<lanelet::ConstPoint3d> points;
-  for (auto point = centerline.begin(); point != centerline.end(); point++) {
-    points.push_back(*point);
-  }
-
-  SplineInterpolationPoints2d interpolation(points);
-  const std::vector<double> curvatures = interpolation.getSplineInterpolatedCurvatures();
-  std::vector<double> curvatures_positive;
-  for (const auto & curvature : curvatures) {
-    curvatures_positive.push_back(std::fabs(curvature));
-  }
-  return *std::max_element(curvatures_positive.begin(), curvatures_positive.end());
-}
-
-std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
-  lanelet::ConstLanelets detection_lanelets_all,
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
-  const double curvature_threshold, const double curvature_calculation_ds)
-{
-  using lanelet::utils::getCenterlineWithOffset;
-
-  // (0) remove left/right lanelet
-  lanelet::ConstLanelets detection_lanelets;
-  for (const auto & detection_lanelet : detection_lanelets_all) {
-    // TODO(Mamoru Sobue): instead of ignoring, only trim straight part of lanelet
-    const auto fine_centerline =
-      lanelet::utils::generateFineCenterline(detection_lanelet, curvature_calculation_ds);
-    const double highest_curvature = getHighestCurvature(fine_centerline);
-    if (highest_curvature > curvature_threshold) {
-      continue;
-    }
-    detection_lanelets.push_back(detection_lanelet);
-  }
-
-  // (1) tsort detection_lanelets
-  const auto [merged_detection_lanelets, originals] =
-    mergeLaneletsByTopologicalSort(detection_lanelets, routing_graph_ptr);
-
-  // (2) merge each branch to one lanelet
-  // NOTE: somehow bg::area() for merged lanelet does not work, so calculate it here
-  std::vector<std::pair<lanelet::ConstLanelet, double>> merged_lanelet_with_area;
-  for (unsigned i = 0; i < merged_detection_lanelets.size(); ++i) {
-    const auto & merged_detection_lanelet = merged_detection_lanelets.at(i);
-    const auto & original = originals.at(i);
-    double area = 0;
-    for (const auto & partition : original) {
-      area += bg::area(partition.polygon2d().basicPolygon());
-    }
-    merged_lanelet_with_area.emplace_back(merged_detection_lanelet, area);
-  }
-
-  // (3) discretize each merged lanelet
-  std::vector<lanelet::ConstLineString3d> detection_divisions;
-  for (const auto & [merged_lanelet, area] : merged_lanelet_with_area) {
-    const double length = bg::length(merged_lanelet.centerline());
-    const double width = area / length;
-    for (int i = 0; i < static_cast<int>(width / resolution); ++i) {
-      const double offset = resolution * i - width / 2;
-      detection_divisions.push_back(
-        getCenterlineWithOffset(merged_lanelet, offset, resolution).invert());
-    }
-    detection_divisions.push_back(
-      getCenterlineWithOffset(merged_lanelet, width / 2, resolution).invert());
-  }
-  return detection_divisions;
 }
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(

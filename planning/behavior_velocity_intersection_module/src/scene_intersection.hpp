@@ -495,6 +495,11 @@ private:
   TrafficPrioritizedLevel getTrafficPrioritizedLevel(
     lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
 
+  IntersectionLanelets getObjectiveLanelets(
+    lanelet::LaneletMapConstPtr lanelet_map_ptr,
+    lanelet::routing::RoutingGraphPtr routing_graph_ptr,
+    const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path);
+
   std::optional<IntersectionStopLines> generateIntersectionStopLines(
     lanelet::ConstLanelet assigned_lanelet,
     const lanelet::CompoundPolygon3d & first_conflicting_area,
@@ -541,6 +546,10 @@ private:
     const size_t last_intersection_stopline_candidate_idx, const double time_delay,
     tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
 
+  std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
+    lanelet::ConstLanelets detection_lanelets,
+    const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution);
+
   OcclusionType getOcclusionStatus(
     const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
     const lanelet::ConstLanelets & adjacent_lanelets,
@@ -548,11 +557,6 @@ private:
     const util::InterpolatedPathInfo & interpolated_path_info,
     const std::vector<lanelet::ConstLineString3d> & lane_divisions,
     const TargetObjects & target_objects);
-
-  IntersectionLanelets getObjectiveLanelets(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path);
 
   /*
   bool IntersectionModule::checkFrontVehicleDeceleration(
