@@ -370,7 +370,7 @@ private:
   ModuleStatus updateState()
   {
     auto log_debug_throttled = [&](std::string_view message) -> void {
-      RCLCPP_WARN(getLogger(), "%s", message.data());
+      RCLCPP_DEBUG(getLogger(), "%s", message.data());
     };
     if (current_state_ == ModuleStatus::IDLE) {
       if (canTransitIdleToRunningState()) {
