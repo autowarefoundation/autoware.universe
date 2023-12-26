@@ -10,7 +10,7 @@ nav:
         - 'Dynamic Drivable Area': planning/behavior_path_planner/docs/behavior_path_planner_drivable_area_design
         - 'Turn Signal': planning/behavior_path_planner/docs/behavior_path_planner_turn_signal_design
     - 'Scene Module':
-        - 'Avoidance': planning/behavior_path_planner/docs/behavior_path_planner_avoidance_design
+        - 'Avoidance': planning/behavior_path_avoidance_module
         - 'Avoidance by Lane Change': planning/behavior_path_planner/docs/behavior_path_planner_avoidance_by_lane_change_design
         - 'Dynamic Avoidance': planning/behavior_path_planner/docs/behavior_path_planner_dynamic_avoidance_design
         - 'Goal Planner': planning/behavior_path_planner/docs/behavior_path_planner_goal_planner_design
