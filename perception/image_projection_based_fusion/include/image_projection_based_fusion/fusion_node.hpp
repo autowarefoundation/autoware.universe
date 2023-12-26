@@ -125,7 +125,6 @@ protected:
   std::vector<std::map<int64_t, typename Msg2D::ConstSharedPtr>> cached_roi_msgs_;
   std::mutex mutex_cached_msgs_;
 
-
   // output publisher
   typename rclcpp::Publisher<Msg>::SharedPtr pub_ptr_;
 
