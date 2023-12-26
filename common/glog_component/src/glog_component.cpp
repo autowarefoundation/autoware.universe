@@ -16,7 +16,7 @@
 
 #include <rclcpp/logging.hpp>
 
-void dump_to_rclcpp_log(const char* data, int size)
+void dump_to_rclcpp_log(const char * data, int size)
 {
   const std::string message = std::string(data, size);
   RCLCPP_FATAL_STREAM(rclcpp::get_logger("glog_component"), message);
