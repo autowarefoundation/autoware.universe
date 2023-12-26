@@ -414,7 +414,7 @@ void MapBasedDetector::mapCallback(
       }
     }
   }
- 
+
   // crosswalk
   const auto traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
     lanelet::Locations::Germany, lanelet::Participants::Vehicle);
