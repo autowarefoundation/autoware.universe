@@ -171,9 +171,8 @@ private:
   bool consider_only_routable_neighbours_;
   double reference_path_resolution_;
 
+  bool check_lateral_acceleration_constraints_;
   double max_lateral_accel_;
-  double deceleration_distance_before_curve_;
-  double deceleration_distance_after_curve_;
   double min_acceleration_before_curve_;
 
   // Stop watch
