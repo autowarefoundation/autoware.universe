@@ -155,7 +155,7 @@ stop
 
 #### Candidate Path's Safety check
 
-See [safety check utils explanation](../behavior_path_planner/docs/behavior_path_planner_safety_check.md)
+See [safety check utils explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
 
 #### Objects selection and classification
 

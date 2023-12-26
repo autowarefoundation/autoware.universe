@@ -9,7 +9,7 @@ This module is designed as one of the obstacle avoidance features and generates 
 - Exist lane changeable lanelet.
 - Exist avoidance target objects on ego driving lane.
 
-![avoidance_by_lane_change](../image/avoidance_by_lane_change.svg)
+![avoidance_by_lane_change](./images/avoidance_by_lane_change.svg)
 
 ## Inner-workings / Algorithms
 
