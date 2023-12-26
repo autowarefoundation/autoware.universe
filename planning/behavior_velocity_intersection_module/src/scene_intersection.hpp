@@ -492,6 +492,28 @@ private:
 
   DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
 
+  TrafficPrioritizedLevel getTrafficPrioritizedLevel(
+    lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
+
+  std::optional<IntersectionStopLines> generateIntersectionStopLines(
+    lanelet::ConstLanelet assigned_lanelet,
+    const lanelet::CompoundPolygon3d & first_conflicting_area,
+    const lanelet::ConstLanelet & first_attention_lane,
+    const util::InterpolatedPathInfo & interpolated_path_info,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
+
+  std::optional<size_t> getStopLineIndexFromMap(
+    const util::InterpolatedPathInfo & interpolated_path_info,
+    lanelet::ConstLanelet assigned_lanelet);
+
+  std::optional<PathLanelets> generatePathLanelets(
+    const lanelet::ConstLanelets & lanelets_on_path,
+    const util::InterpolatedPathInfo & interpolated_path_info,
+    const lanelet::CompoundPolygon3d & first_conflicting_area,
+    const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+    const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
+    const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx);
+
   bool checkStuckVehicleInIntersection(const PathLanelets & path_lanelets, DebugData * debug_data);
 
   bool checkYieldStuckVehicleInIntersection(
@@ -507,17 +529,6 @@ private:
     const PathLanelets & path_lanelets, const size_t closest_idx,
     const size_t last_intersection_stopline_candidate_idx, const double time_delay,
     const TrafficPrioritizedLevel & traffic_prioritized_level);
-
-  std::optional<PathLanelets> generatePathLanelets(
-    const lanelet::ConstLanelets & lanelets_on_path,
-    const util::InterpolatedPathInfo & interpolated_path_info,
-    const lanelet::CompoundPolygon3d & first_conflicting_area,
-    const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
-    const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
-    const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx);
-
-  Polygon2d generateStuckVehicleDetectAreaPolygon(
-    const PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist);
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
@@ -542,21 +553,6 @@ private:
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
     const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path);
-
-  std::optional<IntersectionStopLines> generateIntersectionStopLines(
-    lanelet::ConstLanelet assigned_lanelet,
-    const lanelet::CompoundPolygon3d & first_conflicting_area,
-    const lanelet::CompoundPolygon3d & first_attention_area,
-    const lanelet::ConstLineString2d & first_attention_lane_centerline,
-    const util::InterpolatedPathInfo & interpolated_path_info,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
-
-  TrafficPrioritizedLevel getTrafficPrioritizedLevel(
-    lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
-
-  std::optional<size_t> getStopLineIndexFromMap(
-    const util::InterpolatedPathInfo & interpolated_path_info,
-    lanelet::ConstLanelet assigned_lanelet);
 
   /*
   bool IntersectionModule::checkFrontVehicleDeceleration(

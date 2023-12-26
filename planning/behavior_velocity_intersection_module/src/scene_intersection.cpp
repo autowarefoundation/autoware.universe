@@ -962,6 +962,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
   const std::string turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
+  const auto footprint = planner_data_->vehicle_info_.createFootprint(0.0, 0.0);
+  const auto & current_pose = planner_data_->current_odometry->pose;
 
   // spline interpolation
   const auto interpolated_path_info_opt = util::generateInterpolatedPath(
@@ -976,7 +978,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
 
   // cache intersection lane information because it is invariant
-  const auto & current_pose = planner_data_->current_odometry->pose;
   const auto lanelets_on_path =
     planning_utils::getLaneletsOnPath(*path, lanelet_map_ptr, current_pose);
   if (!intersection_lanelets_) {
@@ -991,7 +992,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     getTrafficPrioritizedLevel(assigned_lanelet, planner_data_->traffic_light_id_map);
   const bool is_prioritized =
     traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED;
-  const auto footprint = planner_data_->vehicle_info_.createFootprint(0.0, 0.0);
   intersection_lanelets.update(is_prioritized, interpolated_path_info, footprint, baselink2front);
 
   // this is abnormal
@@ -1006,18 +1006,15 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   // generate all stop line candidates
   // see the doc for struct IntersectionStopLines
-  const auto & first_attention_area_opt = intersection_lanelets.first_attention_area();
   /// even if the attention area is null, stuck vehicle stop line needs to be generated from
   /// conflicting lanes
-  const auto & dummy_first_attention_area =
-    first_attention_area_opt ? first_attention_area_opt.value() : first_conflicting_area;
-  const auto & dummy_first_attention_lane_centerline =
-    intersection_lanelets.first_attention_lane()
-      ? intersection_lanelets.first_attention_lane().value().centerline2d()
-      : first_conflicting_lane.centerline2d();
+  const auto & dummy_first_attention_lane = intersection_lanelets.first_attention_lane()
+                                              ? intersection_lanelets.first_attention_lane().value()
+                                              : first_conflicting_lane;
+
   const auto intersection_stoplines_opt = generateIntersectionStopLines(
-    assigned_lanelet, first_conflicting_area, dummy_first_attention_area,
-    dummy_first_attention_lane_centerline, interpolated_path_info, path);
+    assigned_lanelet, first_conflicting_area, dummy_first_attention_lane, interpolated_path_info,
+    path);
   if (!intersection_stoplines_opt) {
     return IntersectionModule::Indecisive{"failed to generate intersection_stoplines"};
   }
@@ -1028,6 +1025,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
      default_pass_judge_line_idx, occlusion_wo_tl_pass_judge_line_idx] = intersection_stoplines;
 
   // see the doc for struct PathLanelets
+  const auto & first_attention_area_opt = intersection_lanelets.first_attention_area();
   const auto & conflicting_area = intersection_lanelets.conflicting_area();
   const auto path_lanelets_opt = generatePathLanelets(
     lanelets_on_path, interpolated_path_info, first_conflicting_area, conflicting_area,
@@ -1035,7 +1033,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   if (!path_lanelets_opt.has_value()) {
     return IntersectionModule::Indecisive{"failed to generate PathLanelets"};
   }
-  const auto path_lanelets = path_lanelets_opt.value();
+  const auto & path_lanelets = path_lanelets_opt.value();
 
   // utility functions
   auto fromEgoDist = [&](const size_t index) {
@@ -2051,48 +2049,8 @@ IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
   }
   return OcclusionType::STATICALLY_OCCLUDED;
 }
-
-// utilから移動
-Polygon2d IntersectionModule::generateStuckVehicleDetectAreaPolygon(
-  const PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist)
-{
-  using lanelet::utils::getArcCoordinates;
-  using lanelet::utils::getLaneletLength3d;
-  using lanelet::utils::getPolygonFromArcLength;
-  using lanelet::utils::to2D;
-
-  Polygon2d polygon{};
-  if (path_lanelets.conflicting_interval_and_remaining.size() == 0) {
-    return polygon;
-  }
-
-  double target_polygon_length =
-    getLaneletLength3d(path_lanelets.conflicting_interval_and_remaining);
-  lanelet::ConstLanelets targets = path_lanelets.conflicting_interval_and_remaining;
-  if (path_lanelets.next) {
-    targets.push_back(path_lanelets.next.value());
-    const double next_arc_length =
-      std::min(stuck_vehicle_detect_dist, getLaneletLength3d(path_lanelets.next.value()));
-    target_polygon_length += next_arc_length;
-  }
-  const auto target_polygon =
-    to2D(getPolygonFromArcLength(targets, 0, target_polygon_length)).basicPolygon();
-
-  if (target_polygon.empty()) {
-    return polygon;
-  }
-
-  for (const auto & p : target_polygon) {
-    polygon.outer().emplace_back(p.x(), p.y());
-  }
-
-  polygon.outer().emplace_back(polygon.outer().front());
-  bg::correct(polygon);
-
-  return polygon;
-}
-
 std::optional<size_t> IntersectionModule::checkAngleForTargetLanelets(
+
   const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
   const bool is_parked_vehicle) const
 {
@@ -2717,6 +2675,11 @@ bool IntersectionModule::checkYieldStuckVehicleInIntersection(
 bool IntersectionModule::checkStuckVehicleInIntersection(
   const PathLanelets & path_lanelets, DebugData * debug_data)
 {
+  using lanelet::utils::getArcCoordinates;
+  using lanelet::utils::getLaneletLength3d;
+  using lanelet::utils::getPolygonFromArcLength;
+  using lanelet::utils::to2D;
+
   const bool stuck_detection_direction = [&]() {
     return (turn_direction_ == "left" && planner_param_.stuck_vehicle.turn_direction.left) ||
            (turn_direction_ == "right" && planner_param_.stuck_vehicle.turn_direction.right) ||
@@ -2729,8 +2692,35 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
   const auto & objects_ptr = planner_data_->predicted_objects;
 
   // considering lane change in the intersection, these lanelets are generated from the path
-  const auto stuck_vehicle_detect_area = generateStuckVehicleDetectAreaPolygon(
-    path_lanelets, planner_param_.stuck_vehicle.stuck_vehicle_detect_dist);
+  const double stuck_vehicle_detect_dist = planner_param_.stuck_vehicle.stuck_vehicle_detect_dist;
+  Polygon2d stuck_vehicle_detect_area{};
+  if (path_lanelets.conflicting_interval_and_remaining.size() == 0) {
+    return false;
+  }
+
+  double target_polygon_length =
+    getLaneletLength3d(path_lanelets.conflicting_interval_and_remaining);
+  lanelet::ConstLanelets targets = path_lanelets.conflicting_interval_and_remaining;
+  if (path_lanelets.next) {
+    targets.push_back(path_lanelets.next.value());
+    const double next_arc_length =
+      std::min(stuck_vehicle_detect_dist, getLaneletLength3d(path_lanelets.next.value()));
+    target_polygon_length += next_arc_length;
+  }
+  const auto target_polygon =
+    to2D(getPolygonFromArcLength(targets, 0, target_polygon_length)).basicPolygon();
+
+  if (target_polygon.empty()) {
+    return false;
+  }
+
+  for (const auto & p : target_polygon) {
+    stuck_vehicle_detect_area.outer().emplace_back(p.x(), p.y());
+  }
+
+  stuck_vehicle_detect_area.outer().emplace_back(stuck_vehicle_detect_area.outer().front());
+  bg::correct(stuck_vehicle_detect_area);
+
   debug_data_.stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
 
   for (const auto & object : objects_ptr->objects) {
@@ -2962,8 +2952,7 @@ IntersectionLanelets IntersectionModule::getObjectiveLanelets(
 
 std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionStopLines(
   lanelet::ConstLanelet assigned_lanelet, const lanelet::CompoundPolygon3d & first_conflicting_area,
-  const lanelet::CompoundPolygon3d & first_attention_area,
-  const lanelet::ConstLineString2d & first_attention_lane_centerline,
+  const lanelet::ConstLanelet & first_attention_lane,
   const util::InterpolatedPathInfo & interpolated_path_info,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
@@ -2974,6 +2963,8 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
   const double delay_response_time = planner_param_.common.delay_response_time;
   const double peeking_offset = planner_param_.occlusion.peeking_offset;
 
+  const auto first_attention_area = first_attention_lane.polygon3d();
+  const auto first_attention_lane_centerline = first_attention_lane.centerline2d();
   const auto & path_ip = interpolated_path_info.path;
   const double ds = interpolated_path_info.ds;
   const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
