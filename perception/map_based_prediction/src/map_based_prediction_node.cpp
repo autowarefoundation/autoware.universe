@@ -1000,24 +1000,43 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         }
         // Generate Predicted Path
         std::vector<PredictedPath> predicted_paths;
+        double min_avg_curvature = std::numeric_limits<double>::max();
+        PredictedPath path_with_smallest_avg_curvature;
+
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
             yaw_fixed_transformed_object, ref_path.path);
           if (predicted_path.path.empty()) {
             continue;
           }
+          predicted_path.confidence = ref_path.probability;
+
           // Check lat. acceleration constraints
           const auto trajectory_with_const_velocity =
             toTrajectoryPoints(predicted_path, abs_obj_speed);
+
           if (!isLateralAccelerationConstraintSatisfied(
                 trajectory_with_const_velocity, prediction_sampling_time_interval_)) {
+            constexpr double curvature_calculation_distance = 2.0;
+            constexpr double points_interval = 1.0;
+            const size_t idx_dist = static_cast<size_t>(
+              std::max(static_cast<int>((curvature_calculation_distance) / points_interval), 1));
+            // Calculate curvature assuming the trajectory points interval is constant
+            const auto curvature_v =
+              calcTrajectoryCurvatureFrom3Points(trajectory_with_const_velocity, idx_dist);
+            if (curvature_v.empty()) continue;
+            const auto curvature_avg =
+              std::accumulate(curvature_v.begin(), curvature_v.end(), 0.0) / curvature_v.size();
+            if (curvature_avg < min_avg_curvature) {
+              // In case all paths are deleted, a copy of the straightest path is kept
+              min_avg_curvature = curvature_avg;
+              path_with_smallest_avg_curvature = predicted_path;
+            }
             continue;
           }
-
-          predicted_path.confidence = ref_path.probability;
           predicted_paths.push_back(predicted_path);
         }
-
+        if (predicted_paths.empty()) predicted_paths.push_back(path_with_smallest_avg_curvature);
         // Normalize Path Confidence and output the predicted object
 
         float sum_confidence = 0.0;
