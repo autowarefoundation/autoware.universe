@@ -78,7 +78,7 @@ class GroundSegmentationPipeline:
                 plugin="pointcloud_preprocessor::CropBoxFilterComponent",
                 name=f"{lidar_name}_crop_box_filter",
                 remappings=[
-                    ("input", f"/sensing/lidar/{lidar_name}/outlier_filtered/pointcloud"),
+                    ("input", f"/sensing/lidar/{lidar_name}/pointcloud"),
                     ("output", f"{lidar_name}/range_cropped/pointcloud"),
                 ],
                 parameters=[
@@ -474,7 +474,13 @@ class GroundSegmentationPipeline:
 def launch_setup(context, *args, **kwargs):
     pipeline = GroundSegmentationPipeline(context)
 
-    components = []
+    glog_component = ComposableNode(
+        package="glog_component",
+        plugin="GlogComponent",
+        name="glog_component",
+    )
+
+    components = [glog_component]
     components.extend(
         pipeline.create_single_frame_obstacle_segmentation_components(
             input_topic=LaunchConfiguration("input/pointcloud"),

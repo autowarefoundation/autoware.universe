@@ -519,7 +519,7 @@ LineString2d extendLine(
     {(p1 - length * t).x(), (p1 - length * t).y()}, {(p2 + length * t).x(), (p2 + length * t).y()}};
 }
 
-boost::optional<int64_t> getNearestLaneId(
+std::optional<int64_t> getNearestLaneId(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose)
 {
@@ -533,7 +533,7 @@ boost::optional<int64_t> getNearestLaneId(
   if (lanelet::utils::query::getClosestLanelet(lanes, current_pose, &closest_lane)) {
     return closest_lane.id();
   }
-  return boost::none;
+  return std::nullopt;
 }
 
 std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
@@ -614,7 +614,7 @@ bool isOverLine(
          0.0;
 }
 
-boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
+std::optional<geometry_msgs::msg::Pose> insertDecelPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output,
   const float target_velocity)
 {
@@ -629,16 +629,16 @@ boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
     return {};
   }
 
-  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
+  for (size_t i = insert_idx.value(); i < output.points.size(); ++i) {
     const auto & original_velocity = output.points.at(i).point.longitudinal_velocity_mps;
     output.points.at(i).point.longitudinal_velocity_mps =
       std::min(original_velocity, target_velocity);
   }
-  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.value()));
 }
 
 // TODO(murooka): remove this function for u-turn and crossing-path
-boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+std::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output)
 {
   const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
@@ -648,10 +648,10 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
     return {};
   }
 
-  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.value()));
 }
 
-boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+std::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output)
 {
   const auto insert_idx = motion_utils::insertStopPoint(stop_seg_idx, stop_point, output.points);
@@ -660,10 +660,10 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
     return {};
   }
 
-  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.value()));
 }
 
-std::set<int> getAssociativeIntersectionLanelets(
+std::set<lanelet::Id> getAssociativeIntersectionLanelets(
   lanelet::ConstLanelet lane, const lanelet::LaneletMapPtr lanelet_map,
   const lanelet::routing::RoutingGraphPtr routing_graph)
 {
@@ -673,12 +673,12 @@ std::set<int> getAssociativeIntersectionLanelets(
   }
 
   const auto parents = routing_graph->previous(lane);
-  std::set<int> parent_neighbors;
+  std::set<lanelet::Id> parent_neighbors;
   for (const auto & parent : parents) {
     const auto neighbors = routing_graph->besides(parent);
     for (const auto & neighbor : neighbors) parent_neighbors.insert(neighbor.id());
   }
-  std::set<int> associative_intersection_lanelets;
+  std::set<lanelet::Id> associative_intersection_lanelets;
   associative_intersection_lanelets.insert(lane.id());
   for (const auto & parent_neighbor_id : parent_neighbors) {
     const auto parent_neighbor = lanelet_map->laneletLayer.get(parent_neighbor_id);

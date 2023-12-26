@@ -11,7 +11,7 @@ include_directories(
   ${rosidl_runtime_cpp_INCLUDE_DIRS}
   ${rcl_INCLUDE_DIRS}
   ${autoware_adapi_v1_msgs_INCLUDE_DIRS}
-  ${autoware_auto_planning_msgs_INCLUDE_DIRS}
+  ${autoware_planning_msgs_INCLUDE_DIRS}
   ${autoware_planning_msgs_INCLUDE_DIRS}
   ${autoware_vehicle_msgs_INCLUDE_DIRS}
   ${tier4_control_msgs_INCLUDE_DIRS}
