@@ -406,6 +406,15 @@ void MapBasedDetector::mapCallback(
     }
   }
 
+  auto crosswalk_lanelets = lanelet::utils::query::crosswalkLanelets(all_lanelets);
+  for (const auto & tl : lanelet::utils::query::autowareTrafficLights(crosswalk_lanelets)) {
+    for (const auto & lsp : tl->trafficLights()) {
+      if (lsp.isLineString()) {  // traffic lights must be linestrings
+        pedestrian_tl_id_.insert(lsp.id());
+      }
+    }
+  }
+ 
   // crosswalk
   const auto traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
     lanelet::Locations::Germany, lanelet::Participants::Vehicle);
