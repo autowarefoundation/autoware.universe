@@ -44,6 +44,10 @@
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 #include "tier4_planning_msgs/msg/lateral_offset.hpp"
 
+#include <boost/geometry.hpp>
+#include <boost/geometry/algorithms/within.hpp>
+#include <boost/geometry/index/rtree.hpp>
+
 #include <algorithm>
 #include <any>
 #include <memory>

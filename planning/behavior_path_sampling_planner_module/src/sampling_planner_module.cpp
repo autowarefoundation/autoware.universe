@@ -14,8 +14,6 @@
 
 #include "behavior_path_sampling_planner_module/sampling_planner_module.hpp"
 
-#include <boost/geometry/algorithms/within.hpp>
-
 namespace behavior_path_planner
 {
 using geometry_msgs::msg::Point;
