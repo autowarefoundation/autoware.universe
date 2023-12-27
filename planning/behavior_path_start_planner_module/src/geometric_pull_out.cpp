@@ -63,11 +63,6 @@ std::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const
 
   // collision check with stop objects in pull out lanes
   const auto arc_path = planner_.getArcPath();
-  const auto & stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    *(planner_data_->dynamic_object), parameters_.th_moving_object_velocity);
-  const auto [pull_out_lane_stop_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(
-      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   const double velocity = parallel_parking_parameters_.forward_parking_velocity;
 
