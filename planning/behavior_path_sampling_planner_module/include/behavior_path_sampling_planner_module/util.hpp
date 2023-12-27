@@ -17,6 +17,10 @@
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+
+#include <boost/geometry/index/rtree.hpp>
+
 #include <any>
 #include <functional>
 #include <numeric>
@@ -24,6 +28,7 @@
 #include <vector>
 namespace behavior_path_planner
 {
+
 using geometry_msgs::msg::Pose;
 
 struct SoftConstraintsInputs

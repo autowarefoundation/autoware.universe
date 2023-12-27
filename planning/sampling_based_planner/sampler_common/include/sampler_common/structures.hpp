@@ -26,12 +26,14 @@
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
+#include <boost/geometry/index/rtree.hpp>
 
 #include <algorithm>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace sampler_common
@@ -41,6 +43,9 @@ using tier4_autoware_utils::MultiPoint2d;
 using tier4_autoware_utils::MultiPolygon2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+
+typedef std::pair<tier4_autoware_utils::Box2d, size_t> BoxIndexPair;
+typedef boost::geometry::index::rtree<BoxIndexPair, boost::geometry::index::rstar<16, 4>> Rtree;
 
 /// @brief data about constraint check results of a given path
 struct ConstraintResults
@@ -348,6 +353,7 @@ struct Constraints
   MultiPolygon2d obstacle_polygons;
   MultiPolygon2d drivable_polygons;
   std::vector<DynamicObstacle> dynamic_obstacles;
+  Rtree rtree;
 };
 
 struct ReusableTrajectory

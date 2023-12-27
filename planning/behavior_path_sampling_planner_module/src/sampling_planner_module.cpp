@@ -45,13 +45,24 @@ SamplingPlannerModule::SamplingPlannerModule(
     [](
       sampler_common::Path & path, const sampler_common::Constraints & constraints,
       const MultiPoint2d & footprint) -> bool {
+      namespace bg = boost::geometry;
+      namespace bgi = boost::geometry::index;
+
       if (!footprint.empty()) {
         path.constraint_results.drivable_area =
-          boost::geometry::within(footprint, constraints.drivable_polygons);
+          bg::within(footprint, constraints.drivable_polygons);
       }
 
-      path.constraint_results.collision =
-        !sampler_common::constraints::has_collision(footprint, constraints.obstacle_polygons);
+      // path.constraint_results.collision =
+      //   !sampler_common::constraints::has_collision(footprint, constraints.obstacle_polygons);
+      for (const auto & f : footprint) {
+        const auto collision_index = constraints.rtree.qbegin(bgi::intersects(f));
+        if (collision_index != constraints.rtree.qend()) {
+          path.constraint_results.collision = false;
+          break;
+        }
+      }
+
       return path.constraint_results.collision && path.constraint_results.drivable_area;
     });
 
@@ -343,9 +354,15 @@ void SamplingPlannerModule::prepareConstraints(
   const std::vector<geometry_msgs::msg::Point> & right_bound) const
 {
   constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
+  constraints.rtree.clear();
+  size_t i = 0;
   for (const auto & o : predicted_objects->objects)
-    if (o.kinematics.initial_twist_with_covariance.twist.linear.x < 0.5)  // TODO(Maxime): param
-      constraints.obstacle_polygons.push_back(tier4_autoware_utils::toPolygon2d(o));
+    if (o.kinematics.initial_twist_with_covariance.twist.linear.x < 0.5) {
+      const auto polygon = tier4_autoware_utils::toPolygon2d(o);
+      constraints.obstacle_polygons.push_back(polygon);
+      const auto box = boost::geometry::return_envelope<tier4_autoware_utils::Box2d>(polygon);
+      constraints.rtree.insert(std::make_pair(box, i++));
+    }
 
   constraints.dynamic_obstacles = {};  // TODO(Maxime): not implemented
 
@@ -454,20 +471,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     current_lanes.insert(current_lanes.end(), d.middle_lanes.begin(), d.middle_lanes.end());
   }
 
-  {
-    const auto left_bound =
-      (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, true));
-    const auto right_bound =
-      (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, false));
-
-    const auto sampling_planner_data =
-      createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
-
-    prepareConstraints(
-      internal_params_->constraints, planner_data_->dynamic_object,
-      sampling_planner_data.left_bound, sampling_planner_data.right_bound);
-  }
-
   auto frenet_paths =
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
 
@@ -519,6 +522,18 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
       for (auto & p : extension_frenet_paths) frenet_paths.push_back(prev_path_frenet.extend(p));
     }
   }
+
+  const auto left_bound =
+    (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, true));
+  const auto right_bound =
+    (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, false));
+
+  const auto sampling_planner_data =
+    createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
+
+  prepareConstraints(
+    internal_params_->constraints, planner_data_->dynamic_object, sampling_planner_data.left_bound,
+    sampling_planner_data.right_bound);
 
   SoftConstraintsInputs soft_constraints_input;
   const auto & goal_pose = get_goal_pose();
