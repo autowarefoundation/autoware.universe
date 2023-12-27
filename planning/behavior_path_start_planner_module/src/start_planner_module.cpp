@@ -642,29 +642,13 @@ bool StartPlannerModule::findPullOutPath(
     return false;
   }
 
-  // lambda function for combining partial_paths
-  const auto combine_partial_path = [pull_out_lanes](const auto & path) {
-    PathWithLaneId combined_path;
-    for (const auto & partial_path : path.partial_paths) {
-      combined_path.points.insert(
-        combined_path.points.end(), partial_path.points.begin(), partial_path.points.end());
-    }
-    // remove the point behind of shift end pose
-    const auto shift_end_pose_idx =
-      motion_utils::findNearestIndex(combined_path.points, path.end_pose);
-    combined_path.points.erase(
-      combined_path.points.begin() + *shift_end_pose_idx + 1, combined_path.points.end());
-    return combined_path;
-  };
-
   // check collision
   if (utils::checkCollisionBetweenPathFootprintsAndObjects(
-        vehicle_footprint, combine_partial_path(*pull_out_path), pull_out_lane_stop_objects,
+        vehicle_footprint, extractCollisionCheckPath(*pull_out_path), pull_out_lane_stop_objects,
         parameters_->collision_check_margin)) {
     return false;
   }
 
-  // If start pose candidate
   if (backward_is_unnecessary) {
     updateStatusWithCurrentPath(*pull_out_path, start_pose_candidate, planner->getPlannerType());
     return true;
@@ -673,6 +657,31 @@ bool StartPlannerModule::findPullOutPath(
   updateStatusWithNextPath(*pull_out_path, start_pose_candidate, planner->getPlannerType());
 
   return true;
+}
+
+PathWithLaneId StartPlannerModule::extractCollisionCheckPath(const PullOutPath & path)
+{
+  PathWithLaneId combined_path;
+  for (const auto & partial_path : path.partial_paths) {
+    combined_path.points.insert(
+      combined_path.points.end(), partial_path.points.begin(), partial_path.points.end());
+  }
+  // calculate collision check end idx
+  const size_t collision_check_end_idx = std::invoke([&]() {
+    const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
+      combined_path.points, path.end_pose.position, parameters_->collision_check_distance_from_end);
+
+    if (collision_check_end_pose) {
+      return motion_utils::findNearestIndex(
+        combined_path.points, collision_check_end_pose->position);
+    } else {
+      return combined_path.points.size() - 1;
+    }
+  });
+  // remove the point behind of collision check end pose
+  combined_path.points.erase(
+    combined_path.points.begin() + collision_check_end_idx + 1, combined_path.points.end());
+  return combined_path;
 }
 
 void StartPlannerModule::updateStatusWithCurrentPath(

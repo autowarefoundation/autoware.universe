@@ -173,6 +173,8 @@ private:
   bool findPullOutPath(
     const Pose & start_pose_candidate, const std::shared_ptr<PullOutPlannerBase> & planner,
     const Pose & refined_start_pose, const Pose & goal_pose);
+
+  PathWithLaneId extractCollisionCheckPath(const PullOutPath & path);
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
