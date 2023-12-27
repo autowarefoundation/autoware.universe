@@ -96,7 +96,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   output_msg.signals.resize(input_rois_msg->rois.size());
 
   std::vector<cv::Mat> images;
-  size_t num_valid_roi = 0;
+
   for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
     // skip if the roi is not detected
     if (input_rois_msg->rois.at(i).roi.height == 0) {
@@ -105,9 +105,8 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
     output_msg.signals[i].traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;
     const sensor_msgs::msg::RegionOfInterest & roi = input_rois_msg->rois.at(i).roi;
     images.emplace_back(cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
-    num_valid_roi++;
   }
-  output_msg.signals.resize(num_valid_roi);
+  output_msg.signals.resize(images.size());
   if (!classifier_ptr_->getTrafficSignals(images, output_msg)) {
     RCLCPP_ERROR(this->get_logger(), "failed classify image, abort callback");
     return;
