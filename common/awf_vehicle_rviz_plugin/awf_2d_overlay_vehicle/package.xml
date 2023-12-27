@@ -11,6 +11,8 @@
 
   <license>BSD-3-Clause</license>
 
+  <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_perception_msgs</depend>
   <depend>boost</depend>
   <depend>rosidl_generator_traits</depend>
   <depend>rviz_2d_overlay_msgs</depend>
@@ -18,8 +20,6 @@
   <depend>rviz_ogre_vendor</depend>
   <depend>rviz_rendering</depend>
   <depend>tier4_planning_msgs</depend>
-  <depend>autoware_perception_msgs</depend>
-  <depend>autoware_auto_vehicle_msgs</depend>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

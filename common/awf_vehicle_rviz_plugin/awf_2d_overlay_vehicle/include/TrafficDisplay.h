@@ -1,5 +1,5 @@
-#ifndef TRAFFIC_DISPLAY_H
-#define TRAFFIC_DISPLAY_H
+#ifndef TRAFFICDISPLAY_H_
+#define TRAFFICDISPLAY_H_
 #ifndef Q_MOC_RUN
 #include "overlay_utils.hpp"
 
@@ -49,4 +49,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // TRAFFIC_DISPLAY_H
+#endif  // TRAFFICDISPLAY_H_
