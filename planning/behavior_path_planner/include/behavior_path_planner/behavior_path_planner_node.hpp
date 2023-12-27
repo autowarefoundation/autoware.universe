@@ -15,13 +15,12 @@
 #ifndef BEHAVIOR_PATH_PLANNER__BEHAVIOR_PATH_PLANNER_NODE_HPP_
 #define BEHAVIOR_PATH_PLANNER__BEHAVIOR_PATH_PLANNER_NODE_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/planner_manager.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/steering_factor_interface.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/interface/steering_factor_interface.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
-#include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -35,7 +34,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
-#include <tier4_planning_msgs/msg/lane_change_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
 #include <tier4_planning_msgs/msg/reroute_availability.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
@@ -66,7 +64,6 @@ using nav_msgs::msg::Odometry;
 using rcl_interfaces::msg::SetParametersResult;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
-using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::RerouteAvailability;
 using tier4_planning_msgs::msg::Scenario;
@@ -169,15 +166,13 @@ private:
     const BehaviorModuleOutput & output);
 
   // debug
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_maximum_drivable_area_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
-  rclcpp::Publisher<LaneChangeDebugMsgArray>::SharedPtr debug_lane_change_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_turn_signal_info_publisher_;
 
   /**
    * @brief publish reroute availability
    */
-  void publish_reroute_availability();
+  void publish_reroute_availability() const;
 
   /**
    * @brief publish steering factor from intersection

@@ -116,7 +116,7 @@ void SceneModuleManagerInterface::modifyPathVelocity(
 
     // The velocity factor must be called after modifyPathVelocity.
     const auto velocity_factor = scene_module->getVelocityFactor();
-    if (velocity_factor.type != VelocityFactor::UNKNOWN) {
+    if (velocity_factor.behavior != PlanningBehavior::UNKNOWN) {
       velocity_factor_array.factors.emplace_back(velocity_factor);
     }
     if (stop_reason.reason != "") {
@@ -174,7 +174,7 @@ void SceneModuleManagerInterface::deleteExpiredModules(
 void SceneModuleManagerInterface::registerModule(
   const std::shared_ptr<SceneModuleInterface> & scene_module)
 {
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     logger_, "register task: module = %s, id = %lu", getModuleName(), scene_module->getModuleId());
   registered_module_id_set_.emplace(scene_module->getModuleId());
   scene_modules_.insert(scene_module);
@@ -183,7 +183,7 @@ void SceneModuleManagerInterface::registerModule(
 void SceneModuleManagerInterface::unregisterModule(
   const std::shared_ptr<SceneModuleInterface> & scene_module)
 {
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     logger_, "unregister task: module = %s, id = %lu", getModuleName(),
     scene_module->getModuleId());
   registered_module_id_set_.erase(scene_module->getModuleId());
@@ -192,7 +192,9 @@ void SceneModuleManagerInterface::unregisterModule(
 
 SceneModuleManagerInterfaceWithRTC::SceneModuleManagerInterfaceWithRTC(
   rclcpp::Node & node, const char * module_name, const bool enable_rtc)
-: SceneModuleManagerInterface(node, module_name), rtc_interface_(&node, module_name, enable_rtc)
+: SceneModuleManagerInterface(node, module_name),
+  rtc_interface_(&node, module_name, enable_rtc),
+  objects_of_interest_marker_interface_(&node, module_name)
 {
 }
 
@@ -202,6 +204,7 @@ void SceneModuleManagerInterfaceWithRTC::plan(
   setActivation();
   modifyPathVelocity(path);
   sendRTC(path->header.stamp);
+  publishObjectsOfInterestMarker();
 }
 
 void SceneModuleManagerInterfaceWithRTC::sendRTC(const Time & stamp)
@@ -218,6 +221,7 @@ void SceneModuleManagerInterfaceWithRTC::setActivation()
   for (const auto & scene_module : scene_modules_) {
     const UUID uuid = getUUID(scene_module->getModuleId());
     scene_module->setActivation(rtc_interface_.isActivated(uuid));
+    scene_module->setRTCEnabled(rtc_interface_.isRTCEnabled(uuid));
   }
 }
 
@@ -241,6 +245,19 @@ void SceneModuleManagerInterfaceWithRTC::removeUUID(const int64_t & module_id)
   if (result == 0) {
     RCLCPP_WARN_STREAM(logger_, "[removeUUID] module_id = " << module_id << " is not registered.");
   }
+}
+
+void SceneModuleManagerInterfaceWithRTC::publishObjectsOfInterestMarker()
+{
+  for (const auto & scene_module : scene_modules_) {
+    const auto objects = scene_module->getObjectsOfInterestData();
+    for (const auto & obj : objects) {
+      objects_of_interest_marker_interface_.insertObjectData(obj.pose, obj.shape, obj.color);
+    }
+    scene_module->clearObjectsOfInterestData();
+  }
+
+  objects_of_interest_marker_interface_.publishMarkerArray();
 }
 
 void SceneModuleManagerInterfaceWithRTC::deleteExpiredModules(

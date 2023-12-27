@@ -43,6 +43,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <glog/logging.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -718,6 +720,8 @@ void replaceObjectYawWithLaneletsYaw(
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
 {
+  google::InitGoogleLogging("map_based_prediction_node");
+  google::InstallFailureSignalHandler();
   enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
   prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
   lateral_control_time_horizon_ =
@@ -736,6 +740,12 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sigma_yaw_angle_deg_ = declare_parameter<double>("sigma_yaw_angle_deg");
   object_buffer_time_length_ = declare_parameter<double>("object_buffer_time_length");
   history_time_length_ = declare_parameter<double>("history_time_length");
+
+  check_lateral_acceleration_constraints_ =
+    declare_parameter<bool>("check_lateral_acceleration_constraints");
+  max_lateral_accel_ = declare_parameter<double>("max_lateral_accel");
+  min_acceleration_before_curve_ = declare_parameter<double>("min_acceleration_before_curve");
+
   {  // lane change detection
     lane_change_detection_method_ = declare_parameter<std::string>("lane_change_detection.method");
 
@@ -760,6 +770,9 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
 
     num_continuous_state_transition_ =
       declare_parameter<int>("lane_change_detection.num_continuous_state_transition");
+
+    consider_only_routable_neighbours_ =
+      declare_parameter<bool>("lane_change_detection.consider_only_routable_neighbours");
   }
   reference_path_resolution_ = declare_parameter<double>("reference_path_resolution");
   /* prediction path will disabled when the estimated path length exceeds lanelet length. This
@@ -782,6 +795,25 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   pub_debug_markers_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
   pub_calculation_time_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
+
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&MapBasedPredictionNode::onParam, this, std::placeholders::_1));
+}
+
+rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+
+  updateParam(parameters, "max_lateral_accel", max_lateral_accel_);
+  updateParam(parameters, "min_acceleration_before_curve", min_acceleration_before_curve_);
+  updateParam(
+    parameters, "check_lateral_acceleration_constraints", check_lateral_acceleration_constraints_);
+
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+  return result;
 }
 
 PredictedObjectKinematics MapBasedPredictionNode::convertToPredictedKinematics(
@@ -965,16 +997,53 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         }
         // Generate Predicted Path
         std::vector<PredictedPath> predicted_paths;
+        double min_avg_curvature = std::numeric_limits<double>::max();
+        PredictedPath path_with_smallest_avg_curvature;
+
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
             yaw_fixed_transformed_object, ref_path.path);
-          if (predicted_path.path.empty()) {
+          if (predicted_path.path.empty()) continue;
+
+          if (!check_lateral_acceleration_constraints_) {
+            predicted_path.confidence = ref_path.probability;
+            predicted_paths.push_back(predicted_path);
             continue;
           }
-          predicted_path.confidence = ref_path.probability;
-          predicted_paths.push_back(predicted_path);
+
+          // Check lat. acceleration constraints
+          const auto trajectory_with_const_velocity =
+            toTrajectoryPoints(predicted_path, abs_obj_speed);
+
+          if (isLateralAccelerationConstraintSatisfied(
+                trajectory_with_const_velocity, prediction_sampling_time_interval_)) {
+            predicted_path.confidence = ref_path.probability;
+            predicted_paths.push_back(predicted_path);
+            continue;
+          }
+
+          // Calculate curvature assuming the trajectory points interval is constant
+          // In case all paths are deleted, a copy of the straightest path is kept
+
+          constexpr double curvature_calculation_distance = 2.0;
+          constexpr double points_interval = 1.0;
+          const size_t idx_dist = static_cast<size_t>(
+            std::max(static_cast<int>((curvature_calculation_distance) / points_interval), 1));
+          const auto curvature_v =
+            calcTrajectoryCurvatureFrom3Points(trajectory_with_const_velocity, idx_dist);
+          if (curvature_v.empty()) {
+            continue;
+          }
+          const auto curvature_avg =
+            std::accumulate(curvature_v.begin(), curvature_v.end(), 0.0) / curvature_v.size();
+          if (curvature_avg < min_avg_curvature) {
+            min_avg_curvature = curvature_avg;
+            path_with_smallest_avg_curvature = predicted_path;
+            path_with_smallest_avg_curvature.confidence = ref_path.probability;
+          }
         }
 
+        if (predicted_paths.empty()) predicted_paths.push_back(path_with_smallest_avg_curvature);
         // Normalize Path Confidence and output the predicted object
 
         float sum_confidence = 0.0;
@@ -988,6 +1057,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         for (auto & predicted_path : predicted_paths) {
           predicted_path.confidence = predicted_path.confidence / sum_confidence;
+          if (predicted_object.kinematics.predicted_paths.size() >= 100) break;
           predicted_object.kinematics.predicted_paths.push_back(predicted_path);
         }
         output.objects.push_back(predicted_object);
@@ -1514,19 +1584,22 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       if (!!opt) {
         return *opt;
       }
-      const auto adjacent = get_left ? routing_graph_ptr_->adjacentLeft(lanelet)
-                                     : routing_graph_ptr_->adjacentRight(lanelet);
-      if (!!adjacent) {
-        return *adjacent;
+      if (!consider_only_routable_neighbours_) {
+        const auto adjacent = get_left ? routing_graph_ptr_->adjacentLeft(lanelet)
+                                       : routing_graph_ptr_->adjacentRight(lanelet);
+        if (!!adjacent) {
+          return *adjacent;
+        }
+        // search for unconnected lanelet
+        const auto unconnected_lanelets =
+          get_left ? getLeftLineSharingLanelets(lanelet, lanelet_map_ptr_)
+                   : getRightLineSharingLanelets(lanelet, lanelet_map_ptr_);
+        // just return first candidate of unconnected lanelet for now
+        if (!unconnected_lanelets.empty()) {
+          return unconnected_lanelets.front();
+        }
       }
-      // search for unconnected lanelet
-      const auto unconnected_lanelets = get_left
-                                          ? getLeftLineSharingLanelets(lanelet, lanelet_map_ptr_)
-                                          : getRightLineSharingLanelets(lanelet, lanelet_map_ptr_);
-      // just return first candidate of unconnected lanelet for now
-      if (!unconnected_lanelets.empty()) {
-        return unconnected_lanelets.front();
-      }
+
       // if no candidate lanelet found, return empty
       return std::nullopt;
     };

@@ -49,66 +49,68 @@ public:
   {
     struct Common
     {
-      double attention_area_margin;     //! used for detecting objects in attention area
-      double attention_area_length;     //! used to create attention area polygon
-      double attention_area_angle_thr;  //! threshold in checking the angle of detecting objects
-      double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
-      double intersection_velocity;  //! used for intersection passing time
-      double intersection_max_acc;   //! used for calculating intersection velocity
-      double stop_overshoot_margin;  //! overshoot margin for stuck, collision detection
+      double attention_area_length;
+      double attention_area_margin;
+      double attention_area_angle_threshold;
       bool use_intersection_area;
-      bool consider_wrong_direction_vehicle;
+      double default_stopline_margin;
+      double stopline_overshoot_margin;
       double path_interpolation_ds;
       double max_accel;
       double max_jerk;
       double delay_response_time;
     } common;
+
+    struct TurnDirection
+    {
+      bool left;
+      bool right;
+      bool straight;
+    };
+
     struct StuckVehicle
     {
-      struct TurnDirection
-      {
-        bool left;
-        bool right;
-        bool straight;
-      };
       TurnDirection turn_direction;
-      bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
-      double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
-      double stuck_vehicle_vel_thr;      //! Threshold of the speed to be recognized as stopped
-      /*
-      double
-        assumed_front_car_decel;  //! the expected deceleration of front car when front car as well
-      bool enable_front_car_decel_prediction;  //! flag for using above feature
-      */
-      double timeout_private_area;
-      bool enable_private_area_stuck_disregard;
-      double yield_stuck_distance_thr;
-      TurnDirection yield_stuck_turn_direction;
+      bool use_stuck_stopline;
+      double stuck_vehicle_detect_dist;
+      double stuck_vehicle_velocity_threshold;
+      bool disable_against_private_lane;
     } stuck_vehicle;
+
+    struct YieldStuck
+    {
+      TurnDirection turn_direction;
+      double distance_threshold;
+    } yield_stuck;
+
     struct CollisionDetection
     {
+      bool consider_wrong_direction_vehicle;
+      double collision_detection_hold_time;
       double min_predicted_path_confidence;
-      //! minimum confidence value of predicted path to use for collision detection
-      double minimum_ego_predicted_velocity;  //! used to calculate ego's future velocity profile
-      double state_transit_margin_time;
+      double keep_detection_velocity_threshold;
+      struct VelocityProfile
+      {
+        bool use_upstream;
+        double minimum_upstream_velocity;
+        double default_velocity;
+        double minimum_default_velocity;
+      } velocity_profile;
       struct FullyPrioritized
       {
-        double collision_start_margin_time;  //! start margin time to check collision
-        double collision_end_margin_time;    //! end margin time to check collision
+        double collision_start_margin_time;
+        double collision_end_margin_time;
       } fully_prioritized;
       struct PartiallyPrioritized
       {
-        double collision_start_margin_time;  //! start margin time to check collision
-        double collision_end_margin_time;    //! end margin time to check collision
+        double collision_start_margin_time;
+        double collision_end_margin_time;
       } partially_prioritized;
       struct NotPrioritized
       {
-        double collision_start_margin_time;  //! start margin time to check collision
-        double collision_end_margin_time;    //! end margin time to check collision
+        double collision_start_margin_time;
+        double collision_end_margin_time;
       } not_prioritized;
-      double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
-      bool use_upstream_velocity;
-      double minimum_upstream_velocity;
       struct YieldOnGreeTrafficLight
       {
         double distance_to_assigned_lanelet_start;
@@ -124,33 +126,32 @@ public:
         double object_margin_to_path;
       } ignore_on_red_traffic_light;
     } collision_detection;
+
     struct Occlusion
     {
       bool enable;
-      double occlusion_attention_area_length;  //! used for occlusion detection
-      bool enable_creeping;
-      double occlusion_creep_velocity;  //! the creep velocity to occlusion limit stop line
-      double peeking_offset;
+      double occlusion_attention_area_length;
       int free_space_max;
       int occupied_min;
-      bool do_dp;
-      double before_creep_stop_time;
-      double min_vehicle_brake_for_rss;
-      double max_vehicle_velocity_for_rss;
       double denoise_kernel;
-      std::vector<double> possible_object_bbox;
-      double ignore_parked_vehicle_speed_threshold;
-      double stop_release_margin_time;
-      bool temporal_stop_before_attention_area;
-      struct AbsenceTrafficLight
-      {
-        double creep_velocity;
-        double maximum_peeking_distance;
-      } absence_traffic_light;
       double attention_lane_crop_curvature_threshold;
       double attention_lane_curvature_calculation_ds;
+      struct CreepDuringPeeking
+      {
+        bool enable;
+        double creep_velocity;
+      } creep_during_peeking;
+      double peeking_offset;
+      double occlusion_required_clearance_distance;
+      std::vector<double> possible_object_bbox;
+      double ignore_parked_vehicle_speed_threshold;
+      double occlusion_detection_hold_time;
+      double temporal_stop_time_before_peeking;
+      bool temporal_stop_before_attention_area;
+      double creep_velocity_without_traffic_light;
       double static_occlusion_with_traffic_light_timeout;
     } occlusion;
+
     struct Debug
     {
       std::vector<int64_t> ttc;
@@ -171,26 +172,26 @@ public:
   struct StuckStop
   {
     size_t closest_idx{0};
-    size_t stuck_stop_line_idx{0};
-    std::optional<size_t> occlusion_stop_line_idx{std::nullopt};
+    size_t stuck_stopline_idx{0};
+    std::optional<size_t> occlusion_stopline_idx{std::nullopt};
   };
   struct YieldStuckStop
   {
     size_t closest_idx{0};
-    size_t stuck_stop_line_idx{0};
+    size_t stuck_stopline_idx{0};
   };
   struct NonOccludedCollisionStop
   {
     size_t closest_idx{0};
-    size_t collision_stop_line_idx{0};
-    size_t occlusion_stop_line_idx{0};
+    size_t collision_stopline_idx{0};
+    size_t occlusion_stopline_idx{0};
   };
   struct FirstWaitBeforeOcclusion
   {
     bool is_actually_occlusion_cleared{false};
     size_t closest_idx{0};
-    size_t first_stop_line_idx{0};
-    size_t occlusion_stop_line_idx{0};
+    size_t first_stopline_idx{0};
+    size_t occlusion_stopline_idx{0};
   };
   // A state peeking to occlusion limit line in the presence of traffic light
   struct PeekingTowardOcclusion
@@ -200,9 +201,9 @@ public:
     bool is_actually_occlusion_cleared{false};
     bool temporal_stop_before_attention_required{false};
     size_t closest_idx{0};
-    size_t collision_stop_line_idx{0};
-    size_t first_attention_stop_line_idx{0};
-    size_t occlusion_stop_line_idx{0};
+    size_t collision_stopline_idx{0};
+    size_t first_attention_stopline_idx{0};
+    size_t occlusion_stopline_idx{0};
     // if null, it is dynamic occlusion and shows up intersection_occlusion(dyn)
     // if valid, it contains the remaining time to release the static occlusion stuck and shows up
     // intersection_occlusion(x.y)
@@ -214,9 +215,9 @@ public:
     bool is_actually_occlusion_cleared{false};
     bool temporal_stop_before_attention_required{false};
     size_t closest_idx{0};
-    size_t collision_stop_line_idx{0};
-    size_t first_attention_stop_line_idx{0};
-    size_t occlusion_stop_line_idx{0};
+    size_t collision_stopline_idx{0};
+    size_t first_attention_stopline_idx{0};
+    size_t occlusion_stopline_idx{0};
     // if null, it is dynamic occlusion and shows up intersection_occlusion(dyn)
     // if valid, it contains the remaining time to release the static occlusion stuck
     std::optional<double> static_occlusion_timeout{std::nullopt};
@@ -227,22 +228,22 @@ public:
     bool collision_detected{false};
     bool temporal_stop_before_attention_required{false};
     size_t closest_idx{0};
-    size_t first_attention_area_stop_line_idx{0};
+    size_t first_attention_area_stopline_idx{0};
     size_t peeking_limit_line_idx{0};
   };
   struct Safe
   {
     // NOTE: if RTC is disapproved status, default stop lines are still needed.
     size_t closest_idx{0};
-    size_t collision_stop_line_idx{0};
-    size_t occlusion_stop_line_idx{0};
+    size_t collision_stopline_idx{0};
+    size_t occlusion_stopline_idx{0};
   };
-  struct TrafficLightArrowSolidOn
+  struct FullyPrioritized
   {
     bool collision_detected{false};
     size_t closest_idx{0};
-    size_t collision_stop_line_idx{0};
-    size_t occlusion_stop_line_idx{0};
+    size_t collision_stopline_idx{0};
+    size_t occlusion_stopline_idx{0};
   };
   using DecisionResult = std::variant<
     Indecisive,                   // internal process error, or over the pass judge line
@@ -254,15 +255,15 @@ public:
     OccludedCollisionStop,        // occlusion and collision are both detected
     OccludedAbsenceTrafficLight,  // occlusion is detected in the absence of traffic light
     Safe,                         // judge as safe
-    TrafficLightArrowSolidOn      // only detect vehicles violating traffic rules
+    FullyPrioritized              // only detect vehicles violating traffic rules
     >;
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param, const std::set<int> & associative_ids,
+    const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
     const std::string & turn_direction, const bool has_traffic_light,
-    const bool enable_occlusion_detection, const bool is_private_area, rclcpp::Node & node,
-    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
+    const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
@@ -273,7 +274,7 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   motion_utils::VirtualWalls createVirtualWalls() override;
 
-  const std::set<int> & getAssociativeIds() const { return associative_ids_; }
+  const std::set<lanelet::Id> & getAssociativeIds() const { return associative_ids_; }
 
   UUID getOcclusionUUID() const { return occlusion_uuid_; }
   bool getOcclusionSafety() const { return occlusion_safety_; }
@@ -284,7 +285,7 @@ public:
 private:
   rclcpp::Node & node_;
   const int64_t lane_id_;
-  const std::set<int> associative_ids_;
+  const std::set<lanelet::Id> associative_ids_;
   const std::string turn_direction_;
   const bool has_traffic_light_;
 
@@ -312,9 +313,6 @@ private:
   // vehicles are very slow
   std::optional<rclcpp::Time> initial_green_light_observed_time_{std::nullopt};
 
-  // for stuck vehicle detection
-  const bool is_private_area_;
-
   // for RTC
   const UUID occlusion_uuid_;
   bool occlusion_safety_{true};
@@ -334,9 +332,9 @@ private:
     const util::PathLanelets & path_lanelets);
 
   bool checkYieldStuckVehicle(
-    const std::shared_ptr<const PlannerData> & planner_data,
-    const util::PathLanelets & path_lanelets,
-    const std::optional<lanelet::CompoundPolygon3d> & first_attention_area);
+    const util::TargetObjects & target_objects,
+    const util::InterpolatedPathInfo & interpolated_path_info,
+    const lanelet::ConstLanelets & attention_lanelets);
 
   util::TargetObjects generateTargetObjects(
     const util::IntersectionLanelets & intersection_lanelets,
@@ -345,7 +343,7 @@ private:
   bool checkCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     util::TargetObjects * target_objects, const util::PathLanelets & path_lanelets,
-    const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
+    const size_t closest_idx, const size_t last_intersection_stopline_candidate_idx,
     const double time_delay, const util::TrafficPrioritizedLevel & traffic_prioritized_level);
 
   OcclusionType getOcclusionStatus(

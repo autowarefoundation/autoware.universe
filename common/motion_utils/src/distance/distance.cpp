@@ -91,7 +91,7 @@ std::tuple<double, double, double> update(
  * @param (t_during_min_acc) duration of constant deceleration [s]
  * @return moving distance until velocity is reached vt [m]
  */
-boost::optional<double> calcDecelDistPlanType1(
+std::optional<double> calcDecelDistPlanType1(
   const double v0, const double vt, const double a0, const double am, const double ja,
   const double jd, const double t_during_min_acc)
 {
@@ -155,7 +155,7 @@ boost::optional<double> calcDecelDistPlanType1(
  * @param (jd) minimum jerk [m/sss]
  * @return moving distance until velocity is reached vt [m]
  */
-boost::optional<double> calcDecelDistPlanType2(
+std::optional<double> calcDecelDistPlanType2(
   const double v0, const double vt, const double a0, const double ja, const double jd)
 {
   constexpr double epsilon = 1e-3;
@@ -212,7 +212,7 @@ boost::optional<double> calcDecelDistPlanType2(
  * @param (ja) maximum jerk [m/sss]
  * @return moving distance until velocity is reached vt [m]
  */
-boost::optional<double> calcDecelDistPlanType3(
+std::optional<double> calcDecelDistPlanType3(
   const double v0, const double vt, const double a0, const double ja)
 {
   constexpr double epsilon = 1e-3;
@@ -234,7 +234,7 @@ boost::optional<double> calcDecelDistPlanType3(
 }
 }  // namespace
 
-boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
+std::optional<double> calcDecelDistWithJerkAndAccConstraints(
   const double current_vel, const double target_vel, const double current_acc, const double acc_min,
   const double jerk_acc, const double jerk_dec)
 {
@@ -262,7 +262,8 @@ boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
   if (t_during_min_acc > epsilon) {
     return calcDecelDistPlanType1(
       current_vel, target_vel, current_acc, acc_min, jerk_acc, jerk_dec, t_during_min_acc);
-  } else if (is_decel_needed || current_acc > epsilon) {
+  }
+  if (is_decel_needed || current_acc > epsilon) {
     return calcDecelDistPlanType2(current_vel, target_vel, current_acc, jerk_acc, jerk_dec);
   }
 
