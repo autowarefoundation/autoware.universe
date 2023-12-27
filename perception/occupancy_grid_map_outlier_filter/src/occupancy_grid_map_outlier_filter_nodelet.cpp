@@ -135,8 +135,7 @@ void RadiusSearch2dFilter::filter(
     const int min_points_threshold = std::min(
       std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
       max_points_);
-    const int points_num =
-      kd_tree_->radiusSearch(i, search_radius_, k_indices, k_distances, min_points_threshold);
+    const int points_num = kd_tree_->nearestKSearch(i, min_points_threshold, k_indices, k_distances);
 
     if (min_points_threshold <= points_num) {
       output.points.push_back(xyz_cloud.points.at(i));
@@ -150,43 +149,62 @@ void RadiusSearch2dFilter::filter(
   const PclPointCloud & high_conf_input, const PclPointCloud & low_conf_input, const Pose & pose,
   PclPointCloud & output, PclPointCloud & outlier)
 {
-  const auto & high_conf_xyz_cloud = high_conf_input;
-  const auto & low_conf_xyz_cloud = low_conf_input;
   // check the limit points number
-  if (low_conf_xyz_cloud.points.size() > max_filter_points_nb_) {
+  if (low_conf_input.points.size() > max_filter_points_nb_) {
     RCLCPP_WARN(
       rclcpp::get_logger("OccupancyGridMapOutlierFilterComponent"),
       "Skip outlier filter since too much low_confidence pointcloud!");
     return;
   }
 
-  pcl::PointCloud<pcl::PointXY>::Ptr xy_cloud(new pcl::PointCloud<pcl::PointXY>);
-  xy_cloud->points.resize(low_conf_xyz_cloud.points.size() + high_conf_xyz_cloud.points.size());
-  for (size_t i = 0; i < low_conf_xyz_cloud.points.size(); ++i) {
-    xy_cloud->points[i].x = low_conf_xyz_cloud.points[i].x;
-    xy_cloud->points[i].y = low_conf_xyz_cloud.points[i].y;
-  }
-  for (size_t i = low_conf_xyz_cloud.points.size(); i < xy_cloud->points.size(); ++i) {
-    xy_cloud->points[i].x = high_conf_xyz_cloud.points[i - low_conf_xyz_cloud.points.size()].x;
-    xy_cloud->points[i].y = high_conf_xyz_cloud.points[i - low_conf_xyz_cloud.points.size()].y;
+  pcl::PointCloud<pcl::PointXY>::Ptr low_conf_xy_cloud(new pcl::PointCloud<pcl::PointXY>);
+  low_conf_xy_cloud->points.resize(low_conf_input.points.size());
+  for (size_t i = 0; i < low_conf_input.points.size(); ++i) {
+    low_conf_xy_cloud->points[i].x = low_conf_input.points[i].x;
+    low_conf_xy_cloud->points[i].y = low_conf_input.points[i].y;
   }
 
-  std::vector<int> k_indices(xy_cloud->points.size());
-  std::vector<float> k_distances(xy_cloud->points.size());
-  kd_tree_->setInputCloud(xy_cloud);
-  for (size_t i = 0; i < low_conf_xyz_cloud.points.size(); ++i) {
-    const float distance =
-      std::hypot(xy_cloud->points[i].x - pose.position.x, xy_cloud->points[i].y - pose.position.y);
+  // Low conf cloud check
+  std::vector<int> k_indices_low(low_conf_xy_cloud->points.size());
+  std::vector<float> k_distances_low(low_conf_xy_cloud->points.size());
+  kd_tree_->setInputCloud(low_conf_xy_cloud);
+  for (size_t i = 0; i < low_conf_input.points.size(); ++i) {
+    const float distance = std::hypot(low_conf_xy_cloud->points[i].x - pose.position.x, low_conf_xy_cloud->points[i].y - pose.position.y);
     const int min_points_threshold = std::min(
       std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
       max_points_);
-    const int points_num =
-      kd_tree_->radiusSearch(i, search_radius_, k_indices, k_distances, min_points_threshold);
+    const int points_num = kd_tree_->nearestKSearch(i, min_points_threshold, k_indices_low, k_distances_low);
+    if (min_points_threshold <= points_num) {
+      output.points.push_back(low_conf_input.points.at(i));
+    } else {
+      outlier.points.push_back(low_conf_input.points.at(i));
+    }
+  }
+
+  // High conf cloud check  
+  if(outlier.points.size() == 0){return;}
+
+  pcl::PointCloud<pcl::PointXY>::Ptr high_conf_xy_cloud(new pcl::PointCloud<pcl::PointXY>);
+  high_conf_xy_cloud->points.resize(high_conf_input.points.size());
+  for (size_t i = 0; i < high_conf_input.points.size(); ++i) {
+    high_conf_xy_cloud->points[i].x = high_conf_input.points[i].x;
+    high_conf_xy_cloud->points[i].y = high_conf_input.points[i].y;
+  }
+
+  std::vector<int> k_indices_high(high_conf_xy_cloud->points.size());
+  std::vector<float> k_distances_high(high_conf_xy_cloud->points.size());
+  kd_tree_->setInputCloud(high_conf_xy_cloud);
+  for (size_t i = 0; i < outlier.points.size(); ++i) {
+    const float distance = std::hypot(high_conf_xy_cloud->points[i].x - pose.position.x, high_conf_xy_cloud->points[i].y - pose.position.y);
+    const int min_points_threshold = std::min(
+      std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
+      max_points_);
+    const int points_num = kd_tree_->nearestKSearch(i, min_points_threshold, k_indices_high, k_distances_high);
 
     if (min_points_threshold <= points_num) {
-      output.points.push_back(low_conf_xyz_cloud.points.at(i));
+      output.points.push_back(outlier.points.at(i));
     } else {
-      outlier.points.push_back(low_conf_xyz_cloud.points.at(i));
+      outlier.points.erase(outlier.points.begin() + i);
     }
   }
 }
@@ -239,19 +257,41 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
 void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
   const PointCloud2::ConstSharedPtr & input_pc, PointCloud2 & front_pc, PointCloud2 & behind_pc)
 {
-  PclPointCloud tmp_behind_pc;
-  PclPointCloud tmp_front_pc;
-  for (sensor_msgs::PointCloud2ConstIterator<float> x(*input_pc, "x"), y(*input_pc, "y"),
-       z(*input_pc, "z");
-       x != x.end(); ++x, ++y, ++z) {
+  size_t front_count = 0;
+  size_t behind_count = 0;
+  
+  for (sensor_msgs::PointCloud2ConstIterator<float> x(*input_pc, "x"); x != x.end(); ++x) {
     if (*x < 0.0) {
-      tmp_behind_pc.push_back(pcl::PointXYZ(*x, *y, *z));
+      behind_count++;
     } else {
-      tmp_front_pc.push_back(pcl::PointXYZ(*x, *y, *z));
+      front_count++;
     }
   }
-  pcl::toROSMsg(tmp_front_pc, front_pc);
-  pcl::toROSMsg(tmp_behind_pc, behind_pc);
+
+  sensor_msgs::PointCloud2Modifier front_pc_modfier(front_pc);
+  sensor_msgs::PointCloud2Modifier behind_pc_modfier(behind_pc);
+  front_pc_modfier.setPointCloud2FieldsByString(1,"xyz");
+  behind_pc_modfier.setPointCloud2FieldsByString(1,"xyz");
+  front_pc_modfier.resize(front_count);
+  behind_pc_modfier.resize(behind_count);
+
+  sensor_msgs::PointCloud2Iterator<float> fr_iter(front_pc, "x");
+  sensor_msgs::PointCloud2Iterator<float> be_iter(behind_pc, "x");
+
+  for (sensor_msgs::PointCloud2ConstIterator<float> in_iter(*input_pc, "x"); in_iter != in_iter.end(); ++in_iter) {
+    if (*in_iter < 0.0) {
+      *be_iter = in_iter[0];
+      be_iter[1] = in_iter[1];
+      be_iter[2] = in_iter[2];
+      ++be_iter;
+    } else {
+      *fr_iter = in_iter[0];
+      fr_iter[1] = in_iter[1];
+      fr_iter[2] = in_iter[2];
+      ++fr_iter;
+    }
+  }
+
   front_pc.header = input_pc->header;
   behind_pc.header = input_pc->header;
 }
