@@ -87,10 +87,10 @@ void SignalDisplay::onInitialize()
     "Speed Limit Topic", "/planning/scenario_planning/current_max_velocity",
     "tier4_planning_msgs/msg/VelocityLimit", "Topic for Speed Limit Data", this, nullptr, this);
 
-  traffic_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>("Traffic
-  Light Topic", "/perception/traffic_light_recognition/traffic_signals",
-  rosidl_generator_traits::data_type<autoware_perception_msgs::msg::TrafficSignalArray>(), "Topic
-  for Traffic Light Data", this, nullptr, this);
+  // traffic_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>("Traffic
+  // Light Topic", "/perception/traffic_light_recognition/traffic_signals",
+  // rosidl_generator_traits::data_type<autoware_perception_msgs::msg::TrafficSignalArray>(), "Topic
+  // for Traffic Light Data", this, nullptr, this);
 }
 
 void SignalDisplay::setupRosSubscriptions()
@@ -136,12 +136,14 @@ void SignalDisplay::setupRosSubscriptions()
         updateHazardLightsData(msg);
       });
 
-  traffic_sub_ = rviz_node_->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
-    traffic_topic_property_->getTopicStd(),
-    rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-    [this](const autoware_perception_msgs::msg::TrafficSignalArray::SharedPtr msg) {
-      updateTrafficLightData(msg);
-    });
+  // traffic_sub_ =
+  // rviz_node_->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+  //     traffic_topic_property_->getTopicStd(),
+  //     rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(), [this](const
+  //     autoware_perception_msgs::msg::TrafficSignalArray::SharedPtr msg)
+  //     {
+  //         updateTrafficLightData(msg);
+  //     });
 
   speed_limit_sub_ = rviz_node_->create_subscription<tier4_planning_msgs::msg::VelocityLimit>(
     speed_limit_topic_property_->getTopicStd(),
@@ -155,17 +157,13 @@ SignalDisplay::~SignalDisplay()
 {
   std::lock_guard<std::mutex> lock(property_mutex_);
   overlay_.reset();
-  if (executor_thread_.joinable()) {
-    executor_thread_.join();
-  }
 
-  executor_running_ = false;
   gear_sub_.reset();
   steering_sub_.reset();
   speed_sub_.reset();
   turn_signals_sub_.reset();
   hazard_lights_sub_.reset();
-  traffic_sub_.reset();
+  // traffic_sub_.reset();
 
   rviz_node_.reset();
 
@@ -187,7 +185,7 @@ SignalDisplay::~SignalDisplay()
   speed_topic_property_.reset();
   steering_topic_property_.reset();
   hazard_lights_topic_property_.reset();
-  traffic_topic_property_.reset();
+  // traffic_topic_property_.reset();
 }
 
 void SignalDisplay::update(float /* wall_dt */, float /* ros_dt */)
@@ -214,30 +212,27 @@ void SignalDisplay::onDisable()
 {
   std::lock_guard<std::mutex> lock(property_mutex_);
 
-  executor_running_ = false;
-  if (executor_thread_.joinable()) {
-    executor_thread_.join();
-    gear_sub_.reset();
-    steering_sub_.reset();
-    speed_sub_.reset();
-    turn_signals_sub_.reset();
-    hazard_lights_sub_.reset();
-  }
+  gear_sub_.reset();
+  steering_sub_.reset();
+  speed_sub_.reset();
+  turn_signals_sub_.reset();
+  hazard_lights_sub_.reset();
 
   if (overlay_) {
     overlay_->hide();
   }
 }
 
-void SignalDisplay::updateTrafficLightData(
-  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(property_mutex_);
+// void SignalDisplay::updateTrafficLightData(const
+// autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
+// {
+//     std::lock_guard<std::mutex> lock(property_mutex_);
 
-  if (traffic_display_) {
-    traffic_display_->updateTrafficLightData(msg);
-  }
-}
+//     if (traffic_display_)
+//     {
+//         traffic_display_->updateTrafficLightData(msg);
+//     }
+// }
 
 void SignalDisplay::updateSpeedLimitData(
   const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg)
