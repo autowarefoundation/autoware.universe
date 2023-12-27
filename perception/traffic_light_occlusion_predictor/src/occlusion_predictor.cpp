@@ -111,11 +111,7 @@ void CloudOcclusionPredictor::predict(
     lidar_rays_[static_cast<int>(ray.azimuth)][static_cast<int>(ray.elevation)].push_back(ray);
   }
   for (size_t i = 0; i < roi_tls.size(); i++) {
-    if (rois_msg->rois[i].roi.height == 0) {
-      occlusion_ratios[i] = 1.0;
-      continue;
-    }
-    occlusion_ratios[i] = predict(roi_tls[i], roi_brs[i]);
+   occlusion_ratios[i] = rois_msg->rois[i].roi.height == 0 ? 1.0 : predict(roi_tls[i], roi_brs[i]);
   }
 }
 
