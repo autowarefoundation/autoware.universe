@@ -104,18 +104,41 @@ SamplingPlannerModule::SamplingPlannerModule(
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.points.empty()) return 0.0;
       if (path.poses.empty()) return 0.0;
-      const double distance_ego_to_goal_pose =
-        std::abs(input_data.ego_arc.length - input_data.goal_arc.length);
 
-      constexpr double epsilon = 0.001;
-      if (distance_ego_to_goal_pose < epsilon) return 0.0;
-      const double length_last_point_on_path = input_data.ego_arc.length + path.lengths.back();
-      const double length_path_to_goal =
-        std::abs(length_last_point_on_path - input_data.goal_arc.length);
+      const auto & ego_pose = input_data.ego_pose;
+
+      const auto closest_path_pose_itr = std::min_element(
+        path.poses.begin(), path.poses.end(), [&ego_pose](const auto & p1, const auto & p2) {
+          const auto dist1 =
+            std::hypot(p1.position.x - ego_pose.position.x, p1.position.y - ego_pose.position.y);
+          const auto dist2 =
+            std::hypot(p2.position.x - ego_pose.position.x, p2.position.y - ego_pose.position.y);
+          return dist1 < dist2;
+        });
+
+      int closest_path_pose_index = static_cast<int>(closest_path_pose_itr - path.poses.begin());
+
+      const double remaining_path_length =
+        path.lengths.back() - path.lengths.at(closest_path_pose_index);
+
       const double max_target_length = *std::max_element(
         internal_params_->sampling.target_lengths.begin(),
         internal_params_->sampling.target_lengths.end());
-      return length_path_to_goal / max_target_length;
+
+      // const double distance_ego_to_goal_pose =
+      //   std::abs(input_data.ego_arc.length - input_data.goal_arc.length);
+      // std::cerr << "distance_ego_to_goal_pose " << distance_ego_to_goal_pose << "\n";
+      // if (closest_lanelet_to_goal.id() == closest_lanelet_to_path_end.id()) {
+      //   constexpr double epsilon = 0.001;
+      //   if (distance_ego_to_goal_pose < epsilon) return 0.0;
+      //   const double length_last_point_on_path = input_data.ego_arc.length + path.lengths.back();
+      //   const double length_path_to_goal =
+      //     std::abs(length_last_point_on_path - input_data.goal_arc.length);
+      //   return max_target_length / length_path_to_goal;
+      // }
+
+      // return length_path_to_goal / max_target_length;
+      return max_target_length / remaining_path_length;
     });
 
   // Distance to centerline
@@ -129,7 +152,10 @@ SamplingPlannerModule::SamplingPlannerModule(
       const auto path_point_arc =
         lanelet::utils::getArcCoordinates(input_data.closest_lanelets_to_goal, last_pose);
       const double lateral_distance_to_center_lane = std::abs(path_point_arc.distance);
-      return lateral_distance_to_center_lane;
+      const double max_target_lateral_positions = *std::max_element(
+        internal_params_->sampling.target_lateral_positions.begin(),
+        internal_params_->sampling.target_lateral_positions.end());
+      return lateral_distance_to_center_lane / max_target_lateral_positions;
     });
 
   // // Curvature cost
@@ -138,16 +164,20 @@ SamplingPlannerModule::SamplingPlannerModule(
       sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.curvatures.empty()) return std::numeric_limits<double>::max();
-      double curvature_sum = 0.0;
-      for (const auto curvature : path.curvatures) {
-        curvature_sum += std::abs(curvature);
-      }
-      const auto curvature_average = curvature_sum / static_cast<double>(path.curvatures.size());
-      const auto max_curvature =
-        (curvature_average > 0.0) ? constraints.hard.max_curvature : constraints.hard.min_curvature;
-      return curvature_average / max_curvature;
-      // return constraints.soft.curvature_weight * curvature_sum /
-      //        static_cast<double>(path.curvatures.size());
+      // double curvature_sum = 0.0;
+      // for (const auto curvature : path.curvatures) {
+      //   curvature_sum += std::abs(curvature);
+      // }
+
+      const double max_path_curvature = *std::max_element(
+        path.curvatures.begin(), path.curvatures.end(),
+        [](const auto & a, const auto & b) { return std::abs(a) < std::abs(b); });
+
+      // const auto curvature_average = curvature_sum / static_cast<double>(path.curvatures.size());
+      // const auto max_curvature =
+      //   (curvature_average > 0.0) ? constraints.hard.max_curvature :
+      //   constraints.hard.min_curvature;
+      return std::abs(max_path_curvature) / constraints.hard.max_curvature;
     });
   //  Same lane as goal cost Still in testing dont delete
   // soft_constraints_.emplace_back(
@@ -157,14 +187,14 @@ SamplingPlannerModule::SamplingPlannerModule(
   //     [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
   //     if (path.poses.empty()) return 0.0;
 
-  //     const auto & goal_pose = input_data.goal_pose;
-  //     lanelet::ConstLanelet closest_lanelet_to_goal;
-  //     lanelet::utils::query::getClosestLanelet(
-  //       input_data.current_lanes, goal_pose, &closest_lanelet_to_goal);
-  //     lanelet::ConstLanelet closest_lanelet_to_path_end;
-  //     lanelet::utils::query::getClosestLanelet(
-  //       input_data.current_lanes, path.poses.back(), &closest_lanelet_to_path_end);
-  //     return (closest_lanelet_to_goal.id() == closest_lanelet_to_path_end.id()) ? 0.0 : 0.5;
+  // const auto & goal_pose = input_data.goal_pose;
+  // lanelet::ConstLanelet closest_lanelet_to_goal;
+  // lanelet::utils::query::getClosestLanelet(
+  //   input_data.current_lanes, goal_pose, &closest_lanelet_to_goal);
+  // lanelet::ConstLanelet closest_lanelet_to_path_end;
+  // lanelet::utils::query::getClosestLanelet(
+  //   input_data.current_lanes, path.poses.back(), &closest_lanelet_to_path_end);
+  // return (closest_lanelet_to_goal.id() == closest_lanelet_to_path_end.id()) ? 0.0 : 0.5;
   //   });
 }
 
