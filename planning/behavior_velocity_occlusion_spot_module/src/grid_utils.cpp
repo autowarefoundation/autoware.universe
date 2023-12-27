@@ -25,6 +25,8 @@ namespace behavior_velocity_planner
 {
 namespace grid_utils
 {
+  
+namespace bg = boost::geometry;
 
 Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double radius)
 {

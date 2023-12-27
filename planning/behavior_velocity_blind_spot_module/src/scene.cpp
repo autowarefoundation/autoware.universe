@@ -46,7 +46,7 @@ namespace bg = boost::geometry;
 
 namespace
 {
-[[maybe_unused]] geometry_msgs::msg::Polygon tier4_autoware_utils::toGeomPoly(const lanelet::CompoundPolygon3d & poly)
+[[maybe_unused]] geometry_msgs::msg::Polygon toGeomPoly(const lanelet::CompoundPolygon3d & poly)
 {
   geometry_msgs::msg::Polygon geom_poly;
 

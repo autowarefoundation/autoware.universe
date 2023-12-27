@@ -93,6 +93,9 @@ namespace behavior_velocity_planner
 {
 namespace planning_utils
 {
+  
+namespace bg = boost::geometry;
+
 using autoware_auto_planning_msgs::msg::PathPoint;
 using motion_utils::calcLongitudinalOffsetToSegment;
 using motion_utils::calcSignedArcLength;
