@@ -114,7 +114,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   }
 
   // append the undetected rois as unknown
-  for (const auto & input_roi :  input_rois_msg->rois) {
+  for (const auto & input_roi : input_rois_msg->rois) {
     if (input_roi.roi.height == 0) {
       tier4_perception_msgs::msg::TrafficSignal tlr_sig;
       tlr_sig.traffic_light_id = input_roi.traffic_light_id;
