@@ -6,6 +6,8 @@ find_package(ament_cmake_auto REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(autoware_auto_vehicle_msgs REQUIRED)
 find_package(tier4_planning_msgs REQUIRED)
+find_package(autoware_perception_msgs REQUIRED)
+find_package(tier4_perception_msgs REQUIRED)
 ament_auto_find_build_dependencies()
 # if your cmake has this line it should probably find autoware_auto_vehicle_msgs package if not you should add to ament_target_dependencies()
 
@@ -90,6 +92,8 @@ ament_target_dependencies(
         rviz_2d_overlay_msgs
         autoware_auto_vehicle_msgs
         tier4_planning_msgs
+        autoware_perception_msgs
+        tier4_perception_msgs
 )
 
 ament_export_include_directories(include)

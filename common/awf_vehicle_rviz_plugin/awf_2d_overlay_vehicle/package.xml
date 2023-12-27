@@ -2,14 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>awf_2d_overlay_vehicle</name>
-  <version>1.3.0</version>
+  <version>0.0.1</version>
   <description>
     RViz2 plugin for 2D overlays in the 3D view. Mainly a ROS2 port of the JSK overlay plugin
         (https://github.com/jsk-ros-pkg/jsk_visualization).
   </description>
-  <maintainer email="team-spatzenhirn@uni-ulm.de">Team Spatzenhirn</maintainer>
-  <maintainer email="jonas@jonasotto.com">Jonas Otto</maintainer>
-  <maintainer email="dominik.authaler@uni-ulm.de">Dominik Authaler</maintainer>
+  <maintainer email="khalil@leodrive.ai">Khalil Selyan</maintainer>
 
   <license>BSD-3-Clause</license>
 
@@ -20,6 +18,8 @@
   <depend>rviz_ogre_vendor</depend>
   <depend>rviz_rendering</depend>
   <depend>tier4_planning_msgs</depend>
+  <depend>autoware_perception_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
