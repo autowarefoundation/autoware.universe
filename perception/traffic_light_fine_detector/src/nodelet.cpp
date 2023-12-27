@@ -270,16 +270,16 @@ void TrafficLightFineDetectorNodelet::detectionMatch(
   }
 
   out_rois.rois.clear();
-  for (const auto & r : id2expectRoi) {
+  for (const auto & [tlr_id, _] : id2expectRoi) {
     TrafficLightRoi tlr;
-    tlr.traffic_light_id = r.first;
-    // if matches, update the roi info; else x,y,width,heigh=0
-    if (bestDetections.count(tlr.traffic_light_id)) {
-      tensorrt_yolox::Object p = bestDetections.at(tlr.traffic_light_id);
-      tlr.roi.x_offset = p.x_offset;
-      tlr.roi.y_offset = p.y_offset;
-      tlr.roi.width = p.width;
-      tlr.roi.height = p.height;
+    tlr.traffic_light_id = tlr_id;
+    // if matches, update the roi info; else x,y,width,height=0
+    if (bestDetections.count(tlr_id)) {
+      const auto & object = bestDetections.at(tlr_id);
+      tlr.roi.x_offset = object.x_offset;
+      tlr.roi.y_offset = object.y_offset;
+      tlr.roi.width = object.width;
+      tlr.roi.height = object.height;
     }
     out_rois.rois.push_back(tlr);
   }
