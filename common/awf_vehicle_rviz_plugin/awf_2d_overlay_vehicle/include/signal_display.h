@@ -115,7 +115,7 @@ private:
     turn_signals_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::HazardLightsReport>::SharedPtr
     hazard_lights_sub_;
-  // rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::TrafficLightState>::SharedPtr
+  // rclcpp::Subscription<autoware_perception_msgs::msg::TrafficSignalArray>::SharedPtr
   // traffic_sub_;
   rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr speed_limit_sub_;
 
@@ -133,8 +133,8 @@ private:
     const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr & msg);
   void updateHazardLightsData(
     const autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr & msg);
-  // void updateTrafficData(const autoware_auto_vehicle_msgs::msg::TrafficLightState::ConstSharedPtr
-  // &msg);
+  // void updateTrafficLightData(const
+  // autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
   void updateSpeedLimitData(const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
   void drawWidget(QImage & hud);
 };
