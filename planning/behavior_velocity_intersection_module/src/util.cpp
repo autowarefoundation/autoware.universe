@@ -193,10 +193,6 @@ std::optional<size_t> getFirstPointInsidePolygon(
   return std::nullopt;
 }
 
-/**
- * @param pair lanelets and the vector of original lanelets in topological order (not reversed as
- *in generateDetectionLaneDivisions())
- **/
 std::pair<lanelet::ConstLanelets, std::vector<lanelet::ConstLanelets>>
 mergeLaneletsByTopologicalSort(
   const lanelet::ConstLanelets & lanelets,
@@ -293,8 +289,8 @@ mergeLaneletsByTopologicalSort(
 }
 
 bool isOverTargetIndex(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const geometry_msgs::msg::Pose & current_pose, const int target_idx)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
+  const geometry_msgs::msg::Pose & current_pose, const size_t target_idx)
 {
   if (closest_idx == target_idx) {
     const geometry_msgs::msg::Pose target_pose = path.points.at(target_idx).point.pose;
@@ -304,8 +300,8 @@ bool isOverTargetIndex(
 }
 
 bool isBeforeTargetIndex(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const geometry_msgs::msg::Pose & current_pose, const int target_idx)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
+  const geometry_msgs::msg::Pose & current_pose, const size_t target_idx)
 {
   if (closest_idx == target_idx) {
     const geometry_msgs::msg::Pose target_pose = path.points.at(target_idx).point.pose;
@@ -314,81 +310,13 @@ bool isBeforeTargetIndex(
   return static_cast<bool>(target_idx > closest_idx);
 }
 
-/*
-static std::vector<int> getAllAdjacentLanelets(
-  const lanelet::routing::RoutingGraphPtr routing_graph, lanelet::ConstLanelet lane)
-{
-  std::set<int> results;
-
-  results.insert(lane.id());
-
-  auto it = routing_graph->adjacentRight(lane);
-  // take all lane on the right side
-  while (!!it) {
-    results.insert(it.get().id());
-    it = routing_graph->adjacentRight(it.get());
-  }
-  // take all lane on the left side
-  it = routing_graph->adjacentLeft(lane);
-  while (!!it) {
-    results.insert(it.get().id());
-    it = routing_graph->adjacentLeft(it.get());
-
-  }
-  return std::vector<int>(results.begin(), results.end());
-}
-*/
-
-/*
-lanelet::ConstLanelets extendedAdjacentDirectionLanes(
-  lanelet::LaneletMapConstPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
-  lanelet::ConstLanelet lane)
-{
-  // some of the intersections are not well-formed, and "adjacent" turning
-  // lanelets are not sharing the LineStrings
-  const std::string turn_direction = getTurnDirection(lane);
-  if (turn_direction != "left" && turn_direction != "right" && turn_direction != "straight")
-    return {};
-
-  std::set<int> previous_lanelet_ids;
-  for (auto && previous_lanelet : routing_graph->previous(lane)) {
-    previous_lanelet_ids.insert(previous_lanelet.id());
-  }
-
-  std::set<int> besides_previous_lanelet_ids;
-  for (auto && previous_lanelet_id : previous_lanelet_ids) {
-    lanelet::ConstLanelet previous_lanelet = map->laneletLayer.get(previous_lanelet_id);
-    for (auto && beside_lanelet : getAllAdjacentLanelets(routing_graph, previous_lanelet)) {
-      besides_previous_lanelet_ids.insert(beside_lanelet);
-    }
-  }
-
-  std::set<int> following_turning_lanelets;
-  following_turning_lanelets.insert(lane.id());
-  for (auto && besides_previous_lanelet_id : besides_previous_lanelet_ids) {
-    lanelet::ConstLanelet besides_previous_lanelet =
-      map->laneletLayer.get(besides_previous_lanelet_id);
-    for (auto && following_lanelet : routing_graph->following(besides_previous_lanelet)) {
-      // if this has {"turn_direction", "${turn_direction}"}, take this
-      if (getTurnDirection(following_lanelet) == turn_direction)
-        following_turning_lanelets.insert(following_lanelet.id());
-    }
-  }
-  lanelet::ConstLanelets ret{};
-  for (auto && id : following_turning_lanelets) {
-    ret.push_back(map->laneletLayer.get(id));
-  }
-  return ret;
-}
-*/
-
 std::optional<tier4_autoware_utils::Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr)
 {
   const std::string area_id_str = assigned_lane.attributeOr("intersection_area", "else");
   if (area_id_str == "else") return std::nullopt;
 
-  const int area_id = std::atoi(area_id_str.c_str());
+  const lanelet::Id area_id = std::atoi(area_id_str.c_str());
   const auto poly_3d = lanelet_map_ptr->polygonLayer.get(area_id);
   Polygon2d poly{};
   for (const auto & p : poly_3d) poly.outer().emplace_back(p.x(), p.y());
@@ -422,7 +350,6 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   return interpolated_path_info;
 }
 
-// from here
 geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state)
 {

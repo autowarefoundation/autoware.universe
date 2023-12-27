@@ -34,12 +34,18 @@
 namespace behavior_velocity_planner::util
 {
 
+/** wrapper class of interpolated path with lane id*/
 struct InterpolatedPathInfo
 {
+  /** the interpolated path */
   autoware_auto_planning_msgs::msg::PathWithLaneId path;
+  /** discretization interval of interpolation */
   double ds{0.0};
+  /** the intersection lanelet id */
   lanelet::Id lane_id{0};
+  /** the associative lane ids of lane_id */
   std::set<lanelet::Id> associative_lane_ids{};
+  /** the range of indices for the path points with associative lane id */
   std::optional<std::pair<size_t, size_t>> lane_id_interval{std::nullopt};
 };
 

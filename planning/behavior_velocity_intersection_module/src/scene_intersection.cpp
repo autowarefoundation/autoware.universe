@@ -3352,7 +3352,7 @@ void TargetObject::calc_dist_to_stopline()
   autoware_auto_perception_msgs::msg::PredictedObject predicted_object = object;
   predicted_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
   predicted_object.kinematics.initial_pose_with_covariance.pose.orientation =
-  tier4_autoware_utils::createquaternionfromrpy(0, 0, lane_yaw);
+  tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
   auto predicted_obj_footprint = tier4_autoware_utils::toPolygon2d(predicted_object);
   const bool is_in_stuck_area = !bg::disjoint(predicted_obj_footprint, stuck_vehicle_detect_area);
   debug_data_.predicted_obj_pose.position = stopping_point;
