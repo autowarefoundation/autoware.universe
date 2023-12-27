@@ -29,10 +29,15 @@ TrafficDisplay::~TrafficDisplay()
   // Cleanup if necessary
 }
 
-// void TrafficDisplay::updateTrafficData(const
-// autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr &msg)
+// void TrafficDisplay::updateTrafficLightData(const
+// autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
 // {
-//     current_gear_ = msg->report; // Assuming msg->report contains the gear information
+//     // Update the internal variable
+//     // current_traffic_ = msg->traffic_signal_id;
+
+//     // RCLCPP_INFO(rclcpp::get_logger("rcl"), "Traffic Light: %d", msg->elements.size());
+//     // Force the plugin to redraw
+//     queueRender();
 // }
 
 void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect)
@@ -47,8 +52,7 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   circleRect.setHeight(backgroundRect.height() - 20);
   circleRect.moveTopRight(QPointF(backgroundRect.right() - 10, backgroundRect.top() + 10));
 
-  // #C2C2C2
-  painter.setBrush(QBrush(QColor(194, 194, 194)));
+  painter.setBrush(QBrush(gray));
   painter.drawEllipse(circleRect.center(), 30, 30);
 
   // Define the area for the traffic light image (should be smaller or positioned within the circle)
