@@ -29,16 +29,16 @@ TrafficDisplay::~TrafficDisplay()
   // Cleanup if necessary
 }
 
-// void TrafficDisplay::updateTrafficLightData(const
-// autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
-// {
-//     // Update the internal variable
-//     // current_traffic_ = msg->traffic_signal_id;
+void TrafficDisplay::updateTrafficLightData(
+  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
+{
+  // Update the internal variable
+  // current_traffic_ = msg->traffic_signal_id;
 
-//     // RCLCPP_INFO(rclcpp::get_logger("rcl"), "Traffic Light: %d", msg->elements.size());
-//     // Force the plugin to redraw
-//     queueRender();
-// }
+  // RCLCPP_INFO(rclcpp::get_logger("rcl"), "Traffic Light: %d", msg->elements.size());
+  // Force the plugin to redraw
+  queueRender();
+}
 
 void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect)
 {

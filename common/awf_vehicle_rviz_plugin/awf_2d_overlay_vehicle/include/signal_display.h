@@ -94,7 +94,7 @@ private:
   std::unique_ptr<rviz_common::properties::RosTopicProperty> speed_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> turn_signals_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> hazard_lights_topic_property_;
-  // std::unique_ptr<rviz_common::properties::RosTopicProperty> traffic_topic_property_;
+  std::unique_ptr<rviz_common::properties::RosTopicProperty> traffic_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> speed_limit_topic_property_;
 
   void drawBackground(QPainter & painter, const QRectF & backgroundRect);
@@ -115,8 +115,7 @@ private:
     turn_signals_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::HazardLightsReport>::SharedPtr
     hazard_lights_sub_;
-  // rclcpp::Subscription<autoware_perception_msgs::msg::TrafficSignalArray>::SharedPtr
-  // traffic_sub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficSignalArray>::SharedPtr traffic_sub_;
   rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr speed_limit_sub_;
 
   std::thread executor_thread_;
@@ -133,8 +132,8 @@ private:
     const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr & msg);
   void updateHazardLightsData(
     const autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr & msg);
-  // void updateTrafficLightData(const
-  // autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
+  void updateTrafficLightData(
+    const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
   void updateSpeedLimitData(const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
   void drawWidget(QImage & hud);
 };

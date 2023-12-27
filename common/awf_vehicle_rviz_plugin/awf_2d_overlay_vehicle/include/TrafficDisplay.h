@@ -10,13 +10,13 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
 
+#include <autoware_perception_msgs/msg/traffic_signal.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal_element.hpp>
+
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
-
-// #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
-// #include <autoware_perception_msgs/msg/traffic_signal.hpp>
-// #include <autoware_perception_msgs/msg/traffic_signal_element.hpp>
 #endif
 
 namespace awf_2d_overlay_vehicle
@@ -29,8 +29,8 @@ public:
   TrafficDisplay();
   virtual ~TrafficDisplay() override;
   void drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect);
-  // void updateTrafficLightData(const
-  // autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
+  void updateTrafficLightData(
+    const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
 
 private:
   int current_traffic_;  // Internal variable to store current gear
