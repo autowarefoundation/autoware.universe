@@ -74,11 +74,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
 
-  if (planner_data_->parameters.visualize_maximum_drivable_area) {
-    debug_maximum_drivable_area_publisher_ =
-      create_publisher<MarkerArray>("~/maximum_drivable_area", 1);
-  }
-
   debug_turn_signal_info_publisher_ = create_publisher<MarkerArray>("~/debug/turn_signal_info", 1);
 
   bound_publisher_ = create_publisher<MarkerArray>("~/debug/bound", 1);
@@ -265,7 +260,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.enable_cog_on_centerline = declare_parameter<bool>("enable_cog_on_centerline");
   p.input_path_interval = declare_parameter<double>("input_path_interval");
   p.output_path_interval = declare_parameter<double>("output_path_interval");
-  p.visualize_maximum_drivable_area = declare_parameter<bool>("visualize_maximum_drivable_area");
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
@@ -447,12 +441,6 @@ void BehaviorPathPlannerNode::run()
   }
 
   planner_data_->prev_route_id = planner_data_->route_handler->getRouteUuid();
-
-  if (planner_data_->parameters.visualize_maximum_drivable_area) {
-    const auto maximum_drivable_area = marker_utils::createFurthestLineStringMarkerArray(
-      utils::getMaximumDrivableArea(planner_data_));
-    debug_maximum_drivable_area_publisher_->publish(maximum_drivable_area);
-  }
 
   lk_pd.unlock();  // release planner_data_
 
@@ -931,8 +919,8 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, DrivableAreaExpansionParameters::SMOOTHING_MAX_BOUND_RATE_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_bound_rate);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::SMOOTHING_EXTRA_ARC_LENGTH_PARAM,
-      planner_data_->drivable_area_expansion_parameters.extra_arc_length);
+      parameters, DrivableAreaExpansionParameters::SMOOTHING_ARC_LENGTH_RANGE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.arc_length_range);
     updateParam(
       parameters, DrivableAreaExpansionParameters::PRINT_RUNTIME_PARAM,
       planner_data_->drivable_area_expansion_parameters.print_runtime);
