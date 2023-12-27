@@ -134,7 +134,6 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
     get_point_from_global_offset(in_cloud, input_point, global_offset);
 
     auto x{input_point.x - x_shift};  // base on front wheel center
-    // auto y{input_point.y};
     auto radius{static_cast<float>(std::hypot(x, input_point.y))};
     auto theta{normalizeRadian(std::atan2(x, input_point.y), 0.0)};
 
