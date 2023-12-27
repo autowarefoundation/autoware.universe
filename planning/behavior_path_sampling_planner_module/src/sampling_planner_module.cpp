@@ -356,13 +356,15 @@ void SamplingPlannerModule::prepareConstraints(
   constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
   constraints.rtree.clear();
   size_t i = 0;
-  for (const auto & o : predicted_objects->objects)
+  for (const auto & o : predicted_objects->objects) {
     if (o.kinematics.initial_twist_with_covariance.twist.linear.x < 0.5) {
       const auto polygon = tier4_autoware_utils::toPolygon2d(o);
       constraints.obstacle_polygons.push_back(polygon);
       const auto box = boost::geometry::return_envelope<tier4_autoware_utils::Box2d>(polygon);
-      constraints.rtree.insert(std::make_pair(box, i++));
+      constraints.rtree.insert(std::make_pair(box, i));
     }
+    i++;
+  }
 
   constraints.dynamic_obstacles = {};  // TODO(Maxime): not implemented
 
