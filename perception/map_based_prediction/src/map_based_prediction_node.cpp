@@ -1003,9 +1003,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
             yaw_fixed_transformed_object, ref_path.path);
-          if (predicted_path.path.empty()) {
-            continue;
-          }
+          if (predicted_path.path.empty()) continue;
 
           if (!check_lateral_acceleration_constraints_) {
             predicted_path.confidence = ref_path.probability;

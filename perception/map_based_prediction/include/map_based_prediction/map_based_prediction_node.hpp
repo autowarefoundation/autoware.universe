@@ -253,6 +253,8 @@ private:
     const TrackedObject & object, const LaneletData & current_lanelet_data,
     const double object_detected_time);
 
+  // NOTE: This function is copied from the motion_velocity_smoother package.
+  // TODO(someone): Consolidate functions and move them to a common
   inline std::vector<double> calcTrajectoryCurvatureFrom3Points(
     const TrajectoryPoints & trajectory, size_t idx_dist)
   {
@@ -284,9 +286,7 @@ private:
         curvature = calcCurvature(p0, p1, p2);
       } catch (std::exception const & e) {
         // ...code that handles the error...
-        RCLCPP_WARN(
-          rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"), "%s",
-          e.what());
+        RCLCPP_WARN(rclcpp::get_logger("map_based_prediction"), "%s", e.what());
         if (i > 1) {
           curvature = k_arr.at(i - 1);  // previous curvature
         } else {
@@ -337,10 +337,10 @@ private:
       tf2::convert(next_pose.orientation, q_next);
       double delta_theta = q_current.angleShortestPath(q_next);
       // Handle wrap-around
-      if (delta_theta > 3.14159) {
-        delta_theta -= 2.0 * 3.14159;
-      } else if (delta_theta < -3.14159) {
-        delta_theta += 2.0 * 3.14159;
+      if (delta_theta > M_PI) {
+        delta_theta -= 2.0 * M_PI;
+      } else if (delta_theta < -M_PI) {
+        delta_theta += 2.0 * M_PI;
       }
 
       const double yaw_rate = std::max(delta_theta / delta_time, 1.0E-5);
