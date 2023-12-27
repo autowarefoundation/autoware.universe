@@ -89,6 +89,7 @@ public:
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
   void updateData() override;
+  bool isRootLaneletToBeUpdated() const override { return current_state_ == ModuleStatus::SUCCESS; }
 
   void updateModuleParams(const std::any & parameters) override
   {
