@@ -18,7 +18,6 @@
 #include "scene_intersection.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
 

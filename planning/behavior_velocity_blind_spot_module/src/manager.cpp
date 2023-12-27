@@ -14,7 +14,6 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 

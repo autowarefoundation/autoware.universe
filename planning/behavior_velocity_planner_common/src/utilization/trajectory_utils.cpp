@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <motion_velocity_smoother/trajectory_utils.hpp>

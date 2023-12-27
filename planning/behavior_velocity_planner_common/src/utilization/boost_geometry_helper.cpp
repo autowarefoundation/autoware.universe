@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
-
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <algorithm>

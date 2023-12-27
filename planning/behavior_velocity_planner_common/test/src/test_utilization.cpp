@@ -15,7 +15,6 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "utils.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 
