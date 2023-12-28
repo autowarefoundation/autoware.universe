@@ -625,11 +625,11 @@ bool StartPlannerModule::findPullOutPath(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
   const auto & vehicle_footprint = createVehicleFootprint(vehicle_info_);
   // extract stop objects in pull out lane for collision check
-  const auto [pull_out_lane_objects, others] =
+  const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    *dynamic_objects, parameters_->th_moving_object_velocity);
+  const auto [pull_out_lane_stop_objects, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      *dynamic_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    pull_out_lane_objects, parameters_->th_moving_object_velocity);
+      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   // if start_pose_candidate is far from refined_start_pose, backward driving is necessary
   const bool backward_is_unnecessary =
