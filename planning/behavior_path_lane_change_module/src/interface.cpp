@@ -64,7 +64,7 @@ void LaneChangeInterface::processOnExit()
 
 bool LaneChangeInterface::isExecutionRequested() const
 {
-  if (current_state_ == ModuleStatus::RUNNING) {
+  if (getCurrentStatus() == ModuleStatus::RUNNING) {
     return true;
   }
 
@@ -190,7 +190,7 @@ void LaneChangeInterface::setData(const std::shared_ptr<const PlannerData> & dat
 bool LaneChangeInterface::canTransitSuccessState()
 {
   auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_WARN(getLogger(), "%s", message.data());
+    RCLCPP_DEBUG(getLogger(), "%s", message.data());
   };
 
   if (module_type_->specialExpiredCheck() && isWaitingApproval()) {
@@ -222,7 +222,7 @@ bool LaneChangeInterface::canTransitSuccessState()
 bool LaneChangeInterface::canTransitFailureState()
 {
   auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_WARN(getLogger(), "%s", message.data());
+    RCLCPP_DEBUG(getLogger(), "%s", message.data());
   };
 
   log_debug_throttled(__func__);
@@ -293,7 +293,7 @@ bool LaneChangeInterface::canTransitIdleToRunningState()
   setObjectDebugVisualization();
 
   auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_WARN(getLogger(), "%s", message.data());
+    RCLCPP_DEBUG(getLogger(), "%s", message.data());
   };
 
   log_debug_throttled(__func__);
@@ -359,7 +359,7 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
     return marker;
   }
 
-  if (isWaitingApproval() || current_state_ != ModuleStatus::RUNNING) {
+  if (isWaitingApproval() || getCurrentStatus() != ModuleStatus::RUNNING) {
     return marker;
   }
   const auto & start_pose = module_type_->getLaneChangePath().info.lane_changing_start;

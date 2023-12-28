@@ -371,11 +371,11 @@ BehaviorModuleOutput StartPlannerModule::plan()
       incrementPathIndex();
     }
 
-    if (!status_.is_safe_dynamic_objects && !isWaitingApproval() && !status_.has_stop_point) {
+    if (!status_.is_safe_dynamic_objects && !isWaitingApproval() && !status_.stop_pose) {
       auto current_path = getCurrentPath();
       const auto stop_path =
         behavior_path_planner::utils::parking_departure::generateFeasibleStopPath(
-          current_path, planner_data_, *stop_pose_, parameters_->maximum_deceleration_for_stop,
+          current_path, planner_data_, stop_pose_, parameters_->maximum_deceleration_for_stop,
           parameters_->maximum_jerk_for_stop);
 
       // Insert stop point in the path if needed
@@ -384,17 +384,18 @@ BehaviorModuleOutput StartPlannerModule::plan()
           getLogger(), *clock_, 5000, "Insert stop point in the path because of dynamic objects");
         path = *stop_path;
         status_.prev_stop_path_after_approval = std::make_shared<PathWithLaneId>(path);
-        status_.has_stop_point = true;
+        status_.stop_pose = stop_pose_;
       } else {
         path = current_path;
       }
-    } else if (!isWaitingApproval() && status_.has_stop_point) {
+    } else if (!isWaitingApproval() && status_.stop_pose) {
       // Delete stop point if conditions are met
       if (status_.is_safe_dynamic_objects && isStopped()) {
-        status_.has_stop_point = false;
+        status_.stop_pose = std::nullopt;
         path = getCurrentPath();
       }
       path = *status_.prev_stop_path_after_approval;
+      stop_pose_ = status_.stop_pose;
     } else {
       path = getCurrentPath();
     }
@@ -815,6 +816,8 @@ void StartPlannerModule::updatePullOutStatus()
   planWithPriority(
     start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
 
+  start_planner_data_.refined_start_pose = *refined_start_pose;
+  start_planner_data_.start_pose_candidates = start_pose_candidates;
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
@@ -1273,6 +1276,8 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
 
 void StartPlannerModule::setDebugData() const
 {
+  using marker_utils::addFootprintMarker;
+  using marker_utils::createFootprintMarkerArray;
   using marker_utils::createObjectsMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
@@ -1283,6 +1288,7 @@ void StartPlannerModule::setDebugData() const
   using tier4_autoware_utils::createDefaultMarker;
   using tier4_autoware_utils::createMarkerColor;
   using tier4_autoware_utils::createMarkerScale;
+  using visualization_msgs::msg::Marker;
 
   const auto life_time = rclcpp::Duration::from_seconds(1.5);
   auto add = [&](MarkerArray added) {
@@ -1296,8 +1302,67 @@ void StartPlannerModule::setDebugData() const
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
+  add(createFootprintMarkerArray(
+    start_planner_data_.refined_start_pose, vehicle_info_, "refined_start_pose", 0, 0.9, 0.9, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
   add(createPathMarkerArray(status_.backward_path, "backward_driving_path", 0, 0.0, 0.9, 0.0));
+
+  // visualize collision_check_end_pose and footprint
+  {
+    const auto local_footprint = createVehicleFootprint(vehicle_info_);
+    const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
+      getFullPath().points, status_.pull_out_path.end_pose.position,
+      parameters_->collision_check_distance_from_end);
+    if (collision_check_end_pose) {
+      add(createPoseMarkerArray(
+        *collision_check_end_pose, "static_collision_check_end_pose", 0, 1.0, 0.0, 0.0));
+      auto marker = tier4_autoware_utils::createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "static_collision_check_end_polygon", 0,
+        Marker::LINE_LIST, tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1),
+        tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+      const auto footprint = transformVector(
+        local_footprint, tier4_autoware_utils::pose2transform(*collision_check_end_pose));
+      const double ego_z = planner_data_->self_odometry->pose.pose.position.z;
+      for (size_t i = 0; i < footprint.size(); i++) {
+        const auto & current_point = footprint.at(i);
+        const auto & next_point = footprint.at((i + 1) % footprint.size());
+        marker.points.push_back(
+          tier4_autoware_utils::createPoint(current_point.x(), current_point.y(), ego_z));
+        marker.points.push_back(
+          tier4_autoware_utils::createPoint(next_point.x(), next_point.y(), ego_z));
+      }
+      marker.lifetime = life_time;
+      debug_marker_.markers.push_back(marker);
+    }
+  }
+  // start pose candidates
+  {
+    MarkerArray start_pose_footprint_marker_array{};
+    MarkerArray start_pose_text_marker_array{};
+    const auto purple = createMarkerColor(1.0, 0.0, 1.0, 0.99);
+    Marker footprint_marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "start_pose_candidates", 0, Marker::LINE_STRIP,
+      createMarkerScale(0.2, 0.2, 0.2), purple);
+    Marker text_marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "start_pose_candidates_idx", 0,
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.3, 0.3, 0.3), purple);
+    footprint_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+    text_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+    for (size_t i = 0; i < start_planner_data_.start_pose_candidates.size(); ++i) {
+      footprint_marker.id = i;
+      text_marker.id = i;
+      footprint_marker.points.clear();
+      text_marker.text = "idx[" + std::to_string(i) + "]";
+      text_marker.pose = start_planner_data_.start_pose_candidates.at(i);
+      addFootprintMarker(
+        footprint_marker, start_planner_data_.start_pose_candidates.at(i), vehicle_info_);
+      start_pose_footprint_marker_array.markers.push_back(footprint_marker);
+      start_pose_text_marker_array.markers.push_back(text_marker);
+    }
+
+    add(start_pose_footprint_marker_array);
+    add(start_pose_text_marker_array);
+  }
 
   // safety check
   if (parameters_->safety_check_params.enable_safety_check) {
@@ -1389,7 +1454,7 @@ void StartPlannerModule::logPullOutStatus(rclcpp::Logger::Level log_level) const
     status_.prev_is_safe_dynamic_objects ? "true" : "false");
   logFunc("  Driving Forward: %s", status_.driving_forward ? "true" : "false");
   logFunc("  Backward Driving Complete: %s", status_.backward_driving_complete ? "true" : "false");
-  logFunc("  Has Stop Point: %s", status_.has_stop_point ? "true" : "false");
+  logFunc("  Has Stop Pose: %s", status_.stop_pose ? "true" : "false");
 
   logFunc("[Module State]");
   logFunc("  isActivated: %s", isActivated() ? "true" : "false");
