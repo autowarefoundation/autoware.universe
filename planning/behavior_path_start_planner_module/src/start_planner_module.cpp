@@ -667,21 +667,23 @@ PathWithLaneId StartPlannerModule::extractCollisionCheckPath(const PullOutPath &
     combined_path.points.insert(
       combined_path.points.end(), partial_path.points.begin(), partial_path.points.end());
   }
-  // calculate collision check end idx
-  const size_t collision_check_end_idx = std::invoke([&]() {
-    const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
-      combined_path.points, path.end_pose.position, parameters_->collision_check_distance_from_end);
 
-    if (collision_check_end_pose) {
-      return motion_utils::findNearestIndex(
-        combined_path.points, collision_check_end_pose->position);
-    } else {
-      return 0;
-    }
-  });
+  // calculate collision check end idx
+  size_t collision_check_end_idx = 0;
+  const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
+    combined_path.points, path.end_pose.position, parameters_->collision_check_distance_from_end);
+
+  if (collision_check_end_pose) {
+    collision_check_end_idx =
+      motion_utils::findNearestIndex(combined_path.points, collision_check_end_pose->position);
+  }
+
   // remove the point behind of collision check end pose
-  combined_path.points.erase(
-    combined_path.points.begin() + collision_check_end_idx + 1, combined_path.points.end());
+  if (collision_check_end_idx + 1 < combined_path.points.size()) {
+    combined_path.points.erase(
+      combined_path.points.begin() + collision_check_end_idx + 1, combined_path.points.end());
+  }
+
   return combined_path;
 }
 
@@ -938,7 +940,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     }
 
     if (utils::checkCollisionBetweenFootprintAndObjects(
-          local_vehicle_footprint, *backed_pose, stop_objects_in_shoulder_lanes,
+          local_vehicle_footprint, *backed_pose, stop_objects_in_pull_out_lanes,
           parameters_->collision_check_margin)) {
       break;  // poses behind this has a collision, so break.
     }
