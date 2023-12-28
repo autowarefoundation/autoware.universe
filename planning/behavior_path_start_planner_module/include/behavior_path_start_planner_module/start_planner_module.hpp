@@ -227,8 +227,8 @@ private:
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   void updateStatusAfterBackwardDriving();
-  PredictedObjects filterStopObjectsInShoulderLanes(
-    const lanelet::ConstLanelets & shoulder_lanes, const geometry_msgs::msg::Point & current_pose,
+  PredictedObjects filterStopObjectsInPullOutLanes(
+    const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_pose,
     const double velocity_threshold, const double object_check_backward_distance,
     const double object_check_forward_distance) const;
   bool hasFinishedPullOut() const;
