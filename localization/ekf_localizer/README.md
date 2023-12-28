@@ -159,7 +159,9 @@ Increasing the number will improve the smoothness of the estimation, but may hav
 
 <img src="./media/ekf_dynamics.png" width="320">
 
-where `b_k` is the yaw bias.
+where, $\theta_k$ represents the vehicle's heading angle, including the mountng angle bias.
+$b_k$  is a correction term for the yaw bias, and it is modeled so that $(\theta_k+b_k)$ becomes the heading angle of the base_link.
+The pose_estimator is expected to publish the base_link in the map coordinate system. However, the yaw angle may be offset due to calibration errors. This model compensates this error and improves estimation accuracy.
 
 ### time delay model
 
@@ -194,7 +196,7 @@ Note that, although the dimension gets larger since the analytical expansion can
 
 ## Known issues
 
-- In the presence of multiple inputs with yaw estimation, yaw bias `b_k` in the current EKF state would not make any sense, since it is intended to capture the extrinsic parameter's calibration error of a sensor. Thus, future work includes introducing yaw bias for each sensor with yaw estimation.
+- If multiple pose_estimators are used, the input to the EKF will include multiple yaw biases corresponding to each source. However, the current EKF assumes the existence of only one yaw bias. Therefore, yaw bias `b_k` in the current EKF state would not make any sense and cannot correctly handle these multiple yaw biases. Thus, future work includes introducing yaw bias for each sensor with yaw estimation.
 
 ## reference
 
