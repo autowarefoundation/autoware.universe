@@ -65,10 +65,10 @@ class LidarMarkerLocalizer : public rclcpp::Node
   {
     double resolution;
     std::vector<int64_t> intensity_pattern;
-    int match_intensity_difference_threshold;
-    int positive_match_num_threshold;
-    int negative_match_num_threshold;
-    int vote_threshold_for_detect_marker;
+    int64_t match_intensity_difference_threshold;
+    int64_t positive_match_num_threshold;
+    int64_t negative_match_num_threshold;
+    int64_t vote_threshold_for_detect_marker;
 
     double self_pose_timeout_sec;
     double self_pose_distance_tolerance_m;

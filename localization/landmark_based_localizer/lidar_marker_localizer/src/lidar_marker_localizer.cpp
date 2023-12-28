@@ -37,22 +37,21 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  param_.resolution = static_cast<double>(this->declare_parameter<double>("resolution"));
+  param_.resolution = this->declare_parameter<double>("resolution");
   param_.intensity_pattern = this->declare_parameter<std::vector<int64_t>>("intensity_pattern");
   param_.match_intensity_difference_threshold =
-    static_cast<int>(this->declare_parameter<int>("match_intensity_difference_threshold"));
+    this->declare_parameter<int64_t>("match_intensity_difference_threshold");
   param_.positive_match_num_threshold =
-    static_cast<int>(this->declare_parameter<int>("positive_match_num_threshold"));
+    this->declare_parameter<int64_t>("positive_match_num_threshold");
   param_.negative_match_num_threshold =
-    static_cast<int>(this->declare_parameter<int>("negative_match_num_threshold"));
+    this->declare_parameter<int64_t>("negative_match_num_threshold");
   param_.vote_threshold_for_detect_marker =
-    static_cast<int>(this->declare_parameter<int>("vote_threshold_for_detect_marker"));
-  param_.self_pose_timeout_sec =
-    static_cast<double>(this->declare_parameter<double>("self_pose_timeout_sec"));
+    this->declare_parameter<int64_t>("vote_threshold_for_detect_marker");
+  param_.self_pose_timeout_sec = this->declare_parameter<double>("self_pose_timeout_sec");
   param_.self_pose_distance_tolerance_m =
-    static_cast<double>(this->declare_parameter<double>("self_pose_distance_tolerance_m"));
+    this->declare_parameter<double>("self_pose_distance_tolerance_m");
   param_.limit_distance_from_self_pose_to_marker =
-    static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker"));
+    this->declare_parameter<double>("limit_distance_from_self_pose_to_marker");
   param_.base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
   ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
     this->get_logger(), param_.self_pose_timeout_sec, param_.self_pose_distance_tolerance_m);
