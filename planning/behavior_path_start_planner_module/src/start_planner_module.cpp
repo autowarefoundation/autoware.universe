@@ -958,7 +958,7 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     *planner_data_->dynamic_object, velocity_threshold);
 
-  // filter for objects located in shoulder lanes and moving at a speed below the threshold
+  // filter for objects located in pull out lanes and moving at a speed below the threshold
   auto [stop_objects_in_pull_out_lanes, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
       stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
