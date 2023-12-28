@@ -173,6 +173,8 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
     setCrosswalkTrafficSignal(crosswalk, crosswalk_tl_color, *msg, output);
   }
 
+  removeDuplicateIds(output);
+
   updateLastDetectedSignal(traffic_light_id_map);
   updateLastDetectedSignals(traffic_light_id_map);
 
@@ -519,6 +521,21 @@ boost::optional<uint8_t> CrosswalkTrafficLightEstimatorNode::getHighestConfidenc
 
   return ret;
 }
+
+void CrosswalkTrafficLightEstimatorNode::removeDuplicateIds(TrafficSignalArray & signal_array) const
+{
+  auto & signals = signal_array.signals;
+  std::sort(signals.begin(), signals.end(), [](const auto & s1, const auto & s2) {
+    return s1.traffic_signal_id < s2.traffic_signal_id;
+  });
+
+  signals.erase(
+    std::unique(
+      signals.begin(), signals.end(),
+      [](const auto & s1, const auto s2) { return s1.traffic_signal_id == s2.traffic_signal_id; }),
+    signals.end());
+}
+
 }  // namespace traffic_light
 
 #include <rclcpp_components/register_node_macro.hpp>

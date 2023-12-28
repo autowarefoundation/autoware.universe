@@ -16,6 +16,7 @@
 #define DETECTION_BY_TRACKER__DETECTION_BY_TRACKER_CORE_HPP_
 
 #include "detection_by_tracker/debugger.hpp"
+#include "detection_by_tracker/utils.hpp"
 
 #include <euclidean_cluster/euclidean_cluster.hpp>
 #include <euclidean_cluster/utils.hpp>
@@ -46,7 +47,6 @@
 #include <map>
 #include <memory>
 #include <vector>
-
 class TrackerHandler
 {
 private:
@@ -81,7 +81,7 @@ private:
   std::map<uint8_t, int> max_search_distance_for_merger_;
   std::map<uint8_t, int> max_search_distance_for_divider_;
 
-  bool ignore_unknown_tracker_;
+  detection_by_tracker::utils::TrackerIgnoreLabel tracker_ignore_;
 
   void setMaxSearchRange();
 

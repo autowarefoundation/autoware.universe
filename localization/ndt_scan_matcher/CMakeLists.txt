@@ -22,11 +22,12 @@ else()
   endif()
 endif()
 
+find_package(glog REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io registration)
 include_directories(${PCL_INCLUDE_DIRS})
 
 ament_auto_add_executable(ndt_scan_matcher
-  src/debug.cpp
+  src/particle.cpp
   src/ndt_scan_matcher_node.cpp
   src/ndt_scan_matcher_core.cpp
   src/map_module.cpp
@@ -34,10 +35,10 @@ ament_auto_add_executable(ndt_scan_matcher
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES})
+target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES} glog::glog)
 
 if(BUILD_TESTING)
-  add_ros_test(
+  add_launch_test(
     test/test_ndt_scan_matcher_launch.py
     TIMEOUT "30"
   )
