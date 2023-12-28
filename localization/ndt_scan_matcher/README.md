@@ -219,7 +219,7 @@ Using the feature, `ndt_scan_matcher` can theoretically handle any large size ma
 | `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                          |
 | `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis) |
 
-### Enabling the dynamic map loading feature
+### Notes for dynamic map loading
 
 To use dynamic map loading feature for `ndt_scan_matcher`, you also need to split the PCD files into grids (recommended size: 20[m] x 20[m])
 
