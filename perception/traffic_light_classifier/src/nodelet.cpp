@@ -102,7 +102,8 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
     if (input_rois_msg->rois.at(i).roi.height == 0) {
       continue;
     }
-    output_msg.signals[i].traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;
+    output_msg.signals[images.size()].traffic_light_id =
+      input_rois_msg->rois.at(i).traffic_light_id;
     const sensor_msgs::msg::RegionOfInterest & roi = input_rois_msg->rois.at(i).roi;
     images.emplace_back(cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
   }
