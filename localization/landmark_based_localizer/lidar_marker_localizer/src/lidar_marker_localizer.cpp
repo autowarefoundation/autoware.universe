@@ -99,7 +99,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
 
 void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
 {
-  landmark_manager_.parse_landmarks(msg, "reflective_paint_marker", this->get_logger());
+  landmark_manager_.parse_landmarks(msg, "reflective_paint_marker");
   const MarkerArray marker_msg = landmark_manager_.get_landmarks_as_marker_array_msg();
   pub_marker_mapped_->publish(marker_msg);
 }
