@@ -585,9 +585,16 @@ void StartPlannerModule::planWithPriority(
   const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
-  for (const auto & [index, planner] : order_priority) {
-    if (findPullOutPath(start_pose_candidates[index], planner, refined_start_pose, goal_pose))
-      return;
+  for (const auto & collision_check_margin : parameters_->collision_check_margins) {
+    for (const auto & [index, planner] : order_priority) {
+      if (findPullOutPath(
+            start_pose_candidates[index], planner, refined_start_pose, goal_pose,
+            collision_check_margin)) {
+        start_planner_data_.selected_start_pose_candidate_index = index;
+        start_planner_data_.margin_for_start_pose_candidate = collision_check_margin;
+        return;
+      }
+    }
   }
 
   updateStatusIfNoSafePathFound();
@@ -618,7 +625,7 @@ PriorityOrder StartPlannerModule::determinePriorityOrder(
 
 bool StartPlannerModule::findPullOutPath(
   const Pose & start_pose_candidate, const std::shared_ptr<PullOutPlannerBase> & planner,
-  const Pose & refined_start_pose, const Pose & goal_pose)
+  const Pose & refined_start_pose, const Pose & goal_pose, const double collision_check_margin)
 {
   const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
@@ -646,7 +653,7 @@ bool StartPlannerModule::findPullOutPath(
   // check collision
   if (utils::checkCollisionBetweenPathFootprintsAndObjects(
         vehicle_footprint, extractCollisionCheckSection(*pull_out_path), pull_out_lane_stop_objects,
-        parameters_->collision_check_margin)) {
+        collision_check_margin)) {
     return false;
   }
 
@@ -946,7 +953,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
 
     if (utils::checkCollisionBetweenFootprintAndObjects(
           local_vehicle_footprint, *backed_pose, stop_objects_in_shoulder_lanes,
-          parameters_->collision_check_margin)) {
+          parameters_->collision_check_margins.back())) {
       break;  // poses behind this has a collision, so break.
     }
 
