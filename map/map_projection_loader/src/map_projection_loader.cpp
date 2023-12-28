@@ -64,10 +64,13 @@ tier4_map_msgs::msg::MapProjectorInfo load_map_projector_info(
     msg = load_info_from_yaml(yaml_filename);
   } else {
     std::cout << "Load " << lanelet2_map_filename << std::endl;
-    std::cout << "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. "
-      "Please use map_projector_info.yaml instead. For more info, visit "
-      "https://github.com/autowarefoundation/autoware.universe/blob/main/map/map_projection_loader/"
-      "README.md" << std::endl;
+    std::cout
+      << "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. "
+         "Please use map_projector_info.yaml instead. For more info, visit "
+         "https://github.com/autowarefoundation/autoware.universe/blob/main/map/"
+         "map_projection_loader/"
+         "README.md"
+      << std::endl;
     msg = load_info_from_lanelet2_map(lanelet2_map_filename);
   }
   return msg;
@@ -79,9 +82,9 @@ MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
   std::string lanelet2_map_filename = this->declare_parameter<std::string>("lanelet2_map_path");
   std::ifstream file(yaml_filename);
 
-  tier4_map_msgs::msg::MapProjectorInfo msg = load_map_projector_info(
-    yaml_filename, lanelet2_map_filename, file.is_open());
-  
+  tier4_map_msgs::msg::MapProjectorInfo msg =
+    load_map_projector_info(yaml_filename, lanelet2_map_filename, file.is_open());
+
   // Publish the message
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(publisher_);
