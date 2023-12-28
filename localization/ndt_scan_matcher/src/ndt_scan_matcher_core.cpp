@@ -402,8 +402,11 @@ void NDTScanMatcher::callback_initial_pose(
         << ". Please check the frame_id in the input topic and ensure it is correct.");
   }
 
-  std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
-  latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
+  {
+    // latest_ekf_position_ is also used by callback_timer, so it is necessary to acquire the lock
+    std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
+    latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
+  }
 }
 
 void NDTScanMatcher::callback_regularization_pose(
