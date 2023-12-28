@@ -66,6 +66,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `dust_kernel_size`            | int    | The kernel size of morphology processing in dusty area detection                                                              |
 | `dust_buffering_frames`       | int    | The number of buffering about dusty area detection [range:1-200]                                                              |
 | `dust_buffering_interval`     | int    | The interval of buffering about dusty area detection                                                                          |
+| `max_distance_range`          | double | Maximum view range for the LiDAR                                                                                              |
+| `horizontal_resolution`       | double | The horizontal resolution of depth map image [deg/pixel]                                                                      |
 
 ## Assumptions / Known limits
 
