@@ -18,7 +18,6 @@ One optional function is regularization. Please see the regularization chapter i
 | Name                                | Type                                            | Description                           |
 | ----------------------------------- | ----------------------------------------------- | ------------------------------------- |
 | `ekf_pose_with_covariance`          | `geometry_msgs::msg::PoseWithCovarianceStamped` | initial pose                          |
-| `pointcloud_map`                    | `sensor_msgs::msg::PointCloud2`                 | map pointcloud                        |
 | `points_raw`                        | `sensor_msgs::msg::PointCloud2`                 | sensor pointcloud                     |
 | `sensing/gnss/pose_with_covariance` | `sensor_msgs::msg::PoseWithCovarianceStamped`   | base position for regularization term |
 
@@ -192,12 +191,6 @@ Using the feature, `ndt_scan_matcher` can theoretically handle any large size ma
 <img src="./media/differential_area_loading.gif" alt="drawing" width="400"/>
 
 ### Additional interfaces
-
-#### Additional inputs
-
-| Name             | Type                      | Description                                                 |
-| ---------------- | ------------------------- | ----------------------------------------------------------- |
-| `input_ekf_odom` | `nav_msgs::msg::Odometry` | Vehicle localization results (used for map update decision) |
 
 #### Additional outputs
 
