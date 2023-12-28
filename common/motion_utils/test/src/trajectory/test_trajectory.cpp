@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
@@ -802,17 +802,6 @@ TEST(trajectory, convertToTrajectory)
     const auto traj_input = generateTestTrajectoryPointArray(50, 1.0);
     const auto traj = convertToTrajectory(traj_input);
     EXPECT_EQ(traj.points.size(), traj_input.size());
-  }
-
-  // Clipping check
-  {
-    const auto traj_input = generateTestTrajectoryPointArray(10000, 1.0);
-    const auto traj = convertToTrajectory(traj_input);
-    EXPECT_EQ(traj.points.size(), traj.CAPACITY);
-    // Value check
-    for (size_t i = 0; i < traj.points.size(); ++i) {
-      EXPECT_EQ(traj.points.at(i), traj_input.at(i));
-    }
   }
 }
 
@@ -1894,7 +1883,7 @@ TEST(trajectory, insertTargetPoint)
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle"), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -1907,7 +1896,7 @@ TEST(trajectory, insertTargetPoint)
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle"), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -1920,7 +1909,7 @@ TEST(trajectory, insertTargetPoint)
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle"), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -2321,7 +2310,7 @@ TEST(trajectory, insertTargetPoint_Length)
     const auto p_target = createPoint(4.0, 10.0, 0.0);
     const auto insert_idx = insertTargetPoint(4.0, p_target, traj_out.points);
 
-    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle."), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -4328,7 +4317,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle."), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -4341,7 +4330,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle."), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -4354,7 +4343,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_STREQ(testing::internal::GetCapturedStderr().c_str(), "Sharp angle.\n");
+    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle."), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 

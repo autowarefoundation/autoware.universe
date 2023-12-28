@@ -28,6 +28,8 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
   using std::placeholders::_1;
   using std::placeholders::_2;
   is_approximate_sync_ = this->declare_parameter("approximate_sync", false);
+  backlight_threshold_ = this->declare_parameter<double>("backlight_threshold");
+
   if (is_approximate_sync_) {
     approximate_sync_.reset(new ApproximateSync(ApproximateSyncPolicy(10), image_sub_, roi_sub_));
     approximate_sync_->registerCallback(
@@ -96,7 +98,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   output_msg.signals.resize(input_rois_msg->rois.size());
 
   std::vector<cv::Mat> images;
-
+  std::vector<size_t> backlight_indices;
   for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
     // skip if the roi is not detected
     if (input_rois_msg->rois.at(i).roi.height == 0) {
@@ -105,7 +107,11 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
     output_msg.signals[images.size()].traffic_light_id =
       input_rois_msg->rois.at(i).traffic_light_id;
     const sensor_msgs::msg::RegionOfInterest & roi = input_rois_msg->rois.at(i).roi;
-    images.emplace_back(cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
+    auto roi_img = cv_ptr->image(cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
+    if (is_harsh_backlight(roi_img)) {
+      backlight_indices.emplace_back(i);
+    }
+    images.emplace_back(roi_img);
   }
   output_msg.signals.resize(images.size());
   if (!classifier_ptr_->getTrafficSignals(images, output_msg)) {
@@ -127,8 +133,28 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
     }
   }
 
+  for (const auto & idx : backlight_indices) {
+    auto & elements = output_msg.signals.at(idx).elements;
+    for (auto & element : elements) {
+      element.color = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
+      element.shape = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
+      element.confidence = 0.0;
+    }
+  }
+
   output_msg.header = input_image_msg->header;
   traffic_signal_array_pub_->publish(output_msg);
+}
+
+bool TrafficLightClassifierNodelet::is_harsh_backlight(const cv::Mat & img) const
+{
+  cv::Mat y_cr_cb;
+  cv::cvtColor(img, y_cr_cb, cv::COLOR_RGB2YCrCb);
+
+  const cv::Scalar mean_values = cv::mean(y_cr_cb);
+  const double intensity = (mean_values[0] - 112.5) / 112.5;
+
+  return backlight_threshold_ <= intensity;
 }
 
 }  // namespace traffic_light
