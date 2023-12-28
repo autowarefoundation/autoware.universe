@@ -910,7 +910,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity,
     backward_path_length, std::numeric_limits<double>::max());
 
-  const auto front_stop_objects_in_shoulder_lanes = filterStopObjectsInShoulderLanes(
+  const auto front_stop_objects_in_shoulder_lanes = filterStopObjectsInPullOutLanes(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity, 0,
     std::numeric_limits<double>::max());
 
