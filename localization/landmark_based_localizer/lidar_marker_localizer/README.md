@@ -35,7 +35,7 @@ ros2 launch autoware_launch ... \
 
 ### Detection Algorithm
 
-![detection_algrorithm](./doc_image/detection_algrorithm.png)
+![detection_algorithm](./doc_image/detection_algrorithm.png)
 
 1. Split the LiDAR point cloud into rings along the x-axis of the base_link coordinate system at intervals of the `resolution` size.
 2. Find the portion of intensity that matches the `intensity_pattern`.
