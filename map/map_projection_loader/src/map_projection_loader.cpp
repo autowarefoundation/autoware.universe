@@ -78,11 +78,11 @@ tier4_map_msgs::msg::MapProjectorInfo load_map_projector_info(
 
 MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
 {
-  std::string yaml_filename = this->declare_parameter<std::string>("map_projector_info_path");
-  std::string lanelet2_map_filename = this->declare_parameter<std::string>("lanelet2_map_path");
+  const std::string yaml_filename = this->declare_parameter<std::string>("map_projector_info_path");
+  const std::string lanelet2_map_filename = this->declare_parameter<std::string>("lanelet2_map_path");
   std::ifstream file(yaml_filename);
 
-  tier4_map_msgs::msg::MapProjectorInfo msg =
+  const tier4_map_msgs::msg::MapProjectorInfo msg =
     load_map_projector_info(yaml_filename, lanelet2_map_filename, file.is_open());
 
   // Publish the message
