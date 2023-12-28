@@ -122,6 +122,7 @@ def generate_launch_description():
                         "classifier_precision": LaunchConfiguration("classifier_precision"),
                         "classifier_mean": LaunchConfiguration("classifier_mean"),
                         "classifier_std": LaunchConfiguration("classifier_std"),
+                        "backlight_threshold": LaunchConfiguration("backlight_threshold"),
                     }
                 ],
                 remappings=[
@@ -152,6 +153,7 @@ def generate_launch_description():
                         "classifier_precision": LaunchConfiguration("classifier_precision"),
                         "classifier_mean": LaunchConfiguration("classifier_mean"),
                         "classifier_std": LaunchConfiguration("classifier_std"),
+                        "backlight_threshold": LaunchConfiguration("backlight_threshold"),
                     }
                 ],
                 remappings=[

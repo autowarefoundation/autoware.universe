@@ -98,14 +98,17 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   output_msg.signals.resize(input_rois_msg->rois.size());
 
   std::vector<cv::Mat> images;
+  size_t num_valid_roi = 0;
   std::vector<size_t> backlight_indices;
   for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
     // skip if not the expected type of roi
     if (input_rois_msg->rois.at(i).traffic_light_type != classify_traffic_light_type_) {
       continue;
     }
-    output_msg.signals[i].traffic_light_id = input_rois_msg->rois.at(i).traffic_light_id;
-    output_msg.signals[i].traffic_light_type = input_rois_msg->rois.at(i).traffic_light_type;
+    output_msg.signals[num_valid_roi].traffic_light_id =
+      input_rois_msg->rois.at(i).traffic_light_id;
+    output_msg.signals[num_valid_roi].traffic_light_type =
+      input_rois_msg->rois.at(i).traffic_light_type;
     const sensor_msgs::msg::RegionOfInterest & roi = input_rois_msg->rois.at(i).roi;
 
     auto roi_img = cv_ptr->image(cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
@@ -113,8 +116,9 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
       backlight_indices.emplace_back(i);
     }
     images.emplace_back(roi_img);
+    num_valid_roi++;
   }
-  output_msg.signals.resize(images.size());
+  output_msg.signals.resize(num_valid_roi);
 
   if (!classifier_ptr_->getTrafficSignals(images, output_msg)) {
     RCLCPP_ERROR(this->get_logger(), "failed classify image, abort callback");
