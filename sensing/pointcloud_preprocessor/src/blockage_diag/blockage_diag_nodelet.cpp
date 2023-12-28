@@ -158,6 +158,7 @@ void BlockageDiagComponent::filter(
   int vertical_bins = vertical_bins_;
   int ideal_horizontal_bins;
   double compensate_angle = 0.0;
+  // Check the case when angle_range_deg_[1] exceed 360 and shifted the range to 0~360
   if (angle_range_deg_[0] > angle_range_deg_[1]) {
     compensate_angle = 360.0;
   }
