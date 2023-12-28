@@ -55,29 +55,33 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & fi
   return msg;
 }
 
+tier4_map_msgs::msg::MapProjectorInfo load_map_projector_info(
+  const std::string & yaml_filename, const std::string & lanelet2_map_filename, bool use_yaml_file)
+{
+  tier4_map_msgs::msg::MapProjectorInfo msg;
+  if (use_yaml_file) {
+    std::cout << "Load " << yaml_filename << std::endl;
+    msg = load_info_from_yaml(yaml_filename);
+  } else {
+    std::cout << "Load " << lanelet2_map_filename << std::endl;
+    std::cout << "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. "
+      "Please use map_projector_info.yaml instead. For more info, visit "
+      "https://github.com/autowarefoundation/autoware.universe/blob/main/map/map_projection_loader/"
+      "README.md" << std::endl;
+    msg = load_info_from_lanelet2_map(lanelet2_map_filename);
+  }
+  return msg;
+}
+
 MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
 {
   std::string yaml_filename = this->declare_parameter<std::string>("map_projector_info_path");
   std::string lanelet2_map_filename = this->declare_parameter<std::string>("lanelet2_map_path");
   std::ifstream file(yaml_filename);
 
-  tier4_map_msgs::msg::MapProjectorInfo msg;
-
-  bool use_yaml_file = file.is_open();
-  if (use_yaml_file) {
-    RCLCPP_INFO(this->get_logger(), "Load %s", yaml_filename.c_str());
-    msg = load_info_from_yaml(yaml_filename);
-  } else {
-    RCLCPP_INFO(this->get_logger(), "Load %s", lanelet2_map_filename.c_str());
-    RCLCPP_WARN(
-      this->get_logger(),
-      "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. "
-      "Please use map_projector_info.yaml instead. For more info, visit "
-      "https://github.com/autowarefoundation/autoware.universe/blob/main/map/map_projection_loader/"
-      "README.md");
-    msg = load_info_from_lanelet2_map(lanelet2_map_filename);
-  }
-
+  tier4_map_msgs::msg::MapProjectorInfo msg = load_map_projector_info(
+    yaml_filename, lanelet2_map_filename, file.is_open());
+  
   // Publish the message
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(publisher_);
