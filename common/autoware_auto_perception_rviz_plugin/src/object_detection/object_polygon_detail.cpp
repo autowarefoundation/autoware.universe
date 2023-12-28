@@ -249,7 +249,7 @@ visualization_msgs::msg::Marker::SharedPtr get_existence_probability_marker_ptr(
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-  marker_ptr->ns = std::string("existance_probability");
+  marker_ptr->ns = std::string("existence probability");
   marker_ptr->scale.x = 0.5;
   marker_ptr->scale.z = 0.5;
   marker_ptr->text = std::to_string(object.existence_probability);

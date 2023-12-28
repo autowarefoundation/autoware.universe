@@ -79,7 +79,7 @@ public:
       this},
 
     m_display_existence_probability_property{
-      "Display Existence Probability", true, "Enable/disable existence probability visualization",
+      "Display Existence Probability", false, "Enable/disable existence probability visualization",
       this},
 
     m_line_width_property{"Line Width", 0.03, "Line width of object-shape", this},
@@ -214,7 +214,6 @@ protected:
     const ClassificationContainerT & labels) const
   {
     if (m_display_existence_probability_property.getBool()) {
-      const std::string label = get_best_label(labels);
       const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
       return detail::get_existence_probability_marker_ptr(
         centroid, orientation, object, color_rgba);
