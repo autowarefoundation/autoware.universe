@@ -270,17 +270,26 @@ void TrafficLightFineDetectorNodelet::detectionMatch(
   }
 
   out_rois.rois.clear();
+  std::vector<size_t> invalid_roi_id;
   for (const auto & [tlr_id, _] : id2expectRoi) {
     TrafficLightRoi tlr;
     tlr.traffic_light_id = tlr_id;
-    // if matches, update the roi info; else x,y,width,height=0
-    if (bestDetections.count(tlr_id)) {
-      const auto & object = bestDetections.at(tlr_id);
-      tlr.roi.x_offset = object.x_offset;
-      tlr.roi.y_offset = object.y_offset;
-      tlr.roi.width = object.width;
-      tlr.roi.height = object.height;
+    // if matches, update the roi info
+    if (!bestDetections.count(tlr_id)) {
+      invalid_roi_id.emplace_back(tlr_id);
+      continue;
     }
+    const auto & object = bestDetections.at(tlr_id);
+    tlr.roi.x_offset = object.x_offset;
+    tlr.roi.y_offset = object.y_offset;
+    tlr.roi.width = object.width;
+    tlr.roi.height = object.height;
+    out_rois.rois.push_back(tlr);
+  }
+  // append undetected rois at the end
+  for (const auto & id : invalid_roi_id) {
+    TrafficLightRoi tlr;
+    tlr.traffic_light_id = id;
     out_rois.rois.push_back(tlr);
   }
 }

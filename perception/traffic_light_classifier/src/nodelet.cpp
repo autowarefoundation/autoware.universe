@@ -102,7 +102,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
     // skip if the roi is not detected
     if (input_rois_msg->rois.at(i).roi.height == 0) {
-      continue;
+      break;
     }
     output_msg.signals[images.size()].traffic_light_id =
       input_rois_msg->rois.at(i).traffic_light_id;
