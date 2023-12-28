@@ -160,7 +160,7 @@ Increasing the number will improve the smoothness of the estimation, but may hav
 <img src="./media/ekf_dynamics.png" width="320">
 
 where, $\theta_k$ represents the vehicle's heading angle, including the mountng angle bias.
-$b_k$  is a correction term for the yaw bias, and it is modeled so that $(\theta_k+b_k)$ becomes the heading angle of the base_link.
+$b_k$ is a correction term for the yaw bias, and it is modeled so that $(\theta_k+b_k)$ becomes the heading angle of the base_link.
 The pose_estimator is expected to publish the base_link in the map coordinate system. However, the yaw angle may be offset due to calibration errors. This model compensates this error and improves estimation accuracy.
 
 ### time delay model
