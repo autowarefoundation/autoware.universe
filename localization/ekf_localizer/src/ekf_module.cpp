@@ -232,7 +232,7 @@ bool EKFModule::measurementUpdatePose(
 
   /* Since the kalman filter cannot handle the rotation angle directly,
     offset the yaw angle so that the difference from the yaw angle that ekf holds internally is less
-    than 2π. */
+    than 2 pi. */
   double yaw = tf2::getYaw(pose.pose.pose.orientation);
   const double ekf_yaw = kalman_filter_.getXelement(delay_step * dim_x_ + IDX::YAW);
   const double yaw_error = normalizeYaw(yaw - ekf_yaw);  // normalize the error not to exceed 2 pi
