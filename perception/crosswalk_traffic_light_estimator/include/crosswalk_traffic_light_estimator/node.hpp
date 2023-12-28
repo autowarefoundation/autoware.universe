@@ -34,11 +34,11 @@
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
 namespace traffic_light
 {
 
