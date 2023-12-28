@@ -159,7 +159,7 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
     out_msg_.signals.push_back(in_signal_msg->signals.at(i));
 
     if (occlusion_ratios[i] >= config_.max_occlusion_ratio) {
-      traffic_light_utils::setSignalUnknown(out_msg_.signals.at(predicted_num + i));
+      traffic_light_utils::setSignalUnknown(out_msg_.signals.at(predicted_num + i), 0.0);
     }
   }
   subscribed_.at(traffic_light_type) = true;
