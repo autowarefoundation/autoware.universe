@@ -14,7 +14,6 @@
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>boost</depend>
-  <depend>rosidl_generator_traits</depend>
   <depend>rviz_2d_overlay_msgs</depend>
   <depend>rviz_common</depend>
   <depend>rviz_ogre_vendor</depend>
