@@ -45,6 +45,11 @@ SignalDisplay::SignalDisplay()
   speed_limit_display_ = std::make_unique<SpeedLimitDisplay>();
 }
 
+void SignalDisplay::topic_updated_gear()
+{
+  std::cout << "topic_updated_gear" << std::endl;
+}
+
 void SignalDisplay::onInitialize()
 {
   std::lock_guard<std::mutex> lock(property_mutex_);
@@ -59,14 +64,13 @@ void SignalDisplay::onInitialize()
   updateOverlaySize();
   updateOverlayPosition();
 
-  // Don't create a node, just use the one from the parent class
-  rviz_node_ = context_->getRosNodeAbstraction().lock()->get_raw_node();
-
+  auto rviz_ros_node = context_->getRosNodeAbstraction();
   // TODO: These are still buggy, on button click they crash rviz
   gear_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
-    "Gear Topic", "/vehicle/status/gear_status",
+    "Gear Topic Test", "/vehicle/status/gear_status",
     rosidl_generator_traits::data_type<autoware_auto_vehicle_msgs::msg::GearReport>(),
-    "Topic for Gear Data", this, nullptr, this);
+    "Topic for Gear Data", this, SLOT(topic_updated_gear()));
+  gear_topic_property_->initialize(rviz_ros_node);
   turn_signals_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
     "Turn Signals Topic", "/vehicle/status/turn_indicators_status",
     rosidl_generator_traits::data_type<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>(),
@@ -95,9 +99,8 @@ void SignalDisplay::onInitialize()
 
 void SignalDisplay::setupRosSubscriptions()
 {
-  if (!rviz_node_) {
-    return;
-  }
+  // Don't create a node, just use the one from the parent class
+  auto rviz_node_ = context_->getRosNodeAbstraction().lock()->get_raw_node();
 
   gear_sub_ = rviz_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
     gear_topic_property_->getTopicStd(),
@@ -164,8 +167,6 @@ SignalDisplay::~SignalDisplay()
   turn_signals_sub_.reset();
   hazard_lights_sub_.reset();
   // traffic_sub_.reset();
-
-  rviz_node_.reset();
 
   steering_wheel_display_.reset();
   gear_display_.reset();

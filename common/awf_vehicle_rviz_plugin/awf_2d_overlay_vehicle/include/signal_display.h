@@ -80,6 +80,7 @@ private Q_SLOTS:
   void updateSmallOverlaySize();
   void updateOverlayPosition();
   void updateOverlayColor();
+  void topic_updated_gear();
 
 private:
   std::mutex mutex_;
@@ -107,7 +108,6 @@ private:
   std::unique_ptr<TrafficDisplay> traffic_display_;
   std::unique_ptr<SpeedLimitDisplay> speed_limit_display_;
 
-  rclcpp::Node::SharedPtr rviz_node_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr gear_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr steering_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr speed_sub_;
