@@ -33,11 +33,6 @@ SteeringWheelDisplay::SteeringWheelDisplay()
   wheelImage.load(":/assets/images/wheel.png");
 }
 
-SteeringWheelDisplay::~SteeringWheelDisplay()
-{
-  // Cleanup if necessary
-}
-
 void SteeringWheelDisplay::updateSteeringData(
   const autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr & msg)
 {
@@ -48,8 +43,6 @@ void SteeringWheelDisplay::updateSteeringData(
     steering_angle_ =
       (steeringAngle * -180 / M_PI) *
       17;  // 17 is the ratio between the steering wheel and the steering tire angle i assume
-
-    queueRender();
   } catch (const std::exception & e) {
     // Log the error
     std::cerr << "Error in processMessage: " << e.what() << std::endl;
@@ -112,6 +105,3 @@ QImage SteeringWheelDisplay::coloredImage(const QImage & source, const QColor & 
 }
 
 }  // namespace awf_2d_overlay_vehicle
-
-#include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(awf_2d_overlay_vehicle::SteeringWheelDisplay, rviz_common::Display)

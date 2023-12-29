@@ -272,6 +272,7 @@ void SignalDisplay::updateSteeringData(
 
   if (steering_wheel_display_) {
     steering_wheel_display_->updateSteeringData(msg);
+    queueRender();
   }
 }
 

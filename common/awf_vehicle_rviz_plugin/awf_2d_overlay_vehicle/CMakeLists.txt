@@ -21,12 +21,16 @@ set(
         headers_to_moc
         include/overlay_text_display.hpp
         include/signal_display.h
-        include/SteeringWheelDisplay.h
         include/GearDisplay.h
         include/SpeedDisplay.h
         include/TurnSignalsDisplay.h
         include/TrafficDisplay.h
         include/SpeedLimitDisplay.h
+)
+
+set(
+  headers_to_not_moc
+  include/SteeringWheelDisplay.h
 )
 
 qt5_add_resources(RESOURCES_RCC resources.qrc)
@@ -54,6 +58,7 @@ set(
 add_library(
         ${PROJECT_NAME} SHARED
         ${display_moc_files}
+        ${headers_to_not_moc}
         ${display_source_files}
 )
 
