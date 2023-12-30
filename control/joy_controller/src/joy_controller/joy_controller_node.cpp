@@ -217,8 +217,7 @@ bool AutowareJoyControllerNode::isDataReady()
   }
 
   // Twist
-  if (!raw_control_)
-  {
+  if (!raw_control_) {
     if (!twist_) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), std::chrono::milliseconds(5000).count(),
