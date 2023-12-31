@@ -49,8 +49,8 @@ public:
   bool autoware_engage() const { return X(); }
   bool autoware_disengage() const { return Y(); }
 
-  bool vehicle_engage() const { return LTrigger(); }
-  bool vehicle_disengage() const { return RTrigger(); }
+  bool vehicle_engage() const { return LStickButton(); }
+  bool vehicle_disengage() const { return RStickButton(); }
 
 private:
   float LStickLeftRight() const { return j_.axes.at(0); }
@@ -69,8 +69,8 @@ private:
   bool LB() const { return j_.buttons.at(6); }
   bool RB() const { return j_.buttons.at(7); }
   bool Menu() const { return j_.buttons.at(11); }
-  bool LTrigger() const { return j_.buttons.at(13); }
-  bool RTrigger() const { return j_.buttons.at(14); }
+  bool LStickButton() const { return j_.buttons.at(13); }
+  bool RStickButton() const { return j_.buttons.at(14); }
   bool ChangeView() const { return j_.buttons.at(15); }
   bool Xbox() const { return j_.buttons.at(16); }
 

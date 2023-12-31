@@ -105,5 +105,5 @@
 | Clear Emergency Stop | Menu                  |
 | Autoware Engage      | X                     |
 | Autoware Disengage   | Y                     |
-| Vehicle Engage       | Left Trigger          |
-| Vehicle Disengage    | Right Trigger         |
+| Vehicle Engage       | Left Stick Button     |
+| Vehicle Disengage    | Right Stick Button    |
