@@ -1544,6 +1544,8 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
   const bool enable_expanding_freespace_areas, const bool is_left, const bool is_driving_forward)
 {
+  using motion_utils::removeOverlapPoints;
+
   const auto & route_handler = planner_data->route_handler;
 
   // a function to convert drivable lanes to points without duplicated points
@@ -1583,14 +1585,17 @@ std::vector<geometry_msgs::msg::Point> calcBound(
       planner_data, is_left);
   }();
 
-  // Step2. if there is no drivable area defined by polygon, return original drivable bound.
-  if (!enable_expanding_hatched_road_markings && !enable_expanding_intersection_areas) {
-    const auto bound = motion_utils::removeOverlapPoints(to_ros_point(bound_points));
-    return skip_post_process
+  const auto post_process = [&](const auto & bound, const auto skip) {
+    return skip
              ? bound
              : postProcess(
                  bound, path, planner_data, drivable_lanes, enable_expanding_hatched_road_markings,
                  enable_expanding_intersection_areas, is_left, is_driving_forward);
+  };
+
+  // Step2. if there is no drivable area defined by polygon, return original drivable bound.
+  if (!enable_expanding_hatched_road_markings && !enable_expanding_intersection_areas) {
+    return post_process(removeOverlapPoints(to_ros_point(bound_points)), skip_post_process);
   }
 
   // Step3.if there are hatched road markings, expand drivable bound with the polygon.
@@ -1599,12 +1604,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   }
 
   if (!enable_expanding_intersection_areas) {
-    const auto bound = motion_utils::removeOverlapPoints(to_ros_point(bound_points));
-    return skip_post_process
-             ? bound
-             : postProcess(
-                 bound, path, planner_data, drivable_lanes, enable_expanding_hatched_road_markings,
-                 enable_expanding_intersection_areas, is_left, is_driving_forward);
+    return post_process(removeOverlapPoints(to_ros_point(bound_points)), skip_post_process);
   }
 
   // Step4. if there are intersection areas, expand drivable bound with the polygon.
@@ -1613,12 +1613,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
       getBoundWithIntersectionAreas(bound_points, route_handler, drivable_lanes, is_left);
   }
 
-  const auto bound = motion_utils::removeOverlapPoints(to_ros_point(bound_points));
-  return skip_post_process
-           ? bound
-           : postProcess(
-               bound, path, planner_data, drivable_lanes, enable_expanding_hatched_road_markings,
-               enable_expanding_intersection_areas, is_left, is_driving_forward);
+  return post_process(removeOverlapPoints(to_ros_point(bound_points)), skip_post_process);
 }
 
 std::vector<geometry_msgs::msg::Point> makeBoundLongitudinallyMonotonic(
