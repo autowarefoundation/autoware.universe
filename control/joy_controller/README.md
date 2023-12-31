@@ -86,7 +86,7 @@
 | Vehicle Engage       | △                          |
 | Vehicle Disengage    | △                          |
 
-## XONE Joystick Key Map
+## XBOX Joystick Key Map
 
 | Action               | Button                |
 | -------------------- | --------------------- |

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef JOY_CONTROLLER__JOY_CONVERTER__XONE_JOY_CONVERTER_HPP_
-#define JOY_CONTROLLER__JOY_CONVERTER__XONE_JOY_CONVERTER_HPP_
+#ifndef JOY_CONTROLLER__JOY_CONVERTER__XBOX_JOY_CONVERTER_HPP_
+#define JOY_CONTROLLER__JOY_CONVERTER__XBOX_JOY_CONVERTER_HPP_
 
 #include "joy_controller/joy_converter/joy_converter_base.hpp"
 
@@ -21,10 +21,10 @@
 
 namespace joy_controller
 {
-class XONEJoyConverter : public JoyConverterBase
+class XBOXJoyConverter : public JoyConverterBase
 {
 public:
-  explicit XONEJoyConverter(const sensor_msgs::msg::Joy & j) : j_(j) {}
+  explicit XBOXJoyConverter(const sensor_msgs::msg::Joy & j) : j_(j) {}
 
   float accel() const { return std::max(0.0f, -((RT() - 1.0f) / 2.0f)); }
 
@@ -78,4 +78,4 @@ private:
 };
 }  // namespace joy_controller
 
-#endif  // JOY_CONTROLLER__JOY_CONVERTER__XONE_JOY_CONVERTER_HPP_
+#endif  // JOY_CONTROLLER__JOY_CONVERTER__XBOX_JOY_CONVERTER_HPP_
