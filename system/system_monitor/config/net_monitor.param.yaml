@@ -1,6 +1,7 @@
 /**:
   ros__parameters:
     devices: ["*"]
+    network_traffic_monitor_activated: true
     monitor_program: "greengrass"
     crc_error_check_duration: 1
     crc_error_count_threshold: 1

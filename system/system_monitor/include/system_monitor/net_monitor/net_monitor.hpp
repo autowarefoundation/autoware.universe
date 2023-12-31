@@ -291,6 +291,7 @@ protected:
   int getifaddrs_error_code_;                    //!< @brief Error code set by getifaddrs()
   std::vector<NetworkInfomation> network_list_;  //!< @brief List of Network information
 
+  bool network_traffic_monitor_activated_;
   std::string monitor_program_;         //!< @brief nethogs monitor program name
   std::string socket_path_;             //!< @brief Path of UNIX domain socket
   boost::asio::io_service io_service_;  //!< @brief Core I/O functionality
