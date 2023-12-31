@@ -1745,7 +1745,9 @@ std::vector<DrivableLanes> combineDrivableLanes(
   const auto has_same_lane =
     [](const lanelet::ConstLanelet & target_lane, const lanelet::ConstLanelets & lanes) {
       return std::find_if(lanes.begin(), lanes.end(), [&](const auto & ll) {
-               return ll.id() == target_lane.id();
+               return ll.id() == target_lane.id() &&
+                      ll.rightBound3d().id() == target_lane.rightBound3d().id() &&
+                      ll.leftBound3d().id() == target_lane.leftBound3d().id();
              }) != lanes.end();
     };
 
