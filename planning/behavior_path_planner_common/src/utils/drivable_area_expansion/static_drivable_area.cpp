@@ -766,7 +766,7 @@ std::vector<DrivableLanes> getNonOverlappingExpandedLanes(
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
-  const bool enable_expanding_freespace_areas, [[maybe_unused]] const double vehicle_length,
+  const bool enable_expanding_freespace_areas,
   const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward)
 {
   if (path.points.empty()) {
