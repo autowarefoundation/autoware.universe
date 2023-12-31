@@ -73,6 +73,14 @@ public:
   [[nodiscard]] Object createObjectMsg() const override;
 };
 
+class TruckInitialPoseTool : public InteractiveObjectTool
+{
+public:
+  TruckInitialPoseTool();
+  void onInitialize() override;
+  [[nodiscard]] Object createObjectMsg() const override;
+};
+
 class BikeInitialPoseTool : public InteractiveObjectTool
 {
 public:
