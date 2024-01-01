@@ -263,9 +263,11 @@ When `search_priority` is set to `efficient_path` and the preference is for prio
 | Index | Planner Type       |
 | ----- | ------------------ |
 | 0     | shift_pull_out     |
+| 1     | shift_pull_out     |
 | ...   | ...                |
 | N     | shift_pull_out     |
 | 0     | geometric_pull_out |
+| 1     | geometric_pull_out |
 | ...   | ...                |
 | N     | geometric_pull_out |
 
