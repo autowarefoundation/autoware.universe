@@ -1273,6 +1273,7 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
             return ret;
           }
           i = 0;
+          ret.push_back(polygon[i]);
           continue;
         }
 
@@ -1282,6 +1283,7 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
             return ret;
           }
           i = polygon.size() - 1;
+          ret.push_back(polygon[i]);
           continue;
         }
       }
