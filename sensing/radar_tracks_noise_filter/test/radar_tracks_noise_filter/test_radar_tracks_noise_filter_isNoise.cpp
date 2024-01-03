@@ -46,12 +46,11 @@ radar_msgs::msg::RadarTrack getRadarTrack(float velocity_x, float velocity_y)
 // radar_msgs::msg::RadarTrack getRadarTrack(float velocity_x, float velocity_y)
 // {
 //   radar_msgs::msg::RadarTrack radar_track;
-//   auto velocity = geometry_msgs::msg::build()<geometry_msgs::msg::Vector3>().x(velocity_x).y(velocity_y).z(0.0);
+//   auto velocity =
+//   geometry_msgs::msg::build()<geometry_msgs::msg::Vector3>().x(velocity_x).y(velocity_y).z(0.0);
 //   radar_track.velocity = velocity;
 //   return radar_track;
 // }
-
-
 
 TEST(RadarTracksNoiseFilter, isNoise)
 {
@@ -102,5 +101,4 @@ TEST(RadarTracksNoiseFilter, isNoise)
     RadarTrack radar_track = getRadarTrack(x_velocity, radar_track_velocity);
     EXPECT_FALSE(node->isNoise(radar_track));
   }
-
 }
