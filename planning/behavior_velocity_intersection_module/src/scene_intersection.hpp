@@ -425,7 +425,7 @@ public:
 
   /**
    * @struct
-   * @brief Internal error or ego alreay passed pass_judge_line
+   * @brief Internal error or ego already passed pass_judge_line
    */
   struct Indecisive
   {
@@ -594,7 +594,7 @@ private:
   // for occlusion detection
   const bool enable_occlusion_detection_;
   std::optional<std::vector<lanelet::ConstLineString3d>> occlusion_attention_divisions_{
-    std::nullopt};                        //! for caching discritized occlusion detection lanelets
+    std::nullopt};                        //! for caching discretized occlusion detection lanelets
   StateMachine collision_state_machine_;  //! for stable collision checking
   StateMachine before_creep_state_machine_;    //! for two phase stop
   StateMachine occlusion_stop_state_machine_;  //! for stable occlusion detection
@@ -715,7 +715,7 @@ private:
   /**
    * @fn
    * @brief calculate ego vehicle profile along the path inside the intersection as the sequence of
-   * (time of arrival, travelled distance) from current ego position
+   * (time of arrival, traveled distance) from current ego position
    */
   TimeDistanceArray calcIntersectionPassingTime(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
