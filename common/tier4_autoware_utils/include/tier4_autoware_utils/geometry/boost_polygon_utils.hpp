@@ -35,6 +35,10 @@
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/register/point.hpp>
 
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/Polygon.h>
+#include <lanelet2_core/primitives/CompoundPolygon.h>
+
 #include <vector>
 
 // cppcheck-suppress unknownMacro
@@ -67,6 +71,8 @@ geometry_msgs::msg::Polygon rotatePolygon(
 Polygon2d rotatePolygon(const Polygon2d & polygon, const double angle);
 Polygon2d toPolygon2d(
   const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape);
+Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet);
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon);
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::DetectedObject & object);
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::TrackedObject & object);
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::PredictedObject & object);
