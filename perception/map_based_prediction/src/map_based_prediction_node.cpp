@@ -417,7 +417,7 @@ bool withinRoadLanelet(
 boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const TrackedObject & object, const CrosswalkEdgePoints & edge_points,
   const lanelet::LaneletMapPtr & lanelet_map_ptr, const double time_horizon,
-  const double min_object_vel)
+  const double min_object_vel, const lanelet::ConstLanelets & crosswalks_)
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
   using Line = boost::geometry::model::linestring<Point>;
@@ -448,56 +448,62 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const auto surrounding_lanelets = lanelet::geometry::findNearest(
     lanelet_map_ptr->laneletLayer, search_point, time_horizon * velocity);
 
-  bool first_intersect_load = false;
-  bool second_intersect_load = false;
-  std::vector<Point> intersects_first;
-  std::vector<Point> intersects_second;
-  for (const auto & lanelet : surrounding_lanelets) {
-    if (withinLanelet(object, lanelet.second)) {
-      return {};
-    }
+  const auto isAcrossingRoad = [&surrounding_lanelets, &crosswalks_](
+                                 const Point & p_src, const Point & p_dst) {
+    const auto withinAnyCrosswalk = [&crosswalks_](const Point & p) {
+      for (const auto & crosswalk : crosswalks_) {
+        if (boost::geometry::within(p, crosswalk.polygon2d().basicPolygon())) {
+          return true;
+        }
+      }
+      return false;
+    };
 
-    lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
-    if (attr.value() != "road") {
-      continue;
-    }
+    const auto isExist = [](const std::vector<Point> & points, const Point & p) {
+      for (const auto & existingPoint : points) {
+        if (boost::geometry::distance(existingPoint, p) < 1e-1) {
+          return true;
+        }
+      }
+      return false;
+    };
 
-    {
-      const Line object_to_entry_point{
-        {obj_pos.x, obj_pos.y}, {ret.front_center_point.x(), ret.front_center_point.y()}};
+    std::vector<Point> points_of_intersect;
+    const boost::geometry::model::linestring<Point> line{p_src, p_dst};
+
+    for (const auto & lanelet : surrounding_lanelets) {
+      const lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
+      if (attr.value() != "road") {
+        continue;
+      }
+
       std::vector<Point> tmp_intersects;
       boost::geometry::intersection(
-        object_to_entry_point, lanelet.second.polygon2d().basicPolygon(), tmp_intersects);
+        line, lanelet.second.polygon2d().basicPolygon(), tmp_intersects);
       for (const auto & p : tmp_intersects) {
-        intersects_first.push_back(p);
+        if (isExist(points_of_intersect, p) || withinAnyCrosswalk(p)) {
+          break;
+        }
+        points_of_intersect.push_back(p);
       }
     }
 
-    {
-      const Line object_to_entry_point{
-        {obj_pos.x, obj_pos.y}, {ret.back_center_point.x(), ret.back_center_point.y()}};
-      std::vector<Point> tmp_intersects;
-      boost::geometry::intersection(
-        object_to_entry_point, lanelet.second.polygon2d().basicPolygon(), tmp_intersects);
-      for (const auto & p : tmp_intersects) {
-        intersects_second.push_back(p);
-      }
+    if (points_of_intersect.size() >= 2) {
+      return true;
     }
-  }
+    return false;
+  };
 
-  if (1 < intersects_first.size()) {
-    first_intersect_load = true;
-  }
+  const bool first_intersects_road = isAcrossingRoad(
+    {obj_pos.x, obj_pos.y}, {ret.front_center_point.x(), ret.front_center_point.y()});
+  const bool second_intersects_road =
+    isAcrossingRoad({obj_pos.x, obj_pos.y}, {ret.back_center_point.x(), ret.back_center_point.y()});
 
-  if (1 < intersects_second.size()) {
-    second_intersect_load = true;
-  }
-
-  if (first_intersect_load && second_intersect_load) {
+  if (first_intersects_road && second_intersects_road) {
     return {};
   }
 
-  if (first_intersect_load && !second_intersect_load) {
+  if (first_intersects_road && !second_intersects_road) {
     ret.swap();
   }
 
@@ -1200,45 +1206,44 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
     // If the object is not crossing the crosswalk, not in the road lanelets, try to find the edge
     // points for all crosswalks and generate path to the crosswalk edge
-  } else {
-    for (const auto & crosswalk : crosswalks_) {
-      const auto edge_points = getCrosswalkEdgePoints(crosswalk);
+  }
+  for (const auto & crosswalk : crosswalks_) {
+    const auto edge_points = getCrosswalkEdgePoints(crosswalk);
 
-      const auto reachable_first = hasPotentialToReach(
-        object, edge_points.front_center_point, edge_points.front_right_point,
-        edge_points.front_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
-        max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
-      const auto reachable_second = hasPotentialToReach(
-        object, edge_points.back_center_point, edge_points.back_right_point,
-        edge_points.back_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
-        max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
+    const auto reachable_first = hasPotentialToReach(
+      object, edge_points.front_center_point, edge_points.front_right_point,
+      edge_points.front_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
+      max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
+    const auto reachable_second = hasPotentialToReach(
+      object, edge_points.back_center_point, edge_points.back_right_point,
+      edge_points.back_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
+      max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
 
-      if (!reachable_first && !reachable_second) {
-        continue;
-      }
-
-      const auto reachable_crosswalk = isReachableCrosswalkEdgePoints(
-        object, edge_points, lanelet_map_ptr_, prediction_time_horizon_,
-        min_crosswalk_user_velocity_);
-
-      if (!reachable_crosswalk) {
-        continue;
-      }
-
-      PredictedPath predicted_path =
-        path_generator_->generatePathForCrosswalkUser(object, reachable_crosswalk.get());
-      predicted_path.confidence = 1.0;
-
-      if (predicted_path.path.empty()) {
-        continue;
-      }
-      // If the predicted path to the crosswalk is crossing the fence, don't use it
-      if (doesPathCrossAnyFence(predicted_path)) {
-        continue;
-      }
-
-      predicted_object.kinematics.predicted_paths.push_back(predicted_path);
+    if (!reachable_first && !reachable_second) {
+      continue;
     }
+
+    const auto reachable_crosswalk = isReachableCrosswalkEdgePoints(
+      object, edge_points, lanelet_map_ptr_, prediction_time_horizon_, min_crosswalk_user_velocity_,
+      crosswalks_);
+
+    if (!reachable_crosswalk) {
+      continue;
+    }
+
+    PredictedPath predicted_path =
+      path_generator_->generatePathForCrosswalkUser(object, reachable_crosswalk.get());
+    predicted_path.confidence = 1.0;
+
+    if (predicted_path.path.empty()) {
+      continue;
+    }
+    // If the predicted path to the crosswalk is crossing the fence, don't use it
+    if (doesPathCrossAnyFence(predicted_path)) {
+      continue;
+    }
+
+    predicted_object.kinematics.predicted_paths.push_back(predicted_path);
   }
 
   const auto n_path = predicted_object.kinematics.predicted_paths.size();
