@@ -469,7 +469,7 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
     };
 
     std::vector<Point> points_of_intersect;
-    const boost::geometry::model::linestring<Point> line{p_src, p_dst};
+    const Line line{p_src, p_dst};
 
     for (const auto & lanelet : surrounding_lanelets) {
       const lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
