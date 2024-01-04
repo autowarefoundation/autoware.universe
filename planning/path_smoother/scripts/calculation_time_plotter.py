@@ -49,6 +49,8 @@ class CalculationCostAnalyzer(Node):
             self.y_vec.append(deque())
 
         plt.legend(loc="lower left")
+        plt.xlabel("step [-]")
+        plt.ylabel("calculation time [ms]")
         plt.show()
 
     def CallbackCalculationCost(self, msg):
