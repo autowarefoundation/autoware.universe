@@ -196,9 +196,19 @@ private:
     const double min_target_length = *std::min_element(
       internal_params_->sampling.target_lengths.begin(),
       internal_params_->sampling.target_lengths.end());
+
+    lanelet::ConstLanelet closest_lanelet_to_ego;
+    lanelet::utils::query::getClosestLanelet(current_lanes, ego_pose, &closest_lanelet_to_ego);
+    lanelet::ConstLanelet closest_lanelet_to_goal;
+    lanelet::utils::query::getClosestLanelet(current_lanes, goal_pose, &closest_lanelet_to_goal);
+
+    if (
+      length_to_goal < min_target_length &&
+      closest_lanelet_to_goal.id() == closest_lanelet_to_ego.id())
+      return isReferencePathSafe();
+
     const auto nearest_index =
       motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
-    double yaw_difference = 0.0;
     if (!nearest_index) return false;
     auto toYaw = [](const geometry_msgs::msg::Quaternion & quat) -> double {
       geometry_msgs::msg::Vector3 rpy;
@@ -209,18 +219,11 @@ private:
     const auto quat = prev_module_reference_path->points[*nearest_index].point.pose.orientation;
     const double ref_path_yaw = toYaw(quat);
     const double ego_yaw = toYaw(ego_pose.orientation);
-    yaw_difference = std::abs(ego_yaw - ref_path_yaw);
-    constexpr double pi = 3.14159;
+    const double yaw_difference = std::abs(ego_yaw - ref_path_yaw);
 
-    lanelet::ConstLanelet closest_lanelet_to_ego;
-    lanelet::utils::query::getClosestLanelet(current_lanes, ego_pose, &closest_lanelet_to_ego);
-    lanelet::ConstLanelet closest_lanelet_to_goal;
-    lanelet::utils::query::getClosestLanelet(current_lanes, goal_pose, &closest_lanelet_to_goal);
     const bool merged_back_to_path =
-      ((length_to_goal < min_target_length) || (std::abs(ego_arc.distance)) < 0.5) &&
-      (yaw_difference < pi / 36.0) &&
+      (std::abs(ego_arc.distance) < 0.25) && (yaw_difference < M_PI / 36.0) &&
       (closest_lanelet_to_goal.id() == closest_lanelet_to_ego.id());  // TODO(Daniel) magic numbers
-    std::cerr << __func__ << " Am  I reaching the end of this \n";
     return isReferencePathSafe() && (merged_back_to_path);
   }
 

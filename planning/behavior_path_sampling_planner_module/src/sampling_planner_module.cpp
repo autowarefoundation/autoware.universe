@@ -26,6 +26,9 @@ using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::Point2d;
 using utils::toPath;
 
+namespace bg = boost::geometry;
+namespace bgi = boost::geometry::index;
+
 SamplingPlannerModule::SamplingPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<SamplingPlannerParameters> & parameters,
@@ -43,9 +46,6 @@ SamplingPlannerModule::SamplingPlannerModule(
     [](
       sampler_common::Path & path, const sampler_common::Constraints & constraints,
       const MultiPoint2d & footprint) -> bool {
-      namespace bg = boost::geometry;
-      namespace bgi = boost::geometry::index;
-
       if (!footprint.empty()) {
         path.constraint_results.drivable_area =
           bg::within(footprint, constraints.drivable_polygons);
