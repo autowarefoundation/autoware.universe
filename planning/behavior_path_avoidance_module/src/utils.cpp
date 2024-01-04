@@ -1967,8 +1967,15 @@ DrivableLanes generateExpandDrivableLanes(
 
   // 1. get left/right side lanes
   const auto update_left_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto next_lanes = route_handler->getNextLanelets(target_lane);
+    const auto is_intersection =
+      std::any_of(next_lanes.begin(), next_lanes.end(), [](const auto & lane) {
+        std::string turn_direction = lane.attributeOr("turn_direction", "else");
+        return turn_direction == "right" || turn_direction == "left" ||
+               turn_direction == "straight";
+      });
     const auto all_left_lanelets = route_handler->getAllLeftSharedLinestringLanelets(
-      target_lane, parameters->use_opposite_lane, true);
+      target_lane, parameters->use_opposite_lane && !is_intersection, true);
     if (!all_left_lanelets.empty()) {
       current_drivable_lanes.left_lane = all_left_lanelets.back();  // leftmost lanelet
       pushUniqueVector(
@@ -1977,8 +1984,15 @@ DrivableLanes generateExpandDrivableLanes(
     }
   };
   const auto update_right_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto next_lanes = route_handler->getNextLanelets(target_lane);
+    const auto is_intersection =
+      std::any_of(next_lanes.begin(), next_lanes.end(), [](const auto & lane) {
+        std::string turn_direction = lane.attributeOr("turn_direction", "else");
+        return turn_direction == "right" || turn_direction == "left" ||
+               turn_direction == "straight";
+      });
     const auto all_right_lanelets = route_handler->getAllRightSharedLinestringLanelets(
-      target_lane, parameters->use_opposite_lane, true);
+      target_lane, parameters->use_opposite_lane && !is_intersection, true);
     if (!all_right_lanelets.empty()) {
       current_drivable_lanes.right_lane = all_right_lanelets.back();  // rightmost lanelet
       pushUniqueVector(
