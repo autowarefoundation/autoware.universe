@@ -44,10 +44,6 @@ bool isTrafficSignalStop(const lanelet::ConstLanelet & lanelet, const TrafficSig
     return false;
   }
 
-  if (hasTrafficLightCircleColor(tl_state, TrafficSignalElement::UNKNOWN)) {
-    return false;
-  }
-
   const std::string turn_direction = lanelet.attributeOr("turn_direction", "else");
 
   if (turn_direction == "else") {
