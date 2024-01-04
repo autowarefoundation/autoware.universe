@@ -51,8 +51,6 @@ SamplingPlannerModule::SamplingPlannerModule(
           bg::within(footprint, constraints.drivable_polygons);
       }
 
-      // path.constraint_results.collision =
-      //   !sampler_common::constraints::has_collision(footprint, constraints.obstacle_polygons);
       for (const auto & f : footprint) {
         const auto collision_index = constraints.rtree.qbegin(bgi::intersects(f));
         if (collision_index != constraints.rtree.qend()) {
@@ -83,8 +81,9 @@ SamplingPlannerModule::SamplingPlannerModule(
   // TODO(Daniel): Length increasing curvature cost, increase curvature cost the longer the path is
   // TODO(Daniel): in frenet path to path with laneID transform assign the laneid to the points from
   // end to start -> that will prevent cases were some points on the output dont have a laneID
-
-  //  Yaw difference soft constraint cost
+  // TODO(Daniel): Set a goal that depends on the reference path and NOT the actual goal set by the
+  // user.
+  //  Yaw difference soft constraint cost -> Considering implementation
   // soft_constraints_.emplace_back(
   //   [&](
   //     sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints &
@@ -107,6 +106,10 @@ SamplingPlannerModule::SamplingPlannerModule(
 
       const auto & ego_pose = input_data.ego_pose;
 
+      const double max_target_length = *std::max_element(
+        internal_params_->sampling.target_lengths.begin(),
+        internal_params_->sampling.target_lengths.end());
+
       const auto closest_path_pose_itr = std::min_element(
         path.poses.begin(), path.poses.end(), [&ego_pose](const auto & p1, const auto & p2) {
           const auto dist1 =
@@ -121,23 +124,8 @@ SamplingPlannerModule::SamplingPlannerModule(
       const double remaining_path_length =
         path.lengths.back() - path.lengths.at(closest_path_pose_index);
 
-      const double max_target_length = *std::max_element(
-        internal_params_->sampling.target_lengths.begin(),
-        internal_params_->sampling.target_lengths.end());
-
-      // const double distance_ego_to_goal_pose =
-      //   std::abs(input_data.ego_arc.length - input_data.goal_arc.length);
-      // std::cerr << "distance_ego_to_goal_pose " << distance_ego_to_goal_pose << "\n";
-      // if (closest_lanelet_to_goal.id() == closest_lanelet_to_path_end.id()) {
-      //   constexpr double epsilon = 0.001;
-      //   if (distance_ego_to_goal_pose < epsilon) return 0.0;
-      //   const double length_last_point_on_path = input_data.ego_arc.length + path.lengths.back();
-      //   const double length_path_to_goal =
-      //     std::abs(length_last_point_on_path - input_data.goal_arc.length);
-      //   return max_target_length / length_path_to_goal;
-      // }
-
-      // return length_path_to_goal / max_target_length;
+      constexpr double epsilon = 1E-5;
+      if (remaining_path_length < epsilon) return max_target_length;
       return max_target_length / remaining_path_length;
     });
 
@@ -164,38 +152,12 @@ SamplingPlannerModule::SamplingPlannerModule(
       sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
       [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
       if (path.curvatures.empty()) return std::numeric_limits<double>::max();
-      // double curvature_sum = 0.0;
-      // for (const auto curvature : path.curvatures) {
-      //   curvature_sum += std::abs(curvature);
-      // }
 
       const double max_path_curvature = *std::max_element(
         path.curvatures.begin(), path.curvatures.end(),
         [](const auto & a, const auto & b) { return std::abs(a) < std::abs(b); });
-
-      // const auto curvature_average = curvature_sum / static_cast<double>(path.curvatures.size());
-      // const auto max_curvature =
-      //   (curvature_average > 0.0) ? constraints.hard.max_curvature :
-      //   constraints.hard.min_curvature;
       return std::abs(max_path_curvature) / constraints.hard.max_curvature;
     });
-  //  Same lane as goal cost Still in testing dont delete
-  // soft_constraints_.emplace_back(
-  //   [](
-  //     sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints &
-  //     constraints,
-  //     [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
-  //     if (path.poses.empty()) return 0.0;
-
-  // const auto & goal_pose = input_data.goal_pose;
-  // lanelet::ConstLanelet closest_lanelet_to_goal;
-  // lanelet::utils::query::getClosestLanelet(
-  //   input_data.current_lanes, goal_pose, &closest_lanelet_to_goal);
-  // lanelet::ConstLanelet closest_lanelet_to_path_end;
-  // lanelet::utils::query::getClosestLanelet(
-  //   input_data.current_lanes, path.poses.back(), &closest_lanelet_to_path_end);
-  // return (closest_lanelet_to_goal.id() == closest_lanelet_to_path_end.id()) ? 0.0 : 0.5;
-  //   });
 }
 
 bool SamplingPlannerModule::isExecutionRequested() const
