@@ -265,8 +265,8 @@ ObjectData AvoidanceByLaneChange::createObjectData(
                             : Direction::RIGHT;
 
   // Find the footprint point closest to the path, set to object_data.overhang_distance.
-  object_data.overhang_dist = utils::avoidance::calcEnvelopeOverhangDistance(
-    object_data, data.reference_path, object_data.overhang_pose.position);
+  object_data.overhang_points =
+    utils::avoidance::calcEnvelopeOverhangDistance(object_data, data.reference_path);
 
   // Check whether the the ego should avoid the object.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;

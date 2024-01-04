@@ -823,8 +823,8 @@ bool isNoNeedAvoidanceBehavior(
     return false;
   }
 
-  const auto shift_length =
-    calcShiftLength(isOnRight(object), object.overhang_dist, object.avoid_margin.value());
+  const auto shift_length = calcShiftLength(
+    isOnRight(object), object.overhang_points.front().first, object.avoid_margin.value());
   if (!isShiftNecessary(isOnRight(object), shift_length)) {
     object.reason = "NotNeedAvoidance";
     return true;
@@ -885,40 +885,41 @@ double getRoadShoulderDistance(
     return 0.0;
   }
 
-  const auto centerline_pose =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
-  const auto & p1_object = object.overhang_pose.position;
-  const auto p_tmp =
-    geometry_msgs::build<Pose>().position(p1_object).orientation(centerline_pose.orientation);
-  const auto p2_object =
-    calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? 100.0 : -100.0), 0.0).position;
+  std::vector<std::pair<Point, Point>> intersects;
+  for (const auto & p1 : object.overhang_points) {
+    const auto centerline_pose =
+      lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
+    const auto p_tmp =
+      geometry_msgs::build<Pose>().position(p1.second).orientation(centerline_pose.orientation);
+    const auto p2 = calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? 100.0 : -100.0), 0.0).position;
 
-  // TODO(Satoshi OTA): check if the basic point is on right or left of bound.
-  const auto bound = isOnRight(object) ? data.left_bound : data.right_bound;
+    // TODO(Satoshi OTA): check if the basic point is on right or left of bound.
+    const auto bound = isOnRight(object) ? data.left_bound : data.right_bound;
 
-  std::vector<Point> intersects;
-  for (size_t i = 1; i < bound.size(); i++) {
-    const auto opt_intersect =
-      tier4_autoware_utils::intersect(p1_object, p2_object, bound.at(i - 1), bound.at(i));
+    for (size_t i = 1; i < bound.size(); i++) {
+      const auto opt_intersect =
+        tier4_autoware_utils::intersect(p1.second, p2, bound.at(i - 1), bound.at(i));
 
-    if (!opt_intersect) {
-      continue;
+      if (!opt_intersect) {
+        continue;
+      }
+
+      intersects.emplace_back(p1.second, opt_intersect.value());
     }
-
-    intersects.push_back(opt_intersect.value());
   }
+
+  std::sort(intersects.begin(), intersects.end(), [](const auto & a, const auto & b) {
+    return calcDistance2d(a.first, a.second) < calcDistance2d(b.first, b.second);
+  });
 
   if (intersects.empty()) {
     return 0.0;
   }
 
-  std::sort(intersects.begin(), intersects.end(), [&p1_object](const auto & a, const auto & b) {
-    return calcDistance2d(p1_object, a) < calcDistance2d(p1_object, b);
-  });
+  object.narrowest_place = intersects.front();
 
-  object.nearest_bound_point = intersects.front();
-
-  return calcDistance2d(p1_object, object.nearest_bound_point.value());
+  return calcDistance2d(
+    object.narrowest_place.value().first, object.narrowest_place.value().second);
 }
 }  // namespace filtering_utils
 
@@ -1074,34 +1075,22 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   return;
 }
 
-double calcEnvelopeOverhangDistance(
-  const ObjectData & object_data, const PathWithLaneId & path, Point & overhang_pose)
+std::vector<std::pair<double, Point>> calcEnvelopeOverhangDistance(
+  const ObjectData & object_data, const PathWithLaneId & path)
 {
-  double largest_overhang = isOnRight(object_data) ? -100.0 : 100.0;  // large number
+  std::vector<std::pair<double, Point>> overhang_points{};
 
   for (const auto & p : object_data.envelope_poly.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
     // TODO(someone): search around first position where the ego should avoid the object.
     const auto idx = findNearestIndex(path.points, point);
     const auto lateral = calcLateralDeviation(getPose(path.points.at(idx)), point);
-
-    const auto & overhang_pose_on_right = [&overhang_pose, &largest_overhang, &point, &lateral]() {
-      if (lateral > largest_overhang) {
-        overhang_pose = point;
-      }
-      return std::max(largest_overhang, lateral);
-    };
-
-    const auto & overhang_pose_on_left = [&overhang_pose, &largest_overhang, &point, &lateral]() {
-      if (lateral < largest_overhang) {
-        overhang_pose = point;
-      }
-      return std::min(largest_overhang, lateral);
-    };
-
-    largest_overhang = isOnRight(object_data) ? overhang_pose_on_right() : overhang_pose_on_left();
+    overhang_points.emplace_back(lateral, point);
   }
-  return largest_overhang;
+  std::sort(overhang_points.begin(), overhang_points.end(), [&](const auto & a, const auto & b) {
+    return isOnRight(object_data) ? b.first < a.first : a.first < b.first;
+  });
+  return overhang_points;
 }
 
 void setEndData(
@@ -1446,10 +1435,10 @@ void fillAvoidanceNecessity(
     0.5 * vehicle_width + object_parameter.safety_buffer_lateral * object_data.distance_factor;
 
   const auto check_necessity = [&](const auto hysteresis_factor) {
-    return (isOnRight(object_data) &&
-            std::abs(object_data.overhang_dist) < safety_margin * hysteresis_factor) ||
+    return (isOnRight(object_data) && std::abs(object_data.overhang_points.front().first) <
+                                        safety_margin * hysteresis_factor) ||
            (!isOnRight(object_data) &&
-            object_data.overhang_dist < safety_margin * hysteresis_factor);
+            object_data.overhang_points.front().first < safety_margin * hysteresis_factor);
   };
 
   const auto id = object_data.object.object_id;
@@ -1669,8 +1658,7 @@ void filterTargetObjects(
     }
 
     // Find the footprint point closest to the path, set to object_data.overhang_distance.
-    o.overhang_dist =
-      calcEnvelopeOverhangDistance(o, data.reference_path, o.overhang_pose.position);
+    o.overhang_points = utils::avoidance::calcEnvelopeOverhangDistance(o, data.reference_path);
     o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
     o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 

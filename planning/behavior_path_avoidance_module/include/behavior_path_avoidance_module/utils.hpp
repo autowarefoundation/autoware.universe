@@ -56,8 +56,8 @@ double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
 void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   const PathWithLaneId & path, const Point & ego_pos, ObjectData & obj);
 
-double calcEnvelopeOverhangDistance(
-  const ObjectData & object_data, const PathWithLaneId & path, Point & overhang_pose);
+std::vector<std::pair<double, Point>> calcEnvelopeOverhangDistance(
+  const ObjectData & object_data, const PathWithLaneId & path);
 
 void setEndData(
   AvoidLine & al, const double length, const geometry_msgs::msg::Pose & end, const size_t end_idx,
