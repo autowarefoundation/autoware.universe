@@ -16,6 +16,7 @@
 
 #include "behavior_path_avoidance_module/data_structs.hpp"
 #include "behavior_path_avoidance_module/utils.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
@@ -897,13 +898,8 @@ double getRoadShoulderDistance(
 
   std::vector<Point> intersects;
   for (size_t i = 1; i < bound.size(); i++) {
-    const auto p1_bound =
-      geometry_msgs::build<Point>().x(bound[i - 1].x()).y(bound[i - 1].y()).z(bound[i - 1].z());
-    const auto p2_bound =
-      geometry_msgs::build<Point>().x(bound[i].x()).y(bound[i].y()).z(bound[i].z());
-
     const auto opt_intersect =
-      tier4_autoware_utils::intersect(p1_object, p2_object, p1_bound, p2_bound);
+      tier4_autoware_utils::intersect(p1_object, p2_object, bound.at(i - 1), bound.at(i));
 
     if (!opt_intersect) {
       continue;
@@ -1188,21 +1184,18 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
 {
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
 
-  if (objects.empty() || !parameters->enable_bound_clipping) {
+  if (objects.empty()) {
     return obstacles_for_drivable_area;
   }
 
   for (const auto & object : objects) {
-    // If avoidance is executed by both behavior and motion, only non-avoidable object will be
-    // extracted from the drivable area.
-    if (!parameters->disable_path_update) {
-      if (object.is_avoidable) {
-        continue;
-      }
-    }
-
     // check if avoid marin is calculated
     if (!object.avoid_margin.has_value()) {
+      continue;
+    }
+
+    // check original polygon
+    if (object.envelope_poly.outer().empty()) {
       continue;
     }
 
@@ -1616,6 +1609,40 @@ void compensateDetectionLost(
       !isDetectedNow(registered.object.object_id) && !isIgnoreObject(registered.object.object_id)) {
       now_objects.push_back(registered);
     }
+  }
+}
+
+void updateRoadShoulderDistance(
+  AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  ObjectDataArray clip_objects;
+  std::for_each(data.other_objects.begin(), data.other_objects.end(), [&](const auto & object) {
+    if (!filtering_utils::isMovingObject(object, parameters)) {
+      clip_objects.push_back(object);
+    }
+  });
+  for (auto & o : clip_objects) {
+    const auto & vehicle_width = planner_data->parameters.vehicle_width;
+    const auto object_type = utils::getHighestProbLabel(o.object.classification);
+    const auto object_parameter = parameters->object_parameters.at(object_type);
+
+    o.avoid_margin = object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
+  }
+  const auto extract_obstacles = generateObstaclePolygonsForDrivableArea(
+    clip_objects, parameters, planner_data->parameters.vehicle_width / 2.0);
+
+  auto tmp_path = data.reference_path;
+  tmp_path.left_bound = data.left_bound;
+  tmp_path.right_bound = data.right_bound;
+  utils::extractObstaclesFromDrivableArea(tmp_path, extract_obstacles);
+
+  data.left_bound = tmp_path.left_bound;
+  data.right_bound = tmp_path.right_bound;
+
+  for (auto & o : data.target_objects) {
+    o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
+    o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
   }
 }
 

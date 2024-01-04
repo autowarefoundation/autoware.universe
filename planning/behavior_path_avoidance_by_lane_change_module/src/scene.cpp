@@ -30,16 +30,6 @@
 
 namespace behavior_path_planner
 {
-namespace
-{
-lanelet::BasicLineString3d toLineString3d(const std::vector<Point> & bound)
-{
-  lanelet::BasicLineString3d ret{};
-  std::for_each(
-    bound.begin(), bound.end(), [&](const auto & p) { ret.emplace_back(p.x, p.y, p.z); });
-  return ret;
-}
-}  // namespace
 AvoidanceByLaneChange::AvoidanceByLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters,
   std::shared_ptr<AvoidanceByLCParameters> avoidance_parameters)
@@ -172,10 +162,10 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
   // calc drivable bound
   const auto shorten_lanes =
     utils::cutOverlappedLanes(data.reference_path_rough, data.drivable_lanes);
-  data.left_bound = toLineString3d(utils::calcBound(
-    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, true));
-  data.right_bound = toLineString3d(utils::calcBound(
-    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, false));
+  data.left_bound = utils::calcBound(
+    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, true);
+  data.right_bound = utils::calcBound(
+    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, false);
 
   // get related objects from dynamic_objects, and then separates them as target objects and non
   // target objects

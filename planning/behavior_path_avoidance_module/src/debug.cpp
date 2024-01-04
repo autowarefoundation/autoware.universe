@@ -469,7 +469,7 @@ MarkerArray createDrivableBounds(
       createMarkerColor(r, g, b, 0.999));
 
     for (const auto & p : data.right_bound) {
-      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      marker.points.push_back(p);
     }
 
     msg.markers.push_back(marker);
@@ -482,7 +482,7 @@ MarkerArray createDrivableBounds(
       createMarkerColor(r, g, b, 0.999));
 
     for (const auto & p : data.left_bound) {
-      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      marker.points.push_back(p);
     }
 
     msg.markers.push_back(marker);

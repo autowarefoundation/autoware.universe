@@ -541,9 +541,9 @@ struct AvoidancePlanningData
 
   std::vector<DrivableLanes> drivable_lanes{};
 
-  lanelet::BasicLineString3d right_bound{};
+  std::vector<Point> right_bound{};
 
-  lanelet::BasicLineString3d left_bound{};
+  std::vector<Point> left_bound{};
 
   bool safe{false};
 
