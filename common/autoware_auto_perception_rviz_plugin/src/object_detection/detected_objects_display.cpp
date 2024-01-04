@@ -62,9 +62,10 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
     existence_probability_position.x = object.kinematics.pose_with_covariance.pose.position.x + 0.5;
     existence_probability_position.y = object.kinematics.pose_with_covariance.pose.position.y;
     existence_probability_position.z = object.kinematics.pose_with_covariance.pose.position.z + 0.5;
+    const float existence_probability = object.existence_probability;
     auto existence_prob_marker = get_existence_probability_marker_ptr(
       existence_probability_position, object.kinematics.pose_with_covariance.pose.orientation,
-      object, object.classification);
+      existence_probability, object.classification);
     if (existence_prob_marker) {
       auto existence_prob_marker_ptr = existence_prob_marker.value();
       existence_prob_marker_ptr->header = msg->header;

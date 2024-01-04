@@ -210,13 +210,12 @@ protected:
   template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_existence_probability_marker_ptr(
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-    const autoware_auto_perception_msgs::msg::DetectedObject & object,
-    const ClassificationContainerT & labels) const
+    const float existence_probability, const ClassificationContainerT & labels) const
   {
     if (m_display_existence_probability_property.getBool()) {
       const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
       return detail::get_existence_probability_marker_ptr(
-        centroid, orientation, object, color_rgba);
+        centroid, orientation, existence_probability, color_rgba);
     } else {
       return std::nullopt;
     }

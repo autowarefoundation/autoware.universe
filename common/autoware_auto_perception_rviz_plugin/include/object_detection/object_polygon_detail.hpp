@@ -102,8 +102,7 @@ get_label_marker_ptr(
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_existence_probability_marker_ptr(
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const std_msgs::msg::ColorRGBA & color_rgba);
+  const float existence_probability, const std_msgs::msg::ColorRGBA & color_rgba);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_uuid_marker_ptr(
