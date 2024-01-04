@@ -486,7 +486,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   };
 
   // EXTEND prev path
-  if (prev_sampling_path_ && prev_sampling_path_->points.size()) {
+  if (prev_sampling_path_ && prev_sampling_path_->points.size() > 0) {
     // Update previous path
     frenet_planner::Path prev_path_frenet = prev_sampling_path_.value();
     frenet_paths.push_back(prev_path_frenet);
