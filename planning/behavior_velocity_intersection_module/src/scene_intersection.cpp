@@ -1160,7 +1160,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   auto target_objects = generateTargetObjects(intersection_lanelets, intersection_area);
 
   const bool yield_stuck_detected = checkYieldStuckVehicleInIntersection(
-    target_objects, interpolated_path_info, intersection_lanelets.attention_non_preceding_,
+    target_objects, interpolated_path_info, intersection_lanelets.attention_non_preceding(),
     &debug_data_);
   if (yield_stuck_detected) {
     std::optional<size_t> stopline_idx = std::nullopt;

@@ -34,7 +34,10 @@
 namespace behavior_velocity_planner::util
 {
 
-/** wrapper class of interpolated path with lane id*/
+/**
+ * @struct
+ * @brief  wrapper class of interpolated path with lane id
+ */
 struct InterpolatedPathInfo
 {
   /** the interpolated path */
