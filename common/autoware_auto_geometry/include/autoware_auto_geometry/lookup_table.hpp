@@ -24,8 +24,6 @@
 
 #include <autoware_auto_common/common/types.hpp>
 
-#include <autoware_auto_common/common/types.hpp>
-
 #include <cmath>
 #include <stdexcept>
 #include <vector>
