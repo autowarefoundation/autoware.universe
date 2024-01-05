@@ -407,7 +407,6 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
     const auto stop_pose = calcLongitudinalOffsetPose(
       ego_path.points, nearest_stop_info->first,
       -base_link2front - planner_param_.stop_distance_from_object);
-
     if (stop_pose) {
       return createStopFactor(*stop_pose, stop_factor_points);
     }
