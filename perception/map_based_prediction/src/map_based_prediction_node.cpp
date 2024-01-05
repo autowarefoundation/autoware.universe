@@ -447,8 +447,7 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const auto surrounding_lanelets = lanelet::geometry::findNearest(
     lanelet_map_ptr->laneletLayer, search_point, time_horizon * velocity);
 
-  const auto isAcrossingAnyRoad = [&surrounding_lanelets](
-                                    const Point & p_src, const Point & p_dst) {
+  const auto isAcrossAnyRoad = [&surrounding_lanelets](const Point & p_src, const Point & p_dst) {
     const auto withinAnyCrosswalk = [&surrounding_lanelets](const Point & p) {
       for (const auto & lanelet : surrounding_lanelets) {
         const lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
@@ -495,10 +494,10 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
     return false;
   };
 
-  const bool first_intersects_road = isAcrossingAnyRoad(
+  const bool first_intersects_road = isAcrossAnyRoad(
     {obj_pos.x, obj_pos.y}, {ret.front_center_point.x(), ret.front_center_point.y()});
-  const bool second_intersects_road = isAcrossingAnyRoad(
-    {obj_pos.x, obj_pos.y}, {ret.back_center_point.x(), ret.back_center_point.y()});
+  const bool second_intersects_road =
+    isAcrossAnyRoad({obj_pos.x, obj_pos.y}, {ret.back_center_point.x(), ret.back_center_point.y()});
 
   if (first_intersects_road && second_intersects_road) {
     return {};
