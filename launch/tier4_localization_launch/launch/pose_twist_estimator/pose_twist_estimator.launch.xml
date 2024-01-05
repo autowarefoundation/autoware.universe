@@ -2,6 +2,7 @@
 <launch>
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='online'&quot;)" value="true"/>
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='logging_simulation'&quot;)" value="false"/>
+  <arg name="gnss_enabled"/>
 
   <!-- NDT Scan Matcher Launch (as pose estimator) -->
   <group if="$(eval &quot;'$(var pose_source)'=='ndt'&quot;)">
@@ -13,7 +14,7 @@
       <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
         <arg name="ndt_enabled" value="true"/>
-        <arg name="gnss_enabled" value="true"/>
+        <arg name="gnss_enabled" value="$(var gnss_enabled)"/>
         <arg name="ekf_enabled" value="true"/>
         <arg name="yabloc_enabled" value="false"/>
         <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
@@ -37,7 +38,7 @@
       <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
         <arg name="ndt_enabled" value="false"/>
-        <arg name="gnss_enabled" value="true"/>
+        <arg name="gnss_enabled" value="$(var gnss_enabled)"/>
         <arg name="ekf_enabled" value="true"/>
         <arg name="yabloc_enabled" value="true"/>
         <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
@@ -71,7 +72,7 @@
       <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
         <arg name="ndt_enabled" value="false"/>
-        <arg name="gnss_enabled" value="true"/>
+        <arg name="gnss_enabled" value="$(var gnss_enabled)"/>
         <arg name="ekf_enabled" value="true"/>
         <arg name="yabloc_enabled" value="false"/>
         <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
@@ -98,7 +99,7 @@
       <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
         <arg name="ndt_enabled" value="false"/>
-        <arg name="gnss_enabled" value="true"/>
+        <arg name="gnss_enabled" value="$(var gnss_enabled)"/>
         <arg name="ekf_enabled" value="true"/>
         <arg name="yabloc_enabled" value="false"/>
         <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
@@ -132,7 +133,7 @@
       <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
         <arg name="ndt_enabled" value="false"/>
-        <arg name="gnss_enabled" value="false"/>
+        <arg name="gnss_enabled" value="$(var gnss_enabled)"/>
         <arg name="ekf_enabled" value="true"/>
         <arg name="yabloc_enabled" value="false"/>
         <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
