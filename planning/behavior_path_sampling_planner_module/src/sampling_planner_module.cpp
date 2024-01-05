@@ -42,6 +42,14 @@ SamplingPlannerModule::SamplingPlannerModule(
     std::shared_ptr<SamplingPlannerInternalParameters>(new SamplingPlannerInternalParameters{});
   updateModuleParams(parameters);
 
+  // check if the path is empty
+  hard_constraints_.emplace_back(
+    [](
+      sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
+      [[maybe_unused]] const MultiPoint2d & footprint) -> bool {
+      return !path.points.empty() && !path.poses.empty();
+    });
+
   hard_constraints_.emplace_back(
     [](
       sampler_common::Path & path, const sampler_common::Constraints & constraints,
@@ -66,7 +74,10 @@ SamplingPlannerModule::SamplingPlannerModule(
     [](
       sampler_common::Path & path, const sampler_common::Constraints & constraints,
       [[maybe_unused]] const MultiPoint2d & footprint) -> bool {
-      if (path.curvatures.empty()) return true;
+      if (path.curvatures.empty()) {
+        path.constraint_results.curvature = false;
+        return false;
+      }
       const bool curvatures_satisfied =
         std::all_of(path.curvatures.begin(), path.curvatures.end(), [&](const auto & v) -> bool {
           return (v > constraints.hard.min_curvature) && (v < constraints.hard.max_curvature);
@@ -176,8 +187,8 @@ bool SamplingPlannerModule::isExecutionRequested() const
 
 bool SamplingPlannerModule::isReferencePathSafe() const
 {
+  // TODO(Daniel): Don't use reference path, use a straight path forward.
   std::vector<DrivableLanes> drivable_lanes{};
-  const auto & prev_module_path = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().path);
   const auto & prev_module_reference_path =
     std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
@@ -269,15 +280,12 @@ SamplingPlannerData SamplingPlannerModule::createPlannerData(
   const PlanResult & path, const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound) const
 {
-  // create planner data
   SamplingPlannerData data;
-  // planner_data.header = path.header;
   auto points = path->points;
   data.left_bound = left_bound;
   data.right_bound = right_bound;
   data.ego_pose = planner_data_->self_odometry->pose.pose;
   data.ego_vel = planner_data_->self_odometry->twist.twist.linear.x;
-  // data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
   return data;
 }
 
@@ -290,8 +298,6 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
     quaternion_tf2.setRPY(roll, pitch, yaw);
     return quaternion_tf2;
   };
-
-  // auto copy_point_information = []()
 
   PathWithLaneId path;
   const auto header = planner_data_->route_handler->getRouteHeader();
@@ -511,7 +517,9 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
         prepareSamplingParameters(future_state, reference_spline, *internal_params_);
       auto extension_frenet_paths = frenet_planner::generatePaths(
         reference_spline, frenet_reuse_state, extension_sampling_parameters);
-      for (auto & p : extension_frenet_paths) frenet_paths.push_back(prev_path_frenet.extend(p));
+      for (auto & p : extension_frenet_paths) {
+        if (!p.points.empty()) frenet_paths.push_back(prev_path_frenet.extend(p));
+      }
     }
   }
 
