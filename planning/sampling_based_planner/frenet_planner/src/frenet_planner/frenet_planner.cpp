@@ -189,6 +189,8 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
       path.poses.push_back(pose);
     }
     path.yaws.push_back(path.yaws.back());
+    path.poses.push_back(path.poses.back());
+
     // Calculate curvatures
     for (size_t i = 1; i < path.yaws.size(); ++i) {
       const auto dyaw =
