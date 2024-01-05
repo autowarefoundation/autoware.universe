@@ -415,15 +415,20 @@ bool withinRoadLanelet(
 }
 
 boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
-  const TrackedObject & object, const CrosswalkEdgePoints & edge_points,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr, const double time_horizon,
-  const double min_object_vel)
+  const TrackedObject & object, const lanelet::ConstLanelet & target_crosswalk,
+  const CrosswalkEdgePoints & edge_points, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+  const double time_horizon, const double min_object_vel)
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
 
   const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
   const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
   const auto yaw = tier4_autoware_utils::getRPY(object.kinematics.pose_with_covariance.pose).z;
+
+  lanelet::BasicPoint2d obj_pos_as_lanelet(obj_pos.x, obj_pos.y);
+  if (boost::geometry::within(obj_pos_as_lanelet, target_crosswalk.polygon2d().basicPolygon())) {
+    return {};
+  }
 
   const auto & p1 = edge_points.front_center_point;
   const auto & p2 = edge_points.back_center_point;
@@ -441,11 +446,8 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const auto estimated_velocity = std::hypot(obj_vel.x, obj_vel.y);
   const auto is_stop_object = estimated_velocity < stop_velocity_th;
   const auto velocity = std::max(min_object_vel, estimated_velocity);
-
-  lanelet::BasicPoint2d search_point(obj_pos.x, obj_pos.y);
-  // nearest lanelet
   const auto surrounding_lanelets = lanelet::geometry::findNearest(
-    lanelet_map_ptr->laneletLayer, search_point, time_horizon * velocity);
+    lanelet_map_ptr->laneletLayer, obj_pos_as_lanelet, time_horizon * velocity);
 
   const auto isAcrossAnyRoad = [&surrounding_lanelets](const Point & p_src, const Point & p_dst) {
     const auto withinAnyCrosswalk = [&surrounding_lanelets](const Point & p) {
@@ -1203,10 +1205,8 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
         predicted_object.kinematics.predicted_paths.push_back(predicted_path);
       }
     }
-
-    // If the object is not crossing the crosswalk, not in the road lanelets, try to find the edge
-    // points for all crosswalks and generate path to the crosswalk edge
   }
+  // try to find the edge points for all crosswalks and generate path to the crosswalk edge
   for (const auto & crosswalk : crosswalks_) {
     const auto edge_points = getCrosswalkEdgePoints(crosswalk);
 
@@ -1224,7 +1224,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
     }
 
     const auto reachable_crosswalk = isReachableCrosswalkEdgePoints(
-      object, edge_points, lanelet_map_ptr_, prediction_time_horizon_,
+      object, crosswalk, edge_points, lanelet_map_ptr_, prediction_time_horizon_,
       min_crosswalk_user_velocity_);
 
     if (!reachable_crosswalk) {
