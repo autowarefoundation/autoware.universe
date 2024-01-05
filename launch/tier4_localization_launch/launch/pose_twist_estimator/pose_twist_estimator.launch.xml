@@ -133,7 +133,8 @@
       <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
         <arg name="ndt_enabled" value="false"/>
-        <arg name="gnss_enabled" value="false"/>  <!-- artag currently only works when gnss_enabled is false -->
+        <arg name="gnss_enabled" value="false"/>
+        <!-- artag currently only works when gnss_enabled is false -->
         <arg name="ekf_enabled" value="true"/>
         <arg name="yabloc_enabled" value="false"/>
         <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
