@@ -642,17 +642,48 @@ void ScanGroundFilterComponent::filter(
 rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
   const std::vector<rclcpp::Parameter> & p)
 {
+  if (get_param(p, "grid_size_m", grid_size_m_)) {
+    grid_mode_switch_grid_id_ = grid_mode_switch_radius_ / grid_size_m_;
+    grid_size_rad_ =
+      normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
+      normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
+    tan_grid_size_rad_ = std::tan(grid_size_rad_);
+    RCLCPP_DEBUG(get_logger(), "Setting grid_size_m to: %f.", grid_size_m_);
+    RCLCPP_DEBUG(
+      get_logger(), "Setting grid_mode_switch_grid_id to: %f.", grid_mode_switch_grid_id_);
+    RCLCPP_DEBUG(get_logger(), "Setting grid_size_rad to: %f.", grid_size_rad_);
+    RCLCPP_DEBUG(get_logger(), "Setting tan_grid_size_rad to: %f.", tan_grid_size_rad_);
+  }
+  if (get_param(p, "grid_mode_switch_radius", grid_mode_switch_radius_)) {
+    grid_mode_switch_grid_id_ = grid_mode_switch_radius_ / grid_size_m_;
+    grid_mode_switch_angle_rad_ = std::atan2(grid_mode_switch_radius_, virtual_lidar_z_);
+    grid_size_rad_ =
+      normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
+      normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
+    tan_grid_size_rad_ = std::tan(grid_size_rad_);
+    RCLCPP_DEBUG(get_logger(), "Setting grid_mode_switch_radius to: %f.", grid_mode_switch_radius_);
+    RCLCPP_DEBUG(
+      get_logger(), "Setting grid_mode_switch_grid_id to: %f.", grid_mode_switch_grid_id_);
+    RCLCPP_DEBUG(
+      get_logger(), "Setting grid_mode_switch_angle_rad to: %f.", grid_mode_switch_angle_rad_);
+    RCLCPP_DEBUG(get_logger(), "Setting grid_size_rad to: %f.", grid_size_rad_);
+    RCLCPP_DEBUG(get_logger(), "Setting tan_grid_size_rad to: %f.", tan_grid_size_rad_);
+  }
   double global_slope_max_angle_deg{get_parameter("global_slope_max_angle_deg").as_double()};
   if (get_param(p, "global_slope_max_angle_deg", global_slope_max_angle_deg)) {
     global_slope_max_angle_rad_ = deg2rad(global_slope_max_angle_deg);
+    global_slope_max_ratio_ = std::tan(global_slope_max_angle_rad_);
     RCLCPP_DEBUG(
       get_logger(), "Setting global_slope_max_angle_rad to: %f.", global_slope_max_angle_rad_);
+    RCLCPP_DEBUG(get_logger(), "Setting global_slope_max_ratio to: %f.", global_slope_max_ratio_);
   }
   double local_slope_max_angle_deg{get_parameter("local_slope_max_angle_deg").as_double()};
   if (get_param(p, "local_slope_max_angle_deg", local_slope_max_angle_deg)) {
     local_slope_max_angle_rad_ = deg2rad(local_slope_max_angle_deg);
+    local_slope_max_ratio_ = std::tan(local_slope_max_angle_rad_);
     RCLCPP_DEBUG(
       get_logger(), "Setting local_slope_max_angle_rad to: %f.", local_slope_max_angle_rad_);
+    RCLCPP_DEBUG(get_logger(), "Setting local_slope_max_ratio to: %f.", local_slope_max_ratio_);
   }
   double radial_divider_angle_deg{get_parameter("radial_divider_angle_deg").as_double()};
   if (get_param(p, "radial_divider_angle_deg", radial_divider_angle_deg)) {
@@ -663,9 +694,14 @@ rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
     RCLCPP_DEBUG(get_logger(), "Setting radial_dividers_num to: %zu.", radial_dividers_num_);
   }
   if (get_param(p, "split_points_distance_tolerance", split_points_distance_tolerance_)) {
+    split_points_distance_tolerance_square_ =
+      split_points_distance_tolerance_ * split_points_distance_tolerance_;
     RCLCPP_DEBUG(
       get_logger(), "Setting split_points_distance_tolerance to: %f.",
       split_points_distance_tolerance_);
+    RCLCPP_DEBUG(
+      get_logger(), "Setting split_points_distance_tolerance_square to: %f.",
+      split_points_distance_tolerance_square_);
   }
   if (get_param(p, "split_height_distance", split_height_distance_)) {
     RCLCPP_DEBUG(get_logger(), "Setting split_height_distance to: %f.", split_height_distance_);
