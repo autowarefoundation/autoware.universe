@@ -52,6 +52,7 @@ private:
 
   // plan path
   std::vector<TrajectoryPoint> plan_path(const std::vector<lanelet::Id> & route_lane_ids);
+  std::vector<TrajectoryPoint> optimize_trajectory(const Path & raw_path) const;
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
 
