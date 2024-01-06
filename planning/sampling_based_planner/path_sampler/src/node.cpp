@@ -244,13 +244,12 @@ void PathSampler::onPath(const Path::SharedPtr path_ptr)
   if (!generated_traj_points.empty()) {
     auto full_traj_points = extendTrajectory(planner_data.traj_points, generated_traj_points);
     const auto output_traj_msg =
-      trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
+      motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
   } else {
     auto stopping_traj = trajectory_utils::convertToTrajectoryPoints(planner_data.traj_points);
     for (auto & p : stopping_traj) p.longitudinal_velocity_mps = 0.0;
-    const auto output_traj_msg =
-      trajectory_utils::createTrajectory(path_ptr->header, stopping_traj);
+    const auto output_traj_msg = motion_utils::convertToTrajectory(stopping_traj, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
   }
 

@@ -262,7 +262,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::smoothTrajectory(
 
   // 8. publish eb trajectory
   const auto eb_traj =
-    trajectory_utils::createTrajectory(createHeader(clock_.now()), *eb_traj_points);
+    motion_utils::convertToTrajectory(*eb_traj_points, createHeader(clock_.now()));
   debug_eb_traj_pub_->publish(eb_traj);
 
   time_keeper_ptr_->toc(__func__, "      ");
@@ -389,7 +389,7 @@ void EBPathSmoother::updateConstraint(
 
   // publish fixed trajectory
   const auto eb_fixed_traj =
-    trajectory_utils::createTrajectory(createHeader(clock_.now()), debug_fixed_traj_points);
+    motion_utils::convertToTrajectory(debug_fixed_traj_points, createHeader(clock_.now()));
   debug_eb_fixed_traj_pub_->publish(eb_fixed_traj);
 
   time_keeper_ptr_->toc(__func__, "        ");

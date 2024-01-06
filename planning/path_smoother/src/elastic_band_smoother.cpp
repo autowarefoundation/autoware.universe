@@ -167,7 +167,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
       "Backward path is NOT supported. Just converting path to trajectory");
 
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
-    const auto output_traj_msg = trajectory_utils::createTrajectory(path_ptr->header, traj_points);
+    const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
     path_pub_->publish(*path_ptr);
     return;
@@ -220,7 +220,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
     createFloat64Stamped(now(), time_keeper_ptr_->getAccumulatedTime()));
 
   const auto output_traj_msg =
-    trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
+    motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
   traj_pub_->publish(output_traj_msg);
   const auto output_path_msg = trajectory_utils::create_path(*path_ptr, full_traj_points);
   path_pub_->publish(output_path_msg);

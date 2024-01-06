@@ -236,7 +236,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
       "Backward path is NOT supported. Just converting path to trajectory");
 
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
-    const auto output_traj_msg = trajectory_utils::createTrajectory(path_ptr->header, traj_points);
+    const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
     return;
   }
@@ -268,7 +268,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
     createFloat64Stamped(now(), time_keeper_ptr_->getAccumulatedTime()));
 
   const auto output_traj_msg =
-    trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
+    motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
   traj_pub_->publish(output_traj_msg);
 }
 
@@ -656,7 +656,7 @@ void ObstacleAvoidancePlanner::publishDebugData(const Header & header) const
 
   // publish trajectories
   const auto debug_extended_traj =
-    trajectory_utils::createTrajectory(header, debug_data_ptr_->extended_traj_points);
+    motion_utils::convertToTrajectory(debug_data_ptr_->extended_traj_points, header);
   debug_extended_traj_pub_->publish(debug_extended_traj);
 
   time_keeper_ptr_->toc(__func__, "  ");
