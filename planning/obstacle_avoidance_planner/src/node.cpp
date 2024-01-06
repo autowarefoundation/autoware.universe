@@ -16,6 +16,7 @@
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "obstacle_avoidance_planner/debug_marker.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"

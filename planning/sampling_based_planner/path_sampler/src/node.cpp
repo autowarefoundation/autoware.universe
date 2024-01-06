@@ -16,6 +16,7 @@
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "path_sampler/path_generation.hpp"
 #include "path_sampler/prepare_inputs.hpp"
 #include "path_sampler/utils/geometry_utils.hpp"
