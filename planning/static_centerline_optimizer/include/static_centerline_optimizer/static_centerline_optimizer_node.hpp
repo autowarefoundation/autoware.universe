@@ -63,6 +63,7 @@ private:
     const std::string & lanelet2_output_file_path, const std::vector<lanelet::Id> & route_lane_ids,
     const std::vector<TrajectoryPoint> & optimized_traj_points);
 
+  lanelet::LaneletMapPtr original_map_ptr_{nullptr};
   HADMapBin::ConstSharedPtr map_bin_ptr_{nullptr};
   std::shared_ptr<RouteHandler> route_handler_ptr_{nullptr};
 

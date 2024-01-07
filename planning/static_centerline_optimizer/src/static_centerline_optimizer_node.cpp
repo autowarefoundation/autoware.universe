@@ -266,14 +266,21 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
   // load map by the map_loader package
   map_bin_ptr_ = [&]() -> HADMapBin::ConstSharedPtr {
     // load map
-    lanelet::LaneletMapPtr map_ptr;
     tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
     map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
-    map_ptr = Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
-    lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
+    const auto map_ptr =
+      Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
     if (!map_ptr) {
       return nullptr;
     }
+
+    // NOTE: The original map is stored here since the various ids in the lanelet map will change
+    //       after lanelet::utils::overwriteLaneletCenterline, and saving map will fail.
+    original_map_ptr_ =
+      Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
+
+    // overwrite more dense centerline
+    lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
 
     // create map bin msg
     const auto map_bin_msg =
@@ -673,7 +680,7 @@ void StaticCenterlineOptimizerNode::save_map(
   RCLCPP_INFO(get_logger(), "Updated centerline in map.");
 
   // save map with modified center line
-  lanelet::write(lanelet2_output_file_path, *route_handler_ptr_->getLaneletMapPtr());
+  lanelet::write(lanelet2_output_file_path, *original_map_ptr_);
   RCLCPP_INFO(get_logger(), "Saved map.");
 }
 }  // namespace static_centerline_optimizer
