@@ -817,7 +817,6 @@ void MPTOptimizer::updateBounds(
   // infeasible to run especially when obstacles are extracted from the drivable area.
   //       In this case, the drivable area's width is forced to be wider.
   keepMinimumBoundsWidth(ref_points);
-  // keepMinimumBoundsWidth(ref_points);
 
   // extend violated bounds, where the input path is outside the drivable area
   ref_points = extendViolatedBounds(ref_points);

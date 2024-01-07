@@ -485,13 +485,13 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::optimize_trajectory(
 
     // smooth trajectory by elastic band in the path_smoother package
     const auto smoothed_traj_points =
-      eb_path_smoother_ptr->smoothTrajectory(raw_traj_points, raw_traj_points.front().pose);
+      eb_path_smoother_ptr->smoothTrajectory(raw_traj_points, virtual_ego_pose);
 
     // road collision avoidance by model predictive trajectory in the obstacle_avoidance_planner
     // package
     const obstacle_avoidance_planner::PlannerData planner_data{
       raw_path.header, smoothed_traj_points, raw_path.left_bound, raw_path.right_bound,
-      smoothed_traj_points.front().pose};
+      virtual_ego_pose};
     const auto optimized_traj_points = mpt_optimizer_ptr->optimizeTrajectory(planner_data);
 
     // connect the previously and currently optimized trajectory points

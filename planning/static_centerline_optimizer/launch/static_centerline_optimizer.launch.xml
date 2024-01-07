@@ -66,6 +66,7 @@
     <param from="$(find-pkg-share autoware_launch)/config/planning/scenario_planning/common/nearest_search.param.yaml"/>
     <!-- component param -->
     <param from="$(var map_loader_param)"/>
+    <param from="$(var behavior_path_planner_param)"/>
     <param from="$(var path_smoother_param)"/>
     <param from="$(var obstacle_avoidance_planner_param)"/>
     <param from="$(var mission_planner_param)"/>
