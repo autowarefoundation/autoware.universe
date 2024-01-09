@@ -296,14 +296,6 @@ bool LaneChangeInterface::canTransitIdleToWaitingApprovalState()
 
   log_debug_throttled(__func__);
 
-  if (!isActivated()) {
-    if (module_type_->specialRequiredCheck()) {
-      return true;
-    }
-    log_debug_throttled("Module is idling.");
-    return false;
-  }
-
   log_debug_throttled("Can lane change safely. Executing lane change.");
   module_type_->toNormalState();
   return true;
