@@ -237,7 +237,7 @@ protected:
   LaneChangeStatus status_{};
   PathShifter path_shifter_{};
 
-  LaneChangeStates current_lane_change_state_{};
+  LaneChangeStates current_lane_change_state_{LaneChangeStates::Normal};
 
   std::shared_ptr<LaneChangeParameters> lane_change_parameters_{};
   std::shared_ptr<LaneChangePath> abort_path_{};

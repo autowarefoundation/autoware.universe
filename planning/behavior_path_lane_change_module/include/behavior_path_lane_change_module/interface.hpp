@@ -96,25 +96,6 @@ public:
   TurnSignalInfo getCurrentTurnSignalInfo(
     const PathWithLaneId & path, const TurnSignalInfo & original_turn_signal_info);
 
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] BehaviorModuleOutput run() override
-  {
-    updateData();
-
-    if (!isWaitingApproval()) {
-      return plan();
-    }
-
-    // module is waiting approval. Check it.
-    if (isActivated()) {
-      RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
-      return plan();
-    } else {
-      RCLCPP_DEBUG(getLogger(), "keep waiting approval... Do planCandidate().");
-      return planWaitingApproval();
-    }
-  }
-
 protected:
   std::shared_ptr<LaneChangeParameters> parameters_;
 

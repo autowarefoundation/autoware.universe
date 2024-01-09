@@ -49,9 +49,10 @@ LaneChangeInterface::LaneChangeInterface(
 
 void LaneChangeInterface::processOnEntry()
 {
-  waitApproval();
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
+  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
+  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   module_type_->updateLaneChangeStatus();
 }
 
@@ -80,6 +81,8 @@ void LaneChangeInterface::updateData()
 {
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
+  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
+  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   module_type_->updateSpecialData();
   module_type_->resetStopPose();
 }
@@ -98,8 +101,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     return {};
   }
 
-  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
-  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   auto output = module_type_->generateOutput();
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
   *prev_approved_path_ = getPreviousModuleOutput().path;
@@ -112,7 +113,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   }
 
   updateSteeringFactorPtr(output);
-  clearWaitingApproval();
 
   return output;
 }
@@ -129,8 +129,6 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
 
-  module_type_->setPreviousModulePaths(
-    getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
   module_type_->updateLaneChangeStatus();
   setObjectDebugVisualization();
 
@@ -227,11 +225,6 @@ bool LaneChangeInterface::canTransitFailureState()
 
   log_debug_throttled(__func__);
 
-  if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
-    log_debug_throttled("Abort process has on going.");
-    return false;
-  }
-
   if (isWaitingApproval()) {
     log_debug_throttled("Can't transit to failure state. Module is WAITING_FOR_APPROVAL");
     return false;
@@ -302,14 +295,6 @@ bool LaneChangeInterface::canTransitIdleToWaitingApprovalState()
   };
 
   log_debug_throttled(__func__);
-
-  if (!isActivated()) {
-    if (module_type_->specialRequiredCheck()) {
-      return true;
-    }
-    log_debug_throttled("Module is idling.");
-    return false;
-  }
 
   log_debug_throttled("Can lane change safely. Executing lane change.");
   module_type_->toNormalState();
