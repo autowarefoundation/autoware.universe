@@ -16,8 +16,6 @@
 
 #include "autoware_point_types/types.hpp"
 
-#include <boost/circular_buffer.hpp>
-
 #include <algorithm>
 #include <numeric>
 
@@ -47,6 +45,8 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     max_distance_range_ = declare_parameter<double>("max_distance_range");
     horizontal_resolution_ = declare_parameter<double>("horizontal_resolution");
   }
+  dust_mask_buffer.set_capacity(dust_buffering_frames_);
+  no_return_mask_buffer.set_capacity(blockage_buffering_frames_);
   if (vertical_bins_ <= horizontal_ring_id_) {
     RCLCPP_ERROR(
       this->get_logger(),
@@ -214,7 +214,6 @@ void BlockageDiagComponent::filter(
     cv::Point(blockage_kernel_, blockage_kernel_));
   cv::erode(no_return_mask, erosion_dst, blockage_element);
   cv::dilate(erosion_dst, no_return_mask, blockage_element);
-  static boost::circular_buffer<cv::Mat> no_return_mask_buffer(blockage_buffering_frames_);
   cv::Mat time_series_blockage_result(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::Mat time_series_blockage_mask(
@@ -292,7 +291,6 @@ void BlockageDiagComponent::filter(
   cv::inRange(single_dust_ground_img, 254, 255, single_dust_ground_img);
   cv::Mat ground_mask(cv::Size(ideal_horizontal_bins, horizontal_ring_id_), CV_8UC1);
   cv::vconcat(sky_blank, single_dust_ground_img, single_dust_img);
-  static boost::circular_buffer<cv::Mat> dust_mask_buffer(dust_buffering_frames_);
   cv::Mat binarized_dust_mask_(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::Mat multi_frame_dust_mask(

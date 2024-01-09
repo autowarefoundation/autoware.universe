@@ -33,6 +33,8 @@
 #include <cv_bridge/cv_bridge.h>
 #endif
 
+#include <boost/circular_buffer.hpp>
+
 #include <string>
 #include <vector>
 
@@ -91,6 +93,8 @@ private:
   int dust_frame_count_ = 0;
   double max_distance_range_{200.0};
   double horizontal_resolution_{0.4};
+  boost::circular_buffer<cv::Mat> no_return_mask_buffer{1};
+  boost::circular_buffer<cv::Mat> dust_mask_buffer{1};
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
