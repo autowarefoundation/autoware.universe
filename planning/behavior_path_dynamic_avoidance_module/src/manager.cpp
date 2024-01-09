@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
+#include "behavior_path_dynamic_avoidance_module/manager.hpp"
 
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
@@ -116,6 +116,10 @@ void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
       node->declare_parameter<double>(ns + "max_time_for_object_lat_shift");
     p.lpf_gain_for_lat_avoid_to_offset =
       node->declare_parameter<double>(ns + "lpf_gain_for_lat_avoid_to_offset");
+
+    p.max_ego_lat_acc = node->declare_parameter<double>(ns + "max_ego_lat_acc");
+    p.max_ego_lat_jerk = node->declare_parameter<double>(ns + "max_ego_lat_jerk");
+    p.delay_time_ego_shift = node->declare_parameter<double>(ns + "delay_time_ego_shift");
 
     p.max_time_to_collision_overtaking_object =
       node->declare_parameter<double>(ns + "overtaking_object.max_time_to_collision");
@@ -232,6 +236,10 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
       parameters, ns + "max_time_for_object_lat_shift", p->max_time_for_lat_shift);
     updateParam<double>(
       parameters, ns + "lpf_gain_for_lat_avoid_to_offset", p->lpf_gain_for_lat_avoid_to_offset);
+
+    updateParam<double>(parameters, ns + "max_ego_lat_acc", p->max_ego_lat_acc);
+    updateParam<double>(parameters, ns + "max_ego_lat_jerk", p->max_ego_lat_jerk);
+    updateParam<double>(parameters, ns + "delay_time_ego_shift", p->delay_time_ego_shift);
 
     updateParam<double>(
       parameters, ns + "overtaking_object.max_time_to_collision",
