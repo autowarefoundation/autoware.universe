@@ -126,7 +126,7 @@ protected:
 
   bool canTransitFailureState() override;
 
-  bool canTransitIdleToRunningState() override;
+  bool canTransitIdleToWaitingApprovalState() override;
 
   void setObjectDebugVisualization() const;
 

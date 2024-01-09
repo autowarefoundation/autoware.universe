@@ -345,7 +345,7 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return false; }
+  bool canTransitIdleToWaitingApprovalState() override { return false; }
 
   bool isLabelTargetObstacle(const uint8_t label) const;
   void updateTargetObjects();

@@ -337,7 +337,7 @@ bool StartPlannerModule::canTransitSuccessState()
   return hasFinishedPullOut();
 }
 
-bool StartPlannerModule::canTransitIdleToRunningState()
+bool StartPlannerModule::canTransitIdleToWaitingApprovalState()
 {
   return isActivated() && !isWaitingApproval();
 }
