@@ -248,11 +248,6 @@ bool LaneChangeInterface::canTransitFailureState()
       log_debug_throttled("Can't transit to failure state. Ego is on prepare, and it's safe.");
       return false;
     }
-
-    if (module_type_->isAbleToReturnCurrentLane()) {
-      log_debug_throttled("It's possible to return to current lane. Cancel lane change.");
-      return true;
-    }
   }
 
   if (post_process_safety_status_.is_safe) {
@@ -273,6 +268,11 @@ bool LaneChangeInterface::canTransitFailureState()
   if (!module_type_->isAbortEnabled()) {
     log_debug_throttled(
       "Lane change path is unsafe but abort was not enabled. Continue lane change.");
+    return false;
+  }
+
+  if (!module_type_->isAbleToReturnCurrentLane()) {
+    log_debug_throttled("It's is not possible to return to original lane. Continue lane change.");
     return false;
   }
 
