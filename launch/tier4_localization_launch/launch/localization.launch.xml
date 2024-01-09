@@ -4,6 +4,7 @@
   <arg name="pose_source"/>
   <arg name="twist_source"/>
   <arg name="system_run_mode"/>
+  <arg name="gnss_enabled"/>
 
   <arg name="crop_box_filter_measurement_range_param_path"/>
   <arg name="voxel_grid_downsample_filter_param_path"/>

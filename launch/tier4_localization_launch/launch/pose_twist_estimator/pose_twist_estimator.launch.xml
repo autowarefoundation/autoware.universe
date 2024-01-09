@@ -2,6 +2,7 @@
 <launch>
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='online'&quot;)" value="true"/>
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='logging_simulation'&quot;)" value="false"/>
+  <arg name="gnss_enabled"/>
 
   <!-- NDT Scan Matcher Launch (as pose estimator) -->
   <group if="$(eval &quot;'$(var pose_source)'=='ndt'&quot;)">
