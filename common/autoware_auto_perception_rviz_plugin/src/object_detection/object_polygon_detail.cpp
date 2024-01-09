@@ -262,7 +262,8 @@ visualization_msgs::msg::Marker::SharedPtr get_existence_probability_marker_ptr(
 visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width)
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
+  const bool & is_orientation_available)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->ns = std::string("shape");
@@ -271,6 +272,9 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
   if (shape_msg.type == Shape::BOUNDING_BOX) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_bounding_box_line_list(shape_msg, marker_ptr->points);
+    if (is_orientation_available) {
+      calc_bounding_box_direction_line_list(shape_msg, marker_ptr->points);
+    }
   } else if (shape_msg.type == Shape::CYLINDER) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_cylinder_line_list(shape_msg, marker_ptr->points);
@@ -335,15 +339,13 @@ void calc_bounding_box_line_list(
   // bounding box corner points
   // top and bottom surface, clockwise
   const double corner_points[8][3] = {
-    {length_half, width_half, height_half},   {length_half, -width_half, height_half},
+    {length_half, width_half, height_half},    {length_half, -width_half, height_half},
     {-length_half, -width_half, height_half},  {-length_half, width_half, height_half},
-    {length_half, width_half, -height_half},  {length_half, -width_half, -height_half},
+    {length_half, width_half, -height_half},   {length_half, -width_half, -height_half},
     {-length_half, -width_half, -height_half}, {-length_half, width_half, -height_half},
-  }; 
+  };
   const int bounding_box_pairs[12][2] = {
-    {0, 1}, {1, 2}, {2, 3}, {3, 0}, 
-    {4, 5}, {5, 6}, {6, 7}, {7, 4}, 
-    {0, 4}, {1, 5}, {2, 6}, {3, 7},
+    {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7},
   };
   for (int i = 0; i < 12; ++i) {
     point.x = corner_points[bounding_box_pairs[i][0]][0];
@@ -355,20 +357,32 @@ void calc_bounding_box_line_list(
     point.z = corner_points[bounding_box_pairs[i][1]][2];
     points.push_back(point);
   }
+}
 
+void calc_bounding_box_direction_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
   // direction triangle
+  const double length_half = shape.dimensions.x / 2.0;
+  const double width_half = shape.dimensions.y / 2.0;
+  const double height_half = shape.dimensions.z / 2.0;
   const double triangle_size_half = shape.dimensions.y / 1.4;
+  geometry_msgs::msg::Point point;
+
+  // triangle shape direction indicator
   const double triangle_points[6][3] = {
-    {length_half, 0, height_half}, {length_half - triangle_size_half, width_half, height_half}, 
+    {length_half, 0, height_half},
+    {length_half - triangle_size_half, width_half, height_half},
     {length_half - triangle_size_half, -width_half, height_half},
-    {length_half, 0, -height_half}, {length_half - triangle_size_half, width_half, -height_half}, 
-    {length_half - triangle_size_half, -width_half, -height_half},
+    {length_half, 0, -height_half},
+    {length_half, width_half, height_half},
+    {length_half, -width_half, height_half},
   };
-  const int triangle_pairs[6][2] = {
-    {0, 1}, {1, 2}, {0, 2}, 
-    {3, 4}, {4, 5}, {3, 5},
+  const int triangle_pairs[5][2] = {
+    {0, 1}, {1, 2}, {0, 2}, {3, 4}, {3, 5},
   };
-  for (int i = 0; i < 6; ++i) {
+  for (int i = 0; i < 5; ++i) {
     point.x = triangle_points[triangle_pairs[i][0]][0];
     point.y = triangle_points[triangle_pairs[i][0]][1];
     point.z = triangle_points[triangle_pairs[i][0]][2];
