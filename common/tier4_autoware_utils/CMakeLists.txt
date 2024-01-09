@@ -5,7 +5,6 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Boost REQUIRED)
-find_package(lanelet2 REQUIRED)
 
 ament_auto_add_library(tier4_autoware_utils SHARED
   src/geometry/geometry.cpp
@@ -17,10 +16,6 @@ ament_auto_add_library(tier4_autoware_utils SHARED
   src/ros/marker_helper.cpp
   src/ros/logger_level_configure.cpp
   src/system/backtrace.cpp
-)
-
-ament_target_dependencies(tier4_autoware_utils
-  lanelet2
 )
 
 if(BUILD_TESTING)
