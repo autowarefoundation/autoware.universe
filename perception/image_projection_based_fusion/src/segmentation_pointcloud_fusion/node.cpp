@@ -46,7 +46,7 @@ void SegmentPointCloudFusionNode::postprocess(__attribute__((unused)) PointCloud
 }
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
   const PointCloud2 & input_pointcloud_msg, __attribute__((unused)) const std::size_t image_id,
-  __attribute__((unused)) const Image & input_mask,
+  [[maybe_unused]] const Image & input_mask,
   __attribute__((unused)) const CameraInfo & camera_info,
   __attribute__((unused)) PointCloud2 & output_pointcloud_msg)
 {
