@@ -179,7 +179,7 @@ protected:
         shape_msg, centroid, orientation, color_rgba, line_width, is_orientation_available);
     } else if (m_display_type_property->getOptionInt() == 1) {
       return detail::get_2d_shape_marker_ptr(
-        shape_msg, centroid, orientation, color_rgba, line_width);
+        shape_msg, centroid, orientation, color_rgba, line_width, is_orientation_available);
     } else {
       return std::nullopt;
     }
@@ -189,7 +189,8 @@ protected:
   visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
     const autoware_auto_perception_msgs::msg::Shape & shape_msg,
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-    const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
+    const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
+    const bool & is_orientation_available);
 
   /// \brief Convert given shape msg into a Marker to visualize label name
   /// \tparam ClassificationContainerT List type with ObjectClassificationMsg

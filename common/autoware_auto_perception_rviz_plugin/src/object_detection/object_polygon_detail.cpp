@@ -298,7 +298,8 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
 visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width)
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
+  const bool & is_orientation_available)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->ns = std::string("shape");
@@ -307,6 +308,9 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   if (shape_msg.type == Shape::BOUNDING_BOX) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_2d_bounding_box_bottom_line_list(shape_msg, marker_ptr->points);
+    if (is_orientation_available) {
+      calc_2d_bounding_box_bottom_direction_line_list(shape_msg, marker_ptr->points);
+    }
   } else if (shape_msg.type == Shape::CYLINDER) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_2d_cylinder_bottom_line_list(shape_msg, marker_ptr->points);
@@ -370,7 +374,7 @@ void calc_bounding_box_direction_line_list(
   const double triangle_size_half = shape.dimensions.y / 1.4;
   geometry_msgs::msg::Point point;
 
-  // triangle shape direction indicator
+  // triangle-shaped direction indicator
   const double triangle_points[6][3] = {
     {length_half, 0, height_half},
     {length_half - triangle_size_half, width_half, height_half},
@@ -403,42 +407,63 @@ void calc_2d_bounding_box_bottom_line_list(
   const double height_half = shape.dimensions.z / 2.0;
   geometry_msgs::msg::Point point;
 
-  // down surface
-  point.x = length_half;
-  point.y = width_half;
-  point.z = -height_half;
-  points.push_back(point);
-  point.x = -length_half;
-  point.y = width_half;
-  point.z = -height_half;
-  points.push_back(point);
+  // bounding box corner points
+  // top surface, clockwise
+  const double corner_points[4][3] = {
+    {length_half, width_half, -height_half},
+    {length_half, -width_half, -height_half},
+    {-length_half, -width_half, -height_half},
+    {-length_half, width_half, -height_half},
+  };
+  const int bounding_box_pairs[4][2] = {
+    {0, 1},
+    {1, 2},
+    {2, 3},
+    {3, 0},
+  };
+  for (int i = 0; i < 4; ++i) {
+    point.x = corner_points[bounding_box_pairs[i][0]][0];
+    point.y = corner_points[bounding_box_pairs[i][0]][1];
+    point.z = corner_points[bounding_box_pairs[i][0]][2];
+    points.push_back(point);
+    point.x = corner_points[bounding_box_pairs[i][1]][0];
+    point.y = corner_points[bounding_box_pairs[i][1]][1];
+    point.z = corner_points[bounding_box_pairs[i][1]][2];
+    points.push_back(point);
+  }
+}
 
-  point.x = length_half;
-  point.y = width_half;
-  point.z = -height_half;
-  points.push_back(point);
-  point.x = length_half;
-  point.y = -width_half;
-  point.z = -height_half;
-  points.push_back(point);
+void calc_2d_bounding_box_bottom_direction_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  const double length_half = shape.dimensions.x / 2.0;
+  const double width_half = shape.dimensions.y / 2.0;
+  const double height_half = shape.dimensions.z / 2.0;
+  const double triangle_size_half = shape.dimensions.y / 1.4;
+  geometry_msgs::msg::Point point;
 
-  point.x = -length_half;
-  point.y = width_half;
-  point.z = -height_half;
-  points.push_back(point);
-  point.x = -length_half;
-  point.y = -width_half;
-  point.z = -height_half;
-  points.push_back(point);
-
-  point.x = length_half;
-  point.y = -width_half;
-  point.z = -height_half;
-  points.push_back(point);
-  point.x = -length_half;
-  point.y = -width_half;
-  point.z = -height_half;
-  points.push_back(point);
+  // triangle-shaped direction indicator
+  const double triangle_points[6][3] = {
+    {length_half, 0, -height_half},
+    {length_half - triangle_size_half, width_half, -height_half},
+    {length_half - triangle_size_half, -width_half, -height_half},
+  };
+  const int triangle_pairs[3][2] = {
+    {0, 1},
+    {1, 2},
+    {0, 2},
+  };
+  for (int i = 0; i < 3; ++i) {
+    point.x = triangle_points[triangle_pairs[i][0]][0];
+    point.y = triangle_points[triangle_pairs[i][0]][1];
+    point.z = triangle_points[triangle_pairs[i][0]][2];
+    points.push_back(point);
+    point.x = triangle_points[triangle_pairs[i][1]][0];
+    point.y = triangle_points[triangle_pairs[i][1]][1];
+    point.z = triangle_points[triangle_pairs[i][1]][2];
+    points.push_back(point);
+  }
 }
 
 void calc_cylinder_line_list(
