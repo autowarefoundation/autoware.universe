@@ -19,6 +19,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <visibility_control.hpp>
 
+#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
@@ -99,6 +100,11 @@ get_label_marker_ptr(
   const std::string label, const std_msgs::msg::ColorRGBA & color_rgba);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
+get_existence_probability_marker_ptr(
+  const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
+  const float existence_probability, const std_msgs::msg::ColorRGBA & color_rgba);
+
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_uuid_marker_ptr(
   const std::string & uuid, const geometry_msgs::msg::Point & centroid,
   const std_msgs::msg::ColorRGBA & color_rgba);
@@ -120,7 +126,7 @@ get_acceleration_text_marker_ptr(
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_twist_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance);
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_predicted_path_marker_ptr(

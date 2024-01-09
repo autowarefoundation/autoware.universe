@@ -19,7 +19,7 @@
 
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
 
 namespace behavior_path_planner::utils::avoidance
 {
@@ -890,7 +890,7 @@ void ShiftLineGenerator::applySmallShiftFilter(
       continue;
     }
 
-    if (s.start_longitudinal < helper_->getMinimumPrepareDistance()) {
+    if (s.start_longitudinal + 1e-3 < helper_->getMinimumPrepareDistance()) {
       continue;
     }
 
@@ -931,6 +931,9 @@ void ShiftLineGenerator::applySimilarGradFilter(
       combine, input.at(i).end_shift_length, input.at(i).end, input.at(i).end_idx,
       input.at(i).end_longitudinal);
 
+    combine.parent_ids =
+      utils::avoidance::concatParentIds(base_line.parent_ids, input.at(i).parent_ids);
+
     combine_buffer.push_back(input.at(i));
 
     const auto violates = [&]() {
@@ -966,6 +969,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   AvoidLineArray ret = shift_lines;
 
   constexpr double ep = 1.0e-3;
+  constexpr double RETURN_SHIFT_THRESHOLD = 0.1;
   const bool has_candidate_point = !ret.empty();
   const bool has_registered_point = last_.has_value();
 
@@ -977,14 +981,15 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     return ret;
   }
 
-  // If the return-to-center shift points are already registered, do nothing.
-  if (!has_registered_point && std::fabs(base_offset_) < ep) {
-    return ret;
-  }
-
-  constexpr double RETURN_SHIFT_THRESHOLD = 0.1;
-  if (std::abs(last_.value().end_shift_length) < RETURN_SHIFT_THRESHOLD) {
-    return ret;
+  if (last_.has_value()) {
+    if (std::abs(last_.value().end_shift_length) < RETURN_SHIFT_THRESHOLD) {
+      return ret;
+    }
+  } else {
+    // If the return-to-center shift points are already registered, do nothing.
+    if (std::abs(base_offset_) < ep) {
+      return ret;
+    }
   }
 
   // From here, the return-to-center is not registered. But perhaps the candidate is

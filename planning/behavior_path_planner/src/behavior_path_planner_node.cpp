@@ -73,11 +73,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
 
-  if (planner_data_->parameters.visualize_maximum_drivable_area) {
-    debug_maximum_drivable_area_publisher_ =
-      create_publisher<MarkerArray>("~/maximum_drivable_area", 1);
-  }
-
   debug_turn_signal_info_publisher_ = create_publisher<MarkerArray>("~/debug/turn_signal_info", 1);
 
   bound_publisher_ = create_publisher<MarkerArray>("~/debug/bound", 1);
@@ -135,6 +130,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num, p.verbose);
 
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+      // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
+      if (name == "") {
+        break;
+      }
       planner_manager_->launchScenePlugin(*this, name);
     }
 
@@ -238,39 +237,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.min_acc = declare_parameter<double>("normal.min_acc");
   p.max_acc = declare_parameter<double>("normal.max_acc");
 
-  // lane change parameters
-  p.backward_length_buffer_for_end_of_lane =
-    declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
-  p.backward_length_buffer_for_blocking_object =
-    declare_parameter<double>("lane_change.backward_length_buffer_for_blocking_object");
-  p.lane_changing_lateral_jerk =
-    declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
-  p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
-  p.minimum_lane_changing_velocity =
-    declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
-  p.minimum_lane_changing_velocity =
-    std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
-  p.lane_change_finish_judge_buffer =
-    declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
-
-  // lateral acceleration map for lane change
-  const auto lateral_acc_velocity =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.velocity");
-  const auto min_lateral_acc =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.min_values");
-  const auto max_lateral_acc =
-    declare_parameter<std::vector<double>>("lane_change.lateral_acceleration.max_values");
-  if (
-    lateral_acc_velocity.size() != min_lateral_acc.size() ||
-    lateral_acc_velocity.size() != max_lateral_acc.size()) {
-    RCLCPP_ERROR(get_logger(), "Lane change lateral acceleration map has invalid size.");
-    exit(EXIT_FAILURE);
-  }
-  for (size_t i = 0; i < lateral_acc_velocity.size(); ++i) {
-    p.lane_change_lat_acc_map.add(
-      lateral_acc_velocity.at(i), min_lateral_acc.at(i), max_lateral_acc.at(i));
-  }
-
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
@@ -293,14 +259,9 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.enable_cog_on_centerline = declare_parameter<bool>("enable_cog_on_centerline");
   p.input_path_interval = declare_parameter<double>("input_path_interval");
   p.output_path_interval = declare_parameter<double>("output_path_interval");
-  p.visualize_maximum_drivable_area = declare_parameter<bool>("visualize_maximum_drivable_area");
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
-  if (p.backward_length_buffer_for_end_of_lane < 1.0) {
-    RCLCPP_WARN_STREAM(
-      get_logger(), "Lane change buffer must be more than 1 meter. Modifying the buffer.");
-  }
   return p;
 }
 
@@ -480,12 +441,6 @@ void BehaviorPathPlannerNode::run()
 
   planner_data_->prev_route_id = planner_data_->route_handler->getRouteUuid();
 
-  if (planner_data_->parameters.visualize_maximum_drivable_area) {
-    const auto maximum_drivable_area = marker_utils::createFurthestLineStringMarkerArray(
-      utils::getMaximumDrivableArea(planner_data_));
-    debug_maximum_drivable_area_publisher_->publish(maximum_drivable_area);
-  }
-
   lk_pd.unlock();  // release planner_data_
 
   planner_manager_->print();
@@ -535,16 +490,10 @@ void BehaviorPathPlannerNode::publish_steering_factor(
 
     const auto [intersection_pose, intersection_distance] =
       planner_data->turn_signal_decider.getIntersectionPoseAndDistance();
-    const uint16_t steering_factor_state = std::invoke([&intersection_flag]() {
-      if (intersection_flag) {
-        return SteeringFactor::TURNING;
-      }
-      return SteeringFactor::TRYING;
-    });
 
     steering_factor_interface_ptr_->updateSteeringFactor(
       {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
-      PlanningBehavior::INTERSECTION, steering_factor_direction, steering_factor_state, "");
+      PlanningBehavior::INTERSECTION, steering_factor_direction, SteeringFactor::TURNING, "");
   } else {
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
@@ -771,7 +720,8 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
 {
   // TODO(Horibe) do some error handling when path is not available.
 
-  auto path = output.path ? output.path : planner_data->prev_output_path;
+  auto path = !output.path.points.empty() ? std::make_shared<PathWithLaneId>(output.path)
+                                          : planner_data->prev_output_path;
   path->header = planner_data->route_handler->getRouteHeader();
   path->header.stamp = this->now();
 
@@ -961,8 +911,8 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, DrivableAreaExpansionParameters::SMOOTHING_MAX_BOUND_RATE_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_bound_rate);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::SMOOTHING_EXTRA_ARC_LENGTH_PARAM,
-      planner_data_->drivable_area_expansion_parameters.extra_arc_length);
+      parameters, DrivableAreaExpansionParameters::SMOOTHING_ARC_LENGTH_RANGE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.arc_length_range);
     updateParam(
       parameters, DrivableAreaExpansionParameters::PRINT_RUNTIME_PARAM,
       planner_data_->drivable_area_expansion_parameters.print_runtime);

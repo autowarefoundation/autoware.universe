@@ -77,6 +77,11 @@ public:
     m_display_path_confidence_property{
       "Display Predicted Path Confidence", true, "Enable/disable predicted paths visualization",
       this},
+
+    m_display_existence_probability_property{
+      "Display Existence Probability", false, "Enable/disable existence probability visualization",
+      this},
+
     m_line_width_property{"Line Width", 0.03, "Line width of object-shape", this},
     m_default_topic{default_topic}
   {
@@ -91,6 +96,7 @@ public:
       "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this);
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
+
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
       const auto & class_property_values = map_property_it.second;
@@ -201,6 +207,19 @@ protected:
       return std::nullopt;
     }
   }
+  template <typename ClassificationContainerT>
+  std::optional<Marker::SharedPtr> get_existence_probability_marker_ptr(
+    const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
+    const float existence_probability, const ClassificationContainerT & labels) const
+  {
+    if (m_display_existence_probability_property.getBool()) {
+      const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
+      return detail::get_existence_probability_marker_ptr(
+        centroid, orientation, existence_probability, color_rgba);
+    } else {
+      return std::nullopt;
+    }
+  }
 
   template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_uuid_marker_ptr(
@@ -254,10 +273,11 @@ protected:
 
   std::optional<Marker::SharedPtr> get_twist_marker_ptr(
     const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-    const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance) const
+    const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
+    const double & line_width) const
   {
     if (m_display_twist_property.getBool()) {
-      return detail::get_twist_marker_ptr(pose_with_covariance, twist_with_covariance);
+      return detail::get_twist_marker_ptr(pose_with_covariance, twist_with_covariance, line_width);
     } else {
       return std::nullopt;
     }
@@ -324,7 +344,6 @@ protected:
     }
     return (it->second).label;
   }
-
   std::string uuid_to_string(const unique_identifier_msgs::msg::UUID & u) const
   {
     std::stringstream ss;
@@ -413,6 +432,9 @@ private:
   rviz_common::properties::BoolProperty m_display_predicted_paths_property;
   // Property to enable/disable predicted path confidence visualization
   rviz_common::properties::BoolProperty m_display_path_confidence_property;
+
+  rviz_common::properties::BoolProperty m_display_existence_probability_property;
+
   // Property to decide line width of object shape
   rviz_common::properties::FloatProperty m_line_width_property;
   // Default topic name to be visualized

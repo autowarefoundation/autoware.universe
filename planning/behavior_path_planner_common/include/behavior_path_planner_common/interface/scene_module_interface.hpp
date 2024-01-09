@@ -112,21 +112,6 @@ public:
   virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
   /**
-   * @brief Set the current_state_ based on updateState output.
-   */
-  virtual void updateCurrentState()
-  {
-    const auto print = [this](const auto & from, const auto & to) {
-      RCLCPP_DEBUG(
-        getLogger(), "[%s] Transit from %s to %s.", name_.c_str(), from.data(), to.data());
-    };
-
-    const auto & from = current_state_;
-    current_state_ = updateState();
-    print(magic_enum::enum_name(from), magic_enum::enum_name(current_state_));
-  }
-
-  /**
    * @brief Return true if the module has request for execution (not necessarily feasible)
    */
   virtual bool isExecutionRequested() const = 0;
@@ -157,6 +142,21 @@ public:
   {
     updateData();
     return isWaitingApproval() ? planWaitingApproval() : plan();
+  }
+
+  /**
+   * @brief Set the current_state_ based on updateState output.
+   */
+  void updateCurrentState()
+  {
+    const auto print = [this](const auto & from, const auto & to) {
+      RCLCPP_DEBUG(
+        getLogger(), "[%s] Transit from %s to %s.", name_.c_str(), from.data(), to.data());
+    };
+
+    const auto & from = current_state_;
+    current_state_ = updateState();
+    print(magic_enum::enum_name(from), magic_enum::enum_name(current_state_));
   }
 
   /**
@@ -259,6 +259,8 @@ public:
     return is_waiting_approval_ || current_state_ == ModuleStatus::WAITING_APPROVAL;
   }
 
+  virtual bool isRootLaneletToBeUpdated() const { return false; }
+
   bool isLockedNewModuleLaunch() const { return is_locked_new_module_launch_; }
 
   PlanResult getPathCandidate() const { return path_candidate_; }
@@ -360,9 +362,83 @@ private:
     return existApprovedRequest();
   }
 
+  /**
+   * @brief Return SUCCESS if plan is not needed or plan is successfully finished,
+   *        FAILURE if plan has failed, RUNNING if plan is on going.
+   *        These condition is to be implemented in each modules.
+   */
+  ModuleStatus updateState()
+  {
+    auto log_debug_throttled = [&](std::string_view message) -> void {
+      RCLCPP_DEBUG(getLogger(), "%s", message.data());
+    };
+    if (current_state_ == ModuleStatus::IDLE) {
+      if (canTransitIdleToRunningState()) {
+        log_debug_throttled("transiting from IDLE to RUNNING");
+        return ModuleStatus::RUNNING;
+      }
+
+      log_debug_throttled("transiting from IDLE to IDLE");
+      return ModuleStatus::IDLE;
+    }
+
+    if (current_state_ == ModuleStatus::RUNNING) {
+      if (canTransitSuccessState()) {
+        log_debug_throttled("transiting from RUNNING to SUCCESS");
+        return ModuleStatus::SUCCESS;
+      }
+
+      if (canTransitFailureState()) {
+        log_debug_throttled("transiting from RUNNING to FAILURE");
+        return ModuleStatus::FAILURE;
+      }
+
+      if (canTransitWaitingApprovalState()) {
+        log_debug_throttled("transiting from RUNNING to WAITING_APPROVAL");
+        return ModuleStatus::WAITING_APPROVAL;
+      }
+
+      log_debug_throttled("transiting from RUNNING to RUNNING");
+      return ModuleStatus::RUNNING;
+    }
+
+    if (current_state_ == ModuleStatus::WAITING_APPROVAL) {
+      if (canTransitSuccessState()) {
+        log_debug_throttled("transiting from WAITING_APPROVAL to SUCCESS");
+        return ModuleStatus::SUCCESS;
+      }
+
+      if (canTransitFailureState()) {
+        log_debug_throttled("transiting from WAITING_APPROVAL to FAILURE");
+        return ModuleStatus::FAILURE;
+      }
+
+      if (canTransitWaitingApprovalToRunningState()) {
+        log_debug_throttled("transiting from WAITING_APPROVAL to RUNNING");
+        return ModuleStatus::RUNNING;
+      }
+
+      log_debug_throttled("transiting from WAITING_APPROVAL to WAITING APPROVAL");
+      return ModuleStatus::WAITING_APPROVAL;
+    }
+
+    if (current_state_ == ModuleStatus::SUCCESS) {
+      log_debug_throttled("already SUCCESS");
+      return ModuleStatus::SUCCESS;
+    }
+
+    if (current_state_ == ModuleStatus::FAILURE) {
+      log_debug_throttled("already FAILURE");
+      return ModuleStatus::FAILURE;
+    }
+
+    log_debug_throttled("already IDLE");
+    return ModuleStatus::IDLE;
+  }
+
   std::string name_;
 
-  rclcpp::Logger logger_;
+  ModuleStatus current_state_{ModuleStatus::IDLE};
 
   BehaviorModuleOutput previous_module_output_;
 
@@ -405,7 +481,7 @@ protected:
   virtual BehaviorModuleOutput planWaitingApproval()
   {
     path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
-    path_reference_ = getPreviousModuleOutput().reference_path;
+    path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
     return getPreviousModuleOutput();
   }
@@ -440,64 +516,6 @@ protected:
         ptr->insertObjectData(obj_pose, obj_shape, color_name);
       }
     }
-  }
-
-  /**
-   * @brief Return SUCCESS if plan is not needed or plan is successfully finished,
-   *        FAILURE if plan has failed, RUNNING if plan is on going.
-   *        These condition is to be implemented in each modules.
-   */
-  virtual ModuleStatus updateState()
-  {
-    if (current_state_ == ModuleStatus::IDLE) {
-      if (canTransitIdleToRunningState()) {
-        return ModuleStatus::RUNNING;
-      }
-
-      return ModuleStatus::IDLE;
-    }
-
-    if (current_state_ == ModuleStatus::RUNNING) {
-      if (canTransitSuccessState()) {
-        return ModuleStatus::SUCCESS;
-      }
-
-      if (canTransitFailureState()) {
-        return ModuleStatus::FAILURE;
-      }
-
-      if (canTransitWaitingApprovalState()) {
-        return ModuleStatus::WAITING_APPROVAL;
-      }
-
-      return ModuleStatus::RUNNING;
-    }
-
-    if (current_state_ == ModuleStatus::WAITING_APPROVAL) {
-      if (canTransitSuccessState()) {
-        return ModuleStatus::SUCCESS;
-      }
-
-      if (canTransitFailureState()) {
-        return ModuleStatus::FAILURE;
-      }
-
-      if (canTransitWaitingApprovalToRunningState()) {
-        return ModuleStatus::RUNNING;
-      }
-
-      return ModuleStatus::WAITING_APPROVAL;
-    }
-
-    if (current_state_ == ModuleStatus::SUCCESS) {
-      return ModuleStatus::SUCCESS;
-    }
-
-    if (current_state_ == ModuleStatus::FAILURE) {
-      return ModuleStatus::FAILURE;
-    }
-
-    return ModuleStatus::IDLE;
   }
 
   /**
@@ -581,6 +599,8 @@ protected:
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
   }
 
+  rclcpp::Logger logger_;
+
   rclcpp::Clock::SharedPtr clock_;
 
   std::shared_ptr<const PlannerData> planner_data_;
@@ -591,8 +611,6 @@ protected:
 
   PlanResult path_candidate_;
   PlanResult path_reference_;
-
-  ModuleStatus current_state_{ModuleStatus::IDLE};
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 

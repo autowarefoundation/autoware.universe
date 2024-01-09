@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <launch>
   <group>
-    <push-ros-namespace namespace="ar_tag_based_localizer"/>
-
     <arg name="multi_localizer_mode" default="false" description="Set to true when multiple pose_estimators are run simultaneously."/>
     <let name="input_image" value="/sensing/camera/traffic_light/image_raw" unless="$(var multi_localizer_mode)"/>
     <let name="input_image" value="/sensing/camera/traffic_light/image_raw/artag_relay" if="$(var multi_localizer_mode)"/>

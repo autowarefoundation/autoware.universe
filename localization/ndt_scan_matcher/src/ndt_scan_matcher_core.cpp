@@ -64,47 +64,19 @@ Eigen::Matrix2d find_rotation_matrix_aligning_covariance_to_principal_axes(
   throw std::runtime_error("Eigen solver failed. Return output_pose_covariance value.");
 }
 
-bool validate_local_optimal_solution_oscillation(
-  const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
-  const float oscillation_threshold, const float inversion_vector_threshold)
-{
-  bool prev_oscillation = false;
-  int oscillation_cnt = 0;
-
-  for (size_t i = 2; i < result_pose_msg_array.size(); ++i) {
-    const Eigen::Vector3d current_pose = point_to_vector3d(result_pose_msg_array.at(i).position);
-    const Eigen::Vector3d prev_pose = point_to_vector3d(result_pose_msg_array.at(i - 1).position);
-    const Eigen::Vector3d prev_prev_pose =
-      point_to_vector3d(result_pose_msg_array.at(i - 2).position);
-    const auto current_vec = current_pose - prev_pose;
-    const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
-    const bool oscillation = prev_vec.dot(current_vec) < inversion_vector_threshold;
-    if (prev_oscillation && oscillation) {
-      if (static_cast<float>(oscillation_cnt) > oscillation_threshold) {
-        return true;
-      }
-      ++oscillation_cnt;
-    } else {
-      oscillation_cnt = 0;
-    }
-    prev_oscillation = oscillation;
-  }
-  return false;
-}
-
 // cspell: ignore degrounded
 NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_broadcaster_(*this),
+  tf2_buffer_(this->get_clock()),
+  tf2_listener_(tf2_buffer_),
   ndt_ptr_(new NormalDistributionsTransform),
   state_ptr_(new std::map<std::string, std::string>),
-  inversion_vector_threshold_(-0.9),  // Not necessary to extract to ndt_scan_matcher.param.yaml
-  oscillation_threshold_(10),         // Not necessary to extract to ndt_scan_matcher.param.yaml
   output_pose_covariance_({}),
-  regularization_enabled_(declare_parameter<bool>("regularization_enabled"))
+  regularization_enabled_(declare_parameter<bool>("regularization_enabled")),
+  is_activated_(false)
 {
   (*state_ptr_)["state"] = "Initializing";
-  is_activated_ = false;
 
   int64_t points_queue_size = this->declare_parameter<int64_t>("input_sensor_points_queue_size");
   points_queue_size = std::max(points_queue_size, (int64_t)0);
@@ -193,31 +165,36 @@ NDTScanMatcher::NDTScanMatcher()
 
   z_margin_for_ground_removal_ = this->declare_parameter<double>("z_margin_for_ground_removal");
 
-  rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group;
-  initial_pose_callback_group =
+  timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group =
     this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  rclcpp::CallbackGroup::SharedPtr main_callback_group;
-  main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  rclcpp::CallbackGroup::SharedPtr sensor_callback_group =
+    this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
   auto initial_pose_sub_opt = rclcpp::SubscriptionOptions();
   initial_pose_sub_opt.callback_group = initial_pose_callback_group;
+  auto sensor_sub_opt = rclcpp::SubscriptionOptions();
+  sensor_sub_opt.callback_group = sensor_callback_group;
 
-  auto main_sub_opt = rclcpp::SubscriptionOptions();
-  main_sub_opt.callback_group = main_callback_group;
-
+  constexpr double map_update_dt = 1.0;
+  constexpr auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::chrono::duration<double>(map_update_dt));
+  map_update_timer_ = rclcpp::create_timer(
+    this, this->get_clock(), period_ns, std::bind(&NDTScanMatcher::callback_timer, this),
+    timer_callback_group_);
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_pose_with_covariance", 100,
     std::bind(&NDTScanMatcher::callback_initial_pose, this, std::placeholders::_1),
     initial_pose_sub_opt);
   sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
-    std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1), main_sub_opt);
+    std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1),
+    sensor_sub_opt);
 
   // Only if regularization is enabled, subscribe to the regularization base pose
   if (regularization_enabled_) {
     // NOTE: The reason that the regularization subscriber does not belong to the
-    // main_callback_group is to ensure that the regularization callback is called even if
+    // sensor_callback_group is to ensure that the regularization callback is called even if
     // sensor_callback takes long time to process.
     // Both callback_initial_pose and callback_regularization_pose must not miss receiving data for
     // proper interpolation.
@@ -280,21 +257,18 @@ NDTScanMatcher::NDTScanMatcher()
     "ndt_align_srv",
     std::bind(
       &NDTScanMatcher::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
-    rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
+    rclcpp::ServicesQoS().get_rmw_qos_profile(), sensor_callback_group);
   service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
     std::bind(
       &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
-    rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
-
-  tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
+    rclcpp::ServicesQoS().get_rmw_qos_profile(), sensor_callback_group);
 
   use_dynamic_map_loading_ = this->declare_parameter<bool>("use_dynamic_map_loading");
   if (use_dynamic_map_loading_) {
-    map_update_module_ = std::make_unique<MapUpdateModule>(
-      this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group);
+    map_update_module_ = std::make_unique<MapUpdateModule>(this, &ndt_ptr_mtx_, ndt_ptr_);
   } else {
-    map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
+    map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, sensor_callback_group);
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
@@ -368,6 +342,29 @@ void NDTScanMatcher::publish_diagnostic()
   diagnostics_pub_->publish(diag_msg);
 }
 
+void NDTScanMatcher::callback_timer()
+{
+  if (!is_activated_) {
+    return;
+  }
+  if (!use_dynamic_map_loading_) {
+    return;
+  }
+  std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
+  if (latest_ekf_position_ == std::nullopt) {
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000,
+      "Cannot find the reference position for map update. Please check if the EKF odometry is "
+      "provided to NDT.");
+    return;
+  }
+  // continue only if we should update the map
+  if (map_update_module_->should_update_map(latest_ekf_position_.value())) {
+    RCLCPP_INFO(this->get_logger(), "Start updating NDT map (timer_callback)");
+    map_update_module_->update_map(latest_ekf_position_.value());
+  }
+}
+
 void NDTScanMatcher::callback_initial_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
@@ -381,6 +378,11 @@ void NDTScanMatcher::callback_initial_pose(
       "Received initial pose message with frame_id "
         << initial_pose_msg_ptr->header.frame_id << ", but expected " << map_frame_
         << ". Please check the frame_id in the input topic and ensure it is correct.");
+  }
+
+  if (use_dynamic_map_loading_) {
+    std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
+    latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
   }
 }
 
@@ -473,10 +475,11 @@ void NDTScanMatcher::callback_sensor_points(
   // perform several validations
   bool is_ok_iteration_num =
     validate_num_iteration(ndt_result.iteration_num, ndt_ptr_->getMaximumIterations());
+  const int oscillation_num = count_oscillation(transformation_msg_array);
   bool is_local_optimal_solution_oscillation = false;
   if (!is_ok_iteration_num) {
-    is_local_optimal_solution_oscillation = validate_local_optimal_solution_oscillation(
-      transformation_msg_array, oscillation_threshold_, inversion_vector_threshold_);
+    constexpr int oscillation_threshold = 10;
+    is_local_optimal_solution_oscillation = (oscillation_num > oscillation_threshold);
   }
   bool is_ok_converged_param = validate_converged_param(
     ndt_result.transform_probability, ndt_result.nearest_voxel_transformation_likelihood);
@@ -558,11 +561,9 @@ void NDTScanMatcher::callback_sensor_points(
     std::to_string(ndt_result.nearest_voxel_transformation_likelihood);
   (*state_ptr_)["iteration_num"] = std::to_string(ndt_result.iteration_num);
   (*state_ptr_)["skipping_publish_num"] = std::to_string(skipping_publish_num);
-  if (is_local_optimal_solution_oscillation) {
-    (*state_ptr_)["is_local_optimal_solution_oscillation"] = "1";
-  } else {
-    (*state_ptr_)["is_local_optimal_solution_oscillation"] = "0";
-  }
+  (*state_ptr_)["oscillation_count"] = std::to_string(oscillation_num);
+  (*state_ptr_)["is_local_optimal_solution_oscillation"] =
+    std::to_string(is_local_optimal_solution_oscillation);
   (*state_ptr_)["execution_time"] = std::to_string(exe_time);
 
   publish_diagnostic();
@@ -573,11 +574,25 @@ void NDTScanMatcher::transform_sensor_measurement(
   const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_input_ptr,
   pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_output_ptr)
 {
-  auto tf_target_to_source_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
-  tf2_listener_module_->get_transform(
-    this->now(), target_frame, source_frame, tf_target_to_source_ptr);
+  if (source_frame == target_frame) {
+    sensor_points_output_ptr = sensor_points_input_ptr;
+    return;
+  }
+
+  geometry_msgs::msg::TransformStamped transform;
+  try {
+    transform = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+    RCLCPP_WARN(
+      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+    // Since there is no clear error handling policy, temporarily return as is.
+    sensor_points_output_ptr = sensor_points_input_ptr;
+    return;
+  }
+
   const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
-    tier4_autoware_utils::transform2pose(*tf_target_to_source_ptr);
+    tier4_autoware_utils::transform2pose(transform);
   const Eigen::Matrix4f base_to_sensor_matrix =
     pose_to_matrix4f(target_to_source_pose_stamped.pose);
   tier4_autoware_utils::transformPointCloud(
@@ -731,6 +746,33 @@ bool NDTScanMatcher::validate_converged_param(
   return is_ok_converged_param;
 }
 
+int NDTScanMatcher::count_oscillation(
+  const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array)
+{
+  constexpr double inversion_vector_threshold = -0.9;
+
+  int oscillation_cnt = 0;
+  int max_oscillation_cnt = 0;
+
+  for (size_t i = 2; i < result_pose_msg_array.size(); ++i) {
+    const Eigen::Vector3d current_pose = point_to_vector3d(result_pose_msg_array.at(i).position);
+    const Eigen::Vector3d prev_pose = point_to_vector3d(result_pose_msg_array.at(i - 1).position);
+    const Eigen::Vector3d prev_prev_pose =
+      point_to_vector3d(result_pose_msg_array.at(i - 2).position);
+    const auto current_vec = (current_pose - prev_pose).normalized();
+    const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
+    const double cosine_value = current_vec.dot(prev_vec);
+    const bool oscillation = cosine_value < inversion_vector_threshold;
+    if (oscillation) {
+      oscillation_cnt++;  // count consecutive oscillation
+    } else {
+      oscillation_cnt = 0;  // reset
+    }
+    max_oscillation_cnt = std::max(max_oscillation_cnt, oscillation_cnt);
+  }
+  return max_oscillation_cnt;
+}
+
 std::array<double, 36> NDTScanMatcher::estimate_covariance(
   const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
   const rclcpp::Time & sensor_ros_time)
@@ -835,13 +877,27 @@ void NDTScanMatcher::service_ndt_align(
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
   // get TF from pose_frame to map_frame
-  auto tf_pose_to_map_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
-  tf2_listener_module_->get_transform(
-    get_clock()->now(), map_frame_, req->pose_with_covariance.header.frame_id, tf_pose_to_map_ptr);
+  const std::string & target_frame = map_frame_;
+  const std::string & source_frame = req->pose_with_covariance.header.frame_id;
+
+  geometry_msgs::msg::TransformStamped transform_s2t;
+  try {
+    transform_s2t = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
+    // Note: Up to AWSIMv1.1.0, there is a known bug where the GNSS frame_id is incorrectly set to
+    // "gnss_link" instead of "map". The ndt_align is designed to return identity when this issue
+    // occurs. However, in the future, converting to a non-existent frame_id should be prohibited.
+    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+    RCLCPP_WARN(
+      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+    transform_s2t.header.stamp = get_clock()->now();
+    transform_s2t.header.frame_id = target_frame;
+    transform_s2t.child_frame_id = source_frame;
+    transform_s2t.transform = tf2::toMsg(tf2::Transform::getIdentity());
+  }
 
   // transform pose_frame to map_frame
-  const auto initial_pose_msg_in_map_frame =
-    transform(req->pose_with_covariance, *tf_pose_to_map_ptr);
+  const auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
   if (use_dynamic_map_loading_) {
     map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
   }
