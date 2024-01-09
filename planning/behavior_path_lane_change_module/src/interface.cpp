@@ -248,6 +248,9 @@ bool LaneChangeInterface::canTransitFailureState()
       log_debug_throttled("Can't transit to failure state. Ego is on prepare, and it's safe.");
       return false;
     }
+
+    log_debug_throttled("It's unsafe and ego is in prepare phase. Cancel lane change.");
+    return true;
   }
 
   if (post_process_safety_status_.is_safe) {
