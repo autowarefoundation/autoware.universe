@@ -59,32 +59,33 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node)
   impl_->params_tf_caster->get_parameters({target_tag_ids_parameter_name}, callback);
 }
 
-void ArTagPosition::init(HADMapBin::ConstSharedPtr msg)
+void ArTagPosition::init(HADMapBin::ConstSharedPtr)
 {
-  std::vector<landmark_manager::Landmark> landmarks;
-  {
-    // NOTE: tmp implementation
-    landmark_manager::LandmarkManager manager;
-    manager.parse_landmarks(msg, "apriltag_16h5", logger_);
-    const auto marker_array = manager.get_landmarks_as_marker_array_msg();
-    for (const auto & marker : marker_array.markers) {
-      if (marker.ns != "landmark_text") {
-        continue;
-      }
-      landmark_manager::Landmark landmark;
-      landmark.pose = marker.pose;
-      landmark.id = marker.text.substr(1, marker.text.size() - 2);
-      landmarks.push_back(landmark);
-    }
-  }
+  // TODO:
+  // std::vector<landmark_manager::Landmark> landmarks;
+  // {
+  //   // NOTE: tmp implementation
+  //   landmark_manager::LandmarkManager manager;
+  //   manager.parse_landmarks(msg, "apriltag_16h5", logger_);
+  //   const auto marker_array = manager.get_landmarks_as_marker_array_msg();
+  //   for (const auto & marker : marker_array.markers) {
+  //     if (marker.ns != "landmark_text") {
+  //       continue;
+  //     }
+  //     landmark_manager::Landmark landmark;
+  //     landmark.pose = marker.pose;
+  //     landmark.id = marker.text.substr(1, marker.text.size() - 2);
+  //     landmarks.push_back(landmark);
+  //   }
+  // }
 
-  std::map<std::string, Pose> landmark_map;
-  for (const landmark_manager::Landmark & landmark : landmarks) {
-    landmark_map[landmark.id] = landmark.pose;
-  }
-  impl_->landmark_map = landmark_map;
+  // std::map<std::string, Pose> landmark_map;
+  // for (const landmark_manager::Landmark & landmark : landmarks) {
+  //   landmark_map[landmark.id] = landmark.pose;
+  // }
+  // impl_->landmark_map = landmark_map;
 
-  this->shared_data_is_ready_ = true;
+  // this->shared_data_is_ready_ = true;
 }
 
 double ArTagPosition::distance_to_nearest_ar_tag_around_ego(
