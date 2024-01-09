@@ -216,11 +216,14 @@ void Lanelet2MapVisualizationNode::onMapBin(
     &map_marker_array,
     lanelet::visualization::autowareTrafficLightsAsMarkerArray(aw_tl_reg_elems, cl_trafficlights));
   insertMarkerArray(
-    &map_marker_array,
-    lanelet::visualization::generateTrafficLightIdMaker(road_lanelets, cl_trafficlights));
+    &map_marker_array, lanelet::visualization::generateTrafficLightRegulatoryElementIdMaker(
+                         road_lanelets, cl_trafficlights));
+  insertMarkerArray(
+    &map_marker_array, lanelet::visualization::generateTrafficLightRegulatoryElementIdMaker(
+                         crosswalk_lanelets, cl_trafficlights));
   insertMarkerArray(
     &map_marker_array,
-    lanelet::visualization::generateTrafficLightIdMaker(crosswalk_lanelets, cl_trafficlights));
+    lanelet::visualization::generateTrafficLightIdMaker(aw_tl_reg_elems, cl_trafficlights));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::generateLaneletIdMarker(shoulder_lanelets, cl_lanelet_id));
