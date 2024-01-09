@@ -20,8 +20,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 
 tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & filename)
 {
@@ -75,8 +75,9 @@ tier4_map_msgs::msg::MapProjectorInfo load_map_projector_info(
       << std::endl;
     msg = load_info_from_lanelet2_map(lanelet2_map_filename);
   } else {
-    throw std::runtime_error("No map projector info files found. Please provide either "
-                             "map_projector_info.yaml or lanelet2_map.osm");
+    throw std::runtime_error(
+      "No map projector info files found. Please provide either "
+      "map_projector_info.yaml or lanelet2_map.osm");
   }
   return msg;
 }
@@ -84,7 +85,8 @@ tier4_map_msgs::msg::MapProjectorInfo load_map_projector_info(
 MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
 {
   const std::string yaml_filename = this->declare_parameter<std::string>("map_projector_info_path");
-  const std::string lanelet2_map_filename = this->declare_parameter<std::string>("lanelet2_map_path");
+  const std::string lanelet2_map_filename =
+    this->declare_parameter<std::string>("lanelet2_map_path");
 
   const tier4_map_msgs::msg::MapProjectorInfo msg =
     load_map_projector_info(yaml_filename, lanelet2_map_filename);
