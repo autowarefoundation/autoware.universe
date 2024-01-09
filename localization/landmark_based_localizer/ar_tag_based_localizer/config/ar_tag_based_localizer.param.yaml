@@ -1,5 +1,12 @@
 /**:
   ros__parameters:
+    # Topic names
+    input_lanelet2_map: "/map/vector_map"
+    input_image: "/sensing/camera/traffic_light/image_raw"
+    input_camera_info: "/sensing/camera/traffic_light/camera_info"
+    input_ekf_pose: "/localization/pose_twist_fusion_filter/biased_pose_with_covariance"
+    output_pose_with_covariance: "/localization/pose_estimator/pose_with_covariance"
+
     # marker_size
     marker_size: 0.6
 

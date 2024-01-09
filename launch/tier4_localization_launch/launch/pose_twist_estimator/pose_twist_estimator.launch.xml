@@ -125,7 +125,9 @@
   <group if="$(eval &quot;'$(var pose_source)'=='artag'&quot;)">
     <group>
       <push-ros-namespace namespace="pose_estimator"/>
-      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/ar_tag_based_localizer.launch.xml"/>
+      <include file="$(find-pkg-share ar_tag_based_localizer)/launch/ar_tag_based_localizer.launch.xml">
+        <arg name="param_file" value="$(find-pkg-share ar_tag_based_localizer)/config/ar_tag_based_localizer.param.yaml"/>
+      </include>
     </group>
 
     <group>

@@ -112,17 +112,21 @@ ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
   */
   using std::placeholders::_1;
   map_bin_sub_ = this->create_subscription<HADMapBin>(
-    "~/input/lanelet2_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
+    this->declare_parameter<std::string>("input_lanelet2_map"),
+    rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&ArTagBasedLocalizer::map_bin_callback, this, _1));
 
   rclcpp::QoS qos_sub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
   qos_sub.best_effort();
   image_sub_ = this->create_subscription<Image>(
-    "~/input/image", qos_sub, std::bind(&ArTagBasedLocalizer::image_callback, this, _1));
+    this->declare_parameter<std::string>("input_image"), qos_sub,
+    std::bind(&ArTagBasedLocalizer::image_callback, this, _1));
   cam_info_sub_ = this->create_subscription<CameraInfo>(
-    "~/input/camera_info", qos_sub, std::bind(&ArTagBasedLocalizer::cam_info_callback, this, _1));
+    this->declare_parameter<std::string>("input_camera_info"), qos_sub,
+    std::bind(&ArTagBasedLocalizer::cam_info_callback, this, _1));
   ekf_pose_sub_ = this->create_subscription<PoseWithCovarianceStamped>(
-    "~/input/ekf_pose", qos_sub, std::bind(&ArTagBasedLocalizer::ekf_pose_callback, this, _1));
+    this->declare_parameter<std::string>("input_ekf_pose"), qos_sub,
+    std::bind(&ArTagBasedLocalizer::ekf_pose_callback, this, _1));
 
   /*
     Publishers
@@ -130,7 +134,7 @@ ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
   const rclcpp::QoS qos_pub_once = rclcpp::QoS(rclcpp::KeepLast(10)).transient_local().reliable();
   const rclcpp::QoS qos_pub_periodic(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
   pose_pub_ = this->create_publisher<PoseWithCovarianceStamped>(
-    "~/output/pose_with_covariance", qos_pub_periodic);
+    this->declare_parameter<std::string>("output_pose_with_covariance"), qos_pub_periodic);
   image_pub_ = this->create_publisher<Image>("~/debug/image", qos_pub_periodic);
   mapped_tag_pose_pub_ = this->create_publisher<MarkerArray>("~/debug/mapped_tag", qos_pub_once);
   detected_tag_pose_pub_ =
