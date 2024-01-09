@@ -78,7 +78,7 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return true; }
+  bool canTransitIdleToWaitingApprovalState() override { return true; }
 
   /**
    * @brief update RTC status for candidate shift line.

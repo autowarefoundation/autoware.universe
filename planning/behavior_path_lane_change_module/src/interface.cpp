@@ -297,7 +297,7 @@ bool LaneChangeInterface::canTransitFailureState()
   return false;
 }
 
-bool LaneChangeInterface::canTransitIdleToRunningState()
+bool LaneChangeInterface::canTransitIdleToWaitingApprovalState()
 {
   updateDebugMarker();
 
