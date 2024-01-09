@@ -141,6 +141,10 @@ get_path_confidence_marker_ptr(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const std_msgs::msg::ColorRGBA & path_confidence_color);
 
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_line_list_from_points(
+  const double point_list[][3], const int point_pairs[][2], const int & num_pairs,
+  std::vector<geometry_msgs::msg::Point> & points);
+
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_bounding_box_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
