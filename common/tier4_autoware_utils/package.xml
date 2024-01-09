@@ -18,6 +18,7 @@
   <depend>builtin_interfaces</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>lanelet2_core</depend>
   <depend>logging_demo</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>
