@@ -217,7 +217,10 @@ void Lanelet2MapVisualizationNode::onMapBin(
     lanelet::visualization::autowareTrafficLightsAsMarkerArray(aw_tl_reg_elems, cl_trafficlights));
   insertMarkerArray(
     &map_marker_array,
-    lanelet::visualization::generateTrafficLightIdMaker(aw_tl_reg_elems, cl_trafficlights));
+    lanelet::visualization::generateTrafficLightIdMaker(road_lanelets, cl_trafficlights));
+  insertMarkerArray(
+    &map_marker_array,
+    lanelet::visualization::generateTrafficLightIdMaker(crosswalk_lanelets, cl_trafficlights));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::generateLaneletIdMarker(shoulder_lanelets, cl_lanelet_id));
