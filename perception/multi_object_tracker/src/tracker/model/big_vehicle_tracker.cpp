@@ -51,30 +51,34 @@ BigVehicleTracker::BigVehicleTracker(
 {
   object_ = object;
 
-  // initialize params
+  // Initialize parameters
+  // measurement noise covariance
   float r_stddev_x = 1.5;                                     // [m]
   float r_stddev_y = 0.5;                                     // [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // [rad]
   float r_stddev_vx = 1.0;                                    // [m/s]
+  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
+  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
+  ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
+  ekf_params_.r_cov_vx = std::pow(r_stddev_vx, 2.0);
+  // initial covariance
   float p0_stddev_x = 1.5;                                    // [m]
   float p0_stddev_y = 0.5;                                    // [m]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(30);    // [rad]
   float p0_stddev_vx = tier4_autoware_utils::kmph2mps(1000);  // [m/s]
   float p0_stddev_slip = tier4_autoware_utils::deg2rad(10);   // [rad/s]
-  ekf_params_.q_stddev_acc_long = 9.8 * 0.5;  // [m/(s*s)] uncertain longitudinal acceleration
-  ekf_params_.q_stddev_acc_lat = 9.8 * 0.3;   // [m/(s*s)] uncertain lateral acceleration
-  ekf_params_.q_stddev_slip_rate =
-    tier4_autoware_utils::deg2rad(5);  // [rad/s] uncertain head angle change rate
-  ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
-  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
-  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
-  ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
-  ekf_params_.r_cov_vx = std::pow(r_stddev_vx, 2.0);
   ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
   ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
   ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
   ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
+  // process noise covariance
+  ekf_params_.q_stddev_acc_long = 9.8 * 0.5;  // [m/(s*s)] uncertain longitudinal acceleration
+  ekf_params_.q_stddev_acc_lat = 9.8 * 0.1;   // [m/(s*s)] uncertain lateral acceleration
+  ekf_params_.q_stddev_slip_rate =
+    tier4_autoware_utils::deg2rad(5.0);  // [rad/s] uncertain head angle change rate
+  ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
+  // limitations
   max_vel_ = tier4_autoware_utils::kmph2mps(100);                       // [m/s]
   max_slip_ = tier4_autoware_utils::deg2rad(30);                       // [rad]
   velocity_deviation_threshold_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
@@ -240,7 +244,7 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
 
   // Q
   const float q_stddev_yaw_rate = std::min(
-    ekf_params_.q_stddev_acc_lat * 2.0 / vx,
+    ekf_params_.q_stddev_acc_lat / vx,
     vx / lr_ * std::sin(ekf_params_.q_max_slip_angle));  // [rad/s] uncertain yaw rate limited by
                                                          // lateral acceleration or slip angle
   const float q_cov_x = std::pow(ekf_params_.q_stddev_acc_long * dt * dt, 2.0);
