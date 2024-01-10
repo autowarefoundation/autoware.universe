@@ -43,7 +43,7 @@ public:
   virtual MarkerArray debug_marker_array() { return MarkerArray{}; }
 
 protected:
-  rclcpp::Logger get_logger() { return *logger_ptr_; }
+  rclcpp::Logger get_logger() const { return *logger_ptr_; }
   std::shared_ptr<rclcpp::Logger> logger_ptr_{nullptr};
 };
 

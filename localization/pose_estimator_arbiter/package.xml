@@ -15,7 +15,6 @@
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>landmark_manager</depend>
   <depend>lanelet2_extension</depend>
   <depend>libgoogle-glog-dev</depend>
   <depend>magic_enum</depend>

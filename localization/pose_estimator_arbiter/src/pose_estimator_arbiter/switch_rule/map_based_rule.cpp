@@ -25,8 +25,6 @@ MapBasedRule::MapBasedRule(
   running_estimator_list_(running_estimator_list),
   shared_data_(shared_data)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "MapBasedRule is initialized");
-
   if (running_estimator_list.count(PoseEstimatorName::ndt)) {
     pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
 
@@ -54,6 +52,8 @@ MapBasedRule::MapBasedRule(
         eagleye_area_->init(msg);
       });
   }
+
+  RCLCPP_INFO_STREAM(get_logger(), "MapBasedRule is initialized successfully");
 }
 
 bool MapBasedRule::eagleye_is_available() const

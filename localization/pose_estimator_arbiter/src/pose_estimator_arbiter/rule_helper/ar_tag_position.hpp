@@ -45,8 +45,6 @@ private:
   struct Impl;
   std::shared_ptr<Impl> impl_;
   rclcpp::Logger logger_;
-
-  bool shared_data_is_ready_;
 };
 }  // namespace pose_estimator_arbiter::rule_helper
 
