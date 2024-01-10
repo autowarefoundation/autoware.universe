@@ -1554,27 +1554,24 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     object.kinematics.twist_with_covariance.twist.linear.x,
     object.kinematics.twist_with_covariance.twist.linear.y);
 
-  // Use a filtered-decaying acceleration model
-  const double filtered_obj_acc = object_acceleration_monitor_.getFilteredAcceleration(object);
-  const double exponential_half_life = prediction_time_horizon_ / 4.0;
+  // Use a decaying acceleration model
+  const double obj_acc = std::hypot(
+    object.kinematics.acceleration_with_covariance.accel.linear.x,
+    object.kinematics.acceleration_with_covariance.accel.linear.y);
+
   // The decay constant λ = ln(2) / exponential_half_life
+  const double exponential_half_life = prediction_time_horizon_ / 4.0;
   const double λ = std::log(2) / exponential_half_life;
 
-  // a(t) = filtered_obj_acc - filtered_obj_acc(1-e^(-λt)) = filtered_obj_acc(e^(-λt))
-  // V(t) = Vo + filtered_obj_acc(1/λ)(1-e^(-λt))
-  // x(t) = Xo + Vo * t + t * filtered_obj_acc(1/λ) + filtered_obj_acc(1/λ^2)e^(-λt)
-  // x(t) = Xo + (Vo + filtered_obj_acc(1/λ)) * t  + filtered_obj_acc(1/λ^2)e^(-λt)
-  // acceleration_distance = filtered_obj_acc(1/λ) * t  + filtered_obj_acc(1/λ^2)e^(-λt)
+  // a(t) = obj_acc - obj_acc(1-e^(-λt)) = obj_acc(e^(-λt))
+  // V(t) = Vo + obj_acc(1/λ)(1-e^(-λt))
+  // x(t) = Xo + Vo * t + t * obj_acc(1/λ) + obj_acc(1/λ^2)e^(-λt)
+  // x(t) = Xo + (Vo + obj_acc(1/λ)) * t  + obj_acc(1/λ^2)e^(-λt)
+  // acceleration_distance = obj_acc(1/λ) * t  + obj_acc(1/λ^2)e^(-λt)
 
   const double acceleration_distance =
-    filtered_obj_acc * (1.0 / λ) * prediction_time_horizon_ +
-    filtered_obj_acc * (1.0 / std::pow(λ, 2)) * std::exp(-λ * prediction_time_horizon_);
-  // std::cerr << "------------------------------------\n";
-  // std::cerr << "object " << tier4_autoware_utils::toHexString(object.object_id) << "\n";
-  // std::cerr << "acceleration_distance calculated " << acceleration_distance << "\n";
-  // std::cerr << "obj_vel " << obj_vel << "\n";
-  // std::cerr << "filtered_obj_acc " << filtered_obj_acc << "\n";
-  // std::cerr << "prediction_time_horizon_ " << prediction_time_horizon_ << "\n";
+    obj_acc * (1.0 / λ) * prediction_time_horizon_ +
+    obj_acc * (1.0 / std::pow(λ, 2)) * std::exp(-λ * prediction_time_horizon_);
 
   std::vector<PredictedRefPath> all_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
