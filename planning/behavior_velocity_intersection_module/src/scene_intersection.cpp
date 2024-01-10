@@ -953,7 +953,8 @@ bool IntersectionModule::isGreenSolidOn(lanelet::ConstLanelet lane)
     // this lane has no traffic light
     return false;
   }
-  const auto tl_info_opt = planner_data_->getTrafficSignal(tl_id.value(), true);
+  const auto tl_info_opt = planner_data_->getTrafficSignal(
+    tl_id.value(), true /* traffic light module keeps last observation*/);
   if (!tl_info_opt) {
     // the info of this traffic light is not available
     return false;
@@ -1423,7 +1424,8 @@ TrafficPrioritizedLevel IntersectionModule::getTrafficPrioritizedLevel(lanelet::
     // this lane has no traffic light
     return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
-  const auto tl_info_opt = planner_data_->getTrafficSignal(tl_id.value());
+  const auto tl_info_opt = planner_data_->getTrafficSignal(
+    tl_id.value(), true /* traffic light module keeps last observation*/);
   if (!tl_info_opt) {
     return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
