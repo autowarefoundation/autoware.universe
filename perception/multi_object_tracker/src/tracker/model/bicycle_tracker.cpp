@@ -54,9 +54,9 @@ BicycleTracker::BicycleTracker(
 
   // Initialize parameters
   // measurement noise covariance
-  float r_stddev_x = 0.6;                                     // [m]
-  float r_stddev_y = 0.4;                                     // [m]
-  float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // [rad]
+  float r_stddev_x = 0.6;                                  // [m]
+  float r_stddev_y = 0.4;                                  // [m]
+  float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);  // [rad]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
@@ -73,13 +73,15 @@ BicycleTracker::BicycleTracker(
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
   // process noise covariance
   ekf_params_.q_stddev_acc_long = 9.8 * 0.3;  // [m/(s*s)] uncertain longitudinal acceleration
-  ekf_params_.q_stddev_acc_lat = 9.8 * 0.15;   // [m/(s*s)] uncertain lateral acceleration
-  ekf_params_.q_stddev_slip_rate =
-    tier4_autoware_utils::deg2rad(5.0);  // [rad/s] uncertain head angle change rate
+  ekf_params_.q_stddev_acc_lat = 9.8 * 0.15;  // [m/(s*s)] uncertain lateral acceleration
+  ekf_params_.q_stddev_slip_rate_max =
+    tier4_autoware_utils::deg2rad(10.0);  // [rad/s] uncertain head angle change rate
+  ekf_params_.q_stddev_slip_rate_min =
+    tier4_autoware_utils::deg2rad(0.1);  // [rad/s] uncertain head angle change rate
   ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
   // limitations
   max_vel_ = tier4_autoware_utils::kmph2mps(100);  // [m/s]
-  max_slip_ = tier4_autoware_utils::deg2rad(30);  // [rad/s]
+  max_slip_ = tier4_autoware_utils::deg2rad(30);   // [rad/s]
 
   // initialize X matrix
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -228,15 +230,31 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   A(IDX::YAW, IDX::SLIP) = vx / lr_ * cos_slip * dt;
 
   // Q
-  const float q_stddev_yaw_rate = std::min(
-    ekf_params_.q_stddev_acc_lat / vx,
-    vx / lr_ * std::sin(ekf_params_.q_max_slip_angle));  // [rad/s] uncertain yaw rate limited by
-                                                         // lateral acceleration or slip angle
+  float q_stddev_yaw_rate{0.0};
+  if (vx <= 0.01) {
+    q_stddev_yaw_rate = ekf_params_.q_stddev_acc_lat / 0.01;
+  } else {
+    // uncertain yaw rate limited by
+    // centripetal acceleration w = a_lat/v
+    // or slip angle w = v*sin(slip)/l_r
+    q_stddev_yaw_rate = std::min(
+      ekf_params_.q_stddev_acc_lat / vx,
+      vx * std::sin(ekf_params_.q_max_slip_angle) / lr_);  // [rad/s]
+  }
+  float q_stddev_slip_rate{0.0};
+  if (vx <= 0.01) {
+    q_stddev_slip_rate = ekf_params_.q_stddev_slip_rate_min;
+  } else {
+    float slip_rate_limited_by_yaw_rate = std::abs(sin_slip * ekf_params_.q_stddev_acc_lat / vx);
+    q_stddev_slip_rate =
+      std::min(slip_rate_limited_by_yaw_rate, ekf_params_.q_stddev_slip_rate_max);
+    q_stddev_slip_rate = std::max(q_stddev_slip_rate, ekf_params_.q_stddev_slip_rate_min);
+  }
   const float q_cov_x = std::pow(ekf_params_.q_stddev_acc_long * dt * dt, 2.0);
   const float q_cov_y = std::pow(ekf_params_.q_stddev_acc_lat * dt * dt, 2.0);
   const float q_cov_yaw = std::pow(q_stddev_yaw_rate * dt, 2.0);
   const float q_cov_vx = std::pow(ekf_params_.q_stddev_acc_long * dt, 2.0);
-  const float q_cov_slip = std::pow(ekf_params_.q_stddev_slip_rate * dt, 2.0);
+  const float q_cov_slip = std::pow(q_stddev_slip_rate * dt, 2.0);
 
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   // Rotate the covariance matrix according to the vehicle yaw

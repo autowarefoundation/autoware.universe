@@ -38,7 +38,8 @@ private:
     char dim_x = 5;
     float q_stddev_acc_long;
     float q_stddev_acc_lat;
-    float q_stddev_slip_rate;
+    float q_stddev_slip_rate_max;
+    float q_stddev_slip_rate_min;
     float q_max_slip_angle;
     float p0_cov_vx;
     float p0_cov_slip;
