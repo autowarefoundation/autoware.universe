@@ -1565,13 +1565,13 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
   // a(t) = obj_acc - obj_acc(1-e^(-λt)) = obj_acc(e^(-λt))
   // V(t) = Vo + obj_acc(1/λ)(1-e^(-λt))
-  // x(t) = Xo + Vo * t + t * obj_acc(1/λ) + obj_acc(1/λ^2)e^(-λt)
-  // x(t) = Xo + (Vo + obj_acc(1/λ)) * t  + obj_acc(1/λ^2)e^(-λt)
-  // acceleration_distance = obj_acc(1/λ) * t  + obj_acc(1/λ^2)e^(-λt)
+  // x(t) = Xo + Vo * t + t * obj_acc(1/λ) + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
+  // x(t) = Xo + (Vo + obj_acc(1/λ)) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
+  // acceleration_distance = obj_acc(1/λ) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
 
   const double acceleration_distance =
     obj_acc * (1.0 / λ) * prediction_time_horizon_ +
-    obj_acc * (1.0 / std::pow(λ, 2)) * std::exp(-λ * prediction_time_horizon_);
+    obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * prediction_time_horizon_) - 1);
 
   std::vector<PredictedRefPath> all_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {

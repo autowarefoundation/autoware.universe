@@ -387,7 +387,6 @@ PredictedPath PathGenerator::convertToPredictedPath(
 FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const PosePath & ref_path)
 {
   FrenetPoint frenet_point;
-  const double T = time_horizon_;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
 
   const size_t nearest_segment_idx = motion_utils::findNearestSegmentIndex(ref_path, obj_point);
@@ -412,13 +411,48 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
   // x(t) = Xo + Vo * t + t * acc(1/λ) + acc(1/λ^2)e^(-λt)
   // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)e^(-λt)
   // acceleration_distance = acc(1/λ) * t  + acc(1/λ^2)e^(-λt)
+  const double T = time_horizon_;
   const float exponential_half_life = T / 4.0;
   const float λ = std::log(2) / exponential_half_life;
 
-  // Vnew * T = Vo * T +  acc(1/λ) * T + acc(1/λ^2)e^(-λT)
-  // Vnew = Vo + acc(1/λ) + acc(1/T*λ^2)e^(-λT)
-  const float VX = vx + ax * (1 / λ + std::exp(-λ * T) / (T * std::pow(λ, 2)));
-  const float VY = vy + ay * (1 / λ + std::exp(-λ * T) / (T * std::pow(λ, 2)));
+  auto have_same_sign = [](double a, double b) -> bool {
+    return (a >= 0.0 && b >= 0.0) || (a < 0.0 && b < 0.0);
+  };
+
+  auto get_equivalent_velocity = [&](const double v, const double a) {
+    // V(t) = Vo + acc(1/λ)(1-e^(-λt))
+    const auto V_terminal = v + a * (1.0 / λ) * (1 - std::exp(-λ * T));
+
+    //   obj_acc * (1.0 / λ) * prediction_time_horizon_ +
+    // obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * prediction_time_horizon_) - 1);
+    if (have_same_sign(V_terminal, v))
+      return v + a * (1.0 / λ) + (a / (T * std::pow(λ, 2))) * (std::exp(-λ * T) - 1);
+    // we assume a forwards moving vehicle will not decelerate to 0 and then move backwards
+    // if the velocities don't have the same sign, calculate when the velocity becomes 0
+
+    // 0 = Vo + acc(1/λ)(1-e^(-λT0))
+    // e^(-λT0) = 1 - (-Vo* λ)/acc
+    // T0 = (-1/λ)*ln(1 - (-Vo* λ)/acc)
+    auto T_0 = std::log(1 - (-v * λ / a)) * (-1.0 / λ);
+
+    // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
+    // x(T0) = Xo + (Vo + acc(1/λ)) * T0  + acc(1/λ^2)(e^(-λT0) - 1)
+    auto distance_to_reach_zero_speed =
+      v * T_0 + a * T_0 * (1.0 / λ) + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * T) - 1);
+    std::cerr << "Time to 0 " << T_0 << "\n";
+    std::cerr << "Dist to 0 " << distance_to_reach_zero_speed << "\n";
+    std::cerr << "Vel at 0 ?? " << v + a * (1 / λ) * (1 - std::exp(-λ * T_0)) << "\n";
+    std::cerr << "Veq " << distance_to_reach_zero_speed / T << "\n";
+    std::cerr << "Voriginal " << v << "\n";
+    std::cerr << "Aoriginal " << a << "\n";
+
+    // Vnew * T = x(T0)
+    // Vnew = x(T0) / T
+    return distance_to_reach_zero_speed / T;
+  };
+
+  const float VX = get_equivalent_velocity(vx, ax);
+  const float VY = get_equivalent_velocity(vy, ay);
 
   frenet_point.s = motion_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
   frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
