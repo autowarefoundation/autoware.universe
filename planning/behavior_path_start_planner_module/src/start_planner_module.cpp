@@ -911,11 +911,11 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
 
-  const auto stop_objects_in_shoulder_lanes = filterStopObjectsInShoulderLanes(
+  const auto stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity,
     backward_path_length, std::numeric_limits<double>::max());
 
-  const auto front_stop_objects_in_shoulder_lanes = filterStopObjectsInShoulderLanes(
+  const auto front_stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity, 0,
     std::numeric_limits<double>::max());
 
@@ -962,27 +962,27 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
   return pull_out_start_pose_candidates;
 }
 
-PredictedObjects StartPlannerModule::filterStopObjectsInShoulderLanes(
-  const lanelet::ConstLanelets & shoulder_lanes, const geometry_msgs::msg::Point & current_point,
+PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
+  const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_point,
   const double velocity_threshold, const double object_check_forward_distance,
   const double object_check_backward_distance) const
 {
   const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     *planner_data_->dynamic_object, velocity_threshold);
 
-  // filter for objects located in shoulder lanes and moving at a speed below the threshold
-  auto [stop_objects_in_shoulder_lanes, others] =
+  // filter for objects located in pull out lanes and moving at a speed below the threshold
+  auto [stop_objects_in_pull_out_lanes, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
       stop_objects, shoulder_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   const auto path = planner_data_->route_handler->getCenterLinePath(
-    shoulder_lanes, object_check_backward_distance, object_check_forward_distance);
+    pull_out_lanes, object_check_backward_distance, object_check_forward_distance);
 
   utils::path_safety_checker::filterObjectsByPosition(
-    stop_objects_in_shoulder_lanes, path.points, current_point, object_check_forward_distance,
+    stop_objects_in_pull_out_lanes, path.points, current_point, object_check_forward_distance,
     object_check_backward_distance);
 
-  return stop_objects_in_shoulder_lanes;
+  return stop_objects_in_pull_out_lanes;
 }
 
 bool StartPlannerModule::hasFinishedPullOut() const
