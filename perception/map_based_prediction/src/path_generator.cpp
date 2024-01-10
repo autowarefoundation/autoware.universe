@@ -387,7 +387,6 @@ PredictedPath PathGenerator::convertToPredictedPath(
 FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const PosePath & ref_path)
 {
   FrenetPoint frenet_point;
-  const double T = time_horizon_;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
 
   const size_t nearest_segment_idx = motion_utils::findNearestSegmentIndex(ref_path, obj_point);
