@@ -936,7 +936,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     if (!backed_pose) continue;
 
     if (utils::checkCollisionBetweenFootprintAndObjects(
-          local_vehicle_footprint, *backed_pose, front_stop_objects_in_shoulder_lanes,
+          local_vehicle_footprint, *backed_pose, front_stop_objects_in_pull_out_lanes,
           parameters_->collision_check_margin_from_front_object))
       continue;
 
@@ -954,7 +954,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     }
 
     if (utils::checkCollisionBetweenFootprintAndObjects(
-          local_vehicle_footprint, *backed_pose, stop_objects_in_shoulder_lanes,
+          local_vehicle_footprint, *backed_pose, stop_objects_in_pull_out_lanes,
           parameters_->collision_check_margins.back())) {
       break;  // poses behind this has a collision, so break.
     }
@@ -975,7 +975,7 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   // filter for objects located in pull out lanes and moving at a speed below the threshold
   auto [stop_objects_in_pull_out_lanes, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      stop_objects, shoulder_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
+      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   const auto path = planner_data_->route_handler->getCenterLinePath(
     pull_out_lanes, object_check_backward_distance, object_check_forward_distance);
