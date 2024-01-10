@@ -2,7 +2,7 @@
 
 Table of contents:
 
-- [Purpose](#purpose)
+- [Abstract](#abstract)
 - [Interface](#interfaces)
 - [Architecture](#architecture)
 - [How to launch](#how-to-launch)

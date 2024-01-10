@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
 
 namespace pose_estimator_arbiter
 {
