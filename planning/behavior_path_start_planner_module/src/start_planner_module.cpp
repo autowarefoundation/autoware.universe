@@ -912,7 +912,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity,
     backward_path_length, std::numeric_limits<double>::max());
 
-  const auto front_stop_objects_in_shoulder_lanes = filterStopObjectsInPullOutLanes(
+  const auto front_stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity, 0,
     std::numeric_limits<double>::max());
 
@@ -931,7 +931,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     if (!backed_pose) continue;
 
     if (utils::checkCollisionBetweenFootprintAndObjects(
-          local_vehicle_footprint, *backed_pose, front_stop_objects_in_shoulder_lanes,
+          local_vehicle_footprint, *backed_pose, front_stop_objects_in_pull_out_lanes,
           parameters_->collision_check_margin_from_front_object))
       continue;
 
