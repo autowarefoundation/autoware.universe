@@ -249,8 +249,10 @@ bool LaneChangeInterface::canTransitFailureState()
       return false;
     }
 
-    log_debug_throttled("It's unsafe and ego is in prepare phase. Cancel lane change.");
-    return true;
+    if (module_type_->isAbleToReturnCurrentLane()) {
+      log_debug_throttled("It's possible to return to current lane. Cancel lane change.");
+      return true;
+    }
   }
 
   if (post_process_safety_status_.is_safe) {
