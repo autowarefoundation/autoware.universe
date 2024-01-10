@@ -361,9 +361,23 @@ bool AEB::hasCollision(
     RCLCPP_ERROR_STREAM(get_logger(), "[AEB] ego_path is empty");
     return false;
   }
+  double current_x = 0.0;
+  double current_y = 0.0;
+  double current_yaw = 0.0;
+  const double current_w = angular_velocity_ptr_->z;
   // calculate RSS
-  const auto current_p = tier4_autoware_utils::createPoint(
-    ego_path[0].position.x, ego_path[0].position.y, ego_path[0].position.z);
+  geometry_msgs::msg::Pose current_p;
+  constexpr double epsilon = 1e-6;
+  const double & dt = imu_prediction_time_interval_;
+  const double & horizon = imu_prediction_time_horizon_;
+  for (double t = 0.0; t < horizon + epsilon; t += dt) {
+    current_x = current_x + current_v * std::cos(current_yaw) * dt;
+    current_y = current_y + current_v * std::sin(current_yaw) * dt;
+    current_yaw = current_yaw + current_w * dt;
+
+    current_p.position = tier4_autoware_utils::createPoint(current_x, current_y, 0.0);
+    current_p.orientation = tier4_autoware_utils::createQuaternionFromYaw(current_yaw);
+  }
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
@@ -373,7 +387,7 @@ bool AEB::hasCollision(
     // check the object is front the ego or not
     if ((obj.position.x - ego_path[0].position.x) > 0) {
       const double dist_ego_to_object =
-        motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
+        motion_utils::calcSignedArcLength(ego_path, current_p.position, obj.position) -
         vehicle_info_.max_longitudinal_offset_m;
       if (dist_ego_to_object < rss_dist) {
         // collision happens
