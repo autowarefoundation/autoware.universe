@@ -316,8 +316,11 @@ private:
   };
 
   inline bool isLateralAccelerationConstraintSatisfied(
-    const TrajectoryPoints & trajectory [[maybe_unused]], const double delta_time)
+    const TrajectoryPoints & trajectory, const double delta_time)
   {
+    constexpr double epsilon = 1E-6;
+    if (delta_time < epsilon) throw std::invalid_argument("delta_time must be a positive value");
+
     if (trajectory.size() < 3) return true;
     const double max_lateral_accel_abs = std::fabs(max_lateral_accel_);
 
@@ -343,7 +346,7 @@ private:
         delta_theta += 2.0 * M_PI;
       }
 
-      const double yaw_rate = std::max(std::abs(delta_theta) / delta_time, 1.0E-5);
+      const double yaw_rate = std::max(std::abs(delta_theta / delta_time), 1.0E-5);
 
       const double current_speed = std::abs(trajectory.at(i).longitudinal_velocity_mps);
       // Compute lateral acceleration
