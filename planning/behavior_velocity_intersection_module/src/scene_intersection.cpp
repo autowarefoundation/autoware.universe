@@ -953,7 +953,7 @@ bool IntersectionModule::isGreenSolidOn(lanelet::ConstLanelet lane)
     // this lane has no traffic light
     return false;
   }
-  const auto tl_info_opt = planner_data_->getTrafficSignal(tl_id.value());
+  const auto tl_info_opt = planner_data_->getTrafficSignal(tl_id.value(), true);
   if (!tl_info_opt) {
     // the info of this traffic light is not available
     return false;

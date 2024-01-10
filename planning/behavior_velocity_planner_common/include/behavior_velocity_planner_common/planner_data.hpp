@@ -128,8 +128,13 @@ struct PlannerData
     return true;
   }
 
+  /**
+   *@fn
+   *@brief queries the traffic signal information of given Id. if keep_last_observation = true,
+   *recent UNKNOWN observation is overwritten as the last non-UNKNOWN observation
+   */
   std::optional<TrafficSignalStamped> getTrafficSignal(
-    const lanelet::Id id, const bool keep_last_observation = true) const
+    const lanelet::Id id, const bool keep_last_observation = false) const
   {
     const auto & traffic_light_id_map =
       keep_last_observation ? traffic_light_id_map_last_observed_ : traffic_light_id_map_raw_;

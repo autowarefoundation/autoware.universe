@@ -353,8 +353,8 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 bool TrafficLightModule::findValidTrafficSignal(TrafficSignalStamped & valid_traffic_signal) const
 {
   // get traffic signal associated with the regulatory element id
-  const auto traffic_signal_stamped_opt =
-    planner_data_->getTrafficSignal(traffic_light_reg_elem_.id());
+  const auto traffic_signal_stamped_opt = planner_data_->getTrafficSignal(
+    traffic_light_reg_elem_.id(), true /* traffic light module keeps last observation */);
   if (!traffic_signal_stamped_opt) {
     RCLCPP_WARN_THROTTLE(
       logger_, *clock_, 5000 /* ms */,
