@@ -407,6 +407,11 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
     static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y);
 
   // The decay constant λ = ln(2) / exponential_half_life
+  // a(t) = acc - acc(1-e^(-λt)) = acc(e^(-λt))
+  // V(t) = Vo + acc(1/λ)(1-e^(-λt))
+  // x(t) = Xo + Vo * t + t * acc(1/λ) + acc(1/λ^2)e^(-λt)
+  // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)e^(-λt)
+  // acceleration_distance = acc(1/λ) * t  + acc(1/λ^2)e^(-λt)
   const float exponential_half_life = T / 4.0;
   const float λ = std::log(2) / exponential_half_life;
 
@@ -414,12 +419,6 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
   // Vnew = Vo + acc(1/λ) + acc(1/T*λ^2)e^(-λT)
   const float VX = vx + ax * (1 / λ + std::exp(-λ * T) / (T * std::pow(λ, 2)));
   const float VY = vy + ay * (1 / λ + std::exp(-λ * T) / (T * std::pow(λ, 2)));
-
-  // a(t) = acc - acc(1-e^(-λt)) = acc(e^(-λt))
-  // V(t) = Vo + acc(1/λ)(1-e^(-λt))
-  // x(t) = Xo + Vo * t + t * acc(1/λ) + acc(1/λ^2)e^(-λt)
-  // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)e^(-λt)
-  // acceleration_distance = acc(1/λ) * t  + acc(1/λ^2)e^(-λt)
 
   frenet_point.s = motion_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
   frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
