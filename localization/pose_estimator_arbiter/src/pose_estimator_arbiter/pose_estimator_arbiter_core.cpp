@@ -34,7 +34,7 @@ static std::unordered_set<PoseEstimatorName> parse_estimator_name_args(
     if (estimator.has_value()) {
       running_estimator_list.insert(estimator.value());
     } else {
-      RCLCPP_ERROR_STREAM(logger, "invalid pose_estimator_name is spciefied: " << estimator_name);
+      RCLCPP_ERROR_STREAM(logger, "invalid pose_estimator_name is specified: " << estimator_name);
     }
   }
 
@@ -205,7 +205,7 @@ void PoseEstimatorArbiter::on_timer()
 
   } else {
     RCLCPP_WARN_STREAM(
-      get_logger(), "swtich_rule is not activated. Therefore, enable all pose_estimators");
+      get_logger(), "switch_rule is not activated. Therefore, enable all pose_estimators");
     toggle_all(true);
   }
 

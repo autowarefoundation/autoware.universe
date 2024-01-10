@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <map>
 #include <vector>
 
 namespace pose_estimator_arbiter::rule_helper
@@ -45,7 +46,7 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node) : logger_(node->get_logger())
       if (param.get_name() == target_tag_ids_parameter_name) {
         impl_->target_tag_ids = param.as_string_array();
         RCLCPP_INFO_STREAM(
-          logger_, "AsyncParameters got " << param.as_string_array().size() << " ladnmark IDs");
+          logger_, "AsyncParameters got " << param.as_string_array().size() << " landmark IDs");
       }
     }
   };

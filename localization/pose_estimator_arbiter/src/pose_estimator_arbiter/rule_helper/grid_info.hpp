@@ -48,7 +48,7 @@ struct GridInfo
 
 }  // namespace pose_estimator_arbiter::rule_helper
 
-// This is for unordered_map and unodered_set
+// This is for unordered_map and unordered_set
 namespace std
 {
 template <>

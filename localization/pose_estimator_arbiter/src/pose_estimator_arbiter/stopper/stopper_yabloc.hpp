@@ -73,9 +73,9 @@ protected:
     auto result_future = enable_service_client_->async_send_request(request);
     std::future_status status = result_future.wait_for(1000ms);
     if (status == std::future_status::ready) {
-      RCLCPP_INFO_STREAM(logger_, "yabloc_arbiter dis/enableing service exited successfully");
+      RCLCPP_INFO_STREAM(logger_, "yabloc_arbiter dis/enabling service exited successfully");
     } else {
-      RCLCPP_ERROR_STREAM(logger_, "yabloc_arbiter dis/enableing service exited unexpectedly");
+      RCLCPP_ERROR_STREAM(logger_, "yabloc_arbiter dis/enabling service exited unexpectedly");
     }
   }
 

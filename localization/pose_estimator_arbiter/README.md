@@ -59,7 +59,7 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
 
 | Name                                             | Type   | Description                                                                                 |
 | ------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------- |
-| `pcd_occupancy_rule/pcd_density_upper_threshold` | double | If the number of occupied voxel around the self-position exceeds this, NDT is allowd        |
+| `pcd_occupancy_rule/pcd_density_upper_threshold` | double | If the number of occupied voxel around the self-position exceeds this, NDT is allowed        |
 | `pcd_occupancy_rule/pcd_density_lower_threshold` | double | If the number of occupied voxel around the self-position is less than this, NDT is disabled |
 | `ar_marker_rule/ar_marker_available_distance`    | double | If the distance to the nearest AR marker exceeds this, disable artag-based-localizer        |
 
@@ -84,7 +84,7 @@ For pose estimator arbitration:
 | `/input/eagleye/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped | Eagleye output |
 | `/input/ndt/pointcloud`               | sensor_msgs::msg::PointCloud2                 | NDT input      |
 
-For swithing rule:
+For switching rule:
 
 | Name                          | Type                                                         | Description                       |
 | ----------------------------- | ------------------------------------------------------------ | --------------------------------- |
@@ -140,13 +140,13 @@ It comprises a **switching rule** and **sub arbiters** corresponding to each pos
 
 Which sub arbiters and switching rules are instantiated depends on the runtime arguments at startup.
 
-Following figure shows the node configuration when all pose_estiamtor are run simultaneously.
+Following figure shows the node configuration when all pose_estimator are run simultaneously.
 
 <img src="./media/architecture.drawio.svg" alt="drawing" width="800"/>
 
 - **NDT**
 
-The NDT sub-arbiter relays topics in the frontside of the point cloud pre-processor.
+The NDT sub-arbiter relays topics in the front side of the point cloud pre-processor.
 
 - **YabLoc**
 
@@ -162,7 +162,7 @@ Furthermore, Eagleye's estimation process is lightweight enough to be run contin
 
 - **ArTag**
 
-The ArTag sub-arbiter relays image topics in the frontside of the landmark localizer.
+The ArTag sub-arbiter relays image topics in the front side of the landmark localizer.
 
 ## How to launch
 
@@ -182,11 +182,11 @@ Please see the table below for details.
 | given runtime argument                       | parsed pose_estimator_arbiter's param (pose_sources) |
 | -------------------------------------------- | ---------------------------------------------------- |
 | `pose_source:=ndt`                           | `["ndt"]`                                            |
-| `pose_source:=hoge`                          | `[]`                                                 |
+| `pose_source:=nan`                           | `[]`                                                 |
 | `pose_source:=yabloc_ndt`                    | `["ndt","yabloc"]`                                   |
 | `pose_source:=yabloc_ndt_ndt_ndt`            | `["ndt","yabloc"]`                                   |
 | `pose_source:=ndt_yabloc_eagleye`            | `["ndt","yabloc","eagleye"]`                         |
-| `pose_source:=ndt_yabloc_hoge_eagleye_artag` | `["ndt","yabloc","eagleye","artag"]`                 |
+| `pose_source:=ndt_yabloc_nan_eagleye_artag`  | `["ndt","yabloc","eagleye","artag"]`                 |
 
 ## Switching Rules
 
@@ -221,8 +221,8 @@ This rule basically allows only one pose_estimator to be activated.
 | branch | condition description                                                                                                                                                                   |
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1      | If localization initialization state is not `INITIALIZED`, enable all pose_estimators. This is because system does not know which pose_estimator is available for initial localization. |
-| 2      | If ego-position is not subscribed yet, enable all pose_estimators. This is bacause it is not possible to determine which pose_estimators are available.                                 |
-| 3      | If ego-position enters Eagleye area, enable Eagley. See [Eagleye area](#eagleye-area) for more details                                                                                  |
+| 2      | If ego-position is not subscribed yet, enable all pose_estimators. This is because it is not possible to determine which pose_estimators are available.                                 |
+| 3      | If ego-position enters Eagleye area, enable Eagleye. See [Eagleye area](#eagleye-area) for more details                                                                                  |
 | 4      | If there are landmarks in the surrounding area, enable AR tag based estimation.                                                                                                         |
 | 5      | If YabLoc is not enabled as a runtime argument, enable NDT.                                                                                                                             |
 | 6      | If NDT is not enabled as a runtime argument, enable YabLoc.                                                                                                                             |
@@ -325,7 +325,7 @@ This table's usage is described from three perspectives:
 
 ## Future Plans
 
-### gradually swithing
+### gradually switching
 
 In the future, this package will provide not only ON/OFF switching, but also a mechanism for low frequency operation, such as 50% NDT & 50% YabLoc.
 
