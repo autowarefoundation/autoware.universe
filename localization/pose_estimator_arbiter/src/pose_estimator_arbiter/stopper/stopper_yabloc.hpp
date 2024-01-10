@@ -12,26 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_YABLOC_HPP_
-#define POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_YABLOC_HPP_
-#include "pose_estimator_arbiter/base_pose_estimator_sub_arbiter.hpp"
+#ifndef POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_YABLOC_HPP_
+#define POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_YABLOC_HPP_
+#include "pose_estimator_arbiter/stopper/base_stopper.hpp"
 
 #include <sensor_msgs/msg/image.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
 #include <memory>
 
-namespace pose_estimator_arbiter::sub_arbiter
+namespace pose_estimator_arbiter::stopper
 {
-class SubArbiterYabLoc : public BasePoseEstimatorSubArbiter
+class StopperYabLoc : public BaseStopper
 {
 public:
   using Image = sensor_msgs::msg::Image;
   using SetBool = std_srvs::srv::SetBool;
 
-  explicit SubArbiterYabLoc(
-    rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
-  : BasePoseEstimatorSubArbiter(node, shared_data)
+  explicit StopperYabLoc(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : BaseStopper(node, shared_data)
   {
     yabloc_is_enabled_ = true;
     pub_image_ = node->create_publisher<Image>("~/output/yabloc/image", rclcpp::SensorDataQoS());
@@ -85,5 +84,5 @@ private:
   rclcpp::Client<SetBool>::SharedPtr enable_service_client_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 };
-}  // namespace pose_estimator_arbiter::sub_arbiter
-#endif  // POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_YABLOC_HPP_
+}  // namespace pose_estimator_arbiter::stopper
+#endif  // POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_YABLOC_HPP_

@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_NDT_HPP_
-#define POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_NDT_HPP_
-#include "pose_estimator_arbiter/base_pose_estimator_sub_arbiter.hpp"
+#ifndef POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_NDT_HPP_
+#define POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_NDT_HPP_
+#include "pose_estimator_arbiter/stopper/base_stopper.hpp"
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <memory>
 
-namespace pose_estimator_arbiter::sub_arbiter
+namespace pose_estimator_arbiter::stopper
 {
-class SubArbiterNdt : public BasePoseEstimatorSubArbiter
+class StopperNdt : public BaseStopper
 {
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
 
-  explicit SubArbiterNdt(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
-  : BasePoseEstimatorSubArbiter(node, shared_data)
+  explicit StopperNdt(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : BaseStopper(node, shared_data)
   {
     ndt_is_enabled_ = true;
     pub_pointcloud_ = node->create_publisher<PointCloud2>(
@@ -48,6 +48,6 @@ private:
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_;
   bool ndt_is_enabled_;
 };
-}  // namespace pose_estimator_arbiter::sub_arbiter
+}  // namespace pose_estimator_arbiter::stopper
 
-#endif  // POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_NDT_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_NDT_HPP_

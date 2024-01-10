@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_EAGLEYE_HPP_
-#define POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_EAGLEYE_HPP_
-#include "pose_estimator_arbiter/base_pose_estimator_sub_arbiter.hpp"
+#ifndef POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_EAGLEYE_HPP_
+#define POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_EAGLEYE_HPP_
+#include "pose_estimator_arbiter/stopper/base_stopper.hpp"
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 #include <memory>
 
-namespace pose_estimator_arbiter::sub_arbiter
+namespace pose_estimator_arbiter::stopper
 {
-class SubArbiterEagleye : public BasePoseEstimatorSubArbiter
+class StopperEagleye : public BaseStopper
 {
 public:
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-  explicit SubArbiterEagleye(
-    rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
-  : BasePoseEstimatorSubArbiter(node, shared_data)
+  explicit StopperEagleye(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : BaseStopper(node, shared_data)
   {
     eagleye_is_enabled_ = true;
     pub_pose_ = node->create_publisher<PoseCovStamped>("~/output/eagleye/pose_with_covariance", 5);
@@ -49,6 +48,6 @@ private:
   bool eagleye_is_enabled_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_;
 };
-}  // namespace pose_estimator_arbiter::sub_arbiter
+}  // namespace pose_estimator_arbiter::stopper
 
-#endif  // POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_EAGLEYE_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_EAGLEYE_HPP_

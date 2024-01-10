@@ -15,8 +15,8 @@
 #ifndef POSE_ESTIMATOR_ARBITER__POSE_ESTIMATOR_ARBITER_HPP_
 #define POSE_ESTIMATOR_ARBITER__POSE_ESTIMATOR_ARBITER_HPP_
 
-#include "pose_estimator_arbiter/base_pose_estimator_sub_arbiter.hpp"
 #include "pose_estimator_arbiter/shared_data.hpp"
+#include "pose_estimator_arbiter/stopper/base_stopper.hpp"
 #include "pose_estimator_arbiter/switch_rule/base_switch_rule.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -71,7 +71,7 @@ private:
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Subscription<InitializationState>::SharedPtr sub_initialization_state_;
 
-  std::unordered_map<PoseEstimatorName, BasePoseEstimatorSubArbiter::SharedPtr> sub_arbiters_;
+  std::unordered_map<PoseEstimatorName, stopper::BaseStopper::SharedPtr> stoppers_;
 
   std::shared_ptr<switch_rule::BaseSwitchRule> switch_rule_{nullptr};
 

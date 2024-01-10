@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_ARBITER__BASE_POSE_ESTIMATOR_SUB_ARBITER_HPP_
-#define POSE_ESTIMATOR_ARBITER__BASE_POSE_ESTIMATOR_SUB_ARBITER_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__STOPPER__BASE_STOPPER_HPP_
+#define POSE_ESTIMATOR_ARBITER__STOPPER__BASE_STOPPER_HPP_
 
-#include "shared_data.hpp"
+#include "pose_estimator_arbiter/shared_data.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
 
-namespace pose_estimator_arbiter
+namespace pose_estimator_arbiter::stopper
 {
-class BasePoseEstimatorSubArbiter
+class BaseStopper
 {
 public:
-  using SharedPtr = std::shared_ptr<BasePoseEstimatorSubArbiter>;
+  using SharedPtr = std::shared_ptr<BaseStopper>;
 
-  explicit BasePoseEstimatorSubArbiter(
-    rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  explicit BaseStopper(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
   : logger_(node->get_logger()), shared_data_(shared_data)
   {
   }
@@ -43,6 +42,6 @@ protected:
   rclcpp::Logger logger_;
   std::shared_ptr<const SharedData> shared_data_{nullptr};
 };
-}  // namespace pose_estimator_arbiter
+}  // namespace pose_estimator_arbiter::stopper
 
-#endif  // POSE_ESTIMATOR_ARBITER__BASE_POSE_ESTIMATOR_SUB_ARBITER_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__STOPPER__BASE_STOPPER_HPP_

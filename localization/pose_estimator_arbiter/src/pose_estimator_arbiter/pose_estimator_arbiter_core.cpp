@@ -14,10 +14,10 @@
 
 #include "pose_estimator_arbiter/pose_estimator_arbiter.hpp"
 #include "pose_estimator_arbiter/pose_estimator_name.hpp"
-#include "pose_estimator_arbiter/sub_arbiter/sub_arbiter_artag.hpp"
-#include "pose_estimator_arbiter/sub_arbiter/sub_arbiter_eagleye.hpp"
-#include "pose_estimator_arbiter/sub_arbiter/sub_arbiter_ndt.hpp"
-#include "pose_estimator_arbiter/sub_arbiter/sub_arbiter_yabloc.hpp"
+#include "pose_estimator_arbiter/stopper/stopper_artag.hpp"
+#include "pose_estimator_arbiter/stopper/stopper_eagleye.hpp"
+#include "pose_estimator_arbiter/stopper/stopper_ndt.hpp"
+#include "pose_estimator_arbiter/stopper/stopper_yabloc.hpp"
 #include "pose_estimator_arbiter/switch_rule/map_based_rule.hpp"
 
 #include <magic_enum.hpp>
@@ -58,21 +58,20 @@ PoseEstimatorArbiter::PoseEstimatorArbiter()
   for (auto pose_estimator_name : running_estimator_list_) {
     switch (pose_estimator_name) {
       case PoseEstimatorName::ndt:
-        sub_arbiters_.emplace(
-          pose_estimator_name, std::make_shared<sub_arbiter::SubArbiterNdt>(this, shared_data_));
+        stoppers_.emplace(
+          pose_estimator_name, std::make_shared<stopper::StopperNdt>(this, shared_data_));
         break;
       case PoseEstimatorName::yabloc:
-        sub_arbiters_.emplace(
-          pose_estimator_name, std::make_shared<sub_arbiter::SubArbiterYabLoc>(this, shared_data_));
+        stoppers_.emplace(
+          pose_estimator_name, std::make_shared<stopper::StopperYabLoc>(this, shared_data_));
         break;
       case PoseEstimatorName::eagleye:
-        sub_arbiters_.emplace(
-          pose_estimator_name,
-          std::make_shared<sub_arbiter::SubArbiterEagleye>(this, shared_data_));
+        stoppers_.emplace(
+          pose_estimator_name, std::make_shared<stopper::StopperEagleye>(this, shared_data_));
         break;
       case PoseEstimatorName::artag:
-        sub_arbiters_.emplace(
-          pose_estimator_name, std::make_shared<sub_arbiter::SubArbiterArTag>(this, shared_data_));
+        stoppers_.emplace(
+          pose_estimator_name, std::make_shared<stopper::StopperArTag>(this, shared_data_));
         break;
       default:
         RCLCPP_ERROR_STREAM(get_logger(), "invalid pose_estimator is specified");
@@ -145,7 +144,7 @@ void PoseEstimatorArbiter::load_switch_rule()
 void PoseEstimatorArbiter::toggle_each(
   const std::unordered_map<PoseEstimatorName, bool> & toggle_list)
 {
-  for (auto s : sub_arbiters_) {
+  for (auto s : stoppers_) {
     if (toggle_list.at(s.first)) {
       s.second->enable();
     } else {
@@ -157,7 +156,7 @@ void PoseEstimatorArbiter::toggle_each(
 void PoseEstimatorArbiter::toggle_all(bool enabled)
 {
   std::unordered_map<PoseEstimatorName, bool> toggle_list;
-  for (auto s : sub_arbiters_) {
+  for (auto s : stoppers_) {
     toggle_list.emplace(s.first, enabled);
   }
   toggle_each(toggle_list);

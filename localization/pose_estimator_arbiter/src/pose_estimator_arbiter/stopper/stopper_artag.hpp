@@ -12,25 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_ARTAG_HPP_
-#define POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_ARTAG_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_ARTAG_HPP_
+#define POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_ARTAG_HPP_
 
-#include "pose_estimator_arbiter/base_pose_estimator_sub_arbiter.hpp"
+#include "pose_estimator_arbiter/stopper/base_stopper.hpp"
 
 #include <sensor_msgs/msg/image.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
 #include <memory>
-namespace pose_estimator_arbiter::sub_arbiter
+namespace pose_estimator_arbiter::stopper
 {
-class SubArbiterArTag : public BasePoseEstimatorSubArbiter
+class StopperArTag : public BaseStopper
 {
 public:
   using Image = sensor_msgs::msg::Image;
   using SetBool = std_srvs::srv::SetBool;
 
-  explicit SubArbiterArTag(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
-  : BasePoseEstimatorSubArbiter(node, shared_data)
+  explicit StopperArTag(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : BaseStopper(node, shared_data)
   {
     ar_tag_is_enabled_ = true;
     pub_image_ = node->create_publisher<Image>("~/output/artag/image", rclcpp::SensorDataQoS());
@@ -52,6 +52,6 @@ private:
   bool ar_tag_is_enabled_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 };
-}  // namespace pose_estimator_arbiter::sub_arbiter
+}  // namespace pose_estimator_arbiter::stopper
 
-#endif  // POSE_ESTIMATOR_ARBITER__SUB_ARBITER__SUB_ARBITER_ARTAG_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__STOPPER__STOPPER_ARTAG_HPP_
