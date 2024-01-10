@@ -766,6 +766,7 @@ CollisionPoint CrosswalkModule::createCollisionPoint(
   const std::optional<double> object_crosswalk_passage_direction) const
 {
   constexpr double min_ego_velocity = 1.38;  // [m/s]
+
   const auto estimated_velocity = std::hypot(obj_vel.x, obj_vel.y);
   const auto velocity = std::max(planner_param_.min_object_velocity, estimated_velocity);
 
