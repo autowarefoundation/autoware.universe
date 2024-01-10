@@ -245,7 +245,7 @@ If a safe path cannot be generated from the current position, search backwards f
 
 ### **search priority**
 
-If a safe path with sufficient clearance for static obstacles cannot be generated forward, a backward search from the vehicle's current position is conducted to locate a suitable point for a pull out path generation.
+If a safe path with sufficient clearance for static obstacles cannot be generated forward, a backward search from the vehicle's current position is conducted to locate a suitable start point for a pull out path generation.
 
 During this backward search, different policies can be applied based on `search_priority` parameters:
 
