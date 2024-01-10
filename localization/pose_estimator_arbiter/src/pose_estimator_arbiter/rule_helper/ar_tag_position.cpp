@@ -50,10 +50,22 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node) : logger_(node->get_logger())
     }
   };
 
-  // TODO: Set timeout
   impl_ = std::make_shared<Impl>();
   impl_->params_tf_caster = rclcpp::AsyncParametersClient::make_shared(node, ar_tag_node_name);
-  impl_->params_tf_caster->wait_for_service();
+
+  // Wait for the service to be available
+  const std::chrono::seconds timeout_sec(1);
+  while (!impl_->params_tf_caster->wait_for_service(timeout_sec)) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(node->get_logger(), "Interrupted while waiting for the service.");
+      break;
+    }
+    RCLCPP_INFO(
+      logger_, "waiting for node: %s, param: %s\n", ar_tag_node_name,
+      target_tag_ids_parameter_name);
+  }
+
+  // Get the parameter
   impl_->params_tf_caster->get_parameters({target_tag_ids_parameter_name}, callback);
 }
 
