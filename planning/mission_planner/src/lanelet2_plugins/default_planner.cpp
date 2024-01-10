@@ -111,7 +111,11 @@ geometry_msgs::msg::Pose get_closest_centerline_pose(
   vehicle_info_util::VehicleInfo vehicle_info)
 {
   lanelet::Lanelet closest_lanelet;
-  lanelet::utils::query::getClosestLanelet(road_lanelets, point, &closest_lanelet);
+  if (!lanelet::utils::query::getClosestLaneletWithConstrains(
+        road_lanelets, point, &closest_lanelet, 0.0)) {
+    // point is not on any lanelet.
+    return point;
+  }
 
   const auto refined_center_line = lanelet::utils::generateFineCenterline(closest_lanelet, 1.0);
   closest_lanelet.setCenterline(refined_center_line);
@@ -396,7 +400,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     log_ss << "x: " << point.position.x << " "
            << "y: " << point.position.y << std::endl;
   }
-  RCLCPP_INFO_STREAM(
+  RCLCPP_DEBUG_STREAM(
     logger, "start planning route with check points: " << std::endl
                                                        << log_ss.str());
 

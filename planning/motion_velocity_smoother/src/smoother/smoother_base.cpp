@@ -15,7 +15,7 @@
 #include "motion_velocity_smoother/smoother/smoother_base.hpp"
 
 #include "motion_utils/resample/resample.hpp"
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/resample.hpp"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
@@ -224,8 +224,8 @@ TrajectoryPoints SmootherBase::applySteeringRateLimit(
     auto & steer_back = output.at(i).front_wheel_angle_rad;
 
     // calculate the just 2 steering angle
-    steer_front = std::atan(base_param_.wheel_base * curvature_v.at(i));
-    steer_back = std::atan(base_param_.wheel_base * curvature_v.at(i + 1));
+    steer_front = std::atan(base_param_.wheel_base * curvature_v.at(i + 1));
+    steer_back = std::atan(base_param_.wheel_base * curvature_v.at(i));
 
     const auto mean_vel = 0.5 * (v_front + v_back);
     const auto dt = std::max(points_interval / mean_vel, std::numeric_limits<double>::epsilon());

@@ -117,6 +117,8 @@ void fillObjectStoppableJudge(
   ObjectData & object_data, const ObjectDataArray & registered_objects,
   const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters);
 
+void fillInitialPose(ObjectData & object_data, ObjectDataArray & detected_objects);
+
 void updateRegisteredObject(
   ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);
@@ -151,7 +153,8 @@ AvoidLineArray combineRawShiftLinesWithUniqueCheck(
 
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift);
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift,
+  DebugData & debug);
 
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
@@ -171,6 +174,10 @@ double calcDistanceToAvoidStartLine(
   const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
+
+TurnSignalInfo calcTurnSignalInfo(
+  const ShiftedPath & path, const ShiftLine & shift_line, const double current_shift_length,
+  const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data);
 }  // namespace behavior_path_planner::utils::avoidance
 
 #endif  // BEHAVIOR_PATH_AVOIDANCE_MODULE__UTILS_HPP_

@@ -68,7 +68,7 @@ struct PullOutStatus
   Pose pull_out_start_pose{};
   bool prev_is_safe_dynamic_objects{false};
   std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
-  bool has_stop_point{false};
+  std::optional<Pose> stop_pose{std::nullopt};
 
   PullOutStatus() {}
 };
@@ -169,11 +169,12 @@ private:
   bool isMoving() const;
 
   PriorityOrder determinePriorityOrder(
-    const std::string & search_priority, const size_t candidates_size);
+    const std::string & search_priority, const size_t start_pose_candidates_num);
   bool findPullOutPath(
-    const std::vector<Pose> & start_pose_candidates, const size_t index,
-    const std::shared_ptr<PullOutPlannerBase> & planner, const Pose & refined_start_pose,
-    const Pose & goal_pose);
+    const Pose & start_pose_candidate, const std::shared_ptr<PullOutPlannerBase> & planner,
+    const Pose & refined_start_pose, const Pose & goal_pose);
+
+  PathWithLaneId extractCollisionCheckPath(const PullOutPath & path);
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
@@ -227,7 +228,9 @@ private:
   void updatePullOutStatus();
   void updateStatusAfterBackwardDriving();
   PredictedObjects filterStopObjectsInPullOutLanes(
-    const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
+    const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_pose,
+    const double velocity_threshold, const double object_check_backward_distance,
+    const double object_check_forward_distance) const;
   bool hasFinishedPullOut() const;
   bool hasFinishedBackwardDriving() const;
   bool hasCollisionWithDynamicObjects() const;
