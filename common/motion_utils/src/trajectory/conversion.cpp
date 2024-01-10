@@ -36,9 +36,11 @@ using TrajectoryPoints = std::vector<autoware_auto_planning_msgs::msg::Trajector
  * points larger than the capacity. (Tier IV)
  */
 autoware_auto_planning_msgs::msg::Trajectory convertToTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & trajectory)
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const std_msgs::msg::Header & header)
 {
   autoware_auto_planning_msgs::msg::Trajectory output{};
+  output.header = header;
   for (const auto & pt : trajectory) output.points.push_back(pt);
   return output;
 }
