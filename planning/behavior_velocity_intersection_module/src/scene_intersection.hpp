@@ -616,6 +616,9 @@ private:
 
   std::optional<IntersectionLanelets> intersection_lanelets_{std::nullopt};
 
+  // memorize last observed non-UNKNOWN traffic light information
+  std::optional<TrafficSignalStamped> last_tl_valid_observation_{std::nullopt};
+
   // for pass judge decision
   bool is_go_out_{false};
   bool is_permanent_go_{false};
@@ -662,7 +665,7 @@ private:
    * @fn
    * @brief find TrafficPrioritizedLevel
    */
-  TrafficPrioritizedLevel getTrafficPrioritizedLevel(lanelet::ConstLanelet lane);
+  TrafficPrioritizedLevel getTrafficPrioritizedLevel() const;
 
   /**
    * @fn
@@ -671,7 +674,8 @@ private:
   IntersectionLanelets getObjectiveLanelets(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path);
+    const lanelet::ConstLanelet assigned_lanelet,
+    const lanelet::ConstLanelets & lanelets_on_path) const;
 
   /**
    * @fn
@@ -683,7 +687,7 @@ private:
     const lanelet::ConstLanelet & first_attention_lane,
     const std::optional<lanelet::CompoundPolygon3d> & second_attention_area_opt,
     const util::InterpolatedPathInfo & interpolated_path_info,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
+    autoware_auto_planning_msgs::msg::PathWithLaneId * original_path) const;
 
   /**
    * @fn
@@ -691,7 +695,7 @@ private:
    */
   std::optional<size_t> getStopLineIndexFromMap(
     const util::InterpolatedPathInfo & interpolated_path_info,
-    lanelet::ConstLanelet assigned_lanelet);
+    lanelet::ConstLanelet assigned_lanelet) const;
 
   /**
    * @fn
@@ -703,13 +707,15 @@ private:
     const lanelet::CompoundPolygon3d & first_conflicting_area,
     const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
     const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
-    const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx);
+    const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
+    const size_t closest_idx) const;
 
   /**
    * @fn
    * @brief check stuck
    */
-  bool checkStuckVehicleInIntersection(const PathLanelets & path_lanelets, DebugData * debug_data);
+  bool checkStuckVehicleInIntersection(
+    const PathLanelets & path_lanelets, DebugData * debug_data) const;
 
   /**
    * @fn
@@ -717,7 +723,7 @@ private:
    */
   bool checkYieldStuckVehicleInIntersection(
     const TargetObjects & target_objects, const util::InterpolatedPathInfo & interpolated_path_info,
-    const lanelet::ConstLanelets & attention_lanelets, DebugData * debug_data);
+    const lanelet::ConstLanelets & attention_lanelets, DebugData * debug_data) const;
 
   /**
    * @fn
@@ -735,13 +741,13 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, TargetObjects * target_objects,
     const PathLanelets & path_lanelets, const size_t closest_idx,
     const size_t last_intersection_stopline_candidate_idx, const double time_delay,
-    const TrafficPrioritizedLevel & traffic_prioritized_level);
+    const TrafficPrioritizedLevel & traffic_prioritized_level) const;
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
     const bool is_parked_vehicle) const;
 
-  void cutPredictPathWithDuration(TargetObjects * target_objects, const double time_thr);
+  void cutPredictPathWithDuration(TargetObjects * target_objects, const double time_thr) const;
 
   /**
    * @fn
@@ -751,7 +757,7 @@ private:
   TimeDistanceArray calcIntersectionPassingTime(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
     const size_t last_intersection_stopline_candidate_idx, const double time_delay,
-    tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
+    tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array) const;
 
   std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
     lanelet::ConstLanelets detection_lanelets,
@@ -767,13 +773,13 @@ private:
     const lanelet::CompoundPolygon3d & first_attention_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
     const std::vector<lanelet::ConstLineString3d> & lane_divisions,
-    const TargetObjects & target_objects);
+    const TargetObjects & target_objects) const;
 
   /*
    * @fn
    * @brief check if associated traffic light is green
    */
-  bool isGreenSolidOn(lanelet::ConstLanelet lane);
+  bool isGreenSolidOn() const;
 
   /*
   bool IntersectionModule::checkFrontVehicleDeceleration(
@@ -783,7 +789,13 @@ private:
     const double assumed_front_car_decel);
   */
 
-  DebugData debug_data_;
+  /*
+   * @fn
+   * @brief update last_tl_valid_observation_
+   */
+  void updateTrafficLightObservation(lanelet::ConstLanelet lane);
+
+  mutable DebugData debug_data_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decision_state_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr ego_ttc_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr object_ttc_pub_;

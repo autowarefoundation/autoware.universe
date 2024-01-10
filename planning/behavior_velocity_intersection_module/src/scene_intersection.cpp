@@ -940,7 +940,26 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   return true;
 }
 
-bool IntersectionModule::isGreenSolidOn(lanelet::ConstLanelet lane)
+bool IntersectionModule::isGreenSolidOn() const
+{
+  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+
+  if (!last_tl_valid_observation_) {
+    // the info of this traffic light is not available
+    return false;
+  }
+  const auto & tl_info = last_tl_valid_observation_.value();
+  for (auto && tl_light : tl_info.signal.elements) {
+    if (
+      tl_light.color == TrafficSignalElement::GREEN &&
+      tl_light.shape == TrafficSignalElement::CIRCLE) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void IntersectionModule::updateTrafficLightObservation(lanelet::ConstLanelet lane)
 {
   using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
 
@@ -951,23 +970,21 @@ bool IntersectionModule::isGreenSolidOn(lanelet::ConstLanelet lane)
   }
   if (!tl_id) {
     // this lane has no traffic light
-    return false;
+    return;
   }
   const auto tl_info_opt = planner_data_->getTrafficSignal(
     tl_id.value(), true /* traffic light module keeps last observation*/);
   if (!tl_info_opt) {
-    // the info of this traffic light is not available
-    return false;
+    // if the info of this traffic light is not available, keep last observation
+    return;
   }
   const auto & tl_info = tl_info_opt.value();
-  for (auto && tl_light : tl_info.signal.elements) {
-    if (
-      tl_light.color == TrafficSignalElement::GREEN &&
-      tl_light.shape == TrafficSignalElement::CIRCLE) {
-      return true;
+  for (const auto & tl_light : tl_info.signal.elements) {
+    if (tl_light.color == TrafficSignalElement::UNKNOWN) {
+      return;
     }
   }
-  return false;
+  last_tl_valid_observation_ = tl_info;
 }
 
 IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
@@ -1002,9 +1019,11 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
   auto & intersection_lanelets = intersection_lanelets_.value();
 
+  updateTrafficLightObservation(assigned_lanelet);
+
   // at the very first time of regisTration of this module, the path may not be conflicting with the
   // attention area, so update() is called to update the internal data as well as traffic light info
-  const auto traffic_prioritized_level = getTrafficPrioritizedLevel(assigned_lanelet);
+  const auto traffic_prioritized_level = getTrafficPrioritizedLevel();
   const bool is_prioritized =
     traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED;
   intersection_lanelets.update(
@@ -1266,7 +1285,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // If there are any vehicles on the attention area when ego entered the intersection on green
   // light, do pseudo collision detection because the vehicles are very slow and no collisions may
   // be detected. check if ego vehicle entered assigned lanelet
-  const bool is_green_solid_on = isGreenSolidOn(assigned_lanelet);
+  const bool is_green_solid_on = isGreenSolidOn();
   if (is_green_solid_on) {
     if (!initial_green_light_observed_time_) {
       const auto assigned_lane_begin_point = assigned_lanelet.centerline().front();
@@ -1419,25 +1438,15 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
 }
 
-TrafficPrioritizedLevel IntersectionModule::getTrafficPrioritizedLevel(lanelet::ConstLanelet lane)
+TrafficPrioritizedLevel IntersectionModule::getTrafficPrioritizedLevel() const
 {
   using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
 
-  std::optional<lanelet::Id> tl_id = std::nullopt;
-  for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    tl_id = tl_reg_elem->id();
-    break;
-  }
-  if (!tl_id) {
-    // this lane has no traffic light
+  if (!last_tl_valid_observation_) {
+    // if no information is available from the beginning, NOT_PRIORITIZED
     return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
-  const auto tl_info_opt = planner_data_->getTrafficSignal(
-    tl_id.value(), true /* traffic light module keeps last observation*/);
-  if (!tl_info_opt) {
-    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
-  }
-  const auto & tl_info = tl_info_opt.value();
+  const auto & tl_info = last_tl_valid_observation_.value();
   bool has_amber_signal{false};
   for (auto && tl_light : tl_info.signal.elements) {
     if (tl_light.color == TrafficSignalElement::AMBER) {
@@ -1466,7 +1475,8 @@ static std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
 
 IntersectionLanelets IntersectionModule::getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path)
+  const lanelet::ConstLanelet assigned_lanelet,
+  const lanelet::ConstLanelets & lanelets_on_path) const
 {
   const double detection_area_length = planner_param_.common.attention_area_length;
   const double occlusion_detection_area_length =
@@ -1669,7 +1679,7 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
   const lanelet::ConstLanelet & first_attention_lane,
   const std::optional<lanelet::CompoundPolygon3d> & second_attention_area_opt,
   const util::InterpolatedPathInfo & interpolated_path_info,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path) const
 {
   const bool use_stuck_stopline = planner_param_.stuck_vehicle.use_stuck_stopline;
   const double stopline_margin = planner_param_.common.default_stopline_margin;
@@ -1897,7 +1907,8 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
  * @return true when the stop point is defined on map.
  */
 std::optional<size_t> IntersectionModule::getStopLineIndexFromMap(
-  const util::InterpolatedPathInfo & interpolated_path_info, lanelet::ConstLanelet assigned_lanelet)
+  const util::InterpolatedPathInfo & interpolated_path_info,
+  lanelet::ConstLanelet assigned_lanelet) const
 {
   const auto & path = interpolated_path_info.path;
   const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
@@ -2043,7 +2054,7 @@ std::optional<PathLanelets> IntersectionModule::generatePathLanelets(
   const lanelet::CompoundPolygon3d & first_conflicting_area,
   const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
-  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx)
+  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx) const
 {
   const double width = planner_data_->vehicle_info_.vehicle_width_m;
   static constexpr double path_lanelet_interval = 1.5;
@@ -2110,7 +2121,7 @@ std::optional<PathLanelets> IntersectionModule::generatePathLanelets(
 }
 
 bool IntersectionModule::checkStuckVehicleInIntersection(
-  const PathLanelets & path_lanelets, DebugData * debug_data)
+  const PathLanelets & path_lanelets, DebugData * debug_data) const
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getLaneletLength3d;
@@ -2265,7 +2276,7 @@ static lanelet::ConstLanelet createLaneletFromArcLength(
 
 bool IntersectionModule::checkYieldStuckVehicleInIntersection(
   const TargetObjects & target_objects, const util::InterpolatedPathInfo & interpolated_path_info,
-  const lanelet::ConstLanelets & attention_lanelets, DebugData * debug_data)
+  const lanelet::ConstLanelets & attention_lanelets, DebugData * debug_data) const
 {
   const bool yield_stuck_detection_direction = [&]() {
     return (turn_direction_ == "left" && planner_param_.yield_stuck.turn_direction.left) ||
@@ -2415,7 +2426,7 @@ bool IntersectionModule::checkCollision(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, TargetObjects * target_objects,
   const PathLanelets & path_lanelets, const size_t closest_idx,
   const size_t last_intersection_stopline_candidate_idx, const double time_delay,
-  const TrafficPrioritizedLevel & traffic_prioritized_level)
+  const TrafficPrioritizedLevel & traffic_prioritized_level) const
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -2699,7 +2710,7 @@ std::optional<size_t> IntersectionModule::checkAngleForTargetLanelets(
 }
 
 void IntersectionModule::cutPredictPathWithDuration(
-  TargetObjects * target_objects, const double time_thr)
+  TargetObjects * target_objects, const double time_thr) const
 {
   const rclcpp::Time current_time = clock_->now();
   for (auto & target_object : target_objects->all_attention_objects) {  // each objects
@@ -2724,7 +2735,7 @@ void IntersectionModule::cutPredictPathWithDuration(
 TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
   const size_t last_intersection_stopline_candidate_idx, const double time_delay,
-  tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array)
+  tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array) const
 {
   const double intersection_velocity =
     planner_param_.collision_detection.velocity_profile.default_velocity;
@@ -2936,7 +2947,7 @@ IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
   const lanelet::CompoundPolygon3d & first_attention_area,
   const util::InterpolatedPathInfo & interpolated_path_info,
   const std::vector<lanelet::ConstLineString3d> & lane_divisions,
-  const TargetObjects & target_objects)
+  const TargetObjects & target_objects) const
 {
   const auto & occ_grid = *planner_data_->occupancy_grid;
   const auto & current_pose = planner_data_->current_odometry->pose;
@@ -3336,6 +3347,7 @@ void IntersectionLanelets::update(
     const auto attention_non_preceding_ex_first_area =
       getPolygon3dFromLanelets(attention_non_preceding_ex_first);
     const auto second = getFirstPointInsidePolygonsByFootprint(
+
       attention_non_preceding_ex_first_area, interpolated_path_info, footprint, vehicle_length);
     if (second) {
       second_attention_lane_ = attention_non_preceding_ex_first.at(second.value().second);
