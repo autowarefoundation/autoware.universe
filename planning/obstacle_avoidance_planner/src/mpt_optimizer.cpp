@@ -15,6 +15,7 @@
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
@@ -467,8 +468,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
   debug_data_ptr_->mpt_visualize_sampling_num = mpt_param_.mpt_visualize_sampling_num;
 }
 
-std::vector<TrajectoryPoint> MPTOptimizer::optimizeTrajectory(
-  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points)
+std::vector<TrajectoryPoint> MPTOptimizer::optimizeTrajectory(const PlannerData & planner_data)
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -479,11 +479,11 @@ std::vector<TrajectoryPoint> MPTOptimizer::optimizeTrajectory(
     if (prev_optimized_traj_points_ptr_) {
       return *prev_optimized_traj_points_ptr_;
     }
-    return smoothed_points;
+    return traj_points;
   };
 
   // 1. calculate reference points
-  auto ref_points = calcReferencePoints(planner_data, smoothed_points);
+  auto ref_points = calcReferencePoints(planner_data, traj_points);
   if (ref_points.size() < 2) {
     RCLCPP_INFO_EXPRESSION(
       logger_, enable_debug_info_, "return std::nullopt since ref_points size is less than 2.");
@@ -1708,17 +1708,17 @@ void MPTOptimizer::publishDebugTrajectories(
   time_keeper_ptr_->tic(__func__);
 
   // reference points
-  const auto ref_traj = trajectory_utils::createTrajectory(
-    header, trajectory_utils::convertToTrajectoryPoints(ref_points));
+  const auto ref_traj = motion_utils::convertToTrajectory(
+    trajectory_utils::convertToTrajectoryPoints(ref_points), header);
   debug_ref_traj_pub_->publish(ref_traj);
 
   // fixed reference points
   const auto fixed_traj_points = extractFixedPoints(ref_points);
-  const auto fixed_traj = trajectory_utils::createTrajectory(header, fixed_traj_points);
+  const auto fixed_traj = motion_utils::convertToTrajectory(fixed_traj_points, header);
   debug_fixed_traj_pub_->publish(fixed_traj);
 
   // mpt points
-  const auto mpt_traj = trajectory_utils::createTrajectory(header, mpt_traj_points);
+  const auto mpt_traj = motion_utils::convertToTrajectory(mpt_traj_points, header);
   debug_mpt_traj_pub_->publish(mpt_traj);
 
   time_keeper_ptr_->toc(__func__, "        ");
