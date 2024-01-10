@@ -88,6 +88,7 @@ private:
     const std_srvs::srv::SetBool::Request::SharedPtr req,
     std_srvs::srv::SetBool::Response::SharedPtr res);
 
+  void callback_timer();
   void callback_sensor_points(
     sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
   void callback_initial_pose(
@@ -124,6 +125,7 @@ private:
     const double score, const double score_threshold, const std::string & score_name);
   bool validate_converged_param(
     const double & transform_probability, const double & nearest_voxel_transformation_likelihood);
+  static int count_oscillation(const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array);
 
   std::array<double, 36> estimate_covariance(
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
@@ -133,6 +135,7 @@ private:
 
   void publish_diagnostic();
 
+  rclcpp::TimerBase::SharedPtr map_update_timer_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
@@ -174,6 +177,8 @@ private:
 
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
+
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
   std::shared_ptr<std::map<std::string, std::string>> state_ptr_;
 
@@ -191,8 +196,6 @@ private:
   double lidar_topic_timeout_sec_;
   double initial_pose_timeout_sec_;
   double initial_pose_distance_tolerance_m_;
-  float inversion_vector_threshold_;
-  float oscillation_threshold_;
   bool use_cov_estimation_;
   std::vector<Eigen::Vector2d> initial_pose_offset_model_;
   std::array<double, 36> output_pose_covariance_;
@@ -200,11 +203,16 @@ private:
   std::mutex ndt_ptr_mtx_;
   std::unique_ptr<SmartPoseBuffer> initial_pose_buffer_;
 
+  // Keep latest position for dynamic map loading
+  // This variable is only used when use_dynamic_map_loading is true
+  std::mutex latest_ekf_position_mtx_;
+  std::optional<geometry_msgs::msg::Point> latest_ekf_position_ = std::nullopt;
+
   // variables for regularization
   const bool regularization_enabled_;  // whether to use longitudinal regularization
   std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
 
-  bool is_activated_;
+  std::atomic<bool> is_activated_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<MapUpdateModule> map_update_module_;

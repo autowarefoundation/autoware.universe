@@ -74,8 +74,7 @@ public:
       bool use_stuck_stopline;
       double stuck_vehicle_detect_dist;
       double stuck_vehicle_velocity_threshold;
-      double timeout_private_area;
-      bool enable_private_area_stuck_disregard;
+      bool disable_against_private_lane;
     } stuck_vehicle;
 
     struct YieldStuck
@@ -263,8 +262,8 @@ public:
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
     const std::string & turn_direction, const bool has_traffic_light,
-    const bool enable_occlusion_detection, const bool is_private_area, rclcpp::Node & node,
-    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
+    const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
@@ -314,9 +313,6 @@ private:
   // vehicles are very slow
   std::optional<rclcpp::Time> initial_green_light_observed_time_{std::nullopt};
 
-  // for stuck vehicle detection
-  const bool is_private_area_;
-
   // for RTC
   const UUID occlusion_uuid_;
   bool occlusion_safety_{true};
@@ -336,9 +332,9 @@ private:
     const util::PathLanelets & path_lanelets);
 
   bool checkYieldStuckVehicle(
-    const std::shared_ptr<const PlannerData> & planner_data,
-    const util::PathLanelets & path_lanelets,
-    const std::optional<lanelet::CompoundPolygon3d> & first_attention_area);
+    const util::TargetObjects & target_objects,
+    const util::InterpolatedPathInfo & interpolated_path_info,
+    const lanelet::ConstLanelets & attention_lanelets);
 
   util::TargetObjects generateTargetObjects(
     const util::IntersectionLanelets & intersection_lanelets,

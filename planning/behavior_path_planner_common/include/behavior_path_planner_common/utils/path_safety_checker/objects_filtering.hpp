@@ -23,8 +23,6 @@
 #include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_routing/RoutingGraphContainer.h>
-#include <tf2/utils.h>
 
 #include <memory>
 #include <utility>
@@ -133,6 +131,19 @@ void filterObjectsByPosition(
   PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance);
+
+/**
+ * @brief Filter objects based on their distance from a reference point.
+ *
+ * This function filters out objects that are outside a specified radius from a reference point.
+ *
+ * @param objects The predicted objects to filter.
+ * @param reference_point The reference point (e.g., current pose of the ego vehicle).
+ * @param search_radius The radius within which to retain objects.
+ */
+void filterObjectsWithinRadius(
+  PredictedObjects & objects, const geometry_msgs::msg::Point & reference_point,
+  const double search_radius);
 
 /**
  * @brief Filters the provided objects based on their classification.
