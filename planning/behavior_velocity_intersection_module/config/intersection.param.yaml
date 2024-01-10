@@ -7,6 +7,7 @@
         attention_area_angle_threshold: 0.785
         use_intersection_area: false
         default_stopline_margin: 3.0
+        second_pass_judge_line_margin: 1.0
         stopline_overshoot_margin: 0.5
         path_interpolation_ds: 0.1
         max_accel: -2.8
@@ -36,7 +37,6 @@
         consider_wrong_direction_vehicle: false
         collision_detection_hold_time: 0.5
         min_predicted_path_confidence: 0.05
-        keep_detection_velocity_threshold: 0.833
         velocity_profile:
           use_upstream: true
           minimum_upstream_velocity: 0.01
