@@ -357,6 +357,10 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 bool AEB::hasCollision(
   const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects)
 {
+  if (ego_path.empty()) {
+    RCLCPP_ERROR_STREAM(get_logger(), "[AEB] ego_path is empty");
+    return false;
+  }
   // calculate RSS
   const auto current_p = tier4_autoware_utils::createPoint(
     ego_path[0].position.x, ego_path[0].position.y, ego_path[0].position.z);
