@@ -47,14 +47,15 @@ PoseEstimatorArbiter::PoseEstimatorArbiter()
     declare_parameter<std::vector<std::string>>("pose_sources"), get_logger())),
   logger_configure_(std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this))
 {
+  // Shared data
+  shared_data_ = std::make_shared<SharedData>();
+
   // Publisher
   pub_diag_ = create_publisher<DiagnosticArray>("/diagnostics", 10);
   pub_debug_string_ = create_publisher<String>("~/debug/string", 10);
   pub_debug_marker_array_ = create_publisher<MarkerArray>("~/debug/marker_array", 10);
 
-  shared_data_ = std::make_shared<SharedData>();
-
-  // sub-arbiters
+  // Stoppers
   for (auto pose_estimator_name : running_estimator_list_) {
     switch (pose_estimator_name) {
       case PoseEstimatorName::ndt:
@@ -82,43 +83,27 @@ PoseEstimatorArbiter::PoseEstimatorArbiter()
     const rclcpp::QoS sensor_qos = rclcpp::SensorDataQoS();
     const rclcpp::QoS latch_qos = rclcpp::QoS(1).transient_local().reliable();
 
-    // subscriber for sub arbiter
-    auto on_artag_input = std::bind(&PoseEstimatorArbiter::on_artag_input, this, _1);
-    sub_artag_input_ =
-      create_subscription<Image>("~/input/artag/image", sensor_qos, on_artag_input);
-
-    auto on_yabloc_input = std::bind(&PoseEstimatorArbiter::on_yabloc_input, this, _1);
-    sub_yabloc_input_ =
-      create_subscription<Image>("~/input/yabloc/image", sensor_qos, on_yabloc_input);
-
-    auto on_ndt_input = std::bind(&PoseEstimatorArbiter::on_ndt_input, this, _1);
-    sub_ndt_input_ =
-      create_subscription<PointCloud2>("~/input/ndt/pointcloud", sensor_qos, on_ndt_input);
-    auto on_eagleye_output = std::bind(&PoseEstimatorArbiter::on_eagleye_output, this, _1);
+    // Subscriber for stoppers
+    sub_artag_input_ = create_subscription<Image>(
+      "~/input/artag/image", sensor_qos, shared_data_->artag_input_image.create_callback());
+    sub_yabloc_input_ = create_subscription<Image>(
+      "~/input/yabloc/image", sensor_qos, shared_data_->yabloc_input_image.create_callback());
+    sub_ndt_input_ = create_subscription<PointCloud2>(
+      "~/input/ndt/pointcloud", sensor_qos, shared_data_->ndt_input_points.create_callback());
     sub_eagleye_output_ = create_subscription<PoseCovStamped>(
-      "~/input/eagleye/pose_with_covariance", 5, on_eagleye_output);
+      "~/input/eagleye/pose_with_covariance", 5,
+      shared_data_->eagleye_output_pose_cov.create_callback());
 
-    // subscriber for switch rule
-    auto on_vector_map = [this](HADMapBin::ConstSharedPtr msg) -> void {
-      shared_data_->vector_map.set_and_invoke(msg);
-    };
-    auto on_point_cloud_map = [this](PointCloud2::ConstSharedPtr msg) -> void {
-      shared_data_->point_cloud_map.set_and_invoke(msg);
-    };
-    auto on_localization_pose_cov = [this](PoseCovStamped::ConstSharedPtr msg) -> void {
-      shared_data_->localization_pose_cov.set_and_invoke(msg);
-    };
-    auto on_initialization_state = [this](InitializationState::ConstSharedPtr msg) -> void {
-      shared_data_->initialization_state.set_and_invoke(msg);
-    };
+    // Subscriber for switch rule
     sub_localization_pose_cov_ = create_subscription<PoseCovStamped>(
-      "~/input/pose_with_covariance", 5, on_localization_pose_cov);
-    sub_point_cloud_map_ =
-      create_subscription<PointCloud2>("~/input/pointcloud_map", latch_qos, on_point_cloud_map);
-    sub_vector_map_ =
-      create_subscription<HADMapBin>("~/input/vector_map", latch_qos, on_vector_map);
+      "~/input/pose_with_covariance", 5, shared_data_->localization_pose_cov.create_callback());
+    sub_point_cloud_map_ = create_subscription<PointCloud2>(
+      "~/input/pointcloud_map", latch_qos, shared_data_->point_cloud_map.create_callback());
+    sub_vector_map_ = create_subscription<HADMapBin>(
+      "~/input/vector_map", latch_qos, shared_data_->vector_map.create_callback());
     sub_initialization_state_ = create_subscription<InitializationState>(
-      "~/input/initialization_state", latch_qos, on_initialization_state);
+      "~/input/initialization_state", latch_qos,
+      shared_data_->initialization_state.create_callback());
   }
 
   // Load switching rule
@@ -165,6 +150,8 @@ void PoseEstimatorArbiter::toggle_all(bool enabled)
 void PoseEstimatorArbiter::publish_diagnostics() const
 {
   diagnostic_msgs::msg::DiagnosticStatus diag_status;
+
+  // Temporary implementation
   {
     diag_status.name = "localization: " + std::string(this->get_name());
     diag_status.hardware_id = this->get_name();
@@ -211,23 +198,6 @@ void PoseEstimatorArbiter::on_timer()
 
   //
   publish_diagnostics();
-}
-
-void PoseEstimatorArbiter::on_yabloc_input(Image::ConstSharedPtr msg)
-{
-  shared_data_->yabloc_input_image.set_and_invoke(msg);
-}
-void PoseEstimatorArbiter::on_artag_input(Image::ConstSharedPtr msg)
-{
-  shared_data_->artag_input_image.set_and_invoke(msg);
-}
-void PoseEstimatorArbiter::on_ndt_input(PointCloud2::ConstSharedPtr msg)
-{
-  shared_data_->ndt_input_points.set_and_invoke(msg);
-}
-void PoseEstimatorArbiter::on_eagleye_output(PoseCovStamped::ConstSharedPtr msg)
-{
-  shared_data_->eagleye_output_pose_cov.set_and_invoke(msg);
 }
 
 }  // namespace pose_estimator_arbiter

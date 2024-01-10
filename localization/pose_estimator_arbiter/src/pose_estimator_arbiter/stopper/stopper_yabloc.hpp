@@ -46,7 +46,7 @@ public:
     }
 
     // Register callback
-    shared_data_->artag_input_image.set_callback([this](Image::ConstSharedPtr msg) -> void {
+    shared_data_->artag_input_image.register_callback([this](Image::ConstSharedPtr msg) -> void {
       if (yabloc_is_enabled_) {
         pub_image_->publish(*msg);
       }

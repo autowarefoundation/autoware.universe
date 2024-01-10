@@ -34,7 +34,7 @@ public:
     pub_pose_ = node->create_publisher<PoseCovStamped>("~/output/eagleye/pose_with_covariance", 5);
 
     // Register callback
-    shared_data_->eagleye_output_pose_cov.set_callback(
+    shared_data_->eagleye_output_pose_cov.register_callback(
       [this](PoseCovStamped::ConstSharedPtr msg) -> void {
         if (eagleye_is_enabled_) {
           pub_pose_->publish(*msg);

@@ -35,11 +35,12 @@ public:
       "~/output/ndt/pointcloud", rclcpp::SensorDataQoS().keep_last(10));
 
     // Register callback
-    shared_data_->ndt_input_points.set_callback([this](PointCloud2::ConstSharedPtr msg) -> void {
-      if (ndt_is_enabled_) {
-        pub_pointcloud_->publish(*msg);
-      }
-    });
+    shared_data_->ndt_input_points.register_callback(
+      [this](PointCloud2::ConstSharedPtr msg) -> void {
+        if (ndt_is_enabled_) {
+          pub_pointcloud_->publish(*msg);
+        }
+      });
   }
 
   void set_enable(bool enabled) override { ndt_is_enabled_ = enabled; }

@@ -31,27 +31,46 @@ template <typename T>
 struct CallbackInvokingVariable
 {
   CallbackInvokingVariable() {}
-  explicit CallbackInvokingVariable(T initial_data) : data(initial_data) {}
 
-  void set_and_invoke(T value)
+  explicit CallbackInvokingVariable(T initial_data) : value(initial_data) {}
+
+  // Set data and invoke all callbacks
+  void set_and_invoke(T new_value)
   {
-    data = value;
-    for (const auto & c : callbacks) {
-      c(data.value());
+    value = new_value;
+
+    // Call all callbacks with the new value
+    for (const auto & callback : callbacks) {
+      callback(value.value());
     }
   }
 
-  bool has_value() const { return data.has_value(); }
+  // Same as std::optional::has_value()
+  bool has_value() const { return value.has_value(); }
 
-  const T operator()() const { return data.value(); }
+  // Same as std::optional::value()
+  const T operator()() const { return value.value(); }
 
-  void set_callback(std::function<void(T)> callback) const { callbacks.push_back(callback); }
+  // Register callback function which is invoked when set_and_invoke() is called
+  void register_callback(std::function<void(T)> callback) const { callbacks.push_back(callback); }
+
+  // Create subscription callback function which is used as below:
+  //   auto subscriber = create_subscription<T>("topic_name", 10,
+  //   callback_invoking_variable.create_callback());
+  auto create_callback()
+  {
+    return std::bind(&CallbackInvokingVariable::set_and_invoke, this, std::placeholders::_1);
+  }
 
 private:
-  std::optional<T> data{std::nullopt};
+  // The latest data
+  std::optional<T> value{std::nullopt};
+
+  // These functions are expected not to change the value variable
   mutable std::vector<std::function<void(T)>> callbacks;
 };
 
+// This structure is handed to several modules as shared_ptr so that all modules can access data.
 struct SharedData
 {
 public:
@@ -63,11 +82,12 @@ public:
 
   SharedData() {}
 
-  // Used for sub arbiter
+  // Used for stoppers
   CallbackInvokingVariable<PoseCovStamped::ConstSharedPtr> eagleye_output_pose_cov;
   CallbackInvokingVariable<Image::ConstSharedPtr> artag_input_image;
   CallbackInvokingVariable<PointCloud2::ConstSharedPtr> ndt_input_points;
   CallbackInvokingVariable<Image::ConstSharedPtr> yabloc_input_image;
+
   // Used for switch rule
   CallbackInvokingVariable<PoseCovStamped::ConstSharedPtr> localization_pose_cov;
   CallbackInvokingVariable<PointCloud2::ConstSharedPtr> point_cloud_map;

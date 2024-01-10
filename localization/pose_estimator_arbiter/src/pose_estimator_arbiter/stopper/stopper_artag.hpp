@@ -36,7 +36,7 @@ public:
     pub_image_ = node->create_publisher<Image>("~/output/artag/image", rclcpp::SensorDataQoS());
 
     // Register callback
-    shared_data_->artag_input_image.set_callback([this](Image::ConstSharedPtr msg) -> void {
+    shared_data_->artag_input_image.register_callback([this](Image::ConstSharedPtr msg) -> void {
       if (ar_tag_is_enabled_) {
         pub_image_->publish(*msg);
       }

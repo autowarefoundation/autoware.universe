@@ -84,11 +84,6 @@ private:
 
   // Timer callback
   void on_timer();
-  // For sub arbiter
-  void on_yabloc_input(Image::ConstSharedPtr msg);
-  void on_artag_input(Image::ConstSharedPtr msg);
-  void on_ndt_input(PointCloud2::ConstSharedPtr msg);
-  void on_eagleye_output(PoseCovStamped::ConstSharedPtr msg);
 };
 }  // namespace pose_estimator_arbiter
 

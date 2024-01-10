@@ -29,7 +29,7 @@ MapBasedRule::MapBasedRule(
     pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
 
     // Register callback
-    shared_data_->point_cloud_map.set_callback(
+    shared_data_->point_cloud_map.register_callback(
       [this](sensor_msgs::msg::PointCloud2::ConstSharedPtr msg) -> void {
         pcd_occupancy_->init(msg);
       });
@@ -38,7 +38,7 @@ MapBasedRule::MapBasedRule(
     ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node);
 
     // Register callback
-    shared_data_->vector_map.set_callback(
+    shared_data_->vector_map.register_callback(
       [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
         ar_tag_position_->init(msg);
       });
@@ -47,7 +47,7 @@ MapBasedRule::MapBasedRule(
     eagleye_area_ = std::make_unique<rule_helper::EagleyeArea>(&node);
 
     // Register callback
-    shared_data_->vector_map.set_callback(
+    shared_data_->vector_map.register_callback(
       [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
         eagleye_area_->init(msg);
       });
