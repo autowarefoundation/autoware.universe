@@ -68,6 +68,8 @@ Eigen::Matrix2d find_rotation_matrix_aligning_covariance_to_principal_axes(
 NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_broadcaster_(*this),
+  tf2_buffer_(this->get_clock()),
+  tf2_listener_(tf2_buffer_),
   ndt_ptr_(new NormalDistributionsTransform),
   state_ptr_(new std::map<std::string, std::string>),
   output_pose_covariance_({}),
@@ -262,14 +264,7 @@ NDTScanMatcher::NDTScanMatcher()
       &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), sensor_callback_group);
 
-  tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
-
-  use_dynamic_map_loading_ = this->declare_parameter<bool>("use_dynamic_map_loading");
-  if (use_dynamic_map_loading_) {
-    map_update_module_ = std::make_unique<MapUpdateModule>(this, &ndt_ptr_mtx_, ndt_ptr_);
-  } else {
-    map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, sensor_callback_group);
-  }
+  map_update_module_ = std::make_unique<MapUpdateModule>(this, &ndt_ptr_mtx_, ndt_ptr_);
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
@@ -347,9 +342,6 @@ void NDTScanMatcher::callback_timer()
   if (!is_activated_) {
     return;
   }
-  if (!use_dynamic_map_loading_) {
-    return;
-  }
   std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
   if (latest_ekf_position_ == std::nullopt) {
     RCLCPP_ERROR_STREAM_THROTTLE(
@@ -380,7 +372,8 @@ void NDTScanMatcher::callback_initial_pose(
         << ". Please check the frame_id in the input topic and ensure it is correct.");
   }
 
-  if (use_dynamic_map_loading_) {
+  {
+    // latest_ekf_position_ is also used by callback_timer, so it is necessary to acquire the lock
     std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
     latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
   }
@@ -574,11 +567,25 @@ void NDTScanMatcher::transform_sensor_measurement(
   const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_input_ptr,
   pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_output_ptr)
 {
-  auto tf_target_to_source_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
-  tf2_listener_module_->get_transform(
-    this->now(), target_frame, source_frame, tf_target_to_source_ptr);
+  if (source_frame == target_frame) {
+    sensor_points_output_ptr = sensor_points_input_ptr;
+    return;
+  }
+
+  geometry_msgs::msg::TransformStamped transform;
+  try {
+    transform = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+    RCLCPP_WARN(
+      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+    // Since there is no clear error handling policy, temporarily return as is.
+    sensor_points_output_ptr = sensor_points_input_ptr;
+    return;
+  }
+
   const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
-    tier4_autoware_utils::transform2pose(*tf_target_to_source_ptr);
+    tier4_autoware_utils::transform2pose(transform);
   const Eigen::Matrix4f base_to_sensor_matrix =
     pose_to_matrix4f(target_to_source_pose_stamped.pose);
   tier4_autoware_utils::transformPointCloud(
@@ -863,16 +870,28 @@ void NDTScanMatcher::service_ndt_align(
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
   // get TF from pose_frame to map_frame
-  auto tf_pose_to_map_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
-  tf2_listener_module_->get_transform(
-    get_clock()->now(), map_frame_, req->pose_with_covariance.header.frame_id, tf_pose_to_map_ptr);
+  const std::string & target_frame = map_frame_;
+  const std::string & source_frame = req->pose_with_covariance.header.frame_id;
+
+  geometry_msgs::msg::TransformStamped transform_s2t;
+  try {
+    transform_s2t = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
+    // Note: Up to AWSIMv1.1.0, there is a known bug where the GNSS frame_id is incorrectly set to
+    // "gnss_link" instead of "map". The ndt_align is designed to return identity when this issue
+    // occurs. However, in the future, converting to a non-existent frame_id should be prohibited.
+    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+    RCLCPP_WARN(
+      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+    transform_s2t.header.stamp = get_clock()->now();
+    transform_s2t.header.frame_id = target_frame;
+    transform_s2t.child_frame_id = source_frame;
+    transform_s2t.transform = tf2::toMsg(tf2::Transform::getIdentity());
+  }
 
   // transform pose_frame to map_frame
-  const auto initial_pose_msg_in_map_frame =
-    transform(req->pose_with_covariance, *tf_pose_to_map_ptr);
-  if (use_dynamic_map_loading_) {
-    map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
-  }
+  const auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
+  map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
 
   // mutex Map
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
