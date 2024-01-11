@@ -400,11 +400,20 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
 
   LaneletRoute route_msg;
   RouteSections route_sections;
+  RoutePoints check_points{points};
+
+  if (param_.enable_correct_goal_pose) {
+    for (size_t i = 1; i < check_points.size(); ++i) {
+      check_points.at(i) = get_closest_centerline_pose(
+        lanelet::utils::query::laneletLayer(lanelet_map_ptr_), check_points.at(i), vehicle_info_);
+    }
+  }
 
   lanelet::ConstLanelets all_route_lanelets;
-  for (std::size_t i = 1; i < points.size(); i++) {
-    const auto start_check_point = points.at(i - 1);
-    const auto goal_check_point = points.at(i);
+  for (std::size_t i = 1; i < check_points.size(); i++) {
+    const auto start_check_point = check_points.at(i - 1);
+    const auto goal_check_point = check_points.at(i);
+
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
           start_check_point, goal_check_point, &path_lanelets, param_.consider_no_drivable_lanes)) {
@@ -421,13 +430,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
   }
   route_handler_.setRouteLanelets(all_route_lanelets);
 
-  auto goal_pose = points.back();
-  if (param_.enable_correct_goal_pose) {
-    goal_pose = get_closest_centerline_pose(
-      lanelet::utils::query::laneletLayer(lanelet_map_ptr_), goal_pose, vehicle_info_);
-  }
-
-  if (!is_goal_valid(goal_pose, all_route_lanelets)) {
+  if (!is_goal_valid(check_points.back(), all_route_lanelets)) {
     RCLCPP_WARN(logger, "Goal is not valid! Please check position and angle of goal_pose");
     return route_msg;
   }
@@ -437,12 +440,12 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     return route_msg;
   }
 
-  const auto refined_goal = refine_goal_height(goal_pose, route_sections);
+  const auto refined_goal = refine_goal_height(check_points.back(), route_sections);
   RCLCPP_DEBUG(logger, "Goal Pose Z : %lf", refined_goal.position.z);
 
   // The header is assigned by mission planner.
-  route_msg.start_pose = points.front();
-  route_msg.goal_pose = refined_goal;
+  route_msg.start_pose = check_points.front();
+  route_msg.goal_pose = check_points.back();
   route_msg.segments = route_sections;
   return route_msg;
 }
