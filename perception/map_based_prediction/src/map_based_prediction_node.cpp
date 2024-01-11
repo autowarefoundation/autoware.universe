@@ -384,11 +384,7 @@ bool withinRoadLanelet(
   const TrackedObject & object, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const bool use_yaw_information = false)
 {
-  using Point = boost::geometry::model::d2::point_xy<double>;
-
   const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
-  const Point p_object{obj_pos.x, obj_pos.y};
-
   lanelet::BasicPoint2d search_point(obj_pos.x, obj_pos.y);
   // nearest lanelet
   constexpr double search_radius = 10.0;  // [m]
@@ -1009,7 +1005,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
-            yaw_fixed_transformed_object, ref_path.path);
+            yaw_fixed_transformed_object, ref_path.path, ref_path.speed_limit);
           if (predicted_path.path.empty()) continue;
 
           if (!check_lateral_acceleration_constraints_) {
@@ -1560,28 +1556,64 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     object.kinematics.acceleration_with_covariance.accel.linear.y);
 
   // The decay constant λ = ln(2) / exponential_half_life
-  const double exponential_half_life = prediction_time_horizon_ / 4.0;
+  const double T = prediction_time_horizon_;
+  const double exponential_half_life = T / 4.0;
   const double λ = std::log(2) / exponential_half_life;
 
-  // a(t) = obj_acc - obj_acc(1-e^(-λt)) = obj_acc(e^(-λt))
-  // V(t) = Vo + obj_acc(1/λ)(1-e^(-λt))
-  // x(t) = Xo + Vo * t + t * obj_acc(1/λ) + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
-  // x(t) = Xo + (Vo + obj_acc(1/λ)) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
-  // acceleration_distance = obj_acc(1/λ) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
+  auto get_search_distance_with_decaying_acc = [&]() -> double {
+    // a(t) = obj_acc - obj_acc(1-e^(-λt)) = obj_acc(e^(-λt))
+    // V(t) = Vo + obj_acc(1/λ)(1-e^(-λt))
+    // x(t) = Xo + Vo * t + t * obj_acc(1/λ) + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
+    // x(t) = Xo + (Vo + obj_acc(1/λ)) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
+    // acceleration_distance = obj_acc(1/λ) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
+    const double acceleration_distance =
+      obj_acc * (1.0 / λ) * T + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * T) - 1);
+    double search_dist = acceleration_distance + obj_vel * T;
+    return search_dist;
+  };
 
-  const double acceleration_distance =
-    obj_acc * (1.0 / λ) * prediction_time_horizon_ +
-    obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * prediction_time_horizon_) - 1);
+  auto get_search_distance_with_partial_acc = [&](const double final_speed) -> double {
+    constexpr double epsilon = 1E-5;
+    if (std::abs(obj_acc) < epsilon) {
+      // Assume constant speed
+      return obj_vel * T;
+    }
+    const double time_to_reach_final_speed =
+      (-1.0 / λ) * std::log(1 - ((final_speed - obj_vel) * λ) / obj_acc);
+    // It is assumed the vehicle accelerates until final_speed is reached and
+    // then continues at constant speed for the rest of the time horizon
+    const double search_dist =
+      // Distance covered while accelerating
+      obj_acc * (1.0 / λ) * time_to_reach_final_speed +
+      obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * time_to_reach_final_speed) - 1) +
+      obj_vel * time_to_reach_final_speed +
+      // Distance covered at constant speed
+      final_speed * (T - time_to_reach_final_speed);
+    return search_dist;
+  };
 
   std::vector<PredictedRefPath> all_ref_paths;
+
   for (const auto & current_lanelet_data : current_lanelets_data) {
-    // parameter for lanelet::routing::PossiblePathsParams
-    const double search_dist = acceleration_distance + prediction_time_horizon_ * obj_vel +
-                               lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
+    const lanelet::traffic_rules::SpeedLimitInformation limit =
+      traffic_rules_ptr_->speedLimit(current_lanelet_data.lanelet);
+    const double legal_speed_limit = static_cast<double>(limit.speedLimit.value());
+
+    double final_speed_after_acceleration =
+      obj_vel + obj_acc * (1.0 / λ) * (1.0 - std::exp(-λ * T));
+
+    const double final_speed_limit = legal_speed_limit * 1.5;
+    const bool final_speed_surpasses_limit = final_speed_after_acceleration > final_speed_limit;
+    const bool object_has_surpassed_limit_already = obj_vel > final_speed_limit;
+
+    double search_dist = (final_speed_surpasses_limit && !object_has_surpassed_limit_already)
+                           ? get_search_distance_with_partial_acc(final_speed_limit)
+                           : get_search_distance_with_decaying_acc();
+    search_dist += lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
+
     lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
     // std::cerr << "search_dist " << search_dist << "\n";
-    const double validate_time_horizon =
-      prediction_time_horizon_ * prediction_time_horizon_rate_for_validate_lane_length_;
+    const double validate_time_horizon = T * prediction_time_horizon_rate_for_validate_lane_length_;
 
     // lambda function to get possible paths for isolated lanelet
     // isolated is often caused by lanelet with no connection e.g. shoulder-lane
@@ -1663,7 +1695,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     // Step4. add candidate reference paths to the all_ref_paths
     const float path_prob = current_lanelet_data.probability;
     const auto addReferencePathsLocal = [&](const auto & paths, const auto & maneuver) {
-      addReferencePaths(object, paths, path_prob, maneuver_prob, maneuver, all_ref_paths);
+      addReferencePaths(
+        object, paths, path_prob, maneuver_prob, maneuver, all_ref_paths, final_speed_limit);
     };
     addReferencePathsLocal(left_paths, Maneuver::LEFT_LANE_CHANGE);
     addReferencePathsLocal(right_paths, Maneuver::RIGHT_LANE_CHANGE);
@@ -1986,7 +2019,8 @@ void MapBasedPredictionNode::updateFuturePossibleLanelets(
 void MapBasedPredictionNode::addReferencePaths(
   const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
   const float path_probability, const ManeuverProbability & maneuver_probability,
-  const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths)
+  const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
+  const double speed_limit)
 {
   if (!candidate_paths.empty()) {
     updateFuturePossibleLanelets(object, candidate_paths);
@@ -1996,6 +2030,7 @@ void MapBasedPredictionNode::addReferencePaths(
       predicted_path.probability = maneuver_probability.at(maneuver) * path_probability;
       predicted_path.path = converted_path;
       predicted_path.maneuver = maneuver;
+      predicted_path.speed_limit = speed_limit;
       reference_paths.push_back(predicted_path);
     }
   }

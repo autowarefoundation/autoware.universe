@@ -91,7 +91,7 @@ public:
   PredictedPath generatePathForOffLaneVehicle(const TrackedObject & object);
 
   PredictedPath generatePathForOnLaneVehicle(
-    const TrackedObject & object, const PosePath & ref_paths);
+    const TrackedObject & object, const PosePath & ref_paths, const double speed_limit = 0.0);
 
   PredictedPath generatePathForCrosswalkUser(
     const TrackedObject & object, const CrosswalkEdgePoints & reachable_crosswalk) const;
@@ -109,7 +109,8 @@ private:
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;
 
-  PredictedPath generatePolynomialPath(const TrackedObject & object, const PosePath & ref_path);
+  PredictedPath generatePolynomialPath(
+    const TrackedObject & object, const PosePath & ref_path, const double speed_limit = 0.0);
 
   FrenetPath generateFrenetPath(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length);
@@ -125,7 +126,8 @@ private:
     const TrackedObject & object, const FrenetPath & frenet_predicted_path,
     const PosePath & ref_path);
 
-  FrenetPoint getFrenetPoint(const TrackedObject & object, const PosePath & ref_path);
+  FrenetPoint getFrenetPoint(
+    const TrackedObject & object, const PosePath & ref_path, const double speed_limit = 0.0);
 };
 }  // namespace map_based_prediction
 

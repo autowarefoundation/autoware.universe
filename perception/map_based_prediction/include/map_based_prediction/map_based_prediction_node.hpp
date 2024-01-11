@@ -90,6 +90,7 @@ struct LaneletData
 struct PredictedRefPath
 {
   float probability;
+  double speed_limit;
   PosePath path;
   Maneuver maneuver;
 };
@@ -232,7 +233,8 @@ private:
   void addReferencePaths(
     const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
     const float path_probability, const ManeuverProbability & maneuver_probability,
-    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths);
+    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
+    const double speed_limit = 0.0);
   std::vector<PosePath> convertPathType(const lanelet::routing::LaneletPaths & paths);
 
   void updateFuturePossibleLanelets(
