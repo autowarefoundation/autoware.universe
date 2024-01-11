@@ -476,10 +476,10 @@ private:
   rviz_common::properties::BoolProperty m_display_acceleration_text_property;
   // Property to enable/disable twist visualization
   rviz_common::properties::BoolProperty m_display_twist_property;
-  // Property to enable/disable yaw rate visualization
-  rviz_common::properties::BoolProperty m_display_yaw_rate_property;
   // Property to enable/disable twist covariance visualization
   rviz_common::properties::BoolProperty m_display_twist_covariance_property;
+  // Property to enable/disable yaw rate visualization
+  rviz_common::properties::BoolProperty m_display_yaw_rate_property;
   // Property to enable/disable predicted paths visualization
   rviz_common::properties::BoolProperty m_display_predicted_paths_property;
   // Property to enable/disable predicted path confidence visualization

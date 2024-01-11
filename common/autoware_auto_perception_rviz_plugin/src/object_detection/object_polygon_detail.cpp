@@ -219,8 +219,8 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_ptr->color.a = 0.9;
   marker_ptr->color.r = 1.0;
-  marker_ptr->color.g = 0.5;
-  marker_ptr->color.b = 0.7;
+  marker_ptr->color.g = 0.2;
+  marker_ptr->color.b = 0.4;
 
   return marker_ptr;
 }
