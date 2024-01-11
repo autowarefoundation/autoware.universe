@@ -227,7 +227,8 @@ double calcDistanceFromPointToSegment(
 
   // target_point is outside the segment.
   return std::min(
-    tier4_autoware_utils::calcDistance2d(a, p), tier4_autoware_utils::calcDistance2d(b, p));
+    tier4_autoware_utils::calcSquaredDistance2d(a, p),
+    tier4_autoware_utils::calcSquaredDistance2d(b, p));
 }
 
 PolygonPoint transformBoundFrenetCoordinate(
