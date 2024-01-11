@@ -1,5 +1,5 @@
-#ifndef GEARDISPLAY_HPP_
-#define GEARDISPLAY_HPP_
+#ifndef GEAR_DISPLAY_HPP_
+#define GEAR_DISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -31,4 +31,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // GEARDISPLAY_HPP_
+#endif  // GEAR_DISPLAY_HPP_

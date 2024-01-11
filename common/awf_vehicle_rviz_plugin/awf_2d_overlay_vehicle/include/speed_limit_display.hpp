@@ -1,5 +1,5 @@
-#ifndef SPEEDLIMITDISPLAY_HPP_
-#define SPEEDLIMITDISPLAY_HPP_
+#ifndef SPEED_LIMIT_DISPLAY_HPP_
+#define SPEED_LIMIT_DISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -31,4 +31,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // SPEEDLIMITDISPLAY_HPP_
+#endif  // SPEED_LIMIT_DISPLAY_HPP_

@@ -1,5 +1,5 @@
-#ifndef TURNSIGNALSDISPLAY_HPP_
-#define TURNSIGNALSDISPLAY_HPP_
+#ifndef TURN_SIGNALS_DISPLAY_HPP_
+#define TURN_SIGNALS_DISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -44,4 +44,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // TURNSIGNALSDISPLAY_HPP_
+#endif  // TURN_SIGNALS_DISPLAY_HPP_

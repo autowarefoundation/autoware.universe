@@ -1,5 +1,5 @@
-#ifndef TRAFFICDISPLAY_HPP_
-#define TRAFFICDISPLAY_HPP_
+#ifndef TRAFFIC_DISPLAY_HPP_
+#define TRAFFIC_DISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -45,4 +45,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // TRAFFICDISPLAY_HPP_
+#endif  // TRAFFIC_DISPLAY_HPP_

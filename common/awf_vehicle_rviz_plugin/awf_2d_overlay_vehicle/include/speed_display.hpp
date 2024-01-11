@@ -1,5 +1,5 @@
-#ifndef SPEEDDISPLAY_HPP_
-#define SPEEDDISPLAY_HPP_
+#ifndef SPEED_DISPLAY_HPP_
+#define SPEED_DISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -31,4 +31,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // SPEEDDISPLAY_HPP_
+#endif  // SPEED_DISPLAY_HPP_

@@ -1,5 +1,5 @@
-#ifndef STEERINGWHEELDISPLAY_HPP_
-#define STEERINGWHEELDISPLAY_HPP_
+#ifndef STEERING_WHEEL_DISPLAY_HPP_
+#define STEERING_WHEEL_DISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -36,4 +36,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // STEERINGWHEELDISPLAY_HPP_
+#endif  // STEERING_WHEEL_DISPLAY_HPP_
