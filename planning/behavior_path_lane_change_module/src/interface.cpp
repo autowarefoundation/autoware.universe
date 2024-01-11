@@ -84,6 +84,7 @@ void LaneChangeInterface::updateData()
   module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
   module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   module_type_->updateSpecialData();
+  setObjectDebugVisualization();
   module_type_->resetStopPose();
 }
 
@@ -224,6 +225,10 @@ bool LaneChangeInterface::canTransitFailureState()
   };
 
   log_debug_throttled(__func__);
+  if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
+    log_debug_throttled("Abort process has on going.");
+    return false;
+  }
 
   if (isWaitingApproval()) {
     log_debug_throttled("Can't transit to failure state. Module is WAITING_FOR_APPROVAL");
@@ -288,16 +293,6 @@ bool LaneChangeInterface::canTransitFailureState()
 
 bool LaneChangeInterface::canTransitIdleToWaitingApprovalState()
 {
-  setObjectDebugVisualization();
-
-  auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_DEBUG(getLogger(), "%s", message.data());
-  };
-
-  log_debug_throttled(__func__);
-
-  log_debug_throttled("Can lane change safely. Executing lane change.");
-  module_type_->toNormalState();
   return true;
 }
 
