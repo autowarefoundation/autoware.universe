@@ -262,6 +262,12 @@ PathWithLaneId extendPath(
 
   auto extended_path = target_path;
   for (const auto & p : clipped_path.points) {
+    // skip close points
+    if (
+      tier4_autoware_utils::calcDistance2d(
+        extended_path.points.back().point.pose.position, p.point.pose.position) < 0.1) {
+      continue;
+    }
     extended_path.points.push_back(p);
   }
   extended_path.points = motion_utils::removeOverlapPoints(extended_path.points);
