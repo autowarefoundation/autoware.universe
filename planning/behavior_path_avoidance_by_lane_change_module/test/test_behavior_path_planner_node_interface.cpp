@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
-#include "planning_interface_test_manager/planning_interface_test_manager.hpp"
-#include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <planning_test_utils/planning_interface_test_manager.hpp>
+#include <planning_test_utils/planning_interface_test_manager_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -47,6 +48,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
     ament_index_cpp::get_package_share_directory("planning_test_utils");
   const auto behavior_path_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
+  const auto behavior_path_lane_change_module_dir =
+    ament_index_cpp::get_package_share_directory("behavior_path_lane_change_module");
 
   std::vector<std::string> module_names;
   module_names.emplace_back("behavior_path_planner::AvoidanceByLaneChangeModuleManager");
@@ -63,8 +66,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
      behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
      behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
      behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-     ament_index_cpp::get_package_share_directory("behavior_path_planner") +
-       "/config/lane_change/lane_change.param.yaml",
+     behavior_path_lane_change_module_dir + "/config/lane_change.param.yaml",
      ament_index_cpp::get_package_share_directory("behavior_path_avoidance_module") +
        "/config/avoidance.param.yaml",
      ament_index_cpp::get_package_share_directory("behavior_path_avoidance_by_lane_change_module") +

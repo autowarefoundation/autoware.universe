@@ -453,6 +453,9 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     return;
   }
 
+  // Set 0 at the end of the trajectory
+  input_points.back().longitudinal_velocity_mps = 0.0;
+
   // calculate prev closest point
   if (!prev_output_.empty()) {
     current_closest_point_from_prev_output_ = calcProjectedTrajectoryPointFromEgo(prev_output_);
@@ -799,7 +802,8 @@ MotionVelocitySmootherNode::calcInitialMotion(
   // use ego velocity/acceleration in the planning for smooth transition from MANUAL to AUTONOMOUS.
   if (node_param_.plan_from_ego_speed_on_manual_mode) {  // could be false for debug purpose
     const bool is_in_autonomous_control = operation_mode_.is_autoware_control_enabled &&
-                                          operation_mode_.mode == OperationModeState::AUTONOMOUS;
+                                          (operation_mode_.mode == OperationModeState::AUTONOMOUS ||
+                                           operation_mode_.mode == OperationModeState::STOP);
     if (!is_in_autonomous_control) {
       RCLCPP_INFO_THROTTLE(
         get_logger(), *clock_, 10000, "Not in autonomous control. Plan from ego velocity.");

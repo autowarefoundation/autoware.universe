@@ -16,13 +16,15 @@
 #define BEHAVIOR_PATH_AVOIDANCE_BY_LANE_CHANGE_MODULE__SCENE_HPP_
 
 #include "behavior_path_avoidance_by_lane_change_module/data_structs.hpp"
-#include "behavior_path_planner/scene_module/lane_change/normal.hpp"
+#include "behavior_path_avoidance_module/helper.hpp"
+#include "behavior_path_lane_change_module/scene.hpp"
 
 #include <memory>
 
 namespace behavior_path_planner
 {
 using AvoidanceDebugData = DebugData;
+using helper::avoidance::AvoidanceHelper;
 
 class AvoidanceByLaneChange : public NormalLaneChange
 {
@@ -46,6 +48,7 @@ private:
 
   ObjectDataArray registered_objects_;
   mutable ObjectDataArray stopped_objects_;
+  std::shared_ptr<AvoidanceHelper> avoidance_helper_;
 
   ObjectData createObjectData(
     const AvoidancePlanningData & data, const PredictedObject & object) const;

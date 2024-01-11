@@ -286,6 +286,8 @@ private:
 
     module_ptr->publishRTCStatus();
 
+    module_ptr->publishSteeringFactor();
+
     module_ptr->publishObjectsOfInterestMarker();
 
     processing_time_.at(module_ptr->name()) += stop_watch_.toc(module_ptr->name(), true);
@@ -433,7 +435,16 @@ private:
     const std::vector<SceneModulePtr> & request_modules, const std::shared_ptr<PlannerData> & data,
     const BehaviorModuleOutput & previous_module_output);
 
-  std::string getNames(const std::vector<SceneModulePtr> & modules) const;
+  /**
+   * @brief run keep last approved modules
+   * @param planner data.
+   * @param previous module output.
+   * @return planning result.
+   */
+  BehaviorModuleOutput runKeepLastModules(
+    const std::shared_ptr<PlannerData> & data, const BehaviorModuleOutput & previous_output) const;
+
+  static std::string getNames(const std::vector<SceneModulePtr> & modules);
 
   std::optional<lanelet::ConstLanelet> root_lanelet_{std::nullopt};
 

@@ -188,12 +188,36 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       &debug_marker_array);
   }
 
+  if (debug_data_.first_attention_area) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        {debug_data_.first_attention_area.value()}, "first_attention_area", lane_id_, 1, 0.647,
+        0.0),
+      &debug_marker_array, now);
+  }
+
+  if (debug_data_.second_attention_area) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        {debug_data_.second_attention_area.value()}, "second_attention_area", lane_id_, 1, 0.647,
+        0.0),
+      &debug_marker_array, now);
+  }
+
   if (debug_data_.stuck_vehicle_detect_area) {
     appendMarkerArray(
       debug::createPolygonMarkerArray(
         debug_data_.stuck_vehicle_detect_area.value(), "stuck_vehicle_detect_area", lane_id_, now,
         0.3, 0.0, 0.0, 0.0, 0.5, 0.5),
       &debug_marker_array, now);
+  }
+
+  if (debug_data_.yield_stuck_detect_area) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        debug_data_.yield_stuck_detect_area.value(), "yield_stuck_detect_area", lane_id_, 0.6588235,
+        0.34509, 0.6588235),
+      &debug_marker_array);
   }
 
   if (debug_data_.ego_lane) {
