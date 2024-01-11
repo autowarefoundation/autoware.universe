@@ -177,6 +177,8 @@ private:
   double max_lateral_accel_;
   double min_acceleration_before_curve_;
 
+  bool use_vehicle_acceleration_;
+
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
 

@@ -783,9 +783,13 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   prediction_time_horizon_rate_for_validate_lane_length_ =
     declare_parameter<double>("prediction_time_horizon_rate_for_validate_shoulder_lane_length");
 
+  use_vehicle_acceleration_ = declare_parameter<bool>("use_vehicle_acceleration");
+
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_time_horizon_, lateral_control_time_horizon_, prediction_sampling_time_interval_,
     min_crosswalk_user_velocity_);
+
+  path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "~/input/objects", 1,
@@ -812,6 +816,9 @@ rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
   updateParam(parameters, "min_acceleration_before_curve", min_acceleration_before_curve_);
   updateParam(
     parameters, "check_lateral_acceleration_constraints", check_lateral_acceleration_constraints_);
+  updateParam(parameters, "use_vehicle_acceleration", use_vehicle_acceleration_);
+
+  path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -1551,9 +1558,11 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     object.kinematics.twist_with_covariance.twist.linear.y);
 
   // Use a decaying acceleration model
-  const double obj_acc = std::hypot(
-    object.kinematics.acceleration_with_covariance.accel.linear.x,
-    object.kinematics.acceleration_with_covariance.accel.linear.y);
+  const double obj_acc = (use_vehicle_acceleration_)
+                           ? std::hypot(
+                               object.kinematics.acceleration_with_covariance.accel.linear.x,
+                               object.kinematics.acceleration_with_covariance.accel.linear.y)
+                           : 0.0;
 
   // The decay constant λ = ln(2) / exponential_half_life
   const double T = prediction_time_horizon_;

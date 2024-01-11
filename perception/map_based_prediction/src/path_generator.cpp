@@ -402,9 +402,13 @@ FrenetPoint PathGenerator::getFrenetPoint(
   const float delta_yaw = obj_yaw - lane_yaw;
 
   const float ax =
-    static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.x);
+    (use_vehicle_acceleration_)
+      ? static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.x)
+      : 0.0;
   const float ay =
-    static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y);
+    (use_vehicle_acceleration_)
+      ? static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y)
+      : 0.0;
 
   // The decay constant λ = ln(2) / exponential_half_life
   // a(t) = acc - acc(1-e^(-λt)) = acc(e^(-λt))

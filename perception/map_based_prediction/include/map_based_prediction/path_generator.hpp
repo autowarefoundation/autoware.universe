@@ -99,12 +99,18 @@ public:
   PredictedPath generatePathToTargetPoint(
     const TrackedObject & object, const Eigen::Vector2d & point) const;
 
+  void setUseVehicleAcceleration(const bool use_vehicle_acceleration)
+  {
+    use_vehicle_acceleration_ = use_vehicle_acceleration;
+  }
+
 private:
   // Parameters
   double time_horizon_;
   double lateral_time_horizon_;
   double sampling_time_interval_;
   double min_crosswalk_user_velocity_;
+  bool use_vehicle_acceleration_;
 
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;

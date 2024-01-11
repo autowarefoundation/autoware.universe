@@ -16,6 +16,7 @@
     check_lateral_acceleration_constraints: false # whether to check if the predicted path complies with lateral acceleration constraints
     max_lateral_accel: 2.0 # [m/ss] max acceptable lateral acceleration for predicted vehicle paths
     min_acceleration_before_curve: -2.0 # [m/ss] min acceleration a vehicle might take to decelerate before a curve
+    use_vehicle_acceleration: false # whether to consider current vehicle acceleration when predicting paths or not
     # parameter for shoulder lane prediction
     prediction_time_horizon_rate_for_validate_shoulder_lane_length: 0.8
 
