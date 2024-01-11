@@ -55,7 +55,7 @@ NormalVehicleTracker::NormalVehicleTracker(
   // measurement noise covariance
   float r_stddev_x = 1.0;                                  // in object coordinate [m]
   float r_stddev_y = 0.3;                                  // in object coordinate [m]
-  float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);  // in map coordinate [rad]
+  float r_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // in map coordinate [rad]
   float r_stddev_vx = 1.0;                                 // in object coordinate [m/s]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
@@ -73,12 +73,16 @@ NormalVehicleTracker::NormalVehicleTracker(
   ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
   // process noise covariance
-  ekf_params_.q_stddev_acc_long = 9.8 * 0.5;  // [m/(s*s)] uncertain longitudinal acceleration
+  ekf_params_.q_stddev_acc_long = 9.8 * 0.3;  // [m/(s*s)] uncertain longitudinal acceleration
   ekf_params_.q_stddev_acc_lat = 9.8 * 0.1;   // [m/(s*s)] uncertain lateral acceleration
-  ekf_params_.q_stddev_slip_rate_max =
-    tier4_autoware_utils::deg2rad(10.0);  // [rad/s] uncertain head angle change rate
+  ekf_params_.q_stddev_yaw_rate_min =
+    tier4_autoware_utils::deg2rad(1.2);  // [rad/s] uncertain yaw change rate
+  ekf_params_.q_stddev_yaw_rate_max =
+    tier4_autoware_utils::deg2rad(15.0);  // [rad/s] uncertain yaw change rate
   ekf_params_.q_stddev_slip_rate_min =
-    tier4_autoware_utils::deg2rad(0.1);  // [rad/s] uncertain head angle change rate
+    tier4_autoware_utils::deg2rad(1.1);  // [rad/s] uncertain slip angle change rate
+  ekf_params_.q_stddev_slip_rate_max =
+    tier4_autoware_utils::deg2rad(12.0);  // [rad/s] uncertain slip angle change rate
   ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
   // limitations
   max_vel_ = tier4_autoware_utils::kmph2mps(100);                      // [m/s]
@@ -247,7 +251,7 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   // Q
   float q_stddev_yaw_rate{0.0};
   if (vx <= 0.01) {
-    q_stddev_yaw_rate = ekf_params_.q_stddev_acc_lat / 0.01;
+    q_stddev_yaw_rate = ekf_params_.q_stddev_yaw_rate_min;
   } else {
     // uncertain yaw rate limited by
     // centripetal acceleration w = a_lat/v
@@ -255,14 +259,15 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
     q_stddev_yaw_rate = std::min(
       ekf_params_.q_stddev_acc_lat / vx,
       vx * std::sin(ekf_params_.q_max_slip_angle) / lr_);  // [rad/s]
+    q_stddev_yaw_rate = std::min(q_stddev_yaw_rate, ekf_params_.q_stddev_yaw_rate_max);
+    q_stddev_yaw_rate = std::max(q_stddev_yaw_rate, ekf_params_.q_stddev_yaw_rate_min);
   }
   float q_stddev_slip_rate{0.0};
   if (vx <= 0.01) {
     q_stddev_slip_rate = ekf_params_.q_stddev_slip_rate_min;
   } else {
-    float slip_rate_limited_by_yaw_rate = std::abs(sin_slip * ekf_params_.q_stddev_acc_lat / vx);
-    q_stddev_slip_rate =
-      std::min(slip_rate_limited_by_yaw_rate, ekf_params_.q_stddev_slip_rate_max);
+    q_stddev_slip_rate = std::abs(sin_slip * ekf_params_.q_stddev_acc_lat / vx);
+    q_stddev_slip_rate = std::min(q_stddev_slip_rate, ekf_params_.q_stddev_slip_rate_max);
     q_stddev_slip_rate = std::max(q_stddev_slip_rate, ekf_params_.q_stddev_slip_rate_min);
   }
   const float q_cov_x = std::pow(ekf_params_.q_stddev_acc_long * dt * dt, 2.0);
