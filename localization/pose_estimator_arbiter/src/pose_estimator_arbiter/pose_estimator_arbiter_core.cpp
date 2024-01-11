@@ -181,12 +181,11 @@ void PoseEstimatorArbiter::on_timer()
     toggle_each(toggle_list);
 
     {
-      String msg;
-      msg.data = switch_rule_->debug_string();
+      const auto msg = String().set__data(switch_rule_->debug_string());
       pub_debug_string_->publish(msg);
     }
     {
-      MarkerArray msg = switch_rule_->debug_marker_array();
+      const MarkerArray msg = switch_rule_->debug_marker_array();
       pub_debug_marker_array_->publish(msg);
     }
 

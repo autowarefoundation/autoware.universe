@@ -45,7 +45,7 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node) : logger_(node->get_logger())
     for (const auto & param : future.get()) {
       if (param.get_name() == target_tag_ids_parameter_name) {
         impl_->target_tag_ids = param.as_string_array();
-        RCLCPP_INFO_STREAM(
+        RCLCPP_DEBUG_STREAM(
           logger_, "AsyncParameters got " << param.as_string_array().size() << " landmark IDs");
       }
     }

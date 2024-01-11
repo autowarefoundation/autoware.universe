@@ -74,15 +74,7 @@ bool MapBasedRule::eagleye_is_available() const
 
 std::string MapBasedRule::debug_string()
 {
-  // concatenate all debug string entry
-  std::stringstream ss;
-  for (const auto & [label, value] : debug_string_dictionary_) {
-    if (!ss.str().empty()) {
-      ss << std::endl;
-    }
-    ss << label << ": " << value;
-  }
-  return ss.str();
+  return debug_string_;
 }
 
 MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
@@ -115,8 +107,8 @@ bool MapBasedRule::artag_is_available() const
   const double distance_to_marker =
     ar_tag_position_->distance_to_nearest_ar_tag_around_ego(position);
 
-  debug_string_dictionary_["artag"] =
-    "distance to the nearest marker is " + std::to_string(distance_to_marker);
+  RCLCPP_DEBUG_STREAM(
+    get_logger(), "distance to the nearest AR tag is " + std::to_string(distance_to_marker));
 
   return distance_to_marker < ar_marker_available_distance_;
 }

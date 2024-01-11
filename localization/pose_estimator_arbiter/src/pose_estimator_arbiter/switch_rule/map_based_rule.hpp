@@ -52,7 +52,8 @@ protected:
   std::unique_ptr<rule_helper::PcdOccupancy> pcd_occupancy_{nullptr};
   std::unique_ptr<rule_helper::EagleyeArea> eagleye_area_{nullptr};
 
-  mutable std::unordered_map<std::string, std::string> debug_string_dictionary_;
+  // Store the reason why which pose estimator is enabled
+  mutable std::string debug_string_;
 
   std::unordered_map<PoseEstimatorName, bool> update_impl() const;
 

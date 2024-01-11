@@ -92,14 +92,14 @@ void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
   const auto & po_layer = lanelet_map->polygonLayer;
   const std::unordered_set<std::string> bounding_box_labels_ = {"eagleye_area"};
 
-  RCLCPP_INFO_STREAM(logger_, "Polygon layer size: " << po_layer.size());
+  RCLCPP_DEBUG_STREAM(logger_, "Polygon layer size: " << po_layer.size());
   for (const auto & polygon : po_layer) {
     if (!polygon.hasAttribute(lanelet::AttributeName::Type)) {
       continue;
     }
 
     const lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
-    RCLCPP_INFO_STREAM(logger_, "a polygon attribute: " << attr.value());
+    RCLCPP_DEBUG_STREAM(logger_, "a polygon attribute: " << attr.value());
 
     if (bounding_box_labels_.count(attr.value()) == 0) {
       continue;
