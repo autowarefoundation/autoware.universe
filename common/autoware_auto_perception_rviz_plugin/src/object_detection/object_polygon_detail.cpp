@@ -118,8 +118,8 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
     twist_with_covariance.twist.linear.x * twist_with_covariance.twist.linear.x +
     twist_with_covariance.twist.linear.y * twist_with_covariance.twist.linear.y +
     twist_with_covariance.twist.linear.z * twist_with_covariance.twist.linear.z);
-  const double velocity_angle = std::atan2(
-    twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
+  const double velocity_angle =
+    std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
   point.x = twist_with_covariance.twist.linear.x;
   point.y = twist_with_covariance.twist.linear.y;
   point.z = twist_with_covariance.twist.linear.z;
@@ -128,7 +128,7 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
   point.y = velocity * std::sin(velocity_angle + yaw_rate);
   point.z = 0;
   marker_ptr->points.push_back(point);
-  
+
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_ptr->color.a = 0.999;
   marker_ptr->color.r = 1.0;
@@ -192,11 +192,11 @@ void calc_arc_line_strip(
   points.push_back(point);
   // arc points
   const double maximum_delta_angle = 10.0 * M_PI / 180.0;
-  const int num_points = std::max(
-    3, static_cast<int>(std::abs(end_angle - start_angle) / maximum_delta_angle));
+  const int num_points =
+    std::max(3, static_cast<int>(std::abs(end_angle - start_angle) / maximum_delta_angle));
   for (int i = 0; i < num_points; ++i) {
     const double angle = start_angle + (end_angle - start_angle) * static_cast<double>(i) /
-                                        static_cast<double>(num_points - 1);
+                                         static_cast<double>(num_points - 1);
     point.x = radius * std::cos(angle);
     point.y = radius * std::sin(angle);
     point.z = 0;
@@ -210,12 +210,12 @@ void calc_arc_line_strip(
 }
 
 visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
-  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance)
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
   marker_ptr->ns = std::string("position covariance");
-  marker_ptr->scale.x = 0.03;
+  marker_ptr->scale.x = line_width;
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose = pose_with_covariance.pose;
   marker_ptr->pose.orientation.x = 0.0;
@@ -262,7 +262,7 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
 }
 
 visualization_msgs::msg::Marker::SharedPtr get_yaw_covariance_marker_ptr(
-  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width)
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & length, const double & line_width)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -273,7 +273,7 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_covariance_marker_ptr(
   geometry_msgs::msg::Point point;
 
   // orientation covariance
-  double yaw_vector_length = 3.0;
+  double yaw_vector_length = std::max(length, 1.0);
   double yaw_sigma = std::sqrt(pose_with_covariance.covariance[35]);  // 2.448 sigma is 95%
   // get arc points
   if (yaw_sigma > M_PI) {

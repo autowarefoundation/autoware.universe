@@ -59,6 +59,26 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       add_marker(label_marker_ptr);
     }
 
+    // Get marker for pose with covariance
+    auto pose_with_covariance_marker = get_pose_with_covariance_marker_ptr(
+      object.kinematics.pose_with_covariance, get_line_width() / 2);
+    if (pose_with_covariance_marker) {
+      auto marker_ptr = pose_with_covariance_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = id++;
+      add_marker(marker_ptr);
+    }
+
+    // Get marker for yaw covariance
+    auto yaw_covariance_marker = get_yaw_covariance_marker_ptr(
+      object.kinematics.pose_with_covariance, object.shape.dimensions.x / 1.6, get_line_width() / 2);
+    if (yaw_covariance_marker) {
+      auto marker_ptr = yaw_covariance_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = id++;
+      add_marker(marker_ptr);
+    }
+
     // Get marker for existence probability
     geometry_msgs::msg::Point existence_probability_position;
     existence_probability_position.x = object.kinematics.pose_with_covariance.pose.position.x + 0.5;

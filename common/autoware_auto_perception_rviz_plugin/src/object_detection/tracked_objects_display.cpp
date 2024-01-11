@@ -55,11 +55,11 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
   for (const auto & object : msg->objects) {
     // Filter by object dynamic status
     if (!is_object_to_show(showing_dynamic_status, object)) continue;
-    const auto line_width = get_line_width();
     // Get marker for shape
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.pose_with_covariance.pose.position,
-      object.kinematics.pose_with_covariance.pose.orientation, object.classification, line_width,
+      object.kinematics.pose_with_covariance.pose.orientation, object.classification,
+      get_line_width(),
       object.kinematics.orientation_availability ==
         autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE);
     if (shape_marker) {
@@ -96,8 +96,8 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
     }
 
     // Get marker for pose with covariance
-    auto pose_with_covariance_marker =
-      get_pose_with_covariance_marker_ptr(object.kinematics.pose_with_covariance);
+    auto pose_with_covariance_marker = get_pose_with_covariance_marker_ptr(
+      object.kinematics.pose_with_covariance, get_line_width() / 2);
     if (pose_with_covariance_marker) {
       auto marker_ptr = pose_with_covariance_marker.value();
       marker_ptr->header = msg->header;
@@ -107,7 +107,7 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
 
     // Get marker for yaw covariance
     auto yaw_covariance_marker =
-      get_yaw_covariance_marker_ptr(object.kinematics.pose_with_covariance, line_width/2);
+      get_yaw_covariance_marker_ptr(object.kinematics.pose_with_covariance, object.shape.dimensions.x / 1.6, get_line_width() / 2);
     if (yaw_covariance_marker) {
       auto marker_ptr = yaw_covariance_marker.value();
       marker_ptr->header = msg->header;
@@ -161,7 +161,8 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
 
     // Get marker for twist
     auto twist_marker = get_twist_marker_ptr(
-      object.kinematics.pose_with_covariance, object.kinematics.twist_with_covariance, line_width);
+      object.kinematics.pose_with_covariance, object.kinematics.twist_with_covariance,
+      get_line_width());
     if (twist_marker) {
       auto twist_marker_ptr = twist_marker.value();
       twist_marker_ptr->header = msg->header;

@@ -65,11 +65,9 @@ public:
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
     m_display_pose_with_covariance_property{
-      "Display Pose Covariance", true, "Enable/disable pose covariance visualization",
-      this},
+      "Display Pose Covariance", true, "Enable/disable pose covariance visualization", this},
     m_display_yaw_covariance_property{
-      "Display Yaw Covariance", true, "Enable/disable yaw covariance visualization",
-      this},
+      "Display Yaw Covariance", false, "Enable/disable yaw covariance visualization", this},
     m_display_velocity_text_property{
       "Display Velocity", true, "Enable/disable velocity text visualization", this},
     m_display_acceleration_text_property{
@@ -242,20 +240,23 @@ protected:
   }
 
   std::optional<Marker::SharedPtr> get_pose_with_covariance_marker_ptr(
-    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance) const
+    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+    const double & line_width) const
   {
     if (m_display_pose_with_covariance_property.getBool()) {
-      return detail::get_pose_with_covariance_marker_ptr(pose_with_covariance);
+      return detail::get_pose_with_covariance_marker_ptr(pose_with_covariance, line_width);
     } else {
       return std::nullopt;
     }
   }
 
   std::optional<Marker::SharedPtr> get_yaw_covariance_marker_ptr(
-    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width) const
+    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+    const double & length,
+    const double & line_width) const
   {
     if (m_display_yaw_covariance_property.getBool()) {
-      return detail::get_yaw_covariance_marker_ptr(pose_with_covariance, line_width);
+      return detail::get_yaw_covariance_marker_ptr(pose_with_covariance, length, line_width);
     } else {
       return std::nullopt;
     }

@@ -73,12 +73,11 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
 
   for (const auto & object : msg->objects) {
-    const auto line_width = get_line_width();
     // Get marker for shape
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.initial_pose_with_covariance.pose.position,
       object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification,
-      line_width, true);
+      get_line_width(), true);
     if (shape_marker) {
       auto marker_ptr = shape_marker.value();
       marker_ptr->header = msg->header;
@@ -113,8 +112,8 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     }
 
     // Get marker for pose with covariance
-    auto pose_with_covariance_marker =
-      get_pose_with_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance);
+    auto pose_with_covariance_marker = get_pose_with_covariance_marker_ptr(
+      object.kinematics.initial_pose_with_covariance, get_line_width() / 2);
     if (pose_with_covariance_marker) {
       auto marker_ptr = pose_with_covariance_marker.value();
       marker_ptr->header = msg->header;
@@ -123,8 +122,8 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     }
 
     // Get marker for yaw covariance
-    auto yaw_covariance_marker =
-      get_yaw_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance, line_width/2);
+    auto yaw_covariance_marker = get_yaw_covariance_marker_ptr(
+      object.kinematics.initial_pose_with_covariance, object.shape.dimensions.x / 1.6, get_line_width() / 2);
     if (yaw_covariance_marker) {
       auto marker_ptr = yaw_covariance_marker.value();
       marker_ptr->header = msg->header;
