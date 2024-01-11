@@ -73,7 +73,10 @@ public:
     m_display_acceleration_text_property{
       "Display Acceleration", true, "Enable/disable acceleration text visualization", this},
     m_display_twist_property{"Display Twist", true, "Enable/disable twist visualization", this},
-    m_display_twist_covariance_property{"Display Twist Covariance", false, "Enable/disable twist covariance visualization", this},
+    m_display_twist_covariance_property{
+      "Display Twist Covariance", false, "Enable/disable twist covariance visualization", this},
+    m_display_yaw_rate_property{
+      "Display Yaw Rate", false, "Enable/disable yaw rate visualization", this},
     m_display_predicted_paths_property{
       "Display Predicted Paths", true, "Enable/disable predicted paths visualization", this},
     m_display_path_confidence_property{
@@ -252,8 +255,7 @@ protected:
   }
 
   std::optional<Marker::SharedPtr> get_yaw_covariance_marker_ptr(
-    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-    const double & length,
+    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & length,
     const double & line_width) const
   {
     if (m_display_yaw_covariance_property.getBool()) {
@@ -301,13 +303,27 @@ protected:
     }
   }
 
+  std::optional<Marker::SharedPtr> get_yaw_rate_marker_ptr(
+    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+    const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
+    const double & line_width) const
+  {
+    if (m_display_yaw_rate_property.getBool()) {
+      return detail::get_yaw_rate_marker_ptr(
+        pose_with_covariance, twist_with_covariance, line_width);
+    } else {
+      return std::nullopt;
+    }
+  }
+
   std::optional<Marker::SharedPtr> get_twist_covariance_marker_ptr(
     const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
     const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
     const double & line_width) const
   {
     if (m_display_twist_covariance_property.getBool()) {
-      return detail::get_twist_covariance_marker_ptr(pose_with_covariance, twist_with_covariance, line_width);
+      return detail::get_twist_covariance_marker_ptr(
+        pose_with_covariance, twist_with_covariance, line_width);
     } else {
       return std::nullopt;
     }
@@ -460,7 +476,9 @@ private:
   rviz_common::properties::BoolProperty m_display_acceleration_text_property;
   // Property to enable/disable twist visualization
   rviz_common::properties::BoolProperty m_display_twist_property;
-  // Property to enable/disable twist visualization
+  // Property to enable/disable yaw rate visualization
+  rviz_common::properties::BoolProperty m_display_yaw_rate_property;
+  // Property to enable/disable twist covariance visualization
   rviz_common::properties::BoolProperty m_display_twist_covariance_property;
   // Property to enable/disable predicted paths visualization
   rviz_common::properties::BoolProperty m_display_predicted_paths_property;

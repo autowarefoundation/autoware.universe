@@ -101,7 +101,7 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose = pose_with_covariance.pose;
 
-  // velocity
+  // velocity line
   geometry_msgs::msg::Point point;
   point.x = 0.0;
   point.y = 0.0;
@@ -112,6 +112,26 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
   point.z = twist_with_covariance.twist.linear.z;
   marker_ptr->points.push_back(point);
 
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
+  marker_ptr->color.a = 0.999;
+  marker_ptr->color.r = 1.0;
+  marker_ptr->color.g = 0.0;
+  marker_ptr->color.b = 0.0;
+
+  return marker_ptr;
+}
+
+visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_marker_ptr(
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width)
+{
+  auto marker_ptr = std::make_shared<Marker>();
+  marker_ptr->type = visualization_msgs::msg::Marker::LINE_STRIP;
+  marker_ptr->ns = std::string("yaw rate");
+  marker_ptr->scale.x = line_width;
+  marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
+  marker_ptr->pose = pose_with_covariance.pose;
+
   // yaw rate
   const double yaw_rate = twist_with_covariance.twist.angular.z;
   const double velocity = std::sqrt(
@@ -120,17 +140,20 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
     twist_with_covariance.twist.linear.z * twist_with_covariance.twist.linear.z);
   const double velocity_angle =
     std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
-  point.x = twist_with_covariance.twist.linear.x;
-  point.y = twist_with_covariance.twist.linear.y;
-  point.z = twist_with_covariance.twist.linear.z;
-  marker_ptr->points.push_back(point);
-  point.x = velocity * std::cos(velocity_angle + yaw_rate);
-  point.y = velocity * std::sin(velocity_angle + yaw_rate);
+  const double yaw_mark_length = velocity * 0.8;
+
+  // yaw rate arc
+  calc_arc_line_strip(
+    velocity_angle, velocity_angle + yaw_rate, yaw_mark_length, marker_ptr->points);
+  // last point
+  geometry_msgs::msg::Point point;
+  point.x = 0;
+  point.y = 0;
   point.z = 0;
   marker_ptr->points.push_back(point);
 
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
-  marker_ptr->color.a = 0.999;
+  marker_ptr->color.a = 0.9;
   marker_ptr->color.r = 1.0;
   marker_ptr->color.g = 0.0;
   marker_ptr->color.b = 0.0;
@@ -163,30 +186,41 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
     twist_with_covariance.twist.linear.z * twist_with_covariance.twist.linear.z);
   const double velocity_angle =
     std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
+  const double yaw_mark_length = velocity * 0.8;
+  const double bar_width = std::max(velocity * 0.05, 0.1);
+  const double velocity_yaw_angle = velocity_angle + yaw_rate;
+  const double velocity_yaw_p_sigma_angle = velocity_yaw_angle + yaw_rate_sigma;
+  const double velocity_yaw_n_sigma_angle = velocity_yaw_angle - yaw_rate_sigma;
 
-  point.x = velocity * std::cos(velocity_angle + yaw_rate);
-  point.y = velocity * std::sin(velocity_angle + yaw_rate);
-  point.z = 0;
-  marker_ptr->points.push_back(point);
-  point.x = velocity * std::cos(velocity_angle + yaw_rate + yaw_rate_sigma);
-  point.y = velocity * std::sin(velocity_angle + yaw_rate + yaw_rate_sigma);
-  point.z = 0;
-  marker_ptr->points.push_back(point);
-
-  point.x = velocity * std::cos(velocity_angle + yaw_rate);
-  point.y = velocity * std::sin(velocity_angle + yaw_rate);
-  point.z = 0;
-  marker_ptr->points.push_back(point);
-  point.x = velocity * std::cos(velocity_angle + yaw_rate - yaw_rate_sigma);
-  point.y = velocity * std::sin(velocity_angle + yaw_rate - yaw_rate_sigma);
-  point.z = 0;
-  marker_ptr->points.push_back(point);
+  const double point_list[7][3] = {
+    {yaw_mark_length * std::cos(velocity_yaw_angle), yaw_mark_length * std::sin(velocity_yaw_angle),
+     0},
+    {yaw_mark_length * std::cos(velocity_yaw_p_sigma_angle),
+     yaw_mark_length * std::sin(velocity_yaw_p_sigma_angle), 0},
+    {yaw_mark_length * std::cos(velocity_yaw_n_sigma_angle),
+     yaw_mark_length * std::sin(velocity_yaw_n_sigma_angle), 0},
+    {(yaw_mark_length + bar_width) * std::cos(velocity_yaw_p_sigma_angle),
+     (yaw_mark_length + bar_width) * std::sin(velocity_yaw_p_sigma_angle), 0},
+    {(yaw_mark_length - bar_width) * std::cos(velocity_yaw_p_sigma_angle),
+     (yaw_mark_length - bar_width) * std::sin(velocity_yaw_p_sigma_angle), 0},
+    {(yaw_mark_length + bar_width) * std::cos(velocity_yaw_n_sigma_angle),
+     (yaw_mark_length + bar_width) * std::sin(velocity_yaw_n_sigma_angle), 0},
+    {(yaw_mark_length - bar_width) * std::cos(velocity_yaw_n_sigma_angle),
+     (yaw_mark_length - bar_width) * std::sin(velocity_yaw_n_sigma_angle), 0},
+  };
+  const int point_pairs[4][2] = {
+    {0, 1},
+    {0, 2},
+    {3, 4},
+    {5, 6},
+  };
+  calc_line_list_from_points(point_list, point_pairs, 4, marker_ptr->points);
 
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_ptr->color.a = 0.9;
   marker_ptr->color.r = 1.0;
-  marker_ptr->color.g = 0.0;
-  marker_ptr->color.b = 0.2;
+  marker_ptr->color.g = 0.5;
+  marker_ptr->color.b = 0.7;
 
   return marker_ptr;
 }
@@ -238,11 +272,6 @@ void calc_arc_line_strip(
   std::vector<geometry_msgs::msg::Point> & points)
 {
   geometry_msgs::msg::Point point;
-  // fisrt point
-  point.x = 0;
-  point.y = 0;
-  point.z = 0;
-  points.push_back(point);
   // arc points
   const double maximum_delta_angle = 10.0 * M_PI / 180.0;
   const int num_points =
@@ -255,11 +284,6 @@ void calc_arc_line_strip(
     point.z = 0;
     points.push_back(point);
   }
-  // last point
-  point.x = 0;
-  point.y = 0;
-  point.z = 0;
-  points.push_back(point);
 }
 
 visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
@@ -315,7 +339,8 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
 }
 
 visualization_msgs::msg::Marker::SharedPtr get_yaw_covariance_marker_ptr(
-  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & length, const double & line_width)
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & length,
+  const double & line_width)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -332,7 +357,18 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_covariance_marker_ptr(
   if (yaw_sigma > M_PI) {
     yaw_vector_length = 1.0;
   }
+  // first point
+  point.x = 0;
+  point.y = 0;
+  point.z = 0;
+  marker_ptr->points.push_back(point);
+  // arc points
   calc_arc_line_strip(-yaw_sigma, yaw_sigma, yaw_vector_length, marker_ptr->points);
+  // last point
+  point.x = 0;
+  point.y = 0;
+  point.z = 0;
+  marker_ptr->points.push_back(point);
 
   // marker configuration
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
