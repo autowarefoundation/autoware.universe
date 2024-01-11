@@ -374,7 +374,7 @@ private:
     };
     if (current_state_ == ModuleStatus::IDLE) {
       if (canTransitIdleToWaitingApprovalState()) {
-        log_debug_throttled("transiting from IDLE to RUNNING");
+        log_debug_throttled("transiting from IDLE to WAITING_APPROVAL");
         return ModuleStatus::WAITING_APPROVAL;
       }
 
