@@ -36,9 +36,7 @@ Also, even if both can be activated at the same time, the Kalman Filter may be a
 
 The following video demonstrates the switching of four different pose estimators.
 
-TODO: change the video
-
-<div><video controls src="https://user-images.githubusercontent.com/24854875/271473970-eb9f6412-a849-4b12-b487-4bd7aef6de09.mp4" muted="false" width="400"></video></div>
+<div><video controls src="https://github-production-user-asset-6210df.s3.amazonaws.com/24854875/295755577-62b26fdd-dcf0-4b1c-a1a0-ecd633413196.mp4" muted="false" width="400"></video></div>
 
 Users can reproduce the demonstration using the following data and launch command:
 
@@ -240,7 +238,7 @@ Rule helpers are auxiliary tools for describing switching rules.
 
 <img src="./media/pcd_occupancy.drawio.svg" alt="drawing" width="800"/>
 
-#### eagleye area
+#### Eagleye area
 
 The eagleye area is a planar area described by polygon in lanelet2.
 The height of the area is meaningless; it judges if the projection of its self-position is contained within the polygon or not.
@@ -289,6 +287,7 @@ A sample eagleye area is shown below. The values provided below are placeholders
 #### AR tag position
 
 This rule helper searches for near landmark tags in the neighborhood.
+See [landmark_based_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/landmark_based_localizer) for more details about AR tag.
 
 ## Pose Initialization
 
