@@ -417,7 +417,7 @@ FrenetPoint PathGenerator::getFrenetPoint(
   // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)e^(-λt)
   // acceleration_distance = acc(1/λ) * t  + acc(1/λ^2)e^(-λt)
   const double T = time_horizon_;
-  const float exponential_half_life = T / 4.0;
+  const float exponential_half_life = acceleration_exponential_half_life_;
   const float λ = std::log(2) / exponential_half_life;
 
   auto have_same_sign = [](double a, double b) -> bool {

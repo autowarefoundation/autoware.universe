@@ -784,12 +784,16 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     declare_parameter<double>("prediction_time_horizon_rate_for_validate_shoulder_lane_length");
 
   use_vehicle_acceleration_ = declare_parameter<bool>("use_vehicle_acceleration");
+  speed_limit_multiplier_ = declare_parameter<double>("speed_limit_multiplier");
+  acceleration_exponential_half_life_ =
+    declare_parameter<double>("acceleration_exponential_half_life");
 
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_time_horizon_, lateral_control_time_horizon_, prediction_sampling_time_interval_,
     min_crosswalk_user_velocity_);
 
   path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
+  path_generator_->setAccelerationHalfLife(acceleration_exponential_half_life_);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "~/input/objects", 1,
@@ -817,8 +821,12 @@ rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
   updateParam(
     parameters, "check_lateral_acceleration_constraints", check_lateral_acceleration_constraints_);
   updateParam(parameters, "use_vehicle_acceleration", use_vehicle_acceleration_);
+  updateParam(parameters, "speed_limit_multiplier", speed_limit_multiplier_);
+  updateParam(
+    parameters, "acceleration_exponential_half_life", acceleration_exponential_half_life_);
 
   path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
+  path_generator_->setAccelerationHalfLife(acceleration_exponential_half_life_);
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -1557,7 +1565,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     object.kinematics.twist_with_covariance.twist.linear.x,
     object.kinematics.twist_with_covariance.twist.linear.y);
 
-  // Use a decaying acceleration model
+  // Using a decaying acceleration model
+  // a(t) = obj_acc - obj_acc(1-e^(-λt)) = obj_acc(e^(-λt))
   const double obj_acc = (use_vehicle_acceleration_)
                            ? std::hypot(
                                object.kinematics.acceleration_with_covariance.accel.linear.x,
@@ -1566,7 +1575,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
   // The decay constant λ = ln(2) / exponential_half_life
   const double T = prediction_time_horizon_;
-  const double exponential_half_life = T / 4.0;
+  const double exponential_half_life = acceleration_exponential_half_life_;
   const double λ = std::log(2) / exponential_half_life;
 
   auto get_search_distance_with_decaying_acc = [&]() -> double {
@@ -1611,7 +1620,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     double final_speed_after_acceleration =
       obj_vel + obj_acc * (1.0 / λ) * (1.0 - std::exp(-λ * T));
 
-    const double final_speed_limit = legal_speed_limit * 1.5;
+    const double final_speed_limit = legal_speed_limit * speed_limit_multiplier_;
     const bool final_speed_surpasses_limit = final_speed_after_acceleration > final_speed_limit;
     const bool object_has_surpassed_limit_already = obj_vel > final_speed_limit;
 

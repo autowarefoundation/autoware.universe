@@ -104,6 +104,11 @@ public:
     use_vehicle_acceleration_ = use_vehicle_acceleration;
   }
 
+  void setAccelerationHalfLife(const double acceleration_exponential_half_life)
+  {
+    acceleration_exponential_half_life_ = acceleration_exponential_half_life;
+  }
+
 private:
   // Parameters
   double time_horizon_;
@@ -111,6 +116,7 @@ private:
   double sampling_time_interval_;
   double min_crosswalk_user_velocity_;
   bool use_vehicle_acceleration_;
+  double acceleration_exponential_half_life_;
 
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;

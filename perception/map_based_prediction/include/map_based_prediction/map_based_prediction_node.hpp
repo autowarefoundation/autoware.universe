@@ -178,6 +178,8 @@ private:
   double min_acceleration_before_curve_;
 
   bool use_vehicle_acceleration_;
+  double speed_limit_multiplier_;
+  double acceleration_exponential_half_life_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
