@@ -1415,6 +1415,39 @@ void StartPlannerModule::setDebugData() const
     add(start_pose_text_marker_array);
   }
 
+  // visualize shift start pose to end pose footprints
+  {
+    MarkerArray shift_path_footprint_marker_array{};
+    const auto pink = createMarkerColor(1.0, 0.0, 1.0, 0.99);
+    Marker shift_path_footprint_marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "shift_path_footprint", 0, Marker::LINE_STRIP,
+      createMarkerScale(0.2, 0.2, 0.2), pink);
+    shift_path_footprint_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+    PathWithLaneId path_shift_start_to_end{};
+    const auto shift_path = status_.pull_out_path.partial_paths.front();
+    {
+      const size_t pull_out_start_idx = motion_utils::findNearestIndex(
+        shift_path.points, status_.pull_out_path.start_pose.position);
+      const size_t pull_out_end_idx =
+        motion_utils::findNearestIndex(shift_path.points, status_.pull_out_path.end_pose.position);
+
+      path_shift_start_to_end.points.insert(
+        path_shift_start_to_end.points.begin(), shift_path.points.begin() + pull_out_start_idx,
+        shift_path.points.begin() + pull_out_end_idx + 1);
+    }
+
+    for (size_t i = 0; i < path_shift_start_to_end.points.size(); ++i) {
+      shift_path_footprint_marker.id = i;
+      shift_path_footprint_marker.points.clear();
+      addFootprintMarker(
+        shift_path_footprint_marker, path_shift_start_to_end.points.at(i).point.pose,
+        vehicle_info_);
+      shift_path_footprint_marker_array.markers.push_back(shift_path_footprint_marker);
+    }
+
+    add(shift_path_footprint_marker_array);
+  }
+
   // safety check
   if (parameters_->safety_check_params.enable_safety_check) {
     if (start_planner_data_.ego_predicted_path.size() > 0) {
