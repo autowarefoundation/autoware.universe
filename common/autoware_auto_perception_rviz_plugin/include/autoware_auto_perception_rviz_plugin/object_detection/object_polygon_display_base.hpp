@@ -64,14 +64,14 @@ public:
     // m_display_type_property{"Polygon Type", "3d", "Type of the polygon to display object", this},
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
-    m_display_pose_with_covariance_property{
-      "Display Pose Covariance", true, "Enable/disable pose covariance visualization", this},
-    m_display_yaw_covariance_property{
-      "Display Yaw Covariance", false, "Enable/disable yaw covariance visualization", this},
     m_display_velocity_text_property{
       "Display Velocity", true, "Enable/disable velocity text visualization", this},
     m_display_acceleration_text_property{
       "Display Acceleration", true, "Enable/disable acceleration text visualization", this},
+    m_display_pose_with_covariance_property{
+      "Display Pose Covariance", true, "Enable/disable pose covariance visualization", this},
+    m_display_yaw_covariance_property{
+      "Display Yaw Covariance", false, "Enable/disable yaw covariance visualization", this},
     m_display_twist_property{"Display Twist", true, "Enable/disable twist visualization", this},
     m_display_twist_covariance_property{
       "Display Twist Covariance", false, "Enable/disable twist covariance visualization", this},
@@ -466,14 +466,14 @@ private:
   rviz_common::properties::BoolProperty m_display_label_property;
   // Property to enable/disable uuid visualization
   rviz_common::properties::BoolProperty m_display_uuid_property;
-  // Property to enable/disable pose with covariance visualization
-  rviz_common::properties::BoolProperty m_display_pose_with_covariance_property;
-  // Property to enable/disable yaw covariance visualization
-  rviz_common::properties::BoolProperty m_display_yaw_covariance_property;
   // Property to enable/disable velocity text visualization
   rviz_common::properties::BoolProperty m_display_velocity_text_property;
   // Property to enable/disable acceleration text visualization
   rviz_common::properties::BoolProperty m_display_acceleration_text_property;
+  // Property to enable/disable pose with covariance visualization
+  rviz_common::properties::BoolProperty m_display_pose_with_covariance_property;
+  // Property to enable/disable yaw covariance visualization
+  rviz_common::properties::BoolProperty m_display_yaw_covariance_property;
   // Property to enable/disable twist visualization
   rviz_common::properties::BoolProperty m_display_twist_property;
   // Property to enable/disable twist covariance visualization
