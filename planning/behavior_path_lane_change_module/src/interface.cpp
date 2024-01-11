@@ -303,7 +303,7 @@ bool LaneChangeInterface::canTransitIdleToWaitingApprovalState()
 
   log_debug_throttled(__func__);
 
-  if (!isActivated() || isWaitingApproval()) {
+  if (!isActivated()) {
     if (module_type_->specialRequiredCheck()) {
       return true;
     }

@@ -339,7 +339,7 @@ bool StartPlannerModule::canTransitSuccessState()
 
 bool StartPlannerModule::canTransitIdleToWaitingApprovalState()
 {
-  return isActivated() && !isWaitingApproval();
+  return isActivated();
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
