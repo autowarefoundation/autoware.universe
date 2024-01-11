@@ -54,6 +54,7 @@ void LaneChangeInterface::processOnEntry()
   module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
   module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   module_type_->updateLaneChangeStatus();
+  setObjectDebugVisualization();
 }
 
 void LaneChangeInterface::processOnExit()
@@ -84,13 +85,13 @@ void LaneChangeInterface::updateData()
   module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
   module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   module_type_->updateSpecialData();
-  setObjectDebugVisualization();
   module_type_->resetStopPose();
 }
 
 void LaneChangeInterface::postProcess()
 {
   post_process_safety_status_ = module_type_->isApprovedPathSafe();
+  setObjectDebugVisualization();
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
