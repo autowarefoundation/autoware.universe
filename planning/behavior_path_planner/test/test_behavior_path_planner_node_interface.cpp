@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
-#include "planning_interface_test_manager/planning_interface_test_manager.hpp"
-#include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <planning_test_utils/planning_interface_test_manager.hpp>
+#include <planning_test_utils/planning_interface_test_manager_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -49,36 +50,18 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
 
   std::vector<std::string> module_names;
-  module_names.emplace_back("behavior_path_planner::AvoidanceModuleManager");
-  module_names.emplace_back("behavior_path_planner::DynamicAvoidanceModuleManager");
-  module_names.emplace_back("behavior_path_planner::SideShiftModuleManager");
-  module_names.emplace_back("behavior_path_planner::StartPlannerModuleManager");
-  module_names.emplace_back("behavior_path_planner::GoalPlannerModuleManager");
-  module_names.emplace_back("behavior_path_planner::LaneChangeRightModuleManager");
-  module_names.emplace_back("behavior_path_planner::LaneChangeLeftModuleManager");
-  module_names.emplace_back("behavior_path_planner::ExternalRequestLaneChangeRightModuleManager");
-  module_names.emplace_back("behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager");
-  module_names.emplace_back("behavior_path_planner::AvoidanceByLaneChangeModuleManager");
 
   std::vector<rclcpp::Parameter> params;
   params.emplace_back("launch_modules", module_names);
   node_options.parameter_overrides(params);
 
   test_utils::updateNodeOptions(
-    node_options,
-    {planning_test_utils_dir + "/config/test_common.param.yaml",
-     planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
-     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-     behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
-     behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
-     behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-     behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
-     behavior_path_planner_dir + "/config/dynamic_avoidance/dynamic_avoidance.param.yaml",
-     behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
-     behavior_path_planner_dir + "/config/start_planner/start_planner.param.yaml",
-     behavior_path_planner_dir + "/config/goal_planner/goal_planner.param.yaml",
-     behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
-     behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
+    node_options, {planning_test_utils_dir + "/config/test_common.param.yaml",
+                   planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
+                   planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
+                   behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
+                   behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
+                   behavior_path_planner_dir + "/config/scene_module_manager.param.yaml"});
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }

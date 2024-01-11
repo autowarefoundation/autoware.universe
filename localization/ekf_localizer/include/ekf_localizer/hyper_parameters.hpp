@@ -28,6 +28,7 @@ public:
     ekf_rate(node->declare_parameter("predict_frequency", 50.0)),
     ekf_dt(1.0 / std::max(ekf_rate, 0.1)),
     tf_rate_(node->declare_parameter("tf_rate", 10.0)),
+    publish_tf_(node->declare_parameter("publish_tf", true)),
     enable_yaw_bias_estimation(node->declare_parameter("enable_yaw_bias_estimation", true)),
     extend_state_step(node->declare_parameter("extend_state_step", 50)),
     pose_frame_id(node->declare_parameter("pose_frame_id", std::string("map"))),
@@ -40,6 +41,9 @@ public:
     proc_stddev_vx_c(node->declare_parameter("proc_stddev_vx_c", 5.0)),
     proc_stddev_wz_c(node->declare_parameter("proc_stddev_wz_c", 1.0)),
     proc_stddev_yaw_c(node->declare_parameter("proc_stddev_yaw_c", 0.005)),
+    z_filter_proc_dev(node->declare_parameter("z_filter_proc_dev", 1.0)),
+    roll_filter_proc_dev(node->declare_parameter("roll_filter_proc_dev", 0.01)),
+    pitch_filter_proc_dev(node->declare_parameter("pitch_filter_proc_dev", 0.01)),
     pose_no_update_count_threshold_warn(
       node->declare_parameter("pose_no_update_count_threshold_warn", 50)),
     pose_no_update_count_threshold_error(
@@ -57,6 +61,7 @@ public:
   const double ekf_rate;
   const double ekf_dt;
   const double tf_rate_;
+  const bool publish_tf_;
   const bool enable_yaw_bias_estimation;
   const int extend_state_step;
   const std::string pose_frame_id;
@@ -69,6 +74,9 @@ public:
   const double proc_stddev_vx_c;   //!< @brief  vx process noise
   const double proc_stddev_wz_c;   //!< @brief  wz process noise
   const double proc_stddev_yaw_c;  //!< @brief  yaw process noise
+  const double z_filter_proc_dev;
+  const double roll_filter_proc_dev;
+  const double pitch_filter_proc_dev;
   const size_t pose_no_update_count_threshold_warn;
   const size_t pose_no_update_count_threshold_error;
   const size_t twist_no_update_count_threshold_warn;
