@@ -99,43 +99,6 @@ PathWithLaneId ShiftPullOver::generateReferencePath(
   return road_lane_reference_path;
 }
 
-// generate path after previous module path terminal pose by adding clipped shifted road lane
-std::optional<PathWithLaneId> ShiftPullOver::extendPrevModulePath(
-  const PathWithLaneId & road_lane_reference_path_to_shift_end, const Pose & shift_end_pose,
-  const PathWithLaneId & prev_module_path) const
-{
-  const auto & ref_path = road_lane_reference_path_to_shift_end;
-  const auto & prev_path = prev_module_path;
-  const auto & prev_terminal_pose = prev_path.points.back().point.pose;
-
-  // generate clipped road lane reference path from previous module path terminal pose to shift end
-  const size_t prev_module_path_terminal_idx =
-    motion_utils::findNearestSegmentIndex(ref_path.points, prev_terminal_pose.position) + 1;
-  const double distance_to_terminal_to_shift_end = motion_utils::calcSignedArcLength(
-    ref_path.points, prev_module_path_terminal_idx, shift_end_pose.position);
-  PathWithLaneId clipped_path{};
-  clipped_path.points = motion_utils::cropPoints(
-    ref_path.points, prev_terminal_pose.position, prev_module_path_terminal_idx,
-    distance_to_terminal_to_shift_end, 0.0);
-
-  // shift clipped path to previous module path terminal pose
-  const double lateral_shift_from_reference_path =
-    motion_utils::calcLateralOffset(ref_path.points, prev_terminal_pose.position);
-  for (auto & p : clipped_path.points) {
-    p.point.pose =
-      tier4_autoware_utils::calcOffsetPose(p.point.pose, 0, lateral_shift_from_reference_path, 0);
-  }
-
-  auto extended_prev_module_path = prev_module_path;
-  for (const auto & p : clipped_path.points) {
-    extended_prev_module_path.points.push_back(p);
-  }
-  extended_prev_module_path.points =
-    motion_utils::removeOverlapPoints(extended_prev_module_path.points);
-
-  return extended_prev_module_path;
-}
-
 std::optional<PathWithLaneId> ShiftPullOver::cropPrevModulePath(
   const PathWithLaneId & prev_module_path, const Pose & shift_end_pose) const
 {
@@ -187,10 +150,10 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
       lanelet::utils::getArcCoordinates(road_lanes, shift_end_pose).length >
       lanelet::utils::getArcCoordinates(road_lanes, prev_module_path_terminal_pose).length;
     if (extend_previous_module_path) {  // case1
-      return extendPrevModulePath(
-        road_lane_reference_path_to_shift_end, shift_end_pose, prev_module_path);
+      return goal_planner_utils::extendPath(
+        prev_module_path, road_lane_reference_path_to_shift_end, shift_end_pose);
     } else {  // case2
-      return cropPrevModulePath(prev_module_path, shift_end_pose);
+      return goal_planner_utils::cropPath(prev_module_path, shift_end_pose);
     }
   });
   if (!processed_prev_module_path || processed_prev_module_path->points.empty()) {

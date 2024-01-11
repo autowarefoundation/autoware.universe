@@ -282,4 +282,27 @@ PathWithLaneId extendPath(
   return extendPath(reference_path, target_path, extend_distance);
 }
 
+std::optional<PathWithLaneId> cropPath(const PathWithLaneId & path, const Pose & end_pose)
+{
+  const size_t shift_end_idx =
+    motion_utils::findNearestSegmentIndex(path.points, end_pose.position);
+  std::vector<PathPointWithLaneId> clipped_points{
+    path.points.begin(), path.points.begin() + shift_end_idx};
+  if (clipped_points.empty()) {
+    return std::nullopt;
+  }
+
+  // add projected shift end pose to clipped points
+  PathPointWithLaneId projected_point = clipped_points.back();
+  const double offset =
+    motion_utils::calcSignedArcLength(path.points, shift_end_idx, end_pose.position);
+  projected_point.point.pose =
+    tier4_autoware_utils::calcOffsetPose(clipped_points.back().point.pose, offset, 0, 0);
+  clipped_points.push_back(projected_point);
+  auto clipped_path = path;
+  clipped_path.points = clipped_points;
+
+  return clipped_path;
+}
+
 }  // namespace behavior_path_planner::goal_planner_utils

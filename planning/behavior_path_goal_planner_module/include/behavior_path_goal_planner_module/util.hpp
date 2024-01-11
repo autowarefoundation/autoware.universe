@@ -63,6 +63,7 @@ PathWithLaneId extendPath(
 PathWithLaneId extendPath(
   const PathWithLaneId & prev_module_path, const PathWithLaneId & reference_path,
   const Pose & extend_pose);
+std::optional<PathWithLaneId> cropPath(const PathWithLaneId & path, const Pose & end_pose);
 
 // debug
 MarkerArray createPullOverAreaMarkerArray(
