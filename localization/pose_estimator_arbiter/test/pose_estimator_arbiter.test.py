@@ -27,10 +27,15 @@ from launch.launch_description_sources import AnyLaunchDescriptionSource
 import launch_testing
 import pytest
 import rclpy
-from rclpy.qos import DurabilityPolicy
+from rclpy.qos import DurabilityPolicy, ReliabilityPolicy
 from rclpy.qos import QoSProfile
-from std_msgs.msg import String
 from std_srvs.srv import SetBool
+from sensor_msgs.msg import PointCloud2, Image
+import time
+
+
+# This test confirms that the point cloud is initially relayed by arbiter.
+# Then, the state transitions to YabLoc mode and confirms that the point cloud is no longer relayed.
 
 
 @pytest.mark.launch_test
@@ -43,7 +48,11 @@ def generate_test_description():
 
     pose_estimator_arbiter = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(test_pose_estimator_arbiter_launch_file),
-        launch_arguments={"pose_sources": "['ndt', 'yabloc', 'eagleye']"}.items(),
+        launch_arguments={
+            "pose_sources": "[ndt, yabloc, eagleye]",  # ignore artag now
+            # Because artag helper requests parameters of the artag node, it is difficult to execute correctly.
+            "input_pointcloud": "/sensing/lidar/top/pointcloud",
+        }.items(),
     )
 
     return launch.LaunchDescription(
@@ -55,7 +64,7 @@ def generate_test_description():
     )
 
 
-class TestPoseEstimatorManager(unittest.TestCase):
+class TestPoseEstimatorArbiter(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Initialize the ROS context for the test node
@@ -73,54 +82,86 @@ class TestPoseEstimatorManager(unittest.TestCase):
     def tearDown(self):
         self.test_node.destroy_node()
 
-    def yabloc_callback(self, srv):
+    def spin_for(self, duration_sec):
+        end_time = time.time() + duration_sec
+        while time.time() < end_time:
+            rclpy.spin_once(self.test_node, timeout_sec=0.1)
+
+    def yabloc_suspend_service_callback(self, srv):
         pass
+
+    def publish_input_topics(self):
+        self.pub_ndt_input.publish(PointCloud2())
+        rclpy.spin_once(self.test_node, timeout_sec=0.1)
+        self.pub_yabloc_input.publish(Image())
+        rclpy.spin_once(self.test_node, timeout_sec=0.1)
+
+    def create_publishers_and_subscribers(self):
+        # Publisher
+        qos_profile = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
+
+        self.pub_ndt_input = self.test_node.create_publisher(
+            PointCloud2, "/sensing/lidar/top/pointcloud", qos_profile
+        )
+        self.pub_yabloc_input = self.test_node.create_publisher(
+            Image, "/sensing/camera/traffic_light/image_raw", qos_profile
+        )
+
+        # Subscriber
+        self.test_node.create_subscription(
+            PointCloud2,
+            "/sensing/lidar/top/pointcloud/relay",
+            lambda msg: self.ndt_relayed.append(msg.header),
+            qos_profile,
+        )
+        self.test_node.create_subscription(
+            Image,
+            "/sensing/camera/traffic_light/image_raw/yabloc_relay",
+            lambda msg: self.yabloc_relayed.append(msg.header),
+            qos_profile,
+        )
 
     def test_node_link(self):
         # The arbiter waits for the service to start, so here it instantiates a meaningless service server.
-        self.test_node.create_service(SetBool, "/yabloc_suspend_srv", self.yabloc_callback)
-
-        # Receive state
-        msg_buffer = []
-        self.test_node.create_subscription(
-            String,
-            "/pose_estimator_arbiter/debug/string",
-            lambda msg: msg_buffer.append(msg.data),
-            10,
+        self.test_node.create_service(
+            SetBool,
+            "/localization/pose_estimator/yabloc/pf/yabloc_suspend_srv",
+            self.yabloc_suspend_service_callback,
         )
 
-        # Wait until the node publishes some topic
-        while len(msg_buffer) == 0:
+        # Define subscription buffer
+        self.ndt_relayed = []
+        self.yabloc_relayed = []
+
+        # Create publishers and subscribers
+        self.create_publishers_and_subscribers()
+
+        # Wait 0.5 second for node to be ready
+        self.spin_for(0.5)
+
+        # Publish dummy input topics
+        for _ in range(10):
+            self.publish_input_topics()
             rclpy.spin_once(self.test_node, timeout_sec=0.1)
-        # Check if the arbiter state is transitioning correctly
-        self.assertEqual(msg_buffer[-1], "enable All\nlocalization is not initialized")
+
+        # Wait 1.0 second for all topics to be subscribed
+        self.spin_for(1.0)
+
+        # Confirm both topics are relayed
+        print("ndt", len(self.ndt_relayed))
+        print("yabloc", len(self.yabloc_relayed))
+        self.assertGreater(len(self.ndt_relayed), 5)
+        self.assertGreater(len(self.yabloc_relayed), 5)
 
         # Change UNINITIALIZED -> INITIALIZED
-        qos_profile = QoSProfile(depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         pub_init_state = self.test_node.create_publisher(
             LocalizationInitializationState,
             "/localization/initialization_state",
-            qos_profile,
+            QoSProfile(depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL),
         )
         init_state = LocalizationInitializationState()
         init_state._state = LocalizationInitializationState.INITIALIZED
         pub_init_state.publish(init_state)
-
-        # Wait until the node publishes some topic
-        end_time = time.time() + 1.0  # 1.5s
-        while time.time() < end_time:
-            rclpy.spin_once(self.test_node, timeout_sec=0.1)
-
-        # Check if the arbiter state is transitioning correctly
-        self.assertEqual(msg_buffer[-1], "enable All\nestimated pose has not been published yet")
-
-        # Wait until the node publishes some topic
-        end_time = time.time() + 1.0  # 1.5s
-        while time.time() < end_time:
-            rclpy.spin_once(self.test_node, timeout_sec=0.1)
-
-        # Check if the arbiter state is transitioning correctly
-        self.assertEqual(msg_buffer[-1], "enable All\nestimated pose has not been published yet")
 
         # Publish dummy estimated pose
         pub_pose_stamped = self.test_node.create_publisher(
@@ -128,16 +169,35 @@ class TestPoseEstimatorManager(unittest.TestCase):
             "/localization/pose_with_covariance",
             10,
         )
-        pose_stamped = PoseWithCovarianceStamped()
-        pub_pose_stamped.publish(pose_stamped)
+        pub_pose_stamped.publish(PoseWithCovarianceStamped())
 
-        # Wait until the node publishes some topic
-        end_time = time.time() + 1.5  # 1.5s
-        while time.time() < end_time:
+        # Because pointcloud_map is not broadcasted, the arbiter state must be following:
+        #  - ndt: disabled
+        #  - yabloc: enabled
+        #  - eagleye: disabled
+        #  - artag: disabled
+
+        # Wait 1.0 second for the node state to change
+        self.spin_for(1.0)
+
+        # Clear buffer
+        self.ndt_relayed = []
+        self.yabloc_relayed = []
+
+        # Publish dummy input topics
+        for _ in range(10):
+            self.publish_input_topics()
             rclpy.spin_once(self.test_node, timeout_sec=0.1)
 
-        # Check if the arbiter state is transitioning correctly
-        self.assertEqual(msg_buffer[-1], "enable YabLoc\npcd is not subscribed yet")
+        # Wait 0.5 second for all topics to be subscribed
+        self.spin_for(0.5)
+
+        # Confirm that yabloc topic is relayed and ndt toic is not relayed.
+        print("ndt", len(self.ndt_relayed))
+        print("yabloc", len(self.yabloc_relayed))
+        self.assertGreater(len(self.yabloc_relayed), 5)
+        self.assertEqual(len(self.ndt_relayed), 0)
+        return
 
 
 @launch_testing.post_shutdown_test()
