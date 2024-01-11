@@ -27,12 +27,12 @@ from launch.launch_description_sources import AnyLaunchDescriptionSource
 import launch_testing
 import pytest
 import rclpy
-from rclpy.qos import DurabilityPolicy, ReliabilityPolicy
+from rclpy.qos import DurabilityPolicy
 from rclpy.qos import QoSProfile
+from rclpy.qos import ReliabilityPolicy
+from sensor_msgs.msg import Image
+from sensor_msgs.msg import PointCloud2
 from std_srvs.srv import SetBool
-from sensor_msgs.msg import PointCloud2, Image
-import time
-
 
 # This test confirms that the point cloud is initially relayed by arbiter.
 # Then, the state transitions to YabLoc mode and confirms that the point cloud is no longer relayed.

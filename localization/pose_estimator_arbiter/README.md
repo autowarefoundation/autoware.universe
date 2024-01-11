@@ -57,7 +57,7 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
 
 | Name                                             | Type   | Description                                                                                 |
 | ------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------- |
-| `pcd_occupancy_rule/pcd_density_upper_threshold` | double | If the number of occupied voxel around the self-position exceeds this, NDT is allowed        |
+| `pcd_occupancy_rule/pcd_density_upper_threshold` | double | If the number of occupied voxel around the self-position exceeds this, NDT is allowed       |
 | `pcd_occupancy_rule/pcd_density_lower_threshold` | double | If the number of occupied voxel around the self-position is less than this, NDT is disabled |
 | `ar_marker_rule/ar_marker_available_distance`    | double | If the distance to the nearest AR marker exceeds this, disable artag-based-localizer        |
 
@@ -177,14 +177,14 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
 Even if `pose_source` includes an unexpected string, it will be filtered appropriately.
 Please see the table below for details.
 
-| given runtime argument                       | parsed pose_estimator_arbiter's param (pose_sources) |
-| -------------------------------------------- | ---------------------------------------------------- |
-| `pose_source:=ndt`                           | `["ndt"]`                                            |
-| `pose_source:=nan`                           | `[]`                                                 |
-| `pose_source:=yabloc_ndt`                    | `["ndt","yabloc"]`                                   |
-| `pose_source:=yabloc_ndt_ndt_ndt`            | `["ndt","yabloc"]`                                   |
-| `pose_source:=ndt_yabloc_eagleye`            | `["ndt","yabloc","eagleye"]`                         |
-| `pose_source:=ndt_yabloc_nan_eagleye_artag`  | `["ndt","yabloc","eagleye","artag"]`                 |
+| given runtime argument                      | parsed pose_estimator_arbiter's param (pose_sources) |
+| ------------------------------------------- | ---------------------------------------------------- |
+| `pose_source:=ndt`                          | `["ndt"]`                                            |
+| `pose_source:=nan`                          | `[]`                                                 |
+| `pose_source:=yabloc_ndt`                   | `["ndt","yabloc"]`                                   |
+| `pose_source:=yabloc_ndt_ndt_ndt`           | `["ndt","yabloc"]`                                   |
+| `pose_source:=ndt_yabloc_eagleye`           | `["ndt","yabloc","eagleye"]`                         |
+| `pose_source:=ndt_yabloc_nan_eagleye_artag` | `["ndt","yabloc","eagleye","artag"]`                 |
 
 ## Switching Rules
 
@@ -220,7 +220,7 @@ This rule basically allows only one pose_estimator to be activated.
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1      | If localization initialization state is not `INITIALIZED`, enable all pose_estimators. This is because system does not know which pose_estimator is available for initial localization. |
 | 2      | If ego-position is not subscribed yet, enable all pose_estimators. This is because it is not possible to determine which pose_estimators are available.                                 |
-| 3      | If ego-position enters Eagleye area, enable Eagleye. See [Eagleye area](#eagleye-area) for more details                                                                                  |
+| 3      | If ego-position enters Eagleye area, enable Eagleye. See [Eagleye area](#eagleye-area) for more details                                                                                 |
 | 4      | If there are landmarks in the surrounding area, enable AR tag based estimation.                                                                                                         |
 | 5      | If YabLoc is not enabled as a runtime argument, enable NDT.                                                                                                                             |
 | 6      | If NDT is not enabled as a runtime argument, enable YabLoc.                                                                                                                             |
