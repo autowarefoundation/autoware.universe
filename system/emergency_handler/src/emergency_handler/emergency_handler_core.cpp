@@ -497,9 +497,11 @@ void EmergencyHandler::updateMrmState()
           return;
         }
       }
-      if (isStopped()) {
-        transitionTo(MrmState::MRM_SUCCEEDED);
-        return;
+      else {
+        if (isStopped()) {
+          transitionTo(MrmState::MRM_SUCCEEDED);
+          return;
+        }
       }
     } else if (mrm_state_.state == MrmState::MRM_SUCCEEDED) {
       // Do nothing(only checking common recovery events)
