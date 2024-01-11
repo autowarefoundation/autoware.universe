@@ -1,4 +1,4 @@
-#include "SteeringWheelDisplay.h"
+#include "steering_wheel_display.hpp"
 
 #include <QFontDatabase>
 #include <QPainter>
@@ -31,6 +31,7 @@ SteeringWheelDisplay::SteeringWheelDisplay()
 
   // Load the wheel image
   wheelImage.load(":/assets/images/wheel.png");
+  scaledWheelImage = wheelImage.scaled(54, 54, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
 void SteeringWheelDisplay::updateSteeringData(
@@ -51,36 +52,31 @@ void SteeringWheelDisplay::updateSteeringData(
 
 void SteeringWheelDisplay::drawSteeringWheel(QPainter & painter, const QRectF & backgroundRect)
 {
-  int wheelCenterX = backgroundRect.width() - wheelImage.width() - 20;        // Adjust X position
-  int wheelCenterY = backgroundRect.height() / 2 + wheelImage.height() - 10;  // Center Y position
-
   // Enable Antialiasing for smoother drawing
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-  // Draw the wheel image
-  QImage smallerImage = wheelImage.scaled(54, 54, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  QImage wheel = coloredImage(scaledWheelImage, QColor(255, 255, 255, 255));
 
-  QImage wheel = coloredImage(smallerImage, QColor(255, 255, 255, 255));  // White overlay
+  // Rotate the wheel
+  qreal steeringAngle = steering_angle_;  // No need to round here
+  // Calculate the position
+  int wheelCenterX = backgroundRect.right() - wheel.width() - 17.5;
+  int wheelCenterY = backgroundRect.height() - wheel.height() + 15;
 
-  // Rotate the wheel according to the steering angle
-  qreal steeringAngle = steering_angle_;
-  // Use QMatrix for rotation
-  QMatrix rotation_matrix;
-  rotation_matrix.rotate(std::round(steeringAngle));
+  // Rotate the wheel image
+  QTransform rotationTransform;
+  rotationTransform.translate(wheel.width() / 2.0, wheel.height() / 2.0);
+  rotationTransform.rotate(steeringAngle);
+  rotationTransform.translate(-wheel.width() / 2.0, -wheel.height() / 2.0);
 
-  // Transform the wheel image
-  QImage rotatedWheel = wheel.transformed(QTransform(rotation_matrix), Qt::SmoothTransformation);
+  QImage rotatedWheel = wheel.transformed(rotationTransform, Qt::SmoothTransformation);
 
-  // Crop the rotated image to its original size
-  rotatedWheel = rotatedWheel.copy(
-    (rotatedWheel.width() - wheel.width()) / 2, (rotatedWheel.height() - wheel.height()) / 2,
-    wheel.width(), wheel.height());
+  QPointF drawPoint(
+    wheelCenterX - rotatedWheel.width() / 2, wheelCenterY - rotatedWheel.height() / 2);
 
-  // Draw the rotated image at the correct position
-  painter.drawImage(
-    QPointF(wheelCenterX - wheelImage.width() / 2, wheelCenterY - wheelImage.height() / 2),
-    rotatedWheel);
+  // Draw the rotated image
+  painter.drawImage(drawPoint.x(), drawPoint.y(), rotatedWheel);
 
   QString steeringAngleStringAfterModulo = QString::number(fmod(steeringAngle, 360), 'f', 0);
 
@@ -89,7 +85,7 @@ void SteeringWheelDisplay::drawSteeringWheel(QPainter & painter, const QRectF & 
   painter.setFont(steeringFont);
   painter.setPen(QColor(0, 0, 0, 255));
   QRect steeringRect(
-    wheelCenterX - wheelImage.width() / 2 - 2, wheelCenterY - wheelImage.height() / 2 - 2,
+    wheelCenterX - wheelImage.width() / 2, wheelCenterY - wheelImage.height() / 2,
     wheelImage.width(), wheelImage.height());
   painter.drawText(steeringRect, Qt::AlignCenter, steeringAngleStringAfterModulo + "°");
 }

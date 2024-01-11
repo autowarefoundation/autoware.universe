@@ -1,6 +1,5 @@
-#ifndef SPEEDLIMITDISPLAY_H_
-#define SPEEDLIMITDISPLAY_H_
-#ifndef Q_MOC_RUN
+#ifndef SPEEDLIMITDISPLAY_HPP_
+#define SPEEDLIMITDISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -15,17 +14,14 @@
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
-#endif
 
 namespace awf_2d_overlay_vehicle
 {
 
-class SpeedLimitDisplay : public rviz_common::Display
+class SpeedLimitDisplay
 {
-  Q_OBJECT
 public:
   SpeedLimitDisplay();
-  virtual ~SpeedLimitDisplay() override;
   void drawSpeedLimitIndicator(QPainter & painter, const QRectF & backgroundRect);
   void updateSpeedLimitData(const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
 
@@ -35,4 +31,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // SPEEDLIMITDISPLAY_H_
+#endif  // SPEEDLIMITDISPLAY_HPP_

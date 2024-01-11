@@ -1,4 +1,4 @@
-#include "SpeedLimitDisplay.h"
+#include "speed_limit_display.hpp"
 
 #include <QFontDatabase>
 #include <QPainter>
@@ -30,18 +30,10 @@ SpeedLimitDisplay::SpeedLimitDisplay() : current_limit(0.0)
   }
 }
 
-SpeedLimitDisplay::~SpeedLimitDisplay()
-{
-  // Cleanup if necessary
-}
-
 void SpeedLimitDisplay::updateSpeedLimitData(
   const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg)
 {
   current_limit = msg->max_velocity;
-
-  // Force a redraw
-  queueRender();
 }
 
 void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF & backgroundRect)
@@ -93,6 +85,3 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
 }
 
 }  // namespace awf_2d_overlay_vehicle
-
-#include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(awf_2d_overlay_vehicle::SpeedLimitDisplay, rviz_common::Display)

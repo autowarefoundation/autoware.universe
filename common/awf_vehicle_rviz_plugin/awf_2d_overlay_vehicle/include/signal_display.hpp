@@ -33,16 +33,16 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-#ifndef SIGNAL_DISPLAY_H_
-#define SIGNAL_DISPLAY_H_
+#ifndef SIGNAL_DISPLAY_HPP_
+#define SIGNAL_DISPLAY_HPP_
 #ifndef Q_MOC_RUN
-#include "GearDisplay.h"
-#include "SpeedDisplay.h"
-#include "SpeedLimitDisplay.h"
-#include "SteeringWheelDisplay.h"
-#include "TrafficDisplay.h"
-#include "TurnSignalsDisplay.h"
+#include "gear_display.hpp"
 #include "overlay_utils.hpp"
+#include "speed_display.hpp"
+#include "speed_limit_display.hpp"
+#include "steering_wheel_display.hpp"
+#include "traffic_display.hpp"
+#include "turn_signals_display.hpp"
 
 #include <QImage>
 #include <QString>
@@ -81,6 +81,12 @@ private Q_SLOTS:
   void updateOverlayPosition();
   void updateOverlayColor();
   void topic_updated_gear();
+  void topic_updated_steering();
+  void topic_updated_speed();
+  void topic_updated_speed_limit();
+  void topic_updated_turn_signals();
+  void topic_updated_hazard_lights();
+  // void topic_updated_traffic();
 
 private:
   std::mutex mutex_;
@@ -129,11 +135,11 @@ private:
     const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr & msg);
   void updateHazardLightsData(
     const autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr & msg);
-  // void updateTrafficLightData(const
-  // autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
   void updateSpeedLimitData(const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
+  // void updateTrafficLightData(
+  //   const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
   void drawWidget(QImage & hud);
 };
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // SIGNAL_DISPLAY_H_
+#endif  // SIGNAL_DISPLAY_HPP_

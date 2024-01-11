@@ -1,4 +1,4 @@
-#include "TurnSignalsDisplay.h"
+#include "turn_signals_display.hpp"
 
 #include <QFontDatabase>
 #include <QPainter>
@@ -26,18 +26,12 @@ TurnSignalsDisplay::TurnSignalsDisplay() : current_turn_signal_(0)
   arrowImage.load(":/assets/images/arrow.png");
 }
 
-TurnSignalsDisplay::~TurnSignalsDisplay()
-{
-  // Cleanup if necessary
-}
-
 void TurnSignalsDisplay::updateTurnSignalsData(
   const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr & msg)
 {
   try {
     // Assuming msg->report is the field you're interested in
     current_turn_signal_ = msg->report;
-    queueRender();
   } catch (const std::exception & e) {
     // Log the error
     std::cerr << "Error in processMessage: " << e.what() << std::endl;
@@ -50,7 +44,6 @@ void TurnSignalsDisplay::updateHazardLightsData(
   try {
     // Assuming msg->report is the field you're interested in
     current_hazard_lights_ = msg->report;
-    queueRender();
   } catch (const std::exception & e) {
     // Log the error
     std::cerr << "Error in processMessage: " << e.what() << std::endl;
@@ -108,6 +101,3 @@ QImage TurnSignalsDisplay::coloredImage(const QImage & source, const QColor & co
 }
 
 }  // namespace awf_2d_overlay_vehicle
-
-#include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(awf_2d_overlay_vehicle::TurnSignalsDisplay, rviz_common::Display)

@@ -1,4 +1,4 @@
-#include "GearDisplay.h"
+#include "gear_display.hpp"
 
 #include <QFontDatabase>
 #include <QPainter>
@@ -28,11 +28,6 @@ GearDisplay::GearDisplay() : current_gear_(0)
   if (fontId == -1 || fontId2 == -1) {
     std::cout << "Failed to load the Quicksand font.";
   }
-}
-
-GearDisplay::~GearDisplay()
-{
-  // Cleanup if necessary
 }
 
 void GearDisplay::updateGearData(
@@ -78,6 +73,3 @@ void GearDisplay::drawGearIndicator(QPainter & painter, const QRectF & backgroun
 }
 
 }  // namespace awf_2d_overlay_vehicle
-
-#include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(awf_2d_overlay_vehicle::GearDisplay, rviz_common::Display)

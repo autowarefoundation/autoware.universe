@@ -1,6 +1,5 @@
-#ifndef TURNSIGNALSDISPLAY_H_
-#define TURNSIGNALSDISPLAY_H_
-#ifndef Q_MOC_RUN
+#ifndef TURNSIGNALSDISPLAY_HPP_
+#define TURNSIGNALSDISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -18,16 +17,14 @@
 #include <OgreTexture.h>
 
 #include <chrono>
-#endif
+
 namespace awf_2d_overlay_vehicle
 {
 
-class TurnSignalsDisplay : public rviz_common::Display
+class TurnSignalsDisplay
 {
-  Q_OBJECT
 public:
   TurnSignalsDisplay();
-  virtual ~TurnSignalsDisplay() override;
   void drawArrows(QPainter & painter, const QRectF & backgroundRect, const QColor & color);
   void updateTurnSignalsData(
     const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr & msg);
@@ -47,4 +44,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // TURNSIGNALSDISPLAY_H_
+#endif  // TURNSIGNALSDISPLAY_HPP_

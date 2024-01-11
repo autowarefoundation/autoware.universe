@@ -1,4 +1,4 @@
-#include "TrafficDisplay.h"
+#include "traffic_display.hpp"
 
 #include <QFontDatabase>
 #include <QPainter>
@@ -24,11 +24,6 @@ TrafficDisplay::TrafficDisplay() : current_traffic_(0)
   traffic_light_image_.load(":/assets/images/traffic.png");
 }
 
-TrafficDisplay::~TrafficDisplay()
-{
-  // Cleanup if necessary
-}
-
 // void TrafficDisplay::updateTrafficLightData(const
 // autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
 // {
@@ -37,7 +32,6 @@ TrafficDisplay::~TrafficDisplay()
 
 //     // RCLCPP_INFO(rclcpp::get_logger("rcl"), "Traffic Light: %d", msg->elements.size());
 //     // Force the plugin to redraw
-//     queueRender();
 // }
 
 void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect)
@@ -78,6 +72,3 @@ QImage TrafficDisplay::coloredImage(const QImage & source, const QColor & color)
 }
 
 }  // namespace awf_2d_overlay_vehicle
-
-#include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(awf_2d_overlay_vehicle::TrafficDisplay, rviz_common::Display)

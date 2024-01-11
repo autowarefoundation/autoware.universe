@@ -1,4 +1,4 @@
-#include "SpeedDisplay.h"
+#include "speed_display.hpp"
 
 #include <QFontDatabase>
 #include <QPainter>
@@ -30,11 +30,6 @@ SpeedDisplay::SpeedDisplay() : current_speed_(0.0)
   }
 }
 
-SpeedDisplay::~SpeedDisplay()
-{
-  // Cleanup if necessary
-}
-
 void SpeedDisplay::updateSpeedData(
   const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr & msg)
 {
@@ -43,8 +38,6 @@ void SpeedDisplay::updateSpeedData(
     float speed = msg->longitudinal_velocity;
     // we received it as a m/s value, but we want to display it in km/h
     current_speed_ = (speed * 3.6);
-
-    queueRender();
   } catch (const std::exception & e) {
     // Log the error
     std::cerr << "Error in processMessage: " << e.what() << std::endl;
@@ -57,7 +50,6 @@ void SpeedDisplay::updateSpeedData(
 //     try
 //     {
 //         current_speed_ = std::round(msg->state.longitudinal_velocity_mps * 3.6);
-//         queueRender();
 //     }
 //     catch (const std::exception &e)
 //     {
@@ -97,6 +89,3 @@ void SpeedDisplay::drawSpeedDisplay(QPainter & painter, const QRectF & backgroun
 }
 
 }  // namespace awf_2d_overlay_vehicle
-
-#include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(awf_2d_overlay_vehicle::SpeedDisplay, rviz_common::Display)

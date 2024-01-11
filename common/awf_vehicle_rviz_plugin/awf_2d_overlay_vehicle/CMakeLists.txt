@@ -20,17 +20,18 @@ find_package(std_msgs REQUIRED)
 set(
         headers_to_moc
         include/overlay_text_display.hpp
-        include/signal_display.h
-        include/GearDisplay.h
-        include/SpeedDisplay.h
-        include/TurnSignalsDisplay.h
-        include/TrafficDisplay.h
-        include/SpeedLimitDisplay.h
+        include/signal_display.hpp
+
 )
 
 set(
   headers_to_not_moc
-  include/SteeringWheelDisplay.h
+  include/steering_wheel_display.hpp
+  include/gear_display.hpp
+  include/speed_display.hpp
+  include/turn_signals_display.hpp
+  include/traffic_display.hpp
+  include/speed_limit_display.hpp
 )
 
 qt5_add_resources(RESOURCES_RCC resources.qrc)
@@ -45,12 +46,12 @@ set(
         src/overlay_text_display.cpp
         src/overlay_utils.cpp
         src/signal_display.cpp
-        src/SteeringWheelDisplay.cpp
-        src/GearDisplay.cpp
-        src/SpeedDisplay.cpp
-        src/TurnSignalsDisplay.cpp
-        src/TrafficDisplay.cpp
-        src/SpeedLimitDisplay.cpp
+        src/steering_wheel_display.cpp
+        src/gear_display.cpp
+        src/speed_display.cpp
+        src/turn_signals_display.cpp
+        src/traffic_display.cpp
+        src/speed_limit_display.cpp
         ${RESOURCES_RCC} # Add this line
 
 )

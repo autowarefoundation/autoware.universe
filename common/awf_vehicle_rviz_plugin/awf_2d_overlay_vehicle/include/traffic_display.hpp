@@ -1,6 +1,5 @@
-#ifndef TRAFFICDISPLAY_H_
-#define TRAFFICDISPLAY_H_
-#ifndef Q_MOC_RUN
+#ifndef TRAFFICDISPLAY_HPP_
+#define TRAFFICDISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -10,24 +9,21 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
 
+#include <autoware_perception_msgs/msg/traffic_signal.hpp>
+// #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal_element.hpp>
+
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
 
-// #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
-// #include <autoware_perception_msgs/msg/traffic_signal.hpp>
-// #include <autoware_perception_msgs/msg/traffic_signal_element.hpp>
-#endif
-
 namespace awf_2d_overlay_vehicle
 {
 
-class TrafficDisplay : public rviz_common::Display
+class TrafficDisplay
 {
-  Q_OBJECT
 public:
   TrafficDisplay();
-  virtual ~TrafficDisplay() override;
   void drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect);
   // void updateTrafficLightData(const
   // autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
@@ -49,4 +45,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // TRAFFICDISPLAY_H_
+#endif  // TRAFFICDISPLAY_HPP_

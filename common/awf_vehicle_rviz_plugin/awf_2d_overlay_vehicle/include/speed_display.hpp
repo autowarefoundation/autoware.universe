@@ -1,6 +1,5 @@
-#ifndef SPEEDDISPLAY_H_
-#define SPEEDDISPLAY_H_
-#ifndef Q_MOC_RUN
+#ifndef SPEEDDISPLAY_HPP_
+#define SPEEDDISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -15,17 +14,14 @@
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
-#endif
 
 namespace awf_2d_overlay_vehicle
 {
 
-class SpeedDisplay : public rviz_common::Display
+class SpeedDisplay
 {
-  Q_OBJECT
 public:
   SpeedDisplay();
-  virtual ~SpeedDisplay() override;
   void drawSpeedDisplay(QPainter & painter, const QRectF & backgroundRect);
   void updateSpeedData(const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr & msg);
 
@@ -35,4 +31,4 @@ private:
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // SPEEDDISPLAY_H_
+#endif  // SPEEDDISPLAY_HPP_

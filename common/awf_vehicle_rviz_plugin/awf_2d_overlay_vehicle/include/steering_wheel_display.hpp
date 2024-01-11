@@ -1,5 +1,5 @@
-#ifndef STEERINGWHEELDISPLAY_H_
-#define STEERINGWHEELDISPLAY_H_
+#ifndef STEERINGWHEELDISPLAY_HPP_
+#define STEERINGWHEELDISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -30,9 +30,10 @@ private:
   float steering_angle_ = 0.0f;
 
   QImage wheelImage;
+  QImage scaledWheelImage;
   QImage coloredImage(const QImage & source, const QColor & color);
 };
 
 }  // namespace awf_2d_overlay_vehicle
 
-#endif  // STEERINGWHEELDISPLAY_H_
+#endif  // STEERINGWHEELDISPLAY_HPP_
