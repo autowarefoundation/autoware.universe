@@ -180,7 +180,7 @@ visualization_msgs::msg::Marker::SharedPtr get_acceleration_text_marker_ptr(
   return marker_ptr;
 }
 
-void calc_arc_line_list(
+void calc_arc_line_strip(
   const double start_angle, const double end_angle, const double radius,
   std::vector<geometry_msgs::msg::Point> & points)
 {
@@ -189,6 +189,7 @@ void calc_arc_line_list(
   point.x = 0;
   point.y = 0;
   point.z = 0;
+  points.push_back(point);
   // arc points
   const double maximum_delta_angle = 10.0 * M_PI / 180.0;
   const int num_points = std::max(
@@ -196,15 +197,12 @@ void calc_arc_line_list(
   for (int i = 0; i < num_points; ++i) {
     const double angle = start_angle + (end_angle - start_angle) * static_cast<double>(i) /
                                         static_cast<double>(num_points - 1);
-    // arc lines
-    points.push_back(point);
     point.x = radius * std::cos(angle);
     point.y = radius * std::sin(angle);
     point.z = 0;
     points.push_back(point);
   }
-  // last line
-  points.push_back(point);
+  // last point
   point.x = 0;
   point.y = 0;
   point.z = 0;
@@ -254,24 +252,38 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
   point.z = 0;
   marker_ptr->points.push_back(point);
 
+  // marker configuration
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
+  marker_ptr->color.a = 0.999;
+  marker_ptr->color.r = 1.0;
+  marker_ptr->color.g = 1.0;
+  marker_ptr->color.b = 1.0;
+  return marker_ptr;
+}
+
+visualization_msgs::msg::Marker::SharedPtr get_yaw_covariance_marker_ptr(
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width)
+{
+  auto marker_ptr = std::make_shared<Marker>();
+  marker_ptr->type = visualization_msgs::msg::Marker::LINE_STRIP;
+  marker_ptr->ns = std::string("yaw covariance");
+  marker_ptr->scale.x = line_width;
+  marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
+  marker_ptr->pose = pose_with_covariance.pose;
+  geometry_msgs::msg::Point point;
+
   // orientation covariance
   double yaw_vector_length = 3.0;
   double yaw_sigma = std::sqrt(pose_with_covariance.covariance[35]);  // 2.448 sigma is 95%
-  // get yaw angle from quaternion
-  double yaw = std::atan2(
-    2.0 * (pose_with_covariance.pose.orientation.w * pose_with_covariance.pose.orientation.z +
-           pose_with_covariance.pose.orientation.x * pose_with_covariance.pose.orientation.y),
-    1.0 - 2.0 * (pose_with_covariance.pose.orientation.y * pose_with_covariance.pose.orientation.y +
-                 pose_with_covariance.pose.orientation.z * pose_with_covariance.pose.orientation.z));
   // get arc points
   if (yaw_sigma > M_PI) {
     yaw_vector_length = 1.0;
   }
-  calc_arc_line_list(yaw - yaw_sigma, yaw + yaw_sigma, yaw_vector_length, marker_ptr->points);
+  calc_arc_line_strip(-yaw_sigma, yaw_sigma, yaw_vector_length, marker_ptr->points);
 
   // marker configuration
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
-  marker_ptr->color.a = 0.999;
+  marker_ptr->color.a = 0.9;
   marker_ptr->color.r = 1.0;
   marker_ptr->color.g = 1.0;
   marker_ptr->color.b = 1.0;

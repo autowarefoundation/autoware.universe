@@ -117,6 +117,10 @@ get_pose_with_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
+get_yaw_covariance_marker_ptr(
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width);
+
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_velocity_text_marker_ptr(
   const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
   const std_msgs::msg::ColorRGBA & color_rgba);
@@ -142,7 +146,7 @@ get_path_confidence_marker_ptr(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const std_msgs::msg::ColorRGBA & path_confidence_color);
 
-AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_arc_line_list(
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_arc_line_strip(
   const double start_angle, const double end_angle, const double radius,
   std::vector<geometry_msgs::msg::Point> & points);
 

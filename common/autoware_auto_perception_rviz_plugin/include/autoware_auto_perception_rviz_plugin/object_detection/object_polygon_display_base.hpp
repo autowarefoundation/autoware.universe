@@ -65,7 +65,10 @@ public:
     m_display_label_property{"Display Label", true, "Enable/disable label visualization", this},
     m_display_uuid_property{"Display UUID", true, "Enable/disable uuid visualization", this},
     m_display_pose_with_covariance_property{
-      "Display PoseWithCovariance", true, "Enable/disable pose with covariance visualization",
+      "Display Pose Covariance", true, "Enable/disable pose covariance visualization",
+      this},
+    m_display_yaw_covariance_property{
+      "Display Yaw Covariance", true, "Enable/disable yaw covariance visualization",
       this},
     m_display_velocity_text_property{
       "Display Velocity", true, "Enable/disable velocity text visualization", this},
@@ -248,6 +251,16 @@ protected:
     }
   }
 
+  std::optional<Marker::SharedPtr> get_yaw_covariance_marker_ptr(
+    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width) const
+  {
+    if (m_display_yaw_covariance_property.getBool()) {
+      return detail::get_yaw_covariance_marker_ptr(pose_with_covariance, line_width);
+    } else {
+      return std::nullopt;
+    }
+  }
+
   template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_velocity_text_marker_ptr(
     const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
@@ -425,6 +438,8 @@ private:
   rviz_common::properties::BoolProperty m_display_uuid_property;
   // Property to enable/disable pose with covariance visualization
   rviz_common::properties::BoolProperty m_display_pose_with_covariance_property;
+  // Property to enable/disable yaw covariance visualization
+  rviz_common::properties::BoolProperty m_display_yaw_covariance_property;
   // Property to enable/disable velocity text visualization
   rviz_common::properties::BoolProperty m_display_velocity_text_property;
   // Property to enable/disable acceleration text visualization
