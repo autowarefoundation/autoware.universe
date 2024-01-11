@@ -12,10 +12,10 @@ CTRV model is a model that assumes constant turn rate and velocity magnitude.
 
 $$
 \begin{aligned}
-x_{k+1} & = x_{k} + v_{x_k} \cos(\psi_k) \cdot {d t} \\
-y_{k+1} & = y_{k} + v_{x_k} \sin(\psi_k) \cdot {d t} \\
+x_{k+1} & = x_{k} + v_{k} \cos(\psi_k) \cdot {d t} \\
+y_{k+1} & = y_{k} + v_{k} \sin(\psi_k) \cdot {d t} \\
 \psi_{k+1} & = \psi_k + \dot\psi_{k} \cdot {d t} \\
-v_{x_{k+1}} & = v_{x_{k}} \\
+v_{k+1} & = v_{k} \\
 \dot\psi_{k+1} & = \dot\psi_{k} \\
 \end{aligned}
 $$
@@ -24,8 +24,8 @@ $$
 
 $$
 A = \begin{bmatrix}
-1 & 0 & -v_x \sin(\psi) \cdot dt & \cos(\psi) \cdot dt & 0 \\
-0 & 1 & v_x \cos(\psi) \cdot dt & \sin(\psi) \cdot dt & 0 \\
+1 & 0 & -v \sin(\psi) \cdot dt & \cos(\psi) \cdot dt & 0 \\
+0 & 1 & v \cos(\psi) \cdot dt & \sin(\psi) \cdot dt & 0 \\
 0 & 0 & 1 & 0 & dt \\
 0 & 0 & 0 & 1 & 0 \\
 0 & 0 & 0 & 0 & 1 \\
