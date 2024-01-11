@@ -14,7 +14,6 @@
 
 #include "behavior_path_start_planner_module/util.hpp"
 
-#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
@@ -92,7 +91,6 @@ lanelet::ConstLanelets getPullOutLanes(
   const auto start_pose = planner_data->route_handler->getOriginalStartPose();
 
   lanelet::ConstLanelet current_shoulder_lane;
-  lanelet::ConstLanelets shoulder_lanes;
   if (route_handler->getPullOutStartLane(
         route_handler->getShoulderLanelets(), start_pose, vehicle_width, &current_shoulder_lane)) {
     // pull out from shoulder lane

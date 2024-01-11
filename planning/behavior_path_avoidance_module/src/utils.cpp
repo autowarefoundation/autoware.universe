@@ -16,7 +16,6 @@
 
 #include "behavior_path_avoidance_module/data_structs.hpp"
 #include "behavior_path_avoidance_module/utils.hpp"
-#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
@@ -1953,7 +1952,7 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
 
 DrivableLanes generateExpandDrivableLanes(
   const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters)
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool in_avoidance_maneuver)
 {
   const auto & route_handler = planner_data->route_handler;
 
@@ -1967,6 +1966,11 @@ DrivableLanes generateExpandDrivableLanes(
 
   // 1. get left/right side lanes
   const auto update_left_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto next_lanes = route_handler->getNextLanelets(target_lane);
+    const auto is_stop_signal = utils::traffic_light::isTrafficSignalStop(next_lanes, planner_data);
+    if (is_stop_signal && !in_avoidance_maneuver) {
+      return;
+    }
     const auto all_left_lanelets = route_handler->getAllLeftSharedLinestringLanelets(
       target_lane, parameters->use_opposite_lane, true);
     if (!all_left_lanelets.empty()) {
@@ -1977,6 +1981,11 @@ DrivableLanes generateExpandDrivableLanes(
     }
   };
   const auto update_right_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto next_lanes = route_handler->getNextLanelets(target_lane);
+    const auto is_stop_signal = utils::traffic_light::isTrafficSignalStop(next_lanes, planner_data);
+    if (is_stop_signal && !in_avoidance_maneuver) {
+      return;
+    }
     const auto all_right_lanelets = route_handler->getAllRightSharedLinestringLanelets(
       target_lane, parameters->use_opposite_lane, true);
     if (!all_right_lanelets.empty()) {

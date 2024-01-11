@@ -393,7 +393,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
     return {};
   }
 
-  // Check if the ego should stop beyond the stop line.
+  // Check if the ego should stop at the stop line or the other points.
   const bool stop_at_stop_line =
     dist_ego_to_stop < nearest_stop_info->second &&
     nearest_stop_info->second < dist_ego_to_stop + planner_param_.far_object_threshold;
@@ -404,9 +404,9 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
       return createStopFactor(*default_stop_pose, stop_factor_points);
     }
   } else {
-    // Stop beyond the stop line
     const auto stop_pose = calcLongitudinalOffsetPose(
-      ego_path.points, nearest_stop_info->first, planner_param_.stop_distance_from_object);
+      ego_path.points, nearest_stop_info->first,
+      -base_link2front - planner_param_.stop_distance_from_object);
     if (stop_pose) {
       return createStopFactor(*stop_pose, stop_factor_points);
     }
@@ -1055,19 +1055,20 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
     crosswalk_.regulatoryElementsAs<const lanelet::TrafficLight>();
 
   for (const auto & traffic_lights_reg_elem : traffic_lights_reg_elems) {
-    const auto traffic_signal_stamped =
+    const auto traffic_signal_stamped_opt =
       planner_data_->getTrafficSignal(traffic_lights_reg_elem->id());
-    if (!traffic_signal_stamped) {
+    if (!traffic_signal_stamped_opt) {
       continue;
     }
+    const auto traffic_signal_stamped = traffic_signal_stamped_opt.value();
 
     if (
       planner_param_.traffic_light_state_timeout <
-      (clock_->now() - traffic_signal_stamped->stamp).seconds()) {
+      (clock_->now() - traffic_signal_stamped.stamp).seconds()) {
       continue;
     }
 
-    const auto & lights = traffic_signal_stamped->signal.elements;
+    const auto & lights = traffic_signal_stamped.signal.elements;
     if (lights.empty()) {
       continue;
     }

@@ -2,17 +2,23 @@
 
 ## Purpose / Role
 
-The Start Planner module is designed to generate a path from the current ego position to the driving lane, avoiding static obstacles and implementing safety checks against dynamic obstacles. (Note: The feature of safety checks against dynamic obstacles is currently a work in progress.)
-This module is activated when a new route is received.
+The Start Planner module is designed to generate a path from the current ego position to the driving lane, avoiding static obstacles and stopping in response to dynamic obstacles when a collision is detected.
 
-Use cases are as follows
+Use cases include:
 
-- start smoothly from the current ego position to centerline.
-  ![case1](./images/start_from_road_lane.drawio.svg)
 - pull out from the side of the road lane to centerline.
-  ![case2](./images/start_from_road_side.drawio.svg)
+
+<figure markdown>
+  ![case1](images/start_from_road_side.drawio.svg){width=1000}
+  <figcaption>pull out from side of the road lane</figcaption>
+</figure>
+
 - pull out from the shoulder lane to the road lane centerline.
-  ![case3](./images/start_from_road_shoulder.drawio.svg)
+
+<figure markdown>
+  ![case2](images/start_from_start_from_road_shoulder.drawio.svg){width=1000}
+  <figcaption>pull out from the shoulder lane</figcaption>
+</figure>
 
 ## Design
 
@@ -59,18 +65,19 @@ PullOutPath --o PullOutPlannerBase
 
 ## General parameters for start_planner
 
-| Name                                                        | Unit  | Type   | Description                                                                 | Default value |
-| :---------------------------------------------------------- | :---- | :----- | :-------------------------------------------------------------------------- | :------------ |
-| th_arrived_distance_m                                       | [m]   | double | distance threshold for arrival of path termination                          | 1.0           |
-| th_distance_to_middle_of_the_road                           | [m]   | double | distance threshold to determine if the vehicle is on the middle of the road | 0.1           |
-| th_stopped_velocity_mps                                     | [m/s] | double | velocity threshold for arrival of path termination                          | 0.01          |
-| th_stopped_time_sec                                         | [s]   | double | time threshold for arrival of path termination                              | 1.0           |
-| th_turn_signal_on_lateral_offset                            | [m]   | double | lateral distance threshold for turning on blinker                           | 1.0           |
-| intersection_search_length                                  | [m]   | double | check if intersections exist within this length                             | 30.0          |
-| length_ratio_for_turn_signal_deactivation_near_intersection | [m]   | double | deactivate turn signal of this module near intersection                     | 0.5           |
-| collision_check_margin                                      | [m]   | double | Obstacle collision check margin                                             | 1.0           |
-| collision_check_distance_from_end                           | [m]   | double | collision check distance from end point. currently only for pull out        | 15.0          |
-| center_line_path_interval                                   | [m]   | double | reference center line path point interval                                   | 1.0           |
+| Name                                                        | Unit  | Type     | Description                                                                 | Default value   |
+| :---------------------------------------------------------- | :---- | :------- | :-------------------------------------------------------------------------- | :-------------- |
+| th_arrived_distance_m                                       | [m]   | double   | distance threshold for arrival of path termination                          | 1.0             |
+| th_distance_to_middle_of_the_road                           | [m]   | double   | distance threshold to determine if the vehicle is on the middle of the road | 0.1             |
+| th_stopped_velocity_mps                                     | [m/s] | double   | velocity threshold for arrival of path termination                          | 0.01            |
+| th_stopped_time_sec                                         | [s]   | double   | time threshold for arrival of path termination                              | 1.0             |
+| th_turn_signal_on_lateral_offset                            | [m]   | double   | lateral distance threshold for turning on blinker                           | 1.0             |
+| intersection_search_length                                  | [m]   | double   | check if intersections exist within this length                             | 30.0            |
+| length_ratio_for_turn_signal_deactivation_near_intersection | [m]   | double   | deactivate turn signal of this module near intersection                     | 0.5             |
+| collision_check_margins                                     | [m]   | [double] | Obstacle collision check margins list                                       | [2.0, 1.5, 1.0] |
+| collision_check_distance_from_end                           | [m]   | double   | collision check distance from end shift end pose                            | 1.0             |
+| collision_check_margin_from_front_object                    | [m]   | double   | collision check margin from front object                                    | 5.0             |
+| center_line_path_interval                                   | [m]   | double   | reference center line path point interval                                   | 1.0             |
 
 ## Safety check with static obstacles
 
@@ -242,6 +249,52 @@ If a safe path cannot be generated from the current position, search backwards f
 ![pull_out_after_back](./images/pull_out_after_back.drawio.svg)
 
 [pull out after backward driving video](https://user-images.githubusercontent.com/39142679/181025149-8fb9fb51-9b8f-45c4-af75-27572f4fba78.mp4)
+
+### **search priority**
+
+If a safe path with sufficient clearance for static obstacles cannot be generated forward, a backward search from the vehicle's current position is conducted to locate a suitable start point for a pull out path generation.
+
+During this backward search, different policies can be applied based on `search_priority` parameters:
+
+Selecting `efficient_path` focuses on creating a shift pull out path, regardless of how far back the vehicle needs to move.
+Opting for `short_back_distance` aims to find a location with the least possible backward movement.
+
+![priority_order](./images/priority_order.drawio.svg)
+
+`PriorityOrder` is defined as a vector of pairs, where each element consists of a `size_t` index representing a start pose candidate index, and the planner type. The PriorityOrder vector is processed sequentially from the beginning, meaning that the pairs listed at the top of the vector are given priority in the selection process for pull out path generation.
+
+#### `efficient_path`
+
+When `search_priority` is set to `efficient_path` and the preference is for prioritizing `shift_pull_out`, the `PriorityOrder` array is populated in such a way that `shift_pull_out` is grouped together for all start pose candidates before moving on to the next planner type. This prioritization is reflected in the order of the array, with `shift_pull_out` being listed before geometric_pull_out.
+
+| Index | Planner Type       |
+| ----- | ------------------ |
+| 0     | shift_pull_out     |
+| 1     | shift_pull_out     |
+| ...   | ...                |
+| N     | shift_pull_out     |
+| 0     | geometric_pull_out |
+| 1     | geometric_pull_out |
+| ...   | ...                |
+| N     | geometric_pull_out |
+
+This approach prioritizes trying all candidates with `shift_pull_out` before proceeding to `geometric_pull_out`, which may be efficient in situations where `shift_pull_out` is likely to be appropriate.
+
+#### `short_back_distance`
+
+For `search_priority` set to `short_back_distance`, the array alternates between planner types for each start pose candidate, which can minimize the distance the vehicle needs to move backward if the earlier candidates are successful.
+
+| Index | Planner Type       |
+| ----- | ------------------ |
+| 0     | shift_pull_out     |
+| 0     | geometric_pull_out |
+| 1     | shift_pull_out     |
+| 1     | geometric_pull_out |
+| ...   | ...                |
+| N     | shift_pull_out     |
+| N     | geometric_pull_out |
+
+This ordering is beneficial when the priority is to minimize the backward distance traveled, giving an equal chance for each planner to succeed at the closest possible starting position.
 
 ### **parameters for backward pull out start point search**
 

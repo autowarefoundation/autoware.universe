@@ -223,10 +223,12 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
     utils::avoidance::getExtendLanes(data.current_lanelets, getEgoPose(), planner_data_);
 
   // expand drivable lanes
+  const auto has_shift_point = !path_shifter_.getShiftLines().empty();
+  const auto in_avoidance_maneuver = has_shift_point || helper_->isShifted();
   std::for_each(
     data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
-      data.drivable_lanes.push_back(
-        utils::avoidance::generateExpandDrivableLanes(lanelet, planner_data_, parameters_));
+      data.drivable_lanes.push_back(utils::avoidance::generateExpandDrivableLanes(
+        lanelet, planner_data_, parameters_, in_avoidance_maneuver));
     });
 
   // calc drivable bound
@@ -1388,7 +1390,8 @@ void AvoidanceModule::insertReturnDeadLine(
     shifted_path.path.points, getEgoPosition(), shifted_path.path.points.size() - 1);
   const auto buffer = std::max(0.0, to_shifted_path_end - to_reference_path_end);
 
-  const auto min_return_distance = helper_->getMinAvoidanceDistance(shift_length);
+  const auto min_return_distance =
+    helper_->getMinAvoidanceDistance(shift_length) + helper_->getMinimumPrepareDistance();
   const auto to_stop_line = data.to_return_point - min_return_distance - buffer;
 
   // If we don't need to consider deceleration constraints, insert a deceleration point
