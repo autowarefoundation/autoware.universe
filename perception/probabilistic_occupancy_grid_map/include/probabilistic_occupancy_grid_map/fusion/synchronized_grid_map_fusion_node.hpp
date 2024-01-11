@@ -16,10 +16,9 @@
 #define PROBABILISTIC_OCCUPANCY_GRID_MAP__FUSION__SYNCHRONIZED_GRID_MAP_FUSION_NODE_HPP_
 
 #include "probabilistic_occupancy_grid_map/fusion/single_frame_fusion_policy.hpp"
+#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_fixed.hpp"
 #include "probabilistic_occupancy_grid_map/updater/occupancy_grid_map_log_odds_bayes_filter_updater.hpp"
 #include "probabilistic_occupancy_grid_map/updater/occupancy_grid_map_updater_interface.hpp"
-
-#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_fixed.hpp"
 
 #include <builtin_interfaces/msg/time.hpp>
 #include <rclcpp/rclcpp.hpp>
