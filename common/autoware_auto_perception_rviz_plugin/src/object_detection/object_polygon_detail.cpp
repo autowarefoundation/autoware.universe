@@ -138,6 +138,59 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
   return marker_ptr;
 }
 
+visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width)
+{
+  auto marker_ptr = std::make_shared<Marker>();
+  marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+  marker_ptr->ns = std::string("twist covariance");
+  marker_ptr->scale.x = line_width;
+  marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
+  marker_ptr->pose = pose_with_covariance.pose;
+  geometry_msgs::msg::Point point;
+
+  // velocity covariance
+  // extract eigen values and eigen vectors
+
+  // yaw rate covariance
+  const double yaw_rate_covariance = twist_with_covariance.covariance[35];
+  const double yaw_rate_sigma = std::sqrt(yaw_rate_covariance);  // 2.448 sigma is 95%
+  const double yaw_rate = twist_with_covariance.twist.angular.z;
+  const double velocity = std::sqrt(
+    twist_with_covariance.twist.linear.x * twist_with_covariance.twist.linear.x +
+    twist_with_covariance.twist.linear.y * twist_with_covariance.twist.linear.y +
+    twist_with_covariance.twist.linear.z * twist_with_covariance.twist.linear.z);
+  const double velocity_angle =
+    std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
+
+  point.x = velocity * std::cos(velocity_angle + yaw_rate);
+  point.y = velocity * std::sin(velocity_angle + yaw_rate);
+  point.z = 0;
+  marker_ptr->points.push_back(point);
+  point.x = velocity * std::cos(velocity_angle + yaw_rate + yaw_rate_sigma);
+  point.y = velocity * std::sin(velocity_angle + yaw_rate + yaw_rate_sigma);
+  point.z = 0;
+  marker_ptr->points.push_back(point);
+
+  point.x = velocity * std::cos(velocity_angle + yaw_rate);
+  point.y = velocity * std::sin(velocity_angle + yaw_rate);
+  point.z = 0;
+  marker_ptr->points.push_back(point);
+  point.x = velocity * std::cos(velocity_angle + yaw_rate - yaw_rate_sigma);
+  point.y = velocity * std::sin(velocity_angle + yaw_rate - yaw_rate_sigma);
+  point.z = 0;
+  marker_ptr->points.push_back(point);
+
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
+  marker_ptr->color.a = 0.9;
+  marker_ptr->color.r = 1.0;
+  marker_ptr->color.g = 0.0;
+  marker_ptr->color.b = 0.2;
+
+  return marker_ptr;
+}
+
 visualization_msgs::msg::Marker::SharedPtr get_velocity_text_marker_ptr(
   const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
   const std_msgs::msg::ColorRGBA & color_rgba)

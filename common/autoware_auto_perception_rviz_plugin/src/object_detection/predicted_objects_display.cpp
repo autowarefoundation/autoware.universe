@@ -113,7 +113,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
 
     // Get marker for pose with covariance
     auto pose_with_covariance_marker = get_pose_with_covariance_marker_ptr(
-      object.kinematics.initial_pose_with_covariance, get_line_width() / 2);
+      object.kinematics.initial_pose_with_covariance, get_line_width() * 0.5);
     if (pose_with_covariance_marker) {
       auto marker_ptr = pose_with_covariance_marker.value();
       marker_ptr->header = msg->header;
@@ -123,7 +123,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
 
     // Get marker for yaw covariance
     auto yaw_covariance_marker = get_yaw_covariance_marker_ptr(
-      object.kinematics.initial_pose_with_covariance, object.shape.dimensions.x / 1.6, get_line_width() / 2);
+      object.kinematics.initial_pose_with_covariance, object.shape.dimensions.x * 0.65, get_line_width() * 0.5);
     if (yaw_covariance_marker) {
       auto marker_ptr = yaw_covariance_marker.value();
       marker_ptr->header = msg->header;
@@ -189,6 +189,17 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
       twist_marker_ptr->header = msg->header;
       twist_marker_ptr->id = uuid_to_marker_id(object.object_id);
       markers.push_back(twist_marker_ptr);
+    }
+
+    // Get marker for twist
+    auto twist_covariance_marker = get_twist_covariance_marker_ptr(
+      object.kinematics.initial_pose_with_covariance,
+      object.kinematics.initial_twist_with_covariance, get_line_width() * 0.5);
+    if (twist_covariance_marker) {
+      auto marker_ptr = twist_covariance_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(marker_ptr);
     }
 
     // Add marker for each candidate path
