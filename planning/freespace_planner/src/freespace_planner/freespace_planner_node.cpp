@@ -465,7 +465,9 @@ void FreespacePlannerNode::onTimer()
       reset_in_progress_ = false;
     } else {
       // Will keep current stop trajectory
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Waiting for the vehicle to stop before generating a new trajectory.");
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 1000,
+        "Waiting for the vehicle to stop before generating a new trajectory.");
     }
   }
 
