@@ -36,12 +36,13 @@ Also, even if both can be activated at the same time, the Kalman Filter may be a
 
 The following video demonstrates the switching of four different pose estimators.
 
-<div><video controls src="https://github-production-user-asset-6210df.s3.amazonaws.com/24854875/295755577-62b26fdd-dcf0-4b1c-a1a0-ecd633413196.mp4" muted="false" width="400"></video></div>
+<div><video controls src="https://github-production-user-asset-6210df.s3.amazonaws.com/24854875/295755577-62b26fdd-dcf0-4b1c-a1a0-ecd633413196.mp4" muted="false" width="800"></video></div>
 
 Users can reproduce the demonstration using the following data and launch command:
 
-- rosbag: TODO:
-- map: TODO:
+[sample data (rosbag & map)](https://drive.google.com/file/d/1MxLo1Sw6PdvfkyOYf_9A5dZ9uli1vPvS/view)
+The rosbag is simulated data created by [AWSIM](https://tier4.github.io/AWSIM/).
+The map is an edited version of the [original map data](https://github.com/tier4/AWSIM/releases/download/v1.1.0/nishishinjuku_autoware_map.zip) published on the AWSIM documentation page to make it suitable for multiple pose_estimators.
 
 ```bash
 ros2 launch autoware_launch logging_simulator.launch.xml \
