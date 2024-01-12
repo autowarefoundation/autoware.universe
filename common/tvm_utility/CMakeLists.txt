@@ -13,7 +13,7 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.14)
-project(tvm_utility)
+project(autoware_tvm_utility)
 
 include("${PROJECT_NAME}-extras.cmake")
 

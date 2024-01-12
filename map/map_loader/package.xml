@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>map_loader</name>
+  <name>autoware_map_loader</name>
   <version>0.1.0</version>
   <description>The map_loader package</description>
   <maintainer email="ryohsuke.mitsudome@tier4.jp">Ryohsuke Mitsudome</maintainer>
@@ -20,7 +20,7 @@
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
   <depend>fmt</depend>
-  <depend>geography_utils</depend>
+  <depend>autoware_geography_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>libpcl-all-dev</depend>

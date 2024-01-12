@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(bytetrack)
+project(autoware_bytetrack)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

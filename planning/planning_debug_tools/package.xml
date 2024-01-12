@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>planning_debug_tools</name>
+  <name>autoware_planning_debug_tools</name>
   <version>0.1.0</version>
   <description>The planning_debug_tools package</description>
   <maintainer email="takamasa.horibe@tier4.jp">Takamasa Horibe</maintainer>
@@ -19,11 +19,11 @@
 
   <depend>autoware_auto_planning_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>motion_utils</depend>
+  <depend>autoware_motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_planning_msgs</depend>
 

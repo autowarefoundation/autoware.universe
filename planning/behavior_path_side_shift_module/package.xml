@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>behavior_path_side_shift_module</name>
+  <name>autoware_behavior_path_side_shift_module</name>
   <version>0.1.0</version>
   <description>The behavior_path_side_shift_module package</description>
 
@@ -19,13 +19,13 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_auto_planning_msgs</depend>
-  <depend>behavior_path_planner</depend>
-  <depend>behavior_path_planner_common</depend>
+  <depend>autoware_behavior_path_planner</depend>
+  <depend>autoware_behavior_path_planner_common</depend>
   <depend>geometry_msgs</depend>
-  <depend>motion_utils</depend>
+  <depend>autoware_motion_utils</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_planning_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>

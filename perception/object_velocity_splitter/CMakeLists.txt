@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(object_velocity_splitter)
+project(autoware_object_velocity_splitter)
 
 # Compile options
 if(NOT CMAKE_CXX_STANDARD)

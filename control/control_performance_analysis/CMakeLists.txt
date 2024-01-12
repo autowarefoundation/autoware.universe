@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(control_performance_analysis)
+project(autoware_control_performance_analysis)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

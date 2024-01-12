@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>component_state_monitor</name>
+  <name>autoware_component_state_monitor</name>
   <version>0.1.0</version>
   <description>The component_state_monitor package</description>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
@@ -17,7 +17,7 @@
   <depend>rclcpp_components</depend>
   <depend>tier4_system_msgs</depend>
 
-  <exec_depend>topic_state_monitor</exec_depend>
+  <exec_depend>autoware_topic_state_monitor</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

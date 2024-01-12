@@ -11,10 +11,10 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <exec_depend>component_state_monitor</exec_depend>
-  <exec_depend>emergency_handler</exec_depend>
-  <exec_depend>system_error_monitor</exec_depend>
-  <exec_depend>system_monitor</exec_depend>
+  <exec_depend>autoware_component_state_monitor</exec_depend>
+  <exec_depend>autoware_emergency_handler</exec_depend>
+  <exec_depend>autoware_system_error_monitor</exec_depend>
+  <exec_depend>autoware_system_monitor</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

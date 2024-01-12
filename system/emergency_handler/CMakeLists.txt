@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(emergency_handler)
+project(autoware_emergency_handler)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

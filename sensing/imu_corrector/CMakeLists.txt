@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(imu_corrector)
+project(autoware_imu_corrector)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

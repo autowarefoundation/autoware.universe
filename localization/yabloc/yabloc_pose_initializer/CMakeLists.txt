@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(yabloc_pose_initializer)
+project(autoware_yabloc_pose_initializer)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

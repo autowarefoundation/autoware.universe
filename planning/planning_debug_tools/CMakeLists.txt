@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(planning_debug_tools)
+project(autoware_planning_debug_tools)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

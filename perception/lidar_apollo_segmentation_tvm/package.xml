@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <!DOCTYPE xml>
 <package format="3">
-  <name>lidar_apollo_segmentation_tvm</name>
+  <name>autoware_lidar_apollo_segmentation_tvm</name>
   <version>0.1.0</version>
-  <description>lidar_apollo_segmentation_tvm</description>
+  <description>autoware_lidar_apollo_segmentation_tvm</description>
   <maintainer email="ambroise.vincent@arm.com">Ambroise Vincent</maintainer>
   <maintainer email="xinyu.wang@tier4.jp">Xinyu Wang</maintainer>
   <license>Apache 2.0</license>
@@ -21,9 +21,9 @@
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_perception_msgs</depend>
-  <depend>tvm_utility</depend>
+  <depend>autoware_tvm_utility</depend>
   <depend>tvm_vendor</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>

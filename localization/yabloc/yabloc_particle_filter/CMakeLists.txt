@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(yabloc_particle_filter)
+project(autoware_yabloc_particle_filter)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>tree_structured_parzen_estimator</name>
+  <name>autoware_tree_structured_parzen_estimator</name>
   <version>0.1.0</version>
   <description>The tree_structured_parzen_estimator package</description>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>

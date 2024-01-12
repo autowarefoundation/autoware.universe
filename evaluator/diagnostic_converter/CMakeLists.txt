@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3) # Ubuntu 20.04 default CMake version
 
-project(diagnostic_converter)
+project(autoware_diagnostic_converter)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)

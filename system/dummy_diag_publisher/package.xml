@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>dummy_diag_publisher</name>
+  <name>autoware_dummy_diag_publisher</name>
   <version>0.1.0</version>
   <description>The dummy_diag_publisher ROS 2 package</description>
   <maintainer email="fumihito.ito@tier4.jp">Fumihito Ito</maintainer>
@@ -15,7 +15,7 @@
   <depend>fmt</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
 
   <exec_depend>rqt_reconfigure</exec_depend>
   <exec_depend>rqt_robot_monitor</exec_depend>

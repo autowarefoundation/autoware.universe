@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>static_centerline_optimizer</name>
+  <name>autoware_static_centerline_optimizer</name>
   <version>0.1.0</version>
   <description>The static_centerline_optimizer package</description>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
@@ -18,21 +18,21 @@
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
-  <depend>behavior_path_planner</depend>
+  <depend>autoware_behavior_path_planner</depend>
   <depend>geometry_msgs</depend>
   <depend>global_parameter_loader</depend>
-  <depend>interpolation</depend>
+  <depend>autoware_interpolation</depend>
   <depend>lanelet2_extension</depend>
-  <depend>map_loader</depend>
-  <depend>mission_planner</depend>
-  <depend>motion_utils</depend>
-  <depend>obstacle_avoidance_planner</depend>
-  <depend>osqp_interface</depend>
-  <depend>path_smoother</depend>
+  <depend>autoware_map_loader</depend>
+  <depend>autoware_mission_planner</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_obstacle_avoidance_planner</depend>
+  <depend>autoware_osqp_interface</depend>
+  <depend>autoware_path_smoother</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>route_handler</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_route_handler</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_map_msgs</depend>
   <depend>vehicle_info_util</depend>
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(planning_topic_converter)
+project(autoware_planning_topic_converter)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)

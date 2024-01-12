@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(obstacle_velocity_limiter)
+project(autoware_obstacle_velocity_limiter)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

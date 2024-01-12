@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(sampler_common)
+project(autoware_sampler_common)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

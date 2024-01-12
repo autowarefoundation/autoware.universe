@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>yabloc_pose_initializer</name>
+  <name>autoware_yabloc_pose_initializer</name>
   <version>0.0.0</version>
   <description>The pose initializer</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
@@ -18,7 +18,7 @@
   <depend>sensor_msgs</depend>
   <depend>tier4_localization_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>yabloc_common</depend>
+  <depend>autoware_yabloc_common</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

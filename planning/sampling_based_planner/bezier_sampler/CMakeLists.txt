@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(bezier_sampler)
+project(autoware_bezier_sampler)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

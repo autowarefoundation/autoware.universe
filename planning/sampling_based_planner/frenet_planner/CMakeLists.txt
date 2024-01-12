@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(frenet_planner)
+project(autoware_frenet_planner)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

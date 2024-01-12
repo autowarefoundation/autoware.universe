@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(cuda_utils)
+project(autoware_cuda_utils)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>control_validator</name>
+  <name>autoware_control_validator</name>
   <version>0.1.0</version>
   <description>ros node for control_validator</description>
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
@@ -20,11 +20,11 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
-  <depend>motion_utils</depend>
+  <depend>autoware_motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
 

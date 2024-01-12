@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>behavior_path_dynamic_avoidance_module</name>
+  <name>autoware_behavior_path_dynamic_avoidance_module</name>
   <version>0.1.0</version>
   <description>The behavior_path_dynamic_avoidance_module package</description>
 
@@ -19,17 +19,17 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>behavior_path_planner</depend>
-  <depend>behavior_path_planner_common</depend>
+  <depend>autoware_behavior_path_planner</depend>
+  <depend>autoware_behavior_path_planner_common</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_extension</depend>
-  <depend>motion_utils</depend>
-  <depend>object_recognition_utils</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_object_recognition_utils</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>signal_processing</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_signal_processing</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>

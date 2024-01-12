@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(tensorrt_yolox)
+project(autoware_tensorrt_yolox)
 
 find_package(tensorrt_common)
 if(NOT ${tensorrt_common_FOUND})

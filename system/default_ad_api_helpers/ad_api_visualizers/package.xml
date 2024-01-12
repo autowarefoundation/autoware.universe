@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>ad_api_visualizers</name>
+  <name>autoware_ad_api_visualizers</name>
   <version>0.1.0</version>
   <description>The ad_api_visualizers package</description>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>

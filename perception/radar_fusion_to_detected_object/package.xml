@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>radar_fusion_to_detected_object</name>
+  <name>autoware_radar_fusion_to_detected_object</name>
   <version>0.0.0</version>
-  <description>radar_fusion_to_detected_object</description>
+  <description>autoware_radar_fusion_to_detected_object</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <license>Apache License 2.0</license>
@@ -19,7 +19,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
 
   <test_depend>ament_lint_common</test_depend>
   <test_depend>autoware_lint_common</test_depend>

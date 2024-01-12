@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(bluetooth_monitor)
+project(autoware_bluetooth_monitor)
 
 ### Dependencies
 find_package(autoware_cmake REQUIRED)

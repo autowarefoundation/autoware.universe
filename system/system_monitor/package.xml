@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>system_monitor</name>
+  <name>autoware_system_monitor</name>
   <version>1.13.0</version>
   <description>The system_monitor package</description>
   <maintainer email="fumihito.ito@tier4.jp">Fumihito Ito</maintainer>
@@ -22,7 +22,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_external_api_msgs</depend>
 
   <exec_depend>chrony</exec_depend>

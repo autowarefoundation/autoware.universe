@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(objects_of_interest_marker_interface)
+project(autoware_objects_of_interest_marker_interface)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)

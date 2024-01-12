@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(ndt_scan_matcher)
+project(autoware_ndt_scan_matcher)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

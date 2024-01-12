@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(map_height_fitter)
+project(autoware_map_height_fitter)
 
 find_package(autoware_cmake REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)

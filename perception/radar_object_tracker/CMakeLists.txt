@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(radar_object_tracker)
+project(autoware_radar_object_tracker)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

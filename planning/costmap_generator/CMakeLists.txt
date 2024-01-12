@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(costmap_generator)
+project(autoware_costmap_generator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

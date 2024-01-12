@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(rtc_manager_rviz_plugin)
+project(autoware_rtc_manager_rviz_plugin)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

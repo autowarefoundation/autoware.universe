@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>behavior_velocity_intersection_module</name>
+  <name>autoware_behavior_velocity_intersection_module</name>
   <version>0.1.0</version>
   <description>The behavior_velocity_intersection_module package</description>
 
@@ -21,20 +21,20 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_perception_msgs</depend>
-  <depend>behavior_velocity_planner_common</depend>
+  <depend>autoware_behavior_velocity_planner_common</depend>
   <depend>geometry_msgs</depend>
-  <depend>interpolation</depend>
+  <depend>autoware_interpolation</depend>
   <depend>lanelet2_extension</depend>
   <depend>libopencv-dev</depend>
-  <depend>motion_utils</depend>
+  <depend>autoware_motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>route_handler</depend>
-  <depend>rtc_interface</depend>
+  <depend>autoware_route_handler</depend>
+  <depend>autoware_rtc_interface</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tier4_api_msgs</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>

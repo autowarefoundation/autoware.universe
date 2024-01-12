@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>radar_scan_to_pointcloud2</name>
+  <name>autoware_radar_scan_to_pointcloud2</name>
   <version>0.1.0</version>
   <description>radar_scan_to_pointcloud2</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>

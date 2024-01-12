@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(tensorrt_common)
+project(autoware_tensorrt_common)
 
 find_package(ament_cmake REQUIRED)
 find_package(cudnn_cmake_module REQUIRED)

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>front_vehicle_velocity_estimator</name>
+  <name>autoware_front_vehicle_velocity_estimator</name>
   <version>0.1.0</version>
   <description>front_vehicle_velocity_estimator</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
@@ -21,7 +21,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

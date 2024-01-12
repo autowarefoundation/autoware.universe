@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>scenario_selector</name>
+  <name>autoware_scenario_selector</name>
   <version>0.1.0</version>
   <description>The scenario_selector ROS 2 package</description>
   <maintainer email="taiki.tanaka@tier4.jp">Taiki Tanaka</maintainer>
@@ -20,10 +20,10 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>nav_msgs</depend>
-  <depend>planning_test_utils</depend>
+  <depend>autoware_planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>route_handler</depend>
+  <depend>autoware_route_handler</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>

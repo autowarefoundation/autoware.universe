@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>goal_distance_calculator</name>
+  <name>autoware_goal_distance_calculator</name>
   <version>0.0.0</version>
   <description>The goal_distance_calculator package</description>
   <maintainer email="taiki.tanaka@tier4.jp">Taiki Tanaka</maintainer>
@@ -14,7 +14,7 @@
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

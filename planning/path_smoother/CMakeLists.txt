@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(path_smoother)
+project(autoware_path_smoother)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

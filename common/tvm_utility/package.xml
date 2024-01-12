@@ -17,7 +17,7 @@
 <!DOCTYPE xml>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>tvm_utility</name>
+  <name>autoware_tvm_utility</name>
   <version>1.0.0</version>
   <description>
     A set of utility functions to help build a machine learning pipeline using

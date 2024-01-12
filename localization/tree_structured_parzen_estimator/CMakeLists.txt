@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(tree_structured_parzen_estimator)
+project(autoware_tree_structured_parzen_estimator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

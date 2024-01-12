@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(shift_decider)
+project(autoware_shift_decider)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

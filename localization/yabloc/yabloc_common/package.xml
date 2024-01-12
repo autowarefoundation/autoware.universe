@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>yabloc_common</name>
+  <name>autoware_yabloc_common</name>
   <version>0.1.0</version>
   <description>YabLoc common library</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
@@ -20,7 +20,7 @@
   <depend>pcl_conversions</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>signal_processing</depend>
+  <depend>autoware_signal_processing</depend>
   <depend>sophus</depend>
   <depend>std_msgs</depend>
   <depend>tf2_ros</depend>

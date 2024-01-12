@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(lidar_centerpoint)
+project(autoware_lidar_centerpoint)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

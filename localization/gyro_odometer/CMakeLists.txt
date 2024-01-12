@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(gyro_odometer)
+project(autoware_gyro_odometer)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

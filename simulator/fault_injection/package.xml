@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>fault_injection</name>
+  <name>autoware_fault_injection</name>
   <version>0.0.1</version>
-  <description>fault_injection</description>
+  <description>autoware_fault_injection</description>
   <maintainer email="keisuke.shima@tier4.jp">Keisuke Shima</maintainer>
   <license>Apache License 2.0</license>
 
@@ -16,7 +16,7 @@
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_simulation_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>

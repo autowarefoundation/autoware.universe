@@ -17,7 +17,7 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

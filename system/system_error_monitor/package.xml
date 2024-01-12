@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>system_error_monitor</name>
+  <name>autoware_system_error_monitor</name>
   <version>0.1.1</version>
   <description>The system_error_monitor package in ROS 2</description>
   <maintainer email="fumihito.ito@tier4.jp">Fumihito Ito</maintainer>
@@ -16,7 +16,7 @@
   <depend>fmt</depend>
   <depend>rclcpp</depend>
   <depend>std_srvs</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_control_msgs</depend>
 
   <exec_depend>diagnostic_aggregator</exec_depend>

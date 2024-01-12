@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(geography_utils)
+project(autoware_geography_utils)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

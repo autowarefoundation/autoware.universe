@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>trajectory_follower_node</name>
+  <name>autoware_trajectory_follower_node</name>
   <version>1.0.0</version>
   <description>Nodes to follow a trajectory by generating control commands separated into lateral and longitudinal commands</description>
 
@@ -24,13 +24,13 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>motion_utils</depend>
-  <depend>mpc_lateral_controller</depend>
-  <depend>pid_longitudinal_controller</depend>
-  <depend>pure_pursuit</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_mpc_lateral_controller</depend>
+  <depend>autoware_pid_longitudinal_controller</depend>
+  <depend>autoware_pure_pursuit</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>trajectory_follower_base</depend>
+  <depend>autoware_trajectory_follower_base</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
 
@@ -41,7 +41,7 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
   <test_depend>autoware_testing</test_depend>
-  <test_depend>fake_test_node</test_depend>
+  <test_depend>autoware_fake_test_node</test_depend>
   <test_depend>ros_testing</test_depend>
 
   <export>

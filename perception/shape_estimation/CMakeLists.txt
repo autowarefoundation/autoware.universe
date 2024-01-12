@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(shape_estimation)
+project(autoware_shape_estimation)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

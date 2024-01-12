@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(dummy_perception_publisher)
+project(autoware_dummy_perception_publisher)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

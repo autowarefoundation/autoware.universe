@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>bluetooth_monitor</name>
+  <name>autoware_bluetooth_monitor</name>
   <version>0.1.0</version>
   <description>Bluetooth alive monitoring</description>
   <maintainer email="fumihito.ito@tier4.jp">Fumihito Ito</maintainer>

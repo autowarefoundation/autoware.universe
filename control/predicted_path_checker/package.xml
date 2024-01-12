@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>predicted_path_checker</name>
+  <name>autoware_predicted_path_checker</name>
   <version>1.0.0</version>
   <description>The predicted_path_checker package</description>
 
@@ -20,7 +20,7 @@
   <depend>diagnostic_updater</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
-  <depend>motion_utils</depend>
+  <depend>autoware_motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
@@ -30,7 +30,7 @@
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_control_msgs</depend>
   <depend>tier4_external_api_msgs</depend>
   <depend>tier4_planning_msgs</depend>

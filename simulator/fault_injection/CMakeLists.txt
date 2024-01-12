@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(fault_injection)
+project(autoware_fault_injection)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

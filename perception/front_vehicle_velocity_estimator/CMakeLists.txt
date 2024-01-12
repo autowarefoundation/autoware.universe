@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(front_vehicle_velocity_estimator)
+project(autoware_front_vehicle_velocity_estimator)
 
 # Dependencies
 find_package(autoware_cmake REQUIRED)

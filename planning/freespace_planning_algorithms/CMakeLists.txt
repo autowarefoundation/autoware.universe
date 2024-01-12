@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(freespace_planning_algorithms)
+project(autoware_freespace_planning_algorithms)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

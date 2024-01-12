@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>default_ad_api</name>
+  <name>autoware_default_ad_api</name>
   <version>0.1.0</version>
   <description>The default_ad_api package</description>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
@@ -24,8 +24,8 @@
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
   <depend>geographic_msgs</depend>
-  <depend>geography_utils</depend>
-  <depend>motion_utils</depend>
+  <depend>autoware_geography_utils</depend>
+  <depend>autoware_motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

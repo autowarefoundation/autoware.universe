@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(external_cmd_selector)
+project(autoware_external_cmd_selector)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(obstacle_collision_checker)
+project(autoware_obstacle_collision_checker)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

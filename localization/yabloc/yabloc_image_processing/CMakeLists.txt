@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(yabloc_image_processing)
+project(autoware_yabloc_image_processing)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

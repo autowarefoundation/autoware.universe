@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(steer_offset_estimator)
+project(autoware_steer_offset_estimator)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)

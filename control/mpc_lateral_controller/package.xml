@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>mpc_lateral_controller</name>
+  <name>autoware_mpc_lateral_controller</name>
   <version>1.0.0</version>
   <description>MPC-based lateral controller</description>
 
@@ -24,17 +24,17 @@
   <depend>diagnostic_updater</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
-  <depend>interpolation</depend>
-  <depend>motion_utils</depend>
-  <depend>osqp_interface</depend>
+  <depend>autoware_interpolation</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_osqp_interface</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
-  <depend>trajectory_follower_base</depend>
+  <depend>autoware_trajectory_follower_base</depend>
   <depend>vehicle_info_util</depend>
 
   <test_depend>ament_cmake_ros</test_depend>

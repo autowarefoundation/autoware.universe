@@ -13,7 +13,7 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.14)
-project(lidar_apollo_segmentation_tvm_nodes)
+project(autoware_lidar_apollo_segmentation_tvm_nodes)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(livox_tag_filter)
+project(autoware_livox_tag_filter)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

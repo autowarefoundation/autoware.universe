@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(radar_object_clustering)
+project(autoware_radar_object_clustering)
 
 # Compile options
 if(NOT CMAKE_CXX_STANDARD)

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(obstacle_avoidance_planner)
+project(autoware_obstacle_avoidance_planner)
 
 include(CheckCXXCompilerFlag)
 

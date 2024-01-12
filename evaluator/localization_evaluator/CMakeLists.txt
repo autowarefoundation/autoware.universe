@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(localization_evaluator)
+project(autoware_localization_evaluator)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)

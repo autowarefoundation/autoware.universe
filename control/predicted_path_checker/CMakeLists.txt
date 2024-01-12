@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(predicted_path_checker)
+project(autoware_predicted_path_checker)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

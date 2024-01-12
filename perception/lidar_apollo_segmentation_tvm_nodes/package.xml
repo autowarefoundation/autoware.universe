@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE xml>
 <package format="3">
-  <name>lidar_apollo_segmentation_tvm_nodes</name>
+  <name>autoware_lidar_apollo_segmentation_tvm_nodes</name>
   <version>0.1.0</version>
   <description>lidar_apollo_segmentation_tvm_nodes</description>
   <maintainer email="ambroise.vincent@arm.com">Ambroise Vincent</maintainer>
@@ -12,7 +12,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <depend>lidar_apollo_segmentation_tvm</depend>
+  <depend>autoware_lidar_apollo_segmentation_tvm</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>

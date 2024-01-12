@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>obstacle_velocity_limiter</name>
+  <name>autoware_obstacle_velocity_limiter</name>
   <version>0.1.0</version>
   <description>Package to adjust velocities of a trajectory in order for the ride to feel safe</description>
 
@@ -16,20 +16,20 @@
   <depend>eigen</depend>
   <depend>grid_map_msgs</depend>
   <depend>grid_map_ros</depend>
-  <depend>grid_map_utils</depend>
+  <depend>autoware_grid_map_utils</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
-  <depend>motion_utils</depend>
+  <depend>autoware_motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>pcl_ros</depend>
-  <depend>planning_test_utils</depend>
+  <depend>autoware_planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>

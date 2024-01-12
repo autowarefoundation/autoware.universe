@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(yabloc_common)
+project(autoware_yabloc_common)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

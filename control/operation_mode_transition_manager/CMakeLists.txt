@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(operation_mode_transition_manager)
+project(autoware_operation_mode_transition_manager)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

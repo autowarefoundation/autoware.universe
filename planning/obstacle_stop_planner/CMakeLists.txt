@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(obstacle_stop_planner)
+project(autoware_obstacle_stop_planner)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

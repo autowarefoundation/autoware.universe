@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(lidar_apollo_instance_segmentation)
+project(autoware_lidar_apollo_instance_segmentation)
 
 find_package(ament_cmake REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)

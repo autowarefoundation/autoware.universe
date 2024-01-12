@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>radar_tracks_msgs_converter</name>
+  <name>autoware_radar_tracks_msgs_converter</name>
   <version>0.0.1</version>
   <description>radar_tracks_msgs_converter</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
@@ -21,7 +21,7 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

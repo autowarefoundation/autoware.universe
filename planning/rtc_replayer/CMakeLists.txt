@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(rtc_replayer)
+project(autoware_rtc_replayer)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)

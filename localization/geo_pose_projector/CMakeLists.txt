@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(geo_pose_projector)
+project(autoware_geo_pose_projector)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

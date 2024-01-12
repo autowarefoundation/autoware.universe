@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(map_tf_generator)
+project(autoware_map_tf_generator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
