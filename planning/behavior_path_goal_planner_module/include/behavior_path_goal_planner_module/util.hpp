@@ -49,8 +49,6 @@ PredictedObjects filterObjectsByLateralDistance(
   const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
   const double distance_thresh, const bool filter_inside);
 
-bool isAllowedGoalModification(const std::shared_ptr<RouteHandler> & route_handler);
-bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_handler);
 double calcLateralDeviationBetweenPaths(
   const PathWithLaneId & reference_path, const PathWithLaneId & target_path);
 bool isReferencePath(

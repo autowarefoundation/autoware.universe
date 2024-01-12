@@ -1615,4 +1615,22 @@ std::string convertToSnakeCase(const std::string & input_str)
   }
   return output_str;
 }
+
+bool isAllowedGoalModification(const std::shared_ptr<RouteHandler> & route_handler)
+{
+  return route_handler->isAllowedGoalModification() || checkOriginalGoalIsInShoulder(route_handler);
+}
+
+bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_handler)
+{
+  const Pose & goal_pose = route_handler->getOriginalGoalPose();
+  const auto shoulder_lanes = route_handler->getShoulderLanelets();
+
+  lanelet::ConstLanelet closest_shoulder_lane{};
+  if (lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &closest_shoulder_lane)) {
+    return lanelet::utils::isInLanelet(goal_pose, closest_shoulder_lane, 0.1);
+  }
+
+  return false;
+}
 }  // namespace behavior_path_planner::utils

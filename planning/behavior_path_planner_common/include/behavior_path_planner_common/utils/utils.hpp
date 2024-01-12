@@ -221,6 +221,9 @@ PathWithLaneId refinePathForGoal(
 
 bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal_id);
 
+bool isAllowedGoalModification(const std::shared_ptr<RouteHandler> & route_handler);
+bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_handler);
+
 bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes);
 
 bool isInLaneletWithYawThreshold(

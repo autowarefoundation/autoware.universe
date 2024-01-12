@@ -172,9 +172,7 @@ void GoalPlannerModule::onTimer()
     return;
   }
 
-  if (
-    !planner_data_ ||
-    !goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+  if (!planner_data_ || !utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return;
   }
 
@@ -284,7 +282,7 @@ void GoalPlannerModule::onFreespaceParkingTimer()
     return;
   }
   // fixed goal planner do not use freespace planner
-  if (!goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+  if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return;
   }
 
@@ -445,14 +443,14 @@ bool GoalPlannerModule::isExecutionRequested() const
   // if goal modification is not allowed
   // 1) goal_pose is in current_lanes, plan path to the original fixed goal
   // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
-  if (!goal_planner_utils::isAllowedGoalModification(route_handler)) {
+  if (!utils::isAllowedGoalModification(route_handler)) {
     return goal_is_in_current_lanes;
   }
 
   // if goal arc coordinates can be calculated, check if goal is in request_length
   const double self_to_goal_arc_length =
     utils::getSignedDistance(current_pose, goal_pose, current_lanes);
-  const double request_length = goal_planner_utils::isAllowedGoalModification(route_handler)
+  const double request_length = utils::isAllowedGoalModification(route_handler)
                                   ? calcModuleRequestLength()
                                   : parameters_->pull_over_minimum_request_length;
   if (self_to_goal_arc_length < 0.0 || self_to_goal_arc_length > request_length) {
@@ -463,7 +461,7 @@ bool GoalPlannerModule::isExecutionRequested() const
   // if goal modification is not allowed
   // 1) goal_pose is in current_lanes, plan path to the original fixed goal
   // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
-  if (!goal_planner_utils::isAllowedGoalModification(route_handler)) {
+  if (!utils::isAllowedGoalModification(route_handler)) {
     return goal_is_in_current_lanes;
   }
 
@@ -652,7 +650,7 @@ GoalCandidates GoalPlannerModule::generateGoalCandidates() const
 {
   // calculate goal candidates
   const auto & route_handler = planner_data_->route_handler;
-  if (goal_planner_utils::isAllowedGoalModification(route_handler)) {
+  if (utils::isAllowedGoalModification(route_handler)) {
     return goal_searcher_->search();
   }
 
@@ -670,7 +668,7 @@ GoalCandidates GoalPlannerModule::generateGoalCandidates() const
 
 BehaviorModuleOutput GoalPlannerModule::plan()
 {
-  if (goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+  if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return planPullOver();
   }
 
@@ -1161,7 +1159,7 @@ void GoalPlannerModule::updatePreviousData(const BehaviorModuleOutput & output)
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
 {
-  if (goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+  if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return planPullOverAsCandidate();
   }
 
@@ -1940,7 +1938,7 @@ void GoalPlannerModule::setDebugData()
     }
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
-  if (goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+  if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
     // Visualize pull over areas
     const auto color = hasDecidedPath() ? createMarkerColor(1.0, 1.0, 0.0, 0.999)   // yellow
                                         : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
