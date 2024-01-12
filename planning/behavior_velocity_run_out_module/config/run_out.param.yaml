@@ -65,4 +65,3 @@
       # The mandatory area is calculated based on the current velocity and acceleration and "decel_jerk" constraints
       mandatory_area:
         decel_jerk: -1.2 # [m/s^3] deceleration jerk for obstacles in this area
-
