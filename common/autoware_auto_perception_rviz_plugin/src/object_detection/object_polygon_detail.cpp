@@ -154,7 +154,7 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   phi = pos_yaw_angle + phi;
   double area = sigma1 * sigma2;
   double alpha = std::min(0.5, 1.0 / area);
-  alpha = std::max(0.05, alpha);
+  alpha = std::max(0.1, alpha);
 
   // ellipse orientation
   marker_ptr->pose.orientation.x = 0.0;
