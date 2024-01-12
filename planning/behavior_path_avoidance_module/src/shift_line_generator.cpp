@@ -343,17 +343,27 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       al_return.object_on_right = utils::avoidance::isOnRight(o);
     }
 
-    const auto goal_pose = data_->route_handler->getGoalPose();
-    const double goal_longitudinal_distance =
-      motion_utils::calcSignedArcLength(data.reference_path.points, 0, goal_pose.position);
-    const bool return_to_goal = std::abs(al_return.end_longitudinal - goal_longitudinal_distance) <
-                                parameters_->object_check_return_pose_distance;
+    const bool skip_return_shift = [&]() {
+      if (!utils::isAllowedGoalModification(data_->route_handler)) {
+        return false;
+      }
+      const auto goal_pose = data_->route_handler->getGoalPose();
+      const double goal_longitudinal_distance =
+        motion_utils::calcSignedArcLength(data.reference_path.points, 0, goal_pose.position);
+      const bool is_return_shift_to_goal =
+        std::abs(al_return.end_longitudinal - goal_longitudinal_distance) <
+        parameters_->object_check_return_pose_distance;
+      if (is_return_shift_to_goal) {
+        return true;
+      }
+      const auto & object_pos = o.object.kinematics.initial_pose_with_covariance.pose.position;
+      const bool has_object_near_goal =
+        tier4_autoware_utils::calcDistance2d(goal_pose.position, object_pos) <
+        parameters_->object_check_goal_distance;
+      return has_object_near_goal;
+    }();
 
-    const auto & object_pos = o.object.kinematics.initial_pose_with_covariance.pose.position;
-    const bool is_near_goal = tier4_autoware_utils::calcDistance2d(goal_pose.position, object_pos) <
-                              parameters_->object_check_goal_distance;
-
-    if (is_near_goal || return_to_goal) {
+    if (skip_return_shift) {
       // if the object is close to goal or ego is about to return near GOAL, do not return
       outlines.emplace_back(al_avoid, std::nullopt);
     } else if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
@@ -1002,16 +1012,18 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   const bool has_candidate_point = !ret.empty();
   const bool has_registered_point = last_.has_value();
 
-  const auto has_object_near_goal =
-    std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
-      return tier4_autoware_utils::calcDistance2d(
-               data_->route_handler->getGoalPose().position,
-               o.object.kinematics.initial_pose_with_covariance.pose.position) <
-             parameters_->object_check_goal_distance;
-    });
-  if (has_object_near_goal) {
-    RCLCPP_DEBUG(rclcpp::get_logger(""), "object near goal exists so skip adding return shift");
-    return ret;
+  if (utils::isAllowedGoalModification(data_->route_handler)) {
+    const auto has_object_near_goal =
+      std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
+        return tier4_autoware_utils::calcDistance2d(
+                 data_->route_handler->getGoalPose().position,
+                 o.object.kinematics.initial_pose_with_covariance.pose.position) <
+               parameters_->object_check_goal_distance;
+      });
+    if (has_object_near_goal) {
+      RCLCPP_DEBUG(rclcpp::get_logger(""), "object near goal exists so skip adding return shift");
+      return ret;
+    }
   }
 
   const auto exist_unavoidable_object = std::any_of(
@@ -1069,14 +1081,18 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   }
 
   // if last shift line is near the objects, do not add return shift.
-  if (std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
+  if (utils::isAllowedGoalModification(data_->route_handler)) {
+    const bool has_last_shift_near_goal =
+      std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
         return tier4_autoware_utils::calcDistance2d(
                  last_sl.end.position,
                  o.object.kinematics.initial_pose_with_covariance.pose.position) <
                parameters_->object_check_goal_distance;
-      })) {
-    RCLCPP_DEBUG(rclcpp::get_logger(""), "last shift line is near the objects");
-    return ret;
+      });
+    if (has_last_shift_near_goal) {
+      RCLCPP_DEBUG(rclcpp::get_logger(""), "last shift line is near the objects");
+      return ret;
+    }
   }
 
   // There already is a shift point candidates to go back to center line, but it could be too sharp
@@ -1122,7 +1138,11 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     return ret;
   }
 
-  const auto remaining_distance = data.to_return_point;
+  const auto remaining_distance =
+    utils::isAllowedGoalModification(data_->route_handler)
+      ? data.to_return_point
+      : std::min(
+          arclength_from_ego.back() - parameters_->dead_line_buffer_for_goal, data.to_return_point);
 
   // If the avoidance point has already been set, the return shift must be set after the point.
   const auto last_sl_distance = data.arclength_from_ego.at(last_sl.end_idx);
