@@ -14,9 +14,9 @@
 
 #include "util.hpp"
 
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "util_type.hpp"
 
-#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>

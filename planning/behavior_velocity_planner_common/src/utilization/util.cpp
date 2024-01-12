@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
@@ -93,7 +94,7 @@ namespace behavior_velocity_planner
 {
 namespace planning_utils
 {
-  
+
 namespace bg = boost::geometry;
 
 using autoware_auto_planning_msgs::msg::PathPoint;
@@ -222,9 +223,11 @@ bool createDetectionAreaPolygons(
     // separate detection area polygon with fixed interval or at the end of detection max length
     if (length > interval || max_len < dist_sum || s == max_index) {
       if (left_inner_bound.size() > 1)
-        da_polys.emplace_back(tier4_autoware_utils::lines2polygon(left_inner_bound, left_outer_bound));
+        da_polys.emplace_back(
+          tier4_autoware_utils::lines2polygon(left_inner_bound, left_outer_bound));
       if (right_inner_bound.size() > 1)
-        da_polys.emplace_back(tier4_autoware_utils::lines2polygon(right_outer_bound, right_inner_bound));
+        da_polys.emplace_back(
+          tier4_autoware_utils::lines2polygon(right_outer_bound, right_inner_bound));
       left_inner_bound = {left_inner_bound.back()};
       left_outer_bound = {left_outer_bound.back()};
       right_inner_bound = {right_inner_bound.back()};

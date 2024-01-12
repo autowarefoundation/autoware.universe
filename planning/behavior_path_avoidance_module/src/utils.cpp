@@ -406,7 +406,8 @@ bool isWithinIntersection(
   const auto polygon = route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(id.c_str()));
 
   return boost::geometry::within(
-    object_polygon, tier4_autoware_utils::toPolygon2d(lanelet::utils::to2D(polygon.basicPolygon())));
+    object_polygon,
+    tier4_autoware_utils::toPolygon2d(lanelet::utils::to2D(polygon.basicPolygon())));
 }
 
 bool isParallelToEgoLane(const ObjectData & object, const double threshold)

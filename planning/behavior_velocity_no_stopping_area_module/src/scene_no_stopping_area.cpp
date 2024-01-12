@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "scene_no_stopping_area.hpp"
+
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
@@ -163,7 +164,8 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
     setSafe(true);
     return true;
   }
-  debug_data_.stuck_vehicle_detect_area = tier4_autoware_utils::toGeomPoly(stuck_vehicle_detect_area);
+  debug_data_.stuck_vehicle_detect_area =
+    tier4_autoware_utils::toGeomPoly(stuck_vehicle_detect_area);
   debug_data_.stop_line_detect_area = tier4_autoware_utils::toGeomPoly(stop_line_detect_area);
   // Find stuck vehicle in no stopping area
   const bool is_entry_prohibited_by_stuck_vehicle =

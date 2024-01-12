@@ -16,15 +16,13 @@
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
+#include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/geometry.hpp>
 
-#include <tf2/utils.h>
-
-#include <boost/geometry/algorithms/correct.hpp>
-
+#include <lanelet2_core/primitives/CompoundPolygon.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
-#include <lanelet2_core/primitives/CompoundPolygon.h>
+#include <tf2/utils.h>
 
 namespace
 {

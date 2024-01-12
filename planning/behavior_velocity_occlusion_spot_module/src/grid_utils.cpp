@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "grid_utils.hpp"
+
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <algorithm>
@@ -25,7 +26,7 @@ namespace behavior_velocity_planner
 {
 namespace grid_utils
 {
-  
+
 namespace bg = boost::geometry;
 
 Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double radius)
@@ -172,10 +173,14 @@ Polygon2d generateOccupancyPolygon(const nav_msgs::msg::MapMetaData & info, cons
   using tier4_autoware_utils::calcOffsetPose;
   // generate occupancy polygon from grid origin
   Polygon2d poly;  // create counter clockwise poly
-  poly.outer().emplace_back(tier4_autoware_utils::to_bg2d(calcOffsetPose(info.origin, 0, 0, 0).position));
-  poly.outer().emplace_back(tier4_autoware_utils::to_bg2d(calcOffsetPose(info.origin, r, 0, 0).position));
-  poly.outer().emplace_back(tier4_autoware_utils::to_bg2d(calcOffsetPose(info.origin, r, r, 0).position));
-  poly.outer().emplace_back(tier4_autoware_utils::to_bg2d(calcOffsetPose(info.origin, 0, r, 0).position));
+  poly.outer().emplace_back(
+    tier4_autoware_utils::to_bg2d(calcOffsetPose(info.origin, 0, 0, 0).position));
+  poly.outer().emplace_back(
+    tier4_autoware_utils::to_bg2d(calcOffsetPose(info.origin, r, 0, 0).position));
+  poly.outer().emplace_back(
+    tier4_autoware_utils::to_bg2d(calcOffsetPose(info.origin, r, r, 0).position));
+  poly.outer().emplace_back(
+    tier4_autoware_utils::to_bg2d(calcOffsetPose(info.origin, 0, r, 0).position));
 
   bg::correct(poly);
   return poly;

@@ -16,6 +16,7 @@
 #define GRID_UTILS_HPP_
 
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/LineIterator.hpp>

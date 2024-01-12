@@ -14,9 +14,9 @@
 
 #include "scene_intersection.hpp"
 
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "util.hpp"
 
-#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <interpolation/spline_interpolation_points_2d.hpp>
@@ -2158,7 +2158,8 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
   stuck_vehicle_detect_area.outer().emplace_back(stuck_vehicle_detect_area.outer().front());
   bg::correct(stuck_vehicle_detect_area);
 
-  debug_data_.stuck_vehicle_detect_area = tier4_autoware_utils::toGeomPoly(stuck_vehicle_detect_area);
+  debug_data_.stuck_vehicle_detect_area =
+    tier4_autoware_utils::toGeomPoly(stuck_vehicle_detect_area);
 
   for (const auto & object : objects_ptr->objects) {
     if (!isTargetStuckVehicleType(object)) {
