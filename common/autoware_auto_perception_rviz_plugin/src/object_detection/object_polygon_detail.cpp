@@ -137,7 +137,6 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
     twist_with_covariance.twist.linear.y * twist_with_covariance.twist.linear.y);
   const double velocity_angle =
     std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
-  // pose yaw angle from quaternion (x, y, z, w)
   const double pos_yaw_angle = 2.0 * std::atan2(
     pose_with_covariance.pose.orientation.z,
     pose_with_covariance.pose.orientation.w);  // [rad]
@@ -153,6 +152,9 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   double phi, sigma1, sigma2;
   calc_covariance_eigen_vectors(eigen_twist_covariance, sigma1, sigma2, phi);
   phi = pos_yaw_angle + phi;
+  double area = sigma1 * sigma2;
+  double alpha = std::min(0.5, 1.0 / area);
+  alpha = std::max(0.05, alpha);
 
   // ellipse orientation
   marker_ptr->pose.orientation.x = 0.0;
@@ -166,7 +168,7 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   marker_ptr->scale.z = 0.05;
   
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
-  marker_ptr->color.a = 0.5;
+  marker_ptr->color.a = alpha;
   marker_ptr->color.r = 1.0;
   marker_ptr->color.g = 0.2;
   marker_ptr->color.b = 0.4;
@@ -195,11 +197,16 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_marker_ptr(
     std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
   const double yaw_mark_length = velocity * 0.8;
 
+  geometry_msgs::msg::Point point;
+  // first point
+  point.x = 0;
+  point.y = 0;
+  point.z = 0;
+  marker_ptr->points.push_back(point);
   // yaw rate arc
   calc_arc_line_strip(
     velocity_angle, velocity_angle + yaw_rate, yaw_mark_length, marker_ptr->points);
   // last point
-  geometry_msgs::msg::Point point;
   point.x = 0;
   point.y = 0;
   point.z = 0;
@@ -348,7 +355,7 @@ void calc_covariance_eigen_vectors(
   yaw = std::atan2(e1.y(), e1.x());
 }
 
-visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
+visualization_msgs::msg::Marker::SharedPtr get_pose_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance)
 {
   auto marker_ptr = std::make_shared<Marker>();

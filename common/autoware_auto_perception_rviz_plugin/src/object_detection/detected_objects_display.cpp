@@ -59,8 +59,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       add_marker(label_marker_ptr);
     }
 
-    // Get marker for pose with covariance
-    auto pose_with_covariance_marker = get_pose_with_covariance_marker_ptr(
+    // Get marker for pose covariance
+    auto pose_with_covariance_marker = get_pose_covariance_marker_ptr(
       object.kinematics.pose_with_covariance);
     if (pose_with_covariance_marker) {
       auto marker_ptr = pose_with_covariance_marker.value();

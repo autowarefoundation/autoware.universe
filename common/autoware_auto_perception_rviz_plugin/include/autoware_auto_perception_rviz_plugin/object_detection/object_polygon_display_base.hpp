@@ -68,7 +68,7 @@ public:
       "Display Velocity", true, "Enable/disable velocity text visualization", this},
     m_display_acceleration_text_property{
       "Display Acceleration", true, "Enable/disable acceleration text visualization", this},
-    m_display_pose_with_covariance_property{
+    m_display_pose_covariance_property{
       "Display Pose Covariance", true, "Enable/disable pose covariance visualization", this},
     m_display_yaw_covariance_property{
       "Display Yaw Covariance", false, "Enable/disable yaw covariance visualization", this},
@@ -245,12 +245,11 @@ protected:
     }
   }
 
-  std::optional<Marker::SharedPtr> get_pose_with_covariance_marker_ptr(
-    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-    const double & line_width) const
+  std::optional<Marker::SharedPtr> get_pose_covariance_marker_ptr(
+    const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance) const
   {
-    if (m_display_pose_with_covariance_property.getBool()) {
-      return detail::get_pose_with_covariance_marker_ptr(pose_with_covariance, line_width);
+    if (m_display_pose_covariance_property.getBool()) {
+      return detail::get_pose_covariance_marker_ptr(pose_with_covariance);
     } else {
       return std::nullopt;
     }
@@ -307,12 +306,11 @@ protected:
 
   std::optional<Marker::SharedPtr> get_twist_covariance_marker_ptr(
     const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-    const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
-    const double & line_width) const
+    const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance) const
   {
     if (m_display_twist_covariance_property.getBool()) {
       return detail::get_twist_covariance_marker_ptr(
-        pose_with_covariance, twist_with_covariance, line_width);
+        pose_with_covariance, twist_with_covariance);
     } else {
       return std::nullopt;
     }
@@ -486,7 +484,7 @@ private:
   // Property to enable/disable acceleration text visualization
   rviz_common::properties::BoolProperty m_display_acceleration_text_property;
   // Property to enable/disable pose with covariance visualization
-  rviz_common::properties::BoolProperty m_display_pose_with_covariance_property;
+  rviz_common::properties::BoolProperty m_display_pose_covariance_property;
   // Property to enable/disable yaw covariance visualization
   rviz_common::properties::BoolProperty m_display_yaw_covariance_property;
   // Property to enable/disable twist visualization

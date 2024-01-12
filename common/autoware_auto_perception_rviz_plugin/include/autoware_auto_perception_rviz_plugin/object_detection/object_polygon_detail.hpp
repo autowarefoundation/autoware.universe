@@ -116,7 +116,7 @@ get_uuid_marker_ptr(
   const std_msgs::msg::ColorRGBA & color_rgba);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
-get_pose_with_covariance_marker_ptr(
+get_pose_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
