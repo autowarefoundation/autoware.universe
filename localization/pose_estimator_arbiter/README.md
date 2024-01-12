@@ -131,12 +131,12 @@ Following figure shows the node configuration when NDT, YabLoc Eagleye and AR-Ta
 ### Case of running multiple pose estimators
 
 When running multiple pose_estimators, pose_estimator_arbiter is executed.
-It comprises a **switching rule** and **sub arbiters** corresponding to each pose_estimator.
+It comprises a **switching rule** and **stoppers** corresponding to each pose_estimator.
 
-- Sub arbiters controls the pose_estimator activity by relaying inputs or outputs, or by requesting a suspend service.
+- Stoppers control the pose_estimator activity by relaying inputs or outputs, or by requesting a suspend service.
 - Switching rules determine which pose_estimator to use.
 
-Which sub arbiters and switching rules are instantiated depends on the runtime arguments at startup.
+Which stoppers and switching rules are instantiated depends on the runtime arguments at startup.
 
 Following figure shows the node configuration when all pose_estimator are run simultaneously.
 
@@ -144,23 +144,23 @@ Following figure shows the node configuration when all pose_estimator are run si
 
 - **NDT**
 
-The NDT sub-arbiter relays topics in the front side of the point cloud pre-processor.
+The NDT stopper relays topics in the front side of the point cloud pre-processor.
 
 - **YabLoc**
 
-The YabLoc sub-arbiter relays input image topics in the frontend of the image pre-processor.
+The YabLoc stopper relays input image topics in the frontend of the image pre-processor.
 YabLoc includes a particle filter process that operates on a timer, and even when image topics are not streamed, the particle prediction process continues to work.
-To address this, the YabLoc sub-arbiter also has a service client for explicitly stopping and resuming YabLoc.
+To address this, the YabLoc stopper also has a service client for explicitly stopping and resuming YabLoc.
 
 - **Eagleye**
 
-The Eagleye sub-arbiter relays Eagleye's output pose topics in the backend of Eagleye's estimation process.
+The Eagleye stopper relays Eagleye's output pose topics in the backend of Eagleye's estimation process.
 Eagleye performs time-series processing internally, and it can't afford to stop the input stream.
 Furthermore, Eagleye's estimation process is lightweight enough to be run continuously without a significant load, so the relay is inserted in the backend.
 
 - **ArTag**
 
-The ArTag sub-arbiter relays image topics in the front side of the landmark localizer.
+The ArTag stopper relays image topics in the front side of the landmark localizer.
 
 ## How to launch
 
@@ -328,7 +328,7 @@ This table's usage is described from three perspectives:
 
 In the future, this package will provide not only ON/OFF switching, but also a mechanism for low frequency operation, such as 50% NDT & 50% YabLoc.
 
-### sub_arbiters for pose_estimators to be added in the future
+### stopper for pose_estimators to be added in the future
 
 The basic strategy is to realize ON/OFF switching by relaying the input or output topics of that pose_estimator.
 If pose_estimator involves time-series processing with heavy computations, it's not possible to pause and resume with just topic relaying.

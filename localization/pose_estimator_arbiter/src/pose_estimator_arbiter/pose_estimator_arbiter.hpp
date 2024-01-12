@@ -60,12 +60,12 @@ private:
   rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_diag_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_array_;
   rclcpp::Publisher<String>::SharedPtr pub_debug_string_;
-  // For sub arbiter subscriber
+  // Subscribers for stoppers
   rclcpp::Subscription<Image>::SharedPtr sub_yabloc_input_;
   rclcpp::Subscription<Image>::SharedPtr sub_artag_input_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ndt_input_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_eagleye_output_;
-  // For switch rule subscriber
+  // Subscribers for switch rules
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_localization_pose_cov_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_map_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
