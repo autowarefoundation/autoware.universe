@@ -270,8 +270,8 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
     q_stddev_slip_rate = std::min(q_stddev_slip_rate, ekf_params_.q_stddev_slip_rate_max);
     q_stddev_slip_rate = std::max(q_stddev_slip_rate, ekf_params_.q_stddev_slip_rate_min);
   }
-  const float q_cov_x = std::pow(ekf_params_.q_stddev_acc_long * dt * dt, 2.0);
-  const float q_cov_y = std::pow(ekf_params_.q_stddev_acc_lat * dt * dt, 2.0);
+  const float q_cov_x = std::pow(0.5 * ekf_params_.q_stddev_acc_long * dt * dt, 2.0);
+  const float q_cov_y = std::pow(0.5 * ekf_params_.q_stddev_acc_lat * dt * dt, 2.0);
   const float q_cov_yaw = std::pow(q_stddev_yaw_rate * dt, 2.0);
   const float q_cov_vel = std::pow(ekf_params_.q_stddev_acc_long * dt, 2.0);
   const float q_cov_slip = std::pow(q_stddev_slip_rate * dt, 2.0);
