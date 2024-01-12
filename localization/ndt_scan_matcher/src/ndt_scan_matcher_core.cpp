@@ -486,11 +486,13 @@ void NDTScanMatcher::callback_sensor_points(
   }
 
   // covariance estimation
-  Eigen::Quaterniond map_to_base_link_quat = Eigen::Quaterniond(result_pose_msg.orientation.w, result_pose_msg.orientation.x, result_pose_msg.orientation.y, result_pose_msg.orientation.z);
+  Eigen::Quaterniond map_to_base_link_quat = Eigen::Quaterniond(
+    result_pose_msg.orientation.w, result_pose_msg.orientation.x, result_pose_msg.orientation.y,
+    result_pose_msg.orientation.z);
   Eigen::Matrix3d map_to_base_link_rotation = map_to_base_link_quat.normalized().toRotationMatrix();
 
-  std::array<double, 36> ndt_covariance = rotate_covariance(output_pose_covariance_, map_to_base_link_rotation);
-
+  std::array<double, 36> ndt_covariance =
+    rotate_covariance(output_pose_covariance_, map_to_base_link_rotation);
 
   if (is_converged && use_cov_estimation_) {
     const auto estimated_covariance =
@@ -777,9 +779,9 @@ std::array<double, 36> NDTScanMatcher::rotate_covariance(
   std::array<double, 36> ret_covariance = src_covariance;
 
   Eigen::Matrix3d src_cov;
-  src_cov << src_covariance[0],  src_covariance[1],  src_covariance[2],
-             src_covariance[6],  src_covariance[7],  src_covariance[8],
-             src_covariance[12], src_covariance[13], src_covariance[14];
+  src_cov << src_covariance[0], src_covariance[1], src_covariance[2], src_covariance[6],
+    src_covariance[7], src_covariance[8], src_covariance[12], src_covariance[13],
+    src_covariance[14];
 
   Eigen::Matrix3d ret_cov;
   ret_cov = rotation * src_cov * rotation.transpose();
