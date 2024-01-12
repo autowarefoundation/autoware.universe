@@ -286,20 +286,28 @@ void calc_arc_line_strip(
   }
 }
 
+void calc_covariance_eigen_vectors(
+  const Eigen::Matrix2d & matrix, double & sigma1, double & sigma2, double & yaw)
+{
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> solver(matrix);
+  Eigen::Vector2d eigen_values = solver.eigenvalues();
+  // eigen values
+  sigma1 = std::sqrt(eigen_values.x());
+  sigma2 = std::sqrt(eigen_values.y());
+  // orientation of covariance ellipse
+  Eigen::Vector2d e1 = solver.eigenvectors().col(0);
+  yaw = std::atan2(e1.y(), e1.x());
+}
+
 visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width)
 {
   auto marker_ptr = std::make_shared<Marker>();
-  marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+  marker_ptr->type = visualization_msgs::msg::Marker::CYLINDER;
   marker_ptr->ns = std::string("position covariance");
   marker_ptr->scale.x = line_width;
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose = pose_with_covariance.pose;
-  marker_ptr->pose.orientation.x = 0.0;
-  marker_ptr->pose.orientation.y = 0.0;
-  marker_ptr->pose.orientation.z = 0.0;
-  marker_ptr->pose.orientation.w = 1.0;
-  geometry_msgs::msg::Point point;
 
   // position covariance
   // extract eigen values and eigen vectors
@@ -307,31 +315,28 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
   eigen_pose_with_covariance << pose_with_covariance.covariance[0],
     pose_with_covariance.covariance[1], pose_with_covariance.covariance[6],
     pose_with_covariance.covariance[7];
-  Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> solver(eigen_pose_with_covariance);
-  double sigma1 = 2.448 * std::sqrt(solver.eigenvalues().x());  // 2.448 sigma is 95%
-  double sigma2 = 2.448 * std::sqrt(solver.eigenvalues().y());  // 2.448 sigma is 95%
-  Eigen::Vector2d e1 = solver.eigenvectors().col(0);
-  Eigen::Vector2d e2 = solver.eigenvectors().col(1);
-  point.x = -e1.x() * sigma1;
-  point.y = -e1.y() * sigma1;
-  point.z = 0;
-  marker_ptr->points.push_back(point);
-  point.x = e1.x() * sigma1;
-  point.y = e1.y() * sigma1;
-  point.z = 0;
-  marker_ptr->points.push_back(point);
-  point.x = -e2.x() * sigma2;
-  point.y = -e2.y() * sigma2;
-  point.z = 0;
-  marker_ptr->points.push_back(point);
-  point.x = e2.x() * sigma2;
-  point.y = e2.y() * sigma2;
-  point.z = 0;
-  marker_ptr->points.push_back(point);
+  double yaw, sigma1, sigma2;
+  calc_covariance_eigen_vectors(eigen_pose_with_covariance, sigma1, sigma2, yaw);
+
+  // ellipse orientation
+  marker_ptr->pose.orientation.x =  0.0;
+  marker_ptr->pose.orientation.y =  0.0;
+  marker_ptr->pose.orientation.z =  std::sin(yaw / 2.0);
+  marker_ptr->pose.orientation.w =  std::cos(yaw / 2.0);
+
+  // ellipse size
+  marker_ptr->scale.x = sigma1 * 2.448;  // 2.448 sigma is 95%
+  marker_ptr->scale.y = sigma2 * 2.448;  // 2.448 sigma is 95%
+  marker_ptr->scale.z = 0.05;
+
+  // ellipse color density
+  double area = sigma1 * sigma2;
+  double alpha = std::min(0.5, 3.0 / area);
+  alpha = std::max(0.1, alpha);
 
   // marker configuration
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
-  marker_ptr->color.a = 0.999;
+  marker_ptr->color.a = alpha;
   marker_ptr->color.r = 1.0;
   marker_ptr->color.g = 1.0;
   marker_ptr->color.b = 1.0;
