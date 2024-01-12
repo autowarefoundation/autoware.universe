@@ -38,25 +38,25 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_behavior_velocity_planner_common</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_motion_velocity_smoother</depend>
+  <depend>autoware_route_handler</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
-  <depend>autoware_motion_utils</depend>
-  <depend>autoware_motion_velocity_smoother</depend>
   <depend>pcl_conversions</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>autoware_route_handler</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_api_msgs</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>tier4_v2x_msgs</depend>
   <depend>visualization_msgs</depend>
@@ -65,7 +65,6 @@
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>autoware_lint_common</test_depend>
   <test_depend>autoware_behavior_velocity_blind_spot_module</test_depend>
   <test_depend>autoware_behavior_velocity_crosswalk_module</test_depend>
   <test_depend>autoware_behavior_velocity_detection_area_module</test_depend>
@@ -80,6 +79,7 @@
   <test_depend>autoware_behavior_velocity_traffic_light_module</test_depend>
   <test_depend>autoware_behavior_velocity_virtual_traffic_light_module</test_depend>
   <test_depend>autoware_behavior_velocity_walkway_module</test_depend>
+  <test_depend>autoware_lint_common</test_depend>
   <!--<test_depend>behavior_velocity_template_module</test_depend>-->
 
   <member_of_group>rosidl_interface_packages</member_of_group>

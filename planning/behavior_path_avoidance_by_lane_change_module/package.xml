@@ -22,12 +22,12 @@
   <depend>autoware_behavior_path_lane_change_module</depend>
   <depend>autoware_behavior_path_planner</depend>
   <depend>autoware_behavior_path_planner_common</depend>
-  <depend>lanelet2_extension</depend>
   <depend>autoware_motion_utils</depend>
-  <depend>pluginlib</depend>
-  <depend>rclcpp</depend>
   <depend>autoware_rtc_interface</depend>
   <depend>autoware_tier4_autoware_utils</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>visualization_msgs</depend>
 

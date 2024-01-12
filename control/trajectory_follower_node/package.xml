@@ -28,9 +28,9 @@
   <depend>autoware_mpc_lateral_controller</depend>
   <depend>autoware_pid_longitudinal_controller</depend>
   <depend>autoware_pure_pursuit</depend>
+  <depend>autoware_trajectory_follower_base</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>autoware_trajectory_follower_base</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
 
@@ -39,9 +39,9 @@
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_index_python</test_depend>
   <test_depend>ament_lint_auto</test_depend>
+  <test_depend>autoware_fake_test_node</test_depend>
   <test_depend>autoware_lint_common</test_depend>
   <test_depend>autoware_testing</test_depend>
-  <test_depend>autoware_fake_test_node</test_depend>
   <test_depend>ros_testing</test_depend>
 
   <export>

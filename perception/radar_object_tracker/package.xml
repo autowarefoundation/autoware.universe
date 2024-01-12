@@ -14,18 +14,18 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
-  <depend>eigen</depend>
   <depend>autoware_kalman_filter</depend>
+  <depend>autoware_object_recognition_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
+  <depend>eigen</depend>
   <depend>lanelet2_extension</depend>
   <depend>libgoogle-glog-dev</depend>
   <depend>mussp</depend>
   <depend>nlohmann-json-dev</depend>
-  <depend>autoware_object_recognition_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_perception_msgs</depend>
   <depend>unique_identifier_msgs</depend>
   <depend>yaml-cpp</depend>

@@ -15,17 +15,17 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_auto_planning_msgs</depend>
-  <depend>geometry_msgs</depend>
   <depend>autoware_interpolation</depend>
   <depend>autoware_motion_utils</depend>
-  <depend>nav_msgs</depend>
   <depend>autoware_osqp_interface</depend>
   <depend>autoware_planning_test_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>vehicle_info_util</depend>
@@ -34,9 +34,9 @@
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_index_python</test_depend>
   <test_depend>ament_lint_auto</test_depend>
+  <test_depend>autoware_fake_test_node</test_depend>
   <test_depend>autoware_lint_common</test_depend>
   <test_depend>autoware_testing</test_depend>
-  <test_depend>autoware_fake_test_node</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

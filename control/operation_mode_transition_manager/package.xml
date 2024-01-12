@@ -14,14 +14,14 @@
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
   <depend>geometry_msgs</depend>
-  <depend>autoware_motion_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_srvs</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_control_msgs</depend>
   <depend>tier4_system_msgs</depend>
   <depend>tier4_vehicle_msgs</depend>

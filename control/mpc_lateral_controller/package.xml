@@ -20,21 +20,21 @@
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_interpolation</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_osqp_interface</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
+  <depend>autoware_trajectory_follower_base</depend>
   <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
-  <depend>autoware_interpolation</depend>
-  <depend>autoware_motion_utils</depend>
-  <depend>autoware_osqp_interface</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
-  <depend>autoware_trajectory_follower_base</depend>
   <depend>vehicle_info_util</depend>
 
   <test_depend>ament_cmake_ros</test_depend>

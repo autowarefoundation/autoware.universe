@@ -17,20 +17,20 @@
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_motion_utils</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
+  <depend>autoware_route_handler</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
   <depend>lanelet2_extension</depend>
   <depend>lanelet2_io</depend>
-  <depend>autoware_motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
-  <depend>autoware_route_handler</depend>
   <depend>tf2_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_api_msgs</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>tier4_v2x_msgs</depend>
   <depend>unique_identifier_msgs</depend>

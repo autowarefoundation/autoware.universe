@@ -19,18 +19,18 @@
 
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_behavior_velocity_planner_common</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_route_handler</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
-  <depend>autoware_motion_utils</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>autoware_route_handler</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

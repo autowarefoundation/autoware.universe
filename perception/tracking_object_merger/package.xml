@@ -13,15 +13,15 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
+  <depend>autoware_object_recognition_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>eigen</depend>
   <depend>libgoogle-glog-dev</depend>
   <depend>mussp</depend>
-  <depend>autoware_object_recognition_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_perception_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

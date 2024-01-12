@@ -14,13 +14,13 @@
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_cuda_utils</depend>
+  <depend>autoware_tensorrt_common</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>autoware_tensorrt_common</depend>
   <depend>tf2_eigen</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_perception_msgs</depend>
 

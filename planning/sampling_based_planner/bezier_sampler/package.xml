@@ -11,8 +11,8 @@
 
   <build_depend>autoware_cmake</build_depend>
 
-  <depend>eigen</depend>
   <depend>autoware_sampler_common</depend>
+  <depend>eigen</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

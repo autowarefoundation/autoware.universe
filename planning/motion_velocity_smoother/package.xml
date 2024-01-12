@@ -20,16 +20,16 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_auto_planning_msgs</depend>
-  <depend>geometry_msgs</depend>
   <depend>autoware_interpolation</depend>
   <depend>autoware_motion_utils</depend>
-  <depend>nav_msgs</depend>
   <depend>autoware_osqp_interface</depend>
   <depend>autoware_planning_test_utils</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>vehicle_info_util</depend>

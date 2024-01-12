@@ -21,15 +21,15 @@
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_behavior_path_planner</depend>
   <depend>autoware_behavior_path_planner_common</depend>
+  <depend>autoware_motion_utils</depend>
+  <depend>autoware_object_recognition_utils</depend>
+  <depend>autoware_signal_processing</depend>
+  <depend>autoware_tier4_autoware_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_extension</depend>
-  <depend>autoware_motion_utils</depend>
-  <depend>autoware_object_recognition_utils</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>autoware_signal_processing</depend>
-  <depend>autoware_tier4_autoware_utils</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
