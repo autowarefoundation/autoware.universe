@@ -127,8 +127,6 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     }
 
     for (size_t itr_num = 1;; ++itr_num) {
-      std::cerr << "iteration: " << itr_num << std::endl;
-
       /**
        * STEP1: get approved modules' output
        */
@@ -138,11 +136,6 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
        * STEP2: check modules that need to be launched
        */
       const auto request_modules = getRequestModules(approved_modules_output);
-
-      std::cerr << "request_modules: " << request_modules.size() << std::endl;
-      for (const auto & m : request_modules) {
-        std::cerr << "  " << m->name() << std::endl;
-      }
 
       /**
        * STEP3: if there is no module that need to be launched, return approved modules' output
