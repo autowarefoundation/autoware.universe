@@ -117,7 +117,7 @@ get_uuid_marker_ptr(
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_pose_with_covariance_marker_ptr(
-  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width);
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_yaw_covariance_marker_ptr(
@@ -140,12 +140,17 @@ get_twist_marker_ptr(
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
+get_twist_covariance_marker_ptr(
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance);
+
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_yaw_rate_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
-get_twist_covariance_marker_ptr(
+get_yaw_rate_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width);
 

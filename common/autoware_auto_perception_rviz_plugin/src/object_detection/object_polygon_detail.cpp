@@ -121,6 +121,59 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
   return marker_ptr;
 }
 
+visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
+{
+  auto marker_ptr = std::make_shared<Marker>();
+  marker_ptr->type = visualization_msgs::msg::Marker::CYLINDER;
+  marker_ptr->ns = std::string("twist covariance");
+  marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
+  marker_ptr->pose = pose_with_covariance.pose;
+
+  // position is the tip of the velocity vector
+  const double velocity = std::sqrt(
+    twist_with_covariance.twist.linear.x * twist_with_covariance.twist.linear.x +
+    twist_with_covariance.twist.linear.y * twist_with_covariance.twist.linear.y);
+  const double velocity_angle =
+    std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
+  // pose yaw angle from quaternion (x, y, z, w)
+  const double pos_yaw_angle = 2.0 * std::atan2(
+    pose_with_covariance.pose.orientation.z,
+    pose_with_covariance.pose.orientation.w);  // [rad]
+  marker_ptr->pose.position.x += velocity * std::cos(pos_yaw_angle + velocity_angle);
+  marker_ptr->pose.position.y += velocity * std::sin(pos_yaw_angle + velocity_angle);
+
+  // velocity covariance
+  // extract eigen values and eigen vectors
+  Eigen::Matrix2d eigen_twist_covariance;
+  eigen_twist_covariance << twist_with_covariance.covariance[0],
+    twist_with_covariance.covariance[1], twist_with_covariance.covariance[6],
+    twist_with_covariance.covariance[7];
+  double phi, sigma1, sigma2;
+  calc_covariance_eigen_vectors(eigen_twist_covariance, sigma1, sigma2, phi);
+  phi = pos_yaw_angle + phi;
+
+  // ellipse orientation
+  marker_ptr->pose.orientation.x = 0.0;
+  marker_ptr->pose.orientation.y = 0.0;
+  marker_ptr->pose.orientation.z = std::sin(phi / 2.0);
+  marker_ptr->pose.orientation.w = std::cos(phi / 2.0);
+
+  // ellipse size
+  marker_ptr->scale.x = sigma1 * 2.448;  // 2.448 sigma is 95%
+  marker_ptr->scale.y = sigma2 * 2.448;  // 2.448 sigma is 95%
+  marker_ptr->scale.z = 0.05;
+  
+  marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
+  marker_ptr->color.a = 0.5;
+  marker_ptr->color.r = 1.0;
+  marker_ptr->color.g = 0.2;
+  marker_ptr->color.b = 0.4;
+
+  return marker_ptr;
+}
+
 visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width)
@@ -161,20 +214,16 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_marker_ptr(
   return marker_ptr;
 }
 
-visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
+visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
-  marker_ptr->ns = std::string("twist covariance");
+  marker_ptr->ns = std::string("yaw rate covariance");
   marker_ptr->scale.x = line_width;
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose = pose_with_covariance.pose;
-  geometry_msgs::msg::Point point;
-
-  // velocity covariance
-  // extract eigen values and eigen vectors
 
   // yaw rate covariance
   const double yaw_rate_covariance = twist_with_covariance.covariance[35];
@@ -300,29 +349,28 @@ void calc_covariance_eigen_vectors(
 }
 
 visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
-  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & line_width)
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::CYLINDER;
   marker_ptr->ns = std::string("position covariance");
-  marker_ptr->scale.x = line_width;
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose = pose_with_covariance.pose;
 
   // position covariance
   // extract eigen values and eigen vectors
-  Eigen::Matrix2d eigen_pose_with_covariance;
-  eigen_pose_with_covariance << pose_with_covariance.covariance[0],
+  Eigen::Matrix2d eigen_pose_covariance;
+  eigen_pose_covariance << pose_with_covariance.covariance[0],
     pose_with_covariance.covariance[1], pose_with_covariance.covariance[6],
     pose_with_covariance.covariance[7];
   double yaw, sigma1, sigma2;
-  calc_covariance_eigen_vectors(eigen_pose_with_covariance, sigma1, sigma2, yaw);
+  calc_covariance_eigen_vectors(eigen_pose_covariance, sigma1, sigma2, yaw);
 
   // ellipse orientation
-  marker_ptr->pose.orientation.x =  0.0;
-  marker_ptr->pose.orientation.y =  0.0;
-  marker_ptr->pose.orientation.z =  std::sin(yaw / 2.0);
-  marker_ptr->pose.orientation.w =  std::cos(yaw / 2.0);
+  marker_ptr->pose.orientation.x = 0.0;
+  marker_ptr->pose.orientation.y = 0.0;
+  marker_ptr->pose.orientation.z = std::sin(yaw / 2.0);
+  marker_ptr->pose.orientation.w = std::cos(yaw / 2.0);
 
   // ellipse size
   marker_ptr->scale.x = sigma1 * 2.448;  // 2.448 sigma is 95%

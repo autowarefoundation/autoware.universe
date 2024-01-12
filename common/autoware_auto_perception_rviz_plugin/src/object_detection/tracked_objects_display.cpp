@@ -97,7 +97,7 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
 
     // Get marker for pose with covariance
     auto pose_with_covariance_marker = get_pose_with_covariance_marker_ptr(
-      object.kinematics.pose_with_covariance, get_line_width() * 0.5);
+      object.kinematics.pose_with_covariance);
     if (pose_with_covariance_marker) {
       auto marker_ptr = pose_with_covariance_marker.value();
       marker_ptr->header = msg->header;
@@ -171,6 +171,16 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
       add_marker(twist_marker_ptr);
     }
 
+    // Get marker for twist covariance
+    auto twist_covariance_marker = get_twist_covariance_marker_ptr(
+      object.kinematics.pose_with_covariance, object.kinematics.twist_with_covariance);
+    if (twist_covariance_marker) {
+      auto marker_ptr = twist_covariance_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      add_marker(marker_ptr);
+    }
+
     // Get marker for yaw rate
     auto yaw_rate_marker = get_yaw_rate_marker_ptr(
       object.kinematics.pose_with_covariance, object.kinematics.twist_with_covariance,
@@ -183,11 +193,11 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
     }
 
     // Get marker for twist covariance
-    auto twist_covariance_marker = get_twist_covariance_marker_ptr(
+    auto yaw_rate_covariance_marker = get_yaw_rate_covariance_marker_ptr(
       object.kinematics.pose_with_covariance, object.kinematics.twist_with_covariance,
       get_line_width() * 0.5);
-    if (twist_covariance_marker) {
-      auto marker_ptr = twist_covariance_marker.value();
+    if (yaw_rate_covariance_marker) {
+      auto marker_ptr = yaw_rate_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = uuid_to_marker_id(object.object_id);
       add_marker(marker_ptr);
