@@ -1,0 +1,2 @@
+builtin_interfaces/Time stamp
+autoware_perception_msgs/TrafficSignal[] traffic_signals

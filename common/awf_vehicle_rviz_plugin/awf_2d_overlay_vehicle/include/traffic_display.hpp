@@ -10,7 +10,7 @@
 #include <rviz_common/ros_topic_display.hpp>
 
 #include <autoware_perception_msgs/msg/traffic_signal.hpp>
-// #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <rviz_2d_overlay_msgs/msg/traffic_signal_array_ui.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_element.hpp>
 
 #include <OgreColourValue.h>
@@ -27,6 +27,10 @@ public:
   void drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect);
   // void updateTrafficLightData(const
   // autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
+  rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI temp;
+
+
+
 
 private:
   int current_traffic_;  // Internal variable to store current gear

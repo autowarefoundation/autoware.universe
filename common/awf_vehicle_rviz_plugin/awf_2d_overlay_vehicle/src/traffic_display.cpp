@@ -36,6 +36,7 @@ TrafficDisplay::TrafficDisplay() : current_traffic_(0)
 
 void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect)
 {
+
   // Enable Antialiasing for smoother drawing
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
