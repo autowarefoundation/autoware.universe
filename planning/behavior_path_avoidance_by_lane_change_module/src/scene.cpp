@@ -54,6 +54,7 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
   const auto & data = avoidance_data_;
 
   if (data.target_objects.empty()) {
+    RCLCPP_DEBUG(logger_, "no empty objects");
     return false;
   }
 
@@ -73,11 +74,13 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
     std::accumulate(object_parameters.begin(), object_parameters.end(), 0UL, count_target_object);
 
   if (num_of_avoidance_targets < 1) {
+    RCLCPP_DEBUG(logger_, "no avoidance target");
     return false;
   }
 
   const auto current_lanes = getCurrentLanes();
   if (current_lanes.empty()) {
+    RCLCPP_DEBUG(logger_, "no empty lanes");
     return false;
   }
 
@@ -163,7 +166,7 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
   std::for_each(
     data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
       data.drivable_lanes.push_back(utils::avoidance::generateExpandDrivableLanes(
-        lanelet, planner_data_, avoidance_parameters_));
+        lanelet, planner_data_, avoidance_parameters_, false));
     });
 
   // calc drivable bound
