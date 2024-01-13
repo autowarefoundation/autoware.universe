@@ -2148,19 +2148,6 @@ double calcDistanceToAvoidStartLine(
     }
   }
 
-  // dead line for goal
-  if (
-    utils::isAllowedGoalModification(planner_data->route_handler) &&
-    parameters->enable_dead_line_for_goal) {
-    if (planner_data->route_handler->isInGoalRouteSection(lanelets.back())) {
-      const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
-      const auto to_goal_distance =
-        calcSignedArcLength(path.points, ego_pos, path.points.size() - 1);
-      distance_to_return_dead_line = std::min(
-        distance_to_return_dead_line, to_goal_distance - parameters->dead_line_buffer_for_goal);
-    }
-  }
-
   return distance_to_return_dead_line;
 }
 
@@ -2182,6 +2169,19 @@ double calcDistanceToReturnDeadLine(
       distance_to_return_dead_line = std::min(
         distance_to_return_dead_line,
         to_traffic_light.value() - parameters->dead_line_buffer_for_traffic_light);
+    }
+  }
+
+  // dead line for goal
+  if (
+    utils::isAllowedGoalModification(planner_data->route_handler) &&
+    parameters->enable_dead_line_for_goal) {
+    if (planner_data->route_handler->isInGoalRouteSection(lanelets.back())) {
+      const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
+      const auto to_goal_distance =
+        calcSignedArcLength(path.points, ego_pos, path.points.size() - 1);
+      distance_to_return_dead_line = std::min(
+        distance_to_return_dead_line, to_goal_distance - parameters->dead_line_buffer_for_goal);
     }
   }
 
