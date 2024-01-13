@@ -272,8 +272,10 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // avoidance maneuver (return shift dead line)
   {
     const std::string ns = "avoidance.avoidance.return_dead_line.";
+    p.enable_dead_line_for_goal = getOrDeclareParameter<bool>(*node, ns + "goal.enable");
     p.enable_dead_line_for_traffic_light =
       getOrDeclareParameter<bool>(*node, ns + "traffic_light.enable");
+    p.dead_line_buffer_for_goal = getOrDeclareParameter<double>(*node, ns + "goal.buffer");
     p.dead_line_buffer_for_traffic_light =
       getOrDeclareParameter<double>(*node, ns + "traffic_light.buffer");
   }
