@@ -219,6 +219,62 @@ bool isReferencePath(
          lateral_deviation_threshold;
 }
 
+std::optional<PathWithLaneId> cropPath(const PathWithLaneId & path, const Pose & end_pose)
+{
+  const size_t end_idx = motion_utils::findNearestSegmentIndex(path.points, end_pose.position);
+  std::vector<PathPointWithLaneId> clipped_points{
+    path.points.begin(), path.points.begin() + end_idx};
+  if (clipped_points.empty()) {
+    return std::nullopt;
+  }
+
+  // add projected end pose to clipped points
+  PathPointWithLaneId projected_point = clipped_points.back();
+  const double offset = motion_utils::calcSignedArcLength(path.points, end_idx, end_pose.position);
+  projected_point.point.pose =
+    tier4_autoware_utils::calcOffsetPose(clipped_points.back().point.pose, offset, 0, 0);
+  clipped_points.push_back(projected_point);
+  auto clipped_path = path;
+  clipped_path.points = clipped_points;
+
+  return clipped_path;
+}
+
+PathWithLaneId cropForwardPoints(
+  const PathWithLaneId & path, const size_t target_seg_idx, const double forward_length)
+{
+  const auto & points = path.points;
+
+  double sum_length = 0;
+  for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
+    const double distance = tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    if (forward_length < sum_length + distance) {
+      const size_t end_idx = i - 1;
+      const auto cropped_points =
+        std::vector<PathPointWithLaneId>{points.begin(), points.begin() + end_idx};
+      PathWithLaneId cropped_path = path;
+      cropped_path.points = cropped_points;
+
+      // add precise end pose to cropped points
+      const double remaing_length = forward_length - sum_length;
+      const Pose precise_end_pose =
+        calcOffsetPose(cropped_path.points.back().point.pose, remaing_length, 0, 0);
+      if (remaing_length < 0.1) {
+        // if precise_end_pose is too close, replace the last point
+        cropped_path.points.back().point.pose = precise_end_pose;
+      } else {
+        auto precise_end_point = cropped_path.points.back();
+        precise_end_point.point.pose = precise_end_pose;
+        cropped_path.points.push_back(precise_end_point);
+      }
+      return cropped_path;
+    }
+    sum_length += distance;
+  }
+
+  return PathWithLaneId{};
+}
+
 PathWithLaneId extendPath(
   const PathWithLaneId & target_path, const PathWithLaneId & reference_path,
   const double extend_length)
@@ -227,12 +283,10 @@ PathWithLaneId extendPath(
 
   // generate clipped road lane reference path from previous module path terminal pose to shift end
   const size_t target_path_terminal_idx =
-    motion_utils::findNearestSegmentIndex(reference_path.points, target_terminal_pose.position) + 1;
+    motion_utils::findNearestSegmentIndex(reference_path.points, target_terminal_pose.position);
 
-  PathWithLaneId clipped_path{};
-  clipped_path.points = motion_utils::cropPoints(
-    reference_path.points, target_terminal_pose.position, target_path_terminal_idx, extend_length,
-    0.0);
+  PathWithLaneId clipped_path =
+    cropForwardPoints(reference_path, target_path_terminal_idx, extend_length);
 
   // shift clipped path to previous module path terminal pose
   const double lateral_shift_from_reference_path =
@@ -243,15 +297,17 @@ PathWithLaneId extendPath(
   }
 
   auto extended_path = target_path;
-  for (const auto & p : clipped_path.points) {
-    // skip close points
-    if (
-      tier4_autoware_utils::calcDistance2d(
-        extended_path.points.back().point.pose.position, p.point.pose.position) < 0.1) {
-      continue;
-    }
-    extended_path.points.push_back(p);
-  }
+  const auto start_point =
+    std::find_if(clipped_path.points.begin(), clipped_path.points.end(), [&](const auto & p) {
+      const bool is_forward =
+        tier4_autoware_utils::inverseTransformPoint(p.point.pose.position, target_terminal_pose).x >
+        0.0;
+      const bool is_close = tier4_autoware_utils::calcDistance2d(
+                              p.point.pose.position, target_terminal_pose.position) < 0.1;
+      return is_forward && !is_close;
+    });
+  std::copy(start_point, clipped_path.points.end(), std::back_inserter(extended_path.points));
+
   extended_path.points = motion_utils::removeOverlapPoints(extended_path.points);
 
   return extended_path;
@@ -263,34 +319,11 @@ PathWithLaneId extendPath(
 {
   const auto & target_terminal_pose = target_path.points.back().point.pose;
   const size_t target_path_terminal_idx =
-    motion_utils::findNearestSegmentIndex(reference_path.points, target_terminal_pose.position) + 1;
+    motion_utils::findNearestSegmentIndex(reference_path.points, target_terminal_pose.position);
   const double extend_distance = motion_utils::calcSignedArcLength(
     reference_path.points, target_path_terminal_idx, extend_pose.position);
 
-  return extendPath(reference_path, target_path, extend_distance);
-}
-
-std::optional<PathWithLaneId> cropPath(const PathWithLaneId & path, const Pose & end_pose)
-{
-  const size_t shift_end_idx =
-    motion_utils::findNearestSegmentIndex(path.points, end_pose.position);
-  std::vector<PathPointWithLaneId> clipped_points{
-    path.points.begin(), path.points.begin() + shift_end_idx};
-  if (clipped_points.empty()) {
-    return std::nullopt;
-  }
-
-  // add projected shift end pose to clipped points
-  PathPointWithLaneId projected_point = clipped_points.back();
-  const double offset =
-    motion_utils::calcSignedArcLength(path.points, shift_end_idx, end_pose.position);
-  projected_point.point.pose =
-    tier4_autoware_utils::calcOffsetPose(clipped_points.back().point.pose, offset, 0, 0);
-  clipped_points.push_back(projected_point);
-  auto clipped_path = path;
-  clipped_path.points = clipped_points;
-
-  return clipped_path;
+  return extendPath(target_path, reference_path, extend_distance);
 }
 
 }  // namespace behavior_path_planner::goal_planner_utils
