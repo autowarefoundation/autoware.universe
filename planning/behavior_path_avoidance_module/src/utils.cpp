@@ -700,7 +700,7 @@ bool isSatisfiedWithCommonCondition(
     return false;
   }
 
-  if (utils::isAllowedGoalModification(planner_data->route_handler)) {
+  if (!utils::isAllowedGoalModification(planner_data->route_handler)) {
     if (
       object.longitudinal + object.length / 2 + parameters->object_check_goal_distance >
       to_goal_distance) {
@@ -2174,7 +2174,7 @@ double calcDistanceToReturnDeadLine(
 
   // dead line for goal
   if (
-    utils::isAllowedGoalModification(planner_data->route_handler) &&
+    !utils::isAllowedGoalModification(planner_data->route_handler) &&
     parameters->enable_dead_line_for_goal) {
     if (planner_data->route_handler->isInGoalRouteSection(lanelets.back())) {
       const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
