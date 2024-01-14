@@ -247,11 +247,10 @@ PathWithLaneId cropForwardPoints(
 
   double sum_length = 0;
   for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
-    const double distance = tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
-    if (forward_length < sum_length + distance) {
-      const size_t end_idx = i - 1;
+    const double seg_length = tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    if (forward_length < sum_length + seg_length) {
       const auto cropped_points =
-        std::vector<PathPointWithLaneId>{points.begin(), points.begin() + end_idx};
+        std::vector<PathPointWithLaneId>{points.begin() + target_seg_idx, points.begin() + i};
       PathWithLaneId cropped_path = path;
       cropped_path.points = cropped_points;
 
@@ -269,10 +268,15 @@ PathWithLaneId cropForwardPoints(
       }
       return cropped_path;
     }
-    sum_length += distance;
+    sum_length += seg_length;
   }
 
-  return PathWithLaneId{};
+  // if forward_length is too long, return points after target_seg_idx
+  const auto cropped_points =
+    std::vector<PathPointWithLaneId>{points.begin() + target_seg_idx, points.end()};
+  PathWithLaneId cropped_path = path;
+  cropped_path.points = cropped_points;
+  return cropped_path;
 }
 
 PathWithLaneId extendPath(
