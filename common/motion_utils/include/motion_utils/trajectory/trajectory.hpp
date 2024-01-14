@@ -953,7 +953,7 @@ template <class T>
 std::vector<double> calcCurvature(const T & points)
 {
   std::vector<double> curvature_vec(points.size(), 0.0);
-  if(points.size() < 3){
+  if (points.size() < 3) {
     return curvature_vec;
   }
 
