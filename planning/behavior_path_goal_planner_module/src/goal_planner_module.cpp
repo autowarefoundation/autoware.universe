@@ -440,7 +440,6 @@ double GoalPlannerModule::calcModuleRequestLength() const
     return parameters_->pull_over_minimum_request_length;
   }
 
-
   //  The module is requested at a distance such that the ego can stop for the pull over start point
   //  closest to ego. When path planning, each start point is checked to see if it is possible to
   //  stop again. At that time, if the speed has changed over time, the path will be rejected if
