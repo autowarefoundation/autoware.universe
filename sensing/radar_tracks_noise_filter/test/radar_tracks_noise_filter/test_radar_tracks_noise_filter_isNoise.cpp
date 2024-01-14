@@ -93,5 +93,4 @@ TEST(RadarTracksNoiseFilter, isNoise)
     RadarTrack radar_track = getRadarTrack(x_velocity, y_velocity);
     EXPECT_FALSE(node->isNoise(radar_track));
   }
-
 }
