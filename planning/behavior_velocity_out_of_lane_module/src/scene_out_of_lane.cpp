@@ -75,9 +75,8 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const auto path_footprints = calculate_path_footprints(ego_data, params_);
   const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
   // Calculate lanelets to ignore and consider
-  const auto path_lanelets = planning_utils::getLaneletsOnPath(
-    ego_data.path, planner_data_->route_handler_->getLaneletMapPtr(),
-    planner_data_->current_odometry->pose);
+  const auto path_lanelets =
+    calculate_path_lanelets(ego_data, *planner_data_->route_handler_, current_ego_footprint);
   const auto ignored_lanelets =
     calculate_ignored_lanelets(ego_data, path_lanelets, *planner_data_->route_handler_, params_);
   const auto other_lanelets = calculate_other_lanelets(

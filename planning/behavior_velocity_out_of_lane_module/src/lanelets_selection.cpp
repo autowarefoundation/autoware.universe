@@ -24,6 +24,28 @@
 
 namespace behavior_velocity_planner::out_of_lane
 {
+lanelet::ConstLanelets calculate_path_lanelets(
+  const EgoData & ego_data, const route_handler::RouteHandler & route_handler,
+  const lanelet::BasicPolygon2d & ego_footprint)
+{
+  const auto lanelet_map_ptr = route_handler.getLaneletMapPtr();
+  lanelet::ConstLanelets path_lanelets =
+    planning_utils::getLaneletsOnPath(ego_data.path, lanelet_map_ptr, ego_data.pose);
+  const auto add_unique_within = [&](const auto & geometry) {
+    const auto dist_lanelet_pairs =
+      lanelet::geometry::findWithin2d(lanelet_map_ptr->laneletLayer, geometry);
+    for (const auto & dist_lanelet_pair : dist_lanelet_pairs)
+      if (!contains_lanelet(path_lanelets, dist_lanelet_pair.second.id()))
+        path_lanelets.push_back(dist_lanelet_pair.second);
+  };
+  add_unique_within(ego_footprint);
+  for (const auto & p : ego_data.path.points) {
+    const auto pt = lanelet::BasicPoint2d(p.point.pose.position.x, p.point.pose.position.y);
+    add_unique_within(pt);
+  }
+  return path_lanelets;
+}
+
 lanelet::ConstLanelets calculate_ignored_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & path_lanelets,
   const route_handler::RouteHandler & route_handler, const PlannerParam & params)
