@@ -27,8 +27,11 @@
   <!-- YabLoc Launch (as pose estimator) -->
   <group if="$(var use_yabloc_pose)">
     <push-ros-namespace namespace="pose_estimator"/>
+    <let name="yabloc_src_image" value="/sensing/camera/traffic_light/image_raw" unless="$(var multi_localizer_mode)"/>
+    <let name="yabloc_src_image" value="/sensing/camera/traffic_light/image_raw/yabloc_relay" if="$(var multi_localizer_mode)"/>
+
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/yabloc.launch.xml">
-      <arg name="multi_localizer_mode" value="$(var multi_localizer_mode)"/>
+      <arg name="src_image" value="$(var yabloc_src_image)"/>
     </include>
   </group>
 
@@ -58,8 +61,11 @@
   <!-- AR Tag Based Localizer (as pose estimator) -->
   <group if="$(var use_artag_pose)">
     <push-ros-namespace namespace="pose_estimator"/>
+    <let name="artag_input_image" value="/sensing/camera/traffic_light/image_raw" unless="$(var multi_localizer_mode)"/>
+    <let name="artag_input_image" value="/sensing/camera/traffic_light/image_raw/artag_relay" if="$(var multi_localizer_mode)"/>
+
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/ar_tag_based_localizer.launch.xml">
-      <arg name="multi_localizer_mode" value="$(var multi_localizer_mode)"/>
+      <arg name="input_image" value="$(var artag_input_image)"/>
     </include>
   </group>
 
