@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 /// \brief This file defines some helper functions used by ObjectPolygonDisplayBase class
-#ifndef OBJECT_DETECTION__OBJECT_POLYGON_DETAIL_HPP_
-#define OBJECT_DETECTION__OBJECT_POLYGON_DETAIL_HPP_
+#ifndef AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__OBJECT_DETECTION__OBJECT_POLYGON_DETAIL_HPP_
+#define AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__OBJECT_DETECTION__OBJECT_POLYGON_DETAIL_HPP_
+
+#include "autoware_auto_perception_rviz_plugin/visibility_control.hpp"
 
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <visibility_control.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object.hpp>
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
@@ -83,13 +84,15 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::Sha
 get_shape_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
+  const bool & is_orientation_available = true);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_2d_shape_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
+  const bool & is_orientation_available = true);
 
 /// \brief Convert the given polygon into a marker representing the shape in 3d
 /// \param centroid Centroid position of the shape in Object.header.frame_id frame
@@ -139,11 +142,23 @@ get_path_confidence_marker_ptr(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const std_msgs::msg::ColorRGBA & path_confidence_color);
 
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_line_list_from_points(
+  const double point_list[][3], const int point_pairs[][2], const int & num_pairs,
+  std::vector<geometry_msgs::msg::Point> & points);
+
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_bounding_box_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_bounding_box_direction_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points);
+
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_bounding_box_bottom_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points);
+
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_bounding_box_bottom_direction_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
@@ -238,4 +253,4 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC
 }  // namespace rviz_plugins
 }  // namespace autoware
 
-#endif  // OBJECT_DETECTION__OBJECT_POLYGON_DETAIL_HPP_
+#endif  // AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN__OBJECT_DETECTION__OBJECT_POLYGON_DETAIL_HPP_

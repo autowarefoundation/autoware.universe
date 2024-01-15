@@ -14,7 +14,7 @@
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
-#include <object_detection/detected_objects_display.hpp>
+#include "autoware_auto_perception_rviz_plugin/object_detection/detected_objects_display.hpp"
 
 #include <memory>
 
@@ -38,7 +38,9 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.pose_with_covariance.pose.position,
       object.kinematics.pose_with_covariance.pose.orientation, object.classification,
-      get_line_width());
+      get_line_width(),
+      object.kinematics.orientation_availability ==
+        autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE);
     if (shape_marker) {
       auto shape_marker_ptr = shape_marker.value();
       shape_marker_ptr->header = msg->header;

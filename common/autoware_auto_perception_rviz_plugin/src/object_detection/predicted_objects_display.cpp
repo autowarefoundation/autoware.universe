@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <object_detection/predicted_objects_display.hpp>
+#include "autoware_auto_perception_rviz_plugin/object_detection/predicted_objects_display.hpp"
 
 #include <memory>
 #include <set>
@@ -77,7 +77,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.initial_pose_with_covariance.pose.position,
       object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification,
-      get_line_width());
+      get_line_width(), true);
     if (shape_marker) {
       auto shape_marker_ptr = shape_marker.value();
       shape_marker_ptr->header = msg->header;
