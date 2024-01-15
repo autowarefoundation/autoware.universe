@@ -77,7 +77,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.initial_pose_with_covariance.pose.position,
       object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification,
-      get_line_width());
+      get_line_width(), true);
     if (shape_marker) {
       auto shape_marker_ptr = shape_marker.value();
       shape_marker_ptr->header = msg->header;
@@ -121,6 +121,25 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
       markers.push_back(pose_with_covariance_marker_ptr);
     }
 
+    // Get marker for existence probability
+    geometry_msgs::msg::Point existence_probability_position;
+    existence_probability_position.x =
+      object.kinematics.initial_pose_with_covariance.pose.position.x + 0.5;
+    existence_probability_position.y =
+      object.kinematics.initial_pose_with_covariance.pose.position.y;
+    existence_probability_position.z =
+      object.kinematics.initial_pose_with_covariance.pose.position.z + 0.5;
+    const float existence_probability = object.existence_probability;
+    auto existence_prob_marker = get_existence_probability_marker_ptr(
+      existence_probability_position,
+      object.kinematics.initial_pose_with_covariance.pose.orientation, existence_probability,
+      object.classification);
+    if (existence_prob_marker) {
+      auto existence_prob_marker_ptr = existence_prob_marker.value();
+      existence_prob_marker_ptr->header = msg->header;
+      existence_prob_marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(existence_prob_marker_ptr);
+    }
     // Get marker for velocity text
     geometry_msgs::msg::Point vel_vis_position;
     vel_vis_position.x = uuid_vis_position.x - 0.5;
@@ -154,7 +173,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     // Get marker for twist
     auto twist_marker = get_twist_marker_ptr(
       object.kinematics.initial_pose_with_covariance,
-      object.kinematics.initial_twist_with_covariance);
+      object.kinematics.initial_twist_with_covariance, get_line_width());
     if (twist_marker) {
       auto twist_marker_ptr = twist_marker.value();
       twist_marker_ptr->header = msg->header;

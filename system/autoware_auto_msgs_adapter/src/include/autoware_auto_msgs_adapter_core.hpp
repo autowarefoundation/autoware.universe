@@ -18,6 +18,7 @@
 #include "adapter_map.hpp"
 #include "adapter_perception.hpp"
 #include "adapter_traffic_signals.hpp"
+#include "adapter_planning.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

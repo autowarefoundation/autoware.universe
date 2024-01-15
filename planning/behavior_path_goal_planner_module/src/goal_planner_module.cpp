@@ -15,7 +15,7 @@
 #include "behavior_path_goal_planner_module/goal_planner_module.hpp"
 
 #include "behavior_path_goal_planner_module/util.hpp"
-#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
+#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/parking_departure/utils.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
@@ -93,7 +93,7 @@ GoalPlannerModule::GoalPlannerModule(
   // set selected goal searcher
   // currently there is only one goal_searcher_type
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
-  vehicle_footprint_ = createVehicleFootprint(vehicle_info);
+  vehicle_footprint_ = vehicle_info.createFootprint();
   goal_searcher_ =
     std::make_shared<GoalSearcher>(*parameters, vehicle_footprint_, occupancy_grid_map_);
 
@@ -282,7 +282,7 @@ void GoalPlannerModule::updateData()
 
   resetPathCandidate();
   resetPathReference();
-  path_reference_ = getPreviousModuleOutput().reference_path;
+  path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
   updateOccupancyGrid();
 
@@ -761,7 +761,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output) const
     // because it takes time for the trajectory to be reflected
     auto current_path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
     keepStoppedWithCurrentPath(current_path);
-    output.path = std::make_shared<PathWithLaneId>(current_path);
+    output.path = current_path;
   }
 
   setModifiedGoal(output);
@@ -777,14 +777,14 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output) const
 {
   if (prev_data_.found_path || !prev_data_.stop_path) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
-    output.path = std::make_shared<PathWithLaneId>(generateStopPath());
+    output.path = generateStopPath();
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
   } else {
     // not_safe -> not_safe: use previous stop path
-    output.path = prev_data_.stop_path;
+    output.path = *prev_data_.stop_path;
     // stop_pose_ is removed in manager every loop, so need to set every loop.
-    stop_pose_ = utils::getFirstStopPoseFromPath(*output.path);
+    stop_pose_ = utils::getFirstStopPoseFromPath(output.path);
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, use previous stop path");
   }
@@ -797,23 +797,22 @@ void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output
     auto current_path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
     const auto stop_path =
       behavior_path_planner::utils::parking_departure::generateFeasibleStopPath(
-        current_path, planner_data_, *stop_pose_, parameters_->maximum_deceleration_for_stop,
+        current_path, planner_data_, stop_pose_, parameters_->maximum_deceleration_for_stop,
         parameters_->maximum_jerk_for_stop);
     if (stop_path) {
-      output.path = std::make_shared<PathWithLaneId>(*stop_path);
+      output.path = *stop_path;
       RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, generate stop path");
     } else {
-      output.path =
-        std::make_shared<PathWithLaneId>(thread_safe_data_.get_pull_over_path()->getCurrentPath());
+      output.path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
       RCLCPP_WARN_THROTTLE(
         getLogger(), *clock_, 5000,
         "Collision detected, no feasible stop path found, cannot stop.");
     }
   } else {
     // not_safe safe(no feasible stop path found) -> not_safe: use previous stop path
-    output.path = prev_data_.stop_path_after_approval;
+    output.path = *prev_data_.stop_path_after_approval;
     // stop_pose_ is removed in manager every loop, so need to set every loop.
-    stop_pose_ = utils::getFirstStopPoseFromPath(*output.path);
+    stop_pose_ = utils::getFirstStopPoseFromPath(output.path);
     RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, use previous stop path");
   }
 }
@@ -826,7 +825,7 @@ void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
       planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
   } else {
     const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
-      *output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
+      output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
 
     DrivableAreaInfo current_drivable_area_info;
     current_drivable_area_info.drivable_lanes = target_drivable_lanes;
@@ -853,9 +852,9 @@ void GoalPlannerModule::setTurnSignalInfo(BehaviorModuleOutput & output) const
 {
   const auto original_signal = getPreviousModuleOutput().turn_signal_info;
   const auto new_signal = calcTurnSignalInfo();
-  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path->points);
+  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
   output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
-    *output.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
+    output.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
     planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
 }
@@ -942,10 +941,11 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate()
   BehaviorModuleOutput output{};
   const BehaviorModuleOutput pull_over_output = planPullOverAsOutput();
   output.modified_goal = pull_over_output.modified_goal;
-  output.path = std::make_shared<PathWithLaneId>(generateStopPath());
+  output.path = generateStopPath();
+  output.reference_path = getPreviousModuleOutput().reference_path;
 
   const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
-    *output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
+    output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
 
   DrivableAreaInfo current_drivable_area_info{};
   current_drivable_area_info.drivable_lanes = target_drivable_lanes;
@@ -1053,7 +1053,7 @@ void GoalPlannerModule::postProcess()
 void GoalPlannerModule::updatePreviousData(const BehaviorModuleOutput & output)
 {
   if (prev_data_.found_path || !prev_data_.stop_path) {
-    prev_data_.stop_path = output.path;
+    prev_data_.stop_path = std::make_shared<PathWithLaneId>(output.path);
   }
 
   // for the next loop setOutput().
@@ -1085,7 +1085,7 @@ void GoalPlannerModule::updatePreviousData(const BehaviorModuleOutput & output)
   if (!isActivated() || (!is_safe && prev_data_.stop_path_after_approval)) {
     return;
   }
-  auto stop_path = std::make_shared<PathWithLaneId>(*output.path);
+  auto stop_path = std::make_shared<PathWithLaneId>(output.path);
   for (auto & point : stop_path->points) {
     point.point.longitudinal_velocity_mps = 0.0;
   }

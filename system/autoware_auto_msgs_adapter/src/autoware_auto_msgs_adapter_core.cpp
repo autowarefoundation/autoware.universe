@@ -73,7 +73,11 @@ MapStringAdapter AutowareAutoMsgsAdapterNode::create_adapter_map(
        return std::static_pointer_cast<AdapterBaseInterface>(
          std::make_shared<AdapterTrafficSignals>(*this, topic_name_source, topic_name_target));
      }},
-
+    {"autoware_auto_planning_msgs/msg/Trajectory",
+     [&] {
+       return std::static_pointer_cast<AdapterBaseInterface>(
+         std::make_shared<AdapterPlanning>(*this, topic_name_source, topic_name_target));
+     }},
   };
 }
 

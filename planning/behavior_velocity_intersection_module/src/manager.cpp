@@ -74,10 +74,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_detect_dist");
   ip.stuck_vehicle.stuck_vehicle_velocity_threshold =
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_velocity_threshold");
-  ip.stuck_vehicle.timeout_private_area =
-    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.timeout_private_area");
-  ip.stuck_vehicle.enable_private_area_stuck_disregard =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.enable_private_area_stuck_disregard");
+  ip.stuck_vehicle.disable_against_private_lane =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.disable_against_private_lane");
 
   ip.yield_stuck.turn_direction.left =
     getOrDeclareParameter<bool>(node, ns + ".yield_stuck.turn_direction.left");
@@ -154,6 +152,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".occlusion.creep_during_peeking.creep_velocity");
   ip.occlusion.peeking_offset =
     getOrDeclareParameter<double>(node, ns + ".occlusion.peeking_offset");
+  ip.occlusion.occlusion_required_clearance_distance =
+    getOrDeclareParameter<double>(node, ns + ".occlusion.occlusion_required_clearance_distance");
   ip.occlusion.possible_object_bbox =
     getOrDeclareParameter<std::vector<double>>(node, ns + ".occlusion.possible_object_bbox");
   ip.occlusion.ignore_parked_vehicle_speed_threshold =
@@ -201,7 +201,6 @@ void IntersectionModuleManager::launchNewModules(
     }
 
     const std::string location = ll.attributeOr("location", "else");
-    const bool is_private_area = (location.compare("private") == 0);
     const auto associative_ids =
       planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
     bool has_traffic_light = false;
@@ -213,7 +212,7 @@ void IntersectionModuleManager::launchNewModules(
     }
     const auto new_module = std::make_shared<IntersectionModule>(
       module_id, lane_id, planner_data_, intersection_param_, associative_ids, turn_direction,
-      has_traffic_light, enable_occlusion_detection, is_private_area, node_,
+      has_traffic_light, enable_occlusion_detection, node_,
       logger_.get_child("intersection_module"), clock_);
     generateUUID(module_id);
     /* set RTC status as non_occluded status initially */
