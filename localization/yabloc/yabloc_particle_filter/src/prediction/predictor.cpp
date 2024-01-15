@@ -75,8 +75,8 @@ Predictor::Predictor()
 
   // Service server
   using std::placeholders::_2;
-  auto on_suspend_service = std::bind(&Predictor::on_trigger_service, this, _1, _2);
-  yabloc_trigger_server_ = create_service<SetBool>("~/yabloc_trigger_srv", on_suspend_service);
+  auto on_trigger_service = std::bind(&Predictor::on_trigger_service, this, _1, _2);
+  yabloc_trigger_server_ = create_service<SetBool>("~/yabloc_trigger_srv", on_trigger_service);
 
   // Optional modules
   if (declare_parameter<bool>("visualize", false)) {
@@ -216,7 +216,7 @@ void Predictor::on_timer()
 {
   // ==========================================================================
   // Pre-check section
-  // Return if yabloc is suspended
+  // Return if yabloc is not activated
   if (!yabloc_activated_) {
     return;
   }
