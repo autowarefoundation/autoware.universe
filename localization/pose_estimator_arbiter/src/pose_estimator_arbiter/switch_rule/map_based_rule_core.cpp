@@ -20,7 +20,7 @@ namespace pose_estimator_arbiter::switch_rule
 std::unordered_map<PoseEstimatorType, bool> MapBasedRule::update()
 {
   auto ret = update_impl();
-  RCLCPP_DEBUG(get_logger(), debug_string_.c_str());
+  RCLCPP_DEBUG(get_logger(), "%s", debug_string_.c_str());
   return ret;
 }
 

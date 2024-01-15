@@ -159,9 +159,10 @@ void PoseEstimatorArbiter::publish_diagnostics() const
     diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     diag_status.message = "OK";
 
+    // TODO(KYabuuchi) : Add more details
     diagnostic_msgs::msg::KeyValue key_value_msg;
     key_value_msg.key = "state";
-    key_value_msg.value = "Diagnostics is not implemented.";
+    key_value_msg.value = "Further details have not been implemented yet.";
     diag_status.values.push_back(key_value_msg);
   }
 
