@@ -6,6 +6,9 @@ autoware_package()
 
 find_package(glog REQUIRED)
 
+find_package(PCL REQUIRED COMPONENTS common)
+include_directories(SYSTEM ${PCL_INCLUDE_DIRS})
+
 ament_auto_add_library(switch_rule
   SHARED
   src/pose_estimator_arbiter/switch_rule/map_based_rule.cpp
@@ -21,7 +24,6 @@ ament_auto_add_executable(${PROJECT_NAME}
   src/pose_estimator_arbiter/pose_estimator_arbiter_node.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC src)
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${PCL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} switch_rule glog::glog)
 
 # ==============================
