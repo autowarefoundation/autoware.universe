@@ -17,27 +17,27 @@
 
 namespace pose_estimator_arbiter::switch_rule
 {
-std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
+std::unordered_map<PoseEstimatorType, bool> MapBasedRule::update()
 {
   auto ret = update_impl();
   RCLCPP_DEBUG(get_logger(), debug_string_.c_str());
   return ret;
 }
 
-std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update_impl() const
+std::unordered_map<PoseEstimatorType, bool> MapBasedRule::update_impl() const
 {
   auto is_registered = [&list = std::as_const(running_estimator_list_)](
-                         const PoseEstimatorName name) -> bool { return list.count(name) != 0; };
+                         const PoseEstimatorType type) -> bool { return list.count(type) != 0; };
 
   // (1) If the localization state is not 'INITIALIZED'
   using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
   if (shared_data_->initialization_state()->state != InitializationState::INITIALIZED) {
     debug_string_ = "Enable all: localization is not initialized";
     return {
-      {PoseEstimatorName::ndt, true},
-      {PoseEstimatorName::yabloc, true},
-      {PoseEstimatorName::eagleye, true},
-      {PoseEstimatorName::artag, true},
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, true},
+      {PoseEstimatorType::artag, true},
     };
   }
 
@@ -46,22 +46,22 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update_impl() const
     debug_string_ =
       "Enable all: estimated pose has not been published yet, so unable to determine which to use";
     return {
-      {PoseEstimatorName::ndt, true},
-      {PoseEstimatorName::yabloc, true},
-      {PoseEstimatorName::eagleye, true},
-      {PoseEstimatorName::artag, true},
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, true},
+      {PoseEstimatorType::artag, true},
     };
   }
 
   // (3) If eagleye is available, enable eagleye
-  if (is_registered(PoseEstimatorName::eagleye)) {
+  if (is_registered(PoseEstimatorType::eagleye)) {
     if (eagleye_is_available()) {
       debug_string_ = "Enable eagleye: the vehicle is within eagleye_area";
       return {
-        {PoseEstimatorName::ndt, false},
-        {PoseEstimatorName::yabloc, false},
-        {PoseEstimatorName::eagleye, true},
-        {PoseEstimatorName::artag, false},
+        {PoseEstimatorType::ndt, false},
+        {PoseEstimatorType::yabloc, false},
+        {PoseEstimatorType::eagleye, true},
+        {PoseEstimatorType::artag, false},
       };
     } else {
       RCLCPP_DEBUG(get_logger(), "the vehicle is out of eagleye_area");
@@ -69,14 +69,14 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update_impl() const
   }
 
   // (4) If AR marker exists around ego position, enable artag
-  if (is_registered(PoseEstimatorName::artag)) {
+  if (is_registered(PoseEstimatorType::artag)) {
     if (artag_is_available()) {
       debug_string_ = "Enable artag: landmark exists around the ego";
       return {
-        {PoseEstimatorName::ndt, false},
-        {PoseEstimatorName::yabloc, false},
-        {PoseEstimatorName::eagleye, false},
-        {PoseEstimatorName::artag, true},
+        {PoseEstimatorType::ndt, false},
+        {PoseEstimatorType::yabloc, false},
+        {PoseEstimatorType::eagleye, false},
+        {PoseEstimatorType::artag, true},
       };
     } else {
       RCLCPP_DEBUG(get_logger(), "there are no AR tags around the ego");
@@ -84,24 +84,24 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update_impl() const
   }
 
   // (5) If yabloc is disabled, enable ndt
-  if (!is_registered(PoseEstimatorName::yabloc)) {
+  if (!is_registered(PoseEstimatorType::yabloc)) {
     debug_string_ = "Enable ndt: only ndt is available";
     return {
-      {PoseEstimatorName::ndt, true},
-      {PoseEstimatorName::yabloc, false},
-      {PoseEstimatorName::eagleye, false},
-      {PoseEstimatorName::artag, false},
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, false},
+      {PoseEstimatorType::eagleye, false},
+      {PoseEstimatorType::artag, false},
     };
   }
 
   // (6) If ndt is disabled, enable YabLoc
-  if (!is_registered(PoseEstimatorName::ndt)) {
+  if (!is_registered(PoseEstimatorType::ndt)) {
     debug_string_ = "Enable yabloc: only yabloc is available";
     return {
-      {PoseEstimatorName::ndt, false},
-      {PoseEstimatorName::yabloc, true},
-      {PoseEstimatorName::eagleye, false},
-      {PoseEstimatorName::artag, false},
+      {PoseEstimatorType::ndt, false},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, false},
+      {PoseEstimatorType::artag, false},
     };
   }
 
@@ -110,18 +110,18 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update_impl() const
   if (ndt_is_more_suitable_than_yabloc(&ref_debug_string)) {
     debug_string_ = "Enable ndt: " + ref_debug_string;
     return {
-      {PoseEstimatorName::ndt, true},
-      {PoseEstimatorName::yabloc, false},
-      {PoseEstimatorName::eagleye, false},
-      {PoseEstimatorName::artag, false},
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, false},
+      {PoseEstimatorType::eagleye, false},
+      {PoseEstimatorType::artag, false},
     };
   } else {
     debug_string_ = "Enable yabloc: " + ref_debug_string;
     return {
-      {PoseEstimatorName::ndt, false},
-      {PoseEstimatorName::yabloc, true},
-      {PoseEstimatorName::eagleye, false},
-      {PoseEstimatorName::artag, false}};
+      {PoseEstimatorType::ndt, false},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, false},
+      {PoseEstimatorType::artag, false}};
   }
 }
 

@@ -50,7 +50,7 @@ public:
   PoseEstimatorArbiter();
 
 private:
-  const std::unordered_set<PoseEstimatorName> running_estimator_list_;
+  const std::unordered_set<PoseEstimatorType> running_estimator_list_;
   const std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
   std::shared_ptr<SharedData> shared_data_{nullptr};
@@ -72,12 +72,12 @@ private:
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Subscription<InitializationState>::SharedPtr sub_initialization_state_;
 
-  std::unordered_map<PoseEstimatorName, stopper::BaseStopper::SharedPtr> stoppers_;
+  std::unordered_map<PoseEstimatorType, stopper::BaseStopper::SharedPtr> stoppers_;
 
   std::shared_ptr<switch_rule::BaseSwitchRule> switch_rule_{nullptr};
 
   void toggle_all(bool enabled);
-  void toggle_each(const std::unordered_map<PoseEstimatorName, bool> & toggle_list);
+  void toggle_each(const std::unordered_map<PoseEstimatorType, bool> & toggle_list);
 
   void load_switch_rule();
 

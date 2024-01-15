@@ -15,7 +15,7 @@
 #ifndef POSE_ESTIMATOR_ARBITER__SWITCH_RULE__MAP_BASED_RULE_HPP_
 #define POSE_ESTIMATOR_ARBITER__SWITCH_RULE__MAP_BASED_RULE_HPP_
 
-#include "pose_estimator_arbiter/pose_estimator_name.hpp"
+#include "pose_estimator_arbiter/pose_estimator_type.hpp"
 #include "pose_estimator_arbiter/rule_helper/ar_tag_position.hpp"
 #include "pose_estimator_arbiter/rule_helper/eagleye_area.hpp"
 #include "pose_estimator_arbiter/rule_helper/pcd_occupancy.hpp"
@@ -34,10 +34,10 @@ class MapBasedRule : public BaseSwitchRule
 {
 public:
   MapBasedRule(
-    rclcpp::Node & node, const std::unordered_set<PoseEstimatorName> & running_estimator_list,
+    rclcpp::Node & node, const std::unordered_set<PoseEstimatorType> & running_estimator_list,
     const std::shared_ptr<const SharedData> shared_data);
 
-  std::unordered_map<PoseEstimatorName, bool> update() override;
+  std::unordered_map<PoseEstimatorType, bool> update() override;
 
   std::string debug_string() override;
 
@@ -45,7 +45,7 @@ public:
 
 protected:
   const double ar_marker_available_distance_;
-  const std::unordered_set<PoseEstimatorName> running_estimator_list_;
+  const std::unordered_set<PoseEstimatorType> running_estimator_list_;
   std::shared_ptr<const SharedData> shared_data_{nullptr};
 
   std::unique_ptr<rule_helper::ArTagPosition> ar_tag_position_{nullptr};
@@ -55,7 +55,7 @@ protected:
   // Store the reason why which pose estimator is enabled
   mutable std::string debug_string_;
 
-  std::unordered_map<PoseEstimatorName, bool> update_impl() const;
+  std::unordered_map<PoseEstimatorType, bool> update_impl() const;
 
   bool eagleye_is_available() const;
   bool artag_is_available() const;

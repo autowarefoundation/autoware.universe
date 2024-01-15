@@ -15,7 +15,7 @@
 #ifndef POSE_ESTIMATOR_ARBITER__SWITCH_RULE__BASE_SWITCH_RULE_HPP_
 #define POSE_ESTIMATOR_ARBITER__SWITCH_RULE__BASE_SWITCH_RULE_HPP_
 
-#include "pose_estimator_arbiter/pose_estimator_name.hpp"
+#include "pose_estimator_arbiter/pose_estimator_type.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -40,7 +40,7 @@ public:
   }
 
   virtual ~BaseSwitchRule() = default;
-  virtual std::unordered_map<PoseEstimatorName, bool> update() = 0;
+  virtual std::unordered_map<PoseEstimatorType, bool> update() = 0;
   virtual std::string debug_string() { return std::string{}; }
   virtual MarkerArray debug_marker_array() { return MarkerArray{}; }
 

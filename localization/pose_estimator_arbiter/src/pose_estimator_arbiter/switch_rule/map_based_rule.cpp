@@ -17,7 +17,7 @@
 namespace pose_estimator_arbiter::switch_rule
 {
 MapBasedRule::MapBasedRule(
-  rclcpp::Node & node, const std::unordered_set<PoseEstimatorName> & running_estimator_list,
+  rclcpp::Node & node, const std::unordered_set<PoseEstimatorType> & running_estimator_list,
   const std::shared_ptr<const SharedData> shared_data)
 : BaseSwitchRule(node),
   ar_marker_available_distance_(
@@ -25,7 +25,7 @@ MapBasedRule::MapBasedRule(
   running_estimator_list_(running_estimator_list),
   shared_data_(shared_data)
 {
-  if (running_estimator_list.count(PoseEstimatorName::ndt)) {
+  if (running_estimator_list.count(PoseEstimatorType::ndt)) {
     pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
 
     // Register callback
@@ -34,7 +34,7 @@ MapBasedRule::MapBasedRule(
         pcd_occupancy_->init(msg);
       });
   }
-  if (running_estimator_list.count(PoseEstimatorName::artag)) {
+  if (running_estimator_list.count(PoseEstimatorType::artag)) {
     ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node);
 
     // Register callback
@@ -43,7 +43,7 @@ MapBasedRule::MapBasedRule(
         ar_tag_position_->init(msg);
       });
   }
-  if (running_estimator_list.count(PoseEstimatorName::eagleye)) {
+  if (running_estimator_list.count(PoseEstimatorType::eagleye)) {
     eagleye_area_ = std::make_unique<rule_helper::EagleyeArea>(&node);
 
     // Register callback
@@ -96,7 +96,7 @@ MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
 
 bool MapBasedRule::artag_is_available() const
 {
-  if (running_estimator_list_.count(PoseEstimatorName::artag) == 0) {
+  if (running_estimator_list_.count(PoseEstimatorType::artag) == 0) {
     return false;
   }
   // Below this line, ar_tag_position_ is guaranteed not to be nullptr.

@@ -17,7 +17,7 @@
 
 namespace pose_estimator_arbiter
 {
-enum class PoseEstimatorName : int { ndt = 1, yabloc = 2, eagleye = 4, artag = 8 };
+enum class PoseEstimatorType : int { ndt = 1, yabloc = 2, eagleye = 4, artag = 8 };
 }
 
 #endif  // POSE_ESTIMATOR_ARBITER__POSE_ESTIMATOR_NAME_HPP_
