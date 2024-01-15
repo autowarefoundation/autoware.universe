@@ -86,7 +86,7 @@ private Q_SLOTS:
   void topic_updated_speed_limit();
   void topic_updated_turn_signals();
   void topic_updated_hazard_lights();
-  // void topic_updated_traffic();
+  void topic_updated_traffic();
 
 private:
   std::mutex mutex_;
@@ -101,7 +101,7 @@ private:
   std::unique_ptr<rviz_common::properties::RosTopicProperty> speed_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> turn_signals_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> hazard_lights_topic_property_;
-  // std::unique_ptr<rviz_common::properties::RosTopicProperty> traffic_topic_property_;
+  std::unique_ptr<rviz_common::properties::RosTopicProperty> traffic_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> speed_limit_topic_property_;
 
   void drawBackground(QPainter & painter, const QRectF & backgroundRect);
@@ -121,8 +121,7 @@ private:
     turn_signals_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::HazardLightsReport>::SharedPtr
     hazard_lights_sub_;
-  // rclcpp::Subscription<autoware_perception_msgs::msg::TrafficSignalArray>::SharedPtr
-  // traffic_sub_;
+  rclcpp::Subscription<rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI>::SharedPtr traffic_sub_;
   rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr speed_limit_sub_;
 
   std::mutex property_mutex_;
@@ -136,8 +135,8 @@ private:
   void updateHazardLightsData(
     const autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr & msg);
   void updateSpeedLimitData(const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
-  // void updateTrafficLightData(
-  //   const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
+  void updateTrafficLightData(
+    const rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI::ConstSharedPtr msg);
   void drawWidget(QImage & hud);
 };
 }  // namespace awf_2d_overlay_vehicle
