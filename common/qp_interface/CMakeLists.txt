@@ -32,13 +32,13 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-error=old-style-cast -Wno-error=useless-cast)
 
-target_include_directories(qp_interface
+target_include_directories(${PROJECT_NAME}
   SYSTEM PUBLIC
     "${OSQP_INCLUDE_DIR}"
     "${EIGEN3_INCLUDE_DIR}"
 )
 
-ament_target_dependencies(qp_interface
+ament_target_dependencies(${PROJECT_NAME}
   Eigen3
   osqp_vendor
   proxsuite
