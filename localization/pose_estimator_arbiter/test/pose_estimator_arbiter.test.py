@@ -192,7 +192,7 @@ class TestPoseEstimatorArbiter(unittest.TestCase):
         # Wait 0.5 second for all topics to be subscribed
         self.spin_for(0.5)
 
-        # Confirm that yabloc topic is relayed and ndt toic is not relayed.
+        # Confirm that yabloc topic is relayed and ndt topic is not relayed.
         print("ndt", len(self.ndt_relayed))
         print("yabloc", len(self.yabloc_relayed))
         self.assertGreater(len(self.yabloc_relayed), 5)

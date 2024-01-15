@@ -85,7 +85,7 @@ Predictor::Predictor()
 void Predictor::on_service(
   SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "particle filter activatation is set to " << request->data);
+  RCLCPP_INFO_STREAM(get_logger(), "particle filter activation is set to " << request->data);
   const bool before_activated_ = yabloc_activated_;
   yabloc_activated_ = request->data;
   response->success = true;
