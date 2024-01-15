@@ -287,6 +287,7 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
 void AvoidanceModule::fillAvoidanceTargetObjects(
   AvoidancePlanningData & data, DebugData & debug) const
 {
+  using utils::avoidance::fillAvoidanceNecessity;
   using utils::avoidance::fillObjectStoppableJudge;
   using utils::avoidance::filterTargetObjects;
   using utils::avoidance::getTargetLanelets;
@@ -319,10 +320,12 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   filterTargetObjects(objects, data, debug, planner_data_, parameters_);
 
   // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
+  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto feasible_stop_distance = helper_->getFeasibleDecelDistance(0.0, false);
   std::for_each(data.target_objects.begin(), data.target_objects.end(), [&, this](auto & o) {
     o.to_stop_line = calcDistanceToStopLine(o);
     fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
+    fillAvoidanceNecessity(o, registered_objects_, vehicle_width, parameters_);
   });
 
   // debug
@@ -380,20 +383,9 @@ ObjectData AvoidanceModule::createObjectData(
   utils::avoidance::fillInitialPose(object_data, detected_objects_);
 
   // Calc lateral deviation from path to target object.
-  object_data.to_centerline =
-    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
   object_data.direction = calcLateralDeviation(object_closest_pose, object_pose.position) > 0.0
                             ? Direction::LEFT
                             : Direction::RIGHT;
-
-  // Find the footprint point closest to the path, set to object_data.overhang_distance.
-  object_data.overhang_dist = utils::avoidance::calcEnvelopeOverhangDistance(
-    object_data, data.reference_path, object_data.overhang_pose.position);
-
-  // Check whether the the ego should avoid the object.
-  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  utils::avoidance::fillAvoidanceNecessity(
-    object_data, registered_objects_, vehicle_width, parameters_);
 
   return object_data;
 }

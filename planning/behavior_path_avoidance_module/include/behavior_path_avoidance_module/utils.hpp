@@ -132,11 +132,6 @@ void filterTargetObjects(
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
-double getRoadShoulderDistance(
-  ObjectData & object, const AvoidancePlanningData & data,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters);
-
 void fillAdditionalInfoFromPoint(const AvoidancePlanningData & data, AvoidLineArray & lines);
 
 void fillAdditionalInfoFromLongitudinal(const AvoidancePlanningData & data, AvoidLine & line);
