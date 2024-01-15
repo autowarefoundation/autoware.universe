@@ -1340,10 +1340,12 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   // TODO(Mamoru Sobue): if ego is over 1st/2nd pass judge line and collision is expected at 1st/2nd
   // pass judge line respectively, ego should go
+  const auto second_attention_stopline_idx = intersection_stoplines.second_attention_stopline;
+  const auto last_intersection_stopline_candidate_idx =
+    second_attention_stopline_idx ? second_attention_stopline_idx.value() : occlusion_stopline_idx;
   const bool has_collision = checkCollision(
-    *path, &target_objects, path_lanelets, closest_idx,
-    std::min<size_t>(occlusion_stopline_idx, path->points.size() - 1), time_to_restart,
-    traffic_prioritized_level);
+    *path, &target_objects, path_lanelets, closest_idx, last_intersection_stopline_candidate_idx,
+    time_to_restart, traffic_prioritized_level);
   collision_state_machine_.setStateWithMarginTime(
     has_collision ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
@@ -1840,6 +1842,7 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
         second_attention_area, interpolated_path_info, local_footprint, baselink2front);
     if (first_footprint_inside_2nd_attention_ip_opt) {
       second_attention_stopline_ip_int = first_footprint_inside_2nd_attention_ip_opt.value();
+      second_attention_stopline_valid = true;
     }
   }
   const auto second_attention_stopline_ip =
@@ -2838,8 +2841,6 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
       return std::nullopt;
     }
   }();
-  const bool has_upstream_stopline = upstream_stopline_idx_opt.has_value();
-  const size_t upstream_stopline_ind = upstream_stopline_idx_opt.value_or(0);
 
   for (size_t i = smoothed_path_closest_idx; i < smoothed_reference_path.points.size() - 1; ++i) {
     const auto & p1 = smoothed_reference_path.points.at(i);
@@ -2853,7 +2854,7 @@ TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
       (p1.point.longitudinal_velocity_mps + p2.point.longitudinal_velocity_mps) / 2.0;
     const double passing_velocity = [=]() {
       if (use_upstream_velocity) {
-        if (has_upstream_stopline && i > upstream_stopline_ind) {
+        if (upstream_stopline_idx_opt && i > upstream_stopline_idx_opt.value()) {
           return minimum_upstream_velocity;
         }
         return std::max<double>(average_velocity, minimum_ego_velocity);
