@@ -64,9 +64,9 @@ BigVehicleTracker::BigVehicleTracker(
   // initial covariance
   float p0_stddev_x = 1.5;                                     // [m]
   float p0_stddev_y = 0.5;                                     // [m]
-  float p0_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // [rad]
-  float p0_stddev_vel = tier4_autoware_utils::kmph2mps(1000);  // [m/s]
-  float p0_stddev_slip = tier4_autoware_utils::deg2rad(10);    // [rad/s]
+  float p0_stddev_yaw = tier4_autoware_utils::deg2rad(25);     // in map coordinate [rad]
+  float p0_stddev_vel = tier4_autoware_utils::kmph2mps(1000);  // in object coordinate [m/s]
+  float p0_stddev_slip = tier4_autoware_utils::deg2rad(5);     // in object coordinate [rad/s]
   ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
   ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
   ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
@@ -80,9 +80,9 @@ BigVehicleTracker::BigVehicleTracker(
   ekf_params_.q_stddev_yaw_rate_max =
     tier4_autoware_utils::deg2rad(13.0);  // [rad/s] uncertain yaw change rate
   ekf_params_.q_stddev_slip_rate_min =
-    tier4_autoware_utils::deg2rad(0.6);  // [rad/s] uncertain slip angle change rate
+    tier4_autoware_utils::deg2rad(0.2);  // [rad/s] uncertain slip angle change rate
   ekf_params_.q_stddev_slip_rate_max =
-    tier4_autoware_utils::deg2rad(10.0);  // [rad/s] uncertain slip angle change rate
+    tier4_autoware_utils::deg2rad(5.0);  // [rad/s] uncertain slip angle change rate
   ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
   // limitations
   max_vel_ = tier4_autoware_utils::kmph2mps(100);                      // [m/s]
@@ -262,19 +262,24 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
     q_stddev_yaw_rate = std::min(q_stddev_yaw_rate, ekf_params_.q_stddev_yaw_rate_max);
     q_stddev_yaw_rate = std::max(q_stddev_yaw_rate, ekf_params_.q_stddev_yaw_rate_min);
   }
-  float q_stddev_slip_rate{0.0};
+  float q_cov_slip_rate{0.0};
   if (vel <= 0.01) {
-    q_stddev_slip_rate = ekf_params_.q_stddev_slip_rate_min;
+    q_cov_slip_rate = ekf_params_.q_stddev_slip_rate_min * ekf_params_.q_stddev_slip_rate_min;
   } else {
-    q_stddev_slip_rate = std::abs(sin_slip * ekf_params_.q_stddev_acc_lat / vel);
-    q_stddev_slip_rate = std::min(q_stddev_slip_rate, ekf_params_.q_stddev_slip_rate_max);
-    q_stddev_slip_rate = std::max(q_stddev_slip_rate, ekf_params_.q_stddev_slip_rate_min);
+    // sin(slip) = w*l_r/v
+    // d(slip)/dt = - w*l_r/v^2 * d(v)/dt + l_r/v * d(w)/dt
+    q_cov_slip_rate = std::pow(sin_slip * ekf_params_.q_stddev_acc_lat / vel, 2) +
+                      std::pow(q_stddev_yaw_rate * lr_ / vel, 2);
+    q_cov_slip_rate = std::min(
+      q_cov_slip_rate, ekf_params_.q_stddev_slip_rate_max * ekf_params_.q_stddev_slip_rate_max);
+    q_cov_slip_rate = std::max(
+      q_cov_slip_rate, ekf_params_.q_stddev_slip_rate_min * ekf_params_.q_stddev_slip_rate_min);
   }
   const float q_cov_x = std::pow(0.5 * ekf_params_.q_stddev_acc_long * dt * dt, 2.0);
   const float q_cov_y = std::pow(0.5 * ekf_params_.q_stddev_acc_lat * dt * dt, 2.0);
   const float q_cov_yaw = std::pow(q_stddev_yaw_rate * dt, 2.0);
   const float q_cov_vel = std::pow(ekf_params_.q_stddev_acc_long * dt, 2.0);
-  const float q_cov_slip = std::pow(q_stddev_slip_rate * dt, 2.0);
+  const float q_cov_slip = q_cov_slip_rate * dt * dt;
 
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   // Rotate the covariance matrix according to the vehicle yaw
@@ -544,20 +549,40 @@ bool BigVehicleTracker::getTrackedObject(
   twist_with_cov.twist.linear.x = X_t(IDX::VEL) * std::cos(X_t(IDX::SLIP));
   twist_with_cov.twist.linear.y = X_t(IDX::VEL) * std::sin(X_t(IDX::SLIP));
   twist_with_cov.twist.angular.z =
-    X_t(IDX::VEL) / lr_ * std::sin(X_t(IDX::SLIP));  // yaw_rate = vel_k / l_r * sin(slip_k)
-  // twist covariance
-  constexpr double vy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+    X_t(IDX::VEL) * std::sin(X_t(IDX::SLIP)) / lr_;  // yaw_rate = vel_k * sin(slip_k) / l_r
+  /* twist covariance
+   * convert covariance from velocity, slip angle to vx, vy, and yaw angle
+   *
+   * vx = vel * cos(slip)
+   * vy = vel * sin(slip)
+   * wz = vel * sin(slip) / l_r = vy / l_r
+   *
+   */
   constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  twist_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::VEL, IDX::VEL);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = vy_cov;
+
+  Eigen::MatrixXd cov_jacob(3, 2);
+  cov_jacob << std::cos(X_t(IDX::SLIP)), -X_t(IDX::VEL) * std::sin(X_t(IDX::SLIP)),
+    std::sin(X_t(IDX::SLIP)), X_t(IDX::VEL) * std::cos(X_t(IDX::SLIP)),
+    std::sin(X_t(IDX::SLIP)) / lr_, X_t(IDX::VEL) * std::cos(X_t(IDX::SLIP)) / lr_;
+  Eigen::MatrixXd cov_twist(2, 2);
+  cov_twist << P(IDX::VEL, IDX::VEL), P(IDX::VEL, IDX::SLIP), P(IDX::SLIP, IDX::VEL),
+    P(IDX::SLIP, IDX::SLIP);
+  Eigen::MatrixXd twist_cov_mat = cov_jacob * cov_twist * cov_jacob.transpose();
+
+  twist_with_cov.covariance[utils::MSG_COV_IDX::X_X] = twist_cov_mat(0, 0);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::X_Y] = twist_cov_mat(0, 1);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::X_YAW] = twist_cov_mat(0, 2);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::Y_X] = twist_cov_mat(1, 0);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = twist_cov_mat(1, 1);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::Y_YAW] = twist_cov_mat(1, 2);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_X] = twist_cov_mat(2, 0);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_Y] = twist_cov_mat(2, 1);
+  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = twist_cov_mat(2, 2);
   twist_with_cov.covariance[utils::MSG_COV_IDX::Z_Z] = vz_cov;
-  twist_with_cov.covariance[utils::MSG_COV_IDX::X_YAW] = P(IDX::VEL, IDX::SLIP);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_X] = P(IDX::SLIP, IDX::VEL);
   twist_with_cov.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
-  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::SLIP, IDX::SLIP);
 
   // set shape
   object.shape.dimensions.x = bounding_box_.length;
