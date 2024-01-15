@@ -471,17 +471,23 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   external_velocity_limit_ptr_ = nullptr;
 
   // Trajectory must be either all forward or all backward.
-  bool is_forward_only = std::all_of(input_points.begin(), input_points.end(),
-    [](const auto& tp) { return tp.longitudinal_velocity_mps >= 0.0; });
-  bool is_backward_only = std::all_of(input_points.begin(), input_points.end(),
-    [](const auto& tp) { return tp.longitudinal_velocity_mps <= 0.0; });
+  bool is_forward_only = std::all_of(input_points.begin(), input_points.end(), [](const auto & tp) {
+    return tp.longitudinal_velocity_mps >= 0.0;
+  });
+  bool is_backward_only = std::all_of(
+    input_points.begin(), input_points.end(),
+    [](const auto & tp) { return tp.longitudinal_velocity_mps <= 0.0; });
   if (!is_forward_only && !is_backward_only) {
-    RCLCPP_ERROR(get_logger(), "Input trajectory contains both forward and backward parts (unsupported). Trajectory will be ignored.");
+    RCLCPP_ERROR(
+      get_logger(),
+      "Input trajectory contains both forward and backward parts (unsupported). Trajectory will be "
+      "ignored.");
     return;
   }
 
-  // Backward trajectories are handled by "flipping" the all the poses (orientation, velocity, steering, etc), processing trajectories as if the vehicle was driving forward and flipping back the result.
-  // Note: if trajectory is both forward and backward, it means it is filled with 0.0.
+  // Backward trajectories are handled by "flipping" the all the poses (orientation, velocity,
+  // steering, etc), processing trajectories as if the vehicle was driving forward and flipping back
+  // the result. Note: if trajectory is both forward and backward, it means it is filled with 0.0.
   // In such case we don't need to do anything.
   if (!is_forward_only && is_backward_only) {
     // flip the trajectory
@@ -556,7 +562,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
     traj_input, input_closest, node_param_.extract_ahead_dist, node_param_.extract_behind_dist);
   if (traj_extracted.empty()) {
     RCLCPP_WARN(get_logger(), "Fail to extract the path from the input trajectory");
-    is_reverse_ = false; // previous output is never flipped
+    is_reverse_ = false;  // previous output is never flipped
     return prev_output_;
   }
 
@@ -585,7 +591,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
 
   // Smoothing velocity
   if (!smoothVelocity(traj_extracted, traj_extracted_closest, output)) {
-    is_reverse_ = false; // previous output is never flipped
+    is_reverse_ = false;  // previous output is never flipped
     return prev_output_;
   }
 
@@ -619,7 +625,8 @@ bool MotionVelocitySmootherNode::smoothVelocity(
       : traj_lateral_acc_filtered;
 
   // Note: if input trajectory poses have been flipped, ego pose/velocity should be flipped too.
-  const auto curr_pose = is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
+  const auto curr_pose =
+    is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
   const auto curr_vel = (is_reverse_ ? -1.0 : 1.0) * current_odometry_ptr_->twist.twist.linear.x;
 
   // Resample trajectory with ego-velocity based interval distance
@@ -771,7 +778,8 @@ MotionVelocitySmootherNode::calcInitialMotion(
   const TrajectoryPoints & input_traj, const size_t input_closest) const
 {
   // ego motion w.r.t trajectory orientation
-  const double vehicle_speed = (is_reverse_ ? -1.0 : 1.0) * current_odometry_ptr_->twist.twist.linear.x;
+  const double vehicle_speed =
+    (is_reverse_ ? -1.0 : 1.0) * current_odometry_ptr_->twist.twist.linear.x;
   const double vehicle_acceleration = current_acceleration_ptr_->accel.accel.linear.x;
   // always > 0
   const double target_vel = input_traj.at(input_closest).longitudinal_velocity_mps;
@@ -783,7 +791,8 @@ MotionVelocitySmootherNode::calcInitialMotion(
   }
 
   // when velocity tracking deviation is large
-  const double desired_vel = (is_reverse_ ? -1.0 : 1.0) * current_closest_point_from_prev_output_->longitudinal_velocity_mps;
+  const double desired_vel =
+    (is_reverse_ ? -1.0 : 1.0) * current_closest_point_from_prev_output_->longitudinal_velocity_mps;
   const double desired_acc = current_closest_point_from_prev_output_->acceleration_mps2;
   const double vel_error = vehicle_speed - desired_vel;
 
@@ -1077,13 +1086,15 @@ Trajectory MotionVelocitySmootherNode::toTrajectoryMsg(
 
 size_t MotionVelocitySmootherNode::findNearestIndexFromEgo(const TrajectoryPoints & points) const
 {
-  const auto curr_pose = is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
+  const auto curr_pose =
+    is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
   return motion_utils::findFirstNearestIndexWithSoftConstraints(
     points, curr_pose, node_param_.ego_nearest_dist_threshold,
     node_param_.ego_nearest_yaw_threshold);
 }
 
-geometry_msgs::msg::Pose MotionVelocitySmootherNode::flipPose(const geometry_msgs::msg::Pose & pose) const
+geometry_msgs::msg::Pose MotionVelocitySmootherNode::flipPose(
+  const geometry_msgs::msg::Pose & pose) const
 {
   geometry_msgs::msg::Pose output = pose;
 
@@ -1097,7 +1108,6 @@ geometry_msgs::msg::Pose MotionVelocitySmootherNode::flipPose(const geometry_msg
   output.orientation = tf2::toMsg(q);
   return output;
 }
-
 
 void MotionVelocitySmootherNode::flipTrajectory(TrajectoryPoints & points) const
 {
@@ -1133,7 +1143,8 @@ TrajectoryPoint MotionVelocitySmootherNode::calcProjectedTrajectoryPoint(
 TrajectoryPoint MotionVelocitySmootherNode::calcProjectedTrajectoryPointFromEgo(
   const TrajectoryPoints & trajectory) const
 {
-  auto curr_pose = is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
+  auto curr_pose =
+    is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
   return calcProjectedTrajectoryPoint(trajectory, curr_pose);
 }
 
