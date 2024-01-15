@@ -26,10 +26,10 @@
   <depend>autoware_control_msgs</depend>
   <depend>autoware_map_msgs</depend>
   <depend>autoware_perception_msgs</depend>
-  <depend>rviz_2d_overlay_msgs</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>rviz_2d_overlay_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
