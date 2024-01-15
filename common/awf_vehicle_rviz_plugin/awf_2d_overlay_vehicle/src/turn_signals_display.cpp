@@ -54,6 +54,7 @@ void TurnSignalsDisplay::drawArrows(
   QPainter & painter, const QRectF & backgroundRect, const QColor & color)
 {
   QImage scaledLeftArrow = arrowImage.scaled(64, 43, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  scaledLeftArrow = coloredImage(scaledLeftArrow, gray);
   QImage scaledRightArrow = scaledLeftArrow.mirrored(true, false);
   int arrowYPos = (backgroundRect.height() / 3 - scaledLeftArrow.height() / 2);
   int leftArrowXPos = backgroundRect.width() / 4 - scaledLeftArrow.width();  // Adjust as needed

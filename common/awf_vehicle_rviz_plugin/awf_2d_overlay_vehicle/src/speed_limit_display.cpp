@@ -43,8 +43,8 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
   // #C2C2C2
-  painter.setPen(QPen(QColor(194, 194, 194), 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-  painter.setBrush(QBrush(QColor(194, 194, 194), Qt::SolidPattern));
+  painter.setPen(QPen(gray, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  painter.setBrush(QBrush(gray, Qt::SolidPattern));
 
   // Define the area for the outer circle
   QRectF outerCircleRect = backgroundRect;
@@ -78,7 +78,7 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
 
   painter.setFont(font);
   // #C2C2C2
-  painter.setPen(QPen(QColor(194, 194, 194), 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  painter.setPen(QPen(gray, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
   // Draw the text in the center of the circle
   painter.drawText(innerCircleRect, Qt::AlignCenter, text);

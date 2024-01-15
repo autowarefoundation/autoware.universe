@@ -76,7 +76,7 @@ void SpeedDisplay::drawSpeedDisplay(QPainter & painter, const QRectF & backgroun
   // Center the speed number in the backgroundRect
   QPointF speedPos(
     backgroundRect.center().x() - speedNumberRect.width() / 2, backgroundRect.center().y());
-  painter.setPen(Qt::white);
+  painter.setPen(gray);
   painter.drawText(speedPos, speedNumber);
 
   QFont unitFont("Quicksand", 14);

@@ -27,6 +27,7 @@ public:
 
 private:
   float current_speed_;  // Internal variable to store current speed
+  QColor gray = QColor(194, 194, 194);
 };
 
 }  // namespace awf_2d_overlay_vehicle

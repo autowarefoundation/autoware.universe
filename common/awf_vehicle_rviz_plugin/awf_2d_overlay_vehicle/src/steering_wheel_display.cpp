@@ -56,7 +56,7 @@ void SteeringWheelDisplay::drawSteeringWheel(QPainter & painter, const QRectF & 
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-  QImage wheel = coloredImage(scaledWheelImage, QColor(255, 255, 255, 255));
+  QImage wheel = coloredImage(scaledWheelImage, gray);
 
   // Rotate the wheel
   qreal steeringAngle = steering_angle_;  // No need to round here

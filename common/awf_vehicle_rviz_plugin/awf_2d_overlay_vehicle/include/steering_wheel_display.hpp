@@ -28,6 +28,7 @@ public:
 
 private:
   float steering_angle_ = 0.0f;
+  QColor gray = QColor(194, 194, 194);
 
   QImage wheelImage;
   QImage scaledWheelImage;

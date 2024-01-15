@@ -49,9 +49,14 @@ void GearDisplay::drawGearIndicator(QPainter & painter, const QRectF & backgroun
       gearString = "L";
       break;
     case autoware_auto_vehicle_msgs::msg::GearReport::NONE:
+    case autoware_auto_vehicle_msgs::msg::GearReport::PARK:
       gearString = "P";
       break;
-    // all the drive gears from DRIVE to DRIVE_20
+    case autoware_auto_vehicle_msgs::msg::GearReport::REVERSE:
+    case autoware_auto_vehicle_msgs::msg::GearReport::REVERSE_2:
+      gearString = "R";
+      break;
+    // all the drive gears from DRIVE to DRIVE_16
     default:
       gearString = "D";
       break;
@@ -59,7 +64,7 @@ void GearDisplay::drawGearIndicator(QPainter & painter, const QRectF & backgroun
 
   QFont gearFont("Quicksand", 16, QFont::Bold);
   painter.setFont(gearFont);
-  QPen borderPen(Qt::white);
+  QPen borderPen(gray);
   borderPen.setWidth(4);
   painter.setPen(borderPen);
 
