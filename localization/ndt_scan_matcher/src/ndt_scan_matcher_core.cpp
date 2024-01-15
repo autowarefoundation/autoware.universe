@@ -489,7 +489,8 @@ void NDTScanMatcher::callback_sensor_points(
   const Eigen::Quaterniond map_to_base_link_quat = Eigen::Quaterniond(
     result_pose_msg.orientation.w, result_pose_msg.orientation.x, result_pose_msg.orientation.y,
     result_pose_msg.orientation.z);
-  const Eigen::Matrix3d map_to_base_link_rotation = map_to_base_link_quat.normalized().toRotationMatrix();
+  const Eigen::Matrix3d map_to_base_link_rotation =
+    map_to_base_link_quat.normalized().toRotationMatrix();
 
   std::array<double, 36> ndt_covariance =
     rotate_covariance(output_pose_covariance_, map_to_base_link_rotation);
