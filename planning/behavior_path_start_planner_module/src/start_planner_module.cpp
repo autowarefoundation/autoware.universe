@@ -1433,7 +1433,7 @@ void StartPlannerModule::setDebugData()
     add(showPredictedPath(start_planner_data_.collision_check, "ego_predicted_path"));
     add(showPolygon(start_planner_data_.collision_check, "ego_and_target_polygon_relation"));
 
-  // set objects of interest
+    // set objects of interest
     for (const auto & [uuid, data] : start_planner_data_.collision_check) {
       const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
       setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
