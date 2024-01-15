@@ -75,8 +75,6 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToWaitingApprovalState() override { return true; }
-
   void initVariables();
 
   // non-const methods

@@ -345,7 +345,7 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToWaitingApprovalState() override { return false; }
+  ModuleStatus setInitState() override { return ModuleStatus::IDLE; }
 
   bool isLabelTargetObstacle(const uint8_t label) const;
   void updateTargetObjects();

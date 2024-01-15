@@ -139,7 +139,7 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return true; }
+  ModuleStatus setInitState() override;
 
   /**
    * @brief init member variables.

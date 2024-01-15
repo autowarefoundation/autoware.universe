@@ -380,9 +380,9 @@ bool StartPlannerModule::canTransitSuccessState()
   return hasFinishedPullOut();
 }
 
-bool StartPlannerModule::canTransitIdleToWaitingApprovalState()
+ModuleStatus StartPlannerModule::setInitState()
 {
-  return isActivated();
+  return isActivated() ? ModuleStatus::RUNNING : ModuleStatus::IDLE;
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()

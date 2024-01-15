@@ -126,7 +126,7 @@ protected:
 
   bool canTransitFailureState() override;
 
-  bool canTransitIdleToWaitingApprovalState() override;
+  ModuleStatus setInitState() override { return ModuleStatus::WAITING_APPROVAL; };
 
   void updateDebugMarker() const;
 
