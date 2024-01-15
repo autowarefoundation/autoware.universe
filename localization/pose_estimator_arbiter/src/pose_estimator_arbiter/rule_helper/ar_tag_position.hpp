@@ -31,10 +31,10 @@ namespace pose_estimator_arbiter::rule_helper
 // This class finds the distance to the nearest landmark for AR tag based localization.
 class ArTagPosition
 {
-public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Pose = geometry_msgs::msg::Pose;
 
+public:
   explicit ArTagPosition(rclcpp::Node * node);
 
   double distance_to_nearest_ar_tag_around_ego(const geometry_msgs::msg::Point & ego_point) const;

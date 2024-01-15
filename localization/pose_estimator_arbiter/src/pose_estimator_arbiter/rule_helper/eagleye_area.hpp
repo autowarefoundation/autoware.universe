@@ -29,11 +29,11 @@ namespace pose_estimator_arbiter::rule_helper
 {
 class EagleyeArea
 {
-public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
+public:
   explicit EagleyeArea(rclcpp::Node * node);
   explicit EagleyeArea(const rclcpp::Logger & logger);
 

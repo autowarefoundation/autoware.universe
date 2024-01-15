@@ -28,10 +28,10 @@ namespace pose_estimator_arbiter::rule_helper
 {
 class PcdOccupancy
 {
-public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
+public:
   explicit PcdOccupancy(rclcpp::Node * node);
 
   MarkerArray debug_marker_array() const;

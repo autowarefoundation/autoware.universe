@@ -24,9 +24,9 @@ namespace pose_estimator_arbiter::stopper
 {
 class StopperEagleye : public BaseStopper
 {
-public:
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
+public:
   explicit StopperEagleye(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
   : BaseStopper(node, shared_data)
   {

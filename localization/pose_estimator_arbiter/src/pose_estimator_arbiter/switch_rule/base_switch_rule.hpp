@@ -30,8 +30,10 @@ namespace pose_estimator_arbiter::switch_rule
 {
 class BaseSwitchRule
 {
-public:
+protected:
   using MarkerArray = visualization_msgs::msg::MarkerArray;
+
+public:
   explicit BaseSwitchRule(rclcpp::Node & node)
   : logger_ptr_(std::make_shared<rclcpp::Logger>(node.get_logger()))
   {

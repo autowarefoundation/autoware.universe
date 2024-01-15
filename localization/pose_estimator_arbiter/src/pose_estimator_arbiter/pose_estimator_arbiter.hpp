@@ -36,7 +36,6 @@ namespace pose_estimator_arbiter
 {
 class PoseEstimatorArbiter : public rclcpp::Node
 {
-public:
   using SetBool = std_srvs::srv::SetBool;
   using String = std_msgs::msg::String;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
@@ -46,6 +45,8 @@ public:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
   using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
+
+public:
   PoseEstimatorArbiter();
 
 private:

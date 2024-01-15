@@ -25,10 +25,10 @@ namespace pose_estimator_arbiter::stopper
 {
 class StopperArTag : public BaseStopper
 {
-public:
   using Image = sensor_msgs::msg::Image;
   using SetBool = std_srvs::srv::SetBool;
 
+public:
   explicit StopperArTag(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
   : BaseStopper(node, shared_data)
   {
