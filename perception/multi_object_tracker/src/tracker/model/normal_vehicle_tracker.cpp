@@ -61,7 +61,7 @@ NormalVehicleTracker::NormalVehicleTracker(
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
   ekf_params_.r_cov_vel = std::pow(r_stddev_vel, 2.0);
-  // initial covariance
+  // initial state covariance
   float p0_stddev_x = 1.0;                                     // in object coordinate [m]
   float p0_stddev_y = 0.3;                                     // in object coordinate [m]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(25);     // in map coordinate [rad]
@@ -89,7 +89,7 @@ NormalVehicleTracker::NormalVehicleTracker(
   max_slip_ = tier4_autoware_utils::deg2rad(30);                       // [rad/s]
   velocity_deviation_threshold_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
 
-  // initialize X matrix
+  // initialize state vector X
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
   X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
   X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
@@ -101,7 +101,7 @@ NormalVehicleTracker::NormalVehicleTracker(
   }
   X(IDX::SLIP) = 0.0;
 
-  // initialize P matrix
+  // initialize state covariance matrix P
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   if (!object.kinematics.has_position_covariance) {
     const double cos_yaw = std::cos(X(IDX::YAW));
@@ -212,7 +212,7 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
    *
    */
 
-  // X t
+  // Current state vector X t
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
   ekf.getX(X_t);
   const double cos_yaw = std::cos(X_t(IDX::YAW) + X_t(IDX::SLIP));
@@ -225,7 +225,7 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   const double w_dtdt = w * dt * dt;
   const double vv_dtdt__lr = vel * vel * dt * dt / lr_;
 
-  // X t+1
+  // Predict state vector X t+1
   Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);  // predicted state
   X_next_t(IDX::X) =
     X_t(IDX::X) + vel * cos_yaw * dt - 0.5 * vel * sin_slip * w_dtdt;  // dx = v * cos(yaw)
@@ -235,7 +235,7 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   X_next_t(IDX::VEL) = X_t(IDX::VEL);
   X_next_t(IDX::SLIP) = X_t(IDX::SLIP);
 
-  // A
+  // State transition matrix A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
   A(IDX::X, IDX::YAW) = -vel * sin_yaw * dt - 0.5 * vel * cos_yaw * w_dtdt;
   A(IDX::X, IDX::VEL) = cos_yaw * dt - sin_yaw * w_dtdt;
@@ -248,7 +248,7 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   A(IDX::YAW, IDX::VEL) = 1.0 / lr_ * sin_slip * dt;
   A(IDX::YAW, IDX::SLIP) = vel / lr_ * cos_slip * dt;
 
-  // Q
+  // Process noise covariance Q
   float q_stddev_yaw_rate{0.0};
   if (vel <= 0.01) {
     q_stddev_yaw_rate = ekf_params_.q_stddev_yaw_rate_min;
@@ -291,8 +291,10 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   Q(IDX::YAW, IDX::YAW) = q_cov_yaw;
   Q(IDX::VEL, IDX::VEL) = q_cov_vel;
   Q(IDX::SLIP, IDX::SLIP) = q_cov_slip;
-  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
-  Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
+
+  // control-input model B and control-input u are not used
+  // Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
+  // Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
 
   if (!ekf.predict(X_next_t, A, Q)) {
     RCLCPP_WARN(logger_, "Cannot predict");
