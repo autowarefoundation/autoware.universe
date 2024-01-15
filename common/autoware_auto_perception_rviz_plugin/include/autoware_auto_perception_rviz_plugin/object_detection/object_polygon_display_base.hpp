@@ -106,11 +106,11 @@ public:
     m_simple_visualize_mode_property->addOption("Simple", 1);
     // Confidence interval property
     m_confidence_interval_property = new rviz_common::properties::EnumProperty(
-      "Confidence Interval", "95.45%, 2 sigma", "Confidence interval of state estimations.", this);
-    m_confidence_interval_property->addOption("68.27%, 1 sigma", 0);
-    m_confidence_interval_property->addOption("86.64%, 1.5 sigma", 1);
-    m_confidence_interval_property->addOption("95.45%, 2 sigma", 2);
-    m_confidence_interval_property->addOption("99.73%, 3 sigma", 3);
+      "Confidence Interval", "95%", "Confidence interval of state estimations.", this);
+    m_confidence_interval_property->addOption("70%", 0);
+    m_confidence_interval_property->addOption("85%", 1);
+    m_confidence_interval_property->addOption("95%", 2);
+    m_confidence_interval_property->addOption("99%", 3);
 
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
@@ -257,8 +257,7 @@ protected:
     const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance) const
   {
     if (m_display_pose_covariance_property.getBool()) {
-      return detail::get_pose_covariance_marker_ptr(
-        pose_with_covariance, get_confidence_interval());
+      return detail::get_pose_covariance_marker_ptr(pose_with_covariance, get_confidence_region());
     } else {
       return std::nullopt;
     }
@@ -320,7 +319,7 @@ protected:
   {
     if (m_display_twist_covariance_property.getBool()) {
       return detail::get_twist_covariance_marker_ptr(
-        pose_with_covariance, twist_with_covariance, get_confidence_interval());
+        pose_with_covariance, twist_with_covariance, get_confidence_region());
     } else {
       return std::nullopt;
     }
@@ -478,19 +477,39 @@ protected:
   {
     switch (m_confidence_interval_property->getOptionInt()) {
       case 0:
-        // 68.27%, 1 sigma
-        return 1.0;
+        // 70%
+        return 1.036;
       case 1:
-        // 86.64%, 1.5 sigma
-        return 1.5;
+        // 85%
+        return 1.440;
       case 2:
-        // 95.45%, 2 sigma
-        return 2.0;
+        // 95%
+        return 1.960;
       case 3:
-        // 99.73%, 3 sigma
-        return 3.0;
+        // 99%
+        return 2.576;
       default:
-        return 2.0;
+        return 1.960;
+    }
+  }
+
+  double get_confidence_region() const
+  {
+    switch (m_confidence_interval_property->getOptionInt()) {
+      case 0:
+        // 70%
+        return 1.552;
+      case 1:
+        // 85%
+        return 1.802;
+      case 2:
+        // 95%
+        return 2.448;
+      case 3:
+        // 99%
+        return 3.035;
+      default:
+        return 2.448;
     }
   }
 
