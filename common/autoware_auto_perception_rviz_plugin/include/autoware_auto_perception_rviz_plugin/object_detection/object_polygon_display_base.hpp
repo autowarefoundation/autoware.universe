@@ -78,7 +78,8 @@ public:
     m_display_yaw_rate_property{
       "Display Yaw Rate", false, "Enable/disable yaw rate visualization", this},
     m_display_yaw_rate_covariance_property{
-      "Display Yaw Rate Covariance", false, "Enable/disable yaw rate covariance visualization", this},
+      "Display Yaw Rate Covariance", false, "Enable/disable yaw rate covariance visualization",
+      this},
     m_display_predicted_paths_property{
       "Display Predicted Paths", true, "Enable/disable predicted paths visualization", this},
     m_display_path_confidence_property{
@@ -309,8 +310,7 @@ protected:
     const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance) const
   {
     if (m_display_twist_covariance_property.getBool()) {
-      return detail::get_twist_covariance_marker_ptr(
-        pose_with_covariance, twist_with_covariance);
+      return detail::get_twist_covariance_marker_ptr(pose_with_covariance, twist_with_covariance);
     } else {
       return std::nullopt;
     }

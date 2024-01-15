@@ -96,8 +96,8 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
     }
 
     // Get marker for pose covariance
-    auto pose_with_covariance_marker = get_pose_covariance_marker_ptr(
-      object.kinematics.pose_with_covariance);
+    auto pose_with_covariance_marker =
+      get_pose_covariance_marker_ptr(object.kinematics.pose_with_covariance);
     if (pose_with_covariance_marker) {
       auto marker_ptr = pose_with_covariance_marker.value();
       marker_ptr->header = msg->header;

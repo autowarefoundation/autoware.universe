@@ -138,8 +138,8 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   const double velocity_angle =
     std::atan2(twist_with_covariance.twist.linear.y, twist_with_covariance.twist.linear.x);
   const double pos_yaw_angle = 2.0 * std::atan2(
-    pose_with_covariance.pose.orientation.z,
-    pose_with_covariance.pose.orientation.w);  // [rad]
+                                       pose_with_covariance.pose.orientation.z,
+                                       pose_with_covariance.pose.orientation.w);  // [rad]
   marker_ptr->pose.position.x += velocity * std::cos(pos_yaw_angle + velocity_angle);
   marker_ptr->pose.position.y += velocity * std::sin(pos_yaw_angle + velocity_angle);
 
@@ -166,7 +166,7 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   marker_ptr->scale.x = sigma1 * 2.448;  // 2.448 sigma is 95%
   marker_ptr->scale.y = sigma2 * 2.448;  // 2.448 sigma is 95%
   marker_ptr->scale.z = 0.05;
-  
+
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_ptr->color.a = alpha;
   marker_ptr->color.r = 1.0;
@@ -234,7 +234,7 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_covariance_marker_ptr(
 
   // yaw rate covariance
   const double yaw_rate_covariance = twist_with_covariance.covariance[35];
-  const double yaw_rate_sigma = std::sqrt(yaw_rate_covariance);  // 2.448 sigma is 95%
+  const double yaw_rate_sigma = std::sqrt(yaw_rate_covariance) * 2.448;  // 2.448 sigma is 95%
   const double yaw_rate = twist_with_covariance.twist.angular.z;
   const double velocity = std::sqrt(
     twist_with_covariance.twist.linear.x * twist_with_covariance.twist.linear.x +
@@ -367,9 +367,8 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_covariance_marker_ptr(
   // position covariance
   // extract eigen values and eigen vectors
   Eigen::Matrix2d eigen_pose_covariance;
-  eigen_pose_covariance << pose_with_covariance.covariance[0],
-    pose_with_covariance.covariance[1], pose_with_covariance.covariance[6],
-    pose_with_covariance.covariance[7];
+  eigen_pose_covariance << pose_with_covariance.covariance[0], pose_with_covariance.covariance[1],
+    pose_with_covariance.covariance[6], pose_with_covariance.covariance[7];
   double yaw, sigma1, sigma2;
   calc_covariance_eigen_vectors(eigen_pose_covariance, sigma1, sigma2, yaw);
 
@@ -412,7 +411,7 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_covariance_marker_ptr(
 
   // orientation covariance
   double yaw_vector_length = std::max(length, 1.0);
-  double yaw_sigma = std::sqrt(pose_with_covariance.covariance[35]);  // 2.448 sigma is 95%
+  double yaw_sigma = std::sqrt(pose_with_covariance.covariance[35]) * 2.448;  // 2.448 sigma is 95%
   // get arc points
   if (yaw_sigma > M_PI) {
     yaw_vector_length = 1.0;
