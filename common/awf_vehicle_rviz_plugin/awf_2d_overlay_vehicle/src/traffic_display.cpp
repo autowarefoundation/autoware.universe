@@ -19,20 +19,16 @@
 namespace awf_2d_overlay_vehicle
 {
 
-TrafficDisplay::TrafficDisplay() : current_traffic_(0)
+TrafficDisplay::TrafficDisplay()
 {
   traffic_light_image_.load(":/assets/images/traffic.png");
 }
 
-// void TrafficDisplay::updateTrafficLightData(const
-// autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
-// {
-//     // Update the internal variable
-//     // current_traffic_ = msg->traffic_signal_id;
-
-//     // RCLCPP_INFO(rclcpp::get_logger("rcl"), "Traffic Light: %d", msg->elements.size());
-//     // Force the plugin to redraw
-// }
+void TrafficDisplay::updateTrafficLightData(
+  const rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI::ConstSharedPtr & msg)
+{
+  current_traffic_ = *msg;
+}
 
 void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect)
 {
@@ -53,12 +49,37 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   QRectF imageRect =
     circleRect.adjusted(15, 15, -15, -15);  // Adjusting the rectangle to make the image smaller
 
+  QImage scaled_traffic_image = traffic_light_image_.scaled(
+    imageRect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+  if (current_traffic_.traffic_signals.size() > 0) {
+    switch (current_traffic_.traffic_signals[0].elements[0].color) {
+      case 1:
+        painter.setBrush(QBrush(red));
+        painter.drawEllipse(circleRect.center(), 30, 30);
+        break;
+      case 2:
+        painter.setBrush(QBrush(yellow));
+        painter.drawEllipse(circleRect.center(), 30, 30);
+        break;
+      case 3:
+        painter.setBrush(QBrush(green));
+        painter.drawEllipse(circleRect.center(), 30, 30);
+        break;
+      case 4:
+        painter.setBrush(QBrush(gray));
+        painter.drawEllipse(circleRect.center(), 30, 30);
+        break;
+      default:
+        painter.setBrush(QBrush(gray));
+        painter.drawEllipse(circleRect.center(), 30, 30);
+        break;
+    }
+  }
   // make the image thicker
   painter.setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-  // Draw the traffic light image on top of the circle
-  painter.drawImage(
-    imageRect, traffic_light_image_.scaled(
-                 imageRect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+  painter.drawImage(imageRect, scaled_traffic_image);
 }
 
 QImage TrafficDisplay::coloredImage(const QImage & source, const QColor & color)

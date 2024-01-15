@@ -25,12 +25,11 @@ class TrafficDisplay
 public:
   TrafficDisplay();
   void drawTrafficLightIndicator(QPainter & painter, const QRectF & backgroundRect);
-  // void updateTrafficLightData(const
-  // autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
-  rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI temp;
+  void updateTrafficLightData(
+    const rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI::ConstSharedPtr & msg);
+  rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI current_traffic_;
 
 private:
-  int current_traffic_;  // Internal variable to store current gear
   QImage traffic_light_image_;
   // yellow #CFC353
   QColor yellow = QColor(207, 195, 83);
