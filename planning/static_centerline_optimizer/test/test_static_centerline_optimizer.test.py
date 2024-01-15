@@ -56,7 +56,7 @@ def generate_test_description():
                 get_package_share_directory("behavior_path_planner"),
                 "config/behavior_path_planner.param.yaml",
             ),
-            os.velocity.join(
+            os.path.join(
                 get_package_share_directory("behavior_velocity_planner"),
                 "config/behavior_velocity_planner.param.yaml",
             ),
