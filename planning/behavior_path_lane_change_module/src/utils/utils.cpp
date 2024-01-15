@@ -437,6 +437,14 @@ ShiftLine getLaneChangingShiftLine(
   const Pose & lane_changing_start_pose = prepare_segment.points.back().point.pose;
   const Pose & lane_changing_end_pose = target_segment.points.front().point.pose;
 
+  return getLaneChangingShiftLine(
+    lane_changing_start_pose, lane_changing_end_pose, reference_path, shift_length);
+}
+
+ShiftLine getLaneChangingShiftLine(
+  const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
+  const PathWithLaneId & reference_path, const double shift_length)
+{
   ShiftLine shift_line;
   shift_line.end_shift_length = shift_length;
   shift_line.start = lane_changing_start_pose;

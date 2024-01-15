@@ -53,6 +53,8 @@ public:
 
   LaneChangePath getLaneChangePath() const override;
 
+  PathWithLaneId getTerminalLaneChangePath() const override;
+
   BehaviorModuleOutput generateOutput() override;
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;
@@ -141,7 +143,11 @@ protected:
     const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
     const bool check_safety = true) const override;
 
-  TurnSignalInfo calcTurnSignalInfo() const override;
+  std::optional<LaneChangePath> calcTerminalLaneChangePath(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
+
+  TurnSignalInfo calcTurnSignalInfo() override;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 

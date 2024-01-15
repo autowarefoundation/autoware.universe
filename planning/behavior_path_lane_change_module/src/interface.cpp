@@ -123,16 +123,20 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
 BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
+  module_type_->updateLaneChangeStatus();
+
   *prev_approved_path_ = getPreviousModuleOutput().path;
   module_type_->insertStopPoint(
     module_type_->getLaneChangeStatus().current_lanes, *prev_approved_path_);
 
   BehaviorModuleOutput out;
-  out.path = *prev_approved_path_;
+  out.path = module_type_->getTerminalLaneChangePath();
   out.reference_path = getPreviousModuleOutput().reference_path;
   out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
   out.turn_signal_info = getCurrentTurnSignalInfo(out.path, out.turn_signal_info);
+  module_type_->setPreviousModulePaths(
+    getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
 
   const auto & lane_change_debug = module_type_->getDebugData();
   for (const auto & [uuid, data] : lane_change_debug.collision_check_objects) {
