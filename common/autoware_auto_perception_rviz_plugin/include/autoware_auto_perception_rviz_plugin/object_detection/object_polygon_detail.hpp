@@ -115,12 +115,14 @@ get_uuid_marker_ptr(
   const std_msgs::msg::ColorRGBA & color_rgba);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
-get_pose_covariance_marker_ptr(const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance);
+get_pose_covariance_marker_ptr(
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+  const double & confidence_interval_coefficient);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_yaw_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & length,
-  const double & line_width);
+  const double & confidence_interval_coefficient, const double & line_width);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_velocity_text_marker_ptr(
@@ -140,7 +142,8 @@ get_twist_marker_ptr(
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_twist_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance);
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
+  const double & confidence_interval_coefficient);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_yaw_rate_marker_ptr(
@@ -150,7 +153,8 @@ get_yaw_rate_marker_ptr(
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_yaw_rate_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width);
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
+  const double & confidence_interval_coefficient, const double & line_width);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_predicted_path_marker_ptr(

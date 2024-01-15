@@ -123,7 +123,8 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_marker_ptr(
 
 visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
+  const double & confidence_interval_coefficient)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::CYLINDER;
@@ -163,8 +164,8 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   marker_ptr->pose.orientation.w = std::cos(phi / 2.0);
 
   // ellipse size
-  marker_ptr->scale.x = sigma1 * 2.448;  // 2.448 sigma is 95%
-  marker_ptr->scale.y = sigma2 * 2.448;  // 2.448 sigma is 95%
+  marker_ptr->scale.x = sigma1 * confidence_interval_coefficient;
+  marker_ptr->scale.y = sigma2 * confidence_interval_coefficient;
   marker_ptr->scale.z = 0.05;
 
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.5);
@@ -223,7 +224,8 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_marker_ptr(
 
 visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
-  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance, const double & line_width)
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance,
+  const double & confidence_interval_coefficient, const double & line_width)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
@@ -234,7 +236,7 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_rate_covariance_marker_ptr(
 
   // yaw rate covariance
   const double yaw_rate_covariance = twist_with_covariance.covariance[35];
-  const double yaw_rate_sigma = std::sqrt(yaw_rate_covariance) * 2.448;  // 2.448 sigma is 95%
+  const double yaw_rate_sigma = std::sqrt(yaw_rate_covariance) * confidence_interval_coefficient;
   const double yaw_rate = twist_with_covariance.twist.angular.z;
   const double velocity = std::sqrt(
     twist_with_covariance.twist.linear.x * twist_with_covariance.twist.linear.x +
@@ -356,7 +358,8 @@ void calc_covariance_eigen_vectors(
 }
 
 visualization_msgs::msg::Marker::SharedPtr get_pose_covariance_marker_ptr(
-  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance)
+  const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
+  const double & confidence_interval_coefficient)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::CYLINDER;
@@ -379,8 +382,8 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_covariance_marker_ptr(
   marker_ptr->pose.orientation.w = std::cos(yaw / 2.0);
 
   // ellipse size
-  marker_ptr->scale.x = sigma1 * 2.448;  // 2.448 sigma is 95%
-  marker_ptr->scale.y = sigma2 * 2.448;  // 2.448 sigma is 95%
+  marker_ptr->scale.x = sigma1 * confidence_interval_coefficient;
+  marker_ptr->scale.y = sigma2 * confidence_interval_coefficient;
   marker_ptr->scale.z = 0.05;
 
   // ellipse color density
@@ -399,7 +402,7 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_covariance_marker_ptr(
 
 visualization_msgs::msg::Marker::SharedPtr get_yaw_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance, const double & length,
-  const double & line_width)
+  const double & confidence_interval_coefficient, const double & line_width)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -411,7 +414,8 @@ visualization_msgs::msg::Marker::SharedPtr get_yaw_covariance_marker_ptr(
 
   // orientation covariance
   double yaw_vector_length = std::max(length, 1.0);
-  double yaw_sigma = std::sqrt(pose_with_covariance.covariance[35]) * 2.448;  // 2.448 sigma is 95%
+  double yaw_sigma =
+    std::sqrt(pose_with_covariance.covariance[35]) * confidence_interval_coefficient;
   // get arc points
   if (yaw_sigma > M_PI) {
     yaw_vector_length = 1.0;

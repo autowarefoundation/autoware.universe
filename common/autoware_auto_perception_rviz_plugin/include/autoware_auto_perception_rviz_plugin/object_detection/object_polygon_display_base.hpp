@@ -104,6 +104,13 @@ public:
       "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this);
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
+    // Confidence interval property
+    m_confidence_interval_property = new rviz_common::properties::EnumProperty(
+      "Confidence Interval", "95.45%, 2 sigma", "Confidence interval of state estimations.", this);
+    m_confidence_interval_property->addOption("68.27%, 1 sigma", 0);
+    m_confidence_interval_property->addOption("86.64%, 1.5 sigma", 1);
+    m_confidence_interval_property->addOption("95.45%, 2 sigma", 2);
+    m_confidence_interval_property->addOption("99.73%, 3 sigma", 3);
 
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
@@ -250,7 +257,8 @@ protected:
     const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance) const
   {
     if (m_display_pose_covariance_property.getBool()) {
-      return detail::get_pose_covariance_marker_ptr(pose_with_covariance);
+      return detail::get_pose_covariance_marker_ptr(
+        pose_with_covariance, get_confidence_interval());
     } else {
       return std::nullopt;
     }
@@ -261,7 +269,8 @@ protected:
     const double & line_width) const
   {
     if (m_display_yaw_covariance_property.getBool()) {
-      return detail::get_yaw_covariance_marker_ptr(pose_with_covariance, length, line_width);
+      return detail::get_yaw_covariance_marker_ptr(
+        pose_with_covariance, length, get_confidence_interval(), line_width);
     } else {
       return std::nullopt;
     }
@@ -310,7 +319,8 @@ protected:
     const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance) const
   {
     if (m_display_twist_covariance_property.getBool()) {
-      return detail::get_twist_covariance_marker_ptr(pose_with_covariance, twist_with_covariance);
+      return detail::get_twist_covariance_marker_ptr(
+        pose_with_covariance, twist_with_covariance, get_confidence_interval());
     } else {
       return std::nullopt;
     }
@@ -336,7 +346,7 @@ protected:
   {
     if (m_display_yaw_rate_covariance_property.getBool()) {
       return detail::get_yaw_rate_covariance_marker_ptr(
-        pose_with_covariance, twist_with_covariance, line_width);
+        pose_with_covariance, twist_with_covariance, get_confidence_interval(), line_width);
     } else {
       return std::nullopt;
     }
@@ -464,6 +474,26 @@ protected:
 
   double get_line_width() { return m_line_width_property.getFloat(); }
 
+  double get_confidence_interval() const
+  {
+    switch (m_confidence_interval_property->getOptionInt()) {
+      case 0:
+        // 68.27%, 1 sigma
+        return 1.0;
+      case 1:
+        // 86.64%, 1.5 sigma
+        return 1.5;
+      case 2:
+        // 95.45%, 2 sigma
+        return 2.0;
+      case 3:
+        // 99.73%, 3 sigma
+        return 3.0;
+      default:
+        return 2.0;
+    }
+  }
+
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
   MarkerCommon m_marker_common;
@@ -475,6 +505,8 @@ private:
   rviz_common::properties::EnumProperty * m_display_type_property;
   // Property to choose simplicity of visualization polygon
   rviz_common::properties::EnumProperty * m_simple_visualize_mode_property;
+  // Property to set confidence interval of state estimations
+  rviz_common::properties::EnumProperty * m_confidence_interval_property;
   // Property to enable/disable label visualization
   rviz_common::properties::BoolProperty m_display_label_property;
   // Property to enable/disable uuid visualization
