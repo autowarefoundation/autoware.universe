@@ -39,7 +39,6 @@ struct PoseEstimatorArea::Impl
   bool within(
     const geometry_msgs::msg::Point & point, const std::string & pose_estimator_name) const;
 
-  std::string debug_string() const;
   MarkerArray debug_marker_array() const { return marker_array_; }
 
 private:
@@ -141,18 +140,4 @@ bool PoseEstimatorArea::Impl::within(
   }
   return false;
 }
-
-std::string PoseEstimatorArea::Impl::debug_string() const
-{
-  std::stringstream ss;
-  for (const auto & [key, box] : bounding_boxes_) {
-    ss << key << ": ";
-    for (const auto point : box.outer()) {
-      ss << point.x() << "," << point.y() << " ";
-    }
-    ss << "\n";
-  }
-  return ss.str();
-}
-
 }  // namespace pose_estimator_arbiter::rule_helper

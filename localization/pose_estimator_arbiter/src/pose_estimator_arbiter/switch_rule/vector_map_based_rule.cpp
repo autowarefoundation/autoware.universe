@@ -61,6 +61,7 @@ std::unordered_map<PoseEstimatorType, bool> VectorMapBasedRule::update()
   using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
   if (shared_data_->initialization_state()->state != InitializationState::INITIALIZED) {
     debug_string_ = "Enable all: localization is not initialized";
+    RCLCPP_DEBUG(get_logger(), "%s", debug_string_.c_str());
     return {
       {PoseEstimatorType::ndt, true},
       {PoseEstimatorType::yabloc, true},
@@ -73,6 +74,7 @@ std::unordered_map<PoseEstimatorType, bool> VectorMapBasedRule::update()
   if (!shared_data_->localization_pose_cov.has_value()) {
     debug_string_ =
       "Enable all: estimated pose has not been published yet, so unable to determine which to use";
+    RCLCPP_DEBUG(get_logger(), "%s", debug_string_.c_str());
     return {
       {PoseEstimatorType::ndt, true},
       {PoseEstimatorType::yabloc, true},
@@ -85,13 +87,23 @@ std::unordered_map<PoseEstimatorType, bool> VectorMapBasedRule::update()
 
   // (3)
   std::unordered_map<PoseEstimatorType, bool> enable_list;
+  bool at_least_one_is_enabled = false;
   for (const auto & estimator_type : running_estimator_list_) {
-    debug_string_ =
-      "Enable all: estimated pose has not been published yet, so unable to determine which to use";
     const std::string estimator_name{magic_enum::enum_name(estimator_type)};
     const bool result = pose_estimator_area_->within(ego_position, estimator_name);
     enable_list.emplace(estimator_type, result);
+
+    at_least_one_is_enabled |= result;
   }
+  if (at_least_one_is_enabled) {
+    debug_string_ =
+      "Enable at least one pose_estimators: self vehicle is within the area of at least one "
+      "pose_estimator_area";
+  } else {
+    debug_string_ =
+      "Enable no pose_estiamtor: self vehicle is out of the area of all pose_estimator_area";
+  }
+  RCLCPP_DEBUG(get_logger(), "%s", debug_string_.c_str());
 
   return enable_list;
 }

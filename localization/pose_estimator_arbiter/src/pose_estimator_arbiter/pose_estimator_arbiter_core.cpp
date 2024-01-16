@@ -47,8 +47,6 @@ PoseEstimatorArbiter::PoseEstimatorArbiter()
     declare_parameter<std::vector<std::string>>("pose_sources"), get_logger())),
   logger_configure_(std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this))
 {
-  get_logger().set_level(rclcpp::Logger::Level::Debug);
-
   // Shared data
   shared_data_ = std::make_shared<SharedData>();
 
@@ -124,8 +122,6 @@ void PoseEstimatorArbiter::load_switch_rule()
 {
   // NOTE: In the future, some rule will be laid below
   RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
-  // switch_rule_ =
-  //   std::make_shared<switch_rule::MapBasedRule>(*this, running_estimator_list_, shared_data_);
   switch_rule_ =
     std::make_shared<switch_rule::VectorMapBasedRule>(*this, running_estimator_list_, shared_data_);
 }
@@ -134,6 +130,10 @@ void PoseEstimatorArbiter::toggle_each(
   const std::unordered_map<PoseEstimatorType, bool> & toggle_list)
 {
   for (auto s : stoppers_) {
+    RCLCPP_DEBUG_STREAM(
+      get_logger(), magic_enum::enum_name(s.first)
+                      << " : " << std::boolalpha << toggle_list.at(s.first));
+
     if (toggle_list.at(s.first)) {
       s.second->enable();
     } else {
