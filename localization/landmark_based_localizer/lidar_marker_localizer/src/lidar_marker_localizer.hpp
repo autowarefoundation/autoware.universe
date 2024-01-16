@@ -91,7 +91,8 @@ private:
   void initilize_diagnostics();
   void main_process(const PointCloud2::ConstSharedPtr & points_msg_ptr);
   landmark_manager::Landmark get_nearest_landmark(
-  const geometry_msgs::msg::Pose & self_pose, const std::vector<landmark_manager::Landmark> & landmarks) const;
+    const geometry_msgs::msg::Pose & self_pose,
+    const std::vector<landmark_manager::Landmark> & landmarks) const;
 
   std::vector<landmark_manager::Landmark> detect_landmarks(
     const PointCloud2::ConstSharedPtr & points_msg_ptr);

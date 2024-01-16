@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_MARKER_LOCALIZER__DIAGNOSTICS_MODULE_HPP_
-#define LIDAR_MARKER_LOCALIZER__DIAGNOSTICS_MODULE_HPP_
+#ifndef DIAGNOSTICS__DIAGNOSTICS_MODULE_HPP_
+#define DIAGNOSTICS__DIAGNOSTICS_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -62,4 +62,4 @@ void DiagnosticsModule::addKeyValue(const std::string & key, const std::string &
 template <>
 void DiagnosticsModule::addKeyValue(const std::string & key, const bool & value);
 
-#endif  // LIDAR_MARKER_LOCALIZER__DIAGNOSTICS_MODULE_HPP_
+#endif  // DIAGNOSTICS__DIAGNOSTICS_MODULE_HPP_
