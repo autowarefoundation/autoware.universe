@@ -17,8 +17,6 @@
 
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 
 #include <vector>
@@ -40,6 +38,11 @@ struct StartGoalPlannerData
   std::vector<PoseWithVelocityStamped> ego_predicted_path;
   // collision check debug map
   CollisionCheckDebugMap collision_check;
+
+  Pose refined_start_pose;
+  std::vector<Pose> start_pose_candidates;
+  size_t selected_start_pose_candidate_index;
+  double margin_for_start_pose_candidate;
 };
 
 }  // namespace behavior_path_planner

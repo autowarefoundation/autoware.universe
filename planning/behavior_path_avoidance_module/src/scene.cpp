@@ -17,9 +17,9 @@
 #include "behavior_path_avoidance_module/debug.hpp"
 #include "behavior_path_avoidance_module/utils.hpp"
 #include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
@@ -28,14 +28,11 @@
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include "tier4_planning_msgs/msg/detail/avoidance_debug_msg_array__struct.hpp"
+#include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
 
 #include <boost/geometry/algorithms/centroid.hpp>
-#include <boost/geometry/strategies/cartesian/centroid_bashein_detmer.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -226,10 +223,12 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
     utils::avoidance::getExtendLanes(data.current_lanelets, getEgoPose(), planner_data_);
 
   // expand drivable lanes
+  const auto has_shift_point = !path_shifter_.getShiftLines().empty();
+  const auto in_avoidance_maneuver = has_shift_point || helper_->isShifted();
   std::for_each(
     data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
-      data.drivable_lanes.push_back(
-        utils::avoidance::generateExpandDrivableLanes(lanelet, planner_data_, parameters_));
+      data.drivable_lanes.push_back(utils::avoidance::generateExpandDrivableLanes(
+        lanelet, planner_data_, parameters_, in_avoidance_maneuver));
     });
 
   // calc drivable bound
@@ -704,18 +703,6 @@ bool AvoidanceModule::isSafePath(
     return true;  // if safety check is disabled, it always return safe.
   }
 
-  const bool limit_to_max_velocity = false;
-  const auto ego_predicted_path_params =
-    std::make_shared<utils::path_safety_checker::EgoPredictedPathParams>(
-      parameters_->ego_predicted_path_params);
-  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(shifted_path.path.points);
-  const auto ego_predicted_path_for_front_object = utils::path_safety_checker::createPredictedPath(
-    ego_predicted_path_params, shifted_path.path.points, getEgoPose(), getEgoSpeed(), ego_seg_idx,
-    true, limit_to_max_velocity);
-  const auto ego_predicted_path_for_rear_object = utils::path_safety_checker::createPredictedPath(
-    ego_predicted_path_params, shifted_path.path.points, getEgoPose(), getEgoSpeed(), ego_seg_idx,
-    false, limit_to_max_velocity);
-
   const auto ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
   const auto is_right_shift = [&]() -> std::optional<bool> {
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
@@ -740,7 +727,23 @@ bool AvoidanceModule::isSafePath(
   const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
 
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
-    avoid_data_, planner_data_, parameters_, is_right_shift.value());
+    avoid_data_, planner_data_, parameters_, is_right_shift.value(), debug);
+
+  if (safety_check_target_objects.empty()) {
+    return true;
+  }
+
+  const bool limit_to_max_velocity = false;
+  const auto ego_predicted_path_params =
+    std::make_shared<utils::path_safety_checker::EgoPredictedPathParams>(
+      parameters_->ego_predicted_path_params);
+  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(shifted_path.path.points);
+  const auto ego_predicted_path_for_front_object = utils::path_safety_checker::createPredictedPath(
+    ego_predicted_path_params, shifted_path.path.points, getEgoPose(), getEgoSpeed(), ego_seg_idx,
+    true, limit_to_max_velocity);
+  const auto ego_predicted_path_for_rear_object = utils::path_safety_checker::createPredictedPath(
+    ego_predicted_path_params, shifted_path.path.points, getEgoPose(), getEgoSpeed(), ego_seg_idx,
+    false, limit_to_max_velocity);
 
   for (const auto & object : safety_check_target_objects) {
     auto current_debug_data = utils::path_safety_checker::createObjectDebug(object);
@@ -794,15 +797,16 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
 
   const auto longest_dist_to_shift_point = [&]() {
     double max_dist = 0.0;
-    for (const auto & pnt : path_shifter_.getShiftLines()) {
-      max_dist = std::max(
-        max_dist, calcSignedArcLength(previous_path.points, pnt.start.position, getEgoPosition()));
+    auto lines = path_shifter_.getShiftLines();
+    if (lines.empty()) {
+      return max_dist;
     }
-    for (const auto & sp : generator_.getRawRegisteredShiftLine()) {
-      max_dist = std::max(
-        max_dist, calcSignedArcLength(previous_path.points, sp.start.position, getEgoPosition()));
-    }
-    return max_dist;
+    std::sort(lines.begin(), lines.end(), [](const auto & a, const auto & b) {
+      return a.start_idx < b.start_idx;
+    });
+    return std::max(
+      max_dist,
+      calcSignedArcLength(previous_path.points, lines.front().start.position, getEgoPosition()));
   }();
 
   const auto extra_margin = 10.0;  // Since distance does not consider arclength, but just line.
@@ -876,7 +880,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
   if (success_spline_path_generation && success_linear_path_generation) {
     helper_->setPreviousLinearShiftPath(linear_shift_path);
     helper_->setPreviousSplineShiftPath(spline_shift_path);
-    helper_->setPreviousReferencePath(data.reference_path);
+    helper_->setPreviousReferencePath(path_shifter_.getReferencePath());
   } else {
     spline_shift_path = helper_->getPreviousSplineShiftPath();
   }
@@ -889,9 +893,13 @@ BehaviorModuleOutput AvoidanceModule::plan()
   BehaviorModuleOutput output;
 
   // turn signal info
-  {
+  if (path_shifter_.getShiftLines().empty()) {
+    output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  } else {
     const auto original_signal = getPreviousModuleOutput().turn_signal_info;
-    const auto new_signal = calcTurnSignalInfo(spline_shift_path);
+    const auto new_signal = utils::avoidance::calcTurnSignalInfo(
+      linear_shift_path, path_shifter_.getShiftLines().front(), helper_->getEgoShift(), avoid_data_,
+      planner_data_);
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
     output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
       spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
@@ -1026,11 +1034,14 @@ void AvoidanceModule::updatePathShifter(const AvoidLineArray & shift_lines)
   const auto sl = helper_->getMainShiftLine(shift_lines);
   const auto sl_front = shift_lines.front();
   const auto sl_back = shift_lines.back();
+  const auto relative_longitudinal = sl_back.end_longitudinal - sl_front.start_longitudinal;
 
   if (helper_->getRelativeShiftToPath(sl) > 0.0) {
-    left_shift_array_.push_back({uuid_map_.at("left"), sl_front.start, sl_back.end});
+    left_shift_array_.push_back(
+      {uuid_map_.at("left"), sl_front.start, sl_back.end, relative_longitudinal});
   } else if (helper_->getRelativeShiftToPath(sl) < 0.0) {
-    right_shift_array_.push_back({uuid_map_.at("right"), sl_front.start, sl_back.end});
+    right_shift_array_.push_back(
+      {uuid_map_.at("right"), sl_front.start, sl_back.end, relative_longitudinal});
   }
 
   uuid_map_.at("left") = generateUUID();
@@ -1147,15 +1158,19 @@ bool AvoidanceModule::isValidShiftLine(
     const size_t start_idx = shift_lines.front().start_idx;
     const size_t end_idx = shift_lines.back().end_idx;
 
+    const auto path = shifter_for_validate.getReferencePath();
+    const auto left_bound = lanelet::utils::to2D(avoid_data_.left_bound);
+    const auto right_bound = lanelet::utils::to2D(avoid_data_.right_bound);
     for (size_t i = start_idx; i <= end_idx; ++i) {
-      const auto p = getPoint(shifter_for_validate.getReferencePath().points.at(i));
+      const auto p = getPoint(path.points.at(i));
       lanelet::BasicPoint2d basic_point{p.x, p.y};
 
       const auto shift_length = proposed_shift_path.shift_length.at(i);
-      const auto bound = shift_length > 0.0 ? avoid_data_.left_bound : avoid_data_.right_bound;
       const auto THRESHOLD = minimum_distance + std::abs(shift_length);
 
-      if (boost::geometry::distance(basic_point, lanelet::utils::to2D(bound)) < THRESHOLD) {
+      if (
+        boost::geometry::distance(basic_point, (shift_length > 0.0 ? left_bound : right_bound)) <
+        THRESHOLD) {
         RCLCPP_DEBUG_THROTTLE(
           getLogger(), *clock_, 1000,
           "following latest new shift line may cause deviation from drivable area.");
@@ -1210,6 +1225,12 @@ void AvoidanceModule::updateData()
   // update rtc status.
   updateRTCData();
 
+  // update interest objects data
+  for (const auto & [uuid, data] : debug_data_.collision_check) {
+    const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
+    setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
+  }
+
   safe_ = avoid_data_.safe;
 }
 
@@ -1234,7 +1255,6 @@ void AvoidanceModule::initVariables()
   debug_marker_.markers.clear();
   resetPathCandidate();
   resetPathReference();
-  is_avoidance_maneuver_starts = false;
   arrived_path_end_ = false;
 }
 
@@ -1271,8 +1291,8 @@ void AvoidanceModule::updateRTCData()
 
   CandidateOutput output;
 
-  const auto sl_front = candidates.front();
-  const auto sl_back = candidates.back();
+  const auto & sl_front = candidates.front();
+  const auto & sl_back = candidates.back();
 
   output.path_candidate = data.candidate_path.path;
   output.lateral_shift = helper_->getRelativeShiftToPath(shift_line);
@@ -1280,118 +1300,6 @@ void AvoidanceModule::updateRTCData()
   output.finish_distance_to_path_change = sl_back.end_longitudinal;
 
   updateCandidateRTCStatus(output);
-}
-
-TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) const
-{
-  const auto shift_lines = path_shifter_.getShiftLines();
-  if (shift_lines.empty()) {
-    return {};
-  }
-
-  const auto front_shift_line = shift_lines.front();
-  const size_t start_idx = front_shift_line.start_idx;
-  const size_t end_idx = front_shift_line.end_idx;
-
-  const auto current_shift_length = helper_->getEgoShift();
-  const double start_shift_length = path.shift_length.at(start_idx);
-  const double end_shift_length = path.shift_length.at(end_idx);
-  const double segment_shift_length = end_shift_length - start_shift_length;
-
-  const double turn_signal_shift_length_threshold =
-    planner_data_->parameters.turn_signal_shift_length_threshold;
-  const double turn_signal_search_time = planner_data_->parameters.turn_signal_search_time;
-  const double turn_signal_minimum_search_distance =
-    planner_data_->parameters.turn_signal_minimum_search_distance;
-
-  // If shift length is shorter than the threshold, it does not need to turn on blinkers
-  if (std::fabs(segment_shift_length) < turn_signal_shift_length_threshold) {
-    return {};
-  }
-
-  // If the vehicle does not shift anymore, we turn off the blinker
-  if (std::fabs(end_shift_length - current_shift_length) < 0.1) {
-    return {};
-  }
-
-  // compute blinker start idx and end idx
-  size_t blinker_start_idx = [&]() {
-    for (size_t idx = start_idx; idx <= end_idx; ++idx) {
-      const double current_shift_length = path.shift_length.at(idx);
-      if (current_shift_length > 0.1) {
-        return idx;
-      }
-    }
-    return start_idx;
-  }();
-  size_t blinker_end_idx = end_idx;
-
-  // prevent invalid access for out-of-range
-  blinker_start_idx =
-    std::min(std::max(std::size_t(0), blinker_start_idx), path.path.points.size() - 1);
-  blinker_end_idx =
-    std::min(std::max(blinker_start_idx, blinker_end_idx), path.path.points.size() - 1);
-
-  const auto blinker_start_pose = path.path.points.at(blinker_start_idx).point.pose;
-  const auto blinker_end_pose = path.path.points.at(blinker_end_idx).point.pose;
-
-  const double ego_vehicle_offset =
-    planner_data_->parameters.vehicle_info.max_longitudinal_offset_m;
-  const auto signal_prepare_distance =
-    std::max(getEgoSpeed() * turn_signal_search_time, turn_signal_minimum_search_distance);
-  const auto ego_front_to_shift_start =
-    calcSignedArcLength(path.path.points, getEgoPosition(), blinker_start_pose.position) -
-    ego_vehicle_offset;
-
-  if (signal_prepare_distance < ego_front_to_shift_start) {
-    return {};
-  }
-
-  bool turn_signal_on_swerving = planner_data_->parameters.turn_signal_on_swerving;
-
-  TurnSignalInfo turn_signal_info{};
-  if (turn_signal_on_swerving) {
-    if (segment_shift_length > 0.0) {
-      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-    } else {
-      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-    }
-  } else {
-    const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
-    const auto local_vehicle_footprint =
-      createVehicleFootprint(planner_data_->parameters.vehicle_info);
-    boost::geometry::model::ring<tier4_autoware_utils::Point2d> shifted_vehicle_footprint;
-    for (const auto & cl : current_lanes) {
-      // get left and right bounds of current lane
-      const auto lane_left_bound = cl.leftBound2d().basicLineString();
-      const auto lane_right_bound = cl.rightBound2d().basicLineString();
-      for (size_t i = start_idx; i < end_idx; ++i) {
-        // transform vehicle footprint onto path points
-        shifted_vehicle_footprint = transformVector(
-          local_vehicle_footprint,
-          tier4_autoware_utils::pose2transform(path.path.points.at(i).point.pose));
-        if (
-          boost::geometry::intersects(lane_left_bound, shifted_vehicle_footprint) ||
-          boost::geometry::intersects(lane_right_bound, shifted_vehicle_footprint)) {
-          if (segment_shift_length > 0.0) {
-            turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-          } else {
-            turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-          }
-        }
-      }
-    }
-  }
-  if (ego_front_to_shift_start > 0.0) {
-    turn_signal_info.desired_start_point = planner_data_->self_odometry->pose.pose;
-  } else {
-    turn_signal_info.desired_start_point = blinker_start_pose;
-  }
-  turn_signal_info.desired_end_point = blinker_end_pose;
-  turn_signal_info.required_start_point = blinker_start_pose;
-  turn_signal_info.required_end_point = blinker_end_pose;
-
-  return turn_signal_info;
 }
 
 void AvoidanceModule::updateInfoMarker(const AvoidancePlanningData & data) const
@@ -1494,7 +1402,8 @@ void AvoidanceModule::insertReturnDeadLine(
     shifted_path.path.points, getEgoPosition(), shifted_path.path.points.size() - 1);
   const auto buffer = std::max(0.0, to_shifted_path_end - to_reference_path_end);
 
-  const auto min_return_distance = helper_->getMinAvoidanceDistance(shift_length);
+  const auto min_return_distance =
+    helper_->getMinAvoidanceDistance(shift_length) + helper_->getMinimumPrepareDistance();
   const auto to_stop_line = data.to_return_point - min_return_distance - buffer;
 
   // If we don't need to consider deceleration constraints, insert a deceleration point

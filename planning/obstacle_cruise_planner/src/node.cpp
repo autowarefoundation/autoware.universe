@@ -15,7 +15,7 @@
 #include "obstacle_cruise_planner/node.hpp"
 
 #include "motion_utils/resample/resample.hpp"
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
@@ -169,15 +169,6 @@ std::vector<TrajectoryPoint> extendTrajectoryPoints(
   output_points.push_back(extend_trajectory_point);
 
   return output_points;
-}
-
-Trajectory createTrajectory(
-  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & header)
-{
-  auto traj = motion_utils::convertToTrajectory(traj_points);
-  traj.header = header;
-
-  return traj;
 }
 
 std::vector<int> getTargetObjectType(rclcpp::Node & node, const std::string & param_prefix)
@@ -525,7 +516,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   publishVelocityLimit(slow_down_vel_limit, "slow_down");
 
   // 7. Publish trajectory
-  const auto output_traj = createTrajectory(slow_down_traj_points, msg->header);
+  const auto output_traj = motion_utils::convertToTrajectory(slow_down_traj_points, msg->header);
   trajectory_pub_->publish(output_traj);
 
   // 8. Publish debug data

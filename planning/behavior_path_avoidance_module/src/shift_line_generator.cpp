@@ -19,7 +19,7 @@
 
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
 
 namespace behavior_path_planner::utils::avoidance
 {
@@ -890,7 +890,7 @@ void ShiftLineGenerator::applySmallShiftFilter(
       continue;
     }
 
-    if (s.start_longitudinal < helper_->getMinimumPrepareDistance()) {
+    if (s.start_longitudinal + 1e-3 < helper_->getMinimumPrepareDistance()) {
       continue;
     }
 
@@ -1101,12 +1101,14 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   const double variable_prepare_distance =
     std::max(nominal_prepare_distance - last_sl_distance, 0.0);
 
-  double prepare_distance_scaled = std::max(nominal_prepare_distance, last_sl_distance);
+  double prepare_distance_scaled =
+    std::clamp(nominal_prepare_distance, helper_->getMinimumPrepareDistance(), last_sl_distance);
   double avoid_distance_scaled = nominal_avoid_distance;
   if (remaining_distance < prepare_distance_scaled + avoid_distance_scaled) {
     const auto scale = (remaining_distance - last_sl_distance) /
                        std::max(nominal_avoid_distance + variable_prepare_distance, 0.1);
-    prepare_distance_scaled = last_sl_distance + scale * nominal_prepare_distance;
+    prepare_distance_scaled = std::max(
+      helper_->getMinimumPrepareDistance(), last_sl_distance + scale * nominal_prepare_distance);
     avoid_distance_scaled *= scale;
   }
 
@@ -1219,7 +1221,7 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
     const auto & candidate = shift_lines.at(i);
 
     // prevent sudden steering.
-    if (candidate.start_longitudinal < helper_->getMinimumPrepareDistance()) {
+    if (candidate.start_longitudinal + 1e-3 < helper_->getMinimumPrepareDistance()) {
       break;
     }
 
