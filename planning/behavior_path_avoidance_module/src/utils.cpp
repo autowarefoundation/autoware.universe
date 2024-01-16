@@ -1927,9 +1927,11 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const auto arc_length_array =
     utils::calcPathArcLengthArray(reference_path, 0L, reference_path.points.size(), 1e-3);
 
+  const auto points_size = std::min(reference_path.points.size(), spline_path.points.size());
+
   double next_longitudinal_distance = 0.0;
   std::vector<Polygon2d> detection_areas;
-  for (size_t i = 0; i < reference_path.points.size() - 1; ++i) {
+  for (size_t i = 0; i < points_size - 1; ++i) {
     const auto & p_reference_ego_front = reference_path.points.at(i).point.pose;
     const auto & p_reference_ego_back = reference_path.points.at(i + 1).point.pose;
     const auto & p_spline_ego_front = spline_path.points.at(i).point.pose;
