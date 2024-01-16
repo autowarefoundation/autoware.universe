@@ -140,6 +140,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<bool>(*node, ns + "enable");
     p.threshold_time_force_avoidance_for_stopped_vehicle =
       getOrDeclareParameter<double>(*node, ns + "time_threshold");
+    p.force_avoidance_distance_threshold =
+      getOrDeclareParameter<double>(*node, ns + "distance_threshold");
     p.object_ignore_section_traffic_light_in_front_distance =
       getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
     p.object_ignore_section_crosswalk_in_front_distance =
@@ -205,6 +207,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "max_velocity");
     p.ego_predicted_path_params.acceleration =
       getOrDeclareParameter<double>(*node, "avoidance.constraints.longitudinal.max_acceleration");
+    p.ego_predicted_path_params.time_horizon_for_front_object =
+      getOrDeclareParameter<double>(*node, ns + "time_horizon_for_front_object");
     p.ego_predicted_path_params.time_horizon_for_rear_object =
       getOrDeclareParameter<double>(*node, ns + "time_horizon_for_rear_object");
     p.ego_predicted_path_params.time_resolution =

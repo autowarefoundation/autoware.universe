@@ -46,7 +46,6 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
 {
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;
-  const auto & dynamic_objects = planner_data_->dynamic_object;
 
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_.max_back_distance;
@@ -64,19 +63,12 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     return std::nullopt;
   }
 
-  // extract stop objects in pull out lane for collision check
-  const auto [pull_out_lane_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(
-      *dynamic_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    pull_out_lane_objects, parameters_.th_moving_object_velocity);
-
   // get safe path
   for (auto & pull_out_path : pull_out_paths) {
     auto & shift_path =
       pull_out_path.partial_paths.front();  // shift path is not separate but only one.
 
-    // check lane_departure and collision with path between pull_out_start to pull_out_end
+    // check lane_departure with path between pull_out_start to pull_out_end
     PathWithLaneId path_start_to_end{};
     {
       const size_t pull_out_start_idx = findNearestIndex(shift_path.points, start_pose.position);
@@ -143,19 +135,64 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
       continue;
     }
 
-    // check collision
-    if (utils::checkCollisionBetweenPathFootprintsAndObjects(
-          vehicle_footprint_, path_start_to_end, pull_out_lane_stop_objects,
-          parameters_.collision_check_margin)) {
-      continue;
-    }
-
     shift_path.header = planner_data_->route_handler->getRouteHeader();
 
     return pull_out_path;
   }
 
   return std::nullopt;
+}
+
+bool ShiftPullOut::refineShiftedPathToStartPose(
+  ShiftedPath & shifted_path, const Pose & start_pose, const Pose & end_pose,
+  const double longitudinal_acc, const double lateral_acc)
+{
+  constexpr double TOLERANCE = 0.01;
+  constexpr size_t MAX_ITERATION = 100;
+
+  // Lambda to check if change is above tolerance
+  auto is_within_tolerance =
+    [](const auto & prev_val, const auto & current_val, const auto & tolerance) {
+      return std::abs(current_val - prev_val) < tolerance;
+    };
+
+  size_t iteration = 0;
+  while (iteration < MAX_ITERATION) {
+    const double lateral_offset =
+      motion_utils::calcLateralOffset(shifted_path.path.points, start_pose.position);
+
+    PathShifter path_shifter;
+    path_shifter.setPath(shifted_path.path);
+    ShiftLine shift_line{};
+    shift_line.start = start_pose;
+    shift_line.end = end_pose;
+    shift_line.end_shift_length = lateral_offset;
+    path_shifter.addShiftLine(shift_line);
+    path_shifter.setVelocity(0.0);
+    path_shifter.setLongitudinalAcceleration(longitudinal_acc);
+    path_shifter.setLateralAccelerationLimit(lateral_acc);
+
+    if (!path_shifter.generate(&shifted_path, false)) {
+      RCLCPP_WARN(
+        rclcpp::get_logger("ShiftPullOut:refineShiftedPathToStartPose()"),
+        "Failed to generate shifted path");
+      return false;
+    }
+
+    if (is_within_tolerance(
+          lateral_offset,
+          motion_utils::calcLateralOffset(shifted_path.path.points, start_pose.position),
+          TOLERANCE)) {
+      return true;
+    }
+
+    iteration++;
+  }
+
+  RCLCPP_WARN(
+    rclcpp::get_logger("ShiftPullOut:refineShiftedPathToStartPose()"),
+    "Failed to converge lateral offset until max iteration");
+  return false;
 }
 
 std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
@@ -303,6 +340,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     if (!path_shifter.generate(&shifted_path, offset_back)) {
       continue;
     }
+    refineShiftedPathToStartPose(
+      shifted_path, start_pose, *shift_end_pose_ptr, longitudinal_acc, lateral_acc);
 
     // set velocity
     const size_t pull_out_end_idx =
