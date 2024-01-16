@@ -348,6 +348,7 @@ public:
       double max_accel;
       double max_jerk;
       double delay_response_time;
+      bool enable_pass_judge_before_default_stopline;
     } common;
 
     struct TurnDirection

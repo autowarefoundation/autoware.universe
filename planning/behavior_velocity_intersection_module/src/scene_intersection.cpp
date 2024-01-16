@@ -1270,7 +1270,11 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     planning_utils::getAheadPose(second_pass_judge_line_idx, baselink2front, *path);
   debug_data_.passed_second_pass_judge = safely_passed_2nd_judge_line_time_.has_value();
 
-  if ((is_over_default_stopline && is_over_2nd_pass_judge_line && was_safe) || is_permanent_go_) {
+  if (
+    ((is_over_default_stopline ||
+      planner_param_.common.enable_pass_judge_before_default_stopline) &&
+     is_over_2nd_pass_judge_line && was_safe) ||
+    is_permanent_go_) {
     /*
      * This body is active if ego is
      * - over the default stopline AND

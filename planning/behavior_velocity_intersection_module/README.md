@@ -281,33 +281,37 @@ When the traffic light color/shape is RED/Arrow, occlusion detection is skipped.
 
 ## Pass Judge Line
 
-Generally it is not tolerable for vehicles that have lower traffic priority to stop in the middle of the unprotected area in intersections, and they need to stop at the stop line beforehand if there is any risk of collision, which introduces two requirements:
+Generally it is not tolerable for vehicles that have lower traffic priority to stop in the middle of the unprotected area in intersections, and they need to stop at the stop line beforehand if there will be any risk of collision, which introduces two requirements:
 
-1. The vehicle must start braking at least before the boundary of the unprotected area by the braking distance if it is supposed to stop
-2. The vehicle must recognize upcoming vehicles and check safety with enough braking distance margin to the boundary of the unprotected area if it is supposed to go
-   1. And the SAFE decision must be absolutely certain and continue to be valid for the future horizon so that the safety condition is always satisfied while ego is driving inside the unprotected area.
-   2. (TODO): Since it is almost impossible to make perfectly safe decision beforehand given the limited detection range/velocity tracking performance, intersection module should plan risk-evasive acceleration velocity profile AND/OR relax lateral acceleration limit if the safety decision is "betrayed"(the situation turned dangerous) while ego is driving inside the unprotected area.
+1. The vehicle must start braking before the boundary of the unprotected area at least by the braking distance if it is supposed to stop
+2. The vehicle must recognize upcoming vehicles and check safety beforehand with enough braking distance margin if it is supposed to go
+   1. And the SAFE decision must be absolutely certain and remain to be valid for the future horizon so that the safety condition will be always satisfied while ego is driving inside the unprotected area.
+3. (TODO): Since it is almost impossible to make perfectly safe decision beforehand given the limited detection range/velocity tracking performance, intersection module should plan risk-evasive acceleration velocity profile AND/OR relax lateral acceleration limit while ego is driving inside the unprotected area, if the safety decision is "betrayed" later due to the following reasons:
+   1. The situation _turned out to be dangerous_ later, mainly because velocity tracking was underestimated or the object accelerated beyond TTC margin
+   2. The situation _turned dangerous_ later, mainly because the object is suddenly detected out of nowhere
 
-1st_pass_judge_line is the position which is before the boundary of the unprotected area by the braking distance of ego current speed which is obtained by
+The position which is before the boundary of unprotected area by the braking distance which is obtained by
 
 $$
-\dfrac{v_{\mathrm{ego}}^{2}}{a_{\mathrm{max}}} + v_{\mathrm{ego}} * t_{\mathrm{delay}}
+\dfrac{v_{\mathrm{ego}}^{2}}{2a_{\mathrm{max}}} + v_{\mathrm{ego}} * t_{\mathrm{delay}}
 $$
 
-At intersections with multiple upcoming lanes, 2nd_pass_judge_line is defined as the position which is before the boundary of second attention lane by the braking distance plus `common.second_pass_judge_line_margin`. 1st/2nd_pass_judge_line are illustrated in the following figure.
+is called pass_judge_line, and safety decision must be made before ego passes this position because ego does not stop anymore.
+
+1st_pass_judge_line is before the first upcoming lane, and at intersections with multiple upcoming lanes, 2nd_pass_judge_line is defined as the position which is before the boundary of second attention lane by the braking distance plus `common.second_pass_judge_line_margin`. 1st/2nd_pass_judge_line are illustrated in the following figure.
 
 ![pass-judge-line](./docs/pass-judge-line.drawio.svg)
 
 Intersection module will command to GO if
 
-- ego is over default_stopline AND
+- ego is over default_stopline(or `common.enable_pass_judge_before_default_stopline` is true) AND
 - ego is over 1st_pass judge line AND
 - ego judged SAFE previously AND
 - (ego is over 2nd_pass_judge_line OR ego is between 1st and 2nd pass_judge_line but most probable collision is expected to happen in the 1st attention lane)
 
 because it is expected to stop or continue stop decision if
 
-1. ego is before default_stopline OR
+1. ego is before default_stopline && `common.enable_pass_judge_before_default_stopline` is false OR
    1. reason: default_stopline is defined on the map and should be respected
 2. ego is before 1st_pass_judge_line OR
    1. reason: it has enough braking distance margin
@@ -402,17 +406,19 @@ entity TargetObject {
 
 ### common
 
-| Parameter                         | Type   | Description                                                              |
-| --------------------------------- | ------ | ------------------------------------------------------------------------ |
-| `.attention_area_length`          | double | [m] range for object detection                                           |
-| `.attention_area_margin`          | double | [m] margin for expanding attention area width                            |
-| `.attention_area_angle_threshold` | double | [rad] threshold of angle difference between the detected object and lane |
-| `.use_intersection_area`          | bool   | [-] flag to use intersection_area for collision detection                |
-| `.default_stopline_margin`        | double | [m] margin before_stop_line                                              |
-| `.stopline_overshoot_margin`      | double | [m] margin for the overshoot from stopline                               |
-| `.max_accel`                      | double | [m/ss] max acceleration for stop                                         |
-| `.max_jerk`                       | double | [m/sss] max jerk for stop                                                |
-| `.delay_response_time`            | double | [s] action delay before stop                                             |
+| Parameter                                    | Type   | Description                                                                      |
+| -------------------------------------------- | ------ | -------------------------------------------------------------------------------- |
+| `.attention_area_length`                     | double | [m] range for object detection                                                   |
+| `.attention_area_margin`                     | double | [m] margin for expanding attention area width                                    |
+| `.attention_area_angle_threshold`            | double | [rad] threshold of angle difference between the detected object and lane         |
+| `.use_intersection_area`                     | bool   | [-] flag to use intersection_area for collision detection                        |
+| `.default_stopline_margin`                   | double | [m] margin before_stop_line                                                      |
+| `.stopline_overshoot_margin`                 | double | [m] margin for the overshoot from stopline                                       |
+| `.second_pass_judge_line_margin`             | double | [m] extra margin for the second pass judge line from the second attention lane   |
+| `.max_accel`                                 | double | [m/ss] max acceleration for stop                                                 |
+| `.max_jerk`                                  | double | [m/sss] max jerk for stop                                                        |
+| `.delay_response_time`                       | double | [s] action delay before stop                                                     |
+| `.enable_pass_judge_before_default_stopline` | bool   | [-] flag not to stop before default_stopline even if ego is over pass_judge_line |
 
 ### stuck_vehicle/yield_stuck
 
