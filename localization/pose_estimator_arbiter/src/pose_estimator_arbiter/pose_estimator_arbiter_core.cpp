@@ -55,46 +55,46 @@ PoseEstimatorArbiter::PoseEstimatorArbiter()
   pub_debug_string_ = create_publisher<String>("~/debug/string", 10);
   pub_debug_marker_array_ = create_publisher<MarkerArray>("~/debug/marker_array", 10);
 
-  // Stoppers
-  for (auto pose_estimator_name : running_estimator_list_) {
-    switch (pose_estimator_name) {
-      case PoseEstimatorType::ndt:
-        stoppers_.emplace(
-          pose_estimator_name, std::make_shared<stopper::StopperNdt>(this, shared_data_));
-        break;
-      case PoseEstimatorType::yabloc:
-        stoppers_.emplace(
-          pose_estimator_name, std::make_shared<stopper::StopperYabLoc>(this, shared_data_));
-        break;
-      case PoseEstimatorType::eagleye:
-        stoppers_.emplace(
-          pose_estimator_name, std::make_shared<stopper::StopperEagleye>(this, shared_data_));
-        break;
-      case PoseEstimatorType::artag:
-        stoppers_.emplace(
-          pose_estimator_name, std::make_shared<stopper::StopperArTag>(this, shared_data_));
-        break;
-      default:
-        RCLCPP_ERROR_STREAM(get_logger(), "invalid pose_estimator is specified");
-    }
-  }
-  {
-    using std::placeholders::_1;
-    const rclcpp::QoS sensor_qos = rclcpp::SensorDataQoS();
-    const rclcpp::QoS latch_qos = rclcpp::QoS(1).transient_local().reliable();
+  // Define function to get running pose_estimator
+  const std::set<PoseEstimatorType> running_estimator_set(
+    running_estimator_list_.begin(), running_estimator_list_.end());
+  const auto is_running = [running_estimator_set](const PoseEstimatorType type) -> bool {
+    return running_estimator_set.count(type) != 0;
+  };
 
-    // Subscriber for stoppers
-    sub_artag_input_ = create_subscription<Image>(
-      "~/input/artag/image", sensor_qos, shared_data_->artag_input_image.create_callback());
-    sub_yabloc_input_ = create_subscription<Image>(
-      "~/input/yabloc/image", sensor_qos, shared_data_->yabloc_input_image.create_callback());
+  // QoS
+  const rclcpp::QoS sensor_qos = rclcpp::SensorDataQoS();
+  const rclcpp::QoS latch_qos = rclcpp::QoS(1).transient_local().reliable();
+
+  // Create stoppers & subscribers
+  if (is_running(PoseEstimatorType::ndt)) {
+    stoppers_.emplace(
+      PoseEstimatorType::ndt, std::make_shared<stopper::StopperNdt>(this, shared_data_));
     sub_ndt_input_ = create_subscription<PointCloud2>(
       "~/input/ndt/pointcloud", sensor_qos, shared_data_->ndt_input_points.create_callback());
+  }
+  if (is_running(PoseEstimatorType::yabloc)) {
+    stoppers_.emplace(
+      PoseEstimatorType::yabloc, std::make_shared<stopper::StopperYabLoc>(this, shared_data_));
+    sub_yabloc_input_ = create_subscription<Image>(
+      "~/input/yabloc/image", sensor_qos, shared_data_->yabloc_input_image.create_callback());
+  }
+  if (is_running(PoseEstimatorType::eagleye)) {
+    stoppers_.emplace(
+      PoseEstimatorType::eagleye, std::make_shared<stopper::StopperEagleye>(this, shared_data_));
     sub_eagleye_output_ = create_subscription<PoseCovStamped>(
-      "~/input/eagleye/pose_with_covariance", 5,
+      "~/input/eagleye/pose_with_covariance", 5, /* this is not sensor topic */
       shared_data_->eagleye_output_pose_cov.create_callback());
+  }
+  if (is_running(PoseEstimatorType::artag)) {
+    stoppers_.emplace(
+      PoseEstimatorType::artag, std::make_shared<stopper::StopperArTag>(this, shared_data_));
+    sub_artag_input_ = create_subscription<Image>(
+      "~/input/artag/image", sensor_qos, shared_data_->artag_input_image.create_callback());
+  }
 
-    // Subscriber for switch rule
+  // Subscribers for switch rule
+  {
     sub_localization_pose_cov_ = create_subscription<PoseCovStamped>(
       "~/input/pose_with_covariance", 5, shared_data_->localization_pose_cov.create_callback());
     sub_point_cloud_map_ = create_subscription<PointCloud2>(
