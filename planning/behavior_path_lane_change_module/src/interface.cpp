@@ -82,8 +82,8 @@ void LaneChangeInterface::updateData()
 
   if (isWaitingApproval()) {
     module_type_->updateLaneChangeStatus();
-    setObjectDebugVisualization();
   }
+  setObjectDebugVisualization();
 
   module_type_->updateSpecialData();
   module_type_->resetStopPose();
@@ -206,6 +206,7 @@ bool LaneChangeInterface::canTransitSuccessState()
   }
 
   if (module_type_->hasFinishedLaneChange()) {
+    module_type_->resetParameters();
     log_debug_throttled("Lane change process has completed.");
     return true;
   }

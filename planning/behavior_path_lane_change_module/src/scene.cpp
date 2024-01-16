@@ -428,6 +428,7 @@ void NormalLaneChange::resetParameters()
   debug_filtered_objects_.target_lane.clear();
   debug_filtered_objects_.other_lane.clear();
   debug_valid_path_.clear();
+  RCLCPP_DEBUG(logger_, "reset all flags and debug information.");
 }
 
 TurnSignalInfo NormalLaneChange::updateOutputTurnSignal()
