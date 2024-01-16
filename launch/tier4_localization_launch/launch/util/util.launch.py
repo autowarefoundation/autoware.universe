@@ -71,16 +71,9 @@ def launch_setup(context, *args, **kwargs):
         random_downsample_component,
     ]
 
-    target_container = (
-        "/sensing/lidar/top/pointcloud_preprocessor/pointcloud_container"
-        if UnlessCondition(LaunchConfiguration("use_pointcloud_container")).evaluate(context)
-        else LaunchConfiguration("pointcloud_container_name")
-    )
-
     load_composable_nodes = LoadComposableNodes(
-        condition=LaunchConfigurationNotEquals(target_container, ""),
         composable_node_descriptions=composable_nodes,
-        target_container=target_container,
+        target_container=LaunchConfiguration("lidar_container_name"),
     )
 
     return [load_composable_nodes]
@@ -117,9 +110,9 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "true", "use ROS 2 component container communication")
     add_launch_arg("use_pointcloud_container", "True", "use pointcloud container")
     add_launch_arg(
-        "pointcloud_container_name",
-        "/pointcloud_container",
-        "container name",
+        "lidar_container_name",
+        "/sensing/lidar/top/pointcloud_preprocessor/pointcloud_container",
+        "container name of main lidar used for localization",
     )
 
     add_launch_arg(

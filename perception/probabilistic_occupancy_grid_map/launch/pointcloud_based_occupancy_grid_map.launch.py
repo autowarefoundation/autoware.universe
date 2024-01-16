@@ -63,23 +63,12 @@ def launch_setup(context, *args, **kwargs):
         ),
     ]
 
-    occupancy_grid_map_container = ComposableNodeContainer(
-        name=LaunchConfiguration("container_name"),
-        namespace="",
-        package="rclcpp_components",
-        executable=LaunchConfiguration("container_executable"),
-        composable_node_descriptions=composable_nodes,
-        condition=UnlessCondition(LaunchConfiguration("use_pointcloud_container")),
-        output="screen",
-    )
-
     load_composable_nodes = LoadComposableNodes(
         composable_node_descriptions=composable_nodes,
         target_container=LaunchConfiguration("container_name"),
-        condition=IfCondition(LaunchConfiguration("use_pointcloud_container")),
     )
 
-    return [occupancy_grid_map_container, load_composable_nodes]
+    return [load_composable_nodes]
 
 
 def generate_launch_description():
@@ -102,7 +91,6 @@ def generate_launch_description():
         [
             add_launch_arg("use_multithread", "false"),
             add_launch_arg("use_intra_process", "true"),
-            add_launch_arg("use_pointcloud_container", "false"),
             add_launch_arg("container_name", "occupancy_grid_map_container"),
             add_launch_arg("input/obstacle_pointcloud", "no_ground/oneshot/pointcloud"),
             add_launch_arg("input/raw_pointcloud", "concatenated/pointcloud"),
