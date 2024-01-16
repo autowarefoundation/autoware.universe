@@ -43,8 +43,6 @@ public:
   bool within(
     const geometry_msgs::msg::Point & point, const std::string & pose_estimator_name) const;
 
-  std::string debug_string() const;
-
   MarkerArray debug_marker_array() const;
 
 private:

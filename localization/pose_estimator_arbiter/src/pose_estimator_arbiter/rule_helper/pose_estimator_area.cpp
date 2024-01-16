@@ -33,10 +33,11 @@ using BoostPolygon = boost::geometry::model::polygon<BoostPoint>;
 struct PoseEstimatorArea::Impl
 {
   explicit Impl(rclcpp::Logger logger) : logger_(logger) {}
-  std::vector<BoostPolygon> bounding_boxes_;
+  std::multimap<std::string, BoostPolygon> bounding_boxes_;
 
   void init(HADMapBin::ConstSharedPtr msg);
-  bool within(const geometry_msgs::msg::Point & point) const;
+  bool within(
+    const geometry_msgs::msg::Point & point, const std::string & pose_estimator_name) const;
 
   std::string debug_string() const;
   MarkerArray debug_marker_array() const { return marker_array_; }
@@ -63,13 +64,7 @@ void PoseEstimatorArea::init(HADMapBin::ConstSharedPtr msg)
 bool PoseEstimatorArea::within(
   const geometry_msgs::msg::Point & point, const std::string & pose_estimator_name) const
 {
-  (void)pose_estimator_name;
-  return impl_->within(point);
-}
-
-std::string PoseEstimatorArea::debug_string() const
-{
-  return impl_->debug_string();
+  return impl_->within(point, pose_estimator_name);
 }
 
 PoseEstimatorArea::MarkerArray PoseEstimatorArea::debug_marker_array() const
@@ -79,7 +74,6 @@ PoseEstimatorArea::MarkerArray PoseEstimatorArea::debug_marker_array() const
 
 void PoseEstimatorArea::Impl::init(HADMapBin::ConstSharedPtr msg)
 {
-  std::cout << "PoseEstimatorArea::Impl::init()" << std::endl;
   if (!bounding_boxes_.empty()) {
     // already initialized
     return;
@@ -88,21 +82,19 @@ void PoseEstimatorArea::Impl::init(HADMapBin::ConstSharedPtr msg)
   lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map);
 
-  const auto & po_layer = lanelet_map->polygonLayer;
+  const auto & polygon_layer = lanelet_map->polygonLayer;
+  RCLCPP_DEBUG_STREAM(logger_, "Polygon layer size: " << polygon_layer.size());
+
   const std::string pose_estimator_specifying_attribute = "pose_estimator_specify";
-
-  RCLCPP_DEBUG_STREAM(logger_, "Polygon layer size: " << po_layer.size());
-  for (const auto & polygon : po_layer) {
-    if (!polygon.hasAttribute(lanelet::AttributeName::Type)) {
+  for (const auto & polygon : polygon_layer) {
+    //
+    const std::string type{polygon.attributeOr(lanelet::AttributeName::Type, "none")};
+    RCLCPP_DEBUG_STREAM(logger_, "polygon type: " << type);
+    if (pose_estimator_specifying_attribute != type) {
       continue;
     }
 
-    const lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
-    RCLCPP_DEBUG_STREAM(logger_, "polygon type: " << attr.value());
-    if (pose_estimator_specifying_attribute != attr.value()) {
-      continue;
-    }
-
+    //
     const std::string subtype{polygon.attributeOr(lanelet::AttributeName::Subtype, "none")};
     RCLCPP_DEBUG_STREAM(logger_, "polygon sub type: " << subtype);
 
@@ -111,10 +103,11 @@ void PoseEstimatorArea::Impl::init(HADMapBin::ConstSharedPtr msg)
     marker.type = Marker::LINE_STRIP;
     marker.scale.set__x(0.2f).set__y(0.2f).set__z(0.2f);
     marker.color.set__r(1.0f).set__g(1.0f).set__b(0.0f).set__a(1.0f);
-    marker.ns = "eagleye_area";
+    marker.ns = subtype;
     marker.header.frame_id = "map";
     marker.id = marker_array_.markers.size();
 
+    // Enqueue the vertices of the polygon to bounding box and visualization marker
     BoostPolygon poly;
     for (const lanelet::ConstPoint3d & p : polygon) {
       poly.outer().push_back(BoostPoint(p.x(), p.y()));
@@ -123,20 +116,26 @@ void PoseEstimatorArea::Impl::init(HADMapBin::ConstSharedPtr msg)
       point_msg.set__x(p.x()).set__y(p.y()).set__z(p.z());
       marker.points.push_back(point_msg);
     }
+
     // Push the first vertex again to enclose the polygon
     poly.outer().push_back(poly.outer().front());
-
-    bounding_boxes_.push_back(poly);
     marker.points.push_back(marker.points.front());
+
+    // Push back the items
+    bounding_boxes_.emplace(subtype, poly);
     marker_array_.markers.push_back(marker);
   }
 }
 
-bool PoseEstimatorArea::Impl::within(const geometry_msgs::msg::Point & point) const
+bool PoseEstimatorArea::Impl::within(
+  const geometry_msgs::msg::Point & point, const std::string & pose_estimator_name) const
 {
   const BoostPoint boost_point(point.x, point.y);
-  for (const BoostPolygon & box : bounding_boxes_) {
-    if (!boost::geometry::disjoint(box, boost_point)) {
+
+  auto range = bounding_boxes_.equal_range(pose_estimator_name);
+
+  for (auto itr = range.first; itr != range.second; ++itr) {
+    if (!boost::geometry::disjoint(itr->second, boost_point)) {
       return true;
     }
   }
@@ -146,7 +145,8 @@ bool PoseEstimatorArea::Impl::within(const geometry_msgs::msg::Point & point) co
 std::string PoseEstimatorArea::Impl::debug_string() const
 {
   std::stringstream ss;
-  for (const BoostPolygon & box : bounding_boxes_) {
+  for (const auto & [key, box] : bounding_boxes_) {
+    ss << key << ": ";
     for (const auto point : box.outer()) {
       ss << point.x() << "," << point.y() << " ";
     }

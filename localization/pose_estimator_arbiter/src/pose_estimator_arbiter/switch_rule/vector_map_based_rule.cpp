@@ -14,6 +14,8 @@
 
 #include "pose_estimator_arbiter/switch_rule/vector_map_based_rule.hpp"
 
+#include <magic_enum.hpp>
+
 namespace pose_estimator_arbiter::switch_rule
 {
 VectorMapBasedRule::VectorMapBasedRule(
@@ -36,28 +38,62 @@ VectorMapBasedRule::VectorMapBasedRule(
   RCLCPP_INFO_STREAM(get_logger(), "VectorMapBasedRule is initialized successfully");
 }
 
+VectorMapBasedRule::MarkerArray VectorMapBasedRule::debug_marker_array()
+{
+  MarkerArray array_msg;
+
+  if (pose_estimator_area_) {
+    const auto & additional = pose_estimator_area_->debug_marker_array().markers;
+    array_msg.markers.insert(array_msg.markers.end(), additional.begin(), additional.end());
+  }
+
+  return array_msg;
+}
+
 std::string VectorMapBasedRule::debug_string()
 {
   return debug_string_;
 }
 
-VectorMapBasedRule::MarkerArray VectorMapBasedRule::debug_marker_array()
-{
-  MarkerArray array_msg;
-
-  return array_msg;
-}
-
 std::unordered_map<PoseEstimatorType, bool> VectorMapBasedRule::update()
 {
-  // TODO:
-  debug_string_ = "Enable all: localization is not initialized";
-  return {
-    {PoseEstimatorType::ndt, true},
-    {PoseEstimatorType::yabloc, true},
-    {PoseEstimatorType::eagleye, true},
-    {PoseEstimatorType::artag, true},
-  };
+  // (1) If the localization state is not 'INITIALIZED'
+  using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  if (shared_data_->initialization_state()->state != InitializationState::INITIALIZED) {
+    debug_string_ = "Enable all: localization is not initialized";
+    return {
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, true},
+      {PoseEstimatorType::artag, true},
+    };
+  }
+
+  // (2) If no pose are published, enable all;
+  if (!shared_data_->localization_pose_cov.has_value()) {
+    debug_string_ =
+      "Enable all: estimated pose has not been published yet, so unable to determine which to use";
+    return {
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, true},
+      {PoseEstimatorType::artag, true},
+    };
+  }
+
+  const auto ego_position = shared_data_->localization_pose_cov()->pose.pose.position;
+
+  // (3)
+  std::unordered_map<PoseEstimatorType, bool> enable_list;
+  for (const auto & estimator_type : running_estimator_list_) {
+    debug_string_ =
+      "Enable all: estimated pose has not been published yet, so unable to determine which to use";
+    const std::string estimator_name{magic_enum::enum_name(estimator_type)};
+    const bool result = pose_estimator_area_->within(ego_position, estimator_name);
+    enable_list.emplace(estimator_type, result);
+  }
+
+  return enable_list;
 }
 
 }  // namespace pose_estimator_arbiter::switch_rule
