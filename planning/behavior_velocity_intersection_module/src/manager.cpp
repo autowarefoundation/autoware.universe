@@ -35,11 +35,13 @@ using tier4_autoware_utils::getOrDeclareParameter;
 IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
+    (!getOrDeclareParameter<bool>(node, "enable_all_modules_auto_mode") &&
+     getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc.intersection"))),
   occlusion_rtc_interface_(
     &node, "intersection_occlusion",
-    getOrDeclareParameter<bool>(
-      node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
+    (!getOrDeclareParameter<bool>(node, "enable_all_modules_auto_mode") &&
+     getOrDeclareParameter<bool>(
+       node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion")))
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
