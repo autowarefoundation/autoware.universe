@@ -23,6 +23,10 @@
 | `~/debug/marker`                | `visualization_msgs::msg::MarkerArray`          | [debug topic] Loaded landmarks to visualize in Rviz as thin boards |
 | `/diagnostics`                  | `diagnostic_msgs::msg::DiagnosticArray`         | Diagnostics outputs                                                |
 
+## Parameters
+
+{{ json_to_markdown("localization/landmark_based_localizer/lidar_marker_localizer/schema/lidar_marker_localizer.schema.json") }}
+
 ## How to launch
 
 When launching Autoware, set `lidar_marker` for `pose_source`.
