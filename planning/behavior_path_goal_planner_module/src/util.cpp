@@ -255,10 +255,10 @@ PathWithLaneId cropForwardPoints(
       cropped_path.points = cropped_points;
 
       // add precise end pose to cropped points
-      const double remaing_length = forward_length - sum_length;
+      const double remaining_length = forward_length - sum_length;
       const Pose precise_end_pose =
-        calcOffsetPose(cropped_path.points.back().point.pose, remaing_length, 0, 0);
-      if (remaing_length < 0.1) {
+        calcOffsetPose(cropped_path.points.back().point.pose, remaining_length, 0, 0);
+      if (remaining_length < 0.1) {
         // if precise_end_pose is too close, replace the last point
         cropped_path.points.back().point.pose = precise_end_pose;
       } else {
