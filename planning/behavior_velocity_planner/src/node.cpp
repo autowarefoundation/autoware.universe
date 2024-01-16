@@ -138,6 +138,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Parameters
   forward_path_length_ = declare_parameter<double>("forward_path_length");
   backward_path_length_ = declare_parameter<double>("backward_path_length");
+  behavior_output_path_interval_ = declare_parameter<double>("behavior_output_path_interval");
   planner_data_.stop_line_extend_length = declare_parameter<double>("stop_line_extend_length");
 
   // nearest search
@@ -147,6 +148,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
+    // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
+    if (name == "") {
+      break;
+    }
     planner_manager_.launchScenePlugin(*this, name);
   }
 
@@ -322,7 +327,21 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
     TrafficSignalStamped traffic_signal;
     traffic_signal.stamp = msg->stamp;
     traffic_signal.signal = signal;
-    planner_data_.traffic_light_id_map[signal.traffic_signal_id] = traffic_signal;
+    planner_data_.traffic_light_id_map_raw_[signal.traffic_signal_id] = traffic_signal;
+    const bool is_unknown_observation =
+      std::any_of(signal.elements.begin(), signal.elements.end(), [](const auto & element) {
+        return element.color == autoware_perception_msgs::msg::TrafficSignalElement::UNKNOWN;
+      });
+    // if the observation is UNKNOWN and past observation is available, only update the timestamp
+    // and keep the body of the info
+    if (
+      is_unknown_observation &&
+      planner_data_.traffic_light_id_map_last_observed_.count(signal.traffic_signal_id) == 1) {
+      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id].stamp =
+        msg->stamp;
+    } else {
+      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id] = traffic_signal;
+    }
   }
 }
 
@@ -384,7 +403,7 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
 
   // TODO(someone): support backward path
   const auto is_driving_forward = motion_utils::isDrivingForward(input_path_msg->points);
-  is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+  is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
   if (!is_driving_forward_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 3000,
@@ -405,7 +424,8 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
   const auto filtered_path = filterLitterPathPoint(to_path(velocity_planned_path));
 
   // interpolation
-  const auto interpolated_path_msg = interpolatePath(filtered_path, forward_path_length_);
+  const auto interpolated_path_msg =
+    interpolatePath(filtered_path, forward_path_length_, behavior_output_path_interval_);
 
   // check stop point
   output_path_msg = filterStopPathPoint(interpolated_path_msg);

@@ -18,6 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -33,6 +34,7 @@
 namespace surround_obstacle_checker
 {
 
+using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::VelocityFactor;
 using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using geometry_msgs::msg::PolygonStamped;
@@ -69,7 +71,6 @@ public:
     const double back_distance);
 
 private:
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_virtual_wall_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
   rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factor_pub_;
@@ -87,7 +88,6 @@ private:
   double surround_check_hysteresis_distance_;
   geometry_msgs::msg::Pose self_pose_;
 
-  MarkerArray makeVirtualWallMarker();
   MarkerArray makeVisualizationMarker();
   StopReasonArray makeStopReasonArray();
   VelocityFactorArray makeVelocityFactorArray();

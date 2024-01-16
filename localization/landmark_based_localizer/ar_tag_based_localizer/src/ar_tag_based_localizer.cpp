@@ -49,23 +49,23 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <opencv4/opencv2/calib3d.hpp>
+#include <opencv4/opencv2/core/quaternion.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 #include <tf2/LinearMath/Transform.h>
 
 #include <algorithm>
+#include <limits>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+
 ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
 : Node("ar_tag_based_localizer", options), cam_info_received_(false)
-{
-}
-
-bool ArTagBasedLocalizer::setup()
 {
   /*
     Declare node parameters
@@ -73,7 +73,8 @@ bool ArTagBasedLocalizer::setup()
   marker_size_ = static_cast<float>(this->declare_parameter<double>("marker_size"));
   target_tag_ids_ = this->declare_parameter<std::vector<std::string>>("target_tag_ids");
   base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
-  distance_threshold_squared_ = std::pow(this->declare_parameter<double>("distance_threshold"), 2);
+  distance_threshold_ = this->declare_parameter<double>("distance_threshold");
+  consider_orientation_ = this->declare_parameter<bool>("consider_orientation");
   ekf_time_tolerance_ = this->declare_parameter<double>("ekf_time_tolerance");
   ekf_position_tolerance_ = this->declare_parameter<double>("ekf_position_tolerance");
   std::string detection_mode = this->declare_parameter<std::string>("detection_mode");
@@ -87,8 +88,10 @@ bool ArTagBasedLocalizer::setup()
   } else {
     // Error
     RCLCPP_ERROR_STREAM(this->get_logger(), "Invalid detection_mode: " << detection_mode);
-    return false;
+    return;
   }
+  ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+    this->get_logger(), ekf_time_tolerance_, ekf_position_tolerance_);
 
   /*
     Log parameter info
@@ -103,128 +106,121 @@ bool ArTagBasedLocalizer::setup()
   */
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
-  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
-
-  /*
-    Initialize image transport
-  */
-  it_ = std::make_unique<image_transport::ImageTransport>(shared_from_this());
 
   /*
     Subscribers
   */
+  using std::placeholders::_1;
   map_bin_sub_ = this->create_subscription<HADMapBin>(
     "~/input/lanelet2_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
-    std::bind(&ArTagBasedLocalizer::map_bin_callback, this, std::placeholders::_1));
+    std::bind(&ArTagBasedLocalizer::map_bin_callback, this, _1));
 
   rclcpp::QoS qos_sub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
   qos_sub.best_effort();
   image_sub_ = this->create_subscription<Image>(
-    "~/input/image", qos_sub,
-    std::bind(&ArTagBasedLocalizer::image_callback, this, std::placeholders::_1));
+    "~/input/image", qos_sub, std::bind(&ArTagBasedLocalizer::image_callback, this, _1));
   cam_info_sub_ = this->create_subscription<CameraInfo>(
-    "~/input/camera_info", qos_sub,
-    std::bind(&ArTagBasedLocalizer::cam_info_callback, this, std::placeholders::_1));
+    "~/input/camera_info", qos_sub, std::bind(&ArTagBasedLocalizer::cam_info_callback, this, _1));
   ekf_pose_sub_ = this->create_subscription<PoseWithCovarianceStamped>(
-    "~/input/ekf_pose", qos_sub,
-    std::bind(&ArTagBasedLocalizer::ekf_pose_callback, this, std::placeholders::_1));
+    "~/input/ekf_pose", qos_sub, std::bind(&ArTagBasedLocalizer::ekf_pose_callback, this, _1));
 
   /*
     Publishers
   */
-  rclcpp::QoS qos_marker = rclcpp::QoS(rclcpp::KeepLast(10));
-  qos_marker.transient_local();
-  qos_marker.reliable();
-  marker_pub_ = this->create_publisher<MarkerArray>("~/debug/marker", qos_marker);
-  rclcpp::QoS qos_pub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
-  image_pub_ = it_->advertise("~/debug/result", 1);
-  pose_pub_ =
-    this->create_publisher<PoseWithCovarianceStamped>("~/output/pose_with_covariance", qos_pub);
-  diag_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", qos_pub);
+  const rclcpp::QoS qos_pub_once = rclcpp::QoS(rclcpp::KeepLast(10)).transient_local().reliable();
+  const rclcpp::QoS qos_pub_periodic(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
+  pose_pub_ = this->create_publisher<PoseWithCovarianceStamped>(
+    "~/output/pose_with_covariance", qos_pub_periodic);
+  image_pub_ = this->create_publisher<Image>("~/debug/image", qos_pub_periodic);
+  mapped_tag_pose_pub_ = this->create_publisher<MarkerArray>("~/debug/mapped_tag", qos_pub_once);
+  detected_tag_pose_pub_ =
+    this->create_publisher<PoseArray>("~/debug/detected_tag", qos_pub_periodic);
+  diag_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", qos_pub_periodic);
 
   RCLCPP_INFO(this->get_logger(), "Setup of ar_tag_based_localizer node is successful!");
-  return true;
 }
 
 void ArTagBasedLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
 {
-  const std::vector<landmark_manager::Landmark> landmarks =
-    landmark_manager::parse_landmarks(msg, "apriltag_16h5", this->get_logger());
-  for (const landmark_manager::Landmark & landmark : landmarks) {
-    landmark_map_[landmark.id] = landmark.pose;
-  }
-
-  const MarkerArray marker_msg = landmark_manager::convert_landmarks_to_marker_array_msg(landmarks);
-  marker_pub_->publish(marker_msg);
+  landmark_manager_.parse_landmarks(msg, "apriltag_16h5");
+  const MarkerArray marker_msg = landmark_manager_.get_landmarks_as_marker_array_msg();
+  mapped_tag_pose_pub_->publish(marker_msg);
 }
 
 void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
 {
-  if ((image_pub_.getNumSubscribers() == 0) && (pose_pub_->get_subscription_count() == 0)) {
+  // check subscribers
+  if ((image_pub_->get_subscription_count() == 0) && (pose_pub_->get_subscription_count() == 0)) {
     RCLCPP_DEBUG(this->get_logger(), "No subscribers, not looking for ArUco markers");
     return;
   }
 
+  // check cam_info
   if (!cam_info_received_) {
     RCLCPP_DEBUG(this->get_logger(), "No cam_info has been received.");
     return;
   }
 
-  const builtin_interfaces::msg::Time curr_stamp = msg->header.stamp;
-  cv_bridge::CvImagePtr cv_ptr;
-  try {
-    cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
-  } catch (cv_bridge::Exception & e) {
-    RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
+  const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
+
+  // get self pose
+  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
+    ekf_pose_buffer_->interpolate(sensor_stamp);
+  if (!interpolate_result) {
+    return;
+  }
+  ekf_pose_buffer_->pop_old(sensor_stamp);
+  const Pose self_pose = interpolate_result.value().interpolated_pose.pose.pose;
+
+  // detect
+  const std::vector<Landmark> landmarks = detect_landmarks(msg);
+  if (landmarks.empty()) {
     return;
   }
 
-  cv::Mat in_image = cv_ptr->image;
-
-  // detection results will go into "markers"
-  std::vector<aruco::Marker> markers;
-
-  // ok, let's detect
-  detector_.detect(in_image, markers, cam_param_, marker_size_, false);
-
-  // for each marker, draw info and its boundaries in the image
-  for (const aruco::Marker & marker : markers) {
-    const tf2::Transform tf_cam_to_marker = aruco_marker_to_tf2(marker);
-
-    TransformStamped tf_cam_to_marker_stamped;
-    tf2::toMsg(tf_cam_to_marker, tf_cam_to_marker_stamped.transform);
-    tf_cam_to_marker_stamped.header.stamp = curr_stamp;
-    tf_cam_to_marker_stamped.header.frame_id = msg->header.frame_id;
-    tf_cam_to_marker_stamped.child_frame_id = "detected_marker_" + std::to_string(marker.id);
-    tf_broadcaster_->sendTransform(tf_cam_to_marker_stamped);
-
-    PoseStamped pose_cam_to_marker;
-    tf2::toMsg(tf_cam_to_marker, pose_cam_to_marker.pose);
-    pose_cam_to_marker.header.stamp = curr_stamp;
-    pose_cam_to_marker.header.frame_id = msg->header.frame_id;
-    publish_pose_as_base_link(pose_cam_to_marker, std::to_string(marker.id));
-
-    // drawing the detected markers
-    marker.draw(in_image, cv::Scalar(0, 0, 255), 2);
-  }
-
-  // draw a 3d cube in each marker if there is 3d info
-  if (cam_param_.isValid()) {
-    for (aruco::Marker & marker : markers) {
-      aruco::CvDrawingUtils::draw3dAxis(in_image, marker, cam_param_);
+  // for debug
+  if (detected_tag_pose_pub_->get_subscription_count() > 0) {
+    PoseArray pose_array_msg;
+    pose_array_msg.header.stamp = sensor_stamp;
+    pose_array_msg.header.frame_id = "map";
+    for (const Landmark & landmark : landmarks) {
+      const Pose detected_marker_on_map =
+        tier4_autoware_utils::transformPose(landmark.pose, self_pose);
+      pose_array_msg.poses.push_back(detected_marker_on_map);
     }
+    detected_tag_pose_pub_->publish(pose_array_msg);
   }
 
-  if (image_pub_.getNumSubscribers() > 0) {
-    // show input with augmented information
-    cv_bridge::CvImage out_msg;
-    out_msg.header.stamp = curr_stamp;
-    out_msg.encoding = sensor_msgs::image_encodings::RGB8;
-    out_msg.image = in_image;
-    image_pub_.publish(out_msg.toImageMsg());
+  // calc new_self_pose
+  const Pose new_self_pose =
+    landmark_manager_.calculate_new_self_pose(landmarks, self_pose, consider_orientation_);
+  const Pose diff_pose = tier4_autoware_utils::inverseTransformPose(new_self_pose, self_pose);
+  const double distance =
+    std::hypot(diff_pose.position.x, diff_pose.position.y, diff_pose.position.z);
+
+  // check distance
+  if (distance > ekf_position_tolerance_) {
+    RCLCPP_INFO_STREAM(this->get_logger(), "distance: " << distance);
+    return;
   }
 
-  const int detected_tags = static_cast<int>(markers.size());
+  // publish
+  PoseWithCovarianceStamped pose_with_covariance_stamped;
+  pose_with_covariance_stamped.header.stamp = sensor_stamp;
+  pose_with_covariance_stamped.header.frame_id = "map";
+  pose_with_covariance_stamped.pose.pose = new_self_pose;
+
+  // ~5[m]: base_covariance
+  // 5~[m]: scaling base_covariance by std::pow(distance / 5, 3)
+  const double coeff = std::max(1.0, std::pow(distance / 5, 3));
+  for (int i = 0; i < 36; i++) {
+    pose_with_covariance_stamped.pose.covariance[i] = coeff * base_covariance_[i];
+  }
+
+  pose_pub_->publish(pose_with_covariance_stamped);
+
+  // publish diagnostics
+  const int detected_tags = static_cast<int>(landmarks.size());
 
   diagnostic_msgs::msg::DiagnosticStatus diag_status;
 
@@ -252,150 +248,101 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
 }
 
 // wait for one camera info, then shut down that subscriber
-void ArTagBasedLocalizer::cam_info_callback(const CameraInfo & msg)
+void ArTagBasedLocalizer::cam_info_callback(const CameraInfo::ConstSharedPtr & msg)
 {
   if (cam_info_received_) {
     return;
   }
 
-  cv::Mat camera_matrix(3, 4, CV_64FC1, 0.0);
-  camera_matrix.at<double>(0, 0) = msg.p[0];
-  camera_matrix.at<double>(0, 1) = msg.p[1];
-  camera_matrix.at<double>(0, 2) = msg.p[2];
-  camera_matrix.at<double>(0, 3) = msg.p[3];
-  camera_matrix.at<double>(1, 0) = msg.p[4];
-  camera_matrix.at<double>(1, 1) = msg.p[5];
-  camera_matrix.at<double>(1, 2) = msg.p[6];
-  camera_matrix.at<double>(1, 3) = msg.p[7];
-  camera_matrix.at<double>(2, 0) = msg.p[8];
-  camera_matrix.at<double>(2, 1) = msg.p[9];
-  camera_matrix.at<double>(2, 2) = msg.p[10];
-  camera_matrix.at<double>(2, 3) = msg.p[11];
+  // copy camera matrix
+  cv::Mat camera_matrix(3, 4, CV_64FC1);
+  std::copy(msg->p.begin(), msg->p.end(), camera_matrix.begin<double>());
 
-  cv::Mat distortion_coeff(4, 1, CV_64FC1);
-  for (int i = 0; i < 4; ++i) {
-    distortion_coeff.at<double>(i, 0) = 0;
-  }
+  // all 0
+  cv::Mat distortion_coeff(4, 1, CV_64FC1, 0.0);
 
-  const cv::Size size(static_cast<int>(msg.width), static_cast<int>(msg.height));
+  const cv::Size size(static_cast<int>(msg->width), static_cast<int>(msg->height));
 
   cam_param_ = aruco::CameraParameters(camera_matrix, distortion_coeff, size);
 
   cam_info_received_ = true;
 }
 
-void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped & msg)
+void ArTagBasedLocalizer::ekf_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  latest_ekf_pose_ = msg;
+  if (msg->header.frame_id == "map") {
+    ekf_pose_buffer_->push_back(msg);
+  } else {
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      get_logger(), *this->get_clock(), 1000,
+      "Received initial pose message with frame_id "
+        << msg->header.frame_id << ", but expected map. "
+        << "Please check the frame_id in the input topic and ensure it is correct.");
+  }
 }
 
-void ArTagBasedLocalizer::publish_pose_as_base_link(
-  const PoseStamped & sensor_to_tag, const std::string & tag_id)
+std::vector<landmark_manager::Landmark> ArTagBasedLocalizer::detect_landmarks(
+  const Image::ConstSharedPtr & msg)
 {
-  // Check tag_id
-  if (std::find(target_tag_ids_.begin(), target_tag_ids_.end(), tag_id) == target_tag_ids_.end()) {
-    RCLCPP_INFO_STREAM(this->get_logger(), "tag_id(" << tag_id << ") is not in target_tag_ids");
-    return;
-  }
-  if (landmark_map_.count(tag_id) == 0) {
-    RCLCPP_INFO_STREAM(this->get_logger(), "tag_id(" << tag_id << ") is not in landmark_map_");
-    return;
-  }
+  const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
 
-  // Range filter
-  const double distance_squared = sensor_to_tag.pose.position.x * sensor_to_tag.pose.position.x +
-                                  sensor_to_tag.pose.position.y * sensor_to_tag.pose.position.y +
-                                  sensor_to_tag.pose.position.z * sensor_to_tag.pose.position.z;
-  if (distance_threshold_squared_ < distance_squared) {
-    return;
-  }
-
-  // Transform to base_link
-  PoseStamped base_link_to_tag;
+  // get image
+  cv::Mat in_image;
   try {
-    const TransformStamped transform =
-      tf_buffer_->lookupTransform("base_link", sensor_to_tag.header.frame_id, tf2::TimePointZero);
-    tf2::doTransform(sensor_to_tag, base_link_to_tag, transform);
-    base_link_to_tag.header.frame_id = "base_link";
+    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
+    cv_ptr->image.copyTo(in_image);
+  } catch (cv_bridge::Exception & e) {
+    RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
+    return std::vector<Landmark>{};
+  }
+
+  // get transform from base_link to camera
+  TransformStamped transform_sensor_to_base_link;
+  try {
+    transform_sensor_to_base_link =
+      tf_buffer_->lookupTransform("base_link", msg->header.frame_id, sensor_stamp);
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "Could not transform base_link to camera: %s", ex.what());
-    return;
+    return std::vector<Landmark>{};
   }
 
-  // (1) map_to_tag
-  const Pose & map_to_tag = landmark_map_.at(tag_id);
-  const Eigen::Affine3d map_to_tag_affine = pose_to_affine3d(map_to_tag);
+  // detect
+  std::vector<aruco::Marker> markers;
+  detector_.detect(in_image, markers, cam_param_, marker_size_, false);
 
-  // (2) tag_to_base_link
-  const Eigen::Affine3d base_link_to_tag_affine = pose_to_affine3d(base_link_to_tag.pose);
-  const Eigen::Affine3d tag_to_base_link_affine = base_link_to_tag_affine.inverse();
+  // parse
+  std::vector<Landmark> landmarks;
 
-  // calculate map_to_base_link
-  const Eigen::Affine3d map_to_base_link_affine = map_to_tag_affine * tag_to_base_link_affine;
-  const Pose map_to_base_link = tf2::toMsg(map_to_base_link_affine);
+  for (aruco::Marker & marker : markers) {
+    // convert marker pose to tf
+    const cv::Quat<float> q = cv::Quat<float>::createFromRvec(marker.Rvec);
+    Pose pose;
+    pose.position.x = marker.Tvec.at<float>(0, 0);
+    pose.position.y = marker.Tvec.at<float>(1, 0);
+    pose.position.z = marker.Tvec.at<float>(2, 0);
+    pose.orientation.x = q.x;
+    pose.orientation.y = q.y;
+    pose.orientation.z = q.z;
+    pose.orientation.w = q.w;
+    const double distance = std::hypot(pose.position.x, pose.position.y, pose.position.z);
+    if (distance <= distance_threshold_) {
+      tf2::doTransform(pose, pose, transform_sensor_to_base_link);
+      landmarks.push_back(Landmark{std::to_string(marker.id), pose});
+    }
 
-  // If latest_ekf_pose_ is older than <ekf_time_tolerance_> seconds compared to current frame, it
-  // will not be published.
-  const rclcpp::Duration diff_time =
-    rclcpp::Time(sensor_to_tag.header.stamp) - rclcpp::Time(latest_ekf_pose_.header.stamp);
-  if (diff_time.seconds() > ekf_time_tolerance_) {
-    RCLCPP_INFO(
-      this->get_logger(),
-      "latest_ekf_pose_ is older than %f seconds compared to current frame. "
-      "latest_ekf_pose_.header.stamp: %d.%d, sensor_to_tag.header.stamp: %d.%d",
-      ekf_time_tolerance_, latest_ekf_pose_.header.stamp.sec, latest_ekf_pose_.header.stamp.nanosec,
-      sensor_to_tag.header.stamp.sec, sensor_to_tag.header.stamp.nanosec);
-    return;
+    // for debug, drawing the detected markers
+    marker.draw(in_image, cv::Scalar(0, 0, 255), 2);
+    aruco::CvDrawingUtils::draw3dAxis(in_image, marker, cam_param_);
   }
 
-  // If curr_pose differs from latest_ekf_pose_ by more than <ekf_position_tolerance_>, it will not
-  // be published.
-  const Pose curr_pose = map_to_base_link;
-  const Pose latest_ekf_pose = latest_ekf_pose_.pose.pose;
-  const double diff_position = norm(curr_pose.position, latest_ekf_pose.position);
-  if (diff_position > ekf_position_tolerance_) {
-    RCLCPP_INFO(
-      this->get_logger(),
-      "curr_pose differs from latest_ekf_pose_ by more than %f m. "
-      "curr_pose: (%f, %f, %f), latest_ekf_pose: (%f, %f, %f)",
-      ekf_position_tolerance_, curr_pose.position.x, curr_pose.position.y, curr_pose.position.z,
-      latest_ekf_pose.position.x, latest_ekf_pose.position.y, latest_ekf_pose.position.z);
-    return;
+  // for debug
+  if (image_pub_->get_subscription_count() > 0) {
+    cv_bridge::CvImage out_msg;
+    out_msg.header.stamp = sensor_stamp;
+    out_msg.encoding = sensor_msgs::image_encodings::RGB8;
+    out_msg.image = in_image;
+    image_pub_->publish(*out_msg.toImageMsg());
   }
 
-  // Construct output message
-  PoseWithCovarianceStamped pose_with_covariance_stamped;
-  pose_with_covariance_stamped.header.stamp = sensor_to_tag.header.stamp;
-  pose_with_covariance_stamped.header.frame_id = "map";
-  pose_with_covariance_stamped.pose.pose = curr_pose;
-
-  // ~5[m]: base_covariance
-  // 5~[m]: scaling base_covariance by std::pow(distance/5, 3)
-  const double distance = std::sqrt(distance_squared);
-  const double scale = distance / 5;
-  const double coeff = std::max(1.0, std::pow(scale, 3));
-  for (int i = 0; i < 36; i++) {
-    pose_with_covariance_stamped.pose.covariance[i] = coeff * base_covariance_[i];
-  }
-
-  pose_pub_->publish(pose_with_covariance_stamped);
-}
-
-tf2::Transform ArTagBasedLocalizer::aruco_marker_to_tf2(const aruco::Marker & marker)
-{
-  cv::Mat rot(3, 3, CV_64FC1);
-  cv::Mat r_vec64;
-  marker.Rvec.convertTo(r_vec64, CV_64FC1);
-  cv::Rodrigues(r_vec64, rot);
-  cv::Mat tran64;
-  marker.Tvec.convertTo(tran64, CV_64FC1);
-
-  tf2::Matrix3x3 tf_rot(
-    rot.at<double>(0, 0), rot.at<double>(0, 1), rot.at<double>(0, 2), rot.at<double>(1, 0),
-    rot.at<double>(1, 1), rot.at<double>(1, 2), rot.at<double>(2, 0), rot.at<double>(2, 1),
-    rot.at<double>(2, 2));
-
-  tf2::Vector3 tf_orig(tran64.at<double>(0, 0), tran64.at<double>(1, 0), tran64.at<double>(2, 0));
-
-  return tf2::Transform(tf_rot, tf_orig);
+  return landmarks;
 }

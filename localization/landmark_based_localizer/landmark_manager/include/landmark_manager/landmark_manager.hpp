@@ -15,6 +15,8 @@
 #ifndef LANDMARK_MANAGER__LANDMARK_MANAGER_HPP_
 #define LANDMARK_MANAGER__LANDMARK_MANAGER_HPP_
 
+#include "lanelet2_extension/localization/landmark.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
@@ -22,6 +24,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -34,12 +37,27 @@ struct Landmark
   geometry_msgs::msg::Pose pose;
 };
 
-std::vector<Landmark> parse_landmarks(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
-  const std::string & target_subtype, const rclcpp::Logger & logger);
+class LandmarkManager
+{
+public:
+  void parse_landmarks(
+    const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
+    const std::string & target_subtype);
 
-visualization_msgs::msg::MarkerArray convert_landmarks_to_marker_array_msg(
-  const std::vector<Landmark> & landmarks);
+  [[nodiscard]] std::vector<landmark_manager::Landmark> get_landmarks() const;
+
+  [[nodiscard]] visualization_msgs::msg::MarkerArray get_landmarks_as_marker_array_msg() const;
+
+  [[nodiscard]] geometry_msgs::msg::Pose calculate_new_self_pose(
+    const std::vector<Landmark> & detected_landmarks, const geometry_msgs::msg::Pose & self_pose,
+    const bool consider_orientation) const;
+
+private:
+  // To allow multiple landmarks with the same id to be registered on a vector_map,
+  // manage vectors by having them in a std::map.
+  // landmarks_map_["<id>"] = [pose0, pose1, ...]
+  std::map<std::string, std::vector<geometry_msgs::msg::Pose>> landmarks_map_;
+};
 
 }  // namespace landmark_manager
 
