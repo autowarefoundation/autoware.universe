@@ -841,8 +841,7 @@ bool MissionPlanner::check_reroute_safety(
   // get closest lanelet in start lanelets
   lanelet::ConstLanelet closest_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(start_lanelets, current_pose, &closest_lanelet)) {
-    RCLCPP_ERROR(
-      get_logger(), "Check reroute safety failed. Cannot find the closest lanelet.");
+    RCLCPP_ERROR(get_logger(), "Check reroute safety failed. Cannot find the closest lanelet.");
     return false;
   }
 
