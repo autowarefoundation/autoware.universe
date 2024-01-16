@@ -26,15 +26,13 @@ MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
-  rclcpp::CallbackGroup::SharedPtr main_callback_group,
-  std::shared_ptr<std::map<std::string, std::string>> state_ptr)
+  rclcpp::CallbackGroup::SharedPtr main_callback_group)
 : ndt_ptr_(std::move(ndt_ptr)),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   map_frame_(std::move(map_frame)),
   logger_(node->get_logger()),
   clock_(node->get_clock()),
   tf2_listener_module_(std::move(tf2_listener_module)),
-  state_ptr_(std::move(state_ptr)),
   dynamic_map_loading_update_distance_(
     node->declare_parameter<double>("dynamic_map_loading_update_distance")),
   dynamic_map_loading_map_radius_(
@@ -146,35 +144,36 @@ void MapUpdateModule::update_ndt(
   }
   const auto exe_start_time = std::chrono::system_clock::now();
 
-  NormalDistributionsTransform backup_ndt = *ndt_ptr_;
+  const size_t add_size = maps_to_add.size();
+
+  // Perform heavy processing outside of the lock scope
+  std::vector<pcl::shared_ptr<pcl::PointCloud<PointTarget>>> points_pcl(add_size);
+  for (size_t i = 0; i < add_size; i++) {
+    points_pcl[i] = pcl::make_shared<pcl::PointCloud<PointTarget>>();
+    pcl::fromROSMsg(maps_to_add[i].pointcloud, *points_pcl[i]);
+  }
+
+  (*ndt_ptr_mutex_).lock();
 
   // Add pcd
-  for (const auto & map_to_add : maps_to_add) {
-    pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
-    pcl::fromROSMsg(map_to_add.pointcloud, *map_points_ptr);
-    backup_ndt.addTarget(map_points_ptr, map_to_add.cell_id);
+  for (size_t i = 0; i < add_size; i++) {
+    ndt_ptr_->addTarget(points_pcl[i], maps_to_add[i].cell_id);
   }
 
   // Remove pcd
   for (const std::string & map_id_to_remove : map_ids_to_remove) {
-    backup_ndt.removeTarget(map_id_to_remove);
+    ndt_ptr_->removeTarget(map_id_to_remove);
   }
 
-  backup_ndt.createVoxelKdtree();
+  ndt_ptr_->createVoxelKdtree();
+
+  (*ndt_ptr_mutex_).unlock();
 
   const auto exe_end_time = std::chrono::system_clock::now();
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
   RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
-
-  // swap
-  (*ndt_ptr_mutex_).lock();
-  // ToDo (kminoda): Here negligible NDT copy occurs during the new map loading phase, which should
-  // ideally be avoided. But I will leave this for now since I cannot come up with a solution other
-  // than using pointer of pointer.
-  *ndt_ptr_ = backup_ndt;
-  (*ndt_ptr_mutex_).unlock();
 
   publish_partial_pcd_map();
 }
