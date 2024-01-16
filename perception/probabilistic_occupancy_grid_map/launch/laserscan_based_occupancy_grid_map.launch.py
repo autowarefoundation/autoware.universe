@@ -132,6 +132,7 @@ def launch_setup(context, *args, **kwargs):
 
     return [occupancy_grid_map_container, load_composable_nodes]
 
+
 def generate_launch_description():
     def add_launch_arg(name: str, default_value=None):
         return DeclareLaunchArgument(name, default_value=default_value)
