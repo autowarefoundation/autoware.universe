@@ -238,7 +238,9 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   constexpr auto use_occluded_space = true;
   constexpr auto occluded_slow_down_speed = 1.0f;
   constexpr auto time_buffer = 1.0;
-  if (use_occluded_space && is_crosswalk_occluded(crosswalk_, *planner_data_->occupancy_grid)) {
+  if (
+    use_occluded_space && !path_intersects.empty() &&
+    is_crosswalk_occluded(crosswalk_, *planner_data_->occupancy_grid, path_intersects.front())) {
     if (!current_initial_occlusion_time_) current_initial_occlusion_time_ = clock_->now();
     if ((clock_->now() - *current_initial_occlusion_time_).seconds() >= time_buffer)
       most_recent_occlusion_time_ = clock_->now();
