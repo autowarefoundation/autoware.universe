@@ -53,7 +53,12 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     this->declare_parameter<double>("limit_distance_from_self_pose_to_nearest_marker");
   param_.limit_distance_from_self_pose_to_marker =
     this->declare_parameter<double>("limit_distance_from_self_pose_to_marker");
-  param_.base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
+  std::vector<double> base_covariance = this->declare_parameter<std::vector<double>>("base_covariance");
+  for (std::size_t i = 0; i < base_covariance.size(); ++i) {
+    param_.base_covariance[i] = base_covariance[i];
+  }
+
+
   ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
     this->get_logger(), param_.self_pose_timeout_sec, param_.self_pose_distance_tolerance_m);
 
@@ -269,10 +274,13 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
   result.pose.pose.position.z = self_pose.position.z;
   result.pose.pose.orientation = self_pose.orientation;
 
-  // TODO(YamatoAndo) transform covariance on base_link to map frame
-  for (int i = 0; i < 36; i++) {
-    result.pose.covariance[i] = param_.base_covariance_[i];
-  }
+  // set covariance
+  const Eigen::Quaterniond map_to_base_link_quat = Eigen::Quaterniond(
+    result.pose.pose.orientation.w, result.pose.pose.orientation.x, result.pose.pose.orientation.y,
+    result.pose.pose.orientation.z);
+  const Eigen::Matrix3d map_to_base_link_rotation = map_to_base_link_quat.normalized().toRotationMatrix();
+  result.pose.covariance = rotate_covariance(param_.base_covariance, map_to_base_link_rotation);
+
   pub_base_link_pose_with_covariance_on_map_->publish(result);
 }
 
@@ -433,4 +441,26 @@ landmark_manager::Landmark LidarMarkerLocalizer::get_nearest_landmark(
     nearest_landmark = landmark;
   }
   return nearest_landmark;
+}
+
+std::array<double, 36> LidarMarkerLocalizer::rotate_covariance(
+  const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const
+{
+  std::array<double, 36> ret_covariance = src_covariance;
+
+  Eigen::Matrix3d src_cov;
+  src_cov << src_covariance[0], src_covariance[1], src_covariance[2], src_covariance[6],
+    src_covariance[7], src_covariance[8], src_covariance[12], src_covariance[13],
+    src_covariance[14];
+
+  Eigen::Matrix3d ret_cov;
+  ret_cov = rotation * src_cov * rotation.transpose();
+
+  for (Eigen::Index i = 0; i < 3; ++i) {
+    ret_covariance[i] = ret_cov(0, i);
+    ret_covariance[i + 6] = ret_cov(1, i);
+    ret_covariance[i + 12] = ret_cov(2, i);
+  }
+
+  return ret_covariance;
 }
