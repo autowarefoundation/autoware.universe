@@ -12,7 +12,6 @@ Users can reproduce the demonstration using the following data and launch comman
 The rosbag is simulated data created by [AWSIM](https://tier4.github.io/AWSIM/).
 The map is an edited version of the [original map data](https://github.com/tier4/AWSIM/releases/download/v1.1.0/nishishinjuku_autoware_map.zip) published on the AWSIM documentation page to make it suitable for multiple pose_estimators.
 
-
 ## Interfaces
 
 ### Parameters
@@ -66,7 +65,7 @@ This rule basically allows only one pose_estimator to be activated.
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1      | If localization initialization state is not `INITIALIZED`, enable all pose_estimators. This is because system does not know which pose_estimator is available for initial localization. |
 | 2      | If ego-position is not subscribed yet, enable all pose_estimators. This is because it is not possible to determine which pose_estimators are available.                                 |
-| 3      | If ego-position enters Eagleye's pose estimator area, enable Eagleye. See [Pose estimator area](../README.md#eagleye-area) for more details                                                                                 |
+| 3      | If ego-position enters Eagleye's pose estimator area, enable Eagleye. See [Pose estimator area](../README.md#eagleye-area) for more details                                             |
 | 4      | If there are landmarks in the surrounding area, enable AR tag based estimation.                                                                                                         |
 | 5      | If YabLoc is not enabled as a runtime argument, enable NDT.                                                                                                                             |
 | 6      | If NDT is not enabled as a runtime argument, enable YabLoc.                                                                                                                             |
