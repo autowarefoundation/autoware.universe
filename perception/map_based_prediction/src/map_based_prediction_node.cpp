@@ -1630,7 +1630,6 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     search_dist += lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
 
     lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
-    // std::cerr << "search_dist " << search_dist << "\n";
     const double validate_time_horizon = T * prediction_time_horizon_rate_for_validate_lane_length_;
 
     // lambda function to get possible paths for isolated lanelet
@@ -1720,7 +1719,6 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     addReferencePathsLocal(right_paths, Maneuver::RIGHT_LANE_CHANGE);
     addReferencePathsLocal(center_paths, Maneuver::LANE_FOLLOW);
   }
-  // std::cerr << "------------------------------------\n";
 
   return all_ref_paths;
 }
