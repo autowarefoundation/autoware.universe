@@ -1174,11 +1174,6 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
   return obstacles_for_drivable_area;
 }
 
-double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v)
-{
-  return v * std::cos(calcYawDeviation(p_ref, p_target));
-}
-
 lanelet::ConstLanelets getTargetLanelets(
   const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
   const double left_offset, const double right_offset)
