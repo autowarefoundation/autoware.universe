@@ -53,11 +53,11 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     this->declare_parameter<double>("limit_distance_from_self_pose_to_nearest_marker");
   param_.limit_distance_from_self_pose_to_marker =
     this->declare_parameter<double>("limit_distance_from_self_pose_to_marker");
-  std::vector<double> base_covariance = this->declare_parameter<std::vector<double>>("base_covariance");
+  std::vector<double> base_covariance =
+    this->declare_parameter<std::vector<double>>("base_covariance");
   for (std::size_t i = 0; i < base_covariance.size(); ++i) {
     param_.base_covariance[i] = base_covariance[i];
   }
-
 
   ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
     this->get_logger(), param_.self_pose_timeout_sec, param_.self_pose_distance_tolerance_m);
@@ -278,7 +278,8 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
   const Eigen::Quaterniond map_to_base_link_quat = Eigen::Quaterniond(
     result.pose.pose.orientation.w, result.pose.pose.orientation.x, result.pose.pose.orientation.y,
     result.pose.pose.orientation.z);
-  const Eigen::Matrix3d map_to_base_link_rotation = map_to_base_link_quat.normalized().toRotationMatrix();
+  const Eigen::Matrix3d map_to_base_link_rotation =
+    map_to_base_link_quat.normalized().toRotationMatrix();
   result.pose.covariance = rotate_covariance(param_.base_covariance, map_to_base_link_rotation);
 
   pub_base_link_pose_with_covariance_on_map_->publish(result);

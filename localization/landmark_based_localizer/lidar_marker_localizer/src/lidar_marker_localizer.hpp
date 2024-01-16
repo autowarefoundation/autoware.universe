@@ -75,7 +75,7 @@ class LidarMarkerLocalizer : public rclcpp::Node
 
     double limit_distance_from_self_pose_to_nearest_marker;
     double limit_distance_from_self_pose_to_marker;
-    std::array<double, 36>  base_covariance;
+    std::array<double, 36> base_covariance;
   };
 
 public:
@@ -97,7 +97,6 @@ private:
     const std::vector<landmark_manager::Landmark> & landmarks) const;
   std::array<double, 36> rotate_covariance(
     const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const;
-
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
