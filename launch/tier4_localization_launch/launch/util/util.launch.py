@@ -108,7 +108,6 @@ def generate_launch_description():
         "path to the parameter file of random_downsample_filter",
     )
     add_launch_arg("use_intra_process", "true", "use ROS 2 component container communication")
-    add_launch_arg("use_pointcloud_container", "True", "use pointcloud container")
     add_launch_arg(
         "lidar_container_name",
         "/sensing/lidar/top/pointcloud_preprocessor/pointcloud_container",
