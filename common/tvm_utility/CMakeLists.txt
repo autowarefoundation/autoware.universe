@@ -23,7 +23,7 @@ autoware_package()
 # Library
 
 set(TVM_UTILITY_NODE_LIB_HEADERS
-  "include/${PROJECT_NAME}/pipeline.hpp"
+  "include/tvm_utility/pipeline.hpp"
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED ${TVM_UTILITY_NODE_LIB_HEADERS})
