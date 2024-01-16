@@ -15,6 +15,9 @@
     self_pose_timeout_sec: 1.0
     self_pose_distance_tolerance_m: 1.0
 
+    # For the purpose of determining whether detection should occur
+    limit_distance_from_self_pose_to_nearest_marker: 2.0
+
     # for avoiding miss detection
     limit_distance_from_self_pose_to_marker: 2.0
 

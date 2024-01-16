@@ -29,7 +29,6 @@
 
 LidarMarkerLocalizer::LidarMarkerLocalizer()
 : Node("lidar_marker_localizer"),
-  diag_updater_(this),
   is_activated_(false),
   is_detected_marker_(false),
   is_exist_marker_within_self_pose_(false)
@@ -50,6 +49,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   param_.self_pose_timeout_sec = this->declare_parameter<double>("self_pose_timeout_sec");
   param_.self_pose_distance_tolerance_m =
     this->declare_parameter<double>("self_pose_distance_tolerance_m");
+  param_.limit_distance_from_self_pose_to_nearest_marker =
+    this->declare_parameter<double>("limit_distance_from_self_pose_to_nearest_marker");
   param_.limit_distance_from_self_pose_to_marker =
     this->declare_parameter<double>("limit_distance_from_self_pose_to_marker");
   param_.base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
@@ -92,8 +93,19 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
 
-  diag_updater_.setHardwareID(get_name());
-  diag_updater_.add("lidar_marker_localizer", this, &LidarMarkerLocalizer::update_diagnostics);
+  diagnostics_module_.reset(new DiagnosticsModule(this, "localization", ""));
+}
+
+void LidarMarkerLocalizer::initilize_diagnostics()
+{
+  diagnostics_module_->clear();
+  diagnostics_module_->addKeyValue("is_received_map", false);
+  diagnostics_module_->addKeyValue("is_received_self_pose", false);
+  diagnostics_module_->addKeyValue("detect_marker_num", 0);
+  diagnostics_module_->addKeyValue("distance_self_pose_to_nearest_marker", 0.0);
+  diagnostics_module_->addKeyValue("limit_distance_from_self_pose_to_nearest_marker", param_.limit_distance_from_self_pose_to_nearest_marker);
+  diagnostics_module_->addKeyValue("distance_lanelet2_marker_to_detected_marker", 0.0);
+  diagnostics_module_->addKeyValue("limit_distance_from_lanelet2_marker_to_detected_marker", param_.limit_distance_from_self_pose_to_marker);
 }
 
 void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
@@ -122,26 +134,79 @@ void LidarMarkerLocalizer::self_pose_callback(
 
 void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
+  initilize_diagnostics();
+
+  main_process(std::move(points_msg_ptr));
+
+  diagnostics_module_->publish();
+}
+
+void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & points_msg_ptr)
+{
   const builtin_interfaces::msg::Time sensor_ros_time = points_msg_ptr->header.stamp;
 
-  // (1) Get Self Pose
-  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
-    ekf_pose_buffer_->interpolate(sensor_ros_time);
-  if (!interpolate_result) {
+  // (1) check if the map have be received
+  const std::vector<landmark_manager::Landmark> map_landmarks = landmark_manager_.get_landmarks();
+  const bool is_received_map = !map_landmarks.empty();
+  diagnostics_module_->addKeyValue("is_received_map", is_received_map);
+  if (!is_received_map) {
+    std::stringstream message;
+    message << "Not receive the landmark information. Please check if the vector map is being published and if the landmark information is correctly specified.";
+    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return;
   }
+
+  // (2) get Self Pose
+  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
+    ekf_pose_buffer_->interpolate(sensor_ros_time);
+
+  const bool is_received_self_pose = interpolate_result != std::nullopt;
+  diagnostics_module_->addKeyValue("is_received_self_pose", is_received_self_pose);
+  if (!is_received_self_pose) {
+    std::stringstream message;
+    message << "Could not get self_pose. Please check if the self pose is being published and if the timestamp of the self pose is correctly specified";
+    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    return;
+  }
+
   ekf_pose_buffer_->pop_old(sensor_ros_time);
   const Pose self_pose = interpolate_result.value().interpolated_pose.pose.pose;
 
-  // (2) detect marker
-  const std::vector<landmark_manager::Landmark> detected_landmarks =
+
+  // (3) detect marker
+  const std::vector<  landmark_manager::Landmark> detected_landmarks =
     detect_landmarks(points_msg_ptr);
 
-  is_detected_marker_ = !detected_landmarks.empty();
-  if (!is_detected_marker_) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1, "Could not detect marker");
-    return;
+  const bool is_detected_marker = !detected_landmarks.empty();
+  diagnostics_module_->addKeyValue("detect_marker_num", detected_landmarks.size());
+
+
+  // (4) check distance to the nearest marker
+  const landmark_manager::Landmark nearest_marker = get_nearest_landmark(self_pose, map_landmarks);
+  const Pose nearest_marker_pose_on_base_link =
+        tier4_autoware_utils::inverseTransformPose(nearest_marker.pose, self_pose);
+
+  const double distance_from_self_pose_to_nearest_marker = std::abs(nearest_marker_pose_on_base_link.position.x);
+  diagnostics_module_->addKeyValue("distance_self_pose_to_nearest_marker", distance_from_self_pose_to_nearest_marker);
+
+  const bool is_exist_marker_within_self_pose = distance_from_self_pose_to_nearest_marker < param_.limit_distance_from_self_pose_to_nearest_marker;
+
+  if (!is_detected_marker) {
+    if (!is_exist_marker_within_self_pose) {
+      std::stringstream message;
+      message << "Could not detect marker, because the distance from self_pose to nearest_marker is too far (" << distance_from_self_pose_to_nearest_marker << " [m]).";
+      // RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+      diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::OK, message.str());
+    }
+    else {
+      std::stringstream message;
+      message << "Could not detect marker, although the distance from self_pose to nearest_marker is near (" << distance_from_self_pose_to_nearest_marker << " [m]).";
+      RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+      diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    }
+     return;
   }
 
   // for debug
@@ -157,7 +222,7 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     pub_marker_detected_->publish(pose_array_msg);
   }
 
-  // (3) calculate diff pose
+  // (4) calculate diff pose
   const Pose new_self_pose =
     landmark_manager_.calculate_new_self_pose(detected_landmarks, self_pose, false);
 
@@ -168,16 +233,17 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
   const bool is_exist_marker_within_lanelet2_map =
     diff_norm < param_.limit_distance_from_self_pose_to_marker;
 
+  diagnostics_module_->addKeyValue("distance_lanelet2_marker_to_detected_marker", diff_norm);
   if (!is_exist_marker_within_lanelet2_map) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1,
-      "The distance from lanelet2 to the detect marker is too far("
-        << diff_norm << "). The limit is " << param_.limit_distance_from_self_pose_to_marker
-        << ".");
+    std::stringstream message;
+    message <<  "The distance from lanelet2 to the detect marker is too far("
+            << diff_norm << " [m]). The limit is " << param_.limit_distance_from_self_pose_to_marker << ".";
+    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return;
   }
 
-  // (4) Apply diff pose to self pose
+  // (5) Apply diff pose to self pose
   // only x and y is changed
   PoseWithCovarianceStamped result;
   result.header.stamp = sensor_ros_time;
@@ -192,24 +258,6 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     result.pose.covariance[i] = param_.base_covariance_[i];
   }
   pub_base_link_pose_with_covariance_on_map_->publish(result);
-}
-
-void LidarMarkerLocalizer::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  stat.add("exist_marker_within_self_pose", is_exist_marker_within_self_pose_ ? "Yes" : "No");
-  stat.add("detected_marker", is_detected_marker_ ? "Yes" : "No");
-
-  if (is_exist_marker_within_self_pose_ & is_detected_marker_) {
-    stat.summary(DiagnosticStatus::OK, "OK. Detect a marker");
-  } else if (is_exist_marker_within_self_pose_ & !is_detected_marker_) {
-    stat.summary(DiagnosticStatus::ERROR, "NG. Could not detect a marker");
-  } else if (!is_exist_marker_within_self_pose_ & is_detected_marker_) {
-    stat.summary(DiagnosticStatus::OK, "OK. Detect a not marker-object");
-  } else if (!is_exist_marker_within_self_pose_ & !is_detected_marker_) {
-    stat.summary(DiagnosticStatus::OK, "OK. There are no markers within the range of self-pose");
-  } else {
-    stat.summary(DiagnosticStatus::ERROR, "NG. This message should not be displayed.");
-  }
 }
 
 void LidarMarkerLocalizer::service_trigger_node(
@@ -348,4 +396,24 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   }
 
   return detected_landmarks;
+}
+
+landmark_manager::Landmark LidarMarkerLocalizer::get_nearest_landmark(
+  const geometry_msgs::msg::Pose & self_pose, const std::vector<landmark_manager::Landmark> & landmarks) const
+{
+  landmark_manager::Landmark nearest_landmark;
+  double min_distance = std::numeric_limits<double>::max();
+
+  for (const auto & landmark : landmarks) {
+    const double curr_distance = tier4_autoware_utils::calcDistance3d(
+      landmark.pose.position, self_pose.position);
+
+    if (curr_distance > min_distance) {
+      continue;
+    }
+
+    min_distance = curr_distance;
+    nearest_landmark = landmark;
+  }
+  return nearest_landmark;
 }

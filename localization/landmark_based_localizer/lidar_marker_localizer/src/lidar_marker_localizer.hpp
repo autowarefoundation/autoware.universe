@@ -15,6 +15,7 @@
 #ifndef LIDAR_MARKER_LOCALIZER_HPP_
 #define LIDAR_MARKER_LOCALIZER_HPP_
 
+#include "diagnostics/diagnostics_module.hpp"
 #include "localization_util/smart_pose_buffer.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -40,7 +41,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
-#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <landmark_manager/landmark_manager.hpp>
 
 #include <geometry_msgs/msg/pose_array.hpp>
@@ -73,7 +73,7 @@ class LidarMarkerLocalizer : public rclcpp::Node
     double self_pose_timeout_sec;
     double self_pose_distance_tolerance_m;
 
-    double limit_distance_from_self_pose_to_marker_from_lanelet2;
+    double limit_distance_from_self_pose_to_nearest_marker;
     double limit_distance_from_self_pose_to_marker;
     std::vector<double> base_covariance_;
   };
@@ -85,9 +85,13 @@ private:
   void self_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr);
   void points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr);
   void map_bin_callback(const HADMapBin::ConstSharedPtr & msg);
-  void update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
   void service_trigger_node(
     const SetBool::Request::SharedPtr req, SetBool::Response::SharedPtr res);
+
+  void initilize_diagnostics();
+  void main_process(const PointCloud2::ConstSharedPtr & points_msg_ptr);
+  landmark_manager::Landmark get_nearest_landmark(
+  const geometry_msgs::msg::Pose & self_pose, const std::vector<landmark_manager::Landmark> & landmarks) const;
 
   std::vector<landmark_manager::Landmark> detect_landmarks(
     const PointCloud2::ConstSharedPtr & points_msg_ptr);
@@ -105,7 +109,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_mapped_;
   rclcpp::Publisher<PoseArray>::SharedPtr pub_marker_detected_;
 
-  diagnostic_updater::Updater diag_updater_;
+  std::shared_ptr<DiagnosticsModule> diagnostics_module_;
 
   Param param_;
   bool is_activated_;
