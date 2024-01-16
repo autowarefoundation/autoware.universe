@@ -309,7 +309,8 @@ public:
 private:
   // main functions
   void applySafetySlowDownSpeed(
-    PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects);
+    PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects,
+    const float speed);
 
   std::optional<std::pair<geometry_msgs::msg::Point, double>> getStopPointWithMargin(
     const PathWithLaneId & ego_path,
@@ -432,7 +433,8 @@ private:
   const bool use_regulatory_element_;
 
   // occluded space time buffer
-  std::optional<rclcpp::Time> current_occlusion_start_time_;
+  std::optional<rclcpp::Time> current_initial_occlusion_time_;
+  std::optional<rclcpp::Time> most_recent_occlusion_time_;
 };
 }  // namespace behavior_velocity_planner
 

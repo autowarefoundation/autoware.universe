@@ -14,7 +14,7 @@
 
 #include "scene_crosswalk.hpp"
 
-#include "occluded_object.hpp"
+#include "occluded_crosswalk.hpp"
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
@@ -230,7 +230,25 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   // Apply safety slow down speed if defined in Lanelet2 map
   if (crosswalk_.hasAttribute("safety_slow_down_speed")) {
-    applySafetySlowDownSpeed(*path, path_intersects);
+    applySafetySlowDownSpeed(
+      *path, path_intersects,
+      static_cast<float>(crosswalk_.attribute("safety_slow_down_speed").asDouble().get()));
+  }
+  // TODO(Maxime): param
+  constexpr auto use_occluded_space = true;
+  constexpr auto occluded_slow_down_speed = 1.0f;
+  constexpr auto time_buffer = 1.0;
+  if (use_occluded_space && is_crosswalk_occluded(crosswalk_, *planner_data_->occupancy_grid)) {
+    if (!current_initial_occlusion_time_) current_initial_occlusion_time_ = clock_->now();
+    if ((clock_->now() - *current_initial_occlusion_time_).seconds() >= time_buffer)
+      most_recent_occlusion_time_ = clock_->now();
+  } else {
+    current_initial_occlusion_time_.reset();
+  }
+  if (
+    most_recent_occlusion_time_ &&
+    (clock_->now() - *most_recent_occlusion_time_).seconds() <= time_buffer) {
+    applySafetySlowDownSpeed(*path, path_intersects, occluded_slow_down_speed);
   }
   recordTime(2);
 
@@ -786,7 +804,8 @@ CollisionPoint CrosswalkModule::createCollisionPoint(
 }
 
 void CrosswalkModule::applySafetySlowDownSpeed(
-  PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects)
+  PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects,
+  const float safety_slow_down_speed)
 {
   if (path_intersects.empty()) {
     return;
@@ -794,10 +813,6 @@ void CrosswalkModule::applySafetySlowDownSpeed(
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   const auto ego_path = output;
-
-  // Safety slow down speed in [m/s]
-  const auto & safety_slow_down_speed =
-    static_cast<float>(crosswalk_.attribute("safety_slow_down_speed").asDouble().get());
 
   if (!passed_safety_slow_point_) {
     // Safety slow down distance [m]
@@ -1052,31 +1067,6 @@ void CrosswalkModule::updateObjectState(
       getLabelColor(collision_state));
   }
 
-  constexpr auto use_occluded_pedestrian = true;  // TODO(Maxime): param
-  constexpr auto time_buffer = 1.0;               // TODO(Maxime): param
-  // Update the virtual object
-  if (use_occluded_pedestrian) {
-    const auto & ego_pos = planner_data_->current_odometry->pose.position;
-    const auto occluded_object = create_occluded_object(
-      attention_area, crosswalk_, *planner_data_->occupancy_grid, sparse_resample_path, ego_pos);
-    if (occluded_object) {
-      if (!current_occlusion_start_time_) current_occlusion_start_time_ = clock_->now();
-      if (
-        current_occlusion_start_time_ &&
-        (clock_->now() - *current_occlusion_start_time_).seconds() >= time_buffer) {
-        const auto collision_point = getCollisionPoint(
-          sparse_resample_path, *occluded_object, crosswalk_attention_range, attention_area);
-        object_info_manager_.update(
-          "virtual", occluded_object->kinematics.initial_pose_with_covariance.pose.position,
-          occluded_object->kinematics.initial_twist_with_covariance.twist.linear.x, clock_->now(),
-          is_ego_yielding, has_traffic_light, collision_point,
-          autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN, planner_param_,
-          crosswalk_.polygon2d().basicPolygon());
-      }
-    } else {
-      current_occlusion_start_time_.reset();
-    }
-  }
   object_info_manager_.finalize();
 }
 
