@@ -35,5 +35,4 @@
       <arg name="max_message_size" value="$(var rosbridge_max_message_size)"/>
     </include>
   </group>
-
 </launch>
