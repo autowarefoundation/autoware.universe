@@ -125,6 +125,7 @@ install(
         TARGETS
         DESTINATION lib/${PROJECT_NAME}
 )
+add_definitions(-DQT_NO_KEYWORDS)
 
 ament_package(
         CONFIG_EXTRAS "awf_2d_overlay_vehicle-extras.cmake"

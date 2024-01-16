@@ -1,5 +1,0 @@
-/**:
-  ros__parameters:
-    msg_type_target: "rviz_2d_overlay_msgs/msg/TrafficSignalArrayUI"
-    topic_name_source: "/perception/traffic_light_recognition/traffic_signals"
-    topic_name_target: "/perception/traffic_light_recognition/traffic_signals_plugin"

@@ -97,8 +97,8 @@ void SignalDisplay::onInitialize()
   speed_limit_topic_property_->initialize(rviz_ros_node);
 
   traffic_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
-    "Traffic Topic", "/perception/traffic_light_recognition/traffic_signals_plugin",
-    "rviz_2d_overlay_msgs/msg/TrafficSignalArrayUI", "Topic for Traffic Light Data", this,
+    "Traffic Topic", "/perception/traffic_light_recognition/traffic_signals",
+    "autoware_perception/msgs/msg/TrafficSignalArray", "Topic for Traffic Light Data", this,
     SLOT(topic_updated_traffic()));
   traffic_topic_property_->initialize(rviz_ros_node);
 }
@@ -145,10 +145,10 @@ void SignalDisplay::setupRosSubscriptions()
         updateHazardLightsData(msg);
       });
 
-  traffic_sub_ = rviz_node_->create_subscription<rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI>(
+  traffic_sub_ = rviz_node_->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
     traffic_topic_property_->getTopicStd(),
     rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-    [this](const rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI::SharedPtr msg) {
+    [this](const autoware_perception_msgs::msg::TrafficSignalArray::SharedPtr msg) {
       updateTrafficLightData(msg);
     });
 
@@ -229,7 +229,7 @@ void SignalDisplay::onDisable()
 }
 
 void SignalDisplay::updateTrafficLightData(
-  const rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI::ConstSharedPtr msg)
+  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(property_mutex_);
 
@@ -477,13 +477,14 @@ void SignalDisplay::topic_updated_traffic()
   // resubscribe to the topic
   traffic_sub_.reset();
   auto rviz_ros_node = context_->getRosNodeAbstraction().lock();
-  traffic_sub_ = rviz_ros_node->get_raw_node()
-                   ->create_subscription<rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI>(
-                     traffic_topic_property_->getTopicStd(),
-                     rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-                     [this](const rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI::SharedPtr msg) {
-                       updateTrafficLightData(msg);
-                     });
+  traffic_sub_ =
+    rviz_ros_node->get_raw_node()
+      ->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+        traffic_topic_property_->getTopicStd(),
+        rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
+        [this](const autoware_perception_msgs::msg::TrafficSignalArray::SharedPtr msg) {
+          updateTrafficLightData(msg);
+        });
 }
 
 }  // namespace awf_2d_overlay_vehicle

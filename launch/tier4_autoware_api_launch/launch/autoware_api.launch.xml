@@ -36,8 +36,4 @@
     </include>
   </group>
 
-  <!-- autoware_msgs_adapter for the awf_2d_overlay_vehicle (traffic light topic) -->
-  <group>
-    <include file="$(find-pkg-share autoware_auto_msgs_adapter)/launch/autoware_auto_msgs_adapter.launch.xml"/>
-  </group>
 </launch>

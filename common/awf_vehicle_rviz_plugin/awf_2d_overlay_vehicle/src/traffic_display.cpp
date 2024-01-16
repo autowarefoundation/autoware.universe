@@ -25,7 +25,7 @@ TrafficDisplay::TrafficDisplay()
 }
 
 void TrafficDisplay::updateTrafficLightData(
-  const rviz_2d_overlay_msgs::msg::TrafficSignalArrayUI::ConstSharedPtr & msg)
+  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr & msg)
 {
   current_traffic_ = *msg;
 }
@@ -52,8 +52,8 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   QImage scaled_traffic_image = traffic_light_image_.scaled(
     imageRect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-  if (current_traffic_.traffic_signals.size() > 0) {
-    switch (current_traffic_.traffic_signals[0].elements[0].color) {
+  if (current_traffic_.signals.size() > 0) {
+    switch (current_traffic_.signals[0].elements[0].color) {
       case 1:
         painter.setBrush(QBrush(red));
         painter.drawEllipse(circleRect.center(), 30, 30);

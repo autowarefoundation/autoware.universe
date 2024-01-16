@@ -15,7 +15,6 @@
 #include "include/autoware_auto_msgs_adapter_core.hpp"
 
 #include "include/adapter_control.hpp"
-#include "include/adapter_traffic_signals.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -67,11 +66,6 @@ MapStringAdapter AutowareAutoMsgsAdapterNode::create_adapter_map(
      [&] {
        return std::static_pointer_cast<AdapterBaseInterface>(
          std::make_shared<AdapterPerception>(*this, topic_name_source, topic_name_target));
-     }},
-    {"rviz_2d_overlay_msgs/msg/TrafficSignalArrayUI",
-     [&] {
-       return std::static_pointer_cast<AdapterBaseInterface>(
-         std::make_shared<AdapterTrafficSignals>(*this, topic_name_source, topic_name_target));
      }},
     {"autoware_auto_planning_msgs/msg/Trajectory",
      [&] {
