@@ -17,8 +17,8 @@
 
 #include "pose_estimator_arbiter/pose_estimator_type.hpp"
 #include "pose_estimator_arbiter/rule_helper/ar_tag_position.hpp"
-#include "pose_estimator_arbiter/rule_helper/eagleye_area.hpp"
 #include "pose_estimator_arbiter/rule_helper/pcd_occupancy.hpp"
+#include "pose_estimator_arbiter/rule_helper/pose_estimator_area.hpp"
 #include "pose_estimator_arbiter/shared_data.hpp"
 #include "pose_estimator_arbiter/switch_rule/base_switch_rule.hpp"
 
@@ -50,7 +50,7 @@ protected:
 
   std::unique_ptr<rule_helper::ArTagPosition> ar_tag_position_{nullptr};
   std::unique_ptr<rule_helper::PcdOccupancy> pcd_occupancy_{nullptr};
-  std::unique_ptr<rule_helper::EagleyeArea> eagleye_area_{nullptr};
+  std::unique_ptr<rule_helper::PoseEstimatorArea> pose_estimator_area_{nullptr};
 
   // Store the reason why which pose estimator is enabled
   mutable std::string debug_string_;

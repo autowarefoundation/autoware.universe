@@ -44,12 +44,12 @@ MapBasedRule::MapBasedRule(
       });
   }
   if (running_estimator_list.count(PoseEstimatorType::eagleye)) {
-    eagleye_area_ = std::make_unique<rule_helper::EagleyeArea>(&node);
+    pose_estimator_area_ = std::make_unique<rule_helper::PoseEstimatorArea>(&node);
 
     // Register callback
     shared_data_->vector_map.register_callback(
       [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
-        eagleye_area_->init(msg);
+        pose_estimator_area_->init(msg);
       });
   }
 
@@ -59,17 +59,18 @@ MapBasedRule::MapBasedRule(
 bool MapBasedRule::eagleye_is_available() const
 {
   // Below this line, eagleye_area is guaranteed not to be nullptr.
-  assert(eagleye_area_ != nullptr);
+  assert(pose_estimator_area_ != nullptr);
   assert(shared_data_->localization_pose_cov.has_value());
-  if (!eagleye_area_) {
-    throw std::runtime_error("eagleye_area_ is not initialized");
+  if (!pose_estimator_area_) {
+    throw std::runtime_error("pose_estimator_area_ is not initialized");
   }
 
   if (!shared_data_->eagleye_output_pose_cov.has_value()) {
     return false;
   }
 
-  return eagleye_area_->within(shared_data_->localization_pose_cov()->pose.pose.position);
+  return pose_estimator_area_->within(
+    shared_data_->localization_pose_cov()->pose.pose.position, "eagleye");
 }
 
 std::string MapBasedRule::debug_string()
@@ -86,8 +87,8 @@ MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
     array_msg.markers.insert(array_msg.markers.end(), additional.begin(), additional.end());
   }
 
-  if (eagleye_area_) {
-    const auto & additional = eagleye_area_->debug_marker_array().markers;
+  if (pose_estimator_area_) {
+    const auto & additional = pose_estimator_area_->debug_marker_array().markers;
     array_msg.markers.insert(array_msg.markers.end(), additional.begin(), additional.end());
   }
 
