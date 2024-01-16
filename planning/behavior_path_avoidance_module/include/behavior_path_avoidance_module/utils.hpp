@@ -147,8 +147,9 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   DebugData & debug);
 
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
-  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
-  const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
+  const PathWithLaneId & reference_path, const PathWithLaneId & spline_path,
+  const std::shared_ptr<const PlannerData> & planner_data, const AvoidancePlanningData & data,
+  const std::shared_ptr<AvoidanceParameters> & parameters,
   const double object_check_forward_distance, DebugData & debug);
 
 DrivableLanes generateExpandDrivableLanes(

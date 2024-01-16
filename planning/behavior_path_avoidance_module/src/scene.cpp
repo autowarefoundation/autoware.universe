@@ -295,12 +295,10 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
 
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
   constexpr double MARGIN = 10.0;
-  const auto sparse_resample_path = utils::resamplePathWithSpline(
-    helper_->getPreviousSplineShiftPath().path, parameters_->resample_interval_for_output);
   const auto forward_detection_range = helper_->getForwardDetectionRange();
   const auto [object_within_target_lane, object_outside_target_lane] = separateObjectsByPath(
-    sparse_resample_path, planner_data_, data, parameters_, forward_detection_range + MARGIN,
-    debug);
+    helper_->getPreviousReferencePath(), helper_->getPreviousSplineShiftPath().path, planner_data_,
+    data, parameters_, forward_detection_range + MARGIN, debug);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
@@ -321,9 +319,9 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto feasible_stop_distance = helper_->getFeasibleDecelDistance(0.0, false);
   std::for_each(data.target_objects.begin(), data.target_objects.end(), [&, this](auto & o) {
+    fillAvoidanceNecessity(o, registered_objects_, vehicle_width, parameters_);
     o.to_stop_line = calcDistanceToStopLine(o);
     fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
-    fillAvoidanceNecessity(o, registered_objects_, vehicle_width, parameters_);
   });
 
   // debug

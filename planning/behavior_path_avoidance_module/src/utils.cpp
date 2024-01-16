@@ -175,7 +175,8 @@ geometry_msgs::msg::Polygon createVehiclePolygon(
 }
 
 Polygon2d createOneStepPolygon(
-  const geometry_msgs::msg::Pose & p_front, const geometry_msgs::msg::Pose & p_back,
+  const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2,
+  const geometry_msgs::msg::Pose & p3, const geometry_msgs::msg::Pose & p4,
   const geometry_msgs::msg::Polygon & base_polygon)
 {
   Polygon2d one_step_polygon{};
@@ -183,7 +184,7 @@ Polygon2d createOneStepPolygon(
   {
     geometry_msgs::msg::Polygon out_polygon{};
     geometry_msgs::msg::TransformStamped geometry_tf{};
-    geometry_tf.transform = pose2transform(p_front);
+    geometry_tf.transform = pose2transform(p1);
     tf2::doTransform(base_polygon, out_polygon, geometry_tf);
 
     for (const auto & p : out_polygon.points) {
@@ -194,7 +195,29 @@ Polygon2d createOneStepPolygon(
   {
     geometry_msgs::msg::Polygon out_polygon{};
     geometry_msgs::msg::TransformStamped geometry_tf{};
-    geometry_tf.transform = pose2transform(p_back);
+    geometry_tf.transform = pose2transform(p2);
+    tf2::doTransform(base_polygon, out_polygon, geometry_tf);
+
+    for (const auto & p : out_polygon.points) {
+      one_step_polygon.outer().push_back(Point2d(p.x, p.y));
+    }
+  }
+
+  {
+    geometry_msgs::msg::Polygon out_polygon{};
+    geometry_msgs::msg::TransformStamped geometry_tf{};
+    geometry_tf.transform = pose2transform(p3);
+    tf2::doTransform(base_polygon, out_polygon, geometry_tf);
+
+    for (const auto & p : out_polygon.points) {
+      one_step_polygon.outer().push_back(Point2d(p.x, p.y));
+    }
+  }
+
+  {
+    geometry_msgs::msg::Polygon out_polygon{};
+    geometry_msgs::msg::TransformStamped geometry_tf{};
+    geometry_tf.transform = pose2transform(p4);
     tf2::doTransform(base_polygon, out_polygon, geometry_tf);
 
     for (const auto & p : out_polygon.points) {
@@ -1878,8 +1901,9 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 }
 
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
-  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
-  const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
+  const PathWithLaneId & reference_path, const PathWithLaneId & spline_path,
+  const std::shared_ptr<const PlannerData> & planner_data, const AvoidancePlanningData & data,
+  const std::shared_ptr<AvoidanceParameters> & parameters,
   const double object_check_forward_distance, DebugData & debug)
 {
   PredictedObjects target_objects;
@@ -1895,19 +1919,32 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
 
   const auto detection_area =
     createVehiclePolygon(planner_data->parameters.vehicle_info, max_offset);
-  const auto ego_idx = planner_data->findEgoIndex(path.points);
+  const auto ego_idx = planner_data->findEgoIndex(reference_path.points);
+  const auto arc_length_array =
+    utils::calcPathArcLengthArray(reference_path, 0L, reference_path.points.size(), 1e-3);
 
+  double next_longitudinal_distance = 0.0;
   std::vector<Polygon2d> detection_areas;
-  for (size_t i = 0; i < path.points.size() - 1; ++i) {
-    const auto & p_ego_front = path.points.at(i).point.pose;
-    const auto & p_ego_back = path.points.at(i + 1).point.pose;
+  for (size_t i = 0; i < reference_path.points.size() - 1; ++i) {
+    const auto & p_reference_ego_front = reference_path.points.at(i).point.pose;
+    const auto & p_reference_ego_back = reference_path.points.at(i + 1).point.pose;
+    const auto & p_spline_ego_front = spline_path.points.at(i).point.pose;
+    const auto & p_spline_ego_back = spline_path.points.at(i + 1).point.pose;
 
-    const auto distance_from_ego = calcSignedArcLength(path.points, ego_idx, i);
+    const auto distance_from_ego = calcSignedArcLength(reference_path.points, ego_idx, i);
     if (distance_from_ego > object_check_forward_distance) {
       break;
     }
 
-    detection_areas.push_back(createOneStepPolygon(p_ego_front, p_ego_back, detection_area));
+    if (arc_length_array.at(i) < next_longitudinal_distance) {
+      continue;
+    }
+
+    detection_areas.push_back(createOneStepPolygon(
+      p_reference_ego_front, p_reference_ego_back, p_spline_ego_front, p_spline_ego_back,
+      detection_area));
+
+    next_longitudinal_distance += parameters->resample_interval_for_output;
   }
 
   std::for_each(detection_areas.begin(), detection_areas.end(), [&](const auto & detection_area) {
