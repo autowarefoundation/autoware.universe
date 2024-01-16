@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pose_estimator_arbiter/rule_helper/eagleye_area.hpp"
+#include "pose_estimator_arbiter/rule_helper/pose_estimator_area.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -30,12 +30,14 @@ namespace pose_estimator_arbiter::rule_helper
 using BoostPoint = boost::geometry::model::d2::point_xy<double>;
 using BoostPolygon = boost::geometry::model::polygon<BoostPoint>;
 
-struct EagleyeArea::Impl
+struct PoseEstimatorArea::Impl
 {
   explicit Impl(rclcpp::Logger logger) : logger_(logger) {}
   std::vector<BoostPolygon> bounding_boxes_;
+
   void init(HADMapBin::ConstSharedPtr msg);
   bool within(const geometry_msgs::msg::Point & point) const;
+
   std::string debug_string() const;
   MarkerArray debug_marker_array() const { return marker_array_; }
 
@@ -44,43 +46,40 @@ private:
   MarkerArray marker_array_;
 };
 
-EagleyeArea::EagleyeArea(const rclcpp::Logger & logger) : logger_(logger)
+PoseEstimatorArea::PoseEstimatorArea(const rclcpp::Logger & logger) : logger_(logger)
 {
   impl_ = std::make_shared<Impl>(logger_);
 }
 
-EagleyeArea::EagleyeArea(rclcpp::Node * node) : EagleyeArea(node->get_logger())
+PoseEstimatorArea::PoseEstimatorArea(rclcpp::Node * node) : PoseEstimatorArea(node->get_logger())
 {
 }
 
-void EagleyeArea::init(HADMapBin::ConstSharedPtr msg)
+void PoseEstimatorArea::init(HADMapBin::ConstSharedPtr msg)
 {
-  vector_map_is_initialized_ = true;
   impl_->init(msg);
 }
 
-bool EagleyeArea::vector_map_initialized() const
+bool PoseEstimatorArea::within(
+  const geometry_msgs::msg::Point & point, const std::string & pose_estimator_name) const
 {
-  return vector_map_is_initialized_;
-}
-
-bool EagleyeArea::within(const geometry_msgs::msg::Point & point) const
-{
+  (void)pose_estimator_name;
   return impl_->within(point);
 }
 
-std::string EagleyeArea::debug_string() const
+std::string PoseEstimatorArea::debug_string() const
 {
   return impl_->debug_string();
 }
 
-EagleyeArea::MarkerArray EagleyeArea::debug_marker_array() const
+PoseEstimatorArea::MarkerArray PoseEstimatorArea::debug_marker_array() const
 {
   return impl_->debug_marker_array();
 }
 
-void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
+void PoseEstimatorArea::Impl::init(HADMapBin::ConstSharedPtr msg)
 {
+  std::cout << "PoseEstimatorArea::Impl::init()" << std::endl;
   if (!bounding_boxes_.empty()) {
     // already initialized
     return;
@@ -90,7 +89,7 @@ void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map);
 
   const auto & po_layer = lanelet_map->polygonLayer;
-  const std::unordered_set<std::string> bounding_box_labels_ = {"eagleye_area"};
+  const std::string pose_estimator_specifying_attribute = "pose_estimator_specify";
 
   RCLCPP_DEBUG_STREAM(logger_, "Polygon layer size: " << po_layer.size());
   for (const auto & polygon : po_layer) {
@@ -99,12 +98,15 @@ void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
     }
 
     const lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
-    RCLCPP_DEBUG_STREAM(logger_, "a polygon attribute: " << attr.value());
-
-    if (bounding_box_labels_.count(attr.value()) == 0) {
+    RCLCPP_DEBUG_STREAM(logger_, "polygon type: " << attr.value());
+    if (pose_estimator_specifying_attribute != attr.value()) {
       continue;
     }
 
+    const std::string subtype{polygon.attributeOr(lanelet::AttributeName::Subtype, "none")};
+    RCLCPP_DEBUG_STREAM(logger_, "polygon sub type: " << subtype);
+
+    // Create a marker for visualization
     Marker marker;
     marker.type = Marker::LINE_STRIP;
     marker.scale.set__x(0.2f).set__y(0.2f).set__z(0.2f);
@@ -121,7 +123,7 @@ void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
       point_msg.set__x(p.x()).set__y(p.y()).set__z(p.z());
       marker.points.push_back(point_msg);
     }
-    // to enclose the polygon
+    // Push the first vertex again to enclose the polygon
     poly.outer().push_back(poly.outer().front());
 
     bounding_boxes_.push_back(poly);
@@ -130,7 +132,7 @@ void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
   }
 }
 
-bool EagleyeArea::Impl::within(const geometry_msgs::msg::Point & point) const
+bool PoseEstimatorArea::Impl::within(const geometry_msgs::msg::Point & point) const
 {
   const BoostPoint boost_point(point.x, point.y);
   for (const BoostPolygon & box : bounding_boxes_) {
@@ -141,7 +143,7 @@ bool EagleyeArea::Impl::within(const geometry_msgs::msg::Point & point) const
   return false;
 }
 
-std::string EagleyeArea::Impl::debug_string() const
+std::string PoseEstimatorArea::Impl::debug_string() const
 {
   std::stringstream ss;
   for (const BoostPolygon & box : bounding_boxes_) {

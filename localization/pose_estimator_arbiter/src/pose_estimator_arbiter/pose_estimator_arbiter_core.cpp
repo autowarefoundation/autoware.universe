@@ -18,7 +18,7 @@
 #include "pose_estimator_arbiter/stopper/stopper_eagleye.hpp"
 #include "pose_estimator_arbiter/stopper/stopper_ndt.hpp"
 #include "pose_estimator_arbiter/stopper/stopper_yabloc.hpp"
-#include "pose_estimator_arbiter/switch_rule/map_based_rule.hpp"
+#include "pose_estimator_arbiter/switch_rule/vector_map_based_rule.hpp"
 
 #include <magic_enum.hpp>
 
@@ -47,6 +47,8 @@ PoseEstimatorArbiter::PoseEstimatorArbiter()
     declare_parameter<std::vector<std::string>>("pose_sources"), get_logger())),
   logger_configure_(std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this))
 {
+  get_logger().set_level(rclcpp::Logger::Level::Debug);
+
   // Shared data
   shared_data_ = std::make_shared<SharedData>();
 
@@ -122,8 +124,10 @@ void PoseEstimatorArbiter::load_switch_rule()
 {
   // NOTE: In the future, some rule will be laid below
   RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
+  // switch_rule_ =
+  //   std::make_shared<switch_rule::MapBasedRule>(*this, running_estimator_list_, shared_data_);
   switch_rule_ =
-    std::make_shared<switch_rule::MapBasedRule>(*this, running_estimator_list_, shared_data_);
+    std::make_shared<switch_rule::VectorMapBasedRule>(*this, running_estimator_list_, shared_data_);
 }
 
 void PoseEstimatorArbiter::toggle_each(

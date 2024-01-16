@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_ESTIMATOR_ARBITER__RULE_HELPER__EAGLEYE_AREA_HPP_
-#define POSE_ESTIMATOR_ARBITER__RULE_HELPER__EAGLEYE_AREA_HPP_
+#ifndef POSE_ESTIMATOR_ARBITER__RULE_HELPER__POSE_ESTIMATOR_AREA_HPP_
+#define POSE_ESTIMATOR_ARBITER__RULE_HELPER__POSE_ESTIMATOR_AREA_HPP_
 
 #include <rclcpp/logger.hpp>
 #include <rclcpp/node.hpp>
@@ -27,20 +27,21 @@
 
 namespace pose_estimator_arbiter::rule_helper
 {
-class EagleyeArea
+class PoseEstimatorArea
 {
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
 public:
-  explicit EagleyeArea(rclcpp::Node * node);
-  explicit EagleyeArea(const rclcpp::Logger & logger);
+  explicit PoseEstimatorArea(rclcpp::Node * node);
+  explicit PoseEstimatorArea(const rclcpp::Logger & logger);
 
+  // This is assumed to be called only once in the vector map callback.
   void init(const HADMapBin::ConstSharedPtr msg);
-  bool vector_map_initialized() const;
 
-  bool within(const geometry_msgs::msg::Point & point) const;
+  bool within(
+    const geometry_msgs::msg::Point & point, const std::string & pose_estimator_name) const;
 
   std::string debug_string() const;
 
@@ -50,8 +51,8 @@ private:
   struct Impl;
   std::shared_ptr<Impl> impl_{nullptr};
   rclcpp::Logger logger_;
-  bool vector_map_is_initialized_{false};
 };
+
 }  // namespace pose_estimator_arbiter::rule_helper
 
-#endif  // POSE_ESTIMATOR_ARBITER__RULE_HELPER__EAGLEYE_AREA_HPP_
+#endif  // POSE_ESTIMATOR_ARBITER__RULE_HELPER__POSE_ESTIMATOR_AREA_HPP_
