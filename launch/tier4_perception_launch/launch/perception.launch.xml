@@ -71,7 +71,7 @@
     default="false"
     description="if use_empty_dynamic_object_publisher:=true, /perception/object_recognition/objects topic has an empty DynamicObjectArray"
   />
-  <arg name="use_pointcloud_container" default="false"/>
+  <arg name="use_pointcloud_container" default="false" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
   <arg name="objects_filter_method" default="lanelet_filter"/>
   <arg name="objects_validation_method" default="obstacle_pointcloud"/>
