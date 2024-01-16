@@ -215,7 +215,7 @@ In the `common` namespace,
 
 - The yield decision may be sometimes aggressive or conservative depending on the case.
   - The main reason is that the crosswalk module does not know the ego's position in the future. The detailed ego's position will be determined after the whole planning.
-  - Currently the module assumes that the ego will move with a constant velocit.yu
+  - Currently the module assumes that the ego will move with a constant velocity.
 
 ## Debugging
 
