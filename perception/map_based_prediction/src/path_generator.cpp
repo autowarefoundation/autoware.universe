@@ -413,9 +413,9 @@ FrenetPoint PathGenerator::getFrenetPoint(
   // The decay constant λ = ln(2) / exponential_half_life
   // a(t) = acc - acc(1-e^(-λt)) = acc(e^(-λt))
   // V(t) = Vo + acc(1/λ)(1-e^(-λt))
-  // x(t) = Xo + Vo * t + t * acc(1/λ) + acc(1/λ^2)e^(-λt)
-  // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)e^(-λt)
-  // acceleration_distance = acc(1/λ) * t  + acc(1/λ^2)e^(-λt)
+  // x(t) = Xo + Vo * t + t * acc(1/λ) + acc(1/λ^2)(e^(-λt)-1)
+  // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)(e^(-λt)-1)
+  // acceleration_distance = acc(1/λ) * t  + acc(1/λ^2)(e^(-λt)-1)
   const double T = time_horizon_;
   const float exponential_half_life = acceleration_exponential_half_life_;
   const float λ = std::log(2) / exponential_half_life;

@@ -1572,7 +1572,6 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
                                object.kinematics.acceleration_with_covariance.accel.linear.x,
                                object.kinematics.acceleration_with_covariance.accel.linear.y)
                            : 0.0;
-
   // The decay constant λ = ln(2) / exponential_half_life
   const double T = prediction_time_horizon_;
   const double exponential_half_life = acceleration_exponential_half_life_;
@@ -1583,7 +1582,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     // V(t) = Vo + obj_acc(1/λ)(1-e^(-λt))
     // x(t) = Xo + Vo * t + t * obj_acc(1/λ) + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
     // x(t) = Xo + (Vo + obj_acc(1/λ)) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
-    // acceleration_distance = obj_acc(1/λ) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
+    // acceleration_distance = x(T) = obj_acc(1/λ) * T  + obj_acc(1/λ^2)(e^(-λT) - 1)
     const double acceleration_distance =
       obj_acc * (1.0 / λ) * T + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * T) - 1);
     double search_dist = acceleration_distance + obj_vel * T;
