@@ -128,7 +128,7 @@ void compensateDetectionLost(
   ObjectDataArray & other_objects);
 
 void filterTargetObjects(
-  ObjectDataArray & objects, AvoidancePlanningData & data, DebugData & debug,
+  ObjectDataArray & objects, AvoidancePlanningData & data, const double forward_detection_range,
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
@@ -154,7 +154,7 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
-  const double object_check_forward_distance, const bool is_running, DebugData & debug);
+  const double object_check_forward_distance, DebugData & debug);
 
 DrivableLanes generateExpandDrivableLanes(
   const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,

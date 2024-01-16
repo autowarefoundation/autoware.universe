@@ -629,7 +629,7 @@ bool isForceAvoidanceTarget(
 }
 
 bool isSatisfiedWithCommonCondition(
-  ObjectData & object, const AvoidancePlanningData & data,
+  ObjectData & object, const AvoidancePlanningData & data, const double forward_detection_range,
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -656,7 +656,7 @@ bool isSatisfiedWithCommonCondition(
     return false;
   }
 
-  if (object.longitudinal > parameters->object_check_max_forward_distance) {
+  if (object.longitudinal > forward_detection_range) {
     object.reason = AvoidanceDebugFactor::OBJECT_IS_IN_FRONT_THRESHOLD;
     return false;
   }
@@ -1579,7 +1579,7 @@ void compensateDetectionLost(
 }
 
 void filterTargetObjects(
-  ObjectDataArray & objects, AvoidancePlanningData & data, [[maybe_unused]] DebugData & debug,
+  ObjectDataArray & objects, AvoidancePlanningData & data, const double forward_detection_range,
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -1594,7 +1594,8 @@ void filterTargetObjects(
   };
 
   for (auto & o : objects) {
-    if (!filtering_utils::isSatisfiedWithCommonCondition(o, data, planner_data, parameters)) {
+    if (!filtering_utils::isSatisfiedWithCommonCondition(
+          o, data, forward_detection_range, planner_data, parameters)) {
       data.other_objects.push_back(o);
       continue;
     }
@@ -1884,7 +1885,7 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
-  const double object_check_forward_distance, const bool is_running, DebugData & debug)
+  const double object_check_forward_distance, DebugData & debug)
 {
   PredictedObjects target_objects;
   PredictedObjects other_objects;
@@ -1897,9 +1898,8 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
     max_offset = std::max(max_offset, offset);
   }
 
-  const double MARGIN = is_running ? 1.0 : 0.0;  // [m]
   const auto detection_area =
-    createVehiclePolygon(planner_data->parameters.vehicle_info, max_offset + MARGIN);
+    createVehiclePolygon(planner_data->parameters.vehicle_info, max_offset);
   const auto ego_idx = planner_data->findEgoIndex(path.points);
 
   std::vector<Polygon2d> detection_areas;

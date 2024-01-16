@@ -291,18 +291,16 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   using utils::avoidance::fillObjectStoppableJudge;
   using utils::avoidance::filterTargetObjects;
   using utils::avoidance::getTargetLanelets;
-
-  // Add margin in order to prevent avoidance request chattering only when the module is running.
-  const auto is_running = getCurrentStatus() == ModuleStatus::RUNNING ||
-                          getCurrentStatus() == ModuleStatus::WAITING_APPROVAL;
+  using utils::avoidance::separateObjectsByPath;
 
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
+  constexpr double MARGIN = 10.0;
   const auto sparse_resample_path = utils::resamplePathWithSpline(
     helper_->getPreviousSplineShiftPath().path, parameters_->resample_interval_for_output);
-  const auto [object_within_target_lane, object_outside_target_lane] =
-    utils::avoidance::separateObjectsByPath(
-      sparse_resample_path, planner_data_, data, parameters_, helper_->getForwardDetectionRange(),
-      is_running, debug);
+  const auto forward_detection_range = helper_->getForwardDetectionRange();
+  const auto [object_within_target_lane, object_outside_target_lane] = separateObjectsByPath(
+    sparse_resample_path, planner_data_, data, parameters_, forward_detection_range + MARGIN,
+    debug);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
@@ -317,7 +315,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   }
 
   // Filter out the objects to determine the ones to be avoided.
-  filterTargetObjects(objects, data, debug, planner_data_, parameters_);
+  filterTargetObjects(objects, data, forward_detection_range, planner_data_, parameters_);
 
   // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
