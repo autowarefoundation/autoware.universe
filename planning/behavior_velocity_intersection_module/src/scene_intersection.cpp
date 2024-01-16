@@ -1714,7 +1714,6 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
   const double max_jerk = planner_param_.common.max_jerk;
   const double delay_response_time = planner_param_.common.delay_response_time;
   const double peeking_offset = planner_param_.occlusion.peeking_offset;
-  const double second_pass_judge_line_margin = planner_param_.common.second_pass_judge_line_margin;
 
   const auto first_attention_area = first_attention_lane.polygon3d();
   const auto first_attention_lane_centerline = first_attention_lane.centerline2d();
@@ -1855,8 +1854,7 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
 
   // (8) second pass judge line position on interpolated path. It is the same as first pass judge
   // line if second_attention_lane is null
-  int second_pass_judge_ip_int = second_attention_stopline_ip_int - std::ceil(braking_dist / ds) -
-                                 std::ceil(second_pass_judge_line_margin / ds);
+  int second_pass_judge_ip_int = occlusion_wo_tl_pass_judge_line_ip;
   const auto second_pass_judge_line_ip =
     second_attention_area_opt ? static_cast<size_t>(std::max<int>(second_pass_judge_ip_int, 0))
                               : first_pass_judge_line_ip;

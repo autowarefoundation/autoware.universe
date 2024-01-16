@@ -298,7 +298,7 @@ $$
 
 is called pass_judge_line, and safety decision must be made before ego passes this position because ego does not stop anymore.
 
-1st_pass_judge_line is before the first upcoming lane, and at intersections with multiple upcoming lanes, 2nd_pass_judge_line is defined as the position which is before the boundary of second attention lane by the braking distance plus `common.second_pass_judge_line_margin`. 1st/2nd_pass_judge_line are illustrated in the following figure.
+1st_pass_judge_line is before the first upcoming lane, and at intersections with multiple upcoming lanes, 2nd_pass_judge_line is defined as the position which is before the centerline of the first attention lane by the braking distance. 1st/2nd_pass_judge_line are illustrated in the following figure.
 
 ![pass-judge-line](./docs/pass-judge-line.drawio.svg)
 
@@ -414,7 +414,6 @@ entity TargetObject {
 | `.use_intersection_area`                     | bool   | [-] flag to use intersection_area for collision detection                        |
 | `.default_stopline_margin`                   | double | [m] margin before_stop_line                                                      |
 | `.stopline_overshoot_margin`                 | double | [m] margin for the overshoot from stopline                                       |
-| `.second_pass_judge_line_margin`             | double | [m] extra margin for the second pass judge line from the second attention lane   |
 | `.max_accel`                                 | double | [m/ss] max acceleration for stop                                                 |
 | `.max_jerk`                                  | double | [m/sss] max jerk for stop                                                        |
 | `.delay_response_time`                       | double | [s] action delay before stop                                                     |
