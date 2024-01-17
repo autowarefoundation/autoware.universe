@@ -52,9 +52,11 @@ Predictor::Predictor()
   auto on_initial = std::bind(&Predictor::on_initial_pose, this, _1);
   auto on_twist_cov = std::bind(&Predictor::on_twist_cov, this, _1);
   auto on_particle = std::bind(&Predictor::on_weighted_particles, this, _1);
-  auto on_height = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
-  auto on_ekf_pose = [this](PoseCovStamped::ConstSharedPtr m) -> void {
-    this->latest_ekf_pose_ptr_ = m;
+  auto on_height = [this](std_msgs::msg::Float32::ConstSharedPtr msg) -> void {
+    this->ground_height_ = msg->data;
+  };
+  auto on_ekf_pose = [this](PoseCovStamped::ConstSharedPtr msg) -> void {
+    this->latest_ekf_pose_ptr_ = msg;
   };
 
   initialpose_sub_ = create_subscription<PoseCovStamped>("~/input/initialpose", 1, on_initial);
@@ -73,8 +75,8 @@ Predictor::Predictor()
 
   // Service server
   using std::placeholders::_2;
-  auto on_service = std::bind(&Predictor::on_service, this, _1, _2);
-  enable_server_ = create_service<SetBool>("~/yabloc_suspend_srv", on_service);
+  auto on_trigger_service = std::bind(&Predictor::on_trigger_service, this, _1, _2);
+  yabloc_trigger_server_ = create_service<SetBool>("~/yabloc_trigger_srv", on_trigger_service);
 
   // Optional modules
   if (declare_parameter<bool>("visualize", false)) {
@@ -82,10 +84,15 @@ Predictor::Predictor()
   }
 }
 
-void Predictor::on_service(
+void Predictor::on_trigger_service(
   SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "particle filter activation is set to " << request->data);
+  if (request->data) {
+    RCLCPP_INFO_STREAM(get_logger(), "yabloc particle filter is activated");
+  } else {
+    RCLCPP_INFO_STREAM(get_logger(), "yabloc particle filter is deactivated");
+  }
+
   const bool before_activated_ = yabloc_activated_;
   yabloc_activated_ = request->data;
   response->success = true;
@@ -209,7 +216,7 @@ void Predictor::on_timer()
 {
   // ==========================================================================
   // Pre-check section
-  // Return if yabloc is suspended
+  // Return if yabloc is not activated
   if (!yabloc_activated_) {
     return;
   }

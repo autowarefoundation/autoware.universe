@@ -27,6 +27,7 @@
   <depend>tier4_autoware_utils</depend>
   <depend>ublox_msgs</depend>
   <depend>visualization_msgs</depend>
+  <depend>yabloc_particle_filter</depend>
 
   <exec_depend>rclcpp</exec_depend>
   <exec_depend>rclcpp_components</exec_depend>
