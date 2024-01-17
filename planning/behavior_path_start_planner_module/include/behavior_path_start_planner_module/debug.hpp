@@ -18,6 +18,7 @@
 #include "behavior_path_start_planner_module/data_structs.hpp"
 
 #include <string>
+#include <vector>
 
 namespace behavior_path_planner
 {

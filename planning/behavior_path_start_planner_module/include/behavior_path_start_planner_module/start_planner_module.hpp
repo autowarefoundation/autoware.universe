@@ -21,11 +21,11 @@
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
+#include "behavior_path_start_planner_module/data_structs.hpp"
 #include "behavior_path_start_planner_module/freespace_pull_out.hpp"
 #include "behavior_path_start_planner_module/geometric_pull_out.hpp"
 #include "behavior_path_start_planner_module/pull_out_path.hpp"
 #include "behavior_path_start_planner_module/shift_pull_out.hpp"
-#include "behavior_path_start_planner_module/data_structs.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
