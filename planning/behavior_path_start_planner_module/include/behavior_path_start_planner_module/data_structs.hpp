@@ -1,4 +1,5 @@
-// Copyright 2021 Tier IV, Inc.
+
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,9 +28,30 @@
 
 namespace behavior_path_planner
 {
+
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
+
 using freespace_planning_algorithms::AstarParam;
 using freespace_planning_algorithms::PlannerCommonParam;
 using freespace_planning_algorithms::RRTStarParam;
+
+struct StartPlannerDebugData
+{
+  // filtered objects
+  PredictedObjects filtered_objects;
+  TargetObjectsOnLane target_objects_on_lane;
+  std::vector<PoseWithVelocityStamped> ego_predicted_path;
+  // collision check debug map
+  CollisionCheckDebugMap collision_check;
+
+  Pose refined_start_pose;
+  std::vector<Pose> start_pose_candidates;
+  size_t selected_start_pose_candidate_index;
+  double margin_for_start_pose_candidate;
+};
 
 struct StartPlannerParameters
 {

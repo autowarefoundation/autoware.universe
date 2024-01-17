@@ -17,6 +17,7 @@
 #include "behavior_path_planner_common/utils/parking_departure/utils.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_start_planner_module/debug.hpp"
 #include "behavior_path_start_planner_module/util.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
@@ -1196,7 +1197,7 @@ bool StartPlannerModule::isSafePath() const
   const double hysteresis_factor =
     status_.is_safe_dynamic_objects ? 1.0 : safety_check_params_->hysteresis_factor_expand_rate;
 
-  utils::parking_departure::updateSafetyCheckTargetObjectsData(
+  behavior_path_planner::updateSafetyCheckDebugData(
     start_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
 
   return behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
