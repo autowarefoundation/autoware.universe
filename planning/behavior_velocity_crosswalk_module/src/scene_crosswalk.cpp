@@ -244,8 +244,6 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     if (!current_initial_occlusion_time_) current_initial_occlusion_time_ = clock_->now();
     if ((clock_->now() - *current_initial_occlusion_time_).seconds() >= time_buffer)
       most_recent_occlusion_time_ = clock_->now();
-  } else {
-    current_initial_occlusion_time_.reset();
   }
   if (
     most_recent_occlusion_time_ &&
