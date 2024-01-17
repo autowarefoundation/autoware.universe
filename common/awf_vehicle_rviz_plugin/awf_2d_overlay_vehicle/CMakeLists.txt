@@ -107,6 +107,11 @@ ament_export_dependencies(
         rviz_ogre_vendor
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 install(
         TARGETS ${PROJECT_NAME}
         EXPORT ${PROJECT_NAME}
