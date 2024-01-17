@@ -61,8 +61,8 @@ StartPlannerModule::StartPlannerModule(
 
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
-    start_planners_.push_back(
-      std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
+    start_planners_.push_back(std::make_shared<ShiftPullOut>(
+      node, *parameters, lane_departure_checker_, createExpandedDrivableLanes()));
   }
   if (parameters_->enable_geometric_pull_out) {
     start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
@@ -1323,6 +1323,34 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
             current_drivable_area_info, getPreviousModuleOutput().drivable_area_info)
         : current_drivable_area_info;
   }
+}
+
+lanelet::ConstLanelets StartPlannerModule::createExpandedDrivableLanes()
+{
+  const double backward_path_length =
+    planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
+  const auto pull_out_lanes =
+    start_planner_utils::getPullOutLanes(planner_data_, backward_path_length);
+  // if (pull_out_lanes.empty()) {
+  //   return std::nullopt;
+  // }
+  const auto road_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_path_length, std::numeric_limits<double>::max(),
+    /*forward_only_in_route*/ true);
+  // extract shoulder lanes from pull out lanes
+  lanelet::ConstLanelets shoulder_lanes;
+  std::copy_if(
+    pull_out_lanes.begin(), pull_out_lanes.end(), std::back_inserter(shoulder_lanes),
+    [this](const auto & pull_out_lane) {
+      return planner_data_->route_handler->isShoulderLanelet(pull_out_lane);
+    });
+  const auto drivable_lanes =
+    utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
+  const auto expanded_lanes = utils::transformToLanelets(utils::expandLanelets(
+    drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+    dp.drivable_area_types_to_skip));
+  return expanded_lanes;
 }
 
 void StartPlannerModule::setDebugData()
