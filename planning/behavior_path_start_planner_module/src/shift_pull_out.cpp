@@ -37,8 +37,11 @@ using start_planner_utils::getPullOutLanes;
 
 ShiftPullOut::ShiftPullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
-  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker, const lanelet::ConstLanelets & expanded_drivable_lanes)
-: PullOutPlannerBase{node, parameters}, lane_departure_checker_{lane_departure_checker}, expanded_drivable_lanes_{expanded_drivable_lanes}
+  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker,
+  const lanelet::ConstLanelets & expanded_drivable_lanes)
+: PullOutPlannerBase{node, parameters},
+  lane_departure_checker_{lane_departure_checker},
+  expanded_drivable_lanes_{expanded_drivable_lanes}
 {
 }
 
@@ -52,7 +55,6 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
-
 
   // find candidate paths
   auto pull_out_paths = calcPullOutPaths(*route_handler, road_lanes, start_pose, goal_pose);
@@ -76,8 +78,6 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
         path_shift_start_to_end.points.begin(), shift_path.points.begin() + pull_out_start_idx,
         shift_path.points.begin() + pull_out_end_idx + 1);
     }
-
-
 
     // crop backward path
     // removes points which are out of lanes up to the start pose.
@@ -106,7 +106,8 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     // check lane departure
     if (
       parameters_.check_shift_path_lane_departure &&
-      lane_departure_checker_->checkPathWillLeaveLane(expanded_drivable_lanes_, path_shift_start_to_end)) {
+      lane_departure_checker_->checkPathWillLeaveLane(
+        expanded_drivable_lanes_, path_shift_start_to_end)) {
       continue;
     }
 
