@@ -20,6 +20,9 @@
   <depend>rviz_rendering</depend>
   <depend>tier4_planning_msgs</depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>autoware_lint_common</test_depend>
+
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <export>
