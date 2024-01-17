@@ -1,5 +1,4 @@
-
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2021 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_START_PLANNER_MODULE__START_PLANNER_PARAMETERS_HPP_
-#define BEHAVIOR_PATH_START_PLANNER_MODULE__START_PLANNER_PARAMETERS_HPP_
+#ifndef BEHAVIOR_PATH_START_PLANNER_MODULE__DATA_STRUCTS_HPP_
+#define BEHAVIOR_PATH_START_PLANNER_MODULE__DATA_STRUCTS_HPP_
 
 #include "behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
@@ -28,7 +27,6 @@
 
 namespace behavior_path_planner
 {
-
 using freespace_planning_algorithms::AstarParam;
 using freespace_planning_algorithms::PlannerCommonParam;
 using freespace_planning_algorithms::RRTStarParam;
@@ -105,4 +103,4 @@ struct StartPlannerParameters
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_START_PLANNER_MODULE__START_PLANNER_PARAMETERS_HPP_
+#endif  // BEHAVIOR_PATH_START_PLANNER_MODULE__DATA_STRUCTS_HPP_
