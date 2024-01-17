@@ -136,16 +136,14 @@ IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id,
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
-  const std::string & turn_direction, const bool has_traffic_light,
-  const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock)
+  const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
+  const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   node_(node),
   lane_id_(lane_id),
   associative_ids_(associative_ids),
   turn_direction_(turn_direction),
   has_traffic_light_(has_traffic_light),
-  enable_occlusion_detection_(enable_occlusion_detection),
   occlusion_attention_divisions_(std::nullopt),
   occlusion_uuid_(tier4_autoware_utils::generateUUID())
 {
@@ -931,11 +929,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     activated_, occlusion_activated_, decision_result, planner_param_, baselink2front, path,
     stop_reason, &velocity_factor_, &debug_data_);
 
-  if (!activated_ || !occlusion_activated_) {
-    is_go_out_ = false;
-  } else {
-    is_go_out_ = true;
-  }
   RCLCPP_DEBUG(logger_, "===== plan end =====");
   return true;
 }
@@ -1200,7 +1193,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     (traffic_prioritized_level == TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED) ||
     (traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED);
   auto occlusion_status =
-    (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !is_amber_or_red)
+    (planner_param_.occlusion.enable && !occlusion_attention_lanelets.empty() && !is_amber_or_red)
       ? getOcclusionStatus(
           occlusion_attention_area, adjacent_lanelets, first_attention_area, interpolated_path_info,
           occlusion_attention_divisions, target_objects)
@@ -1223,7 +1216,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
 
   const size_t pass_judge_line_idx = [&]() {
-    if (enable_occlusion_detection_) {
+    if (planner_param_.occlusion.enable) {
       if (has_traffic_light_) {
         // if ego passed the first_pass_judge_line while it is peeking to occlusion, then its
         // position is occlusion_stopline_idx. Otherwise it is first_pass_judge_line
@@ -1336,8 +1329,9 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
 
   // calculate dynamic collision around attention area
+  const bool is_go_out = (activated_ && occlusion_activated_);
   const double time_to_restart =
-    (is_go_out_ || is_prioritized)
+    (is_go_out || is_prioritized)
       ? 0.0
       : (planner_param_.collision_detection.collision_detection_hold_time -
          collision_state_machine_.getDuration());

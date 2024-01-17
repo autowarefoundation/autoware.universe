@@ -590,9 +590,8 @@ public:
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
-    const std::string & turn_direction, const bool has_traffic_light,
-    const bool enable_occlusion_detection, rclcpp::Node & node, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
@@ -620,16 +619,14 @@ private:
   std::optional<IntersectionLanelets> intersection_lanelets_{std::nullopt};
 
   // for pass judge decision
-  bool is_go_out_{false};
   bool is_permanent_go_{false};
   DecisionResult prev_decision_result_{Indecisive{""}};
-  OcclusionType prev_occlusion_status_;
   bool passed_1st_judge_line_while_peeking_{false};
   std::optional<rclcpp::Time> safely_passed_1st_judge_line_time_{std::nullopt};
   std::optional<rclcpp::Time> safely_passed_2nd_judge_line_time_{std::nullopt};
 
   // for occlusion detection
-  const bool enable_occlusion_detection_;
+  OcclusionType prev_occlusion_status_;
   std::optional<std::vector<lanelet::ConstLineString3d>> occlusion_attention_divisions_{
     std::nullopt};                        //! for caching discretized occlusion detection lanelets
   StateMachine collision_state_machine_;  //! for stable collision checking
