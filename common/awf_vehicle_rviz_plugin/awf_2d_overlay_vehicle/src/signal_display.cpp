@@ -179,12 +179,6 @@ SignalDisplay::~SignalDisplay()
   traffic_display_.reset();
   speed_limit_display_.reset();
 
-  delete property_width_;
-  delete property_height_;
-  delete property_left_;
-  delete property_top_;
-  delete property_signal_color_;
-
   gear_topic_property_.reset();
   turn_signals_topic_property_.reset();
   speed_topic_property_.reset();
