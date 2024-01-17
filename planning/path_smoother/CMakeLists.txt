@@ -7,12 +7,7 @@ autoware_package()
 find_package(Eigen3 REQUIRED)
 
 ament_auto_add_library(path_smoother SHARED
-  # node
-  src/elastic_band_smoother.cpp
-  # algorithms
-  src/elastic_band.cpp
-  # utils
-  src/utils/trajectory_utils.cpp
+  DIRECTORY src
 )
 
 target_include_directories(path_smoother
@@ -39,4 +34,9 @@ ament_auto_package(
   INSTALL_TO_SHARE
     launch
     config
+)
+
+install(PROGRAMS
+  scripts/calculation_time_plotter.py
+  DESTINATION lib/${PROJECT_NAME}
 )

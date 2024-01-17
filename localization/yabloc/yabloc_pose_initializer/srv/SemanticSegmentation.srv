@@ -1,3 +1,0 @@
-sensor_msgs/Image src_image
----
-sensor_msgs/Image dst_image

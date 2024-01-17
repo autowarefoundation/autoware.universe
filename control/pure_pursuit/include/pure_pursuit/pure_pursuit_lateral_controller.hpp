@@ -38,7 +38,7 @@
 #include "trajectory_follower_base/lateral_controller_base.hpp"
 
 #include <motion_utils/resample/resample.hpp>
-#include <motion_utils/trajectory/tmp_conversion.hpp>
+#include <motion_utils/trajectory/conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
@@ -100,10 +100,12 @@ struct DebugData
 class PurePursuitLateralController : public LateralControllerBase
 {
 public:
+  /// \param node Reference to the node used only for the component and parameter initialization.
   explicit PurePursuitLateralController(rclcpp::Node & node);
 
 private:
-  rclcpp::Node::SharedPtr node_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
   std::vector<TrajectoryPoint> output_tp_array_;
   autoware_auto_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
   autoware_auto_planning_msgs::msg::Trajectory trajectory_;

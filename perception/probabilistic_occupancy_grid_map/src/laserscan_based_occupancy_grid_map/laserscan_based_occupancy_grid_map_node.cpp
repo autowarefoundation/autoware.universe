@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "laserscan_based_occupancy_grid_map/laserscan_based_occupancy_grid_map_node.hpp"
+#include "probabilistic_occupancy_grid_map/laserscan_based_occupancy_grid_map/laserscan_based_occupancy_grid_map_node.hpp"
 
-#include "cost_value.hpp"
-#include "utils/utils.hpp"
+#include "probabilistic_occupancy_grid_map/cost_value.hpp"
+#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
 

@@ -20,7 +20,11 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -107,7 +111,11 @@ geometry_msgs::msg::Pose get_closest_centerline_pose(
   vehicle_info_util::VehicleInfo vehicle_info)
 {
   lanelet::Lanelet closest_lanelet;
-  lanelet::utils::query::getClosestLanelet(road_lanelets, point, &closest_lanelet);
+  if (!lanelet::utils::query::getClosestLaneletWithConstrains(
+        road_lanelets, point, &closest_lanelet, 0.0)) {
+    // point is not on any lanelet.
+    return point;
+  }
 
   const auto refined_center_line = lanelet::utils::generateFineCenterline(closest_lanelet, 1.0);
   closest_lanelet.setCenterline(refined_center_line);
@@ -147,6 +155,9 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
   param_.goal_angle_threshold_deg = node_->declare_parameter<double>("goal_angle_threshold_deg");
   param_.enable_correct_goal_pose = node_->declare_parameter<bool>("enable_correct_goal_pose");
+  param_.consider_no_drivable_lanes = node_->declare_parameter<bool>("consider_no_drivable_lanes");
+  param_.check_footprint_inside_lanes =
+    node_->declare_parameter<bool>("check_footprint_inside_lanes");
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
@@ -281,7 +292,8 @@ bool DefaultPlanner::check_goal_footprint(
     lanelet::ConstLanelets lanelets;
     lanelets.push_back(combined_prev_lanelet);
     lanelets.push_back(next_lane);
-    lanelet::ConstLanelet combined_lanelets = combine_lanelets(lanelets);
+    lanelet::ConstLanelet combined_lanelets =
+      combine_lanelets_with_shoulder(lanelets, shoulder_lanelets_);
 
     // if next lanelet length longer than vehicle longitudinal offset
     if (vehicle_info_.max_longitudinal_offset_m + search_margin < next_lane_length) {
@@ -340,10 +352,12 @@ bool DefaultPlanner::is_goal_valid(
 
   double next_lane_length = 0.0;
   // combine calculated route lanelets
-  lanelet::ConstLanelet combined_prev_lanelet = combine_lanelets(path_lanelets);
+  lanelet::ConstLanelet combined_prev_lanelet =
+    combine_lanelets_with_shoulder(path_lanelets, shoulder_lanelets_);
 
   // check if goal footprint exceeds lane when the goal isn't in parking_lot
   if (
+    param_.check_footprint_inside_lanes &&
     !check_goal_footprint(
       closest_lanelet, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
     !is_in_parking_lot(
@@ -388,7 +402,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     log_ss << "x: " << point.position.x << " "
            << "y: " << point.position.y << std::endl;
   }
-  RCLCPP_INFO_STREAM(
+  RCLCPP_DEBUG_STREAM(
     logger, "start planning route with check points: " << std::endl
                                                        << log_ss.str());
 
@@ -401,7 +415,8 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto goal_check_point = points.at(i);
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_check_point, goal_check_point, &path_lanelets)) {
+          start_check_point, goal_check_point, &path_lanelets, param_.consider_no_drivable_lanes)) {
+      RCLCPP_WARN(logger, "Failed to plan route.");
       return route_msg;
     }
     for (const auto & lane : path_lanelets) {

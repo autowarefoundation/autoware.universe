@@ -16,6 +16,7 @@
 #include <rclcpp/time.hpp>
 #include <traffic_light_arbiter/traffic_light_arbiter.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <map>
@@ -72,9 +73,10 @@ void TrafficLightArbiter::onMap(const LaneletMapBin::ConstSharedPtr msg)
   lanelet::utils::conversion::fromBinMsg(*msg, map);
 
   const auto signals = lanelet::filter_traffic_signals(map);
-  map_regulatory_elements_set_.clear();
+  map_regulatory_elements_set_ = std::make_unique<std::unordered_set<lanelet::Id>>();
+
   for (const auto & signal : signals) {
-    map_regulatory_elements_set_.emplace(signal->id());
+    map_regulatory_elements_set_->emplace(signal->id());
   }
 }
 
@@ -98,7 +100,7 @@ void TrafficLightArbiter::onExternalMsg(const TrafficSignalArray::ConstSharedPtr
   if (
     (rclcpp::Time(msg->stamp) - rclcpp::Time(latest_perception_msg_.stamp)).seconds() >
     perception_time_tolerance_) {
-    latest_external_msg_.signals.clear();
+    latest_perception_msg_.signals.clear();
   }
 
   arbitrateAndPublish(msg->stamp);
@@ -109,16 +111,26 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
   using ElementAndPriority = std::pair<Element, bool>;
   std::unordered_map<lanelet::Id, std::vector<ElementAndPriority>> regulatory_element_signals_map;
 
-  if (map_regulatory_elements_set_.empty()) {
-    RCLCPP_WARN(get_logger(), "Received traffic signal messages before a map");
+  if (map_regulatory_elements_set_ == nullptr) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Received traffic signal messages before a map");
+    return;
+  }
+
+  TrafficSignalArray output_signals_msg;
+  output_signals_msg.stamp = stamp;
+
+  if (map_regulatory_elements_set_->empty()) {
+    pub_->publish(output_signals_msg);
     return;
   }
 
   auto add_signal_function = [&](const auto & signal, bool priority) {
     const auto id = signal.traffic_signal_id;
-    if (!map_regulatory_elements_set_.count(id)) {
-      RCLCPP_WARN(
-        get_logger(), "Received a traffic signal not present in the current map (%lu)", id);
+    if (!map_regulatory_elements_set_->count(id)) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000,
+        "Received a traffic signal not present in the current map (%lu)", id);
       return;
     }
 
@@ -138,14 +150,14 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
 
   const auto get_highest_confidence_elements =
     [](const std::vector<ElementAndPriority> & elements_and_priority_vector) {
-      using Key = std::tuple<Element::_color_type, Element::_shape_type>;
+      using Key = Element::_shape_type;
       std::map<Key, ElementAndPriority> highest_score_element_and_priority_map;
       std::vector<Element> highest_score_elements_vector;
 
       for (const auto & elements_and_priority : elements_and_priority_vector) {
         const auto & element = elements_and_priority.first;
         const auto & element_priority = elements_and_priority.second;
-        const auto key = std::make_tuple(element.color, element.shape);
+        const auto key = element.shape;
         auto [iter, success] =
           highest_score_element_and_priority_map.try_emplace(key, elements_and_priority);
         const auto & iter_element = iter->second.first;
@@ -165,8 +177,6 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
       return highest_score_elements_vector;
     };
 
-  TrafficSignalArray output_signals_msg;
-  output_signals_msg.stamp = stamp;
   output_signals_msg.signals.reserve(regulatory_element_signals_map.size());
 
   for (const auto & [regulatory_element_id, elements] : regulatory_element_signals_map) {

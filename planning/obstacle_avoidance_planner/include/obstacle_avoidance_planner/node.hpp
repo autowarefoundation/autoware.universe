@@ -15,13 +15,13 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/common_structs.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/replan_checker.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <algorithm>
@@ -37,6 +37,11 @@ class ObstacleAvoidancePlanner : public rclcpp::Node
 public:
   explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
 
+  // NOTE: This is for the static_centerline_optimizer package which utilizes the following
+  // instance.
+  std::shared_ptr<MPTOptimizer> getMPTOptimizer() const { return mpt_optimizer_ptr_; }
+
+  // private:
 protected:  // for the static_centerline_optimizer package
   // TODO(murooka) move this node to common
   class DrivingDirectionChecker
@@ -45,7 +50,7 @@ protected:  // for the static_centerline_optimizer package
     bool isDrivingForward(const std::vector<PathPoint> & path_points)
     {
       const auto is_driving_forward = motion_utils::isDrivingForward(path_points);
-      is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+      is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
       return is_driving_forward_;
     }
 
@@ -61,6 +66,7 @@ protected:  // for the static_centerline_optimizer package
 
   // flags for some functions
   bool enable_pub_debug_marker_;
+  bool enable_pub_extra_debug_marker_;
   bool enable_debug_info_;
   bool enable_outside_drivable_area_stop_;
   bool enable_skip_optimization_;
@@ -76,10 +82,7 @@ protected:  // for the static_centerline_optimizer package
   EgoNearestParam ego_nearest_param_{};
 
   // variables for subscribers
-  Odometry::SharedPtr ego_state_ptr_;
-
-  // variables for previous information
-  std::shared_ptr<std::vector<TrajectoryPoint>> prev_optimized_traj_points_ptr_;
+  Odometry::ConstSharedPtr ego_state_ptr_;
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
@@ -92,7 +95,8 @@ protected:  // for the static_centerline_optimizer package
   // debug publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_markers_pub_;
-  rclcpp::Publisher<StringStamped>::SharedPtr debug_calculation_time_pub_;
+  rclcpp::Publisher<StringStamped>::SharedPtr debug_calculation_time_str_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_float_pub_;
 
   // parameter callback
   rcl_interfaces::msg::SetParametersResult onParam(
@@ -100,7 +104,7 @@ protected:  // for the static_centerline_optimizer package
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   // subscriber callback function
-  void onPath(const Path::SharedPtr);
+  void onPath(const Path::ConstSharedPtr path_ptr);
 
   // reset functions
   void initializePlanning();
@@ -127,6 +131,11 @@ protected:  // for the static_centerline_optimizer package
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points) const;
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
   void publishDebugMarkerOfOptimization(const std::vector<TrajectoryPoint> & traj_points) const;
+
+private:
+  double vehicle_stop_margin_outside_drivable_area_;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace obstacle_avoidance_planner
 

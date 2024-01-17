@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "node.hpp"
-#include "planning_interface_test_manager/planning_interface_test_manager.hpp"
-#include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <planning_test_utils/planning_interface_test_manager.hpp>
+#include <planning_test_utils/planning_interface_test_manager_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -59,6 +60,27 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
     return package_path + "/config/" + module + ".param.yaml";
   };
 
+  std::vector<std::string> module_names;
+  module_names.emplace_back("behavior_velocity_planner::CrosswalkModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::WalkwayModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::TrafficLightModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::IntersectionModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::MergeFromPrivateModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::BlindSpotModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::DetectionAreaModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::VirtualTrafficLightModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::NoStoppingAreaModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::StopLineModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::OcclusionSpotModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::RunOutModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::SpeedBumpModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::OutOfLaneModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::NoDrivableLaneModulePlugin");
+
+  std::vector<rclcpp::Parameter> params;
+  params.emplace_back("launch_modules", module_names);
+  node_options.parameter_overrides(params);
+
   test_utils::updateNodeOptions(
     node_options,
     {planning_test_utils_dir + "/config/test_common.param.yaml",
@@ -69,6 +91,7 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
      behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
      get_behavior_velocity_module_config("blind_spot"),
      get_behavior_velocity_module_config("crosswalk"),
+     get_behavior_velocity_module_config("walkway"),
      get_behavior_velocity_module_config("detection_area"),
      get_behavior_velocity_module_config("intersection"),
      get_behavior_velocity_module_config("no_stopping_area"),
@@ -78,7 +101,8 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
      get_behavior_velocity_module_config("stop_line"),
      get_behavior_velocity_module_config("traffic_light"),
      get_behavior_velocity_module_config("virtual_traffic_light"),
-     get_behavior_velocity_module_config("out_of_lane")});
+     get_behavior_velocity_module_config("out_of_lane"),
+     get_behavior_velocity_module_config("no_drivable_lane")});
 
   // TODO(Takagi, Isamu): set launch_modules
   // TODO(Kyoichi Sugahara) set to true launch_virtual_traffic_light

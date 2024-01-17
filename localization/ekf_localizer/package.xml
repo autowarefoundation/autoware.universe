@@ -8,6 +8,7 @@
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <maintainer email="takeshi.ishita@tier4.jp">Takeshi Ishita</maintainer>
+  <maintainer email="masahiro.sakamoto@tier4.jp">Masahiro Sakamoto</maintainer>
   <license>Apache License 2.0</license>
   <author email="takamasa.horibe@tier4.jp">Takamasa Horibe</author>
 
@@ -17,13 +18,12 @@
 
   <build_depend>eigen</build_depend>
 
+  <depend>diagnostic_msgs</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>kalman_filter</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
-  <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>

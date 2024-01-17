@@ -15,12 +15,14 @@
 #include <baidu_cnn/inference_engine_tvm_config.hpp>
 #include <lidar_apollo_segmentation_tvm/feature_map.hpp>
 #include <lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
+#include <tier4_autoware_utils/transform/transforms.hpp>
 #include <tvm_utility/pipeline.hpp>
 
 #include <memory>
 #include <string>
 #include <vector>
 
+// cspell: ignore bcnn
 using model_zoo::perception::lidar_obstacle_detection::baidu_cnn::onnx_bcnn::config;
 
 namespace autoware
@@ -106,7 +108,7 @@ std::shared_ptr<DetectedObjectsWithFeature> ApolloLidarSegmentationPostProcessor
 ApolloLidarSegmentation::ApolloLidarSegmentation(
   int32_t range, float score_threshold, bool use_intensity_feature, bool use_constant_feature,
   float z_offset, float min_height, float max_height, float objectness_thresh, int32_t min_pts_num,
-  float height_thresh)
+  float height_thresh, const std::string & data_path)
 : range_(range),
   score_threshold_(score_threshold),
   z_offset_(z_offset),
@@ -116,7 +118,7 @@ ApolloLidarSegmentation::ApolloLidarSegmentation(
   pcl_pointcloud_ptr_(new pcl::PointCloud<pcl::PointXYZI>),
   PreP(std::make_shared<PrePT>(
     config, range, use_intensity_feature, use_constant_feature, min_height, max_height)),
-  IE(std::make_shared<IET>(config, "lidar_apollo_segmentation_tvm")),
+  IE(std::make_shared<IET>(config, "lidar_apollo_segmentation_tvm", data_path)),
   PostP(std::make_shared<PostPT>(
     config, pcl_pointcloud_ptr_, range, objectness_thresh, score_threshold, height_thresh,
     min_pts_num)),

@@ -14,8 +14,11 @@
 
 #include "mpc_lateral_controller/mpc.hpp"
 
-#include "motion_utils/motion_utils.hpp"
+#include "interpolation/linear_interpolation.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "mpc_lateral_controller/mpc_utils.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -25,6 +28,12 @@ namespace autoware::motion::control::mpc_lateral_controller
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::normalizeRadian;
 using tier4_autoware_utils::rad2deg;
+
+MPC::MPC(rclcpp::Node & node)
+{
+  m_debug_frenet_predicted_trajectory_pub = node.create_publisher<Trajectory>(
+    "~/debug/predicted_trajectory_in_frenet_coordinate", rclcpp::QoS(1));
+}
 
 bool MPC::calculateMPC(
   const SteeringReport & current_steer, const Odometry & current_kinematics,
@@ -95,39 +104,15 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_pprev = m_raw_steer_cmd_prev;
   m_raw_steer_cmd_prev = Uex(0);
 
-  // calculate predicted trajectory
+  /* calculate predicted trajectory */
   predicted_trajectory =
-    calcPredictedTrajectory(mpc_resampled_ref_trajectory, mpc_matrix, x0_delayed, Uex);
+    calculatePredictedTrajectory(mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt);
 
   // prepare diagnostic message
   diagnostic =
     generateDiagData(reference_trajectory, mpc_data, mpc_matrix, ctrl_cmd, Uex, current_kinematics);
 
   return true;
-}
-
-Trajectory MPC::calcPredictedTrajectory(
-  const MPCTrajectory & mpc_resampled_ref_trajectory, const MPCMatrix & mpc_matrix,
-  const VectorXd & x0_delayed, const VectorXd & Uex) const
-{
-  const VectorXd Xex = mpc_matrix.Aex * x0_delayed + mpc_matrix.Bex * Uex + mpc_matrix.Wex;
-  MPCTrajectory mpc_predicted_traj;
-  const auto & traj = mpc_resampled_ref_trajectory;
-  for (int i = 0; i < m_param.prediction_horizon; ++i) {
-    const int DIM_X = m_vehicle_model_ptr->getDimX();
-    const double lat_error = Xex(i * DIM_X);
-    const double yaw_error = Xex(i * DIM_X + 1);
-    const double x = traj.x.at(i) - std::sin(traj.yaw.at(i)) * lat_error;
-    const double y = traj.y.at(i) + std::cos(traj.yaw.at(i)) * lat_error;
-    const double z = traj.z.at(i);
-    const double yaw = traj.yaw.at(i) + yaw_error;
-    const double vx = traj.vx.at(i);
-    const double k = traj.k.at(i);
-    const double smooth_k = traj.smooth_k.at(i);
-    const double relative_time = traj.relative_time.at(i);
-    mpc_predicted_traj.push_back(x, y, z, yaw, vx, k, smooth_k, relative_time);
-  }
-  return MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj);
 }
 
 Float32MultiArrayStamped MPC::generateDiagData(
@@ -145,6 +130,9 @@ Float32MultiArrayStamped MPC::generateDiagData(
   const double wz_predicted = current_velocity * std::tan(mpc_data.predicted_steer) / wb;
   const double wz_measured = current_velocity * std::tan(mpc_data.steer) / wb;
   const double wz_command = current_velocity * std::tan(ctrl_cmd.steering_tire_angle) / wb;
+  const int iteration_num = m_qpsolver_ptr->getTakenIter();
+  const double runtime = m_qpsolver_ptr->getRunTime();
+  const double objective_value = m_qpsolver_ptr->getObjVal();
 
   typedef decltype(diagnostic.data)::value_type DiagnosticValueType;
   const auto append_diag = [&](const auto & val) -> void {
@@ -168,18 +156,28 @@ Float32MultiArrayStamped MPC::generateDiagData(
   append_diag(nearest_k);                 // [15] nearest path curvature (not smoothed)
   append_diag(mpc_data.predicted_steer);  // [16] predicted steer
   append_diag(wz_predicted);              // [17] angular velocity from predicted steer
+  append_diag(iteration_num);             // [18] iteration number
+  append_diag(runtime);                   // [19] runtime of the latest problem solved
+  append_diag(objective_value);           // [20] objective value of the latest problem solved
 
   return diagnostic;
 }
 
 void MPC::setReferenceTrajectory(
-  const Trajectory & trajectory_msg, const TrajectoryFilteringParam & param)
+  const Trajectory & trajectory_msg, const TrajectoryFilteringParam & param,
+  const Odometry & current_kinematics)
 {
+  const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    trajectory_msg.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
+    ego_nearest_yaw_threshold);
+  const double ego_offset_to_segment = motion_utils::calcLongitudinalOffsetToSegment(
+    trajectory_msg.points, nearest_seg_idx, current_kinematics.pose.pose.position);
+
   const auto mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
 
   // resampling
-  const auto [success_resample, mpc_traj_resampled] =
-    MPCUtils::resampleMPCTrajectoryByDistance(mpc_traj_raw, param.traj_resample_dist);
+  const auto [success_resample, mpc_traj_resampled] = MPCUtils::resampleMPCTrajectoryByDistance(
+    mpc_traj_raw, param.traj_resample_dist, nearest_seg_idx, ego_offset_to_segment);
   if (!success_resample) {
     warn_throttle("[setReferenceTrajectory] spline error when resampling by distance");
     return;
@@ -189,7 +187,7 @@ void MPC::setReferenceTrajectory(
     motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
 
   // if driving direction is unknown, use previous value
-  m_is_forward_shift = is_forward_shift ? is_forward_shift.get() : m_is_forward_shift;
+  m_is_forward_shift = is_forward_shift ? is_forward_shift.value() : m_is_forward_shift;
 
   // path smoothing
   MPCTrajectory mpc_traj_smoothed = mpc_traj_resampled;  // smooth filtered trajectory
@@ -359,9 +357,6 @@ std::pair<bool, VectorXd> MPC::updateStateForDelayCompensation(
 
   MatrixXd x_curr = x0_orig;
   double mpc_curr_time = start_time;
-  // for (const auto & tt : traj.relative_time) {
-  //   std::cerr << "traj.relative_time = " << tt << std::endl;
-  // }
   for (size_t i = 0; i < m_input_buffer.size(); ++i) {
     double k, v = 0.0;
     try {
@@ -392,13 +387,13 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
     return input;
   }
 
-  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
     ego_nearest_yaw_threshold);
 
   MPCTrajectory output = input;
   MPCUtils::dynamicSmoothingVelocity(
-    nearest_idx, current_kinematics.twist.twist.linear.x, m_param.acceleration_limit,
+    nearest_seg_idx, current_kinematics.twist.twist.linear.x, m_param.acceleration_limit,
     m_param.velocity_time_constant, output);
 
   auto last_point = output.back();
@@ -573,47 +568,16 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
     A(i, i - 1) = -1.0;
   }
 
-  const bool is_vehicle_stopped = std::fabs(current_velocity) < 0.01;
-  const auto get_adaptive_steer_rate_lim = [&](const double curvature, const double velocity) {
-    if (is_vehicle_stopped) {
-      return std::numeric_limits<double>::max();
-    }
-
-    double steer_rate_lim_by_curvature = m_steer_rate_lim_map_by_curvature.back().second;
-    for (const auto & steer_rate_lim_info : m_steer_rate_lim_map_by_curvature) {
-      if (std::abs(curvature) <= steer_rate_lim_info.first) {
-        steer_rate_lim_by_curvature = steer_rate_lim_info.second;
-        break;
-      }
-    }
-
-    double steer_rate_lim_by_velocity = m_steer_rate_lim_map_by_velocity.back().second;
-    for (const auto & steer_rate_lim_info : m_steer_rate_lim_map_by_velocity) {
-      if (std::abs(velocity) <= steer_rate_lim_info.first) {
-        steer_rate_lim_by_velocity = steer_rate_lim_info.second;
-        break;
-      }
-    }
-
-    return std::min(steer_rate_lim_by_curvature, steer_rate_lim_by_velocity);
-  };
-
+  // steering angle limit
   VectorXd lb = VectorXd::Constant(DIM_U_N, -m_steer_lim);  // min steering angle
   VectorXd ub = VectorXd::Constant(DIM_U_N, m_steer_lim);   // max steering angle
 
-  VectorXd lbA(DIM_U_N);
-  VectorXd ubA(DIM_U_N);
-  for (int i = 0; i < DIM_U_N; ++i) {
-    const double adaptive_steer_rate_lim =
-      get_adaptive_steer_rate_lim(traj.smooth_k.at(i), traj.vx.at(i));
-    const double adaptive_delta_steer_lim = adaptive_steer_rate_lim * prediction_dt;
-    lbA(i) = -adaptive_delta_steer_lim;
-    ubA(i) = adaptive_delta_steer_lim;
-  }
-  const double adaptive_steer_rate_lim =
-    get_adaptive_steer_rate_lim(traj.smooth_k.at(0), traj.vx.at(0));
-  lbA(0, 0) = m_raw_steer_cmd_prev - adaptive_steer_rate_lim * m_ctrl_period;
-  ubA(0, 0) = m_raw_steer_cmd_prev + adaptive_steer_rate_lim * m_ctrl_period;
+  // steering angle rate limit
+  VectorXd steer_rate_limits = calcSteerRateLimitOnTrajectory(traj, current_velocity);
+  VectorXd ubA = steer_rate_limits * prediction_dt;
+  VectorXd lbA = -steer_rate_limits * prediction_dt;
+  ubA(0) = m_raw_steer_cmd_prev + steer_rate_limits(0) * m_ctrl_period;
+  lbA(0) = m_raw_steer_cmd_prev - steer_rate_limits(0) * m_ctrl_period;
 
   auto t_start = std::chrono::system_clock::now();
   bool solve_result = m_qpsolver_ptr->solve(H, f.transpose(), A, lb, ub, lbA, ubA, Uex);
@@ -759,6 +723,87 @@ double MPC::calcDesiredSteeringRate(
   const auto steer_rate = (steer_1 - steer_0) / predict_dt;
 
   return steer_rate;
+}
+
+VectorXd MPC::calcSteerRateLimitOnTrajectory(
+  const MPCTrajectory & trajectory, const double current_velocity) const
+{
+  const auto interp = [&](const auto & steer_rate_limit_map, const auto & current) {
+    std::vector<double> reference, limits;
+    for (const auto & p : steer_rate_limit_map) {
+      reference.push_back(p.first);
+      limits.push_back(p.second);
+    }
+
+    // If the speed is out of range of the reference, apply zero-order hold.
+    if (current <= reference.front()) {
+      return limits.front();
+    }
+    if (current >= reference.back()) {
+      return limits.back();
+    }
+
+    // Apply linear interpolation
+    for (size_t i = 0; i < reference.size() - 1; ++i) {
+      if (reference.at(i) <= current && current <= reference.at(i + 1)) {
+        auto ratio =
+          (current - reference.at(i)) / std::max(reference.at(i + 1) - reference.at(i), 1.0e-5);
+        ratio = std::clamp(ratio, 0.0, 1.0);
+        const auto interp = limits.at(i) + ratio * (limits.at(i + 1) - limits.at(i));
+        return interp;
+      }
+    }
+
+    std::cerr << "MPC::calcSteerRateLimitOnTrajectory() interpolation logic is broken. Command "
+                 "filter is not working. Please check the code."
+              << std::endl;
+    return reference.back();
+  };
+
+  // when the vehicle is stopped, no steering rate limit.
+  const bool is_vehicle_stopped = std::fabs(current_velocity) < 0.01;
+  if (is_vehicle_stopped) {
+    return VectorXd::Zero(m_param.prediction_horizon);
+  }
+
+  // calculate steering rate limit
+  VectorXd steer_rate_limits = VectorXd::Zero(m_param.prediction_horizon);
+  for (int i = 0; i < m_param.prediction_horizon; ++i) {
+    const auto limit_by_curvature = interp(m_steer_rate_lim_map_by_curvature, trajectory.k.at(i));
+    const auto limit_by_velocity = interp(m_steer_rate_lim_map_by_velocity, trajectory.vx.at(i));
+    steer_rate_limits(i) = std::min(limit_by_curvature, limit_by_velocity);
+  }
+
+  return steer_rate_limits;
+}
+
+Trajectory MPC::calculatePredictedTrajectory(
+  const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
+  const MPCTrajectory & reference_trajectory, const double dt) const
+{
+  const auto predicted_mpc_trajectory =
+    m_vehicle_model_ptr->calculatePredictedTrajectoryInWorldCoordinate(
+      mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
+      dt);
+
+  // do not over the reference trajectory
+  const auto predicted_length = MPCUtils::calcMPCTrajectoryArcLength(reference_trajectory);
+  const auto clipped_trajectory =
+    MPCUtils::clipTrajectoryByLength(predicted_mpc_trajectory, predicted_length);
+
+  const auto predicted_trajectory = MPCUtils::convertToAutowareTrajectory(clipped_trajectory);
+
+  // Publish trajectory in relative coordinate for debug purpose.
+  if (m_debug_publish_predicted_trajectory) {
+    const auto frenet = m_vehicle_model_ptr->calculatePredictedTrajectoryInFrenetCoordinate(
+      mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
+      dt);
+    const auto frenet_clipped = MPCUtils::convertToAutowareTrajectory(
+      MPCUtils::clipTrajectoryByLength(frenet, predicted_length));
+    m_debug_frenet_predicted_trajectory_pub->publish(frenet_clipped);
+  }
+
+  return predicted_trajectory;
 }
 
 bool MPC::isValid(const MPCMatrix & m) const

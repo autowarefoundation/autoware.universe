@@ -15,21 +15,27 @@
 #ifndef MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 #define MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 
-#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/geometry/pose_deviation.hpp"
 #include "tier4_autoware_utils/math/constants.hpp"
+#include "tier4_autoware_utils/system/backtrace.hpp"
 
-#include <boost/optional.hpp>
+#include <Eigen/Geometry>
+
+#include <autoware_auto_planning_msgs/msg/path_point.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 
 #include <algorithm>
 #include <limits>
+#include <optional>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
-
 namespace motion_utils
 {
+#define log_error(message) std::cerr << "\033[31m " << message << " \033[0m" << std::endl;
 
 /**
  * @brief validate if points container is empty or not
@@ -39,9 +45,19 @@ template <class T>
 void validateNonEmpty(const T & points)
 {
   if (points.empty()) {
-    throw std::invalid_argument("Points is empty.");
+    tier4_autoware_utils::print_backtrace();
+    throw std::invalid_argument("[motion_utils] validateNonEmpty(): Points is empty.");
   }
 }
+
+extern template void validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> &);
+extern template void
+validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> &);
+extern template void
+validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &);
 
 /**
  * @brief validate a point is in a non-sharp angle between two points or not
@@ -67,7 +83,8 @@ void validateNonSharpAngle(
 
   constexpr double epsilon = 1e-3;
   if (std::cos(angle_threshold) < product / dist_1to2 / dist_3to2 + epsilon) {
-    throw std::invalid_argument("Sharp angle.");
+    tier4_autoware_utils::print_backtrace();
+    throw std::invalid_argument("[motion_utils] validateNonSharpAngle(): Too sharp angle.");
   }
 }
 
@@ -77,10 +94,10 @@ void validateNonSharpAngle(
  * @return (forward / backward) driving (true / false)
  */
 template <class T>
-boost::optional<bool> isDrivingForward(const T points)
+std::optional<bool> isDrivingForward(const T & points)
 {
   if (points.size() < 2) {
-    return boost::none;
+    return std::nullopt;
   }
 
   // check the first point direction
@@ -90,6 +107,16 @@ boost::optional<bool> isDrivingForward(const T points)
   return tier4_autoware_utils::isDrivingForward(first_pose, second_pose);
 }
 
+extern template std::optional<bool>
+isDrivingForward<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> &);
+extern template std::optional<bool>
+isDrivingForward<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> &);
+extern template std::optional<bool>
+isDrivingForward<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &);
+
 /**
  * @brief checks whether a path of trajectory has forward driving direction using its longitudinal
  * velocity
@@ -97,23 +124,33 @@ boost::optional<bool> isDrivingForward(const T points)
  * @return (forward / backward) driving (true, false, none "if velocity is zero")
  */
 template <class T>
-boost::optional<bool> isDrivingForwardWithTwist(const T points_with_twist)
+std::optional<bool> isDrivingForwardWithTwist(const T & points_with_twist)
 {
   if (points_with_twist.empty()) {
-    return boost::none;
+    return std::nullopt;
   }
   if (points_with_twist.size() == 1) {
     if (0.0 < tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
       return true;
-    } else if (0.0 > tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
-      return false;
-    } else {
-      return boost::none;
     }
+    if (0.0 > tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
+      return false;
+    }
+    return std::nullopt;
   }
 
   return isDrivingForward(points_with_twist);
 }
+
+extern template std::optional<bool>
+isDrivingForwardWithTwist<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> &);
+extern template std::optional<bool>
+isDrivingForwardWithTwist<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> &);
+extern template std::optional<bool>
+isDrivingForwardWithTwist<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &);
 
 /**
  * @brief remove overlapping points through points container.
@@ -125,13 +162,14 @@ boost::optional<bool> isDrivingForwardWithTwist(const T points_with_twist)
  * @return points container without overlapping points
  */
 template <class T>
-T removeOverlapPoints(const T & points, const size_t & start_idx = 0)
+T removeOverlapPoints(const T & points, const size_t start_idx = 0)
 {
   if (points.size() < start_idx + 1) {
     return points;
   }
 
   T dst;
+  dst.reserve(points.size());
 
   for (size_t i = 0; i <= start_idx; ++i) {
     dst.push_back(points.at(i));
@@ -141,8 +179,7 @@ T removeOverlapPoints(const T & points, const size_t & start_idx = 0)
   for (size_t i = start_idx + 1; i < points.size(); ++i) {
     const auto prev_p = tier4_autoware_utils::getPoint(dst.back());
     const auto curr_p = tier4_autoware_utils::getPoint(points.at(i));
-    const double dist = tier4_autoware_utils::calcDistance2d(prev_p, curr_p);
-    if (dist < eps) {
+    if (std::abs(prev_p.x - curr_p.x) < eps && std::abs(prev_p.y - curr_p.y) < eps) {
       continue;
     }
     dst.push_back(points.at(i));
@@ -150,6 +187,19 @@ T removeOverlapPoints(const T & points, const size_t & start_idx = 0)
 
   return dst;
 }
+
+extern template std::vector<autoware_auto_planning_msgs::msg::PathPoint>
+removeOverlapPoints<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const size_t start_idx = 0);
+extern template std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>
+removeOverlapPoints<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const size_t start_idx = 0);
+extern template std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
+removeOverlapPoints<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const size_t start_idx = 0);
 
 /**
  * @brief search through points container from specified start and end indices about first matching
@@ -160,13 +210,13 @@ T removeOverlapPoints(const T & points, const size_t & start_idx = 0)
  * @return first matching index of a zero velocity point inside the points container.
  */
 template <class T>
-boost::optional<size_t> searchZeroVelocityIndex(
+std::optional<size_t> searchZeroVelocityIndex(
   const T & points_with_twist, const size_t src_idx, const size_t dst_idx)
 {
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -180,6 +230,11 @@ boost::optional<size_t> searchZeroVelocityIndex(
   return {};
 }
 
+extern template std::optional<size_t>
+searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist,
+  const size_t src_idx, const size_t dst_idx);
+
 /**
  * @brief search through points container from specified start index till end of points container
  * about first matching index of a zero longitudinal velocity point.
@@ -188,17 +243,22 @@ boost::optional<size_t> searchZeroVelocityIndex(
  * @return first matching index of a zero velocity point inside the points container.
  */
 template <class T>
-boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist, const size_t & src_idx)
+std::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist, const size_t src_idx)
 {
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
   return searchZeroVelocityIndex(points_with_twist, src_idx, points_with_twist.size());
 }
+
+extern template std::optional<size_t>
+searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist,
+  const size_t src_idx);
 
 /**
  * @brief search through points container from its start to end about first matching index of a zero
@@ -207,10 +267,14 @@ boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist, con
  * @return first matching index of a zero velocity point inside the points container.
  */
 template <class T>
-boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist)
+std::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist)
 {
   return searchZeroVelocityIndex(points_with_twist, 0, points_with_twist.size());
 }
+
+extern template std::optional<size_t>
+searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist);
 
 /**
  * @brief find nearest point index through points container for a given point.
@@ -240,6 +304,18 @@ size_t findNearestIndex(const T & points, const geometry_msgs::msg::Point & poin
   return min_idx;
 }
 
+extern template size_t findNearestIndex<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & point);
+extern template size_t
+findNearestIndex<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & point);
+extern template size_t
+findNearestIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & point);
+
 /**
  * @brief find nearest point index through points container for a given pose.
  * Finding nearest point is determined by looping through the points container,
@@ -254,7 +330,7 @@ size_t findNearestIndex(const T & points, const geometry_msgs::msg::Point & poin
  * @return index of nearest point (index or none if not found)
  */
 template <class T>
-boost::optional<size_t> findNearestIndex(
+std::optional<size_t> findNearestIndex(
   const T & points, const geometry_msgs::msg::Pose & pose,
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
@@ -262,7 +338,7 @@ boost::optional<size_t> findNearestIndex(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -288,8 +364,28 @@ boost::optional<size_t> findNearestIndex(
     min_idx = i;
     is_nearest_found = true;
   }
-  return is_nearest_found ? boost::optional<size_t>(min_idx) : boost::none;
+
+  if (is_nearest_found) {
+    return min_idx;
+  }
+  return std::nullopt;
 }
+
+extern template std::optional<size_t>
+findNearestIndex<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
+extern template std::optional<size_t>
+findNearestIndex<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
+extern template std::optional<size_t>
+findNearestIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
 
 /**
  * @brief calculate longitudinal offset (length along trajectory from seg_idx point to nearest point
@@ -307,11 +403,17 @@ double calcLongitudinalOffsetToSegment(
   const bool throw_exception = false)
 {
   if (seg_idx >= points.size() - 1) {
-    const std::out_of_range e("Segment index is invalid.");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      ": Failed to calculate longitudinal offset because the given segment index is out of the "
+      "points size.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::out_of_range(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -323,17 +425,22 @@ double calcLongitudinalOffsetToSegment(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      log_error(e.what());
       return std::nan("");
     }
   }
 
   if (seg_idx >= overlap_removed_points.size() - 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      ": Longitudinal offset calculation is not supported for the same points.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::runtime_error(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -345,6 +452,21 @@ double calcLongitudinalOffsetToSegment(
 
   return segment_vec.dot(target_vec) / segment_vec.norm();
 }
+
+extern template double
+calcLongitudinalOffsetToSegment<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points, const size_t seg_idx,
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+extern template double
+calcLongitudinalOffsetToSegment<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
+  const bool throw_exception = false);
+extern template double
+calcLongitudinalOffsetToSegment<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
+  const bool throw_exception = false);
 
 /**
  * @brief find nearest segment index to point.
@@ -375,6 +497,19 @@ size_t findNearestSegmentIndex(const T & points, const geometry_msgs::msg::Point
   return nearest_idx;
 }
 
+extern template size_t
+findNearestSegmentIndex<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & point);
+extern template size_t
+findNearestSegmentIndex<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & point);
+extern template size_t
+findNearestSegmentIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & point);
+
 /**
  * @brief find nearest segment index to pose
  * Segment is straight path between two continuous points of trajectory.
@@ -386,7 +521,7 @@ size_t findNearestSegmentIndex(const T & points, const geometry_msgs::msg::Point
  * @return nearest index
  */
 template <class T>
-boost::optional<size_t> findNearestSegmentIndex(
+std::optional<size_t> findNearestSegmentIndex(
   const T & points, const geometry_msgs::msg::Pose & pose,
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
@@ -394,7 +529,7 @@ boost::optional<size_t> findNearestSegmentIndex(
   const auto nearest_idx = findNearestIndex(points, pose, max_dist, max_yaw);
 
   if (!nearest_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   if (*nearest_idx == 0) {
@@ -412,6 +547,22 @@ boost::optional<size_t> findNearestSegmentIndex(
 
   return *nearest_idx;
 }
+
+extern template std::optional<size_t>
+findNearestSegmentIndex<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
+extern template std::optional<size_t>
+findNearestSegmentIndex<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
+extern template std::optional<size_t>
+findNearestSegmentIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
 
 /**
  * @brief calculate lateral offset from p_target (length from p_target to trajectory) using given
@@ -435,17 +586,24 @@ double calcLateralOffset(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      log_error(
+        std::string(e.what()) +
+        " Return NaN since no_throw option is enabled. The maintainer must check the code.");
       return std::nan("");
     }
   }
 
   if (overlap_removed_points.size() == 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      ": Lateral offset calculation is not supported for the same points.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::runtime_error(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -458,6 +616,21 @@ double calcLateralOffset(
   const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
   return cross_vec(2) / segment_vec.norm();
 }
+
+extern template double calcLateralOffset<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
+  const bool throw_exception = false);
+extern template double
+calcLateralOffset<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
+  const bool throw_exception = false);
+extern template double
+calcLateralOffset<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
+  const bool throw_exception = false);
 
 /**
  * @brief calculate lateral offset from p_target (length from p_target to trajectory).
@@ -481,23 +654,42 @@ double calcLateralOffset(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      log_error(
+        std::string(e.what()) +
+        " Return NaN since no_throw option is enabled. The maintainer must check the code.");
       return std::nan("");
     }
   }
 
   if (overlap_removed_points.size() == 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      ": Lateral offset calculation is not supported for the same points.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::runtime_error(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
   const size_t seg_idx = findNearestSegmentIndex(overlap_removed_points, p_target);
   return calcLateralOffset(points, p_target, seg_idx, throw_exception);
 }
+
+extern template double calcLateralOffset<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+extern template double
+calcLateralOffset<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+extern template double
+calcLateralOffset<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
 
 /**
  * @brief calculate length of 2D distance between two points, specified by start and end points
@@ -515,7 +707,7 @@ double calcSignedArcLength(const T & points, const size_t src_idx, const size_t 
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
@@ -529,6 +721,19 @@ double calcSignedArcLength(const T & points, const size_t src_idx, const size_t 
   }
   return dist_sum;
 }
+
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points, const size_t src_idx,
+  const size_t dst_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const size_t src_idx, const size_t dst_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const size_t src_idx, const size_t dst_idx);
 
 /**
  * @brief Computes the partial sums of the elements in the sub-ranges of the range [src_idx,
@@ -545,7 +750,7 @@ std::vector<double> calcSignedArcLengthPartialSum(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -567,6 +772,19 @@ std::vector<double> calcSignedArcLengthPartialSum(
   return partial_dist;
 }
 
+extern template std::vector<double>
+calcSignedArcLengthPartialSum<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points, const size_t src_idx,
+  const size_t dst_idx);
+extern template std::vector<double>
+calcSignedArcLengthPartialSum<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const size_t src_idx, const size_t dst_idx);
+extern template std::vector<double>
+calcSignedArcLengthPartialSum<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const size_t src_idx, const size_t dst_idx);
+
 /**
  * @brief calculate length of 2D distance between two points, specified by start point and end point
  * index of points container.
@@ -584,7 +802,7 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
@@ -596,6 +814,19 @@ double calcSignedArcLength(
 
   return signed_length_on_traj - signed_length_src_offset;
 }
+
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const size_t dst_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> &,
+  const geometry_msgs::msg::Point & src_point, const size_t dst_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &,
+  const geometry_msgs::msg::Point & src_point, const size_t dst_idx);
 
 /**
  * @brief calculate length of 2D distance between two points, specified by start index of points
@@ -614,12 +845,25 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
   return -calcSignedArcLength(points, dst_point, src_idx);
 }
+
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points, const size_t src_idx,
+  const geometry_msgs::msg::Point & dst_point);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const size_t src_idx, const geometry_msgs::msg::Point & dst_point);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const size_t src_idx, const geometry_msgs::msg::Point & dst_point);
 
 /**
  * @brief calculate length of 2D distance between two points, specified by start point and end
@@ -640,7 +884,7 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
@@ -656,6 +900,19 @@ double calcSignedArcLength(
   return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
 }
 
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const geometry_msgs::msg::Point & dst_point);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & src_point, const geometry_msgs::msg::Point & dst_point);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const geometry_msgs::msg::Point & dst_point);
+
 /**
  * @brief calculate length of 2D distance for whole points container, from its start to its end.
  * @param points points of trajectory, path, ...
@@ -667,12 +924,21 @@ double calcArcLength(const T & points)
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
   return calcSignedArcLength(points, 0, points.size() - 1);
 }
+
+extern template double calcArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points);
+extern template double
+calcArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points);
+extern template double
+calcArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points);
 
 /**
  * @brief calculate curvature through points container.
@@ -684,9 +950,12 @@ double calcArcLength(const T & points)
  * @return calculated curvature container through points container
  */
 template <class T>
-inline std::vector<double> calcCurvature(const T & points)
+std::vector<double> calcCurvature(const T & points)
 {
-  std::vector<double> curvature_vec(points.size());
+  std::vector<double> curvature_vec(points.size(), 0.0);
+  if (points.size() < 3) {
+    return curvature_vec;
+  }
 
   for (size_t i = 1; i < points.size() - 1; ++i) {
     const auto p1 = tier4_autoware_utils::getPoint(points.at(i - 1));
@@ -700,6 +969,16 @@ inline std::vector<double> calcCurvature(const T & points)
   return curvature_vec;
 }
 
+extern template std::vector<double>
+calcCurvature<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points);
+extern template std::vector<double>
+calcCurvature<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points);
+extern template std::vector<double>
+calcCurvature<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points);
+
 /**
  * @brief calculate curvature through points container and length of 2d distance for segment used
  * for curvature calculation. The method used for calculating the curvature is using 3 consecutive
@@ -711,11 +990,11 @@ inline std::vector<double> calcCurvature(const T & points)
  * curvature calculation
  */
 template <class T>
-inline std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T & points)
+std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T & points)
 {
   // Note that arclength is for the segment, not the sum.
   std::vector<std::pair<double, double>> curvature_arc_length_vec;
-  curvature_arc_length_vec.push_back(std::pair(0.0, 0.0));
+  curvature_arc_length_vec.emplace_back(0.0, 0.0);
   for (size_t i = 1; i < points.size() - 1; ++i) {
     const auto p1 = tier4_autoware_utils::getPoint(points.at(i - 1));
     const auto p2 = tier4_autoware_utils::getPoint(points.at(i));
@@ -723,12 +1002,22 @@ inline std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T 
     const double curvature = tier4_autoware_utils::calcCurvature(p1, p2, p3);
     const double arc_length = tier4_autoware_utils::calcDistance2d(points.at(i - 1), points.at(i)) +
                               tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i + 1));
-    curvature_arc_length_vec.push_back(std::pair(curvature, arc_length));
+    curvature_arc_length_vec.emplace_back(curvature, arc_length);
   }
-  curvature_arc_length_vec.push_back(std::pair(0.0, 0.0));
+  curvature_arc_length_vec.emplace_back(0.0, 0.0);
 
   return curvature_arc_length_vec;
 }
+
+extern template std::vector<std::pair<double, double>>
+calcCurvatureAndArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points);
+extern template std::vector<std::pair<double, double>>
+calcCurvatureAndArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points);
+extern template std::vector<std::pair<double, double>>
+calcCurvatureAndArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points);
 
 /**
  * @brief calculate length of 2D distance between given start point index in points container and
@@ -738,24 +1027,29 @@ inline std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T 
  * container with zero longitudinal velocity
  */
 template <class T>
-boost::optional<double> calcDistanceToForwardStopPoint(
+std::optional<double> calcDistanceToForwardStopPoint(
   const T & points_with_twist, const size_t src_idx = 0)
 {
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
   const auto closest_stop_idx =
     searchZeroVelocityIndex(points_with_twist, src_idx, points_with_twist.size());
   if (!closest_stop_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   return std::max(0.0, calcSignedArcLength(points_with_twist, src_idx, *closest_stop_idx));
 }
+
+extern template std::optional<double>
+calcDistanceToForwardStopPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist,
+  const size_t src_idx = 0);
 
 /**
  * @brief calculate the point offset from source point index along the trajectory (or path) (points
@@ -767,22 +1061,28 @@ boost::optional<double> calcDistanceToForwardStopPoint(
  * @return offset point
  */
 template <class T>
-inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
+std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   const T & points, const size_t src_idx, const double offset, const bool throw_exception = false)
 {
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
   if (points.size() - 1 < src_idx) {
-    const auto e = std::out_of_range("Invalid source index");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      " error: The given source index is out of the points size. Failed to calculate longitudinal "
+      "offset.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::out_of_range(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return {};
   }
 
@@ -821,6 +1121,19 @@ inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   return {};
 }
 
+extern template std::optional<geometry_msgs::msg::Point>
+calcLongitudinalOffsetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points, const size_t src_idx,
+  const double offset, const bool throw_exception = false);
+extern template std::optional<geometry_msgs::msg::Point>
+calcLongitudinalOffsetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const size_t src_idx, const double offset, const bool throw_exception = false);
+extern template std::optional<geometry_msgs::msg::Point>
+calcLongitudinalOffsetPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const size_t src_idx, const double offset, const bool throw_exception = false);
+
 /**
  * @brief calculate the point offset from source point along the trajectory (or path) (points
  * container)
@@ -830,13 +1143,13 @@ inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
  * @return offset point
  */
 template <class T>
-inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
+std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   const T & points, const geometry_msgs::msg::Point & src_point, const double offset)
 {
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error("Failed to calculate longitudinal offset: " + std::string(e.what()));
     return {};
   }
 
@@ -853,6 +1166,19 @@ inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   return calcLongitudinalOffsetPoint(points, src_seg_idx, offset + signed_length_src_offset);
 }
 
+extern template std::optional<geometry_msgs::msg::Point>
+calcLongitudinalOffsetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const double offset);
+extern template std::optional<geometry_msgs::msg::Point>
+calcLongitudinalOffsetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & src_point, const double offset);
+extern template std::optional<geometry_msgs::msg::Point>
+calcLongitudinalOffsetPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const double offset);
+
 /**
  * @brief calculate the point offset from source point index along the trajectory (or path) (points
  * container)
@@ -864,27 +1190,32 @@ inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
  * @return offset pose
  */
 template <class T>
-inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
+std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const T & points, const size_t src_idx, const double offset,
   const bool set_orientation_from_position_direction = true, const bool throw_exception = false)
 {
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error("Failed to calculate longitudinal offset: " + std::string(e.what()));
     return {};
   }
 
   if (points.size() - 1 < src_idx) {
-    const auto e = std::out_of_range("Invalid source index");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      " error: The given source index is out of the points size. Failed to calculate longitudinal "
+      "offset.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::out_of_range(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(error_message);
     return {};
   }
 
   if (points.size() == 1) {
+    log_error("Failed to calculate longitudinal offset: points size is one.");
     return {};
   }
 
@@ -935,6 +1266,22 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   return {};
 }
 
+extern template std::optional<geometry_msgs::msg::Pose>
+calcLongitudinalOffsetPose<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points, const size_t src_idx,
+  const double offset, const bool set_orientation_from_position_direction = true,
+  const bool throw_exception = false);
+extern template std::optional<geometry_msgs::msg::Pose>
+calcLongitudinalOffsetPose<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const size_t src_idx, const double offset,
+  const bool set_orientation_from_position_direction = true, const bool throw_exception = false);
+extern template std::optional<geometry_msgs::msg::Pose>
+calcLongitudinalOffsetPose<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const size_t src_idx, const double offset,
+  const bool set_orientation_from_position_direction = true, const bool throw_exception = false);
+
 /**
  * @brief calculate the point offset from source point along the trajectory (or path) (points
  * container)
@@ -943,17 +1290,17 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
  * @param offset length of offset from source point
  * @param set_orientation_from_position_direction set orientation by spherical interpolation if
  * false
- * @return offset pase
+ * @return offset pose
  */
 template <class T>
-inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
+std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const T & points, const geometry_msgs::msg::Point & src_point, const double offset,
   const bool set_orientation_from_position_direction = true)
 {
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -966,6 +1313,22 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
     set_orientation_from_position_direction);
 }
 
+extern template std::optional<geometry_msgs::msg::Pose>
+calcLongitudinalOffsetPose<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const double offset,
+  const bool set_orientation_from_position_direction = true);
+extern template std::optional<geometry_msgs::msg::Pose>
+calcLongitudinalOffsetPose<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & src_point, const double offset,
+  const bool set_orientation_from_position_direction = true);
+extern template std::optional<geometry_msgs::msg::Pose>
+calcLongitudinalOffsetPose<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const double offset,
+  const bool set_orientation_from_position_direction = true);
+
 /**
  * @brief insert a point in points container (trajectory, path, ...) using segment id
  * @param seg_idx segment index of point at beginning of length
@@ -976,14 +1339,14 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
  * @return index of segment id, where point is inserted
  */
 template <class T>
-inline boost::optional<size_t> insertTargetPoint(
+std::optional<size_t> insertTargetPoint(
   const size_t seg_idx, const geometry_msgs::msg::Point & p_target, T & points,
   const double overlap_threshold = 1e-3)
 {
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -998,7 +1361,7 @@ inline boost::optional<size_t> insertTargetPoint(
   try {
     validateNonSharpAngle(p_front, p_target, p_back);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -1014,7 +1377,7 @@ inline boost::optional<size_t> insertTargetPoint(
 
   geometry_msgs::msg::Pose target_pose;
   {
-    const auto p_base = is_driving_forward.get() ? p_back : p_front;
+    const auto p_base = is_driving_forward.value() ? p_back : p_front;
     const auto pitch = tier4_autoware_utils::calcElevationAngle(p_target, p_base);
     const auto yaw = tier4_autoware_utils::calcAzimuthAngle(p_target, p_base);
 
@@ -1027,7 +1390,7 @@ inline boost::optional<size_t> insertTargetPoint(
 
   geometry_msgs::msg::Pose base_pose;
   {
-    const auto p_base = is_driving_forward.get() ? p_front : p_back;
+    const auto p_base = is_driving_forward.value() ? p_front : p_back;
     const auto pitch = tier4_autoware_utils::calcElevationAngle(p_base, p_target);
     const auto yaw = tier4_autoware_utils::calcAzimuthAngle(p_base, p_target);
 
@@ -1036,7 +1399,7 @@ inline boost::optional<size_t> insertTargetPoint(
   }
 
   if (!overlap_with_front && !overlap_with_back) {
-    if (is_driving_forward.get()) {
+    if (is_driving_forward.value()) {
       tier4_autoware_utils::setPose(base_pose, points.at(seg_idx));
     } else {
       tier4_autoware_utils::setPose(base_pose, points.at(seg_idx + 1));
@@ -1052,6 +1415,22 @@ inline boost::optional<size_t> insertTargetPoint(
   return seg_idx;
 }
 
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const double overlap_threshold = 1e-3);
+
 /**
  * @brief insert a point in points container (trajectory, path, ...) using length of point to be
  * inserted
@@ -1063,19 +1442,20 @@ inline boost::optional<size_t> insertTargetPoint(
  * @return index of segment id, where point is inserted
  */
 template <class T>
-inline boost::optional<size_t> insertTargetPoint(
+std::optional<size_t> insertTargetPoint(
   const double insert_point_length, const geometry_msgs::msg::Point & p_target, T & points,
   const double overlap_threshold = 1e-3)
 {
   validateNonEmpty(points);
 
   if (insert_point_length < 0.0) {
-    return boost::none;
+    return std::nullopt;
   }
 
   // Get Nearest segment index
-  boost::optional<size_t> segment_idx = boost::none;
+  std::optional<size_t> segment_idx = std::nullopt;
   for (size_t i = 1; i < points.size(); ++i) {
+    // TODO(Mamoru Sobue): find accumulated sum beforehand
     const double length = calcSignedArcLength(points, 0, i);
     if (insert_point_length <= length) {
       segment_idx = i - 1;
@@ -1084,11 +1464,27 @@ inline boost::optional<size_t> insertTargetPoint(
   }
 
   if (!segment_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   return insertTargetPoint(*segment_idx, p_target, points, overlap_threshold);
 }
+
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const double insert_point_length, const geometry_msgs::msg::Point & p_target,
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const double insert_point_length, const geometry_msgs::msg::Point & p_target,
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const double insert_point_length, const geometry_msgs::msg::Point & p_target,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const double overlap_threshold = 1e-3);
 
 /**
  * @brief insert a point in points container (trajectory, path, ...) using segment index and length
@@ -1101,18 +1497,18 @@ inline boost::optional<size_t> insertTargetPoint(
  * @return index of insert point
  */
 template <class T>
-inline boost::optional<size_t> insertTargetPoint(
+std::optional<size_t> insertTargetPoint(
   const size_t src_segment_idx, const double insert_point_length, T & points,
   const double overlap_threshold = 1e-3)
 {
   validateNonEmpty(points);
 
   if (src_segment_idx >= points.size() - 1) {
-    return boost::none;
+    return std::nullopt;
   }
 
   // Get Nearest segment index
-  boost::optional<size_t> segment_idx = boost::none;
+  std::optional<size_t> segment_idx = std::nullopt;
   if (0.0 <= insert_point_length) {
     for (size_t i = src_segment_idx + 1; i < points.size(); ++i) {
       const double length = calcSignedArcLength(points, src_segment_idx, i);
@@ -1132,7 +1528,7 @@ inline boost::optional<size_t> insertTargetPoint(
   }
 
   if (!segment_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   // Get Target Point
@@ -1146,6 +1542,22 @@ inline boost::optional<size_t> insertTargetPoint(
 
   return insertTargetPoint(*segment_idx, p_target, points, overlap_threshold);
 }
+
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const size_t src_segment_idx, const double insert_point_length,
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const size_t src_segment_idx, const double insert_point_length,
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const size_t src_segment_idx, const double insert_point_length,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const double overlap_threshold = 1e-3);
 
 /**
  * @brief Insert a target point from a source pose on the trajectory
@@ -1161,7 +1573,7 @@ inline boost::optional<size_t> insertTargetPoint(
  * @return index of insert point
  */
 template <class T>
-inline boost::optional<size_t> insertTargetPoint(
+std::optional<size_t> insertTargetPoint(
   const geometry_msgs::msg::Pose & src_pose, const double insert_point_length, T & points,
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3)
@@ -1169,12 +1581,12 @@ inline boost::optional<size_t> insertTargetPoint(
   validateNonEmpty(points);
 
   if (insert_point_length < 0.0) {
-    return boost::none;
+    return std::nullopt;
   }
 
   const auto nearest_segment_idx = findNearestSegmentIndex(points, src_pose, max_dist, max_yaw);
   if (!nearest_segment_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   const double offset_length =
@@ -1183,6 +1595,25 @@ inline boost::optional<size_t> insertTargetPoint(
   return insertTargetPoint(
     *nearest_segment_idx, insert_point_length + offset_length, points, overlap_threshold);
 }
+
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const geometry_msgs::msg::Pose & src_pose, const double insert_point_length,
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const geometry_msgs::msg::Pose & src_pose, const double insert_point_length,
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertTargetPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const geometry_msgs::msg::Pose & src_pose, const double insert_point_length,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3);
 
 /**
  * @brief Insert stop point from the source segment index
@@ -1194,20 +1625,20 @@ inline boost::optional<size_t> insertTargetPoint(
  * @return index of stop point
  */
 template <class T>
-inline boost::optional<size_t> insertStopPoint(
+std::optional<size_t> insertStopPoint(
   const size_t src_segment_idx, const double distance_to_stop_point, T & points_with_twist,
   const double overlap_threshold = 1e-3)
 {
   validateNonEmpty(points_with_twist);
 
   if (distance_to_stop_point < 0.0 || src_segment_idx >= points_with_twist.size() - 1) {
-    return boost::none;
+    return std::nullopt;
   }
 
   const auto stop_idx = insertTargetPoint(
     src_segment_idx, distance_to_stop_point, points_with_twist, overlap_threshold);
   if (!stop_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   for (size_t i = *stop_idx; i < points_with_twist.size(); ++i) {
@@ -1216,6 +1647,22 @@ inline boost::optional<size_t> insertStopPoint(
 
   return stop_idx;
 }
+
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const size_t src_segment_idx, const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points_with_twist,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const size_t src_segment_idx, const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points_with_twist,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const size_t src_segment_idx, const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist,
+  const double overlap_threshold = 1e-3);
 
 /**
  * @brief Insert stop point from the front point of the path
@@ -1226,13 +1673,13 @@ inline boost::optional<size_t> insertStopPoint(
  * @return index of stop point
  */
 template <class T>
-inline boost::optional<size_t> insertStopPoint(
+std::optional<size_t> insertStopPoint(
   const double distance_to_stop_point, T & points_with_twist, const double overlap_threshold = 1e-3)
 {
   validateNonEmpty(points_with_twist);
 
   if (distance_to_stop_point < 0.0) {
-    return boost::none;
+    return std::nullopt;
   }
 
   double accumulated_length = 0;
@@ -1247,8 +1694,24 @@ inline boost::optional<size_t> insertStopPoint(
     accumulated_length += length;
   }
 
-  return boost::none;
+  return std::nullopt;
 }
+
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points_with_twist,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points_with_twist,
+  const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist,
+  const double overlap_threshold = 1e-3);
 
 /**
  * @brief Insert Stop point from the source pose
@@ -1264,7 +1727,7 @@ inline boost::optional<size_t> insertStopPoint(
  * @return index of stop point
  */
 template <class T>
-inline boost::optional<size_t> insertStopPoint(
+std::optional<size_t> insertStopPoint(
   const geometry_msgs::msg::Pose & src_pose, const double distance_to_stop_point,
   T & points_with_twist, const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3)
@@ -1272,14 +1735,14 @@ inline boost::optional<size_t> insertStopPoint(
   validateNonEmpty(points_with_twist);
 
   if (distance_to_stop_point < 0.0) {
-    return boost::none;
+    return std::nullopt;
   }
 
   const auto stop_idx = insertTargetPoint(
     src_pose, distance_to_stop_point, points_with_twist, max_dist, max_yaw, overlap_threshold);
 
   if (!stop_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   for (size_t i = *stop_idx; i < points_with_twist.size(); ++i) {
@@ -1288,6 +1751,25 @@ inline boost::optional<size_t> insertStopPoint(
 
   return stop_idx;
 }
+
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const geometry_msgs::msg::Pose & src_pose, const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points_with_twist,
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const geometry_msgs::msg::Pose & src_pose, const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points_with_twist,
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3);
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const geometry_msgs::msg::Pose & src_pose, const double distance_to_stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist,
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3);
 
 /**
  * @brief Insert Stop point that is in the stop segment index
@@ -1299,7 +1781,7 @@ inline boost::optional<size_t> insertStopPoint(
  * @return index of stop point
  */
 template <class T>
-boost::optional<size_t> insertStopPoint(
+std::optional<size_t> insertStopPoint(
   const size_t stop_seg_idx, const geometry_msgs::msg::Point & stop_point, T & points_with_twist,
   const double overlap_threshold = 1e-3)
 {
@@ -1307,15 +1789,21 @@ boost::optional<size_t> insertStopPoint(
     motion_utils::insertTargetPoint(stop_seg_idx, stop_point, points_with_twist, overlap_threshold);
 
   if (!insert_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
-  for (size_t i = insert_idx.get(); i < points_with_twist.size(); ++i) {
+  for (size_t i = insert_idx.value(); i < points_with_twist.size(); ++i) {
     tier4_autoware_utils::setLongitudinalVelocity(0.0, points_with_twist.at(i));
   }
 
   return insert_idx;
 }
+
+extern template std::optional<size_t>
+insertStopPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const size_t stop_seg_idx, const geometry_msgs::msg::Point & stop_point,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist,
+  const double overlap_threshold = 1e-3);
 
 /**
  * @brief Insert deceleration point from the source pose
@@ -1325,7 +1813,7 @@ boost::optional<size_t> insertStopPoint(
  * @param points_with_twist output points of trajectory, path, ... (with velocity)
  */
 template <class T>
-boost::optional<size_t> insertDecelPoint(
+std::optional<size_t> insertDecelPoint(
   const geometry_msgs::msg::Point & src_point, const double distance_to_decel_point,
   const double velocity, T & points_with_twist)
 {
@@ -1336,14 +1824,14 @@ boost::optional<size_t> insertDecelPoint(
     return {};
   }
 
-  const auto seg_idx = findNearestSegmentIndex(points_with_twist, decel_point.get());
-  const auto insert_idx = insertTargetPoint(seg_idx, decel_point.get(), points_with_twist);
+  const auto seg_idx = findNearestSegmentIndex(points_with_twist, decel_point.value());
+  const auto insert_idx = insertTargetPoint(seg_idx, decel_point.value(), points_with_twist);
 
   if (!insert_idx) {
     return {};
   }
 
-  for (size_t i = insert_idx.get(); i < points_with_twist.size(); ++i) {
+  for (size_t i = insert_idx.value(); i < points_with_twist.size(); ++i) {
     const auto & original_velocity =
       tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.at(i));
     tier4_autoware_utils::setLongitudinalVelocity(
@@ -1352,6 +1840,12 @@ boost::optional<size_t> insertDecelPoint(
 
   return insert_idx;
 }
+
+extern template std::optional<size_t>
+insertDecelPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const geometry_msgs::msg::Point & src_point, const double distance_to_decel_point,
+  const double velocity,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist);
 
 /**
  * @brief Insert orientation to each point in points container (trajectory, path, ...)
@@ -1390,9 +1884,21 @@ void insertOrientation(T & points, const bool is_driving_forward)
   }
 }
 
+extern template void insertOrientation<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points, const bool is_driving_forward);
+extern template void
+insertOrientation<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const bool is_driving_forward);
+extern template void
+insertOrientation<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const bool is_driving_forward);
+
 /**
  * @brief Remove points with invalid orientation differences from a given points container
- * (trajectory, path, ...)
+ * (trajectory, path, ...). Check the difference between the angles of two points and the difference
+ * between the azimuth angle between the two points and the angle of the next point.
  * @param points Points of trajectory, path, or other point container (input / output)
  * @param max_yaw_diff Maximum acceptable yaw angle difference between two consecutive points in
  * radians (default: M_PI_2)
@@ -1401,10 +1907,14 @@ template <class T>
 void removeInvalidOrientationPoints(T & points, const double max_yaw_diff = M_PI_2)
 {
   for (size_t i = 1; i < points.size();) {
-    const double yaw1 = tf2::getYaw(tier4_autoware_utils::getPose(points.at(i - 1)).orientation);
-    const double yaw2 = tf2::getYaw(tier4_autoware_utils::getPose(points.at(i)).orientation);
+    const auto p1 = tier4_autoware_utils::getPose(points.at(i - 1));
+    const auto p2 = tier4_autoware_utils::getPose(points.at(i));
+    const double yaw1 = tf2::getYaw(p1.orientation);
+    const double yaw2 = tf2::getYaw(p2.orientation);
 
-    if (max_yaw_diff < std::abs(tier4_autoware_utils::normalizeRadian(yaw1 - yaw2))) {
+    if (
+      max_yaw_diff < std::abs(tier4_autoware_utils::normalizeRadian(yaw1 - yaw2)) ||
+      !tier4_autoware_utils::isDrivingForward(p1, p2)) {
       points.erase(points.begin() + i);
     } else {
       ++i;
@@ -1440,6 +1950,22 @@ double calcSignedArcLength(
   return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
 }
 
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
+  const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
+  const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
+  const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx);
+
 /**
  * @brief calculate length of 2D distance between two points, specified by start point and its
  * segment index in points container and end point index in points container
@@ -1465,6 +1991,19 @@ double calcSignedArcLength(
   return signed_length_on_traj - signed_length_src_offset;
 }
 
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx, const size_t dst_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx, const size_t dst_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx, const size_t dst_idx);
+
 /**
  * @brief calculate length of 2D distance between two points, specified by start point index in
  * points container and end point and its segment index in points container
@@ -1489,6 +2028,19 @@ double calcSignedArcLength(
 
   return signed_length_on_traj + signed_length_dst_offset;
 }
+
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points, const size_t src_idx,
+  const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const size_t src_idx, const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx);
+extern template double
+calcSignedArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const size_t src_idx, const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx);
 
 /**
  * @brief find first nearest point index through points container for a given pose with soft
@@ -1524,9 +2076,8 @@ size_t findFirstNearestIndexWithSoftConstraints(
       if (squared_dist_threshold < squared_dist || yaw_threshold < std::abs(yaw)) {
         if (is_within_constraints) {
           break;
-        } else {
-          continue;
         }
+        continue;
       }
 
       if (min_squared_dist <= squared_dist) {
@@ -1556,9 +2107,8 @@ size_t findFirstNearestIndexWithSoftConstraints(
       if (squared_dist_threshold < squared_dist) {
         if (is_within_constraints) {
           break;
-        } else {
-          continue;
         }
+        continue;
       }
 
       if (min_squared_dist <= squared_dist) {
@@ -1579,6 +2129,25 @@ size_t findFirstNearestIndexWithSoftConstraints(
   // without any threshold
   return findNearestIndex(points, pose.position);
 }
+
+extern template size_t
+findFirstNearestIndexWithSoftConstraints<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold = std::numeric_limits<double>::max(),
+  const double yaw_threshold = std::numeric_limits<double>::max());
+extern template size_t findFirstNearestIndexWithSoftConstraints<
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold = std::numeric_limits<double>::max(),
+  const double yaw_threshold = std::numeric_limits<double>::max());
+extern template size_t findFirstNearestIndexWithSoftConstraints<
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold = std::numeric_limits<double>::max(),
+  const double yaw_threshold = std::numeric_limits<double>::max());
 
 /**
  * @brief find nearest segment index to pose with soft constraints
@@ -1617,6 +2186,25 @@ size_t findFirstNearestSegmentIndexWithSoftConstraints(
   return nearest_idx;
 }
 
+extern template size_t findFirstNearestSegmentIndexWithSoftConstraints<
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold = std::numeric_limits<double>::max(),
+  const double yaw_threshold = std::numeric_limits<double>::max());
+extern template size_t findFirstNearestSegmentIndexWithSoftConstraints<
+  std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold = std::numeric_limits<double>::max(),
+  const double yaw_threshold = std::numeric_limits<double>::max());
+extern template size_t findFirstNearestSegmentIndexWithSoftConstraints<
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold = std::numeric_limits<double>::max(),
+  const double yaw_threshold = std::numeric_limits<double>::max());
+
 /**
  * @brief calculate the point offset from source point along the trajectory (or path)
  * @brief calculate length of 2D distance between given pose and first point in container with zero
@@ -1631,7 +2219,7 @@ size_t findFirstNearestSegmentIndexWithSoftConstraints(
  * longitudinal velocity
  */
 template <class T>
-boost::optional<double> calcDistanceToForwardStopPoint(
+std::optional<double> calcDistanceToForwardStopPoint(
   const T & points_with_twist, const geometry_msgs::msg::Pose & pose,
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
@@ -1639,7 +2227,7 @@ boost::optional<double> calcDistanceToForwardStopPoint(
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error("Failed to calculate stop distance" + std::string(e.what()));
     return {};
   }
 
@@ -1647,14 +2235,14 @@ boost::optional<double> calcDistanceToForwardStopPoint(
     motion_utils::findNearestSegmentIndex(points_with_twist, pose, max_dist, max_yaw);
 
   if (!nearest_segment_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   const auto stop_idx = motion_utils::searchZeroVelocityIndex(
     points_with_twist, *nearest_segment_idx + 1, points_with_twist.size());
 
   if (!stop_idx) {
-    return boost::none;
+    return std::nullopt;
   }
 
   const auto closest_stop_dist =
@@ -1662,6 +2250,22 @@ boost::optional<double> calcDistanceToForwardStopPoint(
 
   return std::max(0.0, closest_stop_dist);
 }
+
+extern template std::optional<double>
+calcDistanceToForwardStopPoint<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points_with_twist,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
+extern template std::optional<double>
+calcDistanceToForwardStopPoint<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points_with_twist,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
+extern template std::optional<double>
+calcDistanceToForwardStopPoint<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist,
+  const geometry_msgs::msg::Pose & pose, const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max());
 
 // NOTE: Points after forward length from the point will be cropped
 //       forward_length is assumed to be positive.
@@ -1687,6 +2291,22 @@ T cropForwardPoints(
   return points;
 }
 
+extern template std::vector<autoware_auto_planning_msgs::msg::PathPoint>
+cropForwardPoints<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length);
+extern template std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>
+cropForwardPoints<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length);
+extern template std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
+cropForwardPoints<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length);
+
 // NOTE: Points before backward length from the point will be cropped
 //       backward_length is assumed to be positive.
 template <typename T>
@@ -1711,6 +2331,22 @@ T cropBackwardPoints(
   return points;
 }
 
+extern template std::vector<autoware_auto_planning_msgs::msg::PathPoint>
+cropBackwardPoints<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double backward_length);
+extern template std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>
+cropBackwardPoints<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double backward_length);
+extern template std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
+cropBackwardPoints<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double backward_length);
+
 template <typename T>
 T cropPoints(
   const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
@@ -1730,14 +2366,28 @@ T cropPoints(
     cropped_forward_points, target_pos, modified_target_seg_idx, backward_length);
 
   if (cropped_points.size() < 2) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("obstacle_avoidance_planner.trajectory_utils"),
-      ". Return original points since cropped_points size is less than 2.");
+    log_error("Return original points since cropped_points size is less than 2.");
     return points;
   }
 
   return cropped_points;
 }
+
+extern template std::vector<autoware_auto_planning_msgs::msg::PathPoint>
+cropPoints<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length, const double backward_length);
+extern template std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>
+cropPoints<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length, const double backward_length);
+extern template std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
+cropPoints<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length, const double backward_length);
 
 /**
  * @brief Calculate the angle of the input pose with respect to the nearest trajectory segment.
@@ -1761,17 +2411,22 @@ double calcYawDeviation(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      log_error(e.what());
       return 0.0;
     }
   }
 
   if (overlap_removed_points.size() <= 1) {
-    const std::runtime_error e("points size is less than 2");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      " Given points size is less than 2. Failed to calculate yaw deviation.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::runtime_error(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return 0 since no_throw option is enabled. The maintainer must check the code.");
     return 0.0;
   }
 
@@ -1784,6 +2439,18 @@ double calcYawDeviation(
 
   return tier4_autoware_utils::normalizeRadian(pose_yaw - path_yaw);
 }
+
+extern template double calcYawDeviation<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Pose & pose, const bool throw_exception = false);
+extern template double
+calcYawDeviation<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Pose & pose, const bool throw_exception = false);
+extern template double
+calcYawDeviation<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Pose & pose, const bool throw_exception = false);
 
 /**
  * @brief Check if the given target point is in front of the based pose from the trajectory.
@@ -1808,6 +2475,22 @@ bool isTargetPointFront(
 
   return s_target - s_base > threshold;
 }
+
+extern template bool isTargetPointFront<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & base_point, const geometry_msgs::msg::Point & target_point,
+  const double threshold = 0.0);
+extern template bool
+isTargetPointFront<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & base_point, const geometry_msgs::msg::Point & target_point,
+  const double threshold = 0.0);
+extern template bool
+isTargetPointFront<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & base_point, const geometry_msgs::msg::Point & target_point,
+  const double threshold = 0.0);
+
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_

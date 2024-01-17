@@ -19,6 +19,7 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>behavior_path_planner</depend>
+  <depend>behavior_velocity_planner</depend>
   <depend>geometry_msgs</depend>
   <depend>global_parameter_loader</depend>
   <depend>interpolation</depend>
@@ -28,10 +29,12 @@
   <depend>motion_utils</depend>
   <depend>obstacle_avoidance_planner</depend>
   <depend>osqp_interface</depend>
+  <depend>path_smoother</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>tier4_map_msgs</depend>
   <depend>vehicle_info_util</depend>
 
   <exec_depend>python3-flask-cors</exec_depend>

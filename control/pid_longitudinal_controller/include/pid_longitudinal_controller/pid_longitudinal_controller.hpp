@@ -42,6 +42,7 @@
 
 #include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -56,6 +57,7 @@ namespace trajectory_follower = ::autoware::motion::control::trajectory_follower
 class PidLongitudinalController : public trajectory_follower::LongitudinalControllerBase
 {
 public:
+  /// \param node Reference to the node used only for the component and parameter initialization.
   explicit PidLongitudinalController(rclcpp::Node & node);
 
 private:
@@ -77,7 +79,9 @@ private:
     double slope_angle{0.0};
     double dt{0.0};
   };
-  rclcpp::Node * node_;
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_parameters_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
   // ros variables
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_slope;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_debug;
@@ -94,6 +98,8 @@ private:
 
   // vehicle info
   double m_wheel_base;
+  bool m_prev_vehicle_is_under_control{false};
+  std::shared_ptr<rclcpp::Time> m_under_control_starting_time{nullptr};
 
   // control state
   enum class ControlState { DRIVE = 0, STOPPING, STOPPED, EMERGENCY };
@@ -142,7 +148,9 @@ private:
   // drive
   PIDController m_pid_vel;
   std::shared_ptr<LowpassFilter1d> m_lpf_vel_error{nullptr};
+  bool m_enable_integration_at_low_speed;
   double m_current_vel_threshold_pid_integrate;
+  double m_time_threshold_before_pid_integrate;
   bool m_enable_brake_keeping_before_stop;
   double m_brake_keeping_acc;
 
@@ -202,7 +210,7 @@ private:
   // debug values
   DebugValues m_debug_values;
 
-  std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(node_->now())};
+  std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(clock_->now())};
 
   // Diagnostic
 
@@ -362,7 +370,7 @@ private:
    * @param [in] current_vel current velocity of the vehicle
    */
   double applyVelocityFeedback(
-    const Motion target_motion, const double dt, const double current_vel);
+    const Motion target_motion, const double dt, const double current_vel, const Shift & shift);
 
   /**
    * @brief update variables for debugging about pitch
@@ -381,6 +389,8 @@ private:
   void updateDebugVelAcc(
     const Motion & ctrl_cmd, const geometry_msgs::msg::Pose & current_pose,
     const ControlData & control_data);
+
+  double getTimeUnderControl();
 };
 }  // namespace autoware::motion::control::pid_longitudinal_controller
 

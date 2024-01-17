@@ -15,21 +15,14 @@
 #ifndef SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_
 #define SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_
 
-#include "scene_intersection.hpp"
-
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
 
 #include <memory>
 #include <set>
@@ -57,8 +50,9 @@ public:
   struct PlannerParam
   {
     double attention_area_length;
-    double stop_line_margin;
+    double stopline_margin;
     double stop_duration_sec;
+    double stop_distance_threshold;
     double path_interpolation_ds;
     double occlusion_attention_area_length;
     bool consider_wrong_direction_vehicle;
@@ -66,7 +60,7 @@ public:
 
   MergeFromPrivateRoadModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param, const std::set<int> & associative_ids,
+    const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
     const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
   /**
@@ -78,18 +72,16 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   motion_utils::VirtualWalls createVirtualWalls() override;
 
-  const std::set<int> & getAssociativeIds() const { return associative_ids_; }
+  const std::set<lanelet::Id> & getAssociativeIds() const { return associative_ids_; }
+  lanelet::ConstLanelets getAttentionLanelets() const;
 
 private:
   const int64_t lane_id_;
-  const std::set<int> associative_ids_;
-
-  autoware_auto_planning_msgs::msg::PathWithLaneId extractPathNearExitOfPrivateRoad(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double extend_length);
+  const std::set<lanelet::Id> associative_ids_;
 
   // Parameter
   PlannerParam planner_param_;
-  std::optional<util::IntersectionLanelets> intersection_lanelets_;
+  std::optional<lanelet::ConstLanelet> first_conflicting_lanelet_;
 
   StateMachine state_machine_;  //! for state
 

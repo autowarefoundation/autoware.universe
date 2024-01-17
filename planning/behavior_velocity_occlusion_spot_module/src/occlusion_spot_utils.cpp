@@ -20,6 +20,7 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <interpolation/spline_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 
@@ -186,15 +187,19 @@ bool isVehicle(const PredictedObject & obj)
 bool isStuckVehicle(const PredictedObject & obj, const double min_vel)
 {
   if (!isVehicle(obj)) return false;
-  const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
-  return std::abs(obj_vel) <= min_vel;
+  const auto & obj_vel_norm = std::hypot(
+    obj.kinematics.initial_twist_with_covariance.twist.linear.x,
+    obj.kinematics.initial_twist_with_covariance.twist.linear.y);
+  return obj_vel_norm <= min_vel;
 }
 
 bool isMovingVehicle(const PredictedObject & obj, const double min_vel)
 {
   if (!isVehicle(obj)) return false;
-  const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
-  return std::abs(obj_vel) > min_vel;
+  const auto & obj_vel_norm = std::hypot(
+    obj.kinematics.initial_twist_with_covariance.twist.linear.x,
+    obj.kinematics.initial_twist_with_covariance.twist.linear.y);
+  return obj_vel_norm > min_vel;
 }
 
 std::vector<PredictedObject> extractVehicles(
@@ -401,11 +406,11 @@ bool generatePossibleCollisionsFromGridMap(
     const auto pc = generateOneNotableCollisionFromOcclusionSpot(
       grid, occlusion_spot_positions, offset_from_start_to_ego, base_point, path_lanelet, param,
       debug_data);
-    if (pc == boost::none) continue;
-    const double lateral_distance = std::abs(pc.get().arc_lane_dist_at_collision.distance);
+    if (pc) continue;
+    const double lateral_distance = std::abs(pc.value().arc_lane_dist_at_collision.distance);
     if (lateral_distance > distance_lower_bound) continue;
     distance_lower_bound = lateral_distance;
-    possible_collisions.emplace_back(pc.get());
+    possible_collisions.emplace_back(pc.value());
   }
   return !possible_collisions.empty();
 }
@@ -418,7 +423,7 @@ bool isBlockedByPartition(const LineString2d & direction, const BasicPolygons2d 
   return false;
 }
 
-boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
+std::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const Point2d base_point,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param, DebugData & debug_data)
@@ -468,7 +473,7 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
     has_collision = true;
   }
   if (has_collision) return candidate;
-  return boost::none;
+  return std::nullopt;
 }
 
 }  // namespace occlusion_spot_utils

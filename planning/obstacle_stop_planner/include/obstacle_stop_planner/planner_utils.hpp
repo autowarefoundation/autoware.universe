@@ -18,7 +18,7 @@
 
 #include "obstacle_stop_planner/planner_data.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -27,9 +27,6 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
-
-#include <boost/optional.hpp>
-#include <boost/variant.hpp>
 
 #include <map>
 #include <string>
@@ -46,7 +43,6 @@ using diagnostic_msgs::msg::KeyValue;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
-using geometry_msgs::msg::TransformStamped;
 using std_msgs::msg::Header;
 
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
@@ -58,19 +54,19 @@ using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
-using PointVariant = boost::variant<float, double>;
+using PointVariant = std::variant<float, double>;
 
-boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
+std::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
   const SlowDownParam & slow_down_param, const double dist_baselink_to_obstacle,
   const double current_vel, const double current_acc);
 
-boost::optional<std::pair<size_t, TrajectoryPoint>> getForwardInsertPointFromBasePoint(
+std::optional<std::pair<size_t, TrajectoryPoint>> getForwardInsertPointFromBasePoint(
   const size_t base_idx, const TrajectoryPoints & trajectory, const double margin);
 
-boost::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBasePoint(
+std::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBasePoint(
   const size_t base_idx, const TrajectoryPoints & trajectory, const double margin);
 
-boost::optional<std::pair<size_t, double>> findNearestFrontIndex(
+std::optional<std::pair<size_t, double>> findNearestFrontIndex(
   const size_t start_idx, const TrajectoryPoints & trajectory, const Point & point);
 
 void insertStopPoint(
@@ -144,7 +140,7 @@ bool intersectsInZAxis(const PredictedObject & object, const double z_min, const
 
 pcl::PointXYZ pointToPcl(const double x, const double y, const double z);
 
-boost::optional<PredictedObject> getObstacleFromUuid(
+std::optional<PredictedObject> getObstacleFromUuid(
   const PredictedObjects & obstacles, const unique_identifier_msgs::msg::UUID & target_object_id);
 
 bool isFrontObstacle(const Pose & ego_pose, const geometry_msgs::msg::Point & obstacle_pos);

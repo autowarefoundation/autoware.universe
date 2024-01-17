@@ -12,18 +12,20 @@ This module is activated when there is a stop line in a target lane.
 
 ### Module Parameters
 
-| Parameter                   | Type   | Description                                                                                    |
-| --------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
-| `stop_margin`               | double | a margin that the vehicle tries to stop before stop_line                                       |
-| `stop_check_dist`           | double | when the vehicle is within `stop_check_dist` from stop_line and stopped, move to STOPPED state |
-| `hold_stop_margin_distance` | double | [m] parameter for restart prevention (See Algorithm section)                                   |
+| Parameter                        | Type   | Description                                                                                                                                                                       |
+| -------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stop_margin`                    | double | a margin that the vehicle tries to stop before stop_line                                                                                                                          |
+| `stop_duration_sec`              | double | [s] time parameter for the ego vehicle to stop in front of a stop line                                                                                                            |
+| `hold_stop_margin_distance`      | double | [m] parameter for restart prevention (See Algorithm section). Also, when the ego vehicle is within this distance from a stop line, the ego state becomes STOPPED from APPROACHING |
+| `use_initialization_stop_state`  | bool   | A flag to determine whether to return to the approaching state when the vehicle moves away from a stop line.                                                                      |
+| `show_stop_line_collision_check` | bool   | A flag to determine whether to show the debug information of collision check with a stop line                                                                                     |
 
 ### Inner-workings / Algorithms
 
 - Gets a stop line from map information.
 - insert a stop point on the path from the stop line defined in the map and the ego vehicle length.
 - Sets velocities of the path after the stop point to 0[m/s].
-- Release the inserted stop velocity when the vehicle stops within a radius of 2[m] from the stop point.
+- Release the inserted stop velocity when the vehicle stops at the stop point for `stop_duration_sec` seconds.
 
 #### Flowchart
 
@@ -48,13 +50,13 @@ endif
 if (state is APPROACH) then (yes)
   :set stop velocity;
 
-  if (vehicle is within stop_check_dist?) then (yes)
+  if (vehicle is within hold_stop_margin_distance?) then (yes)
     if (vehicle is stopped?) then (yes)
       :change state to STOPPED;
     endif
   endif
 else if (state is STOPPED) then (yes)
-  if (vehicle started to move?) then (yes)
+  if (stopping time is longer than stop_duration_sec ?) then (yes)
     :change state to START;
   endif
 else if (state is START) then (yes)

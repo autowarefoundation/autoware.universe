@@ -34,6 +34,7 @@
 #include <autoware_adapi_v1_msgs/srv/accept_start.hpp>
 #include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
+#include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
@@ -51,6 +52,7 @@ class AutowareStatePanel : public rviz_common::Panel
   using ClearRoute = autoware_adapi_v1_msgs::srv::ClearRoute;
   using LocalizationInitializationState =
     autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  using InitializeLocalization = autoware_adapi_v1_msgs::srv::InitializeLocalization;
   using MotionState = autoware_adapi_v1_msgs::msg::MotionState;
   using AcceptStart = autoware_adapi_v1_msgs::srv::AcceptStart;
   using MRMState = autoware_adapi_v1_msgs::msg::MrmState;
@@ -69,6 +71,7 @@ public Q_SLOTS:  // NOLINT for Qt
   void onClickAutowareControl();
   void onClickDirectControl();
   void onClickClearRoute();
+  void onClickInitByGnss();
   void onClickAcceptStart();
   void onClickVelocityLimit();
   void onClickEmergencyButton();
@@ -130,7 +133,10 @@ protected:
 
   // Localization
   QLabel * localization_label_ptr_{nullptr};
+  QPushButton * init_by_gnss_button_ptr_{nullptr};
+
   rclcpp::Subscription<LocalizationInitializationState>::SharedPtr sub_localization_;
+  rclcpp::Client<InitializeLocalization>::SharedPtr client_init_by_gnss_;
 
   void onLocalization(const LocalizationInitializationState::ConstSharedPtr msg);
 
@@ -165,15 +171,15 @@ protected:
   {
     auto req = std::make_shared<typename T::Request>();
 
-    RCLCPP_INFO(raw_node_->get_logger(), "client request");
+    RCLCPP_DEBUG(raw_node_->get_logger(), "client request");
 
     if (!client->service_is_ready()) {
-      RCLCPP_INFO(raw_node_->get_logger(), "client is unavailable");
+      RCLCPP_DEBUG(raw_node_->get_logger(), "client is unavailable");
       return;
     }
 
     client->async_send_request(req, [this](typename rclcpp::Client<T>::SharedFuture result) {
-      RCLCPP_INFO(
+      RCLCPP_DEBUG(
         raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
         result.get()->status.message.c_str());
     });

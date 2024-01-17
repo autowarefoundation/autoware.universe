@@ -18,7 +18,6 @@
 #include <rosidl_runtime_cpp/message_initialization.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/pose_deviation.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -30,6 +29,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <boost/geometry/index/rtree.hpp>
 #include <boost/optional.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -47,7 +47,9 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::PoseDeviation;
+using tier4_autoware_utils::Segment2d;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+typedef boost::geometry::index::rtree<Segment2d, boost::geometry::index::rstar<16>> SegmentRtree;
 
 struct Param
 {
@@ -73,6 +75,7 @@ struct Input
   lanelet::ConstLanelets shoulder_lanelets{};
   Trajectory::ConstSharedPtr reference_trajectory{};
   Trajectory::ConstSharedPtr predicted_trajectory{};
+  std::vector<std::string> boundary_types_to_detect{};
 };
 
 struct Output
@@ -80,6 +83,7 @@ struct Output
   std::map<std::string, double> processing_time_map{};
   bool will_leave_lane{};
   bool is_out_of_lane{};
+  bool will_cross_boundary{};
   PoseDeviation trajectory_deviation{};
   lanelet::ConstLanelets candidate_lanelets{};
   TrajectoryPoints resampled_trajectory{};
@@ -135,6 +139,16 @@ private:
   static bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints);
+
+  double calcMaxSearchLengthForBoundaries(const Trajectory & trajectory) const;
+
+  static SegmentRtree extractUncrossableBoundaries(
+    const lanelet::LaneletMap & lanelet_map, const geometry_msgs::msg::Point & ego_point,
+    const double max_search_length, const std::vector<std::string> & boundary_types_to_detect);
+
+  static bool willCrossBoundary(
+    const std::vector<LinearRing2d> & vehicle_footprints,
+    const SegmentRtree & uncrossable_segments);
 };
 }  // namespace lane_departure_checker
 

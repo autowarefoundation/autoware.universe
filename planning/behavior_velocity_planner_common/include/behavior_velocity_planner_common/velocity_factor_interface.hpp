@@ -16,50 +16,41 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER_COMMON__VELOCITY_FACTOR_INTERFACE_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER_COMMON__VELOCITY_FACTOR_INTERFACE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-
+#include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-#include <mutex>
 #include <string>
 #include <vector>
 
 namespace behavior_velocity_planner
 {
 
+using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::VelocityFactor;
 using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using geometry_msgs::msg::Pose;
-using VelocityFactorType = VelocityFactor::_type_type;
+using VelocityFactorBehavior = VelocityFactor::_behavior_type;
 using VelocityFactorStatus = VelocityFactor::_status_type;
 
 class VelocityFactorInterface
 {
 public:
-  VelocityFactorInterface() { type_ = VelocityFactor::UNKNOWN; }
+  VelocityFactorInterface() { behavior_ = VelocityFactor::UNKNOWN; }
 
   VelocityFactor get() const { return velocity_factor_; }
-  void init(const VelocityFactorType type) { type_ = type; }
-  void reset() { velocity_factor_.type = VelocityFactor::UNKNOWN; }
+  void init(const VelocityFactorBehavior behavior) { behavior_ = behavior; }
+  void reset() { velocity_factor_.behavior = PlanningBehavior::UNKNOWN; }
 
-  template <class T>
   void set(
-    const T & points, const Pose & curr_pose, const Pose & stop_pose,
-    const VelocityFactorStatus status, const std::string detail = "")
-  {
-    const auto & curr_point = curr_pose.position;
-    const auto & stop_point = stop_pose.position;
-    velocity_factor_.type = type_;
-    velocity_factor_.pose = stop_pose;
-    velocity_factor_.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
-    velocity_factor_.status = status;
-    velocity_factor_.detail = detail;
-  }
+    const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+    const Pose & curr_pose, const Pose & stop_pose, const VelocityFactorStatus status,
+    const std::string detail = "");
 
 private:
-  VelocityFactorType type_;
+  VelocityFactorBehavior behavior_;
   VelocityFactor velocity_factor_;
 };
 

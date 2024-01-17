@@ -4,6 +4,7 @@
   <version>0.0.0</version>
   <description>The pose initializer</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <maintainer email="masahiro.sakamoto@tier4.jp">Masahiro Sakamoto</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
@@ -14,11 +15,7 @@
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>rclcpp</depend>
-  <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>std_srvs</depend>
-  <depend>tf2</depend>
   <depend>tier4_localization_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>yabloc_common</depend>

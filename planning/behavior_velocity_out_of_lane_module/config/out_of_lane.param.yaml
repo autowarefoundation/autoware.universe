@@ -16,6 +16,8 @@
         minimum_velocity: 0.5  # [m/s] objects lower than this velocity will be ignored
         use_predicted_paths: true  # if true, use the predicted paths to estimate future positions.
                                    # if false, assume the object moves at constant velocity along *all* lanelets it currently is located in.
+        predicted_path_min_confidence : 0.1  # when using predicted paths, ignore the ones whose confidence is lower than this value.
+        distance_buffer: 1.0 # [m] distance buffer used to determine if a collision will occur in the other lane
 
       overlap:
         minimum_distance: 0.0  # [m] minimum distance inside a lanelet for an overlap to be considered
@@ -23,9 +25,9 @@
 
       action:  # action to insert in the path if an object causes a conflict at an overlap
         skip_if_over_max_decel: true  # if true, do not take an action that would cause more deceleration than the maximum allowed
-        strict: true # if true, when a decision is taken to avoid entering a lane, the stop point will make sure no lane at all is entered by ego
-                     # if false, ego stops just before entering a lane but may then be overlapping another lane.
+        precision: 0.1  # [m] precision when inserting a stop pose in the path
         distance_buffer: 1.5  # [m] buffer distance to try to keep between the ego footprint and lane
+        min_duration: 1.0  # [s] minimum duration needed before a decision can be canceled
         slowdown:
           distance_threshold: 30.0 # [m] insert a slowdown when closer than this distance from an overlap
           velocity: 2.0  # [m/s] slowdown velocity
@@ -33,6 +35,7 @@
           distance_threshold: 15.0 # [m] insert a stop when closer than this distance from an overlap
 
       ego:
+        min_assumed_velocity: 2.0 # [m/s] minimum velocity used to calculate the enter and exit times of ego
         extra_front_offset: 0.0 # [m] extra front distance
         extra_rear_offset: 0.0 # [m] extra rear distance
         extra_right_offset: 0.0 # [m] extra right distance

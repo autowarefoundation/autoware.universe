@@ -15,12 +15,13 @@
 #ifndef PATH_SMOOTHER__ELASTIC_BAND_SMOOTHER_HPP_
 #define PATH_SMOOTHER__ELASTIC_BAND_SMOOTHER_HPP_
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "path_smoother/common_structs.hpp"
 #include "path_smoother/elastic_band.hpp"
+#include "path_smoother/replan_checker.hpp"
 #include "path_smoother/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -35,14 +36,18 @@ class ElasticBandSmoother : public rclcpp::Node
 public:
   explicit ElasticBandSmoother(const rclcpp::NodeOptions & node_options);
 
-protected:
+  // NOTE: This is for the static_centerline_optimizer package which utilizes the following
+  // instance.
+  std::shared_ptr<EBPathSmoother> getElasticBandSmoother() const { return eb_path_smoother_ptr_; }
+
+private:
   class DrivingDirectionChecker
   {
   public:
     bool isDrivingForward(const std::vector<PathPoint> & path_points)
     {
       const auto is_driving_forward = motion_utils::isDrivingForward(path_points);
-      is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+      is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
       return is_driving_forward_;
     }
 
@@ -59,13 +64,14 @@ protected:
 
   // algorithms
   std::shared_ptr<EBPathSmoother> eb_path_smoother_ptr_{nullptr};
+  std::shared_ptr<ReplanChecker> replan_checker_ptr_{nullptr};
 
   // parameters
   CommonParam common_param_{};
   EgoNearestParam ego_nearest_param_{};
 
   // variables for subscribers
-  Odometry::SharedPtr ego_state_ptr_;
+  Odometry::ConstSharedPtr ego_state_ptr_;
 
   // variables for previous information
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_optimized_traj_points_ptr_;
@@ -80,7 +86,8 @@ protected:
 
   // debug publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;
-  rclcpp::Publisher<StringStamped>::SharedPtr debug_calculation_time_pub_;
+  rclcpp::Publisher<StringStamped>::SharedPtr debug_calculation_time_str_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_float_pub_;
 
   // parameter callback
   rcl_interfaces::msg::SetParametersResult onParam(
@@ -88,7 +95,7 @@ protected:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   // subscriber callback function
-  void onPath(const Path::SharedPtr);
+  void onPath(const Path::ConstSharedPtr path_ptr);
 
   // reset functions
   void initializePlanning();
@@ -96,23 +103,15 @@ protected:
 
   // main functions
   bool isDataReady(const Path & path, rclcpp::Clock clock) const;
-  PlannerData createPlannerData(const Path & path) const;
-  std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
-  std::vector<TrajectoryPoint> extendTrajectory(
-    const std::vector<TrajectoryPoint> & traj_points,
-    const std::vector<TrajectoryPoint> & optimized_points) const;
-
-  // functions in generateOptimizedTrajectory
-  std::vector<TrajectoryPoint> optimizeTrajectory(const PlannerData & planner_data);
-  std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
-    const std::vector<TrajectoryPoint> & traj_points) const;
   void applyInputVelocity(
     std::vector<TrajectoryPoint> & output_traj_points,
     const std::vector<TrajectoryPoint> & input_traj_points,
     const geometry_msgs::msg::Pose & ego_pose) const;
-  void insertZeroVelocityOutsideDrivableArea(
-    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points) const;
-  void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
+  std::vector<TrajectoryPoint> extendTrajectory(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<TrajectoryPoint> & optimized_points) const;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace path_smoother
 

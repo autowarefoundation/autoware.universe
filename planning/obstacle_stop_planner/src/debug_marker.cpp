@@ -14,8 +14,9 @@
 
 #include "obstacle_stop_planner/debug_marker.hpp"
 
-#include <motion_utils/motion_utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -531,7 +532,7 @@ VelocityFactorArray ObstacleStopPlannerDebugNode::makeVelocityFactorArray()
   if (stop_pose_ptr_) {
     using distance_type = VelocityFactor::_distance_type;
     VelocityFactor velocity_factor;
-    velocity_factor.type = VelocityFactor::ROUTE_OBSTACLE;
+    velocity_factor.behavior = PlanningBehavior::ROUTE_OBSTACLE;
     velocity_factor.pose = *stop_pose_ptr_;
     velocity_factor.distance = std::numeric_limits<distance_type>::quiet_NaN();
     velocity_factor.status = VelocityFactor::UNKNOWN;

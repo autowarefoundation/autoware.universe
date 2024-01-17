@@ -209,6 +209,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   pub_collision_pointcloud_debug_ =
     this->create_publisher<PointCloud2>("~/debug/collision_pointcloud", 1);
 
+  pub_processing_time_ms_ = this->create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
+
   // Subscribers
   if (!node_param_.use_predicted_objects) {
     // No need to point cloud while using predicted objects
@@ -242,6 +244,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/expand_stop_range", 1,
     std::bind(&ObstacleStopPlannerNode::onExpandStopRange, this, std::placeholders::_1),
     createSubscriptionOptions(this));
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
@@ -272,6 +276,8 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
 
 void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_msg)
 {
+  stop_watch_.tic(__func__);
+
   mutex_.lock();
   // NOTE: these variables must not be referenced for multithreading
   const auto vehicle_info = vehicle_info_;
@@ -289,7 +295,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
         str);
     };
 
-    if (!object_ptr) {
+    if (!object_ptr && node_param_.use_predicted_objects) {
       waiting("perception object");
       return;
     }
@@ -319,7 +325,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
 
   // TODO(someone): support backward path
   const auto is_driving_forward = motion_utils::isDrivingForwardWithTwist(input_msg->points);
-  is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+  is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
   if (!is_driving_forward_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 3000, "Backward path is NOT supported. publish input as it is.");
@@ -374,6 +380,11 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
 
   trajectory.header = input_msg->header;
   pub_trajectory_->publish(trajectory);
+
+  Float64Stamped processing_time_ms;
+  processing_time_ms.stamp = now();
+  processing_time_ms.data = stop_watch_.toc(__func__);
+  pub_processing_time_ms_->publish(processing_time_ms);
 }
 
 void ObstacleStopPlannerNode::searchObstacle(
@@ -962,7 +973,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
       auto obj_latest_state = getObstacleFromUuid(*latest_object_ptr, obj.object_id);
       if (!obj_latest_state) {
         // Can not find the object in the latest object list. Send previous state.
-        obj_latest_state = boost::make_optional(obj);
+        obj_latest_state = obj;
       }
 
       acc_controller_->insertAdaptiveCruiseVelocity(
@@ -992,7 +1003,7 @@ void ObstacleStopPlannerNode::insertVelocity(
     const auto idx = planner_data.decimate_trajectory_index_map.at(
                        planner_data.decimate_trajectory_collision_index) +
                      planner_data.trajectory_trim_index;
-    boost::optional<std::pair<size_t, double>> index_with_dist_remain;
+    std::optional<std::pair<size_t, double>> index_with_dist_remain;
 
     index_with_dist_remain = findNearestFrontIndex(
       std::min(idx, traj_end_idx), output,
@@ -1002,14 +1013,14 @@ void ObstacleStopPlannerNode::insertVelocity(
     if (index_with_dist_remain) {
       const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
       const auto dist_baselink_to_obstacle =
-        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.get().first);
+        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.value().first);
 
       debug_ptr_->setDebugValues(
         DebugValues::TYPE::COLLISION_OBSTACLE_DISTANCE,
-        dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
+        dist_baselink_to_obstacle + index_with_dist_remain.value().second - base_link2front);
 
       const auto stop_point = searchInsertPoint(
-        index_with_dist_remain.get().first, output, index_with_dist_remain.get().second,
+        index_with_dist_remain.value().first, output, index_with_dist_remain.value().second,
         stop_param);
 
       const auto & ego_pose = planner_data.current_pose;
@@ -1053,7 +1064,7 @@ void ObstacleStopPlannerNode::insertVelocity(
           current_stop_pos.index = findFirstNearestSegmentIndexWithSoftConstraints(
             output, ego_pose, node_param_.ego_nearest_dist_threshold,
             node_param_.ego_nearest_yaw_threshold);
-          current_stop_pos.point.pose = ego_pos_on_path.get();
+          current_stop_pos.point.pose = ego_pos_on_path.value();
 
           insertStopPoint(current_stop_pos, output, planner_data.stop_reason_diag);
 
@@ -1083,19 +1094,19 @@ void ObstacleStopPlannerNode::insertVelocity(
     if (index_with_dist_remain) {
       const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
       const auto dist_baselink_to_obstacle =
-        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.get().first);
+        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.value().first);
 
       debug_ptr_->setDebugValues(
         DebugValues::TYPE::SLOWDOWN_OBSTACLE_DISTANCE,
-        dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
+        dist_baselink_to_obstacle + index_with_dist_remain.value().second - base_link2front);
       const auto slow_down_section = createSlowDownSection(
-        index_with_dist_remain.get().first, output, planner_data.lateral_deviation,
-        index_with_dist_remain.get().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
+        index_with_dist_remain.value().first, output, planner_data.lateral_deviation,
+        index_with_dist_remain.value().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
         current_vel);
 
       if (
         !latest_slow_down_section_ &&
-        dist_baselink_to_obstacle + index_with_dist_remain.get().second <
+        dist_baselink_to_obstacle + index_with_dist_remain.value().second <
           vehicle_info.max_longitudinal_offset_m) {
         latest_slow_down_section_ = slow_down_section;
       }
@@ -1106,8 +1117,8 @@ void ObstacleStopPlannerNode::insertVelocity(
 
   if (node_param_.enable_slow_down && latest_slow_down_section_) {
     // check whether ego is in slow down section or not
-    const auto & p_start = latest_slow_down_section_.get().start_point.pose.position;
-    const auto & p_end = latest_slow_down_section_.get().end_point.pose.position;
+    const auto & p_start = latest_slow_down_section_.value().start_point.pose.position;
+    const auto & p_end = latest_slow_down_section_.value().end_point.pose.position;
     const auto reach_slow_down_start_point =
       isInFrontOfTargetPoint(planner_data.current_pose, p_start);
     const auto reach_slow_down_end_point = isInFrontOfTargetPoint(planner_data.current_pose, p_end);
@@ -1116,7 +1127,7 @@ void ObstacleStopPlannerNode::insertVelocity(
 
     if (is_in_slow_down_section && index_with_dist_remain) {
       const auto end_insert_point_with_idx = getBackwardInsertPointFromBasePoint(
-        index_with_dist_remain.get().first, output, -index_with_dist_remain.get().second);
+        index_with_dist_remain.value().first, output, -index_with_dist_remain.value().second);
 
       double slow_down_velocity;
       if (node_param_.use_predicted_objects) {
@@ -1164,8 +1175,8 @@ void ObstacleStopPlannerNode::insertVelocity(
       SlowDownSection slow_down_section{};
       slow_down_section.slow_down_start_idx = 0;
       slow_down_section.start_point = output.front();
-      slow_down_section.slow_down_end_idx = end_insert_point_with_idx.get().first;
-      slow_down_section.end_point = end_insert_point_with_idx.get().second;
+      slow_down_section.slow_down_end_idx = end_insert_point_with_idx.value().first;
+      slow_down_section.end_point = end_insert_point_with_idx.value().second;
       slow_down_section.velocity =
         set_velocity_limit_ ? std::numeric_limits<double>::max() : target_velocity;
 
@@ -1247,8 +1258,8 @@ StopPoint ObstacleStopPlannerNode::createTargetPoint(
   }
 
   StopPoint stop_point{};
-  stop_point.index = insert_point_with_idx.get().first;
-  stop_point.point = insert_point_with_idx.get().second;
+  stop_point.index = insert_point_with_idx.value().first;
+  stop_point.point = insert_point_with_idx.value().second;
 
   return stop_point;
 }
@@ -1262,7 +1273,7 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
     const auto margin_with_vel = calcFeasibleMarginAndVelocity(
       slow_down_param_, dist_baselink_to_obstacle + dist_remain, current_vel, current_acc);
 
-    const auto relax_target_vel = margin_with_vel == boost::none;
+    const auto relax_target_vel = margin_with_vel.has_value();
     if (relax_target_vel && !set_velocity_limit_) {
       setExternalVelocityLimit();
     }
@@ -1277,12 +1288,12 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
 
     const auto update_forward_margin_from_vehicle =
       use_velocity_limit ? slow_down_param_.min_longitudinal_forward_margin - dist_remain
-                         : margin_with_vel.get().first - dist_remain;
+                         : margin_with_vel.value().first - dist_remain;
     const auto update_backward_margin_from_vehicle =
       slow_down_param_.longitudinal_backward_margin + dist_remain;
 
     const auto velocity =
-      use_velocity_limit ? std::numeric_limits<double>::max() : margin_with_vel.get().second;
+      use_velocity_limit ? std::numeric_limits<double>::max() : margin_with_vel.value().second;
 
     return createSlowDownSectionFromMargin(
       idx, base_trajectory, update_forward_margin_from_vehicle, update_backward_margin_from_vehicle,
@@ -1324,10 +1335,10 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSectionFromMargin(
   }
 
   SlowDownSection slow_down_section{};
-  slow_down_section.slow_down_start_idx = start_insert_point_with_idx.get().first;
-  slow_down_section.start_point = start_insert_point_with_idx.get().second;
-  slow_down_section.slow_down_end_idx = end_insert_point_with_idx.get().first;
-  slow_down_section.end_point = end_insert_point_with_idx.get().second;
+  slow_down_section.slow_down_start_idx = start_insert_point_with_idx.value().first;
+  slow_down_section.start_point = start_insert_point_with_idx.value().second;
+  slow_down_section.slow_down_end_idx = end_insert_point_with_idx.value().first;
+  slow_down_section.end_point = end_insert_point_with_idx.value().second;
   slow_down_section.velocity = velocity;
 
   return slow_down_section;

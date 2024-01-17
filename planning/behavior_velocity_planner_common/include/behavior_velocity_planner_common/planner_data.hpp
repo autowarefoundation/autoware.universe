@@ -17,14 +17,13 @@
 
 #include "route_handler/route_handler.hpp"
 
-#include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_velocity_smoother/smoother/smoother_base.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal_stamped.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -36,20 +35,14 @@
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
-#include <boost/optional.hpp>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_routing/RoutingGraphContainer.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
 #include <deque>
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -83,8 +76,11 @@ struct PlannerData
   double ego_nearest_yaw_threshold;
 
   // other internal data
-  std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> traffic_light_id_map;
-  boost::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
+  // traffic_light_id_map_raw is the raw observation, while traffic_light_id_map_keep_last keeps the
+  // last observed infomation for UNKNOWN
+  std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_raw_;
+  std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_last_observed_;
+  std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
 
   // velocity smoother
@@ -132,14 +128,20 @@ struct PlannerData
     return true;
   }
 
-  std::shared_ptr<autoware_auto_perception_msgs::msg::TrafficSignalStamped> getTrafficSignal(
-    const int id) const
+  /**
+   *@fn
+   *@brief queries the traffic signal information of given Id. if keep_last_observation = true,
+   *recent UNKNOWN observation is overwritten as the last non-UNKNOWN observation
+   */
+  std::optional<TrafficSignalStamped> getTrafficSignal(
+    const lanelet::Id id, const bool keep_last_observation = false) const
   {
+    const auto & traffic_light_id_map =
+      keep_last_observation ? traffic_light_id_map_last_observed_ : traffic_light_id_map_raw_;
     if (traffic_light_id_map.count(id) == 0) {
-      return {};
+      return std::nullopt;
     }
-    return std::make_shared<autoware_auto_perception_msgs::msg::TrafficSignalStamped>(
-      traffic_light_id_map.at(id));
+    return std::make_optional<TrafficSignalStamped>(traffic_light_id_map.at(id));
   }
 };
 }  // namespace behavior_velocity_planner

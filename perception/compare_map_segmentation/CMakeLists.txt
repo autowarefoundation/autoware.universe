@@ -46,8 +46,7 @@ ament_target_dependencies(compare_map_segmentation
   sensor_msgs
   tier4_autoware_utils
   autoware_map_msgs
-  component_interface_specs
-  component_interface_utils
+  nav_msgs
 )
 
 if(OPENMP_FOUND)
@@ -90,6 +89,8 @@ install(
   RUNTIME DESTINATION bin
 )
 
-ament_auto_package(INSTALL_TO_SHARE
+ament_auto_package(
+  INSTALL_TO_SHARE
   launch
+  config
 )

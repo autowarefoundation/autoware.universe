@@ -15,12 +15,12 @@
 #ifndef MOTION_UTILS__MARKER__VIRTUAL_WALL_MARKER_CREATOR_HPP_
 #define MOTION_UTILS__MARKER__VIRTUAL_WALL_MARKER_CREATOR_HPP_
 
-#include "motion_utils/marker/marker_helper.hpp"
+#include <rclcpp/time.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
-#include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -38,8 +38,9 @@ struct VirtualWall
   std::string ns{};
   VirtualWallType style = stop;
   double longitudinal_offset{};
+  bool is_driving_forward{true};
 };
-typedef std::vector<VirtualWall> VirtualWalls;
+using VirtualWalls = std::vector<VirtualWall>;
 
 /// @brief class to manage the creation of virtual wall markers
 /// @details creates both ADD and DELETE markers
@@ -54,10 +55,10 @@ class VirtualWallMarkerCreator
   using create_wall_function = std::function<visualization_msgs::msg::MarkerArray(
     const geometry_msgs::msg::Pose & pose, const std::string & module_name,
     const rclcpp::Time & now, const int32_t id, const double longitudinal_offset,
-    const std::string & ns_prefix)>;
+    const std::string & ns_prefix, const bool is_driving_forward)>;
 
-  VirtualWalls virtual_walls;
-  std::unordered_map<std::string, MarkerCount> marker_count_per_namespace;
+  VirtualWalls virtual_walls_;
+  std::unordered_map<std::string, MarkerCount> marker_count_per_namespace_;
 
   /// @brief internal cleanup: clear the stored markers and remove unused namespace from the map
   void cleanup();

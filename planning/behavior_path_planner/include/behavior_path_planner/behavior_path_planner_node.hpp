@@ -15,18 +15,12 @@
 #ifndef BEHAVIOR_PATH_PLANNER__BEHAVIOR_PATH_PLANNER_NODE_HPP_
 #define BEHAVIOR_PATH_PLANNER__BEHAVIOR_PATH_PLANNER_NODE_HPP_
 
-#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/planner_manager.hpp"
-#include "behavior_path_planner/scene_module/avoidance/manager.hpp"
-#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
-#include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
-#include "behavior_path_planner/scene_module/lane_change/manager.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/scene_module/side_shift/manager.hpp"
-#include "behavior_path_planner/scene_module/start_planner/manager.hpp"
-#include "behavior_path_planner/steering_factor_interface.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/interface/steering_factor_interface.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
-#include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -40,8 +34,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
-#include <tier4_planning_msgs/msg/lane_change_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
+#include <tier4_planning_msgs/msg/reroute_availability.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
@@ -62,16 +56,16 @@ using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_perception_msgs::msg::TrafficSignalArray;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
-using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using rcl_interfaces::msg::SetParametersResult;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
-using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 using tier4_planning_msgs::msg::LateralOffset;
+using tier4_planning_msgs::msg::RerouteAvailability;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::StopReasonArray;
 using visualization_msgs::msg::Marker;
@@ -85,6 +79,9 @@ public:
   // Getter method for waiting approval modules
   std::vector<std::string> getWaitingApprovalModules();
 
+  // Getter method for running modules
+  std::vector<std::string> getRunningModules();
+
 private:
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_subscriber_;
   rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
@@ -94,6 +91,7 @@ private:
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr costmap_subscriber_;
+  rclcpp::Subscription<TrafficSignalArray>::SharedPtr traffic_signals_subscriber_;
   rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
   rclcpp::Subscription<OperationModeState>::SharedPtr operation_mode_subscriber_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
@@ -102,6 +100,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr bound_publisher_;
   rclcpp::Publisher<PoseWithUuidStamped>::SharedPtr modified_goal_publisher_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_publisher_;
+  rclcpp::Publisher<RerouteAvailability>::SharedPtr reroute_availability_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_candidate_publishers_;
@@ -136,6 +135,7 @@ private:
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
   void onCostMap(const OccupancyGrid::ConstSharedPtr msg);
+  void onTrafficSignals(const TrafficSignalArray::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
   void onRoute(const LaneletRoute::ConstSharedPtr route_msg);
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
@@ -166,10 +166,13 @@ private:
     const BehaviorModuleOutput & output);
 
   // debug
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_maximum_drivable_area_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
-  rclcpp::Publisher<LaneChangeDebugMsgArray>::SharedPtr debug_lane_change_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_turn_signal_info_publisher_;
+
+  /**
+   * @brief publish reroute availability
+   */
+  void publish_reroute_availability() const;
 
   /**
    * @brief publish steering factor from intersection
@@ -210,6 +213,8 @@ private:
   Path convertToPath(
     const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready,
     const std::shared_ptr<PlannerData> & planner_data);
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace behavior_path_planner
 

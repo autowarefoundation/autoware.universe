@@ -11,7 +11,6 @@
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
   <maintainer email="taiki.tanaka@tier4.jp">Taiki Tanaka</maintainer>
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
-  <maintainer email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</maintainer>
   <maintainer email="tomohito.ando@tier4.jp">Tomohito Ando</maintainer>
   <maintainer email="makoto.kurihara@tier4.jp">Makoto Kurihara</maintainer>
   <maintainer email="maxime.clement@tier4.jp">Maxime Clement</maintainer>
@@ -32,6 +31,8 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
+
+  <build_depend>rosidl_default_generators</build_depend>
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
@@ -60,6 +61,8 @@
   <depend>tier4_v2x_msgs</depend>
   <depend>visualization_msgs</depend>
 
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
@@ -76,6 +79,10 @@
   <test_depend>behavior_velocity_stop_line_module</test_depend>
   <test_depend>behavior_velocity_traffic_light_module</test_depend>
   <test_depend>behavior_velocity_virtual_traffic_light_module</test_depend>
+  <test_depend>behavior_velocity_walkway_module</test_depend>
+  <!--<test_depend>behavior_velocity_template_module</test_depend>-->
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>

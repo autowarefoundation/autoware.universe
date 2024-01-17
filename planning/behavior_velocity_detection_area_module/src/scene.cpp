@@ -17,12 +17,13 @@
 #include <behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
+
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <algorithm>
 #include <memory>
@@ -46,7 +47,7 @@ DetectionAreaModule::DetectionAreaModule(
   state_(State::GO),
   planner_param_(planner_param)
 {
-  velocity_factor_.init(VelocityFactor::USER_DEFINED_DETECTION_AREA);
+  velocity_factor_.init(PlanningBehavior::USER_DEFINED_DETECTION_AREA);
 }
 
 LineString2d DetectionAreaModule::getStopLineGeometry2d() const
@@ -109,7 +110,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
       return false;
     }
 
-    modified_stop_pose = ego_pos_on_path.get();
+    modified_stop_pose = ego_pos_on_path.value();
     modified_stop_line_seg_idx = current_seg_idx;
   }
 

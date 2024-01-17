@@ -401,7 +401,7 @@ void ProcessMonitor::getHighMemoryProcesses(const std::string & output)
     bp::pipe err_pipe{err_fd[0], err_fd[1]};
     bp::ipstream is_err{std::move(err_pipe)};
 
-    bp::child c("sort -r -k 10", bp::std_out > p2, bp::std_err > is_err, bp::std_in < p1);
+    bp::child c("sort -r -k 10 -n", bp::std_out > p2, bp::std_err > is_err, bp::std_in < p1);
     c.wait();
     if (c.exit_code() != 0) {
       is_err >> os.rdbuf();
@@ -412,6 +412,27 @@ void ProcessMonitor::getHighMemoryProcesses(const std::string & output)
 
   // Get top-rated
   getTopratedProcesses(&memory_tasks_, &p2);
+}
+
+bool ProcessMonitor::getCommandLineFromPiD(const std::string & pid, std::string & command)
+{
+  std::string commandLineFilePath = "/proc/" + pid + "/cmdline";
+  std::ifstream commandFile(commandLineFilePath, std::ios::in | std::ios::binary);
+
+  if (commandFile.is_open()) {
+    std::vector<uint8_t> buffer;
+    std::copy(
+      std::istream_iterator<uint8_t>(commandFile), std::istream_iterator<uint8_t>(),
+      std::back_inserter(buffer));
+    commandFile.close();
+    std::replace(
+      buffer.begin(), buffer.end(), '\0',
+      ' ');  // 0x00 is used as delimiter in /cmdline instead of 0x20 (space)
+    command = std::string(buffer.begin(), buffer.end());
+    return (buffer.size() > 0) ? true : false;  // cmdline is empty if it is kernel process
+  } else {
+    return false;
+  }
 }
 
 void ProcessMonitor::getTopratedProcesses(
@@ -451,27 +472,28 @@ void ProcessMonitor::getTopratedProcesses(
     return;
   }
 
-  std::vector<std::string> list;
   std::string line;
   int index = 0;
 
   while (std::getline(is_out, line) && !line.empty()) {
-    boost::trim_left(line);
-    boost::split(list, line, boost::is_space(), boost::token_compress_on);
+    std::istringstream stream(line);
+
+    ProcessInfo info;
+    stream >> info.processId >> info.userName >> info.priority >> info.niceValue >>
+      info.virtualImage >> info.residentSize >> info.sharedMemSize >> info.processStatus >>
+      info.cpuUsage >> info.memoryUsage >> info.cpuTime;
+
+    std::string program_name;
+    std::getline(stream, program_name);
+
+    bool flag_find_command_line = getCommandLineFromPiD(info.processId, info.commandName);
+
+    if (!flag_find_command_line) {
+      info.commandName = program_name;  // if command line is not found, use program name instead
+    }
 
     tasks->at(index)->setDiagnosticsStatus(DiagStatus::OK, "OK");
-    tasks->at(index)->setProcessId(list[0]);
-    tasks->at(index)->setUserName(list[1]);
-    tasks->at(index)->setPriority(list[2]);
-    tasks->at(index)->setNiceValue(list[3]);
-    tasks->at(index)->setVirtualImage(list[4]);
-    tasks->at(index)->setResidentSize(list[5]);
-    tasks->at(index)->setSharedMemSize(list[6]);
-    tasks->at(index)->setProcessStatus(list[7]);
-    tasks->at(index)->setCPUUsage(list[8]);
-    tasks->at(index)->setMemoryUsage(list[9]);
-    tasks->at(index)->setCPUTime(list[10]);
-    tasks->at(index)->setCommandName(list[11]);
+    tasks->at(index)->setProcessInformation(info);
     ++index;
   }
 }

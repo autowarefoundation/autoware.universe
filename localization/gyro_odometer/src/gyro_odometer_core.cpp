@@ -102,12 +102,13 @@ geometry_msgs::msg::TwistWithCovarianceStamped concatGyroAndOdometer(
 
 GyroOdometer::GyroOdometer(const rclcpp::NodeOptions & options)
 : Node("gyro_odometer", options),
-  output_frame_(declare_parameter("base_link", "base_link")),
-  message_timeout_sec_(declare_parameter("message_timeout_sec", 0.2)),
+  output_frame_(declare_parameter<std::string>("output_frame")),
+  message_timeout_sec_(declare_parameter<double>("message_timeout_sec")),
   vehicle_twist_arrived_(false),
   imu_arrived_(false)
 {
   transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 
   vehicle_twist_sub_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "vehicle/twist_with_covariance", rclcpp::QoS{100},

@@ -15,8 +15,11 @@
 #include "obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 
 #include "interpolation/spline_interpolation.hpp"
+#include "motion_utils/marker/marker_helper.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
 
@@ -493,7 +496,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::doCruiseWithTrajectory(
     return cruise_traj_points;
   }
 
-  for (size_t i = zero_vel_idx_opt.get(); i < cruise_traj_points.size(); ++i) {
+  for (size_t i = zero_vel_idx_opt.value(); i < cruise_traj_points.size(); ++i) {
     cruise_traj_points.at(i).longitudinal_velocity_mps = 0.0;
   }
 

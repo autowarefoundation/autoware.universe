@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_based_occupancy_grid_map/occupancy_grid_map_projective.hpp"
+#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_projective.hpp"
 
-#include "cost_value.hpp"
-#include "utils/utils.hpp"
+#include "probabilistic_occupancy_grid_map/cost_value.hpp"
+#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 #include <grid_map_costmap_2d/grid_map_costmap_2d.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
@@ -202,7 +202,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   if (pub_debug_grid_)
     converter.addLayerFromCostmap2D(*this, "filled_free_to_farthest", debug_grid_);
 
-  // Second step: Add uknown cell
+  // Second step: Add unknown cell
   for (size_t bin_index = 0; bin_index < obstacle_pointcloud_angle_bins.size(); ++bin_index) {
     const auto & obstacle_pointcloud_angle_bin = obstacle_pointcloud_angle_bins.at(bin_index);
     const auto & raw_pointcloud_angle_bin = raw_pointcloud_angle_bins.at(bin_index);

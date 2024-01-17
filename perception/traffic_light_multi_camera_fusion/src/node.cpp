@@ -14,6 +14,9 @@
 
 #include "traffic_light_multi_camera_fusion/node.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -165,10 +168,10 @@ MultiCameraFusion::MultiCameraFusion(const rclcpp::NodeOptions & node_options)
       exact_sync_subs_.back()->registerCallback(
         std::bind(&MultiCameraFusion::trafficSignalRoiCallback, this, _1, _2, _3));
     } else {
-      appro_sync_subs_.emplace_back(new ApproSync(
-        ApproSyncPolicy(10), *(cam_info_subs_.back()), *(roi_subs_.back()),
+      approximate_sync_subs_.emplace_back(new ApproximateSync(
+        ApproximateSyncPolicy(10), *(cam_info_subs_.back()), *(roi_subs_.back()),
         *(signal_subs_.back())));
-      appro_sync_subs_.back()->registerCallback(
+      approximate_sync_subs_.back()->registerCallback(
         std::bind(&MultiCameraFusion::trafficSignalRoiCallback, this, _1, _2, _3));
     }
   }
@@ -186,14 +189,14 @@ void MultiCameraFusion::trafficSignalRoiCallback(
   rclcpp::Time stamp(roi_msg->header.stamp);
   /*
   Insert the received record array to the table.
-  Attention should be paied that this record array might not have the newest timestamp
+  Attention should be payed that this record array might not have the newest timestamp
   */
   record_arr_set_.insert(
     FusionRecordArr{cam_info_msg->header, *cam_info_msg, *roi_msg, *signal_msg});
 
-  std::map<IdType, FusionRecord> fusioned_record_map, grouped_record_map;
-  multiCameraFusion(fusioned_record_map);
-  groupFusion(fusioned_record_map, grouped_record_map);
+  std::map<IdType, FusionRecord> fused_record_map, grouped_record_map;
+  multiCameraFusion(fused_record_map);
+  groupFusion(fused_record_map, grouped_record_map);
 
   NewSignalArrayType msg_out;
   convertOutputMsg(grouped_record_map, msg_out);
@@ -216,7 +219,7 @@ void MultiCameraFusion::mapCallback(
 
     auto lights = tl->trafficLights();
     for (const auto & light : lights) {
-      traffic_light_id_to_regulatory_ele_id_[light.id()] = tl->id();
+      traffic_light_id_to_regulatory_ele_id_[light.id()].emplace_back(tl->id());
     }
   }
 }
@@ -237,9 +240,9 @@ void MultiCameraFusion::convertOutputMsg(
   }
 }
 
-void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusioned_record_map)
+void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fused_record_map)
 {
-  fusioned_record_map.clear();
+  fused_record_map.clear();
   /*
   this should not happen. Just in case
   */
@@ -259,7 +262,7 @@ void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusio
       it = record_arr_set_.erase(it);
     } else {
       /*
-      generate fusioned record result with the saved records
+      generate fused record result with the saved records
       */
       const FusionRecordArr & record_arr = *it;
       for (size_t i = 0; i < record_arr.rois.rois.size(); i++) {
@@ -279,9 +282,9 @@ void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusio
         update it
         */
         if (
-          fusioned_record_map.find(roi.traffic_light_id) == fusioned_record_map.end() ||
-          ::compareRecord(record, fusioned_record_map[roi.traffic_light_id]) >= 0) {
-          fusioned_record_map[roi.traffic_light_id] = record;
+          fused_record_map.find(roi.traffic_light_id) == fused_record_map.end() ||
+          ::compareRecord(record, fused_record_map[roi.traffic_light_id]) >= 0) {
+          fused_record_map[roi.traffic_light_id] = record;
         }
       }
       it++;
@@ -290,11 +293,11 @@ void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusio
 }
 
 void MultiCameraFusion::groupFusion(
-  std::map<IdType, FusionRecord> & fusioned_record_map,
+  std::map<IdType, FusionRecord> & fused_record_map,
   std::map<IdType, FusionRecord> & grouped_record_map)
 {
   grouped_record_map.clear();
-  for (auto & p : fusioned_record_map) {
+  for (auto & p : fused_record_map) {
     IdType roi_id = p.second.roi.traffic_light_id;
     /*
     this should not happen
@@ -302,11 +305,15 @@ void MultiCameraFusion::groupFusion(
     if (traffic_light_id_to_regulatory_ele_id_.count(roi_id) == 0) {
       RCLCPP_WARN_STREAM(
         get_logger(), "Found Traffic Light Id = " << roi_id << " which is not defined in Map");
-    } else {
-      /*
-      keep the best record for every regulatory element id
-      */
-      IdType reg_ele_id = traffic_light_id_to_regulatory_ele_id_[p.second.roi.traffic_light_id];
+      continue;
+    }
+
+    /*
+    keep the best record for every regulatory element id
+    */
+    const auto reg_ele_id_vec =
+      traffic_light_id_to_regulatory_ele_id_[p.second.roi.traffic_light_id];
+    for (const auto & reg_ele_id : reg_ele_id_vec) {
       if (
         grouped_record_map.count(reg_ele_id) == 0 ||
         ::compareRecord(p.second, grouped_record_map[reg_ele_id]) >= 0) {

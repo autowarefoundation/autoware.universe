@@ -15,7 +15,11 @@
 #include "autonomous_emergency_braking/node.hpp"
 
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+
+#include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
 #include <pcl/filters/voxel_grid.h>
 #include <tf2/utils.h>
@@ -29,6 +33,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <boost/geometry/algorithms/convex_hull.hpp>
+#include <boost/geometry/algorithms/within.hpp>
 namespace autoware::motion::control::autonomous_emergency_braking
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
@@ -119,6 +125,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
 
   // parameter
+  publish_debug_pointcloud_ = declare_parameter<bool>("publish_debug_pointcloud");
   use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
   use_imu_path_ = declare_parameter<bool>("use_imu_path");
   voxel_grid_x_ = declare_parameter<double>("voxel_grid_x");
@@ -130,8 +137,10 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   t_response_ = declare_parameter<double>("t_response");
   a_ego_min_ = declare_parameter<double>("a_ego_min");
   a_obj_min_ = declare_parameter<double>("a_obj_min");
-  prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
-  prediction_time_interval_ = declare_parameter<double>("prediction_time_interval");
+  imu_prediction_time_horizon_ = declare_parameter<double>("imu_prediction_time_horizon");
+  imu_prediction_time_interval_ = declare_parameter<double>("imu_prediction_time_interval");
+  mpc_prediction_time_horizon_ = declare_parameter<double>("mpc_prediction_time_horizon");
+  mpc_prediction_time_interval_ = declare_parameter<double>("mpc_prediction_time_interval");
 
   const auto collision_keeping_sec = declare_parameter<double>("collision_keeping_sec");
   collision_data_keeper_.setTimeout(collision_keeping_sec);
@@ -221,7 +230,9 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
   obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
   pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
-  pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
+  if (publish_debug_pointcloud_) {
+    pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
+  }
 }
 
 bool AEB::isDataReady()
@@ -347,25 +358,29 @@ bool AEB::hasCollision(
   const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects)
 {
   // calculate RSS
-  const auto current_p = tier4_autoware_utils::createPoint(0.0, 0.0, 0.0);
+  const auto current_p = tier4_autoware_utils::createPoint(
+    ego_path[0].position.x, ego_path[0].position.y, ego_path[0].position.z);
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
     const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
                             obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
-    const double dist_ego_to_object =
-      motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
-      vehicle_info_.max_longitudinal_offset_m;
-    if (dist_ego_to_object < rss_dist) {
-      // collision happens
-      ObjectData collision_data = obj;
-      collision_data.rss = rss_dist;
-      collision_data.distance_to_object = dist_ego_to_object;
-      collision_data_keeper_.update(collision_data);
-      return true;
+
+    // check the object is front the ego or not
+    if ((obj.position.x - ego_path[0].position.x) > 0) {
+      const double dist_ego_to_object =
+        motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
+        vehicle_info_.max_longitudinal_offset_m;
+      if (dist_ego_to_object < rss_dist) {
+        // collision happens
+        ObjectData collision_data = obj;
+        collision_data.rss = rss_dist;
+        collision_data.distance_to_object = dist_ego_to_object;
+        collision_data_keeper_.update(collision_data);
+        return true;
+      }
     }
   }
-
   return false;
 }
 
@@ -386,8 +401,8 @@ void AEB::generateEgoPath(
   }
 
   constexpr double epsilon = 1e-6;
-  const double & dt = prediction_time_interval_;
-  const double & horizon = prediction_time_horizon_;
+  const double & dt = imu_prediction_time_interval_;
+  const double & horizon = imu_prediction_time_horizon_;
   for (double t = 0.0; t < horizon + epsilon; t += dt) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
@@ -426,6 +441,10 @@ void AEB::generateEgoPath(
   const Trajectory & predicted_traj, Path & path,
   std::vector<tier4_autoware_utils::Polygon2d> & polygons)
 {
+  if (predicted_traj.points.empty()) {
+    return;
+  }
+
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -442,8 +461,11 @@ void AEB::generateEgoPath(
     geometry_msgs::msg::Pose map_pose;
     tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped);
     path.at(i) = map_pose;
-  }
 
+    if (i * mpc_prediction_time_interval_ > mpc_prediction_time_horizon_) {
+      break;
+    }
+  }
   // create polygon
   polygons.resize(path.size());
   for (size_t i = 0; i < path.size() - 1; ++i) {

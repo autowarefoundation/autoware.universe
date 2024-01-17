@@ -14,8 +14,10 @@
 
 #include "lane_departure_checker/lane_departure_checker_node.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/route_checker.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -51,13 +53,13 @@ std::array<geometry_msgs::msg::Point, 3> triangle2points(
   return points;
 }
 
-std::map<int, lanelet::ConstLanelet> getRouteLanelets(
+std::map<lanelet::Id, lanelet::ConstLanelet> getRouteLanelets(
   const lanelet::LaneletMapPtr & lanelet_map,
   const lanelet::routing::RoutingGraphPtr & routing_graph,
   const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr & route_ptr,
   const double vehicle_length)
 {
-  std::map<int, lanelet::ConstLanelet> route_lanelets;
+  std::map<lanelet::Id, lanelet::ConstLanelet> route_lanelets;
 
   bool is_route_valid = lanelet::utils::route::isRouteValid(*route_ptr, lanelet_map);
   if (!is_route_valid) {
@@ -125,6 +127,11 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
 {
   using std::placeholders::_1;
 
+  // Enable feature
+  node_param_.will_out_of_lane_checker = declare_parameter<bool>("will_out_of_lane_checker");
+  node_param_.out_of_lane_checker = declare_parameter<bool>("out_of_lane_checker");
+  node_param_.boundary_departure_checker = declare_parameter<bool>("boundary_departure_checker");
+
   // Node Parameter
   node_param_.update_rate = declare_parameter<double>("update_rate");
   node_param_.visualize_lanelet = declare_parameter<bool>("visualize_lanelet");
@@ -132,6 +139,10 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   node_param_.include_left_lanes = declare_parameter<bool>("include_left_lanes");
   node_param_.include_opposite_lanes = declare_parameter<bool>("include_opposite_lanes");
   node_param_.include_conflicting_lanes = declare_parameter<bool>("include_conflicting_lanes");
+
+  // Boundary_departure_checker
+  node_param_.boundary_types_to_detect =
+    declare_parameter<std::vector<std::string>>("boundary_types_to_detect");
 
   // Vehicle Info
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -304,7 +315,7 @@ void LaneDepartureCheckerNode::onTimer()
 
   // In order to wait for both of map and route will be ready, write this not in callback but here
   if (last_route_ != route_ && !route_->segments.empty()) {
-    std::map<int, lanelet::ConstLanelet>::iterator itr;
+    std::map<lanelet::Id, lanelet::ConstLanelet>::iterator itr;
 
     auto map_route_lanelets_ =
       getRouteLanelets(lanelet_map_, routing_graph_, route_, vehicle_length_m_);
@@ -336,6 +347,7 @@ void LaneDepartureCheckerNode::onTimer()
   input_.shoulder_lanelets = shoulder_lanelets_;
   input_.reference_trajectory = reference_trajectory_;
   input_.predicted_trajectory = predicted_trajectory_;
+  input_.boundary_types_to_detect = node_param_.boundary_types_to_detect;
   processing_time_map["Node: setInputData"] = stop_watch.toc(true);
 
   output_ = lane_departure_checker_->update(input_);
@@ -375,12 +387,19 @@ rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
   result.reason = "success";
 
   try {
+    // Enable feature
+    update_param(parameters, "will_out_of_lane_checker", node_param_.will_out_of_lane_checker);
+    update_param(parameters, "out_of_lane_checker", node_param_.out_of_lane_checker);
+    update_param(parameters, "boundary_departure_checker", node_param_.boundary_departure_checker);
+
     // Node
     update_param(parameters, "visualize_lanelet", node_param_.visualize_lanelet);
     update_param(parameters, "include_right_lanes", node_param_.include_right_lanes);
     update_param(parameters, "include_left_lanes", node_param_.include_left_lanes);
     update_param(parameters, "include_opposite_lanes", node_param_.include_opposite_lanes);
     update_param(parameters, "include_conflicting_lanes", node_param_.include_conflicting_lanes);
+    update_param(parameters, "boundary_departure_checker", node_param_.boundary_departure_checker);
+    update_param(parameters, "boundary_types_to_detect", node_param_.boundary_types_to_detect);
 
     // Core
     update_param(parameters, "footprint_margin_scale", param_.footprint_margin_scale);
@@ -407,14 +426,19 @@ void LaneDepartureCheckerNode::checkLaneDeparture(
   int8_t level = DiagStatus::OK;
   std::string msg = "OK";
 
-  if (output_.will_leave_lane) {
+  if (output_.will_leave_lane && node_param_.will_out_of_lane_checker) {
     level = DiagStatus::WARN;
     msg = "vehicle will leave lane";
   }
 
-  if (output_.is_out_of_lane) {
+  if (output_.is_out_of_lane && node_param_.out_of_lane_checker) {
     level = DiagStatus::ERROR;
     msg = "vehicle is out of lane";
+  }
+
+  if (output_.will_cross_boundary && node_param_.boundary_departure_checker) {
+    level = DiagStatus::ERROR;
+    msg = "vehicle will cross boundary";
   }
 
   stat.summary(level, msg);

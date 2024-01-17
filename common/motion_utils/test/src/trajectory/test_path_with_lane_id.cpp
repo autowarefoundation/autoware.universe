@@ -13,8 +13,7 @@
 // limitations under the License.
 
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
-// #include "tier4_autoware_utils/geometry/geometry.hpp"
-// #include "tier4_autoware_utils/math/unit_conversion.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <gtest/gtest.h>
 
@@ -86,7 +85,7 @@ TEST(path_with_lane_id, getPathIndexRangeWithLaneId)
     }
     {
       const auto res = getPathIndexRangeWithLaneId(points, 4);
-      EXPECT_EQ(res, boost::none);
+      EXPECT_EQ(res, std::nullopt);
     }
   }
 
@@ -94,7 +93,7 @@ TEST(path_with_lane_id, getPathIndexRangeWithLaneId)
   {
     PathWithLaneId points;
     const auto res = getPathIndexRangeWithLaneId(points, 4);
-    EXPECT_EQ(res, boost::none);
+    EXPECT_EQ(res, std::nullopt);
   }
 }
 

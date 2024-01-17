@@ -14,9 +14,25 @@
 
 #include "utils.hpp"
 
+#include <motion_utils/distance/distance.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
+
+#include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/geometry/algorithms/make.hpp>
+
+#include <tf2/utils.h>
+
 #include <algorithm>
 #include <limits>
 
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 namespace behavior_velocity_planner
 {
 namespace run_out_utils
@@ -117,7 +133,7 @@ bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg:
 }
 
 // if path points have the same point as target_point, return the index
-boost::optional<size_t> haveSamePoint(
+std::optional<size_t> haveSamePoint(
   const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & target_point)
 {
   for (size_t i = 0; i < path_points.size(); i++) {
@@ -148,7 +164,7 @@ void insertPathVelocityFromIndex(
   }
 }
 
-boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points)
+std::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points)
 {
   for (size_t i = 0; i < path_points.size(); i++) {
     const auto vel = path_points.at(i).point.longitudinal_velocity_mps;
@@ -256,7 +272,7 @@ PathWithLaneId trimPathFromSelfPose(
 
 // create polygon for passing lines and deceleration line calculated by stopping jerk
 // note that this polygon is not closed
-boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
+std::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
   const std::vector<std::vector<geometry_msgs::msg::Point>> & passing_lines,
   const size_t deceleration_line_idx)
 {
@@ -343,7 +359,7 @@ Polygons2d createDetectionAreaPolygon(
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
   if (!stop_dist) {
-    stop_dist = boost::make_optional<double>(0.0);
+    stop_dist = std::make_optional<double>(0.0);
   }
 
   // create detection area polygon
@@ -387,7 +403,7 @@ Polygons2d createMandatoryDetectionAreaPolygon(
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
   if (!stop_dist) {
-    stop_dist = boost::make_optional<double>(0.0);
+    stop_dist = std::make_optional<double>(0.0);
   }
 
   // create detection area polygon

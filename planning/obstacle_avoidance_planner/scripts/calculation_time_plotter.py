@@ -28,6 +28,7 @@ class CalculationCostAnalyzer(Node):
         super().__init__("calculation_cost_analyzer")
 
         self.functions_name = args.functions.split(",")
+        self.depth = args.depth
 
         self.calculation_cost_hist = []
         self.sub_calculation_cost = self.create_subscription(
@@ -48,6 +49,8 @@ class CalculationCostAnalyzer(Node):
             self.y_vec.append(deque())
 
         plt.legend(loc="lower left")
+        plt.xlabel("step [-]")
+        plt.ylabel("calculation time [ms]")
         plt.show()
 
     def CallbackCalculationCost(self, msg):
@@ -67,7 +70,7 @@ class CalculationCostAnalyzer(Node):
             if not is_found:
                 self.y_vec[f_idx].append(None)
 
-            if len(self.y_vec[f_idx]) > 100:
+            if len(self.y_vec[f_idx]) > self.depth:
                 self.y_vec[f_idx].popleft()
 
             x_vec = list(range(len(self.y_vec[f_idx])))
@@ -99,7 +102,13 @@ if __name__ == "__main__":
         "-f",
         "--functions",
         type=str,
-        default="onPath, getModelPredictiveTrajectory, getEBTrajectory",
+        default="onPath, calcReferencePoints, calcOptimizedSteerAngles, publishDebugMarkerOfOptimization",
+    )
+    parser.add_argument(
+        "-d",
+        "--depth",
+        type=float,
+        default=500,
     )
     args = parser.parse_args()
 

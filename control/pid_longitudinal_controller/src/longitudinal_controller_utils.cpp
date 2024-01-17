@@ -91,49 +91,42 @@ double getPitchByTraj(
     return 0.0;
   }
 
-  for (size_t i = nearest_idx + 1; i < trajectory.points.size(); ++i) {
-    const double dist = tier4_autoware_utils::calcDistance2d(
-      trajectory.points.at(nearest_idx), trajectory.points.at(i));
-    if (dist > wheel_base) {
-      // calculate pitch from trajectory between rear wheel (nearest) and front center (i)
-      return calcElevationAngle(trajectory.points.at(nearest_idx), trajectory.points.at(i));
+  const auto [prev_idx, next_idx] = [&]() {
+    for (size_t i = nearest_idx + 1; i < trajectory.points.size(); ++i) {
+      const double dist = tier4_autoware_utils::calcDistance2d(
+        trajectory.points.at(nearest_idx), trajectory.points.at(i));
+      if (dist > wheel_base) {
+        // calculate pitch from trajectory between rear wheel (nearest) and front center (i)
+        return std::make_pair(nearest_idx, i);
+      }
     }
-  }
+    // NOTE: The ego pose is close to the goal.
+    return std::make_pair(
+      std::min(nearest_idx, trajectory.points.size() - 2), trajectory.points.size() - 1);
+  }();
 
-  // close to goal
-  for (size_t i = trajectory.points.size() - 1; i > 0; --i) {
-    const double dist =
-      tier4_autoware_utils::calcDistance2d(trajectory.points.back(), trajectory.points.at(i));
-
-    if (dist > wheel_base) {
-      // calculate pitch from trajectory
-      // between wheelbase behind the end of trajectory (i) and the end of trajectory (back)
-      return calcElevationAngle(trajectory.points.at(i), trajectory.points.back());
-    }
-  }
-
-  // calculate pitch from trajectory between the beginning and end of trajectory
-  return calcElevationAngle(trajectory.points.at(0), trajectory.points.back());
-}
-
-double calcElevationAngle(const TrajectoryPoint & p_from, const TrajectoryPoint & p_to)
-{
-  const double dx = p_from.pose.position.x - p_to.pose.position.x;
-  const double dy = p_from.pose.position.y - p_to.pose.position.y;
-  const double dz = p_from.pose.position.z - p_to.pose.position.z;
-
-  const double dxy = std::max(std::hypot(dx, dy), std::numeric_limits<double>::epsilon());
-  const double pitch = std::atan2(dz, dxy);
-
-  return pitch;
+  return tier4_autoware_utils::calcElevationAngle(
+    trajectory.points.at(prev_idx).pose.position, trajectory.points.at(next_idx).pose.position);
 }
 
 Pose calcPoseAfterTimeDelay(
-  const Pose & current_pose, const double delay_time, const double current_vel)
+  const Pose & current_pose, const double delay_time, const double current_vel,
+  const double current_acc)
 {
+  if (delay_time <= 0.0) {
+    return current_pose;
+  }
+
+  // check time to stop
+  const double time_to_stop = -current_vel / current_acc;
+
+  const double delay_time_calculation =
+    time_to_stop > 0.0 && time_to_stop < delay_time ? time_to_stop : delay_time;
   // simple linear prediction
   const double yaw = tf2::getYaw(current_pose.orientation);
-  const double running_distance = delay_time * current_vel;
+  const double running_distance = delay_time_calculation * current_vel + 0.5 * current_acc *
+                                                                           delay_time_calculation *
+                                                                           delay_time_calculation;
   const double dx = running_distance * std::cos(yaw);
   const double dy = running_distance * std::sin(yaw);
 
@@ -146,16 +139,6 @@ Pose calcPoseAfterTimeDelay(
 double lerp(const double v_from, const double v_to, const double ratio)
 {
   return v_from + (v_to - v_from) * ratio;
-}
-
-Quaternion lerpOrientation(const Quaternion & o_from, const Quaternion & o_to, const double ratio)
-{
-  tf2::Quaternion q_from, q_to;
-  tf2::fromMsg(o_from, q_from);
-  tf2::fromMsg(o_to, q_to);
-
-  const auto q_interpolated = q_from.slerp(q_to, ratio);
-  return tf2::toMsg(q_interpolated);
 }
 
 double applyDiffLimitFilter(

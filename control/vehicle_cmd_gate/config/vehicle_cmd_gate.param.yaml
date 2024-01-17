@@ -5,6 +5,9 @@
     use_emergency_handling: false
     check_external_emergency_heartbeat: false
     use_start_request: false
+    enable_cmd_limit_filter: true
+    filter_activated_count_threshold: 5
+    filter_activated_velocity_threshold: 1.0
     external_emergency_stop_heartbeat_timeout: 0.0
     stop_hold_acceleration: -1.5
     emergency_acceleration: -2.4
@@ -13,15 +16,21 @@
     stop_check_duration: 1.0
     nominal:
       vel_lim: 25.0
-      lon_acc_lim: 5.0
-      lon_jerk_lim: 5.0
-      lat_acc_lim: 5.0
-      lat_jerk_lim: 7.0
-      actual_steer_diff_lim: 1.0
+      reference_speed_points: [20.0, 30.0]
+      steer_lim: [1.0, 0.8]
+      steer_rate_lim: [1.0, 0.8]
+      lon_acc_lim: [5.0, 4.0]
+      lon_jerk_lim: [5.0, 4.0]
+      lat_acc_lim: [5.0, 4.0]
+      lat_jerk_lim: [7.0, 6.0]
+      actual_steer_diff_lim: [1.0, 0.8]
     on_transition:
       vel_lim: 50.0
-      lon_acc_lim: 1.0
-      lon_jerk_lim: 0.5
-      lat_acc_lim: 2.0
-      lat_jerk_lim: 7.0
-      actual_steer_diff_lim: 1.0
+      reference_speed_points: [20.0, 30.0]
+      steer_lim: [1.0, 0.8]
+      steer_rate_lim: [1.0, 0.8]
+      lon_acc_lim: [1.0, 0.9]
+      lon_jerk_lim: [0.5, 0.4]
+      lat_acc_lim: [2.0, 1.8]
+      lat_jerk_lim: [7.0, 6.0]
+      actual_steer_diff_lim: [1.0, 0.8]

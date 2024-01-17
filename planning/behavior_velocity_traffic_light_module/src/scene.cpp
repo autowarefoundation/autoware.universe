@@ -16,8 +16,10 @@
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
+#include <traffic_light_utils/traffic_light_utils.hpp>
 
-#include <boost/optional.hpp>  // To be replaced by std::optional in C++17
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
 
 #include <tf2/utils.h>
 
@@ -29,9 +31,7 @@
 
 #include <algorithm>
 #include <limits>
-#include <map>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -50,14 +50,14 @@ bool getBackwardPointFromBasePoint(
   return true;
 }
 
-boost::optional<Point2d> findNearestCollisionPoint(
+std::optional<Point2d> findNearestCollisionPoint(
   const LineString2d & line1, const LineString2d & line2, const Point2d & origin)
 {
   std::vector<Point2d> collision_points;
   bg::intersection(line1, line2, collision_points);
 
   if (collision_points.empty()) {
-    return boost::none;
+    return std::nullopt;
   }
 
   // check nearest collision point
@@ -159,32 +159,6 @@ bool calcStopPointAndInsertIndex(
   }
   return false;
 }
-
-geometry_msgs::msg::Point getTrafficLightPosition(
-  const lanelet::ConstLineStringOrPolygon3d & traffic_light)
-{
-  if (!traffic_light.lineString()) {
-    throw std::invalid_argument{"Traffic light is not LineString"};
-  }
-  geometry_msgs::msg::Point tl_center;
-  auto traffic_light_ls = traffic_light.lineString().value();
-  for (const auto & tl_point : traffic_light_ls) {
-    tl_center.x += tl_point.x() / traffic_light_ls.size();
-    tl_center.y += tl_point.y() / traffic_light_ls.size();
-    tl_center.z += tl_point.z() / traffic_light_ls.size();
-  }
-  return tl_center;
-}
-autoware_auto_perception_msgs::msg::LookingTrafficSignal initializeTrafficSignal(
-  const rclcpp::Time stamp)
-{
-  autoware_auto_perception_msgs::msg::LookingTrafficSignal state;
-  state.header.stamp = stamp;
-  state.is_module_running = true;
-  state.perception.has_state = false;
-  state.result.has_state = false;
-  return state;
-}
 }  // namespace
 
 TrafficLightModule::TrafficLightModule(
@@ -197,16 +171,14 @@ TrafficLightModule::TrafficLightModule(
   traffic_light_reg_elem_(traffic_light_reg_elem),
   lane_(lane),
   state_(State::APPROACH),
-  input_(Input::PERCEPTION),
   is_prev_state_stop_(false)
 {
-  velocity_factor_.init(VelocityFactor::TRAFFIC_SIGNAL);
+  velocity_factor_.init(PlanningBehavior::TRAFFIC_SIGNAL);
   planner_param_ = planner_param;
 }
 
 bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
-  looking_tl_state_ = initializeTrafficSignal(path->header.stamp);
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
@@ -217,9 +189,8 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   const auto & self_pose = planner_data_->current_odometry;
 
-  // Get lanelet2 traffic lights and stop lines.
+  // Get lanelet2 stop lines.
   lanelet::ConstLineString3d lanelet_stop_lines = *(traffic_light_reg_elem_.stopLine());
-  lanelet::ConstLineStringsOrPolygons3d traffic_lights = traffic_light_reg_elem_.trafficLights();
 
   // Calculate stop pose and insert index
   Eigen::Vector2d stop_line_point{};
@@ -247,15 +218,35 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     // Move to go out state if ego vehicle over deadline.
     constexpr double signed_deadline_length = -2.0;
     if (signed_arc_length_to_stop_point < signed_deadline_length) {
-      RCLCPP_INFO(logger_, "APPROACH -> GO_OUT");
+      RCLCPP_DEBUG(logger_, "APPROACH -> GO_OUT");
       state_ = State::GO_OUT;
+      stop_signal_received_time_ptr_.reset();
       return true;
     }
 
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
     // Check if stop is coming.
-    setSafe(!isStopSignal(traffic_lights));
+    const bool is_stop_signal = isStopSignal();
+
+    // Update stop signal received time
+    if (is_stop_signal) {
+      if (!stop_signal_received_time_ptr_) {
+        stop_signal_received_time_ptr_ = std::make_unique<Time>(clock_->now());
+      }
+    } else {
+      stop_signal_received_time_ptr_.reset();
+    }
+
+    // Check hysteresis
+    const double time_diff =
+      stop_signal_received_time_ptr_
+        ? std::max((clock_->now() - *stop_signal_received_time_ptr_).seconds(), 0.0)
+        : 0.0;
+    const bool to_be_stopped =
+      is_stop_signal && (is_prev_state_stop_ || time_diff > planner_param_.stop_time_hysteresis);
+
+    setSafe(!to_be_stopped);
     if (isActivated()) {
       is_prev_state_stop_ = false;
       return true;
@@ -273,45 +264,46 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     constexpr double restart_length = 1.0;
     if (use_initialization_after_start) {
       if (signed_arc_length_to_stop_point > restart_length) {
-        RCLCPP_INFO(logger_, "GO_OUT(RESTART) -> APPROACH");
+        RCLCPP_DEBUG(logger_, "GO_OUT(RESTART) -> APPROACH");
         state_ = State::APPROACH;
       }
     }
+    stop_signal_received_time_ptr_.reset();
     return true;
   }
 
   return false;
 }
 
-bool TrafficLightModule::isStopSignal(const lanelet::ConstLineStringsOrPolygons3d & traffic_lights)
+bool TrafficLightModule::isStopSignal()
 {
-  if (!updateTrafficSignal(traffic_lights)) {
+  updateTrafficSignal();
+
+  // If it never receives traffic signal, it will PASS.
+  if (!traffic_signal_stamp_) {
     return false;
   }
 
-  return looking_tl_state_.result.judge ==
-         autoware_auto_perception_msgs::msg::TrafficSignalWithJudge::STOP;
+  if (isTrafficSignalTimedOut()) {
+    return true;
+  }
+
+  return traffic_light_utils::isTrafficSignalStop(lane_, looking_tl_state_);
 }
 
-bool TrafficLightModule::updateTrafficSignal(
-  const lanelet::ConstLineStringsOrPolygons3d & traffic_lights)
+void TrafficLightModule::updateTrafficSignal()
 {
-  autoware_auto_perception_msgs::msg::TrafficSignalStamped tl_state_perception;
-  bool found_perception = getHighestConfidenceTrafficSignal(traffic_lights, tl_state_perception);
-
-  if (!found_perception) {
-    // Don't stop when UNKNOWN or TIMEOUT as discussed at #508
-    input_ = Input::NONE;
-    return false;
+  TrafficSignalStamped signal;
+  if (!findValidTrafficSignal(signal)) {
+    // Don't stop if it never receives traffic light topic.
+    return;
   }
 
-  if (found_perception) {
-    looking_tl_state_.perception = generateTlStateWithJudgeFromTlState(tl_state_perception.signal);
-    looking_tl_state_.result = looking_tl_state_.perception;
-    input_ = Input::PERCEPTION;
-  }
+  traffic_signal_stamp_ = signal.stamp;
 
-  return true;
+  // Found signal associated with the lanelet
+  looking_tl_state_ = signal.signal;
+  return;
 }
 
 bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
@@ -337,7 +329,7 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 
   const auto & enable_pass_judge = planner_param_.enable_pass_judge;
 
-  if (enable_pass_judge && !stoppable && !is_prev_state_stop_ && input_ == Input::PERCEPTION) {
+  if (enable_pass_judge && !stoppable && !is_prev_state_stop_) {
     // Cannot stop under acceleration and jerk limits.
     // However, ego vehicle can't enter the intersection while the light is yellow.
     // It is called dilemma zone. Make a stop decision to be safe.
@@ -358,102 +350,38 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
   }
 }
 
-bool TrafficLightModule::isTrafficSignalStop(
-  const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state) const
+bool TrafficLightModule::findValidTrafficSignal(TrafficSignalStamped & valid_traffic_signal) const
 {
-  if (hasTrafficLightCircleColor(
-        tl_state, autoware_auto_perception_msgs::msg::TrafficLight::GREEN)) {
+  // get traffic signal associated with the regulatory element id
+  const auto traffic_signal_stamped_opt = planner_data_->getTrafficSignal(
+    traffic_light_reg_elem_.id(), true /* traffic light module keeps last observation */);
+  if (!traffic_signal_stamped_opt) {
+    RCLCPP_WARN_THROTTLE(
+      logger_, *clock_, 5000 /* ms */,
+      "the traffic signal data associated with regulatory element id is not received");
     return false;
   }
-
-  const std::string turn_direction = lane_.attributeOr("turn_direction", "else");
-
-  if (turn_direction == "else") {
-    return true;
-  }
-  if (
-    turn_direction == "right" &&
-    hasTrafficLightShape(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW)) {
-    return false;
-  }
-  if (
-    turn_direction == "left" &&
-    hasTrafficLightShape(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW)) {
-    return false;
-  }
-  if (
-    turn_direction == "straight" &&
-    hasTrafficLightShape(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::UP_ARROW)) {
-    return false;
-  }
-
+  valid_traffic_signal = traffic_signal_stamped_opt.value();
   return true;
 }
 
-bool TrafficLightModule::getHighestConfidenceTrafficSignal(
-  const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
-  autoware_auto_perception_msgs::msg::TrafficSignalStamped & highest_confidence_tl_state)
+bool TrafficLightModule::isTrafficSignalTimedOut() const
 {
-  // search traffic light state
-  bool found = false;
-  double highest_confidence = 0.0;
-  std::string reason;
-  for (const auto & traffic_light : traffic_lights) {
-    // traffic light must be linestrings
-    if (!traffic_light.isLineString()) {
-      reason = "NotLineString";
-      continue;
-    }
-
-    const int id = static_cast<lanelet::ConstLineString3d>(traffic_light).id();
-    RCLCPP_DEBUG(logger_, "traffic light id: %d (on route)", id);
-    const auto tl_state_stamped = planner_data_->getTrafficSignal(id);
-    if (!tl_state_stamped) {
-      reason = "TrafficSignalNotFound";
-      continue;
-    }
-
-    const auto header = tl_state_stamped->header;
-    const auto tl_state = tl_state_stamped->signal;
-    if (!((clock_->now() - header.stamp).seconds() < planner_param_.tl_state_timeout)) {
-      reason = "TimeOut";
-      continue;
-    }
-
-    if (
-      tl_state.lights.empty() ||
-      tl_state.lights.front().color == autoware_auto_perception_msgs::msg::TrafficLight::UNKNOWN) {
-      reason = "TrafficLightUnknown";
-      continue;
-    }
-
-    if (highest_confidence < tl_state.lights.front().confidence) {
-      highest_confidence = tl_state.lights.front().confidence;
-      highest_confidence_tl_state = *tl_state_stamped;
-      try {
-        auto tl_position = getTrafficLightPosition(traffic_light);
-        debug_data_.traffic_light_points.push_back(tl_position);
-        debug_data_.highest_confidence_traffic_light_point = std::make_optional(tl_position);
-      } catch (const std::invalid_argument & ex) {
-        RCLCPP_WARN_STREAM(logger_, ex.what());
-        continue;
-      }
-      found = true;
-    }
-  }
-  if (!found) {
-    std::string not_found_traffic_ids{""};
-    for (size_t i = 0; i < traffic_lights.size(); ++i) {
-      const int id = static_cast<lanelet::ConstLineString3d>(traffic_lights.at(i)).id();
-      not_found_traffic_ids += (i != 0 ? "," : "") + std::to_string(id);
-    }
-
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 5000 /* ms */, "cannot find traffic light lamp state (%s) due to %s.",
-      not_found_traffic_ids.c_str(), reason.c_str());
+  if (!traffic_signal_stamp_) {
     return false;
   }
-  return true;
+
+  const auto is_traffic_signal_timeout =
+    (clock_->now() - *traffic_signal_stamp_).seconds() > planner_param_.tl_state_timeout;
+  if (is_traffic_signal_timeout) {
+    RCLCPP_WARN_THROTTLE(
+      logger_, *clock_, 5000 /* ms */, "the received traffic signal data is outdated");
+    RCLCPP_WARN_STREAM_THROTTLE(
+      logger_, *clock_, 5000 /* ms */,
+      "time diff: " << (clock_->now() - *traffic_signal_stamp_).seconds());
+    return true;
+  }
+  return false;
 }
 
 autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
@@ -495,41 +423,4 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   return modified_path;
 }
 
-bool TrafficLightModule::hasTrafficLightCircleColor(
-  const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
-  const uint8_t & lamp_color) const
-{
-  using autoware_auto_perception_msgs::msg::TrafficLight;
-
-  const auto it_lamp =
-    std::find_if(tl_state.lights.begin(), tl_state.lights.end(), [&lamp_color](const auto & x) {
-      return x.shape == TrafficLight::CIRCLE && x.color == lamp_color;
-    });
-
-  return it_lamp != tl_state.lights.end();
-}
-
-bool TrafficLightModule::hasTrafficLightShape(
-  const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
-  const uint8_t & lamp_shape) const
-{
-  const auto it_lamp = std::find_if(
-    tl_state.lights.begin(), tl_state.lights.end(),
-    [&lamp_shape](const auto & x) { return x.shape == lamp_shape; });
-
-  return it_lamp != tl_state.lights.end();
-}
-
-autoware_auto_perception_msgs::msg::TrafficSignalWithJudge
-TrafficLightModule::generateTlStateWithJudgeFromTlState(
-  const autoware_auto_perception_msgs::msg::TrafficSignal tl_state) const
-{
-  autoware_auto_perception_msgs::msg::TrafficSignalWithJudge tl_state_with_judge;
-  tl_state_with_judge.signal = tl_state;
-  tl_state_with_judge.has_state = true;
-  tl_state_with_judge.judge = isTrafficSignalStop(tl_state)
-                                ? autoware_auto_perception_msgs::msg::TrafficSignalWithJudge::STOP
-                                : autoware_auto_perception_msgs::msg::TrafficSignalWithJudge::GO;
-  return tl_state_with_judge;
-}
 }  // namespace behavior_velocity_planner

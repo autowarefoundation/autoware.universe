@@ -30,11 +30,13 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/tracker/model/normal_vehicle_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "perception_utils/perception_utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
@@ -54,7 +56,7 @@ NormalVehicleTracker::NormalVehicleTracker(
   float q_stddev_y = 1.0;                                     // object coordinate [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // map coordinate[rad/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(10);     // object coordinate [m/(s*s)]
-  float q_stddev_slip = tier4_autoware_utils::deg2rad(20);    // object coordinate [rad/(s*s)]
+  float q_stddev_slip = tier4_autoware_utils::deg2rad(5);     // object coordinate [rad/(s*s)]
   float r_stddev_x = 1.0;                                     // object coordinate [m]
   float r_stddev_y = 0.3;                                     // object coordinate [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // map coordinate [rad]
@@ -245,7 +247,7 @@ bool NormalVehicleTracker::measureWithPose(
 
   float r_cov_x;
   float r_cov_y;
-  const uint8_t label = perception_utils::getHighestProbLabel(object.classification);
+  const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
 
   if (label == Label::CAR) {
     r_cov_x = ekf_params_.r_cov_x;
@@ -407,7 +409,7 @@ bool NormalVehicleTracker::measure(
 {
   const auto & current_classification = getClassification();
   object_ = object;
-  if (perception_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -435,7 +437,7 @@ bool NormalVehicleTracker::measure(
 bool NormalVehicleTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = perception_utils::toTrackedObject(object_);
+  object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 
@@ -494,7 +496,8 @@ bool NormalVehicleTracker::getTrackedObject(
   pose_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
 
   // twist
-  twist_with_cov.twist.linear.x = X_t(IDX::VX);
+  twist_with_cov.twist.linear.x = X_t(IDX::VX) * std::cos(X_t(IDX::SLIP));
+  twist_with_cov.twist.linear.y = X_t(IDX::VX) * std::sin(X_t(IDX::SLIP));
   twist_with_cov.twist.angular.z =
     X_t(IDX::VX) / lr_ * std::sin(X_t(IDX::SLIP));  // yaw_rate = vx_k / l_r * sin(slip_k)
   // twist covariance

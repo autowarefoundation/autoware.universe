@@ -15,6 +15,7 @@
 #include "path_smoother/elastic_band_smoother.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "path_smoother/utils/geometry_utils.hpp"
 #include "path_smoother/utils/trajectory_utils.hpp"
 #include "rclcpp/time.hpp"
@@ -43,11 +44,19 @@ StringStamped createStringStamped(const rclcpp::Time & now, const std::string & 
   return msg;
 }
 
+Float64Stamped createFloat64Stamped(const rclcpp::Time & now, const float & data)
+{
+  Float64Stamped msg;
+  msg.stamp = now;
+  msg.data = data;
+  return msg;
+}
+
 void setZeroVelocityAfterStopPoint(std::vector<TrajectoryPoint> & traj_points)
 {
   const auto opt_zero_vel_idx = motion_utils::searchZeroVelocityIndex(traj_points);
   if (opt_zero_vel_idx) {
-    for (size_t i = opt_zero_vel_idx.get(); i < traj_points.size(); ++i) {
+    for (size_t i = opt_zero_vel_idx.value(); i < traj_points.size(); ++i) {
       traj_points.at(i).longitudinal_velocity_mps = 0.0;
     }
   }
@@ -71,11 +80,13 @@ ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_option
   path_sub_ = create_subscription<Path>(
     "~/input/path", 1, std::bind(&ElasticBandSmoother::onPath, this, std::placeholders::_1));
   odom_sub_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
+    "~/input/odometry", 1, [this](const Odometry::ConstSharedPtr msg) { ego_state_ptr_ = msg; });
 
   // debug publisher
   debug_extended_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_traj", 1);
-  debug_calculation_time_pub_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
+  debug_calculation_time_str_pub_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
+  debug_calculation_time_float_pub_ =
+    create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
 
   {  // parameters
     // parameters for ego nearest search
@@ -87,6 +98,7 @@ ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_option
 
   eb_path_smoother_ptr_ = std::make_shared<EBPathSmoother>(
     this, enable_debug_info_, ego_nearest_param_, common_param_, time_keeper_ptr_);
+  replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
 
   // reset planners
   initializePlanning();
@@ -94,6 +106,8 @@ ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_option
   // set parameter callback
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&ElasticBandSmoother::onParam, this, std::placeholders::_1));
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 rcl_interfaces::msg::SetParametersResult ElasticBandSmoother::onParam(
@@ -109,6 +123,7 @@ rcl_interfaces::msg::SetParametersResult ElasticBandSmoother::onParam(
 
   // parameters for core algorithms
   eb_path_smoother_ptr_->onParam(parameters);
+  replan_checker_ptr_->onParam(parameters);
 
   // reset planners
   initializePlanning();
@@ -134,7 +149,7 @@ void ElasticBandSmoother::resetPreviousData()
   prev_optimized_traj_points_ptr_ = nullptr;
 }
 
-void ElasticBandSmoother::onPath(const Path::SharedPtr path_ptr)
+void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
 {
   time_keeper_ptr_->init();
   time_keeper_ptr_->tic(__func__);
@@ -153,20 +168,43 @@ void ElasticBandSmoother::onPath(const Path::SharedPtr path_ptr)
       "Backward path is NOT supported. Just converting path to trajectory");
 
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
-    const auto output_traj_msg = trajectory_utils::createTrajectory(path_ptr->header, traj_points);
+    const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
     path_pub_->publish(*path_ptr);
     return;
   }
 
-  // 1. create planner data
-  const auto planner_data = createPlannerData(*path_ptr);
+  const auto input_traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
 
-  // 2. generate optimized trajectory
-  const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
+  // 1. calculate trajectory with Elastic Band
+  // 1.a check if replan (= optimization) is required
+  PlannerData planner_data(
+    input_traj_points, ego_state_ptr_->pose.pose, ego_state_ptr_->twist.twist.linear.x);
+  const bool is_replan_required = [&]() {
+    if (replan_checker_ptr_->isResetRequired(planner_data)) {
+      // NOTE: always replan when resetting previous optimization
+      resetPreviousData();
+      return true;
+    }
+    // check replan when not resetting previous optimization
+    return !prev_optimized_traj_points_ptr_ ||
+           replan_checker_ptr_->isReplanRequired(planner_data, now());
+  }();
+  replan_checker_ptr_->updateData(planner_data, is_replan_required, now());
+  time_keeper_ptr_->tic(__func__);
+  auto smoothed_traj_points = is_replan_required ? eb_path_smoother_ptr_->smoothTrajectory(
+                                                     input_traj_points, ego_state_ptr_->pose.pose)
+                                                 : *prev_optimized_traj_points_ptr_;
+  time_keeper_ptr_->toc(__func__, "    ");
+
+  prev_optimized_traj_points_ptr_ =
+    std::make_shared<std::vector<TrajectoryPoint>>(smoothed_traj_points);
+
+  // 2. update velocity
+  applyInputVelocity(smoothed_traj_points, input_traj_points, ego_state_ptr_->pose.pose);
 
   // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
-  auto full_traj_points = extendTrajectory(planner_data.traj_points, optimized_traj_points);
+  auto full_traj_points = extendTrajectory(input_traj_points, smoothed_traj_points);
 
   // 4. set zero velocity after stop point
   setZeroVelocityAfterStopPoint(full_traj_points);
@@ -178,10 +216,12 @@ void ElasticBandSmoother::onPath(const Path::SharedPtr path_ptr)
   // publish calculation_time
   // NOTE: This function must be called after measuring onPath calculation time
   const auto calculation_time_msg = createStringStamped(now(), time_keeper_ptr_->getLog());
-  debug_calculation_time_pub_->publish(calculation_time_msg);
+  debug_calculation_time_str_pub_->publish(calculation_time_msg);
+  debug_calculation_time_float_pub_->publish(
+    createFloat64Stamped(now(), time_keeper_ptr_->getAccumulatedTime()));
 
   const auto output_traj_msg =
-    trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
+    motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
   traj_pub_->publish(output_traj_msg);
   const auto output_path_msg = trajectory_utils::create_path(*path_ptr, full_traj_points);
   path_pub_->publish(output_path_msg);
@@ -206,56 +246,6 @@ bool ElasticBandSmoother::isDataReady(const Path & path, rclcpp::Clock clock) co
   }
 
   return true;
-}
-
-PlannerData ElasticBandSmoother::createPlannerData(const Path & path) const
-{
-  // create planner data
-  PlannerData planner_data;
-  planner_data.header = path.header;
-  planner_data.traj_points = trajectory_utils::convertToTrajectoryPoints(path.points);
-  planner_data.left_bound = path.left_bound;
-  planner_data.right_bound = path.right_bound;
-  planner_data.ego_pose = ego_state_ptr_->pose.pose;
-  planner_data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
-  return planner_data;
-}
-
-std::vector<TrajectoryPoint> ElasticBandSmoother::generateOptimizedTrajectory(
-  const PlannerData & planner_data)
-{
-  time_keeper_ptr_->tic(__func__);
-
-  const auto & input_traj_points = planner_data.traj_points;
-
-  // 1. calculate trajectory with Elastic Band
-  auto optimized_traj_points = optimizeTrajectory(planner_data);
-
-  // 2. update velocity
-  applyInputVelocity(optimized_traj_points, input_traj_points, planner_data.ego_pose);
-
-  time_keeper_ptr_->toc(__func__, " ");
-  return optimized_traj_points;
-}
-
-std::vector<TrajectoryPoint> ElasticBandSmoother::optimizeTrajectory(
-  const PlannerData & planner_data)
-{
-  time_keeper_ptr_->tic(__func__);
-  const auto & p = planner_data;
-
-  const auto eb_traj = eb_path_smoother_ptr_->getEBTrajectory(planner_data);
-  if (!eb_traj) return getPrevOptimizedTrajectory(p.traj_points);
-
-  time_keeper_ptr_->toc(__func__, "    ");
-  return *eb_traj;
-}
-
-std::vector<TrajectoryPoint> ElasticBandSmoother::getPrevOptimizedTrajectory(
-  const std::vector<TrajectoryPoint> & traj_points) const
-{
-  if (prev_optimized_traj_points_ptr_) return *prev_optimized_traj_points_ptr_;
-  return traj_points;
 }
 
 void ElasticBandSmoother::applyInputVelocity(
@@ -295,12 +285,36 @@ void ElasticBandSmoother::applyInputVelocity(
   // insert stop point explicitly
   const auto stop_idx = motion_utils::searchZeroVelocityIndex(forward_cropped_input_traj_points);
   if (stop_idx) {
-    const auto input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.get()).pose;
-    const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
-      output_traj_points, input_stop_pose, ego_nearest_param_);
+    const auto & input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.value()).pose;
+    // NOTE: motion_utils::findNearestSegmentIndex is used instead of
+    // trajectory_utils::findEgoSegmentIndex
+    //       for the case where input_traj_points is much longer than output_traj_points, and the
+    //       former has a stop point but the latter will not have.
+    const auto stop_seg_idx = motion_utils::findNearestSegmentIndex(
+      output_traj_points, input_stop_pose, ego_nearest_param_.dist_threshold,
+      ego_nearest_param_.yaw_threshold);
 
     // calculate and insert stop pose on output trajectory
-    trajectory_utils::insertStopPoint(output_traj_points, input_stop_pose, stop_seg_idx);
+    const bool is_stop_point_inside_trajectory = [&]() {
+      if (!stop_seg_idx) {
+        return false;
+      }
+      if (*stop_seg_idx == output_traj_points.size() - 2) {
+        const double signed_projected_length_to_segment =
+          motion_utils::calcLongitudinalOffsetToSegment(
+            output_traj_points, *stop_seg_idx, input_stop_pose.position);
+        const double segment_length =
+          motion_utils::calcSignedArcLength(output_traj_points, *stop_seg_idx, *stop_seg_idx + 1);
+        if (segment_length < signed_projected_length_to_segment) {
+          // NOTE: input_stop_pose is outside output_traj_points.
+          return false;
+        }
+      }
+      return true;
+    }();
+    if (is_stop_point_inside_trajectory) {
+      trajectory_utils::insertStopPoint(output_traj_points, input_stop_pose, *stop_seg_idx);
+    }
   }
 
   time_keeper_ptr_->toc(__func__, "    ");
@@ -324,25 +338,25 @@ std::vector<TrajectoryPoint> ElasticBandSmoother::extendTrajectory(
   const auto joint_end_traj_point_idx = trajectory_utils::getPointIndexAfter(
     traj_points, joint_start_pose.position, joint_start_traj_seg_idx,
     joint_traj_max_length_for_smoothing, joint_traj_min_length_for_smoothing);
+  if (!joint_end_traj_point_idx) {
+    return trajectory_utils::resampleTrajectoryPoints(
+      optimized_traj_points, common_param_.output_delta_arc_length);
+  }
 
   // calculate full trajectory points
   const auto full_traj_points = [&]() {
-    if (!joint_end_traj_point_idx) {
-      return optimized_traj_points;
-    }
-
-    const auto extended_traj_points = std::vector<TrajectoryPoint>{
+    auto extended_traj_points = std::vector<TrajectoryPoint>{
       traj_points.begin() + *joint_end_traj_point_idx, traj_points.end()};
 
-    // NOTE: if optimized_traj_points's back is non zero velocity and extended_traj_points' front is
-    // zero velocity, the zero velocity will be inserted in the whole joint trajectory.
-    auto modified_optimized_traj_points = optimized_traj_points;
-    if (!extended_traj_points.empty() && !modified_optimized_traj_points.empty()) {
-      modified_optimized_traj_points.back().longitudinal_velocity_mps =
-        extended_traj_points.front().longitudinal_velocity_mps;
+    if (!extended_traj_points.empty() && !optimized_traj_points.empty()) {
+      // NOTE: Without this code, if optimized_traj_points's back is non zero velocity and
+      // extended_traj_points' front
+      //       is zero velocity, the zero velocity will be inserted in the whole joint trajectory.
+      //       The input stop point will be inserted explicitly in the latter part.
+      extended_traj_points.front().longitudinal_velocity_mps =
+        optimized_traj_points.back().longitudinal_velocity_mps;
     }
-
-    return concatVectors(modified_optimized_traj_points, extended_traj_points);
+    return concatVectors(optimized_traj_points, extended_traj_points);
   }();
 
   // resample trajectory points
@@ -350,7 +364,7 @@ std::vector<TrajectoryPoint> ElasticBandSmoother::extendTrajectory(
     full_traj_points, common_param_.output_delta_arc_length);
 
   // update stop velocity on joint
-  for (size_t i = joint_start_traj_seg_idx + 1; i <= joint_end_traj_point_idx; ++i) {
+  for (size_t i = joint_start_traj_seg_idx + 1; i <= *joint_end_traj_point_idx; ++i) {
     if (hasZeroVelocity(traj_points.at(i))) {
       if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
         // Here is when current point is 0 velocity, but previous point is not 0 velocity.

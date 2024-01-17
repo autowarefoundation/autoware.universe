@@ -34,17 +34,19 @@ namespace image_projection_based_fusion
 {
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>("roi_cluster_fusion", options)
+: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
+    "roi_cluster_fusion", options)
 {
-  use_iou_x_ = declare_parameter("use_iou_x", true);
-  use_iou_y_ = declare_parameter("use_iou_y", false);
-  use_iou_ = declare_parameter("use_iou", false);
-  use_cluster_semantic_type_ = declare_parameter("use_cluster_semantic_type", false);
-  only_allow_inside_cluster_ = declare_parameter("only_allow_inside_cluster_", true);
-  roi_scale_factor_ = declare_parameter("roi_scale_factor", 1.1);
-  iou_threshold_ = declare_parameter("iou_threshold", 0.1);
-  remove_unknown_ = declare_parameter("remove_unknown", false);
-  trust_distance_ = declare_parameter("trust_distance", 100.0);
+  trust_object_iou_mode_ = declare_parameter<std::string>("trust_object_iou_mode");
+  non_trust_object_iou_mode_ = declare_parameter<std::string>("non_trust_object_iou_mode");
+  use_cluster_semantic_type_ = declare_parameter<bool>("use_cluster_semantic_type");
+  only_allow_inside_cluster_ = declare_parameter<bool>("only_allow_inside_cluster");
+  roi_scale_factor_ = declare_parameter<double>("roi_scale_factor");
+  iou_threshold_ = declare_parameter<double>("iou_threshold");
+  unknown_iou_threshold_ = declare_parameter<double>("unknown_iou_threshold");
+  remove_unknown_ = declare_parameter<bool>("remove_unknown");
+  fusion_distance_ = declare_parameter<double>("fusion_distance");
+  trust_object_distance_ = declare_parameter<double>("trust_object_distance");
 }
 
 void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluster_msg)
@@ -67,9 +69,11 @@ void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_clust
   DetectedObjectsWithFeature known_objects;
   known_objects.feature_objects.reserve(output_cluster_msg.feature_objects.size());
   for (auto & feature_object : output_cluster_msg.feature_objects) {
+    bool is_roi_label_known = feature_object.object.classification.front().label !=
+                              autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
     if (
-      feature_object.object.classification.front().label !=
-      autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+      is_roi_label_known ||
+      feature_object.object.existence_probability >= min_roi_existence_prob_) {
       known_objects.feature_objects.push_back(feature_object);
     }
   }
@@ -81,10 +85,6 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
-  std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
-  std::vector<sensor_msgs::msg::RegionOfInterest> debug_pointcloud_rois;
-  std::vector<Eigen::Vector2d> debug_image_points;
-
   Eigen::Matrix4d projection;
   projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2), camera_info.p.at(3),
     camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6), camera_info.p.at(7),
@@ -97,6 +97,9 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       tf_buffer_, /*target*/ camera_info.header.frame_id,
       /*source*/ input_cluster_msg.header.frame_id, camera_info.header.stamp);
     if (!transform_stamped_optional) {
+      RCLCPP_WARN_STREAM(
+        get_logger(), "Failed to get transform from " << input_cluster_msg.header.frame_id << " to "
+                                                      << camera_info.header.frame_id);
       return;
     }
     transform_stamped = transform_stamped_optional.value();
@@ -108,7 +111,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       continue;
     }
 
-    if (filter_by_distance(input_cluster_msg.feature_objects.at(i))) {
+    if (is_far_enough(input_cluster_msg.feature_objects.at(i), fusion_distance_)) {
       continue;
     }
 
@@ -148,7 +151,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         max_x = std::max(static_cast<int>(normalized_projected_point.x()), max_x);
         max_y = std::max(static_cast<int>(normalized_projected_point.y()), max_y);
         projected_points.push_back(normalized_projected_point);
-        debug_image_points.push_back(normalized_projected_point);
+        if (debugger_) debugger_->obstacle_points_.push_back(normalized_projected_point);
       }
     }
     if (projected_points.empty()) {
@@ -162,48 +165,79 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     roi.width = max_x - min_x;
     roi.height = max_y - min_y;
     m_cluster_roi.insert(std::make_pair(i, roi));
-    debug_pointcloud_rois.push_back(roi);
+    if (debugger_) debugger_->obstacle_rois_.push_back(roi);
   }
 
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
-    int index = 0;
+    int index = -1;
+    bool associated = false;
     double max_iou = 0.0;
+    bool is_roi_label_known =
+      feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
     for (const auto & cluster_map : m_cluster_roi) {
-      double iou(0.0), iou_x(0.0), iou_y(0.0);
-      if (use_iou_) {
-        iou = calcIoU(cluster_map.second, feature_obj.feature.roi);
+      double iou(0.0);
+      bool is_use_non_trust_object_iou_mode = is_far_enough(
+        input_cluster_msg.feature_objects.at(cluster_map.first), trust_object_distance_);
+      auto image_roi = feature_obj.feature.roi;
+      auto cluster_roi = cluster_map.second;
+      sanitizeROI(image_roi, camera_info.width, camera_info.height);
+      sanitizeROI(cluster_roi, camera_info.width, camera_info.height);
+      if (is_use_non_trust_object_iou_mode || is_roi_label_known) {
+        iou = cal_iou_by_mode(cluster_roi, image_roi, non_trust_object_iou_mode_);
+      } else {
+        iou = cal_iou_by_mode(cluster_roi, image_roi, trust_object_iou_mode_);
       }
-      if (use_iou_x_) {
-        iou_x = calcIoUX(cluster_map.second, feature_obj.feature.roi);
-      }
-      if (use_iou_y_) {
-        iou_y = calcIoUY(cluster_map.second, feature_obj.feature.roi);
-      }
+
       const bool passed_inside_cluster_gate =
-        only_allow_inside_cluster_
-          ? is_inside(feature_obj.feature.roi, cluster_map.second, roi_scale_factor_)
-          : true;
-      if (max_iou < iou + iou_x + iou_y && passed_inside_cluster_gate) {
+        only_allow_inside_cluster_ ? is_inside(image_roi, cluster_roi, roi_scale_factor_) : true;
+      if (max_iou < iou && passed_inside_cluster_gate) {
         index = cluster_map.first;
-        max_iou = iou + iou_x + iou_y;
+        max_iou = iou;
+        associated = true;
       }
     }
-    if (
-      iou_threshold_ < max_iou &&
-      output_cluster_msg.feature_objects.at(index).object.existence_probability <=
-        feature_obj.object.existence_probability &&
-      feature_obj.object.classification.front().label !=
-        autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
-      output_cluster_msg.feature_objects.at(index).object.classification =
-        feature_obj.object.classification;
+
+    if (!associated) {
+      continue;
     }
-    debug_image_rois.push_back(feature_obj.feature.roi);
+
+    if (!output_cluster_msg.feature_objects.empty()) {
+      bool is_roi_existence_prob_higher =
+        output_cluster_msg.feature_objects.at(index).object.existence_probability <=
+        feature_obj.object.existence_probability;
+      if (iou_threshold_ < max_iou && is_roi_existence_prob_higher && is_roi_label_known) {
+        output_cluster_msg.feature_objects.at(index).object.classification =
+          feature_obj.object.classification;
+
+        // Update existence_probability for fused objects
+        if (
+          output_cluster_msg.feature_objects.at(index).object.existence_probability <
+          min_roi_existence_prob_) {
+          output_cluster_msg.feature_objects.at(index).object.existence_probability =
+            min_roi_existence_prob_;
+        }
+      }
+
+      // fuse with unknown roi
+
+      if (unknown_iou_threshold_ < max_iou && is_roi_existence_prob_higher && !is_roi_label_known) {
+        output_cluster_msg.feature_objects.at(index).object.classification =
+          feature_obj.object.classification;
+        // Update existence_probability for fused objects
+        if (
+          output_cluster_msg.feature_objects.at(index).object.existence_probability <
+          min_roi_existence_prob_) {
+          output_cluster_msg.feature_objects.at(index).object.existence_probability =
+            min_roi_existence_prob_;
+        }
+      }
+    }
+    if (debugger_) debugger_->image_rois_.push_back(feature_obj.feature.roi);
+    if (debugger_) debugger_->max_iou_for_image_rois_.push_back(max_iou);
   }
 
+  // note: debug objects are safely cleared in fusion_node.cpp
   if (debugger_) {
-    debugger_->image_rois_ = debug_image_rois;
-    debugger_->obstacle_rois_ = debug_pointcloud_rois;
-    debugger_->obstacle_points_ = debug_image_points;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
   }
 }
@@ -238,11 +272,30 @@ bool RoiClusterFusionNode::out_of_scope(const DetectedObjectWithFeature & obj)
   return is_out;
 }
 
-bool RoiClusterFusionNode::filter_by_distance(const DetectedObjectWithFeature & obj)
+bool RoiClusterFusionNode::is_far_enough(
+  const DetectedObjectWithFeature & obj, const double distance_threshold)
 {
   const auto & position = obj.object.kinematics.pose_with_covariance.pose.position;
-  const auto square_distance = position.x * position.x + position.y + position.y;
-  return square_distance > trust_distance_ * trust_distance_;
+  return position.x * position.x + position.y * position.y >
+         distance_threshold * distance_threshold;
+}
+
+double RoiClusterFusionNode::cal_iou_by_mode(
+  const sensor_msgs::msg::RegionOfInterest & roi_1,
+  const sensor_msgs::msg::RegionOfInterest & roi_2, const std::string iou_mode)
+{
+  switch (IOU_MODE_MAP.at(iou_mode)) {
+    case 0 /* use iou mode */:
+      return calcIoU(roi_1, roi_2);
+
+    case 1 /* use iou_x mode */:
+      return calcIoUX(roi_1, roi_2);
+
+    case 2 /* use iou_y mode */:
+      return calcIoUY(roi_1, roi_2);
+    default:
+      return 0.0;
+  }
 }
 
 }  // namespace image_projection_based_fusion

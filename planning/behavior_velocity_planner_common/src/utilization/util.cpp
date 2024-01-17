@@ -12,21 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+
+#include <autoware_auto_planning_msgs/msg/path_point.hpp>
+
+#include <boost/geometry/algorithms/correct.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <algorithm>
 #include <limits>
 #include <string>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace
 {
-namespace planning_utils
+size_t calcPointIndexFromSegmentIndex(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & point, const size_t seg_idx)
 {
-Point2d calculateOffsetPoint2d(const Pose & pose, const double offset_x, const double offset_y)
-{
-  return to_bg2d(calcOffsetPose(pose, offset_x, offset_y, 0.0));
+  const size_t prev_point_idx = seg_idx;
+  const size_t next_point_idx = seg_idx + 1;
+
+  const double prev_dist = tier4_autoware_utils::calcDistance2d(point, points.at(prev_point_idx));
+  const double next_dist = tier4_autoware_utils::calcDistance2d(point, points.at(next_point_idx));
+
+  if (prev_dist < next_dist) {
+    return prev_point_idx;
+  }
+  return next_point_idx;
 }
+
+using autoware_auto_planning_msgs::msg::PathPoint;
 
 PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, const double ratio)
 {
@@ -36,6 +64,71 @@ PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, con
   const double v = lerp(p0.longitudinal_velocity_mps, p1.longitudinal_velocity_mps, ratio);
   p.longitudinal_velocity_mps = v;
   return p;
+}
+
+geometry_msgs::msg::Pose transformRelCoordinate2D(
+  const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
+{
+  // translation
+  geometry_msgs::msg::Point trans_p;
+  trans_p.x = target.position.x - origin.position.x;
+  trans_p.y = target.position.y - origin.position.y;
+
+  // rotation (use inverse matrix of rotation)
+  double yaw = tf2::getYaw(origin.orientation);
+
+  geometry_msgs::msg::Pose res;
+  res.position.x = (std::cos(yaw) * trans_p.x) + (std::sin(yaw) * trans_p.y);
+  res.position.y = ((-1.0) * std::sin(yaw) * trans_p.x) + (std::cos(yaw) * trans_p.y);
+  res.position.z = target.position.z - origin.position.z;
+  res.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(tf2::getYaw(target.orientation) - yaw);
+
+  return res;
+}
+
+}  // namespace
+
+namespace behavior_velocity_planner
+{
+namespace planning_utils
+{
+using autoware_auto_planning_msgs::msg::PathPoint;
+using motion_utils::calcLongitudinalOffsetToSegment;
+using motion_utils::calcSignedArcLength;
+using motion_utils::validateNonEmpty;
+using tier4_autoware_utils::calcAzimuthAngle;
+using tier4_autoware_utils::calcDistance2d;
+using tier4_autoware_utils::calcOffsetPose;
+using tier4_autoware_utils::calcSquaredDistance2d;
+using tier4_autoware_utils::createQuaternionFromYaw;
+using tier4_autoware_utils::getPoint;
+
+size_t calcSegmentIndexFromPointIndex(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & point, const size_t idx)
+{
+  if (idx == 0) {
+    return 0;
+  }
+  if (idx == points.size() - 1) {
+    return idx - 1;
+  }
+  if (points.size() < 3) {
+    return 0;
+  }
+
+  const double offset_to_seg = motion_utils::calcLongitudinalOffsetToSegment(points, idx, point);
+  if (0 < offset_to_seg) {
+    return idx;
+  }
+  return idx - 1;
+}
+
+Point2d calculateOffsetPoint2d(
+  const geometry_msgs::msg::Pose & pose, const double offset_x, const double offset_y)
+{
+  return to_bg2d(calcOffsetPose(pose, offset_x, offset_y, 0.0));
 }
 
 bool createDetectionAreaPolygons(
@@ -167,30 +260,6 @@ void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, BasicPolygons
   }
 }
 
-SearchRangeIndex getPathIndexRangeIncludeLaneId(const PathWithLaneId & path, const int64_t lane_id)
-{
-  /**
-   * @brief find path index range include given lane_id
-   *        |<-min_idx       |<-max_idx
-   *  ------|oooooooooooooooo|-------
-   */
-  SearchRangeIndex search_range = {0, path.points.size() - 1};
-  bool found_first_idx = false;
-  for (size_t i = 0; i < path.points.size(); i++) {
-    const auto & p = path.points.at(i);
-    for (const auto & id : p.lane_ids) {
-      if (id == lane_id) {
-        if (!found_first_idx) {
-          search_range.min_idx = i;
-          found_first_idx = true;
-        }
-        search_range.max_idx = i;
-      }
-    }
-  }
-  return search_range;
-}
-
 void setVelocityFromIndex(const size_t begin_idx, const double vel, PathWithLaneId * input)
 {
   for (size_t i = begin_idx; i < input->points.size(); ++i) {
@@ -228,7 +297,7 @@ void insertVelocity(
 
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
 {
-  geometry_msgs::msg::Pose p = planning_utils::transformRelCoordinate2D(target, origin);
+  geometry_msgs::msg::Pose p = transformRelCoordinate2D(target, origin);
   const bool is_target_ahead = (p.position.x > 0.0);
   return is_target_ahead;
 }
@@ -285,73 +354,6 @@ Polygon2d generatePathPolygon(
 
   bg::correct(ego_area);
   return ego_area;
-}
-
-lanelet::ConstLanelet generatePathLanelet(
-  const PathWithLaneId & path, const size_t start_idx, const size_t end_idx, const double width)
-{
-  lanelet::Points3d lefts;
-  for (size_t i = start_idx; i <= end_idx; ++i) {
-    const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
-    const double x = path.points.at(i).point.pose.position.x + width / 2 * std::sin(yaw);
-    const double y = path.points.at(i).point.pose.position.y - width / 2 * std::cos(yaw);
-    const lanelet::Point3d p(lanelet::InvalId, x, y, path.points.at(i).point.pose.position.z);
-    lefts.emplace_back(p);
-  }
-  lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, lefts);
-
-  lanelet::Points3d rights;
-  for (size_t i = start_idx; i <= end_idx; ++i) {
-    const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
-    const double x = path.points.at(i).point.pose.position.x - width / 2 * std::sin(yaw);
-    const double y = path.points.at(i).point.pose.position.y + width / 2 * std::cos(yaw);
-    const lanelet::Point3d p(lanelet::InvalId, x, y, path.points.at(i).point.pose.position.z);
-    rights.emplace_back(p);
-  }
-  lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, rights);
-
-  return lanelet::Lanelet(lanelet::InvalId, left, right);
-}
-
-geometry_msgs::msg::Pose transformRelCoordinate2D(
-  const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
-{
-  // translation
-  geometry_msgs::msg::Point trans_p;
-  trans_p.x = target.position.x - origin.position.x;
-  trans_p.y = target.position.y - origin.position.y;
-
-  // rotation (use inverse matrix of rotation)
-  double yaw = tf2::getYaw(origin.orientation);
-
-  geometry_msgs::msg::Pose res;
-  res.position.x = (std::cos(yaw) * trans_p.x) + (std::sin(yaw) * trans_p.y);
-  res.position.y = ((-1.0) * std::sin(yaw) * trans_p.x) + (std::cos(yaw) * trans_p.y);
-  res.position.z = target.position.z - origin.position.z;
-  res.orientation =
-    tier4_autoware_utils::createQuaternionFromYaw(tf2::getYaw(target.orientation) - yaw);
-
-  return res;
-}
-
-geometry_msgs::msg::Pose transformAbsCoordinate2D(
-  const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin)
-{
-  // rotation
-  geometry_msgs::msg::Point rot_p;
-  double yaw = tf2::getYaw(origin.orientation);
-  rot_p.x = (std::cos(yaw) * relative.position.x) + (-std::sin(yaw) * relative.position.y);
-  rot_p.y = (std::sin(yaw) * relative.position.x) + (std::cos(yaw) * relative.position.y);
-
-  // translation
-  geometry_msgs::msg::Pose absolute;
-  absolute.position.x = rot_p.x + origin.position.x;
-  absolute.position.y = rot_p.y + origin.position.y;
-  absolute.position.z = relative.position.z + origin.position.z;
-  absolute.orientation =
-    tier4_autoware_utils::createQuaternionFromYaw(tf2::getYaw(relative.orientation) + yaw);
-
-  return absolute;
 }
 
 double calcJudgeLineDistWithAccLimit(
@@ -517,7 +519,7 @@ LineString2d extendLine(
     {(p1 - length * t).x(), (p1 - length * t).y()}, {(p2 + length * t).x(), (p2 + length * t).y()}};
 }
 
-boost::optional<int64_t> getNearestLaneId(
+std::optional<int64_t> getNearestLaneId(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose)
 {
@@ -531,7 +533,7 @@ boost::optional<int64_t> getNearestLaneId(
   if (lanelet::utils::query::getClosestLanelet(lanes, current_pose, &closest_lane)) {
     return closest_lane.id();
   }
-  return boost::none;
+  return std::nullopt;
 }
 
 std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
@@ -612,7 +614,7 @@ bool isOverLine(
          0.0;
 }
 
-boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
+std::optional<geometry_msgs::msg::Pose> insertDecelPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output,
   const float target_velocity)
 {
@@ -627,16 +629,16 @@ boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
     return {};
   }
 
-  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
+  for (size_t i = insert_idx.value(); i < output.points.size(); ++i) {
     const auto & original_velocity = output.points.at(i).point.longitudinal_velocity_mps;
     output.points.at(i).point.longitudinal_velocity_mps =
       std::min(original_velocity, target_velocity);
   }
-  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.value()));
 }
 
 // TODO(murooka): remove this function for u-turn and crossing-path
-boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+std::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output)
 {
   const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
@@ -646,10 +648,10 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
     return {};
   }
 
-  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.value()));
 }
 
-boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+std::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output)
 {
   const auto insert_idx = motion_utils::insertStopPoint(stop_seg_idx, stop_point, output.points);
@@ -658,10 +660,10 @@ boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
     return {};
   }
 
-  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.value()));
 }
 
-std::set<int> getAssociativeIntersectionLanelets(
+std::set<lanelet::Id> getAssociativeIntersectionLanelets(
   lanelet::ConstLanelet lane, const lanelet::LaneletMapPtr lanelet_map,
   const lanelet::routing::RoutingGraphPtr routing_graph)
 {
@@ -671,12 +673,12 @@ std::set<int> getAssociativeIntersectionLanelets(
   }
 
   const auto parents = routing_graph->previous(lane);
-  std::set<int> parent_neighbors;
+  std::set<lanelet::Id> parent_neighbors;
   for (const auto & parent : parents) {
     const auto neighbors = routing_graph->besides(parent);
     for (const auto & neighbor : neighbors) parent_neighbors.insert(neighbor.id());
   }
-  std::set<int> associative_intersection_lanelets;
+  std::set<lanelet::Id> associative_intersection_lanelets;
   associative_intersection_lanelets.insert(lane.id());
   for (const auto & parent_neighbor_id : parent_neighbors) {
     const auto parent_neighbor = lanelet_map->laneletLayer.get(parent_neighbor_id);

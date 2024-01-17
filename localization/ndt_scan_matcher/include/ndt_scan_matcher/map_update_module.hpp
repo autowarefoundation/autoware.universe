@@ -15,10 +15,8 @@
 #ifndef NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 #define NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
-#include "ndt_scan_matcher/debug.hpp"
+#include "localization_util/util_func.hpp"
 #include "ndt_scan_matcher/particle.hpp"
-#include "ndt_scan_matcher/tf2_listener_module.hpp"
-#include "ndt_scan_matcher/util_func.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -49,43 +47,29 @@ class MapUpdateModule
 public:
   MapUpdateModule(
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-    std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
-    std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
-    rclcpp::CallbackGroup::SharedPtr main_callback_group,
-    std::shared_ptr<std::map<std::string, std::string>> state_ptr);
+    std::shared_ptr<NormalDistributionsTransform> ndt_ptr);
 
 private:
   friend class NDTScanMatcher;
-  void callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr odom_ptr);
-  void map_update_timer_callback();
 
   void update_ndt(
     const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
     const std::vector<std::string> & map_ids_to_remove);
   void update_map(const geometry_msgs::msg::Point & position);
-  bool should_update_map(const geometry_msgs::msg::Point & position) const;
+  [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position) const;
   void publish_partial_pcd_map();
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 
   rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr
     pcd_loader_client_;
-  rclcpp::TimerBase::SharedPtr map_update_timer_;
-
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_odom_sub_;
-
-  rclcpp::CallbackGroup::SharedPtr map_callback_group_;
 
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
   std::mutex * ndt_ptr_mutex_;
-  std::string map_frame_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
-  std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
-  std::shared_ptr<std::map<std::string, std::string>> state_ptr_;
 
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
-  std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
   const double dynamic_map_loading_update_distance_;
   const double dynamic_map_loading_map_radius_;
   const double lidar_radius_;

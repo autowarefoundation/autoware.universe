@@ -14,7 +14,11 @@
 
 #include "motion_utils/resample/resample.hpp"
 
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
+#include "interpolation/zero_order_hold.hpp"
 #include "motion_utils/resample/resample_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 namespace motion_utils
@@ -109,13 +113,16 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
 }
 
 std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
-  const std::vector<geometry_msgs::msg::Pose> & points,
+  const std::vector<geometry_msgs::msg::Pose> & points_raw,
   const std::vector<double> & resampled_arclength, const bool use_akima_spline_for_xy,
   const bool use_lerp_for_z)
 {
+  // Remove overlap points for resampling
+  const auto points = motion_utils::removeOverlapPoints(points_raw);
+
   // validate arguments
   if (!resample_utils::validate_arguments(points, resampled_arclength)) {
-    return points;
+    return points_raw;
   }
 
   std::vector<geometry_msgs::msg::Point> position(points.size());
@@ -479,7 +486,7 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
   autoware_auto_planning_msgs::msg::Path resampled_path;
   resampled_path.header = input_path.header;
   resampled_path.left_bound = input_path.left_bound;
-  resampled_path.right_bound = resampled_path.right_bound;
+  resampled_path.right_bound = input_path.right_bound;
   resampled_path.points.resize(interpolated_pose.size());
   for (size_t i = 0; i < resampled_path.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::PathPoint path_point;

@@ -14,7 +14,8 @@
 
 #include "path_sampler/utils/trajectory_utils.hpp"
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/resample/resample.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "path_sampler/utils/geometry_utils.hpp"
 #include "tf2/utils.h"
 
@@ -55,15 +56,6 @@ void compensateLastPose(
   if (dist > delta_dist_threshold || std::fabs(norm_diff_yaw) > delta_yaw_threshold) {
     traj_points.push_back(convertToTrajectoryPoint(last_path_point));
   }
-}
-
-Trajectory createTrajectory(
-  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points)
-{
-  auto traj = motion_utils::convertToTrajectory(traj_points);
-  traj.header = header;
-
-  return traj;
 }
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(

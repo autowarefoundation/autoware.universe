@@ -75,6 +75,10 @@ For instance, if the vehicle is attempting to start with an acceleration of `1.0
 
 A suitable example of a vehicle system for the slope compensation function is one in which the output acceleration from the longitudinal_controller is converted into target accel/brake pedal input without any feedbacks. In this case, the output acceleration is just used as a feedforward term to calculate the target pedal, and hence the issue mentioned above does not arise.
 
+Note: The angle of the slope is defined as positive for an uphill slope, while the pitch angle of the ego pose is defined as negative when facing upward. They have an opposite definition.
+
+![slope_definition](./media/slope_definition.drawio.svg)
+
 #### PID control
 
 For deviations that cannot be handled by FeedForward control, such as model errors, PID control is used to construct a feedback system.
@@ -86,8 +90,13 @@ This PID logic has a maximum value for the output of each term. This is to preve
 - Large integral terms may cause unintended behavior by users.
 - Unintended noise may cause the output of the derivative term to be very large.
 
-Also, the integral term is not accumulated when the vehicle is stopped. This is to prevent unintended accumulation of the integral term in cases such as Autoware assumes that the vehicle is engaged, but an external system has locked the vehicle to start.
-On the other hand, if the vehicle gets stuck in a depression in the road surface when starting, the vehicle will not start forever, which is currently being addressed by developers.
+Note: by default, the integral term in the control system is not accumulated when the vehicle is stationary. This precautionary measure aims to prevent unintended accumulation of the integral term in scenarios where Autoware assumes the vehicle is engaged, but an external system has immobilized the vehicle to initiate startup procedures.
+
+However, certain situations may arise, such as when the vehicle encounters a depression in the road surface during startup or if the slope compensation is inaccurately estimated (lower than necessary), leading to a failure to initiate motion. To address these scenarios, it is possible to activate error integration even when the vehicle is at rest by setting the `enable_integration_at_low_speed` parameter to true.
+
+When `enable_integration_at_low_speed` is set to true, the PID controller will initiate integration of the acceleration error after a specified duration defined by the `time_threshold_before_pid_integration` parameter has elapsed without the vehicle surpassing a minimum velocity set by the `current_vel_threshold_pid_integration` parameter.
+
+The presence of the `time_threshold_before_pid_integration` parameter is important for practical PID tuning. Integrating the error when the vehicle is stationary or at low speed can complicate PID tuning. This parameter effectively introduces a delay before the integral part becomes active, preventing it from kicking in immediately. This delay allows for more controlled and effective tuning of the PID controller.
 
 At present, PID control is implemented from the viewpoint of trade-off between development/maintenance cost and performance.
 This may be replaced by a higher performance controller (adaptive control or robust control) in future development.
@@ -203,7 +212,9 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 | max_d_effort                          | double | max value of acceleration with d gain                                                                                                                              | 0.0           |
 | min_d_effort                          | double | min value of acceleration with d gain                                                                                                                              | 0.0           |
 | lpf_vel_error_gain                    | double | gain of low-pass filter for velocity error                                                                                                                         | 0.9           |
-| current_vel_threshold_pid_integration | double | Velocity error is integrated for I-term only when the absolute value of current velocity is larger than this parameter. [m/s]                                      | 0.5           |
+| enable_integration_at_low_speed       | bool   | Whether to enable integration of acceleration errors when the vehicle speed is lower than `current_vel_threshold_pid_integration` or not.                          |
+| current_vel_threshold_pid_integration | double | Velocity error is integrated for I-term only when the absolute value of current velocity is larger than this parameter. [m/s]                                      |
+| time_threshold_before_pid_integration | double | How much time without the vehicle moving must past to enable PID error integration. [s]                                                                            | 5.0           |
 | brake_keeping_acc                     | double | If `enable_brake_keeping_before_stop` is true, a certain acceleration is kept during DRIVE state before the ego stops [m/s^2] See [Brake keeping](#brake-keeping). | 0.2           |
 
 ### STOPPING Parameter (smooth stop)
@@ -229,6 +240,10 @@ If the ego is still running, strong acceleration (`strong_stop_acc`) to stop rig
 | smooth_stop_strong_stop_dist | double | Strong acceleration will be output when the ego is `smooth_stop_strong_stop_dist`-meter over the stop point. [m]     | -0.5          |
 
 ### STOPPED Parameter
+
+The `STOPPED` state assumes that the vehicle is completely stopped with the brakes fully applied.
+Therefore, `stopped_acc` should be set to a value that allows the vehicle to apply the strongest possible brake.
+If `stopped_acc` is not sufficiently low, there is a possibility of sliding down on steep slopes.
 
 | Name         | Type   | Description                                  | Default value |
 | :----------- | :----- | :------------------------------------------- | :------------ |

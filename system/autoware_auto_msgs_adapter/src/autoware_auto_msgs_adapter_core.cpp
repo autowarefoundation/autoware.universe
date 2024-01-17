@@ -57,6 +57,21 @@ MapStringAdapter AutowareAutoMsgsAdapterNode::create_adapter_map(
        return std::static_pointer_cast<AdapterBaseInterface>(
          std::make_shared<AdapterControl>(*this, topic_name_source, topic_name_target));
      }},
+    {"autoware_auto_mapping_msgs/msg/HADMapBin",
+     [&] {
+       return std::static_pointer_cast<AdapterBaseInterface>(
+         std::make_shared<AdapterMap>(*this, topic_name_source, topic_name_target));
+     }},
+    {"autoware_auto_perception_msgs/msg/PredictedObjects",
+     [&] {
+       return std::static_pointer_cast<AdapterBaseInterface>(
+         std::make_shared<AdapterPerception>(*this, topic_name_source, topic_name_target));
+     }},
+    {"autoware_auto_planning_msgs/msg/Trajectory",
+     [&] {
+       return std::static_pointer_cast<AdapterBaseInterface>(
+         std::make_shared<AdapterPlanning>(*this, topic_name_source, topic_name_target));
+     }},
   };
 }
 

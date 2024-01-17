@@ -16,6 +16,7 @@
 
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 namespace
 {
@@ -29,36 +30,6 @@ geometry_msgs::msg::Point calcOffsetPosition(
   const geometry_msgs::msg::Pose & pose, const double offset_x, const double offset_y)
 {
   return tier4_autoware_utils::calcOffsetPose(pose, offset_x, offset_y, 0.0).position;
-}
-
-Polygon2d createOneStepPolygon(
-  const geometry_msgs::msg::Pose & base_step_pose, const geometry_msgs::msg::Pose & next_step_pose,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
-{
-  Polygon2d polygon;
-
-  const double base_to_front = vehicle_info.max_longitudinal_offset_m;
-  const double width = vehicle_info.vehicle_width_m / 2.0 + lat_margin;
-  const double base_to_rear = vehicle_info.rear_overhang_m;
-
-  // base step
-  appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, base_to_front, width));
-  appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, base_to_front, -width));
-  appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, -base_to_rear, -width));
-  appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, -base_to_rear, width));
-
-  // next step
-  appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, base_to_front, width));
-  appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, base_to_front, -width));
-  appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, -base_to_rear, -width));
-  appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, -base_to_rear, width));
-
-  bg::correct(polygon);
-
-  Polygon2d hull_polygon;
-  bg::convex_hull(polygon, hull_polygon);
-
-  return hull_polygon;
 }
 
 PointWithStamp calcNearestCollisionPoint(
@@ -114,6 +85,7 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
           collision_geom_point.stamp = object_time;
           collision_geom_point.point.x = collision_point.x();
           collision_geom_point.point.y = collision_point.y();
+          collision_geom_point.point.z = traj_points.at(i).pose.position.z;
           collision_geom_points.push_back(collision_geom_point);
         }
       }
@@ -132,19 +104,68 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
 
 namespace polygon_utils
 {
-std::optional<geometry_msgs::msg::Point> getCollisionPoint(
+Polygon2d createOneStepPolygon(
+  const std::vector<geometry_msgs::msg::Pose> & last_poses,
+  const std::vector<geometry_msgs::msg::Pose> & current_poses,
+  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
+{
+  Polygon2d polygon;
+
+  const double base_to_front = vehicle_info.max_longitudinal_offset_m;
+  const double width = vehicle_info.vehicle_width_m / 2.0 + lat_margin;
+  const double base_to_rear = vehicle_info.rear_overhang_m;
+
+  for (auto & pose : last_poses) {
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, -width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, -width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, width));
+  }
+  for (auto & pose : current_poses) {
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, -width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, -width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, width));
+  }
+
+  bg::correct(polygon);
+
+  Polygon2d hull_polygon;
+  bg::convex_hull(polygon, hull_polygon);
+
+  return hull_polygon;
+}
+
+std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const bool is_driving_forward)
+  const Obstacle & obstacle, const bool is_driving_forward,
+  const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   const auto collision_info =
     getCollisionIndex(traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape);
-  if (collision_info) {
-    const auto nearest_collision_point = calcNearestCollisionPoint(
-      collision_info->first, collision_info->second, traj_points, is_driving_forward);
-    return nearest_collision_point.point;
+  if (!collision_info) {
+    return std::nullopt;
   }
 
-  return std::nullopt;
+  const double x_diff_to_bumper = is_driving_forward ? vehicle_info.max_longitudinal_offset_m
+                                                     : vehicle_info.min_longitudinal_offset_m;
+  const auto bumper_pose = tier4_autoware_utils::calcOffsetPose(
+    traj_points.at(collision_info->first).pose, x_diff_to_bumper, 0.0, 0.0);
+
+  std::optional<double> max_collision_length = std::nullopt;
+  std::optional<geometry_msgs::msg::Point> max_collision_point = std::nullopt;
+  for (const auto & poly_vertex : collision_info->second) {
+    const double dist_from_bumper =
+      std::abs(tier4_autoware_utils::inverseTransformPoint(poly_vertex.point, bumper_pose).x);
+
+    if (!max_collision_length.has_value() || dist_from_bumper > *max_collision_length) {
+      max_collision_length = dist_from_bumper;
+      max_collision_point = poly_vertex.point;
+    }
+  }
+  return std::make_pair(
+    *max_collision_point, motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first) -
+                            *max_collision_length);
 }
 
 // NOTE: max_lat_dist is used for efficient calculation to suppress boost::geometry's polygon
@@ -182,27 +203,6 @@ std::vector<PointWithStamp> getCollisionPoints(
   }
 
   return collision_points;
-}
-
-std::vector<Polygon2d> createOneStepPolygons(
-  const std::vector<TrajectoryPoint> & traj_points,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
-{
-  std::vector<Polygon2d> polygons;
-
-  for (size_t i = 0; i < traj_points.size(); ++i) {
-    const auto polygon = [&]() {
-      if (i == 0) {
-        return createOneStepPolygon(
-          traj_points.at(i).pose, traj_points.at(i).pose, vehicle_info, lat_margin);
-      }
-      return createOneStepPolygon(
-        traj_points.at(i - 1).pose, traj_points.at(i).pose, vehicle_info, lat_margin);
-    }();
-
-    polygons.push_back(polygon);
-  }
-  return polygons;
 }
 
 }  // namespace polygon_utils

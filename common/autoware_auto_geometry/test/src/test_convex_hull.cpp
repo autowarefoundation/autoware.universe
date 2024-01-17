@@ -14,7 +14,7 @@
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
-#include "geometry/convex_hull.hpp"
+#include "autoware_auto_geometry/convex_hull.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
 
@@ -139,7 +139,7 @@ TYPED_TEST(TypedConvexHullTest, Quadrilateral)
 }
 
 // test that things get reordered to ccw
-TYPED_TEST(TypedConvexHullTest, Quadhull)
+TYPED_TEST(TypedConvexHullTest, QuadHull)
 {
   std::vector<TypeParam> data(
     {this->make(1, 1, 1), this->make(5, 1, 2), this->make(2, 6, 3), this->make(3, 3, 4),

@@ -88,7 +88,11 @@ void CloudOcclusionPredictor::predict(
   image_geometry::PinholeCameraModel pinhole_model;
   pinhole_model.fromCameraInfo(*camera_info_msg);
   for (size_t i = 0; i < rois_msg->rois.size(); i++) {
-    calcRoiVectex3D(
+    // skip if no detection
+    if (rois_msg->rois[i].roi.height == 0) {
+      continue;
+    }
+    calcRoiVector3D(
       rois_msg->rois[i], pinhole_model, traffic_light_position_map, tf_camera2map, roi_tls[i],
       roi_brs[i]);
   }
@@ -107,11 +111,11 @@ void CloudOcclusionPredictor::predict(
     lidar_rays_[static_cast<int>(ray.azimuth)][static_cast<int>(ray.elevation)].push_back(ray);
   }
   for (size_t i = 0; i < roi_tls.size(); i++) {
-    occlusion_ratios[i] = predict(roi_tls[i], roi_brs[i]);
+    occlusion_ratios[i] = rois_msg->rois[i].roi.height == 0 ? 0 : predict(roi_tls[i], roi_brs[i]);
   }
 }
 
-void CloudOcclusionPredictor::calcRoiVectex3D(
+void CloudOcclusionPredictor::calcRoiVector3D(
   const tier4_perception_msgs::msg::TrafficLightRoi & roi,
   const image_geometry::PinholeCameraModel & pinhole_model,
   const std::map<lanelet::Id, tf2::Vector3> & traffic_light_position_map,

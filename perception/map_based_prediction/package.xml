@@ -4,10 +4,12 @@
   <name>map_based_prediction</name>
   <version>0.1.0</version>
   <description>This package implements a map_based_prediction</description>
-  <maintainer email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</maintainer>
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
+  <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
+  <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
+  <maintainer email="kotaro.uetake@tier4.jp">Kotaro Uetake</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -16,6 +18,7 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
+  <depend>libgoogle-glog-dev</depend>
   <depend>motion_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
@@ -23,6 +26,7 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>tier4_debug_msgs</depend>
   <depend>unique_identifier_msgs</depend>
   <depend>visualization_msgs</depend>
 

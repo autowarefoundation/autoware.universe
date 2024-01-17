@@ -24,6 +24,8 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+#include <lanelet2_core/geometry/LineString.h>
+
 #include <algorithm>
 #include <array>
 #include <random>
@@ -75,6 +77,9 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   plugin_loader_("mission_planner", "mission_planner::PlannerPlugin"),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
+  odometry_(nullptr),
+  map_ptr_(nullptr),
+  reroute_availability_(nullptr),
   normal_route_(nullptr),
   mrm_route_(nullptr)
 {
@@ -85,17 +90,23 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
   planner_->initialize(this);
 
-  odometry_ = nullptr;
   sub_odometry_ = create_subscription<Odometry>(
     "/localization/kinematic_state", rclcpp::QoS(1),
     std::bind(&MissionPlanner::on_odometry, this, std::placeholders::_1));
-
-  auto qos_transient_local = rclcpp::QoS{1}.transient_local();
-  vector_map_subscriber_ = create_subscription<HADMapBin>(
-    "input/vector_map", qos_transient_local,
-    std::bind(&MissionPlanner::onMap, this, std::placeholders::_1));
+  sub_reroute_availability_ = create_subscription<RerouteAvailability>(
+    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/output/"
+    "is_reroute_available",
+    rclcpp::QoS(1),
+    std::bind(&MissionPlanner::on_reroute_availability, this, std::placeholders::_1));
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
+  sub_vector_map_ = create_subscription<HADMapBin>(
+    "input/vector_map", durable_qos,
+    std::bind(&MissionPlanner::on_map, this, std::placeholders::_1));
+  sub_modified_goal_ = create_subscription<PoseWithUuidStamped>(
+    "input/modified_goal", durable_qos,
+    std::bind(&MissionPlanner::on_modified_goal, this, std::placeholders::_1));
+
   pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
@@ -110,9 +121,32 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_change_route_points_, this, &MissionPlanner::on_change_route_points);
   adaptor.init_srv(srv_set_mrm_route_, this, &MissionPlanner::on_set_mrm_route);
   adaptor.init_srv(srv_clear_mrm_route_, this, &MissionPlanner::on_clear_mrm_route);
-  adaptor.init_sub(sub_modified_goal_, this, &MissionPlanner::on_modified_goal);
 
+  // Route state will be published when the node gets ready for route api after initialization,
+  // otherwise the mission planner rejects the request for the API.
+  data_check_timer_ = create_wall_timer(
+    std::chrono::milliseconds(100), std::bind(&MissionPlanner::checkInitialization, this));
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+}
+
+void MissionPlanner::checkInitialization()
+{
+  if (!planner_->ready()) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting lanelet map... Route API is not ready.");
+    return;
+  }
+  if (!odometry_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting odometry... Route API is not ready.");
+    return;
+  }
+
+  // All data is ready. Now API is available.
+  RCLCPP_DEBUG(get_logger(), "Route API is ready.");
   change_state(RouteState::Message::UNSET);
+  data_check_timer_->cancel();  // stop timer callback
 }
 
 void MissionPlanner::on_odometry(const Odometry::ConstSharedPtr msg)
@@ -130,7 +164,12 @@ void MissionPlanner::on_odometry(const Odometry::ConstSharedPtr msg)
   }
 }
 
-void MissionPlanner::onMap(const HADMapBin::ConstSharedPtr msg)
+void MissionPlanner::on_reroute_availability(const RerouteAvailability::ConstSharedPtr msg)
+{
+  reroute_availability_ = msg;
+}
+
+void MissionPlanner::on_map(const HADMapBin::ConstSharedPtr msg)
 {
   map_ptr_ = msg;
 }
@@ -375,6 +414,10 @@ void MissionPlanner::on_set_mrm_route(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
+  if (reroute_availability_ && !reroute_availability_->availability) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
+  }
 
   const auto prev_state = state_.state;
   change_state(RouteState::Message::CHANGING);
@@ -401,6 +444,7 @@ void MissionPlanner::on_set_mrm_route(
       res->status.success = false;
     }
     change_state(RouteState::Message::SET);
+    RCLCPP_INFO(get_logger(), "Route is successfully changed with the modified goal");
     return;
   }
 
@@ -409,6 +453,7 @@ void MissionPlanner::on_set_mrm_route(
     change_mrm_route(new_route);
     change_state(RouteState::Message::SET);
     res->status.success = true;
+    RCLCPP_INFO(get_logger(), "MRM route is successfully changed with the modified goal");
     return;
   }
 
@@ -444,13 +489,20 @@ void MissionPlanner::on_clear_mrm_route(
   if (!mrm_route_) {
     throw component_interface_utils::NoEffectWarning("MRM route is not set");
   }
+  if (
+    state_.state == RouteState::Message::SET && reroute_availability_ &&
+    !reroute_availability_->availability) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE,
+      "Cannot clear MRM route as the planner is not lane following before arriving at the goal.");
+  }
 
   change_state(RouteState::Message::CHANGING);
 
   if (!normal_route_) {
     clear_mrm_route();
     change_state(RouteState::Message::UNSET);
-    res->success = true;
+    res->status.success = true;
     return;
   }
 
@@ -459,7 +511,7 @@ void MissionPlanner::on_clear_mrm_route(
     clear_mrm_route();
     change_route(*normal_route_);
     change_state(RouteState::Message::SET);
-    res->success = true;
+    res->status.success = true;
     return;
   }
 
@@ -472,21 +524,22 @@ void MissionPlanner::on_clear_mrm_route(
   // check new route safety
   if (new_route.segments.empty() || !check_reroute_safety(*mrm_route_, new_route)) {
     // failed to create a new route
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "Reroute with normal goal failed.");
+    RCLCPP_ERROR(get_logger(), "Reroute with normal goal failed.");
     change_mrm_route(*mrm_route_);
-    change_route(*normal_route_);
     change_state(RouteState::Message::SET);
-    res->success = false;
+    res->status.success = false;
   } else {
     clear_mrm_route();
     change_route(new_route);
     change_state(RouteState::Message::SET);
-    res->success = true;
+    res->status.success = true;
   }
 }
 
 void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg)
 {
+  RCLCPP_INFO(get_logger(), "Received modified goal.");
+
   if (state_.state != RouteState::Message::SET) {
     RCLCPP_ERROR(get_logger(), "The route hasn't set yet. Cannot reroute.");
     return;
@@ -516,12 +569,13 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
     if (new_route.segments.empty()) {
       change_mrm_route(*mrm_route_);
       change_state(RouteState::Message::SET);
-      RCLCPP_ERROR(get_logger(), "The planned route is empty.");
+      RCLCPP_ERROR(get_logger(), "The planned MRM route is empty.");
       return;
     }
 
     change_mrm_route(new_route);
     change_state(RouteState::Message::SET);
+    RCLCPP_INFO(get_logger(), "Changed the MRM route with the modified goal");
     return;
   }
 
@@ -543,6 +597,7 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
 
     change_route(new_route);
     change_state(RouteState::Message::SET);
+    RCLCPP_INFO(get_logger(), "Changed the route with the modified goal");
     return;
   }
 
@@ -573,6 +628,10 @@ void MissionPlanner::on_change_route(
   if (mrm_route_) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
+  }
+  if (reroute_availability_ && !reroute_availability_->availability) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
   }
 
   // set to changing state
@@ -633,6 +692,10 @@ void MissionPlanner::on_change_route_points(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
   }
+  if (reroute_availability_ && !reroute_availability_->availability) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
+  }
 
   change_state(RouteState::Message::CHANGING);
 
@@ -671,8 +734,12 @@ bool MissionPlanner::check_reroute_safety(
     return false;
   }
 
-  // find the index of the original route that has same idx with the front segment of the new route
-  const auto target_front_primitives = target_route.segments.front().primitives;
+  const auto current_velocity = odometry_->twist.twist.linear.x;
+
+  // if vehicle is stopped, do not check safety
+  if (current_velocity < 0.01) {
+    return true;
+  }
 
   auto hasSamePrimitives = [](
                              const std::vector<LaneletPrimitive> & original_primitives,
@@ -690,15 +757,55 @@ bool MissionPlanner::check_reroute_safety(
     return is_same;
   };
 
-  // find idx that matches the target primitives
-  size_t start_idx = original_route.segments.size();
-  for (size_t i = 0; i < original_route.segments.size(); ++i) {
-    const auto & original_primitives = original_route.segments.at(i).primitives;
-    if (hasSamePrimitives(original_primitives, target_front_primitives)) {
-      start_idx = i;
-      break;
+  // find idx of original primitives that matches the target primitives
+  const auto start_idx_opt = std::invoke([&]() -> std::optional<size_t> {
+    /*
+     * find the index of the original route that has same idx with the front segment of the new
+     * route
+     *
+     *                          start_idx
+     * +-----------+-----------+-----------+-----------+-----------+
+     * |           |           |           |           |           |
+     * +-----------+-----------+-----------+-----------+-----------+
+     * |           |           |           |           |           |
+     * +-----------+-----------+-----------+-----------+-----------+
+     *  original    original    original    original    original
+     *                          target      target      target
+     */
+    const auto target_front_primitives = target_route.segments.front().primitives;
+    for (size_t i = 0; i < original_route.segments.size(); ++i) {
+      const auto & original_primitives = original_route.segments.at(i).primitives;
+      if (hasSamePrimitives(original_primitives, target_front_primitives)) {
+        return i;
+      }
     }
+
+    /*
+     * find the target route that has same idx with the front segment of the original route
+     *
+     *                          start_idx
+     * +-----------+-----------+-----------+-----------+-----------+
+     * |           |           |           |           |           |
+     * +-----------+-----------+-----------+-----------+-----------+
+     * |           |           |           |           |           |
+     * +-----------+-----------+-----------+-----------+-----------+
+     * 　　　　　　　　　　　　　　　original    original    original
+     *  target      target      target      target      target
+     */
+    const auto original_front_primitives = original_route.segments.front().primitives;
+    for (size_t i = 0; i < target_route.segments.size(); ++i) {
+      const auto & target_primitives = target_route.segments.at(i).primitives;
+      if (hasSamePrimitives(target_primitives, original_front_primitives)) {
+        return 0;
+      }
+    }
+
+    return std::nullopt;
+  });
+  if (!start_idx_opt.has_value()) {
+    return false;
   }
+  const size_t start_idx = start_idx_opt.value();
 
   // find last idx that matches the target primitives
   size_t end_idx = start_idx;
@@ -778,13 +885,17 @@ bool MissionPlanner::check_reroute_safety(
   }
 
   // check safety
-  const auto current_velocity = odometry_->twist.twist.linear.x;
   const double safety_length =
     std::max(current_velocity * reroute_time_threshold_, minimum_reroute_length_);
   if (accumulated_length > safety_length) {
     return true;
   }
 
+  RCLCPP_WARN(
+    get_logger(),
+    "Length of lane where original and B target (= %f) is less than safety length (= %f), so "
+    "reroute is not safe.",
+    accumulated_length, safety_length);
   return false;
 }
 }  // namespace mission_planner

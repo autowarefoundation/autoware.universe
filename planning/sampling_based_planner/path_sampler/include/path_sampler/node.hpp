@@ -15,13 +15,11 @@
 #ifndef PATH_SAMPLER__NODE_HPP_
 #define PATH_SAMPLER__NODE_HPP_
 
-#include "motion_utils/motion_utils.hpp"
 #include "path_sampler/common_structs.hpp"
 #include "path_sampler/parameters.hpp"
 #include "path_sampler/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <sampler_common/structures.hpp>
@@ -92,11 +90,12 @@ protected:  // for the static_centerline_optimizer package
     sampler_common::State & state, const sampler_common::transform::Spline2D & path_spline) const;
 
   // sub-functions of generateTrajectory
+  void copyZ(
+    const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj);
+  void copyVelocity(
+    const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj,
+    const geometry_msgs::msg::Pose & ego_pose);
   std::vector<TrajectoryPoint> generatePath(const PlannerData & planner_data);
-  void applyInputVelocity(
-    std::vector<TrajectoryPoint> & output_traj_points,
-    const std::vector<TrajectoryPoint> & input_traj_points,
-    const geometry_msgs::msg::Pose & ego_pose) const;
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
   void publishDebugMarker(const std::vector<TrajectoryPoint> & traj_points) const;
 };

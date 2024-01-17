@@ -1,13 +1,24 @@
 # yabloc_pose_initializer
 
-This package contains some nodes related to initial pose estimation.
+This package contains a node related to initial pose estimation.
 
 - [camera_pose_initializer](#camera_pose_initializer)
-- [semantic_segmentation_server](#semantic_segmentation_server)
+
+This package requires the pre-trained semantic segmentation model for runtime. This model is usually downloaded by `ansible` during env preparation phase of the [installation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/).
+It is also possible to download it manually. Even if the model is not downloaded, initialization will still complete, but the accuracy may be compromised.
+
+To download and extract the model manually:
+
+```bash
+$ mkdir -p ~/autoware_data/yabloc_pose_initializer/
+$ wget -P ~/autoware_data/yabloc_pose_initializer/ \
+       https://s3.ap-northeast-2.wasabisys.com/pinto-model-zoo/136_road-segmentation-adas-0001/resources.tar.gz
+$ tar xzf ~/autoware_data/yabloc_pose_initializer/resources.tar.gz -C ~/autoware_data/yabloc_pose_initializer/
+```
 
 ## Note
 
-This package makes use of external code. The trained files are provided by apollo. The trained files are automatically downloaded when you build.
+This package makes use of external code. The trained files are provided by apollo. The trained files are automatically downloaded during env preparation.
 
 Original model URL
 
@@ -57,21 +68,3 @@ Converted model URL
 | Name               | Type                                                      | Description                     |
 | ------------------ | --------------------------------------------------------- | ------------------------------- |
 | `yabloc_align_srv` | `tier4_localization_msgs::srv::PoseWithCovarianceStamped` | initial pose estimation request |
-
-### Clients
-
-| Name                        | Type                                                 | Description                   |
-| --------------------------- | ---------------------------------------------------- | ----------------------------- |
-| `semantic_segmentation_srv` | `yabloc_pose_initializer::srv::SemanticSegmentation` | semantic segmentation request |
-
-## semantic_segmentation_server
-
-### Purpose
-
-- This node performs semantic segmentation.
-
-### Services
-
-| Name                        | Type                                                 | Description                   |
-| --------------------------- | ---------------------------------------------------- | ----------------------------- |
-| `semantic_segmentation_srv` | `yabloc_pose_initializer::srv::SemanticSegmentation` | semantic segmentation request |

@@ -20,6 +20,7 @@
 #include "obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -48,6 +49,10 @@ private:
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // main functions
+  std::vector<Polygon2d> createOneStepPolygons(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const vehicle_info_util::VehicleInfo & vehicle_info,
+    const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
   std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
@@ -86,7 +91,7 @@ private:
 
   void checkConsistency(
     const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
-    const std::vector<TrajectoryPoint> & traj_points, std::vector<StopObstacle> & stop_obstacles);
+    std::vector<StopObstacle> & stop_obstacles);
   void publishVelocityLimit(
     const std::optional<VelocityLimit> & vel_limit, const std::string & module_name);
   void publishDebugMarker() const;
@@ -100,6 +105,10 @@ private:
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
   double min_behavior_stop_margin_;
+  bool enable_approaching_on_curve_;
+  double additional_safe_distance_margin_on_curve_;
+  double min_safe_distance_margin_on_curve_;
+  bool suppress_sudden_obstacle_stop_;
 
   std::vector<int> stop_obstacle_types_;
   std::vector<int> inside_cruise_obstacle_types_;
@@ -179,9 +188,6 @@ private:
     // prediction resampling
     double prediction_resampling_time_interval;
     double prediction_resampling_time_horizon;
-    // goal extension
-    double goal_extension_length;
-    double goal_extension_interval;
     // max lateral margin
     double max_lat_margin_for_stop;
     double max_lat_margin_for_cruise;
@@ -189,6 +195,9 @@ private:
     double lat_hysteresis_margin_for_slow_down;
     int successive_num_to_entry_slow_down_condition;
     int successive_num_to_exit_slow_down_condition;
+    // consideration for the current ego pose
+    bool enable_to_consider_current_pose{false};
+    double time_to_convergence{1.5};
   };
   BehaviorDeterminationParam behavior_determination_param_;
 
@@ -235,7 +244,7 @@ private:
     }
     void reset(const std::string & uuid) { counter_.emplace(uuid, 0); }
 
-    // NOTE: positive is for meeting entrying condition, and negative is for exiting.
+    // NOTE: positive is for meeting entering condition, and negative is for exiting.
     std::unordered_map<std::string, int> counter_;
     std::vector<std::string> current_uuids_;
   };
@@ -248,6 +257,8 @@ private:
 
   // previous closest obstacle
   std::shared_ptr<StopObstacle> prev_closest_stop_obstacle_ptr_{nullptr};
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace motion_planning
 

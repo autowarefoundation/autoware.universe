@@ -17,9 +17,9 @@
 #ifndef TEST_BOUNDING_BOX_HPP_
 #define TEST_BOUNDING_BOX_HPP_
 
-#include "geometry/bounding_box/lfit.hpp"
+#include "autoware_auto_geometry/bounding_box/lfit.hpp"
 // cspell: ignore lfit
-#include "geometry/bounding_box/rotating_calipers.hpp"
+#include "autoware_auto_geometry/bounding_box/rotating_calipers.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
 
@@ -336,7 +336,7 @@ TYPED_TEST(BoxTest, Line3)
     /_/ <-- first guess is suboptimal
 
 */
-TYPED_TEST(BoxTest, SuboptInit)
+TYPED_TEST(BoxTest, SuboptimalInit)
 {
   this->points.insert(
     this->points.begin(),

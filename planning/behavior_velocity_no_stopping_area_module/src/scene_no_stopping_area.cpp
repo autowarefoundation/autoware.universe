@@ -18,10 +18,12 @@
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <interpolation/spline_interpolation.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
+#include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/utility/Optional.h>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
@@ -48,7 +50,7 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   no_stopping_area_reg_elem_(no_stopping_area_reg_elem),
   planner_param_(planner_param)
 {
-  velocity_factor_.init(VelocityFactor::NO_STOPPING_AREA);
+  velocity_factor_.init(PlanningBehavior::NO_STOPPING_AREA);
   state_machine_.setState(StateMachine::State::GO);
   state_machine_.setMarginTime(planner_param_.state_clear_time);
 }
@@ -228,6 +230,8 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
     }
     const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
     if (obj_v > planner_param_.stuck_vehicle_vel_thr) {
+      setObjectsOfInterestData(
+        object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::GREEN);
       continue;  // not stop vehicle
     }
     // check if the footprint is in the stuck detect area
@@ -235,6 +239,8 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, poly);
     if (is_in_stuck_area) {
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
+      setObjectsOfInterestData(
+        object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::RED);
       for (const auto & p : obj_footprint.outer()) {
         geometry_msgs::msg::Point point;
         point.x = p.x();
@@ -296,7 +302,7 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
       logger_, *clock_, 1000 /* ms */, "motion_utils::findNearestIndex fail");
     return ego_area;
   }
-  const size_t closest_idx = closest_idx_opt.get();
+  const size_t closest_idx = closest_idx_opt.value();
 
   const int num_ignore_nearest = 1;  // Do not consider nearest lane polygon
   size_t ego_area_start_idx = closest_idx + num_ignore_nearest;

@@ -15,52 +15,80 @@
 #include "decisions.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
+
+#include <boost/geometry/algorithms/within.hpp>
+
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_routing/RoutingGraph.h>
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
-
 namespace behavior_velocity_planner::out_of_lane
 {
 double distance_along_path(const EgoData & ego_data, const size_t target_idx)
 {
   return motion_utils::calcSignedArcLength(
-    ego_data.path->points, ego_data.pose.position, ego_data.first_path_idx + target_idx);
+    ego_data.path.points, ego_data.pose.position, ego_data.first_path_idx + target_idx);
 }
 
-double time_along_path(const EgoData & ego_data, const size_t target_idx)
+double time_along_path(const EgoData & ego_data, const size_t target_idx, const double min_velocity)
 {
   const auto dist = distance_along_path(ego_data, target_idx);
   const auto v = std::max(
-    ego_data.velocity,
-    ego_data.path->points[ego_data.first_path_idx + target_idx].point.longitudinal_velocity_mps *
+    std::max(ego_data.velocity, min_velocity),
+    ego_data.path.points[ego_data.first_path_idx + target_idx].point.longitudinal_velocity_mps *
       0.5);
   return dist / v;
 }
 
+bool object_is_incoming(
+  const lanelet::BasicPoint2d & object_position,
+  const std::shared_ptr<route_handler::RouteHandler> route_handler,
+  const lanelet::ConstLanelet & lane)
+{
+  const auto lanelets = route_handler->getPrecedingLaneletSequence(lane, 50.0);
+  if (boost::geometry::within(object_position, lane.polygon2d().basicPolygon())) return true;
+  for (const auto & lls : lanelets)
+    for (const auto & ll : lls)
+      if (boost::geometry::within(object_position, ll.polygon2d().basicPolygon())) return true;
+  return false;
+}
+
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
+  const std::shared_ptr<route_handler::RouteHandler> route_handler, const double dist_buffer,
   const rclcpp::Logger & logger)
 {
-  const auto max_deviation = object.shape.dimensions.y * 2.0;
+  // skip the dynamic object if it is not in a lane preceding the overlapped lane
+  // lane changes are intentionally not considered
+  const auto object_point = lanelet::BasicPoint2d(
+    object.kinematics.initial_pose_with_covariance.pose.position.x,
+    object.kinematics.initial_pose_with_covariance.pose.position.y);
+  if (!object_is_incoming(object_point, route_handler, range.lane)) return {};
 
+  const auto max_deviation = object.shape.dimensions.y + range.inside_distance + dist_buffer;
   auto worst_enter_time = std::optional<double>();
   auto worst_exit_time = std::optional<double>();
 
   for (const auto & predicted_path : object.kinematics.predicted_paths) {
+    const auto unique_path_points = motion_utils::removeOverlapPoints(predicted_path.path);
     const auto time_step = rclcpp::Duration(predicted_path.time_step).seconds();
     const auto enter_point =
       geometry_msgs::msg::Point().set__x(range.entering_point.x()).set__y(range.entering_point.y());
     const auto enter_segment_idx =
-      motion_utils::findNearestSegmentIndex(predicted_path.path, enter_point);
+      motion_utils::findNearestSegmentIndex(unique_path_points, enter_point);
     const auto enter_offset = motion_utils::calcLongitudinalOffsetToSegment(
-      predicted_path.path, enter_segment_idx, enter_point);
-    const auto enter_lat_dist = std::abs(
-      motion_utils::calcLateralOffset(predicted_path.path, enter_point, enter_segment_idx));
+      unique_path_points, enter_segment_idx, enter_point);
+    const auto enter_lat_dist =
+      std::abs(motion_utils::calcLateralOffset(unique_path_points, enter_point, enter_segment_idx));
     const auto enter_segment_length = tier4_autoware_utils::calcDistance2d(
-      predicted_path.path[enter_segment_idx], predicted_path.path[enter_segment_idx + 1]);
+      unique_path_points[enter_segment_idx], unique_path_points[enter_segment_idx + 1]);
     const auto enter_offset_ratio = enter_offset / enter_segment_length;
     const auto enter_time =
       static_cast<double>(enter_segment_idx) * time_step + enter_offset_ratio * time_step;
@@ -68,13 +96,13 @@ std::optional<std::pair<double, double>> object_time_to_range(
     const auto exit_point =
       geometry_msgs::msg::Point().set__x(range.exiting_point.x()).set__y(range.exiting_point.y());
     const auto exit_segment_idx =
-      motion_utils::findNearestSegmentIndex(predicted_path.path, exit_point);
+      motion_utils::findNearestSegmentIndex(unique_path_points, exit_point);
     const auto exit_offset = motion_utils::calcLongitudinalOffsetToSegment(
-      predicted_path.path, exit_segment_idx, exit_point);
+      unique_path_points, exit_segment_idx, exit_point);
     const auto exit_lat_dist =
-      std::abs(motion_utils::calcLateralOffset(predicted_path.path, exit_point, exit_segment_idx));
+      std::abs(motion_utils::calcLateralOffset(unique_path_points, exit_point, exit_segment_idx));
     const auto exit_segment_length = tier4_autoware_utils::calcDistance2d(
-      predicted_path.path[exit_segment_idx], predicted_path.path[exit_segment_idx + 1]);
+      unique_path_points[exit_segment_idx], unique_path_points[exit_segment_idx + 1]);
     const auto exit_offset_ratio = exit_offset / static_cast<double>(exit_segment_length);
     const auto exit_time =
       static_cast<double>(exit_segment_idx) * time_step + exit_offset_ratio * time_step;
@@ -97,11 +125,9 @@ std::optional<std::pair<double, double>> object_time_to_range(
 
     const auto same_driving_direction_as_ego = enter_time < exit_time;
     if (same_driving_direction_as_ego) {
-      RCLCPP_DEBUG(logger, " / SAME DIR \\\n");
       worst_enter_time = worst_enter_time ? std::min(*worst_enter_time, enter_time) : enter_time;
       worst_exit_time = worst_exit_time ? std::max(*worst_exit_time, exit_time) : exit_time;
     } else {
-      RCLCPP_DEBUG(logger, " / OPPOSITE DIR \\\n");
       worst_enter_time = worst_enter_time ? std::max(*worst_enter_time, enter_time) : enter_time;
       worst_exit_time = worst_exit_time ? std::min(*worst_exit_time, exit_time) : exit_time;
     }
@@ -183,8 +209,11 @@ std::optional<std::pair<double, double>> object_time_to_range(
 
 bool threshold_condition(const RangeTimes & range_times, const PlannerParam & params)
 {
-  return std::min(range_times.object.enter_time, range_times.object.exit_time) <
-         params.time_threshold;
+  const auto enter_within_threshold =
+    range_times.object.enter_time > 0.0 && range_times.object.enter_time < params.time_threshold;
+  const auto exit_within_threshold =
+    range_times.object.exit_time > 0.0 && range_times.object.exit_time < params.time_threshold;
+  return enter_within_threshold || exit_within_threshold;
 }
 
 bool intervals_condition(
@@ -243,7 +272,7 @@ bool ttc_condition(
   return collision_during_overlap || ttc_is_bellow_threshold;
 }
 
-bool object_is_incoming(
+bool will_collide_on_range(
   const RangeTimes & range_times, const PlannerParam & params, const rclcpp::Logger & logger)
 {
   RCLCPP_DEBUG(
@@ -259,8 +288,10 @@ bool should_not_enter(
   const rclcpp::Logger & logger)
 {
   RangeTimes range_times{};
-  range_times.ego.enter_time = time_along_path(inputs.ego_data, range.entering_path_idx);
-  range_times.ego.exit_time = time_along_path(inputs.ego_data, range.exiting_path_idx);
+  range_times.ego.enter_time =
+    time_along_path(inputs.ego_data, range.entering_path_idx, params.ego_min_velocity);
+  range_times.ego.exit_time =
+    time_along_path(inputs.ego_data, range.exiting_path_idx, params.ego_min_velocity);
   RCLCPP_DEBUG(
     logger, "\t[%lu -> %lu] %ld | ego enters at %2.2f, exits at %2.2f\n", range.entering_path_idx,
     range.exiting_path_idx, range.lane.id(), range_times.ego.enter_time, range_times.ego.exit_time);
@@ -274,9 +305,11 @@ bool should_not_enter(
       continue;  // skip objects with velocity bellow a threshold
     }
     // skip objects that are already on the interval
-    const auto enter_exit_time = params.objects_use_predicted_paths
-                                   ? object_time_to_range(object, range, logger)
-                                   : object_time_to_range(object, range, inputs, logger);
+    const auto enter_exit_time =
+      params.objects_use_predicted_paths
+        ? object_time_to_range(
+            object, range, inputs.route_handler, params.objects_dist_buffer, logger)
+        : object_time_to_range(object, range, inputs, logger);
     if (!enter_exit_time) {
       RCLCPP_DEBUG(logger, " SKIP (no enter/exit times found)\n");
       continue;  // skip objects that are not driving towards the overlapping range
@@ -284,27 +317,14 @@ bool should_not_enter(
 
     range_times.object.enter_time = enter_exit_time->first;
     range_times.object.exit_time = enter_exit_time->second;
-    if (object_is_incoming(range_times, params, logger)) return true;
-  }
-  return false;
-}
-
-OverlapRange find_most_preceding_range(const OverlapRange & range, const DecisionInputs & inputs)
-{
-  OverlapRange preceding_range = range;
-  bool found_preceding_range = true;
-  while (found_preceding_range) {
-    found_preceding_range = false;
-    for (const auto & other_range : inputs.ranges) {
-      if (
-        other_range.entering_path_idx < preceding_range.entering_path_idx &&
-        other_range.exiting_path_idx >= preceding_range.entering_path_idx) {
-        preceding_range = other_range;
-        found_preceding_range = true;
-      }
+    if (will_collide_on_range(range_times, params, logger)) {
+      range.debug.times = range_times;
+      range.debug.object = object;
+      return true;
     }
   }
-  return preceding_range;
+  range.debug.times = range_times;
+  return false;
 }
 
 void set_decision_velocity(
@@ -325,11 +345,10 @@ std::optional<Slowdown> calculate_decision(
 {
   std::optional<Slowdown> decision;
   if (should_not_enter(range, inputs, params, logger)) {
-    const auto stop_before_range = params.strict ? find_most_preceding_range(range, inputs) : range;
     decision.emplace();
-    decision->target_path_idx = inputs.ego_data.first_path_idx +
-                                stop_before_range.entering_path_idx;  // add offset from curr pose
-    decision->lane_to_avoid = stop_before_range.lane;
+    decision->target_path_idx =
+      inputs.ego_data.first_path_idx + range.entering_path_idx;  // add offset from curr pose
+    decision->lane_to_avoid = range.lane;
     const auto ego_dist_to_range = distance_along_path(inputs.ego_data, range.entering_path_idx);
     set_decision_velocity(decision, ego_dist_to_range, params);
   }
@@ -343,6 +362,7 @@ std::vector<Slowdown> calculate_decisions(
   for (const auto & range : inputs.ranges) {
     if (range.entering_path_idx == 0UL) continue;  // skip if we already entered the range
     const auto optional_decision = calculate_decision(range, inputs, params, logger);
+    range.debug.decision = optional_decision;
     if (optional_decision) decisions.push_back(*optional_decision);
   }
   return decisions;

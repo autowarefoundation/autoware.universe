@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "detected_object_filter/object_position_filter.hpp"
-
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include "detected_object_validation/detected_object_filter/object_position_filter.hpp"
 
 namespace object_position_filter
 {

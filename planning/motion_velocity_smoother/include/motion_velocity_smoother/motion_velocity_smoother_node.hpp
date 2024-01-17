@@ -15,7 +15,7 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__MOTION_VELOCITY_SMOOTHER_NODE_HPP_
 #define MOTION_VELOCITY_SMOOTHER__MOTION_VELOCITY_SMOOTHER_NODE_HPP_
 
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/resample.hpp"
 #include "motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
@@ -30,6 +30,7 @@
 #include "tf2_ros/transform_listener.h"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/ros/self_pose_listener.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
@@ -41,6 +42,7 @@
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
+#include "visualization_msgs/msg/marker_array.hpp"
 
 #include <iostream>
 #include <memory>
@@ -62,6 +64,7 @@ using nav_msgs::msg::Odometry;
 using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
+using visualization_msgs::msg::MarkerArray;
 
 struct Motion
 {
@@ -79,6 +82,7 @@ public:
 
 private:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr pub_over_stop_velocity_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_current_odometry_;
   rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr sub_current_acceleration_;
@@ -94,6 +98,7 @@ private:
   double max_velocity_with_deceleration_;         // maximum velocity with deceleration
                                                   // for external velocity limit
   double wheelbase_;                              // wheelbase
+  double base_link2front_;                        // base_link to front
 
   TrajectoryPoints prev_output_;  // previously published trajectory
 
@@ -123,6 +128,9 @@ private:
 
   struct Param
   {
+    bool enable_lateral_acc_limit;
+    bool enable_steering_rate_limit;
+
     double max_velocity;                              // max velocity [m/s]
     double margin_to_insert_external_velocity_limit;  // for external velocity limit [m]
     double replan_vel_deviation;                      // if speed error exceeds this [m/s],
@@ -149,6 +157,7 @@ private:
   {
     double velocity{0.0};  // current external_velocity_limit
     double dist{0.0};      // distance to set external velocity limit
+    std::string sender{""};
   };
   ExternalVelocityLimit
     external_velocity_limit_;  // velocity and distance constraint  of external velocity limit
@@ -260,6 +269,8 @@ private:
   bool isReverse(const TrajectoryPoints & points) const;
   void flipVelocity(TrajectoryPoints & points) const;
   void publishStopWatchTime();
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace motion_velocity_smoother
 

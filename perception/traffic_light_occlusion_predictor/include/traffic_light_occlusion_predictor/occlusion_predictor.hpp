@@ -25,9 +25,7 @@
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
 #include <image_geometry/pinhole_camera_model.h>
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <lanelet2_core/Forward.h>
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -77,7 +75,7 @@ private:
     uint32_t horizontal_sample_num, uint32_t vertical_sample_num,
     pcl::PointCloud<pcl::PointXYZ> & cloud_out);
 
-  void calcRoiVectex3D(
+  void calcRoiVector3D(
     const tier4_perception_msgs::msg::TrafficLightRoi & roi,
     const image_geometry::PinholeCameraModel & pinhole_model,
     const std::map<lanelet::Id, tf2::Vector3> & traffic_light_position_map,

@@ -24,7 +24,9 @@
 #include <lanelet2_core/LaneletMap.h>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -42,19 +44,24 @@ struct PlannerParam
   double intervals_ego_buffer;  // [s](mode="intervals") buffer to extend the ego time range
   double intervals_obj_buffer;  // [s](mode="intervals") buffer to extend the objects time range
   double ttc_threshold;  // [s](mode="ttc") threshold on time to collision between ego and an object
+  double ego_min_velocity;  // [m/s] minimum velocity of ego used to calculate its ttc or time range
 
-  bool objects_use_predicted_paths;  //  # whether to use the objects' predicted paths
-  double objects_min_vel;            //  # [m/s] objects lower than this velocity will be ignored
+  bool objects_use_predicted_paths;  // whether to use the objects' predicted paths
+  double objects_min_vel;            // [m/s] objects lower than this velocity will be ignored
+  double objects_min_confidence;     // minimum confidence to consider a predicted path
+  double objects_dist_buffer;  // [m] distance buffer used to determine if a collision will occur in
+                               // the other lane
 
   double overlap_extra_length;  // [m] extra length to add around an overlap range
   double overlap_min_dist;      // [m] min distance inside another lane to consider an overlap
   // action to insert in the path if an object causes a conflict at an overlap
   bool skip_if_over_max_decel;  // if true, skip the action if it causes more than the max decel
-  bool strict;  // if true stop before entering *any* other lane, not only the lane to avoid
   double dist_buffer;
   double slow_velocity;
   double slow_dist_threshold;
   double stop_dist_threshold;
+  double precision;              // [m] precision when inserting a stop pose in the path
+  double min_decision_duration;  // [s] minimum duration needed a decision can be canceled
   // ego dimensions used to create its polygon footprint
   double front_offset;        // [m]  front offset (from vehicle info)
   double rear_offset;         // [m]  rear offset (from vehicle info)
@@ -66,17 +73,16 @@ struct PlannerParam
   double extra_left_offset;   // [m] extra left distance
 };
 
-/// @brief range along the path where ego overlaps another lane
-struct OverlapRange
+struct EnterExitTimes
 {
-  lanelet::ConstLanelet lane;
-  size_t entering_path_idx{};
-  size_t exiting_path_idx{};
-  lanelet::BasicPoint2d entering_point;  // pose of the overlapping point closest along the lane
-  lanelet::BasicPoint2d exiting_point;   // pose of the overlapping point furthest along the lane
-  double inside_distance{};              // [m] how much ego footprint enters the lane
+  double enter_time{};
+  double exit_time{};
 };
-using OverlapRanges = std::vector<OverlapRange>;
+struct RangeTimes
+{
+  EnterExitTimes ego{};
+  EnterExitTimes object{};
+};
 
 /// @brief action taken by the "out of lane" module
 struct Slowdown
@@ -100,6 +106,35 @@ struct RangeBound
   double arc_length;
   double inside_distance;
 };
+
+/// @brief representation of an overlap between the ego footprint and some other lane
+struct Overlap
+{
+  double inside_distance = 0.0;  ///!< distance inside the overlap
+  double min_arc_length = std::numeric_limits<double>::infinity();
+  double max_arc_length = 0.0;
+  lanelet::BasicPoint2d min_overlap_point{};  ///!< point with min arc length
+  lanelet::BasicPoint2d max_overlap_point{};  ///!< point with max arc length
+};
+
+/// @brief range along the path where ego overlaps another lane
+struct OverlapRange
+{
+  lanelet::ConstLanelet lane;
+  size_t entering_path_idx{};
+  size_t exiting_path_idx{};
+  lanelet::BasicPoint2d entering_point;  // pose of the overlapping point closest along the lane
+  lanelet::BasicPoint2d exiting_point;   // pose of the overlapping point furthest along the lane
+  double inside_distance{};              // [m] how much ego footprint enters the lane
+  mutable struct
+  {
+    std::vector<Overlap> overlaps;
+    std::optional<Slowdown> decision;
+    RangeTimes times;
+    std::optional<autoware_auto_perception_msgs::msg::PredictedObject> object{};
+  } debug;
+};
+using OverlapRanges = std::vector<OverlapRange>;
 /// @brief representation of a lane and its current overlap range
 struct OtherLane
 {
@@ -133,7 +168,7 @@ struct OtherLane
 /// @brief data related to the ego vehicle
 struct EgoData
 {
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path{};
+  autoware_auto_planning_msgs::msg::PathWithLaneId path{};
   size_t first_path_idx{};
   double velocity{};   // [m/s]
   double max_decel{};  // [m/s²]
@@ -162,12 +197,32 @@ struct DebugData
   lanelet::ConstLanelets path_lanelets;
   lanelet::ConstLanelets ignored_lanelets;
   lanelet::ConstLanelets other_lanelets;
+  autoware_auto_planning_msgs::msg::PathWithLaneId path;
+  size_t first_path_idx;
+
+  size_t prev_footprints = 0;
+  size_t prev_slowdowns = 0;
+  size_t prev_ranges = 0;
+  size_t prev_current_overlapped_lanelets = 0;
+  size_t prev_ignored_lanelets = 0;
+  size_t prev_path_lanelets = 0;
+  size_t prev_other_lanelets = 0;
   void reset_data()
   {
+    prev_footprints = footprints.size();
     footprints.clear();
+    prev_slowdowns = slowdowns.size();
     slowdowns.clear();
+    prev_ranges = ranges.size();
     ranges.clear();
+    prev_current_overlapped_lanelets = current_overlapped_lanelets.size();
     current_overlapped_lanelets.clear();
+    prev_ignored_lanelets = ignored_lanelets.size();
+    ignored_lanelets.clear();
+    prev_path_lanelets = path_lanelets.size();
+    path_lanelets.clear();
+    prev_other_lanelets = other_lanelets.size();
+    other_lanelets.clear();
   }
 };
 

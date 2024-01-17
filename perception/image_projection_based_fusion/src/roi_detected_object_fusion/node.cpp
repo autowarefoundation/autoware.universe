@@ -14,6 +14,8 @@
 
 #include "image_projection_based_fusion/roi_detected_object_fusion/node.hpp"
 
+#include "object_recognition_utils/object_recognition_utils.hpp"
+
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 
@@ -23,30 +25,50 @@ namespace image_projection_based_fusion
 {
 
 RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjects, DetectedObject>("roi_detected_object_fusion", options)
+: FusionNode<DetectedObjects, DetectedObject, DetectedObjectsWithFeature>(
+    "roi_detected_object_fusion", options)
 {
-  fusion_params_.passthrough_lower_bound_probability_threshold =
-    declare_parameter<double>("passthrough_lower_bound_probability_threshold");
+  fusion_params_.passthrough_lower_bound_probability_thresholds =
+    declare_parameter<std::vector<double>>("passthrough_lower_bound_probability_thresholds");
+  fusion_params_.min_iou_threshold = declare_parameter<double>("min_iou_threshold");
+  fusion_params_.trust_distances = declare_parameter<std::vector<double>>("trust_distances");
   fusion_params_.use_roi_probability = declare_parameter<bool>("use_roi_probability");
   fusion_params_.roi_probability_threshold = declare_parameter<double>("roi_probability_threshold");
-  fusion_params_.min_iou_threshold = declare_parameter<double>("min_iou_threshold");
+  {
+    const auto can_assign_vector_tmp = declare_parameter<std::vector<int64_t>>("can_assign_matrix");
+    std::vector<int> can_assign_vector(can_assign_vector_tmp.begin(), can_assign_vector_tmp.end());
+    const int label_num = static_cast<int>(std::sqrt(can_assign_vector.size()));
+    Eigen::Map<Eigen::MatrixXi> can_assign_matrix_tmp(
+      can_assign_vector.data(), label_num, label_num);
+    fusion_params_.can_assign_matrix = can_assign_matrix_tmp.transpose();
+  }
 }
 
 void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
 {
-  passthrough_object_flags_.clear();
-  passthrough_object_flags_.resize(output_msg.objects.size());
-  fused_object_flags_.clear();
-  fused_object_flags_.resize(output_msg.objects.size());
-  ignored_object_flags_.clear();
-  ignored_object_flags_.resize(output_msg.objects.size());
+  std::vector<bool> passthrough_object_flags, fused_object_flags, ignored_object_flags;
+  passthrough_object_flags.resize(output_msg.objects.size());
+  fused_object_flags.resize(output_msg.objects.size());
+  ignored_object_flags.resize(output_msg.objects.size());
   for (std::size_t obj_i = 0; obj_i < output_msg.objects.size(); ++obj_i) {
-    if (
-      output_msg.objects.at(obj_i).existence_probability >
-      fusion_params_.passthrough_lower_bound_probability_threshold) {
-      passthrough_object_flags_.at(obj_i) = true;
+    const auto & object = output_msg.objects.at(obj_i);
+    const auto label = object_recognition_utils::getHighestProbLabel(object.classification);
+    const auto pos = object_recognition_utils::getPose(object).position;
+    const auto object_sqr_dist = pos.x * pos.x + pos.y * pos.y;
+    const auto prob_threshold =
+      fusion_params_.passthrough_lower_bound_probability_thresholds.at(label);
+    const auto trust_sqr_dist =
+      fusion_params_.trust_distances.at(label) * fusion_params_.trust_distances.at(label);
+    if (object.existence_probability > prob_threshold || object_sqr_dist > trust_sqr_dist) {
+      passthrough_object_flags.at(obj_i) = true;
     }
   }
+
+  int64_t timestamp_nsec =
+    output_msg.header.stamp.sec * (int64_t)1e9 + output_msg.header.stamp.nanosec;
+  passthrough_object_flags_map_.insert(std::make_pair(timestamp_nsec, passthrough_object_flags));
+  fused_object_flags_map_.insert(std::make_pair(timestamp_nsec, fused_object_flags));
+  ignored_object_flags_map_.insert(std::make_pair(timestamp_nsec, ignored_object_flags));
 }
 
 void RoiDetectedObjectFusionNode::fuseOnSingleImage(
@@ -58,8 +80,8 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   Eigen::Affine3d object2camera_affine;
   {
     const auto transform_stamped_optional = getTransformStamped(
-      tf_buffer_, /*target*/ camera_info.header.frame_id,
-      /*source*/ input_object_msg.header.frame_id, input_object_msg.header.stamp);
+      tf_buffer_, /*target*/ input_roi_msg.header.frame_id,
+      /*source*/ input_object_msg.header.frame_id, input_roi_msg.header.stamp);
     if (!transform_stamped_optional) {
       return;
     }
@@ -73,9 +95,9 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
     camera_info.p.at(11);
 
   const auto object_roi_map = generateDetectedObjectRoIs(
-    input_object_msg.objects, static_cast<double>(camera_info.width),
+    input_object_msg, static_cast<double>(camera_info.width),
     static_cast<double>(camera_info.height), object2camera_affine, camera_projection);
-  fuseObjectsOnImage(input_object_msg.objects, input_roi_msg.feature_objects, object_roi_map);
+  fuseObjectsOnImage(input_object_msg, input_roi_msg.feature_objects, object_roi_map);
 
   if (debugger_) {
     debugger_->image_rois_.reserve(input_roi_msg.feature_objects.size());
@@ -86,26 +108,35 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   }
 }
 
-std::map<std::size_t, RegionOfInterest> RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
-  const std::vector<DetectedObject> & input_objects, const double image_width,
-  const double image_height, const Eigen::Affine3d & object2camera_affine,
-  const Eigen::Matrix4d & camera_projection)
+std::map<std::size_t, DetectedObjectWithFeature>
+RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
+  const DetectedObjects & input_object_msg, const double image_width, const double image_height,
+  const Eigen::Affine3d & object2camera_affine, const Eigen::Matrix4d & camera_projection)
 {
-  std::map<std::size_t, RegionOfInterest> object_roi_map;
-  for (std::size_t obj_i = 0; obj_i < input_objects.size(); ++obj_i) {
+  std::map<std::size_t, DetectedObjectWithFeature> object_roi_map;
+  int64_t timestamp_nsec =
+    input_object_msg.header.stamp.sec * (int64_t)1e9 + input_object_msg.header.stamp.nanosec;
+  if (passthrough_object_flags_map_.size() == 0) {
+    return object_roi_map;
+  }
+  if (passthrough_object_flags_map_.count(timestamp_nsec) == 0) {
+    return object_roi_map;
+  }
+  const auto & passthrough_object_flags = passthrough_object_flags_map_.at(timestamp_nsec);
+  for (std::size_t obj_i = 0; obj_i < input_object_msg.objects.size(); ++obj_i) {
     std::vector<Eigen::Vector3d> vertices_camera_coord;
+    const auto & object = input_object_msg.objects.at(obj_i);
+
+    if (passthrough_object_flags.at(obj_i)) {
+      continue;
+    }
+
+    // filter point out of scope
+    if (debugger_ && out_of_scope(object)) {
+      continue;
+    }
+
     {
-      const auto & object = input_objects.at(obj_i);
-
-      if (passthrough_object_flags_.at(obj_i)) {
-        continue;
-      }
-
-      // filter point out of scope
-      if (debugger_ && out_of_scope(object)) {
-        continue;
-      }
-
       std::vector<Eigen::Vector3d> vertices;
       objectToVertices(object.kinematics.pose_with_covariance.pose, object.shape, vertices);
       transformPoints(vertices, object2camera_affine, vertices_camera_coord);
@@ -142,7 +173,7 @@ std::map<std::size_t, RegionOfInterest> RoiDetectedObjectFusionNode::generateDet
         }
       }
     }
-    if (point_on_image_cnt == 0) {
+    if (point_on_image_cnt < 3) {
       continue;
     }
 
@@ -151,16 +182,18 @@ std::map<std::size_t, RegionOfInterest> RoiDetectedObjectFusionNode::generateDet
     max_x = std::min(max_x, image_width - 1);
     max_y = std::min(max_y, image_height - 1);
 
-    // build roi
-    RegionOfInterest roi;
-    roi.x_offset = static_cast<std::uint32_t>(min_x);
-    roi.y_offset = static_cast<std::uint32_t>(min_y);
-    roi.width = static_cast<std::uint32_t>(max_x) - static_cast<std::uint32_t>(min_x);
-    roi.height = static_cast<std::uint32_t>(max_y) - static_cast<std::uint32_t>(min_y);
-    object_roi_map.insert(std::make_pair(obj_i, roi));
+    DetectedObjectWithFeature object_roi;
+    object_roi.feature.roi.x_offset = static_cast<std::uint32_t>(min_x);
+    object_roi.feature.roi.y_offset = static_cast<std::uint32_t>(min_y);
+    object_roi.feature.roi.width =
+      static_cast<std::uint32_t>(max_x) - static_cast<std::uint32_t>(min_x);
+    object_roi.feature.roi.height =
+      static_cast<std::uint32_t>(max_y) - static_cast<std::uint32_t>(min_y);
+    object_roi.object = object;
+    object_roi_map.insert(std::make_pair(obj_i, object_roi));
 
     if (debugger_) {
-      debugger_->obstacle_rois_.push_back(roi);
+      debugger_->obstacle_rois_.push_back(object_roi.feature.roi);
     }
   }
 
@@ -168,13 +201,26 @@ std::map<std::size_t, RegionOfInterest> RoiDetectedObjectFusionNode::generateDet
 }
 
 void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
-  const std::vector<DetectedObject> & objects __attribute__((unused)),
+  const DetectedObjects & input_object_msg,
   const std::vector<DetectedObjectWithFeature> & image_rois,
-  const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map)
+  const std::map<std::size_t, DetectedObjectWithFeature> & object_roi_map)
 {
+  int64_t timestamp_nsec =
+    input_object_msg.header.stamp.sec * (int64_t)1e9 + input_object_msg.header.stamp.nanosec;
+  if (fused_object_flags_map_.size() == 0 || ignored_object_flags_map_.size() == 0) {
+    return;
+  }
+  if (
+    fused_object_flags_map_.count(timestamp_nsec) == 0 ||
+    ignored_object_flags_map_.count(timestamp_nsec) == 0) {
+    return;
+  }
+  auto & fused_object_flags = fused_object_flags_map_.at(timestamp_nsec);
+  auto & ignored_object_flags = ignored_object_flags_map_.at(timestamp_nsec);
+
   for (const auto & object_pair : object_roi_map) {
     const auto & obj_i = object_pair.first;
-    if (fused_object_flags_.at(obj_i)) {
+    if (fused_object_flags.at(obj_i)) {
       continue;
     }
 
@@ -182,7 +228,15 @@ void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
     float max_iou = 0.0f;
     for (const auto & image_roi : image_rois) {
       const auto & object_roi = object_pair.second;
-      const double iou = calcIoU(object_roi, image_roi.feature.roi);
+      const auto object_roi_label =
+        object_recognition_utils::getHighestProbLabel(object_roi.object.classification);
+      const auto image_roi_label =
+        object_recognition_utils::getHighestProbLabel(image_roi.object.classification);
+      if (!fusion_params_.can_assign_matrix(object_roi_label, image_roi_label)) {
+        continue;
+      }
+
+      const double iou = calcIoU(object_roi.feature.roi, image_roi.feature.roi);
       if (iou > max_iou) {
         max_iou = iou;
         roi_prob = image_roi.object.existence_probability;
@@ -192,15 +246,15 @@ void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
     if (max_iou > fusion_params_.min_iou_threshold) {
       if (fusion_params_.use_roi_probability) {
         if (roi_prob > fusion_params_.roi_probability_threshold) {
-          fused_object_flags_.at(obj_i) = true;
+          fused_object_flags.at(obj_i) = true;
         } else {
-          ignored_object_flags_.at(obj_i) = true;
+          ignored_object_flags.at(obj_i) = true;
         }
       } else {
-        fused_object_flags_.at(obj_i) = true;
+        fused_object_flags.at(obj_i) = true;
       }
     } else {
-      ignored_object_flags_.at(obj_i) = true;
+      ignored_object_flags.at(obj_i) = true;
     }
   }
 }
@@ -234,19 +288,37 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
     return;
   }
 
+  int64_t timestamp_nsec =
+    output_msg.header.stamp.sec * (int64_t)1e9 + output_msg.header.stamp.nanosec;
+  if (
+    passthrough_object_flags_map_.size() == 0 || fused_object_flags_map_.size() == 0 ||
+    ignored_object_flags_map_.size() == 0) {
+    return;
+  }
+  if (
+    passthrough_object_flags_map_.count(timestamp_nsec) == 0 ||
+    fused_object_flags_map_.count(timestamp_nsec) == 0 ||
+    ignored_object_flags_map_.count(timestamp_nsec) == 0) {
+    return;
+  }
+  auto & passthrough_object_flags = passthrough_object_flags_map_.at(timestamp_nsec);
+  auto & fused_object_flags = fused_object_flags_map_.at(timestamp_nsec);
+  auto & ignored_object_flags = ignored_object_flags_map_.at(timestamp_nsec);
+
   DetectedObjects output_objects_msg, debug_fused_objects_msg, debug_ignored_objects_msg;
   output_objects_msg.header = output_msg.header;
   debug_fused_objects_msg.header = output_msg.header;
   debug_ignored_objects_msg.header = output_msg.header;
   for (std::size_t obj_i = 0; obj_i < output_msg.objects.size(); ++obj_i) {
     const auto & obj = output_msg.objects.at(obj_i);
-    if (passthrough_object_flags_.at(obj_i)) {
+    if (passthrough_object_flags.at(obj_i)) {
       output_objects_msg.objects.emplace_back(obj);
     }
-    if (fused_object_flags_.at(obj_i)) {
+    if (fused_object_flags.at(obj_i)) {
       output_objects_msg.objects.emplace_back(obj);
       debug_fused_objects_msg.objects.emplace_back(obj);
-    } else if (ignored_object_flags_.at(obj_i)) {
+    }
+    if (ignored_object_flags.at(obj_i)) {
       debug_ignored_objects_msg.objects.emplace_back(obj);
     }
   }
@@ -255,6 +327,10 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
 
   debug_publisher_->publish<DetectedObjects>("debug/fused_objects", debug_fused_objects_msg);
   debug_publisher_->publish<DetectedObjects>("debug/ignored_objects", debug_ignored_objects_msg);
+
+  passthrough_object_flags_map_.erase(timestamp_nsec);
+  fused_object_flags_map_.erase(timestamp_nsec);
+  ignored_object_flags_map_.erase(timestamp_nsec);
 }
 
 }  // namespace image_projection_based_fusion

@@ -30,7 +30,9 @@
 #include <algorithm>
 #include <vector>
 
+using motion_utils::calcArcLength;
 using tier4_autoware_utils::LinearRing2d;
+using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::MultiPoint2d;
 using tier4_autoware_utils::Point2d;
 
@@ -39,6 +41,7 @@ namespace
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using geometry_msgs::msg::Point;
 
 double calcBrakingDistance(
   const double abs_velocity, const double max_deceleration, const double delay_time)
@@ -140,6 +143,14 @@ Output LaneDepartureChecker::update(const Input & input)
 
   output.is_out_of_lane = isOutOfLane(output.candidate_lanelets, output.vehicle_footprints.front());
   output.processing_time_map["isOutOfLane"] = stop_watch.toc(true);
+
+  const double max_search_length_for_boundaries =
+    calcMaxSearchLengthForBoundaries(*input.predicted_trajectory);
+  const auto uncrossable_boundaries = extractUncrossableBoundaries(
+    *input.lanelet_map, input.predicted_trajectory->points.front().pose.position,
+    max_search_length_for_boundaries, input.boundary_types_to_detect);
+  output.will_cross_boundary = willCrossBoundary(output.vehicle_footprints, uncrossable_boundaries);
+  output.processing_time_map["willCrossBoundary"] = stop_watch.toc(true);
 
   return output;
 }
@@ -296,6 +307,61 @@ bool LaneDepartureChecker::isOutOfLane(
     }
   }
 
+  return false;
+}
+
+double LaneDepartureChecker::calcMaxSearchLengthForBoundaries(const Trajectory & trajectory) const
+{
+  const double max_ego_lon_length = std::max(
+    std::abs(vehicle_info_ptr_->max_longitudinal_offset_m),
+    std::abs(vehicle_info_ptr_->min_longitudinal_offset_m));
+  const double max_ego_lat_length = std::max(
+    std::abs(vehicle_info_ptr_->max_lateral_offset_m),
+    std::abs(vehicle_info_ptr_->min_lateral_offset_m));
+  const double max_ego_search_length = std::hypot(max_ego_lon_length, max_ego_lat_length);
+  return calcArcLength(trajectory.points) + max_ego_search_length;
+}
+
+SegmentRtree LaneDepartureChecker::extractUncrossableBoundaries(
+  const lanelet::LaneletMap & lanelet_map, const geometry_msgs::msg::Point & ego_point,
+  const double max_search_length, const std::vector<std::string> & boundary_types_to_detect)
+{
+  const auto has_types =
+    [](const lanelet::ConstLineString3d & ls, const std::vector<std::string> & types) {
+      constexpr auto no_type = "";
+      const auto type = ls.attributeOr(lanelet::AttributeName::Type, no_type);
+      return (type != no_type && std::find(types.begin(), types.end(), type) != types.end());
+    };
+
+  SegmentRtree uncrossable_segments_in_range;
+  LineString2d line;
+  const auto ego_p = Point2d{ego_point.x, ego_point.y};
+  for (const auto & ls : lanelet_map.lineStringLayer) {
+    if (has_types(ls, boundary_types_to_detect)) {
+      line.clear();
+      for (const auto & p : ls) line.push_back(Point2d{p.x(), p.y()});
+      for (auto segment_idx = 0LU; segment_idx + 1 < line.size(); ++segment_idx) {
+        const Segment2d segment = {line[segment_idx], line[segment_idx + 1]};
+        if (boost::geometry::distance(segment, ego_p) < max_search_length) {
+          uncrossable_segments_in_range.insert(segment);
+        }
+      }
+    }
+  }
+  return uncrossable_segments_in_range;
+}
+
+bool LaneDepartureChecker::willCrossBoundary(
+  const std::vector<LinearRing2d> & vehicle_footprints, const SegmentRtree & uncrossable_segments)
+{
+  for (const auto & footprint : vehicle_footprints) {
+    std::vector<Segment2d> intersection_result;
+    uncrossable_segments.query(
+      boost::geometry::index::intersects(footprint), std::back_inserter(intersection_result));
+    if (!intersection_result.empty()) {
+      return true;
+    }
+  }
   return false;
 }
 }  // namespace lane_departure_checker

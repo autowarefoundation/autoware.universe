@@ -14,7 +14,8 @@
 
 #include "path_smoother/utils/trajectory_utils.hpp"
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/resample/resample.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "path_smoother/utils/geometry_utils.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
@@ -33,15 +34,6 @@ namespace path_smoother
 {
 namespace trajectory_utils
 {
-Trajectory createTrajectory(
-  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points)
-{
-  auto traj = motion_utils::convertToTrajectory(traj_points);
-  traj.header = header;
-
-  return traj;
-}
-
 Path create_path(Path path_msg, const std::vector<TrajectoryPoint> & traj_points)
 {
   path_msg.points.clear();

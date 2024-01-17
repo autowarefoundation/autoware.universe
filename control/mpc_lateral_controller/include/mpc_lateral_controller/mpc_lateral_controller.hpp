@@ -52,11 +52,13 @@ using tier4_debug_msgs::msg::Float32Stamped;
 class MpcLateralController : public trajectory_follower::LateralControllerBase
 {
 public:
+  /// \param node Reference to the node used only for the component and parameter initialization.
   explicit MpcLateralController(rclcpp::Node & node);
   virtual ~MpcLateralController();
 
 private:
-  rclcpp::Node * node_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
 
   rclcpp::Publisher<Trajectory>::SharedPtr m_pub_predicted_traj;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr m_pub_debug_values;
@@ -89,7 +91,7 @@ private:
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
 
-  MPC m_mpc;  // MPC object for trajectory following.
+  std::unique_ptr<MPC> m_mpc;  // MPC object for trajectory following.
 
   // Check is mpc output converged
   bool m_is_mpc_history_filled{false};
@@ -144,23 +146,27 @@ private:
    * @param wheelbase Vehicle's wheelbase.
    * @param steer_lim Steering command limit.
    * @param steer_tau Steering time constant.
+   * @param node Reference to the node.
    * @return Pointer to the created vehicle model.
    */
   std::shared_ptr<VehicleModelInterface> createVehicleModel(
-    const double wheelbase, const double steer_lim, const double steer_tau);
+    const double wheelbase, const double steer_lim, const double steer_tau, rclcpp::Node & node);
 
   /**
    * @brief Create the quadratic problem solver interface.
+   * @param node Reference to the node.
    * @return Pointer to the created QP solver interface.
    */
-  std::shared_ptr<QPSolverInterface> createQPSolverInterface();
+  std::shared_ptr<QPSolverInterface> createQPSolverInterface(rclcpp::Node & node);
 
   /**
    * @brief Create the steering offset estimator for offset compensation.
    * @param wheelbase Vehicle's wheelbase.
+   * @param node Reference to the node.
    * @return Pointer to the created steering offset estimator.
    */
-  std::shared_ptr<SteeringOffsetEstimator> createSteerOffsetEstimator(const double wheelbase);
+  std::shared_ptr<SteeringOffsetEstimator> createSteerOffsetEstimator(
+    const double wheelbase, rclcpp::Node & node);
 
   /**
    * @brief Check if all necessary data is received and ready to run the control.
@@ -181,7 +187,7 @@ private:
    * @brief Set the current trajectory using the received message.
    * @param msg Received trajectory message.
    */
-  void setTrajectory(const Trajectory & msg);
+  void setTrajectory(const Trajectory & msg, const Odometry & current_kinematics);
 
   /**
    * @brief Check if the received data is valid.
@@ -250,8 +256,9 @@ private:
 
   /**
    * @brief Declare MPC parameters as ROS parameters to allow tuning on the fly.
+   * @param node Reference to the node.
    */
-  void declareMPCparameters();
+  void declareMPCparameters(rclcpp::Node & node);
 
   /**
    * @brief Callback function called when parameters are changed outside of the node.
@@ -264,13 +271,13 @@ private:
   template <typename... Args>
   inline void info_throttle(Args &&... args)
   {
-    RCLCPP_INFO_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000, args...);
+    RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, args...);
   }
 
   template <typename... Args>
   inline void warn_throttle(Args &&... args)
   {
-    RCLCPP_WARN_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000, args...);
+    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, args...);
   }
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller

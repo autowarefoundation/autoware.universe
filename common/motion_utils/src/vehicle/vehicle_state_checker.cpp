@@ -88,7 +88,7 @@ VehicleStopChecker::VehicleStopChecker(rclcpp::Node * node)
     std::bind(&VehicleStopChecker::onOdom, this, _1));
 }
 
-void VehicleStopChecker::onOdom(const Odometry::SharedPtr msg)
+void VehicleStopChecker::onOdom(const Odometry::ConstSharedPtr msg)
 {
   odometry_ptr_ = msg;
 
@@ -124,11 +124,11 @@ bool VehicleArrivalChecker::isVehicleStoppedAtStopPoint(const double stop_durati
     return false;
   }
 
-  return std::abs(motion_utils::calcSignedArcLength(trajectory_ptr_->points, p, idx.get())) <
+  return std::abs(motion_utils::calcSignedArcLength(trajectory_ptr_->points, p, idx.value())) <
          th_arrived_distance_m;
 }
 
-void VehicleArrivalChecker::onTrajectory(const Trajectory::SharedPtr msg)
+void VehicleArrivalChecker::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   trajectory_ptr_ = msg;
 }

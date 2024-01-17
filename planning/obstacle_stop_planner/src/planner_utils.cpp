@@ -15,12 +15,17 @@
 #include "obstacle_stop_planner/planner_utils.hpp"
 
 #include <motion_utils/distance/distance.hpp>
-#include <motion_utils/trajectory/tmp_conversion.hpp>
+#include <motion_utils/trajectory/conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
 #include <diagnostic_msgs/msg/key_value.hpp>
 
 #include <boost/format.hpp>
+#include <boost/geometry/algorithms/convex_hull.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/within.hpp>
+#include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -35,7 +40,7 @@ using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::getRPY;
 
-boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
+std::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
   const SlowDownParam & slow_down_param, const double dist_baselink_to_obstacle,
   const double current_vel, const double current_acc)
 {
@@ -61,10 +66,10 @@ boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
       continue;
     }
 
-    if (stop_dist.get() + p.longitudinal_forward_margin < dist_baselink_to_obstacle) {
+    if (stop_dist.value() + p.longitudinal_forward_margin < dist_baselink_to_obstacle) {
       RCLCPP_DEBUG(
         logger, "[found plan] dist:%-6.2f jerk:%-6.2f margin:%-6.2f v0:%-6.2f vt:%-6.2f",
-        stop_dist.get(), planning_jerk, p.longitudinal_forward_margin, p.slow_down_velocity,
+        stop_dist.value(), planning_jerk, p.longitudinal_forward_margin, p.slow_down_velocity,
         current_vel);
       return std::make_pair(p.longitudinal_forward_margin, p.slow_down_velocity);
     }
@@ -83,11 +88,12 @@ boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
       return {};
     }
 
-    if (stop_dist.get() + p.min_longitudinal_forward_margin < dist_baselink_to_obstacle) {
-      const auto planning_margin = dist_baselink_to_obstacle - stop_dist.get();
+    if (stop_dist.value() + p.min_longitudinal_forward_margin < dist_baselink_to_obstacle) {
+      const auto planning_margin = dist_baselink_to_obstacle - stop_dist.value();
       RCLCPP_DEBUG(
         logger, "[relax margin] dist:%-6.2f jerk:%-6.2f margin:%-6.2f v0:%-6.2f vt%-6.2f",
-        stop_dist.get(), p.slow_down_min_jerk, planning_margin, p.slow_down_velocity, current_vel);
+        stop_dist.value(), p.slow_down_min_jerk, planning_margin, p.slow_down_velocity,
+        current_vel);
       return std::make_pair(planning_margin, p.slow_down_velocity);
     }
   }
@@ -96,7 +102,7 @@ boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
   return {};
 }
 
-boost::optional<std::pair<size_t, TrajectoryPoint>> getForwardInsertPointFromBasePoint(
+std::optional<std::pair<size_t, TrajectoryPoint>> getForwardInsertPointFromBasePoint(
   const size_t base_idx, const TrajectoryPoints & trajectory, const double margin)
 {
   if (base_idx + 1 > trajectory.size()) {
@@ -132,7 +138,7 @@ boost::optional<std::pair<size_t, TrajectoryPoint>> getForwardInsertPointFromBas
   return {};
 }
 
-boost::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBasePoint(
+std::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBasePoint(
   const size_t base_idx, const TrajectoryPoints & trajectory, const double margin)
 {
   if (base_idx + 1 > trajectory.size()) {
@@ -169,7 +175,7 @@ boost::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBa
   return {};
 }
 
-boost::optional<std::pair<size_t, double>> findNearestFrontIndex(
+std::optional<std::pair<size_t, double>> findNearestFrontIndex(
   const size_t start_idx, const TrajectoryPoints & trajectory, const Point & point)
 {
   for (size_t i = start_idx; i < trajectory.size(); ++i) {
@@ -485,10 +491,11 @@ pcl::PointXYZ pointToPcl(const double x, const double y, const double z)
   PointVariant z_variant = z;
 
   // Extract the corresponding components from the variant
-  auto extract_float = [](const auto & variant) { return boost::get<float>(variant); };
-  float pcl_x = boost::apply_visitor(extract_float, x_variant);
-  float pcl_y = boost::apply_visitor(extract_float, y_variant);
-  float pcl_z = boost::apply_visitor(extract_float, z_variant);
+  auto extract_float = [](const auto & value) -> float { return static_cast<float>(value); };
+
+  float pcl_x = std::visit(extract_float, x_variant);
+  float pcl_y = std::visit(extract_float, y_variant);
+  float pcl_z = std::visit(extract_float, z_variant);
 
   // Create a new pcl::PointXYZ object
   return {pcl_x, pcl_y, pcl_z};
@@ -667,7 +674,7 @@ Polygon2d convertPolygonObjectToGeometryPolygon(
   return object_polygon;
 }
 
-boost::optional<PredictedObject> getObstacleFromUuid(
+std::optional<PredictedObject> getObstacleFromUuid(
   const PredictedObjects & obstacles, const unique_identifier_msgs::msg::UUID & target_object_id)
 {
   const auto itr = std::find_if(
@@ -676,9 +683,9 @@ boost::optional<PredictedObject> getObstacleFromUuid(
     });
 
   if (itr == obstacles.objects.end()) {
-    return boost::none;
+    return std::nullopt;
   }
-  return boost::make_optional(*itr);
+  return *itr;
 }
 
 bool isFrontObstacle(const Pose & ego_pose, const geometry_msgs::msg::Point & obstacle_pos)
