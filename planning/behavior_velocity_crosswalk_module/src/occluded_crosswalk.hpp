@@ -28,6 +28,7 @@
 
 #include <vector>
 
+/*
 // for writing the svg file
 #include <fstream>
 #include <iostream>
@@ -36,7 +37,7 @@
 // for the svg mapper
 #include <boost/geometry/io/svg/svg_mapper.hpp>
 #include <boost/geometry/io/svg/write.hpp>
-
+*/
 namespace behavior_velocity_planner
 {
 /// @brief check if the gridmap is occluded at the given index
@@ -71,8 +72,8 @@ bool is_crosswalk_occluded(
   const geometry_msgs::msg::Point & path_intersection)
 {
   // Declare a stream and an SVG mapper
-  std::ofstream svg("/home/mclement/Pictures/crosswalk.svg");  // /!\ CHANGE PATH
-  boost::geometry::svg_mapper<lanelet::BasicPoint2d> mapper(svg, 400, 400);
+  // std::ofstream svg("/home/mclement/Pictures/crosswalk.svg");  // /!\ CHANGE PATH
+  // boost::geometry::svg_mapper<lanelet::BasicPoint2d> mapper(svg, 400, 400);
   grid_map::GridMap grid_map;
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
   const lanelet::BasicPoint2d path_inter(path_intersection.x, path_intersection.y);
@@ -110,16 +111,16 @@ bool is_crosswalk_occluded(
     }
   }
   incoming_areas.push_back(crosswalk_lanelet.polygon2d().basicPolygon());
-  mapper.add(crosswalk_lanelet.polygon2d().basicPolygon());
-  mapper.add(path_inter);
-  mapper.add(incoming_areas[0]);
-  mapper.add(incoming_areas[1]);
-  mapper.map(
-    crosswalk_lanelet.polygon2d().basicPolygon(),
-    "fill-opacity:0.3;fill:grey;stroke:black;stroke-width:1");
-  mapper.map(path_inter, "opacity:0.5;fill:pink;stroke:pink;stroke-width:1", 1);
-  mapper.map(incoming_areas[0], "fill-opacity:0.3;fill:green;stroke:none;stroke-width:1");
-  mapper.map(incoming_areas[1], "fill-opacity:0.3;fill:red;stroke:none;stroke-width:1");
+  // mapper.add(crosswalk_lanelet.polygon2d().basicPolygon());
+  // mapper.add(path_inter);
+  // mapper.add(incoming_areas[0]);
+  // mapper.add(incoming_areas[1]);
+  // mapper.map(
+  //   crosswalk_lanelet.polygon2d().basicPolygon(),
+  //   "fill-opacity:0.3;fill:grey;stroke:black;stroke-width:1");
+  // mapper.map(path_inter, "opacity:0.5;fill:pink;stroke:pink;stroke-width:1", 1);
+  // mapper.map(incoming_areas[0], "fill-opacity:0.3;fill:green;stroke:none;stroke-width:1");
+  // mapper.map(incoming_areas[1], "fill-opacity:0.3;fill:red;stroke:none;stroke-width:1");
   for (const auto & incoming_area : incoming_areas) {
     grid_map::Polygon poly;
     for (const auto & p : incoming_area) poly.addVertex(grid_map::Position(p.x(), p.y()));
