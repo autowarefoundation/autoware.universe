@@ -12,24 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTIL_TYPE_HPP_
-#define UTIL_TYPE_HPP_
+#ifndef INTERPOLATED_PATH_INFO_HPP_
+#define INTERPOLATED_PATH_INFO_HPP_
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <geometry_msgs/msg/point.hpp>
-#include <geometry_msgs/msg/polygon.hpp>
-#include <geometry_msgs/msg/pose.hpp>
 
-#include <lanelet2_core/primitives/CompoundPolygon.h>
-#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/Forward.h>
 
 #include <optional>
 #include <set>
 #include <utility>
-#include <vector>
 
 namespace behavior_velocity_planner::util
 {
@@ -54,4 +46,4 @@ struct InterpolatedPathInfo
 
 }  // namespace behavior_velocity_planner::util
 
-#endif  // UTIL_TYPE_HPP_
+#endif  // INTERPOLATED_PATH_INFO_HPP_

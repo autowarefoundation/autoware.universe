@@ -15,25 +15,22 @@
 #ifndef UTIL_HPP_
 #define UTIL_HPP_
 
-#include "util_type.hpp"
+#include "interpolated_path_info.hpp"
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/logger.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include <autoware_auto_perception_msgs/msg/predicted_object_kinematics.hpp>
 
-#include <map>
-#include <memory>
+#include <lanelet2_core/Forward.h>
+#include <lanelet2_routing/Forward.h>
+
 #include <optional>
 #include <set>
-#include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
-{
-namespace util
+namespace behavior_velocity_planner::util
 {
 
 /**
@@ -142,7 +139,16 @@ std::optional<size_t> getFirstPointInsidePolygonByFootprint(
   const lanelet::CompoundPolygon3d & polygon, const InterpolatedPathInfo & interpolated_path_info,
   const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length);
 
-}  // namespace util
-}  // namespace behavior_velocity_planner
+std::optional<std::pair<
+  size_t /* the index of interpolated PathPoint*/, size_t /* the index of corresponding Polygon */>>
+getFirstPointInsidePolygonsByFootprint(
+  const std::vector<lanelet::CompoundPolygon3d> & polygons,
+  const util::InterpolatedPathInfo & interpolated_path_info,
+  const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length);
+
+std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
+  const lanelet::ConstLanelets & ll_vec);
+
+}  // namespace behavior_velocity_planner::util
 
 #endif  // UTIL_HPP_

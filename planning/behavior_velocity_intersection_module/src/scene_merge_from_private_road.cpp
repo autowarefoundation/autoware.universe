@@ -24,6 +24,7 @@
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_routing/RoutingGraph.h>
 
 #include <algorithm>
 #include <limits>

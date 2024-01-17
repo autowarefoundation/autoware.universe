@@ -14,14 +14,13 @@
 
 #include "util.hpp"
 
-#include "util_type.hpp"
+#include "interpolated_path_info.hpp"
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -29,22 +28,21 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_routing/RoutingGraph.h>
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace behavior_velocity_planner::util
 {
 namespace bg = boost::geometry;
-
-namespace util
-{
 
 static std::optional<size_t> getDuplicatedPointIdx(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
@@ -150,6 +148,34 @@ std::optional<size_t> getFirstPointInsidePolygonByFootprint(
       footprint, tier4_autoware_utils::pose2transform(base_pose));
     if (bg::intersects(path_footprint, area_2d)) {
       return std::make_optional<size_t>(i);
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<std::pair<
+  size_t /* the index of interpolated PathPoint*/, size_t /* the index of corresponding Polygon */>>
+getFirstPointInsidePolygonsByFootprint(
+  const std::vector<lanelet::CompoundPolygon3d> & polygons,
+  const util::InterpolatedPathInfo & interpolated_path_info,
+  const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length)
+{
+  const auto & path_ip = interpolated_path_info.path;
+  const auto [lane_start, lane_end] = interpolated_path_info.lane_id_interval.value();
+  const size_t vehicle_length_idx = static_cast<size_t>(vehicle_length / interpolated_path_info.ds);
+  const size_t start =
+    static_cast<size_t>(std::max<int>(0, static_cast<int>(lane_start) - vehicle_length_idx));
+
+  for (size_t i = start; i <= lane_end; ++i) {
+    const auto & pose = path_ip.points.at(i).point.pose;
+    const auto path_footprint =
+      tier4_autoware_utils::transformVector(footprint, tier4_autoware_utils::pose2transform(pose));
+    for (size_t j = 0; j < polygons.size(); ++j) {
+      const auto area_2d = lanelet::utils::to2D(polygons.at(j)).basicPolygon();
+      const bool is_in_polygon = bg::intersects(area_2d, path_footprint);
+      if (is_in_polygon) {
+        return std::make_optional<std::pair<size_t, size_t>>(i, j);
+      }
     }
   }
   return std::nullopt;
@@ -367,5 +393,14 @@ geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   return obj_pose;
 }
 
-}  // namespace util
-}  // namespace behavior_velocity_planner
+std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
+  const lanelet::ConstLanelets & ll_vec)
+{
+  std::vector<lanelet::CompoundPolygon3d> polys;
+  for (auto && ll : ll_vec) {
+    polys.push_back(ll.polygon3d());
+  }
+  return polys;
+}
+
+}  // namespace behavior_velocity_planner::util
