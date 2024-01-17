@@ -19,6 +19,7 @@
   <depend>libgoogle-glog-dev</depend>
   <depend>magic_enum</depend>
   <depend>pcl_conversions</depend>
+  <depend>yabloc_particle_filter</depend>
   <depend>pcl_ros</depend>
   <depend>pluginlib</depend>
   <depend>sensor_msgs</depend>

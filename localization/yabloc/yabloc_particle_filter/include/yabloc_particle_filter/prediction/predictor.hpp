@@ -77,7 +77,7 @@ private:
   rclcpp::Publisher<Marker>::SharedPtr marker_pub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_;
   // Server
-  rclcpp::Service<SetBool>::SharedPtr enable_server_;
+  rclcpp::Service<SetBool>::SharedPtr yabloc_trigger_server_;
 
   // Timer callback
   rclcpp::TimerBase::SharedPtr timer_;
@@ -99,7 +99,8 @@ private:
   void on_twist_cov(const TwistCovStamped::ConstSharedPtr twist);
   void on_weighted_particles(const ParticleArray::ConstSharedPtr weighted_particles);
   void on_timer();
-  void on_service(SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response);
+  void on_trigger_service(
+    SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response);
 
   //
   void initialize_particles(const PoseCovStamped & initialpose);
