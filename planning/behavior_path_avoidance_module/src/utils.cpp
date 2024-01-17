@@ -700,11 +700,13 @@ bool isSatisfiedWithCommonCondition(
     return false;
   }
 
-  if (
-    object.longitudinal + object.length / 2 + parameters->object_check_goal_distance >
-    to_goal_distance) {
-    object.reason = "TooNearToGoal";
-    return false;
+  if (!utils::isAllowedGoalModification(planner_data->route_handler)) {
+    if (
+      object.longitudinal + object.length / 2 + parameters->object_check_goal_distance >
+      to_goal_distance) {
+      object.reason = "TooNearToGoal";
+      return false;
+    }
   }
 
   return true;
@@ -1686,7 +1688,9 @@ void fillAdditionalInfoFromLongitudinal(
 {
   for (auto & outline : outlines) {
     fillAdditionalInfoFromLongitudinal(data, outline.avoid_line);
-    fillAdditionalInfoFromLongitudinal(data, outline.return_line);
+    if (outline.return_line.has_value()) {
+      fillAdditionalInfoFromLongitudinal(data, outline.return_line.value());
+    }
 
     std::for_each(outline.middle_lines.begin(), outline.middle_lines.end(), [&](auto & line) {
       fillAdditionalInfoFromLongitudinal(data, line);
@@ -1909,6 +1913,10 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   PredictedObjects target_objects;
   PredictedObjects other_objects;
 
+  if (reference_path.points.empty() || spline_path.points.empty()) {
+    return std::make_pair(target_objects, other_objects);
+  }
+
   double max_offset = 0.0;
   for (const auto & object_parameter : parameters->object_parameters) {
     const auto p = object_parameter.second;
@@ -1921,16 +1929,15 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
     createVehiclePolygon(planner_data->parameters.vehicle_info, max_offset);
   const auto ego_idx = planner_data->findEgoIndex(reference_path.points);
   const auto arc_length_array =
-    utils::calcPathArcLengthArray(reference_path, 0L, reference_path.points.size(), 1e-3);
+    utils::calcPathArcLengthArray(reference_path, 0L, reference_path.points.size(), 0.0);
 
-  double next_longitudinal_distance = 0.0;
+  const auto points_size = std::min(reference_path.points.size(), spline_path.points.size());
+
   std::vector<Polygon2d> detection_areas;
-  for (size_t i = 0; i < reference_path.points.size() - 1; ++i) {
-    const auto & p_reference_ego_front = reference_path.points.at(i).point.pose;
-    const auto & p_reference_ego_back = reference_path.points.at(i + 1).point.pose;
-    const auto & p_spline_ego_front = spline_path.points.at(i).point.pose;
-    const auto & p_spline_ego_back = spline_path.points.at(i + 1).point.pose;
-
+  Pose p_reference_ego_front = reference_path.points.front().point.pose;
+  Pose p_spline_ego_front = spline_path.points.front().point.pose;
+  double next_longitudinal_distance = parameters->resample_interval_for_output;
+  for (size_t i = 0; i < points_size; ++i) {
     const auto distance_from_ego = calcSignedArcLength(reference_path.points, ego_idx, i);
     if (distance_from_ego > object_check_forward_distance) {
       break;
@@ -1940,9 +1947,15 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
       continue;
     }
 
+    const auto & p_reference_ego_back = reference_path.points.at(i).point.pose;
+    const auto & p_spline_ego_back = spline_path.points.at(i).point.pose;
+
     detection_areas.push_back(createOneStepPolygon(
       p_reference_ego_front, p_reference_ego_back, p_spline_ego_front, p_spline_ego_back,
       detection_area));
+
+    p_reference_ego_front = p_reference_ego_back;
+    p_spline_ego_front = p_spline_ego_back;
 
     next_longitudinal_distance += parameters->resample_interval_for_output;
   }
@@ -2169,7 +2182,9 @@ double calcDistanceToReturnDeadLine(
   }
 
   // dead line for goal
-  if (parameters->enable_dead_line_for_goal) {
+  if (
+    !utils::isAllowedGoalModification(planner_data->route_handler) &&
+    parameters->enable_dead_line_for_goal) {
     if (planner_data->route_handler->isInGoalRouteSection(lanelets.back())) {
       const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
       const auto to_goal_distance =
