@@ -127,7 +127,7 @@ void StartPlannerModule::initVariables()
   debug_marker_.markers.clear();
   initializeSafetyCheckParameters();
   initializeCollisionCheckDebugMap(start_planner_data_.collision_check);
-  updateExpandedDrivableLanes();
+  updateDrivableLanes();
 }
 
 void StartPlannerModule::updateEgoPredictedPathParams(
@@ -560,7 +560,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 void StartPlannerModule::resetStatus()
 {
   status_ = PullOutStatus{};
-  updateExpandedDrivableLanes();
+  updateDrivableLanes();
 }
 
 void StartPlannerModule::incrementPathIndex()
@@ -1327,19 +1327,19 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
   }
 }
 
-void StartPlannerModule::updateExpandedDrivableLanes()
+void StartPlannerModule::updateDrivableLanes()
 {
-  const auto expanded_drivable_lanes = createExpandedDrivableLanes();
+  const auto drivable_lanes = createDrivableLanes();
   for (auto & planner : start_planners_) {
     auto shift_pull_out = std::dynamic_pointer_cast<ShiftPullOut>(planner);
 
     if (shift_pull_out) {
-      shift_pull_out->setExpandedDrivableLanes(expanded_drivable_lanes);
+      shift_pull_out->setDrivableLanes(drivable_lanes);
     }
   }
 }
 
-lanelet::ConstLanelets StartPlannerModule::createExpandedDrivableLanes() const
+lanelet::ConstLanelets StartPlannerModule::createDrivableLanes() const
 {
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
@@ -1358,13 +1358,9 @@ lanelet::ConstLanelets StartPlannerModule::createExpandedDrivableLanes() const
     [this](const auto & pull_out_lane) {
       return planner_data_->route_handler->isShoulderLanelet(pull_out_lane);
     });
-  const auto drivable_lanes =
-    utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
-  const auto & dp = planner_data_->drivable_area_expansion_parameters;
-  const auto expanded_lanes = utils::transformToLanelets(utils::expandLanelets(
-    drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-    dp.drivable_area_types_to_skip));
-  return expanded_lanes;
+  const auto drivable_lanes = utils::transformToLanelets(
+    utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes));
+  return drivable_lanes;
 }
 
 void StartPlannerModule::setDebugData()

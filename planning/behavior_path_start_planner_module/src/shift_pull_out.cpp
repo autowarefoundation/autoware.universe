@@ -98,7 +98,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
       const auto transformed_vehicle_footprint =
         transformVector(vehicle_footprint_, tier4_autoware_utils::pose2transform(pose));
       const bool is_out_of_lane =
-        LaneDepartureChecker::isOutOfLane(expanded_drivable_lanes_, transformed_vehicle_footprint);
+        LaneDepartureChecker::isOutOfLane(drivable_lanes_, transformed_vehicle_footprint);
       if (i <= start_segment_idx) {
         if (!is_out_of_lane) {
           cropped_path.points.push_back(shift_path.points.at(i));
@@ -112,8 +112,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     // check lane departure
     if (
       parameters_.check_shift_path_lane_departure &&
-      lane_departure_checker_->checkPathWillLeaveLane(
-        expanded_drivable_lanes_, path_shift_start_to_end)) {
+      lane_departure_checker_->checkPathWillLeaveLane(drivable_lanes_, path_start_to_end)) {
       continue;
     }
 
