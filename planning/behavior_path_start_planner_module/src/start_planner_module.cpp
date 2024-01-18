@@ -1415,7 +1415,7 @@ void StartPlannerModule::setDebugData()
     add(start_pose_text_marker_array);
   }
 
-  // visualize shift start pose to end pose footprints
+  // visualize the footprint from pull_out_start pose to pull_out_end pose along the path
   {
     MarkerArray shift_path_footprint_marker_array{};
     const auto pink = createMarkerColor(1.0, 0.0, 1.0, 0.99);
