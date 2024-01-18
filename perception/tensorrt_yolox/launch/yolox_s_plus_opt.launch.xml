@@ -37,7 +37,7 @@
     <remap from="~/output/raw_image" to="$(var input/image)"/>
   </node>
 
-  <node pkg="tensorrt_yolox" exec="tensorrt_yolox_node_exe" name="tensorrt_yolox" output="screen">
+  <node pkg="tensorrt_yolox" exec="tensorrt_yolox_node_exe" name="tensorrt_yolox" output="both">
     <remap from="~/in/image" to="$(var input/image)"/>
     <remap from="~/out/objects" to="$(var output/objects)"/>
     <param name="score_threshold" value="$(var score_threshold)"/>

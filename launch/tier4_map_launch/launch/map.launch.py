@@ -141,7 +141,7 @@ def launch_setup(context, *args, **kwargs):
             pointcloud_map_loader,
             map_tf_generator,
         ],
-        output="screen",
+        output="both",
     )
 
     group = GroupAction(

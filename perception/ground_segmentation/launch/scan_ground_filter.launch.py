@@ -66,7 +66,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=nodes,
-        output="screen",
+        output="both",
         condition=LaunchConfigurationEquals("container", ""),
     )
 

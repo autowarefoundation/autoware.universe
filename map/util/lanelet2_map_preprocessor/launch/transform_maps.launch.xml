@@ -11,7 +11,7 @@
   <arg name="pitch" default="0.0"/>
   <arg name="yaw" default="0.0"/>
 
-  <node pkg="lanelet2_map_preprocessor" exec="transform_maps" name="transform_maps" output="screen">
+  <node pkg="lanelet2_map_preprocessor" exec="transform_maps" name="transform_maps" output="both">
     <param name="llt_map_path" value="$(var llt_map_path)"/>
     <param name="pcd_map_path" value="$(var pcd_map_path)"/>
     <param name="llt_output_path" value="$(var llt_output_path)"/>

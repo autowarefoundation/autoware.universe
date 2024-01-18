@@ -12,7 +12,7 @@
   <arg name="core_params.moving_average_num" default="1"/>
 
   <!-- Node -->
-  <node pkg="front_vehicle_velocity_estimator" exec="front_vehicle_velocity_estimator_node" name="front_vehicle_velocity_estimator" output="screen">
+  <node pkg="front_vehicle_velocity_estimator" exec="front_vehicle_velocity_estimator_node" name="front_vehicle_velocity_estimator" output="both">
     <!-- Input -->
     <remap from="~/input/objects" to="$(var input/objects)"/>
     <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>

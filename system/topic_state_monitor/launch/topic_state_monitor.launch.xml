@@ -10,7 +10,7 @@
   <arg name="timeout" description="timeout period[s]"/>
   <arg name="window_size" default="10" description="window size"/>
 
-  <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="screen">
+  <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="both">
     <param name="topic" value="$(var topic)"/>
     <param name="topic_type" value="$(var topic_type)"/>
     <param name="transient_local" value="$(var transient_local)"/>

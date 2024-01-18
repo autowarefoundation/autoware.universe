@@ -79,7 +79,7 @@ The minimum node launch will be like the following.
 <arg name="output_topic" default="~/output/occupancy_grid_map"/>
 <arg name="fusion_node_param_path" default="$(find-pkg-share probabilistic_occupancy_grid_map)/config/synchronized_grid_map_fusion_node.param.yaml"/>
 
-<node name="synchronized_grid_map_fusion_node" exec="synchronized_grid_map_fusion_node" pkg="probabilistic_occupancy_grid_map" output="screen">
+<node name="synchronized_grid_map_fusion_node" exec="synchronized_grid_map_fusion_node" pkg="probabilistic_occupancy_grid_map" output="both">
   <remap from="~/output/occupancy_grid_map" to="$(var output_topic)"/>
   <param from="$(var fusion_node_param_path)"/>
 </node>

@@ -9,7 +9,7 @@
   <arg name="config_file" default="$(find-pkg-share dummy_infrastructure)/config/dummy_infrastructure.param.yaml"/>
 
   <!-- Node -->
-  <node pkg="dummy_infrastructure" exec="dummy_infrastructure_node" name="dummy_infrastructure" output="screen">
+  <node pkg="dummy_infrastructure" exec="dummy_infrastructure_node" name="dummy_infrastructure" output="both">
     <!-- Input -->
     <remap from="~/input/command_array" to="$(var input/command_array)"/>
 

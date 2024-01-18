@@ -88,14 +88,14 @@
     <!-- publish empty objects instead of object recognition module -->
     <group unless="$(var perception/enable_object_recognition)">
       <push-ros-namespace namespace="object_recognition"/>
-      <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
+      <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="both">
         <remap from="~/output/objects" to="/perception/object_recognition/objects"/>
       </node>
     </group>
 
     <group if="$(var perception/enable_elevation_map)">
       <push-ros-namespace namespace="obstacle_segmentation/elevation_map"/>
-      <node pkg="elevation_map_loader" exec="elevation_map_loader" name="elevation_map_loader" output="screen">
+      <node pkg="elevation_map_loader" exec="elevation_map_loader" name="elevation_map_loader" output="both">
         <remap from="output/elevation_map" to="map"/>
         <remap from="input/pointcloud_map" to="/map/pointcloud_map"/>
         <remap from="input/vector_map" to="/map/vector_map"/>
@@ -129,7 +129,7 @@
 
   <!-- Diagnostic Converter -->
   <group if="$(var launch_diagnostic_converter)">
-    <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen">
+    <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="both">
       <param name="diagnostic_topics" value="[/diagnostic/planning_evaluator/metrics, /diagnostics_err]"/>
     </node>
   </group>

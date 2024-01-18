@@ -8,5 +8,5 @@
   </include>
 
   <!-- local server to connect path optimizer and cloud software -->
-  <node pkg="static_centerline_optimizer" exec="app.py" name="static_centerline_optimizer_http_server" output="screen"/>
+  <node pkg="static_centerline_optimizer" exec="app.py" name="static_centerline_optimizer_http_server" output="both"/>
 </launch>

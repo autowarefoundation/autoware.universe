@@ -11,7 +11,7 @@
   <arg name="pcd_path" default="test.pcd"/>
   <arg name="detections_path" default="test.ply"/>
 
-  <node pkg="lidar_centerpoint" exec="single_inference_lidar_centerpoint_node" name="lidar_centerpoint" output="screen">
+  <node pkg="lidar_centerpoint" exec="single_inference_lidar_centerpoint_node" name="lidar_centerpoint" output="both">
     <param name="score_threshold" value="$(var score_threshold)"/>
     <param name="yaw_norm_threshold" value="$(var yaw_norm_threshold)"/>
     <param name="densification_world_frame_id" value="map"/>
@@ -29,7 +29,7 @@
     <param name="detections_path" value="$(var detections_path)"/>
   </node>
 
-  <node pkg="lidar_centerpoint" exec="lidar_centerpoint_visualizer.py" name="lidar_centerpoint_visualizer" output="screen">
+  <node pkg="lidar_centerpoint" exec="lidar_centerpoint_visualizer.py" name="lidar_centerpoint_visualizer" output="both">
     <param name="pcd_path" value="$(var pcd_path)"/>
     <param name="detections_path" value="$(var detections_path)"/>
   </node>

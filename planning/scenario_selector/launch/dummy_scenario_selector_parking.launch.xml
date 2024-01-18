@@ -12,5 +12,5 @@
   <node pkg="topic_tools" exec="relay" name="scenario_trajectory_relay" output="log" args="$(var input_parking_trajectory) $(var output_trajectory)"/>
 
   <arg name="cmd" default="ros2 topic pub $(var output_scenario) tier4_planning_msgs/msg/Scenario '{current_scenario: Parking, activating_scenarios: [Parking]}'"/>
-  <executable cmd="$(var cmd)" name="scenario_pub" output="screen" shell="true"/>
+  <executable cmd="$(var cmd)" name="scenario_pub" output="both" shell="true"/>
 </launch>

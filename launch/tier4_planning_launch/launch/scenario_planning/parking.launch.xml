@@ -3,7 +3,7 @@
   <group if="$(var launch_parking_module)">
     <push-ros-namespace namespace="parking"/>
 
-    <node_container pkg="rclcpp_components" exec="$(var container_type)" name="parking_container" namespace="" output="screen">
+    <node_container pkg="rclcpp_components" exec="$(var container_type)" name="parking_container" namespace="" output="both">
       <composable_node pkg="costmap_generator" plugin="CostmapGenerator" name="costmap_generator" namespace="">
         <!-- topic remap -->
         <remap from="~/input/objects" to="/perception/object_recognition/objects"/>

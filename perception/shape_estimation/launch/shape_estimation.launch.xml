@@ -8,7 +8,7 @@
   <arg name="use_vehicle_reference_shape_size" default="false"/>
   <arg name="use_boost_bbox_optimizer" default="false"/>
 
-  <node pkg="shape_estimation" exec="shape_estimation" name="$(var node_name)" output="screen">
+  <node pkg="shape_estimation" exec="shape_estimation" name="$(var node_name)" output="both">
     <remap from="input" to="$(var input/objects)"/>
     <remap from="objects" to="$(var output/objects)"/>
     <param from="$(var config_file)"/>

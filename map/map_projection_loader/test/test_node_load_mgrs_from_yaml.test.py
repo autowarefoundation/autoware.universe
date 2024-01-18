@@ -45,7 +45,7 @@ def generate_test_description():
     map_projection_loader_node = Node(
         package="map_projection_loader",
         executable="map_projection_loader",
-        output="screen",
+        output="both",
         parameters=[
             {
                 "map_projector_info_path": map_projector_info_path,

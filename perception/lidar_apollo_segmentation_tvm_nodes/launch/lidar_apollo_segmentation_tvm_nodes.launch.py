@@ -51,7 +51,7 @@ def generate_launch_description():
             ("objects_out", LaunchConfiguration("output/objects")),
         ],
         parameters=[lidar_apollo_segmentation_tvm_node_params],
-        output="screen",
+        output="both",
     )
 
     return launch.LaunchDescription(arguments + [lidar_apollo_segmentation_tvm_node_runner])

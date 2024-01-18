@@ -5,7 +5,7 @@
   <arg name="input/current_odometry" default="/localization/kinematic_state"/>
   <arg name="output/control_raw" default="lateral/control_cmd"/>
 
-  <node pkg="pure_pursuit" exec="pure_pursuit" name="pure_pursuit" output="screen">
+  <node pkg="pure_pursuit" exec="pure_pursuit" name="pure_pursuit" output="both">
     <remap from="input/reference_trajectory" to="$(var input/reference_trajectory)"/>
     <remap from="input/current_odometry" to="$(var input/current_odometry)"/>
     <remap from="output/control_raw" to="$(var output/control_raw)"/>

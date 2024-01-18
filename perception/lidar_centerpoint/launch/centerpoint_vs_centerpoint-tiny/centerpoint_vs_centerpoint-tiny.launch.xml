@@ -10,8 +10,8 @@
   <set_parameter name="use_sim_time" value="true"/>
   <group>
     <!-- Rviz -->
-    <node pkg="rviz2" exec="rviz2" name="rviz2_centerpoint_tiny" output="screen" args="-d $(var rviz_config1)"/>
-    <node pkg="rviz2" exec="rviz2" name="rviz2_centerpoint" output="screen" args="-d $(var rviz_config2)"/>
+    <node pkg="rviz2" exec="rviz2" name="rviz2_centerpoint_tiny" output="both" args="-d $(var rviz_config1)"/>
+    <node pkg="rviz2" exec="rviz2" name="rviz2_centerpoint" output="both" args="-d $(var rviz_config2)"/>
   </group>
 
   <!-- CenterPoint -->

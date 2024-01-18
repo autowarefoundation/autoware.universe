@@ -12,7 +12,7 @@
   <arg name="has_twist" default="false"/>
   <arg name="data_path" default="$(env HOME)/autoware_data"/>
 
-  <node pkg="lidar_centerpoint_tvm" exec="lidar_centerpoint_tvm_node" name="lidar_centerpoint_tvm" output="screen">
+  <node pkg="lidar_centerpoint_tvm" exec="lidar_centerpoint_tvm_node" name="lidar_centerpoint_tvm" output="both">
     <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
     <remap from="~/output/objects" to="$(var output/objects)"/>
     <param name="score_threshold" value="$(var score_threshold)"/>

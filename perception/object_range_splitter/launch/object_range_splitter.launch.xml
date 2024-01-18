@@ -5,7 +5,7 @@
   <arg name="output/short_range_object" default="short_range_object"/>
   <arg name="split_range" default="30.0"/>
 
-  <node pkg="object_range_splitter" exec="object_range_splitter_node" name="object_range_splitter" output="screen">
+  <node pkg="object_range_splitter" exec="object_range_splitter_node" name="object_range_splitter" output="both">
     <remap from="input/object" to="$(var input/object)"/>
     <remap from="output/long_range_object" to="$(var output/long_range_object)"/>
     <remap from="output/short_range_object" to="$(var output/short_range_object)"/>

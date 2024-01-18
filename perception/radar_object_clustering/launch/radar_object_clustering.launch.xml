@@ -7,7 +7,7 @@
   <arg name="radar_object_clustering_param_path" default="$(find-pkg-share radar_object_clustering)/config/radar_object_clustering.param.yaml"/>
 
   <!-- Node -->
-  <node pkg="radar_object_clustering" exec="radar_object_clustering_node" name="radar_object_clustering" output="screen">
+  <node pkg="radar_object_clustering" exec="radar_object_clustering_node" name="radar_object_clustering" output="both">
     <remap from="~/input/objects" to="$(var input/objects)"/>
     <remap from="~/output/objects" to="$(var output/objects)"/>
     <param from="$(var radar_object_clustering_param_path)"/>

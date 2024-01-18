@@ -5,7 +5,7 @@
   <!-- Parameter -->
   <arg name="param_file" default="$(find-pkg-share radar_scan_to_pointcloud2)/config/radar_scan_to_pointcloud2.param.yaml"/>
 
-  <node pkg="radar_scan_to_pointcloud2" exec="radar_scan_to_pointcloud2_node" name="radar_scan_to_pointcloud2" output="screen">
+  <node pkg="radar_scan_to_pointcloud2" exec="radar_scan_to_pointcloud2_node" name="radar_scan_to_pointcloud2" output="both">
     <remap from="~/input/radar" to="$(var input/radar)"/>
     <remap from="~/output/amplitude_pointcloud" to="$(var output/amplitude_pointcloud)"/>
     <remap from="~/output/doppler_pointcloud" to="$(var output/doppler_pointcloud)"/>

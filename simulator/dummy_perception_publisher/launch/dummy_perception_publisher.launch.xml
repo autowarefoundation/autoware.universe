@@ -9,7 +9,7 @@
   <group>
     <push-ros-namespace namespace="simulation"/>
     <group if="$(var real)">
-      <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen">
+      <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="both">
         <remap from="output/dynamic_object" to="/perception/object_recognition/detection/labeled_clusters"/>
         <remap from="output/objects_pose" to="debug/object_pose"/>
         <remap from="output/points_raw" to="/perception/obstacle_segmentation/pointcloud"/>
@@ -30,7 +30,7 @@
       </include>
     </group>
     <group unless="$(var real)">
-      <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen">
+      <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="both">
         <remap from="output/dynamic_object" to="/perception/object_recognition/detection/objects_with_feature"/>
         <remap from="output/objects_pose" to="debug/object_pose"/>
         <remap from="output/points_raw" to="/perception/obstacle_segmentation/pointcloud"/>
