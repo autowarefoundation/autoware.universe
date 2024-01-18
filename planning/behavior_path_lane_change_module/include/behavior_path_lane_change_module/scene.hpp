@@ -53,7 +53,7 @@ public:
 
   LaneChangePath getLaneChangePath() const override;
 
-  PathWithLaneId getTerminalLaneChangePath() const override;
+  BehaviorModuleOutput getTerminalLaneChangePath() const override;
 
   BehaviorModuleOutput generateOutput() override;
 
@@ -147,7 +147,7 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  TurnSignalInfo calcTurnSignalInfo() override;
+  TurnSignalInfo calcTurnSignalInfo() const override;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 

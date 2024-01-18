@@ -140,22 +140,44 @@ LaneChangePath NormalLaneChange::getLaneChangePath() const
   return status_.lane_change_path;
 }
 
-PathWithLaneId NormalLaneChange::getTerminalLaneChangePath() const
+BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
 {
+  BehaviorModuleOutput output;
+
   const auto current_lanes = getCurrentLanes();
   if (current_lanes.empty()) {
     RCLCPP_WARN(logger_, "Current lanes not found!!! Something wrong.");
-    return prev_module_path_;
+    output.path = prev_module_path_;
+    output.reference_path = prev_module_reference_path_;
+    output.drivable_area_info = prev_drivable_area_info_;
+    output.turn_signal_info = prev_turn_signal_info_;
+    return output;
   }
 
   const auto terminal_path =
     calcTerminalLaneChangePath(current_lanes, getLaneChangeLanes(current_lanes, direction_));
   if (!terminal_path) {
     RCLCPP_WARN(logger_, "Terminal path not found!!!");
-    return prev_module_path_;
+    output.path = prev_module_path_;
+    output.reference_path = prev_module_reference_path_;
+    output.drivable_area_info = prev_drivable_area_info_;
+    output.turn_signal_info = prev_turn_signal_info_;
+    return output;
   }
 
-  return terminal_path->path;
+  output.path = terminal_path->path;
+  output.reference_path = prev_module_reference_path_;
+  output.turn_signal_info = updateOutputTurnSignal();
+
+  extendOutputDrivableArea(output);
+
+  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
+  output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+    output.path, getEgoPose(), current_seg_idx, prev_turn_signal_info_, output.turn_signal_info,
+    planner_data_->parameters.ego_nearest_dist_threshold,
+    planner_data_->parameters.ego_nearest_yaw_threshold);
+
+  return output;
 }
 
 BehaviorModuleOutput NormalLaneChange::generateOutput()
@@ -1469,7 +1491,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   // lane changing start getEgoPose() is at the end of prepare segment
   const auto current_lane_terminal_point =
     lanelet::utils::conversion::toGeomMsgPt(current_lanes.back().centerline3d().back());
-  const auto lane_changing_start_pose = motion_utils::calcLongitudinalOffsetPose(
+  auto lane_changing_start_pose = motion_utils::calcLongitudinalOffsetPose(
     prev_module_path_.points, current_lane_terminal_point,
     -(lane_change_buffer + next_lane_change_buffer));
 
@@ -1558,6 +1580,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
     reference_segment.points, reference_segment.points.front().point.pose.position,
     lane_changing_start_pose->position);
   utils::clipPathLength(reference_segment, 0, length_to_lane_changing_start, 0.0);
+  reference_segment.points.back().point.longitudinal_velocity_mps = minimum_lane_changing_velocity;
 
   const auto minimum_lane_change_path = utils::lane_change::constructCandidatePath(
     lane_change_info, reference_segment, target_segment, target_lane_reference_path,

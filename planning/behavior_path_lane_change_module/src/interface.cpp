@@ -130,11 +130,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
     module_type_->getLaneChangeStatus().current_lanes, *prev_approved_path_);
 
   BehaviorModuleOutput out;
-  out.path = module_type_->getTerminalLaneChangePath();
-  out.reference_path = getPreviousModuleOutput().reference_path;
-  out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
-  out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
-  out.turn_signal_info = getCurrentTurnSignalInfo(out.path, out.turn_signal_info);
+  out = module_type_->getTerminalLaneChangePath();
+
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
 

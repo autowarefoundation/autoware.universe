@@ -88,7 +88,7 @@ public:
 
   virtual LaneChangePath getLaneChangePath() const = 0;
 
-  virtual PathWithLaneId getTerminalLaneChangePath() const = 0;
+  virtual BehaviorModuleOutput getTerminalLaneChangePath() const = 0;
 
   virtual bool isEgoOnPreparePhase() const = 0;
 
