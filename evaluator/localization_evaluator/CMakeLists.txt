@@ -18,7 +18,6 @@ ament_auto_find_build_dependencies()
 ament_auto_add_library(${PROJECT_NAME}_node SHARED
   src/metrics_calculator.cpp
   src/${PROJECT_NAME}_node.cpp
-  src/localization_evaluator_node.cpp
   src/metrics/localization_metrics.cpp
 )
 
