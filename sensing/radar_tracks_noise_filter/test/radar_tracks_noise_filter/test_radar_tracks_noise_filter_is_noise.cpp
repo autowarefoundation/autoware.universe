@@ -27,8 +27,8 @@ std::shared_ptr<radar_tracks_noise_filter::RadarTrackCrossingNoiseFilterNode> ge
     {"velocity_y_threshold", velocity_y_threshold},
   });
 
-  auto node =
-    std::make_shared<radar_tracks_noise_filter::RadarTrackCrossingNoiseFilterNode>(node_options);
+  auto node = std::make_shared<radar_tracks_noise_filter::RadarTrackCrossingNoiseFilterNode>(node_options);
+  
   return node;
 }
 
@@ -40,6 +40,7 @@ radar_msgs::msg::RadarTrack getRadarTrack(float velocity_x, float velocity_y)
   vector_msg.y = velocity_y;
   vector_msg.z = 0.0;
   radar_track.velocity = vector_msg;
+
   return radar_track;
 }
 
