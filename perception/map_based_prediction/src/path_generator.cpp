@@ -412,8 +412,7 @@ FrenetPoint PathGenerator::getFrenetPoint(
 
   // Using a decaying acceleration model. Consult the README for more information about the model.
   const double t_h = time_horizon_;
-  const float exponential_half_life = acceleration_exponential_half_life_;
-  const float λ = std::log(2) / exponential_half_life;
+  const float λ = std::log(2) / acceleration_exponential_half_life_;
 
   auto have_same_sign = [](double a, double b) -> bool {
     return (a >= 0.0 && b >= 0.0) || (a < 0.0 && b < 0.0);

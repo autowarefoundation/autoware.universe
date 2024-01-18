@@ -1572,8 +1572,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
                                object.kinematics.acceleration_with_covariance.accel.linear.y)
                            : 0.0;
   const double t_h = prediction_time_horizon_;
-  const double exponential_half_life = acceleration_exponential_half_life_;
-  const double λ = std::log(2) / exponential_half_life;
+  const double λ = std::log(2) / acceleration_exponential_half_life_;
 
   auto get_search_distance_with_decaying_acc = [&]() -> double {
     const double acceleration_distance =
