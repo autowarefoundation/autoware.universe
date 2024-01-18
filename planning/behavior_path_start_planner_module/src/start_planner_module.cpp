@@ -61,8 +61,8 @@ StartPlannerModule::StartPlannerModule(
 
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
-    start_planners_.push_back(std::make_shared<ShiftPullOut>(
-      node, *parameters, lane_departure_checker_, createExpandedDrivableLanes()));
+    start_planners_.push_back(
+      std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (parameters_->enable_geometric_pull_out) {
     start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
@@ -127,6 +127,7 @@ void StartPlannerModule::initVariables()
   debug_marker_.markers.clear();
   initializeSafetyCheckParameters();
   initializeCollisionCheckDebugMap(start_planner_data_.collision_check);
+  updateExpandedDrivableLanes();
 }
 
 void StartPlannerModule::updateEgoPredictedPathParams(
@@ -559,6 +560,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 void StartPlannerModule::resetStatus()
 {
   status_ = PullOutStatus{};
+  updateExpandedDrivableLanes();
 }
 
 void StartPlannerModule::incrementPathIndex()
@@ -1325,15 +1327,27 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
   }
 }
 
-lanelet::ConstLanelets StartPlannerModule::createExpandedDrivableLanes()
+void StartPlannerModule::updateExpandedDrivableLanes()
+{
+  const auto expanded_drivable_lanes = createExpandedDrivableLanes();
+  for (auto & planner : start_planners_) {
+    auto shift_pull_out = std::dynamic_pointer_cast<ShiftPullOut>(planner);
+
+    if (shift_pull_out) {
+      shift_pull_out->setExpandedDrivableLanes(expanded_drivable_lanes);
+    }
+  }
+}
+
+lanelet::ConstLanelets StartPlannerModule::createExpandedDrivableLanes() const
 {
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
   const auto pull_out_lanes =
     start_planner_utils::getPullOutLanes(planner_data_, backward_path_length);
-  // if (pull_out_lanes.empty()) {
-  //   return std::nullopt;
-  // }
+  if (pull_out_lanes.empty()) {
+    return lanelet::ConstLanelets{};
+  }
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);

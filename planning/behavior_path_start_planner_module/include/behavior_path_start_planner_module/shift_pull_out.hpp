@@ -34,8 +34,7 @@ class ShiftPullOut : public PullOutPlannerBase
 public:
   explicit ShiftPullOut(
     rclcpp::Node & node, const StartPlannerParameters & parameters,
-    std::shared_ptr<LaneDepartureChecker> & lane_departure_checker,
-    const lanelet::ConstLanelets & expanded_drivable_lanes);
+    std::shared_ptr<LaneDepartureChecker> & lane_departure_checker);
 
   PlannerType getPlannerType() override { return PlannerType::SHIFT; };
   std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) override;
@@ -51,8 +50,12 @@ public:
     ShiftedPath & shifted_path, const Pose & start_pose, const Pose & end_pose,
     const double longitudinal_acc, const double lateral_acc);
 
+  void setExpandedDrivableLanes(const lanelet::ConstLanelets & expanded_drivable_lanes)
+  {
+    expanded_drivable_lanes_ = expanded_drivable_lanes;
+  }
+
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
-  lanelet::ConstLanelets expanded_drivable_lanes_;
 
 private:
   // Calculate longitudinal distance based on the acceleration limit, curvature limit, and the
@@ -60,6 +63,8 @@ private:
   double calcPullOutLongitudinalDistance(
     const double lon_acc, const double shift_time, const double shift_length,
     const double max_curvature, const double min_distance) const;
+
+  lanelet::ConstLanelets expanded_drivable_lanes_;
 };
 }  // namespace behavior_path_planner
 

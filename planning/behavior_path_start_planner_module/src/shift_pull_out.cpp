@@ -37,11 +37,8 @@ using start_planner_utils::getPullOutLanes;
 
 ShiftPullOut::ShiftPullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
-  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker,
-  const lanelet::ConstLanelets & expanded_drivable_lanes)
-: PullOutPlannerBase{node, parameters},
-  lane_departure_checker_{lane_departure_checker},
-  expanded_drivable_lanes_{expanded_drivable_lanes}
+  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker)
+: PullOutPlannerBase{node, parameters}, lane_departure_checker_{lane_departure_checker}
 {
 }
 
@@ -55,7 +52,6 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
-
   // find candidate paths
   auto pull_out_paths = calcPullOutPaths(*route_handler, road_lanes, start_pose, goal_pose);
   if (pull_out_paths.empty()) {
@@ -68,15 +64,25 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
       pull_out_path.partial_paths.front();  // shift path is not separate but only one.
 
     // check lane_departure with path between pull_out_start to pull_out_end
-    PathWithLaneId path_shift_start_to_end{};
+    PathWithLaneId path_start_to_end{};
     {
       const size_t pull_out_start_idx = findNearestIndex(shift_path.points, start_pose.position);
-      const size_t pull_out_end_idx =
-        findNearestIndex(shift_path.points, pull_out_path.end_pose.position);
 
-      path_shift_start_to_end.points.insert(
-        path_shift_start_to_end.points.begin(), shift_path.points.begin() + pull_out_start_idx,
-        shift_path.points.begin() + pull_out_end_idx + 1);
+      // calculate collision check end idx
+      const size_t collision_check_end_idx = std::invoke([&]() {
+        const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
+          shift_path.points, pull_out_path.end_pose.position,
+          parameters_.collision_check_distance_from_end);
+
+        if (collision_check_end_pose) {
+          return findNearestIndex(shift_path.points, collision_check_end_pose->position);
+        } else {
+          return shift_path.points.size() - 1;
+        }
+      });
+      path_start_to_end.points.insert(
+        path_start_to_end.points.begin(), shift_path.points.begin() + pull_out_start_idx,
+        shift_path.points.begin() + collision_check_end_idx + 1);
     }
 
     // crop backward path
