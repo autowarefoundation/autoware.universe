@@ -150,9 +150,19 @@ By default, the `map_based_prediction` module uses the current obstacle's veloci
 
 Since this module tries to predict the vehicle's path several seconds into the future, it is not practical to consider the current vehicle's acceleration as constant (it is not assumed the vehicle will be accelerating for `prediction_time_horizon` seconds after detection). Instead, a decaying acceleration model is used. With the decaying acceleration model, a vehicle's acceleration is modeled as:
 
-\[ a(t) = a\_{t0} \cdot e^{-\lambda \cdot t} \]
+$\ a(t) = a\_{t0} \cdot e^{-\lambda \cdot t} $
 
-where \( a\_{t0} \) is the vehicle acceleration at the time of detection, and \( \lambda \) is the decay constant \( \lambda = \ln(2) / \text{exponential_half_life} \). With this model, the influence of the vehicle's detected instantaneous acceleration on the predicted path's length is diminished but still considered. This feature also considers that the obstacle might not accelerate past its road's speed limit (multiplied by a tunable factor).
+where $\ a\_{t0} $ is the vehicle acceleration at the time of detection $\ t0 $, and $\ \lambda $ is the decay constant $\ \lambda = \ln(2) / hl $ and $\ hl $ is the exponential's half life.
+
+Furthermore, the integration of $\ a(t) $ over time gives us equations for velocity, $\ v(t) $ and distance $\ x(t) $ as:
+
+$\ v(t) = v*{t0} + a*{t0} \* (1/\lambda) \cdot (1 - e^{-\lambda \cdot t}) $
+
+and
+
+$\ x(t) = x*{t0} + (v*{t0} + a*{t0} \* (1/\lambda)) \cdot t + a*{t0}(1/λ^2)(e^{-\lambda \cdot t} - 1) $
+
+With this model, the influence of the vehicle's detected instantaneous acceleration on the predicted path's length is diminished but still considered. This feature also considers that the obstacle might not accelerate past its road's speed limit (multiplied by a tunable factor).
 
 Currently, we provide three parameters to tune the use of obstacle acceleration for path prediction:
 

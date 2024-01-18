@@ -410,13 +410,8 @@ FrenetPoint PathGenerator::getFrenetPoint(
       ? static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y)
       : 0.0;
 
-  // The decay constant λ = ln(2) / exponential_half_life
-  // a(t) = acc - acc(1-e^(-λt)) = acc(e^(-λt))
-  // V(t) = Vo + acc(1/λ)(1-e^(-λt))
-  // x(t) = Xo + Vo * t + t * acc(1/λ) + acc(1/λ^2)(e^(-λt)-1)
-  // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)(e^(-λt)-1)
-  // acceleration_distance = acc(1/λ) * t  + acc(1/λ^2)(e^(-λt)-1)
-  const double T = time_horizon_;
+  // Using a decaying acceleration model. Consult the README for more information about the model.
+  const double t_h = time_horizon_;
   const float exponential_half_life = acceleration_exponential_half_life_;
   const float λ = std::log(2) / exponential_half_life;
 
@@ -424,67 +419,65 @@ FrenetPoint PathGenerator::getFrenetPoint(
     return (a >= 0.0 && b >= 0.0) || (a < 0.0 && b < 0.0);
   };
 
-  auto get_equivalent_velocity = [&](const double v, const double a) {
+  auto get_acceleration_adjusted_velocity = [&](const double v, const double a) {
     constexpr double epsilon = 1E-5;
     if (std::abs(a) < epsilon) {
       // Assume constant speed
       return v;
     }
     // Get velocity after time horizon
-    // V(t) = Vo + acc(1/λ)(1-e^(-λt))
-    const auto V_terminal = v + a * (1.0 / λ) * (1 - std::exp(-λ * T));
+    const auto terminal_velocity = v + a * (1.0 / λ) * (1 - std::exp(-λ * t_h));
 
     // If vehicle is decelerating, make sure its speed does not change signs (we assume it will, at
     // most stop, not reverse its direction)
-    if (!have_same_sign(V_terminal, v)) {
+    if (!have_same_sign(terminal_velocity, v)) {
       // we assume a forwards moving vehicle will not decelerate to 0 and then move backwards
-      // if the velocities don't have the same sign, calculate when the velocity becomes 0 -> time
-      // T_0
+      // if the velocities don't have the same sign, calculate when the vehicle reaches 0 speed ->
+      // time t_stop
 
-      // 0 = Vo + acc(1/λ)(1-e^(-λT0))
-      // e^(-λT0) = 1 - (-Vo* λ)/acc
-      // T0 = (-1/λ)*ln(1 - (-Vo* λ)/acc)
-      auto T_0 = std::log(1 - (-v * λ / a)) * (-1.0 / λ);
+      // 0 = Vo + acc(1/λ)(1-e^(-λt_stop))
+      // e^(-λt_stop) = 1 - (-Vo* λ)/acc
+      // t_stop = (-1/λ)*ln(1 - (-Vo* λ)/acc)
+      // t_stop = (-1/λ)*ln(1 + (Vo* λ)/acc)
+      auto t_stop = (-1.0 / λ) * std::log(1 + (v * λ / a));
 
-      // Calculate what distance will be traveled
-      // x(t) = Xo + (Vo + acc(1/λ)) * t  + acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
-      // x(T0) = Xo + (Vo + acc(1/λ)) * T0  + acc(1/λ^2)(e^(-λT0) - 1)
+      // Calculate the distance traveled until stopping
       auto distance_to_reach_zero_speed =
-        v * T_0 + a * T_0 * (1.0 / λ) + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * T) - 1);
-      // Vnew * T = x(T0)
-      // Vnew = x(T0) / T
+        v * t_stop + a * t_stop * (1.0 / λ) + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_h) - 1);
       // Output an equivalent constant speed
-      return distance_to_reach_zero_speed / T;
+      return distance_to_reach_zero_speed / t_h;
     }
 
     // if the vehicle speed limit is not surpassed we return an equivalent speed = x(T) / T
     // alternatively, if the vehicle is still accelerating and has surpassed the speed limit.
     // assume it will continue accelerating (reckless driving)
     const bool object_has_surpassed_limit_already = v > speed_limit;
-    if (V_terminal < speed_limit || object_has_surpassed_limit_already)
-      return v + a * (1.0 / λ) + (a / (T * std::pow(λ, 2))) * (std::exp(-λ * T) - 1);
+    if (terminal_velocity < speed_limit || object_has_surpassed_limit_already)
+      return v + a * (1.0 / λ) + (a / (t_h * std::pow(λ, 2))) * (std::exp(-λ * t_h) - 1);
 
     // It is assumed the vehicle accelerates until final_speed is reached and
     // then continues at constant speed for the rest of the time horizon
     // So, we calculate the time it takes to reach the speed limit and compute how far the vehicle
     // would go if it accelerated until reaching the speed limit, and then continued at a constant
     // speed.
-    const double T_f = (-1.0 / λ) * std::log(1 - ((speed_limit - v) * λ) / a);
+    const double t_f = (-1.0 / λ) * std::log(1 - ((speed_limit - v) * λ) / a);
     const double distance_covered =
       // Distance covered while accelerating
-      a * (1.0 / λ) * T_f + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * T_f) - 1) + v * T_f +
+      a * (1.0 / λ) * t_f + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_f) - 1) + v * t_f +
       // Distance covered at constant speed for the rest of the horizon time
-      speed_limit * (T - T_f);
-    return distance_covered / T;
+      speed_limit * (t_h - t_f);
+    return distance_covered / t_h;
   };
 
-  const float VX = get_equivalent_velocity(vx, ax);
-  const float VY = get_equivalent_velocity(vy, ay);
+  const float acceleration_adjusted_velocity_x = get_acceleration_adjusted_velocity(vx, ax);
+  const float acceleration_adjusted_velocity_y = get_acceleration_adjusted_velocity(vy, ay);
 
   frenet_point.s = motion_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
   frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
-  frenet_point.s_vel = VX * std::cos(delta_yaw) - VY * std::sin(delta_yaw);
-  frenet_point.d_vel = VX * std::sin(delta_yaw) + VY * std::cos(delta_yaw);
+  frenet_point.s_vel = acceleration_adjusted_velocity_x * std::cos(delta_yaw) -
+                       acceleration_adjusted_velocity_y * std::sin(delta_yaw);
+  frenet_point.d_vel = acceleration_adjusted_velocity_x * std::sin(delta_yaw) +
+                       acceleration_adjusted_velocity_y * std::cos(delta_yaw);
   frenet_point.s_acc = 0.0;
   frenet_point.d_acc = 0.0;
 

@@ -1565,27 +1565,20 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     object.kinematics.twist_with_covariance.twist.linear.x,
     object.kinematics.twist_with_covariance.twist.linear.y);
 
-  // Using a decaying acceleration model
-  // a(t) = obj_acc - obj_acc(1-e^(-λt)) = obj_acc(e^(-λt))
+  // Using a decaying acceleration model. Consult the README for more information about the model.
   const double obj_acc = (use_vehicle_acceleration_)
                            ? std::hypot(
                                object.kinematics.acceleration_with_covariance.accel.linear.x,
                                object.kinematics.acceleration_with_covariance.accel.linear.y)
                            : 0.0;
-  // The decay constant λ = ln(2) / exponential_half_life
-  const double T = prediction_time_horizon_;
+  const double t_h = prediction_time_horizon_;
   const double exponential_half_life = acceleration_exponential_half_life_;
   const double λ = std::log(2) / exponential_half_life;
 
   auto get_search_distance_with_decaying_acc = [&]() -> double {
-    // a(t) = obj_acc - obj_acc(1-e^(-λt)) = obj_acc(e^(-λt))
-    // V(t) = Vo + obj_acc(1/λ)(1-e^(-λt))
-    // x(t) = Xo + Vo * t + t * obj_acc(1/λ) + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
-    // x(t) = Xo + (Vo + obj_acc(1/λ)) * t  + obj_acc(1/λ^2)e^(-λt) - obj_acc(1/λ^2)
-    // acceleration_distance = x(T) = obj_acc(1/λ) * T  + obj_acc(1/λ^2)(e^(-λT) - 1)
     const double acceleration_distance =
-      obj_acc * (1.0 / λ) * T + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * T) - 1);
-    double search_dist = acceleration_distance + obj_vel * T;
+      obj_acc * (1.0 / λ) * t_h + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_h) - 1);
+    double search_dist = acceleration_distance + obj_vel * t_h;
     return search_dist;
   };
 
@@ -1593,19 +1586,18 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     constexpr double epsilon = 1E-5;
     if (std::abs(obj_acc) < epsilon) {
       // Assume constant speed
-      return obj_vel * T;
+      return obj_vel * t_h;
     }
-    const double time_to_reach_final_speed =
-      (-1.0 / λ) * std::log(1 - ((final_speed - obj_vel) * λ) / obj_acc);
+    // Time to reach final speed
+    const double t_f = (-1.0 / λ) * std::log(1 - ((final_speed - obj_vel) * λ) / obj_acc);
     // It is assumed the vehicle accelerates until final_speed is reached and
     // then continues at constant speed for the rest of the time horizon
     const double search_dist =
       // Distance covered while accelerating
-      obj_acc * (1.0 / λ) * time_to_reach_final_speed +
-      obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * time_to_reach_final_speed) - 1) +
-      obj_vel * time_to_reach_final_speed +
+      obj_acc * (1.0 / λ) * t_f + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_f) - 1) +
+      obj_vel * t_f +
       // Distance covered at constant speed
-      final_speed * (T - time_to_reach_final_speed);
+      final_speed * (t_h - t_f);
     return search_dist;
   };
 
@@ -1617,7 +1609,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     const double legal_speed_limit = static_cast<double>(limit.speedLimit.value());
 
     double final_speed_after_acceleration =
-      obj_vel + obj_acc * (1.0 / λ) * (1.0 - std::exp(-λ * T));
+      obj_vel + obj_acc * (1.0 / λ) * (1.0 - std::exp(-λ * t_h));
 
     const double final_speed_limit = legal_speed_limit * speed_limit_multiplier_;
     const bool final_speed_surpasses_limit = final_speed_after_acceleration > final_speed_limit;
@@ -1629,7 +1621,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     search_dist += lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
 
     lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
-    const double validate_time_horizon = T * prediction_time_horizon_rate_for_validate_lane_length_;
+    const double validate_time_horizon =
+      t_h * prediction_time_horizon_rate_for_validate_lane_length_;
 
     // lambda function to get possible paths for isolated lanelet
     // isolated is often caused by lanelet with no connection e.g. shoulder-lane
