@@ -65,7 +65,7 @@ SimModelPymodels::SimModelPymodels(
   std::vector<std::tuple<char*, char*, char*>> error_model_desc = {
     {
       (char*)"control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis",
-      (char*)"$HOME/f1tenth/ws_testing/base_model_save",
+      (char*)"$HOME/autoware_model_params/base_model_save",
       (char*)"SimpleSteeringHyst"
     },
     {
