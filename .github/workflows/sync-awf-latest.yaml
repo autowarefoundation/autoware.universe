@@ -1,0 +1,30 @@
+name: sync-awf-latest
+
+on:
+  schedule:
+    - cron: 0 15 * * *
+  workflow_dispatch:
+
+jobs:
+  sync-awf-latest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Run sync-branches
+        uses: autowarefoundation/autoware-github-actions/sync-branches@v1
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          base-branch: awf-latest
+          sync-pr-branch: sync-awf-latest
+          sync-target-repository: https://github.com/autowarefoundation/autoware.universe.git
+          sync-target-branch: main
+          pr-title: "chore: sync awf-latest"
+          pr-labels: |
+            bot
+          auto-merge-method: merge
