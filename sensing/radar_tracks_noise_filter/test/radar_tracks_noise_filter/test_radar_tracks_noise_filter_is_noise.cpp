@@ -27,8 +27,9 @@ std::shared_ptr<radar_tracks_noise_filter::RadarTrackCrossingNoiseFilterNode> ge
     {"velocity_y_threshold", velocity_y_threshold},
   });
 
-  auto node = std::make_shared<radar_tracks_noise_filter::RadarTrackCrossingNoiseFilterNode>(node_options);
-  
+  auto node =
+    std::make_shared<radar_tracks_noise_filter::RadarTrackCrossingNoiseFilterNode>(node_options);
+
   return node;
 }
 
