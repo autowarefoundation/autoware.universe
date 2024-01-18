@@ -191,7 +191,7 @@ private:
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
-  mutable StartPlannerDebugData start_planner_data_;
+  mutable StartPlannerDebugData debug_data_;
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
