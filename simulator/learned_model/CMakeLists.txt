@@ -8,10 +8,12 @@ find_package(Python3 COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/sim_pymodel_steer_vel.cpp
+  src/pymodel_interconnected_model.cpp
 )
 target_link_libraries(${PROJECT_NAME} pybind11::embed ${Python3_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${Python3_INCLUDE_DIRS})
+
+target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
 
 install(
   DIRECTORY include/
