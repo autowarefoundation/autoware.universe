@@ -44,7 +44,6 @@ radar_msgs::msg::RadarTrack getRadarTrack(float velocity_x, float velocity_y)
   return radar_track;
 }
 
-
 TEST(RadarTracksNoiseFilter, isNoise)
 {
   using radar_msgs::msg::RadarTrack;
