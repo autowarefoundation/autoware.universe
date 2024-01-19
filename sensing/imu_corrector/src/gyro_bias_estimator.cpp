@@ -223,8 +223,15 @@ void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
       std::abs(estimated_gyro_bias_z) < gyro_bias_threshold_;
 
     // Update diagnostics
+    // The summary depends on which of the three states you are in: 
+    // updated, not updated, or threshold exceeded.
     if (is_bias_small_enough) {
-      stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Succeccefully updated");
+      if (is_bias_updated_) {
+        stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Successfully updated");
+      }
+      else {
+        stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Not updated");
+      }
     } else {
       stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, 
         "Gyro bias may be incorrect. Please calibrate IMU and reflect the result in "
