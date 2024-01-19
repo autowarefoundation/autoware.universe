@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(autoware_vehicle_info_util)
+project(vehicle_info_util)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
