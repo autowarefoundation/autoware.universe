@@ -33,7 +33,6 @@
 */
 namespace behavior_velocity_planner
 {
-/// @brief check if the gridmap is occluded at the given index
 bool is_occluded(
   const grid_map::GridMap & grid_map, const int min_nb_of_cells, const grid_map::Index idx,
   const behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
@@ -61,7 +60,6 @@ lanelet::BasicPoint2d interpolate_point(
   return p2 + extra_distance * direction_vector;
 }
 
-/// @brief check if the crosswalk is occluded
 bool is_crosswalk_occluded(
   const lanelet::ConstLanelet & crosswalk_lanelet,
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
