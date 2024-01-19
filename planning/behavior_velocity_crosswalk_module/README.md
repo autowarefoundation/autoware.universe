@@ -2,7 +2,7 @@
 
 ## Role
 
-This module judges whether the ego should stop in front of the crosswalk in order to provide safe passage for crosswalk users, such as pedestrians and bicycles, based on the objects' behavior and surrounding traffic.
+This module judges whether the ego should stop in front of the crosswalk in order to provide safe passage for crosswalk users, such as pedestrians and bicycles, based on the objects' behavior and surround traffic.
 
 <figure markdown>
   ![crosswalk_module](docs/crosswalk_module.svg){width=1100}
@@ -110,12 +110,12 @@ In the `pass_judge` namespace, the following parameters are defined.
 
 ### Smooth Yield Decision
 
-If the subject is stopped near a crosswalk but has no intention of walking, a situation can arise in which the ego continues to yield the right-of-way to the object.
-To prevent such a deadlock situation, the ego cancels yielding depending on the situation.
+If the object is stopped near the crosswalk but has no intention of walking, a situation can arise in which the ego continues to yield the right-of-way to the object.
+To prevent such a deadlock situation, the ego will cancel yielding depending on the situation.
 
-#### For the cases of no traffic light
+#### Cases without traffic lights
 
-For the object stopped around the crosswalk but has no intention to walk (\*1), after the ego stops to yield for a specific time (\*2), the ego cancels the yield and starts driving.
+For the object stopped around the crosswalk but has no intention to walk (\*1), after the ego has keep stopping to yield for a specific time (\*2), the ego cancels the yield and starts driving.
 
 \*1:
 The time is calculated by the interpolation of distance between the object and crosswalk with `distance_map_for_no_intention_to_walk` and `timeout_map_for_no_intention_to_walk`.
@@ -134,13 +134,13 @@ In the `pass_judge` namespace, the following parameters are defined.
 | ---------------------------- | --- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
 | `timeout_ego_stop_for_yield` | [s] | double | If the ego maintains the stop for this amount of time, then the ego proceeds, assuming it has stopped long time enough. |
 
-#### For the cases of with traffic light
+#### Cases with traffic lights
 
 The ego will cancel the yield without stopping when the object stops around the crosswalk but has no intention to walk (\*1).
 This comes from the assumption that the object has no intention to walk since it is stopped even though the pedestrian traffic light is green.
 
 \*1:
-The crosswalk user's intention to walk is calculated in the same way as `For the cases of no traffic light`.
+The crosswalk user's intention to walk is calculated in the same way as `Cases without traffic lights`.
 
 <div align="center">
     <table>
@@ -157,7 +157,7 @@ Due to the perception's limited performance where the tree or poll is recognized
 If this happens while the ego is going to pass the crosswalk, the ego will stop suddenly.
 
 To deal with this issue, the option `disable_yield_for_new_stopped_object` is prepared.
-If true is set, yield decisions around the crosswalk with a traffic light will ignore the new stopped object.
+If true is set, the yield decisions around the crosswalk with a traffic light will ignore the new stopped object.
 
 In the `pass_judge` namespace, the following parameters are defined.
 
@@ -181,7 +181,7 @@ document.
 
 ### Stuck Vehicle Detection
 
-The feature will make the ego not stop on the crosswalk.
+The feature will make the ego not ot stop on the crosswalk.
 When there is a low-speed or stopped vehicle ahead of the crosswalk, and there is not enough space between the crosswalk and the vehicle, the crosswalk module plans to stop before the crosswalk even if there are no pedestrians or bicycles.
 
 `min_acc`, `min_jerk`, and `max_jerk` are met. If the ego cannot stop before the crosswalk with these parameters, the stop position will move forward.
