@@ -18,12 +18,15 @@
 #include "scene_crosswalk.hpp"
 
 #include <grid_map_core/GridMap.hpp>
+#include <rclcpp/time.hpp>
 
 #include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Point.h>
+
+#include <optional>
 
 namespace behavior_velocity_planner
 {
@@ -56,6 +59,15 @@ bool is_crosswalk_occluded(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
   const geometry_msgs::msg::Point & path_intersection,
   const behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
+
+/// @brief update timers so that the slowdown activates if the initial time is older than the buffer
+/// @param initial_time initial time
+/// @param most_recent_slowdown_time time to set only if initial_time is older than the buffer
+/// @param buffer [s] time buffer
+void update_occlusion_timers(
+  std::optional<rclcpp::Time> & initial_time,
+  std::optional<rclcpp::Time> & most_recent_slowdown_time, const rclcpp::Time & now,
+  const double buffer);
 }  // namespace behavior_velocity_planner
 
 #endif  // OCCLUDED_CROSSWALK_HPP_

@@ -74,7 +74,7 @@ bool is_crosswalk_occluded(
   if (
     crosswalk_lanelet.centerline2d().size() > 1 && crosswalk_lanelet.leftBound2d().size() > 1 &&
     crosswalk_lanelet.rightBound2d().size() > 1) {
-    for (const auto segment_getter : segment_getters) {
+    for (const auto & segment_getter : segment_getters) {
       const auto center_segment = segment_getter(crosswalk_lanelet.centerline2d());
       const auto left_segment = segment_getter(crosswalk_lanelet.leftBound2d());
       const auto right_segment = segment_getter(crosswalk_lanelet.rightBound2d());
@@ -97,5 +97,14 @@ bool is_crosswalk_occluded(
       if (is_occluded(grid_map, min_nb_of_cells, *iter, params)) return true;
   }
   return false;
+}
+
+void update_occlusion_timers(
+  std::optional<rclcpp::Time> & initial_time,
+  std::optional<rclcpp::Time> & most_recent_slowdown_time, const rclcpp::Time & now,
+  const double buffer)
+{
+  if (!initial_time) initial_time = now;
+  if ((now - *initial_time).seconds() >= buffer) most_recent_slowdown_time = now;
 }
 }  // namespace behavior_velocity_planner
