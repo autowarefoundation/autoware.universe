@@ -90,7 +90,7 @@ public:
   Net(
     const std::string & onnx_file_path, const std::string & precision, const int max_batch_size,
     const Config & yolo_config, const std::vector<std::string> & calibration_images,
-    const std::string & calibration_table, bool verbose = false,
+    const std::string & calibration_table, bool verbose = true,
     size_t workspace_size = (1ULL << 30));
 
   ~Net();

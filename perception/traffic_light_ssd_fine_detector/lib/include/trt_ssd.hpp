@@ -64,7 +64,7 @@ public:
   // Create engine from serialized onnx model
   Net(
     const std::string & onnx_file_path, const std::string & precision, const int max_batch_size,
-    bool verbose = false, size_t workspace_size = (1ULL << 30));
+    bool verbose = true, size_t workspace_size = (1ULL << 30));
 
   ~Net();
 
