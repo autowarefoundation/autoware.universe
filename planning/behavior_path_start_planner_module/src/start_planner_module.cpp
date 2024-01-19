@@ -85,6 +85,10 @@ StartPlannerModule::StartPlannerModule(
 
 void StartPlannerModule::onFreespacePlannerTimer()
 {
+  if (getCurrentStatus() == ModuleStatus::IDLE) {
+    return;
+  }
+
   if (!planner_data_) {
     return;
   }
@@ -95,7 +99,11 @@ void StartPlannerModule::onFreespacePlannerTimer()
 
   const bool is_new_costmap =
     (clock_->now() - planner_data_->costmap->header.stamp).seconds() < 1.0;
-  if (isStuck() && is_new_costmap) {
+  if (!is_new_costmap) {
+    return;
+  }
+
+  if (isStuck()) {
     planFreespacePath();
   }
 }
