@@ -39,12 +39,11 @@ bool is_occluded(
   const behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
 
 /// @brief interpolate a point beyond the end of the given segment
-/// @param [in] p1 first point of the segment
-/// @param [in] p2 second point of the segment
-/// @param [in] extra_distance distance beyond p2 of the interpolated point
-/// @return interpolated point beyond p2
+/// @param [in] segment input segment
+/// @param [in] extra_distance desired distance beyond the end of the segment
+/// @return interpolated point beyond the end of the segment
 lanelet::BasicPoint2d interpolate_point(
-  const lanelet::BasicPoint2d & p1, const lanelet::BasicPoint2d & p2, const double extra_distance);
+  const lanelet::BasicSegment2d & segment, const double extra_distance);
 
 /// @brief check if the crosswalk is occluded
 /// @param crosswalk_lanelet lanelet of the crosswalk

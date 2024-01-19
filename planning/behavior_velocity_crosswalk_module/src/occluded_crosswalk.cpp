@@ -54,10 +54,10 @@ bool is_occluded(
 }
 
 lanelet::BasicPoint2d interpolate_point(
-  const lanelet::BasicPoint2d & p1, const lanelet::BasicPoint2d & p2, const double extra_distance)
+  const lanelet::BasicSegment2d & segment, const double extra_distance)
 {
-  const auto direction_vector = (p2 - p1).normalized();
-  return p2 + extra_distance * direction_vector;
+  const auto direction_vector = (segment.second - segment.first).normalized();
+  return segment.second + extra_distance * direction_vector;
 }
 
 bool is_crosswalk_occluded(
@@ -75,36 +75,31 @@ bool is_crosswalk_occluded(
 
   const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
   std::vector<lanelet::BasicPolygon2d> incoming_areas;
-  // front
-  {
-    const auto dist = lanelet::geometry::distance2d(
-      crosswalk_lanelet.centerline2d().basicLineString().front(), path_inter);
-    if (dist < params.occlusion_detection_range) {
-      const auto & base_left = crosswalk_lanelet.leftBound2d().front().basicPoint2d();
-      const auto & base_right = crosswalk_lanelet.rightBound2d().front().basicPoint2d();
-      const auto target_left = interpolate_point(
-        *(crosswalk_lanelet.leftBound2d().basicBegin() + 1), base_left,
-        params.occlusion_detection_range - dist);
-      const auto target_right = interpolate_point(
-        *(crosswalk_lanelet.rightBound2d().basicBegin() + 1), base_right,
-        params.occlusion_detection_range - dist);
-      incoming_areas.push_back({base_left, target_left, target_right, base_right});
-    }
-  }
-  // back
-  {
-    const auto dist = lanelet::geometry::distance2d(
-      crosswalk_lanelet.centerline2d().basicLineString().back(), path_inter);
-    if (dist < params.occlusion_detection_range) {
-      const auto & base_left = crosswalk_lanelet.leftBound2d().back().basicPoint2d();
-      const auto & base_right = crosswalk_lanelet.rightBound2d().back().basicPoint2d();
-      const auto target_left = interpolate_point(
-        *(crosswalk_lanelet.leftBound2d().basicEnd() - 2), base_left,
-        params.occlusion_detection_range - dist);
-      const auto target_right = interpolate_point(
-        *(crosswalk_lanelet.rightBound2d().basicEnd() - 2), base_right,
-        params.occlusion_detection_range - dist);
-      incoming_areas.push_back({base_left, target_left, target_right, base_right});
+  const std::vector<std::function<lanelet::BasicSegment2d(lanelet::ConstLineString2d)>>
+    segment_getters = {
+      [](const auto & ls) -> lanelet::BasicSegment2d {
+        return {ls[1].basicPoint2d(), ls[0].basicPoint2d()};
+      },
+      [](const auto & ls) -> lanelet::BasicSegment2d {
+        const auto size = ls.size();
+        return {ls[size - 2].basicPoint2d(), ls[size - 1].basicPoint2d()};
+      }};
+  if (
+    crosswalk_lanelet.centerline2d().size() > 1 && crosswalk_lanelet.leftBound2d().size() > 1 &&
+    crosswalk_lanelet.rightBound2d().size() > 1) {
+    for (const auto segment_getter : segment_getters) {
+      const auto center_segment = segment_getter(crosswalk_lanelet.centerline2d());
+      const auto left_segment = segment_getter(crosswalk_lanelet.leftBound2d());
+      const auto right_segment = segment_getter(crosswalk_lanelet.rightBound2d());
+      const auto dist = lanelet::geometry::distance2d(center_segment.second, path_inter);
+      if (dist < params.occlusion_detection_range) {
+        const auto target_left =
+          interpolate_point(left_segment, params.occlusion_detection_range - dist);
+        const auto target_right =
+          interpolate_point(right_segment, params.occlusion_detection_range - dist);
+        incoming_areas.push_back(
+          {left_segment.second, target_left, target_right, right_segment.second});
+      }
     }
   }
   incoming_areas.push_back(crosswalk_lanelet.polygon2d().basicPolygon());
