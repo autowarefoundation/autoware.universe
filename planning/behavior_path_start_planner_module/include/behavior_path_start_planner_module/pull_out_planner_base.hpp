@@ -16,9 +16,8 @@
 #define BEHAVIOR_PATH_START_PLANNER_MODULE__PULL_OUT_PLANNER_BASE_HPP_
 
 #include "behavior_path_planner_common/data_manager.hpp"
-#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
+#include "behavior_path_start_planner_module/data_structs.hpp"
 #include "behavior_path_start_planner_module/pull_out_path.hpp"
-#include "behavior_path_start_planner_module/start_planner_parameters.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -45,7 +44,7 @@ public:
   explicit PullOutPlannerBase(rclcpp::Node & node, const StartPlannerParameters & parameters)
   {
     vehicle_info_ = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
-    vehicle_footprint_ = createVehicleFootprint(vehicle_info_);
+    vehicle_footprint_ = vehicle_info_.createFootprint();
     parameters_ = parameters;
   }
   virtual ~PullOutPlannerBase() = default;

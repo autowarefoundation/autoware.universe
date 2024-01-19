@@ -22,6 +22,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
@@ -89,6 +90,7 @@ struct LaneletData
 struct PredictedRefPath
 {
   float probability;
+  double speed_limit;
   PosePath path;
   Maneuver maneuver;
 };
@@ -175,6 +177,10 @@ private:
   double max_lateral_accel_;
   double min_acceleration_before_curve_;
 
+  bool use_vehicle_acceleration_;
+  double speed_limit_multiplier_;
+  double acceleration_exponential_half_life_;
+
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
 
@@ -231,7 +237,8 @@ private:
   void addReferencePaths(
     const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
     const float path_probability, const ManeuverProbability & maneuver_probability,
-    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths);
+    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
+    const double speed_limit = 0.0);
   std::vector<PosePath> convertPathType(const lanelet::routing::LaneletPaths & paths);
 
   void updateFuturePossibleLanelets(
@@ -316,8 +323,11 @@ private:
   };
 
   inline bool isLateralAccelerationConstraintSatisfied(
-    const TrajectoryPoints & trajectory [[maybe_unused]], const double delta_time)
+    const TrajectoryPoints & trajectory, const double delta_time)
   {
+    constexpr double epsilon = 1E-6;
+    if (delta_time < epsilon) throw std::invalid_argument("delta_time must be a positive value");
+
     if (trajectory.size() < 3) return true;
     const double max_lateral_accel_abs = std::fabs(max_lateral_accel_);
 
@@ -343,19 +353,17 @@ private:
         delta_theta += 2.0 * M_PI;
       }
 
-      const double yaw_rate = std::max(delta_theta / delta_time, 1.0E-5);
+      const double yaw_rate = std::max(std::abs(delta_theta / delta_time), 1.0E-5);
 
       const double current_speed = std::abs(trajectory.at(i).longitudinal_velocity_mps);
       // Compute lateral acceleration
       const double lateral_acceleration = std::abs(current_speed * yaw_rate);
       if (lateral_acceleration < max_lateral_accel_abs) continue;
-
       const double v_curvature_max = std::sqrt(max_lateral_accel_abs / yaw_rate);
       const double t =
         (v_curvature_max - current_speed) / min_acceleration_before_curve_;  // acc is negative
       const double distance_to_slow_down =
         current_speed * t + 0.5 * min_acceleration_before_curve_ * std::pow(t, 2);
-
       if (distance_to_slow_down > arc_length) return false;
     }
     return true;

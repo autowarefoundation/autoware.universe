@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/utils.hpp"
+#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -180,6 +180,22 @@ bool extractCommonPointCloud(
   output_obstacle_pc.header = obstacle_pc.header;
 
   return true;
+}
+
+/**
+ * @brief Convert unsigned char value to closest cost value
+ * @param cost Cost value
+ * @return Probability
+ */
+unsigned char getApproximateOccupancyState(const unsigned char & value)
+{
+  if (value >= occupancy_cost_value::OCCUPIED_THRESHOLD) {
+    return occupancy_cost_value::LETHAL_OBSTACLE;
+  } else if (value <= occupancy_cost_value::FREE_THRESHOLD) {
+    return occupancy_cost_value::FREE_SPACE;
+  } else {
+    return occupancy_cost_value::NO_INFORMATION;
+  }
 }
 
 }  // namespace utils

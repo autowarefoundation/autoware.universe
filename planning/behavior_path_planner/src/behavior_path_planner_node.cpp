@@ -17,6 +17,7 @@
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -700,7 +701,8 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = utils::toPath(*path_candidate_ptr);
+  output = motion_utils::convertToPath<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+    *path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();
   output.header.stamp = this->now();
@@ -782,6 +784,7 @@ void BehaviorPathPlannerNode::onTrafficSignals(const TrafficSignalArray::ConstSh
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
 
+  planner_data_->traffic_light_id_map.clear();
   for (const auto & signal : msg->signals) {
     TrafficSignalStamped traffic_signal;
     traffic_signal.stamp = msg->stamp;
