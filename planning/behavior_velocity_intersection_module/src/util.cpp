@@ -117,7 +117,7 @@ static std::optional<size_t> insertPointIndex(
 }
 
 bool hasLaneIds(
-  const autoware_planning_msgs::msg::PathPointWithLaneId & p, 
+  const autoware_planning_msgs::msg::PathPointWithLaneId & p,
   const std::set<lanelet::Id> & ids)
 {
   for (const auto & pid : p.lane_ids) {
@@ -1099,7 +1099,7 @@ std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
 }
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(
-  const int lane_id, const std::set<lanelet::Id> & associative_lane_ids,
+  const lanelet::Id lane_id, const std::set<lanelet::Id> & associative_lane_ids,
   const autoware_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
   const rclcpp::Logger logger)
 {
