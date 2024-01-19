@@ -36,9 +36,9 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(),
     getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
-    occlusion_rtc_interface_(
-      &node, "intersection_occlusion",
-      getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
+  occlusion_rtc_interface_(
+    &node, "intersection_occlusion",
+    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
