@@ -40,6 +40,7 @@ PlannerManager::PlannerManager(
 {
   processing_time_.emplace("total_time", 0.0);
   debug_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
+  state_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
 }
 
 void PlannerManager::launchScenePlugin(rclcpp::Node & node, const std::string & name)
@@ -859,11 +860,9 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
   // when lane change module is running, don't update root lanelet.
   const bool is_lane_change_running = std::invoke([&]() {
-    const auto lane_change_itr =
-      std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [](const auto & m) {
-        return m->name().find("lane_change") != std::string::npos ||
-               m->name().find("avoidance_by_lc") != std::string::npos;
-      });
+    const auto lane_change_itr = std::find_if(
+      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
+      [](const auto & m) { return m->isRootLaneletToBeUpdated(); });
     return lane_change_itr != approved_module_ptrs_.end();
   });
   if (is_lane_change_running) {
@@ -910,10 +909,6 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
 void PlannerManager::print() const
 {
-  if (!verbose_) {
-    return;
-  }
-
   const auto get_status = [](const auto & m) {
     return magic_enum::enum_name(m->getCurrentStatus());
   };
@@ -961,6 +956,12 @@ void PlannerManager::print() const
                   << std::left << t.first << ":" << std::setw(4) << std::right << t.second
                   << "ms]\n"
                   << std::setw(21);
+  }
+
+  state_publisher_ptr_->publish<DebugStringMsg>("internal_state", string_stream.str());
+
+  if (!verbose_) {
+    return;
   }
 
   RCLCPP_INFO_STREAM(logger_, string_stream.str());
