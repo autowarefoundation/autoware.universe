@@ -18,8 +18,6 @@
 #define FMT_HEADER_ONLY
 
 #include "localization_util/smart_pose_buffer.hpp"
-#include "localization_util/tf2_listener_module.hpp"
-#include "ndt_scan_matcher/map_module.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -41,6 +39,8 @@
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl/point_types.h>
 #include <tf2/transform_datatypes.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -127,6 +127,8 @@ private:
     const double & transform_probability, const double & nearest_voxel_transformation_likelihood);
   static int count_oscillation(const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array);
 
+  std::array<double, 36> rotate_covariance(
+    const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const;
   std::array<double, 36> estimate_covariance(
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
@@ -176,6 +178,8 @@ private:
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
 
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
+  tf2_ros::Buffer tf2_buffer_;
+  tf2_ros::TransformListener tf2_listener_;
 
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
 
@@ -213,16 +217,12 @@ private:
   std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
 
   std::atomic<bool> is_activated_;
-  std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
-  std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
   // cspell: ignore degrounded
   bool estimate_scores_for_degrounded_scan_;
   double z_margin_for_ground_removal_;
-
-  bool use_dynamic_map_loading_;
 
   // The execution time which means probably NDT cannot matches scans properly
   int64_t critical_upper_bound_exe_time_ms_;
