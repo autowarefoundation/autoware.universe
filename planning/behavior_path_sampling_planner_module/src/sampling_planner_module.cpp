@@ -468,8 +468,13 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     current_lanes.insert(current_lanes.end(), d.middle_lanes.begin(), d.middle_lanes.end());
   }
 
-  auto frenet_paths =
-    frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
+  const bool prev_path_is_valid = prev_sampling_path_ && prev_sampling_path_->points.size() > 0;
+  std::vector<frenet_planner::Path> frenet_paths;
+
+  if (!prev_path_is_valid) {
+    frenet_paths =
+      frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
+  }
 
   auto get_goal_pose = [&]() {
     auto goal_pose = planner_data_->route_handler->getGoalPose();
@@ -491,22 +496,48 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   };
 
   // EXTEND prev path
-  if (prev_sampling_path_ && prev_sampling_path_->points.size() > 0) {
+  if (prev_path_is_valid) {
     // Update previous path
     frenet_planner::Path prev_path_frenet = prev_sampling_path_.value();
     frenet_paths.push_back(prev_path_frenet);
 
-    geometry_msgs::msg::Pose future_pose = prev_path_frenet.poses.back();
-    const double length_path = lanelet::utils::getArcCoordinates(current_lanes, future_pose).length;
-    const auto goal_pose = get_goal_pose();
-    const double length_goal = lanelet::utils::getArcCoordinates(current_lanes, goal_pose).length;
+    auto get_subset = [](const frenet_planner::Path & path, size_t offset) -> frenet_planner::Path {
+      frenet_planner::Path s;
+      s.points = {path.points.begin(), path.points.begin() + offset};
+      s.curvatures = {path.curvatures.begin(), path.curvatures.begin() + offset};
+      s.yaws = {path.yaws.begin(), path.yaws.begin() + offset};
+      s.lengths = {path.lengths.begin(), path.lengths.begin() + offset};
+      s.poses = {path.poses.begin(), path.poses.begin() + offset};
+      return s;
+    };
 
-    const double min_target_length = *std::min_element(
-      internal_params_->sampling.target_lengths.begin(),
-      internal_params_->sampling.target_lengths.end());
+    sampler_common::State current_state;
+    current_state.pose = {ego_pose.position.x, ego_pose.position.y};
 
-    if (std::abs(length_goal - length_path) > min_target_length) {
-      geometry_msgs::msg::Pose future_pose = prev_path_frenet.poses.back();
+    const auto closest_iter = std::min_element(
+      prev_path_frenet.points.begin(), prev_path_frenet.points.end() - 1,
+      [&](const auto & p1, const auto & p2) {
+        return boost::geometry::distance(p1, current_state.pose) <=
+               boost::geometry::distance(p2, current_state.pose);
+      });
+
+    const auto current_idx = std::distance(prev_path_frenet.points.begin(), closest_iter);
+    const double current_length = prev_path_frenet.lengths.at(current_idx);
+    const double remaining_path_length = prev_path_frenet.lengths.back() - current_length;
+    const double length_step = remaining_path_length / 3.0;
+    std::cout << "Current idx " << current_idx << "\n";
+    std::cout << "current_length " << current_length << "\n";
+    for (double reuse_length = 0.0; reuse_length <= remaining_path_length;
+         reuse_length += length_step) {
+      size_t reuse_idx;
+      for (reuse_idx = current_idx + 1; reuse_idx + 2 < prev_path_frenet.lengths.size();
+           ++reuse_idx) {
+        if (prev_path_frenet.lengths[reuse_idx] - current_length >= reuse_length) break;
+      }
+
+      const auto reused_path = get_subset(prev_path_frenet, reuse_idx);
+
+      geometry_msgs::msg::Pose future_pose = reused_path.poses.back();
       sampler_common::State future_state =
         behavior_path_planner::getInitialState(future_pose, reference_spline);
       frenet_planner::FrenetState frenet_reuse_state;
@@ -517,7 +548,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
       auto extension_frenet_paths = frenet_planner::generatePaths(
         reference_spline, frenet_reuse_state, extension_sampling_parameters);
       for (auto & p : extension_frenet_paths) {
-        if (!p.points.empty()) frenet_paths.push_back(prev_path_frenet.extend(p));
+        if (!p.points.empty()) frenet_paths.push_back(reused_path.extend(p));
       }
     }
   }
