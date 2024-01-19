@@ -102,7 +102,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     // check lane departure
     if (
       parameters_.check_shift_path_lane_departure &&
-      lane_departure_checker_->checkPathWillLeaveLane(expanded_lanes, path_shift_start_to_end)) {
+      lane_departure_checker_->checkPathWillLeaveLane(drivable_lanes_, path_shift_start_to_end)) {
       continue;
     }
 
