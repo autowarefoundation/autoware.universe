@@ -181,7 +181,7 @@ document.
 
 ### Stuck Vehicle Detection
 
-The feature will make the ego not ot stop on the crosswalk.
+The feature will make the ego not to stop on the crosswalk.
 When there is a low-speed or stopped vehicle ahead of the crosswalk, and there is not enough space between the crosswalk and the vehicle, the crosswalk module plans to stop before the crosswalk even if there are no pedestrians or bicycles.
 
 `min_acc`, `min_jerk`, and `max_jerk` are met. If the ego cannot stop before the crosswalk with these parameters, the stop position will move forward.
