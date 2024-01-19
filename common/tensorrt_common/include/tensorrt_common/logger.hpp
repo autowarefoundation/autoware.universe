@@ -493,7 +493,7 @@ namespace
 //!
 inline LogStreamConsumer LOG_VERBOSE(const Logger & logger)
 {
-  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kVERBOSE);
+  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kVERBOSE) << "[TRT] ";
 }
 
 //!
@@ -505,7 +505,7 @@ inline LogStreamConsumer LOG_VERBOSE(const Logger & logger)
 //!
 inline LogStreamConsumer LOG_INFO(const Logger & logger)
 {
-  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kINFO);
+  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kINFO) << "[TRT] ";
 }
 
 //!
@@ -517,7 +517,7 @@ inline LogStreamConsumer LOG_INFO(const Logger & logger)
 //!
 inline LogStreamConsumer LOG_WARN(const Logger & logger)
 {
-  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kWARNING);
+  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kWARNING) << "[TRT] ";
 }
 
 //!
@@ -529,7 +529,7 @@ inline LogStreamConsumer LOG_WARN(const Logger & logger)
 //!
 inline LogStreamConsumer LOG_ERROR(const Logger & logger)
 {
-  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kERROR);
+  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kERROR) << "[TRT] ";
 }
 
 //!
@@ -543,7 +543,7 @@ inline LogStreamConsumer LOG_ERROR(const Logger & logger)
 //!
 inline LogStreamConsumer LOG_FATAL(const Logger & logger)
 {
-  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kINTERNAL_ERROR);
+  return LogStreamConsumer(logger.getReportableSeverity(), Severity::kINTERNAL_ERROR) << "[TRT] ";
 }
 
 }  // anonymous namespace
