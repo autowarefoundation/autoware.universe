@@ -42,7 +42,8 @@ namespace behavior_velocity_planner
 {
 /// @brief check if the gridmap is occluded at the given index
 bool is_occluded(
-  const grid_map::GridMap & grid_map, const int min_nb_of_cells, const grid_map::Index idx)
+  const grid_map::GridMap & grid_map, const int min_nb_of_cells, const grid_map::Index idx,
+  const behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
 {
   grid_map::Index idx_offset;
   for (idx_offset.x() = 0; idx_offset.x() < min_nb_of_cells; ++idx_offset.x()) {
@@ -50,8 +51,10 @@ bool is_occluded(
       const auto index = idx + idx_offset;
       if ((index < grid_map.getSize()).all()) {
         const auto cell_value = grid_map.at("layer", index);
-        // TODO(Maxime): magic number -> params
-        if (cell_value < 47 || cell_value > 53) return false;
+        if (
+          cell_value < params.occlusion_free_space_max ||
+          cell_value > params.occlusion_occupied_min)
+          return false;
       }
     }
   }
@@ -69,7 +72,8 @@ lanelet::BasicPoint2d interpolate_point(
 bool is_crosswalk_occluded(
   const lanelet::ConstLanelet & crosswalk_lanelet,
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const geometry_msgs::msg::Point & path_intersection)
+  const geometry_msgs::msg::Point & path_intersection,
+  const behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
 {
   // Declare a stream and an SVG mapper
   // std::ofstream svg("/home/mclement/Pictures/crosswalk.svg");  // /!\ CHANGE PATH
@@ -78,21 +82,21 @@ bool is_crosswalk_occluded(
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
   const lanelet::BasicPoint2d path_inter(path_intersection.x, path_intersection.y);
 
-  constexpr double min_size = 0.5;  // TODO(Maxime): param
-  constexpr double range = 8.0;     // TODO(Maxime): param, should include the ego width ?
-  const auto min_nb_of_cells = std::ceil(min_size / grid_map.getResolution());
+  const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
   std::vector<lanelet::BasicPolygon2d> incoming_areas;
   // front
   {
     const auto dist = lanelet::geometry::distance2d(
       crosswalk_lanelet.centerline2d().basicLineString().front(), path_inter);
-    if (dist < range) {
+    if (dist < params.occlusion_detection_range) {
       const auto & base_left = crosswalk_lanelet.leftBound2d().front().basicPoint2d();
       const auto & base_right = crosswalk_lanelet.rightBound2d().front().basicPoint2d();
       const auto target_left = interpolate_point(
-        *(crosswalk_lanelet.leftBound2d().basicBegin() + 1), base_left, range - dist);
+        *(crosswalk_lanelet.leftBound2d().basicBegin() + 1), base_left,
+        params.occlusion_detection_range - dist);
       const auto target_right = interpolate_point(
-        *(crosswalk_lanelet.rightBound2d().basicBegin() + 1), base_right, range - dist);
+        *(crosswalk_lanelet.rightBound2d().basicBegin() + 1), base_right,
+        params.occlusion_detection_range - dist);
       incoming_areas.push_back({base_left, target_left, target_right, base_right});
     }
   }
@@ -100,13 +104,15 @@ bool is_crosswalk_occluded(
   {
     const auto dist = lanelet::geometry::distance2d(
       crosswalk_lanelet.centerline2d().basicLineString().back(), path_inter);
-    if (dist < range) {
+    if (dist < params.occlusion_detection_range) {
       const auto & base_left = crosswalk_lanelet.leftBound2d().back().basicPoint2d();
       const auto & base_right = crosswalk_lanelet.rightBound2d().back().basicPoint2d();
       const auto target_left = interpolate_point(
-        *(crosswalk_lanelet.leftBound2d().basicEnd() - 2), base_left, range - dist);
+        *(crosswalk_lanelet.leftBound2d().basicEnd() - 2), base_left,
+        params.occlusion_detection_range - dist);
       const auto target_right = interpolate_point(
-        *(crosswalk_lanelet.rightBound2d().basicEnd() - 2), base_right, range - dist);
+        *(crosswalk_lanelet.rightBound2d().basicEnd() - 2), base_right,
+        params.occlusion_detection_range - dist);
       incoming_areas.push_back({base_left, target_left, target_right, base_right});
     }
   }
@@ -125,7 +131,7 @@ bool is_crosswalk_occluded(
     grid_map::Polygon poly;
     for (const auto & p : incoming_area) poly.addVertex(grid_map::Position(p.x(), p.y()));
     for (grid_map_utils::PolygonIterator iter(grid_map, poly); !iter.isPastEnd(); ++iter)
-      if (is_occluded(grid_map, min_nb_of_cells, *iter)) return true;
+      if (is_occluded(grid_map, min_nb_of_cells, *iter, params)) return true;
   }
   return false;
 }

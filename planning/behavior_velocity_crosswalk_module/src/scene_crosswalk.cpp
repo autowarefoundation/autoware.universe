@@ -236,20 +236,22 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   }
   // TODO(Maxime): param
   const auto use_occluded_space = [&]() -> bool {
-    return !path_intersects.empty() && calcSignedArcLength(path->points, ego_pos, path_intersects.front()) > 0.0;
+    return !path_intersects.empty() &&
+           calcSignedArcLength(path->points, ego_pos, path_intersects.front()) > 0.0;
   }();
-  constexpr auto occluded_slow_down_speed = 1.0f;
-  constexpr auto time_buffer = 1.0;
   if (use_occluded_space) {
-    if(is_crosswalk_occluded(crosswalk_, *planner_data_->occupancy_grid, path_intersects.front())) {
+    if (is_crosswalk_occluded(
+          crosswalk_, *planner_data_->occupancy_grid, path_intersects.front(), planner_param_)) {
       if (!current_initial_occlusion_time_) current_initial_occlusion_time_ = clock_->now();
-      if ((clock_->now() - *current_initial_occlusion_time_).seconds() >= time_buffer)
+      if (
+        (clock_->now() - *current_initial_occlusion_time_).seconds() >=
+        planner_param_.occlusion_time_buffer)
         most_recent_occlusion_time_ = clock_->now();
     }
     if (
-      most_recent_occlusion_time_ &&
-      (clock_->now() - *most_recent_occlusion_time_).seconds() <= time_buffer) {
-      applySafetySlowDownSpeed(*path, path_intersects, occluded_slow_down_speed);
+      most_recent_occlusion_time_ && (clock_->now() - *most_recent_occlusion_time_).seconds() <=
+                                       planner_param_.occlusion_time_buffer) {
+      applySafetySlowDownSpeed(*path, path_intersects, planner_param_.occlusion_slow_down_velocity);
     }
   }
   recordTime(2);
