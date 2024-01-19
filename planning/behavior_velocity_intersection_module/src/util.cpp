@@ -133,7 +133,8 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
 }
 
 std::optional<size_t> getFirstPointInsidePolygonByFootprint(
-  const lanelet::CompoundPolygon3d & polygon, const InterpolatedPathInfo & interpolated_path_info,
+  const lanelet::CompoundPolygon3d & polygon,
+  const intersection::InterpolatedPathInfo & interpolated_path_info,
   const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
@@ -157,7 +158,7 @@ std::optional<std::pair<
   size_t /* the index of interpolated PathPoint*/, size_t /* the index of corresponding Polygon */>>
 getFirstPointInsidePolygonsByFootprint(
   const std::vector<lanelet::CompoundPolygon3d> & polygons,
-  const util::InterpolatedPathInfo & interpolated_path_info,
+  const intersection::InterpolatedPathInfo & interpolated_path_info,
   const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
@@ -359,12 +360,12 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
   return tl_id.has_value();
 }
 
-std::optional<InterpolatedPathInfo> generateInterpolatedPath(
+std::optional<intersection::InterpolatedPathInfo> generateInterpolatedPath(
   const lanelet::Id lane_id, const std::set<lanelet::Id> & associative_lane_ids,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const double ds,
   const rclcpp::Logger logger)
 {
-  InterpolatedPathInfo interpolated_path_info;
+  intersection::InterpolatedPathInfo interpolated_path_info;
   if (!splineInterpolate(input_path, ds, interpolated_path_info.path, logger)) {
     return std::nullopt;
   }

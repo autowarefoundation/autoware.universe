@@ -19,7 +19,7 @@
 #include <string>
 #include <variant>
 
-namespace behavior_velocity_planner
+namespace behavior_velocity_planner::intersection
 {
 
 /**
@@ -162,6 +162,42 @@ using DecisionResult = std::variant<
   FullyPrioritized              //! only detect vehicles violating traffic rules
   >;
 
-}  // namespace behavior_velocity_planner
+inline std::string formatDecisionResult(const DecisionResult & decision_result)
+{
+  if (std::holds_alternative<Indecisive>(decision_result)) {
+    const auto indecisive = std::get<Indecisive>(decision_result);
+    return "Indecisive because " + indecisive.error;
+  }
+  if (std::holds_alternative<StuckStop>(decision_result)) {
+    return "StuckStop";
+  }
+  if (std::holds_alternative<YieldStuckStop>(decision_result)) {
+    return "YieldStuckStop";
+  }
+  if (std::holds_alternative<NonOccludedCollisionStop>(decision_result)) {
+    return "NonOccludedCollisionStop";
+  }
+  if (std::holds_alternative<FirstWaitBeforeOcclusion>(decision_result)) {
+    return "FirstWaitBeforeOcclusion";
+  }
+  if (std::holds_alternative<PeekingTowardOcclusion>(decision_result)) {
+    return "PeekingTowardOcclusion";
+  }
+  if (std::holds_alternative<OccludedCollisionStop>(decision_result)) {
+    return "OccludedCollisionStop";
+  }
+  if (std::holds_alternative<OccludedAbsenceTrafficLight>(decision_result)) {
+    return "OccludedAbsenceTrafficLight";
+  }
+  if (std::holds_alternative<Safe>(decision_result)) {
+    return "Safe";
+  }
+  if (std::holds_alternative<FullyPrioritized>(decision_result)) {
+    return "FullyPrioritized";
+  }
+  return "";
+}
+
+}  // namespace behavior_velocity_planner::intersection
 
 #endif  // DECISION_RESULT_HPP_

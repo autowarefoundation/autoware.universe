@@ -21,11 +21,11 @@
 
 #include <string>
 
-namespace behavior_velocity_planner
+namespace behavior_velocity_planner::intersection
 {
 
 void IntersectionLanelets::update(
-  const bool is_prioritized, const util::InterpolatedPathInfo & interpolated_path_info,
+  const bool is_prioritized, const InterpolatedPathInfo & interpolated_path_info,
   const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length,
   lanelet::routing::RoutingGraphPtr routing_graph_ptr)
 {
@@ -79,4 +79,4 @@ void IntersectionLanelets::update(
     }
   }
 }
-}  // namespace behavior_velocity_planner
+}  // namespace behavior_velocity_planner::intersection

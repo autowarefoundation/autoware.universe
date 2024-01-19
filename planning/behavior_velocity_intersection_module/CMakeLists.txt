@@ -12,7 +12,10 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/util.cpp
   src/scene_intersection.cpp
   src/intersection_lanelets.cpp
-  src/object_manager.cpp
+  src/scene_intersection_prepare_data.cpp
+  src/scene_intersection_stuck.cpp
+  src/scene_intersection_occlusion.cpp
+  src/scene_intersection_collision.cpp
   src/scene_merge_from_private_road.cpp
   src/debug.cpp
 )

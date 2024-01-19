@@ -27,7 +27,7 @@
 #include <optional>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace behavior_velocity_planner::intersection
 {
 
 /**
@@ -41,7 +41,7 @@ public:
    * update conflicting lanelets and traffic priority information
    */
   void update(
-    const bool is_prioritized, const util::InterpolatedPathInfo & interpolated_path_info,
+    const bool is_prioritized, const InterpolatedPathInfo & interpolated_path_info,
     const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr);
 
@@ -192,6 +192,6 @@ struct PathLanelets
                                          // conflicting lanelets plus the next lane part of the
                                          // path
 };
-}  // namespace behavior_velocity_planner
+}  // namespace behavior_velocity_planner::intersection
 
 #endif  // INTERSECTION_LANELETS_HPP_
