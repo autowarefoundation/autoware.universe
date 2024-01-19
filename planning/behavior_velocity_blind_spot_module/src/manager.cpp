@@ -16,7 +16,6 @@
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <tier4_autoware_utils/ros/parameter.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
@@ -28,13 +27,9 @@
 
 namespace behavior_velocity_planner
 {
-using tier4_autoware_utils::getOrDeclareParameter;
 
 BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(),
-    (!getOrDeclareParameter<bool>(node, "enable_all_modules_auto_mode") &&
-     getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc")))
+: SceneModuleManagerInterfaceWithRTC(node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
 {
   const std::string ns(getModuleName());
   planner_param_.use_pass_judge_line =
