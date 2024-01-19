@@ -11,8 +11,6 @@ If the transformation from `base_link` to the antenna cannot be obtained, it out
 
 ## Inner-workings / Algorithms
 
-
-
 ## Inputs / Outputs
 
 ### Input
