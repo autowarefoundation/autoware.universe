@@ -117,7 +117,7 @@ private:
 
   vehicle_info_util::VehicleInfo vehicle_info_;
 
-  bool isAllValid(const PlanningValidatorStatus & status);
+  bool isAllValid(const PlanningValidatorStatus & status) const;
 
   Trajectory::ConstSharedPtr current_trajectory_;
   Trajectory::ConstSharedPtr previous_published_trajectory_;

@@ -296,7 +296,7 @@ void PlanningValidator::validate(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidSize(const Trajectory & trajectory) const
 {
-  return trajectory.points.size() >=2;
+  return trajectory.points.size() >= 2;
 }
 
 bool PlanningValidator::checkValidFiniteValue(const Trajectory & trajectory)
@@ -447,7 +447,7 @@ bool PlanningValidator::checkValidDistanceDeviation(const Trajectory & trajector
   return true;
 }
 
-bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s)
+bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s) const
 {
   return s.is_valid_size && s.is_valid_finite_value && s.is_valid_interval &&
          s.is_valid_relative_angle && s.is_valid_curvature && s.is_valid_lateral_acc &&
