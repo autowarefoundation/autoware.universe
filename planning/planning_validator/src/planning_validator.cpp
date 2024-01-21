@@ -296,7 +296,7 @@ void PlanningValidator::validate(const Trajectory & trajectory)
 
 bool PlanningValidator::checkValidSize(const Trajectory & trajectory)
 {
-  return trajectory.points.size() < 2 ? false : true;
+  return trajectory.points.size() >=2;
 }
 
 bool PlanningValidator::checkValidFiniteValue(const Trajectory & trajectory)
