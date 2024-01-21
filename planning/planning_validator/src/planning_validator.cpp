@@ -294,7 +294,7 @@ void PlanningValidator::validate(const Trajectory & trajectory)
   s.invalid_count = isAllValid(s) ? 0 : s.invalid_count + 1;
 }
 
-bool PlanningValidator::checkValidSize(const Trajectory & trajectory)
+bool PlanningValidator::checkValidSize(const Trajectory & trajectory) const
 {
   return trajectory.points.size() >=2;
 }
