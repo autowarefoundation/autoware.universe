@@ -64,6 +64,7 @@ public:
 
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
 
+  bool checkValidSize(const Trajectory & trajectory);
   bool checkValidFiniteValue(const Trajectory & trajectory);
   bool checkValidInterval(const Trajectory & trajectory);
   bool checkValidRelativeAngle(const Trajectory & trajectory);
