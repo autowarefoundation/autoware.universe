@@ -52,9 +52,9 @@ NormalVehicleTracker::NormalVehicleTracker(
   object_ = object;
 
   // Initialize parameters
-  // measurement noise covariance
-  float r_stddev_x = 1.0;                                  // in object coordinate [m]
-  float r_stddev_y = 0.3;                                  // in object coordinate [m]
+  // measurement noise covariance: detector uncertainty + ego vehicle motion uncertainty
+  float r_stddev_x = 0.5;                                  // in vehicle coordinate [m]
+  float r_stddev_y = 0.4;                                  // in vehicle coordinate [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // in map coordinate [rad]
   float r_stddev_vel = 1.0;                                // in object coordinate [m/s]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
@@ -73,8 +73,8 @@ NormalVehicleTracker::NormalVehicleTracker(
   ekf_params_.p0_cov_vel = std::pow(p0_stddev_vel, 2.0);
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
   // process noise covariance
-  ekf_params_.q_stddev_acc_long = 9.8 * 0.3;  // [m/(s*s)] uncertain longitudinal acceleration
-  ekf_params_.q_stddev_acc_lat = 9.8 * 0.1;   // [m/(s*s)] uncertain lateral acceleration
+  ekf_params_.q_stddev_acc_long = 9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
+  ekf_params_.q_stddev_acc_lat = 9.8 * 0.15;   // [m/(s*s)] uncertain lateral acceleration
   ekf_params_.q_stddev_yaw_rate_min =
     tier4_autoware_utils::deg2rad(1.5);  // [rad/s] uncertain yaw change rate
   ekf_params_.q_stddev_yaw_rate_max =
@@ -219,23 +219,24 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   ekf.getX(X_t);
   const double cos_yaw = std::cos(X_t(IDX::YAW) + X_t(IDX::SLIP));
   const double sin_yaw = std::sin(X_t(IDX::YAW) + X_t(IDX::SLIP));
+  const double vel = X_t(IDX::VEL);
   const double cos_slip = std::cos(X_t(IDX::SLIP));
   const double sin_slip = std::sin(X_t(IDX::SLIP));
-  const double vel = X_t(IDX::VEL);
+
+  double w = vel * sin_slip / lr_;
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
-  const double w = vel * sin_slip / lr_;
   const double w_dtdt = w * dt * dt;
   const double vv_dtdt__lr = vel * vel * dt * dt / lr_;
 
   // Predict state vector X t+1
   Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);  // predicted state
   X_next_t(IDX::X) =
-    X_t(IDX::X) + vel * cos_yaw * dt - 0.5 * vel * sin_slip * w_dtdt;  // dx = v * cos(yaw)
+    X_t(IDX::X) + vel * cos_yaw * dt - 0.5 * vel * sin_slip * w_dtdt;  // dx = v * cos(yaw) * dt
   X_next_t(IDX::Y) =
-    X_t(IDX::Y) + vel * sin_yaw * dt + 0.5 * vel * cos_slip * w_dtdt;  // dy = v * sin(yaw)
-  X_next_t(IDX::YAW) = X_t(IDX::YAW) + vel / lr_ * sin_slip * dt;      // dyaw = omega
+    X_t(IDX::Y) + vel * sin_yaw * dt + 0.5 * vel * cos_slip * w_dtdt;  // dy = v * sin(yaw) * dt
+  X_next_t(IDX::YAW) = X_t(IDX::YAW) + w * dt;                         // d(yaw) = w * dt
   X_next_t(IDX::VEL) = X_t(IDX::VEL);
-  X_next_t(IDX::SLIP) = X_t(IDX::SLIP);
+  X_next_t(IDX::SLIP) = X_t(IDX::SLIP);  // slip_angle = asin(lr * w / v)
 
   // State transition matrix A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -320,8 +321,8 @@ bool NormalVehicleTracker::measureWithPose(
     r_cov_x = ekf_params_.r_cov_x;
     r_cov_y = ekf_params_.r_cov_y;
   } else if (utils::isLargeVehicleLabel(label)) {
-    constexpr float r_stddev_x = 8.0;  // [m]
-    constexpr float r_stddev_y = 0.8;  // [m]
+    constexpr float r_stddev_x = 2.0;  // [m]
+    constexpr float r_stddev_y = 2.0;  // [m]
     r_cov_x = std::pow(r_stddev_x, 2.0);
     r_cov_y = std::pow(r_stddev_y, 2.0);
   } else {
