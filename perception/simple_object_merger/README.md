@@ -56,5 +56,5 @@ Since [clustering processing](https://github.com/autowarefoundation/autoware.uni
 | :------------------ | :----------- | :----------------------------------- | :------------ |
 | `update_rate_hz`    | double       | Update rate. [hz]                    | 20.0          |
 | `new_frame_id`      | string       | The header frame_id of output topic. | "base_link"   |
-| `timeout_threshold` | double       | Threshold for timeout judgement [s]. | 1.0           |
+| `timeout_threshold` | double       | Threshold for timeout judgement [s]. | 0.1           |
 | `input_topics`      | List[string] | Input topics name.                   | "[]"          |
