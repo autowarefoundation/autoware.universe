@@ -38,7 +38,7 @@ GyroBiasEstimator::GyroBiasEstimator()
   updater_.setHardwareID(get_name());
   updater_.add("gyro_bias_validator", this, &GyroBiasEstimator::update_diagnostics);
   // diagnostic_updater is designed to be updated at the same rate as the timer
-  updater_.setPeriod(timer_callback_interval_sec_); 
+  updater_.setPeriod(timer_callback_interval_sec_);
 
   gyro_bias_estimation_module_ = std::make_unique<GyroBiasEstimationModule>();
 
@@ -201,7 +201,6 @@ void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Not initialized");
     is_bias_updated_ = false;
   } else {
-
     // Get gyro bias
     gyro_bias_x_for_imu_corrector = gyro_bias_.value().x;
     gyro_bias_y_for_imu_corrector = gyro_bias_.value().y;
@@ -212,23 +211,22 @@ void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
     estimated_gyro_bias_z = gyro_bias_.value().z - angular_velocity_offset_z_;
 
     // Validation
-    const bool is_bias_small_enough =
-      std::abs(estimated_gyro_bias_x) < gyro_bias_threshold_ &&
-      std::abs(estimated_gyro_bias_y) < gyro_bias_threshold_ &&
-      std::abs(estimated_gyro_bias_z) < gyro_bias_threshold_;
+    const bool is_bias_small_enough = std::abs(estimated_gyro_bias_x) < gyro_bias_threshold_ &&
+                                      std::abs(estimated_gyro_bias_y) < gyro_bias_threshold_ &&
+                                      std::abs(estimated_gyro_bias_z) < gyro_bias_threshold_;
 
     // Update diagnostics
-    // The summary depends on which of the three states you are in: 
+    // The summary depends on which of the three states you are in:
     // updated, not updated, or threshold exceeded.
     if (is_bias_small_enough) {
       if (is_bias_updated_) {
         stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Successfully updated");
-      }
-      else {
+      } else {
         stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Paused update");
       }
     } else {
-      stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, 
+      stat.summary(
+        diagnostic_msgs::msg::DiagnosticStatus::WARN,
         "Gyro bias may be incorrect. Please calibrate IMU and reflect the result in "
         "imu_corrector. You may also use the output of gyro_bias_estimator.");
     }
