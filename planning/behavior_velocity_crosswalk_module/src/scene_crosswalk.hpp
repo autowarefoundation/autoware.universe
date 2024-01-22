@@ -157,11 +157,12 @@ public:
     // param for occlusions
     bool occlusion_enable;
     double occlusion_occluded_object_velocity;
-    double occlusion_slow_down_velocity;
+    float occlusion_slow_down_velocity;
     double occlusion_time_buffer;
     double occlusion_min_size;
     int occlusion_free_space_max;
     int occlusion_occupied_min;
+    bool occlusion_ignore_with_traffic_light;
   };
 
   struct ObjectInfo

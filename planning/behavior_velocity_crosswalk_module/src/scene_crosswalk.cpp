@@ -235,7 +235,9 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
       static_cast<float>(crosswalk_.attribute("safety_slow_down_speed").asDouble().get()));
   }
   // Apply safety slow down speed if the crosswalk is occluded
-  if (planner_param_.occlusion_enable && !path_intersects.empty()) {
+  if (
+    planner_param_.occlusion_enable && !path_intersects.empty() &&
+    !is_crosswalk_ignored(crosswalk_, planner_param_.occlusion_ignore_with_traffic_light)) {
     const auto dist_ego_to_crosswalk =
       calcSignedArcLength(path->points, ego_pos, path_intersects.front());
     const auto detection_range = calculate_detection_range(
@@ -256,9 +258,12 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
       const auto is_last_occlusion_within_time_buffer =
         most_recent_occlusion_time_ && (clock_->now() - *most_recent_occlusion_time_).seconds() <=
                                          planner_param_.occlusion_time_buffer;
-      if (is_last_occlusion_within_time_buffer)
+      if (is_last_occlusion_within_time_buffer) {
+        const auto target_velocity = calcTargetVelocity(path_intersects.front(), *path);
         applySafetySlowDownSpeed(
-          *path, path_intersects, planner_param_.occlusion_slow_down_velocity);
+          *path, path_intersects,
+          std::max(target_velocity, planner_param_.occlusion_slow_down_velocity));
+      }
     }
   }
   recordTime(2);

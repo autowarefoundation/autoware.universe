@@ -129,11 +129,13 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.occlusion_occluded_object_velocity =
     getOrDeclareParameter<double>(node, ns + ".occlusion.occluded_object_velocity");
   cp.occlusion_slow_down_velocity =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.slow_down_velocity");
+    getOrDeclareParameter<float>(node, ns + ".occlusion.slow_down_velocity");
   cp.occlusion_time_buffer = getOrDeclareParameter<double>(node, ns + ".occlusion.time_buffer");
   cp.occlusion_min_size = getOrDeclareParameter<double>(node, ns + ".occlusion.min_size");
   cp.occlusion_free_space_max = getOrDeclareParameter<int>(node, ns + ".occlusion.free_space_max");
   cp.occlusion_occupied_min = getOrDeclareParameter<int>(node, ns + ".occlusion.occupied_min");
+  cp.occlusion_ignore_with_traffic_light =
+    getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_with_traffic_light");
 }
 
 void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
