@@ -65,7 +65,7 @@ void SteeringWheelDisplay::drawSteeringWheel(QPainter & painter, const QRectF & 
   QImage wheel = coloredImage(scaledWheelImage, gray);
 
   // Rotate the wheel
-  qreal steeringAngle = steering_angle_;  // No need to round here
+  float steeringAngle = steering_angle_;  // No need to round here
   // Calculate the position
   int wheelCenterX = backgroundRect.right() - wheel.width() - 17.5;
   int wheelCenterY = backgroundRect.height() - wheel.height() + 15;

@@ -4,7 +4,7 @@
   <name>awf_2d_overlay_vehicle</name>
   <version>0.0.1</version>
   <description>
-    RViz2 plugin for 2D overlays in the 3D view. Mainly a ROS2 port of the JSK overlay plugin
+    RViz2 plugin for 2D overlays in the 3D view. Mainly a port of the JSK overlay plugin
         (https://github.com/jsk-ros-pkg/jsk_visualization).
   </description>
   <maintainer email="khalil@leodrive.ai">Khalil Selyan</maintainer>
