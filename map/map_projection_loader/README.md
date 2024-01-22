@@ -33,6 +33,7 @@ projector_type: local
 The functionality that requires latitude and longitude will become unavailable.
 
 The currently identified unavailable functionalities are:
+
 - GNSS localization
 - Sending the self-position in latitude and longitude using ADAPI
 
