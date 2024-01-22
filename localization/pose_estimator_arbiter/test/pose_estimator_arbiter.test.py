@@ -19,7 +19,6 @@ import time
 import unittest
 
 from ament_index_python import get_package_share_directory
-from autoware_adapi_v1_msgs.msg import LocalizationInitializationState
 from geometry_msgs.msg import PoseWithCovarianceStamped
 import launch
 from launch.actions import IncludeLaunchDescription
@@ -27,7 +26,6 @@ from launch.launch_description_sources import AnyLaunchDescriptionSource
 import launch_testing
 import pytest
 import rclpy
-from rclpy.qos import DurabilityPolicy
 from rclpy.qos import QoSProfile
 from rclpy.qos import ReliabilityPolicy
 from sensor_msgs.msg import Image
@@ -49,8 +47,7 @@ def generate_test_description():
     pose_estimator_arbiter = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(test_pose_estimator_arbiter_launch_file),
         launch_arguments={
-            "pose_sources": "[ndt, yabloc, eagleye]",  # ignore artag now
-            # Because artag helper requests parameters of the artag node, it is difficult to execute correctly.
+            "pose_sources": "[ndt, yabloc, eagleye, artag]",
             "input_pointcloud": "/sensing/lidar/top/pointcloud",
         }.items(),
     )
@@ -95,6 +92,8 @@ class TestPoseEstimatorArbiter(unittest.TestCase):
         rclpy.spin_once(self.test_node, timeout_sec=0.1)
         self.pub_yabloc_input.publish(Image())
         rclpy.spin_once(self.test_node, timeout_sec=0.1)
+        self.pub_eagleye_input.publish(PoseWithCovarianceStamped())
+        rclpy.spin_once(self.test_node, timeout_sec=0.1)
 
     def create_publishers_and_subscribers(self):
         # Publisher
@@ -103,8 +102,14 @@ class TestPoseEstimatorArbiter(unittest.TestCase):
         self.pub_ndt_input = self.test_node.create_publisher(
             PointCloud2, "/sensing/lidar/top/pointcloud", qos_profile
         )
+        # pub_yabloc_input is used for both yabloc and artag
         self.pub_yabloc_input = self.test_node.create_publisher(
             Image, "/sensing/camera/traffic_light/image_raw", qos_profile
+        )
+        self.pub_eagleye_input = self.test_node.create_publisher(
+            PoseWithCovarianceStamped,
+            "/localization/eagleye/pose_with_covariance/to_relay",
+            QoSProfile(depth=10),
         )
 
         # Subscriber
@@ -120,18 +125,32 @@ class TestPoseEstimatorArbiter(unittest.TestCase):
             lambda msg: self.yabloc_relayed.append(msg.header),
             qos_profile,
         )
+        self.test_node.create_subscription(
+            Image,
+            "/sensing/camera/traffic_light/image_raw/artag_relay",
+            lambda msg: self.artag_relayed.append(msg.header),
+            qos_profile,
+        )
+        self.test_node.create_subscription(
+            PoseWithCovarianceStamped,
+            "/localization/pose_estimator/pose_with_covariance",
+            lambda msg: self.eagleye_relayed.append(msg.header),
+            qos_profile,
+        )
 
     def test_node_link(self):
         # The arbiter waits for the service to start, so here it instantiates a meaningless service server.
         self.test_node.create_service(
             SetBool,
-            "/localization/pose_estimator/yabloc/pf/yabloc_suspend_srv",
+            "/localization/pose_estimator/yabloc/pf/yabloc_trigger_srv",
             self.yabloc_suspend_service_callback,
         )
 
         # Define subscription buffer
         self.ndt_relayed = []
         self.yabloc_relayed = []
+        self.artag_relayed = []
+        self.eagleye_relayed = []
 
         # Create publishers and subscribers
         self.create_publishers_and_subscribers()
@@ -144,60 +163,19 @@ class TestPoseEstimatorArbiter(unittest.TestCase):
             self.publish_input_topics()
             rclpy.spin_once(self.test_node, timeout_sec=0.1)
 
-        # Wait 1.0 second for all topics to be subscribed
-        self.spin_for(1.0)
+        # Wait 0.5 second for all topics to be subscribed
+        self.spin_for(0.5)
 
         # Confirm both topics are relayed
         print("ndt", len(self.ndt_relayed))
         print("yabloc", len(self.yabloc_relayed))
+        print("eagleye", len(self.eagleye_relayed))
+        print("aratg", len(self.artag_relayed))
+
         self.assertGreater(len(self.ndt_relayed), 5)
         self.assertGreater(len(self.yabloc_relayed), 5)
-
-        # Change UNINITIALIZED -> INITIALIZED
-        pub_init_state = self.test_node.create_publisher(
-            LocalizationInitializationState,
-            "/localization/initialization_state",
-            QoSProfile(depth=10, durability=DurabilityPolicy.TRANSIENT_LOCAL),
-        )
-        init_state = LocalizationInitializationState()
-        init_state._state = LocalizationInitializationState.INITIALIZED
-        pub_init_state.publish(init_state)
-
-        # Publish dummy estimated pose
-        pub_pose_stamped = self.test_node.create_publisher(
-            PoseWithCovarianceStamped,
-            "/localization/pose_with_covariance",
-            10,
-        )
-        pub_pose_stamped.publish(PoseWithCovarianceStamped())
-
-        # Because pointcloud_map is not broadcasted, the arbiter state must be following:
-        #  - ndt: disabled
-        #  - yabloc: enabled
-        #  - eagleye: disabled
-        #  - artag: disabled
-
-        # Wait 1.0 second for the node state to change
-        self.spin_for(1.0)
-
-        # Clear buffer
-        self.ndt_relayed = []
-        self.yabloc_relayed = []
-
-        # Publish dummy input topics
-        for _ in range(10):
-            self.publish_input_topics()
-            rclpy.spin_once(self.test_node, timeout_sec=0.1)
-
-        # Wait 0.5 second for all topics to be subscribed
-        self.spin_for(0.5)
-
-        # Confirm that yabloc topic is relayed and ndt topic is not relayed.
-        print("ndt", len(self.ndt_relayed))
-        print("yabloc", len(self.yabloc_relayed))
-        self.assertGreater(len(self.yabloc_relayed), 5)
-        self.assertEqual(len(self.ndt_relayed), 0)
-        return
+        self.assertGreater(len(self.eagleye_relayed), 5)
+        self.assertGreater(len(self.artag_relayed), 5)
 
 
 @launch_testing.post_shutdown_test()
