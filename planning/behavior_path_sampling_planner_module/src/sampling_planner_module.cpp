@@ -463,14 +463,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     current_lanes.insert(current_lanes.end(), d.middle_lanes.begin(), d.middle_lanes.end());
   }
 
-  const bool prev_path_is_valid = prev_sampling_path_ && prev_sampling_path_->points.size() > 0;
-  std::vector<frenet_planner::Path> frenet_paths;
-
-  if (!prev_path_is_valid) {
-    frenet_paths =
-      frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
-  }
-
   auto get_goal_pose = [&]() {
     auto goal_pose = planner_data_->route_handler->getGoalPose();
     if (!std::any_of(current_lanes.begin(), current_lanes.end(), [&](const auto & lane) {
@@ -489,8 +481,13 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     return goal_pose;
   };
 
+  const bool prev_path_is_valid = prev_sampling_path_ && prev_sampling_path_->points.size() > 0;
+  const int path_divisions = internal_params_->sampling.previous_path_reuse_points_nb;
+  const bool is_extend_previous_path = path_divisions > 0;
+
+  std::vector<frenet_planner::Path> frenet_paths;
   // Extend prev path
-  if (prev_path_is_valid) {
+  if (prev_path_is_valid && is_extend_previous_path) {
     frenet_planner::Path prev_path_frenet = prev_sampling_path_.value();
     frenet_paths.push_back(prev_path_frenet);
 
@@ -517,9 +514,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     const auto current_idx = std::distance(prev_path_frenet.points.begin(), closest_iter);
     const double current_length = prev_path_frenet.lengths.at(current_idx);
     const double remaining_path_length = prev_path_frenet.lengths.back() - current_length;
-    const int path_divisions = (internal_params_->sampling.previous_path_reuse_points_nb > 0)
-                                 ? internal_params_->sampling.previous_path_reuse_points_nb
-                                 : 1;
     const double length_step = remaining_path_length / path_divisions;
     for (double reuse_length = 0.0; reuse_length <= remaining_path_length;
          reuse_length += length_step) {
@@ -545,6 +539,9 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
         if (!p.points.empty()) frenet_paths.push_back(reused_path.extend(p));
       }
     }
+  } else {
+    frenet_paths =
+      frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
   }
 
   const auto left_bound =
