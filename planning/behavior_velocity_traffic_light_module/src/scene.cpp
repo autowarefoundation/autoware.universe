@@ -225,6 +225,9 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
+    // Check if stop is coming.
+    setSafe(!isStopSignal());
+
     const auto rest_time_to_red_signal =
       planner_data_->getRestTimeToRedSignal(traffic_light_reg_elem_.id());
     if (
@@ -246,8 +249,6 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       return true;
     }
 
-    // Check if stop is coming.
-    setSafe(!isStopSignal());
     if (isActivated()) {
       is_prev_state_stop_ = false;
       return true;
@@ -291,6 +292,9 @@ bool TrafficLightModule::updateTrafficSignal()
 
   if (!found_signal) {
     // Don't stop when UNKNOWN or TIMEOUT as discussed at #508
+    // Reset looking_tl_state
+    looking_tl_state_.elements.clear();
+    looking_tl_state_.traffic_signal_id = 0;
     return false;
   }
 
