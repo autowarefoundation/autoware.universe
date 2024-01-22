@@ -363,6 +363,8 @@ void LaneDepartureCheckerNode::onTimer()
     debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>("deviation/yaw", deviation.yaw);
     debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>(
       "deviation/yaw_deg", rad2deg(deviation.yaw));
+    debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "deviation/longitudinal", deviation.longitudinal);
   }
   processing_time_map["Node: publishTrajectoryDeviation"] = stop_watch.toc(true);
 
