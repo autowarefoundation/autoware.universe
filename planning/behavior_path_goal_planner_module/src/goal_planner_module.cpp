@@ -929,6 +929,10 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus() const
   // This eliminates a unsafe path to be approved
   if (
     parameters_->safety_check_params.enable_safety_check && !isSafePath().first && !isActivated()) {
+    RCLCPP_DEBUG(
+      getLogger(),
+      "[DecidingPathStatus]: NOT_DECIDED. path is not safe against dynamic objects before "
+      "approval");
     return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
   }
 
@@ -937,17 +941,27 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus() const
   if (prev_status.first == DecidingPathStatus::DECIDING) {
     // if object recognition for path collision check is enabled, transition to DECIDED after
     // DECIDING for a certain period of time if there is no collision.
-    if (checkObjectsCollision(
-          current_path, parameters_->object_recognition_collision_check_margin,
-          true /*update_debug_data*/)) {
+    const auto parking_path = utils::resamplePathWithSpline(pull_over_path->getParkingPath(), 0.5);
+    const double margin =
+      parameters_->object_recognition_collision_check_margin * 0.9;  // hysteresis factor
+    if (checkObjectsCollision(parking_path, margin)) {
+      RCLCPP_DEBUG(
+        getLogger(),
+        "[DecidingPathStatus]: DECIDING->NOT_DECIDED. path has collision with objects");
       return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
     }
 
     constexpr double check_collision_duration = 1.0;
-    if ((clock_->now() - prev_status.second).seconds() > check_collision_duration) {
+    const double elapsed_time_from_deciding = (clock_->now() - prev_status.second).seconds();
+    if (elapsed_time_from_deciding > check_collision_duration) {
+      RCLCPP_DEBUG(
+        getLogger(), "[DecidingPathStatus]: DECIDING->DECIDED. has enough safe time passed");
       return {DecidingPathStatus::DECIDED, clock_->now()};
     }
 
+    RCLCPP_DEBUG(
+      getLogger(), "[DecidingPathStatus]: keep DECIDING. elapsed_time_from_deciding: %f",
+      elapsed_time_from_deciding);
     return prev_status;
   }
 
@@ -967,10 +981,15 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus() const
 
   // if object recognition for path collision check is enabled, transition to DECIDING to check
   // collision for a certain period of time. Otherwise, transition to DECIDED directly.
-  return {
-    parameters_->use_object_recognition ? DecidingPathStatus::DECIDING
-                                        : DecidingPathStatus::DECIDED,
-    clock_->now()};
+  if (parameters_->use_object_recognition) {
+    RCLCPP_DEBUG(
+      getLogger(),
+      "[DecidingPathStatus]: NOT_DECIDED->DECIDING. start checking collision for certain "
+      "period of time");
+    return {DecidingPathStatus::DECIDING, clock_->now()};
+  }
+  RCLCPP_DEBUG(getLogger(), "[DecidingPathStatus]: NOT_DECIDED->DECIDED");
+  return {DecidingPathStatus::DECIDED, clock_->now()};
 }
 
 void GoalPlannerModule::decideVelocity()
@@ -1035,6 +1054,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
     // if the final path is not decided and enough time has passed since last path update,
     // select safe path from lane parking pull over path candidates
     // and set it to thread_safe_data_
+    RCLCPP_DEBUG(getLogger(), "Update pull over path candidates");
 
     thread_safe_data_.clearPullOverPath();
 
