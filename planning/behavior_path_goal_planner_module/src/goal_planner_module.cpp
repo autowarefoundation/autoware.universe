@@ -936,14 +936,27 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus() const
     return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
   }
 
+  // if object recognition for path collision check is enabled, transition to DECIDED after
+  // DECIDING for a certain period of time if there is no collision.
   const auto pull_over_path = thread_safe_data_.get_pull_over_path();
   const auto current_path = pull_over_path->getCurrentPath();
   if (prev_status.first == DecidingPathStatus::DECIDING) {
-    // if object recognition for path collision check is enabled, transition to DECIDED after
-    // DECIDING for a certain period of time if there is no collision.
+    const double hysteresis_factor = 0.9;
+
+    // check goal pose collision
+    goal_searcher_->setPlannerData(planner_data_);
+    const auto modified_goal_opt = thread_safe_data_.get_modified_goal_pose();
+    if (
+      modified_goal_opt && !goal_searcher_->isSafeGoalWithMarginScaleFactor(
+                             modified_goal_opt.value(), hysteresis_factor)) {
+      RCLCPP_DEBUG(getLogger(), "[DecidingPathStatus]: DECIDING->NOT_DECIDED. goal is not safe");
+      return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
+    }
+
+    // check current parking path collision
     const auto parking_path = utils::resamplePathWithSpline(pull_over_path->getParkingPath(), 0.5);
     const double margin =
-      parameters_->object_recognition_collision_check_margin * 0.9;  // hysteresis factor
+      parameters_->object_recognition_collision_check_margin * hysteresis_factor;
     if (checkObjectsCollision(parking_path, margin)) {
       RCLCPP_DEBUG(
         getLogger(),
@@ -951,6 +964,7 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus() const
       return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
     }
 
+    // if enough time has passed since deciding status starts, transition to DECIDED
     constexpr double check_collision_duration = 1.0;
     const double elapsed_time_from_deciding = (clock_->now() - prev_status.second).seconds();
     if (elapsed_time_from_deciding > check_collision_duration) {
@@ -959,6 +973,7 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus() const
       return {DecidingPathStatus::DECIDED, clock_->now()};
     }
 
+    // if enough time has NOT passed since deciding status starts, keep DECIDING
     RCLCPP_DEBUG(
       getLogger(), "[DecidingPathStatus]: keep DECIDING. elapsed_time_from_deciding: %f",
       elapsed_time_from_deciding);
