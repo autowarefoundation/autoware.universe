@@ -16,9 +16,7 @@
 #define POSE_ESTIMATOR_ARBITER__SWITCH_RULE__MAP_BASED_RULE_HPP_
 
 #include "pose_estimator_arbiter/pose_estimator_type.hpp"
-#include "pose_estimator_arbiter/rule_helper/ar_tag_position.hpp"
 #include "pose_estimator_arbiter/rule_helper/pcd_occupancy.hpp"
-#include "pose_estimator_arbiter/rule_helper/pose_estimator_area.hpp"
 #include "pose_estimator_arbiter/shared_data.hpp"
 #include "pose_estimator_arbiter/switch_rule/base_switch_rule.hpp"
 
@@ -39,26 +37,19 @@ public:
 
   std::unordered_map<PoseEstimatorType, bool> update() override;
 
-  std::string debug_string() override;
+  std::string debug_string() override { return debug_string_; }
 
   MarkerArray debug_marker_array() override;
 
 protected:
-  const double ar_marker_available_distance_;
   const std::unordered_set<PoseEstimatorType> running_estimator_list_;
   std::shared_ptr<const SharedData> shared_data_{nullptr};
 
-  std::unique_ptr<rule_helper::ArTagPosition> ar_tag_position_{nullptr};
   std::unique_ptr<rule_helper::PcdOccupancy> pcd_occupancy_{nullptr};
-  std::unique_ptr<rule_helper::PoseEstimatorArea> pose_estimator_area_{nullptr};
 
   // Store the reason why which pose estimator is enabled
   mutable std::string debug_string_;
 
-  std::unordered_map<PoseEstimatorType, bool> update_impl() const;
-
-  bool eagleye_is_available() const;
-  bool artag_is_available() const;
   bool ndt_is_more_suitable_than_yabloc(std::string * optional_message = nullptr) const;
 };
 }  // namespace pose_estimator_arbiter::switch_rule

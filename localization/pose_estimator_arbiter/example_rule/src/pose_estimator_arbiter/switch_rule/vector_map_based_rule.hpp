@@ -37,19 +37,18 @@ public:
 
   std::unordered_map<PoseEstimatorType, bool> update() override;
 
-  std::string debug_string() override;
+  std::string debug_string() override { return debug_string_; }
 
   MarkerArray debug_marker_array() override;
 
 protected:
-  const double ar_marker_available_distance_;
   const std::unordered_set<PoseEstimatorType> running_estimator_list_;
   std::shared_ptr<const SharedData> shared_data_{nullptr};
 
-  std::unique_ptr<rule_helper::PoseEstimatorArea> pose_estimator_area_{nullptr};
-
   // Store the reason why which pose estimator is enabled
   mutable std::string debug_string_;
+
+  std::unique_ptr<rule_helper::PoseEstimatorArea> pose_estimator_area_{nullptr};
 };
 }  // namespace pose_estimator_arbiter::switch_rule
 

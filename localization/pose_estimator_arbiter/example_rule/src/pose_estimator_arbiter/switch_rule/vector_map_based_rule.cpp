@@ -21,11 +21,7 @@ namespace pose_estimator_arbiter::switch_rule
 VectorMapBasedRule::VectorMapBasedRule(
   rclcpp::Node & node, const std::unordered_set<PoseEstimatorType> & running_estimator_list,
   const std::shared_ptr<const SharedData> shared_data)
-: BaseSwitchRule(node),
-  ar_marker_available_distance_(
-    node.declare_parameter<int>("ar_marker_rule/ar_marker_available_distance")),
-  running_estimator_list_(running_estimator_list),
-  shared_data_(shared_data)
+: BaseSwitchRule(node), running_estimator_list_(running_estimator_list), shared_data_(shared_data)
 {
   pose_estimator_area_ = std::make_unique<rule_helper::PoseEstimatorArea>(node.get_logger());
 
@@ -48,11 +44,6 @@ VectorMapBasedRule::MarkerArray VectorMapBasedRule::debug_marker_array()
   }
 
   return array_msg;
-}
-
-std::string VectorMapBasedRule::debug_string()
-{
-  return debug_string_;
 }
 
 std::unordered_map<PoseEstimatorType, bool> VectorMapBasedRule::update()

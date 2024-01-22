@@ -19,11 +19,7 @@ namespace pose_estimator_arbiter::switch_rule
 MapBasedRule::MapBasedRule(
   rclcpp::Node & node, const std::unordered_set<PoseEstimatorType> & running_estimator_list,
   const std::shared_ptr<const SharedData> shared_data)
-: BaseSwitchRule(node),
-  ar_marker_available_distance_(
-    node.declare_parameter<int>("ar_marker_rule/ar_marker_available_distance")),
-  running_estimator_list_(running_estimator_list),
-  shared_data_(shared_data)
+: BaseSwitchRule(node), running_estimator_list_(running_estimator_list), shared_data_(shared_data)
 {
   if (running_estimator_list.count(PoseEstimatorType::ndt)) {
     pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
@@ -34,48 +30,6 @@ MapBasedRule::MapBasedRule(
         pcd_occupancy_->init(msg);
       });
   }
-  if (running_estimator_list.count(PoseEstimatorType::artag)) {
-    ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node);
-
-    // Register callback
-    shared_data_->vector_map.register_callback(
-      [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
-        ar_tag_position_->init(msg);
-      });
-  }
-  if (running_estimator_list.count(PoseEstimatorType::eagleye)) {
-    pose_estimator_area_ = std::make_unique<rule_helper::PoseEstimatorArea>(&node);
-
-    // Register callback
-    shared_data_->vector_map.register_callback(
-      [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
-        pose_estimator_area_->init(msg);
-      });
-  }
-
-  RCLCPP_INFO_STREAM(get_logger(), "MapBasedRule is initialized successfully");
-}
-
-bool MapBasedRule::eagleye_is_available() const
-{
-  // Below this line, eagleye_area is guaranteed not to be nullptr.
-  assert(pose_estimator_area_ != nullptr);
-  assert(shared_data_->localization_pose_cov.has_value());
-  if (!pose_estimator_area_) {
-    throw std::runtime_error("pose_estimator_area_ is not initialized");
-  }
-
-  if (!shared_data_->eagleye_output_pose_cov.has_value()) {
-    return false;
-  }
-
-  return pose_estimator_area_->within(
-    shared_data_->localization_pose_cov()->pose.pose.position, "eagleye");
-}
-
-std::string MapBasedRule::debug_string()
-{
-  return debug_string_;
 }
 
 MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
@@ -87,31 +41,7 @@ MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
     array_msg.markers.insert(array_msg.markers.end(), additional.begin(), additional.end());
   }
 
-  if (pose_estimator_area_) {
-    const auto & additional = pose_estimator_area_->debug_marker_array().markers;
-    array_msg.markers.insert(array_msg.markers.end(), additional.begin(), additional.end());
-  }
-
   return array_msg;
-}
-
-bool MapBasedRule::artag_is_available() const
-{
-  if (running_estimator_list_.count(PoseEstimatorType::artag) == 0) {
-    return false;
-  }
-  // Below this line, ar_tag_position_ is guaranteed not to be nullptr.
-  assert(ar_tag_position_ != nullptr);
-  assert(shared_data_->localization_pose_cov.has_value());
-
-  const auto position = shared_data_->localization_pose_cov()->pose.pose.position;
-  const double distance_to_marker =
-    ar_tag_position_->distance_to_nearest_ar_tag_around_ego(position);
-
-  RCLCPP_DEBUG_STREAM(
-    get_logger(), "distance to the nearest AR tag is " + std::to_string(distance_to_marker));
-
-  return distance_to_marker < ar_marker_available_distance_;
 }
 
 bool MapBasedRule::ndt_is_more_suitable_than_yabloc(std::string * optional_message) const
@@ -126,6 +56,52 @@ bool MapBasedRule::ndt_is_more_suitable_than_yabloc(std::string * optional_messa
 
   const auto position = shared_data_->localization_pose_cov()->pose.pose.position;
   return pcd_occupancy_->ndt_can_operate(position, optional_message);
+}
+
+std::unordered_map<PoseEstimatorType, bool> MapBasedRule::update()
+{
+  // (1) If the localization state is not 'INITIALIZED'
+  using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  if (shared_data_->initialization_state()->state != InitializationState::INITIALIZED) {
+    debug_string_ = "Enable all: localization is not initialized";
+    return {
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, true},
+      {PoseEstimatorType::artag, true},
+    };
+  }
+
+  // (2) If no pose are published, enable all;
+  if (!shared_data_->localization_pose_cov.has_value()) {
+    debug_string_ =
+      "Enable all: estimated pose has not been published yet, so unable to determine which to use";
+    return {
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, true},
+      {PoseEstimatorType::artag, true},
+    };
+  }
+
+  // (3) If PCD is enough occupied, enable ndt. Otherwise, enable yabloc
+  std::string ref_debug_string;
+  if (ndt_is_more_suitable_than_yabloc(&ref_debug_string)) {
+    debug_string_ = "Enable ndt: " + ref_debug_string;
+    return {
+      {PoseEstimatorType::ndt, true},
+      {PoseEstimatorType::yabloc, false},
+      {PoseEstimatorType::eagleye, false},
+      {PoseEstimatorType::artag, false},
+    };
+  } else {
+    debug_string_ = "Enable yabloc: " + ref_debug_string;
+    return {
+      {PoseEstimatorType::ndt, false},
+      {PoseEstimatorType::yabloc, true},
+      {PoseEstimatorType::eagleye, false},
+      {PoseEstimatorType::artag, false}};
+  }
 }
 
 }  // namespace pose_estimator_arbiter::switch_rule

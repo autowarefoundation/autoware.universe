@@ -2,9 +2,7 @@
 ament_auto_add_library(example_rule
   SHARED
   src/pose_estimator_arbiter/switch_rule/map_based_rule.cpp
-  src/pose_estimator_arbiter/switch_rule/map_based_rule_core.cpp
   src/pose_estimator_arbiter/switch_rule/vector_map_based_rule.cpp
-  src/pose_estimator_arbiter/rule_helper/ar_tag_position.cpp
   src/pose_estimator_arbiter/rule_helper/pcd_occupancy.cpp
   src/pose_estimator_arbiter/rule_helper/pose_estimator_area.cpp
 )
