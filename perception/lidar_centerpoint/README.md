@@ -104,7 +104,7 @@ conda install pytorch==1.13.1 torchvision==0.14.1 pytorch-cuda=11.6 -c pytorch -
 pip install -U openmim
 mim install mmengine
 mim install 'mmcv>=2.0.0rc4'
-mim install 'mmdet>=3.0.0'
+mim install 'mmdet>=3.0.0rc5, <3.3.0'
 ```
 
 **Step 2.** Install mmdetection3d forked repository
@@ -141,7 +141,7 @@ python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./dat
 #### Prepare the config file
 
 The configuration file that illustrates how to train the CenterPoint model with the NuScenes dataset is
-located at mmdetection3d/configs/centerpoint/centerpoint_custom.py. This configuration file is a derived version of the
+located at mmdetection3d/projects/AutowareCenterPoint/configs. This configuration file is a derived version of the
 centerpoint_pillar02_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py configuration file from mmdetection3D.
 In this custom configuration, the **use_voxel_center_z parameter** is set to **False** to deactivate the z coordinate of the voxel center,
 aligning with the original paper's specifications and making the model compatible with Autoware. Additionally, the filter size is set as **[32, 32]**.
@@ -152,7 +152,7 @@ This includes adjustments related to preprocessing operations, training, testing
 #### Start training
 
 ```bash
-python tools/train.py configs/centerpoint/centerpoint_custom.py --work-dir ./work_dirs/centerpoint_custom
+python tools/train.py projects/AutowareCenterPoint/configs/centerpoint_custom.py --work-dir ./work_dirs/centerpoint_custom
 ```
 
 #### Evaluation of the trained model
@@ -185,7 +185,7 @@ python tools/create_data.py Tier4Dataset --root-path data/sample_dataset/ --out-
 Run evaluation
 
 ```bash
-python tools/test.py ./configs/centerpoint/test-centerpoint.py /PATH/OF/THE/CHECKPOINT  --task lidar_det
+python tools/test.py projects/AutowareCenterPoint/configs/centerpoint_custom_test.py /PATH/OF/THE/CHECKPOINT  --task lidar_det
 ```
 
 Evaluation results could be relatively low because of the e to variations in sensor modalities between the sample dataset
@@ -200,10 +200,10 @@ the base link location of the vehicle.
 The lidar_centerpoint implementation requires two ONNX models as input the voxel encoder and the backbone-neck-head of the CenterPoint model, other aspects of the network,
 such as preprocessing operations, are implemented externally. Under the fork of the mmdetection3d repository,
 we have included a script that converts the CenterPoint model to Autoware compatible ONNX format.
-You can find it in `mmdetection3d/tools/centerpoint_onnx_converter.py` file.
+You can find it in `mmdetection3d/projects/AutowareCenterPoint` file.
 
 ```bash
-python tools/centerpoint_onnx_converter.py --cfg configs/centerpoint/centerpoint_custom.py --ckpt work_dirs/centerpoint_custom/YOUR_BEST_MODEL.pth -work-dir ./work_dirs/onnx_models
+python projects/AutowareCenterPoint/centerpoint_onnx_converter.py --cfg projects/AutowareCenterPoint/configs/centerpoint_custom.py --ckpt work_dirs/centerpoint_custom/YOUR_BEST_MODEL.pth --work-dir ./work_dirs/onnx_models
 ```
 
 #### Create the config file for the custom model
