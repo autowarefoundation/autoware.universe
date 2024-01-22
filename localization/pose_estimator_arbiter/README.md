@@ -25,6 +25,11 @@ However, this approach is not preferable due to computational costs.
 Particularly, NDT and YabLoc are computationally intensive, and it's not recommended to run them simultaneously.
 Also, even if both can be activated at the same time, the Kalman Filter may be affected by one of them giving bad output.
 
+> [!NOTE]
+> By default, **there is only a rule implemented that only enables all pose_estimators.**
+> If users want to toggle pose_estimator with their own rules, they need to add new rules. by referring to example_rule.
+> The [example_rule](example_rule/README.md) has source code that can be used as a reference for implementing the rules.
+
 ### Supporting pose_estimators
 
 - [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher)
@@ -195,7 +200,7 @@ In the future, several rules will be implemented and users will be able to selec
 > [!TIP]
 > There are presets available to extend the rules. If you want to extend the rules, please see [example_rule](./example_rule/README.md).
 
-### enable_all_rule
+### Enable All Rule
 
 This is the default and simplest rule. This rule enables all pose_estimators regardless of their current state.
 
@@ -255,4 +260,4 @@ In such cases, there may not be generally applicable solutions, but the followin
 2. Subscribe to `localization/kinematic_state` and **keep updating states** to ensure that the estimation does not break (relying on the output of the active pose_estimator).
 3. The multiple pose_estimator **does not support** that particular pose_estimator.
 
-It is important to note that this issue is fundamental to realizing multiple pose_estimators, and it will arise regardless of the architecture proposed in this case.
+Please note that this issue is fundamental to realizing multiple pose_estimators, and it will arise regardless of the architecture proposed in this case.

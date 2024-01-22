@@ -6,10 +6,6 @@
   <node pkg="pose_estimator_arbiter" exec="pose_estimator_arbiter" name="pose_estimator_arbiter" output="screen">
     <param name="pose_sources" value="$(var pose_sources)"/>
 
-    <param name="pcd_occupancy_rule/pcd_density_upper_threshold" value="25"/>
-    <param name="pcd_occupancy_rule/pcd_density_lower_threshold" value="20"/>
-    <param name="ar_marker_rule/ar_marker_available_distance" value="30"/>
-
     <!-- ndt -->
     <remap from="~/input/ndt/pointcloud" to="$(var input_pointcloud)"/>
     <remap from="~/output/ndt/pointcloud" to="$(var input_pointcloud)/relay"/>
