@@ -30,6 +30,8 @@
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -57,18 +59,26 @@ namespace behavior_velocity_planner::intersection
  * @struct
  * @brief store collision information
  */
-struct CollisionKnowledge
+struct CollisionInterval
 {
-  rclcpp::Time stamp;
   enum LanePosition {
     FIRST,
     SECOND,
     ELSE,
   } expected_lane_position;
+  lanelet::Id lane_id;
   std::vector<geometry_msgs::msg::Pose> path;
   std::pair<size_t, size_t>
     interval_position;                      //! possible collision interval position index on path
   std::pair<double, double> interval_time;  //! possible collision interval time(without TTC margin)
+};
+
+struct CollisionKnowledge
+{
+  rclcpp::Time stamp;
+  CollisionInterval interval;
+  lanelet::ArcCoordinates observed_position_arc_coords;  //! arc coordinate on the attention lanelet
+  double observed_velocity;
 };
 
 /**
@@ -78,32 +88,45 @@ struct CollisionKnowledge
 class ObjectInfo
 {
 public:
+  explicit ObjectInfo(const unique_identifier_msgs::msg::UUID & uuid);
+
+  const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object() const
+  {
+    return predicted_object_;
+  };
+
+  const std::optional<CollisionInterval> & unsafe_decision_knowledge() const
+  {
+    return unsafe_decision_knowledge_;
+  }
+
   /**
-   * @fn
    * @brief update observed_position, observed_position_arc_coords, predicted_path,
    * observed_velocity, attention_lanelet, stopline, dist_to_stopline
    */
   void update(
-    std::optional<lanelet::ConstLanelet> attention_lanelet_opt,
-    std::optional<lanelet::ConstLineString3d> stopline_opt,
     const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
-    const std::optional<CollisionKnowledge> & unsafe_knowledge_opt);
+    std::optional<lanelet::ConstLanelet> attention_lanelet_opt,
+    std::optional<lanelet::ConstLineString3d> stopline_opt);
 
   /**
-   * @fn
+   * @brief update observed_position, observed_position_arc_coords, predicted_path,
+   * observed_velocity, attention_lanelet, stopline, dist_to_stopline
+   */
+  void update(const std::optional<CollisionInterval> & unsafe_knowledge_opt);
+
+  /**
    * @brief find the estimated position of the object in the past
    */
   geometry_msgs::msg::Pose estimated_past_pose(const double past_duration) const;
 
   /**
-   * @fn
    * @brief check if object can stop before stopline under the deceleration. return false if
    * stopline is null for conservative collision  checking
    */
   bool can_stop_before_stopline(const double brake_deceleration) const;
 
   /**
-   * @fn
    * @brief check if object can stop before stopline within the overshoot margin. return false if
    * stopline is null for conservative collision checking
    */
@@ -112,17 +135,22 @@ public:
     lanelet::ConstLanelet ego_lane) const;
 
 private:
-  geometry_msgs::msg::Pose observed_position;
+  const std::string uuid_str;
+  autoware_auto_perception_msgs::msg::PredictedObject predicted_object_;
   lanelet::ArcCoordinates observed_position_arc_coords;  //! arc coordinate on the attention lanelet
   double observed_velocity;
   std::optional<lanelet::ConstLanelet> attention_lanelet_opt{
     std::nullopt};  //! null if the object in intersection_area but not in attention_area
   std::optional<lanelet::ConstLineString3d> stopline_opt{std::nullopt};
   std::optional<double> dist_to_stopline_opt{std::nullopt};
-  std::optional<CollisionKnowledge> unsafe_decision_knowledge{
+  std::optional<CollisionInterval> unsafe_decision_knowledge_{
     std::nullopt};  //! store the information of if judged as UNSAFE
+  std::optional<std::tuple<rclcpp::Time, CollisionKnowledge, bool>>
+    decision_at_1st_pass_judge_line_passage{std::nullopt};
+  std::optional<std::tuple<rclcpp::Time, CollisionKnowledge, bool>>
+    decision_at_2nd_pass_judge_line_passage{std::nullopt};
+
   /**
-   * @fn
    * @brief calculate/update the distance to corresponding stopline
    */
   void calc_dist_to_stopline();
@@ -135,8 +163,31 @@ private:
 class ObjectInfoManager
 {
 public:
-  std::unordered_map<unique_identifier_msgs::msg::UUID, std::shared_ptr<ObjectInfo>> objects_info;
-  std::vector<std::shared_ptr<ObjectInfo>> all_objects;
+  std::shared_ptr<ObjectInfo> registerObject(
+    const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
+    const bool belong_intersection_area);
+  void clearAreaObjects()
+  {
+    attention_area_objects_.clear();
+    intersection_area_objects_.clear();
+  };
+  const std::vector<std::shared_ptr<ObjectInfo>> & attentionObjects() const
+  {
+    return attention_area_objects_;
+  }
+  std::vector<std::shared_ptr<ObjectInfo>> allObjects()
+  {
+    std::vector<std::shared_ptr<ObjectInfo>> all_objects = attention_area_objects_;
+    all_objects.insert(
+      all_objects.end(), intersection_area_objects_.begin(), intersection_area_objects_.end());
+    return all_objects;
+  }
+
+private:
+  std::unordered_map<unique_identifier_msgs::msg::UUID, std::shared_ptr<ObjectInfo>> objects_info_;
+  std::vector<std::shared_ptr<ObjectInfo>> attention_area_objects_;  //! belong to attention area
+  std::vector<std::shared_ptr<ObjectInfo>>
+    intersection_area_objects_;  //! does not belong to attention area but to intersection area
 };
 }  // namespace behavior_velocity_planner::intersection
 

@@ -698,7 +698,7 @@ private:
   /**
    * @brief return the CollisionKnowledge struct if the predicted path collides ego path spatially
    */
-  std::optional<intersection::CollisionKnowledge> findPassageInterval(
+  std::optional<intersection::CollisionInterval> findPassageInterval(
     const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
     const autoware_auto_perception_msgs::msg::Shape & shape,
     const lanelet::BasicPolygon2d & ego_lane_poly,

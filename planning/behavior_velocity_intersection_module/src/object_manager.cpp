@@ -23,27 +23,46 @@
 
 #include <vector>
 
+namespace
+{
+std::string to_string(const unique_identifier_msgs::msg::UUID & uuid)
+{
+  std::stringstream ss;
+  for (auto i = 0; i < 16; ++i) {
+    ss << std::hex << std::setfill('0') << std::setw(2) << +uuid.uuid[i];
+  }
+  return ss.str();
+}
+}  // namespace
+
 namespace behavior_velocity_planner::intersection
 {
 namespace bg = boost::geometry;
 
-void ObjectInfo::update(
-  std::optional<lanelet::ConstLanelet> attention_lanelet_opt_,
-  std::optional<lanelet::ConstLineString3d> stopline_opt_,
-  const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
-  const std::optional<CollisionKnowledge> & unsafe_knowledge_opt)
+ObjectInfo::ObjectInfo(const unique_identifier_msgs::msg::UUID & uuid) : uuid_str(::to_string(uuid))
 {
-  observed_position = predicted_object.kinematics.initial_pose_with_covariance.pose;
+}
+
+void ObjectInfo::update(
+  const autoware_auto_perception_msgs::msg::PredictedObject & object,
+  std::optional<lanelet::ConstLanelet> attention_lanelet_opt_,
+  std::optional<lanelet::ConstLineString3d> stopline_opt_)
+{
+  predicted_object_ = object;
   attention_lanelet_opt = attention_lanelet_opt_;
   stopline_opt = stopline_opt_;
   if (attention_lanelet_opt) {
     const auto attention_lanelet = attention_lanelet_opt.value();
-    observed_position_arc_coords =
-      lanelet::utils::getArcCoordinates({attention_lanelet}, observed_position);
+    observed_position_arc_coords = lanelet::utils::getArcCoordinates(
+      {attention_lanelet}, predicted_object_.kinematics.initial_pose_with_covariance.pose);
   }
-  observed_velocity = predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  unsafe_decision_knowledge = unsafe_knowledge_opt;
+  observed_velocity = predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
   calc_dist_to_stopline();
+}
+
+void ObjectInfo::update(const std::optional<CollisionInterval> & unsafe_knowledge_opt)
+{
+  unsafe_decision_knowledge_ = unsafe_knowledge_opt;
 }
 
 void ObjectInfo::calc_dist_to_stopline()
@@ -52,8 +71,8 @@ void ObjectInfo::calc_dist_to_stopline()
     return;
   }
   const auto attention_lanelet = attention_lanelet_opt.value();
-  const auto object_arc_coords =
-    lanelet::utils::getArcCoordinates({attention_lanelet}, observed_position);
+  const auto object_arc_coords = lanelet::utils::getArcCoordinates(
+    {attention_lanelet}, predicted_object_.kinematics.initial_pose_with_covariance.pose);
   const auto stopline = stopline_opt.value();
   geometry_msgs::msg::Pose stopline_center;
   stopline_center.position.x = (stopline.front().x() + stopline.back().x()) / 2.0;
@@ -114,4 +133,22 @@ bool ObjectInfo::can_stop_before_ego_lane(
   // NOTE: if object_to_ego_path < 0, object passed ego path
   return object_to_ego_path > tolerable_overshoot;
 }
+
+std::shared_ptr<ObjectInfo> ObjectInfoManager::registerObject(
+  const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
+  const bool belong_intersection_area)
+{
+  if (objects_info_.count(uuid) == 0) {
+    auto object = std::make_shared<intersection::ObjectInfo>(uuid);
+    objects_info_[uuid] = object;
+  }
+  auto object = objects_info_[uuid];
+  if (belong_attention_area) {
+    attention_area_objects_.push_back(object);
+  } else if (belong_intersection_area) {
+    intersection_area_objects_.push_back(object);
+  }
+  return object;
+}
+
 }  // namespace behavior_velocity_planner::intersection
