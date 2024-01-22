@@ -35,11 +35,10 @@ using tier4_autoware_utils::getOrDeclareParameter;
 IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
+    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
   occlusion_rtc_interface_(
     &node, "intersection_occlusion",
-    getOrDeclareParameter<bool>(
-      node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
+    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
@@ -61,6 +60,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.common.max_jerk = getOrDeclareParameter<double>(node, ns + ".common.max_jerk");
   ip.common.delay_response_time =
     getOrDeclareParameter<double>(node, ns + ".common.delay_response_time");
+  ip.common.enable_pass_judge_before_default_stopline =
+    getOrDeclareParameter<bool>(node, ns + ".common.enable_pass_judge_before_default_stopline");
 
   ip.stuck_vehicle.turn_direction.left =
     getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.left");
@@ -92,8 +93,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".collision_detection.collision_detection_hold_time");
   ip.collision_detection.min_predicted_path_confidence =
     getOrDeclareParameter<double>(node, ns + ".collision_detection.min_predicted_path_confidence");
-  ip.collision_detection.keep_detection_velocity_threshold = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.keep_detection_velocity_threshold");
   ip.collision_detection.velocity_profile.use_upstream =
     getOrDeclareParameter<bool>(node, ns + ".collision_detection.velocity_profile.use_upstream");
   ip.collision_detection.velocity_profile.minimum_upstream_velocity = getOrDeclareParameter<double>(
