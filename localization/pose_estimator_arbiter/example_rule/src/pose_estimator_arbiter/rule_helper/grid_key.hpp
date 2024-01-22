@@ -22,13 +22,13 @@
 
 namespace pose_estimator_arbiter::rule_helper
 {
-struct GridInfo
+struct GridKey
 {
   const float unit_length = 10.f;
   int x, y;
 
-  GridInfo() : x(0), y(0) {}
-  GridInfo(float x, float y) : x(std::floor(x / unit_length)), y(std::floor(y / unit_length)) {}
+  GridKey() : x(0), y(0) {}
+  GridKey(float x, float y) : x(std::floor(x / unit_length)), y(std::floor(y / unit_length)) {}
 
   pcl::PointXYZ get_center_point() const
   {
@@ -39,11 +39,11 @@ struct GridInfo
     return xyz;
   }
 
-  friend bool operator==(const GridInfo & one, const GridInfo & other)
+  friend bool operator==(const GridKey & one, const GridKey & other)
   {
     return one.x == other.x && one.y == other.y;
   }
-  friend bool operator!=(const GridInfo & one, const GridInfo & other) { return !(one == other); }
+  friend bool operator!=(const GridKey & one, const GridKey & other) { return !(one == other); }
 };
 
 }  // namespace pose_estimator_arbiter::rule_helper
@@ -52,10 +52,10 @@ struct GridInfo
 namespace std
 {
 template <>
-struct hash<pose_estimator_arbiter::rule_helper::GridInfo>
+struct hash<pose_estimator_arbiter::rule_helper::GridKey>
 {
 public:
-  size_t operator()(const pose_estimator_arbiter::rule_helper::GridInfo & grid) const
+  size_t operator()(const pose_estimator_arbiter::rule_helper::GridKey & grid) const
   {
     std::size_t seed = 0;
     boost::hash_combine(seed, grid.x);

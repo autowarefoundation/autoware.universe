@@ -14,21 +14,17 @@
 
 #include "pose_estimator_arbiter/rule_helper/pcd_occupancy.hpp"
 
-#include "pose_estimator_arbiter/rule_helper/grid_info.hpp"
+#include "pose_estimator_arbiter/rule_helper/grid_key.hpp"
 
-#include <tier4_autoware_utils/ros/parameter.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace pose_estimator_arbiter::rule_helper
 {
-using tier4_autoware_utils::getOrDeclareParameter;
-
-PcdOccupancy::PcdOccupancy(rclcpp::Node * node)
-: pcd_density_upper_threshold_(
-    getOrDeclareParameter<int>(*node, "pcd_occupancy_rule/pcd_density_upper_threshold")),
-  pcd_density_lower_threshold_(
-    getOrDeclareParameter<int>(*node, "pcd_occupancy_rule/pcd_density_lower_threshold"))
+PcdOccupancy::PcdOccupancy(int pcd_density_upper_threshold, int pcd_density_lower_threshold)
+: pcd_density_upper_threshold_(pcd_density_upper_threshold),
+  pcd_density_lower_threshold_(pcd_density_lower_threshold)
 {
 }
 
@@ -94,9 +90,9 @@ void PcdOccupancy::init(PointCloud2::ConstSharedPtr msg)
   pcl::PointCloud<pcl::PointXYZ> cloud;
   pcl::fromROSMsg(*msg, cloud);
 
-  std::unordered_map<GridInfo, size_t> grid_point_count;
+  std::unordered_map<GridKey, size_t> grid_point_count;
   for (pcl::PointXYZ xyz : cloud) {
-    grid_point_count[GridInfo(xyz.x, xyz.y)] += 1;
+    grid_point_count[GridKey(xyz.x, xyz.y)] += 1;
   }
 
   occupied_areas_ = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();

@@ -14,6 +14,8 @@
 
 #include "pose_estimator_arbiter/switch_rule/map_based_rule.hpp"
 
+#include <tier4_autoware_utils/ros/parameter.hpp>
+
 namespace pose_estimator_arbiter::switch_rule
 {
 MapBasedRule::MapBasedRule(
@@ -22,7 +24,13 @@ MapBasedRule::MapBasedRule(
 : BaseSwitchRule(node), running_estimator_list_(running_estimator_list), shared_data_(shared_data)
 {
   if (running_estimator_list.count(PoseEstimatorType::ndt)) {
-    pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
+    const int pcd_density_upper_threshold =
+      tier4_autoware_utils::getOrDeclareParameter<int>(node, "pcd_density_upper_threshold");
+    const int pcd_density_lower_threshold =
+      tier4_autoware_utils::getOrDeclareParameter<int>(node, "pcd_density_lower_threshold");
+
+    pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(
+      pcd_density_upper_threshold, pcd_density_lower_threshold);
 
     // Register callback
     shared_data_->point_cloud_map.register_callback(

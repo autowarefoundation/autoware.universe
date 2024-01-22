@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pose_estimator_arbiter/rule_helper/grid_info.hpp"
+#include "pose_estimator_arbiter/rule_helper/grid_key.hpp"
 #include "pose_estimator_arbiter/rule_helper/pcd_occupancy.hpp"
 #include "pose_estimator_arbiter/rule_helper/pose_estimator_area.hpp"
-#include "pose_estimator_arbiter/switch_rule/map_based_rule.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
@@ -77,10 +76,12 @@ TEST_F(MockNode, poseEstimatorArea)
 TEST_F(MockNode, pcdOccupancy)
 {
   using pose_estimator_arbiter::rule_helper::PcdOccupancy;
-  node->declare_parameter<int>("pcd_occupancy_rule/pcd_density_upper_threshold", 20);
-  node->declare_parameter<int>("pcd_occupancy_rule/pcd_density_lower_threshold", 10);
+  const int pcd_density_upper_threshold = 20;
+  const int pcd_density_lower_threshold = 10;
 
-  pose_estimator_arbiter::rule_helper::PcdOccupancy pcd_occupancy(&(*node));
+  pose_estimator_arbiter::rule_helper::PcdOccupancy pcd_occupancy(
+    pcd_density_upper_threshold, pcd_density_lower_threshold);
+
   geometry_msgs::msg::Point point;
   std::string message;
 
@@ -88,18 +89,18 @@ TEST_F(MockNode, pcdOccupancy)
   EXPECT_FALSE(pcd_occupancy.ndt_can_operate(point, &message));
 }
 
-TEST_F(MockNode, gridInfo)
+TEST_F(MockNode, gridKey)
 {
-  using pose_estimator_arbiter::rule_helper::GridInfo;
-  EXPECT_TRUE(GridInfo(10., -5.) == GridInfo(10., -10.));
-  EXPECT_TRUE(GridInfo(10., -5.) != GridInfo(10., -15.));
+  using pose_estimator_arbiter::rule_helper::GridKey;
+  EXPECT_TRUE(GridKey(10., -5.) == GridKey(10., -10.));
+  EXPECT_TRUE(GridKey(10., -5.) != GridKey(10., -15.));
 
-  EXPECT_TRUE(GridInfo(10., -5.).get_center_point().x == 15.f);
-  EXPECT_TRUE(GridInfo(10., -5.).get_center_point().y == -5.f);
-  EXPECT_TRUE(GridInfo(10., -5.).get_center_point().z == 0.f);
+  EXPECT_TRUE(GridKey(10., -5.).get_center_point().x == 15.f);
+  EXPECT_TRUE(GridKey(10., -5.).get_center_point().y == -5.f);
+  EXPECT_TRUE(GridKey(10., -5.).get_center_point().z == 0.f);
 
-  std::unordered_set<GridInfo> set;
+  std::unordered_set<GridKey> set;
   set.emplace(10., -5.);
-  EXPECT_EQ(set.count(GridInfo(10., -5.)), 1ul);
-  EXPECT_EQ(set.count(GridInfo(10., -15.)), 0ul);
+  EXPECT_EQ(set.count(GridKey(10., -5.)), 1ul);
+  EXPECT_EQ(set.count(GridKey(10., -15.)), 0ul);
 }

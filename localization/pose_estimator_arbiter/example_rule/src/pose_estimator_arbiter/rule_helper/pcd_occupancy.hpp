@@ -32,7 +32,7 @@ class PcdOccupancy
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
 public:
-  explicit PcdOccupancy(rclcpp::Node * node);
+  explicit PcdOccupancy(int pcd_density_upper_threshold, int pcd_density_lower_threshold);
 
   MarkerArray debug_marker_array() const;
   void init(PointCloud2::ConstSharedPtr msg);
