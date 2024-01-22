@@ -88,7 +88,8 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
 
     // The reason for adding a large value is that when converting from float to int, values around
     // -1 to 1 are all rounded down to 0. Therefore, to prevent the numbers from becoming negative,
-    // a large value is added.
+    // a large value is added. It has been tuned to reduce computational costs, and deliberately
+    // avoids using round or floor functions.
     VoxelKey key = {
       static_cast<int>((x + large_num_offset) * inverse_voxel_size_x),
       static_cast<int>((y + large_num_offset) * inverse_voxel_size_y),
