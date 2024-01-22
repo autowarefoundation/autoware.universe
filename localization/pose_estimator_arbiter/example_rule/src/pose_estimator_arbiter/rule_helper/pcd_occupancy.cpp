@@ -52,7 +52,10 @@ bool PcdOccupancy::ndt_can_operate(
   std::stringstream ss;
   ss << "pcd occupancy: " << count << " > "
      << (last_is_ndt_mode ? pcd_density_lower_threshold_ : pcd_density_upper_threshold_);
-  *optional_message = ss.str();
+
+  if (optional_message) {
+    *optional_message = ss.str();
+  }
 
   return is_ndt_mode;
 }

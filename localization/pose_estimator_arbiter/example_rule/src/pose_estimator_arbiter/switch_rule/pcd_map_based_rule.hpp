@@ -24,14 +24,13 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 namespace pose_estimator_arbiter::switch_rule
 {
-class MapBasedRule : public BaseSwitchRule
+class PcdMapBasedRule : public BaseSwitchRule
 {
 public:
-  MapBasedRule(
+  PcdMapBasedRule(
     rclcpp::Node & node, const std::unordered_set<PoseEstimatorType> & running_estimator_list,
     const std::shared_ptr<const SharedData> shared_data);
 
@@ -49,8 +48,6 @@ protected:
 
   // Store the reason why which pose estimator is enabled
   mutable std::string debug_string_;
-
-  bool ndt_is_more_suitable_than_yabloc(std::string * optional_message = nullptr) const;
 };
 }  // namespace pose_estimator_arbiter::switch_rule
 

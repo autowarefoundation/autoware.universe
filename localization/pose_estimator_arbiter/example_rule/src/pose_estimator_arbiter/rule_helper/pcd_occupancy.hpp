@@ -37,7 +37,7 @@ public:
   MarkerArray debug_marker_array() const;
   void init(PointCloud2::ConstSharedPtr msg);
   bool ndt_can_operate(
-    const geometry_msgs::msg::Point & position, std::string * optional_message) const;
+    const geometry_msgs::msg::Point & position, std::string * optional_message = nullptr) const;
 
 private:
   const int pcd_density_upper_threshold_;
