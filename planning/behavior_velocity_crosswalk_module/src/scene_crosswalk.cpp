@@ -896,6 +896,8 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
     }
   }
 
+  const auto & ego_pos = planner_data_->current_odometry->pose.position;
+
   for (const auto & object : objects) {
     if (!isVehicle(object)) {
       continue;
