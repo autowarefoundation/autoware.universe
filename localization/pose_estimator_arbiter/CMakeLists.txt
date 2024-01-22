@@ -12,20 +12,21 @@ include_directories(SYSTEM ${PCL_INCLUDE_DIRS})
 # switch rule library
 ament_auto_add_library(switch_rule
   SHARED
-  src/pose_estimator_arbiter/switch_rule/vector_map_based_rule.cpp
-  src/pose_estimator_arbiter/rule_helper/pose_estimator_area.cpp
+  src/pose_estimator_arbiter/switch_rule/enable_all_rule.cpp
 )
 target_include_directories(switch_rule PUBLIC src)
 
 # example switch rule library
 ament_auto_add_library(example_rule
   SHARED
-  example_rule/pose_estimator_arbiter/switch_rule/map_based_rule.cpp
-  example_rule/pose_estimator_arbiter/switch_rule/map_based_rule_core.cpp
-  example_rule/pose_estimator_arbiter/rule_helper/ar_tag_position.cpp
-  example_rule/pose_estimator_arbiter/rule_helper/pcd_occupancy.cpp
+  example_rule/src/pose_estimator_arbiter/switch_rule/map_based_rule.cpp
+  example_rule/src/pose_estimator_arbiter/switch_rule/map_based_rule_core.cpp
+  example_rule/src/pose_estimator_arbiter/switch_rule/vector_map_based_rule.cpp
+  example_rule/src/pose_estimator_arbiter/rule_helper/ar_tag_position.cpp
+  example_rule/src/pose_estimator_arbiter/rule_helper/pcd_occupancy.cpp
+  example_rule/src/pose_estimator_arbiter/rule_helper/pose_estimator_area.cpp
 )
-target_include_directories(example_rule PUBLIC src example_rule)
+target_include_directories(example_rule PUBLIC src example_rule/src)
 target_link_libraries(example_rule switch_rule)
 
 # pose estimator arbiter node

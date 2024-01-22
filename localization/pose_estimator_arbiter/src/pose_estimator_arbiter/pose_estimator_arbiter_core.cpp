@@ -18,7 +18,7 @@
 #include "pose_estimator_arbiter/stopper/stopper_eagleye.hpp"
 #include "pose_estimator_arbiter/stopper/stopper_ndt.hpp"
 #include "pose_estimator_arbiter/stopper/stopper_yabloc.hpp"
-#include "pose_estimator_arbiter/switch_rule/vector_map_based_rule.hpp"
+#include "pose_estimator_arbiter/switch_rule/enable_all_rule.hpp"
 
 #include <magic_enum.hpp>
 
@@ -122,8 +122,9 @@ void PoseEstimatorArbiter::load_switch_rule()
 {
   // NOTE: In the future, some rule will be laid below
   RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
+
   switch_rule_ =
-    std::make_shared<switch_rule::VectorMapBasedRule>(*this, running_estimator_list_, shared_data_);
+    std::make_shared<switch_rule::EnableAllRule>(*this, running_estimator_list_, shared_data_);
 }
 
 void PoseEstimatorArbiter::toggle_each(
@@ -133,6 +134,12 @@ void PoseEstimatorArbiter::toggle_each(
     RCLCPP_DEBUG_STREAM(
       get_logger(), magic_enum::enum_name(s.first)
                       << " : " << std::boolalpha << toggle_list.at(s.first));
+
+    if (toggle_list.count(s.first) == 0) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), magic_enum::enum_name(s.first) << " is not included in toggle_list.");
+      continue;
+    }
 
     if (toggle_list.at(s.first)) {
       s.second->enable();
