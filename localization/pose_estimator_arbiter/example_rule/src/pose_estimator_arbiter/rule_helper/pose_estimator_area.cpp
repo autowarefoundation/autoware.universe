@@ -22,6 +22,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <map>
 #include <unordered_set>
 #include <vector>
 

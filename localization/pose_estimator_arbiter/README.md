@@ -63,7 +63,9 @@ There are no parameters.
 
 ### Services
 
-There are no service server.
+| Name             | Type                            | Description                     |
+| ---------------- | ------------------------------- | ------------------------------- |
+| `/config_logger` | logging_demo::srv::ConfigLogger | service to modify logging level |
 
 ### Clients
 
@@ -187,78 +189,20 @@ Please see the table below for details.
 
 ## Switching Rules
 
-### Vector Map Based Rule
+Currently, **only one rule** (`enable_all_rule`) is implemented.
+In the future, several rules will be implemented and users will be able to select rules.
+
+> [!TIP]
+> There are presets available to extend the rules. If you want to extend the rules, please see [example_rule](./example_rule/README.md).
+
+### enable_all_rule
+
+This is the default and simplest rule. This rule enables all pose_estimators regardless of their current state.
 
 ```mermaid
 flowchart LR
-  A{Localization\n Initialization\n state is 'INITIALIZED'?}
-  A --false --> _A[enable all pose_estimators]
-  A --true --> B{/localization\n/pose_with_covariance\n is subscribed?}
-  B -- false --> _B[enable all pose_estiamtors]
-  B -- true --> C[Enable some pose_estimators depending on the area described in the vector map]
-```
-
-### Rule helpers
-
-Rule helpers are auxiliary tools for describing switching rules.
-
-#### Pose estimator area
-
-The pose_estimator_area is a planar area described by polygon in lanelet2.
-The height of the area is meaningless; it judges if the projection of its self-position is contained within the polygon or not.
-
-<img src="./media/pose_estimator_area_in_vector_map.png" alt="drawing" width="800"/>
-
-A sample pose_estimator_area is shown below. The values provided below are placeholders.
-
-```xml
-  <node id="1" lat="35.8xxxxx" lon="139.6xxxxx">
-    <tag k="mgrs_code" v="54SUE000000"/>
-    <tag k="local_x" v="10.0"/>
-    <tag k="local_y" v="10.0"/>
-    <tag k="ele" v="1.0"/>
-  </node>
-  <node id="2" lat="35.8xxxxx" lon="139.6xxxxx">
-    <tag k="mgrs_code" v="54SUE000000"/>
-    <tag k="local_x" v="10.0"/>
-    <tag k="local_y" v="20.0"/>
-    <tag k="ele" v="1.0"/>
-  </node>
-  <node id="3" lat="35.8xxxxx" lon="139.6xxxxx">
-    <tag k="mgrs_code" v="54SUE000000"/>
-    <tag k="local_x" v="20.0"/>
-    <tag k="local_y" v="20.0"/>
-    <tag k="ele" v="1.0"/>
-  </node>
-  <node id="4" lat="35.8xxxxx" lon="139.6xxxxx">
-    <tag k="mgrs_code" v="54SUE000000"/>
-    <tag k="local_x" v="10.0"/>
-    <tag k="local_y" v="20.0"/>
-    <tag k="ele" v="1.0"/>
-  </node>
-
-...
-
-  <way id="5">
-    <nd ref="1"/>
-    <nd ref="2"/>
-    <nd ref="3"/>
-    <nd ref="4"/>
-    <tag k="type" v="pose_estimator_specify"/>
-    <tag k="subtype" v="eagleye"/>
-    <tag k="area" v="yes"/>
-  </way>
-
-  <way id="6">
-    <nd ref="7"/>
-    <nd ref="8"/>
-    <nd ref="9"/>
-    <nd ref="10"/>
-    <tag k="type" v="pose_estimator_specify"/>
-    <tag k="subtype" v="yabloc"/>
-    <tag k="area" v="yes"/>
-  </way>
-
+  A{ }
+  A --whatever --> _A[enable all pose_estimators]
 ```
 
 ## Pose Initialization
