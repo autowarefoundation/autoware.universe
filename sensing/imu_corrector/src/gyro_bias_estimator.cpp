@@ -37,6 +37,8 @@ GyroBiasEstimator::GyroBiasEstimator()
 {
   updater_.setHardwareID(get_name());
   updater_.add("gyro_bias_validator", this, &GyroBiasEstimator::update_diagnostics);
+  // diagnostic_updater is designed to be updated at the same rate as the timer
+  updater_.setPeriod(timer_callback_interval_sec_); 
 
   gyro_bias_estimation_module_ = std::make_unique<GyroBiasEstimationModule>();
 
@@ -107,7 +109,6 @@ void GyroBiasEstimator::timer_callback()
   if (pose_buf_.empty()) {
     is_bias_updated_ = false;
     supplement_ = "pose_buf is empty";
-    updater_.force_update();
     return;
   }
 
@@ -123,7 +124,6 @@ void GyroBiasEstimator::timer_callback()
   if (t1_rclcpp_time <= t0_rclcpp_time) {
     is_bias_updated_ = false;
     supplement_ = "pose_buf is not in chronological order";
-    updater_.force_update();
     return;
   }
 
@@ -141,7 +141,6 @@ void GyroBiasEstimator::timer_callback()
   if (gyro_filtered.size() <= 1) {
     is_bias_updated_ = false;
     supplement_ = "gyro_filtered size is less than 2";
-    updater_.force_update();
     return;
   }
 
@@ -157,7 +156,6 @@ void GyroBiasEstimator::timer_callback()
   if (!is_straight) {
     is_bias_updated_ = false;
     supplement_ = "yaw angular velocity is greater than straight_motion_ang_vel_upper_limit";
-    updater_.force_update();
     return;
   }
 
@@ -172,14 +170,11 @@ void GyroBiasEstimator::timer_callback()
 
     is_bias_updated_ = false;
     supplement_ = "tf betweeen base and imu is not available";
-    updater_.force_update();
     return;
   }
 
   gyro_bias_ =
     transform_vector3(gyro_bias_estimation_module_->get_bias_base_link(), *tf_base2imu_ptr);
-
-  updater_.force_update();
 }
 
 geometry_msgs::msg::Vector3 GyroBiasEstimator::transform_vector3(
@@ -230,7 +225,7 @@ void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
         stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Successfully updated");
       }
       else {
-        stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Not updated");
+        stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Paused update");
       }
     } else {
       stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, 
