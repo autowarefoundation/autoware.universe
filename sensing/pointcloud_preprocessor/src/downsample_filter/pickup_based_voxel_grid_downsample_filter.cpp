@@ -16,6 +16,10 @@
 
 namespace
 {
+/**
+ * @brief Hash function for voxel keys.
+ * Utilizes prime numbers to calculate a unique hash for each voxel key.
+ */
 struct VoxelKeyHash
 {
   std::size_t operator()(const std::array<int, 3> & k) const
@@ -28,6 +32,10 @@ struct VoxelKeyHash
   }
 };
 
+/**
+ * @brief Equality function for voxel keys.
+ * Checks if two voxel keys are equal.
+ */
 struct VoxelKeyEqual
 {
   bool operator()(const std::array<int, 3> & a, const std::array<int, 3> & b) const
@@ -43,12 +51,10 @@ PickupBasedVoxelGridDownsampleFilterComponent::PickupBasedVoxelGridDownsampleFil
   const rclcpp::NodeOptions & options)
 : Filter("PickupBasedVoxelGridDownsampleFilterComponent", options)
 {
-  // set initial parameters
-  {
-    voxel_size_x_ = static_cast<float>(declare_parameter("voxel_size_x", 1.0));
-    voxel_size_y_ = static_cast<float>(declare_parameter("voxel_size_y", 1.0));
-    voxel_size_z_ = static_cast<float>(declare_parameter("voxel_size_z", 1.0));
-  }
+  // Initialization of voxel sizes from parameters
+  voxel_size_x_ = static_cast<float>(declare_parameter("voxel_size_x", 1.0));
+  voxel_size_y_ = static_cast<float>(declare_parameter("voxel_size_y", 1.0));
+  voxel_size_z_ = static_cast<float>(declare_parameter("voxel_size_z", 1.0));
 
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -73,6 +79,7 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
   const int y_offset = input->fields[pcl::getFieldIndex(*input, "y")].offset;
   const int z_offset = input->fields[pcl::getFieldIndex(*input, "z")].offset;
 
+  // Process each point in the point cloud
   for (size_t global_offset = 0; global_offset + input->point_step <= input->data.size();
        global_offset += input->point_step) {
     const float & x = *reinterpret_cast<const float *>(&input->data[global_offset + x_offset]);
@@ -92,7 +99,7 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
     }
   }
 
-  // If the size of voxel_map is less than or equal to max_points, copy all points
+  // Populate the output point cloud
   size_t output_global_offset = 0;
   output.data.resize(voxel_map.size() * input->point_step);
   for (const auto & kv : voxel_map) {
@@ -108,8 +115,8 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
     output_global_offset += input->point_step;
   }
 
+  // Set the output point cloud metadata
   output.header.frame_id = input->header.frame_id;
-
   output.height = 1;
   output.fields = input->fields;
   output.is_bigendian = input->is_bigendian;
@@ -125,6 +132,7 @@ PickupBasedVoxelGridDownsampleFilterComponent::paramCallback(
 {
   std::scoped_lock lock(mutex_);
 
+  // Handling dynamic updates for the voxel sizes
   if (get_param(p, "voxel_size_x", voxel_size_x_)) {
     RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %f.", voxel_size_x_);
   }

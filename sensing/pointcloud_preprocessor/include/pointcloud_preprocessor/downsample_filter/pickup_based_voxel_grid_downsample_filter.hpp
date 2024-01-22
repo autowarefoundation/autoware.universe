@@ -28,6 +28,14 @@
 
 namespace pointcloud_preprocessor
 {
+/**
+ * @class PickupBasedVoxelGridDownsampleFilterComponent
+ * @brief A filter component for downsampling point clouds using a voxel grid approach.
+ *
+ * This component reduces the number of points in a point cloud by grouping them into voxels
+ * and picking a representative point for each voxel. It's useful for reducing computational
+ * load when processing large point clouds.
+ */
 class PickupBasedVoxelGridDownsampleFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
@@ -35,9 +43,9 @@ protected:
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
-  float voxel_size_x_;
-  float voxel_size_y_;
-  float voxel_size_z_;
+  float voxel_size_x_;  ///< The size of the voxel in the x dimension.
+  float voxel_size_y_;  ///< The size of the voxel in the y dimension.
+  float voxel_size_z_;  ///< The size of the voxel in the z dimension.
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
