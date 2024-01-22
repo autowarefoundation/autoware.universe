@@ -9,6 +9,7 @@ find_package(glog REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 include_directories(SYSTEM ${PCL_INCLUDE_DIRS})
 
+# ==============================
 # switch rule library
 ament_auto_add_library(switch_rule
   SHARED
@@ -16,19 +17,7 @@ ament_auto_add_library(switch_rule
 )
 target_include_directories(switch_rule PUBLIC src)
 
-# example switch rule library
-ament_auto_add_library(example_rule
-  SHARED
-  example_rule/src/pose_estimator_arbiter/switch_rule/map_based_rule.cpp
-  example_rule/src/pose_estimator_arbiter/switch_rule/map_based_rule_core.cpp
-  example_rule/src/pose_estimator_arbiter/switch_rule/vector_map_based_rule.cpp
-  example_rule/src/pose_estimator_arbiter/rule_helper/ar_tag_position.cpp
-  example_rule/src/pose_estimator_arbiter/rule_helper/pcd_occupancy.cpp
-  example_rule/src/pose_estimator_arbiter/rule_helper/pose_estimator_area.cpp
-)
-target_include_directories(example_rule PUBLIC src example_rule/src)
-target_link_libraries(example_rule switch_rule)
-
+# ==============================
 # pose estimator arbiter node
 ament_auto_add_executable(${PROJECT_NAME}
   src/pose_estimator_arbiter/pose_estimator_arbiter_core.cpp
@@ -38,6 +27,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC src)
 target_link_libraries(${PROJECT_NAME} switch_rule glog::glog)
 
 # ==============================
+# define test definition macro
 function(add_testcase filepath)
   get_filename_component(filename ${filepath} NAME)
   string(REGEX REPLACE ".cpp" "" test_name ${filename})
@@ -58,6 +48,11 @@ if(BUILD_TESTING)
   # TIMEOUT "30"
   # )
 endif()
+
+# ==============================
+# In practice, the example rule is not used as autoware code.
+# It exists only for user reference and is tested only.
+add_subdirectory(example_rule)
 
 # ==============================
 ament_auto_package(INSTALL_TO_SHARE

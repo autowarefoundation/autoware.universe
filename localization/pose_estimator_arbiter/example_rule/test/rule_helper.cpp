@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pose_estimator_arbiter/switch_rule/map_based_rule.hpp"
-
-#include "pose_estimator_arbiter/rule_helper/eagleye_area.hpp"
 #include "pose_estimator_arbiter/rule_helper/grid_info.hpp"
 #include "pose_estimator_arbiter/rule_helper/pcd_occupancy.hpp"
+#include "pose_estimator_arbiter/rule_helper/pose_estimator_area.hpp"
+#include "pose_estimator_arbiter/switch_rule/map_based_rule.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
@@ -30,20 +29,7 @@
 
 #include <unordered_set>
 
-lanelet::Polygon3d create_polygon3d()
-{
-  lanelet::Polygon3d polygon;
-  lanelet::Attribute attribute("eagleye_area");
-  polygon.setAttribute(lanelet::AttributeName::Type, attribute);
-  lanelet::Id index = 0;
-  polygon.push_back(lanelet::Point3d(index++, 0, 0));
-  polygon.push_back(lanelet::Point3d(index++, 10, 0));
-  polygon.push_back(lanelet::Point3d(index++, 10, 10));
-  polygon.push_back(lanelet::Point3d(index++, 0, 10));
-  return polygon;
-}
-
-class MapBasedRule : public ::testing::Test
+class MockNode : public ::testing::Test
 {
 protected:
   virtual void SetUp()
@@ -57,27 +43,38 @@ protected:
   virtual void TearDown() { rclcpp::shutdown(); }
 };
 
-TEST_F(MapBasedRule, eagleyeArea)
+TEST_F(MockNode, poseEstimatorArea)
 {
-  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  auto create_polygon3d = []() -> lanelet::Polygon3d {
+    lanelet::Polygon3d polygon;
+    polygon.setAttribute(lanelet::AttributeName::Type, {"pose_estimator_specify"});
+    polygon.setAttribute(lanelet::AttributeName::Subtype, {"ndt"});
+    lanelet::Id index = 0;
+    polygon.push_back(lanelet::Point3d(index++, 0, 0));
+    polygon.push_back(lanelet::Point3d(index++, 10, 0));
+    polygon.push_back(lanelet::Point3d(index++, 10, 10));
+    polygon.push_back(lanelet::Point3d(index++, 0, 10));
+    return polygon;
+  };
 
   lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
   lanelet_map->add(create_polygon3d());
 
+  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using Point = geometry_msgs::msg::Point;
   HADMapBin msg;
   lanelet::utils::conversion::toBinMsg(lanelet_map, &msg);
 
-  using Point = geometry_msgs::msg::Point;
+  pose_estimator_arbiter::rule_helper::PoseEstimatorArea pose_estimator_area(&(*node));
+  pose_estimator_area.init(std::make_shared<HADMapBin>(msg));
 
-  pose_estimator_arbiter::rule_helper::EagleyeArea eagleye_area(&(*node));
-  eagleye_area.init(std::make_shared<HADMapBin>(msg));
-
-  EXPECT_TRUE(eagleye_area.within(Point().set__x(5).set__y(5).set__z(0)));
-  EXPECT_FALSE(eagleye_area.within(Point().set__x(-5).set__y(-5).set__z(0)));
-  EXPECT_EQ(eagleye_area.debug_string(), "0,0 10,0 10,10 0,10 0,0 \n");
+  EXPECT_TRUE(pose_estimator_area.within(Point().set__x(5).set__y(5).set__z(0), "ndt"));
+  EXPECT_FALSE(pose_estimator_area.within(Point().set__x(5).set__y(5).set__z(0), "yabloc"));
+  EXPECT_FALSE(pose_estimator_area.within(Point().set__x(-5).set__y(-5).set__z(0), "ndt"));
+  EXPECT_FALSE(pose_estimator_area.within(Point().set__x(-5).set__y(-5).set__z(0), "yabloc"));
 }
 
-TEST_F(MapBasedRule, pcdOccupancy)
+TEST_F(MockNode, pcdOccupancy)
 {
   using pose_estimator_arbiter::rule_helper::PcdOccupancy;
   node->declare_parameter<int>("pcd_occupancy_rule/pcd_density_upper_threshold", 20);
@@ -91,7 +88,7 @@ TEST_F(MapBasedRule, pcdOccupancy)
   EXPECT_FALSE(pcd_occupancy.ndt_can_operate(point, &message));
 }
 
-TEST_F(MapBasedRule, gridInfo)
+TEST_F(MockNode, gridInfo)
 {
   using pose_estimator_arbiter::rule_helper::GridInfo;
   EXPECT_TRUE(GridInfo(10., -5.) == GridInfo(10., -10.));
