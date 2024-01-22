@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
+#ifndef BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_
+#define BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
@@ -104,4 +104,4 @@ inline sampler_common::State getInitialState(
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
+#endif  // BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_

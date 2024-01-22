@@ -71,7 +71,7 @@
     value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::StartPlannerModuleManager, '&quot;)"
     if="$(var launch_start_planner_module)"
   />
-    <let
+  <let
     name="behavior_path_planner_launch_modules"
     value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::SamplingPlannerModuleManager, '&quot;)"
     if="$(var launch_sampling_planner_module)"

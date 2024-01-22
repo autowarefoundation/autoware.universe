@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__MANAGER_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__MANAGER_HPP_
+#ifndef BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_
+#define BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_
 
 #include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 #include "behavior_path_sampling_planner_module/sampling_planner_module.hpp"
@@ -51,4 +51,4 @@ private:
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__MANAGER_HPP_
+#endif  // BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_
