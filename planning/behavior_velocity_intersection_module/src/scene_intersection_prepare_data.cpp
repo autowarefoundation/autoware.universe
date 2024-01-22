@@ -194,6 +194,11 @@ IntersectionModule::prepareIntersectionData(const bool is_prioritized, PathWithL
       generateObjectiveLanelets(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
   }
   auto & intersection_lanelets = intersection_lanelets_.value();
+  debug_data_.attention_area = intersection_lanelets.attention_area();
+  debug_data_.first_attention_area = intersection_lanelets.first_attention_area();
+  debug_data_.second_attention_area = intersection_lanelets.second_attention_area();
+  debug_data_.occlusion_attention_area = intersection_lanelets.occlusion_attention_area();
+  debug_data_.adjacent_area = intersection_lanelets.adjacent_area();
 
   // at the very first time of regisTration of this module, the path may not be conflicting with the
   // attention area, so update() is called to update the internal data as well as traffic light info

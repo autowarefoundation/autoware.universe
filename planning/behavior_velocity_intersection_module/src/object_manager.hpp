@@ -134,6 +134,11 @@ public:
     const double brake_deceleration, const double tolerable_overshoot,
     lanelet::ConstLanelet ego_lane) const;
 
+  /**
+   * @brief check if the object is before the stopline within the specified margin
+   */
+  bool before_stopline_by(const double margin) const;
+
 private:
   const std::string uuid_str;
   autoware_auto_perception_msgs::msg::PredictedObject predicted_object_;
@@ -165,22 +170,41 @@ class ObjectInfoManager
 public:
   std::shared_ptr<ObjectInfo> registerObject(
     const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
-    const bool belong_intersection_area);
-  void clearAreaObjects()
+    const bool belong_intersection_area, const bool is_parked);
+
+  void registerExistingObject(
+    const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
+    const bool belong_intersection_area, const bool is_parked,
+    std::shared_ptr<intersection::ObjectInfo> object);
+
+  void clearObjects()
   {
+    objects_info_.clear();
     attention_area_objects_.clear();
     intersection_area_objects_.clear();
+    parked_objects_.clear();
   };
+
   const std::vector<std::shared_ptr<ObjectInfo>> & attentionObjects() const
   {
     return attention_area_objects_;
   }
+
+  const std::vector<std::shared_ptr<ObjectInfo>> & parkedObjects() const { return parked_objects_; }
+
   std::vector<std::shared_ptr<ObjectInfo>> allObjects()
   {
     std::vector<std::shared_ptr<ObjectInfo>> all_objects = attention_area_objects_;
     all_objects.insert(
       all_objects.end(), intersection_area_objects_.begin(), intersection_area_objects_.end());
+    all_objects.insert(all_objects.end(), parked_objects_.begin(), parked_objects_.end());
     return all_objects;
+  }
+
+  const std::unordered_map<unique_identifier_msgs::msg::UUID, std::shared_ptr<ObjectInfo>> &
+  getObjectsMap()
+  {
+    return objects_info_;
   }
 
 private:
@@ -188,7 +212,20 @@ private:
   std::vector<std::shared_ptr<ObjectInfo>> attention_area_objects_;  //! belong to attention area
   std::vector<std::shared_ptr<ObjectInfo>>
     intersection_area_objects_;  //! does not belong to attention area but to intersection area
+  std::vector<std::shared_ptr<ObjectInfo>>
+    parked_objects_;  //! parked objects on attention_area/intersection_area
 };
+
+/**
+ * @brief return the CollisionKnowledge struct if the predicted path collides ego path spatially
+ */
+std::optional<intersection::CollisionInterval> findPassageInterval(
+  const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  const lanelet::BasicPolygon2d & ego_lane_poly,
+  const std::optional<lanelet::ConstLanelet> & first_attention_lane_opt,
+  const std::optional<lanelet::ConstLanelet> & second_attention_lane_opt);
+
 }  // namespace behavior_velocity_planner::intersection
 
 #endif  // OBJECT_MANAGER_HPP_

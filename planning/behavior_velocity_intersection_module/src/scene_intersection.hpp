@@ -46,32 +46,6 @@
 namespace behavior_velocity_planner
 {
 
-/**
- * @struct
- * @brief see the document for more details of IntersectionStopLines
- */
-struct TargetObject
-{
-  autoware_auto_perception_msgs::msg::PredictedObject object;
-  std::optional<lanelet::ConstLanelet> attention_lanelet{std::nullopt};
-  std::optional<lanelet::ConstLineString3d> stopline{std::nullopt};
-  std::optional<double> dist_to_stopline{std::nullopt};
-  void calc_dist_to_stopline();
-};
-
-/**
- * @struct
- * @brief categorize TargetObjects
- */
-struct TargetObjects
-{
-  std_msgs::msg::Header header;
-  std::vector<TargetObject> attention_objects;
-  std::vector<TargetObject> parked_attention_objects;
-  std::vector<TargetObject> intersection_area_objects;
-  std::vector<TargetObject> all_attention_objects;  // TODO(Mamoru Sobue): avoid copy
-};
-
 class IntersectionModule : public SceneModuleInterface
 {
 public:
@@ -524,16 +498,6 @@ private:
 
 private:
   /**
-   * @defgroup utility [fn] utility member function
-   * @{
-   */
-  void stoppedAtPositionForDuration(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t position,
-    const double duration, StateMachine * state_machine);
-  /** @} */
-
-private:
-  /**
    ***********************************************************
    ***********************************************************
    ***********************************************************
@@ -550,14 +514,6 @@ private:
    */
   TrafficPrioritizedLevel getTrafficPrioritizedLevel() const;
   /** @} */
-
-private:
-  /**
-   * @brief categorize target objects
-   */
-  TargetObjects generateTargetObjects(
-    const intersection::IntersectionLanelets & intersection_lanelets,
-    const std::optional<Polygon2d> & intersection_area) const;
 
 private:
   /**
@@ -602,14 +558,12 @@ private:
   std::optional<intersection::YieldStuckStop> isYieldStuckStatus(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const intersection::InterpolatedPathInfo & interpolated_path_info,
-    const intersection::IntersectionStopLines & intersection_stoplines,
-    const TargetObjects & target_objects) const;
+    const intersection::IntersectionStopLines & intersection_stoplines) const;
 
   /**
    * @brief check yield stuck
    */
   bool checkYieldStuckVehicleInIntersection(
-    const TargetObjects & target_objects,
     const intersection::InterpolatedPathInfo & interpolated_path_info,
     const lanelet::ConstLanelets & attention_lanelets) const;
   /** @} */
@@ -625,27 +579,21 @@ private:
   /**
    * @brief check occlusion status
    * @attention this function has access to value() of occlusion_attention_divisions_,
-   * intersection_lanelets.first_attention_area()
+   * intersection_lanelets_ intersection_lanelets.first_attention_area()
    */
   std::tuple<
     OcclusionType, bool /* module detection with margin */,
     bool /* reconciled occlusion disapproval */>
   getOcclusionStatus(
     const TrafficPrioritizedLevel & traffic_prioritized_level,
-    const intersection::InterpolatedPathInfo & interpolated_path_info,
-    const intersection::IntersectionLanelets & intersection_lanelets,
-    const TargetObjects & target_objects);
+    const intersection::InterpolatedPathInfo & interpolated_path_info);
 
   /**
    * @brief calculate detected occlusion status(NOT | STATICALLY | DYNAMICALLY)
+   * @attention this function has access to value() of intersection_lanelets_,
+   * intersection_lanelets.first_attention_area(), occlusion_attention_divisions_
    */
-  OcclusionType detectOcclusion(
-    const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
-    const lanelet::ConstLanelets & adjacent_lanelets,
-    const lanelet::CompoundPolygon3d & first_attention_area,
-    const intersection::InterpolatedPathInfo & interpolated_path_info,
-    const std::vector<lanelet::ConstLineString3d> & lane_divisions,
-    const TargetObjects & target_objects);
+  OcclusionType detectOcclusion(const intersection::InterpolatedPathInfo & interpolated_path_info);
   /** @} */
 
 private:
@@ -683,27 +631,22 @@ private:
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
-   * @brief update object info
+   * @brief find the objects on attention_area/intersection_area
+   * @attention this function has access to value() of intersection_lanelets_
    */
-  void updateObjectInfoManager(
+  void updateObjectInfoManagerArea();
+
+  /**
+   * @brief find the CollsionInterval/CollisionKnowledge of registered objects
+   * @attention this function has access to value() of intersection_lanelets_
+   */
+  void updateObjectInfoManagerCollision(
     const intersection::PathLanelets & path_lanelets, const TimeDistanceArray & time_distance_array,
-    const TrafficPrioritizedLevel & traffic_prioritized_level,
-    const intersection::IntersectionLanelets & intersection_lanelets,
-    const std::optional<Polygon2d> & intersection_area);
+    const TrafficPrioritizedLevel & traffic_prioritized_level);
 
   void cutPredictPathWithinDuration(
     const builtin_interfaces::msg::Time & object_stamp, const double time_thr,
     autoware_auto_perception_msgs::msg::PredictedPath * predicted_path);
-
-  /**
-   * @brief return the CollisionKnowledge struct if the predicted path collides ego path spatially
-   */
-  std::optional<intersection::CollisionInterval> findPassageInterval(
-    const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
-    const autoware_auto_perception_msgs::msg::Shape & shape,
-    const lanelet::BasicPolygon2d & ego_lane_poly,
-    const std::optional<lanelet::ConstLanelet> & first_attention_lane_opt,
-    const std::optional<lanelet::ConstLanelet> & second_attention_lane_opt);
 
   /**
    * @brief check if there are any objects around the stoplines on the attention areas when ego
@@ -716,23 +659,16 @@ private:
   std::optional<intersection::NonOccludedCollisionStop> isGreenPseudoCollisionStatus(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const size_t collision_stopline_idx,
-    const intersection::IntersectionStopLines & intersection_stoplines,
-    const TargetObjects & target_objects);
+    const intersection::IntersectionStopLines & intersection_stoplines);
 
   /**
    * @brief check collision
    */
-  bool checkCollision(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, TargetObjects * target_objects,
-    const intersection::PathLanelets & path_lanelets, const size_t closest_idx,
-    const size_t last_intersection_stopline_candidate_idx, const double time_delay,
-    const TrafficPrioritizedLevel & traffic_prioritized_level);
+  bool checkCollision();
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
     const bool is_parked_vehicle) const;
-
-  void cutPredictPathWithDuration(TargetObjects * target_objects, const double time_thr);
 
   /**
    * @brief calculate ego vehicle profile along the path inside the intersection as the sequence of

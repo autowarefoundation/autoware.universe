@@ -175,6 +175,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return false;
   };
 
+  updateObjectInfoManagerArea();
+
   // stuck vehicle detection is viable even if attention area is empty
   // so this needs to be checked before attention area validation
   const auto is_stuck_status = isStuckStatus(*path, intersection_stoplines, path_lanelets);
@@ -204,27 +206,14 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto first_attention_stopline_idx = first_attention_stopline_idx_opt.value();
   const auto occlusion_stopline_idx = occlusion_peeking_stopline_idx_opt.value();
 
-  debug_data_.attention_area = intersection_lanelets.attention_area();
-  debug_data_.first_attention_area = intersection_lanelets.first_attention_area();
-  debug_data_.second_attention_area = intersection_lanelets.second_attention_area();
-  debug_data_.occlusion_attention_area = intersection_lanelets.occlusion_attention_area();
-  debug_data_.adjacent_area = intersection_lanelets.adjacent_area();
-
-  // get intersection area
-  const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
-  const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
-  const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
-  // filter objects
-  auto target_objects = generateTargetObjects(intersection_lanelets, intersection_area);
   const auto is_yield_stuck_status =
-    isYieldStuckStatus(*path, interpolated_path_info, intersection_stoplines, target_objects);
+    isYieldStuckStatus(*path, interpolated_path_info, intersection_stoplines);
   if (is_yield_stuck_status) {
     return is_yield_stuck_status.value();
   }
 
   const auto [occlusion_status, is_occlusion_cleared_with_margin, is_occlusion_state] =
-    getOcclusionStatus(
-      traffic_prioritized_level, interpolated_path_info, intersection_lanelets, target_objects);
+    getOcclusionStatus(traffic_prioritized_level, interpolated_path_info);
 
   // TODO(Mamoru Sobue): this should be called later for safety diagnosis
   const auto is_over_pass_judge_lines_status =
@@ -240,8 +229,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     util::isOverTargetIndex(*path, closest_idx, current_pose, default_stopline_idx);
   const auto collision_stopline_idx = is_over_default_stopline ? closest_idx : default_stopline_idx;
 
-  const auto is_green_pseudo_collision_status = isGreenPseudoCollisionStatus(
-    *path, collision_stopline_idx, intersection_stoplines, target_objects);
+  const auto is_green_pseudo_collision_status =
+    isGreenPseudoCollisionStatus(*path, collision_stopline_idx, intersection_stoplines);
   if (is_green_pseudo_collision_status) {
     return is_green_pseudo_collision_status.value();
   }
@@ -264,10 +253,9 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto time_distance_array = calcIntersectionPassingTime(
     *path, closest_idx, last_intersection_stopline_candidate_idx, time_to_restart,
     &ego_ttc_time_array);
+  updateObjectInfoManagerCollision(path_lanelets, time_distance_array, traffic_prioritized_level);
 
-  const bool has_collision = checkCollision(
-    *path, &target_objects, path_lanelets, closest_idx, last_intersection_stopline_candidate_idx,
-    time_to_restart, traffic_prioritized_level);
+  const bool has_collision = checkCollision();
   collision_state_machine_.setStateWithMarginTime(
     has_collision ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
@@ -1125,80 +1113,6 @@ IntersectionModule::TrafficPrioritizedLevel IntersectionModule::getTrafficPriori
   return TrafficPrioritizedLevel::NOT_PRIORITIZED;
 }
 
-TargetObjects IntersectionModule::generateTargetObjects(
-  const intersection::IntersectionLanelets & intersection_lanelets,
-  const std::optional<Polygon2d> & intersection_area) const
-{
-  const auto & objects_ptr = planner_data_->predicted_objects;
-  // extract target objects
-  TargetObjects target_objects;
-  target_objects.header = objects_ptr->header;
-  const auto & attention_lanelets = intersection_lanelets.attention();
-  const auto & attention_lanelet_stoplines = intersection_lanelets.attention_stoplines();
-  const auto & adjacent_lanelets = intersection_lanelets.adjacent();
-  for (const auto & object : objects_ptr->objects) {
-    // ignore non-vehicle type objects, such as pedestrian.
-    if (!isTargetCollisionVehicleType(object)) {
-      continue;
-    }
-
-    // check direction of objects
-    const auto object_direction = util::getObjectPoseWithVelocityDirection(object.kinematics);
-    const auto belong_adjacent_lanelet_id =
-      checkAngleForTargetLanelets(object_direction, adjacent_lanelets, false);
-    if (belong_adjacent_lanelet_id) {
-      continue;
-    }
-
-    const auto is_parked_vehicle =
-      std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x) <
-      planner_param_.occlusion.ignore_parked_vehicle_speed_threshold;
-    auto & container = is_parked_vehicle ? target_objects.parked_attention_objects
-                                         : target_objects.attention_objects;
-    if (intersection_area) {
-      const auto & obj_pos = object.kinematics.initial_pose_with_covariance.pose.position;
-      const auto obj_poly = tier4_autoware_utils::toPolygon2d(object);
-      const auto intersection_area_2d = intersection_area.value();
-      const auto belong_attention_lanelet_id =
-        checkAngleForTargetLanelets(object_direction, attention_lanelets, is_parked_vehicle);
-      if (belong_attention_lanelet_id) {
-        const auto id = belong_attention_lanelet_id.value();
-        TargetObject target_object;
-        target_object.object = object;
-        target_object.attention_lanelet = attention_lanelets.at(id);
-        target_object.stopline = attention_lanelet_stoplines.at(id);
-        container.push_back(target_object);
-      } else if (bg::within(Point2d{obj_pos.x, obj_pos.y}, intersection_area_2d)) {
-        TargetObject target_object;
-        target_object.object = object;
-        target_object.attention_lanelet = std::nullopt;
-        target_object.stopline = std::nullopt;
-        target_objects.intersection_area_objects.push_back(target_object);
-      }
-    } else if (const auto belong_attention_lanelet_id = checkAngleForTargetLanelets(
-                 object_direction, attention_lanelets, is_parked_vehicle);
-               belong_attention_lanelet_id.has_value()) {
-      // intersection_area is not available, use detection_area_with_margin as before
-      const auto id = belong_attention_lanelet_id.value();
-      TargetObject target_object;
-      target_object.object = object;
-      target_object.attention_lanelet = attention_lanelets.at(id);
-      target_object.stopline = attention_lanelet_stoplines.at(id);
-      container.push_back(target_object);
-    }
-  }
-  for (const auto & object : target_objects.attention_objects) {
-    target_objects.all_attention_objects.push_back(object);
-  }
-  for (const auto & object : target_objects.parked_attention_objects) {
-    target_objects.all_attention_objects.push_back(object);
-  }
-  for (auto & object : target_objects.all_attention_objects) {
-    object.calc_dist_to_stopline();
-  }
-  return target_objects;
-}
-
 intersection::Result<
   intersection::Indecisive,
   std::pair<bool /* is_over_1st_pass_judge */, bool /* is_over_2nd_pass_judge */>>
@@ -1293,24 +1207,6 @@ IntersectionModule::isOverPassJudgeLinesStatus(
   }
   return intersection::Result<intersection::Indecisive, std::pair<bool, bool>>::make_err(
     std::make_pair(is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line));
-}
-
-void TargetObject::calc_dist_to_stopline()
-{
-  if (!attention_lanelet || !stopline) {
-    return;
-  }
-  const auto attention_lanelet_val = attention_lanelet.value();
-  const auto object_arc_coords = lanelet::utils::getArcCoordinates(
-    {attention_lanelet_val}, object.kinematics.initial_pose_with_covariance.pose);
-  const auto stopline_val = stopline.value();
-  geometry_msgs::msg::Pose stopline_center;
-  stopline_center.position.x = (stopline_val.front().x() + stopline_val.back().x()) / 2.0;
-  stopline_center.position.y = (stopline_val.front().y() + stopline_val.back().y()) / 2.0;
-  stopline_center.position.z = (stopline_val.front().z() + stopline_val.back().z()) / 2.0;
-  const auto stopline_arc_coords =
-    lanelet::utils::getArcCoordinates({attention_lanelet_val}, stopline_center);
-  dist_to_stopline = (stopline_arc_coords.length - object_arc_coords.length);
 }
 
 /*
