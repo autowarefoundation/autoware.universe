@@ -15,7 +15,6 @@
 #include "grid_utils.hpp"
 #include "utils.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <gtest/gtest.h>

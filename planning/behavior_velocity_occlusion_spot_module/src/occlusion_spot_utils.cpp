@@ -15,6 +15,7 @@
 #include "occlusion_spot_utils.hpp"
 
 #include "risk_predictive_braking.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
@@ -43,7 +44,7 @@ Polygon2d toFootprintPolygon(const PredictedObject & object, const double scale 
   const Pose & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
   Polygon2d obj_footprint = tier4_autoware_utils::toPolygon2d(object);
   // upscale foot print for noise
-  obj_footprint = upScalePolygon(obj_pose.position, obj_footprint, scale);
+  obj_footprint = tier4_autoware_utils::upScalePolygon(obj_pose.position, obj_footprint, scale);
   return obj_footprint;
 }
 

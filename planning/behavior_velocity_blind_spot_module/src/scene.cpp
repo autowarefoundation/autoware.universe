@@ -14,7 +14,8 @@
 
 #include "scene.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
@@ -385,7 +386,8 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
       const bool exist_in_right_detection_area =
         std::any_of(detection_areas.begin(), detection_areas.end(), [&object](const auto & area) {
           return bg::within(
-            to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
+            tier4_autoware_utils::to_bg2d(
+              object.kinematics.initial_pose_with_covariance.pose.position),
             lanelet::utils::to2D(area));
         });
       // opposite direction
@@ -434,7 +436,8 @@ bool BlindSpotModule::isPredictedPathInArea(
           return std::any_of(
             path.path.begin(), path.path.end(),
             [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & point) {
-              const auto is_in_area = bg::within(to_bg2d(point.position), area_2d);
+              const auto is_in_area =
+                bg::within(tier4_autoware_utils::to_bg2d(point.position), area_2d);
               const auto match_yaw =
                 std::fabs(ego_yaw - tf2::getYaw(point.orientation)) < threshold_yaw_diff;
               return is_in_area && match_yaw;

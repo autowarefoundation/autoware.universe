@@ -17,7 +17,6 @@
 #include "occlusion_spot_utils.hpp"
 #include "risk_predictive_braking.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>

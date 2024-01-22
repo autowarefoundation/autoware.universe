@@ -14,9 +14,9 @@
 
 #include "scene_intersection.hpp"
 
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "util.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <interpolation/spline_interpolation_points_2d.hpp>
@@ -2044,7 +2044,7 @@ getFirstPointInsidePolygons(
       const auto & p = path.points.at(i).point.pose.position;
       for (const auto & polygon : polygons) {
         const auto polygon_2d = lanelet::utils::to2D(polygon);
-        is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+        is_in_lanelet = bg::within(tier4_autoware_utils::to_bg2d(p), polygon_2d);
         if (is_in_lanelet) {
           return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
             i, polygon);
@@ -2060,7 +2060,7 @@ getFirstPointInsidePolygons(
       const auto & p = path.points.at(i).point.pose.position;
       for (const auto & polygon : polygons) {
         const auto polygon_2d = lanelet::utils::to2D(polygon);
-        is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+        is_in_lanelet = bg::within(tier4_autoware_utils::to_bg2d(p), polygon_2d);
         if (is_in_lanelet) {
           return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
             i, polygon);
@@ -2198,7 +2198,8 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
   stuck_vehicle_detect_area.outer().emplace_back(stuck_vehicle_detect_area.outer().front());
   bg::correct(stuck_vehicle_detect_area);
 
-  debug_data_.stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
+  debug_data_.stuck_vehicle_detect_area =
+    tier4_autoware_utils::toGeomPoly(stuck_vehicle_detect_area);
 
   for (const auto & object : objects_ptr->objects) {
     if (!isTargetStuckVehicleType(object)) {
@@ -2656,7 +2657,7 @@ bool IntersectionModule::checkCollision(
         polygon.outer().emplace_back(p.x(), p.y());
       }
       bg::correct(polygon);
-      debug_data_.candidate_collision_ego_lane_polygon = toGeomPoly(polygon);
+      debug_data_.candidate_collision_ego_lane_polygon = tier4_autoware_utils::toGeomPoly(polygon);
 
       for (auto itr = first_itr; itr != last_itr.base(); ++itr) {
         const auto footprint_polygon = tier4_autoware_utils::toPolygon2d(*itr, object.shape);

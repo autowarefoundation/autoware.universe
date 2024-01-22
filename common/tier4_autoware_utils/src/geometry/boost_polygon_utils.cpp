@@ -16,8 +16,12 @@
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
+#include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/geometry.hpp>
 
+#include <lanelet2_core/primitives/CompoundPolygon.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/Polygon.h>
 #include <tf2/utils.h>
 
 namespace
@@ -179,6 +183,30 @@ Polygon2d toPolygon2d(
   return isClockwise(polygon) ? polygon : inverseClockwise(polygon);
 }
 
+Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet)
+{
+  Polygon2d polygon;
+  for (const auto & p : lanelet.polygon2d().basicPolygon()) {
+    polygon.outer().emplace_back(p.x(), p.y());
+  }
+  polygon.outer().push_back(polygon.outer().front());
+
+  return tier4_autoware_utils::isClockwise(polygon)
+           ? polygon
+           : tier4_autoware_utils::inverseClockwise(polygon);
+}
+
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon)
+{
+  Polygon2d ret;
+  for (const auto & p : polygon) {
+    ret.outer().emplace_back(p.x(), p.y());
+  }
+  ret.outer().push_back(ret.outer().front());
+
+  return tier4_autoware_utils::isClockwise(ret) ? ret : tier4_autoware_utils::inverseClockwise(ret);
+}
+
 tier4_autoware_utils::Polygon2d toPolygon2d(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
@@ -267,5 +295,48 @@ Polygon2d expandPolygon(const Polygon2d & input_polygon, const double offset)
 
   boost::geometry::correct(expanded_polygon);
   return expanded_polygon;
+}
+
+Polygon2d lines2polygon(const LineString2d & left_line, const LineString2d & right_line)
+{
+  Polygon2d polygon;
+
+  polygon.outer().push_back(left_line.front());
+
+  for (auto itr = right_line.begin(); itr != right_line.end(); ++itr) {
+    polygon.outer().push_back(*itr);
+  }
+
+  for (auto itr = left_line.rbegin(); itr != left_line.rend(); ++itr) {
+    polygon.outer().push_back(*itr);
+  }
+
+  bg::correct(polygon);
+  return polygon;
+}
+
+Polygon2d upScalePolygon(
+  const geometry_msgs::msg::Point & position, const Polygon2d & polygon, const double scale)
+{
+  Polygon2d transformed_polygon;
+  // upscale
+  for (size_t i = 0; i < polygon.outer().size(); i++) {
+    const double upscale_x = (polygon.outer().at(i).x() - position.x) * scale + position.x;
+    const double upscale_y = (polygon.outer().at(i).y() - position.y) * scale + position.y;
+    transformed_polygon.outer().emplace_back(Point2d(upscale_x, upscale_y));
+  }
+  return transformed_polygon;
+}
+
+geometry_msgs::msg::Polygon toGeomPoly(const Polygon2d & polygon)
+{
+  geometry_msgs::msg::Polygon polygon_msg;
+  geometry_msgs::msg::Point32 point_msg;
+  for (const auto & p : polygon.outer()) {
+    point_msg.x = p.x();
+    point_msg.y = p.y();
+    polygon_msg.points.push_back(point_msg);
+  }
+  return polygon_msg;
 }
 }  // namespace tier4_autoware_utils

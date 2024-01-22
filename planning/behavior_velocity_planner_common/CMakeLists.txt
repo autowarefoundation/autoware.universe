@@ -10,7 +10,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/utilization/path_utilization.cpp
   src/utilization/trajectory_utils.cpp
   src/utilization/arc_lane_util.cpp
-  src/utilization/boost_geometry_helper.cpp
   src/utilization/util.cpp
   src/utilization/debug.cpp
 )
