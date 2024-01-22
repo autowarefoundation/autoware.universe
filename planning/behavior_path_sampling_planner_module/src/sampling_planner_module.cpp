@@ -235,16 +235,12 @@ bool SamplingPlannerModule::isReferencePathSafe() const
   auto transform_to_sampling_path = [](const PlanResult plan) {
     sampler_common::Path path;
     for (size_t i = 0; i < plan->points.size(); ++i) {
-      // plan->points[i].point.pose
-
       const auto x = plan->points[i].point.pose.position.x;
       const auto y = plan->points[i].point.pose.position.y;
       const auto quat = plan->points[i].point.pose.orientation;
-      // tf2::Quaternion quaternion(q.x,q.y,q.z,q.w);
       geometry_msgs::msg::Vector3 rpy;
       tf2::Quaternion q(quat.x, quat.y, quat.z, quat.w);
       tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
-      // const auto z = plan->points[0].point.pose.position.z;
       path.points.emplace_back(Point2d{x, y});
       path.poses.emplace_back(plan->points[i].point.pose);
       path.yaws.emplace_back(rpy.z);
@@ -306,7 +302,6 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
   for (size_t i = 0; i < frenet_path.points.size(); ++i) {
     const auto & frenet_path_point_position = frenet_path.points.at(i);
     const auto & frenet_path_point_yaw = frenet_path.yaws.at(i);
-    // const auto & frenet_path_point_velocity = frenet_path.points.;
     PathPointWithLaneId point{};
     point.point.pose.position.x = frenet_path_point_position.x();
     point.point.pose.position.y = frenet_path_point_position.y();
@@ -481,7 +476,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     if (!std::any_of(current_lanes.begin(), current_lanes.end(), [&](const auto & lane) {
           return lanelet::utils::isInLanelet(goal_pose, lane);
         })) {
-      // std::cerr << "goal not in current lanes. Finidng farthest path point to use as goal\n";
       for (auto it = reference_path_ptr->points.rbegin(); it < reference_path_ptr->points.rend();
            it++) {
         if (std::any_of(current_lanes.begin(), current_lanes.end(), [&](const auto & lane) {
@@ -495,9 +489,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     return goal_pose;
   };
 
-  // EXTEND prev path
+  // Extend prev path
   if (prev_path_is_valid) {
-    // Update previous path
     frenet_planner::Path prev_path_frenet = prev_sampling_path_.value();
     frenet_paths.push_back(prev_path_frenet);
 
@@ -524,9 +517,10 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     const auto current_idx = std::distance(prev_path_frenet.points.begin(), closest_iter);
     const double current_length = prev_path_frenet.lengths.at(current_idx);
     const double remaining_path_length = prev_path_frenet.lengths.back() - current_length;
-    const double length_step = remaining_path_length / 3.0;
-    std::cout << "Current idx " << current_idx << "\n";
-    std::cout << "current_length " << current_length << "\n";
+    const int path_divisions = (internal_params_->sampling.previous_path_reuse_points_nb > 0)
+                                 ? internal_params_->sampling.previous_path_reuse_points_nb
+                                 : 1;
+    const double length_step = remaining_path_length / path_divisions;
     for (double reuse_length = 0.0; reuse_length <= remaining_path_length;
          reuse_length += length_step) {
       size_t reuse_idx;
@@ -721,23 +715,6 @@ void SamplingPlannerModule::updateDebugMarkers()
   debug_marker_.markers.push_back(m);
   info_marker_.markers.push_back(m);
   ++m.id;
-  // m.ns = "debug_path";
-  // m.id = 0UL;
-  // m.type = m.POINTS;
-  // m.points.clear();
-  // m.color.g = 1.0;
-  // m.color.b = 0.0;
-  // m.scale.y = 0.04;
-  // if (!debug_data_.sampled_candidates.empty()) {
-  //   m.action = m.ADD;
-  //   for (const auto & p :
-  //        debug_data_.sampled_candidates[debug_data_.sampled_candidates.size()].points)
-  //     m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
-  // } else {
-  //   m.action = m.DELETE;
-  // }
-  // debug_marker_.markers.push_back(m);
-  // info_marker_.markers.push_back(m);
   m.type = m.LINE_STRIP;
   m.ns = "obstacles";
   m.id = 0UL;
@@ -764,7 +741,6 @@ void SamplingPlannerModule::updateDebugMarkers()
 void SamplingPlannerModule::extendOutputDrivableArea(BehaviorModuleOutput & output)
 {
   const auto prev_module_path = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().path);
-  // const auto current_lanes = utils::getCurrentLanesFromPath(*prev_module_path, planner_data_);
   const auto & p = planner_data_->parameters;
   const auto ego_pose = planner_data_->self_odometry->pose.pose;
   lanelet::ConstLanelet current_lane;
@@ -782,15 +758,6 @@ void SamplingPlannerModule::extendOutputDrivableArea(BehaviorModuleOutput & outp
   std::for_each(current_lanes.begin(), current_lanes.end(), [&](const auto & lanelet) {
     drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
   });
-
-  // // const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
-  // //   *planner_data_->route_handler, current_lanes, status_.target_lanes);
-  // const auto drivable_lanes = behavior_path_planner::utils::generateDrivableLanes(current_lanes);
-  // const auto shorten_lanes = utils::cutOverlappedLanes(*output.path, drivable_lanes);
-  // const auto expanded_lanes = utils::expandLanelets(
-  //   shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-  //   dp.drivable_area_types_to_skip);
-
   // // for new architecture
   DrivableAreaInfo current_drivable_area_info;
   current_drivable_area_info.drivable_lanes = drivable_lanes;

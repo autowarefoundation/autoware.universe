@@ -36,15 +36,18 @@ void SamplingPlannerModuleManager::init(rclcpp::Node * node)
     p.max_curvature = node->declare_parameter<double>(ns + ".max_curvature");
     p.min_curvature = node->declare_parameter<double>(ns + ".min_curvature");
     ns = std::string{"constraints.soft"};
-    p.lateral_deviation_weight = node->declare_parameter<double>(ns + ".lateral_deviation_weight");
-    p.length_weight = node->declare_parameter<double>(ns + ".length_weight");
-    p.curvature_weight = node->declare_parameter<double>(ns + ".curvature_weight");
+    p.lateral_deviation_weight =
+      node->declare_parameter<double>(ns + ".lateral_deviation_weight");       // [[unused]] Delete?
+    p.length_weight = node->declare_parameter<double>(ns + ".length_weight");  // [[unused]] Delete?
+    p.curvature_weight =
+      node->declare_parameter<double>(ns + ".curvature_weight");  // [[unused]] Delete?
     p.weights = node->declare_parameter<std::vector<double>>(ns + ".weights");
   }
   {
     std::string ns{"sampling"};
     p.enable_frenet = node->declare_parameter<bool>(ns + ".enable_frenet");
-    p.enable_bezier = node->declare_parameter<bool>(ns + ".enable_bezier");
+    p.enable_bezier = node->declare_parameter<bool>(
+      ns + ".enable_bezier");  // [[unused]] will be used in the future
     p.resolution = node->declare_parameter<double>(ns + ".resolution");
     p.previous_path_reuse_points_nb =
       node->declare_parameter<int>(ns + ".previous_path_reuse_points_nb");
@@ -61,9 +64,12 @@ void SamplingPlannerModuleManager::init(rclcpp::Node * node)
   }
   {
     std::string ns{"preprocessing"};
-    p.force_zero_deviation = node->declare_parameter<bool>(ns + ".force_zero_initial_deviation");
-    p.force_zero_heading = node->declare_parameter<bool>(ns + ".force_zero_initial_heading");
-    p.smooth_reference = node->declare_parameter<bool>(ns + ".smooth_reference_trajectory");
+    p.force_zero_deviation = node->declare_parameter<bool>(
+      ns + ".force_zero_initial_deviation");  // [[unused]] will be used in the future
+    p.force_zero_heading = node->declare_parameter<bool>(
+      ns + ".force_zero_initial_heading");  // [[unused]] will be used in the future
+    p.smooth_reference = node->declare_parameter<bool>(
+      ns + ".smooth_reference_trajectory");  // [[unused]] will be used in the future
   }
   parameters_ = std::make_shared<SamplingPlannerParameters>(p);
 }
