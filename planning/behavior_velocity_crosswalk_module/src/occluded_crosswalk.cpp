@@ -19,6 +19,7 @@
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_utils/polygon_iterator.hpp>
 
+#include <algorithm>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -53,7 +54,7 @@ lanelet::BasicPoint2d interpolate_point(
 bool is_crosswalk_occluded(
   const lanelet::ConstLanelet & crosswalk_lanelet,
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const geometry_msgs::msg::Point & path_intersection,
+  const geometry_msgs::msg::Point & path_intersection, const double detection_range,
   const behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
 {
   grid_map::GridMap grid_map;
@@ -79,11 +80,9 @@ bool is_crosswalk_occluded(
       const auto left_segment = segment_getter(crosswalk_lanelet.leftBound2d());
       const auto right_segment = segment_getter(crosswalk_lanelet.rightBound2d());
       const auto dist = lanelet::geometry::distance2d(center_segment.second, path_inter);
-      if (dist < params.occlusion_detection_range) {
-        const auto target_left =
-          interpolate_point(left_segment, params.occlusion_detection_range - dist);
-        const auto target_right =
-          interpolate_point(right_segment, params.occlusion_detection_range - dist);
+      if (dist < detection_range) {
+        const auto target_left = interpolate_point(left_segment, detection_range - dist);
+        const auto target_right = interpolate_point(right_segment, detection_range - dist);
         incoming_areas.push_back(
           {left_segment.second, target_left, target_right, right_segment.second});
       }
@@ -97,6 +96,14 @@ bool is_crosswalk_occluded(
       if (is_occluded(grid_map, min_nb_of_cells, *iter, params)) return true;
   }
   return false;
+}
+
+double calculate_detection_range(
+  const double object_velocity, const double dist_ego_to_crosswalk, const double ego_velocity)
+{
+  constexpr double min_ego_velocity = 1.0;
+  const auto time_to_crosswalk = dist_ego_to_crosswalk / std::max(min_ego_velocity, ego_velocity);
+  return time_to_crosswalk > 0.0 ? time_to_crosswalk / object_velocity : 20.0;
 }
 
 void update_occlusion_timers(

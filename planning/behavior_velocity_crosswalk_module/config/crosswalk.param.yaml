@@ -72,9 +72,9 @@
       # param for occlusions
       occlusion:
         enable: true  # if true, ego will slowdown around crosswalks that are occluded
+        occluded_object_velocity: 1.0 # [m/s] assumed velocity of objects that may come out of the occluded space
         slow_down_velocity: 1.0  # [m/s]
         time_buffer: 1.0  # [s] consecutive time with/without an occlusion to add/remove the slowdown
         min_size: 0.5  # [m] minimum size of an occlusion (square side size)
-        detection_range: 8.0  # [m] distance away from the crosswalk-ego path intersection that is checked for occlusion
         free_space_max: 43  # [-] maximum value of a free space cell in the occupancy grid
         occupied_min: 58    # [-] minimum value of an occupied cell in the occupancy grid

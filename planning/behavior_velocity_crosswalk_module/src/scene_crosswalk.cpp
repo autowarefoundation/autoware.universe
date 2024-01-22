@@ -234,24 +234,32 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
       *path, path_intersects,
       static_cast<float>(crosswalk_.attribute("safety_slow_down_speed").asDouble().get()));
   }
-  // Apply slow down if the crosswalk is occluded
-  const auto use_occluded_space =
-    planner_param_.occlusion_enable && !path_intersects.empty() &&
-    calcSignedArcLength(path->points, ego_pos, path_intersects.front()) > 0.0;
-  if (use_occluded_space) {
-    if (is_crosswalk_occluded(
-          crosswalk_, *planner_data_->occupancy_grid, path_intersects.front(), planner_param_))
-      update_occlusion_timers(
-        current_initial_occlusion_time_, most_recent_occlusion_time_, clock_->now(),
-        planner_param_.occlusion_time_buffer);
-    else
-      current_initial_occlusion_time_.reset();
+  // Apply safety slow down speed if the crosswalk is occluded
+  if (planner_param_.occlusion_enable && !path_intersects.empty()) {
+    const auto dist_ego_to_crosswalk =
+      calcSignedArcLength(path->points, ego_pos, path_intersects.front());
+    const auto detection_range = calculate_detection_range(
+      planner_param_.min_object_velocity, dist_ego_to_crosswalk,
+      planner_data_->current_velocity->twist.linear.x);
+    const auto is_ego_on_the_crosswalk =
+      dist_ego_to_crosswalk <= planner_data_->vehicle_info_.max_longitudinal_offset_m;
+    if (!is_ego_on_the_crosswalk) {
+      if (is_crosswalk_occluded(
+            crosswalk_, *planner_data_->occupancy_grid, path_intersects.front(), detection_range,
+            planner_param_))
+        update_occlusion_timers(
+          current_initial_occlusion_time_, most_recent_occlusion_time_, clock_->now(),
+          planner_param_.occlusion_time_buffer);
+      else
+        current_initial_occlusion_time_.reset();
 
-    const auto is_last_occlusion_within_time_buffer =
-      most_recent_occlusion_time_ && (clock_->now() - *most_recent_occlusion_time_).seconds() <=
-                                       planner_param_.occlusion_time_buffer;
-    if (is_last_occlusion_within_time_buffer)
-      applySafetySlowDownSpeed(*path, path_intersects, planner_param_.occlusion_slow_down_velocity);
+      const auto is_last_occlusion_within_time_buffer =
+        most_recent_occlusion_time_ && (clock_->now() - *most_recent_occlusion_time_).seconds() <=
+                                         planner_param_.occlusion_time_buffer;
+      if (is_last_occlusion_within_time_buffer)
+        applySafetySlowDownSpeed(
+          *path, path_intersects, planner_param_.occlusion_slow_down_velocity);
+    }
   }
   recordTime(2);
 

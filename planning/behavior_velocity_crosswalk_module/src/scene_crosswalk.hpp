@@ -156,10 +156,10 @@ public:
     bool look_pedestrian;
     // param for occlusions
     bool occlusion_enable;
+    double occlusion_occluded_object_velocity;
     double occlusion_slow_down_velocity;
     double occlusion_time_buffer;
     double occlusion_min_size;
-    double occlusion_detection_range;
     int occlusion_free_space_max;
     int occlusion_occupied_min;
   };

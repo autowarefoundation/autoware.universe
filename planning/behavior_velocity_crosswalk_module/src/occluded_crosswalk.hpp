@@ -50,15 +50,19 @@ lanelet::BasicPoint2d interpolate_point(
 
 /// @brief check if the crosswalk is occluded
 /// @param crosswalk_lanelet lanelet of the crosswalk
-/// @param occupancy_grid occupancy grid
+/// @param occupancy_grid occupancy grid with the occlusion information
 /// @param path_intersection intersection between the crosswalk and the ego path
+/// @param detection_range range away from the crosswalk until occlusions are considered
 /// @param params parameters
 /// @return true if the crosswalk is occluded
 bool is_crosswalk_occluded(
   const lanelet::ConstLanelet & crosswalk_lanelet,
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const geometry_msgs::msg::Point & path_intersection,
+  const geometry_msgs::msg::Point & path_intersection, const double detection_range,
   const behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
+
+double calculate_detection_range(
+  const double object_velocity, const double dist_ego_to_crosswalk, const double ego_velocity);
 
 /// @brief update timers so that the slowdown activates if the initial time is older than the buffer
 /// @param initial_time initial time
