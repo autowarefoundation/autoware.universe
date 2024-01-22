@@ -18,6 +18,7 @@
 #include <rosidl_runtime_cpp/message_initialization.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/pose_deviation.hpp>
+#include <tier4_autoware_utils/geometry/pose_deviation.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -78,6 +79,12 @@ struct Input
   std::vector<std::string> boundary_types_to_detect{};
 };
 
+struct DerivativeDeviation
+{
+  double longitudinal_vel{0.0};
+  double longitudinal_acc{0.0};
+};
+
 struct Output
 {
   std::map<std::string, double> processing_time_map{};
@@ -85,6 +92,7 @@ struct Output
   bool is_out_of_lane{};
   bool will_cross_boundary{};
   PoseDeviation trajectory_deviation{};
+  DerivativeDeviation trajectory_der_deviation{};
   lanelet::ConstLanelets candidate_lanelets{};
   TrajectoryPoints resampled_trajectory{};
   std::vector<LinearRing2d> vehicle_footprints{};
@@ -118,6 +126,10 @@ public:
 private:
   Param param_;
   std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
+
+  static DerivativeDeviation calcLongitudinalDeviationDerivatives(
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
+    const double dist_threshold, const double yaw_threshold);  
 
   static PoseDeviation calcTrajectoryDeviation(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
