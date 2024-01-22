@@ -19,6 +19,7 @@
 #include "interpolated_path_info.hpp"
 #include "intersection_lanelets.hpp"
 #include "intersection_stoplines.hpp"
+#include "object_manager.hpp"
 #include "result.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
@@ -363,6 +364,9 @@ private:
    */
   //! debouncing for stable SAFE decision
   StateMachine collision_state_machine_;
+
+  //! container for storing safety statuts of objects on the attention area
+  intersection::ObjectInfoManager object_info_manager_;
   /** @} */
 
 private:
@@ -677,6 +681,29 @@ private:
    */
   bool isTargetCollisionVehicleType(
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
+
+  /**
+   * @brief update object info
+   */
+  void updateObjectInfoManager(
+    const intersection::PathLanelets & path_lanelets, const TimeDistanceArray & time_distance_array,
+    const TrafficPrioritizedLevel & traffic_prioritized_level,
+    const intersection::IntersectionLanelets & intersection_lanelets,
+    const std::optional<Polygon2d> & intersection_area);
+
+  void cutPredictPathWithinDuration(
+    const builtin_interfaces::msg::Time & object_stamp, const double time_thr,
+    autoware_auto_perception_msgs::msg::PredictedPath * predicted_path);
+
+  /**
+   * @brief return the CollisionKnowledge struct if the predicted path collides ego path spatially
+   */
+  std::optional<intersection::CollisionKnowledge> findPassageInterval(
+    const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
+    const autoware_auto_perception_msgs::msg::Shape & shape,
+    const lanelet::BasicPolygon2d & ego_lane_poly,
+    const std::optional<lanelet::ConstLanelet> & first_attention_lane_opt,
+    const std::optional<lanelet::ConstLanelet> & second_attention_lane_opt);
 
   /**
    * @brief check if there are any objects around the stoplines on the attention areas when ego
