@@ -40,8 +40,8 @@ private:
     float q_stddev_acc_lat;
     float q_stddev_yaw_rate_min;
     float q_stddev_yaw_rate_max;
-    float q_stddev_slip_rate_min;
-    float q_stddev_slip_rate_max;
+    float q_cov_slip_rate_min;
+    float q_cov_slip_rate_max;
     float q_max_slip_angle;
     float p0_cov_vel;
     float p0_cov_slip;

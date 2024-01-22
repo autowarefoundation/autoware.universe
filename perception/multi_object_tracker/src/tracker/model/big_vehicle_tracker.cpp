@@ -54,7 +54,7 @@ BigVehicleTracker::BigVehicleTracker(
   // Initialize parameters
   // measurement noise covariance
   float r_stddev_x = 1.5;                                  // [m]
-  float r_stddev_y = 0.5;                                  // [m]
+  float r_stddev_y = 0.3;                                  // [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad]
   float r_stddev_vel = 1.0;                                // [m/s]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
@@ -76,13 +76,15 @@ BigVehicleTracker::BigVehicleTracker(
   ekf_params_.q_stddev_acc_long = 9.8 * 0.3;  // [m/(s*s)] uncertain longitudinal acceleration
   ekf_params_.q_stddev_acc_lat = 9.8 * 0.1;   // [m/(s*s)] uncertain lateral acceleration
   ekf_params_.q_stddev_yaw_rate_min =
-    tier4_autoware_utils::deg2rad(0.8);  // [rad/s] uncertain yaw change rate
+    tier4_autoware_utils::deg2rad(1.5);  // [rad/s] uncertain yaw change rate
   ekf_params_.q_stddev_yaw_rate_max =
-    tier4_autoware_utils::deg2rad(13.0);  // [rad/s] uncertain yaw change rate
-  ekf_params_.q_stddev_slip_rate_min =
-    tier4_autoware_utils::deg2rad(0.2);  // [rad/s] uncertain slip angle change rate
-  ekf_params_.q_stddev_slip_rate_max =
-    tier4_autoware_utils::deg2rad(5.0);  // [rad/s] uncertain slip angle change rate
+    tier4_autoware_utils::deg2rad(15.0);  // [rad/s] uncertain yaw change rate
+  float q_stddev_slip_rate_min =
+    tier4_autoware_utils::deg2rad(0.3);  // [rad/s] uncertain slip angle change rate
+  float q_stddev_slip_rate_max =
+    tier4_autoware_utils::deg2rad(10.0);  // [rad/s] uncertain slip angle change rate
+  ekf_params_.q_cov_slip_rate_min = std::pow(q_stddev_slip_rate_min, 2.0);
+  ekf_params_.q_cov_slip_rate_max = std::pow(q_stddev_slip_rate_max, 2.0);
   ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
   // limitations
   max_vel_ = tier4_autoware_utils::kmph2mps(100);                      // [m/s]
@@ -253,9 +255,9 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   if (vel <= 0.01) {
     q_stddev_yaw_rate = ekf_params_.q_stddev_yaw_rate_min;
   } else {
-    // uncertain yaw rate limited by
-    // centripetal acceleration w = a_lat/v
-    // or slip angle w = v*sin(slip)/l_r
+    // uncertainty of the yaw rate is limited by
+    // centripetal acceleration a_lat : d(yaw)/dt = w = a_lat/v
+    // or maximum slip angle slip_max : w = v*sin(slip_max)/l_r
     q_stddev_yaw_rate = std::min(
       ekf_params_.q_stddev_acc_lat / vel,
       vel * std::sin(ekf_params_.q_max_slip_angle) / lr_);  // [rad/s]
@@ -264,21 +266,23 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   }
   float q_cov_slip_rate{0.0};
   if (vel <= 0.01) {
-    q_cov_slip_rate = ekf_params_.q_stddev_slip_rate_min * ekf_params_.q_stddev_slip_rate_min;
+    q_cov_slip_rate = ekf_params_.q_cov_slip_rate_min;
   } else {
-    // sin(slip) = w*l_r/v
-    // d(slip)/dt = - w*l_r/v^2 * d(v)/dt + l_r/v * d(w)/dt
-    q_cov_slip_rate = std::pow(sin_slip * ekf_params_.q_stddev_acc_lat / vel, 2) +
-                      std::pow(q_stddev_yaw_rate * lr_ / vel, 2);
-    q_cov_slip_rate = std::min(
-      q_cov_slip_rate, ekf_params_.q_stddev_slip_rate_max * ekf_params_.q_stddev_slip_rate_max);
-    q_cov_slip_rate = std::max(
-      q_cov_slip_rate, ekf_params_.q_stddev_slip_rate_min * ekf_params_.q_stddev_slip_rate_min);
+    // where sin(slip) = w * l_r / v
+    // uncertainty of the slip angle rate is modeled as
+    // d(slip)/dt ~ - w*l_r/v^2 * d(v)/dt + l_r/v * d(w)/dt
+    //            = - sin(slip)/v * d(v)/dt + l_r/v * d(w)/dt
+    // d(w)/dt is modeled as proportional to w (more uncertain when slip is large)
+    // d(v)/dt and d(w)/t is considered that those are not correlated
+    q_cov_slip_rate =
+      std::pow(ekf_params_.q_stddev_acc_lat * sin_slip / vel, 2) + std::pow(sin_slip * 1.5, 2);
+    q_cov_slip_rate = std::min(q_cov_slip_rate, ekf_params_.q_cov_slip_rate_max);
+    q_cov_slip_rate = std::max(q_cov_slip_rate, ekf_params_.q_cov_slip_rate_min);
   }
-  const float q_cov_x = std::pow(0.5 * ekf_params_.q_stddev_acc_long * dt * dt, 2.0);
-  const float q_cov_y = std::pow(0.5 * ekf_params_.q_stddev_acc_lat * dt * dt, 2.0);
-  const float q_cov_yaw = std::pow(q_stddev_yaw_rate * dt, 2.0);
-  const float q_cov_vel = std::pow(ekf_params_.q_stddev_acc_long * dt, 2.0);
+  const float q_cov_x = std::pow(0.5 * ekf_params_.q_stddev_acc_long * dt * dt, 2);
+  const float q_cov_y = std::pow(0.5 * ekf_params_.q_stddev_acc_lat * dt * dt, 2);
+  const float q_cov_yaw = std::pow(q_stddev_yaw_rate * dt, 2);
+  const float q_cov_vel = std::pow(ekf_params_.q_stddev_acc_long * dt, 2);
   const float q_cov_slip = q_cov_slip_rate * dt * dt;
 
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
