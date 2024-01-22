@@ -2,6 +2,7 @@
 
 #include <QFontDatabase>
 #include <QPainter>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rviz_rendering/render_system.hpp>
 
 #include <OgreHardwarePixelBuffer.h>
@@ -21,7 +22,10 @@ namespace awf_2d_overlay_vehicle
 
 TrafficDisplay::TrafficDisplay()
 {
-  traffic_light_image_.load(":/assets/images/traffic.png");
+  // Load the traffic light image
+  std::string package_path = ament_index_cpp::get_package_share_directory("awf_2d_overlay_vehicle");
+  std::string image_path = package_path + "/assets/images/traffic.png";
+  traffic_light_image_.load(image_path.c_str());
 }
 
 void TrafficDisplay::updateTrafficLightData(

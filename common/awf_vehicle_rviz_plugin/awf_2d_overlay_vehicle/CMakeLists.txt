@@ -34,7 +34,6 @@ set(
   include/speed_limit_display.hpp
 )
 
-qt5_add_resources(RESOURCES_RCC resources.qrc)
 
 
 foreach (header "${headers_to_moc}")
@@ -52,7 +51,6 @@ set(
         src/turn_signals_display.cpp
         src/traffic_display.cpp
         src/speed_limit_display.cpp
-        ${RESOURCES_RCC} # Add this line
 
 )
 
@@ -80,8 +78,7 @@ target_link_libraries(
         rviz_ogre_vendor::OgreOverlay
 )
 
-# Causes the visibility macros to use dllexport rather than dllimport,
-# which is appropriate when building the dll but not consuming it.
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE "${PROJECT_NAME}_BUILDING_LIBRARY")
 
 # prevent pluginlib from using boost
@@ -130,6 +127,13 @@ install(
         TARGETS
         DESTINATION lib/${PROJECT_NAME}
 )
+
+# Copy the assets directory to the installation directory
+install(
+    DIRECTORY assets/
+    DESTINATION share/${PROJECT_NAME}/assets
+)
+
 add_definitions(-DQT_NO_KEYWORDS)
 
 ament_package(

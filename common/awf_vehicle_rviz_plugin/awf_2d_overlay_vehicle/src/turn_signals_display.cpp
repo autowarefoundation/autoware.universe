@@ -2,6 +2,7 @@
 
 #include <QFontDatabase>
 #include <QPainter>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rviz_rendering/render_system.hpp>
 
 #include <OgreHardwarePixelBuffer.h>
@@ -23,7 +24,10 @@ TurnSignalsDisplay::TurnSignalsDisplay() : current_turn_signal_(0)
 {
   last_toggle_time_ = std::chrono::steady_clock::now();
 
-  arrowImage.load(":/assets/images/arrow.png");
+  // Load the arrow image
+  std::string package_path = ament_index_cpp::get_package_share_directory("awf_2d_overlay_vehicle");
+  std::string image_path = package_path + "/assets/images/arrow.png";
+  arrowImage.load(image_path.c_str());
 }
 
 void TurnSignalsDisplay::updateTurnSignalsData(

@@ -2,6 +2,7 @@
 
 #include <QFontDatabase>
 #include <QPainter>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rviz_rendering/render_system.hpp>
 
 #include <OgreHardwarePixelBuffer.h>
@@ -21,16 +22,21 @@ namespace awf_2d_overlay_vehicle
 
 SteeringWheelDisplay::SteeringWheelDisplay()
 {
-  int fontId =
-    QFontDatabase::addApplicationFont(":/assets/font/Quicksand/static/Quicksand-Regular.ttf");
-  int fontId2 =
-    QFontDatabase::addApplicationFont(":/assets/font/Quicksand/static/Quicksand-Bold.ttf");
+  // Load the Quicksand font
+  std::string package_path = ament_index_cpp::get_package_share_directory("awf_2d_overlay_vehicle");
+  std::string font_path = package_path + "/assets/font/Quicksand/static/Quicksand-Regular.ttf";
+  std::string font_path2 = package_path + "/assets/font/Quicksand/static/Quicksand-Bold.ttf";
+  int fontId = QFontDatabase::addApplicationFont(
+    font_path.c_str());  // returns -1 on failure (see docs for more info)
+  int fontId2 = QFontDatabase::addApplicationFont(
+    font_path2.c_str());  // returns -1 on failure (see docs for more info)
   if (fontId == -1 || fontId2 == -1) {
     std::cout << "Failed to load the Quicksand font.";
   }
 
   // Load the wheel image
-  wheelImage.load(":/assets/images/wheel.png");
+  std::string image_path = package_path + "/assets/images/wheel.png";
+  wheelImage.load(image_path.c_str());
   scaledWheelImage = wheelImage.scaled(54, 54, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
