@@ -17,6 +17,7 @@
 
 #include "sampler_common/structures.hpp"
 
+#include <vector>
 namespace sampler_common::constraints
 {
 /// @brief Check if the path satisfies the hard constraints
