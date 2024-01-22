@@ -40,6 +40,7 @@ PlannerManager::PlannerManager(
 {
   processing_time_.emplace("total_time", 0.0);
   debug_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
+  state_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
 }
 
 void PlannerManager::launchScenePlugin(rclcpp::Node & node, const std::string & name)
@@ -141,8 +142,9 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
        * STEP3: if there is no module that need to be launched, return approved modules' output
        */
       if (request_modules.empty()) {
+        const auto output = runKeepLastModules(data, approved_modules_output);
         processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
-        return approved_modules_output;
+        return output;
       }
 
       /**
@@ -150,24 +152,32 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
        */
       const auto [highest_priority_module, candidate_modules_output] =
         runRequestModules(request_modules, data, approved_modules_output);
+
+      /**
+       * STEP5: run keep last approved modules after running candidate modules.
+       * NOTE: if no candidate module is launched, approved_modules_output used as input for keep
+       * last modules and return the result immediately.
+       */
+      const auto output = runKeepLastModules(
+        data, highest_priority_module ? candidate_modules_output : approved_modules_output);
       if (!highest_priority_module) {
         processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
-        return approved_modules_output;
+        return output;
       }
 
       /**
-       * STEP5: if the candidate module's modification is NOT approved yet, return the result.
+       * STEP6: if the candidate module's modification is NOT approved yet, return the result.
        * NOTE: the result is output of the candidate module, but the output path don't contains path
        * shape modification that needs approval. On the other hand, it could include velocity
        * profile modification.
        */
       if (highest_priority_module->isWaitingApproval()) {
         processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
-        return candidate_modules_output;
+        return output;
       }
 
       /**
-       * STEP6: if the candidate module is approved, push the module into approved_module_ptrs_
+       * STEP7: if the candidate module is approved, push the module into approved_module_ptrs_
        */
       addApprovedModule(highest_priority_module);
       clearCandidateModules();
@@ -178,7 +188,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
           logger_, clock_, 1000, "Reach iteration limit (max: %ld). Output current result.",
           max_iteration_num_);
         processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
-        return candidate_modules_output;
+        return output;
       }
     }
 
@@ -392,6 +402,19 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
   }
 
   return request_modules;
+}
+
+BehaviorModuleOutput PlannerManager::runKeepLastModules(
+  const std::shared_ptr<PlannerData> & data, const BehaviorModuleOutput & previous_output) const
+{
+  auto output = previous_output;
+  std::for_each(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [&](const auto & m) {
+    if (getManager(m)->isKeepLast()) {
+      output = run(m, data, output);
+    }
+  });
+
+  return output;
 }
 
 BehaviorModuleOutput PlannerManager::getReferencePath(
@@ -652,11 +675,13 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
   }
 
   /**
-   * execute all approved modules.
+   * execute approved modules except keep last modules.
    */
   std::for_each(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [&](const auto & m) {
-    output = run(m, data, output);
-    results.emplace(m->name(), output);
+    if (!getManager(m)->isKeepLast()) {
+      output = run(m, data, output);
+      results.emplace(m->name(), output);
+    }
   });
 
   /**
@@ -835,11 +860,9 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
   // when lane change module is running, don't update root lanelet.
   const bool is_lane_change_running = std::invoke([&]() {
-    const auto lane_change_itr =
-      std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [](const auto & m) {
-        return m->name().find("lane_change") != std::string::npos ||
-               m->name().find("avoidance_by_lc") != std::string::npos;
-      });
+    const auto lane_change_itr = std::find_if(
+      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
+      [](const auto & m) { return m->isRootLaneletToBeUpdated(); });
     return lane_change_itr != approved_module_ptrs_.end();
   });
   if (is_lane_change_running) {
@@ -886,10 +909,6 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
 void PlannerManager::print() const
 {
-  if (!verbose_) {
-    return;
-  }
-
   const auto get_status = [](const auto & m) {
     return magic_enum::enum_name(m->getCurrentStatus());
   };
@@ -937,6 +956,12 @@ void PlannerManager::print() const
                   << std::left << t.first << ":" << std::setw(4) << std::right << t.second
                   << "ms]\n"
                   << std::setw(21);
+  }
+
+  state_publisher_ptr_->publish<DebugStringMsg>("internal_state", string_stream.str());
+
+  if (!verbose_) {
+    return;
   }
 
   RCLCPP_INFO_STREAM(logger_, string_stream.str());
