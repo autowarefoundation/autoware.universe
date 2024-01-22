@@ -90,7 +90,7 @@ enum class HorizontalAlignment : uint8_t {
 /**
  * Helper class for realizing an overlay object on top of the rviz 3D panel.
  *
- * This class is supposed to be instantiated in the onInitalize method of the
+ * This class is supposed to be instantiated in the onInitialize method of the
  * rviz_common::Display class.
  */
 class OverlayObject
