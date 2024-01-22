@@ -199,7 +199,10 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
         input_path, lanelet_stop_lines,
         planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
         planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx)) {
-    RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 5000, "Failed to calculate stop point and insert index for regulatory element id " << traffic_light_reg_elem_.id());
+    RCLCPP_WARN_STREAM_THROTTLE(
+      logger_, *clock_, 5000,
+      "Failed to calculate stop point and insert index for regulatory element id "
+        << traffic_light_reg_elem_.id());
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
     return false;
@@ -358,7 +361,8 @@ bool TrafficLightModule::findValidTrafficSignal(TrafficSignalStamped & valid_tra
   if (!traffic_signal_stamped_opt) {
     RCLCPP_WARN_STREAM_THROTTLE(
       logger_, *clock_, 5000 /* ms */,
-      "the traffic signal data associated with regulatory element id " << traffic_light_reg_elem_.id() << " is not received");
+      "the traffic signal data associated with regulatory element id "
+        << traffic_light_reg_elem_.id() << " is not received");
     return false;
   }
   valid_traffic_signal = traffic_signal_stamped_opt.value();
