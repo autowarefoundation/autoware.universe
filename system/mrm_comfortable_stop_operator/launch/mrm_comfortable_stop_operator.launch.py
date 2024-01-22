@@ -50,7 +50,7 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             component,
         ],
-        output="screen",
+        output="both",
     )
 
     return [container]

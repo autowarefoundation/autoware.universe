@@ -8,7 +8,7 @@
   <arg name="velocity_threshold" default="3.0"/>
 
   <!-- Node -->
-  <node pkg="object_velocity_splitter" exec="object_velocity_splitter_node" name="object_velocity_splitter" output="screen">
+  <node pkg="object_velocity_splitter" exec="object_velocity_splitter_node" name="object_velocity_splitter" output="both">
     <remap from="~/input/objects" to="$(var input/objects)"/>
     <remap from="~/output/low_speed_objects" to="$(var output/low_speed_objects)"/>
     <remap from="~/output/high_speed_objects" to="$(var output/high_speed_objects)"/>

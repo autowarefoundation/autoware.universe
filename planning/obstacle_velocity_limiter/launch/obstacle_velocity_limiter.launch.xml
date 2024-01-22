@@ -12,7 +12,7 @@
   <arg name="param_path" default="$(find-pkg-share obstacle_velocity_limiter)/config/default_obstacle_velocity_limiter.param.yaml"/>
   <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
 
-  <node pkg="obstacle_velocity_limiter" exec="obstacle_velocity_limiter" name="obstacle_velocity_limiter" output="screen">
+  <node pkg="obstacle_velocity_limiter" exec="obstacle_velocity_limiter" name="obstacle_velocity_limiter" output="both">
     <param from="$(var param_path)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>

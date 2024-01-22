@@ -5,16 +5,16 @@
   <arg name="perception_param_path" default="$(find-pkg-share autoware_auto_msgs_adapter)/config/autoware_auto_msgs_adapter_perception.param.yaml"/>
   <arg name="planning_param_path" default="$(find-pkg-share autoware_auto_msgs_adapter)/config/autoware_auto_msgs_adapter_planning.param.yaml"/>
 
-  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_control" output="screen">
+  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_control" output="both">
     <param from="$(var control_param_path)"/>
   </node>
-  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_map" output="screen">
+  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_map" output="both">
     <param from="$(var map_param_path)"/>
   </node>
-  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_perception" output="screen">
+  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_perception" output="both">
     <param from="$(var perception_param_path)"/>
   </node>
-  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_planning" output="screen">
+  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_planning" output="both">
     <param from="$(var planning_param_path)"/>
   </node>
 </launch>

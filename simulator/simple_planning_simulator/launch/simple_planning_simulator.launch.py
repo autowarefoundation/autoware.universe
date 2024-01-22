@@ -45,7 +45,7 @@ def launch_setup(context, *args, **kwargs):
         executable="simple_planning_simulator_exe",
         name="simple_planning_simulator",
         namespace="simulation",
-        output="screen",
+        output="both",
         parameters=[
             vehicle_info_param,
             vehicle_characteristics_param,
@@ -82,7 +82,7 @@ def launch_setup(context, *args, **kwargs):
         package="tf2_ros",
         executable="static_transform_publisher",
         name="static_map_to_odom_tf_publisher",
-        output="screen",
+        output="both",
         arguments=[
             "--frame-id",
             "map",

@@ -29,7 +29,7 @@ def generate_test_description():
         executable="lidar_apollo_segmentation_tvm_nodes_exe",
         name="lidar_apollo_segmentation_tvm_nodes",
         namespace="benchmark",
-        output="screen",
+        output="both",
         parameters=[
             os.path.join(
                 get_package_share_directory("lidar_apollo_segmentation_tvm_nodes"),

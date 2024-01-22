@@ -147,7 +147,7 @@
 
   <!-- traffic_light_multi_camera_fusion -->
   <group>
-    <node pkg="traffic_light_multi_camera_fusion" exec="traffic_light_multi_camera_fusion_node" name="traffic_light_multi_camera_fusion" output="screen">
+    <node pkg="traffic_light_multi_camera_fusion" exec="traffic_light_multi_camera_fusion_node" name="traffic_light_multi_camera_fusion" output="both">
       <param name="camera_namespaces" value="$(var all_camera_namespaces)"/>
       <param name="perform_group_fusion" value="true"/>
       <remap from="~/input/vector_map" to="/map/vector_map"/>
@@ -156,7 +156,7 @@
   </group>
 
   <group if="$(var use_crosswalk_traffic_light_estimator)">
-    <node pkg="crosswalk_traffic_light_estimator" exec="crosswalk_traffic_light_estimator_node" name="crosswalk_traffic_light_estimator" output="screen">
+    <node pkg="crosswalk_traffic_light_estimator" exec="crosswalk_traffic_light_estimator_node" name="crosswalk_traffic_light_estimator" output="both">
       <remap from="~/input/vector_map" to="/map/vector_map"/>
       <remap from="~/input/route" to="/planning/mission_planning/route"/>
       <remap from="~/input/classified/traffic_signals" to="$(var fusion/traffic_signals)"/>
@@ -166,7 +166,7 @@
   </group>
 
   <group unless="$(var use_crosswalk_traffic_light_estimator)">
-    <node pkg="topic_tools" exec="relay" name="fusion_signals_relay" output="screen">
+    <node pkg="topic_tools" exec="relay" name="fusion_signals_relay" output="both">
       <param name="input_topic" value="$(var fusion/traffic_signals)"/>
       <param name="output_topic" value="$(var internal/traffic_signals)"/>
       <param name="type" value="autoware_auto_perception_msgs/msg/TrafficSignalArray"/>

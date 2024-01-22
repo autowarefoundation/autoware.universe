@@ -34,7 +34,7 @@ def generate_test_description():
     static_centerline_optimizer_node = Node(
         package="static_centerline_optimizer",
         executable="main",
-        output="screen",
+        output="both",
         parameters=[
             {"lanelet2_map_path": lanelet2_map_path},
             {"run_background": False},

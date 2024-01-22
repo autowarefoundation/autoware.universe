@@ -70,7 +70,7 @@ def launch_setup(context, *args, **kwargs):
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=composable_nodes,
         condition=UnlessCondition(LaunchConfiguration("use_pointcloud_container")),
-        output="screen",
+        output="both",
     )
 
     load_composable_nodes = LoadComposableNodes(

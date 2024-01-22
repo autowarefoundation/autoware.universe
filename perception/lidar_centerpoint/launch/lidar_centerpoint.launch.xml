@@ -11,7 +11,7 @@
   <arg name="has_twist" default="false"/>
   <arg name="build_only" default="false" description="shutdown node after TensorRT engine file is built"/>
 
-  <node pkg="lidar_centerpoint" exec="lidar_centerpoint_node" name="lidar_centerpoint" output="screen">
+  <node pkg="lidar_centerpoint" exec="lidar_centerpoint_node" name="lidar_centerpoint" output="both">
     <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
     <remap from="~/output/objects" to="$(var output/objects)"/>
     <param name="score_threshold" value="$(var score_threshold)"/>

@@ -8,7 +8,7 @@
   <arg name="use_twist_yaw_compensation" default="false"/>
   <arg name="static_object_speed_threshold" default="1.0"/>
 
-  <node pkg="radar_tracks_msgs_converter" exec="radar_tracks_msgs_converter_node" name="radar_tracks_msgs_converter" output="screen">
+  <node pkg="radar_tracks_msgs_converter" exec="radar_tracks_msgs_converter_node" name="radar_tracks_msgs_converter" output="both">
     <remap from="~/input/radar_objects" to="$(var input/radar_objects)"/>
     <remap from="~/input/odometry" to="$(var input/odometry)"/>
     <remap from="~/output/radar_detected_objects" to="$(var output/radar_detected_objects)"/>

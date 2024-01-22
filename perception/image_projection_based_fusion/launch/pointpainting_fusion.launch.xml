@@ -39,7 +39,7 @@
   <arg name="input/image6" default="/image_raw6"/>
   <arg name="input/image7" default="/image_raw7"/>
   <group>
-    <node pkg="image_projection_based_fusion" exec="pointpainting_fusion_node" name="pointpainting" output="screen">
+    <node pkg="image_projection_based_fusion" exec="pointpainting_fusion_node" name="pointpainting" output="both">
       <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
       <remap from="~/output/objects" to="$(var output/objects)"/>
       <param name="trt_precision" value="fp16"/>

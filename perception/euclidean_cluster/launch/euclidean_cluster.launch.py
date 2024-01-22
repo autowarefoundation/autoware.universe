@@ -75,7 +75,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=[],
-        output="screen",
+        output="both",
     )
 
     use_low_height_pointcloud_loader = LoadComposableNodes(

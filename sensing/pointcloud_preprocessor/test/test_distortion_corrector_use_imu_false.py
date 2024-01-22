@@ -64,7 +64,7 @@ def generate_test_description():
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=nodes,
-        output="screen",
+        output="both",
     )
 
     return launch.LaunchDescription(

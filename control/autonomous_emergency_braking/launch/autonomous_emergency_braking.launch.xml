@@ -6,7 +6,7 @@
   <arg name="input_odometry" default="/localization/kinematic_state"/>
   <arg name="input_predicted_trajectory" default="/control/trajectory_follower/lateral/predicted_trajectory"/>
 
-  <node pkg="autonomous_emergency_braking" exec="autonomous_emergency_braking" name="autonomous_emergency_braking" output="screen">
+  <node pkg="autonomous_emergency_braking" exec="autonomous_emergency_braking" name="autonomous_emergency_braking" output="both">
     <!-- load config files -->
     <param from="$(var param_path)"/>
     <!-- remap topic name -->

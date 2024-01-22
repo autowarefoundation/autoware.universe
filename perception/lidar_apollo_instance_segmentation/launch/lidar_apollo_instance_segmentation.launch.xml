@@ -16,7 +16,7 @@
 
   <arg name="precision" default="fp32"/>
 
-  <node pkg="lidar_apollo_instance_segmentation" exec="lidar_apollo_instance_segmentation_node" name="lidar_apollo_instance_segmentation" output="screen">
+  <node pkg="lidar_apollo_instance_segmentation" exec="lidar_apollo_instance_segmentation_node" name="lidar_apollo_instance_segmentation" output="both">
     <remap from="input/pointcloud" to="$(var input/pointcloud)"/>
     <remap from="output/labeled_clusters" to="$(var output/objects)"/>
     <param name="onnx_file" value="$(var trained_onnx_file)"/>

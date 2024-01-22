@@ -8,7 +8,7 @@
   <arg name="input_topics" default="[]"/>
 
   <!-- Node -->
-  <node pkg="simple_object_merger" exec="simple_object_merger_node" name="simple_object_merger" output="screen">
+  <node pkg="simple_object_merger" exec="simple_object_merger_node" name="simple_object_merger" output="both">
     <remap from="~/output/objects" to="$(var output/objects)"/>
     <param name="update_rate_hz" value="$(var update_rate_hz)"/>
     <param name="timeout_threshold" value="$(var timeout_threshold)"/>

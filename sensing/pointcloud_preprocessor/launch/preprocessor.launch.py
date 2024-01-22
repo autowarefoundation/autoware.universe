@@ -128,7 +128,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=concat_components + [cropbox_component],
-        output="screen",
+        output="both",
     )
 
     # check the size of input_points_raw_list

@@ -76,7 +76,7 @@ def launch_setup(context, *args, **kwargs):
         namespace=ns,
         executable="component_container",
         composable_node_descriptions=[],
-        output="screen",
+        output="both",
     )
 
     use_low_height_pointcloud_loader = LoadComposableNodes(

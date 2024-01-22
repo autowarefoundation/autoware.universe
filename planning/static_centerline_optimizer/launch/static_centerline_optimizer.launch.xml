@@ -80,5 +80,5 @@
   </node>
 
   <!-- rviz -->
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share static_centerline_optimizer)/rviz/static_centerline_optimizer.rviz" if="$(var rviz)"/>
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="both" args="-d $(find-pkg-share static_centerline_optimizer)/rviz/static_centerline_optimizer.rviz" if="$(var rviz)"/>
 </launch>
