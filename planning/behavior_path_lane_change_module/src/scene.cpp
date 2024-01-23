@@ -420,6 +420,7 @@ void NormalLaneChange::resetParameters()
   is_abort_approval_requested_ = false;
   current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_ = nullptr;
+  status_ = {};
 
   object_debug_.clear();
 }

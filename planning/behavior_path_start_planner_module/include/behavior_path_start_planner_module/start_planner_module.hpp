@@ -139,7 +139,7 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override;
+  bool canTransitIdleToWaitingApprovalState() override;
 
   /**
    * @brief init member variables.

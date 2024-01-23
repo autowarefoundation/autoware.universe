@@ -49,10 +49,12 @@ LaneChangeInterface::LaneChangeInterface(
 
 void LaneChangeInterface::processOnEntry()
 {
-  waitApproval();
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
+  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
+  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   module_type_->updateLaneChangeStatus();
+  setObjectDebugVisualization();
 }
 
 void LaneChangeInterface::processOnExit()
@@ -80,6 +82,8 @@ void LaneChangeInterface::updateData()
 {
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
+  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
+  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   module_type_->updateSpecialData();
   module_type_->resetStopPose();
 }
@@ -87,6 +91,7 @@ void LaneChangeInterface::updateData()
 void LaneChangeInterface::postProcess()
 {
   post_process_safety_status_ = module_type_->isApprovedPathSafe();
+  setObjectDebugVisualization();
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
@@ -98,8 +103,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     return {};
   }
 
-  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
-  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   auto output = module_type_->generateOutput();
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
   *prev_approved_path_ = getPreviousModuleOutput().path;
@@ -112,7 +115,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   }
 
   updateSteeringFactorPtr(output);
-  clearWaitingApproval();
 
   return output;
 }
@@ -129,8 +131,6 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
 
-  module_type_->setPreviousModulePaths(
-    getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
   module_type_->updateLaneChangeStatus();
   setObjectDebugVisualization();
 
@@ -226,7 +226,6 @@ bool LaneChangeInterface::canTransitFailureState()
   };
 
   log_debug_throttled(__func__);
-
   if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has on going.");
     return false;
@@ -293,26 +292,8 @@ bool LaneChangeInterface::canTransitFailureState()
   return false;
 }
 
-bool LaneChangeInterface::canTransitIdleToRunningState()
+bool LaneChangeInterface::canTransitIdleToWaitingApprovalState()
 {
-  setObjectDebugVisualization();
-
-  auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_DEBUG(getLogger(), "%s", message.data());
-  };
-
-  log_debug_throttled(__func__);
-
-  if (!isActivated() || isWaitingApproval()) {
-    if (module_type_->specialRequiredCheck()) {
-      return true;
-    }
-    log_debug_throttled("Module is idling.");
-    return false;
-  }
-
-  log_debug_throttled("Can lane change safely. Executing lane change.");
-  module_type_->toNormalState();
   return true;
 }
 

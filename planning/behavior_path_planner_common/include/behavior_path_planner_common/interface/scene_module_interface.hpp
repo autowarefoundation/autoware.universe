@@ -373,9 +373,9 @@ private:
       RCLCPP_DEBUG(getLogger(), "%s", message.data());
     };
     if (current_state_ == ModuleStatus::IDLE) {
-      if (canTransitIdleToRunningState()) {
+      if (canTransitIdleToWaitingApprovalState()) {
         log_debug_throttled("transiting from IDLE to RUNNING");
-        return ModuleStatus::RUNNING;
+        return ModuleStatus::WAITING_APPROVAL;
       }
 
       log_debug_throttled("transiting from IDLE to IDLE");
@@ -462,7 +462,7 @@ protected:
   /**
    * @brief State transition condition IDLE -> RUNNING
    */
-  virtual bool canTransitIdleToRunningState() = 0;
+  virtual bool canTransitIdleToWaitingApprovalState() = 0;
 
   /**
    * @brief Get candidate path. This information is used for external judgement.
