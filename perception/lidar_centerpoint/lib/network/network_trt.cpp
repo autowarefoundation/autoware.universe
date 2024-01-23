@@ -14,8 +14,6 @@
 
 #include "lidar_centerpoint/network/network_trt.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
 namespace centerpoint
 {
 bool VoxelEncoderTRT::setProfile(
