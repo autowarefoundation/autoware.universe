@@ -130,7 +130,7 @@ OverlayTextDisplay::OverlayTextDisplay()
   font_property_ = new rviz_common::properties::EnumProperty(
     "font", "DejaVu Sans Mono", "font", this, SLOT(updateFont()));
   for (ssize_t i = 0; i < font_families_.size(); i++) {
-    font_property_->addOption(font_families_[i], static_cast<int>(i);
+    font_property_->addOption(font_families_[i], static_cast<int>(i));
   }
 }
 
