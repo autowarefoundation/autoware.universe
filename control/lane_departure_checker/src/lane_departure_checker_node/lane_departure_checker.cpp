@@ -167,6 +167,29 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
   return willLeaveLane(candidate_lanelets, vehicle_footprints);
 }
 
+DerivativeDeviation LaneDepartureChecker::calcLongitudinalDeviationDerivatives(
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold, const double yaw_threshold)
+{
+  const auto nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    trajectory.points, pose, dist_threshold, yaw_threshold);
+
+  DerivativeDeviation der_deviation;
+
+  const auto & point = trajectory.points.at(nearest_idx);
+  const auto vel = point.twist.linear.x;
+  const auto acc = point.accel.linear.x;
+
+  const auto & ref_point = trajectory.points.at(nearest_idx);
+  const auto ref_vel = ref_point.twist.linear.x;
+  const auto ref_acc = ref_point.accel.linear.x;
+
+  der_deviation.longitudinal_vel = vel - ref_vel;
+  der_deviation.longitudinal_acc = acc - ref_acc;
+
+  return der_deviation;
+} 
+
 PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
   const double yaw_threshold)
