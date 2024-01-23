@@ -36,8 +36,8 @@
 
   <!-- Camera-Lidar-Radar fusion based detection -->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_radar_fusion&quot;')">
-    <!-- Detectior -->
-    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/camera_lidar_radar_fusion_based_detection.launch.xml">
+    <!-- Camera-Lidar detectiors -->
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/camera_lidar_fusion_based_detection.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="image_raw0" value="$(var image_raw0)"/>
       <arg name="camera_info0" value="$(var camera_info0)"/>
@@ -63,12 +63,21 @@
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
       <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
-      <arg name="input/radar" value="$(var input/radar)"/>
-      <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
-      <arg name="roi_cluster_fusion_param_path" value="$(var roi_cluster_fusion_param_path)"/>
-      <arg name="roi_pointcloud_fusion_param_path" value="$(var roi_pointcloud_fusion_param_path)"/>
-      <arg name="roi_detected_object_fusion_param_path" value="$(var roi_detected_object_fusion_param_path)"/>
     </include>
+    <!-- Radar detector-->
+    <group>
+      <push-ros-namespace namespace="radar"/>
+      <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/radar_detector.launch.xml">
+        <arg name="input/radar" value="$(var input/radar)"/>
+        <arg name="output/objects" value="far_objects"/>
+        <arg name="filter/angle_threshold" value="1.0472"/>
+        <arg name="filter/velocity_threshold" value="3.0"/>
+        <arg name="split/velocity_threshold" value="4.5"/>
+        <arg name="split_range" value="70.0"/>
+        <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
+        <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
+      </include>
+    </group>
     <!-- Object merger -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/merger/camera_lidar_radar_merger.launch.xml">
       <arg name="image_raw0" value="$(var image_raw0)"/>
@@ -97,7 +106,7 @@
 
   <!-- Camera-Lidar fusion based detection -->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_fusion&quot;')">
-    <!-- Detectior -->
+    <!-- Camera-Lidar detectiors -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/camera_lidar_fusion_based_detection.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="image_raw0" value="$(var image_raw0)"/>
@@ -152,18 +161,28 @@
 
   <!-- Lidar-Radar fusion based detection -->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;lidar_radar_fusion&quot;')">
-    <!-- Detectior -->
-    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/lidar_radar_based_detection.launch.xml">
-      <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
-      <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
-      <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
-      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
-      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
-      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
-      <arg name="input/radar" value="$(var input/radar)"/>
-      <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
-      <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
-    </include>
+    <!-- Radar detector-->
+    <group>
+      <push-ros-namespace namespace="radar"/>
+      <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/radar_detector.launch.xml">
+        <arg name="input/radar" value="$(var input/radar)"/>
+        <arg name="output/objects" value="far_objects"/>
+        <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
+        <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
+      </include>
+    </group>
+    <!-- LiDAR detectors-->
+    <group>
+      <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/lidar_based_detection.launch.xml">
+        <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
+        <arg name="output/objects" value="lidar/objects"/>
+        <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+        <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
+        <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
+        <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
+        <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+      </include>
+    </group>
     <!-- Lidar object merger -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/merger/lidar_merger.launch.xml">
       <arg name="output/objects" value="lidar/objects"/>
@@ -181,7 +200,7 @@
 
   <!-- Lidar based detection -->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;lidar&quot;')">
-    <!-- Detectior -->
+    <!-- LiDAR detectors-->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/lidar_based_detection.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
@@ -191,7 +210,7 @@
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
     </include>
-    <!-- Object merger -->
+    <!-- Lidar object merger -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/merger/lidar_merger.launch.xml">
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
       <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
@@ -200,9 +219,9 @@
   </group>
 
   <!-- Radar based detection -->
-  <!-- Detectior -->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;radar&quot;')">
-    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/radar_based_detection.launch.xml">
+    <!-- Radar detector-->
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/radar_detector.launch.xml">
       <arg name="input/radar" value="$(var input/radar)"/>
       <arg name="output/objects" value="objects"/>
       <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
