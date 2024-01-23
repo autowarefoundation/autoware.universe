@@ -44,11 +44,11 @@ SimModelPymodels::SimModelPymodels(
       (char*)nullptr,
       (char*)"KinematicBicycleSteerVel"
     },
-    // {
-    //   (char*)"control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis",
-    //   (char*)"$HOME/f1tenth/ws_testing/base_model_save",
-    //   (char*)"SimpleSteeringHyst"
-    // },
+    {
+      (char*)"control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis",
+      (char*)"$HOME/autoware_model_params/base_model_save",
+      (char*)"SimpleSteeringHyst"
+    },
     {
       (char*)"control_analysis_pipeline.model.base_model.base_model_simple_velocity",
       (char*)nullptr,
@@ -58,33 +58,12 @@ SimModelPymodels::SimModelPymodels(
   
   vehicle.addSubmodel(model_desc[0]);
   vehicle.addSubmodel(model_desc[1]); 
-  
-
-
-
-  std::vector<std::tuple<char*, char*, char*>> error_model_desc = {
-    {
-      (char*)"control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis",
-      (char*)"$HOME/autoware_model_params/base_model_save",
-      (char*)"SimpleSteeringHyst"
-    },
-    {
-      (char*)"control_analysis_pipeline.model.error_model.error_debug_model",
-      (char*)nullptr,
-      (char*)"ErrorDebugModel"
-    },
-  };
-  
-  // vehicle.AddSubmodel(model_desc[1]);
-  vehicle.addSubmodelBaseError(error_model_desc[0], error_model_desc[1]);
-
-
-
+  vehicle.addSubmodel(model_desc[2]); 
 
   vehicle.generateConnections(input_names, state_names);
 
   std::cout << dt << std::endl;
-  std::cout << "OKAAAAAYYYYYYY" << std::endl;
+  std::cout << "Python model loaded successfully " << std::endl;
 }
 
 double SimModelPymodels::getX()

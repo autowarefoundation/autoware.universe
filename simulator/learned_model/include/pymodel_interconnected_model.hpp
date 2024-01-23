@@ -1,7 +1,7 @@
 #ifndef LEARNED_MODEL__SIM_PYMODEL_INTERCONNECTED_MODEL_
 #define LEARNED_MODEL__SIM_PYMODEL_INTERCONNECTED_MODEL_
 
-#include "pymodel_base_error.hpp"
+// #include "pymodel_base_error.hpp"
 #include "pymodel_interface.hpp"
 #include "pymodel_simple_model.hpp"
 #include "model_connections_helpers.hpp"
@@ -128,17 +128,17 @@ public:
     submodels.push_back(std::unique_ptr<PymodelSimpleModel>(new_model));
   }
 
-  /**
-   * @brief add a sub-model consisting of base + error sub-model
-   * @param [in] base_desc descriptor of base sub-model
-   * @param [in] error_desc descriptor of error sub-model
-   */
-  void addSubmodelBaseError(
-    std::tuple<char *, char *, char *> base_desc, std::tuple<char *, char *, char *> error_desc)
-  {
-    submodels.push_back(
-      std::unique_ptr<SimPymodelBaseError>(new SimPymodelBaseError(base_desc, error_desc)));
-  }
+  // /**
+  //  * @brief add a sub-model consisting of base + error sub-model
+  //  * @param [in] base_desc descriptor of base sub-model
+  //  * @param [in] error_desc descriptor of error sub-model
+  //  */
+  // void addSubmodelBaseError(
+  //   std::tuple<char *, char *, char *> base_desc, std::tuple<char *, char *, char *> error_desc)
+  // {
+  //   submodels.push_back(
+  //     std::unique_ptr<SimPymodelBaseError>(new SimPymodelBaseError(base_desc, error_desc)));
+  // }
 
   /**
    * @brief set a new model state if it was changed using PSIM interface (mainly position and orientation)
