@@ -30,8 +30,6 @@ private:
   std::vector<char*> pymodel_state_names;
 
 public:
-  std::vector<double> signals_w_delayed_input;
-
   /**
    * @brief constructor
    * @param [in] pymodel_import_name_ path to python model
@@ -105,9 +103,7 @@ public:
 
     // map outputs from python model to required outputs
     std::vector<double> next_state = fillVectorUsingMap(py_state_next, model_signals_vec_next, map_pyout_to_sig_vec, false);
-
-    signals_w_delayed_input = fillVectorUsingMap(action_delayed, model_signals_vec_next, map_sig_vec_to_pyin, false);
-
+    
     return next_state;
   }
 
