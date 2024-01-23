@@ -70,6 +70,10 @@ private:
   std::optional<geometry_msgs::msg::Point> createCollisionPointForStopObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle) const;
+  std::optional<CruiseObstacle> createYieldCruiseObstacle(
+    const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points);
+  std::optional<CruiseObstacle> findYieldCruiseObstacle(
+    const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points);
   std::optional<CruiseObstacle> createCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle, const double precise_lat_dist);
@@ -197,6 +201,7 @@ private:
     int successive_num_to_exit_slow_down_condition;
     // consideration for the current ego pose
     bool enable_to_consider_current_pose{false};
+    bool allow_yield{false};
     double time_to_convergence{1.5};
   };
   BehaviorDeterminationParam behavior_determination_param_;
