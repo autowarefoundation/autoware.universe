@@ -38,8 +38,8 @@ TEST(SharedData, callback_invoked_correctly)
 
   EXPECT_TRUE(variable.has_value());
   EXPECT_TRUE(callback_invoked);
-  EXPECT_EQ(variable(), expected_value);
-  EXPECT_EQ(processed_value, 2 * expected_value);
+  EXPECT_TRUE(variable() == expected_value);
+  EXPECT_TRUE(processed_value == 2 * expected_value);
 }
 
 TEST(SharedData, multimple_callback_invoked_correctly)
@@ -55,5 +55,5 @@ TEST(SharedData, multimple_callback_invoked_correctly)
   // set value and invoke callback
   variable.set_and_invoke(10);
 
-  EXPECT_TRUE(callback_invoked_num == 3);
+  EXPECT_EQ(callback_invoked_num, 3);
 }

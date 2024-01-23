@@ -26,7 +26,7 @@ Particularly, NDT and YabLoc are computationally intensive, and it's not recomme
 Also, even if both can be activated at the same time, the Kalman Filter may be affected by one of them giving bad output.
 
 > [!NOTE]
-> By default, **there is only a rule implemented that only enables all pose_estimators.**
+> Currently, **there is ONLY A RULE implemented that always enables all pose_estimators.**
 > If users want to toggle pose_estimator with their own rules, they need to add new rules. by referring to example_rule.
 > The [example_rule](example_rule/README.md) has source code that can be used as a reference for implementing the rules.
 
@@ -41,10 +41,7 @@ Also, even if both can be activated at the same time, the Kalman Filter may be a
 
 The following video demonstrates the switching of four different pose estimators.
 
-> [!NOTE]
-> TODO(KYabuuchi) The following video is obsolete.
-
-<div><video controls src="https://github-production-user-asset-6210df.s3.amazonaws.com/24854875/295755577-62b26fdd-dcf0-4b1c-a1a0-ecd633413196.mp4" muted="false" width="800"></video></div>
+<div><video controls src="https://github.com/autowarefoundation/autoware.universe/assets/24854875/d4d48be4-748e-4ffc-bde2-d498911ed3a1" muted="false" width="800"></video></div>
 
 Users can reproduce the demonstration using the following data and launch command:
 
@@ -115,20 +112,14 @@ For switching rule:
 
 ## Trouble Shooting
 
-If it does not work, users can get more information in the following ways.
+If it does not seems to work, users can get more information in the following ways.
 
-- visualize debug log
-
-```bash
-ros2 service call /localization/pose_estimator_arbiter/config_logger logging_demo/srv/ConfigLogger \
-  '{logger_name: localization.pose_estimator_arbiter, level: debug}'
-```
-
-- check debug string topic
-
-```bash
-ros2 topic echo /localization/pose_estimator_arbiter/debug/string
-```
+> [!TIP]
+>
+> ```bash
+> ros2 service call /localization/pose_estimator_arbiter/config_logger logging_demo/srv/ConfigLogger \
+>   '{logger_name: localization.pose_estimator_arbiter, level: debug}'
+> ```
 
 ## Architecture
 
@@ -180,6 +171,9 @@ The ArTag stopper relays image topics in the front side of the landmark localize
 
 ## How to launch
 
+<details>
+<summary>Click to show details</summary>
+
 The user can launch the desired pose_estimators by giving the pose_estimator names as a concatenation of underscores for the runtime argument `pose_source`.
 
 ```bash
@@ -202,8 +196,12 @@ Please see the table below for details.
 | `pose_source:=ndt_yabloc_eagleye`           | `["ndt","yabloc","eagleye"]`                         |
 | `pose_source:=ndt_yabloc_nan_eagleye_artag` | `["ndt","yabloc","eagleye","artag"]`                 |
 
+</details>
+
 ## Switching Rules
 
+<details>
+<summary>Click to show details</summary>
 Currently, **ONLY ONE RULE** (`enable_all_rule`) is implemented.
 In the future, several rules will be implemented and users will be able to select rules.
 
@@ -219,6 +217,8 @@ flowchart LR
   A{ }
   A --whatever --> _A[enable all pose_estimators]
 ```
+
+</details>
 
 ## Pose Initialization
 
@@ -259,6 +259,9 @@ This table's usage is described from three perspectives:
 
 ## Future Plans
 
+<details>
+<summary>Click to show details</summary>
+
 ### gradually switching
 
 In the future, this package will provide not only ON/OFF switching, but also a mechanism for low frequency operation, such as 50% NDT & 50% YabLoc.
@@ -275,3 +278,5 @@ In such cases, there may not be generally applicable solutions, but the followin
 3. The multiple pose_estimator **does not support** that particular pose_estimator.
 
 Please note that this issue is fundamental to realizing multiple pose_estimators, and it will arise regardless of the architecture proposed in this case.
+
+</details>
