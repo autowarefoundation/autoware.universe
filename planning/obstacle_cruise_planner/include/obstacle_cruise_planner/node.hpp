@@ -201,7 +201,7 @@ private:
     int successive_num_to_exit_slow_down_condition;
     // consideration for the current ego pose
     bool enable_to_consider_current_pose{false};
-    bool allow_yield{false};
+    bool enable_yield{false};
     double time_to_convergence{1.5};
   };
   BehaviorDeterminationParam behavior_determination_param_;

@@ -248,7 +248,7 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     node.declare_parameter<double>("behavior_determination.stop.max_lat_margin");
   max_lat_margin_for_cruise =
     node.declare_parameter<double>("behavior_determination.cruise.max_lat_margin");
-  allow_yield = node.declare_parameter<bool>("behavior_determination.cruise.allow_yield");
+  enable_yield = node.declare_parameter<bool>("behavior_determination.cruise.enable_yield");
   max_lat_margin_for_slow_down =
     node.declare_parameter<double>("behavior_determination.slow_down.max_lat_margin");
   lat_hysteresis_margin_for_slow_down =
@@ -305,7 +305,7 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.cruise.max_lat_margin", max_lat_margin_for_cruise);
   tier4_autoware_utils::updateParam<bool>(
-    parameters, "behavior_determination.slow_down.allow_yield", allow_yield);
+    parameters, "behavior_determination.cruise.enable_yield", enable_yield);
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.slow_down.max_lat_margin", max_lat_margin_for_slow_down);
   tier4_autoware_utils::updateParam<double>(
@@ -646,7 +646,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
   }
 
   // Sort from closest to farthest obstacle
-  if (behavior_determination_param_.allow_yield) {
+  if (behavior_determination_param_.enable_yield) {
     std::sort(
       target_obstacles.begin(), target_obstacles.end(), [](const auto & o1, const auto & o2) {
         return o1.ego_to_obstacle_distance < o2.ego_to_obstacle_distance;
