@@ -21,11 +21,11 @@
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
+#include "behavior_path_start_planner_module/data_structs.hpp"
 #include "behavior_path_start_planner_module/freespace_pull_out.hpp"
 #include "behavior_path_start_planner_module/geometric_pull_out.hpp"
 #include "behavior_path_start_planner_module/pull_out_path.hpp"
 #include "behavior_path_start_planner_module/shift_pull_out.hpp"
-#include "behavior_path_start_planner_module/start_planner_parameters.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
@@ -191,7 +191,7 @@ private:
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
-  mutable StartGoalPlannerData start_planner_data_;
+  mutable StartPlannerDebugData debug_data_;
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
@@ -242,6 +242,8 @@ private:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
+  void updateDrivableLanes();
+  lanelet::ConstLanelets createDrivableLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.
   bool isGoalBehindOfEgoInSameRouteSegment() const;
