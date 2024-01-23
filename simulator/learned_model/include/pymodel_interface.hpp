@@ -1,6 +1,8 @@
 #ifndef LEARNED_MODEL__PYMODEL_INTERFACE_HPP_
 #define LEARNED_MODEL__PYMODEL_INTERFACE_HPP_
 
+#include <vector>
+
 class PymodelInterface
  {  
  public:
