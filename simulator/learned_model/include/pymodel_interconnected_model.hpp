@@ -9,11 +9,10 @@
 #include <dlfcn.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
-
 #include <algorithm>
 
 namespace py = pybind11;
-// sim_pymodel_steer_vel
+
 class InterconnectedModel
 {
   int num_signals;
@@ -23,12 +22,11 @@ class InterconnectedModel
 
   std::vector<std::unique_ptr<PymodelInterface>> submodels;
 
-  std::vector<int>
-    map_in_to_sig_vec;  // index in "map_in_to_pyin" is index in "py_inputs" and value in
-                        // "map_in_to_pyin" is index in "all_variables_names"
-  std::vector<int>
-    map_sig_vec_to_out;  // index in "map_pyout_to_out" is index in "pymodel_outputs" and value in
-                         // "map_pyout_to_out" is index in "all_variables_names"
+  // index in "map_in_to_sig_vec" is index in "py_inputs" and value in "map_in_to_sig_vec" is index in "all_variables_names"
+  std::vector<int> map_in_to_sig_vec;  
+
+  // index in "map_sig_vec_to_out" is index in "pymodel_outputs" and value in "map_sig_vec_to_out" is index in "all_variables_names"
+  std::vector<int> map_sig_vec_to_out;  
 
 public:
   py::scoped_interpreter guard{};  // start the interpreter and keep it alive
@@ -39,9 +37,8 @@ public:
   InterconnectedModel()
   {
     // Initialize python library
-    dlopen(
-      "libpython3.10.so",
-      RTLD_GLOBAL | RTLD_NOW);  // Manually load libpython3.10.so as we need it for python.h.
+    // Manually load libpython3.10.so as we need it for python.h.
+    dlopen("libpython3.10.so", RTLD_GLOBAL | RTLD_NOW);
     /*
     More about the line above here:
       https://stackoverflow.com/questions/60719987/embedding-python-which-uses-numpy-in-c-doesnt-work-in-library-dynamically-loa
@@ -127,8 +124,8 @@ public:
   void addSubmodel(std::tuple<char *, char *, char *> submodel_desc)
   {
     const auto [lib_path, param_path, class_name] = submodel_desc;
-    submodels.push_back(std::unique_ptr<PymodelSimpleModel>(
-      new PymodelSimpleModel(lib_path, param_path, class_name)));
+    auto new_model = new PymodelSimpleModel(lib_path, param_path, class_name);
+    submodels.push_back(std::unique_ptr<PymodelSimpleModel>(new_model));
   }
 
   /**
@@ -139,9 +136,6 @@ public:
   void addSubmodelBaseError(
     std::tuple<char *, char *, char *> base_desc, std::tuple<char *, char *, char *> error_desc)
   {
-    // SimPymodelBaseError pymodel(base_desc, error_desc);
-    // submodels.push_back(pymodel);
-    std::cout << "HAHA111" << std::endl;
     submodels.push_back(
       std::unique_ptr<SimPymodelBaseError>(new SimPymodelBaseError(base_desc, error_desc)));
   }
@@ -155,16 +149,14 @@ public:
     bool state_changed_externally = false;
 
     for (size_t PSIM_STATE_IDX = 0; PSIM_STATE_IDX < new_state.size(); PSIM_STATE_IDX++) {
-      if (
-        abs(model_signals_vec[map_sig_vec_to_out[PSIM_STATE_IDX]] - new_state[PSIM_STATE_IDX]) >
-        1e-6) {
+      if (abs(model_signals_vec[map_sig_vec_to_out[PSIM_STATE_IDX]] - new_state[PSIM_STATE_IDX]) > 1e-6) {
         state_changed_externally = true;
         break;
       }
     }
 
     if (state_changed_externally) {
-      std::cout << "Reseting model...  ----***----" << std::endl;
+      std::cout << "Reseting model" << std::endl;
 
       std::fill(model_signals_vec.begin(), model_signals_vec.end(), 0.0);
 
