@@ -230,6 +230,13 @@ struct LastApprovalData
   Pose pose{};
 };
 
+enum class DecidingPathStatus {
+  NOT_DECIDED,
+  DECIDING,
+  DECIDED,
+};
+using DecidingPathStatusWithStamp = std::pair<DecidingPathStatus, rclcpp::Time>;
+
 struct PreviousPullOverData
 {
   struct SafetyStatus
@@ -240,18 +247,14 @@ struct PreviousPullOverData
 
   void reset()
   {
-    stop_path = nullptr;
-    stop_path_after_approval = nullptr;
     found_path = false;
     safety_status = SafetyStatus{};
-    has_decided_path = false;
+    deciding_path_status = DecidingPathStatusWithStamp{};
   }
 
-  std::shared_ptr<PathWithLaneId> stop_path{nullptr};
-  std::shared_ptr<PathWithLaneId> stop_path_after_approval{nullptr};
   bool found_path{false};
   SafetyStatus safety_status{};
-  bool has_decided_path{false};
+  DecidingPathStatusWithStamp deciding_path_status{};
 };
 
 // store stop_pose_ pointer with reason string
@@ -387,7 +390,7 @@ private:
   ThreadSafeData thread_safe_data_;
 
   std::unique_ptr<LastApprovalData> last_approval_data_{nullptr};
-  PreviousPullOverData prev_data_{nullptr};
+  PreviousPullOverData prev_data_{};
 
   // approximate distance from the start point to the end point of pull_over.
   // this is used as an assumed value to decelerate, etc., before generating the actual path.
@@ -428,7 +431,7 @@ private:
   void decelerateBeforeSearchStart(
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
   PathWithLaneId generateStopPath() const;
-  PathWithLaneId generateFeasibleStopPath() const;
+  PathWithLaneId generateFeasibleStopPath(const PathWithLaneId & path) const;
 
   void keepStoppedWithCurrentPath(PathWithLaneId & path) const;
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
@@ -443,6 +446,8 @@ private:
   bool needPathUpdate(const double path_update_duration) const;
   bool isStuck();
   bool hasDecidedPath() const;
+  bool hasNotDecidedPath() const;
+  DecidingPathStatusWithStamp checkDecidingPathStatus() const;
   void decideVelocity();
   bool foundPullOverPath() const;
   void updateStatus(const BehaviorModuleOutput & output);
@@ -477,19 +482,8 @@ private:
 
   // output setter
   void setOutput(BehaviorModuleOutput & output) const;
-  void setStopPath(BehaviorModuleOutput & output) const;
-  void updatePreviousData(const BehaviorModuleOutput & output);
+  void updatePreviousData();
 
-  /**
-   * @brief Sets a stop path in the current path based on safety conditions and previous paths.
-   *
-   * This function sets a stop path in the current path. Depending on whether the previous safety
-   * judgement against dynamic objects were safe or if a previous stop path existed, it either
-   * generates a new stop path or uses the previous stop path.
-   *
-   * @param output BehaviorModuleOutput
-   */
-  void setStopPathFromCurrentPath(BehaviorModuleOutput & output) const;
   void setModifiedGoal(BehaviorModuleOutput & output) const;
   void setTurnSignalInfo(BehaviorModuleOutput & output) const;
 
