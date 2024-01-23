@@ -240,18 +240,37 @@ struct PreviousPullOverData
 
   void reset()
   {
-    stop_path = nullptr;
-    stop_path_after_approval = nullptr;
     found_path = false;
     safety_status = SafetyStatus{};
     has_decided_path = false;
   }
 
-  std::shared_ptr<PathWithLaneId> stop_path{nullptr};
-  std::shared_ptr<PathWithLaneId> stop_path_after_approval{nullptr};
   bool found_path{false};
   SafetyStatus safety_status{};
   bool has_decided_path{false};
+};
+
+// store stop_pose_ pointer with reason string
+struct PoseWithString
+{
+  std::optional<Pose> * pose;
+  std::string string;
+
+  explicit PoseWithString(std::optional<Pose> * shared_pose) : pose(shared_pose), string("") {}
+
+  void set(const Pose & new_pose, const std::string & new_string)
+  {
+    *pose = new_pose;
+    string = new_string;
+  }
+
+  void set(const std::string & new_string) { string = new_string; }
+
+  void clear()
+  {
+    pose->reset();
+    string = "";
+  }
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -364,7 +383,7 @@ private:
   ThreadSafeData thread_safe_data_;
 
   std::unique_ptr<LastApprovalData> last_approval_data_{nullptr};
-  PreviousPullOverData prev_data_{nullptr};
+  PreviousPullOverData prev_data_{};
 
   // approximate distance from the start point to the end point of pull_over.
   // this is used as an assumed value to decelerate, etc., before generating the actual path.
@@ -385,6 +404,7 @@ private:
 
   // debug
   mutable GoalPlannerDebugData debug_data_;
+  mutable PoseWithString debug_stop_pose_with_info_;
 
   // collision check
   void initializeOccupancyGridMap();
@@ -404,7 +424,7 @@ private:
   void decelerateBeforeSearchStart(
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
   PathWithLaneId generateStopPath() const;
-  PathWithLaneId generateFeasibleStopPath() const;
+  PathWithLaneId generateFeasibleStopPath(const PathWithLaneId & path) const;
 
   void keepStoppedWithCurrentPath(PathWithLaneId & path) const;
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
@@ -453,24 +473,17 @@ private:
 
   // output setter
   void setOutput(BehaviorModuleOutput & output) const;
-  void setStopPath(BehaviorModuleOutput & output) const;
-  void updatePreviousData(const BehaviorModuleOutput & output);
+  void updatePreviousData();
 
-  /**
-   * @brief Sets a stop path in the current path based on safety conditions and previous paths.
-   *
-   * This function sets a stop path in the current path. Depending on whether the previous safety
-   * judgement against dynamic objects were safe or if a previous stop path existed, it either
-   * generates a new stop path or uses the previous stop path.
-   *
-   * @param output BehaviorModuleOutput
-   */
-  void setStopPathFromCurrentPath(BehaviorModuleOutput & output) const;
   void setModifiedGoal(BehaviorModuleOutput & output) const;
   void setTurnSignalInfo(BehaviorModuleOutput & output) const;
 
   // new turn signal
   TurnSignalInfo calcTurnSignalInfo() const;
+
+  std::optional<BehaviorModuleOutput> last_previous_module_output_{};
+  bool hasPreviousModulePathShapeChanged() const;
+  bool hasDeviatedFromLastPreviousModulePath() const;
 
   // timer for generating pull over path candidates in a separate thread
   void onTimer();

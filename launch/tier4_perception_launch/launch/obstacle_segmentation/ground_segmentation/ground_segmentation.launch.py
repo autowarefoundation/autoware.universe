@@ -474,13 +474,7 @@ class GroundSegmentationPipeline:
 def launch_setup(context, *args, **kwargs):
     pipeline = GroundSegmentationPipeline(context)
 
-    glog_component = ComposableNode(
-        package="glog_component",
-        plugin="GlogComponent",
-        name="glog_component",
-    )
-
-    components = [glog_component]
+    components = []
     components.extend(
         pipeline.create_single_frame_obstacle_segmentation_components(
             input_topic=LaunchConfiguration("input/pointcloud"),
@@ -511,7 +505,7 @@ def launch_setup(context, *args, **kwargs):
             )
         )
     individual_container = ComposableNodeContainer(
-        name=LaunchConfiguration("container_name"),
+        name=LaunchConfiguration("individual_container_name"),
         namespace="",
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
@@ -521,7 +515,7 @@ def launch_setup(context, *args, **kwargs):
     )
     pointcloud_container_loader = LoadComposableNodes(
         composable_node_descriptions=components,
-        target_container=LaunchConfiguration("container_name"),
+        target_container=LaunchConfiguration("pointcloud_container_name"),
         condition=IfCondition(LaunchConfiguration("use_pointcloud_container")),
     )
     return [individual_container, pointcloud_container_loader]
@@ -537,7 +531,8 @@ def generate_launch_description():
     add_launch_arg("use_multithread", "False")
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("use_pointcloud_container", "False")
-    add_launch_arg("container_name", "perception_pipeline_container")
+    add_launch_arg("pointcloud_container_name", "pointcloud_container")
+    add_launch_arg("individual_container_name", "ground_segmentation_container")
     add_launch_arg("input/pointcloud", "/sensing/lidar/concatenated/pointcloud")
 
     set_container_executable = SetLaunchConfiguration(
