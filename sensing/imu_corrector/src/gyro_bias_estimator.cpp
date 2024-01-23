@@ -113,7 +113,6 @@ void GyroBiasEstimator::callback_odom(const Odometry::ConstSharedPtr odom_msg_pt
 
 void GyroBiasEstimator::timer_callback()
 {
-
   if (pose_buf_.empty()) {
     diagnostics_info_.summary_message = "Skipped update (pose_buf is empty)";
     return;
@@ -159,7 +158,8 @@ void GyroBiasEstimator::timer_callback()
   const double yaw_vel = yaw_diff / time_diff;
   const bool is_straight = (yaw_vel < straight_motion_ang_vel_upper_limit_);
   if (!is_straight) {
-    diagnostics_info_.summary_message = "Skipped update (yaw angular velocity is greater than straight_motion_ang_vel_upper_limit)";
+    diagnostics_info_.summary_message =
+      "Skipped update (yaw angular velocity is greater than straight_motion_ang_vel_upper_limit)";
     return;
   }
 
@@ -172,7 +172,8 @@ void GyroBiasEstimator::timer_callback()
     RCLCPP_ERROR(
       this->get_logger(), "Please publish TF %s to %s", imu_frame_.c_str(), output_frame_.c_str());
 
-    diagnostics_info_.summary_message = "Skipped update (tf betweeen base and imu is not available)";
+    diagnostics_info_.summary_message =
+      "Skipped update (tf betweeen base and imu is not available)";
     return;
   }
 
@@ -183,8 +184,8 @@ void GyroBiasEstimator::timer_callback()
   updater_.force_update();
 }
 
-void GyroBiasEstimator::validate_gyro_bias(){
-
+void GyroBiasEstimator::validate_gyro_bias()
+{
   // Calculate diagnostics key-values
   diagnostics_info_.gyro_bias_x_for_imu_corrector = gyro_bias_.value().x;
   diagnostics_info_.gyro_bias_y_for_imu_corrector = gyro_bias_.value().y;
@@ -194,7 +195,7 @@ void GyroBiasEstimator::validate_gyro_bias(){
   diagnostics_info_.estimated_gyro_bias_z = gyro_bias_.value().z - angular_velocity_offset_z_;
 
   // Validation
-  const bool is_bias_small_enough = 
+  const bool is_bias_small_enough =
     std::abs(diagnostics_info_.estimated_gyro_bias_x) < gyro_bias_threshold_ &&
     std::abs(diagnostics_info_.estimated_gyro_bias_y) < gyro_bias_threshold_ &&
     std::abs(diagnostics_info_.estimated_gyro_bias_z) < gyro_bias_threshold_;
@@ -205,7 +206,7 @@ void GyroBiasEstimator::validate_gyro_bias(){
     diagnostics_info_.summary_message = "Successfully updated";
   } else {
     diagnostics_info_.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diagnostics_info_.summary_message = 
+    diagnostics_info_.summary_message =
       "Gyro bias may be incorrect. Please calibrate IMU and reflect the result in imu_corrector. "
       "You may also use the output of gyro_bias_estimator.";
   }
