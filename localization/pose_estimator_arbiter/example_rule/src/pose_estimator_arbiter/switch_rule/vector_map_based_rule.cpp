@@ -65,7 +65,7 @@ std::unordered_map<PoseEstimatorType, bool> VectorMapBasedRule::update()
       "pose_estimator_area";
   } else {
     debug_string_ =
-      "Enable no pose_estiamtor: self vehicle is out of the area of all pose_estimator_area";
+      "Enable no pose_estimator: self vehicle is out of the area of all pose_estimator_area";
   }
   RCLCPP_DEBUG(get_logger(), "%s", debug_string_.c_str());
 

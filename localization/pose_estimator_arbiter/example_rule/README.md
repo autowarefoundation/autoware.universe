@@ -32,7 +32,7 @@ flowchart LR
 Rule helpers are auxiliary tools for describing switching rules.
 
 - [PCD occupancy](#pcd-occupancy)
-- [Pose estmator area](#pose-estimator-area)
+- [Pose estimator area](#pose-estimator-area)
 
 #### PCD occupancy
 

@@ -42,7 +42,7 @@ TEST(SharedData, callback_invoked_correctly)
   EXPECT_TRUE(processed_value == 2 * expected_value);
 }
 
-TEST(SharedData, multimple_callback_invoked_correctly)
+TEST(SharedData, multiple_callback_invoked_correctly)
 {
   pose_estimator_arbiter::CallbackInvokingVariable<int> variable;
 
