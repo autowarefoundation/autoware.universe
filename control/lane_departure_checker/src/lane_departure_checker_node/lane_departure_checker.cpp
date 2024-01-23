@@ -103,8 +103,8 @@ Output LaneDepartureChecker::update(const Input & input)
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   output.trajectory_der_deviation = calcLongitudinalDeviationDerivatives(
-      *input.predicted_trajectory, input.current_odom->twist.twist, param_.ego_nearest_dist_threshold,
-    param_.ego_nearest_yaw_threshold);
+      *input.predicted_trajectory, param_.ego_nearest_dist_threshold,
+    param_.ego_nearest_yaw_threshold, input);
 
   output.trajectory_deviation = calcTrajectoryDeviation(
     *input.reference_trajectory, input.current_odom->pose.pose, param_.ego_nearest_dist_threshold,
@@ -168,24 +168,17 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
 }
 
 DerivativeDeviation LaneDepartureChecker::calcLongitudinalDeviationDerivatives(
-  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
-  const double dist_threshold, const double yaw_threshold)
+  const Trajectory & trajectory, const double dist_threshold, 
+  const double yaw_threshold, const Input & input)
 {
+  const geometry_msgs::msg::Pose & pose = input.current_odom->pose.pose;
   const auto nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, pose, dist_threshold, yaw_threshold);
-
   DerivativeDeviation der_deviation;
-
-  const auto & point = trajectory.points.at(nearest_idx);
-  const auto vel = point.twist.linear.x;
-  const auto acc = point.accel.linear.x;
-
+  const auto current_vel = input.current_odom->twist.twist.linear.x;
   const auto & ref_point = trajectory.points.at(nearest_idx);
-  const auto ref_vel = ref_point.twist.linear.x;
-  const auto ref_acc = ref_point.accel.linear.x;
-
-  der_deviation.longitudinal_vel = vel - ref_vel;
-  der_deviation.longitudinal_acc = acc - ref_acc;
+  const auto ref_vel = ref_point.longitudinal_velocity_mps;
+  der_deviation.longitudinal_vel = current_vel - ref_vel;
 
   return der_deviation;
 } 
