@@ -27,8 +27,8 @@ struct VoxelKeyHash
     // Primes based on the following paper: 'Investigating the Use of Primes in Hashing for
     // Volumetric Data'.
     return (k[0] * 73856093 ^ k[1] * 19349663 ^ k[2] * 83492791);
+    // In general, the performance of the search may be improved by restricting the hashkey to the following However, the risk of key collisions also increases, so the value must be appropriate. Enable the following code depending on the situation.
     // return ((1 << 16) - 1) & (k[0] * 73856093 ^ k[1] * 19349663 ^ k[2] * 83492791);
-    // return ((1 << 20) - 1) & (k[0] * 73856093 ^ k[1] * 19349663 ^ k[2] * 83492791);
   }
 };
 
