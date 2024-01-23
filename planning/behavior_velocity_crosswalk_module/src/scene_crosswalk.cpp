@@ -896,8 +896,6 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
     }
   }
 
-  const auto & ego_pos = planner_data_->current_odometry->pose.position;
-
   for (const auto & object : objects) {
     if (!isVehicle(object)) {
       continue;
@@ -925,25 +923,27 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
       planner_data_->vehicle_info_.vehicle_length_m + planner_param_.required_clearance;
 
     if (crosswalk_front_to_obj_rear > 0.0 && crosswalk_back_to_obj_rear < required_space_length) {
-      // Plan STOP considering min_acc, max_jerk and min_jerk.
+      // If there exists at least one vehicle ahead, plan STOP considering min_acc, max_jerk and
+      // min_jerk. Note that nearest search is not required because the stop pose independends to
+      // the vehicles.
       const auto braking_distance = calcDecelDistWithJerkAndAccConstraints(
         planner_data_->current_velocity->twist.linear.x, 0.0,
         planner_data_->current_acceleration->accel.accel.linear.x, p.min_acc_for_stuck_vehicle,
         p.max_jerk_for_stuck_vehicle, p.min_jerk_for_stuck_vehicle);
       if (!braking_distance) {
-        continue;
+        return {};
       }
 
+      const auto & ego_pos = planner_data_->current_odometry->pose.position;
       const double dist_ego2stop =
         calcSignedArcLength(ego_path.points, ego_pos, stop_pose->position);
       const double feasible_dist_ego2stop = std::max(*braking_distance, dist_ego2stop);
       const double dist_to_ego =
         calcSignedArcLength(ego_path.points, ego_path.points.front().point.pose.position, ego_pos);
-
       const auto feasible_stop_pose =
         calcLongitudinalOffsetPose(ego_path.points, 0, dist_to_ego + feasible_dist_ego2stop);
       if (!feasible_stop_pose) {
-        continue;
+        return {};
       }
 
       setObjectsOfInterestData(obj_pose, object.shape, ColorName::RED);
