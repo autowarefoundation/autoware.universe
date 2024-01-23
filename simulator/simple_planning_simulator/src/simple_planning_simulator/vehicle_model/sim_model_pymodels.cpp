@@ -39,20 +39,35 @@ SimModelPymodels::SimModelPymodels(
   // TODO this should be in config file not hardcoded here
   // Think of a way how to differentiate between "simple" model and "base + error" model
   std::vector<std::tuple<char*, char*, char*>> model_desc = {
+    // {
+    //   (char*)"control_analysis_pipeline.model.base_model.kinematic_bicycle_steer_vel",
+    //   (char*)nullptr,
+    //   (char*)"KinematicBicycleSteerVel"
+    // },
     {
-      (char*)"control_analysis_pipeline.model.base_model.kinematic_bicycle_steer_vel",
+      (char*)"control_analysis_pipeline.autoware_models.vehicle.kinematic",
       (char*)nullptr,
-      (char*)"KinematicBicycleSteerVel"
+      (char*)"KinematicModel"
     },
+    // {
+    //   (char*)"control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis",
+    //   (char*)"$HOME/autoware_model_params/base_model_save",
+    //   (char*)"SimpleSteeringHyst"
+    // },
     {
-      (char*)"control_analysis_pipeline.model.base_model.base_model_simple_steering_hysteresis",
+      (char*)"control_analysis_pipeline.autoware_models.steering.example_base_error",
       (char*)"$HOME/autoware_model_params/base_model_save",
-      (char*)"SimpleSteeringHyst"
+      (char*)"BaseError"
     },
+    // {
+    //   (char*)"control_analysis_pipeline.model.base_model.base_model_simple_velocity",
+    //   (char*)nullptr,
+    //   (char*)"SimpleVelocity"
+    // }
     {
-      (char*)"control_analysis_pipeline.model.base_model.base_model_simple_velocity",
+      (char*)"control_analysis_pipeline.autoware_models.drive.drive_example",
       (char*)nullptr,
-      (char*)"SimpleVelocity"
+      (char*)"DriveExample"
     }
   };
   

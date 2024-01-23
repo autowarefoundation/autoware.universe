@@ -31,19 +31,17 @@ class CustomPythonSubmodel:
 
     def forward(self, action, state):  # Required
         """
-        Calculate forward pass through the model.
-        Currently implemented in the way that the next_state 
-        needs to be 2d array with size (1 x NUM_OF_STATES).
+        Calculate forward pass through the model and returns next_state.
         """
-        return list(list())  # next state
+        return list()
     
-    def get_sig_state_names(self):  # Required
+    def get_state_names(self):  # Required
         """
         Return list of string names of the model states (outputs).
         """
         return list()
 
-    def get_sig_action_names(self):  # Required
+    def get_action_names(self):  # Required
         """
         Return list of string names of the model actions (inputs).
         """

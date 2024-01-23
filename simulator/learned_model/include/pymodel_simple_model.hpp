@@ -45,7 +45,7 @@ public:
         // Import python module
         py::module_ imported_module = py::module_::import(pymodel_import_name);
         // Initialize model class from imported module
-        py_model_class = imported_module.attr(py_class_name)(nullptr);
+        py_model_class = imported_module.attr(py_class_name)();
     } 
     else 
     {
@@ -65,13 +65,13 @@ public:
         // TODO warning that using default model params
     }
     
-    py::list pymodel_state_names_ = py_model_class.attr("get_sig_state_names")();
+    py::list pymodel_state_names_ = py_model_class.attr("get_state_names")();
     num_outputs_py = pymodel_state_names_.size();
     for (int STATE_IDX = 0; STATE_IDX < num_outputs_py; STATE_IDX++){
       pymodel_state_names.push_back(PyBytes_AS_STRING(PyUnicode_AsEncodedString(pymodel_state_names_[STATE_IDX].ptr(), "UTF-8", "strict")));
     }
 
-    py::list pymodel_input_names_ = py_model_class.attr("get_sig_action_names")();
+    py::list pymodel_input_names_ = py_model_class.attr("get_action_names")();
     num_inputs_py = pymodel_input_names_.size();
     for (int INPUT_IDX = 0; INPUT_IDX < num_inputs_py; INPUT_IDX++){
       pymodel_input_names.push_back(PyBytes_AS_STRING(PyUnicode_AsEncodedString(pymodel_input_names_[INPUT_IDX].ptr(), "UTF-8", "strict")));
@@ -95,15 +95,11 @@ public:
     
     // forward pass through the base model
     py::tuple res = py_model_class.attr("forward")(py_inputs, py_state);
-    std::vector<double> py_state_next = res[0].cast<std::vector<std::vector<double>>>()[0];
-
-    // for (auto state : model_state) std::cout << "STATE AFTER :  " << state << std::endl;
-    
-    std::vector<double> action_delayed = res[1].cast<std::vector<std::vector<double>>>()[0]; 
+    std::vector<double> py_state_next = res.cast<std::vector<double>>();
 
     // map outputs from python model to required outputs
     std::vector<double> next_state = fillVectorUsingMap(py_state_next, model_signals_vec_next, map_pyout_to_sig_vec, false);
-    
+
     return next_state;
   }
 
