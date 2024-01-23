@@ -8,7 +8,6 @@ find_package(autoware_auto_vehicle_msgs REQUIRED)
 find_package(tier4_planning_msgs REQUIRED)
 find_package(autoware_perception_msgs REQUIRED)
 ament_auto_find_build_dependencies()
-# if your cmake has this line it should probably find autoware_auto_vehicle_msgs package if not you should add to ament_target_dependencies()
 
 find_package(rviz_2d_overlay_msgs REQUIRED)
 
@@ -36,9 +35,9 @@ set(
 
 
 
-foreach (header "${headers_to_moc}")
+foreach(header "${headers_to_moc}")
     qt5_wrap_cpp(display_moc_files "${header}")
-endforeach ()
+endforeach()
 
 set(
         display_source_files

@@ -63,7 +63,7 @@ class OverlayObject;
 class ScopedPixelBuffer
 {
 public:
-  ScopedPixelBuffer(Ogre::HardwarePixelBufferSharedPtr pixel_buffer);
+  explicit ScopedPixelBuffer(Ogre::HardwarePixelBufferSharedPtr pixel_buffer);
   virtual ~ScopedPixelBuffer();
   virtual Ogre::HardwarePixelBufferSharedPtr getPixelBuffer();
   virtual QImage getQImage(unsigned int width, unsigned int height);
@@ -98,7 +98,7 @@ class OverlayObject
 public:
   using SharedPtr = std::shared_ptr<OverlayObject>;
 
-  OverlayObject(const std::string & name);
+  explicit OverlayObject(const std::string & name);
   virtual ~OverlayObject();
 
   virtual std::string getName() const;

@@ -60,7 +60,7 @@ void SignalDisplay::onInitialize()
   updateOverlayPosition();
 
   auto rviz_ros_node = context_->getRosNodeAbstraction();
-  // TODO: These are still buggy, on button click they crash rviz
+
   gear_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
     "Gear Topic Test", "/vehicle/status/gear_status", "autoware_auto_vehicle_msgs/msg/GearReport",
     "Topic for Gear Data", this, SLOT(topic_updated_gear()));

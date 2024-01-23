@@ -51,6 +51,8 @@
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
 #include <std_msgs/msg/color_rgba.h>
+
+#include <string>
 #endif
 
 namespace awf_2d_overlay_vehicle
@@ -86,11 +88,11 @@ protected:
   HorizontalAlignment horizontal_alignment_;
   VerticalAlignment vertical_alignment_;
 
-  virtual void onInitialize() override;
-  virtual void onEnable() override;
-  virtual void onDisable() override;
-  virtual void update(float wall_dt, float ros_dt) override;
-  virtual void reset() override;
+  void onInitialize() override;
+  void onEnable() override;
+  void onDisable() override;
+  void update(float wall_dt, float ros_dt) override;
+  void reset() override;
 
   bool require_update_texture_;
   // properties are raw pointers since they are owned by Qt

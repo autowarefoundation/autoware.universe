@@ -56,6 +56,7 @@
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
 
+#include <memory>
 #include <mutex>
 #endif
 
@@ -66,7 +67,7 @@ class SignalDisplay : public rviz_common::Display
   Q_OBJECT
 public:
   SignalDisplay();
-  virtual ~SignalDisplay() override;
+  ~SignalDisplay() override;
 
 protected:
   void onInitialize() override;
