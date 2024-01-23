@@ -136,6 +136,10 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.occlusion_occupied_min = getOrDeclareParameter<int>(node, ns + ".occlusion.occupied_min");
   cp.occlusion_ignore_with_traffic_light =
     getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_with_traffic_light");
+  cp.occlusion_ignore_behind_predicted_objects =
+    getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_behind_predicted_objects");
+  cp.occlusion_min_objects_velocity =
+    getOrDeclareParameter<double>(node, ns + ".occlusion.min_objects_velocity");
 }
 
 void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)

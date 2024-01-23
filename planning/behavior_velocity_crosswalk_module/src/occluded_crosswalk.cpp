@@ -16,8 +16,10 @@
 
 #include "behavior_velocity_crosswalk_module/util.hpp"
 
+#include <grid_map_cv/GridMapCvConverter.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_utils/polygon_iterator.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -94,15 +96,62 @@ std::vector<lanelet::BasicPolygon2d> calculate_detection_areas(
   return detection_areas;
 }
 
+void clear_behind_objects(
+  grid_map::GridMap & grid_map,
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
+  const double min_object_velocity)
+{
+  const auto angle_cmp = [&](const auto & p1, const auto & p2) {
+    const auto d1 = p1 - grid_map.getPosition();
+    const auto d2 = p2 - grid_map.getPosition();
+    return std::atan2(d1.y(), d1.x()) < std::atan2(d2.y(), d2.x());
+  };
+  cv::Mat img;  // DEBUG
+  if (grid_map::GridMapCvConverter::toImage<unsigned short, 4>(
+        grid_map, "layer", CV_16UC4, 0, 100, img))
+    cv::imwrite("/home/mclement/Pictures/original.png", img);
+  const lanelet::BasicPoint2d grid_map_position = grid_map.getPosition();
+  const auto range = grid_map.getLength().maxCoeff() / 2.0;
+  for (const auto & object : objects) {
+    const lanelet::BasicPoint2d object_position = {
+      object.kinematics.initial_pose_with_covariance.pose.position.x,
+      object.kinematics.initial_pose_with_covariance.pose.position.y};
+    if (
+      object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_object_velocity &&
+      lanelet::geometry::distance2d(grid_map_position, object_position) < range) {
+      lanelet::BasicPoints2d edge_points;
+      for (const auto & edge_point : tier4_autoware_utils::toPolygon2d(object).outer())
+        edge_points.push_back(edge_point);
+      std::sort(edge_points.begin(), edge_points.end(), angle_cmp);
+      // points.push_back(interpolate_point({object_position, edge_point}, 10.0 * range));
+      grid_map::Polygon polygon_to_clear;
+      polygon_to_clear.addVertex(edge_points.front());
+      polygon_to_clear.addVertex(
+        interpolate_point({grid_map_position, edge_points.front()}, 10.0 * range));
+      polygon_to_clear.addVertex(
+        interpolate_point({grid_map_position, edge_points.back()}, 10.0 * range));
+      polygon_to_clear.addVertex(edge_points.back());
+      for (grid_map_utils::PolygonIterator it(grid_map, polygon_to_clear); !it.isPastEnd(); ++it)
+        grid_map.at("layer", *it) = 0;
+    }
+  }
+  if (grid_map::GridMapCvConverter::toImage<unsigned short, 4>(
+        grid_map, "layer", CV_16UC4, 0, 100, img))
+    cv::imwrite("/home/mclement/Pictures/result.png", img);
+}
+
 bool is_crosswalk_occluded(
   const lanelet::ConstLanelet & crosswalk_lanelet,
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
   const geometry_msgs::msg::Point & path_intersection, const double detection_range,
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & dynamic_objects,
   const behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
 {
   grid_map::GridMap grid_map;
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
 
+  if (params.occlusion_ignore_behind_predicted_objects)
+    clear_behind_objects(grid_map, dynamic_objects, params.occlusion_min_objects_velocity);
   const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
   for (const auto & detection_area : calculate_detection_areas(
          crosswalk_lanelet, {path_intersection.x, path_intersection.y}, detection_range)) {
@@ -115,11 +164,12 @@ bool is_crosswalk_occluded(
 }
 
 double calculate_detection_range(
-  const double object_velocity, const double dist_ego_to_crosswalk, const double ego_velocity)
+  const double occluded_object_velocity, const double dist_ego_to_crosswalk,
+  const double ego_velocity)
 {
   constexpr double min_ego_velocity = 1.0;
   const auto time_to_crosswalk = dist_ego_to_crosswalk / std::max(min_ego_velocity, ego_velocity);
-  return time_to_crosswalk > 0.0 ? time_to_crosswalk / object_velocity : 20.0;
+  return time_to_crosswalk > 0.0 ? time_to_crosswalk / occluded_object_velocity : 20.0;
 }
 
 void update_occlusion_timers(

@@ -27,6 +27,7 @@
 #include <lanelet2_core/primitives/Point.h>
 
 #include <optional>
+#include <vector>
 
 namespace behavior_velocity_planner
 {
@@ -60,16 +61,23 @@ bool is_crosswalk_ignored(
 /// @param occupancy_grid occupancy grid with the occlusion information
 /// @param path_intersection intersection between the crosswalk and the ego path
 /// @param detection_range range away from the crosswalk until occlusions are considered
+/// @param dynamic_objects dynamic objects
 /// @param params parameters
 /// @return true if the crosswalk is occluded
 bool is_crosswalk_occluded(
   const lanelet::ConstLanelet & crosswalk_lanelet,
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
   const geometry_msgs::msg::Point & path_intersection, const double detection_range,
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & dynamic_objects,
   const behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
 
+/// @brief calculate the distance away from the crosswalk that should be checked for occlusions
+/// @param occluded_objects_velocity assumed velocity of the objects coming out of occlusions
+/// @param dist_ego_to_crosswalk distance between ego and the crosswalk
+/// @param ego_velocity current velocity of ego
 double calculate_detection_range(
-  const double object_velocity, const double dist_ego_to_crosswalk, const double ego_velocity);
+  const double occluded_object_velocity, const double dist_ego_to_crosswalk,
+  const double ego_velocity);
 
 /// @brief update timers so that the slowdown activates if the initial time is older than the buffer
 /// @param initial_time initial time
