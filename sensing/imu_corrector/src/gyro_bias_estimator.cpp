@@ -172,7 +172,7 @@ void GyroBiasEstimator::timer_callback()
     RCLCPP_ERROR(
       this->get_logger(), "Please publish TF %s to %s", imu_frame_.c_str(), output_frame_.c_str());
 
-    diagnostics_info_.summary_message = "Skipped update (tf betweeen base and imu is not available)";
+    diagnostics_info_.summary_message = "Skipped update (tf between base and imu is not available)";
     return;
   }
 
