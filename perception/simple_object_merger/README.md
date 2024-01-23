@@ -11,6 +11,14 @@ This package can merge multiple topics of [autoware_auto_perception_msgs/msg/Det
 So `simple_object_merger` aim to merge multiple DetectedObjects with low calculation cost.
 The package do not use data association algorithm to reduce the computational cost, and it can handle more than 2 topics in one node to prevent launching a large number of nodes.
 
+### Use case
+
+Use case is as below.
+
+- Multiple radar detection
+
+`Simple_object_merger` can be used for multiple radar detection. By combining them into one topic from multiple radar topics with `simple_object_merger`, the pipeline for faraway detection with radar is simpler.
+
 ### Limitation
 
 - Sensor data drops and delay
@@ -20,14 +28,6 @@ Merged objects will not be published until all topic data is received when initi
 - Post-processing
 
 Because this package does not have matching processing, there are overlapping objects depending on the input objects. So output objects can be used only when post-processing is used. For now, [clustering processing](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/radar_object_clustering) can be used as post-processing.
-
-### Use case
-
-Use case is as below.
-
-- Multiple radar detection
-
-`Simple_object_merger` can be used for multiple radar detection. By combining them into one topic from multiple radar topics with `simple_object_merger`, the pipeline for faraway detection with radar is simpler.
 
 ## Interface
 
