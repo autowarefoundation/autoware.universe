@@ -254,7 +254,6 @@ struct PreviousPullOverData
 
   bool found_path{false};
   SafetyStatus safety_status{};
-  // bool has_decided_path{false};
   DecidingPathStatusWithStamp deciding_path_status{};
 };
 
