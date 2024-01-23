@@ -595,7 +595,7 @@ void StartPlannerModule::planWithPriority(
   const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
-  for (const auto & collision_check_margin : parameters_->collision_check_margins) {
+  for (const auto & collision_check_margin : parameters_->front_objects_collision_check_margins) {
     for (const auto & [index, planner] : order_priority) {
       if (findPullOutPath(
             start_pose_candidates[index], planner, refined_start_pose, goal_pose,
@@ -923,9 +923,9 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
 
-  const auto stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
+  const auto back_stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity,
-    backward_path_length, std::numeric_limits<double>::max());
+    backward_path_length, 0);
 
   const auto front_stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity, 0,
@@ -964,8 +964,8 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     }
 
     if (utils::checkCollisionBetweenFootprintAndObjects(
-          local_vehicle_footprint, *backed_pose, stop_objects_in_pull_out_lanes,
-          parameters_->collision_check_margins.back())) {
+          local_vehicle_footprint, *backed_pose, back_stop_objects_in_pull_out_lanes,
+          parameters_->back_objects_collision_check_margin)) {
       break;  // poses behind this has a collision, so break.
     }
 
