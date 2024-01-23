@@ -175,10 +175,15 @@ DerivativeDeviation LaneDepartureChecker::calcLongitudinalDeviationDerivatives(
   const auto nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, pose, dist_threshold, yaw_threshold);
   DerivativeDeviation der_deviation;
-  const auto current_vel = input.current_odom->twist.twist.linear.x;
   const auto & ref_point = trajectory.points.at(nearest_idx);
-  const auto ref_vel = ref_point.longitudinal_velocity_mps;
+
+  const auto current_vel = input.current_odom->twist.twist.linear.x;
+  const auto & ref_vel = ref_point.longitudinal_velocity_mps;
   der_deviation.longitudinal_vel = current_vel - ref_vel;
+
+  const auto current_acc = 0; // There is no acc from input.current_odom->twist.twist.linear.x. You may need to subscribe.
+  const auto & ref_acc = ref_point.acceleration_mps2;
+  der_deviation.longitudinal_acc = current_acc - ref_acc;
 
   return der_deviation;
 } 
