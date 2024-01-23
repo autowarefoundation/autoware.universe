@@ -61,26 +61,19 @@ bool is_crosswalk_ignored(
   return (ignore_with_traffic_light && has_traffic_light) || has_skip_attribute;
 }
 
-bool is_crosswalk_occluded(
-  const lanelet::ConstLanelet & crosswalk_lanelet,
-  const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const geometry_msgs::msg::Point & path_intersection, const double detection_range,
-  const behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
+std::vector<lanelet::BasicPolygon2d> calculate_detection_areas(
+  const lanelet::ConstLanelet & crosswalk_lanelet, const lanelet::BasicPoint2d & crosswalk_origin,
+  const double detection_range)
 {
-  grid_map::GridMap grid_map;
-  grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
-  const lanelet::BasicPoint2d path_inter(path_intersection.x, path_intersection.y);
-
-  const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
-  std::vector<lanelet::BasicPolygon2d> incoming_areas;
+  std::vector<lanelet::BasicPolygon2d> detection_areas = {
+    crosswalk_lanelet.polygon2d().basicPolygon()};
   const std::vector<std::function<lanelet::BasicSegment2d(lanelet::ConstLineString2d)>>
     segment_getters = {
       [](const auto & ls) -> lanelet::BasicSegment2d {
         return {ls[1].basicPoint2d(), ls[0].basicPoint2d()};
       },
       [](const auto & ls) -> lanelet::BasicSegment2d {
-        const auto size = ls.size();
-        return {ls[size - 2].basicPoint2d(), ls[size - 1].basicPoint2d()};
+        return {ls[ls.size() - 2].basicPoint2d(), ls[ls.size() - 1].basicPoint2d()};
       }};
   if (
     crosswalk_lanelet.centerline2d().size() > 1 && crosswalk_lanelet.leftBound2d().size() > 1 &&
@@ -89,19 +82,32 @@ bool is_crosswalk_occluded(
       const auto center_segment = segment_getter(crosswalk_lanelet.centerline2d());
       const auto left_segment = segment_getter(crosswalk_lanelet.leftBound2d());
       const auto right_segment = segment_getter(crosswalk_lanelet.rightBound2d());
-      const auto dist = lanelet::geometry::distance2d(center_segment.second, path_inter);
+      const auto dist = lanelet::geometry::distance2d(center_segment.second, crosswalk_origin);
       if (dist < detection_range) {
         const auto target_left = interpolate_point(left_segment, detection_range - dist);
         const auto target_right = interpolate_point(right_segment, detection_range - dist);
-        incoming_areas.push_back(
+        detection_areas.push_back(
           {left_segment.second, target_left, target_right, right_segment.second});
       }
     }
   }
-  incoming_areas.push_back(crosswalk_lanelet.polygon2d().basicPolygon());
-  for (const auto & incoming_area : incoming_areas) {
+  return detection_areas;
+}
+
+bool is_crosswalk_occluded(
+  const lanelet::ConstLanelet & crosswalk_lanelet,
+  const nav_msgs::msg::OccupancyGrid & occupancy_grid,
+  const geometry_msgs::msg::Point & path_intersection, const double detection_range,
+  const behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
+{
+  grid_map::GridMap grid_map;
+  grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
+
+  const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
+  for (const auto & detection_area : calculate_detection_areas(
+         crosswalk_lanelet, {path_intersection.x, path_intersection.y}, detection_range)) {
     grid_map::Polygon poly;
-    for (const auto & p : incoming_area) poly.addVertex(grid_map::Position(p.x(), p.y()));
+    for (const auto & p : detection_area) poly.addVertex(grid_map::Position(p.x(), p.y()));
     for (grid_map_utils::PolygonIterator iter(grid_map, poly); !iter.isPastEnd(); ++iter)
       if (is_occluded(grid_map, min_nb_of_cells, *iter, params)) return true;
   }
