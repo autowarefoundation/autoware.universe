@@ -595,7 +595,7 @@ void StartPlannerModule::planWithPriority(
   const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
-  for (const auto & collision_check_margin : parameters_->front_objects_collision_check_margins) {
+  for (const auto & collision_check_margin : parameters_->objects_collision_check_margins) {
     for (const auto & [index, planner] : order_priority) {
       if (findPullOutPath(
             start_pose_candidates[index], planner, refined_start_pose, goal_pose,
