@@ -30,6 +30,7 @@ Use case is as below.
 `Simple_object_merger` can be used for multiple radar detection. By combining them into one topic from multiple radar topics with `simple_object_merger`, the pipeline for faraway detection with radar is simpler.
 
 ## Interface
+
 ### Input
 
 Input topics is defined by the parameter of `input_topics` (List[string]). The type of input topics is `std::vector<autoware_auto_perception_msgs/msg/DetectedObjects.msg>`.
