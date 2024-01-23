@@ -7,10 +7,23 @@
   <arg name="input/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
-  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
-  <arg name="score_threshold" default="0.35"/>
-  <arg name="use_object_filter" default="true" description="use object filter"/>
   <arg name="use_pointcloud_container" default="false" description="use pointcloud container for detection preprocessor"/>
+
+  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="lidar_detection_score_threshold" default="0.35"/>
+
+  <!-- LiDAR detector centerpoint parameters -->
+  <arg name="centerpoint_model_name" default="centerpoint_tiny"/>
+  <arg name="centerpoint_model_path" default="$(var data_path)/lidar_centerpoint"/>
+  <arg name="lidar_model_param_path" default="$(find-pkg-share lidar_centerpoint)/config"/>
+
+  <!-- Merger parameters -->
+  <arg name="objects_validation_method" default="obstacle_pointcloud"/>
+  <arg name="objects_filter_method" default="lanelet_filter"/>
+  <arg name="object_recognition_detection_object_merger_data_association_matrix_param_path" default="$(find-pkg-share object_merger)/config/data_association_matrix.param.yaml"/>
+  <arg name="object_recognition_detection_object_merger_distance_threshold_list_path" default="$(find-pkg-share object_merger)/config/overlapped_judge.param.yaml"/>
+
+  <arg name="use_object_filter" default="true" description="use object filter"/>
   <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
   <arg name="use_roi_based_cluster" default="false"/>
 
@@ -200,10 +213,11 @@
       <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
         <arg name="output/objects" value="objects"/>
-        <arg name="score_threshold" value="$(var score_threshold)"/>
+        <arg name="score_threshold" value="$(var lidar_detection_score_threshold)"/>
         <arg name="model_name" value="$(var centerpoint_model_name)"/>
         <arg name="model_path" value="$(var centerpoint_model_path)"/>
         <arg name="model_param_path" value="$(var lidar_model_param_path)/$(var centerpoint_model_name).param.yaml"/>
+        <arg name="class_remapper_param_path" value="$(var lidar_model_param_path)/detection_class_remapper.param.yaml"/>
       </include>
     </group>
   </group>
@@ -274,7 +288,9 @@
     </include>
   </group>
 
+  <!-- Camera late fusion -->
   <group>
+    <let name="target_objects" value="$(var lidar_detection_model)/objects"/>
     <include file="$(find-pkg-share image_projection_based_fusion)/launch/roi_detected_object_fusion.launch.xml">
       <arg name="input/camera_info0" value="$(var camera_info0)"/>
       <arg name="input/rois0" value="$(var detection_rois0)"/>
@@ -301,7 +317,7 @@
       <arg name="input/image5" value="$(var image_raw5)"/>
       <arg name="input/image6" value="$(var image_raw6)"/>
       <arg name="input/image7" value="$(var image_raw7)"/>
-      <arg name="input/objects" value="$(var lidar_detection_model)/objects"/>
+      <arg name="input/objects" value="$(var target_objects)"/>
       <arg name="output/objects" value="$(var lidar_detection_model)/roi_fusion/objects"/>
       <arg name="param_path" value="$(var roi_detected_object_fusion_param_path)"/>
     </include>
@@ -331,9 +347,9 @@
     <!-- 1st merger to merge camera_lidar_fusion + ML lidar detection-->
     <let name="merger/input/objects" value="$(var lidar_detection_model)/validation/objects" if="$(var use_validator)"/>
     <let name="merger/input/objects" value="$(var lidar_detection_model)/objects" unless="$(var use_validator)"/>
-    <let name="detection_end_here" value="$(eval &quot;'$(var use_detection_by_tracker)'=='false' and '$(var use_object_filter)'=='false' &quot;)"/>
-    <let name="merger/output/objects" value="$(var output/objects)" if="$(var detection_end_here)"/>
-    <let name="merger/output/objects" value="$(var lidar_detection_model)_roi_cluster_fusion/objects" unless="$(var detection_end_here)"/>
+    <let name="without_dbt_and_filter" value="$(eval &quot;'$(var use_detection_by_tracker)'=='false' and '$(var use_object_filter)'=='false' &quot;)"/>
+    <let name="merger/output/objects" value="$(var output/objects)" if="$(var without_dbt_and_filter)"/>
+    <let name="merger/output/objects" value="$(var lidar_detection_model)_roi_cluster_fusion/objects" unless="$(var without_dbt_and_filter)"/>
     <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
       <arg name="input/object0" value="$(var merger/input/objects)"/>
       <arg name="input/object1" value="clustering/camera_lidar_fusion/objects"/>
