@@ -44,16 +44,8 @@ public:
 
   std::unordered_map<PoseEstimatorType, bool> update() override;
 
-  std::string debug_string() override { return std::string{}; }
-
-  MarkerArray debug_marker_array() override { return MarkerArray{}; }
-
 protected:
   const std::unordered_set<PoseEstimatorType> running_estimator_list_;
-
-  rclcpp::Logger get_logger() const { return *logger_ptr_; }
-
-  std::shared_ptr<rclcpp::Logger> logger_ptr_{nullptr};
 };
 
 }  // namespace pose_estimator_arbiter::switch_rule

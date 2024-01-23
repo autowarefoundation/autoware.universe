@@ -41,12 +41,12 @@ Also, even if both can be activated at the same time, the Kalman Filter may be a
 
 The following video demonstrates the switching of four different pose estimators.
 
+> [!NOTE]
+> TODO(KYabuuchi) The following video is obsolete.
+
 <div><video controls src="https://github-production-user-asset-6210df.s3.amazonaws.com/24854875/295755577-62b26fdd-dcf0-4b1c-a1a0-ecd633413196.mp4" muted="false" width="800"></video></div>
 
 Users can reproduce the demonstration using the following data and launch command:
-
-> [!NOTE]
-> TODO(KYabuuchi) The following data is obsolete.
 
 [sample data (rosbag & map)](https://drive.google.com/file/d/1MxLo1Sw6PdvfkyOYf_9A5dZ9uli1vPvS/view)
 The rosbag is simulated data created by [AWSIM](https://tier4.github.io/AWSIM/).
@@ -61,6 +61,9 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
 ```
 
 ## Interfaces
+
+<details>
+<summary>Click to show details</summary>
 
 ### Parameters
 
@@ -108,6 +111,8 @@ For switching rule:
 | `/output/debug/marker_array`           | visualization_msgs::msg::MarkerArray          | [debug topic] everything for visualization             |
 | `/output/debug/string`                 | visualization_msgs::msg::MarkerArray          | [debug topic] debug information such as current status |
 
+</details>
+
 ## Trouble Shooting
 
 If it does not work, users can get more information in the following ways.
@@ -126,6 +131,9 @@ ros2 topic echo /localization/pose_estimator_arbiter/debug/string
 ```
 
 ## Architecture
+
+<details>
+<summary>Click to show details</summary>
 
 ### Case of running a single pose estimator
 
@@ -168,6 +176,8 @@ Furthermore, Eagleye's estimation process is lightweight enough to be run contin
 
 The ArTag stopper relays image topics in the front side of the landmark localizer.
 
+</details>
+
 ## How to launch
 
 The user can launch the desired pose_estimators by giving the pose_estimator names as a concatenation of underscores for the runtime argument `pose_source`.
@@ -194,7 +204,7 @@ Please see the table below for details.
 
 ## Switching Rules
 
-Currently, **only one rule** (`enable_all_rule`) is implemented.
+Currently, **ONLY ONE RULE** (`enable_all_rule`) is implemented.
 In the future, several rules will be implemented and users will be able to select rules.
 
 > [!TIP]
@@ -214,6 +224,8 @@ flowchart LR
 
 When using multiple pose_estimators, it is necessary to appropriately adjust the parameters provided to the `pose_initializer`.
 
+<details>
+<summary>Click to show details</summary>
 The following table is based on the runtime argument "pose_source," indicating which initial pose estimation methods are available and the parameters that should be provided to the pose_initialization node.
 To avoid making the application too complicated, a priority is established so that NDT is always used when it is available.
 (The pose_initializer will only perform NDT-based initial pose estimation when `ndt_enabled` and `yabloc_enabled` are both `true`).
@@ -242,6 +254,8 @@ This table's usage is described from three perspectives:
 |     ndt, eagleye, artag     | ndt                           | ndt           | false            | true           | /sensing/gnss/pose_with_covariance           |
 |   yabloc, eagleye, artag    | yabloc                        | ndt           | true             | true           | /sensing/gnss/pose_with_covariance           |
 | ndt, yabloc, eagleye, artag | ndt                           | ndt           | true             | true           | /sensing/gnss/pose_with_covariance           |
+
+</details>
 
 ## Future Plans
 

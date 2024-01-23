@@ -1,5 +1,7 @@
 # example rule
 
+The example rule provides a sample rule for controlling the arbiter. By combining the provided rules, it is possible to achieve demonstrations as follows. Users can extend the rules as needed by referencing this code, allowing them to control the arbiter as desired.
+
 ## Demonstration
 
 The following video demonstrates the switching of four different pose estimators.
@@ -44,6 +46,7 @@ The height of the area is meaningless; it judges if the projection of its self-p
 <img src="../media/pose_estimator_area_in_vector_map.png" alt="drawing" width="600"/>
 
 A sample pose_estimator_area is shown below. The values provided below are placeholders.
+To be correctly read, the area should have the type "pose_estimator_specify" and the subtype should be one of ndt, yabloc, eagleye, or artag.
 
 ```xml
   <node id="1" lat="35.8xxxxx" lon="139.6xxxxx">

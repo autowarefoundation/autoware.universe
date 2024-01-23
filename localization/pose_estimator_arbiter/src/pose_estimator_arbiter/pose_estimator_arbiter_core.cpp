@@ -122,7 +122,6 @@ void PoseEstimatorArbiter::load_switch_rule()
 {
   // NOTE: In the future, some rule will be laid below
   RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
-
   switch_rule_ =
     std::make_shared<switch_rule::EnableAllRule>(*this, running_estimator_list_, shared_data_);
 }
@@ -186,20 +185,14 @@ void PoseEstimatorArbiter::publish_diagnostics() const
 
 void PoseEstimatorArbiter::on_timer()
 {
-  auto now = rclcpp::Clock().now();
-
   if (switch_rule_) {
-    auto toggle_list = switch_rule_->update();
+    const auto toggle_list = switch_rule_->update();
     toggle_each(toggle_list);
 
-    {
-      const auto msg = String().set__data(switch_rule_->debug_string());
-      pub_debug_string_->publish(msg);
-    }
-    {
-      const MarkerArray msg = switch_rule_->debug_marker_array();
-      pub_debug_marker_array_->publish(msg);
-    }
+    // Publish std_msg::String for debug
+    pub_debug_string_->publish(String().set__data(switch_rule_->debug_string()));
+    // Publish visualization_msgs::MarkerArray for debug
+    pub_debug_marker_array_->publish(switch_rule_->debug_marker_array());
 
   } else {
     RCLCPP_WARN_STREAM(
