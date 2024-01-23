@@ -38,6 +38,7 @@
       <arg name="filter/velocity_threshold" value="3.0"/>
       <arg name="split/velocity_threshold" value="4.5"/>
       <arg name="split_range" value="70.0"/>
+      <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
       <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
     </include>
   </group>
