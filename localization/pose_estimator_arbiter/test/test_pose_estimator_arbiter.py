@@ -32,8 +32,7 @@ from sensor_msgs.msg import Image
 from sensor_msgs.msg import PointCloud2
 from std_srvs.srv import SetBool
 
-# This test confirms that the point cloud is initially relayed by arbiter.
-# Then, the state transitions to YabLoc mode and confirms that the point cloud is no longer relayed.
+# This test confirms that all topics are relayed by arbiter.
 
 
 @pytest.mark.launch_test
@@ -167,11 +166,7 @@ class TestPoseEstimatorArbiter(unittest.TestCase):
         self.spin_for(0.5)
 
         # Confirm both topics are relayed
-        print("ndt", len(self.ndt_relayed))
-        print("yabloc", len(self.yabloc_relayed))
-        print("eagleye", len(self.eagleye_relayed))
-        print("aratg", len(self.artag_relayed))
-
+        # In reality, 10topics should be received, but with a margin, 5 is used as the threshold.
         self.assertGreater(len(self.ndt_relayed), 5)
         self.assertGreater(len(self.yabloc_relayed), 5)
         self.assertGreater(len(self.eagleye_relayed), 5)

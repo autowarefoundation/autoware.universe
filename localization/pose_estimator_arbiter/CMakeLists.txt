@@ -30,8 +30,19 @@ target_link_libraries(${PROJECT_NAME} switch_rule glog::glog)
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
 
+  # define test definition macro
+  function(add_testcase filepath)
+    get_filename_component(filename ${filepath} NAME)
+    string(REGEX REPLACE ".cpp" "" test_name ${filename})
+    ament_add_gmock(${test_name} ${filepath})
+    target_include_directories(${test_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(${test_name} fmt)
+    ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+  endfunction()
+
+  add_testcase(test/test_shared_data.cpp)
   add_ros_test(
-    test/pose_estimator_arbiter.test.py
+    test/test_pose_estimator_arbiter.py
     TIMEOUT "30"
   )
 endif()
