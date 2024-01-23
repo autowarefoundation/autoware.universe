@@ -21,7 +21,6 @@ namespace behavior_velocity_planner::intersection
 {
 
 /**
- * @struct
  * @brief see the document for more details of IntersectionStopLines
  */
 struct IntersectionStopLines

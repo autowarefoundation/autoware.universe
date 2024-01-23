@@ -40,6 +40,10 @@ namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 
+using intersection::make_err;
+using intersection::make_ok;
+using intersection::Result;
+
 IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id,
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
@@ -95,10 +99,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   debug_data_ = DebugData();
   *stop_reason = planning_utils::initializeStopReason(StopReason::INTERSECTION);
 
-  // set default RTC
   initializeRTCStatus();
 
-  // calculate the
   const auto decision_result = modifyPathVelocityDetail(path, stop_reason);
   prev_decision_result_ = decision_result;
 
@@ -112,7 +114,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   reactRTCApproval(decision_result, path, stop_reason);
 
-  RCLCPP_DEBUG(logger_, "===== plan end =====");
   return true;
 }
 
@@ -175,29 +176,39 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     return false;
   };
 
-  updateObjectInfoManagerArea();
-
+  // ==========================================================================================
+  // stuck detection
+  //
   // stuck vehicle detection is viable even if attention area is empty
   // so this needs to be checked before attention area validation
+  // ==========================================================================================
   const auto is_stuck_status = isStuckStatus(*path, intersection_stoplines, path_lanelets);
   if (is_stuck_status) {
     return is_stuck_status.value();
   }
 
+  // ==========================================================================================
+  // basic data validation
+  //
   // if attention area is empty, collision/occlusion detection is impossible
+  //
+  // if attention area is not null but default stop line is not available, ego/backward-path has
+  // already passed the stop line, so ego is already in the middle of the intersection, or the
+  // end of the ego path has just entered the entry of this intersection
+  //
+  // occlusion stop line is generated from the intersection of ego footprint along the path with the
+  // attention area, so if this is null, ego has already passed the intersection, or the end of the
+  // ego path has just entered the entry of this intersection
+  // ==========================================================================================
   if (!intersection_lanelets.first_attention_area()) {
     return intersection::Indecisive{"attention area is empty"};
   }
   const auto first_attention_area = intersection_lanelets.first_attention_area().value();
-  // if attention area is not null but default stop line is not available, ego/backward-path has
-  // already passed the stop line
   const auto default_stopline_idx_opt = intersection_stoplines.default_stopline;
   if (!default_stopline_idx_opt) {
     return intersection::Indecisive{"default stop line is null"};
   }
   const auto default_stopline_idx = default_stopline_idx_opt.value();
-  // occlusion stop line is generated from the intersection of ego footprint along the path with the
-  // attention area, so if this is null, eog has already passed the intersection
   const auto first_attention_stopline_idx_opt = intersection_stoplines.first_attention_stopline;
   const auto occlusion_peeking_stopline_idx_opt = intersection_stoplines.occlusion_peeking_stopline;
   if (!first_attention_stopline_idx_opt || !occlusion_peeking_stopline_idx_opt) {
@@ -206,6 +217,15 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto first_attention_stopline_idx = first_attention_stopline_idx_opt.value();
   const auto occlusion_stopline_idx = occlusion_peeking_stopline_idx_opt.value();
 
+  // ==========================================================================================
+  // classify the objects to attention_area/intersection_area and update their position, velocity,
+  // belonging attention lanelet, distance to corresponding stopline
+  // ==========================================================================================
+  updateObjectInfoManagerArea();
+
+  // ==========================================================================================
+  // yield stuck detection
+  // ==========================================================================================
   const auto is_yield_stuck_status =
     isYieldStuckStatus(*path, interpolated_path_info, intersection_stoplines);
   if (is_yield_stuck_status) {
@@ -221,22 +241,47 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   if (is_over_pass_judge_lines_status) {
     return is_over_pass_judge_lines_status.ok();
   }
+  // TODO(Mamoru Sobue): if ego is over 1st/2nd pass judge line and collision is expected at 1st/2nd
+  // pass judge line respectively, ego should go
   [[maybe_unused]] const auto [is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line] =
     is_over_pass_judge_lines_status.err();
 
-  const auto & current_pose = planner_data_->current_odometry->pose;
-  const bool is_over_default_stopline =
-    util::isOverTargetIndex(*path, closest_idx, current_pose, default_stopline_idx);
+  const bool is_over_default_stopline = util::isOverTargetIndex(
+    *path, closest_idx, planner_data_->current_odometry->pose, default_stopline_idx);
   const auto collision_stopline_idx = is_over_default_stopline ? closest_idx : default_stopline_idx;
 
+  // ==========================================================================================
+  // pseudo collision detection on green light
+  // ==========================================================================================
   const auto is_green_pseudo_collision_status =
     isGreenPseudoCollisionStatus(*path, collision_stopline_idx, intersection_stoplines);
   if (is_green_pseudo_collision_status) {
     return is_green_pseudo_collision_status.value();
   }
 
-  // if ego is waiting for collision detection, the entry time into the intersection is a bit
-  // delayed for the chattering hold
+  // ==========================================================================================
+  // calculate the expected vehicle speed and obtain the spatiotemporal profile of ego to the
+  // exit of intersection
+  //
+  // if ego is waiting for collision detection, the entry time into the intersection
+  // is a bit delayed for the chattering hold, so we need to "shift" the TimeDistanceArray by
+  // this delay
+  //
+  // to account for the stopline generated by upstream behavior_velocity modules (like walkway,
+  // crosswalk), if use_upstream flag is true, the raw velocity of path points after
+  // last_intersection_stopline_candidate_idx is used, which maybe almost-zero. at those almost-zero
+  // velocity path points, ego future profile is almost "fixed" there.
+  //
+  // last_intersection_stopline_candidate_idx must be carefully decided especially when ego
+  // velocity is almost zero, because if last_intersection_stopline_candidate_idx is at the
+  // closest_idx for example, ego is almost "fixed" at current position for the entire
+  // spatiotemporal profile, which is judged as SAFE because that profile does not collide
+  // with the predicted paths of objects.
+  //
+  // if second_attention_lane exists, second_attention_stopline_idx is used. if not,
+  // max(occlusion_stopline_idx, first_attention_stopline_idx) is used because
+  // occlusion_stopline_idx varies depending on the peeking offset parameter
+  // ==========================================================================================
   const bool is_go_out = (activated_ && occlusion_activated_);
   const double time_to_restart =
     (is_go_out || is_prioritized)
@@ -244,11 +289,10 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       : (planner_param_.collision_detection.collision_detection_hold_time -
          collision_state_machine_.getDuration());
 
-  // TODO(Mamoru Sobue): if ego is over 1st/2nd pass judge line and collision is expected at 1st/2nd
-  // pass judge line respectively, ego should go
   const auto second_attention_stopline_idx = intersection_stoplines.second_attention_stopline;
   const auto last_intersection_stopline_candidate_idx =
-    second_attention_stopline_idx ? second_attention_stopline_idx.value() : occlusion_stopline_idx;
+    second_attention_stopline_idx ? second_attention_stopline_idx.value()
+                                  : std::max(occlusion_stopline_idx, first_attention_stopline_idx);
   tier4_debug_msgs::msg::Float64MultiArrayStamped ego_ttc_time_array;
   const auto time_distance_array = calcIntersectionPassingTime(
     *path, closest_idx, last_intersection_stopline_candidate_idx, time_to_restart,
@@ -277,15 +321,16 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       closest_idx, collision_stopline_idx, occlusion_stopline_idx};
   }
   // Occluded
-  // occlusion_status is assured to be not NOT_OCCLUDED
   const auto occlusion_wo_tl_pass_judge_line_idx =
     intersection_stoplines.occlusion_wo_tl_pass_judge_line;
   const bool stopped_at_default_line = stoppedForDuration(
     default_stopline_idx, planner_param_.occlusion.temporal_stop_time_before_peeking,
     before_creep_state_machine_);
   if (stopped_at_default_line) {
+    // ==========================================================================================
     // if specified the parameter occlusion.temporal_stop_before_attention_area OR
     // has_no_traffic_light_, ego will temporarily stop before entering attention area
+    // ==========================================================================================
     const bool temporal_stop_before_attention_required =
       (planner_param_.occlusion.temporal_stop_before_attention_area || !has_traffic_light_)
         ? !stoppedForDuration(
@@ -306,8 +351,12 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         first_attention_stopline_idx,
         occlusion_wo_tl_pass_judge_line_idx};
     }
+
+    // ==========================================================================================
     // following remaining block is "has_traffic_light_"
+    //
     // if ego is stuck by static occlusion in the presence of traffic light, start timeout count
+    // ==========================================================================================
     const bool is_static_occlusion = occlusion_status == OcclusionType::STATICALLY_OCCLUDED;
     const bool is_stuck_by_static_occlusion =
       stoppedAtPosition(
@@ -795,7 +844,6 @@ void reactRTCApprovalByDecisionResult(
     "PeekingTowardOcclusion, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
   // NOTE: creep_velocity should be inserted first at closest_idx if !rtc_default_approved
-
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
     const size_t occlusion_peeking_stopline =
       decision_result.temporal_stop_before_attention_required
@@ -1113,7 +1161,7 @@ IntersectionModule::TrafficPrioritizedLevel IntersectionModule::getTrafficPriori
   return TrafficPrioritizedLevel::NOT_PRIORITIZED;
 }
 
-intersection::Result<
+Result<
   intersection::Indecisive,
   std::pair<bool /* is_over_1st_pass_judge */, bool /* is_over_2nd_pass_judge */>>
 IntersectionModule::isOverPassJudgeLinesStatus(
@@ -1130,8 +1178,11 @@ IntersectionModule::isOverPassJudgeLinesStatus(
   const size_t pass_judge_line_idx = [&]() {
     if (planner_param_.occlusion.enable) {
       if (has_traffic_light_) {
+        // ==========================================================================================
         // if ego passed the first_pass_judge_line while it is peeking to occlusion, then its
-        // position is occlusion_stopline_idx. Otherwise it is first_pass_judge_line
+        // position is changed to occlusion_stopline_idx. even if occlusion is cleared by peeking,
+        // its position should be occlusion_stopline_idx as before
+        // ==========================================================================================
         if (passed_1st_judge_line_while_peeking_) {
           return occlusion_stopline_idx;
         }
@@ -1140,16 +1191,22 @@ IntersectionModule::isOverPassJudgeLinesStatus(
         if (is_occlusion_state && is_over_first_pass_judge_line) {
           passed_1st_judge_line_while_peeking_ = true;
           return occlusion_stopline_idx;
-        } else {
-          return first_pass_judge_line_idx;
         }
+        // ==========================================================================================
+        // Otherwise it is first_pass_judge_line
+        // ==========================================================================================
+        return first_pass_judge_line_idx;
       } else if (is_occlusion_state) {
+        // ==========================================================================================
         // if there is no traffic light and occlusion is detected, pass_judge position is beyond
         // the boundary of first attention area
+        // ==========================================================================================
         return occlusion_wo_tl_pass_judge_line_idx;
       } else {
+        // ==========================================================================================
         // if there is no traffic light and occlusion is not detected, pass_judge position is
-        // default
+        // default position
+        // ==========================================================================================
         return first_pass_judge_line_idx;
       }
     }
@@ -1184,105 +1241,30 @@ IntersectionModule::isOverPassJudgeLinesStatus(
       planner_param_.common.enable_pass_judge_before_default_stopline) &&
      is_over_2nd_pass_judge_line && was_safe) ||
     is_permanent_go_) {
-    /*
-     * This body is active if ego is
-     * - over the default stopline AND
-     * - over the 1st && 2nd pass judge line AND
-     * - previously safe
-     * ,
-     * which means ego can stop even if it is over the 1st pass judge line but
-     * - before default stopline OR
-     * - before the 2nd pass judge line OR
-     * - or previously unsafe
-     * .
-     * In order for ego to continue peeking or collision detection when occlusion is detected after
-     * ego passed the 1st pass judge line, it needs to be
-     * - before the default stopline OR
-     * - before the 2nd pass judge line OR
-     * - previously unsafe
-     */
+    // ==========================================================================================
+    // this body is active if ego is
+    // - over the default stopline AND
+    // - over the 1st && 2nd pass judge line AND
+    // - previously safe
+    // ,
+    // which means ego can stop even if it is over the 1st pass judge line but
+    // - before default stopline OR
+    // - before the 2nd pass judge line OR
+    // - or previously unsafe
+    // .
+    //
+    // in order for ego to continue peeking or collision detection when occlusion is detected after
+    // ego passed the 1st pass judge line, it needs to be
+    // - before the default stopline OR
+    // - before the 2nd pass judge line OR
+    // - previously unsafe
+    // ==========================================================================================
     is_permanent_go_ = true;
-    return intersection::Result<intersection::Indecisive, std::pair<bool, bool>>::make_ok(
-      intersection::Indecisive{"over the pass judge line. no plan needed"});
+    return make_ok<intersection::Indecisive, std::pair<bool, bool>>(
+      "over the pass judge line. no plan needed");
   }
-  return intersection::Result<intersection::Indecisive, std::pair<bool, bool>>::make_err(
-    std::make_pair(is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line));
+  return make_err<intersection::Indecisive, std::pair<bool, bool>>(
+    is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line);
 }
-
-/*
-  bool IntersectionModule::checkFrontVehicleDeceleration(
-  lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
-  const Polygon2d & stuck_vehicle_detect_area,
-  const autoware_auto_perception_msgs::msg::PredictedObject & object,
-  const double assumed_front_car_decel)
-  {
-  const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
-  // consider vehicle in ego-lane && in front of ego
-  const auto lon_vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  const double object_decel =
-  planner_param_.stuck_vehicle.assumed_front_car_decel;  // NOTE: this is positive
-  const double stopping_distance = lon_vel * lon_vel / (2 * object_decel);
-
-  std::vector<geometry_msgs::msg::Point> center_points;
-  for (auto && p : ego_lane_with_next_lane[0].centerline())
-  center_points.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
-  for (auto && p : ego_lane_with_next_lane[1].centerline())
-  center_points.push_back(std::move(lanelet::utils::conversion::toGeomMsgPt(p)));
-  const double lat_offset =
-  std::fabs(motion_utils::calcLateralOffset(center_points, object_pose.position));
-  // get the nearest centerpoint to object
-  std::vector<double> dist_obj_center_points;
-  for (const auto & p : center_points)
-  dist_obj_center_points.push_back(tier4_autoware_utils::calcDistance2d(object_pose.position,
-  p)); const int obj_closest_centerpoint_idx = std::distance( dist_obj_center_points.begin(),
-  std::min_element(dist_obj_center_points.begin(), dist_obj_center_points.end()));
-  // find two center_points whose distances from `closest_centerpoint` cross stopping_distance
-  double acc_dist_prev = 0.0, acc_dist = 0.0;
-  auto p1 = center_points[obj_closest_centerpoint_idx];
-  auto p2 = center_points[obj_closest_centerpoint_idx];
-  for (unsigned i = obj_closest_centerpoint_idx; i < center_points.size() - 1; ++i) {
-  p1 = center_points[i];
-  p2 = center_points[i + 1];
-  acc_dist_prev = acc_dist;
-  const auto arc_position_p1 =
-  lanelet::utils::getArcCoordinates(ego_lane_with_next_lane, toPose(p1));
-  const auto arc_position_p2 =
-  lanelet::utils::getArcCoordinates(ego_lane_with_next_lane, toPose(p2));
-  const double delta = arc_position_p2.length - arc_position_p1.length;
-  acc_dist += delta;
-  if (acc_dist > stopping_distance) {
-  break;
-  }
-  }
-  // if stopping_distance >= center_points, stopping_point is center_points[end]
-  const double ratio = (acc_dist <= stopping_distance)
-  ? 0.0
-  : (acc_dist - stopping_distance) / (stopping_distance - acc_dist_prev);
-  // linear interpolation
-  geometry_msgs::msg::Point stopping_point;
-  stopping_point.x = (p1.x * ratio + p2.x) / (1 + ratio);
-  stopping_point.y = (p1.y * ratio + p2.y) / (1 + ratio);
-  stopping_point.z = (p1.z * ratio + p2.z) / (1 + ratio);
-  const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, stopping_point);
-  stopping_point.x += lat_offset * std::cos(lane_yaw + M_PI / 2.0);
-  stopping_point.y += lat_offset * std::sin(lane_yaw + M_PI / 2.0);
-
-  // calculate footprint of predicted stopping pose
-  autoware_auto_perception_msgs::msg::PredictedObject predicted_object = object;
-  predicted_object.kinematics.initial_pose_with_covariance.pose.position = stopping_point;
-  predicted_object.kinematics.initial_pose_with_covariance.pose.orientation =
-  tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
-  auto predicted_obj_footprint = tier4_autoware_utils::toPolygon2d(predicted_object);
-  const bool is_in_stuck_area = !bg::disjoint(predicted_obj_footprint, stuck_vehicle_detect_area);
-  debug_data_.predicted_obj_pose.position = stopping_point;
-  debug_data_.predicted_obj_pose.orientation =
-  tier4_autoware_utils::createQuaternionFromRPY(0, 0, lane_yaw);
-
-  if (is_in_stuck_area) {
-  return true;
-  }
-  return false;
-  }
-*/
 
 }  // namespace behavior_velocity_planner

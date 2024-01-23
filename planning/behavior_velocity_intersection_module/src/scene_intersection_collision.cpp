@@ -63,18 +63,26 @@ void IntersectionModule::updateObjectInfoManagerArea()
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
 
-  auto old_map = object_info_manager_.getObjectsMap();
+  // ==========================================================================================
+  // entries that are not observed in this iteration need to be cleared
+  //
+  // NOTE: old_map is not referenced because internal data of object_info_manager is cleared
+  // ==========================================================================================
+  const auto old_map = object_info_manager_.getObjectsMap();
   object_info_manager_.clearObjects();
 
   for (const auto & predicted_object : planner_data_->predicted_objects->objects) {
     if (!isTargetCollisionVehicleType(predicted_object)) {
       continue;
     }
-    const auto & obj_pos = predicted_object.kinematics.initial_pose_with_covariance.pose.position;
 
+    // ==========================================================================================
+    // NOTE: is_parked_vehicle is used because sometimes slow vehicle direction is
+    // incorrect/reversed/flipped due to tracking. if is_parked_vehicle is true, object direction
+    // is not checked
+    // ==========================================================================================
     const auto object_direction =
       util::getObjectPoseWithVelocityDirection(predicted_object.kinematics);
-    // NOTE: is_parked_vehicle is used because sometimes slow vehicle direction is wrong
     const auto is_parked_vehicle =
       std::fabs(predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x) <
       planner_param_.occlusion.ignore_parked_vehicle_speed_threshold;
@@ -86,6 +94,7 @@ void IntersectionModule::updateObjectInfoManagerArea()
     }
     const auto belong_attention_lanelet_id =
       checkAngleForTargetLanelets(object_direction, attention_lanelets, is_parked_vehicle);
+    const auto & obj_pos = predicted_object.kinematics.initial_pose_with_covariance.pose.position;
     const bool in_intersection_area = [&]() {
       if (!intersection_area) {
         return false;
@@ -103,17 +112,18 @@ void IntersectionModule::updateObjectInfoManagerArea()
       stopline = attention_lanelet_stoplines.at(idx);
     }
 
-    if (old_map.count(predicted_object.object_id) != 0) {
-      auto object_info = old_map[predicted_object.object_id];
+    const auto object_it = old_map.find(predicted_object.object_id);
+    if (object_it != old_map.end()) {
+      auto object_info = object_it->second;
       object_info_manager_.registerExistingObject(
         predicted_object.object_id, belong_attention_lanelet_id.has_value(), in_intersection_area,
         is_parked_vehicle, object_info);
-      object_info->update(predicted_object, attention_lanelet, stopline);
+      object_info->initialize(predicted_object, attention_lanelet, stopline);
     } else {
       auto object_info = object_info_manager_.registerObject(
         predicted_object.object_id, belong_attention_lanelet_id.has_value(), in_intersection_area,
         is_parked_vehicle);
-      object_info->update(predicted_object, attention_lanelet, stopline);
+      object_info->initialize(predicted_object, attention_lanelet, stopline);
     }
   }
 }
@@ -133,7 +143,6 @@ void IntersectionModule::updateObjectInfoManagerCollision(
   debug_data_.ego_lane = ego_lane.polygon3d();
   const auto ego_poly = ego_lane.polygon2d().basicPolygon();
 
-  // change TTC margin based on ego traffic light color
   const auto [collision_start_margin_time, collision_end_margin_time] = [&]() {
     if (traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED) {
       return std::make_pair(
@@ -151,10 +160,6 @@ void IntersectionModule::updateObjectInfoManagerCollision(
   }();
 
   for (auto & object_info : object_info_manager_.attentionObjects()) {
-    // NOTE: this is important because prior UNSAFE is kept otherwise
-    // これ分かりにくい
-    object_info->update(std::nullopt);
-
     const auto & predicted_object = object_info->predicted_object();
     if (
       traffic_prioritized_level == TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED &&
@@ -174,7 +179,10 @@ void IntersectionModule::updateObjectInfoManagerCollision(
       continue;
     }
 
-    // check the PredictedPath in the ascending order of its confidence
+    // ==========================================================================================
+    // check the PredictedPath in the ascending order of its confidence to save the safe/unsafe
+    // CollisionKnowledge for most probable path
+    // ==========================================================================================
     std::list<const autoware_auto_perception_msgs::msg::PredictedPath *> sorted_predicted_paths;
     for (unsigned i = 0; i < predicted_object.kinematics.predicted_paths.size(); ++i) {
       sorted_predicted_paths.push_back(&predicted_object.kinematics.predicted_paths.at(i));
@@ -197,7 +205,7 @@ void IntersectionModule::updateObjectInfoManagerCollision(
         intersection_lanelets.first_attention_lane(),
         intersection_lanelets.second_attention_lane());
       if (!object_passage_interval_opt) {
-        // there is no spatial collision for the entire prediction horizon
+        // there is no chance of geometric collision for the entire prediction horizon
         continue;
       }
       const auto & object_passage_interval = object_passage_interval_opt.value();
@@ -207,10 +215,12 @@ void IntersectionModule::updateObjectInfoManagerCollision(
         object_enter_time - collision_start_margin_time,
         [](const auto & a, const double b) { return a.first < b; });
       if (ego_start_itr == time_distance_array.end()) {
+        // ==========================================================================================
         // this is the case where at time "object_enter_time - collision_start_margin_time", ego is
         // arriving at the exit of the intersection, which means even if we assume that the object
         // accelerates and the first collision happens faster by the TTC margin, ego will be already
         // arriving at the exist of the intersection.
+        // ==========================================================================================
         continue;
       }
       auto ego_end_itr = std::lower_bound(
@@ -258,8 +268,10 @@ void IntersectionModule::updateObjectInfoManagerCollision(
         break;
       }
       if (!safe_decision_knowledge) {
+        // ==========================================================================================
         // save the safe_decision_knowledge for the most probable path. this value is nullified if
         // judged UNSAFE during the iteration
+        // ==========================================================================================
         safe_decision_knowledge = object_passage_interval;
       }
     }
@@ -269,7 +281,7 @@ void IntersectionModule::updateObjectInfoManagerCollision(
 
 void IntersectionModule::cutPredictPathWithinDuration(
   const builtin_interfaces::msg::Time & object_stamp, const double time_thr,
-  autoware_auto_perception_msgs::msg::PredictedPath * path)
+  autoware_auto_perception_msgs::msg::PredictedPath * path) const
 {
   const rclcpp::Time current_time = clock_->now();
   const auto original_path = path->path;
@@ -293,15 +305,15 @@ IntersectionModule::isGreenPseudoCollisionStatus(
 {
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
-  // If there are any vehicles on the attention area when ego entered the intersection on green
-  // light, do pseudo collision detection because the vehicles are very slow and no collisions may
-  // be detected. check if ego vehicle entered assigned lanelet
+  // ==========================================================================================
+  // if there are any vehicles on the attention area when ego entered the intersection on green
+  // light, do pseudo collision detection because collision is likely to happen.
+  // ==========================================================================================
   const bool is_green_solid_on = isGreenSolidOn();
   if (!is_green_solid_on) {
     return std::nullopt;
   }
   const auto closest_idx = intersection_stoplines.closest_idx;
-  const auto occlusion_stopline_idx = intersection_stoplines.occlusion_peeking_stopline.value();
   if (!initial_green_light_observed_time_) {
     const auto assigned_lane_begin_point = assigned_lanelet.centerline().front();
     const bool approached_assigned_lane =
@@ -331,6 +343,7 @@ IntersectionModule::isGreenPseudoCollisionStatus(
           planner_param_.collision_detection.yield_on_green_traffic_light.object_dist_to_stopline);
       });
     if (exist_close_vehicles) {
+      const auto occlusion_stopline_idx = intersection_stoplines.occlusion_peeking_stopline.value();
       return intersection::NonOccludedCollisionStop{
         closest_idx, collision_stopline_idx, occlusion_stopline_idx};
     }

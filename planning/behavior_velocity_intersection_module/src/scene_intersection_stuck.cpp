@@ -268,10 +268,9 @@ std::optional<intersection::YieldStuckStop> IntersectionModule::isYieldStuckStat
   auto fromEgoDist = [&](const size_t index) {
     return motion_utils::calcSignedArcLength(path.points, closest_idx, index);
   };
-  const auto & intersection_lanelets = intersection_lanelets_.value();                // this is OK
-  const auto default_stopline_idx = intersection_stoplines.default_stopline.value();  // this is OK
-  const auto first_attention_stopline_idx =
-    intersection_stoplines.first_attention_stopline.value();  // this is OK
+  const auto & intersection_lanelets = intersection_lanelets_.value();
+  const auto default_stopline_idx = intersection_stoplines.default_stopline.value();
+  const auto first_attention_stopline_idx = intersection_stoplines.first_attention_stopline.value();
   const auto stuck_stopline_idx_opt = intersection_stoplines.stuck_stopline;
 
   const bool yield_stuck_detected = checkYieldStuckVehicleInIntersection(

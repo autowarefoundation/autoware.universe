@@ -208,7 +208,6 @@ public:
   using TimeDistanceArray = std::vector<std::pair<double /* time*/, double /* distance*/>>;
 
   /**
-   * @struct
    * @brief categorize traffic light priority
    */
   enum class TrafficPrioritizedLevel {
@@ -339,7 +338,7 @@ private:
   //! debouncing for stable SAFE decision
   StateMachine collision_state_machine_;
 
-  //! container for storing safety statuts of objects on the attention area
+  //! container for storing safety status of objects on the attention area
   intersection::ObjectInfoManager object_info_manager_;
   /** @} */
 
@@ -631,13 +630,13 @@ private:
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
-   * @brief find the objects on attention_area/intersection_area
+   * @brief find the objects on attention_area/intersection_area and update positional information
    * @attention this function has access to value() of intersection_lanelets_
    */
   void updateObjectInfoManagerArea();
 
   /**
-   * @brief find the CollsionInterval/CollisionKnowledge of registered objects
+   * @brief find the collision Interval/CollisionKnowledge of registered objects
    * @attention this function has access to value() of intersection_lanelets_
    */
   void updateObjectInfoManagerCollision(
@@ -646,7 +645,7 @@ private:
 
   void cutPredictPathWithinDuration(
     const builtin_interfaces::msg::Time & object_stamp, const double time_thr,
-    autoware_auto_perception_msgs::msg::PredictedPath * predicted_path);
+    autoware_auto_perception_msgs::msg::PredictedPath * predicted_path) const;
 
   /**
    * @brief check if there are any objects around the stoplines on the attention areas when ego
@@ -679,14 +678,6 @@ private:
     const size_t last_intersection_stopline_candidate_idx, const double time_delay,
     tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
   /** @} */
-
-  /*
-  bool IntersectionModule::checkFrontVehicleDeceleration(
-    lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
-    const Polygon2d & stuck_vehicle_detect_area,
-    const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const double assumed_front_car_decel);
-  */
 
   mutable DebugData debug_data_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decision_state_pub_;

@@ -72,7 +72,7 @@ ObjectInfo::ObjectInfo(const unique_identifier_msgs::msg::UUID & uuid) : uuid_st
 {
 }
 
-void ObjectInfo::update(
+void ObjectInfo::initialize(
   const autoware_auto_perception_msgs::msg::PredictedObject & object,
   std::optional<lanelet::ConstLanelet> attention_lanelet_opt_,
   std::optional<lanelet::ConstLineString3d> stopline_opt_)
@@ -86,6 +86,7 @@ void ObjectInfo::update(
       {attention_lanelet}, predicted_object_.kinematics.initial_pose_with_covariance.pose);
   }
   observed_velocity = predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
+  unsafe_decision_knowledge_ = std::nullopt;
   calc_dist_to_stopline();
 }
 
@@ -208,6 +209,23 @@ void ObjectInfoManager::registerExistingObject(
   }
 }
 
+void ObjectInfoManager::clearObjects()
+{
+  objects_info_.clear();
+  attention_area_objects_.clear();
+  intersection_area_objects_.clear();
+  parked_objects_.clear();
+};
+
+std::vector<std::shared_ptr<ObjectInfo>> ObjectInfoManager::allObjects()
+{
+  std::vector<std::shared_ptr<ObjectInfo>> all_objects = attention_area_objects_;
+  all_objects.insert(
+    all_objects.end(), intersection_area_objects_.begin(), intersection_area_objects_.end());
+  all_objects.insert(all_objects.end(), parked_objects_.begin(), parked_objects_.end());
+  return all_objects;
+}
+
 std::optional<intersection::CollisionInterval> findPassageInterval(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const autoware_auto_perception_msgs::msg::Shape & shape,
@@ -236,7 +254,7 @@ std::optional<intersection::CollisionInterval> findPassageInterval(
   const size_t enter_idx = static_cast<size_t>(first_itr - predicted_path.path.begin());
   const double object_enter_time =
     static_cast<double>(enter_idx) * rclcpp::Duration(predicted_path.time_step).seconds();
-  const size_t exit_idx = static_cast<size_t>(last_itr.base() - predicted_path.path.begin());
+  const size_t exit_idx = std::distance(predicted_path.path.begin(), last_itr.base()) - 1;
   const double object_exit_time =
     static_cast<double>(exit_idx) * rclcpp::Duration(predicted_path.time_step).seconds();
   const auto [lane_position, lane_id] =

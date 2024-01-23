@@ -23,7 +23,6 @@ namespace behavior_velocity_planner::intersection
 {
 
 /**
- * @struct
  * @brief Internal error or ego already passed pass_judge_line
  */
 struct Indecisive
@@ -32,7 +31,6 @@ struct Indecisive
 };
 
 /**
- * @struct
  * @brief detected stuck vehicle
  */
 struct StuckStop
@@ -43,7 +41,6 @@ struct StuckStop
 };
 
 /**
- * @struct
  * @brief yielded by vehicle on the attention area
  */
 struct YieldStuckStop
@@ -53,7 +50,6 @@ struct YieldStuckStop
 };
 
 /**
- * @struct
  * @brief only collision is detected
  */
 struct NonOccludedCollisionStop
@@ -64,7 +60,6 @@ struct NonOccludedCollisionStop
 };
 
 /**
- * @struct
  * @brief occlusion is detected so ego needs to stop at the default stop line position
  */
 struct FirstWaitBeforeOcclusion
@@ -76,7 +71,6 @@ struct FirstWaitBeforeOcclusion
 };
 
 /**
- * @struct
  * @brief ego is approaching the boundary of attention area in the presence of traffic light
  */
 struct PeekingTowardOcclusion
@@ -96,7 +90,6 @@ struct PeekingTowardOcclusion
 };
 
 /**
- * @struct
  * @brief both collision and occlusion are detected in the presence of traffic light
  */
 struct OccludedCollisionStop
@@ -113,7 +106,6 @@ struct OccludedCollisionStop
 };
 
 /**
- * @struct
  * @brief at least occlusion is detected in the absence of traffic light
  */
 struct OccludedAbsenceTrafficLight
@@ -127,7 +119,6 @@ struct OccludedAbsenceTrafficLight
 };
 
 /**
- * @struct
  * @brief both collision and occlusion are not detected
  */
 struct Safe
@@ -138,7 +129,6 @@ struct Safe
 };
 
 /**
- * @struct
  * @brief traffic light is red or arrow signal
  */
 struct FullyPrioritized
