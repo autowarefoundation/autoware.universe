@@ -52,6 +52,7 @@ This parameter should be same as the frame rate of input topics.
   - Default parameter: "base_link"
 
 This parameter is the header frame_id of the output topic.
+If output topics use for perception module, it should be set for "base_link"
 
 - `timeout_threshold` (double) [s]
   - Default parameter: 0.1
@@ -75,3 +76,4 @@ If the time difference between the first topic of `input_topics` and an input to
 This parameter is the name of input topics.
 For example, when this packages use for radar objects, `"[/sensing/radar/front_center/detected_objects, /sensing/radar/front_left/detected_objects, /sensing/radar/rear_left/detected_objects, /sensing/radar/rear_center/detected_objects, /sensing/radar/rear_right/detected_objects, /sensing/radar/front_right/detected_objects]"` can be set.
 For now, the time difference is calculated by the header time between the first topic of `input_topics` and the input topics, so the most important objects to detect should be set in the first of `input_topics` list.
+
