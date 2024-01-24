@@ -50,9 +50,14 @@ public:
   PoseEstimatorArbiter();
 
 private:
+  // Set of running pose estimators specified by ros param `pose_sources`
   const std::unordered_set<PoseEstimatorType> running_estimator_list_;
+  // Configuration to allow changing the log level by service
   const std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
+  // This is passed to several modules (stoppers & rule) so that all modules can access common data
+  // without passing them as arguments. Also, modules can register subscriber callbacks through
+  // shared_data, avoiding the need to define duplicate subscribers for each module.
   std::shared_ptr<SharedData> shared_data_{nullptr};
 
   // Timer callback
@@ -72,15 +77,19 @@ private:
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Subscription<InitializationState>::SharedPtr sub_initialization_state_;
 
+  // Stoppers which enable/disable pose estimators
   std::unordered_map<PoseEstimatorType, stopper::BaseStopper::SharedPtr> stoppers_;
-
+  // Abstract class to determine which pose estimator should be used
   std::shared_ptr<switch_rule::BaseSwitchRule> switch_rule_{nullptr};
 
+  // Instruct all stopper to enable/disable
   void toggle_all(bool enabled);
+  // Instruct each stopper to enable/disable
   void toggle_each(const std::unordered_map<PoseEstimatorType, bool> & toggle_list);
 
+  // Load switching rule according to the condition
   void load_switch_rule();
-
+  // Publish diagnostic messages
   void publish_diagnostics() const;
 
   // Timer callback

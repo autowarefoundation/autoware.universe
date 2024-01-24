@@ -24,13 +24,14 @@
 
 namespace pose_estimator_arbiter
 {
-
+// Parses ros param to get the estimator set that is running
 static std::unordered_set<PoseEstimatorType> parse_estimator_name_args(
   const std::vector<std::string> & arg, const rclcpp::Logger & logger)
 {
   std::unordered_set<PoseEstimatorType> running_estimator_list;
   for (const auto & estimator_name : arg) {
-    auto estimator = magic_enum::enum_cast<PoseEstimatorType>(estimator_name);
+    const auto estimator = magic_enum::enum_cast<PoseEstimatorType>(estimator_name);
+
     if (estimator.has_value()) {
       running_estimator_list.insert(estimator.value());
     } else {
@@ -133,12 +134,14 @@ void PoseEstimatorArbiter::toggle_each(
     RCLCPP_DEBUG_STREAM(
       get_logger(), magic_enum::enum_name(type) << " : " << std::boolalpha << toggle_list.at(type));
 
+    // If the rule implementation is perfect, toggle_list should contains all pose_estimator_type.
     if (toggle_list.count(type) == 0) {
       RCLCPP_ERROR_STREAM(
         get_logger(), magic_enum::enum_name(type) << " is not included in toggle_list.");
       continue;
     }
 
+    // Enable or disable according to toggle_list
     if (toggle_list.at(type)) {
       stopper->enable();
     } else {
@@ -149,10 +152,13 @@ void PoseEstimatorArbiter::toggle_each(
 
 void PoseEstimatorArbiter::toggle_all(bool enabled)
 {
+  // Create toggle_list
   std::unordered_map<PoseEstimatorType, bool> toggle_list;
   for (auto [type, stopper] : stoppers_) {
     toggle_list.emplace(type, enabled);
   }
+
+  // Apply toggle_list
   toggle_each(toggle_list);
 }
 
@@ -184,6 +190,7 @@ void PoseEstimatorArbiter::publish_diagnostics() const
 
 void PoseEstimatorArbiter::on_timer()
 {
+  // Toggle each stopper status
   if (switch_rule_) {
     const auto toggle_list = switch_rule_->update();
     toggle_each(toggle_list);
@@ -199,7 +206,7 @@ void PoseEstimatorArbiter::on_timer()
     toggle_all(true);
   }
 
-  //
+  // Publish diagnostic results periodically
   publish_diagnostics();
 }
 
