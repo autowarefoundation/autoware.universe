@@ -97,22 +97,18 @@ user@host-pc:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=R
 
 ## Test Autoware Installation with Planning Simulation:
 
-1. Run the pulled Docker image as a container (if not already running).
+1. Source the `setup.*sh` (e.g., `setup.bash`) files of ROS distribution (if not already done) and your workspace:
 ```bash
-user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
+user@host-pc:~$ source /opt/ros/galactic/setup.bash
+user@host-pc:~$ source ~/Autoware_WS/autoware_local/install/setup.bash
 ```
+> **Note:** You can write the above lines to the `~/.bashrc` file so that it is automatically executed when a new terminal instance is created.
 
-2. Source the `setup.*sh` (e.g., `setup.bash`) file of your workspace:
-```bash
-user@host-pc:~$ source ~/Autoware_WS/autoware_docker/install/setup.bash
-```
-> **Note:** You can write the above line to the `~/.bashrc` file so that it is automatically executed when a new terminal instance is created.
-
-3. Launch the `planning_simulator` with the `sample-map-planning` map, `sample_vehicle` vehicle, and `sample_sensor_kit` sensor kit.
+2. Launch the `planning_simulator` with the `sample-map-planning` map, `sample_vehicle` vehicle, and `sample_sensor_kit` sensor kit.
 ```
 user@host-pc:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
 ```
 
-4. Tinker around with the `planning_simulator` and explore the depths of Autoware stack!
+3. Tinker around with the `planning_simulator` and explore the depths of Autoware stack!
    ![Autoware-Planning-Simulation](https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/Autoware-Planning-Simulation/Autoware-Planning-Simulation.gif)
 > **Note:** Check out the official [Planning Simulation Documentation](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/planning-simulation/) for more details.
