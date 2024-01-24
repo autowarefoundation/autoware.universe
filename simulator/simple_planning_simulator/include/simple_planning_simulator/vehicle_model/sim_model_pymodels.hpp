@@ -138,11 +138,11 @@ private:
   void update(const double & dt) override;
 
   /**
-   * @brief calculate derivative of states with delay steering model
+   * @brief not used for this model. calculate derivative of states with delay steering model
    * @param [in] state current model state
    * @param [in] input input vector to model
    */
-  Eigen::VectorXd calcModel(const Eigen::VectorXd & state, const Eigen::VectorXd & input) override;
+  Eigen::VectorXd calcModel([[maybe_unused]]const Eigen::VectorXd & state, [[maybe_unused]]const Eigen::VectorXd & input) override {return Eigen::VectorXd::Zero(dim_x_);}
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_PYMODELS_HPP_

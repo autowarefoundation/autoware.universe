@@ -104,27 +104,3 @@ void SimModelPymodels::update(const double & dt)
   current_ax_ = (input_(IDX_U::VX_DES) - prev_vx_) / dt;
   prev_vx_ = input_(IDX_U::VX_DES);
 }
-
-Eigen::VectorXd SimModelPymodels::calcModel(
-  const Eigen::VectorXd & state, const Eigen::VectorXd & input)
-{
-  // Not used for this model -> we can get rid of this later
-  auto sat = [](double val, double u, double l) { return std::max(std::min(val, u), l); };
-
-  const double vx = sat(state(IDX::VX), 50, -50);
-  const double steer = sat(state(IDX::STEER), 0, -0);
-  const double yaw = state(IDX::YAW);
-  const double delay_input_vx = input(IDX_U::VX_DES);
-  const double delay_vx_des = sat(delay_input_vx, 50, -50);
-  const double vx_rate = sat(-(vx - delay_vx_des), 0, -0);
-
-
-  Eigen::VectorXd d_state = Eigen::VectorXd::Zero(dim_x_);
-  d_state(IDX::X) = 0 * vx * cos(yaw);
-  d_state(IDX::Y) = 0 * vx * sin(yaw);
-  d_state(IDX::YAW) = 0 * vx * std::tan(steer) / 1.5;
-  d_state(IDX::VX) = 0 * vx_rate;
-  d_state(IDX::STEER) = 0.0;  //Use python models to update steer
-
-  return d_state;
-}
