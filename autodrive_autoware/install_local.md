@@ -72,22 +72,22 @@ user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/s
 
 1. Create an `src` directory within the `autoware_local` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
 ```bash
-user@container-id:~$ cd Autoware_WS/autoware_local/
-user@container-id:~$ mkdir src
-user@container-id:~$ vcs import src < autoware.repos
+user@host-pc:~$ cd Autoware_WS/autoware_local/
+user@host-pc:~$ mkdir src
+user@host-pc:~$ vcs import src < autoware.repos
 ```
 
 2. Install the required dependencies (Autoware uses [`rosdep`](https://github.com/ros-infrastructure/rosdep) to manage dependencies).
 ```bash
-user@container-id:~$ sudo apt update
-user@container-id:~$ rosdep update
-user@container-id:~$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+user@host-pc:~$ sudo apt update
+user@host-pc:~$ rosdep update
+user@host-pc:~$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
 ```
 > **Note:** You can ignore the `Invalid version` errors (if any) during `rosdep` installation process.
 
 3. Build the workspace (Autoware uses [colcon](https://github.com/colcon) to build workspaces).
 ```bash
-user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+user@host-pc:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 > **Note 1:** You can ignore the `stderr` warnings (if any) during the `colcon` build process.
 
@@ -104,13 +104,13 @@ user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autowa
 
 2. Source the `setup.*sh` (e.g., `setup.bash`) file of your workspace:
 ```bash
-user@container-id:~$ source ~/Autoware_WS/autoware_docker/install/setup.bash
+user@host-pc:~$ source ~/Autoware_WS/autoware_docker/install/setup.bash
 ```
 > **Note:** You can write the above line to the `~/.bashrc` file so that it is automatically executed when a new terminal instance is created.
 
 3. Launch the `planning_simulator` with the `sample-map-planning` map, `sample_vehicle` vehicle, and `sample_sensor_kit` sensor kit.
 ```
-user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
+user@host-pc:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
 ```
 
 4. Tinker around with the `planning_simulator` and explore the depths of Autoware stack!
