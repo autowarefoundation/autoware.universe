@@ -62,7 +62,6 @@ struct CollisionInterval
 {
   enum LanePosition {
     FIRST,
-    SECOND,
     ELSE,
   };
   LanePosition lane_position{LanePosition::ELSE};
@@ -185,6 +184,16 @@ public:
   void setDecisionAt2ndPassJudgeLinePassage(const CollisionKnowledge & knowledge)
   {
     decision_at_2nd_pass_judge_line_passage_ = knowledge;
+  }
+
+  const std::optional<CollisionKnowledge> & decision_at_1st_pass_judge_line_passage() const
+  {
+    return decision_at_1st_pass_judge_line_passage_;
+  }
+
+  const std::optional<CollisionKnowledge> & decision_at_2nd_pass_judge_line_passage() const
+  {
+    return decision_at_2nd_pass_judge_line_passage_;
   }
 
 private:

@@ -224,7 +224,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     path_lanelets, time_distance_array, traffic_prioritized_level, safely_passed_1st_judge_line,
     safely_passed_2nd_judge_line);
 
-  const auto [has_collision, collision_position] = detectCollision();
+  const auto [has_collision, collision_position] =
+    detectCollision(is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line);
   if (is_permanent_go_) {
     if (has_collision) {
       // TODO(Mamoru Sobue): diagnosis

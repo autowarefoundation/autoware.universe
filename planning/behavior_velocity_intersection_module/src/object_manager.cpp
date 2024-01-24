@@ -233,7 +233,7 @@ std::optional<intersection::CollisionInterval> findPassageInterval(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   const lanelet::BasicPolygon2d & ego_lane_poly,
   const std::optional<lanelet::ConstLanelet> & first_attention_lane_opt,
-  const std::optional<lanelet::ConstLanelet> & second_attention_lane_opt)
+  [[maybe_unused]] const std::optional<lanelet::ConstLanelet> & second_attention_lane_opt)
 {
   const auto first_itr = std::adjacent_find(
     predicted_path.path.cbegin(), predicted_path.path.cend(), [&](const auto & a, const auto & b) {
@@ -261,15 +261,6 @@ std::optional<intersection::CollisionInterval> findPassageInterval(
     static_cast<double>(exit_idx) * rclcpp::Duration(predicted_path.time_step).seconds();
   const auto [lane_position, lane_id] =
     [&]() -> std::pair<intersection::CollisionInterval::LanePosition, lanelet::Id> {
-    if (second_attention_lane_opt) {
-      if (lanelet::geometry::inside(
-            second_attention_lane_opt.value(),
-            lanelet::BasicPoint2d(first_itr->position.x, first_itr->position.y))) {
-        return std::make_pair(
-          intersection::CollisionInterval::LanePosition::SECOND,
-          second_attention_lane_opt.value().id());
-      }
-    }
     if (first_attention_lane_opt) {
       if (lanelet::geometry::inside(
             first_attention_lane_opt.value(),

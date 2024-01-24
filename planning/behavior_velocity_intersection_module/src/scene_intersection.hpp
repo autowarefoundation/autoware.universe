@@ -680,7 +680,8 @@ private:
   /**
    * @brief return if collision is detected and the collision position
    */
-  std::pair<bool, intersection::CollisionInterval::LanePosition> detectCollision();
+  std::pair<bool, intersection::CollisionInterval::LanePosition> detectCollision(
+    const bool is_over_1st_pass_judge_line, const bool is_over_2nd_pass_judge_line);
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,

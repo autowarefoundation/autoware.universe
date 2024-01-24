@@ -151,6 +151,10 @@ void IntersectionModule::updateObjectInfoManagerCollision(
   debug_data_.ego_lane = ego_lane.polygon3d();
   const auto ego_poly = ego_lane.polygon2d().basicPolygon();
 
+  // ==========================================================================================
+  // dynamically change TTC margin according to traffic light color to gradually relax from green to
+  // red
+  // ==========================================================================================
   const auto [collision_start_margin_time, collision_end_margin_time] = [&]() {
     if (traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED) {
       return std::make_pair(
@@ -365,26 +369,71 @@ IntersectionModule::isGreenPseudoCollisionStatus(
   return std::nullopt;
 }
 
-std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModule::detectCollision()
+std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModule::detectCollision(
+  const bool is_over_1st_pass_judge_line, const bool is_over_2nd_pass_judge_line)
 {
   // ==========================================================================================
   // if collision is detected for multiple objects, we prioritize collision on the first
   // attention lanelet
   // ==========================================================================================
-  std::optional<intersection::CollisionInterval::LanePosition> collision_at_non_first_lane_opt{
-    std::nullopt};
+  bool collision_at_first_lane = false;
+  bool collision_at_non_first_lane = false;
+
+  // ==========================================================================================
+  // find the objects which is judges as UNSAFE after ego passed pass judge lines.
+  //
+  // misjudge_objects are those that were once judged as safe when ego passed the pass judge line
+  //
+  // too_late_detect objects are those that (1) were not detected when ego passed the pass judge
+  // line (2) were judged as dangerous at the same time when ego passed the pass judge, which are
+  // expected to have been detected in the prior iteration because ego could have judged as UNSAFE
+  // in the prior iteration
+  // ==========================================================================================
+  std::vector<std::shared_ptr<intersection::ObjectInfo>> misjudge_objects;
+  std::vector<std::shared_ptr<intersection::ObjectInfo>> too_late_detect_objects;
   for (const auto & object_info : object_info_manager_.attentionObjects()) {
-    if (const auto unsafe_info = object_info->is_unsafe(); unsafe_info) {
+    if (!object_info->is_unsafe()) {
+      continue;
+    }
+    const auto & unsafe_info = object_info->is_unsafe().value();
+    if (unsafe_info.lane_position == intersection::CollisionInterval::LanePosition::FIRST) {
+      collision_at_first_lane = true;
+    } else {
+      collision_at_non_first_lane = true;
+    }
+    if (is_over_1st_pass_judge_line) {
+      const auto & decision_at_1st_pass_judge_opt =
+        object_info->decision_at_1st_pass_judge_line_passage();
+      if (!decision_at_1st_pass_judge_opt) {
+        too_late_detect_objects.push_back(object_info);
+      }
+      const auto & decision_at_1st_pass_judge = decision_at_1st_pass_judge_opt.value();
       if (
-        unsafe_info.value().lane_position == intersection::CollisionInterval::LanePosition::FIRST) {
-        return {true, intersection::CollisionInterval::LanePosition::FIRST};
+        decision_at_1st_pass_judge.safe || decision_at_1st_pass_judge.safe_under_traffic_control) {
+        misjudge_objects.push_back(object_info);
       } else {
-        collision_at_non_first_lane_opt = unsafe_info.value().lane_position;
+        too_late_detect_objects.push_back(object_info);
+      }
+    }
+    if (is_over_2nd_pass_judge_line) {
+      const auto & decision_at_2nd_pass_judge_opt =
+        object_info->decision_at_2nd_pass_judge_line_passage();
+      if (!decision_at_2nd_pass_judge_opt) {
+        too_late_detect_objects.push_back(object_info);
+      }
+      const auto & decision_at_2nd_pass_judge = decision_at_2nd_pass_judge_opt.value();
+      if (
+        decision_at_2nd_pass_judge.safe || decision_at_2nd_pass_judge.safe_under_traffic_control) {
+        misjudge_objects.push_back(object_info);
+      } else {
+        too_late_detect_objects.push_back(object_info);
       }
     }
   }
-  if (collision_at_non_first_lane_opt) {
-    return {true, collision_at_non_first_lane_opt.value()};
+  if (collision_at_first_lane) {
+    return {true, intersection::CollisionInterval::FIRST};
+  } else if (collision_at_non_first_lane) {
+    return {true, intersection::CollisionInterval::ELSE};
   }
   return {false, intersection::CollisionInterval::ELSE};
 }
