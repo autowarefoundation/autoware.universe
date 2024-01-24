@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(autoware_map_based_prediction)
+project(map_based_prediction)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
