@@ -117,8 +117,7 @@ void clear_behind_objects(
       lanelet::geometry::distance2d(grid_map_position, object_position) < range) {
       lanelet::BasicPoints2d edge_points;
       const auto object_polygon = tier4_autoware_utils::toPolygon2d(object);
-      for (const auto & edge_point : object_polygon.outer())
-        edge_points.push_back(edge_point);
+      for (const auto & edge_point : object_polygon.outer()) edge_points.push_back(edge_point);
       std::sort(edge_points.begin(), edge_points.end(), angle_cmp);
       // points.push_back(interpolate_point({object_position, edge_point}, 10.0 * range));
       grid_map::Polygon polygon_to_clear;
@@ -145,7 +144,9 @@ bool is_crosswalk_occluded(
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
 
   if (params.occlusion_ignore_behind_predicted_objects)
-    clear_behind_objects(grid_map, dynamic_objects, params.occlusion_min_objects_velocity, params.occlusion_extra_objects_size);
+    clear_behind_objects(
+      grid_map, dynamic_objects, params.occlusion_min_objects_velocity,
+      params.occlusion_extra_objects_size);
   const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
   for (const auto & detection_area : calculate_detection_areas(
          crosswalk_lanelet, {path_intersection.x, path_intersection.y}, detection_range)) {

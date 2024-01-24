@@ -140,7 +140,7 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_behind_predicted_objects");
   cp.occlusion_min_objects_velocity =
     getOrDeclareParameter<double>(node, ns + ".occlusion.min_objects_velocity");
-  cp.occlusion_extra_objects_size=
+  cp.occlusion_extra_objects_size =
     getOrDeclareParameter<double>(node, ns + ".occlusion.extra_objects_size");
 }
 
