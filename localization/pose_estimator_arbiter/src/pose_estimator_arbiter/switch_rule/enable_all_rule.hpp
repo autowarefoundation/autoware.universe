@@ -18,23 +18,15 @@
 #include "pose_estimator_arbiter/shared_data.hpp"
 #include "pose_estimator_arbiter/switch_rule/base_switch_rule.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <visualization_msgs/msg/marker_array.hpp>
-
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
 namespace pose_estimator_arbiter::switch_rule
 {
 class EnableAllRule : public BaseSwitchRule
 {
-protected:
-  using MarkerArray = visualization_msgs::msg::MarkerArray;
-
 public:
   EnableAllRule(
     rclcpp::Node & node, const std::unordered_set<PoseEstimatorType> & running_estimator_list,
