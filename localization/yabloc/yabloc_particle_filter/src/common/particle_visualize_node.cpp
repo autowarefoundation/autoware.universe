@@ -15,7 +15,7 @@
 #include "yabloc_common/color.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <yabloc_particle_filter/msg/particle_array.hpp>
+#include <autoware_yabloc_particle_filter/msg/particle_array.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
