@@ -142,40 +142,6 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto [interpolated_path_info, intersection_stoplines, path_lanelets] = prepare_data.ok();
   const auto & intersection_lanelets = intersection_lanelets_.value();
 
-  const auto closest_idx = intersection_stoplines.closest_idx;
-
-  // utility functions
-  auto fromEgoDist = [&](const size_t index) {
-    return motion_utils::calcSignedArcLength(path->points, closest_idx, index);
-  };
-  auto stoppedForDuration =
-    [&](const size_t pos, const double duration, StateMachine & state_machine) {
-      const double dist_stopline = fromEgoDist(pos);
-      const bool approached_dist_stopline =
-        (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
-      const bool over_stopline = (dist_stopline < 0.0);
-      const bool is_stopped_duration = planner_data_->isVehicleStopped(duration);
-      if (over_stopline) {
-        state_machine.setState(StateMachine::State::GO);
-      } else if (is_stopped_duration && approached_dist_stopline) {
-        state_machine.setState(StateMachine::State::GO);
-      }
-      return state_machine.getState() == StateMachine::State::GO;
-    };
-  auto stoppedAtPosition = [&](const size_t pos, const double duration) {
-    const double dist_stopline = fromEgoDist(pos);
-    const bool approached_dist_stopline =
-      (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
-    const bool over_stopline = (dist_stopline < -planner_param_.common.stopline_overshoot_margin);
-    const bool is_stopped = planner_data_->isVehicleStopped(duration);
-    if (over_stopline) {
-      return true;
-    } else if (is_stopped && approached_dist_stopline) {
-      return true;
-    }
-    return false;
-  };
-
   // ==========================================================================================
   // stuck detection
   //
@@ -224,20 +190,20 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   updateObjectInfoManagerArea();
 
   // ==========================================================================================
-  // yield stuck detection
+  // occlusion_status is type of occlusion,
+  // is_occlusion_cleared_with_margin indicates if occlusion is physically detected
+  // is_occlusion_state indicates if occlusion is detected. OR occlusion is not detected but RTC for
+  // intersection_occlusion is disapproved, which means ego is virtually occluded
+  //
+  // so is_occlusion_cleared_with_margin should be sent to RTC as module decision
+  // and is_occlusion_status should be only used to decide ego action
+  // !is_occlusion_state == !physically_occluded && !externally_occluded, so even if occlusion is
+  // not detected but not approved, SAFE is not sent.
   // ==========================================================================================
-  const auto is_yield_stuck_status =
-    isYieldStuckStatus(*path, interpolated_path_info, intersection_stoplines);
-  if (is_yield_stuck_status) {
-    return is_yield_stuck_status.value();
-  }
-
   const auto [occlusion_status, is_occlusion_cleared_with_margin, is_occlusion_state] =
     getOcclusionStatus(traffic_prioritized_level, interpolated_path_info);
 
-  // TODO(Mamoru Sobue): if ego is over 1st/2nd pass judge line and collision is expected at 1st/2nd
-  // pass judge line respectively, ego should go
-  [[maybe_unused]] const auto
+  const auto
     [is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line, safely_passed_1st_judge_line,
      safely_passed_2nd_judge_line] =
       isOverPassJudgeLinesStatus(*path, is_occlusion_state, intersection_stoplines);
@@ -254,14 +220,30 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     path_lanelets, time_distance_array, traffic_prioritized_level, safely_passed_1st_judge_line,
     safely_passed_2nd_judge_line);
 
-  const bool has_collision = hasCollision();
+  const auto [has_collision, collision_position] = detectCollision();
   if (is_permanent_go_) {
-    // TODO(Mamoru Sobue): diagnosis if has_collision
-    return intersection::Indecisive{"over pass judge lines"};
+    if (has_collision) {
+      // TODO(Mamoru Sobue): diagnosis
+      return intersection::Indecisive{
+        "ego is over the pass judge lines and collision is detected. need acceleration to keep "
+        "safe."};
+    }
+    return intersection::Indecisive{"over pass judge lines and collision is not detected"};
   }
-  // if (is_over_1st_pass_judge_line && !is_over_2nd_pass_judge_line && collision_on_1st_lane)
-  // TODO(Mamoru Sobue): diagnosis
+  /*
+  const bool collision_on_1st_attention_lane =
+    has_collision && collision_position == intersection::CollisionInterval::LanePosition::FIRST;
+  if (
+    is_over_1st_pass_judge_line && !is_over_2nd_pass_judge_line &&
+    collision_on_1st_attention_lane) {
+    // TODO(Mamoru Sobue): diagnosis
+    return intersection::Indecisive{
+      "ego is already over the 1st pass judge line although still before the 2nd pass judge line, "
+      "but collision is detected on the first attention lane"};
+  }
+  */
 
+  const auto closest_idx = intersection_stoplines.closest_idx;
   const bool is_over_default_stopline = util::isOverTargetIndex(
     *path, closest_idx, planner_data_->current_odometry->pose, default_stopline_idx);
   const auto collision_stopline_idx = is_over_default_stopline ? closest_idx : default_stopline_idx;
@@ -273,6 +255,15 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     isGreenPseudoCollisionStatus(*path, collision_stopline_idx, intersection_stoplines);
   if (is_green_pseudo_collision_status) {
     return is_green_pseudo_collision_status.value();
+  }
+
+  // ==========================================================================================
+  // yield stuck detection
+  // ==========================================================================================
+  const auto is_yield_stuck_status =
+    isYieldStuckStatus(*path, interpolated_path_info, intersection_stoplines);
+  if (is_yield_stuck_status) {
+    return is_yield_stuck_status.value();
   }
 
   collision_state_machine_.setStateWithMarginTime(
@@ -296,6 +287,38 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       closest_idx, collision_stopline_idx, occlusion_stopline_idx};
   }
   // Occluded
+  // utility functions
+  auto fromEgoDist = [&](const size_t index) {
+    return motion_utils::calcSignedArcLength(path->points, closest_idx, index);
+  };
+  auto stoppedForDuration =
+    [&](const size_t pos, const double duration, StateMachine & state_machine) {
+      const double dist_stopline = fromEgoDist(pos);
+      const bool approached_dist_stopline =
+        (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
+      const bool over_stopline = (dist_stopline < 0.0);
+      const bool is_stopped_duration = planner_data_->isVehicleStopped(duration);
+      if (over_stopline) {
+        state_machine.setState(StateMachine::State::GO);
+      } else if (is_stopped_duration && approached_dist_stopline) {
+        state_machine.setState(StateMachine::State::GO);
+      }
+      return state_machine.getState() == StateMachine::State::GO;
+    };
+  auto stoppedAtPosition = [&](const size_t pos, const double duration) {
+    const double dist_stopline = fromEgoDist(pos);
+    const bool approached_dist_stopline =
+      (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
+    const bool over_stopline = (dist_stopline < -planner_param_.common.stopline_overshoot_margin);
+    const bool is_stopped = planner_data_->isVehicleStopped(duration);
+    if (over_stopline) {
+      return true;
+    } else if (is_stopped && approached_dist_stopline) {
+      return true;
+    }
+    return false;
+  };
+
   const auto occlusion_wo_tl_pass_judge_line_idx =
     intersection_stoplines.occlusion_wo_tl_pass_judge_line;
   const bool stopped_at_default_line = stoppedForDuration(

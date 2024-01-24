@@ -126,12 +126,15 @@ public:
     return predicted_object_;
   };
 
-  bool is_safe() const
+  std::optional<CollisionInterval> is_unsafe() const
   {
     if (safe_under_traffic_control_) {
-      return true;
+      return std::nullopt;
     }
-    return !unsafe_interval_.has_value();
+    if (!unsafe_interval_) {
+      return std::nullopt;
+    }
+    return unsafe_interval_;
   }
 
   /**

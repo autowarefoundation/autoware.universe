@@ -387,14 +387,28 @@ IntersectionModule::isGreenPseudoCollisionStatus(
   return std::nullopt;
 }
 
-bool IntersectionModule::hasCollision()
+std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModule::detectCollision()
 {
+  // ==========================================================================================
+  // if collision is detected for multiple objects, we prioritize collision on the first attention
+  // lanelet
+  // ==========================================================================================
+  std::optional<intersection::CollisionInterval::LanePosition> collision_at_non_first_lane_opt{
+    std::nullopt};
   for (const auto & object_info : object_info_manager_.attentionObjects()) {
-    if (!object_info->is_safe()) {
-      return true;
+    if (const auto unsafe_info = object_info->is_unsafe(); unsafe_info) {
+      if (
+        unsafe_info.value().lane_position == intersection::CollisionInterval::LanePosition::FIRST) {
+        return {true, unsafe_info.value().lane_position};
+      } else {
+        collision_at_non_first_lane_opt = unsafe_info.value().lane_position;
+      }
     }
   }
-  return false;
+  if (collision_at_non_first_lane_opt) {
+    return {true, collision_at_non_first_lane_opt.value()};
+  }
+  return {false, intersection::CollisionInterval::ELSE};
 }
 
 /*

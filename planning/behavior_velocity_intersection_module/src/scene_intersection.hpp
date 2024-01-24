@@ -678,9 +678,9 @@ private:
     const intersection::IntersectionStopLines & intersection_stoplines);
 
   /**
-   * @brief check collision
+   * @brief return if collision is detected and the collision position
    */
-  bool hasCollision();
+  std::pair<bool, intersection::CollisionInterval::LanePosition> detectCollision();
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
