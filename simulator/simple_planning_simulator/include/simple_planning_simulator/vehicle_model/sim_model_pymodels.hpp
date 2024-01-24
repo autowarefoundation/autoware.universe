@@ -55,8 +55,10 @@ private:
 
   std::vector<char*> state_names = {(char*)"POS_X", 
                                     (char*)"POS_Y", 
-                                    (char*)"YAW", 
-                                    (char*)"VX", 
+                                    (char*)"YAW",
+                                    (char*)"YAW_RATE", 
+                                    (char*)"VX",
+                                    (char*)"VY", 
                                     (char*)"STEER"
                                     };
 
@@ -68,7 +70,9 @@ private:
     X = 0,
     Y,
     YAW,
+    YAW_RATE,
     VX,
+    VY,
     STEER,
   };
   enum IDX_U {
