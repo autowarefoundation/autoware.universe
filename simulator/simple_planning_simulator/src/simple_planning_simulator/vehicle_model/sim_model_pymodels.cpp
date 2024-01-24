@@ -18,22 +18,8 @@
 
 #include "pymodel_interconnected_model.hpp"
 
-SimModelPymodels::SimModelPymodels(
-  double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
-  double dt, double vx_delay, double vx_time_constant, double steer_delay,
-  double steer_time_constant, double steer_dead_band)
-: SimModelInterface(5 /* dim x */, 2 /* dim u */),
-  MIN_TIME_CONSTANT(0.03),
-  vx_lim_(vx_lim),
-  vx_rate_lim_(vx_rate_lim),
-  steer_lim_(steer_lim),
-  steer_rate_lim_(steer_rate_lim),
-  wheelbase_(wheelbase),
-  vx_delay_(vx_delay),
-  vx_time_constant_(std::max(vx_time_constant, MIN_TIME_CONSTANT)),
-  steer_delay_(steer_delay),
-  steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT)),
-  steer_dead_band_(steer_dead_band)
+SimModelPymodels::SimModelPymodels(double dt)
+: SimModelInterface(5 /* dim x */, 2 /* dim u */)
 {
   
   // TODO this should be in config file not hardcoded here
@@ -92,7 +78,7 @@ double SimModelPymodels::getAx()
 }
 double SimModelPymodels::getWz()
 {
-  return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
+  return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / 1.5;
 }
 double SimModelPymodels::getSteer()
 {
@@ -125,18 +111,18 @@ Eigen::VectorXd SimModelPymodels::calcModel(
   // Not used for this model -> we can get rid of this later
   auto sat = [](double val, double u, double l) { return std::max(std::min(val, u), l); };
 
-  const double vx = sat(state(IDX::VX), vx_lim_, -vx_lim_);
-  const double steer = sat(state(IDX::STEER), steer_lim_, -steer_lim_);
+  const double vx = sat(state(IDX::VX), 50, -50);
+  const double steer = sat(state(IDX::STEER), 0, -0);
   const double yaw = state(IDX::YAW);
   const double delay_input_vx = input(IDX_U::VX_DES);
-  const double delay_vx_des = sat(delay_input_vx, vx_lim_, -vx_lim_);
-  const double vx_rate = sat(-(vx - delay_vx_des) / vx_time_constant_, vx_rate_lim_, -vx_rate_lim_);
+  const double delay_vx_des = sat(delay_input_vx, 50, -50);
+  const double vx_rate = sat(-(vx - delay_vx_des), 0, -0);
 
 
   Eigen::VectorXd d_state = Eigen::VectorXd::Zero(dim_x_);
   d_state(IDX::X) = 0 * vx * cos(yaw);
   d_state(IDX::Y) = 0 * vx * sin(yaw);
-  d_state(IDX::YAW) = 0 * vx * std::tan(steer) / wheelbase_;
+  d_state(IDX::YAW) = 0 * vx * std::tan(steer) / 1.5;
   d_state(IDX::VX) = 0 * vx_rate;
   d_state(IDX::STEER) = 0.0;  //Use python models to update steer
 
