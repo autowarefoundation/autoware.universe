@@ -218,7 +218,9 @@
       <extra_arg name="use_intra_process_comms" value="false"/>
     </composable_node>
 
-    <composable_node pkg="behavior_velocity_planner" plugin="behavior_velocity_planner::BehaviorVelocityPlannerNode" name="behavior_velocity_planner" namespace="">
+    <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component" namespace=""/>
+  </node_container>
+    <node pkg="behavior_velocity_planner" exec="behavior_velocity_planner_node" name="behavior_velocity_planner" namespace="" launch-prefix="konsole -e gdb -ex run --args">
       <!-- topic remap -->
       <remap from="~/input/path_with_lane_id" to="path_with_lane_id"/>
       <remap from="~/input/vector_map" to="$(var input_vector_map_topic_name)"/>
@@ -261,12 +263,8 @@
       <param from="$(var behavior_velocity_planner_out_of_lane_module_param_path)"/>
       <param from="$(var behavior_velocity_planner_no_drivable_lane_module_param_path)"/>
       <param from="$(var behavior_velocity_planner_dynamic_obstacle_stop_module_param_path)"/>
-      <!-- composable node config -->
-      <extra_arg name="use_intra_process_comms" value="false"/>
-    </composable_node>
+    </node>
 
-    <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component" namespace=""/>
-  </node_container>
 
   <group if="$(var launch_compare_map_pipeline)">
     <!-- use pointcloud container -->
