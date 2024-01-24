@@ -26,6 +26,10 @@ This documentation covers `Local Installation of Autoware` and testing the insta
 
 ---
 
+## Install ROS 2 Galactic:
+
+Refer to the official [ROS 2 Galactic Installation (Ubuntu 20.04)](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) guide to install ROS 2 Galactic Desktop on your host PC.
+
 ## Set Up Autoware Development Environment:
 
 1. Create a dedicated workspace for Autoware called `Autoware_WS` on Host-PC to organize different Autoware installations, maps, data, etc., and move to the directory.
