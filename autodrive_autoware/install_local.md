@@ -32,6 +32,7 @@ This documentation covers `Local Installation of Autoware` and testing the insta
 Refer to the official [ROS 2 Galactic Installation (Ubuntu 20.04)](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) guide to install ROS 2 Galactic Desktop on your host PC.
 
 ## Set Up Autoware Development Environment:
+#### (Approximate Time Investment: 0.5 Hours)
 
 1. Create a dedicated workspace for Autoware called `Autoware_WS` on Host-PC to organize different Autoware installations, maps, data, etc., and move to the directory.
 ```bash
@@ -39,16 +40,16 @@ user@host-pc:~$ mkdir -p Autoware_WS
 user@host-pc:~$ cd Autoware_WS
 ```
 
-2. Clone the [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_docker` (to differentiate it from `autoware_local` installation, if any) and move to the directory.
+2. Clone the [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_local` (to differentiate it from `autoware_docker` installation, if any) and move to the directory.
 ```bash
 user@host-pc:~$ git clone https://github.com/autowarefoundation/autoware.git
-user@host-pc:~$ sudo mv ~/Autoware_WS/autoware ~/Autoware_WS/autoware_docker
-user@host-pc:~$ cd autoware_docker
+user@host-pc:~$ sudo mv ~/Autoware_WS/autoware ~/Autoware_WS/autoware_local
+user@host-pc:~$ cd autoware_local
 ```
 
 3. Install the required dependencies (Autoware uses [`Ansible`](https://www.ansible.com/) scripts to automate dependency and configuration management).
 ```bash
-user@host-pc:~$ ./setup-dev-env.sh docker # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
+user@host-pc:~$ ./setup-dev-env.sh # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
 user@host-pc:~$ # Setting up the build environment can take up to 1 hour.
                         # >  Are you sure you want to run setup? [y/N]
                         y
@@ -64,11 +65,6 @@ user@host-pc:~$ cd .. # cd ~/Autoware_WS
 user@host-pc:~$ mkdir -p autoware_map
 user@host-pc:~$ gdown -O ~/Autoware_WS/autoware_map/ 'https://docs.google.com/uc?export=download&id=1499_nsbUbIeturZaDj7jhUownh5fvXHd'
 user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/sample-map-planning.zip
-```
-
-5. Pull [`autowarefoundation/autoware-universe`](https://github.com/autowarefoundation/autoware/pkgs/container/autoware-universe) image from [GitHub Packages](https://github.com/features/packages).
-```bash
-user@host-pc:~$ docker pull ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 ```
 
 ## Set Up Autoware Workspace:
