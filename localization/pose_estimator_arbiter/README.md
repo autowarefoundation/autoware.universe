@@ -202,6 +202,7 @@ Please see the table below for details.
 
 <details>
 <summary>Click to show details</summary>
+
 Currently, **ONLY ONE RULE** (`enable_all_rule`) is implemented.
 In the future, several rules will be implemented and users will be able to select rules.
 
@@ -226,7 +227,8 @@ When using multiple pose_estimators, it is necessary to appropriately adjust the
 
 <details>
 <summary>Click to show details</summary>
-The following table is based on the runtime argument "pose_source," indicating which initial pose estimation methods are available and the parameters that should be provided to the pose_initialization node.
+
+The following table is based on the runtime argument "pose_source" indicating which initial pose estimation methods are available and the parameters that should be provided to the pose_initialization node.
 To avoid making the application too complicated, a priority is established so that NDT is always used when it is available.
 (The pose_initializer will only perform NDT-based initial pose estimation when `ndt_enabled` and `yabloc_enabled` are both `true`).
 
