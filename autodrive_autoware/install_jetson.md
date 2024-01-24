@@ -75,7 +75,7 @@ user@jetson-device:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware
 ```
 
 ## Set Up Autoware Workspace:
-#### (Approximate Time Investment: 6.0 Hours - Depends on the Jetson-Device)
+#### (Approximate Time Investment: >6.0 Hours - Depends on the Jetson-Device)
 
 1. Create an `src` directory within the `autoware_local` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
 ```bash
