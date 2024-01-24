@@ -26,8 +26,8 @@ namespace yabloc
 {
 namespace modularized_particle_filter
 {
-std::optional<yabloc_particle_filter::msg::ParticleArray> find_synced_particles(
-  boost::circular_buffer<yabloc_particle_filter::msg::ParticleArray> circular_buffer,
+std::optional<autoware_yabloc_particle_filter::msg::ParticleArray> find_synced_particles(
+  boost::circular_buffer<autoware_yabloc_particle_filter::msg::ParticleArray> circular_buffer,
   rclcpp::Time time);
 }
 }  // namespace yabloc

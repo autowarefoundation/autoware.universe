@@ -33,8 +33,8 @@ namespace modularized_particle_filter
 class AbstractCorrector : public rclcpp::Node
 {
 public:
-  using Particle = yabloc_particle_filter::msg::Particle;
-  using ParticleArray = yabloc_particle_filter::msg::ParticleArray;
+  using Particle = autoware_yabloc_particle_filter::msg::Particle;
+  using ParticleArray = autoware_yabloc_particle_filter::msg::ParticleArray;
 
   explicit AbstractCorrector(const std::string & node_name);
 

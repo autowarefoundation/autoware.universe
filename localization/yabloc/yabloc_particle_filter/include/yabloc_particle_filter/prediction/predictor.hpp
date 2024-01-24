@@ -40,7 +40,7 @@ class Predictor : public rclcpp::Node
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using ParticleArray = yabloc_particle_filter::msg::ParticleArray;
+  using ParticleArray = autoware_yabloc_particle_filter::msg::ParticleArray;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using TwistCovStamped = geometry_msgs::msg::TwistWithCovarianceStamped;

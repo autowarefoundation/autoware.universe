@@ -29,8 +29,8 @@ class ParticleVisualizer
 {
 public:
   using MarkerArray = visualization_msgs::msg::MarkerArray;
-  using Particle = yabloc_particle_filter::msg::Particle;
-  using ParticleArray = yabloc_particle_filter::msg::ParticleArray;
+  using Particle = autoware_yabloc_particle_filter::msg::Particle;
+  using ParticleArray = autoware_yabloc_particle_filter::msg::ParticleArray;
 
   explicit ParticleVisualizer(rclcpp::Node & node);
   void publish(const ParticleArray & msg);

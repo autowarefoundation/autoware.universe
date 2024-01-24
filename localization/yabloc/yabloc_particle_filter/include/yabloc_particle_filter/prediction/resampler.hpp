@@ -31,8 +31,8 @@ public:
 class RetroactiveResampler
 {
 public:
-  using Particle = yabloc_particle_filter::msg::Particle;
-  using ParticleArray = yabloc_particle_filter::msg::ParticleArray;
+  using Particle = autoware_yabloc_particle_filter::msg::Particle;
+  using ParticleArray = autoware_yabloc_particle_filter::msg::ParticleArray;
 
   RetroactiveResampler(int number_of_particles, int max_history_num);
 
