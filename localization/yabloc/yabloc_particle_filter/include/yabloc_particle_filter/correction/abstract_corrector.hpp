@@ -19,7 +19,7 @@
 #include "yabloc_particle_filter/common/visualize.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <yabloc_particle_filter/msg/particle_array.hpp>
+#include <autoware_yabloc_particle_filter/msg/particle_array.hpp>
 
 #include <list>
 #include <memory>

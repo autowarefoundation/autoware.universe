@@ -16,7 +16,7 @@
 #define YABLOC_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-#include "yabloc_particle_filter/msg/particle_array.hpp"
+#include "autoware_yabloc_particle_filter/msg/particle_array.hpp"
 
 #include <boost/circular_buffer.hpp>
 

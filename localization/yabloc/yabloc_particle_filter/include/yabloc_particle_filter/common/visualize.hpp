@@ -16,7 +16,7 @@
 #define YABLOC_PARTICLE_FILTER__COMMON__VISUALIZE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <yabloc_particle_filter/msg/particle_array.hpp>
+#include <autoware_yabloc_particle_filter/msg/particle_array.hpp>
 
 #include <std_msgs/msg/color_rgba.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>

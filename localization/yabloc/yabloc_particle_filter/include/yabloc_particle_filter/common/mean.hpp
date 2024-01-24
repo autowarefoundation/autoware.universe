@@ -16,7 +16,7 @@
 #define YABLOC_PARTICLE_FILTER__COMMON__MEAN_HPP_
 
 #include <Eigen/Core>
-#include <yabloc_particle_filter/msg/particle_array.hpp>
+#include <autoware_yabloc_particle_filter/msg/particle_array.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 
