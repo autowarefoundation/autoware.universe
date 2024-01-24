@@ -97,7 +97,7 @@ void Predictor::on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose
 void Predictor::initialize_particles(const PoseCovStamped & initialpose)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "initialize_particles");
-  yabloc_particle_filter::msg::ParticleArray particle_array{};
+  autoware_yabloc_particle_filter::msg::ParticleArray particle_array{};
   particle_array.header = initialpose.header;
   particle_array.id = 0;
   particle_array.particles.resize(number_of_particles_);

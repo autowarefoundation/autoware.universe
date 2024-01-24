@@ -25,8 +25,8 @@ namespace yabloc::modularized_particle_filter
 class ParticleVisualize : public rclcpp::Node
 {
 public:
-  using Particle = yabloc_particle_filter::msg::Particle;
-  using ParticleArray = yabloc_particle_filter::msg::ParticleArray;
+  using Particle = autoware_yabloc_particle_filter::msg::Particle;
+  using ParticleArray = autoware_yabloc_particle_filter::msg::ParticleArray;
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 

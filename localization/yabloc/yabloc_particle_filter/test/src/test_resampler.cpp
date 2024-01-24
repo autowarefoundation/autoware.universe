@@ -19,8 +19,8 @@
 #include <gtest/gtest.h>
 
 namespace mpf = yabloc::modularized_particle_filter;
-using Particle = yabloc_particle_filter::msg::Particle;
-using ParticleArray = yabloc_particle_filter::msg::ParticleArray;
+using Particle = autoware_yabloc_particle_filter::msg::Particle;
+using ParticleArray = autoware_yabloc_particle_filter::msg::ParticleArray;
 
 constexpr int PARTICLE_COUNT = 10;
 constexpr int HISTORY_SIZE = 10;

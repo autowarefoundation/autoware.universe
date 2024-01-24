@@ -44,10 +44,10 @@ double mean_radian(const std::vector<double> & angles, const std::vector<double>
 }  // namespace
 
 geometry_msgs::msg::Pose get_mean_pose(
-  const yabloc_particle_filter::msg::ParticleArray & particle_array)
+  const autoware_yabloc_particle_filter::msg::ParticleArray & particle_array)
 {
   using Pose = geometry_msgs::msg::Pose;
-  using Particle = yabloc_particle_filter::msg::Particle;
+  using Particle = autoware_yabloc_particle_filter::msg::Particle;
 
   Pose mean_pose;
 
@@ -89,9 +89,9 @@ geometry_msgs::msg::Pose get_mean_pose(
   return mean_pose;
 }
 
-Eigen::Matrix3f std_of_distribution(const yabloc_particle_filter::msg::ParticleArray & array)
+Eigen::Matrix3f std_of_distribution(const autoware_yabloc_particle_filter::msg::ParticleArray & array)
 {
-  using Particle = yabloc_particle_filter::msg::Particle;
+  using Particle = autoware_yabloc_particle_filter::msg::Particle;
   auto ori = get_mean_pose(array).orientation;
   Eigen::Quaternionf orientation(ori.w, ori.x, ori.y, ori.z);
   float invN = 1.f / array.particles.size();
@@ -113,9 +113,9 @@ Eigen::Matrix3f std_of_distribution(const yabloc_particle_filter::msg::ParticleA
   return sigma;
 }
 
-float std_of_weight(const yabloc_particle_filter::msg::ParticleArray & particle_array)
+float std_of_weight(const autoware_yabloc_particle_filter::msg::ParticleArray & particle_array)
 {
-  using Particle = yabloc_particle_filter::msg::Particle;
+  using Particle = autoware_yabloc_particle_filter::msg::Particle;
 
   const float invN = 1.f / particle_array.particles.size();
   float mean = 0;
