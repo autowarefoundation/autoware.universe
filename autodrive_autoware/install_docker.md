@@ -106,11 +106,12 @@ user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_T
 user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
 ```
 
-2. Source the `setup.*sh` (e.g., `setup.bash`) file of your workspace:
+2. Source the `setup.*sh` (e.g., `setup.bash`) files of ROS distribution (if not already done) and your workspace:
 ```bash
-user@container-id:~$ source ~/Autoware_WS/autoware_docker/install/setup.bash
+user@container-id:~$ source /opt/rumble/setup.bash
+user@container-id:~$ source ~/Autoware_WS/autoware_local/install/setup.bash
 ```
-> **Note:** You can write the above line to the `~/.bashrc` file so that it is automatically executed when a new terminal instance is created.
+> **Note:** You can write the above lines to the `~/.bashrc` file so that it is automatically executed when a new terminal instance is created.
 
 3. Launch the `planning_simulator` with the `sample-map-planning` map, `sample_vehicle` vehicle, and `sample_sensor_kit` sensor kit.
 ```
