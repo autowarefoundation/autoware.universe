@@ -12,6 +12,6 @@
     <remap from="~/input/objects" to="$(var input/objects)"/>
     <remap from="~/output/low_speed_objects" to="$(var output/low_speed_objects)"/>
     <remap from="~/output/high_speed_objects" to="$(var output/high_speed_objects)"/>
-    <param from="config_path"/>
+    <param from="$(var config_path)"/>
   </node>
 </launch>
