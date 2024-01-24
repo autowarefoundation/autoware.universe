@@ -22,6 +22,8 @@ This documentation covers `Local Installation of Autoware` and testing the insta
 
 - For the official Autoware planning simulation guide, see [Planning Simulation Documentation](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/planning-simulation/).
 
+- For the official ROS 2 Galactic installation guide, see [ROS 2 Galactic Installation (Ubuntu 20.04)](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html).
+
 ---
 
 ## Set Up Autoware Development Environment:
