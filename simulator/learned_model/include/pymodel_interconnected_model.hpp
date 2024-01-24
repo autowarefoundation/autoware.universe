@@ -102,10 +102,12 @@ private:
   }
   
   /**
-   * @brief create of signal names from all submodels
+   * @brief create of signal names from all sub-models and PSIM signal names 
    */
-  void getSignalNames()
+  void getSignalNames(std::vector<char *> in_names, std::vector<char *> out_names)
   {
+    addNamesToSigVec(in_names);
+    addNamesToSigVec(out_names);
     for (auto & submodel : submodels) {
       addNamesToSigVec(submodel->getInputNames());
       addNamesToSigVec(submodel->getStateNames());
@@ -121,7 +123,7 @@ public:
   void generateConnections(std::vector<char *> in_names, std::vector<char *> out_names)
   {
     // Create vector of signal names
-    getSignalNames();
+    getSignalNames(in_names, out_names);
     num_signals = signals_vec_names.size();
     // Init vector of signal values
     for (int i = 0; i < num_signals; i++) model_signals_vec.push_back(0);
@@ -189,7 +191,7 @@ public:
     }
 
     // Compute forward pass through all models (order should not matter)
-    std::vector<double> model_signals_vec_next(num_signals);
+    std::vector<double> model_signals_vec_next = model_signals_vec;
     for (auto & submodel : submodels) {
       model_signals_vec_next = submodel->getNextState(model_signals_vec, model_signals_vec_next);
     }
