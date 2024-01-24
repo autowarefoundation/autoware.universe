@@ -318,6 +318,9 @@ private:
   //! cache discretized occlusion detection lanelets
   std::optional<std::vector<lanelet::ConstLineString3d>> occlusion_attention_divisions_{
     std::nullopt};
+
+  //! save the time when ego observed green traffic light before entering the intersection
+  std::optional<rclcpp::Time> initial_green_light_observed_time_{std::nullopt};
   /** @}*/
 
 private:
@@ -383,8 +386,6 @@ private:
   //! time counter for the stuck detection due to occlusion caused static objects
   StateMachine static_occlusion_timeout_state_machine_;
   /** @} */
-
-  std::optional<rclcpp::Time> initial_green_light_observed_time_{std::nullopt};
 
 private:
   /**
@@ -673,8 +674,7 @@ private:
    * intersection_stoplines.occlusion_peeking_stopline
    */
   std::optional<intersection::NonOccludedCollisionStop> isGreenPseudoCollisionStatus(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const size_t collision_stopline_idx,
+    const size_t closest_idx, const size_t collision_stopline_idx,
     const intersection::IntersectionStopLines & intersection_stoplines);
 
   /**

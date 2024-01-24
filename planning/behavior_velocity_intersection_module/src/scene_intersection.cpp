@@ -216,6 +216,10 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto time_distance_array =
     calcIntersectionPassingTime(*path, is_prioritized, intersection_stoplines, &ego_ttc_time_array);
 
+  // ==========================================================================================
+  // run collision checking for each objects considering traffic light level. Also if ego just
+  // passed each pass judge line for the first time, save current collision status.
+  // ==========================================================================================
   updateObjectInfoManagerCollision(
     path_lanelets, time_distance_array, traffic_prioritized_level, safely_passed_1st_judge_line,
     safely_passed_2nd_judge_line);
@@ -252,7 +256,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // pseudo collision detection on green light
   // ==========================================================================================
   const auto is_green_pseudo_collision_status =
-    isGreenPseudoCollisionStatus(*path, collision_stopline_idx, intersection_stoplines);
+    isGreenPseudoCollisionStatus(closest_idx, collision_stopline_idx, intersection_stoplines);
   if (is_green_pseudo_collision_status) {
     return is_green_pseudo_collision_status.value();
   }
