@@ -6,7 +6,7 @@ This documentation covers `Local Installation of Autoware` on [NVIDIA Jetson Dev
 
 > **Note 1**: Installation was tested with [Jetson Orin Nano] (on [Nigel](https://youtu.be/UVIShZuZmpg?si=rcPk0l3ea3gm9eAH)) and [Jetson Xavier NX] (on [F1TENTH](https://f1tenth.org/)) running [L4T (or Jetson Linux)](https://developer.nvidia.com/embedded/jetson-linux) with Ubuntu 20.04 (with ROS 1 Noetic, ROS 2 Foxy & ROS 2 Galactic).
 
-> **Note 2**: A dedicated `Autoware_WS` was created on the Jetson device to organize `autoware_maps` and `autoware_local` installation (with ROS 2 Galactic).
+> **Note 2**: A dedicated `Autoware_WS` was created on the Jetson-Device to organize `autoware_maps` and `autoware_local` installation (with ROS 2 Galactic).
 
 ## Official Documentation:
 
@@ -35,31 +35,31 @@ This documentation covers `Local Installation of Autoware` on [NVIDIA Jetson Dev
 ## Install ROS 2 Galactic:
 #### (Approximate Time Investment: 0.5 Hours)
 
-Refer to the official [ROS 2 Galactic Installation (Ubuntu 20.04)](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) guide to install ROS 2 Galactic Desktop on your host PC.
+Refer to the official [ROS 2 Galactic Installation (Ubuntu 20.04)](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) guide to install ROS 2 Galactic Desktop on your Jetson device.
 
 ## Set Up Autoware Development Environment:
 #### (Approximate Time Investment: 0.5 Hours)
 
-1. Create a dedicated workspace for Autoware called `Autoware_WS` on Host-PC to organize different Autoware installations, maps, data, etc., and move to the directory.
+1. Create a dedicated workspace for Autoware called `Autoware_WS` on Jetson-Device to organize different Autoware installations, maps, data, etc., and move to the directory.
 ```bash
-user@host-pc:~$ mkdir -p Autoware_WS
-user@host-pc:~$ cd Autoware_WS
+user@jetson-device:~$ mkdir -p Autoware_WS
+user@jetson-device:~$ cd Autoware_WS
 ```
 
 2. Clone the [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_local` (to differentiate it from `autoware_docker` installation, if any) and move to the directory.
 ```bash
-user@host-pc:~$ git clone https://github.com/autowarefoundation/autoware.git
-user@host-pc:~$ sudo mv ~/Autoware_WS/autoware ~/Autoware_WS/autoware_local
-user@host-pc:~$ cd autoware_local
+user@jetson-device:~$ git clone https://github.com/autowarefoundation/autoware.git
+user@jetson-device:~$ sudo mv ~/Autoware_WS/autoware ~/Autoware_WS/autoware_local
+user@jetson-device:~$ cd autoware_local
 ```
 
 3. Install the required dependencies (Autoware uses [`Ansible`](https://www.ansible.com/) scripts to automate dependency and configuration management).
 ```bash
-user@host-pc:~$ ./setup-dev-env.sh # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
-user@host-pc:~$ # Setting up the build environment can take up to 1 hour.
+user@jetson-device:~$ ./setup-dev-env.sh # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
+user@jetson-device:~$ # Setting up the build environment can take up to 1 hour.
                         # >  Are you sure you want to run setup? [y/N]
                         y
-user@host-pc:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN and TensorRT NVIDIA libraries which have end-user license agreements that should be reviewed before installation.
+user@jetson-device:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN and TensorRT NVIDIA libraries which have end-user license agreements that should be reviewed before installation.
                         # Install NVIDIA libraries? [y/N]
                         N # On certain systems, modifying any existing NVIDIA libraries can break things!
                         y # If you are confident about your system dependencies, you may choose to proceed with the installation of NVIDIA libraries.
@@ -67,10 +67,10 @@ user@host-pc:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN a
 
 4. Create `autoware_map` directory within `Autoware_WS` to store map files, and download & unzip `sample-map-planning` (later used for planning simulation) within this directory.
 ```bash
-user@host-pc:~$ cd .. # cd ~/Autoware_WS
-user@host-pc:~$ mkdir -p autoware_map
-user@host-pc:~$ gdown -O ~/Autoware_WS/autoware_map/ 'https://docs.google.com/uc?export=download&id=1499_nsbUbIeturZaDj7jhUownh5fvXHd'
-user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/sample-map-planning.zip
+user@jetson-device:~$ cd .. # cd ~/Autoware_WS
+user@jetson-device:~$ mkdir -p autoware_map
+user@jetson-device:~$ gdown -O ~/Autoware_WS/autoware_map/ 'https://docs.google.com/uc?export=download&id=1499_nsbUbIeturZaDj7jhUownh5fvXHd'
+user@jetson-device:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/sample-map-planning.zip
 ```
 
 ## Set Up Autoware Workspace:
@@ -78,22 +78,22 @@ user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/s
 
 1. Create an `src` directory within the `autoware_local` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
 ```bash
-user@host-pc:~$ cd Autoware_WS/autoware_local/
-user@host-pc:~$ mkdir src
-user@host-pc:~$ vcs import src < autoware.repos
+user@jetson-device:~$ cd Autoware_WS/autoware_local/
+user@jetson-device:~$ mkdir src
+user@jetson-device:~$ vcs import src < autoware.repos
 ```
 
 2. Install the required dependencies (Autoware uses [`rosdep`](https://github.com/ros-infrastructure/rosdep) to manage dependencies).
 ```bash
-user@host-pc:~$ sudo apt update
-user@host-pc:~$ rosdep update
-user@host-pc:~$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+user@jetson-device:~$ sudo apt update
+user@jetson-device:~$ rosdep update
+user@jetson-device:~$ rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
 ```
 > **Note:** You can ignore the `Invalid version` errors (if any) during `rosdep` installation process.
 
 3. Build the workspace (Autoware uses [colcon](https://github.com/colcon) to build workspaces).
 ```bash
-user@host-pc:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+user@jetson-device:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 > **Note 1:** You can ignore the `stderr` warnings (if any) during the `colcon` build process.
 
@@ -105,14 +105,14 @@ user@host-pc:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=R
 
 1. Source the `setup.*sh` (e.g., `setup.bash`) files of ROS distribution (if not already done) and your workspace:
 ```bash
-user@host-pc:~$ source /opt/ros/galactic/setup.bash
-user@host-pc:~$ source ~/Autoware_WS/autoware_local/install/setup.bash
+user@jetson-device:~$ source /opt/ros/galactic/setup.bash
+user@jetson-device:~$ source ~/Autoware_WS/autoware_local/install/setup.bash
 ```
 > **Note:** You can write the above lines to the `~/.bashrc` file so that it is automatically executed when a new terminal instance is created.
 
 2. Launch the `planning_simulator` with the `sample-map-planning` map, `sample_vehicle` vehicle, and `sample_sensor_kit` sensor kit.
 ```
-user@host-pc:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
+user@jetson-device:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
 ```
 
 3. Tinker around with the `planning_simulator` and explore the depths of Autoware stack!
