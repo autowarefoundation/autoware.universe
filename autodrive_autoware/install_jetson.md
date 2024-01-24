@@ -55,15 +55,16 @@ user@jetson-device:~$ cd autoware_local
 
 3. Install the required dependencies (Autoware uses [`Ansible`](https://www.ansible.com/) scripts to automate dependency and configuration management).
 ```bash
-user@jetson-device:~$ ./setup-dev-env.sh # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
+user@jetson-device:~$ ./setup-dev-env.sh --no-nvidia --no-cuda-drivers # On certain systems, modifying any existing NVIDIA libraries can break things!
 user@jetson-device:~$ # Setting up the build environment can take up to 1 hour.
-                        # >  Are you sure you want to run setup? [y/N]
-                        y
+                      # >  Are you sure you want to run setup? [y/N]
+                      y
 user@jetson-device:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN and TensorRT NVIDIA libraries which have end-user license agreements that should be reviewed before installation.
                         # Install NVIDIA libraries? [y/N]
                         N # On certain systems, modifying any existing NVIDIA libraries can break things!
-                        y # If you are confident about your system dependencies, you may choose to proceed with the installation of NVIDIA libraries.
 ```
+> **Note:** The NVIDIA library and CUDA driver installation are disabled as they are already installed with the L4T JetPack SDK. If you force installation here, it may potentially mess up the kernel and cause errors at bootup. You will need to reflash the Jetson-Device if this happens.
+
 
 4. Create `autoware_map` directory within `Autoware_WS` to store map files, and download & unzip `sample-map-planning` (later used for planning simulation) within this directory.
 ```bash
