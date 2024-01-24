@@ -113,7 +113,6 @@ user@jetson-device:~$ rosdep install -y --from-paths src --ignore-src --rosdistr
    
    Create a new swapfile
    ```bash
-   # 32G is not sufficient
    sudo fallocate -l 64G /swapfile
    sudo chmod 600 /swapfile
    sudo mkswap /swapfile
