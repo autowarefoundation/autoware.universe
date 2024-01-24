@@ -65,12 +65,14 @@ public:
         // TODO warning that using default model params
     }
     
+    // Get string names of states of python model, convert them to C++ string and store them in pymodel_state_names
     py::list pymodel_state_names_ = py_model_class.attr("get_state_names")();
     num_outputs_py = pymodel_state_names_.size();
     for (int STATE_IDX = 0; STATE_IDX < num_outputs_py; STATE_IDX++){
       pymodel_state_names.push_back(PyBytes_AS_STRING(PyUnicode_AsEncodedString(pymodel_state_names_[STATE_IDX].ptr(), "UTF-8", "strict")));
     }
 
+    // Get string names of actions (inputs) of python model, convert them to C++ string and store them in pymodel_input_names
     py::list pymodel_input_names_ = py_model_class.attr("get_action_names")();
     num_inputs_py = pymodel_input_names_.size();
     for (int INPUT_IDX = 0; INPUT_IDX < num_inputs_py; INPUT_IDX++){
@@ -87,7 +89,7 @@ public:
   std::vector<double> getNextState(std::vector<double> model_signals_vec, std::vector<double> model_signals_vec_next) override
   {
     
-    // get inputs and states of the python model from the vector of all signals
+    // get inputs and states of the python model from the vector of signals
     std::vector<double> py_inputs(num_inputs_py);
     std::vector<double> py_state(num_outputs_py);
     py_inputs = fillVectorUsingMap(py_inputs, model_signals_vec, map_sig_vec_to_pyin, true);

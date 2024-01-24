@@ -38,7 +38,7 @@ SimModelPymodels::SimModelPymodels(
   
   // TODO this should be in config file not hardcoded here
   // Think of a way how to differentiate between "simple" model and "base + error" model
-  std::vector<std::tuple<char*, char*, char*>> model_desc = {
+  std::vector<std::tuple<char*, char*, char*>> model_descriptors = {
     {
       (char*)"control_analysis_pipeline.autoware_models.vehicle.kinematic",
       (char*)nullptr,
