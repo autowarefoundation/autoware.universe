@@ -68,6 +68,8 @@ user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/s
 ```
 
 ## Set Up Autoware Workspace:
+#### (Approximate Time Investment: 0.5 Hours)
+
 1. Run the pulled Docker image as a container (Autoware uses [`rocker`](https://github.com/osrf/rocker) to run Docker images with customized local support).
 ```bash
 user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
