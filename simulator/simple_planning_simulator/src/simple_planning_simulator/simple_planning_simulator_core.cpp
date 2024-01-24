@@ -570,7 +570,9 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
   const double x = pose.position.x;
   const double y = pose.position.y;
   const double yaw = tf2::getYaw(pose.orientation);
+  const double yaw_rate = 0.0;
   const double vx = twist.linear.x;
+  const double vy = 0.0;
   const double steer = 0.0;
   const double accx = 0.0;
 
@@ -583,9 +585,11 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED) {
     state << x, y, yaw, vx;
   } else if (  // NOLINT
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL ||
-    vehicle_model_type_ == VehicleModelType::PYMODELS) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) 
+    {
     state << x, y, yaw, vx, steer;
+  } else if (vehicle_model_type_ == VehicleModelType::PYMODELS){
+    state << x, y, yaw, yaw_rate, vx, vy, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||

@@ -19,7 +19,7 @@
 #include "pymodel_interconnected_model.hpp"
 
 SimModelPymodels::SimModelPymodels(double dt)
-: SimModelInterface(5 /* dim x */, 2 /* dim u */)
+: SimModelInterface(7 /* dim x */, 2 /* dim u */)
 {
   
   // TODO this should be in config file not hardcoded here
@@ -70,7 +70,7 @@ double SimModelPymodels::getVx()
 }
 double SimModelPymodels::getVy()
 {
-  return 0.0;
+  return state_(IDX::VY);
 }
 double SimModelPymodels::getAx()
 {
@@ -78,7 +78,7 @@ double SimModelPymodels::getAx()
 }
 double SimModelPymodels::getWz()
 {
-  return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / 1.5;
+  return state_(IDX::YAW_RATE);
 }
 double SimModelPymodels::getSteer()
 {
