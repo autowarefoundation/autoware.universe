@@ -27,6 +27,7 @@ This documentation covers `Local Installation of Autoware` and testing the insta
 ---
 
 ## Install ROS 2 Galactic:
+#### (Approximate Time Investment: 0.5 Hours)
 
 Refer to the official [ROS 2 Galactic Installation (Ubuntu 20.04)](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) guide to install ROS 2 Galactic Desktop on your host PC.
 
