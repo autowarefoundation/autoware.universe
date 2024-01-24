@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
     sync_queue_size: 20
-    priority_mode: 2 # 0: Object0, 1: Object1, 2: Confidence 
+    priority_mode: 2 # 0: Object0, 1: Object1, 2: Confidence
     precision_threshold_to_judge_overlapped: 0.4
     remove_overlapped_unknown_objects: true
