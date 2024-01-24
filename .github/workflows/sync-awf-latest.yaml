@@ -9,22 +9,17 @@ jobs:
   sync-awf-latest:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate token
-        id: generate-token
-        uses: tibdex/github-app-token@v1
+      - uses: actions/checkout@v2
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.PRIVATE_KEY }}
+          fetch-depth: 0
+      - name: Commit Results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
 
-      - name: Run sync-branches
-        uses: autowarefoundation/autoware-github-actions/sync-branches@v1
-        with:
-          token: ${{ steps.generate-token.outputs.token }}
-          base-branch: awf-latest
-          sync-pr-branch: sync-awf-latest
-          sync-target-repository: https://github.com/autowarefoundation/autoware.universe.git
-          sync-target-branch: main
-          pr-title: "chore: sync awf-latest"
-          pr-labels: |
-            bot
-          auto-merge-method: merge
+          git checkout awf-latest
+          git remote add awf https://github.com/autowarefoundation/autoware.universe
+          git fetch awf main
+          git rebase awf/main
+
+          git push origin awf-latest --force
