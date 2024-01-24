@@ -131,9 +131,9 @@ user@jetson-device:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_
 
 > **Note 1:** You can ignore the `stderr` warnings (if any) during the `colcon` build process.
 
-> **Note 2:** For more advanced build options, refer to the [colcon documentation](https://colcon.readthedocs.io/).
+> **Note 2:** If you get build errors (packages fail to build) and the system is hanging for too long, try increasing the swap size.
 
-> **Note 3:** If you get build errors (packages fail to build) and the system is hanging for too long, try increasing the swap size.
+> **Note 3:** For more advanced build options, refer to the [colcon documentation](https://colcon.readthedocs.io/).
 
 > **Note 4:** Use `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of (re)building the entire workspace to avoid large (re)build times.
 
