@@ -283,9 +283,7 @@ void SimplePlanningSimulator::initialize_vehicle_model()
       acceleration_map_path);
   } else if (vehicle_model_type_str == "PYMODELS"){
     vehicle_model_type_ = VehicleModelType::PYMODELS;
-    vehicle_model_ptr_ = std::make_shared<SimModelPymodels>(
-      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant, steer_dead_band);
+    vehicle_model_ptr_ = std::make_shared<SimModelPymodels>(timer_sampling_time_ms_ / 1000.0);
   }else{
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
