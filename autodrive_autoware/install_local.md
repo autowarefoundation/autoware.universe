@@ -22,8 +22,6 @@ This documentation covers `Local Installation of Autoware` and testing the insta
 
 - For the official Autoware planning simulation guide, see [Planning Simulation Documentation](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/planning-simulation/).
 
-- For the official Docker installation guide, see [Get Docker](https://docs.docker.com/get-docker/), and particularly for Ubuntu, see [Docker Ubuntu Installation](https://docs.docker.com/desktop/install/ubuntu/).
-
 ---
 
 ## Set Up Autoware Development Environment:
@@ -118,34 +116,3 @@ user@container-id:~$ ros2 launch autoware_launch planning_simulator.launch.xml m
 4. Tinker around with the `planning_simulator` and explore the depths of Autoware stack!
    ![Autoware-Planning-Simulation](https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/Autoware-Planning-Simulation/Autoware-Planning-Simulation.gif)
 > **Note:** Check out the official [Planning Simulation Documentation](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/planning-simulation/) for more details.
-
-## Generally Helpful Docker Tips:
-1. To access the container while it is running, execute the following command in a new terminal window to start a new bash session inside the container:
-```bash
-$ docker exec -it <container_name> bash
-```
-
-2. To exit the bash session(s), simply execute:
-```bash
-$ exit
-```
-
-3. To kill the container, execute the following command:
-```bash
-$ docker kill <container_name>
-```
-
-4. To remove the container, simply execute:
-```bash
-$ docker rm <container_name>
-```
-
-5. Running or caching multiple docker images, containers, volumes, and networks can quickly consume a lot of disk space. Hence, it is always a good idea to frequently check docker disk utilization:
-```bash
-$ docker system df
-```
-
-6. To avoid utilizing a lot of disk space, it is a good idea to frequently purge docker resources such as images, containers, volumes, and networks that are unused or dangling (i.e. not tagged or associated with a container). There are several ways with many options to achieve this, please refer to appropriate documentation. The easiest way (but a potentially dangerous one) is to use a single command to clean up all the docker resources (dangling or otherwise):
-```bash
-$ docker system prune -a
-```
