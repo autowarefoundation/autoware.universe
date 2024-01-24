@@ -165,6 +165,7 @@ public:
     bool occlusion_ignore_with_traffic_light;
     bool occlusion_ignore_behind_predicted_objects;
     double occlusion_min_objects_velocity;
+    double occlusion_extra_objects_size;
   };
 
   struct ObjectInfo

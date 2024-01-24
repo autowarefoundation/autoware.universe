@@ -16,10 +16,8 @@
 
 #include "behavior_velocity_crosswalk_module/util.hpp"
 
-#include <grid_map_cv/GridMapCvConverter.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_utils/polygon_iterator.hpp>
-#include <opencv2/imgcodecs.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -99,20 +97,18 @@ std::vector<lanelet::BasicPolygon2d> calculate_detection_areas(
 void clear_behind_objects(
   grid_map::GridMap & grid_map,
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
-  const double min_object_velocity)
+  const double min_object_velocity, const double extra_object_size)
 {
   const auto angle_cmp = [&](const auto & p1, const auto & p2) {
     const auto d1 = p1 - grid_map.getPosition();
     const auto d2 = p2 - grid_map.getPosition();
     return std::atan2(d1.y(), d1.x()) < std::atan2(d2.y(), d2.x());
   };
-  cv::Mat img;  // DEBUG
-  if (grid_map::GridMapCvConverter::toImage<unsigned short, 4>(
-        grid_map, "layer", CV_16UC4, 0, 100, img))
-    cv::imwrite("/home/mclement/Pictures/original.png", img);
   const lanelet::BasicPoint2d grid_map_position = grid_map.getPosition();
   const auto range = grid_map.getLength().maxCoeff() / 2.0;
-  for (const auto & object : objects) {
+  for (auto object : objects) {
+    object.shape.dimensions.x += extra_object_size;
+    object.shape.dimensions.y += extra_object_size;
     const lanelet::BasicPoint2d object_position = {
       object.kinematics.initial_pose_with_covariance.pose.position.x,
       object.kinematics.initial_pose_with_covariance.pose.position.y};
@@ -120,7 +116,8 @@ void clear_behind_objects(
       object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_object_velocity &&
       lanelet::geometry::distance2d(grid_map_position, object_position) < range) {
       lanelet::BasicPoints2d edge_points;
-      for (const auto & edge_point : tier4_autoware_utils::toPolygon2d(object).outer())
+      const auto object_polygon = tier4_autoware_utils::toPolygon2d(object);
+      for (const auto & edge_point : object_polygon.outer())
         edge_points.push_back(edge_point);
       std::sort(edge_points.begin(), edge_points.end(), angle_cmp);
       // points.push_back(interpolate_point({object_position, edge_point}, 10.0 * range));
@@ -135,9 +132,6 @@ void clear_behind_objects(
         grid_map.at("layer", *it) = 0;
     }
   }
-  if (grid_map::GridMapCvConverter::toImage<unsigned short, 4>(
-        grid_map, "layer", CV_16UC4, 0, 100, img))
-    cv::imwrite("/home/mclement/Pictures/result.png", img);
 }
 
 bool is_crosswalk_occluded(
@@ -151,7 +145,7 @@ bool is_crosswalk_occluded(
   grid_map::GridMapRosConverter::fromOccupancyGrid(occupancy_grid, "layer", grid_map);
 
   if (params.occlusion_ignore_behind_predicted_objects)
-    clear_behind_objects(grid_map, dynamic_objects, params.occlusion_min_objects_velocity);
+    clear_behind_objects(grid_map, dynamic_objects, params.occlusion_min_objects_velocity, params.occlusion_extra_objects_size);
   const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
   for (const auto & detection_area : calculate_detection_areas(
          crosswalk_lanelet, {path_intersection.x, path_intersection.y}, detection_range)) {

@@ -81,3 +81,4 @@
         ignore_with_traffic_light: true  # [-] if true, occlusions at crosswalks with traffic lights are ignored
         ignore_behind_predicted_objects: true  # [-] if true, occlusions behind predicted objects are ignored
         min_objects_velocity: 0.5  # [m/s] minimum velocity for a predicted object to be ignored
+        extra_objects_size: 0.5  # [m] extra size added to the objects when masking the occlusions
