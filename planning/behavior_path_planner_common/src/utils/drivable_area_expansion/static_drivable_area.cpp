@@ -1841,7 +1841,7 @@ std::vector<geometry_msgs::msg::Point> makeBoundLongitudinallyMonotonic(
     return original_bound;
   }
 
-  if (original_bound.empty()) {
+  if (original_bound.size() < 2) {
     return original_bound;
   }
 
