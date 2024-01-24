@@ -23,7 +23,7 @@ namespace behavior_velocity_planner::intersection
 {
 
 /**
- * @brief Internal error or ego already passed pass_judge_line
+ * @brief internal error
  */
 struct Indecisive
 {

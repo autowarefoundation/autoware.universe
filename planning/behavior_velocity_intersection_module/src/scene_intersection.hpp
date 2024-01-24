@@ -220,6 +220,25 @@ public:
   };
   /** @} */
 
+  /**
+   * @brief
+   */
+  struct PassJudgeStatus
+  {
+    //! true if ego is over the 1st pass judge line
+    bool is_over_1st_pass_judge;
+
+    //! true if (1) ego is over the 2nd pass judge line, or (2) ego is over the 1st pass judge line
+    //! and 2nd attention lane does not exist
+    bool is_over_2nd_pass_judge;
+
+    //! true only when ego passed 1st pass judge line safely for the first time
+    bool safely_passed_1st_judge_line;
+
+    //! true only when ego passed 2nd pass judge line safely for the first time
+    bool safely_passed_2nd_judge_line;
+  };
+
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
@@ -610,10 +629,7 @@ private:
    * @attention this function has access to value() of intersection_stoplines.default_stopline,
    * intersection_stoplines.occlusion_stopline
    */
-  intersection::Result<
-    intersection::Indecisive,
-    std::pair<bool /* is_over_1st_pass_judge */, bool /* is_over_2nd_pass_judge */>>
-  isOverPassJudgeLinesStatus(
+  PassJudgeStatus isOverPassJudgeLinesStatus(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const bool is_occlusion_state,
     const intersection::IntersectionStopLines & intersection_stoplines);
   /** @} */
@@ -641,7 +657,8 @@ private:
    */
   void updateObjectInfoManagerCollision(
     const intersection::PathLanelets & path_lanelets, const TimeDistanceArray & time_distance_array,
-    const TrafficPrioritizedLevel & traffic_prioritized_level);
+    const TrafficPrioritizedLevel & traffic_prioritized_level,
+    const bool passed_1st_judge_line_first_time, const bool passed_2nd_judge_line_first_time);
 
   void cutPredictPathWithinDuration(
     const builtin_interfaces::msg::Time & object_stamp, const double time_thr,
@@ -672,10 +689,13 @@ private:
   /**
    * @brief calculate ego vehicle profile along the path inside the intersection as the sequence of
    * (time of arrival, traveled distance) from current ego position
+   * @attention this function has access to value() of
+   * intersection_stoplines.occlusion_peeking_stopline,
+   * intersection_stoplines.first_attention_stopline
    */
   TimeDistanceArray calcIntersectionPassingTime(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
-    const size_t last_intersection_stopline_candidate_idx, const double time_delay,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const bool is_prioritized,
+    const intersection::IntersectionStopLines & intersection_stoplines,
     tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
   /** @} */
 

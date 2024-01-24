@@ -64,8 +64,9 @@ struct CollisionInterval
     FIRST,
     SECOND,
     ELSE,
-  } expected_lane_position;
-  lanelet::Id lane_id;
+  };
+  LanePosition lane_position{LanePosition::ELSE};
+  lanelet::Id lane_id{lanelet::InvalId};
 
   //! original predicted path
   std::vector<geometry_msgs::msg::Pose> path;
@@ -81,8 +82,25 @@ struct CollisionKnowledge
 {
   rclcpp::Time stamp;
   CollisionInterval interval;
-  lanelet::ArcCoordinates observed_position_arc_coords;
+  bool safe{false};
   double observed_velocity;
+  /**
+   * diag format:
+   * for objects with decision_at_1st_pass_judge_line_passage or
+   * decision_at_2nd_pass_judge_line_passage:
+   * [uuid] was detected as [safe] at [stamp] with the
+   * velocity of [observed_velocity] and the possible collision position was at
+   * [(path[interval_position.first])] on the Lanelet[interval.lane_id]  which was expected to
+   * happen after [interval_time.first] seconds. Now it is judged as unsafe with the velocity of
+   * [new observed_velocity] at [(new path[new interval_position.first])] on the Lanelet[new
+   * interval.lane_id]
+   * for objects without the above members:
+   * [uuid] was not detected when ego passed the 1st/2nd pass judge line at
+   * [manager.passed_1st/2nd_judge_line_first_time], so collision detection was impossible at that
+   * time. but now collision is expected on the 1st/2nd attention lanelet. This dangerous situation
+   * is because at time [manager.passed_1st/2nd_judge_line_first_time] ego could not detect [uuid]
+   * which was estimated to be xxx meter behind from yyy position
+   */
 };
 
 /**
@@ -98,14 +116,10 @@ public:
     return predicted_object_;
   };
 
-  const std::optional<CollisionInterval> & unsafe_decision_knowledge() const
-  {
-    return unsafe_decision_knowledge_;
-  }
+  const std::optional<CollisionInterval> & unsafe_interval() const { return unsafe_interval_; }
 
   /**
-   * @brief update observed_position, observed_position_arc_coords, predicted_path,
-   * observed_velocity, attention_lanelet, stopline, dist_to_stopline
+   * @brief update predicted_object_, attention_lanelet, stopline, dist_to_stopline
    */
   void initialize(
     const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
@@ -113,10 +127,11 @@ public:
     std::optional<lanelet::ConstLineString3d> stopline_opt);
 
   /**
-   * @brief update observed_position, observed_position_arc_coords, predicted_path,
-   * observed_velocity, attention_lanelet, stopline, dist_to_stopline
+   * @brief update unsafe_knowledge
    */
-  void update(const std::optional<CollisionInterval> & unsafe_knowledge_opt);
+  void update_safety(
+    const std::optional<CollisionInterval> & unsafe_interval_opt,
+    const std::optional<CollisionInterval> & safe_interval_opt);
 
   /**
    * @brief find the estimated position of the object in the past
@@ -146,11 +161,6 @@ private:
   const std::string uuid_str;
   autoware_auto_perception_msgs::msg::PredictedObject predicted_object_;
 
-  //! arc coordinate on the attention lanelet
-  lanelet::ArcCoordinates observed_position_arc_coords;
-
-  double observed_velocity;
-
   //! null if the object in intersection_area but not in attention_area
   std::optional<lanelet::ConstLanelet> attention_lanelet_opt{std::nullopt};
 
@@ -160,13 +170,14 @@ private:
   //! null if the object in intersection_area but not in attention_area
   std::optional<double> dist_to_stopline_opt{std::nullopt};
 
-  //! store the information of if judged as UNSAFE
-  std::optional<CollisionInterval> unsafe_decision_knowledge_{std::nullopt};
+  //! store the information if judged as UNSAFE
+  std::optional<CollisionInterval> unsafe_interval_{std::nullopt};
 
-  std::optional<std::tuple<rclcpp::Time, CollisionKnowledge, bool>>
-    decision_at_1st_pass_judge_line_passage{std::nullopt};
-  std::optional<std::tuple<rclcpp::Time, CollisionKnowledge, bool>>
-    decision_at_2nd_pass_judge_line_passage{std::nullopt};
+  //! store the information if judged as SAFE
+  std::optional<CollisionInterval> safe_interval_{std::nullopt};
+
+  std::optional<CollisionKnowledge> decision_at_1st_pass_judge_line_passage{std::nullopt};
+  std::optional<CollisionKnowledge> decision_at_2nd_pass_judge_line_passage{std::nullopt};
 
   /**
    * @brief calculate/update the distance to corresponding stopline

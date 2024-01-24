@@ -80,19 +80,16 @@ void ObjectInfo::initialize(
   predicted_object_ = object;
   attention_lanelet_opt = attention_lanelet_opt_;
   stopline_opt = stopline_opt_;
-  if (attention_lanelet_opt) {
-    const auto attention_lanelet = attention_lanelet_opt.value();
-    observed_position_arc_coords = lanelet::utils::getArcCoordinates(
-      {attention_lanelet}, predicted_object_.kinematics.initial_pose_with_covariance.pose);
-  }
-  observed_velocity = predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
-  unsafe_decision_knowledge_ = std::nullopt;
+  unsafe_interval_ = std::nullopt;
   calc_dist_to_stopline();
 }
 
-void ObjectInfo::update(const std::optional<CollisionInterval> & unsafe_knowledge_opt)
+void ObjectInfo::update_safety(
+  const std::optional<CollisionInterval> & unsafe_interval,
+  const std::optional<CollisionInterval> & safe_interval)
 {
-  unsafe_decision_knowledge_ = unsafe_knowledge_opt;
+  unsafe_interval_ = unsafe_interval;
+  safe_interval_ = safe_interval;
 }
 
 void ObjectInfo::calc_dist_to_stopline()
@@ -118,6 +115,8 @@ bool ObjectInfo::can_stop_before_stopline(const double brake_deceleration) const
   if (!dist_to_stopline_opt) {
     return false;
   }
+  const double observed_velocity =
+    predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
   const double dist_to_stopline = dist_to_stopline_opt.value();
   const double braking_distance =
     (observed_velocity * observed_velocity) / (2.0 * brake_deceleration);
@@ -132,6 +131,8 @@ bool ObjectInfo::can_stop_before_ego_lane(
     return false;
   }
   const double dist_to_stopline = dist_to_stopline_opt.value();
+  const double observed_velocity =
+    predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
   const double braking_distance =
     (observed_velocity * observed_velocity) / (2.0 * brake_deceleration);
   if (dist_to_stopline > braking_distance) {
