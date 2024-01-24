@@ -7,8 +7,6 @@
   <arg name="objects_filter_method" default="lanelet_filter"/>
   <arg name="object_recognition_detection_object_merger_data_association_matrix_param_path" default="$(find-pkg-share object_merger)/config/data_association_matrix.param.yaml"/>
   <arg name="object_recognition_detection_object_merger_distance_threshold_list_path" default="$(find-pkg-share object_merger)/config/overlapped_judge.param.yaml"/>
-  <!-- <arg name="object_recognition_detection_roi_detected_object_fusion_param_path"/> -->
-  <!-- <arg name="object_recognition_detection_object_position_filter_param_path"/> -->
 
   <arg name="use_object_filter" default="true" description="use object filter"/>
   <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>

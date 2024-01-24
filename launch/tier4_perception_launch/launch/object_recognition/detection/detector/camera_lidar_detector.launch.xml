@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- LiDAR parameters -->
+  <!-- Lidar parameters -->
   <arg name="input/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
   <arg name="pointcloud_container_name" default="pointcloud_container"/>
