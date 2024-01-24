@@ -86,10 +86,11 @@ void ObjectInfo::initialize(
 
 void ObjectInfo::update_safety(
   const std::optional<CollisionInterval> & unsafe_interval,
-  const std::optional<CollisionInterval> & safe_interval)
+  const std::optional<CollisionInterval> & safe_interval, const bool safe_under_traffic_control)
 {
   unsafe_interval_ = unsafe_interval;
   safe_interval_ = safe_interval;
+  safe_under_traffic_control_ = safe_under_traffic_control;
 }
 
 void ObjectInfo::calc_dist_to_stopline()

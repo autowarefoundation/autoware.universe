@@ -254,7 +254,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     path_lanelets, time_distance_array, traffic_prioritized_level, safely_passed_1st_judge_line,
     safely_passed_2nd_judge_line);
 
-  const bool has_collision = checkCollision();
+  const bool has_collision = hasCollision();
   if (is_permanent_go_) {
     // TODO(Mamoru Sobue): diagnosis if has_collision
     return intersection::Indecisive{"over pass judge lines"};
@@ -1189,10 +1189,10 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
 
   const bool is_over_1st_pass_judge_line =
     util::isOverTargetIndex(path, closest_idx, current_pose, pass_judge_line_idx);
-  bool safely_passed_1st_judge_line = false;
+  bool safely_passed_1st_judge_line_first_time = false;
   if (is_over_1st_pass_judge_line && was_safe && !safely_passed_1st_judge_line_time_) {
     safely_passed_1st_judge_line_time_ = clock_->now();
-    safely_passed_1st_judge_line = true;
+    safely_passed_1st_judge_line_first_time = true;
   }
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   debug_data_.first_pass_judge_wall_pose =
@@ -1201,10 +1201,10 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
   const auto second_pass_judge_line_idx = intersection_stoplines.second_pass_judge_line;
   const bool is_over_2nd_pass_judge_line =
     util::isOverTargetIndex(path, closest_idx, current_pose, second_pass_judge_line_idx);
-  bool safely_passed_2nd_judge_line = false;
+  bool safely_passed_2nd_judge_line_first_time = false;
   if (is_over_2nd_pass_judge_line && was_safe && !safely_passed_2nd_judge_line_time_) {
     safely_passed_2nd_judge_line_time_ = clock_->now();
-    safely_passed_2nd_judge_line = true;
+    safely_passed_2nd_judge_line_first_time = true;
   }
   debug_data_.second_pass_judge_wall_pose =
     planning_utils::getAheadPose(second_pass_judge_line_idx, baselink2front, path);
@@ -1238,8 +1238,8 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
     is_permanent_go_ = true;
   }
   return {
-    is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line, safely_passed_1st_judge_line,
-    safely_passed_2nd_judge_line};
+    is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line,
+    safely_passed_1st_judge_line_first_time, safely_passed_2nd_judge_line_first_time};
 }
 
 }  // namespace behavior_velocity_planner

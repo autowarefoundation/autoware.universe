@@ -80,9 +80,19 @@ struct CollisionInterval
 
 struct CollisionKnowledge
 {
+  //! the time when the expected collision is judged
   rclcpp::Time stamp;
-  CollisionInterval interval;
+
+  //! if judged as SAFE/UNSAFE
   bool safe{false};
+
+  //! if judged as SAFE given traffic control
+  bool safe_under_traffic_control{false};
+
+  //! if !safe, this has value, and it safe, this maybe null if the predicted path does not
+  //! intersect with ego path
+  std::optional<CollisionInterval> interval{std::nullopt};
+
   double observed_velocity;
   /**
    * diag format:
@@ -116,7 +126,13 @@ public:
     return predicted_object_;
   };
 
-  const std::optional<CollisionInterval> & unsafe_interval() const { return unsafe_interval_; }
+  bool is_safe() const
+  {
+    if (safe_under_traffic_control_) {
+      return true;
+    }
+    return !unsafe_interval_.has_value();
+  }
 
   /**
    * @brief update predicted_object_, attention_lanelet, stopline, dist_to_stopline
@@ -131,7 +147,8 @@ public:
    */
   void update_safety(
     const std::optional<CollisionInterval> & unsafe_interval_opt,
-    const std::optional<CollisionInterval> & safe_interval_opt);
+    const std::optional<CollisionInterval> & safe_interval_opt,
+    const bool safe_under_traffic_control);
 
   /**
    * @brief find the estimated position of the object in the past
@@ -157,6 +174,16 @@ public:
    */
   bool before_stopline_by(const double margin) const;
 
+  void setDecisionAt1stPassJudgeLinePassage(const CollisionKnowledge & knowledge)
+  {
+    decision_at_1st_pass_judge_line_passage_ = knowledge;
+  }
+
+  void setDecisionAt2ndPassJudgeLinePassage(const CollisionKnowledge & knowledge)
+  {
+    decision_at_2nd_pass_judge_line_passage_ = knowledge;
+  }
+
 private:
   const std::string uuid_str;
   autoware_auto_perception_msgs::msg::PredictedObject predicted_object_;
@@ -176,8 +203,11 @@ private:
   //! store the information if judged as SAFE
   std::optional<CollisionInterval> safe_interval_{std::nullopt};
 
-  std::optional<CollisionKnowledge> decision_at_1st_pass_judge_line_passage{std::nullopt};
-  std::optional<CollisionKnowledge> decision_at_2nd_pass_judge_line_passage{std::nullopt};
+  //! true if the object is judged as negligible given traffic light color
+  bool safe_under_traffic_control_{false};
+
+  std::optional<CollisionKnowledge> decision_at_1st_pass_judge_line_passage_{std::nullopt};
+  std::optional<CollisionKnowledge> decision_at_2nd_pass_judge_line_passage_{std::nullopt};
 
   /**
    * @brief calculate/update the distance to corresponding stopline
@@ -217,6 +247,15 @@ public:
     return objects_info_;
   }
 
+  void setPassed1stPassJudgeLineFirstTime(const rclcpp::Time & time)
+  {
+    passed_1st_judge_line_first_time_ = time;
+  }
+  void setPassed2ndPassJudgeLineFirstTime(const rclcpp::Time & time)
+  {
+    passed_2nd_judge_line_first_time_ = time;
+  }
+
 private:
   std::unordered_map<unique_identifier_msgs::msg::UUID, std::shared_ptr<ObjectInfo>> objects_info_;
 
@@ -228,6 +267,9 @@ private:
 
   //! parked objects on attention_area/intersection_area
   std::vector<std::shared_ptr<ObjectInfo>> parked_objects_;
+
+  std::optional<rclcpp::Time> passed_1st_judge_line_first_time_{std::nullopt};
+  std::optional<rclcpp::Time> passed_2nd_judge_line_first_time_{std::nullopt};
 };
 
 /**

@@ -680,7 +680,7 @@ private:
   /**
    * @brief check collision
    */
-  bool checkCollision();
+  bool hasCollision();
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,

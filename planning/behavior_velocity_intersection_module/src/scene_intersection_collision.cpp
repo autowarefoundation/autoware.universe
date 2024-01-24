@@ -132,10 +132,16 @@ void IntersectionModule::updateObjectInfoManagerCollision(
   const intersection::PathLanelets & path_lanelets,
   const IntersectionModule::TimeDistanceArray & time_distance_array,
   const IntersectionModule::TrafficPrioritizedLevel & traffic_prioritized_level,
-  [[maybe_unused]] const bool passed_1st_judge_line_first_time,
-  [[maybe_unused]] const bool passed_2nd_judge_line_first_time)
+  const bool passed_1st_judge_line_first_time, const bool passed_2nd_judge_line_first_time)
 {
   const auto & intersection_lanelets = intersection_lanelets_.value();
+
+  if (passed_1st_judge_line_first_time) {
+    object_info_manager_.setPassed1stPassJudgeLineFirstTime(clock_->now());
+  }
+  if (passed_2nd_judge_line_first_time) {
+    object_info_manager_.setPassed2ndPassJudgeLineFirstTime(clock_->now());
+  }
 
   const double passing_time = time_distance_array.back().first;
   const auto & concat_lanelets = path_lanelets.all;
@@ -163,13 +169,14 @@ void IntersectionModule::updateObjectInfoManagerCollision(
 
   for (auto & object_info : object_info_manager_.attentionObjects()) {
     const auto & predicted_object = object_info->predicted_object();
+    bool safe_under_traffic_control = false;
     if (
       traffic_prioritized_level == TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED &&
       object_info->can_stop_before_stopline(
         planner_param_.collision_detection.ignore_on_amber_traffic_light
           .object_expected_deceleration)) {
       debug_data_.amber_ignore_targets.objects.push_back(predicted_object);
-      continue;
+      safe_under_traffic_control = true;
     }
     if (
       traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED &&
@@ -178,7 +185,7 @@ void IntersectionModule::updateObjectInfoManagerCollision(
           .object_expected_deceleration,
         planner_param_.collision_detection.ignore_on_red_traffic_light.object_margin_to_path,
         ego_lane)) {
-      continue;
+      safe_under_traffic_control = true;
     }
 
     // ==========================================================================================
@@ -191,8 +198,15 @@ void IntersectionModule::updateObjectInfoManagerCollision(
     }
     sorted_predicted_paths.sort(
       [](const auto path1, const auto path2) { return path1->confidence > path2->confidence; });
+
+    // ==========================================================================================
+    // if all of the predicted path is lower confidence/geometrically does not intersect with ego
+    // path, both will be null, which is interpreted as SAFE. if any of the path is "normal", either
+    // of them has value, not both
+    // ==========================================================================================
     std::optional<intersection::CollisionInterval> unsafe_interval{std::nullopt};
     std::optional<intersection::CollisionInterval> safe_interval{std::nullopt};
+
     for (const auto & predicted_path_ptr : sorted_predicted_paths) {
       auto predicted_path = *predicted_path_ptr;
       if (
@@ -277,7 +291,27 @@ void IntersectionModule::updateObjectInfoManagerCollision(
         safe_interval = object_passage_interval;
       }
     }
-    object_info->update_safety(unsafe_interval, safe_interval);
+    object_info->update_safety(unsafe_interval, safe_interval, safe_under_traffic_control);
+    if (passed_1st_judge_line_first_time) {
+      object_info->setDecisionAt1stPassJudgeLinePassage(intersection::CollisionKnowledge{
+        clock_->now(),                                      // stamp
+        unsafe_interval ? false : true,                     // safe
+        safe_under_traffic_control,                         // safe_under_traffic_control
+        unsafe_interval ? unsafe_interval : safe_interval,  // interval
+        predicted_object.kinematics.initial_twist_with_covariance.twist.linear
+          .x  // observed_velocity
+      });
+    }
+    if (passed_2nd_judge_line_first_time) {
+      object_info->setDecisionAt2ndPassJudgeLinePassage(intersection::CollisionKnowledge{
+        clock_->now(),                                      // stamp
+        unsafe_interval ? false : true,                     // safe
+        safe_under_traffic_control,                         // safe_under_traffic_control
+        unsafe_interval ? unsafe_interval : safe_interval,  // interval
+        predicted_object.kinematics.initial_twist_with_covariance.twist.linear
+          .x  // observed_velocity
+      });
+    }
   }
 }
 
@@ -353,10 +387,10 @@ IntersectionModule::isGreenPseudoCollisionStatus(
   return std::nullopt;
 }
 
-bool IntersectionModule::checkCollision()
+bool IntersectionModule::hasCollision()
 {
   for (const auto & object_info : object_info_manager_.attentionObjects()) {
-    if (object_info->unsafe_interval().has_value()) {
+    if (!object_info->is_safe()) {
       return true;
     }
   }
