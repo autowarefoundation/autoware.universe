@@ -68,21 +68,16 @@ user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/s
 ```
 
 ## Set Up Autoware Workspace:
-#### (Approximate Time Investment: 0.5 Hours)
+#### (Approximate Time Investment: 2.0 Hours)
 
-1. Run the pulled Docker image as a container (Autoware uses [`rocker`](https://github.com/osrf/rocker) to run Docker images with customized local support).
+1. Create an `src` directory within the `autoware_local` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
 ```bash
-user@host-pc:~$ rocker -e LIBGL_ALWAYS_SOFTWARE=1 --x11 --user --volume ~/Autoware_WS/autoware_docker --volume ~/Autoware_WS/autoware_map -- ghcr.io/autowarefoundation/autoware-universe:latest-cuda
-```
-
-2. Create an `src` directory within the `autoware_docker` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
-```bash
-user@container-id:~$ cd Autoware_WS/autoware_docker/
+user@container-id:~$ cd Autoware_WS/autoware_local/
 user@container-id:~$ mkdir src
 user@container-id:~$ vcs import src < autoware.repos
 ```
 
-3. Install the required dependencies (Autoware uses [`rosdep`](https://github.com/ros-infrastructure/rosdep) to manage dependencies).
+2. Install the required dependencies (Autoware uses [`rosdep`](https://github.com/ros-infrastructure/rosdep) to manage dependencies).
 ```bash
 user@container-id:~$ sudo apt update
 user@container-id:~$ rosdep update
@@ -90,7 +85,7 @@ user@container-id:~$ rosdep install -y --from-paths src --ignore-src --rosdistro
 ```
 > **Note:** You can ignore the `Invalid version` errors (if any) during `rosdep` installation process.
 
-4. Build the workspace (Autoware uses [colcon](https://github.com/colcon) to build workspaces).
+3. Build the workspace (Autoware uses [colcon](https://github.com/colcon) to build workspaces).
 ```bash
 user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
