@@ -1,0 +1,25 @@
+name: create-awf-latest
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+  workflow_dispatch:
+
+jobs:
+  create-awf-latest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Commit Results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git checkout awf-latest
+          git remote add awf https://github.com/autowarefoundation/autoware.universe
+          git fetch awf main
+          git rebase awf/main
+
+          git push origin awf-latest --force
