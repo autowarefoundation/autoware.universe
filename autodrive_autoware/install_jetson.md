@@ -75,7 +75,7 @@ user@jetson-device:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware
 ```
 
 ## Set Up Autoware Workspace:
-#### (Approximate Time Investment: 2.0 Hours)
+#### (Approximate Time Investment: 6.0 Hours - Depends on the Jetson-Device)
 
 1. Create an `src` directory within the `autoware_local` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
 ```bash
@@ -92,15 +92,51 @@ user@jetson-device:~$ rosdep install -y --from-paths src --ignore-src --rosdistr
 ```
 > **Note:** You can ignore the `Invalid version` errors (if any) during `rosdep` installation process.
 
-3. Build the workspace (Autoware uses [colcon](https://github.com/colcon) to build workspaces).
+3. Create a swapfile (Originally from [Autoware Troubleshooting Section](https://autowarefoundation.github.io/autoware-documentation/main/support/troubleshooting/#build-issues)).
+
+   Building Autoware requires a lot of memory. Jetson-Device can crash during the build process because of insufficient memory. To avoid this problem, 16-64 GB of swap should be configured (depending upon the underlying computing platform).
+
+   Optional: Check the current swap size
+   ```bash
+   free -h
+   ```
+
+   Remove the current swapfile (if one exists)
+   ```bash
+   sudo swapoff /swapfile
+   # If there is an error (swapoff: /swapfile: swapoff failed: No such file or directory)
+   sudo swapoff -a
+
+   # ONLY necessary if no error encountered with earlier command
+   sudo rm /swapfile
+   ```
+   
+   Create a new swapfile
+   ```bash
+   # 32G is not sufficient
+   sudo fallocate -l 64G /swapfile
+   sudo chmod 600 /swapfile
+   sudo mkswap /swapfile
+   sudo swapon /swapfile
+   ```
+
+   Optional: Check if the change is reflected
+   ```bash
+   free -h
+   ```
+
+4. Build the workspace (Autoware uses [colcon](https://github.com/colcon) to build workspaces).
 ```bash
 user@jetson-device:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
+
 > **Note 1:** You can ignore the `stderr` warnings (if any) during the `colcon` build process.
 
 > **Note 2:** For more advanced build options, refer to the [colcon documentation](https://colcon.readthedocs.io/).
 
-> **Note 3:** Use `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of (re)building the entire workspace to avoid large (re)build times.
+> **Note 3:** If you get build errors (packages fail to build) and the system is hanging for too long, try increasing the swap size.
+
+> **Note 4:** Use `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of (re)building the entire workspace to avoid large (re)build times.
 
 ## Test Autoware Installation with Planning Simulation:
 
