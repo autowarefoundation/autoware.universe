@@ -249,6 +249,10 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
   max_lat_margin_for_cruise =
     node.declare_parameter<double>("behavior_determination.cruise.max_lat_margin");
   enable_yield = node.declare_parameter<bool>("behavior_determination.cruise.enable_yield");
+  yield_lat_distance_threshold =
+    node.declare_parameter<double>("behavior_determination.cruise.yield_lat_distance_threshold");
+  max_lat_dist_between_obstacles =
+    node.declare_parameter<double>("behavior_determination.cruise.max_lat_dist_between_obstacles");
   max_lat_margin_for_slow_down =
     node.declare_parameter<double>("behavior_determination.slow_down.max_lat_margin");
   lat_hysteresis_margin_for_slow_down =
@@ -306,6 +310,12 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
     parameters, "behavior_determination.cruise.max_lat_margin", max_lat_margin_for_cruise);
   tier4_autoware_utils::updateParam<bool>(
     parameters, "behavior_determination.cruise.enable_yield", enable_yield);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.cruise.yield_lat_distance_threshold",
+    yield_lat_distance_threshold);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.cruise.max_lat_dist_between_obstacles",
+    max_lat_dist_between_obstacles);
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.slow_down.max_lat_margin", max_lat_margin_for_slow_down);
   tier4_autoware_utils::updateParam<double>(
@@ -901,6 +911,8 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::findYieldCruiseObstacle
   const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points)
 {
   if (obstacles.empty() || traj_points.empty()) return std::nullopt;
+  const auto & p = behavior_determination_param_;
+
   // obstacles are sorted by closest to farthest, we want to preserve the order
   std::vector<std::pair<size_t, Obstacle>> indexed_obstacles;
   for (std::size_t i = 0; i < obstacles.size(); ++i) {
@@ -926,12 +938,17 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::findYieldCruiseObstacle
   std::cerr << "-----Checking for Yield candidates----- \n";
 
   for (const auto & moving_obstacle : moving_obstacles) {
+    if (moving_obstacle.second.lat_dist_from_obstacle_to_traj >= p.yield_lat_distance_threshold)
+      continue;
     for (const auto & stopped_obstacle : stopped_obstacles) {
-      if (moving_obstacle.first >= stopped_obstacle.first) continue;
+      if (moving_obstacle.first >= stopped_obstacle.first)
+        continue;  // TODO (Daniel) is a break here fine?
+      if (stopped_obstacle.second.lat_dist_from_obstacle_to_traj >= p.yield_lat_distance_threshold)
+        continue;
       const double lateral_distance_between_obstacles = std::abs(
         moving_obstacle.second.lat_dist_from_obstacle_to_traj -
         stopped_obstacle.second.lat_dist_from_obstacle_to_traj);
-      if (lateral_distance_between_obstacles < 0.5) {
+      if (lateral_distance_between_obstacles < p.max_lat_dist_between_obstacles) {
         std::cerr << "Found Yield candidates \n";
         return createYieldCruiseObstacle(moving_obstacle.second, traj_points);
       }

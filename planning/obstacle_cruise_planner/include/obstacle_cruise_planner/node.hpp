@@ -202,6 +202,8 @@ private:
     // consideration for the current ego pose
     bool enable_to_consider_current_pose{false};
     bool enable_yield{false};
+    double yield_lat_distance_threshold;
+    double max_lat_dist_between_obstacles;
     double time_to_convergence{1.5};
   };
   BehaviorDeterminationParam behavior_determination_param_;
