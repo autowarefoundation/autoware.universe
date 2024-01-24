@@ -60,8 +60,8 @@ user@jetson-device:~$ # Setting up the build environment can take up to 1 hour.
                       # >  Are you sure you want to run setup? [y/N]
                       y
 user@jetson-device:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN and TensorRT NVIDIA libraries which have end-user license agreements that should be reviewed before installation.
-                        # Install NVIDIA libraries? [y/N]
-                        N # On certain systems, modifying any existing NVIDIA libraries can break things!
+                      # Install NVIDIA libraries? [y/N]
+                      N # On certain systems, modifying any existing NVIDIA libraries can break things!
 ```
 > **Note:** The NVIDIA library and CUDA driver installation are disabled as they are already installed with the L4T JetPack SDK. If you force installation here, it may potentially mess up the kernel and cause errors at bootup. You will need to reflash the Jetson-Device if this happens.
 
