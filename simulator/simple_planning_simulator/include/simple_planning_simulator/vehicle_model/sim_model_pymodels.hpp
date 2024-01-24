@@ -106,11 +106,9 @@ private:
   std::deque<double> vx_input_queue_;     //!< @brief buffer for velocity command
   std::deque<double> steer_input_queue_;  //!< @brief buffer for angular velocity command
   const double vx_delay_;                 //!< @brief time delay for velocity command [s]
-  const double vx_time_constant_;
-  //!< @brief time constant for 1D model of velocity dynamics
+  const double vx_time_constant_;  //!< @brief time constant for 1D model of velocity dynamics
   const double steer_delay_;  //!< @brief time delay for angular-velocity command [s]
-  const double
-    steer_time_constant_;  //!< @brief time constant for 1D model of angular-velocity dynamics
+  const double steer_time_constant_;  //!< @brief time constant for 1D model of angular-velocity dynamics
   const double steer_dead_band_;  //!< @brief dead band for steering angle [rad]
   
   /**

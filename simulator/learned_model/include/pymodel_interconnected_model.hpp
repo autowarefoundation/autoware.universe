@@ -14,10 +14,10 @@ namespace py = pybind11;
 
 class InterconnectedModel
 {
-  int num_signals;
-
-  std::vector<double> model_signals_vec;
+  // Vector of unique names of inputs and outputs of sub-models
   std::vector<char *> signals_vec_names;
+  std::vector<double> model_signals_vec;
+  int num_signals;
 
   std::vector<std::unique_ptr<PymodelInterface>> submodels;
 
@@ -67,20 +67,33 @@ private:
     return connection_map;
   }
 
+  /**
+   * @brief create a mapping between vector of signal input names from PSIM to vector of signals
+   * @param [in] in_names vector of signal input names from PSIM
+   */
   void mapInputs(std::vector<char *> in_names)
   {
     // index in "map_in_to_sig_vec" is index in "in_names" and value in "map_in_to_sig_vec" is index in "signals_vec_names"
     map_in_to_sig_vec = createConnectionsMap(signals_vec_names, in_names);
   }
 
+  /**
+   * @brief create a mapping between vector of signal output names from PSIM to vector of signals
+   * @param [in] out_names vector of signal output names from PSIM
+   */
   void mapOutputs(std::vector<char *> out_names)
   {
     // index in "map_sig_vec_to_out" is index in "out_names" and value in "map_sig_vec_to_out" is index in "signals_vec_names"
     map_sig_vec_to_out = createConnectionsMap(signals_vec_names, out_names);
   }
 
+  /**
+   * @brief add unique names to the vector of signal names
+   * @param [in] names vector of signal names
+   */
   void addNamesToSigVec(const std::vector<char *> & names)
   {
+    // Check if the name is already in the vector. If not add it.
     for (char * name : names) {
       if (std::find(signals_vec_names.begin(), signals_vec_names.end(), name) == signals_vec_names.end()) {
         signals_vec_names.push_back(name);
@@ -88,6 +101,9 @@ private:
     }
   }
   
+  /**
+   * @brief create of signal names from all submodels
+   */
   void getSignalNames()
   {
     for (auto & submodel : submodels) {
@@ -104,14 +120,19 @@ public:
    */
   void generateConnections(std::vector<char *> in_names, std::vector<char *> out_names)
   {
+    // Create vector of signal names
     getSignalNames();
     num_signals = signals_vec_names.size();
+    // Init vector of signal values
     for (int i = 0; i < num_signals; i++) model_signals_vec.push_back(0);
 
+    // For every sub-model create mapping from vector of signals to inputs and outputs
     for (auto & submodel : submodels) {
       submodel->mapInputs(signals_vec_names);
       submodel->mapOutputs(signals_vec_names);
     }
+
+    // Create mapping from vector of signals to inputs and outputs of PSIM
     mapInputs(in_names);
     mapOutputs(out_names);
   }
@@ -135,6 +156,7 @@ public:
   {
     bool state_changed_externally = false;
 
+    // Check if some state was changed externally
     for (size_t PSIM_STATE_IDX = 0; PSIM_STATE_IDX < new_state.size(); PSIM_STATE_IDX++) {
       if (abs(model_signals_vec[map_sig_vec_to_out[PSIM_STATE_IDX]] - new_state[PSIM_STATE_IDX]) > 1e-6) {
         state_changed_externally = true;
@@ -143,8 +165,10 @@ public:
     }
 
     if (state_changed_externally) {
+      // Reinitialize model
       std::cout << "Reseting model" << std::endl;
 
+      // Currently initializing model to zero -> TODO find a way how to initialize them to some other default values
       std::fill(model_signals_vec.begin(), model_signals_vec.end(), 0.0);
 
       for (size_t PSIM_STATE_IDX = 0; PSIM_STATE_IDX < new_state.size(); PSIM_STATE_IDX++) {
