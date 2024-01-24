@@ -129,21 +129,20 @@ void PoseEstimatorArbiter::load_switch_rule()
 void PoseEstimatorArbiter::toggle_each(
   const std::unordered_map<PoseEstimatorType, bool> & toggle_list)
 {
-  for (auto s : stoppers_) {
+  for (auto [type, stopper] : stoppers_) {
     RCLCPP_DEBUG_STREAM(
-      get_logger(), magic_enum::enum_name(s.first)
-                      << " : " << std::boolalpha << toggle_list.at(s.first));
+      get_logger(), magic_enum::enum_name(type) << " : " << std::boolalpha << toggle_list.at(type));
 
-    if (toggle_list.count(s.first) == 0) {
+    if (toggle_list.count(type) == 0) {
       RCLCPP_ERROR_STREAM(
-        get_logger(), magic_enum::enum_name(s.first) << " is not included in toggle_list.");
+        get_logger(), magic_enum::enum_name(type) << " is not included in toggle_list.");
       continue;
     }
 
-    if (toggle_list.at(s.first)) {
-      s.second->enable();
+    if (toggle_list.at(type)) {
+      stopper->enable();
     } else {
-      s.second->disable();
+      stopper->disable();
     }
   }
 }
@@ -151,8 +150,8 @@ void PoseEstimatorArbiter::toggle_each(
 void PoseEstimatorArbiter::toggle_all(bool enabled)
 {
   std::unordered_map<PoseEstimatorType, bool> toggle_list;
-  for (auto s : stoppers_) {
-    toggle_list.emplace(s.first, enabled);
+  for (auto [type, stopper] : stoppers_) {
+    toggle_list.emplace(type, enabled);
   }
   toggle_each(toggle_list);
 }
