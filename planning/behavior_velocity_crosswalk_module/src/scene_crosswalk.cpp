@@ -924,7 +924,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
 
     if (crosswalk_front_to_obj_rear > 0.0 && crosswalk_back_to_obj_rear < required_space_length) {
       // If there exists at least one vehicle ahead, plan STOP considering min_acc, max_jerk and
-      // min_jerk. Note that nearest search is not required because the stop pose independends to
+      // min_jerk. Note that nearest search is not required because the stop pose independents to
       // the vehicles.
       const auto braking_distance = calcDecelDistWithJerkAndAccConstraints(
         planner_data_->current_velocity->twist.linear.x, 0.0,
