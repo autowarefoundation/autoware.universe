@@ -131,9 +131,6 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   out.turn_signal_info =
     getCurrentTurnSignalInfo(out.path, getPreviousModuleOutput().turn_signal_info);
 
-  module_type_->setPreviousModulePaths(
-    getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
-
   const auto & lane_change_debug = module_type_->getDebugData();
   for (const auto & [uuid, data] : lane_change_debug.collision_check_objects) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
