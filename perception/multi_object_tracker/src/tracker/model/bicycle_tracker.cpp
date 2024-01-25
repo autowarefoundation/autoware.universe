@@ -17,7 +17,6 @@
 //
 
 #include "multi_object_tracker/tracker/model/bicycle_tracker.hpp"
-
 #include "multi_object_tracker/utils/utils.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
@@ -94,16 +93,15 @@ BicycleTracker::BicycleTracker(
   X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
   X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
   X(IDX::YAW) = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  X(IDX::SLIP) = 0.0;
   if (object.kinematics.has_twist) {
     X(IDX::VEL) = object.kinematics.twist_with_covariance.twist.linear.x;
   } else {
     X(IDX::VEL) = 0.0;
   }
-  X(IDX::SLIP) = 0.0;
 
   // initialize state covariance matrix P
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
-
   if (!object.kinematics.has_position_covariance) {
     const double cos_yaw = std::cos(X(IDX::YAW));
     const double sin_yaw = std::sin(X(IDX::YAW));
@@ -250,16 +248,15 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
     q_stddev_yaw_rate = std::min(q_stddev_yaw_rate, ekf_params_.q_stddev_yaw_rate_max);
     q_stddev_yaw_rate = std::max(q_stddev_yaw_rate, ekf_params_.q_stddev_yaw_rate_min);
   }
-  float q_cov_slip_rate{0.0};
+  float q_cov_slip_rate{0.0f};
   if (vel <= 0.01) {
     q_cov_slip_rate = ekf_params_.q_cov_slip_rate_min;
   } else {
+    // The slip angle rate uncertainty is modeled as follows:
+    // d(slip)/dt ~ - sin(slip)/v * d(v)/dt + l_r/v * d(w)/dt
     // where sin(slip) = w * l_r / v
-    // uncertainty of the slip angle rate is modeled as
-    // d(slip)/dt ~ - w*l_r/v^2 * d(v)/dt + l_r/v * d(w)/dt
-    //            = - sin(slip)/v * d(v)/dt + l_r/v * d(w)/dt
-    // d(w)/dt is modeled as proportional to w (more uncertain when slip is large)
-    // d(v)/dt and d(w)/t is considered that those are not correlated
+    // d(w)/dt is assumed to be proportional to w (more uncertain when slip is large)
+    // d(v)/dt and d(w)/t are considered to be uncorrelated
     q_cov_slip_rate =
       std::pow(ekf_params_.q_stddev_acc_lat * sin_slip / vel, 2) + std::pow(sin_slip * 1.5, 2);
     q_cov_slip_rate = std::min(q_cov_slip_rate, ekf_params_.q_cov_slip_rate_max);
@@ -378,12 +375,12 @@ bool BicycleTracker::measureWithPose(
     }
   }
 
-  // update with ekf
+  // ekf update
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
 
-  // normalize yaw and limit vel, wz
+  // normalize yaw and limit vel, slip
   {
     Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
     Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -409,14 +406,22 @@ bool BicycleTracker::measureWithPose(
 bool BicycleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
+  // if the input shape is convex type, convert it to bbox type
+  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    return false;
+    utils::convertConvexHullToBoundingBox(object, bbox_object);
+  } else {
+    bbox_object = object;
   }
-  constexpr float gain = 0.9;
 
-  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
-  bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
+  constexpr float gain = 0.9;
+  bounding_box_.length =
+    gain * bounding_box_.length + (1.0 - gain) * bbox_object.shape.dimensions.x;
+  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * bbox_object.shape.dimensions.y;
+  bounding_box_.height =
+    gain * bounding_box_.height + (1.0 - gain) * bbox_object.shape.dimensions.z;
+  last_input_bounding_box_ = {
+    bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y, bbox_object.shape.dimensions.z};
 
   // update lf, lr
   lf_ = bounding_box_.length * 0.3;  // 30% front from the center
@@ -454,7 +459,7 @@ bool BicycleTracker::getTrackedObject(
   object.object_id = getUUID();
   object.classification = getClassification();
 
-  // predict kinematics
+  // predict state
   KalmanFilter tmp_ekf_for_no_update = ekf_;
   const double dt = (time - last_update_time_).seconds();
   if (0.001 /*1msec*/ < dt) {

@@ -16,6 +16,13 @@
 // Author: v1.0 Yukihiro Saito
 //
 
+#include "multi_object_tracker/tracker/model/big_vehicle_tracker.hpp"
+#include "multi_object_tracker/utils/utils.hpp"
+
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
+
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -26,17 +33,11 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-
-#define EIGEN_MPL2_ONLY
-#include "multi_object_tracker/tracker/model/big_vehicle_tracker.hpp"
-#include "multi_object_tracker/utils/utils.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
 
+#define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/math/normalization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
@@ -99,7 +100,6 @@ BigVehicleTracker::BigVehicleTracker(
   X(IDX::SLIP) = 0.0;
   if (object.kinematics.has_twist) {
     X(IDX::VEL) = object.kinematics.twist_with_covariance.twist.linear.x;
-    // X(IDX::YAW) = object.kinematics.twist_with_covariance.twist.angular.z;
   } else {
     X(IDX::VEL) = 0.0;
   }
@@ -149,9 +149,7 @@ BigVehicleTracker::BigVehicleTracker(
     bounding_box_ = {
       bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
       bbox_object.shape.dimensions.z};
-    last_input_bounding_box_ = {
-      bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
-      bbox_object.shape.dimensions.z};
+    last_input_bounding_box_ = bounding_box_;
   }
   ekf_.init(X, P);
 
@@ -265,16 +263,15 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
     q_stddev_yaw_rate = std::min(q_stddev_yaw_rate, ekf_params_.q_stddev_yaw_rate_max);
     q_stddev_yaw_rate = std::max(q_stddev_yaw_rate, ekf_params_.q_stddev_yaw_rate_min);
   }
-  float q_cov_slip_rate{0.0};
+  float q_cov_slip_rate{0.0f};
   if (vel <= 0.01) {
     q_cov_slip_rate = ekf_params_.q_cov_slip_rate_min;
   } else {
+    // The slip angle rate uncertainty is modeled as follows:
+    // d(slip)/dt ~ - sin(slip)/v * d(v)/dt + l_r/v * d(w)/dt
     // where sin(slip) = w * l_r / v
-    // uncertainty of the slip angle rate is modeled as
-    // d(slip)/dt ~ - w*l_r/v^2 * d(v)/dt + l_r/v * d(w)/dt
-    //            = - sin(slip)/v * d(v)/dt + l_r/v * d(w)/dt
-    // d(w)/dt is modeled as proportional to w (more uncertain when slip is large)
-    // d(v)/dt and d(w)/t is considered that those are not correlated
+    // d(w)/dt is assumed to be proportional to w (more uncertain when slip is large)
+    // d(v)/dt and d(w)/t are considered to be uncorrelated
     q_cov_slip_rate =
       std::pow(ekf_params_.q_stddev_acc_lat * sin_slip / vel, 2) + std::pow(sin_slip * 1.5, 2);
     q_cov_slip_rate = std::min(q_cov_slip_rate, ekf_params_.q_cov_slip_rate_max);
@@ -317,14 +314,14 @@ bool BigVehicleTracker::measureWithPose(
   float r_cov_y;
   const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
 
-  if (label == Label::CAR) {
+  if (utils::isLargeVehicleLabel(label)) {
+    r_cov_x = ekf_params_.r_cov_x;
+    r_cov_y = ekf_params_.r_cov_y;
+  } else if (label == Label::CAR) {
     constexpr float r_stddev_x = 2.0;  // [m]
     constexpr float r_stddev_y = 2.0;  // [m]
     r_cov_x = std::pow(r_stddev_x, 2.0);
     r_cov_y = std::pow(r_stddev_y, 2.0);
-  } else if (utils::isLargeVehicleLabel(label)) {
-    r_cov_x = ekf_params_.r_cov_x;
-    r_cov_y = ekf_params_.r_cov_y;
   } else {
     r_cov_x = ekf_params_.r_cov_x;
     r_cov_y = ekf_params_.r_cov_y;
@@ -364,7 +361,7 @@ bool BigVehicleTracker::measureWithPose(
     last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
     bbox_object, X_t(IDX::YAW), offset_object, tracking_offset_);
 
-  /* Set measurement matrix */
+  /* Set measurement matrix and noise covariance*/
   Eigen::MatrixXd Y(dim_y, 1);
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
@@ -398,6 +395,7 @@ bool BigVehicleTracker::measureWithPose(
     R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
   }
 
+  // Update the velocity when necessary
   if (dim_y == 4) {
     Y(IDX::VEL, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
     C(3, IDX::VEL) = 1.0;  // for vel
@@ -409,7 +407,7 @@ bool BigVehicleTracker::measureWithPose(
     }
   }
 
-  /* ekf tracks constant tracking point */
+  // ekf update
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
@@ -440,9 +438,8 @@ bool BigVehicleTracker::measureWithPose(
 bool BigVehicleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
+  // if the input shape is convex type, convert it to bbox type
   autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-
-  // if input is convex shape convert it to bbox shape
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     utils::convertConvexHullToBoundingBox(object, bbox_object);
   } else {
@@ -565,6 +562,7 @@ bool BigVehicleTracker::getTrackedObject(
    * wz = vel * sin(slip) / l_r = vy / l_r
    *
    */
+
   constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
@@ -599,7 +597,6 @@ bool BigVehicleTracker::getTrackedObject(
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
   object.shape.footprint =
     tier4_autoware_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
-
   return true;
 }
 
