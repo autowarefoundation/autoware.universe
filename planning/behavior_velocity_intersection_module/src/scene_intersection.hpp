@@ -226,17 +226,16 @@ public:
   struct PassJudgeStatus
   {
     //! true if ego is over the 1st pass judge line
-    bool is_over_1st_pass_judge;
+    const bool is_over_1st_pass_judge;
 
-    //! true if (1) ego is over the 2nd pass judge line, or (2) ego is over the 1st pass judge line
-    //! and 2nd attention lane does not exist
-    bool is_over_2nd_pass_judge;
+    //! true if second_attention_lane exists and ego is over the 2nd pass judge line
+    const std::optional<bool> is_over_2nd_pass_judge;
 
     //! true only when ego passed 1st pass judge line safely for the first time
-    bool safely_passed_1st_judge_line;
+    const bool safely_passed_1st_judge_line;
 
     //! true only when ego passed 2nd pass judge line safely for the first time
-    bool safely_passed_2nd_judge_line;
+    const bool safely_passed_2nd_judge_line;
   };
 
   IntersectionModule(
@@ -681,7 +680,7 @@ private:
    * @brief return if collision is detected and the collision position
    */
   std::pair<bool, intersection::CollisionInterval::LanePosition> detectCollision(
-    const bool is_over_1st_pass_judge_line, const bool is_over_2nd_pass_judge_line);
+    const bool is_over_1st_pass_judge_line, const std::optional<bool> is_over_2nd_pass_judge_line);
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,

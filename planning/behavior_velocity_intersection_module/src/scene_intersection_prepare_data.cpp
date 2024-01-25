@@ -483,12 +483,13 @@ IntersectionModule::generateIntersectionStopLines(
     second_attention_stopline_ip_int >= 0 ? static_cast<size_t>(second_attention_stopline_ip_int)
                                           : 0;
 
-  // (8) second pass judge line position on interpolated path. It is the same as first pass judge
-  // line if second_attention_lane is null
-  int second_pass_judge_ip_int = occlusion_wo_tl_pass_judge_line_ip;
-  const auto second_pass_judge_line_ip =
-    second_attention_area_opt ? static_cast<size_t>(std::max<int>(second_pass_judge_ip_int, 0))
-                              : first_pass_judge_line_ip;
+  // (8) second pass judge line position on interpolated path. It is null if second_attention_lane
+  // is null
+  size_t second_pass_judge_line_ip = occlusion_wo_tl_pass_judge_line_ip;
+  bool second_pass_judge_line_valid = false;
+  if (second_attention_area_opt) {
+    second_pass_judge_line_valid = true;
+  }
 
   struct IntersectionStopLinesTemp
   {
@@ -554,9 +555,11 @@ IntersectionModule::generateIntersectionStopLines(
     intersection_stoplines.occlusion_peeking_stopline =
       intersection_stoplines_temp.occlusion_peeking_stopline;
   }
+  if (second_pass_judge_line_valid) {
+    intersection_stoplines.second_pass_judge_line =
+      intersection_stoplines_temp.second_pass_judge_line;
+  }
   intersection_stoplines.first_pass_judge_line = intersection_stoplines_temp.first_pass_judge_line;
-  intersection_stoplines.second_pass_judge_line =
-    intersection_stoplines_temp.second_pass_judge_line;
   intersection_stoplines.occlusion_wo_tl_pass_judge_line =
     intersection_stoplines_temp.occlusion_wo_tl_pass_judge_line;
   return intersection_stoplines;

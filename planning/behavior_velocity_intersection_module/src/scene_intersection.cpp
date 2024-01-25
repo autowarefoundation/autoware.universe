@@ -1226,24 +1226,34 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
   debug_data_.first_pass_judge_wall_pose =
     planning_utils::getAheadPose(pass_judge_line_idx, baselink2front, path);
   debug_data_.passed_first_pass_judge = safely_passed_1st_judge_line_time_.has_value();
-  const auto second_pass_judge_line_idx = intersection_stoplines.second_pass_judge_line;
-  const bool is_over_2nd_pass_judge_line =
-    util::isOverTargetIndex(path, closest_idx, current_pose, second_pass_judge_line_idx);
+  const auto second_pass_judge_line_idx_opt = intersection_stoplines.second_pass_judge_line;
+  const std::optional<bool> is_over_2nd_pass_judge_line =
+    second_pass_judge_line_idx_opt
+      ? std::make_optional(util::isOverTargetIndex(
+          path, closest_idx, current_pose, second_pass_judge_line_idx_opt.value()))
+      : std::nullopt;
   bool safely_passed_2nd_judge_line_first_time = false;
-  if (is_over_2nd_pass_judge_line && was_safe && !safely_passed_2nd_judge_line_time_) {
+  if (
+    is_over_2nd_pass_judge_line && is_over_2nd_pass_judge_line.value() && was_safe &&
+    !safely_passed_2nd_judge_line_time_) {
     safely_passed_2nd_judge_line_time_ = clock_->now();
     safely_passed_2nd_judge_line_first_time = true;
   }
-  debug_data_.second_pass_judge_wall_pose =
-    planning_utils::getAheadPose(second_pass_judge_line_idx, baselink2front, path);
+  if (second_pass_judge_line_idx_opt) {
+    debug_data_.second_pass_judge_wall_pose =
+      planning_utils::getAheadPose(second_pass_judge_line_idx_opt.value(), baselink2front, path);
+  }
   debug_data_.passed_second_pass_judge = safely_passed_2nd_judge_line_time_.has_value();
 
   const bool is_over_default_stopline =
     util::isOverTargetIndex(path, closest_idx, current_pose, default_stopline_idx);
+
+  const bool over_default_stopline_for_pass_judge =
+    is_over_default_stopline || planner_param_.common.enable_pass_judge_before_default_stopline;
+  const bool over_pass_judge_line_overall =
+    is_over_2nd_pass_judge_line ? is_over_2nd_pass_judge_line.value() : is_over_1st_pass_judge_line;
   if (
-    ((is_over_default_stopline ||
-      planner_param_.common.enable_pass_judge_before_default_stopline) &&
-     is_over_2nd_pass_judge_line && was_safe) ||
+    (over_default_stopline_for_pass_judge && over_pass_judge_line_overall && was_safe) ||
     is_permanent_go_) {
     // ==========================================================================================
     // this body is active if ego is
@@ -1257,8 +1267,8 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
     // - or previously unsafe
     // .
     //
-    // in order for ego to continue peeking or collision detection when occlusion is detected after
-    // ego passed the 1st pass judge line, it needs to be
+    // in order for ego to continue peeking or collision detection when occlusion is detected
+    // after ego passed the 1st pass judge line, it needs to be
     // - before the default stopline OR
     // - before the 2nd pass judge line OR
     // - previously unsafe

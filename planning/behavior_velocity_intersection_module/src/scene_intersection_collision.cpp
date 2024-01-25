@@ -370,7 +370,7 @@ IntersectionModule::isGreenPseudoCollisionStatus(
 }
 
 std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModule::detectCollision(
-  const bool is_over_1st_pass_judge_line, const bool is_over_2nd_pass_judge_line)
+  const bool is_over_1st_pass_judge_line, const std::optional<bool> is_over_2nd_pass_judge_line)
 {
   // ==========================================================================================
   // if collision is detected for multiple objects, we prioritize collision on the first
@@ -401,7 +401,9 @@ std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModul
     } else {
       collision_at_non_first_lane = true;
     }
-    if (is_over_1st_pass_judge_line) {
+    if (
+      is_over_1st_pass_judge_line &&
+      unsafe_info.lane_position == intersection::CollisionInterval::LanePosition::FIRST) {
       const auto & decision_at_1st_pass_judge_opt =
         object_info->decision_at_1st_pass_judge_line_passage();
       if (!decision_at_1st_pass_judge_opt) {
@@ -415,7 +417,7 @@ std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModul
         too_late_detect_objects.push_back(object_info);
       }
     }
-    if (is_over_2nd_pass_judge_line) {
+    if (is_over_2nd_pass_judge_line && is_over_2nd_pass_judge_line.value()) {
       const auto & decision_at_2nd_pass_judge_opt =
         object_info->decision_at_2nd_pass_judge_line_passage();
       if (!decision_at_2nd_pass_judge_opt) {
