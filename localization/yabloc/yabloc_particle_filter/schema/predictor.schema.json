@@ -39,10 +39,7 @@
         "cov_xx_yy": {
           "type": "array",
           "description": "the covariance of initial pose",
-          "default": [
-            2.0,
-            0.25
-          ]
+          "default": [2.0, 0.25]
         }
       },
       "required": [
@@ -65,14 +62,10 @@
           "$ref": "#/definitions/predictor"
         }
       },
-      "required": [
-        "ros__parameters"
-      ],
+      "required": ["ros__parameters"],
       "additionalProperties": false
     }
   },
-  "required": [
-    "/**"
-  ],
+  "required": ["/**"],
   "additionalProperties": false
 }

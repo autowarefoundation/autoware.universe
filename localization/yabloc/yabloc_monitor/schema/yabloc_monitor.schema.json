@@ -12,9 +12,7 @@
           "default": 1.0
         }
       },
-      "required": [
-        "availability/timestamp_tolerance"
-      ],
+      "required": ["availability/timestamp_tolerance"],
       "additionalProperties": false
     }
   },
@@ -26,14 +24,10 @@
           "$ref": "#/definitions/yabloc_monitor"
         }
       },
-      "required": [
-        "ros__parameters"
-      ],
+      "required": ["ros__parameters"],
       "additionalProperties": false
     }
   },
-  "required": [
-    "/**"
-  ],
+  "required": ["/**"],
   "additionalProperties": false
 }
