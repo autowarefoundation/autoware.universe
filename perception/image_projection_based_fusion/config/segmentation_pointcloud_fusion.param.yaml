@@ -28,7 +28,7 @@
     # this is selected based on semantic segmentation model accuracy,
     # calibration accuracy and unknown reaction distance
     filter_distance_threshold: 60.0
-    
+
     # debug
     debug_mode: false
     filter_scope_minx: -100
