@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for ground_server",
+  "title": "Parameters for ll2_decomposer",
   "type": "object",
   "definitions": {
     "geo_pose_projector": {

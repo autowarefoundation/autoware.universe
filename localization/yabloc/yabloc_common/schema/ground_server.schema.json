@@ -14,12 +14,12 @@
         "ground_search_neighbors": {
           "type": "number",
           "description": "the number of neighbors for ground search on a map",
-          "default": "50"
+          "default": 50
         },
         "ground_search_radius": {
           "type": "number",
           "description": "radius for ground search on a map [m]",
-          "default": "10"
+          "default": 10
         }
       },
       "required": ["force_zero_tilt", "ground_search_neighbors", "ground_search_radius"],
