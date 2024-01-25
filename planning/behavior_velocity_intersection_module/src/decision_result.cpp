@@ -25,16 +25,18 @@ std::string formatDecisionResult(const DecisionResult & decision_result)
   if (std::holds_alternative<OverPassJudge>(decision_result)) {
     const auto state = std::get<OverPassJudge>(decision_result);
     return "OverPassJudge:\nsafety_report:" + state.safety_report + "\nevasive_report:\n" +
-           state.evasive_report + "\n";
+           state.evasive_report;
   }
   if (std::holds_alternative<StuckStop>(decision_result)) {
     return "StuckStop";
   }
   if (std::holds_alternative<YieldStuckStop>(decision_result)) {
-    return "YieldStuckStop";
+    const auto state = std::get<YieldStuckStop>(decision_result);
+    return "YieldStuckStop:\nsafety_report:" + state.safety_report;
   }
   if (std::holds_alternative<NonOccludedCollisionStop>(decision_result)) {
-    return "NonOccludedCollisionStop";
+    const auto state = std::get<NonOccludedCollisionStop>(decision_result);
+    return "NonOccludedCollisionStop\nsafety_report:" + state.safety_report;
   }
   if (std::holds_alternative<FirstWaitBeforeOcclusion>(decision_result)) {
     return "FirstWaitBeforeOcclusion";
@@ -43,16 +45,19 @@ std::string formatDecisionResult(const DecisionResult & decision_result)
     return "PeekingTowardOcclusion";
   }
   if (std::holds_alternative<OccludedCollisionStop>(decision_result)) {
-    return "OccludedCollisionStop";
+    const auto state = std::get<OccludedCollisionStop>(decision_result);
+    return "OccludedCollisionStop\nsafety_report:" + state.safety_report;
   }
   if (std::holds_alternative<OccludedAbsenceTrafficLight>(decision_result)) {
-    return "OccludedAbsenceTrafficLight";
+    const auto state = std::get<OccludedAbsenceTrafficLight>(decision_result);
+    return "OccludedAbsenceTrafficLight\nsafety_report:" + state.safety_report;
   }
   if (std::holds_alternative<Safe>(decision_result)) {
     return "Safe";
   }
   if (std::holds_alternative<FullyPrioritized>(decision_result)) {
-    return "FullyPrioritized";
+    const auto state = std::get<FullyPrioritized>(decision_result);
+    return "FullyPrioritized\nsafety_report:" + state.safety_report;
   }
   return "";
 }

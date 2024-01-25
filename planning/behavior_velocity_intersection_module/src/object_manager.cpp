@@ -93,6 +93,27 @@ void ObjectInfo::update_safety(
   safe_under_traffic_control_ = safe_under_traffic_control;
 }
 
+std::optional<geometry_msgs::msg::Point> ObjectInfo::estimated_past_position(
+  const double past_duration) const
+{
+  if (!attention_lanelet_opt) {
+    return std::nullopt;
+  }
+  const auto attention_lanelet = attention_lanelet_opt.value();
+  const auto current_arc_coords = lanelet::utils::getArcCoordinates(
+    {attention_lanelet}, predicted_object_.kinematics.initial_pose_with_covariance.pose);
+  const auto distance = current_arc_coords.distance;
+  const auto past_length =
+    current_arc_coords.length -
+    predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x * past_duration;
+  const auto past_point = lanelet::geometry::fromArcCoordinates(
+    attention_lanelet.centerline2d(), lanelet::ArcCoordinates{past_length, distance});
+  geometry_msgs::msg::Point past_position;
+  past_position.x = past_point.x();
+  past_position.y = past_point.y();
+  return std::make_optional(past_position);
+}
+
 void ObjectInfo::calc_dist_to_stopline()
 {
   if (!stopline_opt || !attention_lanelet_opt) {
@@ -233,7 +254,7 @@ std::optional<intersection::CollisionInterval> findPassageInterval(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   const lanelet::BasicPolygon2d & ego_lane_poly,
   const std::optional<lanelet::ConstLanelet> & first_attention_lane_opt,
-  [[maybe_unused]] const std::optional<lanelet::ConstLanelet> & second_attention_lane_opt)
+  const std::optional<lanelet::ConstLanelet> & second_attention_lane_opt)
 {
   const auto first_itr = std::adjacent_find(
     predicted_path.path.cbegin(), predicted_path.path.cend(), [&](const auto & a, const auto & b) {
@@ -259,18 +280,22 @@ std::optional<intersection::CollisionInterval> findPassageInterval(
   const size_t exit_idx = std::distance(predicted_path.path.begin(), last_itr.base()) - 1;
   const double object_exit_time =
     static_cast<double>(exit_idx) * rclcpp::Duration(predicted_path.time_step).seconds();
-  const auto [lane_position, lane_id] =
-    [&]() -> std::pair<intersection::CollisionInterval::LanePosition, lanelet::Id> {
+  const auto lane_position = [&]() {
     if (first_attention_lane_opt) {
       if (lanelet::geometry::inside(
             first_attention_lane_opt.value(),
             lanelet::BasicPoint2d(first_itr->position.x, first_itr->position.y))) {
-        return std::make_pair(
-          intersection::CollisionInterval::LanePosition::FIRST,
-          first_attention_lane_opt.value().id());
+        return intersection::CollisionInterval::LanePosition::FIRST;
       }
     }
-    return std::make_pair(intersection::CollisionInterval::LanePosition::ELSE, lanelet::InvalId);
+    if (second_attention_lane_opt) {
+      if (lanelet::geometry::inside(
+            second_attention_lane_opt.value(),
+            lanelet::BasicPoint2d(first_itr->position.x, first_itr->position.y))) {
+        return intersection::CollisionInterval::LanePosition::SECOND;
+      }
+    }
+    return intersection::CollisionInterval::LanePosition::ELSE;
   }();
 
   std::vector<geometry_msgs::msg::Pose> path;
@@ -278,7 +303,7 @@ std::optional<intersection::CollisionInterval> findPassageInterval(
     path.push_back(pose);
   }
   return intersection::CollisionInterval{
-    lane_position, lane_id, path, {enter_idx, exit_idx}, {object_enter_time, object_exit_time}};
+    lane_position, path, {enter_idx, exit_idx}, {object_enter_time, object_exit_time}};
 }
 
 }  // namespace behavior_velocity_planner::intersection

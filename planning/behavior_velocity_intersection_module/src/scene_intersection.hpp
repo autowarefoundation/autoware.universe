@@ -129,6 +129,10 @@ public:
       {
         double object_margin_to_path;
       } ignore_on_red_traffic_light;
+      struct AvoidCollisionByAcceleration
+      {
+        double object_time_margin_to_collision_point;
+      } avoid_collision_by_acceleration;
     } collision_detection;
 
     struct Occlusion
@@ -194,6 +198,7 @@ public:
     std::optional<std::vector<lanelet::CompoundPolygon3d>> yield_stuck_detect_area{std::nullopt};
 
     std::optional<geometry_msgs::msg::Polygon> candidate_collision_ego_lane_polygon{std::nullopt};
+    autoware_auto_perception_msgs::msg::PredictedObjects safe_under_traffic_control_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects unsafe_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects misjudge_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects too_late_detect_targets;
@@ -237,6 +242,23 @@ public:
 
     //! true only when ego passed 2nd pass judge line safely for the first time
     const bool safely_passed_2nd_judge_line;
+  };
+
+  /**
+   * @brief
+   */
+  struct CollisionStatus
+  {
+    enum BlameType {
+      BLAME_AT_FIRST_PASS_JUDGE,
+      BLAME_AT_SECOND_PASS_JUDGE,
+    };
+    const bool collision_detected;
+    const intersection::CollisionInterval::LanePosition collision_position;
+    const std::vector<std::pair<BlameType, std::shared_ptr<intersection::ObjectInfo>>>
+      too_late_detect_objects;
+    const std::vector<std::pair<BlameType, std::shared_ptr<intersection::ObjectInfo>>>
+      misjudge_objects;
   };
 
   IntersectionModule(
@@ -342,11 +364,13 @@ private:
   //! is treated as the same position as occlusion_peeking_stopline
   bool passed_1st_judge_line_while_peeking_{false};
 
-  //! save the time when ego passed the 1st/2nd_pass_judge_line with safe decision. If collision is
-  //! expected after these variables are non-null, then it is the fault of past perception failure
-  //! at these time.
-  std::optional<rclcpp::Time> safely_passed_1st_judge_line_time_{std::nullopt};
-  std::optional<rclcpp::Time> safely_passed_2nd_judge_line_time_{std::nullopt};
+  //! save the time and ego position when ego passed the 1st/2nd_pass_judge_line with safe
+  //! decision. If collision is expected after these variables are non-null, then it is the fault of
+  //! past perception failure at these time.
+  std::optional<std::pair<rclcpp::Time, geometry_msgs::msg::Pose>>
+    safely_passed_1st_judge_line_time_{std::nullopt};
+  std::optional<std::pair<rclcpp::Time, geometry_msgs::msg::Pose>>
+    safely_passed_2nd_judge_line_time_{std::nullopt};
   /** @}*/
 
 private:
@@ -678,9 +702,35 @@ private:
     const intersection::IntersectionStopLines & intersection_stoplines);
 
   /**
+   * @brief generate the message explaining why too_late_detect_objects/misjudge_objects exist and
+   * blame past perception fault
+   */
+  std::string generateDetectionBlameDiagnosis(
+    const std::vector<
+      std::pair<CollisionStatus::BlameType, std::shared_ptr<intersection::ObjectInfo>>> &
+      too_late_detect_objects,
+    const std::vector<
+      std::pair<CollisionStatus::BlameType, std::shared_ptr<intersection::ObjectInfo>>> &
+      misjudge_objects) const;
+
+  /**
+   * @brief generate the message explaining how much ego should accelerate to avoid future dangerous
+   * situation
+   */
+  std::string generateEgoRiskEvasiveDiagnosis(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
+    const TimeDistanceArray & ego_time_distance_array,
+    const std::vector<
+      std::pair<CollisionStatus::BlameType, std::shared_ptr<intersection::ObjectInfo>>> &
+      too_late_detect_objects,
+    const std::vector<
+      std::pair<CollisionStatus::BlameType, std::shared_ptr<intersection::ObjectInfo>>> &
+      misjudge_objects) const;
+
+  /**
    * @brief return if collision is detected and the collision position
    */
-  std::pair<bool, intersection::CollisionInterval::LanePosition> detectCollision(
+  CollisionStatus detectCollision(
     const bool is_over_1st_pass_judge_line, const std::optional<bool> is_over_2nd_pass_judge_line);
 
   std::optional<size_t> checkAngleForTargetLanelets(

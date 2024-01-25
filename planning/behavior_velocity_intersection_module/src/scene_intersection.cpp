@@ -218,29 +218,42 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   // ==========================================================================================
   // run collision checking for each objects considering traffic light level. Also if ego just
-  // passed each pass judge line for the first time, save current collision status.
+  // passed each pass judge line for the first time, save current collision status for late
+  // diagnosis
   // ==========================================================================================
   updateObjectInfoManagerCollision(
     path_lanelets, time_distance_array, traffic_prioritized_level, safely_passed_1st_judge_line,
     safely_passed_2nd_judge_line);
 
-  const auto [has_collision, collision_position] =
+  const auto [has_collision, collision_position, too_late_detect_objects, misjudge_objects] =
     detectCollision(is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line);
+  const std::string safety_diag =
+    generateDetectionBlameDiagnosis(too_late_detect_objects, misjudge_objects);
   if (is_permanent_go_) {
     if (has_collision) {
-      return intersection::OverPassJudge{"TODO", "ego needs acceleration to keep safe"};
+      const auto closest_idx = intersection_stoplines.closest_idx;
+      const std::string evasive_diag = generateEgoRiskEvasiveDiagnosis(
+        *path, closest_idx, time_distance_array, too_late_detect_objects, misjudge_objects);
+      return intersection::OverPassJudge{safety_diag, evasive_diag};
     }
     return intersection::OverPassJudge{
       "no collision is detected", "ego can safely pass the intersection at this rate"};
   }
 
-  std::string safety_report{""};
   const bool collision_on_1st_attention_lane =
-    has_collision && collision_position == intersection::CollisionInterval::LanePosition::FIRST;
+    has_collision && (collision_position == intersection::CollisionInterval::LanePosition::FIRST);
+  // ==========================================================================================
+  // this state is very dangerous because ego is very close/over the boundary of 1st attention lane
+  // and collision is detected on the 1st lane. Since the 2nd attention lane also exists in this
+  // case, possible another collision may be expected on the 2nd attention lane too.
+  // ==========================================================================================
+  std::string safety_report = safety_diag;
   if (
     is_over_1st_pass_judge_line && is_over_2nd_pass_judge_line &&
     is_over_2nd_pass_judge_line.value() && collision_on_1st_attention_lane) {
-    safety_report = "TODO";
+    safety_report +=
+      "\nego is between the 1st and 2nd pass judge line but collision is expected on the 1st "
+      "attention lane, which is dangerous.";
   }
 
   const auto closest_idx = intersection_stoplines.closest_idx;
@@ -1244,7 +1257,7 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
     util::isOverTargetIndex(path, closest_idx, current_pose, pass_judge_line_idx);
   bool safely_passed_1st_judge_line_first_time = false;
   if (is_over_1st_pass_judge_line && was_safe && !safely_passed_1st_judge_line_time_) {
-    safely_passed_1st_judge_line_time_ = clock_->now();
+    safely_passed_1st_judge_line_time_ = std::make_pair(clock_->now(), current_pose);
     safely_passed_1st_judge_line_first_time = true;
   }
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -1261,7 +1274,7 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
   if (
     is_over_2nd_pass_judge_line && is_over_2nd_pass_judge_line.value() && was_safe &&
     !safely_passed_2nd_judge_line_time_) {
-    safely_passed_2nd_judge_line_time_ = clock_->now();
+    safely_passed_2nd_judge_line_time_ = std::make_pair(clock_->now(), current_pose);
     safely_passed_2nd_judge_line_first_time = true;
   }
   if (second_pass_judge_line_idx_opt) {

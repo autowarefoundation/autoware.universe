@@ -21,7 +21,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
-#include <boost/unordered_map.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -62,10 +62,10 @@ struct CollisionInterval
 {
   enum LanePosition {
     FIRST,
+    SECOND,
     ELSE,
   };
   LanePosition lane_position{LanePosition::ELSE};
-  lanelet::Id lane_id{lanelet::InvalId};
 
   //! original predicted path
   std::vector<geometry_msgs::msg::Pose> path;
@@ -82,34 +82,18 @@ struct CollisionKnowledge
   //! the time when the expected collision is judged
   rclcpp::Time stamp;
 
-  //! if judged as SAFE/UNSAFE
-  bool safe{false};
-
-  //! if judged as SAFE given traffic control
-  bool safe_under_traffic_control{false};
+  enum SafeType {
+    UNSAFE,
+    SAFE,
+    SAFE_UNDER_TRAFFIC_CONTROL,
+  };
+  SafeType safe_type{SafeType::UNSAFE};
 
   //! if !safe, this has value, and it safe, this maybe null if the predicted path does not
   //! intersect with ego path
   std::optional<CollisionInterval> interval{std::nullopt};
 
   double observed_velocity;
-  /**
-   * diag format:
-   * for objects with decision_at_1st_pass_judge_line_passage or
-   * decision_at_2nd_pass_judge_line_passage:
-   * [uuid] was detected as [safe] at [stamp] with the
-   * velocity of [observed_velocity] and the possible collision position was at
-   * [(path[interval_position.first])] on the Lanelet[interval.lane_id]  which was expected to
-   * happen after [interval_time.first] seconds. Now it is judged as unsafe with the velocity of
-   * [new observed_velocity] at [(new path[new interval_position.first])] on the Lanelet[new
-   * interval.lane_id]
-   * for objects without the above members:
-   * [uuid] was not detected when ego passed the 1st/2nd pass judge line at
-   * [manager.passed_1st/2nd_judge_line_first_time], so collision detection was impossible at that
-   * time. but now collision is expected on the 1st/2nd attention lanelet. This dangerous situation
-   * is because at time [manager.passed_1st/2nd_judge_line_first_time] ego could not detect [uuid]
-   * which was estimated to be xxx meter behind from yyy position
-   */
 };
 
 /**
@@ -136,6 +120,8 @@ public:
     return unsafe_interval_;
   }
 
+  bool is_safe_under_traffic_control() const { return safe_under_traffic_control_; }
+
   /**
    * @brief update predicted_object_, attention_lanelet, stopline, dist_to_stopline
    */
@@ -155,7 +141,8 @@ public:
   /**
    * @brief find the estimated position of the object in the past
    */
-  geometry_msgs::msg::Pose estimated_past_pose(const double past_duration) const;
+  std::optional<geometry_msgs::msg::Point> estimated_past_position(
+    const double past_duration) const;
 
   /**
    * @brief check if object can stop before stopline under the deceleration. return false if
@@ -186,6 +173,13 @@ public:
     decision_at_2nd_pass_judge_line_passage_ = knowledge;
   }
 
+  const std::optional<CollisionInterval> & unsafe_interval() const { return unsafe_interval_; }
+
+  double observed_velocity() const
+  {
+    return predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
+  }
+
   const std::optional<CollisionKnowledge> & decision_at_1st_pass_judge_line_passage() const
   {
     return decision_at_1st_pass_judge_line_passage_;
@@ -196,8 +190,9 @@ public:
     return decision_at_2nd_pass_judge_line_passage_;
   }
 
-private:
   const std::string uuid_str;
+
+private:
   autoware_auto_perception_msgs::msg::PredictedObject predicted_object_;
 
   //! null if the object in intersection_area but not in attention_area

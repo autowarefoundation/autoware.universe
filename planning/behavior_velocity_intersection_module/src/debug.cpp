@@ -192,6 +192,14 @@ constexpr std::tuple<float, float, float> red()
   return {r, g, b};
 }
 
+constexpr std::tuple<float, float, float> light_blue()
+{
+  constexpr uint64_t code = 0x96cde6;
+  constexpr float r = static_cast<int>(code >> 16) / 255.0;
+  constexpr float g = static_cast<int>((code << 48) >> 56) / 255.0;
+  constexpr float b = static_cast<int>((code << 56) >> 56) / 255.0;
+  return {r, g, b};
+}
 }  // namespace
 
 namespace behavior_velocity_planner
@@ -280,6 +288,13 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
   static constexpr auto green = ::green();
   static constexpr auto yellow = ::yellow();
   static constexpr auto red = ::red();
+  static constexpr auto light_blue = ::light_blue();
+  appendMarkerArray(
+    debug::createObjectsMarkerArray(
+      debug_data_.safe_under_traffic_control_targets, "safe_under_traffic_control_targets",
+      module_id_, now, std::get<0>(light_blue), std::get<1>(light_blue), std::get<2>(light_blue)),
+    &debug_marker_array, now);
+
   appendMarkerArray(
     debug::createObjectsMarkerArray(
       debug_data_.unsafe_targets, "unsafe_targets", module_id_, now, std::get<0>(green),
