@@ -680,7 +680,7 @@ void reactRTCApprovalByDecisionResult(
     {
       tier4_planning_msgs::msg::StopFactor stop_factor;
       stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data->conflicting_targets);
+      stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data->unsafe_targets);
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,
@@ -729,7 +729,7 @@ void reactRTCApprovalByDecisionResult(
     {
       tier4_planning_msgs::msg::StopFactor stop_factor;
       stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data->conflicting_targets);
+      stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data->unsafe_targets);
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,

@@ -204,7 +204,7 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
   // (3.1) draw all cells on attention_mask behind blocking vehicles as not occluded
   const auto & blocking_attention_objects = object_info_manager_.parkedObjects();
   for (const auto & blocking_attention_object_info : blocking_attention_objects) {
-    debug_data_.blocking_attention_objects.objects.push_back(
+    debug_data_.parked_targets.objects.push_back(
       blocking_attention_object_info->predicted_object());
   }
   std::vector<std::vector<cv::Point>> blocking_polygons;

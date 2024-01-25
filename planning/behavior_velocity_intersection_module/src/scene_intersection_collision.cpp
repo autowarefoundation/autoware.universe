@@ -179,7 +179,6 @@ void IntersectionModule::updateObjectInfoManagerCollision(
       object_info->can_stop_before_stopline(
         planner_param_.collision_detection.ignore_on_amber_traffic_light
           .object_expected_deceleration)) {
-      debug_data_.amber_ignore_targets.objects.push_back(predicted_object);
       safe_under_traffic_control = true;
     }
     if (
@@ -284,7 +283,6 @@ void IntersectionModule::updateObjectInfoManagerCollision(
         // if judged as UNSAFE, return
         safe_interval = std::nullopt;
         unsafe_interval = object_passage_interval;
-        debug_data_.conflicting_targets.objects.push_back(predicted_object);
         break;
       }
       if (!safe_interval) {
@@ -396,6 +394,17 @@ std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModul
       continue;
     }
     const auto & unsafe_info = object_info->is_unsafe().value();
+    // ==========================================================================================
+    // if ego is over the pass judge lines, then the visualization as "too_late_objects" or
+    // "misjudge_objects" is more important than that for "unsafe"
+    //
+    // NOTE: consider a vehicle which was not detected at 1st_pass_judge_passage, and now collision
+    // detected on the 1st lane, which is "too_late" for 1st lane passage, but once it decelerated
+    // or yielded, so it turned safe, and ego passed the 2nd pass judge line, but at the same it
+    // accelerated again, which is "misjudge" for 2nd lane passage. In this case this vehicle is
+    // visualized as "misjudge"
+    // ==========================================================================================
+    auto * debug_container = &debug_data_.unsafe_targets.objects;
     if (unsafe_info.lane_position == intersection::CollisionInterval::LanePosition::FIRST) {
       collision_at_first_lane = true;
     } else {
@@ -408,13 +417,18 @@ std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModul
         object_info->decision_at_1st_pass_judge_line_passage();
       if (!decision_at_1st_pass_judge_opt) {
         too_late_detect_objects.push_back(object_info);
-      }
-      const auto & decision_at_1st_pass_judge = decision_at_1st_pass_judge_opt.value();
-      if (
-        decision_at_1st_pass_judge.safe || decision_at_1st_pass_judge.safe_under_traffic_control) {
-        misjudge_objects.push_back(object_info);
+        debug_container = &debug_data_.too_late_detect_targets.objects;
       } else {
-        too_late_detect_objects.push_back(object_info);
+        const auto & decision_at_1st_pass_judge = decision_at_1st_pass_judge_opt.value();
+        if (
+          decision_at_1st_pass_judge.safe ||
+          decision_at_1st_pass_judge.safe_under_traffic_control) {
+          misjudge_objects.push_back(object_info);
+          debug_container = &debug_data_.misjudge_targets.objects;
+        } else {
+          too_late_detect_objects.push_back(object_info);
+          debug_container = &debug_data_.too_late_detect_targets.objects;
+        }
       }
     }
     if (is_over_2nd_pass_judge_line && is_over_2nd_pass_judge_line.value()) {
@@ -422,15 +436,21 @@ std::pair<bool, intersection::CollisionInterval::LanePosition> IntersectionModul
         object_info->decision_at_2nd_pass_judge_line_passage();
       if (!decision_at_2nd_pass_judge_opt) {
         too_late_detect_objects.push_back(object_info);
-      }
-      const auto & decision_at_2nd_pass_judge = decision_at_2nd_pass_judge_opt.value();
-      if (
-        decision_at_2nd_pass_judge.safe || decision_at_2nd_pass_judge.safe_under_traffic_control) {
-        misjudge_objects.push_back(object_info);
+        debug_container = &debug_data_.too_late_detect_targets.objects;
       } else {
-        too_late_detect_objects.push_back(object_info);
+        const auto & decision_at_2nd_pass_judge = decision_at_2nd_pass_judge_opt.value();
+        if (
+          decision_at_2nd_pass_judge.safe ||
+          decision_at_2nd_pass_judge.safe_under_traffic_control) {
+          misjudge_objects.push_back(object_info);
+          debug_container = &debug_data_.misjudge_targets.objects;
+        } else {
+          too_late_detect_objects.push_back(object_info);
+          debug_container = &debug_data_.too_late_detect_targets.objects;
+        }
       }
     }
+    debug_container->push_back(object_info->predicted_object());
   }
   if (collision_at_first_lane) {
     return {true, intersection::CollisionInterval::FIRST};

@@ -179,29 +179,30 @@ public:
     std::optional<geometry_msgs::msg::Pose> occlusion_stop_wall_pose{std::nullopt};
     std::optional<geometry_msgs::msg::Pose> occlusion_first_stop_wall_pose{std::nullopt};
     std::optional<geometry_msgs::msg::Pose> first_pass_judge_wall_pose{std::nullopt};
+    std::optional<geometry_msgs::msg::Pose> second_pass_judge_wall_pose{std::nullopt};
     bool passed_first_pass_judge{false};
     bool passed_second_pass_judge{false};
-    std::optional<geometry_msgs::msg::Pose> second_pass_judge_wall_pose{std::nullopt};
+    std::optional<geometry_msgs::msg::Pose> absence_traffic_light_creep_wall{std::nullopt};
+
     std::optional<std::vector<lanelet::CompoundPolygon3d>> attention_area{std::nullopt};
     std::optional<std::vector<lanelet::CompoundPolygon3d>> occlusion_attention_area{std::nullopt};
-    std::optional<lanelet::CompoundPolygon3d> ego_lane{std::nullopt};
     std::optional<std::vector<lanelet::CompoundPolygon3d>> adjacent_area{std::nullopt};
     std::optional<lanelet::CompoundPolygon3d> first_attention_area{std::nullopt};
     std::optional<lanelet::CompoundPolygon3d> second_attention_area{std::nullopt};
+    std::optional<lanelet::CompoundPolygon3d> ego_lane{std::nullopt};
     std::optional<geometry_msgs::msg::Polygon> stuck_vehicle_detect_area{std::nullopt};
     std::optional<std::vector<lanelet::CompoundPolygon3d>> yield_stuck_detect_area{std::nullopt};
+
     std::optional<geometry_msgs::msg::Polygon> candidate_collision_ego_lane_polygon{std::nullopt};
-    std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
-    autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
-    autoware_auto_perception_msgs::msg::PredictedObjects amber_ignore_targets;
-    autoware_auto_perception_msgs::msg::PredictedObjects red_overshoot_ignore_targets;
+    autoware_auto_perception_msgs::msg::PredictedObjects unsafe_targets;
+    autoware_auto_perception_msgs::msg::PredictedObjects misjudge_targets;
+    autoware_auto_perception_msgs::msg::PredictedObjects too_late_detect_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects yield_stuck_targets;
+    autoware_auto_perception_msgs::msg::PredictedObjects parked_targets;
     std::vector<geometry_msgs::msg::Polygon> occlusion_polygons;
     std::optional<std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
       nearest_occlusion_projection{std::nullopt};
-    autoware_auto_perception_msgs::msg::PredictedObjects blocking_attention_objects;
-    std::optional<geometry_msgs::msg::Pose> absence_traffic_light_creep_wall{std::nullopt};
     std::optional<double> static_occlusion_with_traffic_light_timeout{std::nullopt};
   };
 
