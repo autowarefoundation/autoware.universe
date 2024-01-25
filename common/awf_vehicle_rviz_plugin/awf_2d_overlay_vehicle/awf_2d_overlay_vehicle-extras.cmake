@@ -1,4 +1,5 @@
 # Copyright (c) 2021, Open Source Robotics Foundation, Inc.
+# The Clear BSD License
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
