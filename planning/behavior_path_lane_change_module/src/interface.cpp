@@ -129,8 +129,9 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 
   BehaviorModuleOutput out;
   out = module_type_->getTerminalLaneChangePath();
-
   module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, out.path);
+  out.turn_signal_info =
+    getCurrentTurnSignalInfo(out.path, getPreviousModuleOutput().turn_signal_info);
 
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
@@ -439,16 +440,13 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   const double buffer =
     next_lane_change_buffer + min_length_for_turn_signal_activation + base_to_front;
   const double path_length = motion_utils::calcArcLength(path.points);
-  const auto & front_point = path.points.front().point.pose.position;
   const size_t & current_nearest_seg_idx =
     motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
-  const double length_front_to_ego = motion_utils::calcSignedArcLength(
-    path.points, front_point, static_cast<size_t>(0), current_pose.position,
-    current_nearest_seg_idx);
+  const double dist_to_terminal = utils::getDistanceToEndOfLane(current_pose, current_lanes);
   const auto start_pose =
     motion_utils::calcLongitudinalOffsetPose(path.points, 0, std::max(path_length - buffer, 0.0));
-  if (path_length - length_front_to_ego < buffer && start_pose) {
+  if (dist_to_terminal - base_to_front < buffer && start_pose) {
     // modify turn signal
     current_turn_signal_info.desired_start_point = *start_pose;
     current_turn_signal_info.desired_end_point = lane_change_path.info.lane_changing_end;
