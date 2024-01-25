@@ -770,11 +770,6 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   if (p.enable_yield) {
     const auto yield_obstacles = findYieldCruiseObstacles(obstacles, decimated_traj_points);
     if (yield_obstacles) {
-      // std::copy_if( *yield_obstacles.begin(), *yield_obstacles.end(),
-      // std::back_inserter(cruise_obstacles),[&cruise_obstacles](const auto & o){
-      //   return std::find_if(cruise_obstacles.begin(),cruise_obstacles.end(),[&o]{})
-      // });
-
       for (const auto & y : yield_obstacles.value()) {
         // Check if there is no member with the same UUID in cruise_obstacles
         auto it = std::find_if(
@@ -944,21 +939,6 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
   std::vector<std::pair<size_t, Obstacle>> stopped_obstacles;
   std::vector<std::pair<size_t, Obstacle>> moving_obstacles;
 
-  // std::copy_if(
-  //   indexed_obstacles.begin(), indexed_obstacles.end(), std::back_inserter(stopped_obstacles),
-  //   [](const auto & o) {
-  //     const bool is_not_moving = std::hypot(o.second.twist.linear.x, o.second.twist.linear.y) <
-  //     0.5; const bool is_within_lat_threshold =
-  //       o.second.lat_dist_from_obstacle_to_traj >=
-  //       p.yield_lat_distance_threshold + p.max_lat_dist_between_obstacles;
-  //     return is_not_moving && is_within_lat_threshold;
-  //   });
-  // std::copy_if(
-  //   indexed_obstacles.begin(), indexed_obstacles.end(), std::back_inserter(moving_obstacles),
-  //   [](const auto & o) {
-  //     bool is_moving return std::hypot(o.second.twist.linear.x, o.second.twist.linear.y) >= 0.5;
-  //   });
-
   std::for_each(
     indexed_obstacles.begin(), indexed_obstacles.end(),
     [&stopped_obstacles, &moving_obstacles, &p](const auto & o) {
@@ -969,9 +949,7 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
         if (is_within_lat_dist_threshold) moving_obstacles.push_back(o);
         return;
       }
-      // lat threshold is larger for the stopped obstacle
-      std::cerr << "stopped.lat_dist_from_obstacle_to_traj "
-                << o.second.lat_dist_from_obstacle_to_traj << "id " << o.first << "\n";
+      // lat threshold is larger for stopped obstacles
       const bool is_within_lat_dist_threshold =
         o.second.lat_dist_from_obstacle_to_traj <
         p.yield_lat_distance_threshold + p.max_lat_dist_between_obstacles;
@@ -980,15 +958,10 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
     });
 
   if (stopped_obstacles.empty() || moving_obstacles.empty()) return std::nullopt;
-  std::cerr << "-----Checking for Yield candidates----- \n";
-
   std::vector<CruiseObstacle> yield_obstacles;
   for (const auto & moving_obstacle : moving_obstacles) {
     for (const auto & stopped_obstacle : stopped_obstacles) {
-      if (moving_obstacle.first >= stopped_obstacle.first)
-        continue;  // TODO(Daniel): is a break here fine?
-      std::cerr << "Stopped obs lat dist " << stopped_obstacle.second.lat_dist_from_obstacle_to_traj
-                << "\n";
+      if (moving_obstacle.first >= stopped_obstacle.first) continue;
       const double lateral_distance_between_obstacles = std::abs(
         moving_obstacle.second.lat_dist_from_obstacle_to_traj -
         stopped_obstacle.second.lat_dist_from_obstacle_to_traj);
@@ -1007,13 +980,11 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
         p.max_obstacles_collision_time;
 
       if (are_obstacles_aligned && obstacles_collide_within_threshold_time) {
-        std::cerr << "Found Yield candidates \n";
         const auto yield_obstacle = createYieldCruiseObstacle(moving_obstacle.second, traj_points);
         if (yield_obstacle) yield_obstacles.push_back(*yield_obstacle);
       }
     }
   }
-  std::cerr << "----Finish check for Yield candidates----- \n";
 
   if (yield_obstacles.empty()) return std::nullopt;
   return yield_obstacles;
