@@ -21,7 +21,6 @@
 #include "tier4_api_utils/tier4_api_utils.hpp"
 
 #include "autoware_control_msgs/msg/control.hpp"
-#include "autoware_auto_geometry_msgs/msg/complex32.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode_command.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode_report.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
@@ -63,7 +62,6 @@ namespace simple_planning_simulator
 {
 
 using autoware_control_msgs::msg::Control;
-using autoware_auto_geometry_msgs::msg::Complex32;
 using autoware_vehicle_msgs::msg::ControlModeReport;
 using autoware_vehicle_msgs::msg::Engage;
 using autoware_vehicle_msgs::msg::GearCommand;
