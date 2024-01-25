@@ -73,6 +73,7 @@ void MetricsVisualizePanel::onMetrics(const DiagnosticArray::ConstSharedPtr msg)
       grid_->setRowStretch(i / GRAPH_COL_SIZE * 2, false);
       grid_->addWidget(metric.getChartView(), i / GRAPH_COL_SIZE * 2 + 1, i % GRAPH_COL_SIZE);
       grid_->setRowStretch(i / GRAPH_COL_SIZE * 2 + 1, true);
+      grid_->setColumnStretch(i % GRAPH_COL_SIZE, true);
     }
 
     metrics_.at(status.name).updateData(time, status);

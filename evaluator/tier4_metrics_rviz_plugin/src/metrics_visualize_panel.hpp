@@ -62,7 +62,7 @@ public:
     {
       auto label = new QLabel;
       label->setAlignment(Qt::AlignCenter);
-      label->setText(QString::fromStdString(status.name));
+      label->setText("metric_name");
       labels.emplace("metric_name", label);
 
       header.push_back(QString::fromStdString(status.name));
