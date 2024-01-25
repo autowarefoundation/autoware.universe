@@ -32,7 +32,11 @@ It estimates the height and tilt of the ground from lanelet2.
 
 ### Parameters
 
-{{ json_to_markdown("localization/yabloc/yabloc_common/schema/ground_server.schema.json") }}
+| Name              | Type | Description                                              |
+| ----------------- | ---- | -------------------------------------------------------- |
+| `force_zero_tilt` | bool | if true, the tilt is always determined to be horizontal. |
+| `K`               | int  | parameter for nearest k search                           |
+| `R`               | int  | parameter for radius search                              |
 
 ## ll2_decomposer
 

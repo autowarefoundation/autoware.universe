@@ -33,8 +33,8 @@ namespace yabloc::ground_server
 GroundServer::GroundServer()
 : Node("ground_server"),
   force_zero_tilt_(declare_parameter<bool>("force_zero_tilt")),
-  ground_search_radius_(declare_parameter<int>("ground_search_radius")),
-  ground_search_neighbors_(declare_parameter<int>("ground_search_neighbors"))
+  R(declare_parameter<int>("R")),
+  K(declare_parameter<int>("K"))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -191,7 +191,7 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
 
   std::vector<int> raw_indices;
   std::vector<float> distances;
-  kdtree_->nearestKSearch(xyz, ground_search_neighbors_, raw_indices, distances);
+  kdtree_->nearestKSearch(xyz, K, raw_indices, distances);
 
   std::vector<int> indices = estimate_inliers_by_ransac(raw_indices);
 
