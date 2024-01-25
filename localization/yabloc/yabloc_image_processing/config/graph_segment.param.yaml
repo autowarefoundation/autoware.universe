@@ -3,7 +3,7 @@
       # graph_node selects a road surface area from around this height
       target_height_ratio: 0.85
 
-      #
+      # size of the square area to search for candidate road surfaces
       target_candidate_box_width: 15
 
       # graph_segment_node will pickup additional road-like areas
@@ -12,7 +12,7 @@
       # used when the pickup_additional_graph_segment: true
       similarity_score_threshold: 0.8
 
-      # parameters for cv::ximgproc::segmentation
-      sigma: 0.5
-      k: 300.0
-      min_size: 100.0
+      # parameters for cv::ximgproc::segmentation::GraphSegmentation
+      segmentation_sigma: 0.5
+      segmentation_k: 300.0
+      segmentation_min_size: 100.0
