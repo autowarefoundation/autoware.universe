@@ -2,20 +2,37 @@
 <img src="https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/media/Autoware-Logo.png" alt="AutoDRIVE" width="390"/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/media/AutoDRIVE-Logo.png" alt="Autoware" width="390"/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/media/OpenCAV-Logo.png" alt="Autoware" width="150"/>
 </p>
 
-## Demo (Digital Twin Simulation - AutoDRIVE Simulator)
+## 2D Navigation Demo (Digital Twin Simulation - AutoDRIVE Simulator)
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-TinyTown-Simulator/Replay-OpenCAV.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-TinyTown-Simulator/Replay-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
+
+ros2 run pointcloud_to_laserscan pointcloud_to_laserscan_node cloud_in:=/autodrive/opencav_1/lidar
+
+ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/csamak/path"}" --feedback
+
+## 3D Navigation Demo (Digital Twin Simulation - AutoDRIVE Simulator)
+
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-City-Simulator/Replay-OpenCAV.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-City-Simulator/Replay-Autoware.gif" width="478"> |
+| :-----------------: | :-----------------: |
 
 1. Launch AutoDRIVE Simulator for OpenCAV and establish Autoware API bridge connection in single or distributed computing setting as applicable.
-2. Map the environment (if not already accomplished)
+2. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment
     -  Use the built-in 3D PCD mapping functionality of AutoDRIVE Simulator
     -  Use standard ROS 2 3D SLAM packages to save a PCD map
-```bash
-user@host-pc:~$ mkdir -p Autoware_WS
-user@host-pc:~$ cd Autoware_WS
-```
+3. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
+    ```bash
+    user@host-pc:~$ ros2 launch autodrive_opencav simulator_record_3d.launch.py
+    user@host-pc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
+    user@host-pc:~$ ros2 run autodrive_opencav teleop_keyboard
+    ```
+    > **Note:** Replace `<username>` with your actual username.
+4. Engage the vehicle in autonomous mode to track the reference trajectory in real time.
+    ```bash
+    user@host-pc:~$ ros2 launch autodrive_opencav simulator_replay_3d.launch.py
+    user@host-pc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
+    ```
+    > **Note:** Replace `<username>` with your actual username.
 
 ## Citation
 
