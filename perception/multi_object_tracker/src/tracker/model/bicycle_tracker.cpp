@@ -17,6 +17,7 @@
 //
 
 #include "multi_object_tracker/tracker/model/bicycle_tracker.hpp"
+
 #include "multi_object_tracker/utils/utils.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
