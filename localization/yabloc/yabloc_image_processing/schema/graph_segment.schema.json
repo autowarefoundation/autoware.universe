@@ -47,9 +47,9 @@
         "target_candidate_box_width",
         "pickup_additional_graph_segment",
         "similarity_score_threshold",
-        "segmentation_sigma",
-        "segmentation_k",
-        "segmentation_min_size"
+        "sigma",
+        "k",
+        "min_size"
       ],
       "additionalProperties": false
     }
@@ -62,10 +62,14 @@
           "$ref": "#/definitions/graph_segment"
         }
       },
-      "required": ["ros__parameters"],
+      "required": [
+        "ros__parameters"
+      ],
       "additionalProperties": false
     }
   },
-  "required": ["/**"],
+  "required": [
+    "/**"
+  ],
   "additionalProperties": false
 }
