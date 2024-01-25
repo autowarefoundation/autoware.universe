@@ -3,7 +3,7 @@
   "title": "Parameters for ground_server",
   "type": "object",
   "definitions": {
-    "geo_pose_projector": {
+    "ground_server": {
       "type": "object",
       "properties": {
         "force_zero_tilt": {
@@ -31,7 +31,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/geo_pose_projector"
+          "$ref": "#/definitions/ground_server"
         }
       },
       "required": ["ros__parameters"],

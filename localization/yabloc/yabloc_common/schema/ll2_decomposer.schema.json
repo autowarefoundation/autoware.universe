@@ -3,7 +3,7 @@
   "title": "Parameters for ll2_decomposer",
   "type": "object",
   "definitions": {
-    "geo_pose_projector": {
+    "ll2_decomposer": {
       "type": "object",
       "properties": {
         "road_marking_labels": {
@@ -39,7 +39,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/geo_pose_projector"
+          "$ref": "#/definitions/ll2_decomposer"
         }
       },
       "required": ["ros__parameters"],
