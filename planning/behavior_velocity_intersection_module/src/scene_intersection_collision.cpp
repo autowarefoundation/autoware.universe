@@ -361,7 +361,7 @@ IntersectionModule::isGreenPseudoCollisionStatus(
     if (exist_close_vehicles) {
       const auto occlusion_stopline_idx = intersection_stoplines.occlusion_peeking_stopline.value();
       return intersection::NonOccludedCollisionStop{
-        closest_idx, collision_stopline_idx, occlusion_stopline_idx};
+        closest_idx, collision_stopline_idx, occlusion_stopline_idx, std::string("")};
     }
   }
   return std::nullopt;

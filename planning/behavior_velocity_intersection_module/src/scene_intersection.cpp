@@ -167,18 +167,18 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // ego path has just entered the entry of this intersection
   // ==========================================================================================
   if (!intersection_lanelets.first_attention_area()) {
-    return intersection::Indecisive{"attention area is empty"};
+    return intersection::InternalError{"attention area is empty"};
   }
   const auto first_attention_area = intersection_lanelets.first_attention_area().value();
   const auto default_stopline_idx_opt = intersection_stoplines.default_stopline;
   if (!default_stopline_idx_opt) {
-    return intersection::Indecisive{"default stop line is null"};
+    return intersection::InternalError{"default stop line is null"};
   }
   const auto default_stopline_idx = default_stopline_idx_opt.value();
   const auto first_attention_stopline_idx_opt = intersection_stoplines.first_attention_stopline;
   const auto occlusion_peeking_stopline_idx_opt = intersection_stoplines.occlusion_peeking_stopline;
   if (!first_attention_stopline_idx_opt || !occlusion_peeking_stopline_idx_opt) {
-    return intersection::Indecisive{"occlusion stop line is null"};
+    return intersection::InternalError{"occlusion stop line is null"};
   }
   const auto first_attention_stopline_idx = first_attention_stopline_idx_opt.value();
   const auto occlusion_stopline_idx = occlusion_peeking_stopline_idx_opt.value();
@@ -228,25 +228,20 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     detectCollision(is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line);
   if (is_permanent_go_) {
     if (has_collision) {
-      // TODO(Mamoru Sobue): diagnosis
-      return intersection::Indecisive{
-        "ego is over the pass judge lines and collision is detected. need acceleration to keep "
-        "safe."};
+      return intersection::OverPassJudge{"TODO", "ego needs acceleration to keep safe"};
     }
-    return intersection::Indecisive{"over pass judge lines and collision is not detected"};
+    return intersection::OverPassJudge{
+      "no collision is detected", "ego can safely pass the intersection at this rate"};
   }
-  /*
+
+  std::string safety_report{""};
   const bool collision_on_1st_attention_lane =
     has_collision && collision_position == intersection::CollisionInterval::LanePosition::FIRST;
   if (
-    is_over_1st_pass_judge_line && !is_over_2nd_pass_judge_line &&
-    collision_on_1st_attention_lane) {
-    // TODO(Mamoru Sobue): diagnosis
-    return intersection::Indecisive{
-      "ego is already over the 1st pass judge line although still before the 2nd pass judge line, "
-      "but collision is detected on the first attention lane"};
+    is_over_1st_pass_judge_line && is_over_2nd_pass_judge_line &&
+    is_over_2nd_pass_judge_line.value() && collision_on_1st_attention_lane) {
+    safety_report = "TODO";
   }
-  */
 
   const auto closest_idx = intersection_stoplines.closest_idx;
   const bool is_over_default_stopline = util::isOverTargetIndex(
@@ -268,7 +263,9 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto is_yield_stuck_status =
     isYieldStuckStatus(*path, interpolated_path_info, intersection_stoplines);
   if (is_yield_stuck_status) {
-    return is_yield_stuck_status.value();
+    auto yield_stuck = is_yield_stuck_status.value();
+    yield_stuck.safety_report = safety_report;
+    return yield_stuck;
   }
 
   collision_state_machine_.setStateWithMarginTime(
@@ -279,7 +276,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   if (is_prioritized) {
     return intersection::FullyPrioritized{
-      has_collision_with_margin, closest_idx, collision_stopline_idx, occlusion_stopline_idx};
+      has_collision_with_margin, closest_idx, collision_stopline_idx, occlusion_stopline_idx,
+      safety_report};
   }
 
   // Safe
@@ -289,7 +287,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // Only collision
   if (!is_occlusion_state && has_collision_with_margin) {
     return intersection::NonOccludedCollisionStop{
-      closest_idx, collision_stopline_idx, occlusion_stopline_idx};
+      closest_idx, collision_stopline_idx, occlusion_stopline_idx, safety_report};
   }
   // Occluded
   // utility functions
@@ -343,7 +341,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         : false;
     if (!has_traffic_light_) {
       if (fromEgoDist(occlusion_wo_tl_pass_judge_line_idx) < 0) {
-        return intersection::Indecisive{
+        return intersection::InternalError{
           "already passed maximum peeking line in the absence of traffic light"};
       }
       return intersection::OccludedAbsenceTrafficLight{
@@ -352,7 +350,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         temporal_stop_before_attention_required,
         closest_idx,
         first_attention_stopline_idx,
-        occlusion_wo_tl_pass_judge_line_idx};
+        occlusion_wo_tl_pass_judge_line_idx,
+        safety_report};
     }
 
     // ==========================================================================================
@@ -395,7 +394,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         collision_stopline_idx,
         first_attention_stopline_idx,
         occlusion_stopline_idx,
-        static_occlusion_timeout};
+        static_occlusion_timeout,
+        safety_report};
     } else {
       return intersection::PeekingTowardOcclusion{
         is_occlusion_cleared_with_margin,
@@ -438,7 +438,17 @@ void prepareRTCByDecisionResult(
 
 template <>
 void prepareRTCByDecisionResult(
-  [[maybe_unused]] const intersection::Indecisive & result,
+  [[maybe_unused]] const intersection::InternalError & result,
+  [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance)
+{
+  return;
+}
+
+template <>
+void prepareRTCByDecisionResult(
+  [[maybe_unused]] const intersection::OverPassJudge & result,
   [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
   [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance)
@@ -646,7 +656,22 @@ template <>
 void reactRTCApprovalByDecisionResult(
   [[maybe_unused]] const bool rtc_default_approved,
   [[maybe_unused]] const bool rtc_occlusion_approved,
-  [[maybe_unused]] const intersection::Indecisive & decision_result,
+  [[maybe_unused]] const intersection::InternalError & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] const double baselink2front,
+  [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason,
+  [[maybe_unused]] VelocityFactorInterface * velocity_factor,
+  [[maybe_unused]] IntersectionModule::DebugData * debug_data)
+{
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  [[maybe_unused]] const bool rtc_default_approved,
+  [[maybe_unused]] const bool rtc_occlusion_approved,
+  [[maybe_unused]] const intersection::OverPassJudge & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   [[maybe_unused]] const double baselink2front,
   [[maybe_unused]] autoware_auto_planning_msgs::msg::PathWithLaneId * path,

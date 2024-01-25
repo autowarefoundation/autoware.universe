@@ -336,7 +336,7 @@ private:
   bool is_permanent_go_{false};
 
   //! for checking if ego is over the pass judge lines because previously the situation was SAFE
-  intersection::DecisionResult prev_decision_result_{intersection::Indecisive{""}};
+  intersection::DecisionResult prev_decision_result_{intersection::InternalError{""}};
 
   //! flag if ego passed the 1st_pass_judge_line while peeking. If this is true, 1st_pass_judge_line
   //! is treated as the same position as occlusion_peeking_stopline
@@ -461,13 +461,13 @@ private:
 
   /**
    * @brief prepare basic data structure
-   * @return return IntersectionStopLines if all data is valid, otherwise Indecisive
+   * @return return IntersectionStopLines if all data is valid, otherwise InternalError
    * @note if successful, it is ensure that intersection_lanelets_,
    * intersection_lanelets.first_conflicting_lane are not null
    *
    * To simplify modifyPathVelocityDetail(), this function is used at first
    */
-  intersection::Result<BasicData, intersection::Indecisive> prepareIntersectionData(
+  intersection::Result<BasicData, intersection::InternalError> prepareIntersectionData(
     const bool is_prioritized, PathWithLaneId * path);
 
   /**
@@ -625,7 +625,7 @@ private:
    */
   /**
    * @brief check if ego is already over the pass judge line
-   * @return if ego is over both 1st/2nd pass judge lines, return Indecisive, else return
+   * @return if ego is over both 1st/2nd pass judge lines, return InternalError, else return
    * (is_over_1st_pass_judge, is_over_2nd_pass_judge)
    * @attention this function has access to value() of intersection_stoplines.default_stopline,
    * intersection_stoplines.occlusion_stopline

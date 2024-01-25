@@ -295,7 +295,7 @@ std::optional<intersection::YieldStuckStop> IntersectionModule::isYieldStuckStat
       }
     }
     if (stopline_idx) {
-      return intersection::YieldStuckStop{closest_idx, stopline_idx.value()};
+      return intersection::YieldStuckStop{closest_idx, stopline_idx.value(), std::string("")};
     }
   }
   return std::nullopt;
