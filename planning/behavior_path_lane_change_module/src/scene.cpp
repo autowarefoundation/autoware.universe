@@ -875,6 +875,10 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
   const auto current_pose = getEgoPose();
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
+  const auto shift_intervals =
+    route_handler.getLateralIntervalsToPreferredLane(current_lanes.back(), direction_);
+  const double minimum_lane_change_length =
+    utils::lane_change::calcMinimumLaneChangeLength(*lane_change_parameters_, shift_intervals);
 
   // Guard
   if (objects.objects.empty()) {
@@ -943,6 +947,24 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       const auto lateral = dist_object_to_current_lanes_center - dist_ego_to_current_lanes_center;
       return std::abs(lateral) > (common_parameters.vehicle_width / 2);
     };
+
+    // ignore object that are ahead of terminal lane change start
+    {
+      double distance_to_terminal_from_object = std::numeric_limits<double>::max();
+      for (const auto & polygon_p : obj_polygon_outer) {
+        const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+        Pose polygon_pose;
+        polygon_pose.position = obj_p;
+        polygon_pose.orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
+        const double dist = utils::getDistanceToEndOfLane(polygon_pose, current_lanes);
+        if (dist < distance_to_terminal_from_object) {
+          distance_to_terminal_from_object = dist;
+        }
+      }
+      if (minimum_lane_change_length > distance_to_terminal_from_object) {
+        continue;
+      }
+    }
 
     // ignore static object that are behind the ego vehicle
     if (obj_velocity_norm < 1.0 && max_dist_ego_to_obj < 0.0) {
@@ -1580,13 +1602,15 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
     reference_segment.points, reference_segment.points.front().point.pose.position,
     lane_changing_start_pose->position);
   utils::clipPathLength(reference_segment, 0, length_to_lane_changing_start, 0.0);
+  // remove terminal points because utils::clipPathLenght() calculates extra long path
+  reference_segment.points.pop_back();
   reference_segment.points.back().point.longitudinal_velocity_mps = minimum_lane_changing_velocity;
 
-  const auto minimum_lane_change_path = utils::lane_change::constructCandidatePath(
+  const auto terminal_lane_change_path = utils::lane_change::constructCandidatePath(
     lane_change_info, reference_segment, target_segment, target_lane_reference_path,
     sorted_lane_ids);
 
-  return minimum_lane_change_path;
+  return terminal_lane_change_path;
 }
 
 PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const

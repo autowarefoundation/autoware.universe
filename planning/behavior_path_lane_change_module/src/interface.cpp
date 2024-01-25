@@ -126,11 +126,11 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   module_type_->updateLaneChangeStatus();
 
   *prev_approved_path_ = getPreviousModuleOutput().path;
-  module_type_->insertStopPoint(
-    module_type_->getLaneChangeStatus().current_lanes, *prev_approved_path_);
 
   BehaviorModuleOutput out;
   out = module_type_->getTerminalLaneChangePath();
+
+  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, out.path);
 
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
