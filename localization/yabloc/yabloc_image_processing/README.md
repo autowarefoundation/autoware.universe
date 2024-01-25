@@ -81,6 +81,7 @@ This is a node that integrates the results of graph_segment and lsd to extract r
 
 ### Parameters
 
+{{ json_to_markdown("localization/yabloc/yabloc_common/schema/segment_filter.schema.json") }}
 
 ## undistort
 
@@ -111,11 +112,7 @@ This is to avoid redundant decompression within Autoware.
 
 ### Parameters
 
-| Name                | Type   | Description                                                                                    |
-| ------------------- | ------ | ---------------------------------------------------------------------------------------------- |
-| `use_sensor_qos`    | bool   | where to use sensor qos or not                                                                 |
-| `width`             | int    | resized image width size                                                                       |
-| `override_frame_id` | string | value for overriding the camera's frame_id. if blank, frame_id of static_tf is not overwritten |
+{{ json_to_markdown("localization/yabloc/yabloc_common/schema/undistort.schema.json") }}
 
 #### about tf_static overriding
 
