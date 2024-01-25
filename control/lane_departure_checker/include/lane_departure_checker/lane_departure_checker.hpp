@@ -81,7 +81,6 @@ struct Input
 struct DerivativeDeviation
 {
   double longitudinal_vel{0.0};
-  double longitudinal_acc{0.0};
 };
 
 struct Output

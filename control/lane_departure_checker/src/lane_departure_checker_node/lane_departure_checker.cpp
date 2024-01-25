@@ -181,10 +181,6 @@ DerivativeDeviation LaneDepartureChecker::calcLongitudinalDeviationDerivatives(
   const auto & ref_vel = ref_point.longitudinal_velocity_mps;
   der_deviation.longitudinal_vel = current_vel - ref_vel;
 
-  const auto current_acc = 0; // There is no acc from input.current_odom->twist.twist.linear.x. You may need to subscribe.
-  const auto & ref_acc = ref_point.acceleration_mps2;
-  der_deviation.longitudinal_acc = current_acc - ref_acc;
-
   return der_deviation;
 } 
 
