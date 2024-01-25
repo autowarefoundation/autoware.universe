@@ -6,6 +6,7 @@
   <description>The tier4_metrics_rviz_plugin package</description>
   <maintainer email="satoshi.ota@tier4.jp">Satoshi OTA</maintainer>
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
+  <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
