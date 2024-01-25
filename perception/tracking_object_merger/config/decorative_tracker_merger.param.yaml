@@ -22,5 +22,5 @@
       max_dt: 1.0
 
     # logging settings
-    enable_logging: false
-    log_file_path: "/tmp/decorative_tracker_merger.log"
+    enable_logging: true
+    log_file_path: "association_log.json"
