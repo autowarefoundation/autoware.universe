@@ -61,8 +61,8 @@ public:
 
 private:
   const bool force_zero_tilt_;
-  const float R;
-  const int K;
+  const float ground_search_radius_;
+  const int ground_search_neighbors_;
 
   // Subscriber
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;

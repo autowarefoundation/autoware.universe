@@ -1,5 +1,5 @@
 /**:
   ros__parameters:
     force_zero_tilt: false
-    K: 50
-    R: 10
+    ground_search_neighbors: 50
+    ground_search_radius: 10
