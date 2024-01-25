@@ -253,6 +253,8 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     node.declare_parameter<double>("behavior_determination.cruise.yield.lat_distance_threshold");
   max_lat_dist_between_obstacles = node.declare_parameter<double>(
     "behavior_determination.cruise.yield.max_lat_dist_between_obstacles");
+  max_obstacles_collision_time = node.declare_parameter<double>(
+    "behavior_determination.cruise.yield.max_obstacles_collision_time");
   max_lat_margin_for_slow_down =
     node.declare_parameter<double>("behavior_determination.slow_down.max_lat_margin");
   lat_hysteresis_margin_for_slow_down =
@@ -316,6 +318,9 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.cruise.yield.max_lat_dist_between_obstacles",
     max_lat_dist_between_obstacles);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.cruise.yield.max_obstacles_collision_time",
+    max_obstacles_collision_time);
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.slow_down.max_lat_margin", max_lat_margin_for_slow_down);
   tier4_autoware_utils::updateParam<double>(
@@ -874,6 +879,7 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
 std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstacle(
   const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points)
 {
+  if (traj_points.empty()) return std::nullopt;
   // check label
   const auto & object_id = obstacle.uuid.substr(0, 4);
   const auto & p = behavior_determination_param_;
@@ -903,12 +909,10 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstac
   }
 
   const auto collision_points = [&]() -> std::optional<std::vector<PointWithStamp>> {
-    const size_t obstacle_idx = motion_utils::findNearestIndex(traj_points, obstacle.pose.position);
+    const auto obstacle_idx = motion_utils::findNearestIndex(traj_points, obstacle.pose);
     if (!obstacle_idx) return std::nullopt;
-    const auto collision_traj_point = traj_points.at(obstacle_idx);
-
-    const auto object_time =
-      rclcpp::Time(obstacle.stamp) + traj_points.at(obstacle_idx).time_from_start;
+    const auto collision_traj_point = traj_points.at(obstacle_idx.value());
+    const auto object_time = now() + traj_points.at(obstacle_idx.value()).time_from_start;
 
     PointWithStamp collision_traj_point_with_stamp;
     collision_traj_point_with_stamp.stamp = object_time;
@@ -919,9 +923,10 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstac
     return collision_points_vector;
   }();
 
+  if (!collision_points) return std::nullopt;
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
   return CruiseObstacle{obstacle.uuid, obstacle.stamp, obstacle.pose,
-                        tangent_vel,   normal_vel,     *collision_points};
+                        tangent_vel,   normal_vel,     collision_points.value()};
 }
 
 std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldCruiseObstacles(
@@ -987,7 +992,21 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
       const double lateral_distance_between_obstacles = std::abs(
         moving_obstacle.second.lat_dist_from_obstacle_to_traj -
         stopped_obstacle.second.lat_dist_from_obstacle_to_traj);
-      if (lateral_distance_between_obstacles < p.max_lat_dist_between_obstacles) {
+
+      const double longitudinal_distance_between_obstacles = std::abs(
+        moving_obstacle.second.ego_to_obstacle_distance -
+        stopped_obstacle.second.ego_to_obstacle_distance);
+
+      const double moving_obstacle_speed =
+        std::hypot(moving_obstacle.second.twist.linear.x, moving_obstacle.second.twist.linear.y);
+
+      const bool are_obstacles_aligned =
+        lateral_distance_between_obstacles < p.max_lat_dist_between_obstacles;
+      const bool obstacles_collide_within_threshold_time =
+        longitudinal_distance_between_obstacles / moving_obstacle_speed <
+        p.max_obstacles_collision_time;
+
+      if (are_obstacles_aligned && obstacles_collide_within_threshold_time) {
         std::cerr << "Found Yield candidates \n";
         const auto yield_obstacle = createYieldCruiseObstacle(moving_obstacle.second, traj_points);
         if (yield_obstacle) yield_obstacles.push_back(*yield_obstacle);

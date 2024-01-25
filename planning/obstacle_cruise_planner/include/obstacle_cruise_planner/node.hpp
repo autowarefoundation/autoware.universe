@@ -200,11 +200,13 @@ private:
     int successive_num_to_entry_slow_down_condition;
     int successive_num_to_exit_slow_down_condition;
     // consideration for the current ego pose
+    double time_to_convergence{1.5};
     bool enable_to_consider_current_pose{false};
+    // yield related parameters
     bool enable_yield{false};
     double yield_lat_distance_threshold;
     double max_lat_dist_between_obstacles;
-    double time_to_convergence{1.5};
+    double max_obstacles_collision_time;
   };
   BehaviorDeterminationParam behavior_determination_param_;
 
