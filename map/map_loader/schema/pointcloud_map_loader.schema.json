@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for Map Loader Node",
+  "title": "Parameters for point cloud map loader Node",
   "type": "object",
   "definitions": {
     "pointcloud_map_loader": {
@@ -9,27 +9,27 @@
         "enable_whole_load": {
           "type": "boolean",
           "description": "Enable loading all PCD maps",
-          "default": "true"
+          "default": true
         },
         "enable_downsampled_whole_load": {
           "type": "boolean",
           "description": "Enable downsampling all loaded PCDs",
-          "default": "false"
+          "default": false
         },
         "enable_partial_load": {
           "type": "boolean",
           "description": "Enable loading partial PCD maps",
-          "default": "true"
+          "default": true
         },
         "enable_selected_load": {
           "type": "boolean",
           "description": "Enable loading selected PCD maps",
-          "default": "false"
+          "default": false
         },
         "leaf_size": {
           "type": "number",
           "description": "Resolution of the voxel grid used for downsampling all loaded PCDs",
-          "default": "3.0"
+          "default": 3.0
         }
       },
       "required": [
