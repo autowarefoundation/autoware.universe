@@ -97,7 +97,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
       lane_change_parameters_->rss_params_for_stuck, is_stuck);
   }
 
-  lane_change_debug_.valid_path = valid_paths;
+  lane_change_debug_.valid_paths = valid_paths;
 
   if (valid_paths.empty()) {
     safe_path.info.current_lanes = current_lanes;

@@ -27,7 +27,7 @@ using utils::path_safety_checker::CollisionCheckDebugMap;
 struct Debug
 {
   std::string module_type;
-  LaneChangePaths valid_path;
+  LaneChangePaths valid_paths;
   CollisionCheckDebugMap collision_check_objects;
   CollisionCheckDebugMap collision_check_objects_after_approval;
   LaneChangeTargetObjects filtered_objects;
@@ -35,7 +35,7 @@ struct Debug
 
   void reset()
   {
-    valid_path.clear();
+    valid_paths.clear();
     collision_check_objects.clear();
     collision_check_objects_after_approval.clear();
     filtered_objects.current_lane.clear();

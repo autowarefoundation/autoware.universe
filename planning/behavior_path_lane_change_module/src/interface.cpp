@@ -330,7 +330,7 @@ void LaneChangeInterface::updateDebugMarker() const
   const auto & debug_collision_check_object = debug_data.collision_check_objects;
   const auto & debug_collision_check_object_after_approval =
     debug_data.collision_check_objects_after_approval;
-  const auto & debug_valid_path = debug_data.valid_path;
+  const auto & debug_valid_paths = debug_data.valid_paths;
   const auto & debug_filtered_objects = debug_data.filtered_objects;
 
   debug_marker_.markers.clear();
@@ -338,7 +338,7 @@ void LaneChangeInterface::updateDebugMarker() const
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
+  add(showAllValidLaneChangePath(debug_valid_paths, "lane_change_valid_paths"));
   add(showFilteredObjects(
     debug_filtered_objects.current_lane, debug_filtered_objects.target_lane,
     debug_filtered_objects.other_lane, "object_filtered"));
