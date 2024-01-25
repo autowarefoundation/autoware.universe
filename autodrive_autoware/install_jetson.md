@@ -38,35 +38,33 @@ This documentation covers `Local Installation of Autoware` on [NVIDIA Jetson Dev
 
 ---
 
-## Flash JetPack to Jetson Device
+## Install JetPack
 #### (Approximate Time Investment: 2.0 Hours)
 
-There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1 (rev. 1). Other JetPack versions may also work but have not yet been tested.
+There are multiple ways to install JetPack on a Jetson-Device as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install JetPack are via the `NVIDIA SDK Manager Method` or the `microSD Card Image Method`. As mentioned above, this repository was tested with JetPack 5.1.1 (rev. 1). Other JetPack versions may also work and have similar installation procedures, but have not yet been tested.
 
 ### NVIDIA SDK Manager Method:
-This method requires a Linux host computer running Ubuntu Linux x64 version `18.04` or `20.04` with `~40GB` of disk space
+This method requires a Linux host computer running Ubuntu Linux x64 version `18.04` or `20.04` with `~40GB` of disk space.
 
-This method you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson Xavier NX via a `micro-USB` cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Xavier NX. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the F1tenth car's Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
+In this method, you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson-Device via a `micro-USB` or `USB-C` cable (depending on the Jetson-Device), download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson-Device. This method allows you to flash JetPack to the `SD Card` or the `NVMe SSD` on the Jetson-Device. You may need to create an NVIDIA account to download the NVIDIA SDK Manager.
 
-1. Download and install [SDK Manager](https://developer.nvidia.com/sdk-manager) on your host machine.
+1. Download and install [NVIDIA SDK Manager](https://developer.nvidia.com/sdk-manager) on your host machine.
 
-2. Follow the steps at [Install Jetson Software with SDK Manager](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html). Select JetPack version 5.1.1 (rev. 1). The target hardware will be the Jetson Xavier NX.
+2. Follow the steps at [Install Jetson Software with SDK Manager](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html). Select JetPack version 5.1.1 (rev. 1). The target hardware will be the applicable Jetson-Device (i.e., `Jetson Orin Nano` or `Jetson Xavier NX`).
 
-3. If you have trouble flashing the JetPack, you can put the Jetson into `Force Recovery Mode` by using a jumper to connect `PINs #9 and #10` of the connector J50 before powering up the Jetson.
+### microSD Card Image Method:
+This method requires a host computer with a stable internet connection and the ability to read and write microSD cards. Try to use a microSD card with ample space (e.g. 128 GB).
 
+1. Download the microSD image for the applicable Jetson-Device (i.e., `Jetson Orin Nano` or `Jetson Xavier NX`).
+    - For Jetson Orin Nano, use [this link](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-orin-nano-sd-card-image.zip/) to download the microSD image.
+    - For Jetson Xavier NX, use [this link](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-xnx-sd-card-image.zip/) to download the microSD image.
+> **Note:** If you have not previously run a JetPack 5.x release on your Jetson Xavier NX Developer Kit, you must first update its QSPI before using this JetPack 5.x microSD Card image. You can download an updated QSPI image from [here](https://developer.nvidia.com/embedded/L4T/r35_Release_v1.0/QSPI-img/Jetson_Xavier_NX_QSPI_35.1.gz), and then follow the QSPI update instructions from the [Jetson Linux Developer Guide](https://docs.nvidia.com/jetson/archives/r35.1/DeveloperGuide/text/SD/FlashingSupport.html#to-upgrade-jetpack-4-x-to-jetpack-5-x-on-jetson-xavier-nx-p3668-0000).
 
-### SD Card Image Method:
-This method requires a computer with Internet connection and the ability to read and write SD cards. Try to use a microSD card with ample space (e.g. 128 GB)
+2. Follow the steps mentioned in the `Getting Started Guide` of the applicable Jetson-Device to write the image to the microSD card.
+    - For Jetson Orin Nano, refer [this link](https://developer.nvidia.com/embedded/learn/get-started-jetson-orin-nano-devkit#write) to flash the microSD image.
+    - For Jetson Xavier NX, refer [this link](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#write) to flash the microSD image.
 
-1. Download [JetPack 5.1.1](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-xnx-sd-card-image.zip/)
-
-2. If you have not previously run a JetPack 5.x release on your Jetson Xavier NX Developer kit, you must first update its QSPI before using this JetPack 5.x SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more information.
-
-2. Follow the steps at [Jetson Xavier NX Developer Kit - Get Started](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare) to write the Jetpack to the microSD card.
-
-3. Insert your microSD card to the Jetson.
-
-Once the JetPack is successfully flashed to the Jetson NX, boot the system and the Ubuntu desktop environment should launch
+3. Insert the flashed microSD card into the microSD slot of the applicable Jetson-Device and boot the system, an Ubuntu 20.04 desktop environment should launch.
 
 ## Install ROS 2 Galactic:
 #### (Approximate Time Investment: 0.5 Hours)
