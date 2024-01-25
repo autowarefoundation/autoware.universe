@@ -1602,7 +1602,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
     reference_segment.points, reference_segment.points.front().point.pose.position,
     lane_changing_start_pose->position);
   utils::clipPathLength(reference_segment, 0, length_to_lane_changing_start, 0.0);
-  // remove terminal points because utils::clipPathLenght() calculates extra long path
+  // remove terminal points because utils::clipPathLength() calculates extra long path
   reference_segment.points.pop_back();
   reference_segment.points.back().point.longitudinal_velocity_mps = minimum_lane_changing_velocity;
 
