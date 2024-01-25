@@ -123,8 +123,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
 BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
-  module_type_->updateLaneChangeStatus();
-
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
   BehaviorModuleOutput out;
