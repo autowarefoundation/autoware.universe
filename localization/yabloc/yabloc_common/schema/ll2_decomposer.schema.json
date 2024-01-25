@@ -22,23 +22,15 @@
         "sign_board_labels": {
           "type": "array",
           "description": "line string types that indicating traffic sign boards in lanelet2",
-          "default": [
-            "sign-board"
-          ]
+          "default": ["sign-board"]
         },
         "bounding_box_labels": {
           "type": "array",
           "description": "line string types that indicating not mapped areas in lanelet2",
-          "default": [
-            "none"
-          ]
+          "default": ["none"]
         }
       },
-      "required": [
-        "road_marking_labels",
-        "sign_board_labels",
-        "bounding_box_labels"
-      ],
+      "required": ["road_marking_labels", "sign_board_labels", "bounding_box_labels"],
       "additionalProperties": false
     }
   },
@@ -50,14 +42,10 @@
           "$ref": "#/definitions/geo_pose_projector"
         }
       },
-      "required": [
-        "ros__parameters"
-      ],
+      "required": ["ros__parameters"],
       "additionalProperties": false
     }
   },
-  "required": [
-    "/**"
-  ],
+  "required": ["/**"],
   "additionalProperties": false
 }
