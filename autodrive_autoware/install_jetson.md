@@ -34,9 +34,11 @@ This documentation covers `Local Installation of Autoware` on [NVIDIA Jetson Dev
 
 - For more information on NVIDIA® JetPack SDK, see [JetPack SDK Page](https://developer.nvidia.com/embedded/jetpack).
 
+- For more information on versioning schemes of NVIDIA® Jetson™ Linux (L4T) and JetPack SDK, see [Jetson Linux (L4T) to JetPack Version Guide](https://jetsonhacks.com/jetpack-and-jetson-linux-l4t-versions).
+
 ---
 
-## Flash JetPack 5.1.1 (rev. 1) to Jetson Device
+## Flash JetPack to Jetson Device
 #### (Approximate Time Investment: 2.0 Hours)
 
 There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1 (rev. 1). Other JetPack versions may also work but have not yet been tested.
