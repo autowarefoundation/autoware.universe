@@ -316,48 +316,13 @@ bool LaneChangeInterface::canTransitIdleToRunningState()
 
 void LaneChangeInterface::updateDebugMarker() const
 {
-  debug_marker_.markers.clear();
   if (!parameters_->publish_debug_marker) {
     return;
   }
-  using marker_utils::showPolygon;
-  using marker_utils::showPredictedPath;
-  using marker_utils::showSafetyCheckInfo;
-  using marker_utils::lane_change_markers::showAllValidLaneChangePath;
-  using marker_utils::lane_change_markers::showFilteredObjects;
-
-  const auto & debug_data = module_type_->getDebugData();
-  const auto & debug_collision_check_object = debug_data.collision_check_objects;
-  const auto & debug_collision_check_object_after_approval =
-    debug_data.collision_check_objects_after_approval;
-  const auto & debug_valid_paths = debug_data.valid_paths;
-  const auto & debug_filtered_objects = debug_data.filtered_objects;
 
   debug_marker_.markers.clear();
-  const auto add = [this](const MarkerArray & added) {
-    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
-  };
-
-  add(showAllValidLaneChangePath(debug_valid_paths, "lane_change_valid_paths"));
-  add(showFilteredObjects(
-    debug_filtered_objects.current_lane, debug_filtered_objects.target_lane,
-    debug_filtered_objects.other_lane, "object_filtered"));
-
-  if (!debug_collision_check_object.empty()) {
-    add(showSafetyCheckInfo(debug_collision_check_object, "collision_check_object_info"));
-    add(showPredictedPath(debug_collision_check_object, "ego_predicted_path"));
-    add(showPolygon(debug_collision_check_object, "ego_and_target_polygon_relation"));
-  }
-
-  if (!debug_collision_check_object_after_approval.empty()) {
-    add(showSafetyCheckInfo(
-      debug_collision_check_object_after_approval, "object_debug_info_after_approval"));
-    add(showPredictedPath(
-      debug_collision_check_object_after_approval, "ego_predicted_path_after_approval"));
-    add(showPolygon(
-      debug_collision_check_object_after_approval,
-      "ego_and_target_polygon_relation_after_approval"));
-  }
+  using marker_utils::lane_change_markers::createDebugMarkerArray;
+  debug_marker_ = createDebugMarkerArray(module_type_->getDebugData());
 }
 
 MarkerArray LaneChangeInterface::getModuleVirtualWall()
