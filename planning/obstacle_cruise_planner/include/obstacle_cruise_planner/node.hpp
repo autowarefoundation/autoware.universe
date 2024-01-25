@@ -72,7 +72,7 @@ private:
     const Obstacle & obstacle) const;
   std::optional<CruiseObstacle> createYieldCruiseObstacle(
     const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points);
-  std::optional<CruiseObstacle> findYieldCruiseObstacle(
+  std::optional<std::vector<CruiseObstacle>> findYieldCruiseObstacles(
     const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points);
   std::optional<CruiseObstacle> createCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
