@@ -960,26 +960,30 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
       const bool is_moving = std::hypot(o.second.twist.linear.x, o.second.twist.linear.y) > 0.5;
       if (is_moving) {
         const bool is_within_lat_dist_threshold =
-          o.second.lat_dist_from_obstacle_to_traj >= p.yield_lat_distance_threshold;
+          o.second.lat_dist_from_obstacle_to_traj < p.yield_lat_distance_threshold;
         if (is_within_lat_dist_threshold) moving_obstacles.push_back(o);
         return;
       }
       // lat threshold is larger for the stopped obstacle
+      std::cerr << "stopped.lat_dist_from_obstacle_to_traj "
+                << o.second.lat_dist_from_obstacle_to_traj << "id " << o.first << "\n";
       const bool is_within_lat_dist_threshold =
-        o.second.lat_dist_from_obstacle_to_traj >=
+        o.second.lat_dist_from_obstacle_to_traj <
         p.yield_lat_distance_threshold + p.max_lat_dist_between_obstacles;
       if (is_within_lat_dist_threshold) stopped_obstacles.push_back(o);
       return;
     });
 
   if (stopped_obstacles.empty() || moving_obstacles.empty()) return std::nullopt;
-
   std::cerr << "-----Checking for Yield candidates----- \n";
+
   std::vector<CruiseObstacle> yield_obstacles;
   for (const auto & moving_obstacle : moving_obstacles) {
     for (const auto & stopped_obstacle : stopped_obstacles) {
       if (moving_obstacle.first >= stopped_obstacle.first)
         continue;  // TODO(Daniel): is a break here fine?
+      std::cerr << "Stopped obs lat dist " << stopped_obstacle.second.lat_dist_from_obstacle_to_traj
+                << "\n";
       const double lateral_distance_between_obstacles = std::abs(
         moving_obstacle.second.lat_dist_from_obstacle_to_traj -
         stopped_obstacle.second.lat_dist_from_obstacle_to_traj);
