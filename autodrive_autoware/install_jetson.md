@@ -4,7 +4,7 @@
 
 This documentation covers `Local Installation of Autoware` on [NVIDIA Jetson Devices](https://developer.nvidia.com/embedded/jetson-developer-kits) and testing the installation with `Autoware Planning Simulation`.
 
-> **Note 1**: Installation was tested with [Jetson Orin Nano] (on [Nigel](https://youtu.be/UVIShZuZmpg?si=rcPk0l3ea3gm9eAH)) and [Jetson Xavier NX] (on [F1TENTH](https://f1tenth.org/)) running [L4T (or Jetson Linux)](https://developer.nvidia.com/embedded/jetson-linux) with Ubuntu 20.04 (with ROS 1 Noetic, ROS 2 Foxy & ROS 2 Galactic).
+> **Note 1**: Installation was tested with [Jetson Orin Nano] (on [Nigel](https://youtu.be/UVIShZuZmpg?si=rcPk0l3ea3gm9eAH)) and [Jetson Xavier NX] (on [F1TENTH](https://f1tenth.org/)) running [L4T (or Jetson Linux) 35.3.1](https://developer.nvidia.com/embedded/jetson-linux-r3531) with Ubuntu 20.04 desktop environment (with ROS 1 Noetic, ROS 2 Foxy & ROS 2 Galactic installed).
 
 > **Note 2**: A dedicated `Autoware_WS` was created on the Jetson-Device to organize `autoware_maps` and `autoware_local` installation (with ROS 2 Galactic).
 
@@ -29,6 +29,10 @@ This documentation covers `Local Installation of Autoware` on [NVIDIA Jetson Dev
 - For more information on NVIDIA® Jetson™ modules, see [Jetson Modules Page](https://developer.nvidia.com/embedded/jetson-modules).
  
 - For more information on NVIDIA® Jetson™ software, see [Jetson Software Page](https://developer.nvidia.com/embedded/develop/software).
+
+- For more information on NVIDIA® Jetson™ Linux (L4T), see [Jetson Linux Page](https://developer.nvidia.com/embedded/jetson-linux).
+
+- For more information on NVIDIA® JetPack SDK, see [JetPack SDK Page](https://developer.nvidia.com/embedded/jetpack).
 
 ---
 
