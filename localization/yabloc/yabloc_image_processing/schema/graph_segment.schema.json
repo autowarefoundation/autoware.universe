@@ -26,17 +26,17 @@
           "description": "threshold for picking up additional areas",
           "default": 0.8
         },
-        "segmentation_sigma": {
+        "sigma": {
           "type": "number",
           "description": "parameter for cv::ximgproc::segmentation::GraphSegmentation",
           "default": 0.5
         },
-        "segmentation_k": {
+        "k": {
           "type": "number",
           "description": "parameter for cv::ximgproc::segmentation::GraphSegmentation",
           "default": 300.0
         },
-        "segmentation_min_size": {
+        "min_size": {
           "type": "number",
           "description": "parameter for cv::ximgproc::segmentation::GraphSegmentation",
           "default": 100.0
@@ -62,10 +62,14 @@
           "$ref": "#/definitions/graph_segment"
         }
       },
-      "required": ["ros__parameters"],
+      "required": [
+        "ros__parameters"
+      ],
       "additionalProperties": false
     }
   },
-  "required": ["/**"],
+  "required": [
+    "/**"
+  ],
   "additionalProperties": false
 }

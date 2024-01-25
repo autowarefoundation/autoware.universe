@@ -37,9 +37,9 @@ GraphSegment::GraphSegment()
   pub_mask_image_ = create_publisher<Image>("~/output/mask_image", 10);
   pub_debug_image_ = create_publisher<Image>("~/debug/segmented_image", 10);
 
-  const double sigma = declare_parameter<double>("segmentation_sigma");
-  const float k = declare_parameter<float>("segmentation_k");
-  const int min_size = declare_parameter<double>("segmentation_min_size");
+  const double sigma = declare_parameter<double>("sigma");
+  const float k = declare_parameter<float>("k");
+  const int min_size = declare_parameter<double>("min_size");
   segmentation_ = cv::ximgproc::segmentation::createGraphSegmentation(sigma, k, min_size);
 
   // additional area pickup module
