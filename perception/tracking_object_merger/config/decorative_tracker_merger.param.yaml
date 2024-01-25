@@ -23,4 +23,4 @@
 
     # logging settings
     enable_logging: true
-    log_file_path: "association_log.json"
+    logging_file_path: "association_log.json"
