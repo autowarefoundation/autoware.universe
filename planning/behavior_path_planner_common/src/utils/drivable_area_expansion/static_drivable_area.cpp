@@ -1329,13 +1329,13 @@ std::pair<std::vector<lanelet::ConstPoint3d>, bool> getBoundWithFreeSpaceAreas(
   };
 
   const auto get_bound_edge = [&ego_pose, &is_driving_freespace, &is_left](
-                                const auto & bound, const auto is_inside) {
+                                const auto & bound, const auto trim_behind_bound) {
     if (!is_driving_freespace) {
       return bound;
     }
 
     const auto p_offset = tier4_autoware_utils::calcOffsetPose(
-      ego_pose, (is_inside ? -100.0 : 100.0), (is_left ? 0.1 : -0.1), 0.0);
+      ego_pose, (trim_behind_bound ? -100.0 : 100.0), (is_left ? 0.1 : -0.1), 0.0);
 
     std::vector<lanelet::ConstPoint3d> ret;
     for (size_t i = 1; i < bound.size(); ++i) {
@@ -1357,37 +1357,63 @@ std::pair<std::vector<lanelet::ConstPoint3d>, bool> getBoundWithFreeSpaceAreas(
 
   std::vector<lanelet::ConstPoint3d> expanded_bound;
 
-  if (original_bound_itr->id() != original_bound_rev_itr->id()) {
-    const auto polygon_bound =
-      extract_bound_from_polygon(original_bound_itr->id(), original_bound_rev_itr->id());
+  enum class RouteCase {
+    ROUTE_IS_PASS_THROUGH_FREESPACE = 0,
+    GOAL_POS_IS_IN_FREESPACE,
+    INIT_POS_IS_IN_FREESPACE,
+    OTHER,
+  };
 
-    expanded_bound.insert(expanded_bound.end(), original_bound.begin(), original_bound_itr);
-    expanded_bound.insert(expanded_bound.end(), polygon_bound.begin(), polygon_bound.end());
-    expanded_bound.insert(
-      expanded_bound.end(), std::next(original_bound_rev_itr).base(), original_bound.end());
+  const auto route_case = [&]() {
+    if (original_bound_itr->id() != original_bound_rev_itr->id()) {
+      return RouteCase::ROUTE_IS_PASS_THROUGH_FREESPACE;
+    } else if (boost::geometry::within(
+                 to2D(original_bound.front().basicPoint()), to2D(polygon).basicPolygon())) {
+      return RouteCase::INIT_POS_IS_IN_FREESPACE;
+    } else if (boost::geometry::within(
+                 to2D(original_bound.back().basicPoint()), to2D(polygon).basicPolygon())) {
+      return RouteCase::GOAL_POS_IS_IN_FREESPACE;
+    }
+    return RouteCase::OTHER;
+  }();
 
-  } else if (boost::geometry::within(
-               to2D(original_bound.front().basicPoint()), to2D(polygon).basicPolygon())) {
-    auto polygon_bound =
-      extract_bound_from_polygon(other_side_bound_itr->id(), original_bound_itr->id());
-    std::reverse(polygon_bound.begin(), polygon_bound.end());
-    auto bound_edge = get_bound_edge(polygon_bound, true);
-    std::reverse(bound_edge.begin(), bound_edge.end());
+  switch (route_case) {
+    case RouteCase::ROUTE_IS_PASS_THROUGH_FREESPACE: {
+      const auto polygon_bound =
+        extract_bound_from_polygon(original_bound_itr->id(), original_bound_rev_itr->id());
 
-    expanded_bound.insert(expanded_bound.end(), bound_edge.begin(), bound_edge.end());
-    expanded_bound.insert(expanded_bound.end(), original_bound_itr, original_bound.end());
+      expanded_bound.insert(expanded_bound.end(), original_bound.begin(), original_bound_itr);
+      expanded_bound.insert(expanded_bound.end(), polygon_bound.begin(), polygon_bound.end());
+      expanded_bound.insert(
+        expanded_bound.end(), std::next(original_bound_rev_itr).base(), original_bound.end());
+      break;
+    }
+    case RouteCase::INIT_POS_IS_IN_FREESPACE: {
+      auto polygon_bound =
+        extract_bound_from_polygon(other_side_bound_itr->id(), original_bound_itr->id());
+      std::reverse(polygon_bound.begin(), polygon_bound.end());
+      auto bound_edge = get_bound_edge(polygon_bound, true);
+      std::reverse(bound_edge.begin(), bound_edge.end());
 
-  } else if (boost::geometry::within(
-               to2D(original_bound.back().basicPoint()), to2D(polygon).basicPolygon())) {
-    const auto polygon_bound =
-      extract_bound_from_polygon(original_bound_itr->id(), other_side_bound_itr->id());
-    const auto bound_edge = get_bound_edge(polygon_bound, false);
+      expanded_bound.insert(expanded_bound.end(), bound_edge.begin(), bound_edge.end());
+      expanded_bound.insert(expanded_bound.end(), original_bound_itr, original_bound.end());
+      break;
+    }
+    case RouteCase::GOAL_POS_IS_IN_FREESPACE: {
+      const auto polygon_bound =
+        extract_bound_from_polygon(original_bound_itr->id(), other_side_bound_itr->id());
+      const auto bound_edge = get_bound_edge(polygon_bound, false);
 
-    expanded_bound.insert(expanded_bound.end(), original_bound.begin(), original_bound_itr);
-    expanded_bound.insert(expanded_bound.end(), bound_edge.begin(), bound_edge.end());
-
-  } else {
-    expanded_bound = original_bound;
+      expanded_bound.insert(expanded_bound.end(), original_bound.begin(), original_bound_itr);
+      expanded_bound.insert(expanded_bound.end(), bound_edge.begin(), bound_edge.end());
+      break;
+    }
+    case RouteCase::OTHER: {
+      expanded_bound = original_bound;
+      break;
+    }
+    default:
+      throw std::domain_error("invalid case.");
   }
 
   const auto goal_is_in_freespace = boost::geometry::within(
