@@ -13,7 +13,7 @@
   <arg name="use_intra_process" default="false"/>
 
   <!-- select container type -->
-  <arg name="use_multithread" default="false"/>  
+  <arg name="use_multithread" default="false"/>
   <let name="container_type" value="component_container" unless="$(var use_multithread)"/>
   <let name="container_type" value="component_container_mt" if="$(var use_multithread)"/>
 
@@ -21,7 +21,6 @@
     <push-ros-namespace namespace="map"/>
 
     <node_container pkg="rclcpp_components" exec="$(var container_type)" name="map_container" namespace="" output="screen">
-
       <composable_node pkg="map_loader" plugin="PointCloudMapLoaderNode" name="pointcloud_map_loader">
         <param from="$(var pointcloud_map_loader_param_path)"/>
         <param name="pcd_paths_or_directory" value="[$(var pointcloud_map_path)]"/>
@@ -52,9 +51,7 @@
         <param name="viewer_frame" value="viewer"/>
         <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
-
     </node_container>
-
 
     <node pkg="map_loader" exec="map_hash_generator" name="map_hash_generator">
       <param name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
@@ -65,6 +62,5 @@
       <arg name="map_projector_info_path" value="$(var map_projector_info_path)"/>
       <arg name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
     </include>
-
   </group>
 </launch>
