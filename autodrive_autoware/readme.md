@@ -2,6 +2,22 @@
 <img src="media/AutoDRIVE-Logo.png" alt="AutoDRIVE" width="478"/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="media/Autoware-Logo.png" alt="Autoware" width="478"/>
 </p>
 
+## Team Name:
+
+<img align="left" style="padding-left: 10px; padding-right: 10px; padding-bottom: 10px" height="175px" src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Group/Tinker_Twins.png">
+
+**Tinker Twins:** [Chinmay Samak](https://www.linkedin.com/in/samakchinmay) and [Tanmay Samak](https://in.linkedin.com/in/samaktanmay) are twin brothers, who use "Tinker Twins" as a personal brand (the team's name was therefore decided to reflect the same brand). The twins have come a long way tinkering with various tools and technologies, which has strengthened their scientific knowledge and skills. The duo has worked on various projects ranging from microelectromechanical systems (MEMS) to in-orbit space settlements, and almost everything in between. They have a particularly keen interest in the field of robotics and autonomous systems, and are specializing in the field of autonomous vehicles.
+
+## Team Members:
+
+<img align="left" style="padding-left: 10px; padding-right: 10px; padding-bottom: 10px" height="200px" src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Group/Chinmay_Samak.png">
+
+**Chinmay Samak:** I received the [B.Tech. degree in Mechatronics Engineering](https://www.srmist.edu.in/program/b-tech-mechatronics-engineering/) with a gold medal from [SRM Institute of Science and Technology](https://www.srmist.edu.in/) in 2021. Having worked on several research projects in the field of autonomous vehicles, complemented with a solid background in mechatronics engineering, I have joined [ARMLab](http://cecas.clemson.edu/armlab-cuicar) at [CU-ICAR](https://cuicar.com/) as a direct Ph.D. candidate under the supervision of [Dr. Venkat Krovi](https://www.linkedin.com/in/venkatnkrovi) to pursue focused research in the field of vehicle automation. My research interests lie at the intersection of physics-informed and data-driven methods to bridge the sim2real gap using digital twins. I am contributing towards projects such as [VIPR-GS](https://cecas.clemson.edu/VIPR-GS/), [OpenCAV](https://sites.google.com/view/opencav/), [AutoDRIVE](https://autodrive-ecosystem.github.io/), [F1Tenth](https://f1tenth.org/) and [Autoware](https://autoware.org/).
+
+<img align="left" style="padding-left: 10px; padding-right: 10px; padding-bottom: 10px" height="200px" src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Group/Tanmay_Samak.png">
+
+**Tanmay Samak:** I received the [B.Tech. degree in Mechatronics Engineering](https://www.srmist.edu.in/program/b-tech-mechatronics-engineering/) with a silver medal from [SRM Institute of Science and Technology](https://www.srmist.edu.in/) in 2021. Having worked on several research projects in the field of autonomous vehicles, complemented with a solid background in mechatronics engineering, I have joined [ARMLab](http://cecas.clemson.edu/armlab-cuicar) at [CU-ICAR](https://cuicar.com/) as a direct Ph.D. candidate under the supervision of [Dr. Venkat Krovi](https://www.linkedin.com/in/venkatnkrovi) to pursue focused research in the field of vehicle automation. My research interests lie at the intersection of real and virtual worlds to create physically and graphically accurate digital twins. I am contributing towards projects such as [VIPR-GS](https://cecas.clemson.edu/VIPR-GS/), [OpenCAV](https://sites.google.com/view/opencav/), [AutoDRIVE](https://autodrive-ecosystem.github.io/), [F1Tenth](https://f1tenth.org/) and [Autoware](https://autoware.org/).
+
 ## Deployments
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-TinyTown-Simulator/Replay-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-TinyTown-Simulator/Replay-Autoware.gif" width="478"> |
