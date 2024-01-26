@@ -17,6 +17,7 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <set>
@@ -138,10 +139,29 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_with_traffic_light");
   cp.occlusion_ignore_behind_predicted_objects =
     getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_behind_predicted_objects");
-  cp.occlusion_do_not_ignore_behind_pedestrians =
-    getOrDeclareParameter<bool>(node, ns + ".occlusion.do_not_ignore_behind_pedestrians");
-  cp.occlusion_ignore_velocity_threshold =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.ignore_velocity_threshold");
+
+  cp.occlusion_ignore_velocity_thresholds.resize(
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN + 1,
+    getOrDeclareParameter<double>(node, ns + ".occlusion.ignore_velocity_thresholds.default"));
+  const auto get_label = [](const std::string & s) {
+    if (s == "CAR") return autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+    if (s == "TRUCK") return autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK;
+    if (s == "BUS") return autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
+    if (s == "TRAILER") return autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER;
+    if (s == "MOTORCYCLE")
+      return autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
+    if (s == "BICYCLE") return autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
+    if (s == "PEDESTRIAN")
+      return autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+    return autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+  };
+  const auto custom_labels = getOrDeclareParameter<std::vector<std::string>>(
+    node, ns + ".occlusion.ignore_velocity_thresholds.custom_labels");
+  const auto custom_velocities = getOrDeclareParameter<std::vector<double>>(
+    node, ns + ".occlusion.ignore_velocity_thresholds.custom_thresholds");
+  for (auto idx = 0UL; idx < std::min(custom_labels.size(), custom_velocities.size()); ++idx) {
+    cp.occlusion_ignore_velocity_thresholds[get_label(custom_labels[idx])] = custom_velocities[idx];
+  }
   cp.occlusion_extra_objects_size =
     getOrDeclareParameter<double>(node, ns + ".occlusion.extra_predicted_objects_size");
 }

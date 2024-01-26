@@ -96,16 +96,12 @@ std::vector<lanelet::BasicPolygon2d> calculate_detection_areas(
 
 std::vector<autoware_auto_perception_msgs::msg::PredictedObject> select_and_inflate_objects(
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
-  const double velocity_threshold, const bool skip_pedestrians, const double inflate_size)
+  const std::vector<double> velocity_thresholds, const double inflate_size)
 {
   std::vector<autoware_auto_perception_msgs::msg::PredictedObject> selected_objects;
   for (const auto & o : objects) {
-    const auto skip =
-      (skip_pedestrians &&
-       o.classification.front().label ==
-         autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN) ||
-      o.kinematics.initial_twist_with_covariance.twist.linear.x >= velocity_threshold;
-    if (!skip) {
+    const auto vel_threshold = velocity_thresholds[o.classification.front().label];
+    if (o.kinematics.initial_twist_with_covariance.twist.linear.x >= vel_threshold) {
       auto selected_object = o;
       selected_object.shape.dimensions.x += inflate_size;
       selected_object.shape.dimensions.y += inflate_size;
@@ -161,8 +157,8 @@ bool is_crosswalk_occluded(
 
   if (params.occlusion_ignore_behind_predicted_objects) {
     const auto objects = select_and_inflate_objects(
-      dynamic_objects, params.occlusion_ignore_velocity_threshold,
-      params.occlusion_do_not_ignore_behind_pedestrians, params.occlusion_extra_objects_size);
+      dynamic_objects, params.occlusion_ignore_velocity_thresholds,
+      params.occlusion_extra_objects_size);
     clear_occlusions_behind_objects(grid_map, objects);
   }
   const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
