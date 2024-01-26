@@ -5,9 +5,12 @@
 ## 2D Navigation Demo (Digital Twin Simulation - AutoDRIVE Simulator)
 
 1. Launch AutoDRIVE Simulator for Hunter SE and establish Autoware API bridge connection in single or distributed computing setting as applicable.
-2. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
+2. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
-    user@host-pc:~$ sudo apt install ros-galactic-slam-toolbox
+    user@host-pc:~$ sudo apt install ros-$ROS_DISTRO-slam-toolbox
+    ```
+3. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
+    ```bash
     user@host-pc:~$ ros2 launch autodrive_hunter simulator_slam_2d.launch.py
     user@host-pc:~$ ros2 run autodrive_hunter teleop_keyboard
     ```
@@ -15,7 +18,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-HunterSE-TinyTown-Simulator/Map-HunterSE.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-HunterSE-TinyTown-Simulator/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-3. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
+4. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
     user@host-pc:~$ ros2 launch autodrive_hunter simulator_record_2d.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
@@ -26,7 +29,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-HunterSE-TinyTown-Simulator/Record-HunterSE.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-HunterSE-TinyTown-Simulator/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-4. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
+5. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
     user@host-pc:~$ ros2 launch autodrive_hunter simulator_replay_2d.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
