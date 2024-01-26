@@ -397,6 +397,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
     current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  output.modified_goal = getPreviousModuleOutput().modified_goal;
 
   return output;
 }
@@ -1221,7 +1222,6 @@ std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoi
       prev_object->ref_path_points_for_obj_poly,
       ref_path_points_for_obj_poly.at(obj_point_idx).point.pose.position));
 
-    std::cerr << paths_lat_diff << std::endl;
     constexpr double min_paths_lat_diff = 0.3;
     if (paths_lat_diff < min_paths_lat_diff) {
       return true;

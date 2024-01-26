@@ -806,7 +806,9 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output) const
 
   if (!thread_safe_data_.foundPullOverPath()) {
     // situation : not safe against static objects use stop_path
-    setStopPath(output);
+    output.path = generateStopPath();
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
     setDrivableAreaInfo(output);
     return;
   }
@@ -816,7 +818,11 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output) const
     // situation : not safe against dynamic objects after approval
     // insert stop point in current path if ego is able to stop with acceleration and jerk
     // constraints
-    setStopPathFromCurrentPath(output);
+    output.path =
+      generateFeasibleStopPath(thread_safe_data_.get_pull_over_path()->getCurrentPath());
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Not safe against dynamic objects, generate stop path");
+    debug_stop_pose_with_info_.set(std::string("feasible stop after approval"));
   } else {
     // situation : (safe against static and dynamic objects) or (safe against static objects and
     // before approval) don't stop
@@ -833,58 +839,6 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output) const
   // set hazard and turn signal
   if (hasDecidedPath() && isActivated()) {
     setTurnSignalInfo(output);
-  }
-}
-
-void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output) const
-{
-  if (prev_data_.found_path || !prev_data_.stop_path) {
-    // safe -> not_safe or no prev_stop_path: generate new stop_path
-    output.path = generateStopPath();
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
-  } else {
-    // not_safe -> not_safe: use previous stop path
-    output.path = *prev_data_.stop_path;
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "Not found safe pull_over path, use previous stop path");
-    // stop_pose_ is removed in manager every loop, so need to set every loop.
-    const auto stop_pose_opt = utils::getFirstStopPoseFromPath(output.path);
-    if (stop_pose_opt) {
-      debug_stop_pose_with_info_.set(stop_pose_opt.value(), std::string("keep previous stop pose"));
-    }
-  }
-}
-
-void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output) const
-{
-  // safe or not safe(no feasible stop_path found) -> not_safe: try to find new feasible stop_path
-  if (prev_data_.safety_status.is_safe || !prev_data_.stop_path_after_approval) {
-    auto current_path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
-    const auto stop_path =
-      behavior_path_planner::utils::parking_departure::generateFeasibleStopPath(
-        current_path, planner_data_, stop_pose_, parameters_->maximum_deceleration_for_stop,
-        parameters_->maximum_jerk_for_stop);
-    if (stop_path) {
-      output.path = *stop_path;
-      debug_stop_pose_with_info_.set(std::string("feasible stop after approval"));
-      RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, generate stop path");
-    } else {
-      output.path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
-      RCLCPP_WARN_THROTTLE(
-        getLogger(), *clock_, 5000,
-        "Collision detected, no feasible stop path found, cannot stop.");
-    }
-  } else {
-    // not_safe safe(no feasible stop path found) -> not_safe: use previous stop path
-    output.path = *prev_data_.stop_path_after_approval;
-    // stop_pose_ is removed in manager every loop, so need to set every loop.
-    const auto stop_pose_opt = utils::getFirstStopPoseFromPath(output.path);
-    if (stop_pose_opt) {
-      debug_stop_pose_with_info_.set(
-        stop_pose_opt.value(), std::string("keep feasible stop after approval"));
-    }
-    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, use previous stop path");
   }
 }
 
@@ -949,36 +903,108 @@ void GoalPlannerModule::updateSteeringFactor(
 
 bool GoalPlannerModule::hasDecidedPath() const
 {
+  return checkDecidingPathStatus().first == DecidingPathStatus::DECIDED;
+}
+
+bool GoalPlannerModule::hasNotDecidedPath() const
+{
+  return checkDecidingPathStatus().first == DecidingPathStatus::NOT_DECIDED;
+}
+
+DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus() const
+{
+  const auto & prev_status = prev_data_.deciding_path_status;
+
   // Once this function returns true, it will continue to return true thereafter
-  if (prev_data_.has_decided_path) {
-    return true;
+  if (prev_status.first == DecidingPathStatus::DECIDED) {
+    return prev_status;
   }
 
   // if path is not safe, not decided
   if (!thread_safe_data_.foundPullOverPath()) {
-    return false;
+    return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
   }
 
-  // If it is dangerous before approval, do not determine the path.
+  // If it is dangerous against dynamic objects before approval, do not determine the path.
   // This eliminates a unsafe path to be approved
   if (
     parameters_->safety_check_params.enable_safety_check && !isSafePath().first && !isActivated()) {
-    return false;
+    RCLCPP_DEBUG(
+      getLogger(),
+      "[DecidingPathStatus]: NOT_DECIDED. path is not safe against dynamic objects before "
+      "approval");
+    return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
+  }
+
+  // if object recognition for path collision check is enabled, transition to DECIDED after
+  // DECIDING for a certain period of time if there is no collision.
+  const auto pull_over_path = thread_safe_data_.get_pull_over_path();
+  const auto current_path = pull_over_path->getCurrentPath();
+  if (prev_status.first == DecidingPathStatus::DECIDING) {
+    const double hysteresis_factor = 0.9;
+
+    // check goal pose collision
+    goal_searcher_->setPlannerData(planner_data_);
+    const auto modified_goal_opt = thread_safe_data_.get_modified_goal_pose();
+    if (
+      modified_goal_opt && !goal_searcher_->isSafeGoalWithMarginScaleFactor(
+                             modified_goal_opt.value(), hysteresis_factor)) {
+      RCLCPP_DEBUG(getLogger(), "[DecidingPathStatus]: DECIDING->NOT_DECIDED. goal is not safe");
+      return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
+    }
+
+    // check current parking path collision
+    const auto parking_path = utils::resamplePathWithSpline(pull_over_path->getParkingPath(), 0.5);
+    const double margin =
+      parameters_->object_recognition_collision_check_margin * hysteresis_factor;
+    if (checkObjectsCollision(parking_path, margin)) {
+      RCLCPP_DEBUG(
+        getLogger(),
+        "[DecidingPathStatus]: DECIDING->NOT_DECIDED. path has collision with objects");
+      return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
+    }
+
+    // if enough time has passed since deciding status starts, transition to DECIDED
+    constexpr double check_collision_duration = 1.0;
+    const double elapsed_time_from_deciding = (clock_->now() - prev_status.second).seconds();
+    if (elapsed_time_from_deciding > check_collision_duration) {
+      RCLCPP_DEBUG(
+        getLogger(), "[DecidingPathStatus]: DECIDING->DECIDED. has enough safe time passed");
+      return {DecidingPathStatus::DECIDED, clock_->now()};
+    }
+
+    // if enough time has NOT passed since deciding status starts, keep DECIDING
+    RCLCPP_DEBUG(
+      getLogger(), "[DecidingPathStatus]: keep DECIDING. elapsed_time_from_deciding: %f",
+      elapsed_time_from_deciding);
+    return prev_status;
   }
 
   // if ego is sufficiently close to the start of the nearest candidate path, the path is decided
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
-  const size_t ego_segment_idx = motion_utils::findNearestSegmentIndex(
-    thread_safe_data_.get_pull_over_path()->getCurrentPath().points, current_pose.position);
+  const size_t ego_segment_idx =
+    motion_utils::findNearestSegmentIndex(current_path.points, current_pose.position);
 
-  const size_t start_pose_segment_idx = motion_utils::findNearestSegmentIndex(
-    thread_safe_data_.get_pull_over_path()->getCurrentPath().points,
-    thread_safe_data_.get_pull_over_path()->start_pose.position);
+  const size_t start_pose_segment_idx =
+    motion_utils::findNearestSegmentIndex(current_path.points, pull_over_path->start_pose.position);
   const double dist_to_parking_start_pose = calcSignedArcLength(
-    thread_safe_data_.get_pull_over_path()->getCurrentPath().points, current_pose.position,
-    ego_segment_idx, thread_safe_data_.get_pull_over_path()->start_pose.position,
-    start_pose_segment_idx);
-  return dist_to_parking_start_pose < parameters_->decide_path_distance;
+    current_path.points, current_pose.position, ego_segment_idx,
+    pull_over_path->start_pose.position, start_pose_segment_idx);
+  if (dist_to_parking_start_pose > parameters_->decide_path_distance) {
+    return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
+  }
+
+  // if object recognition for path collision check is enabled, transition to DECIDING to check
+  // collision for a certain period of time. Otherwise, transition to DECIDED directly.
+  if (parameters_->use_object_recognition) {
+    RCLCPP_DEBUG(
+      getLogger(),
+      "[DecidingPathStatus]: NOT_DECIDED->DECIDING. start checking collision for certain "
+      "period of time");
+    return {DecidingPathStatus::DECIDING, clock_->now()};
+  }
+  RCLCPP_DEBUG(getLogger(), "[DecidingPathStatus]: NOT_DECIDED->DECIDED");
+  return {DecidingPathStatus::DECIDED, clock_->now()};
 }
 
 void GoalPlannerModule::decideVelocity()
@@ -1039,10 +1065,11 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
     return getPreviousModuleOutput();
   }
 
-  if (!hasDecidedPath() && needPathUpdate(1.0 /*path_update_duration*/)) {
+  if (hasNotDecidedPath() && needPathUpdate(1.0 /*path_update_duration*/)) {
     // if the final path is not decided and enough time has passed since last path update,
     // select safe path from lane parking pull over path candidates
     // and set it to thread_safe_data_
+    RCLCPP_DEBUG(getLogger(), "Update pull over path candidates");
 
     thread_safe_data_.clearPullOverPath();
 
@@ -1096,7 +1123,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
   path_candidate_ =
     std::make_shared<PathWithLaneId>(thread_safe_data_.get_pull_over_path()->getFullPath());
 
-  updatePreviousData(output);
+  updatePreviousData();
 
   return output;
 }
@@ -1123,17 +1150,13 @@ void GoalPlannerModule::postProcess()
   setStopReason(StopReason::GOAL_PLANNER, thread_safe_data_.get_pull_over_path()->getFullPath());
 }
 
-void GoalPlannerModule::updatePreviousData(const BehaviorModuleOutput & output)
+void GoalPlannerModule::updatePreviousData()
 {
-  if (prev_data_.found_path || !prev_data_.stop_path) {
-    prev_data_.stop_path = std::make_shared<PathWithLaneId>(output.path);
-  }
-
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
   prev_data_.found_path = thread_safe_data_.foundPullOverPath();
 
-  prev_data_.has_decided_path = hasDecidedPath();
+  prev_data_.deciding_path_status = checkDecidingPathStatus();
 
   // This is related to safety check, so if it is disabled, return here.
   if (!parameters_->safety_check_params.enable_safety_check) {
@@ -1152,17 +1175,6 @@ void GoalPlannerModule::updatePreviousData(const BehaviorModuleOutput & output)
     prev_data_.safety_status.safe_start_time = std::nullopt;
   }
   prev_data_.safety_status.is_safe = is_safe;
-
-  // If safety check is enabled, save current path as stop_path_after_approval
-  // This path is set only once after approval.
-  if (!isActivated() || (!is_safe && prev_data_.stop_path_after_approval)) {
-    return;
-  }
-  auto stop_path = std::make_shared<PathWithLaneId>(output.path);
-  for (auto & point : stop_path->points) {
-    point.point.longitudinal_velocity_mps = 0.0;
-  }
-  prev_data_.stop_path_after_approval = stop_path;
 }
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
@@ -1269,7 +1281,7 @@ PathWithLaneId GoalPlannerModule::generateStopPath() const
       return std::make_pair(decel_pose.value(), "stop at search start pose");
     });
   if (!stop_pose_with_info) {
-    const auto feasible_stop_path = generateFeasibleStopPath();
+    const auto feasible_stop_path = generateFeasibleStopPath(getPreviousModuleOutput().path);
     // override stop pose info debug string
     debug_stop_pose_with_info_.set(std::string("feasible stop: not calculate stop pose"));
     return feasible_stop_path;
@@ -1284,7 +1296,7 @@ PathWithLaneId GoalPlannerModule::generateStopPath() const
   const bool is_stopped = std::abs(current_vel) < eps_vel;
   const double buffer = is_stopped ? stop_distance_buffer_ : 0.0;
   if (min_stop_distance && ego_to_stop_distance + buffer < *min_stop_distance) {
-    const auto feasible_stop_path = generateFeasibleStopPath();
+    const auto feasible_stop_path = generateFeasibleStopPath(getPreviousModuleOutput().path);
     debug_stop_pose_with_info_.set(
       std::string("feasible stop: stop pose is closer than min_stop_distance"));
     return feasible_stop_path;
@@ -1316,17 +1328,17 @@ PathWithLaneId GoalPlannerModule::generateStopPath() const
   return stop_path;
 }
 
-PathWithLaneId GoalPlannerModule::generateFeasibleStopPath() const
+PathWithLaneId GoalPlannerModule::generateFeasibleStopPath(const PathWithLaneId & path) const
 {
   // calc minimum stop distance under maximum deceleration
   const auto min_stop_distance = calcFeasibleDecelDistance(
     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0.0);
   if (!min_stop_distance) {
-    return getPreviousModuleOutput().path;
+    return path;
   }
 
   // set stop point
-  auto stop_path = getPreviousModuleOutput().path;
+  auto stop_path = path;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto stop_idx =
     motion_utils::insertStopPoint(current_pose, *min_stop_distance, stop_path.points);
@@ -1509,22 +1521,12 @@ bool GoalPlannerModule::checkObjectsCollision(
   const PathWithLaneId & path, const double collision_check_margin,
   const bool update_debug_data) const
 {
-  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
-    *(planner_data_->route_handler), left_side_parking_, parameters_->backward_goal_search_length,
-    parameters_->forward_goal_search_length);
+  const auto pull_over_lane_stop_objects =
+    goal_planner_utils::extractStaticObjectsInExpandedPullOverLanes(
+      *(planner_data_->route_handler), left_side_parking_, parameters_->backward_goal_search_length,
+      parameters_->forward_goal_search_length, parameters_->detection_bound_offset,
+      *(planner_data_->dynamic_object), parameters_->th_moving_object_velocity);
 
-  const auto expanded_pull_over_lanes =
-    left_side_parking_ ? lanelet::utils::getExpandedLanelets(
-                           pull_over_lanes, parameters_->detection_bound_offset, 0.0)
-                       : lanelet::utils::getExpandedLanelets(
-                           pull_over_lanes, 0.0, parameters_->detection_bound_offset);
-
-  const auto [pull_over_lane_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(
-      *(planner_data_->dynamic_object), expanded_pull_over_lanes,
-      utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto pull_over_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    pull_over_lane_objects, parameters_->th_moving_object_velocity);
   std::vector<Polygon2d> obj_polygons;
   for (const auto & object : pull_over_lane_stop_objects.objects) {
     obj_polygons.push_back(tier4_autoware_utils::toPolygon2d(object));
