@@ -1672,6 +1672,10 @@ TurnSignalInfo NormalLaneChange::calcTurnSignalInfo() const
 
   TurnSignalInfo turn_signal_info{};
 
+  if (path.path.points.empty()) {
+    return turn_signal_info;
+  }
+
   // desired start pose = prepare start pose
   turn_signal_info.desired_start_point = std::invoke([&]() {
     const auto blinker_start_duration = planner_data_->parameters.turn_signal_search_time;
