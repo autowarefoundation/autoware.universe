@@ -14,37 +14,25 @@
 
 #include "simple_planning_simulator/vehicle_model/sim_model_pymodels.hpp"
 
+#include "learned_model/pymodel_interconnected_model.hpp"
+
 #include <algorithm>
 
-#include "pymodel_interconnected_model.hpp"
-
-SimModelPymodels::SimModelPymodels(double dt)
-: SimModelInterface(7 /* dim x */, 2 /* dim u */)
+SimModelPymodels::SimModelPymodels(double dt) : SimModelInterface(7 /* dim x */, 2 /* dim u */)
 {
-  
   // TODO this should be in config file not hardcoded here
   // Think of a way how to differentiate between "simple" model and "base + error" model
-  std::vector<std::tuple<char*, char*, char*>> model_descriptors = {
-    {
-      (char*)"control_analysis_pipeline.autoware_models.vehicle.kinematic",
-      (char*)nullptr,
-      (char*)"KinematicModel"
-    },
-    {
-      (char*)"control_analysis_pipeline.autoware_models.steering.example_base_error",
-      (char*)"$HOME/autoware_model_params/base_model_save",
-      (char*)"BaseError"
-    },
-    {
-      (char*)"control_analysis_pipeline.autoware_models.drive.drive_example",
-      (char*)nullptr,
-      (char*)"DriveExample"
-    }
-  };
-  
-  vehicle.addSubmodel(model_desc[0]);
-  vehicle.addSubmodel(model_desc[1]); 
-  vehicle.addSubmodel(model_desc[2]); 
+  std::vector<std::tuple<char *, char *, char *>> model_descriptors = {
+    {(char *)"control_analysis_pipeline.autoware_models.vehicle.kinematic", (char *)nullptr,
+     (char *)"KinematicModel"},
+    {(char *)"control_analysis_pipeline.autoware_models.steering.example_base_error",
+     (char *)"$HOME/autoware_model_params/base_model_save", (char *)"BaseError"},
+    {(char *)"control_analysis_pipeline.autoware_models.drive.drive_example", (char *)nullptr,
+     (char *)"DriveExample"}};
+
+  vehicle.addSubmodel(model_descriptors[0]);
+  vehicle.addSubmodel(model_descriptors[1]);
+  vehicle.addSubmodel(model_descriptors[2]);
 
   vehicle.generateConnections(input_names, state_names);
 

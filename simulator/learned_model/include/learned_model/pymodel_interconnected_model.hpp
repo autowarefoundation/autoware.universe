@@ -1,13 +1,14 @@
-#ifndef LEARNED_MODEL__SIM_PYMODEL_INTERCONNECTED_MODEL_
-#define LEARNED_MODEL__SIM_PYMODEL_INTERCONNECTED_MODEL_
+#ifndef LEARNED_MODEL__PYMODEL_INTERCONNECTED_MODEL_HPP_
+#define LEARNED_MODEL__PYMODEL_INTERCONNECTED_MODEL_HPP_
 
-#include "pymodel_interface.hpp"
-#include "pymodel_simple_model.hpp"
-#include "model_connections_helpers.hpp"
+#include "learned_model/model_connections_helpers.hpp"
+#include "learned_model/pymodel_interface.hpp"
+#include "learned_model/pymodel_simple_model.hpp"
 
 #include <dlfcn.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
+
 #include <algorithm>
 
 namespace py = pybind11;
@@ -21,11 +22,13 @@ class InterconnectedModel
 
   std::vector<std::unique_ptr<PymodelInterface>> submodels;
 
-  // index in "map_in_to_sig_vec" is index in "py_inputs" and value in "map_in_to_sig_vec" is index in "all_variables_names"
-  std::vector<int> map_in_to_sig_vec;  
+  // index in "map_in_to_sig_vec" is index in "py_inputs" and value in "map_in_to_sig_vec" is index
+  // in "all_variables_names"
+  std::vector<int> map_in_to_sig_vec;
 
-  // index in "map_sig_vec_to_out" is index in "pymodel_outputs" and value in "map_sig_vec_to_out" is index in "all_variables_names"
-  std::vector<int> map_sig_vec_to_out;  
+  // index in "map_sig_vec_to_out" is index in "pymodel_outputs" and value in "map_sig_vec_to_out"
+  // is index in "all_variables_names"
+  std::vector<int> map_sig_vec_to_out;
 
 public:
   py::scoped_interpreter guard{};  // start the interpreter and keep it alive
@@ -48,7 +51,8 @@ public:
   }
 
 private:
-  std::vector<int> createConnectionsMap(std::vector<char *> connection_names_1, std::vector<char *> connection_names_2)
+  std::vector<int> createConnectionsMap(
+    std::vector<char *> connection_names_1, std::vector<char *> connection_names_2)
   {
     std::vector<int> connection_map;
     // index in "connection_map" is index in "connection_names_2" and value in "connection_map" is
@@ -73,7 +77,8 @@ private:
    */
   void mapInputs(std::vector<char *> in_names)
   {
-    // index in "map_in_to_sig_vec" is index in "in_names" and value in "map_in_to_sig_vec" is index in "signals_vec_names"
+    // index in "map_in_to_sig_vec" is index in "in_names" and value in "map_in_to_sig_vec" is index
+    // in "signals_vec_names"
     map_in_to_sig_vec = createConnectionsMap(signals_vec_names, in_names);
   }
 
@@ -83,7 +88,8 @@ private:
    */
   void mapOutputs(std::vector<char *> out_names)
   {
-    // index in "map_sig_vec_to_out" is index in "out_names" and value in "map_sig_vec_to_out" is index in "signals_vec_names"
+    // index in "map_sig_vec_to_out" is index in "out_names" and value in "map_sig_vec_to_out" is
+    // index in "signals_vec_names"
     map_sig_vec_to_out = createConnectionsMap(signals_vec_names, out_names);
   }
 
@@ -95,14 +101,16 @@ private:
   {
     // Check if the name is already in the vector. If not add it.
     for (char * name : names) {
-      if (std::find(signals_vec_names.begin(), signals_vec_names.end(), name) == signals_vec_names.end()) {
+      if (
+        std::find(signals_vec_names.begin(), signals_vec_names.end(), name) ==
+        signals_vec_names.end()) {
         signals_vec_names.push_back(name);
       }
     }
   }
-  
+
   /**
-   * @brief create of signal names from all sub-models and PSIM signal names 
+   * @brief create of signal names from all sub-models and PSIM signal names
    */
   void getSignalNames(std::vector<char *> in_names, std::vector<char *> out_names)
   {
@@ -151,7 +159,8 @@ public:
   }
 
   /**
-   * @brief set a new model state if it was changed using PSIM interface (mainly position and orientation)
+   * @brief set a new model state if it was changed using PSIM interface (mainly position and
+   * orientation)
    * @param [in] new_state new state set by PSIM
    */
   void initState(std::vector<double> new_state)
@@ -160,7 +169,9 @@ public:
 
     // Check if some state was changed externally
     for (size_t PSIM_STATE_IDX = 0; PSIM_STATE_IDX < new_state.size(); PSIM_STATE_IDX++) {
-      if (abs(model_signals_vec[map_sig_vec_to_out[PSIM_STATE_IDX]] - new_state[PSIM_STATE_IDX]) > 1e-6) {
+      if (
+        abs(model_signals_vec[map_sig_vec_to_out[PSIM_STATE_IDX]] - new_state[PSIM_STATE_IDX]) >
+        1e-6) {
         state_changed_externally = true;
         break;
       }
@@ -170,7 +181,8 @@ public:
       // Reinitialize model
       std::cout << "Reseting model" << std::endl;
 
-      // Currently initializing model to zero -> TODO find a way how to initialize them to some other default values
+      // Currently initializing model to zero -> TODO find a way how to initialize them to some
+      // other default values
       std::fill(model_signals_vec.begin(), model_signals_vec.end(), 0.0);
 
       for (size_t PSIM_STATE_IDX = 0; PSIM_STATE_IDX < new_state.size(); PSIM_STATE_IDX++) {
@@ -209,4 +221,4 @@ public:
   }
 };
 
-#endif  // LEARNED_MODEL__SIM_PYMODEL_INTERCONNECTED_MODEL_
+#endif  // LEARNED_MODEL__PYMODEL_INTERCONNECTED_MODEL_HPP_
