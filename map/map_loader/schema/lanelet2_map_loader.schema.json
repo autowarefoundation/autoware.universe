@@ -10,10 +10,16 @@
           "type": "number",
           "description": "Resolution of the Lanelet center line [m]",
           "default": "5.0"
+        },
+        "lanelet2_map_path": {
+          "type": "string",
+          "description": "The lanelet2 map path",
+          "default": ""
         }
       },
       "required": [
-          "center_line_resolution"
+          "center_line_resolution",
+          "lanelet2_map_path"
       ],
       "additionalProperties": false
     }
