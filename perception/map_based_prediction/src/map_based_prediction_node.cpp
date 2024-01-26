@@ -801,6 +801,9 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sub_map_ = this->create_subscription<HADMapBin>(
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
+  sub_traffic_signals_ = this->create_subscription<TrafficSignalArray>(
+    "/traffic_signals", 1,
+    std::bind(&MapBasedPredictionNode::trafficSignalsCallback, this, std::placeholders::_1));
 
   pub_objects_ = this->create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
   pub_debug_markers_ =
@@ -870,6 +873,14 @@ void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
   const auto walkways = lanelet::utils::query::walkwayLanelets(all_lanelets);
   crosswalks_.insert(crosswalks_.end(), crosswalks.begin(), crosswalks.end());
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
+}
+
+void MapBasedPredictionNode::trafficSignalsCallback(const TrafficSignalArray::ConstSharedPtr msg)
+{
+  traffic_signal_id_map.clear();
+  for (const auto & signal : msg->signals) {
+    traffic_signal_id_map[signal.traffic_signal_id] = signal;
+  }
 }
 
 void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPtr in_objects)
@@ -1218,6 +1229,23 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   }
   // try to find the edge points for all crosswalks and generate path to the crosswalk edge
   for (const auto & crosswalk : crosswalks_) {
+    const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
+    if (crosswalk_signal_id_opt.has_value()) {
+      // If the crosswalk has traffic light, do something.
+      if (traffic_signal_id_map.count(crosswalk_signal_id_opt.value()) != 0) {
+        const auto & signal_elements =
+          traffic_signal_id_map.at(crosswalk_signal_id_opt.value()).elements;
+        if (signal_elements.size() > 1) {
+          RCLCPP_ERROR(
+            get_logger(), "[Map Based Prediction]: Multiple TrafficSignalElement_ are recieved.");
+        } else if (
+          !signal_elements.empty() && signal_elements.front().color == TrafficSignalElement::RED) {
+          continue;
+        }
+      }
+      // TODO(yuki takagi): If a flag is setted, wait for timeout while the pedestrian is stopping.
+    }
+
     const auto edge_points = getCrosswalkEdgePoints(crosswalk);
 
     const auto reachable_first = hasPotentialToReach(
@@ -2211,6 +2239,24 @@ bool MapBasedPredictionNode::isDuplicated(
 
   return false;
 }
+
+std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
+  const lanelet::ConstLanelet & way_lanelet)
+{
+  const auto traffic_light_reg_elems =
+    way_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>();
+  if (traffic_light_reg_elems.empty()) {
+    return std::nullopt;
+  } else if (traffic_light_reg_elems.size() > 1) {
+    RCLCPP_ERROR(
+      get_logger(),
+      "[Map Based Prediction]: "
+      "Multiple regulatory elements as TrafficLight are defined to one lanelet object.");
+    return std::nullopt;  // Is it appropriate?
+  }
+  return traffic_light_reg_elems.front()->id();
+}
+
 }  // namespace map_based_prediction
 
 #include <rclcpp_components/register_node_macro.hpp>
