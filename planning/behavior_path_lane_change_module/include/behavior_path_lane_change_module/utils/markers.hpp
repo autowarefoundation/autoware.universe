@@ -28,9 +28,9 @@
 namespace marker_utils::lane_change_markers
 {
 using behavior_path_planner::LaneChangePath;
+using behavior_path_planner::data::lane_change::Debug;
 using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects;
 using visualization_msgs::msg::MarkerArray;
-using LaneChangeDebug = behavior_path_planner::data::lane_change::Debug;
 MarkerArray showAllValidLaneChangePath(
   const std::vector<LaneChangePath> & lanes, std::string && ns);
 MarkerArray createLaneChangingVirtualWallMarker(
@@ -40,6 +40,6 @@ MarkerArray showFilteredObjects(
   const ExtendedPredictedObjects & current_lane_objects,
   const ExtendedPredictedObjects & target_lane_objects,
   const ExtendedPredictedObjects & other_lane_objects, const std::string & ns);
-MarkerArray createDebugMarkerArray(const LaneChangeDebug & debug_data);
+MarkerArray createDebugMarkerArray(const Debug & debug_data);
 }  // namespace marker_utils::lane_change_markers
 #endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__MARKERS_HPP_

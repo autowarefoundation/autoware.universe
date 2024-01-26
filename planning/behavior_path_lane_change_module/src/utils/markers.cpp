@@ -122,7 +122,7 @@ MarkerArray showFilteredObjects(
   return marker_array;
 }
 
-MarkerArray createDebugMarkerArray(const LaneChangeDebug & debug_data)
+MarkerArray createDebugMarkerArray(const Debug & debug_data)
 {
   using marker_utils::showPolygon;
   using marker_utils::showPredictedPath;
