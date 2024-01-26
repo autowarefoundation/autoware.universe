@@ -15,7 +15,7 @@
 #ifndef DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
 #define DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
 
-#include "dummy_perception_publisher/msg/object.hpp"
+#include "autoware_dummy_perception_publisher/msg/object.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -45,7 +45,7 @@
 struct ObjectInfo
 {
   ObjectInfo(
-    const dummy_perception_publisher::msg::Object & object, const rclcpp::Time & current_time);
+    const autoware_dummy_perception_publisher::msg::Object & object, const rclcpp::Time & current_time);
   double length;
   double width;
   double height;
@@ -60,7 +60,7 @@ struct ObjectInfo
   // convert to TrackedObject
   // (todo) currently need object input to get id and header information, but it should be removed
   autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
-    const dummy_perception_publisher::msg::Object & object) const;
+    const autoware_dummy_perception_publisher::msg::Object & object) const;
 };
 
 class PointCloudCreator
@@ -116,11 +116,11 @@ private:
     detected_object_with_feature_pub_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
     ground_truth_objects_pub_;
-  rclcpp::Subscription<dummy_perception_publisher::msg::Object>::SharedPtr object_sub_;
+  rclcpp::Subscription<autoware_dummy_perception_publisher::msg::Object>::SharedPtr object_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  std::vector<dummy_perception_publisher::msg::Object> objects_;
+  std::vector<autoware_dummy_perception_publisher::msg::Object> objects_;
   double visible_range_;
   double detection_successful_rate_;
   bool enable_ray_tracing_;
@@ -134,7 +134,7 @@ private:
 
   std::mt19937 random_generator_;
   void timerCallback();
-  void objectCallback(const dummy_perception_publisher::msg::Object::ConstSharedPtr msg);
+  void objectCallback(const autoware_dummy_perception_publisher::msg::Object::ConstSharedPtr msg);
 
 public:
   DummyPerceptionPublisherNode();

@@ -10,10 +10,10 @@ This node publishes the result of the dummy detection with the type of perceptio
 
 ### Input
 
-| Name           | Type                                      | Description             |
-| -------------- | ----------------------------------------- | ----------------------- |
-| `/tf`          | `tf2_msgs/TFMessage`                      | TF (self-pose)          |
-| `input/object` | `dummy_perception_publisher::msg::Object` | dummy detection objects |
+| Name           | Type                                               | Description             |
+| -------------- | -------------------------------------------------- | ----------------------- |
+| `/tf`          | `tf2_msgs/TFMessage`                               | TF (self-pose)          |
+| `input/object` | `autoware_dummy_perception_publisher::msg::Object` | dummy detection objects |
 
 ### Output
 
