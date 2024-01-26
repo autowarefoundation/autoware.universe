@@ -8,7 +8,7 @@ find_package(Python3 COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/pymodel_interconnected_model.cpp
+  DIRECTORY src
 )
 target_link_libraries(${PROJECT_NAME} pybind11::embed ${Python3_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${Python3_INCLUDE_DIRS})
