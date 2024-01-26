@@ -181,6 +181,7 @@ void GyroBiasEstimator::timer_callback()
 
   validate_gyro_bias();
   updater_.force_update();
+  updater_.setPeriod(diagnostics_updater_interval_sec_); // to reset timer inside the updater
 }
 
 void GyroBiasEstimator::validate_gyro_bias()
