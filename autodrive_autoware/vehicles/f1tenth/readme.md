@@ -33,7 +33,7 @@
     ```
     > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
 
-      <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-RVizGym/Record-F1TENTH.gif">
+   <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-RVizGym/Record-F1TENTH.gif">
 
 ## Digital Twin Simulation Demo - AutoDRIVE Simulator
 
