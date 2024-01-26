@@ -148,8 +148,8 @@ AvoidLineArray combineRawShiftLinesWithUniqueCheck(
 
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift,
-  DebugData & debug);
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool has_left_shift,
+  const bool has_right_shift, DebugData & debug);
 
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & reference_path, const PathWithLaneId & spline_path,

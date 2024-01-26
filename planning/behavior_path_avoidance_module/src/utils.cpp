@@ -1872,14 +1872,14 @@ lanelet::ConstLanelets getAdjacentLane(
 
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift,
-  DebugData & debug)
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool has_left_shift,
+  const bool has_right_shift, DebugData & debug)
 {
   const auto & p = parameters;
   const auto check_right_lanes =
-    (is_right_shift && p->check_shift_side_lane) || (!is_right_shift && p->check_other_side_lane);
+    (has_right_shift && p->check_shift_side_lane) || (has_left_shift && p->check_other_side_lane);
   const auto check_left_lanes =
-    (!is_right_shift && p->check_shift_side_lane) || (is_right_shift && p->check_other_side_lane);
+    (has_left_shift && p->check_shift_side_lane) || (has_right_shift && p->check_other_side_lane);
 
   std::vector<ExtendedPredictedObject> target_objects;
 
