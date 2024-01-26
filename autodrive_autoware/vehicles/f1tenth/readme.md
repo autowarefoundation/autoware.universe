@@ -4,7 +4,19 @@
 
 ## Gym Simulation Demo - RViz
 
-1. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
+1. Install `onnx` and roll back `setuptools` to version 65.5.0 (if not already accomplished).
+   ```bash
+   user@host-pc:~$ sudo apt install python3-testresources
+   user@host-pc:~$ pip3 install onnx setuptools==65.5.0
+   ```
+
+2. Install the gym dependencies (if not already accomplished).
+   ```bash
+   user@host-pc:~$ cd ~/Autoware_WS/autoware_local/src/universe/autoware.universe/autodrive_autoware/vehicles/f1tenth/f1tenth_gym_ros/f1tenth_gym
+   user@host-pc:~$ pip3 install -e .
+   ```
+
+3. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
     ```bash
     user@host-pc:~$ sudo apt update
     user@host-pc:~$ rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
