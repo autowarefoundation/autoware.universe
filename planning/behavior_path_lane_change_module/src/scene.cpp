@@ -1513,9 +1513,16 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   // lane changing start getEgoPose() is at the end of prepare segment
   const auto current_lane_terminal_point =
     lanelet::utils::conversion::toGeomMsgPt(current_lanes.back().centerline3d().back());
-  auto lane_changing_start_pose = motion_utils::calcLongitudinalOffsetPose(
+
+  double distance_to_terminal_from_goal = 0;
+  if (is_goal_in_route) {
+    distance_to_terminal_from_goal =
+      utils::getDistanceToEndOfLane(route_handler.getGoalPose(), current_lanes);
+  }
+
+  const auto lane_changing_start_pose = motion_utils::calcLongitudinalOffsetPose(
     prev_module_path_.points, current_lane_terminal_point,
-    -(lane_change_buffer + next_lane_change_buffer));
+    -(lane_change_buffer + next_lane_change_buffer + distance_to_terminal_from_goal));
 
   if (!lane_changing_start_pose) {
     RCLCPP_WARN(logger_, "Reject: lane changing start pose not found!!!");

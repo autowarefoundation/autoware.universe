@@ -412,16 +412,16 @@ PathWithLaneId getReferencePathFromTargetLane(
     return std::min(dist_from_lc_start, target_lane_length - next_lane_change_buffer);
   });
 
-  if (s_end - s_start < lane_changing_length) {
-    return PathWithLaneId();
-  }
-
   RCLCPP_DEBUG(
     rclcpp::get_logger("behavior_path_planner")
       .get_child("lane_change")
       .get_child("util")
       .get_child("getReferencePathFromTargetLane"),
     "start: %f, end: %f", s_start, s_end);
+
+  if (s_end - s_start < lane_changing_length) {
+    return PathWithLaneId();
+  }
 
   const auto lane_changing_reference_path =
     route_handler.getCenterLinePath(target_lanes, s_start, s_end);
