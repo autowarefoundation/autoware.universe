@@ -8,8 +8,8 @@
 2. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
     user@host-pc:~$ sudo apt install ros-galactic-slam-toolbox
-    user@host-pc:~$ ros2 launch autodrive_opencav simulator_slam_2d.launch.py
-    user@host-pc:~$ ros2 run autodrive_opencav teleop_keyboard
+    user@host-pc:~$ ros2 launch autodrive_hunter simulator_slam_2d.launch.py
+    user@host-pc:~$ ros2 run autodrive_hunter teleop_keyboard
     ```
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-HunterSE-TinyTown-Simulator/Map-HunterSE.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-HunterSE-TinyTown-Simulator/Map-Autoware.gif" width="478"> |
@@ -17,9 +17,9 @@
 
 3. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_opencav simulator_record_2d.launch.py
+    user@host-pc:~$ ros2 launch autodrive_hunter simulator_record_2d.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
-    user@host-pc:~$ ros2 run autodrive_opencav teleop_keyboard
+    user@host-pc:~$ ros2 run autodrive_hunter teleop_keyboard
     ```
     > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
 
@@ -28,7 +28,7 @@
 
 4. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_opencav simulator_replay_2d.launch.py
+    user@host-pc:~$ ros2 launch autodrive_hunter simulator_replay_2d.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
     ```
     > **Note:** Replace `<username>` with your actual username. Be sure to use the correct path to load the trajectory file.
@@ -48,9 +48,9 @@
 
 3. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_opencav simulator_record_3d.launch.py
+    user@host-pc:~$ ros2 launch autodrive_hunter simulator_record_3d.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
-    user@host-pc:~$ ros2 run autodrive_opencav teleop_keyboard
+    user@host-pc:~$ ros2 run autodrive_hunter teleop_keyboard
     ```
     > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
 
@@ -59,7 +59,7 @@
 
 4. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_opencav simulator_replay_3d.launch.py
+    user@host-pc:~$ ros2 launch autodrive_hunter simulator_replay_3d.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
     ```
     > **Note:** Replace `<username>` with your actual username. Be sure to use the correct path to load the trajectory file.
