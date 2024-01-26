@@ -1,1 +1,1 @@
-#include "../include/pymodel_interconnected_model.hpp"
+#include "learned_model/pymodel_interconnected_model.hpp"

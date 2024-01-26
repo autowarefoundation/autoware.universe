@@ -1,1 +1,1 @@
-#include "../include/model_connections_helpers.hpp"
+#include "learned_model/model_connections_helpers.hpp"

@@ -15,8 +15,8 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_PYMODELS_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_PYMODELS_HPP_
 
+#include "learned_model/pymodel_interconnected_model.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
-#include "pymodel_interconnected_model.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/LU>
@@ -47,24 +47,16 @@ public:
   ~SimModelPymodels() = default;
 
 private:
-
-  /* 
-  Specify string names for states and inputs. So we can automatically map states and 
+  /*
+  Specify string names for states and inputs. So we can automatically map states and
   inputs of this model to states and inputs of the python model.
   */
 
-  std::vector<char*> state_names = {(char*)"POS_X", 
-                                    (char*)"POS_Y", 
-                                    (char*)"YAW",
-                                    (char*)"YAW_RATE", 
-                                    (char*)"VX",
-                                    (char*)"VY", 
-                                    (char*)"STEER"
-                                    };
+  std::vector<char *> state_names = {(char *)"POS_X",    (char *)"POS_Y", (char *)"YAW",
+                                     (char *)"YAW_RATE", (char *)"VX",    (char *)"VY",
+                                     (char *)"STEER"};
 
-  std::vector<char*> input_names = {(char*)"VX_DES", 
-                                    (char*)"STEER_DES"
-                                    };
+  std::vector<char *> input_names = {(char *)"VX_DES", (char *)"STEER_DES"};
 
   enum IDX {
     X = 0,
@@ -88,7 +80,7 @@ private:
 
   std::deque<double> vx_input_queue_;     //!< @brief buffer for velocity command
   std::deque<double> steer_input_queue_;  //!< @brief buffer for angular velocity command
-  
+
   /**
    * @brief set queue buffer for input command
    * @param [in] dt delta time
@@ -146,7 +138,12 @@ private:
    * @param [in] state current model state
    * @param [in] input input vector to model
    */
-  Eigen::VectorXd calcModel([[maybe_unused]]const Eigen::VectorXd & state, [[maybe_unused]]const Eigen::VectorXd & input) override {return Eigen::VectorXd::Zero(dim_x_);}
+  Eigen::VectorXd calcModel(
+    [[maybe_unused]] const Eigen::VectorXd & state,
+    [[maybe_unused]] const Eigen::VectorXd & input) override
+  {
+    return Eigen::VectorXd::Zero(dim_x_);
+  }
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_PYMODELS_HPP_
