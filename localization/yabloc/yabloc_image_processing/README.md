@@ -53,7 +53,7 @@ This node extract road surface region by [graph-based-segmentation](https://docs
 
 ### Parameters
 
-{{ json_to_markdown("localization/yabloc/yabloc_common/schema/graph_segmentation.schema.json") }}
+{{ json_to_markdown("localization/yabloc/yabloc_image_processing/schema/graph_segmentation.schema.json") }}
 
 ## segment_filter
 
@@ -81,7 +81,7 @@ This is a node that integrates the results of graph_segment and lsd to extract r
 
 ### Parameters
 
-{{ json_to_markdown("localization/yabloc/yabloc_common/schema/segment_filter.schema.json") }}
+{{ json_to_markdown("localization/yabloc/yabloc_image_processing/schema/segment_filter.schema.json") }}
 
 ## undistort
 
@@ -112,7 +112,7 @@ This is to avoid redundant decompression within Autoware.
 
 ### Parameters
 
-{{ json_to_markdown("localization/yabloc/yabloc_common/schema/undistort.schema.json") }}
+{{ json_to_markdown("localization/yabloc/yabloc_image_processing/schema/undistort.schema.json") }}
 
 #### about tf_static overriding
 
