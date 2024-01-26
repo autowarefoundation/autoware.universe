@@ -243,7 +243,11 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 ## How to record a trajectory (real car)
 
-1. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
+1. Update the recordreplay_planner_nodes param file at `~autoware/src/universe/autoware.universe/planning/recordreplay_planner_nodes/param/defaults.param.yaml`
+
+   change the vehicle_state from '/ego_racecar/odom' to '/pf/pose/odom' so it will use the data from particle fileter
+
+2. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
 # Terminal 1
@@ -252,7 +256,7 @@ cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth realcar_launch.py
 ```
 
-2. Launch the `particle_filter` node for localization. You need the library `range_libc` to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
+3. Launch the `particle_filter` node for localization. You need the library `range_libc` to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
 
 ```(bash)
 # Terminal 2
@@ -261,7 +265,7 @@ cd autoware && . install/setup.bash
 ros2 launch particle_filter localize_launch.py
 ```
 
-3. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved. 
+4. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved. 
 The default path for the recording is is set to `"/tmp/path"`. This recording will be automatically erased after system reboot.
 
 ```(bash)
@@ -273,7 +277,11 @@ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/act
 
 ## How to replay a trajectory (real car)
 
-1. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
+1. Update the trajectory_follower_f1tenth launch file  `~/autoware/src/universe/autoware.universe/f1tenth/trajectory_follower_f1tenth/launch/trajectory_follower_f1tenth.launch.xml`
+
+   update <remap from="input/kinematics" to="/ego_racecar/odom"/> to <remap from="input/kinematics" to="/pf/pose/odom"/>
+
+2. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
 # Terminal 1
@@ -282,7 +290,7 @@ cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth realcar_launch.py
 ```
 
-2. Launch the `particle_filter` node for localization. You need the library range_libc to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
+3. Launch the `particle_filter` node for localization. You need the library range_libc to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
 
 ```(bash)
 # Terminal 2
@@ -291,7 +299,7 @@ cd autoware && . install/setup.bash
 ros2 launch particle_filter localize_launch.py
 ```
 
-3. Replay a trajectory from your previously saved file
+4. Replay a trajectory from your previously saved file
 
 ```(bash)
 # Terminal 3
