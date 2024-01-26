@@ -53,7 +53,7 @@ This node extract road surface region by [graph-based-segmentation](https://docs
 
 ### Parameters
 
-{{ json_to_markdown("localization/yabloc/yabloc_image_processing/schema/graph_segmentation.schema.json") }}
+{{ json_to_markdown("localization/yabloc/yabloc_image_processing/schema/graph_segment.schema.json") }}
 
 ## segment_filter
 
