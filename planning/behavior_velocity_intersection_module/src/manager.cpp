@@ -35,11 +35,10 @@ using tier4_autoware_utils::getOrDeclareParameter;
 IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
+    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
   occlusion_rtc_interface_(
     &node, "intersection_occlusion",
-    getOrDeclareParameter<bool>(
-      node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
+    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
@@ -181,8 +180,6 @@ void IntersectionModuleManager::launchNewModules(
   const auto lanelets =
     planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
   // run occlusion detection only in the first intersection
-  // TODO(Mamoru Sobue): remove `enable_occlusion_detection` variable
-  const bool enable_occlusion_detection = intersection_param_.occlusion.enable;
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();
@@ -212,8 +209,7 @@ void IntersectionModuleManager::launchNewModules(
     }
     const auto new_module = std::make_shared<IntersectionModule>(
       module_id, lane_id, planner_data_, intersection_param_, associative_ids, turn_direction,
-      has_traffic_light, enable_occlusion_detection, node_,
-      logger_.get_child("intersection_module"), clock_);
+      has_traffic_light, node_, logger_.get_child("intersection_module"), clock_);
     generateUUID(module_id);
     /* set RTC status as non_occluded status initially */
     const UUID uuid = getUUID(new_module->getModuleId());
