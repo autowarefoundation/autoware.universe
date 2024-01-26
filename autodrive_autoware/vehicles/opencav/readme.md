@@ -70,4 +70,4 @@ issn = {2218-6581},
 doi = {10.3390/robotics12030077}
 }
 ```
-This work has been published in **MDPI Robotics.** The open-access publication can be found on [MDPI](https://doi.org/10.3390/robotics12030577).
+This work has been published in **MDPI Robotics.** The open-access publication can be found on [MDPI](https://doi.org/10.3390/robotics12030077).
