@@ -50,7 +50,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-TinyTown-Simulator/Replay-OpenCAV.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-TinyTown-Simulator/Replay-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-## 3D Navigation Demo (Digital Twin Simulation - AutoDRIVE Simulator)
+## Physical Testbed Demo - F1TENTH @ ARMLab CU-ICAR
 
 1. Launch AutoDRIVE Simulator for F1TENTH and establish Autoware API bridge connection in single or distributed computing setting as applicable.
 2. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
