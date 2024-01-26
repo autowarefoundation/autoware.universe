@@ -22,5 +22,5 @@
       max_dt: 1.0
 
     # logging settings
-    enable_logging: true
+    enable_logging: false
     logging_file_path: "association_log.json"
