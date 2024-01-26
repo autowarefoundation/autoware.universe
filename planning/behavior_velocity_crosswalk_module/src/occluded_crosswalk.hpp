@@ -79,6 +79,24 @@ double calculate_detection_range(
   const double occluded_object_velocity, const double dist_ego_to_crosswalk,
   const double ego_velocity);
 
+/// @brief select a subset of objects meeting the velocity threshold and inflate their shape
+/// @param objects input objects
+/// @param velocity_threshold minimum velocity for an object to be selected
+/// @param skip_pedestrians if true, pedestrians are not selected regardless of their velocities
+/// @param inflate_size [m] size by which the shape of the selected objects are inflated
+/// @return selected and inflated objects
+std::vector<autoware_auto_perception_msgs::msg::PredictedObject> select_and_inflate_objects(
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
+  const double velocity_threshold, const bool skip_pedestrians, const double inflate_size);
+
+/// @brief clear occlusions behind the given objects
+/// @details masks behind the object assuming rays from the center of the grid map
+/// @param grid_map grid map
+/// @param objects objects
+void clear_occlusions_behind_objects(
+  grid_map::GridMap & grid_map,
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects);
+
 /// @brief update timers so that the slowdown activates if the initial time is older than the buffer
 /// @param initial_time initial time
 /// @param most_recent_slowdown_time time to set only if initial_time is older than the buffer

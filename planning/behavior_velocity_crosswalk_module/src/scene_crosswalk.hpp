@@ -164,7 +164,8 @@ public:
     int occlusion_occupied_min;
     bool occlusion_ignore_with_traffic_light;
     bool occlusion_ignore_behind_predicted_objects;
-    double occlusion_min_objects_velocity;
+    bool occlusion_do_not_ignore_behind_pedestrians;
+    double occlusion_ignore_velocity_threshold;
     double occlusion_extra_objects_size;
   };
 
