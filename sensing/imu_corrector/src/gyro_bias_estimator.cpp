@@ -225,14 +225,22 @@ geometry_msgs::msg::Vector3 GyroBiasEstimator::transform_vector3(
 
 void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  stat.summary(diagnostics_info_.level, diagnostics_info_.summary_message);
-  stat.add("gyro_bias_x_for_imu_corrector", diagnostics_info_.gyro_bias_x_for_imu_corrector);
-  stat.add("gyro_bias_y_for_imu_corrector", diagnostics_info_.gyro_bias_y_for_imu_corrector);
-  stat.add("gyro_bias_z_for_imu_corrector", diagnostics_info_.gyro_bias_z_for_imu_corrector);
+  auto f = [](const double & value) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(8) << value;
+    return ss.str();
+  };
 
-  stat.add("estimated_gyro_bias_x", diagnostics_info_.estimated_gyro_bias_x);
-  stat.add("estimated_gyro_bias_y", diagnostics_info_.estimated_gyro_bias_y);
-  stat.add("estimated_gyro_bias_z", diagnostics_info_.estimated_gyro_bias_z);
+  stat.summary(diagnostics_info_.level, diagnostics_info_.summary_message);
+  stat.add("gyro_bias_x_for_imu_corrector", f(diagnostics_info_.gyro_bias_x_for_imu_corrector));
+  stat.add("gyro_bias_y_for_imu_corrector", f(diagnostics_info_.gyro_bias_y_for_imu_corrector));
+  stat.add("gyro_bias_z_for_imu_corrector", f(diagnostics_info_.gyro_bias_z_for_imu_corrector));
+
+  stat.add("estimated_gyro_bias_x", f(diagnostics_info_.estimated_gyro_bias_x));
+  stat.add("estimated_gyro_bias_y", f(diagnostics_info_.estimated_gyro_bias_y));
+  stat.add("estimated_gyro_bias_z", f(diagnostics_info_.estimated_gyro_bias_z));
+
+  stat.add("gyro_bias_threshold", f(gyro_bias_threshold_));
 }
 
 }  // namespace imu_corrector
