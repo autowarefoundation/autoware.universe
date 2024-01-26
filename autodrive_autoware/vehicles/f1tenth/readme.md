@@ -35,6 +35,15 @@
 
    <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-RVizGym/Record-F1TENTH.gif">
 
+5. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
+    ```bash
+    user@host-pc:~$ ros2 launch autodrive_f1tenth gym_rviz_replay.launch.py
+    user@host-pc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
+    ```
+    > **Note:** Replace `<username>` with your actual username. Be sure to use the correct path to load the trajectory file.
+
+   <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-RVizGym/Replay-F1TENTH.gif">
+
 ## Digital Twin Simulation Demo - AutoDRIVE Simulator
 
 1. Launch AutoDRIVE Simulator for F1TENTH and establish Autoware API bridge connection in single or distributed computing setting as applicable.
