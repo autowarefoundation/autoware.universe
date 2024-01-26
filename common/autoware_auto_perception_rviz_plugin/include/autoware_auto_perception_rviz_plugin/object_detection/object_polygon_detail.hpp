@@ -22,10 +22,7 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
-#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
-#include <autoware_auto_perception_msgs/msg/shape.hpp>
+#include <autoware_perception_msgs/msg/detected_object.hpp>
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
@@ -62,21 +59,21 @@ struct ObjectPropertyValues
 
 // Map defining colors according to value of label field in ObjectClassification msg
 const std::map<
-  autoware_auto_perception_msgs::msg::ObjectClassification::_label_type, ObjectPropertyValues>
+  autoware_perception_msgs::msg::ObjectClassification::_label_type, ObjectPropertyValues>
   // Color map is based on cityscapes color
   kDefaultObjectPropertyValues = {
-    {autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN,
+    {autoware_perception_msgs::msg::ObjectClassification::UNKNOWN,
      {"UNKNOWN", {255, 255, 255}}},
-    {autoware_auto_perception_msgs::msg::ObjectClassification::CAR, {"CAR", {30, 144, 255}}},
-    {autoware_auto_perception_msgs::msg::ObjectClassification::BUS, {"BUS", {30, 144, 255}}},
-    {autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
+    {autoware_perception_msgs::msg::ObjectClassification::CAR, {"CAR", {30, 144, 255}}},
+    {autoware_perception_msgs::msg::ObjectClassification::BUS, {"BUS", {30, 144, 255}}},
+    {autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
      {"PEDESTRIAN", {255, 192, 203}}},
-    {autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE, {"CYCLIST", {119, 11, 32}}},
-    {autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    {autoware_perception_msgs::msg::ObjectClassification::BICYCLE, {"CYCLIST", {119, 11, 32}}},
+    {autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
      {"MOTORCYCLE", {119, 11, 32}}},
-    {autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER,
+    {autoware_perception_msgs::msg::ObjectClassification::TRAILER,
      {"TRAILER", {30, 144, 255}}},
-    {autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK, {"TRUCK", {30, 144, 255}}}};
+    {autoware_perception_msgs::msg::ObjectClassification::TRUCK, {"TRUCK", {30, 144, 255}}}};
 
 /// \brief Convert the given polygon into a marker representing the shape in 3d
 /// \param shape_msg Shape msg to be converted. Corners should be in object-local frame
@@ -87,7 +84,7 @@ const std::map<
 /// \return Marker ptr. Id and header will have to be set by the caller
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_shape_marker_ptr(
-  const autoware_auto_perception_msgs::msg::Shape & shape_msg,
+  const autoware_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
   const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
   const bool & is_orientation_available = true);
@@ -101,17 +98,10 @@ get_shape_marker_ptr(
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_2d_shape_marker_ptr(
-  const autoware_auto_perception_msgs::msg::Shape & shape_msg,
-  const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
-  const bool & is_orientation_available = true);
-
-AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
-get_2d_shape_marker_ptr(
   const autoware_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
   const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
-  const bool & is_orientation_available = true );
+  const bool & is_orientation_available = true);
 
 /// \brief Convert the given polygon into a marker representing the shape in 3d
 /// \param centroid Centroid position of the shape in Object.header.frame_id frame
@@ -175,19 +165,10 @@ get_yaw_rate_covariance_marker_ptr(
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_predicted_path_marker_ptr(
-  const autoware_auto_perception_msgs::msg::Shape & shape,
-  const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
-  const std_msgs::msg::ColorRGBA & predicted_path_color, const bool is_simple = false);
-AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
-get_predicted_path_marker_ptr(
   const autoware_perception_msgs::msg::Shape & shape,
   const autoware_perception_msgs::msg::PredictedPath & predicted_path,
   const std_msgs::msg::ColorRGBA & predicted_path_color, const bool is_simple = false);
 
-AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
-get_path_confidence_marker_ptr(
-  const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
-  const std_msgs::msg::ColorRGBA & path_confidence_color);
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_path_confidence_marker_ptr(
   const autoware_perception_msgs::msg::PredictedPath & predicted_path,
@@ -205,7 +186,7 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_covariance_eigen_vectors(
   const Eigen::Matrix2d & matrix, double & sigma1, double & sigma2, double & yaw);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_bounding_box_line_list(
-  const autoware_auto_perception_msgs::msg::Shape & shape,
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_bounding_box_line_list(
   const autoware_perception_msgs::msg::Shape & shape,
@@ -220,7 +201,7 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_bounding_box_direction_lin
   std::vector<geometry_msgs::msg::Point> & points);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_bounding_box_bottom_line_list(
-  const autoware_auto_perception_msgs::msg::Shape & shape,
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_bounding_box_bottom_line_list(
   const autoware_perception_msgs::msg::Shape & shape,
@@ -235,14 +216,14 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_bounding_box_bottom_dir
   std::vector<geometry_msgs::msg::Point> & points);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_cylinder_line_list(
-  const autoware_auto_perception_msgs::msg::Shape & shape,
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_cylinder_line_list(
   const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_cylinder_bottom_line_list(
-  const autoware_auto_perception_msgs::msg::Shape & shape,
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_cylinder_bottom_line_list(
   const autoware_perception_msgs::msg::Shape & shape,
@@ -253,22 +234,19 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_circle_line_list(
   std::vector<geometry_msgs::msg::Point> & points, const int n);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_polygon_line_list(
-  const autoware_auto_perception_msgs::msg::Shape & shape,
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_polygon_line_list(
   const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_polygon_bottom_line_list(
-  const autoware_auto_perception_msgs::msg::Shape & shape,
+  const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_polygon_bottom_line_list(
   const autoware_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
-AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_path_line_list(
-  const autoware_auto_perception_msgs::msg::PredictedPath & paths,
-  std::vector<geometry_msgs::msg::Point> & points, const bool is_simple = false);
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_path_line_list(
   const autoware_perception_msgs::msg::PredictedPath & paths,
   std::vector<geometry_msgs::msg::Point> & points, const bool is_simple = false);
@@ -319,7 +297,7 @@ inline AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC geometry_msgs::msg::Pose init
 /// \return Id of the best classification, Unknown if there is no best label
 template <typename ClassificationContainerT>
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC
-  autoware_auto_perception_msgs::msg::ObjectClassification::_label_type
+  autoware_perception_msgs::msg::ObjectClassification::_label_type
   get_best_label(ClassificationContainerT labels, const std::string & logger_name)
 {
   const auto best_class_label = std::max_element(
@@ -330,7 +308,7 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC
       rclcpp::get_logger(logger_name),
       "Empty classification field. "
       "Treating as unknown");
-    return autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    return autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
   }
   return best_class_label->label;
 }

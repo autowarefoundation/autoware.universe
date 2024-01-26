@@ -19,7 +19,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -52,19 +52,19 @@ public:
 
 private:
   void objectsCallback(
-    const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_object0_msg,
-    const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_object1_msg);
+    const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_object0_msg,
+    const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_object1_msg);
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     merged_object_pub_;
-  message_filters::Subscriber<autoware_auto_perception_msgs::msg::DetectedObjects> object0_sub_{};
-  message_filters::Subscriber<autoware_auto_perception_msgs::msg::DetectedObjects> object1_sub_{};
+  message_filters::Subscriber<autoware_perception_msgs::msg::DetectedObjects> object0_sub_{};
+  message_filters::Subscriber<autoware_perception_msgs::msg::DetectedObjects> object1_sub_{};
 
   using SyncPolicy = message_filters::sync_policies::ApproximateTime<
-    autoware_auto_perception_msgs::msg::DetectedObjects,
-    autoware_auto_perception_msgs::msg::DetectedObjects>;
+    autoware_perception_msgs::msg::DetectedObjects,
+    autoware_perception_msgs::msg::DetectedObjects>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
   typename std::shared_ptr<Sync> sync_ptr_;
 

@@ -37,7 +37,7 @@
 #include <Eigen/Geometry>
 #include <rclcpp_components/register_node_macro.hpp>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 namespace
 {
@@ -80,7 +80,7 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node)
 
   if (debug_settings_.publish_tentative_objects) {
     debug_tentative_objects_pub_ =
-      node_.create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>(
+      node_.create_publisher<autoware_perception_msgs::msg::TrackedObjects>(
         "debug/tentative_objects", rclcpp::QoS{1});
   }
 
@@ -153,7 +153,7 @@ void TrackerDebugger::publishProcessingTime()
 }
 
 void TrackerDebugger::publishTentativeObjects(
-  const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const
+  const autoware_perception_msgs::msg::TrackedObjects & tentative_objects) const
 {
   if (debug_settings_.publish_tentative_objects) {
     debug_tentative_objects_pub_->publish(tentative_objects);
@@ -183,11 +183,11 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   google::InstallFailureSignalHandler();
 
   // Create publishers and subscribers
-  detected_object_sub_ = create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  detected_object_sub_ = create_subscription<autoware_perception_msgs::msg::DetectedObjects>(
     "input", rclcpp::QoS{1},
     std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
   tracked_objects_pub_ =
-    create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
+    create_publisher<autoware_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
   // Parameters
   double publish_rate = declare_parameter<double>("publish_rate");
@@ -239,7 +239,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 }
 
 void MultiObjectTracker::onMeasurement(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg)
+  const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg)
 {
   /* keep the latest input stamp and check transform*/
   debugger_->startMeasurementTime(rclcpp::Time(input_objects_msg->header.stamp));
@@ -250,7 +250,7 @@ void MultiObjectTracker::onMeasurement(
   }
 
   /* transform to world coordinate */
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+  autoware_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
         *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
@@ -302,7 +302,7 @@ void MultiObjectTracker::onMeasurement(
 }
 
 std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform) const
 {
   const std::uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
@@ -372,10 +372,10 @@ void MultiObjectTracker::sanitizeTracker(
   constexpr double distance_threshold = 5.0;
   /* delete collision tracker */
   for (auto itr1 = list_tracker.begin(); itr1 != list_tracker.end(); ++itr1) {
-    autoware_auto_perception_msgs::msg::TrackedObject object1;
+    autoware_perception_msgs::msg::TrackedObject object1;
     (*itr1)->getTrackedObject(time, object1);
     for (auto itr2 = std::next(itr1); itr2 != list_tracker.end(); ++itr2) {
-      autoware_auto_perception_msgs::msg::TrackedObject object2;
+      autoware_perception_msgs::msg::TrackedObject object2;
       (*itr2)->getTrackedObject(time, object2);
       const double distance = std::hypot(
         object1.kinematics.pose_with_covariance.pose.position.x -
@@ -449,19 +449,19 @@ void MultiObjectTracker::publish(const rclcpp::Time & time)
     return;
   }
   // Create output msg
-  autoware_auto_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
+  autoware_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
   output_msg.header.stamp = time;
   tentative_objects_msg.header = output_msg.header;
 
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     if (!shouldTrackerPublish(*itr)) {  // for debug purpose
-      autoware_auto_perception_msgs::msg::TrackedObject object;
+      autoware_perception_msgs::msg::TrackedObject object;
       (*itr)->getTrackedObject(time, object);
       tentative_objects_msg.objects.push_back(object);
       continue;
     }
-    autoware_auto_perception_msgs::msg::TrackedObject object;
+    autoware_perception_msgs::msg::TrackedObject object;
     (*itr)->getTrackedObject(time, object);
     output_msg.objects.push_back(object);
   }

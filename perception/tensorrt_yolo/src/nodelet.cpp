@@ -14,7 +14,7 @@
 
 #include "tensorrt_yolo/nodelet.hpp"
 
-#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+#include <autoware_perception_msgs/msg/object_classification.hpp>
 
 #include <glob.h>
 
@@ -130,7 +130,7 @@ void TensorrtYoloNodelet::connectCb()
 
 void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg)
 {
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  using Label = autoware_perception_msgs::msg::ObjectClassification;
 
   tier4_perception_msgs::msg::DetectedObjectsWithFeature out_objects;
 
@@ -162,7 +162,7 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
     object.feature.roi.y_offset = out_boxes_[4 * i + 1] * height;
     object.feature.roi.width = out_boxes_[4 * i + 2] * width;
     object.feature.roi.height = out_boxes_[4 * i + 3] * height;
-    object.object.classification.emplace_back(autoware_auto_perception_msgs::build<Label>()
+    object.object.classification.emplace_back(autoware_perception_msgs::build<Label>()
                                                 .label(Label::UNKNOWN)
                                                 .probability(out_scores_[i]));
     const auto class_id = static_cast<int>(out_classes_[i]);

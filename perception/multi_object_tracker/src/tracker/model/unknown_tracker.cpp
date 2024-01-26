@@ -35,7 +35,7 @@
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 UnknownTracker::UnknownTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("UnknownTracker")),
@@ -176,7 +176,7 @@ bool UnknownTracker::predict(const double dt, KalmanFilter & ekf) const
 }
 
 bool UnknownTracker::measureWithPose(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   constexpr int dim_y = 2;  // pos x, pos y depending on Pose output
 
@@ -230,7 +230,7 @@ bool UnknownTracker::measureWithPose(
 }
 
 bool UnknownTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 {
   object_ = object;
@@ -248,7 +248,7 @@ bool UnknownTracker::measure(
 }
 
 bool UnknownTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();

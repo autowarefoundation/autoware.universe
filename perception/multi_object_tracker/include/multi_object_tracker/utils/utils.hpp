@@ -22,9 +22,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
-#include <autoware_auto_perception_msgs/msg/shape.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
+#include <autoware_perception_msgs/msg/detected_object.hpp>
+#include <autoware_perception_msgs/msg/shape.hpp>
+#include <autoware_perception_msgs/msg/tracked_object.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/transform.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
@@ -97,7 +97,7 @@ enum BBOX_IDX {
  */
 inline bool isLargeVehicleLabel(const uint8_t label)
 {
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  using Label = autoware_perception_msgs::msg::ObjectClassification;
   return label == Label::BUS || label == Label::TRUCK || label == Label::TRAILER;
 }
 
@@ -163,11 +163,11 @@ inline int getNearestCornerOrSurface(
  * @return nearest corner or surface index
  */
 inline int getNearestCornerOrSurfaceFromObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const double & yaw,
+  const autoware_perception_msgs::msg::DetectedObject & object, const double & yaw,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // only work for BBOX shape
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     return BBOX_IDX::INVALID;
   }
 
@@ -263,8 +263,8 @@ inline Eigen::Vector2d recoverFromTrackingPoint(
  */
 inline void calcAnchorPointOffset(
   const double w, const double l, const int indx,
-  const autoware_auto_perception_msgs::msg::DetectedObject & input_object, const double & yaw,
-  autoware_auto_perception_msgs::msg::DetectedObject & offset_object,
+  const autoware_perception_msgs::msg::DetectedObject & input_object, const double & yaw,
+  autoware_perception_msgs::msg::DetectedObject & offset_object,
   Eigen::Vector2d & tracking_offset)
 {
   // copy value
@@ -296,8 +296,8 @@ inline void calcAnchorPointOffset(
  * @param output_object: output bounding box objects
  */
 inline void convertConvexHullToBoundingBox(
-  const autoware_auto_perception_msgs::msg::DetectedObject & input_object,
-  autoware_auto_perception_msgs::msg::DetectedObject & output_object)
+  const autoware_perception_msgs::msg::DetectedObject & input_object,
+  autoware_perception_msgs::msg::DetectedObject & output_object)
 {
   const Eigen::Vector2d center{
     input_object.kinematics.pose_with_covariance.pose.position.x,
@@ -337,7 +337,7 @@ inline void convertConvexHullToBoundingBox(
   output_object.kinematics.pose_with_covariance.pose.position.x = new_center.x();
   output_object.kinematics.pose_with_covariance.pose.position.y = new_center.y();
 
-  output_object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  output_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   output_object.shape.dimensions.x = length;
   output_object.shape.dimensions.y = width;
   output_object.shape.dimensions.z = height;

@@ -40,10 +40,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 PedestrianTracker::PedestrianTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("PedestrianTracker")),
@@ -136,10 +136,10 @@ PedestrianTracker::PedestrianTracker(
 
   bounding_box_ = {0.5, 0.5, 1.7};
   cylinder_ = {0.3, 1.7};
-  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
-  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     cylinder_ = {object.shape.dimensions.x, object.shape.dimensions.z};
   }
 
@@ -224,7 +224,7 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
 }
 
 bool PedestrianTracker::measureWithPose(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   constexpr int dim_y = 2;  // pos x, pos y depending on Pose output
   // double measurement_yaw =
@@ -302,14 +302,14 @@ bool PedestrianTracker::measureWithPose(
 }
 
 bool PedestrianTracker::measureWithShape(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   constexpr float gain = 0.9;
-  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
     bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
     bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
-  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     cylinder_.width = gain * cylinder_.width + (1.0 - gain) * object.shape.dimensions.x;
     cylinder_.height = gain * cylinder_.height + (1.0 - gain) * object.shape.dimensions.z;
   } else {
@@ -320,7 +320,7 @@ bool PedestrianTracker::measureWithShape(
 }
 
 bool PedestrianTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   const auto & current_classification = getClassification();
@@ -343,7 +343,7 @@ bool PedestrianTracker::measure(
 }
 
 bool PedestrianTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
@@ -381,7 +381,7 @@ bool PedestrianTracker::getTrackedObject(
     pose_with_cov.pose.orientation.z = filtered_quaternion.z();
     pose_with_cov.pose.orientation.w = filtered_quaternion.w();
     object.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
+      autoware_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
   }
   // position covariance
   constexpr double z_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
@@ -415,15 +415,15 @@ bool PedestrianTracker::getTrackedObject(
   twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
 
   // set shape
-  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     object.shape.dimensions.x = bounding_box_.length;
     object.shape.dimensions.y = bounding_box_.width;
     object.shape.dimensions.z = bounding_box_.height;
-  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     object.shape.dimensions.x = cylinder_.width;
     object.shape.dimensions.y = cylinder_.width;
     object.shape.dimensions.z = cylinder_.height;
-  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
     const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
     const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
     object.shape.footprint =

@@ -48,9 +48,9 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
   map_sub_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&ObjectLaneletFilterNode::mapCallback, this, _1));
-  object_sub_ = this->create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  object_sub_ = this->create_subscription<autoware_perception_msgs::msg::DetectedObjects>(
     "input/object", rclcpp::QoS{1}, std::bind(&ObjectLaneletFilterNode::objectCallback, this, _1));
-  object_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  object_pub_ = this->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
     "output/object", rclcpp::QoS{1});
 
   debug_publisher_ =
@@ -69,19 +69,19 @@ void ObjectLaneletFilterNode::mapCallback(
 }
 
 void ObjectLaneletFilterNode::objectCallback(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_msg)
+  const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_msg)
 {
   // Guard
   if (object_pub_->get_subscription_count() < 1) return;
 
-  autoware_auto_perception_msgs::msg::DetectedObjects output_object_msg;
+  autoware_perception_msgs::msg::DetectedObjects output_object_msg;
   output_object_msg.header = input_msg->header;
 
   if (!lanelet_map_ptr_) {
     RCLCPP_ERROR(get_logger(), "No vector map received.");
     return;
   }
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+  autoware_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
         *input_msg, lanelet_frame_id_, tf_buffer_, transformed_objects)) {
     RCLCPP_ERROR(get_logger(), "Failed transform to %s.", lanelet_frame_id_.c_str());
@@ -131,10 +131,10 @@ void ObjectLaneletFilterNode::objectCallback(
 }
 
 geometry_msgs::msg::Polygon ObjectLaneletFilterNode::setFootprint(
-  const autoware_auto_perception_msgs::msg::DetectedObject & detected_object)
+  const autoware_perception_msgs::msg::DetectedObject & detected_object)
 {
   geometry_msgs::msg::Polygon footprint;
-  if (detected_object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (detected_object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     const auto object_size = detected_object.shape.dimensions;
     const double x_front = object_size.x / 2.0;
     const double x_rear = -object_size.x / 2.0;
@@ -156,7 +156,7 @@ geometry_msgs::msg::Polygon ObjectLaneletFilterNode::setFootprint(
 }
 
 LinearRing2d ObjectLaneletFilterNode::getConvexHull(
-  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects)
+  const autoware_perception_msgs::msg::DetectedObjects & detected_objects)
 {
   MultiPoint2d candidate_points;
   for (const auto & object : detected_objects.objects) {

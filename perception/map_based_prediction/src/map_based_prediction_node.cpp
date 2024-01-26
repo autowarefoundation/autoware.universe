@@ -25,7 +25,7 @@
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
@@ -1036,7 +1036,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         TrackedObject yaw_fixed_transformed_object = transformed_object;
         if (
           transformed_object.kinematics.orientation_availability ==
-          autoware_auto_perception_msgs::msg::TrackedObjectKinematics::UNAVAILABLE) {
+          autoware_perception_msgs::msg::TrackedObjectKinematics::UNAVAILABLE) {
           replaceObjectYawWithLaneletsYaw(current_lanelets, yaw_fixed_transformed_object);
         }
         // Generate Predicted Path
@@ -1303,7 +1303,7 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
 {
   if (
     object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
+    autoware_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
     return;
   }
 
@@ -1324,7 +1324,7 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   if (abs_object_speed < min_abs_speed) return;
 
   switch (object.kinematics.orientation_availability) {
-    case autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN: {
+    case autoware_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN: {
       const auto original_yaw =
         tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
       // flip the angle
@@ -1393,7 +1393,7 @@ void MapBasedPredictionNode::removeOldObjectsHistory(
   for (auto it = stopped_times_against_green_.begin(); it != stopped_times_against_green_.end();) {
     const bool isDisappeared = std::none_of(
       in_objects->objects.begin(), in_objects->objects.end(),
-      [&it](autoware_auto_perception_msgs::msg::TrackedObject obj) {
+      [&it](autoware_perception_msgs::msg::TrackedObject obj) {
         return tier4_autoware_utils::toHexString(obj.object_id) == it->first.first;
       });
     if (isDisappeared) {

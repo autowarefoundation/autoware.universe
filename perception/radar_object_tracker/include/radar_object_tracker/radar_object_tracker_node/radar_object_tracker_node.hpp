@@ -19,8 +19,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/tracked_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <tf2/LinearMath/Transform.h>
@@ -51,10 +51,10 @@
 #include <memory>
 #include <string>
 
-using autoware_auto_perception_msgs::msg::DetectedObject;
-using autoware_auto_perception_msgs::msg::DetectedObjects;
-using autoware_auto_perception_msgs::msg::TrackedObject;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_perception_msgs::msg::DetectedObject;
+using autoware_perception_msgs::msg::DetectedObjects;
+using autoware_perception_msgs::msg::TrackedObject;
+using autoware_perception_msgs::msg::TrackedObjects;
 using autoware_map_msgs::msg::LaneletMapBin;
 
 class RadarObjectTrackerNode : public rclcpp::Node
@@ -64,9 +64,9 @@ public:
 
 private:
   // pub-sub
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
     tracked_objects_pub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
   rclcpp::TimerBase::SharedPtr publish_timer_;              // publish timer
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;  // map subscriber
@@ -79,7 +79,7 @@ private:
   int measurement_count_threshold_;
 
   void onMeasurement(
-    const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);
+    const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
   void onMap(const LaneletMapBin::ConstSharedPtr map_msg);
 
@@ -126,7 +126,7 @@ private:
     std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform);
   std::shared_ptr<Tracker> createNewTracker(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) const;
 
   void publish(const rclcpp::Time & time) const;

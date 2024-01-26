@@ -40,10 +40,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 BigVehicleTracker::BigVehicleTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & self_transform)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("BigVehicleTracker")),
@@ -138,14 +138,14 @@ BigVehicleTracker::BigVehicleTracker(
     P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
   }
 
-  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
     last_input_bounding_box_ = bounding_box_;
   } else {
     // past default value
     // bounding_box_ = {7.0, 2.0, 2.0};
-    autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
+    autoware_perception_msgs::msg::DetectedObject bbox_object;
     utils::convertConvexHullToBoundingBox(object, bbox_object);
     bounding_box_ = {
       bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
@@ -307,9 +307,9 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
 }
 
 bool BigVehicleTracker::measureWithPose(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  using Label = autoware_perception_msgs::msg::ObjectClassification;
 
   float r_cov_x;
   float r_cov_y;
@@ -349,15 +349,15 @@ bool BigVehicleTracker::measureWithPose(
   ekf_.getX(X_t);
 
   // convert to boundingbox if input is convex shape
-  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  autoware_perception_msgs::msg::DetectedObject bbox_object;
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     utils::convertConvexHullToBoundingBox(object, bbox_object);
   } else {
     bbox_object = object;
   }
 
   /* get offset measurement*/
-  autoware_auto_perception_msgs::msg::DetectedObject offset_object;
+  autoware_perception_msgs::msg::DetectedObject offset_object;
   utils::calcAnchorPointOffset(
     last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
     bbox_object, X_t(IDX::YAW), offset_object, tracking_offset_);
@@ -436,11 +436,11 @@ bool BigVehicleTracker::measureWithPose(
 }
 
 bool BigVehicleTracker::measureWithShape(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   // if the input shape is convex type, convert it to bbox type
-  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  autoware_perception_msgs::msg::DetectedObject bbox_object;
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     utils::convertConvexHullToBoundingBox(object, bbox_object);
   } else {
     bbox_object = object;
@@ -463,7 +463,7 @@ bool BigVehicleTracker::measureWithShape(
 }
 
 bool BigVehicleTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   const auto & current_classification = getClassification();
@@ -488,7 +488,7 @@ bool BigVehicleTracker::measure(
 }
 
 bool BigVehicleTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
@@ -534,7 +534,7 @@ bool BigVehicleTracker::getTrackedObject(
     pose_with_cov.pose.orientation.z = filtered_quaternion.z();
     pose_with_cov.pose.orientation.w = filtered_quaternion.w();
     object.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
+      autoware_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
   }
   // position covariance
   constexpr double z_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
@@ -612,7 +612,7 @@ void BigVehicleTracker::setNearestCornerOrSurfaceIndex(
 }
 
 double BigVehicleTracker::getMeasurementYaw(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));

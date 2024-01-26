@@ -26,8 +26,8 @@
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/tracked_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <tf2/LinearMath/Transform.h>
@@ -62,7 +62,7 @@ public:
   explicit TrackerDebugger(rclcpp::Node & node);
   void publishProcessingTime();
   void publishTentativeObjects(
-    const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const;
+    const autoware_perception_msgs::msg::TrackedObjects & tentative_objects) const;
   void startStopWatch();
   void startMeasurementTime(const rclcpp::Time & measurement_header_stamp);
   void setupDiagnostics();
@@ -80,7 +80,7 @@ public:
 private:
   void loadParameters();
   rclcpp::Node & node_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
     debug_tentative_objects_pub_;
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
@@ -93,9 +93,9 @@ public:
   explicit MultiObjectTracker(const rclcpp::NodeOptions & node_options);
 
 private:
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
     tracked_objects_pub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
   rclcpp::TimerBase::SharedPtr publish_timer_;  // publish timer
 
@@ -108,7 +108,7 @@ private:
   std::map<std::uint8_t, std::string> tracker_map_;
 
   void onMeasurement(
-    const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);
+    const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
 
   std::string world_frame_id_;  // tracking frame
@@ -121,7 +121,7 @@ private:
   void sanitizeTracker(
     std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time);
   std::shared_ptr<Tracker> createNewTracker(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) const;
 
   void publish(const rclcpp::Time & time);

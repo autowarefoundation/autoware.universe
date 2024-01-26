@@ -40,10 +40,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 BicycleTracker::BicycleTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("BicycleTracker")),
@@ -134,7 +134,7 @@ BicycleTracker::BicycleTracker(
     P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
   }
 
-  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
@@ -292,7 +292,7 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
 }
 
 bool BicycleTracker::measureWithPose(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   // yaw measurement
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
@@ -306,7 +306,7 @@ bool BicycleTracker::measureWithPose(
   bool use_orientation_information = false;
   if (
     object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {  // has 180 degree
+    autoware_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {  // has 180 degree
                                                                                    // uncertainty
     // fix orientation
     while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
@@ -319,7 +319,7 @@ bool BicycleTracker::measureWithPose(
 
   } else if (
     object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {  // know full angle
+    autoware_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {  // know full angle
 
     use_orientation_information = true;
   }
@@ -396,11 +396,11 @@ bool BicycleTracker::measureWithPose(
 }
 
 bool BicycleTracker::measureWithShape(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   // if the input shape is convex type, convert it to bbox type
-  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  autoware_perception_msgs::msg::DetectedObject bbox_object;
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     utils::convertConvexHullToBoundingBox(object, bbox_object);
   } else {
     bbox_object = object;
@@ -423,7 +423,7 @@ bool BicycleTracker::measureWithShape(
 }
 
 bool BicycleTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 {
   const auto & current_classification = getClassification();
@@ -445,7 +445,7 @@ bool BicycleTracker::measure(
 }
 
 bool BicycleTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
@@ -483,7 +483,7 @@ bool BicycleTracker::getTrackedObject(
     pose_with_cov.pose.orientation.z = filtered_quaternion.z();
     pose_with_cov.pose.orientation.w = filtered_quaternion.w();
     object.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
+      autoware_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
   }
   // position covariance
   constexpr double z_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative

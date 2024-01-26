@@ -36,7 +36,7 @@
 #include <Eigen/Geometry>
 
 PassThroughTracker::PassThroughTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("PassThroughTracker")),
@@ -58,7 +58,7 @@ bool PassThroughTracker::predict(const rclcpp::Time & time)
 }
 
 bool PassThroughTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   prev_observed_object_ = object_;
@@ -80,7 +80,7 @@ bool PassThroughTracker::measure(
 }
 
 bool PassThroughTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();

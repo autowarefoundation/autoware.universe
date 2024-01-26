@@ -26,7 +26,7 @@
 class PedestrianTracker : public Tracker
 {
 private:
-  autoware_auto_perception_msgs::msg::DetectedObject object_;
+  autoware_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
 
 private:
@@ -78,19 +78,19 @@ private:
 
 public:
   PedestrianTracker(
-    const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
     const geometry_msgs::msg::Transform & self_transform);
 
   bool predict(const rclcpp::Time & time) override;
   bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;
-  bool measureWithPose(const autoware_auto_perception_msgs::msg::DetectedObject & object);
-  bool measureWithShape(const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  bool measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object);
+  bool measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object);
   bool getTrackedObject(
     const rclcpp::Time & time,
-    autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
+    autoware_perception_msgs::msg::TrackedObject & object) const override;
   virtual ~PedestrianTracker() {}
 };
 

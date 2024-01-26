@@ -17,7 +17,7 @@
 #include <node.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
-#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+#include <autoware_perception_msgs/msg/object_classification.hpp>
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -32,7 +32,7 @@
 #include <memory>
 #include <string>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_options)
 : Node("shape_estimation", node_options)
@@ -81,7 +81,7 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
     }
 
     // estimate shape and pose
-    autoware_auto_perception_msgs::msg::Shape shape;
+    autoware_perception_msgs::msg::Shape shape;
     geometry_msgs::msg::Pose pose;
     boost::optional<ReferenceYawInfo> ref_yaw_info = boost::none;
     boost::optional<ReferenceShapeSizeInfo> ref_shape_size_info = boost::none;

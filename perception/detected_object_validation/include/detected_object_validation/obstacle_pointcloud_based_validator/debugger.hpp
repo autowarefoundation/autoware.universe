@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/point_cloud.h>
@@ -37,7 +37,7 @@ public:
     pointcloud_within_polygon_(new pcl::PointCloud<pcl::PointXYZ>)
   {
     removed_objects_pub_ =
-      node->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
         "~/debug/removed_objects", 1);
     neighbor_pointcloud_pub_ =
       node->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/neighbor_pointcloud", 1);
@@ -46,7 +46,7 @@ public:
   }
 
   ~Debugger() {}
-  void publishRemovedObjects(const autoware_auto_perception_msgs::msg::DetectedObjects & input)
+  void publishRemovedObjects(const autoware_perception_msgs::msg::DetectedObjects & input)
   {
     removed_objects_pub_->publish(input);
   }
@@ -92,7 +92,7 @@ public:
   }
 
 private:
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     removed_objects_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr neighbor_pointcloud_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_within_polygon_pub_;

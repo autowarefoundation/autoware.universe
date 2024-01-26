@@ -21,8 +21,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <shape_estimation/shape_estimator.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/tracked_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
@@ -50,16 +50,16 @@ public:
   explicit Debugger(rclcpp::Node * node)
   {
     initial_objects_pub_ =
-      node->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
         "debug/initial_objects", 1);
     tracked_objects_pub_ =
-      node->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
         "debug/tracked_objects", 1);
     merged_objects_pub_ =
-      node->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
         "debug/merged_objects", 1);
     divided_objects_pub_ =
-      node->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
         "debug/divided_objects", 1);
   }
 
@@ -68,7 +68,7 @@ public:
   {
     initial_objects_pub_->publish(removeFeature(input));
   }
-  void publishTrackedObjects(const autoware_auto_perception_msgs::msg::DetectedObjects & input)
+  void publishTrackedObjects(const autoware_perception_msgs::msg::DetectedObjects & input)
   {
     tracked_objects_pub_->publish(input);
   }
@@ -82,19 +82,19 @@ public:
   }
 
 private:
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     initial_objects_pub_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     tracked_objects_pub_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     merged_objects_pub_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     divided_objects_pub_;
 
-  autoware_auto_perception_msgs::msg::DetectedObjects removeFeature(
+  autoware_perception_msgs::msg::DetectedObjects removeFeature(
     const tier4_perception_msgs::msg::DetectedObjectsWithFeature & input)
   {
-    autoware_auto_perception_msgs::msg::DetectedObjects objects;
+    autoware_perception_msgs::msg::DetectedObjects objects;
     objects.header = input.header;
     for (const auto & feature_object : input.feature_objects) {
       objects.objects.push_back(feature_object.object);
