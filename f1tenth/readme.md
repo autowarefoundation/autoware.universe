@@ -243,9 +243,9 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 ## How to record a trajectory (real car)
 
-1. Update the recordreplay_planner_nodes param file at `~autoware/src/universe/autoware.universe/planning/recordreplay_planner_nodes/param/defaults.param.yaml`
+1. Update the `recordreplay_planner_nodes` param file at `~autoware/src/universe/autoware.universe/planning/recordreplay_planner_nodes/param/defaults.param.yaml`
 
-   change the vehicle_state from '/ego_racecar/odom' to '/pf/pose/odom' so it will use the data from particle fileter
+   change the `vehicle_state` from `'/ego_racecar/odom'` to `'/pf/pose/odom'` so it will use the data from particle fileter
 
 2. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
@@ -277,9 +277,9 @@ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/act
 
 ## How to replay a trajectory (real car)
 
-1. Update the trajectory_follower_f1tenth launch file  `~/autoware/src/universe/autoware.universe/f1tenth/trajectory_follower_f1tenth/launch/trajectory_follower_f1tenth.launch.xml`
+1. Update the `trajectory_follower_f1tenth` launch file  `~/autoware/src/universe/autoware.universe/f1tenth/trajectory_follower_f1tenth/launch/trajectory_follower_f1tenth.launch.xml`
 
-   update <remap from="input/kinematics" to="/ego_racecar/odom"/> to <remap from="input/kinematics" to="/pf/pose/odom"/>
+   update `<remap from="input/kinematics" to="/ego_racecar/odom"/>` to `<remap from="input/kinematics" to="/pf/pose/odom"/>`
 
 2. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
