@@ -24,6 +24,16 @@
     user@host-pc:~$ sudo chmod +x *.sh
     user@host-pc:~$ ./compile_with_cuda.sh
     ```
+4. Create and/or load the required map by referring to the appropriate files from the `launch` and `config` directories (defaults for replicating the demo example are already in place).
+5. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
+    ```bash
+    user@host-pc:~$ ros2 launch autodrive_f1tenth gym_rviz_record.launch.py
+    user@host-pc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
+    user@host-pc:~$ ros2 run autodrive_f1tenth teleop_keyboard
+    ```
+    > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
+
+      <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-RVizGym/Record-F1TENTH.gif">
 
 ## Digital Twin Simulation Demo - AutoDRIVE Simulator
 
