@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "EKF Localizer Configuration for Diagnostics",
+    "definitions": {
+        "diagnostics": {
+            "type": "object",
+            "properties": {
+                "pose_no_update_count_threshold_warn": {
+                    "type": "integer",
+                    "description": "Warning threshold for pose update count.",
+                    "default": 50
+                },
+                "pose_no_update_count_threshold_error": {
+                    "type": "integer",
+                    "description": "Error threshold for pose update count.",
+                    "default": 100
+                },
+                "twist_no_update_count_threshold_warn": {
+                    "type": "integer",
+                    "description": "Warning threshold for twist update count.",
+                    "default": 50
+                },
+                "twist_no_update_count_threshold_error": {
+                    "type": "integer",
+                    "description": "Error threshold for twist update count.",
+                    "default": 100
+                }
+            },
+            "required": [
+                "pose_no_update_count_threshold_warn",
+                "pose_no_update_count_threshold_error",
+                "twist_no_update_count_threshold_warn",
+                "twist_no_update_count_threshold_error"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

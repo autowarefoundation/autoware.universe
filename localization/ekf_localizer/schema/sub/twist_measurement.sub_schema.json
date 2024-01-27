@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "EKF Localizer Configuration for Twist Measurement",
+    "definitions": {
+        "twist_measurement": {
+            "type": "object",
+            "properties": {
+                "twist_additional_delay": {
+                    "type": "number",
+                    "description": "Additional delay for twist measurements.",
+                    "default": 0.0
+                },
+                "twist_smoothing_steps": {
+                    "type": "integer",
+                    "description": "Number of steps for twist smoothing.",
+                    "default": 2
+                },
+                "twist_gate_dist": {
+                    "type": "number",
+                    "description": "Gate distance for twist measurements.",
+                    "default": 10000.0
+                }
+            },
+            "required": [
+                "twist_additional_delay",
+                "twist_smoothing_steps",
+                "twist_gate_dist"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

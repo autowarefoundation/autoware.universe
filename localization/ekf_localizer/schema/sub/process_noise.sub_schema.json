@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "EKF Localizer Configuration for Process Noise",
+    "definitions": {
+        "process_noise": {
+            "type": "object",
+            "properties": {
+                "proc_stddev_yaw_c": {
+                    "type": "number",
+                    "description": "Standard deviation of yaw in the process model.",
+                    "default": 0.005
+                },
+                "proc_stddev_vx_c": {
+                    "type": "number",
+                    "description": "Standard deviation of linear velocity in the process model.",
+                    "default": 10.0
+                },
+                "proc_stddev_wz_c": {
+                    "type": "number",
+                    "description": "Standard deviation of angular velocity in the process model.",
+                    "default": 5.0
+                }
+            },
+            "required": [
+                "proc_stddev_yaw_c",
+                "proc_stddev_vx_c",
+                "proc_stddev_wz_c"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "EKF Localizer Configuration for MISC",
+    "definitions": {
+        "misc": {
+            "type": "object",
+            "properties": {
+                "threshold_observable_velocity_mps": {
+                    "type": "number",
+                    "description": "Velocity threshold for observability in meters per second.",
+                    "default": 0.0
+                }
+            },
+            "required": [
+                "threshold_observable_velocity_mps"
+            ],
+            "additionalProperties": false
+        }
+    }
+}
