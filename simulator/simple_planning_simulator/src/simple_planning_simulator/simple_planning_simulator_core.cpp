@@ -238,6 +238,10 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   const double wheelbase = vehicle_info.wheel_base_m;
 
+  std::vector<std::string> model_python_paths = declare_parameter<std::vector<std::string>>("model_python_paths", std::vector<std::string>({""}));
+  std::vector<std::string> model_param_paths = declare_parameter<std::vector<std::string>>("model_param_paths", std::vector<std::string>({""}));
+  std::vector<std::string> model_class_names = declare_parameter<std::vector<std::string>>("model_class_names", std::vector<std::string>({""}));
+
   if (vehicle_model_type_str == "IDEAL_STEER_VEL") {
     vehicle_model_type_ = VehicleModelType::IDEAL_STEER_VEL;
     vehicle_model_ptr_ = std::make_shared<SimModelIdealSteerVel>(wheelbase);
@@ -283,7 +287,10 @@ void SimplePlanningSimulator::initialize_vehicle_model()
       acceleration_map_path);
   } else if (vehicle_model_type_str == "PYMODELS"){
     vehicle_model_type_ = VehicleModelType::PYMODELS;
-    vehicle_model_ptr_ = std::make_shared<SimModelPymodels>(timer_sampling_time_ms_ / 1000.0);
+
+    vehicle_model_ptr_ = std::make_shared<SimModelPymodels>(timer_sampling_time_ms_ / 1000.0, 
+      model_python_paths, model_param_paths, model_class_names);
+
   }else{
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
