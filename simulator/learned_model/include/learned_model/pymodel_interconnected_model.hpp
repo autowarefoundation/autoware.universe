@@ -151,7 +151,7 @@ public:
    * @brief add a sub-model consisting of base + error model
    * @param [in] submodel_desc descriptor of the sub-model
    */
-  void addSubmodel(std::tuple<char *, char *, char *> submodel_desc)
+  void addSubmodel(std::tuple<std::string, std::string, std::string> submodel_desc)
   {
     const auto [lib_path, param_path, class_name] = submodel_desc;
     auto new_model = new PymodelSimpleModel(lib_path, param_path, class_name);

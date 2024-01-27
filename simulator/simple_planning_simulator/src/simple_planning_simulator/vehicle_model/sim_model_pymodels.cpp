@@ -24,19 +24,13 @@ SimModelPymodels::SimModelPymodels(double dt,
                                   [[maybe_unused]] std::vector<std::string> model_class_names
                                   ) : SimModelInterface(7 /* dim x */, 2 /* dim u */)
 {
-  // TODO this should be in config file not hardcoded here
-  // Think of a way how to differentiate between "simple" model and "base + error" model
-  std::vector<std::tuple<char *, char *, char *>> model_descriptors = {
-    {(char *)"control_analysis_pipeline.autoware_models.vehicle.kinematic", (char *)nullptr,
-     (char *)"KinematicModel"},
-    {(char *)"control_analysis_pipeline.autoware_models.steering.example_base_error",
-     (char *)"$HOME/autoware_model_params/base_model_save", (char *)"BaseError"},
-    {(char *)"control_analysis_pipeline.autoware_models.drive.drive_example", (char *)nullptr,
-     (char *)"DriveExample"}};
 
-  vehicle.addSubmodel(model_descriptors[0]);
-  vehicle.addSubmodel(model_descriptors[1]);
-  vehicle.addSubmodel(model_descriptors[2]);
+  for (size_t i = 0; i < model_python_paths.size(); i++){
+    std::tuple<std::string, std::string, std::string> descriptor = {
+      model_python_paths[i], model_param_paths[i], model_class_names[i]
+    };
+    vehicle.addSubmodel(descriptor);
+  }
 
   vehicle.generateConnections(input_names, state_names);
 
