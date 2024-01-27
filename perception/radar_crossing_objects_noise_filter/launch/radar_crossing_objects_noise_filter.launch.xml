@@ -12,6 +12,6 @@
     <remap from="~/input/objects" to="$(var input/objects)"/>
     <remap from="~/output/noise_objects" to="$(var output/noise_objects)"/>
     <remap from="~/output/filtered_objects" to="$(var output/filtered_objects)"/>
-    <param from="param_path" value="$(var param_path)"/>
+    <param from="$(var param_path)"/>
   </node>
 </launch>

@@ -13,7 +13,7 @@
     <arg name="input/objects" value="$(var input/radar)"/>
     <arg name="output/noise_objects" value="noise_objects"/>
     <arg name="output/filtered_objects" value="noise_filtered_objects"/>
-    <arg name="param_path" value="$(radar_crossing_objects_noise_filter_param_path)"/>
+    <arg name="param_path" value="$(var radar_crossing_objects_noise_filter_param_path)"/>
   </include>
 
   <include file="$(find-pkg-share object_velocity_splitter)/launch/object_velocity_splitter.launch.xml">
