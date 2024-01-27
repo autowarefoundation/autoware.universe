@@ -76,19 +76,12 @@ private:
   };
 
   InterconnectedModel vehicle;
-  // py::scoped_interpreter guard{};
 
   double prev_vx_ = 0.0;
   double current_ax_ = 0.0;
 
   std::deque<double> vx_input_queue_;     //!< @brief buffer for velocity command
   std::deque<double> steer_input_queue_;  //!< @brief buffer for angular velocity command
-
-  /**
-   * @brief set queue buffer for input command
-   * @param [in] dt delta time
-   */
-  void initializeInputQueue(const double & dt);
 
   /**
    * @brief get vehicle position x
