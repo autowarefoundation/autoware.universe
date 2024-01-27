@@ -16,7 +16,7 @@ namespace py = pybind11;
 class PymodelSimpleModel : public PymodelInterface
 {
 private:
-  char * pymodel_import_name = nullptr;
+  std::string pymodel_import_name;
 
   int num_inputs_py;
   int num_outputs_py;
@@ -40,23 +40,23 @@ public:
    * @param [in] param_file_path path to saved parameter file of the python sub-model
    * @param [in] py_class_name name of the python class
    */
-  PymodelSimpleModel(char * pymodel_import_name_, char * param_file_path, char * py_class_name)
+  PymodelSimpleModel(std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name)
   {
     // Import model class
     pymodel_import_name = pymodel_import_name_;
-    if (pymodel_import_name != nullptr) {
+    if (!pymodel_import_name.empty()) {
       // Import python module
-      py::module_ imported_module = py::module_::import(pymodel_import_name);
+      py::module_ imported_module = py::module_::import(pymodel_import_name.c_str());
       // Initialize model class from imported module
-      py_model_class = imported_module.attr(py_class_name)();
+      py_model_class = imported_module.attr(py_class_name.c_str())();
     } else {
       // TODO throw exception/error
       return;
     }
 
     // Load model parameters and reset the model
-    if (param_file_path != nullptr) {
-      py::object load_params_succ = py_model_class.attr("load_params")(param_file_path);
+    if (!param_file_path.empty()) {
+      py::object load_params_succ = py_model_class.attr("load_params")(param_file_path.c_str());
       py_model_class.attr("reset")();
       std::cout << "Params loaded" << std::endl;
     } else {
