@@ -39,7 +39,10 @@ public:
    * @brief constructor
    * @param [in] dt delta time information to set input buffer for delay
    */
-  SimModelPymodels(double dt);
+  SimModelPymodels(double dt, 
+                  std::vector<std::string> model_python_paths, 
+                  std::vector<std::string> model_param_paths, 
+                  std::vector<std::string> model_class_names);
 
   /**
    * @brief destructor

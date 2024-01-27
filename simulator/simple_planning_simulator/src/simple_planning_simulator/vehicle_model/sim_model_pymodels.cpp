@@ -18,7 +18,11 @@
 
 #include <algorithm>
 
-SimModelPymodels::SimModelPymodels(double dt) : SimModelInterface(7 /* dim x */, 2 /* dim u */)
+SimModelPymodels::SimModelPymodels(double dt, 
+                                  [[maybe_unused]] std::vector<std::string> model_python_paths, 
+                                  [[maybe_unused]] std::vector<std::string> model_param_paths, 
+                                  [[maybe_unused]] std::vector<std::string> model_class_names
+                                  ) : SimModelInterface(7 /* dim x */, 2 /* dim u */)
 {
   // TODO this should be in config file not hardcoded here
   // Think of a way how to differentiate between "simple" model and "base + error" model
