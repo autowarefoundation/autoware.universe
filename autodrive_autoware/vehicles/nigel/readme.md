@@ -74,8 +74,30 @@
     ```
 5. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
+    # Terminal 1
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ roscore
+
+    # Terminal 2
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ source /opt/ros/galactic/setup.bash
+    user@vehicle-sbc:~$ ros2 run ros1_bridge dynamic_bridge
+
+    # Terminal 3
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200
+
+    # Terminal 4
     user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_slam.launch.py
+
+    # Terminal 5
+    user@host-pc:~$ ros2 run autodrive_nigel teleop_keyboard
     ```
+    > **Note 1:** You will need to run or add the `export ROS_MASTER_URI=http://localhost:11311` command to the `.bashrc` file to set `ROS_MASTER_URI` environment variable before running the `ros1_bridge`.
+
+    > **Note 2:** You might need to modify the `_port` and/or `_baud` parameters depending on your actual USB port and baud rate for the Arduino board respectively.
+    
+    > **Note 3:** You might need to replace `noetic` and/or `galactic` tags depending on your actual ROS 1 and ROS 2 versions respectively.
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Map-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
