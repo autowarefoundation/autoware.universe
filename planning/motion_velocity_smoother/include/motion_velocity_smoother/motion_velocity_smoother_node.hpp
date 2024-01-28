@@ -39,7 +39,6 @@
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "tier4_debug_msgs/msg/bool_stamped.hpp"            // temporary
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
@@ -90,8 +89,6 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
-  rclcpp::Subscription<tier4_debug_msgs::msg::BoolStamped>::SharedPtr sub_tmp_;
-  bool break_path_ = false;
 
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
   AccelWithCovarianceStamped::ConstSharedPtr current_acceleration_ptr_;

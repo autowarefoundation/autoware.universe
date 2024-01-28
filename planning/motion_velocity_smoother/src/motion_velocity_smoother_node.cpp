@@ -72,11 +72,6 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     "~/input/operation_mode_state", 1,
     [this](const OperationModeState::ConstSharedPtr msg) { operation_mode_ = *msg; });
 
-  sub_tmp_ = create_subscription<tier4_debug_msgs::msg::BoolStamped>(
-    "/tmp/break_path", 1, [this](const tier4_debug_msgs::msg::BoolStamped::ConstSharedPtr msg) {
-      break_path_ = msg->data;
-    });
-
   // parameter update
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&MotionVelocitySmootherNode::onParameter, this, _1));
@@ -506,16 +501,8 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     flipVelocity(output_resampled);
   }
 
-  if (break_path_) {
-    const size_t closest = findNearestIndexFromEgo(output_resampled);
-    TrajectoryPoints clipped;
-    clipped.insert(clipped.end(), output_resampled.begin(), output_resampled.begin() + closest);
-    publishTrajectory(clipped);
-  } else {
-    publishTrajectory(output_resampled);
-  }
-
   // publish message
+  publishTrajectory(output_resampled);
 
   // publish debug message
   publishStopDistance(output);
