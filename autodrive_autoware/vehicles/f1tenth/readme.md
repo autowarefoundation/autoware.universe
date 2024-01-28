@@ -116,23 +116,22 @@
 
 5. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
-    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth simulator_record.launch.py
+    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_record.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
-    user@vehicle-sbc:~$ ros2 run autodrive_f1tenth teleop_keyboard
     ```
     > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
 
-| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Record-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Record-Autoware.gif" width="478"> |
+| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Record-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
 5. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
-    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth simulator_replay.launch.py
+    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_replay.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
     ```
     > **Note:** Replace `<username>` with your actual username. Be sure to use the correct path to load the trajectory file.
 
-| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Replay-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Replay-Autoware.gif" width="478"> |
+| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Replay-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Replay-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
 ## Citation
