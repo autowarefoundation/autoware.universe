@@ -53,12 +53,21 @@
     ```
 3. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_opencav simulator_slam_2d.launch.py
-    user@host-pc:~$ ros2 run autodrive_opencav teleop_keyboard
+    user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_slam.launch.py
+    user@host-pc:~$ ros2 run autodrive_f1tenth teleop_keyboard
     ```
 
-| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-TinyTown-Simulator/Map-OpenCAV.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-TinyTown-Simulator/Map-Autoware.gif" width="478"> |
+| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Map-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
+
+3. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
+    ```bash
+    user@host-pc:~$ sudo apt update
+    user@host-pc:~$ rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+    user@host-pc:~$ cd ~/Autoware_WS/autoware_local/src/universe/autoware.universe/autodrive_autoware/perception/pf_localization/range_libc/pywrapper
+    user@host-pc:~$ sudo chmod +x *.sh
+    user@host-pc:~$ ./compile_with_cuda.sh
+    ```
 
 4. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
