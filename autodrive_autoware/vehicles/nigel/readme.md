@@ -15,8 +15,8 @@
     ```
 4. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_f1tenth testbed_slam.launch.py
-    user@host-pc:~$ ros2 run autodrive_f1tenth teleop_keyboard
+    user@host-pc:~$ ros2 launch autodrive_nigel testbed_slam.launch.py
+    user@host-pc:~$ ros2 run autodrive_nigel teleop_keyboard
     ```
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-TinyTown-Simulator/Map-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-TinyTown-Simulator/Map-Autoware.gif" width="478"> |
@@ -33,9 +33,9 @@
 
 6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_record.launch.py
+    user@host-pc:~$ ros2 launch autodrive_nigel simulator_record.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
-    user@host-pc:~$ ros2 run autodrive_f1tenth teleop_keyboard
+    user@host-pc:~$ ros2 run autodrive_nigel teleop_keyboard
     ```
     > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
 
@@ -44,7 +44,7 @@
 
 7. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_replay.launch.py
+    user@host-pc:~$ ros2 launch autodrive_nigel simulator_replay.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
     ```
     > **Note:** Replace `<username>` with your actual username. Be sure to use the correct path to load the trajectory file.
@@ -65,7 +65,7 @@
     ```
 4. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
-    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_slam.launch.py
+    user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_slam.launch.py
     ```
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Map-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Map-Autoware.gif" width="478"> |
@@ -82,7 +82,7 @@
 
 6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
-    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_record.launch.py
+    user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_record.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
     ```
     > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
@@ -92,7 +92,7 @@
 
 7. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
-    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_replay.launch.py
+    user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_replay.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
     ```
     > **Note:** Replace `<username>` with your actual username. Be sure to use the correct path to load the trajectory file.
