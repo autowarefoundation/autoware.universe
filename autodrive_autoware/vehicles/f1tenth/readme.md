@@ -60,7 +60,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Map-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-3. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
+4. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
     ```bash
     user@host-pc:~$ sudo apt update
     user@host-pc:~$ rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
@@ -69,15 +69,15 @@
     user@host-pc:~$ ./compile_with_cuda.sh
     ```
 
-4. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
+5. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_opencav simulator_record_2d.launch.py
+    user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_record.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
-    user@host-pc:~$ ros2 run autodrive_opencav teleop_keyboard
+    user@host-pc:~$ ros2 run autodrive_f1tenth teleop_keyboard
     ```
     > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
 
-| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-TinyTown-Simulator/Record-OpenCAV.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-OpenCAV-TinyTown-Simulator/Record-Autoware.gif" width="478"> |
+| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Record-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
 5. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
