@@ -62,12 +62,14 @@
     user@vehicle-sbc:~$ source /opt/ros/galactic/setup.bash
     user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-ros1-bridge
     ```
-3. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+3. Install the `rviz_imu_plugin` package for ROS 2 (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
+    user@vehicle-sbc:~$ source /opt/ros/galactic/setup.bash
     user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-rviz-imu-plugin
     ```
-4. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+4. Install the `slam_toolbox` package for ROS 2 (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
+    user@vehicle-sbc:~$ source /opt/ros/galactic/setup.bash
     user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-slam-toolbox
     ```
 5. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
