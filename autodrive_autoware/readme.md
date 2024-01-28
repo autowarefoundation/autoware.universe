@@ -30,10 +30,10 @@
   - [Docker Installation Documentation](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/install_docker.md)
   - [Jetson Installation Documentation](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/install_jetson.md)
 - **Deployments:** Autoware stack deployment on different vehicles of [AutoDRIVE Ecosystem](https://autodrive-ecosystem.github.io/) across scales and [ODDs](https://en.wikipedia.org/wiki/Operational_design_domain).
-  - Nigel
-  - F1TENTH
-  - Hunter SE
-  - OpenCAV
+  - [Nigel (Small-Scale Vehicle - On-Road Navigation)](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/nigel/readme.md)
+  - [F1TENTH (Small-Scale Vehicle - Autonomous Racing)](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/f1tenth/readme.md)
+  - [Hunter SE (Mid-Scale Vehicle - On-Road & Off-Road Navigation)](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/readme.md)
+  - [OpenCAV (Full-Scale Vehicle - On-Road Navigation)](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/opencav/readme.md)
 
 ---
 
