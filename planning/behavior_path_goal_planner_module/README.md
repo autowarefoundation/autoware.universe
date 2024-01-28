@@ -159,26 +159,62 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 
 ## **Goal Search**
 
-If it is not possible to park safely at a given goal, `/planning/scenario_planning/modified_goal` is
-searched for in certain range of the shoulder lane.
+To realize pull over even when an obstacle exists near the original goal, a collision free area is searched within a certain range around the original goal. The goal found will be published as `/planning/scenario_planning/modified_goal`.
 
 [goal search video](https://user-images.githubusercontent.com/39142679/188359594-c6724e3e-1cb7-4051-9a18-8d2c67d4dee9.mp4)
 
+1. The original goal is set, and the refined goal pose is obtained by moving in the direction normal to the lane center line and keeping `margin_from_boundary` from the edge of the lane.
+
+![refined_goal](./images/goal_planner-refined_goal.drawio.svg)
+
+2. Using `refined_goal` as the base goal, search for candidate goals in the range of `-forward_goal_search_length` to `backward_goal_search_length` in the longitudinal direction and `longitudinal_margin` to `longitudinal_margin+max_lateral_offset` in th lateral direction based on refined_goal.
+
+![goal_candidates](./images/goal_planner-goal_candidates.drawio.svg)
+
+3. Each candidate goal is prioritized and a path is generated for each planner for each goal. The priority of a candidate goal is determined by its distance from the base goal. The ego vehicle tries to park for the highest possible goal. The distance is determined by the selected policy. In case `minimum_longitudinal_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_weighted_distance`, sort with the sum of weighted lateral distance and longitudinal distance. This means the distance is calculated by `longitudinal_distance + lateral_cost*lateral_distance`
+
+![goal_distance](./images/goal_planner-goal_distance.drawio.svg)
+
+The following figure is an example of minimum_weighted_distance.​ The white number indicates the goal candidate priority, and the smaller the number, the higher the priority. the 0 goal indicates the base goal.
+![goal_priority_rviz_with_goal](./images/goal_priority_with_goal.png)
+![goal_priority_rviz](./images/goal_priority_rviz.png)
+
+4. If the footprint in each goal candidate is within `object_recognition_collision_check_margin` of that of the object, it is determined to be unsafe. These goals are not selected. If `use_occupancy_grid_for_goal_search` is enabled, collision detection on the grid is also performed with `occupancy_grid_collision_check_margin`.
+
+Red goals candidates in the image indicate unsafe ones.
+
+![is_safe](./images/goal_planner-is_safe.drawio.svg)
+
+It is possible to keep `longitudinal_margin` in the longitudinal direction apart from the collision margin for obstacles from the goal candidate. This is intended to provide natural spacing for parking and efficient departure.
+
+![longitudinal_margin](./images/goal_planner-longitudinal_margin.drawio.svg)
+
+Also, if `prioritize_goals_before_objects` is enabled, To arrive at each goal, the number of objects that need to be avoided in the target range is counted, and those with the lowest number are given priority.
+
+The images represent a count of objects to be avoided at each range, with priority given to those with the lowest number, regardless of the aforementioned distances.
+
+![object_to_avoid](./images/goal_planner-object_to_avoid.drawio.svg)
+
+The gray numbers represent objects to avoid, and you can see that the goal in front has a higher priority in this case.
+
+![goal_priority_object_to_avoid_rviz.png](./images/goal_priority_object_to_avoid_rviz.png)
+
 ### Parameters for goal search
 
-| Name                            | Unit | Type   | Description                                                                                                                                                                                                                                 | Default value               |
-| :------------------------------ | :--- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------- |
-| goal_priority                   | [-]  | string | In case `minimum_weighted_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_longitudinal_distance`, sort with weighted lateral distance against longitudinal distance. | `minimum_weighted_distance` |
-| prioritize_goals_before_objects | [-]  | bool   | If there are objects that may need to be avoided, prioritize the goal in front of them                                                                                                                                                      | true                        |
-| forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                                               | 20.0                        |
-| backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                                              | 20.0                        |
-| goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                                           | 2.0                         |
-| longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                                               | 3.0                         |
-| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                                      | 0.5                         |
-| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                                   | 0.25                        |
-| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                                         | 0.0                         |
-| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                                         | 0.0                         |
-| margin_from_boundary            | [m]  | double | distance margin from edge of the shoulder lane                                                                                                                                                                                              | 0.5                         |
+| Name                            | Unit | Type   | Description                                                                                                                                                                                                                                       | Default value               |
+| :------------------------------ | :--- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------- |
+| goal_priority                   | [-]  | string | In case `minimum_longitudinal_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_weighted_distance`, sort with the sum of weighted lateral distance and longitudinal distance | `minimum_weighted_distance` |
+| lateral_weight                  | [-]  | double | Weight for lateral distance used when `minimum_weighted_distance`                                                                                                                                                                                 | 40.0                        |
+| prioritize_goals_before_objects | [-]  | bool   | If there are objects that may need to be avoided, prioritize the goal in front of them                                                                                                                                                            | true                        |
+| forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                                                     | 20.0                        |
+| backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                                                    | 20.0                        |
+| goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                                                 | 2.0                         |
+| longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                                                     | 3.0                         |
+| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                                            | 0.5                         |
+| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                                         | 0.25                        |
+| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                                               | 0.0                         |
+| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                                               | 0.0                         |
+| margin_from_boundary            | [m]  | double | distance margin from edge of the shoulder lane                                                                                                                                                                                                    | 0.5                         |
 
 ## **Pull Over**
 
