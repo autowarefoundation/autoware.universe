@@ -47,11 +47,15 @@
 ## Digital Twin Simulation Demo - AutoDRIVE Simulator
 
 1. Launch AutoDRIVE Simulator for F1TENTH and establish Autoware API bridge connection in single or distributed computing setting as applicable.
-2. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+2. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+    ```bash
+    user@host-pc:~$ sudo apt install ros-$ROS_DISTRO-rviz-imu-plugin
+    ```
+3. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
     user@host-pc:~$ sudo apt install ros-$ROS_DISTRO-slam-toolbox
     ```
-3. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
+4. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
     user@host-pc:~$ ros2 launch autodrive_f1tenth testbed_slam.launch.py
     user@host-pc:~$ ros2 run autodrive_f1tenth teleop_keyboard
@@ -60,7 +64,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Map-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-4. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
+5. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
     ```bash
     user@host-pc:~$ sudo apt update
     user@host-pc:~$ rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
@@ -69,7 +73,7 @@
     user@host-pc:~$ ./compile_with_cuda.sh
     ```
 
-5. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
+6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
     user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_record.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
@@ -80,7 +84,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Record-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-6. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
+7. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
     user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_replay.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
@@ -93,11 +97,15 @@
 ## Physical Testbed Demo - F1TENTH @ ARMLab CU-ICAR
 
 1. Start up the vehicle and establish a remote connection with the vehicle's single-board computer (SBC) using [SSH](https://en.wikipedia.org/wiki/Secure_Shell) or [VNC](https://en.wikipedia.org/wiki/X11vnc) ([HDMI](https://en.wikipedia.org/wiki/HDMI) or [DP](https://en.wikipedia.org/wiki/DisplayPort) emulator a.k.a. dummy plug may be required) as applicable.
-2. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+2. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+    ```bash
+    user@host-pc:~$ sudo apt install ros-$ROS_DISTRO-rviz-imu-plugin
+    ```
+3. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
     user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-slam-toolbox
     ```
-3. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
+4. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_slam.launch.py
     ```
@@ -105,7 +113,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Map-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-4. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
+5. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
     ```bash
     user@vehicle-sbc:~$ sudo apt update
     user@vehicle-sbc:~$ rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
@@ -114,7 +122,7 @@
     user@vehicle-sbc:~$ ./compile_with_cuda.sh
     ```
 
-5. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
+6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_record.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
@@ -124,7 +132,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Record-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-6. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
+7. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_replay.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
