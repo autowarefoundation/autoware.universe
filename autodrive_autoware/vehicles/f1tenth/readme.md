@@ -9,13 +9,11 @@
    user@host-pc:~$ sudo apt install python3-testresources
    user@host-pc:~$ pip3 install onnx setuptools==65.5.0
    ```
-
 2. Install the gym dependencies (if not already accomplished).
    ```bash
    user@host-pc:~$ cd ~/Autoware_WS/autoware_local/src/universe/autoware.universe/autodrive_autoware/vehicles/f1tenth/f1tenth_gym_ros/f1tenth_gym
    user@host-pc:~$ pip3 install -e .
    ```
-
 3. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
     ```bash
     user@host-pc:~$ sudo apt update
@@ -72,7 +70,6 @@
     user@host-pc:~$ sudo chmod +x *.sh
     user@host-pc:~$ ./compile_with_cuda.sh
     ```
-
 6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
     user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_record.launch.py
@@ -99,7 +96,7 @@
 1. Start up the vehicle and establish a remote connection with the vehicle's single-board computer (SBC) using [SSH](https://en.wikipedia.org/wiki/Secure_Shell) or [VNC](https://en.wikipedia.org/wiki/X11vnc) ([HDMI](https://en.wikipedia.org/wiki/HDMI) or [DP](https://en.wikipedia.org/wiki/DisplayPort) emulator a.k.a. dummy plug may be required) as applicable.
 2. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
-    user@host-pc:~$ sudo apt install ros-$ROS_DISTRO-rviz-imu-plugin
+    user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-rviz-imu-plugin
     ```
 3. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
@@ -121,7 +118,6 @@
     user@vehicle-sbc:~$ sudo chmod +x *.sh
     user@vehicle-sbc:~$ ./compile_with_cuda.sh
     ```
-
 6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_record.launch.py
