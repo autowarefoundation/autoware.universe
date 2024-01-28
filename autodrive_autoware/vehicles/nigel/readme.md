@@ -15,7 +15,7 @@
     ```
 4. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_nigel testbed_slam.launch.py
+    user@host-pc:~$ ros2 launch autodrive_nigel simulator_slam.launch.py
     user@host-pc:~$ ros2 run autodrive_nigel teleop_keyboard
     ```
 
