@@ -2,6 +2,8 @@
 <img src="media/AutoDRIVE-Logo.png" alt="AutoDRIVE" width="478"/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="media/Autoware-Logo.png" alt="Autoware" width="478"/>
 </p>
 
+---
+
 ## Team
 
 <img align="left" style="padding-left: 10px; padding-right: 10px; padding-bottom: 10px" height="175px" src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Group/Tinker_Twins.png">
