@@ -30,7 +30,6 @@
     user@host-pc:~$ sudo chmod +x *.sh
     user@host-pc:~$ ./compile_with_cuda.sh
     ```
-
 6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
     user@host-pc:~$ ros2 launch autodrive_nigel simulator_record.launch.py
@@ -57,15 +56,21 @@
 > **Note:** This demo was set up with [`rosserial`](https://wiki.ros.org/rosserial) and [`rosserial_arduino`](https://wiki.ros.org/rosserial_arduino) (tested with [rosserial_arduino_library 0.7.9](https://www.arduino.cc/reference/en/libraries/rosserial-arduino-library)) to additionally demonstrate the workflow of deploying Autoware stack by interfacing ROS 2 Galactic with ROS 1 Noetic using [`ros1_bridge`](https://github.com/ros2/ros1_bridge) for ROS 2.
 
 1. Start up the vehicle and establish a remote connection with the vehicle's single-board computer (SBC) using [SSH](https://en.wikipedia.org/wiki/Secure_Shell) or [VNC](https://en.wikipedia.org/wiki/X11vnc) ([HDMI](https://en.wikipedia.org/wiki/HDMI) or [DP](https://en.wikipedia.org/wiki/DisplayPort) emulator a.k.a. dummy plug may be required) as applicable.
-2. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+2. Install [`ros1_bridge`](https://github.com/ros2/ros1_bridge) for ROS 2:
     ```bash
-    user@host-pc:~$ sudo apt install ros-$ROS_DISTRO-rviz-imu-plugin
+    user@vehicle-sbc:~$ sudo apt update
+    user@vehicle-sbc:~$ source /opt/ros/galactic/setup.bash
+    user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-ros1-bridge
     ```
-3. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+3. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
+    ```bash
+    user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-rviz-imu-plugin
+    ```
+4. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
     user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-slam-toolbox
     ```
-4. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
+5. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_slam.launch.py
     ```
@@ -81,7 +86,6 @@
     user@vehicle-sbc:~$ sudo chmod +x *.sh
     user@vehicle-sbc:~$ ./compile_with_cuda.sh
     ```
-
 6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_record.launch.py
