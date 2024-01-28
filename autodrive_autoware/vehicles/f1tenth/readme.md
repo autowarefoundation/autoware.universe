@@ -57,7 +57,7 @@
     ```
 4. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_f1tenth testbed_slam.launch.py
+    user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_slam.launch.py
     user@host-pc:~$ ros2 run autodrive_f1tenth teleop_keyboard
     ```
 
