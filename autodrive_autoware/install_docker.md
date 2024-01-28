@@ -99,6 +99,8 @@ user@container-id:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_T
 
 > **Note 3:** Use `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of (re)building the entire workspace to avoid large (re)build times.
 
+> **Note 4:** If any changes to files of a particular package don't seem to take effect, delete the respective package directories from the `install` and `build` folders and rebuild the respective package using `--packages-select` option.
+
 ## Test Autoware Installation with Planning Simulation:
 
 1. Run the pulled Docker image as a container (if not already running).
