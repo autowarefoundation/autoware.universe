@@ -99,6 +99,8 @@
     
     > **Note 3:** You might need to replace `noetic` and/or `galactic` tags depending on your actual ROS 1 and ROS 2 versions respectively.
 
+    > **Note 4:** In case the USB devices misbehave, disconnecting and reconnecting them (potentially multiple times) should do the trick.
+
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Map-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
@@ -112,20 +114,71 @@
     ```
 7. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
+    # Terminal 1
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ roscore
+
+    # Terminal 2
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ source /opt/ros/galactic/setup.bash
+    user@vehicle-sbc:~$ ros2 run ros1_bridge dynamic_bridge
+
+    # Terminal 3
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200
+
+    # Terminal 4
     user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_record.launch.py
+
+    # Terminal 5
     user@vehicle-sbc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
+    
+    # Terminal 6
+    user@host-pc:~$ ros2 run autodrive_nigel teleop_keyboard
     ```
-    > **Note:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
+    > **Note 1:** You will need to run or add the `export ROS_MASTER_URI=http://localhost:11311` command to the `.bashrc` file to set `ROS_MASTER_URI` environment variable before running the `ros1_bridge`.
+
+    > **Note 2:** You might need to modify the `_port` and/or `_baud` parameters depending on your actual USB port and baud rate for the Arduino board respectively.
+
+    > **Note 3:** You might need to replace `noetic` and/or `galactic` tags depending on your actual ROS 1 and ROS 2 versions respectively.
+
+    > **Note 4:** Replace `<username>` with your actual username. Feel free to use a different path to save the trajectory file.
+
+    > **Note 5:** In case the USB devices misbehave, disconnecting and reconnecting them (potentially multiple times) should do the trick.
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Record-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
 8. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
+    # Terminal 1
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ roscore
+
+    # Terminal 2
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ source /opt/ros/galactic/setup.bash
+    user@vehicle-sbc:~$ ros2 run ros1_bridge dynamic_bridge
+
+    # Terminal 3
+    user@vehicle-sbc:~$ source /opt/ros/noetic/setup.bash
+    user@vehicle-sbc:~$ rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200
+
+    # Terminal 4
     user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_replay.launch.py
+
+    # Terminal 5
     user@vehicle-sbc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
     ```
-    > **Note:** Replace `<username>` with your actual username. Be sure to use the correct path to load the trajectory file.
+    > **Note 1:** You will need to run or add the `export ROS_MASTER_URI=http://localhost:11311` command to the `.bashrc` file to set `ROS_MASTER_URI` environment variable before running the `ros1_bridge`.
+
+    > **Note 2:** You might need to modify the `_port` and/or `_baud` parameters depending on your actual USB port and baud rate for the Arduino board respectively.
+
+    > **Note 3:** You might need to replace `noetic` and/or `galactic` tags depending on your actual ROS 1 and ROS 2 versions respectively.
+
+    > **Note 4:** Replace `<username>` with your actual username. Be sure to use the correct path to load the trajectory file.
+
+    > **Note 5:** In case the USB devices misbehave, disconnecting and reconnecting them (potentially multiple times) should do the trick.
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Replay-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Replay-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
