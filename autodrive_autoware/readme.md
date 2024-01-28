@@ -23,7 +23,7 @@
 ---
 
 ## Documentation
-- **Installation:** Autoware installation using different 
+- **Installation:** Autoware stack installation using different options depending upon the required system hardware/software configuration.
   - [Local Installation Documentation](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/install_local.md)
   - [Docker Installation Documentation](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/install_docker.md)
   - [Jetson Installation Documentation](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/install_jetson.md)
