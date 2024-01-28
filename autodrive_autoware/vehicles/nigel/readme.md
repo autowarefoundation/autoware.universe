@@ -102,7 +102,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Map-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-5. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
+6. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
     ```bash
     user@vehicle-sbc:~$ sudo apt update
     user@vehicle-sbc:~$ rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
@@ -110,7 +110,7 @@
     user@vehicle-sbc:~$ sudo chmod +x *.sh
     user@vehicle-sbc:~$ ./compile_with_cuda.sh
     ```
-6. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
+7. Record waypoints by driving (teleoperating) the vehicle around the environment while localizing against the map.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_record.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/home/<username>/path"}" --feedback
@@ -120,7 +120,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Record-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-ARMLab-Testbed/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-7. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
+8. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_nigel testbed_replay.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
