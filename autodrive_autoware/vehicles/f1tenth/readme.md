@@ -80,7 +80,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Record-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-5. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
+6. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
     user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_replay.launch.py
     user@host-pc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
@@ -124,7 +124,7 @@
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Record-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Record-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
-5. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
+6. Engage the vehicle in autonomous mode to track the reference trajectory in real-time.
     ```bash
     user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_replay.launch.py
     user@vehicle-sbc:~$ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/home/<username>/path"}" --feedback
