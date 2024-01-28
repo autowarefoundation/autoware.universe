@@ -22,6 +22,17 @@
 
 ---
 
+## Documentation
+- **Installation:** Autoware installation using different 
+  - [Local Installation Documentation](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/install_local.md)
+  - [Docker Installation Documentation](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/install_docker.md)
+  - [Jetson Installation Documentation](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/install_jetson.md)
+- **Deployments:** Autoware stack deployment on different vehicles of [AutoDRIVE Ecosystem](https://autodrive-ecosystem.github.io/) across scales and [ODDs](https://en.wikipedia.org/wiki/Operational_design_domain).
+  - Nigel
+  - F1TENTH
+  - Hunter SE
+  - OpenCAV
+
 ## Deployments
 
 | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-TinyTown-Simulator/Replay-Nigel.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-Nigel-TinyTown-Simulator/Replay-Autoware.gif" width="478"> |
