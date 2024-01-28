@@ -171,6 +171,8 @@ user@jetson-device:~$ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_
 
 > **Note 4:** Use `colcon build --packages-select <package_name> --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` to re-build only specific packages instead of (re)building the entire workspace to avoid large (re)build times.
 
+> **Note 5:** If any changes to files of a particular package don't seem to take effect, delete the respective package directories from the `install` and `build` folders and rebuild the respective package using `--packages-select` option.
+
 ## Test Autoware Installation with Planning Simulation:
 
 1. Source the `setup.*sh` (e.g., `setup.bash`) files of ROS distribution (if not already done) and your workspace:
