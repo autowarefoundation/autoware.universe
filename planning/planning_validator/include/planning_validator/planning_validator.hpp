@@ -55,6 +55,8 @@ struct ValidationParams
   double steering_rate_threshold;
   double velocity_deviation_threshold;
   double distance_deviation_threshold;
+  double longitudinal_distance_deviation_threshold;
+  double forward_trajectory_time_length_threshold;
 };
 
 class PlanningValidator : public rclcpp::Node
@@ -64,7 +66,7 @@ public:
 
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
 
-  bool checkValidSize(const Trajectory & trajectory) const;
+  bool checkValidSize(const Trajectory & trajectory);
   bool checkValidFiniteValue(const Trajectory & trajectory);
   bool checkValidInterval(const Trajectory & trajectory);
   bool checkValidRelativeAngle(const Trajectory & trajectory);
@@ -76,6 +78,8 @@ public:
   bool checkValidSteeringRate(const Trajectory & trajectory);
   bool checkValidVelocityDeviation(const Trajectory & trajectory);
   bool checkValidDistanceDeviation(const Trajectory & trajectory);
+  bool checkValidLongitudinalDistanceDeviation(const Trajectory & trajectory);
+  bool checkValidForwardTrajectoryTimeLength(const Trajectory & trajectory);
 
 private:
   void setupDiag();

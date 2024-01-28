@@ -39,8 +39,8 @@
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "tier4_debug_msgs/msg/bool_stamped.hpp"            // temporary
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
-#include "tier4_debug_msgs/msg/bool_stamped.hpp"         // temporary
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
 #include "visualization_msgs/msg/marker_array.hpp"

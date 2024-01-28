@@ -14,7 +14,7 @@ ament_auto_add_library(planning_validator_component SHARED
   include/planning_validator/planning_validator.hpp
   src/planning_validator.cpp
 )
-target_link_libraries(planning_validator_component planning_validator_helpers)
+target_link_libraries(planning_validator_component planning_validator_helpers glog)
 rclcpp_components_register_node(planning_validator_component
   PLUGIN "planning_validator::PlanningValidator"
   EXECUTABLE planning_validator_node

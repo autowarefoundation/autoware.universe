@@ -73,8 +73,9 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     [this](const OperationModeState::ConstSharedPtr msg) { operation_mode_ = *msg; });
 
   sub_tmp_ = create_subscription<tier4_debug_msgs::msg::BoolStamped>(
-    "/tmp/break_path", 1,
-    [this](const tier4_debug_msgs::msg::BoolStamped::ConstSharedPtr msg) { break_path_ = msg->data; });
+    "/tmp/break_path", 1, [this](const tier4_debug_msgs::msg::BoolStamped::ConstSharedPtr msg) {
+      break_path_ = msg->data;
+    });
 
   // parameter update
   set_param_res_ = this->add_on_set_parameters_callback(
