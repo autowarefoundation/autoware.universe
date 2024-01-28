@@ -92,7 +92,7 @@
 
 ## Physical Testbed Demo - F1TENTH @ ARMLab CU-ICAR
 
-1. Start up the vehicle and establish a remote connection with the vehicle's single-board computer (SBC) using VNC or SSH as applicable.
+1. Start up the vehicle and establish a remote connection with the vehicle's single-board computer (SBC) using [SSH](https://en.wikipedia.org/wiki/Secure_Shell) or [VNC](https://en.wikipedia.org/wiki/X11vnc) ([HDMI](https://en.wikipedia.org/wiki/HDMI) or [DP](https://en.wikipedia.org/wiki/DisplayPort) emulator a.k.a. dummy plug may be required) as applicable.
 2. Install the `slam_toolbox` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
     ```bash
     user@vehicle-sbc:~$ sudo apt install ros-$ROS_DISTRO-slam-toolbox
