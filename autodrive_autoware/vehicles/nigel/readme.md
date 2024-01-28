@@ -54,7 +54,7 @@
 
 ## Physical Testbed Demo - Nigel @ ARMLab CU-ICAR
 
-> **Note:** This demo was set up with `rosserial_arduino` to additionally demonstrate the workflow of deploying Autoware stack by interfacing ROS 2 Galactic with ROS 1 Noetic.
+> **Note:** This demo was set up with [`rosserial`](https://wiki.ros.org/rosserial) and [`rosserial_arduino`](https://wiki.ros.org/rosserial_arduino) (tested with [rosserial_arduino_library 0.7.9](https://www.arduino.cc/reference/en/libraries/rosserial-arduino-library)) to additionally demonstrate the workflow of deploying Autoware stack by interfacing ROS 2 Galactic with ROS 1 Noetic using [`ros1_bridge`](https://github.com/ros2/ros1_bridge) for ROS 2.
 
 1. Start up the vehicle and establish a remote connection with the vehicle's single-board computer (SBC) using [SSH](https://en.wikipedia.org/wiki/Secure_Shell) or [VNC](https://en.wikipedia.org/wiki/X11vnc) ([HDMI](https://en.wikipedia.org/wiki/HDMI) or [DP](https://en.wikipedia.org/wiki/DisplayPort) emulator a.k.a. dummy plug may be required) as applicable.
 2. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
