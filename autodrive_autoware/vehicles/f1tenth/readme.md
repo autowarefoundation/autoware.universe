@@ -53,7 +53,7 @@
     ```
 3. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
-    user@host-pc:~$ ros2 launch autodrive_f1tenth simulator_slam.launch.py
+    user@host-pc:~$ ros2 launch autodrive_f1tenth testbed_slam.launch.py
     user@host-pc:~$ ros2 run autodrive_f1tenth teleop_keyboard
     ```
 
@@ -99,11 +99,10 @@
     ```
 3. Map the environment (if not already accomplished) by driving (teleoperating) the vehicle around the environment.
     ```bash
-    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth simulator_slam.launch.py
-    user@vehicle-sbc:~$ ros2 run autodrive_f1tenth teleop_keyboard
+    user@vehicle-sbc:~$ ros2 launch autodrive_f1tenth testbed_slam.launch.py
     ```
 
-| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Map-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-PortoTrack-Simulator/Map-Autoware.gif" width="478"> |
+| <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Map-F1TENTH.gif" width="478"> | <img src="https://github.com/Tinker-Twins/Scaled-Autonomous-Vehicles/blob/main/Project%20Media/AutoDRIVE-F1TENTH-ARMLab-Testbed/Map-Autoware.gif" width="478"> |
 | :-----------------: | :-----------------: |
 
 4. Build and install the [RangeLibc Python wrapper](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/tree/main/autodrive_autoware/perception/pf_localization/range_libc/pywrapper) (if not already accomplished).
