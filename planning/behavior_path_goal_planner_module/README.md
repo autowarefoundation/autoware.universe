@@ -219,7 +219,11 @@ The gray numbers represent objects to avoid, and you can see that the goal in fr
 ## **Pull Over**
 
 There are three path generation methods.
-The path is generated with a certain margin (default: `0.5 m`) from the boundary of shoulder lane.
+The path is generated with a certain margin (default: `0.75 m`) from the boundary of shoulder lane.
+
+The process is time consuming because multiple planners are used to generate path for each candidate goal. Therefore, in this module, the path generation is performed in a thread different from the main thread.
+Path generation is performed at the timing when the shape of the output path of the previous module changes. If a new module launches, it is expected to go to the previous stage before the goal planner, in which case the goal planner re-generates the path. The goal planner is expected to run at the end of multiple modules, which is achieved by `keep_last` in the planner manager.
+
 
 | Name                             | Unit   | Type   | Description                                                                                                                                                                    | Default value                            |
 | :------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
