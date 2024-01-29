@@ -159,6 +159,7 @@ Float32MultiArrayStamped MPC::generateDiagData(
   append_diag(iteration_num);             // [18] iteration number
   append_diag(runtime);                   // [19] runtime of the latest problem solved
   append_diag(objective_value);           // [20] objective value of the latest problem solved
+  append_diag(std::clamp(Uex(0), -m_steer_lim, m_steer_lim));          // [21] control signal after the saturation constraint (clamp)
 
   return diagnostic;
 }
