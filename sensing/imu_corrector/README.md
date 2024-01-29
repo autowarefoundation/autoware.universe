@@ -69,6 +69,7 @@ In the future, with careful implementation for pose errors, the IMU bias estimat
 | `~/output/gyro_bias` | `geometry_msgs::msg::Vector3Stamped` | bias of the gyroscope [rad/s] |
 
 ### Parameters
+
 Note that this node also uses `angular_velocity_offset_x`, `angular_velocity_offset_y`, `angular_velocity_offset_z` parameters from `imu_corrector.param.yaml`.
 
 | Name                                  | Type   | Description                                                                                 |
