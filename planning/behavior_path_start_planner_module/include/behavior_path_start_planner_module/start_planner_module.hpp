@@ -139,7 +139,7 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override;
+  bool canTransitIdleToRunningState() override { return true; }
 
   /**
    * @brief init member variables.
@@ -242,6 +242,8 @@ private:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
+  void updateDrivableLanes();
+  lanelet::ConstLanelets createDrivableLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.
   bool isGoalBehindOfEgoInSameRouteSegment() const;
