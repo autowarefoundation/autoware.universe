@@ -494,6 +494,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   }
 
   stop_watch_.tic(__func__);
+  const auto & p = behavior_determination_param_;
   *debug_data_ptr_ = DebugData();
 
   const auto is_driving_forward = motion_utils::isDrivingForwardWithTwist(traj_points);
@@ -503,9 +504,19 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   //    (1) with a proper label
   //    (2) in front of ego
   //    (3) not too far from trajectory
-  const auto target_obstacles = convertToObstacles(traj_points);
+  const auto target_obstacles = [&]() {
+    auto target_obstacles = convertToObstacles(traj_points);
+    // Sort from closest to farthest obstacle to speed up yield
+    if (p.enable_yield) {
+      std::sort(
+        target_obstacles.begin(), target_obstacles.end(), [](const auto & o1, const auto & o2) {
+          return o1.ego_to_obstacle_distance < o2.ego_to_obstacle_distance;
+        });
+    }
+    return target_obstacles;
+  }();
 
-  // 2. Determine ego's behavior against each obstacle from stop, cruise and slow down.
+  //  2. Determine ego's behavior against each obstacle from stop, cruise and slow down.
   const auto & [stop_obstacles, cruise_obstacles, slow_down_obstacles] =
     determineEgoBehaviorAgainstObstacles(traj_points, target_obstacles);
 
@@ -660,14 +671,6 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     target_obstacles.push_back(target_obstacle);
   }
 
-  // Sort from closest to farthest obstacle to speed up yield
-  if (p.enable_yield) {
-    std::sort(
-      target_obstacles.begin(), target_obstacles.end(), [](const auto & o1, const auto & o2) {
-        return o1.ego_to_obstacle_distance < o2.ego_to_obstacle_distance;
-      });
-  }
-
   const double calculation_time = stop_watch_.toc(__func__);
   RCLCPP_INFO_EXPRESSION(
     rclcpp::get_logger("ObstacleCruisePlanner"), enable_debug_info_, "  %s := %f [ms]", __func__,
@@ -776,7 +779,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
           cruise_obstacles.begin(), cruise_obstacles.end(),
           [&y](const auto & c) { return y.uuid == c.uuid; });
 
-        // If no matching UUID found, insert y into cruise_obstacles
+        // If no matching UUID found, insert yield obstacle into cruise_obstacles
         if (it == cruise_obstacles.end()) {
           cruise_obstacles.push_back(y);
         }
@@ -959,9 +962,18 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
 
   if (stopped_obstacles.empty() || moving_obstacles.empty()) return std::nullopt;
   std::vector<CruiseObstacle> yield_obstacles;
+  // std::cerr << "------------------------------------\n";
   for (const auto & moving_obstacle : moving_obstacles) {
+    // std::cerr << "moving_obstacle uuid " << moving_obstacle.second.uuid << "\n";
     for (const auto & stopped_obstacle : stopped_obstacles) {
-      if (moving_obstacle.first >= stopped_obstacle.first) continue;
+      const bool is_moving_obs_behind_of_stopped_obs =
+        moving_obstacle.first < stopped_obstacle.first;
+      const bool is_moving_obs_ahead_of_ego_front =
+        moving_obstacle.second.ego_to_obstacle_distance > vehicle_info_.vehicle_length_m;
+
+      if (!is_moving_obs_ahead_of_ego_front || !is_moving_obs_behind_of_stopped_obs) continue;
+
+      // std::cerr << "stopped_obstacle uuid " << stopped_obstacle.second.uuid << "\n";
       const double lateral_distance_between_obstacles = std::abs(
         moving_obstacle.second.lat_dist_from_obstacle_to_traj -
         stopped_obstacle.second.lat_dist_from_obstacle_to_traj);
@@ -978,14 +990,27 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
       const bool obstacles_collide_within_threshold_time =
         longitudinal_distance_between_obstacles / moving_obstacle_speed <
         p.max_obstacles_collision_time;
-
+      // std::cerr << "lateral_distance_between_obstacles " << lateral_distance_between_obstacles
+      // << "\n";
+      // std::cerr << "longitudinal_distance_between_obstacles "
+      // << longitudinal_distance_between_obstacles << "\n";
+      // std::cerr << "longitudinal_distance_between_obstacles / moving_obstacle_speed "
+      // << longitudinal_distance_between_obstacles / moving_obstacle_speed << "\n";
+      // std::cerr << " moving_obstacle_speed " << moving_obstacle_speed << "\n";
       if (are_obstacles_aligned && obstacles_collide_within_threshold_time) {
+        // std::cerr << "Yield obstacle candidate found " << moving_obstacle.second.uuid << "\n";
         const auto yield_obstacle = createYieldCruiseObstacle(moving_obstacle.second, traj_points);
-        if (yield_obstacle) yield_obstacles.push_back(*yield_obstacle);
+        if (yield_obstacle) {
+          yield_obstacles.push_back(*yield_obstacle);
+          // std::cerr << "Yield obstacle found " << moving_obstacle.second.uuid << "\n";
+          // std::cerr << "moving_obstacle_speed " << moving_obstacle_speed << "\n";
+          // std::cerr << "moving_obstacle.second.ego_to_obstacle_distance "
+          // << moving_obstacle.second.ego_to_obstacle_distance << "\n";
+        }
       }
     }
   }
-
+  // std::cerr << "------------------------------------\n";
   if (yield_obstacles.empty()) return std::nullopt;
   return yield_obstacles;
 }
