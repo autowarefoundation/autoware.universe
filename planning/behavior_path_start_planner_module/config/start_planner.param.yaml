@@ -13,7 +13,7 @@
       center_line_path_interval: 1.0
       # shift pull out
       enable_shift_pull_out: true
-      check_shift_path_lane_departure: false
+      check_shift_path_lane_departure: true
       minimum_shift_pull_out_distance: 0.0
       deceleration_interval: 15.0
       lateral_jerk: 0.5
