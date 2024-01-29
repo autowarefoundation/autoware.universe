@@ -27,7 +27,7 @@ Using this Python model interface a PSIM model consisting of sub-models implemen
 To use this package `python3` and `pybind11` need to be installed. The only assumption on Python sub-models is their interface (see below).
 
 ```python
-class CustomPythonSubmodel:
+class PythonSubmodelInterface:
 
     def forward(self, action, state):  # Required
         """
@@ -53,7 +53,7 @@ class CustomPythonSubmodel:
         """
         pass
 
-    def load_params(self, path):  # Optional
+    def load_params(self, path):  # Required
         """
         Load parameters of the model. 
         Inputs:
@@ -61,7 +61,7 @@ class CustomPythonSubmodel:
         """
         pass
 
-    def dtSet(self, dt):
+    def dtSet(self, dt):  # Required
         """
         Set dt of the model.
         Inputs:
@@ -83,15 +83,54 @@ To successfully create a vehicle model an InterconnectedModel class needs to be 
 #### ```Constructor```
 Constructor takes no arguments.
 
-#### ```addSubmodel(model_desc)```
+#### ```void addSubmodel(std::tuple<std::string, std::string, std::string> model_descriptor)```
+Add a new sub-model to the model.
 
-#### ```generateConnections(input_names, state_names)```
+Inputs:
+* model_descriptor: Describes what model should be used. Model descriptor contains three strings:
+    * First string is a path to a file where the model is implemented.
+    * Second string is a path to the file where model parameters are stored
+    * Third string is a name of the class that implement the model.
 
-#### ```initState(current_state)```
+Outputs:
+* None 
 
-#### ```updatePymodel(vehicle_input)```
+#### ```void generateConnections(std::vector<char *> in_names, std::vector<char *> out_names)```
+Generate connections between sub-models and inputs/outputs of the model.
 
-#### ```dtSet(dt)```
+Inputs:
+* in_names: String names for all of the model inputs in order.
+* out_names: String names for all of the model outputs in order.
+
+Outputs:
+* None 
+
+#### ```void initState(std::vector<double> new_state)```
+Set the initial state of the model.
+
+Inputs:
+* new_state: New state of the model.
+
+Outputs:
+* None 
+
+#### ```std::vector<double> updatePymodel(std::vector<double> psim_input)```
+Calculate the next state of the model by calculating the next state of all of the sub-models.
+
+Inputs:
+* psim_input: Input to the model.
+
+Outputs:
+* next_state: Next state of the model.
+
+#### ```dtSet(double dt)```
+Set the time step of the model. 
+
+Inputs:
+* dt: time step
+
+Outputs:
+* None 
 
 ### Example
 Firstly we need to set up the model.
@@ -99,21 +138,21 @@ Firstly we need to set up the model.
 InterconnectedModel vehicle;
 
 // Example of model descriptors
-std::tuple<char*, char*, char*> model_desc_1 = {
+std::tuple<char*, char*, char*> model_descriptor_1 = {
     (char*)"path_to_file_with_model_class_1",
     (char*)nullptr,  // If no param file is needed you can pass 'nullptr' 
     (char*)"ModelClass1"
-  };
+    };
 
-std::tuple<char*, char*, char*> model_desc_2 =   {
-      (char*)"path_to_file_with_model_class_2",
-      (char*)"/path_to/param_file",
-      (char*)"ModelClass2"  // Name of the python class. Needs to use the interface from 'Assumptions'
-    }
+std::tuple<char*, char*, char*> model_descriptor_2 =   {
+    (char*)"path_to_file_with_model_class_2",
+    (char*)"/path_to/param_file",
+    (char*)"ModelClass2"  // Name of the python class. Needs to use the interface from 'Assumptions'
+    };
 
 // Create sub-models based on descriptors
-vehicle.addSubmodel(model_desc_1);
-vehicle.addSubmodel(model_desc_2);
+vehicle.addSubmodel(model_descriptor_1);
+vehicle.addSubmodel(model_descriptor_2);
 
 // Define STATE and INPUT names of the system
 std::vector<char*> state_names = {(char*)"STATE_NAME_1", (char*)"STATE_NAME_2"};
