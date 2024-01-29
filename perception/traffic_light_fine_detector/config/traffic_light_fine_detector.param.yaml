@@ -6,4 +6,3 @@
     build_only: false
     fine_detector_score_thresh: 0.3
     fine_detector_nms_thresh: 0.65
-

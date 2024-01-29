@@ -17,8 +17,8 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.actions import SetLaunchConfiguration
 from launch.actions import OpaqueFunction
+from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
@@ -26,6 +26,7 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
 from launch_ros.parameter_descriptions import ParameterFile
+
 
 def launch_setup(context, *args, **kwargs):
     def create_parameter_dict(*args):
@@ -35,13 +36,16 @@ def launch_setup(context, *args, **kwargs):
         return result
 
     fine_detector_model_param = ParameterFile(
-        param_file=LaunchConfiguration("fine_detector_param_path").perform(context), allow_substs=True
+        param_file=LaunchConfiguration("fine_detector_param_path").perform(context),
+        allow_substs=True,
     )
     car_traffic_light_classifier_model_param = ParameterFile(
-        param_file=LaunchConfiguration("car_classifier_param_path").perform(context), allow_substs=True
+        param_file=LaunchConfiguration("car_classifier_param_path").perform(context),
+        allow_substs=True,
     )
     pedestrian_traffic_light_classifier_model_param = ParameterFile(
-        param_file=LaunchConfiguration("pedestrian_classifier_param_path").perform(context), allow_substs=True
+        param_file=LaunchConfiguration("pedestrian_classifier_param_path").perform(context),
+        allow_substs=True,
     )
 
     container = ComposableNodeContainer(
@@ -152,7 +156,8 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(LaunchConfiguration("enable_fine_detection")),
     )
 
-    return  [container, decompressor_loader, fine_detector_loader]
+    return [container, decompressor_loader, fine_detector_loader]
+
 
 def generate_launch_description():
     launch_arguments = []
@@ -190,12 +195,16 @@ def generate_launch_description():
     # traffic_light_classifier
     add_launch_arg(
         "car_classifier_param_path",
-        os.path.join(classifier_share_dir, "config", "car_traffic_light_classifier_efficientNet.param.yaml"),
+        os.path.join(
+            classifier_share_dir, "config", "car_traffic_light_classifier_efficientNet.param.yaml"
+        ),
     )
     add_launch_arg(
         "pedestrian_classifier_param_path",
         os.path.join(
-            classifier_share_dir, "config", "pedestrian_traffic_light_classifier_efficientNet.param.yaml"
+            classifier_share_dir,
+            "config",
+            "pedestrian_traffic_light_classifier_efficientNet.param.yaml",
         ),
     )
 
@@ -219,6 +228,6 @@ def generate_launch_description():
             *launch_arguments,
             set_container_executable,
             set_container_mt_executable,
-            OpaqueFunction(function=launch_setup)
+            OpaqueFunction(function=launch_setup),
         ]
     )
