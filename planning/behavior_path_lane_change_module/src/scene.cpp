@@ -115,17 +115,17 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
   return {true, found_safe_path};
 }
 
-bool NormalLaneChange::isLaneChangeRequired() const
+bool NormalLaneChange::isLaneChangeRequired()
 {
-  const auto current_lanes = getCurrentLanes();
+  status_.current_lanes = getCurrentLanes();
 
-  if (current_lanes.empty()) {
+  if (status_.current_lanes.empty()) {
     return false;
   }
 
-  const auto target_lanes = getLaneChangeLanes(current_lanes, direction_);
+  status_.target_lanes = getLaneChangeLanes(status_.current_lanes, direction_);
 
-  return !target_lanes.empty();
+  return !status_.target_lanes.empty();
 }
 
 bool NormalLaneChange::isStoppedAtRedTrafficLight() const
@@ -183,7 +183,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   return output;
 }
 
-void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
+void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output) const
 {
   const auto & dp = planner_data_->drivable_area_expansion_parameters;
 
@@ -420,11 +420,18 @@ void NormalLaneChange::resetParameters()
   is_abort_approval_requested_ = false;
   current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_ = nullptr;
+  status_ = {};
 
   object_debug_.clear();
+  object_debug_after_approval_.clear();
+  debug_filtered_objects_.current_lane.clear();
+  debug_filtered_objects_.target_lane.clear();
+  debug_filtered_objects_.other_lane.clear();
+  debug_valid_path_.clear();
+  RCLCPP_DEBUG(logger_, "reset all flags and debug information.");
 }
 
-TurnSignalInfo NormalLaneChange::updateOutputTurnSignal()
+TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
 {
   TurnSignalInfo turn_signal_info = calcTurnSignalInfo();
   const auto [turn_signal_command, distance_to_vehicle_front] = utils::getPathTurnSignal(
@@ -1440,7 +1447,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   return safety_status;
 }
 
-TurnSignalInfo NormalLaneChange::calcTurnSignalInfo()
+TurnSignalInfo NormalLaneChange::calcTurnSignalInfo() const
 {
   const auto get_blinker_pose = [](const PathWithLaneId & path, const double length) {
     double accumulated_length = 0.0;
