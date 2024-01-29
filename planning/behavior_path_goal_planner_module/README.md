@@ -82,12 +82,15 @@ GoalCandidates --o GoalSeacherBase
 
 ## start condition
 
-Either one is activated when all conditions are met.
-
 ### fixed_goal_planner
 
-- Route is set with `allow_goal_modification=false` by default.
-- ego-vehicle is in the same lane as the goal.
+This is a very simple function that draws a smooth path to a specified goal. This function does not require approval and always runs with the other modules.
+
+Executed when both conditions are met.
+
+- Route is set with `allow_goal_modification=false`. This is the default.
+- The goal is set in the normal lane. In other words, it is NOT `road_shoulder`.
+- Ego-vehicle exists in the same lane sequence as the goal.
 
 If the target path contains a goal, modify the points of the path so that the path and the goal are connected smoothly. This process will change the shape of the path by the distance of `refine_goal_search_radius_range` from the goal. Note that this logic depends on the interpolation algorithm that will be executed in a later module (at the moment it uses spline interpolation), so it needs to be updated in the future.
 
@@ -129,7 +132,9 @@ If the target path contains a goal, modify the points of the path so that the pa
 | th_stopped_time           | [s]   | double | time threshold for arrival of path termination     | 2.0           |
 | center_line_path_interval | [m]   | double | reference center line path point interval          | 1.0           |
 
-## **collision check**
+## **collision check for path generation**
+
+To select a safe one from the path candidates, a collision check with obstacles is performed.
 
 ### **occupancy grid based collision check**
 
@@ -147,6 +152,9 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 | obstacle_threshold                              | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
 
 ### **object recognition based collision check**
+
+`object_recognition_collision_check_margin`
+`object_recognition_collision_check_max_extra_stopping_margin`
 
 #### Parameters for object recognition based collision check
 
