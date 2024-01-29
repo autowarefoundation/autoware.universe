@@ -3,4 +3,4 @@
     update_rate_hz: 20.0
     new_frame_id: "base_link"
     timeout_threshold: 1.0
-    input_topics: "[]
+    input_topics: "[]"
