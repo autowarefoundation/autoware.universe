@@ -216,7 +216,7 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/pipeline_latency_ms", processing_time_ms);
+      "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 }
 
