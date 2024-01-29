@@ -5,7 +5,6 @@
   <arg name="filter/angle_threshold" default="1.221"/>
   <arg name="filter/velocity_threshold" default="1.5"/>
   <arg name="split/velocity_threshold" default="5.5"/>
-  <arg name="split_range" default="80.0"/>
 
   <!-- Detection for far dynamic objects -->
   <include file="$(find-pkg-share radar_crossing_objects_noise_filter)/launch/radar_crossing_objects_noise_filter.launch.xml">
@@ -27,7 +26,7 @@
     <arg name="input/object" value="high_speed_objects"/>
     <arg name="output/long_range_object" value="far_high_speed_objects"/>
     <arg name="output/short_range_object" value="near_high_speed_objects"/>
-    <arg name="split_range" value="$(var split_range)"/>
+    <arg name="param_path" value="$(var object_range_splitter_param_path)"/>
   </include>
 
   <include file="$(find-pkg-share detected_object_validation)/launch/object_lanelet_filter.launch.xml">
