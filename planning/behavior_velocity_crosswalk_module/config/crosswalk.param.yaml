@@ -84,4 +84,4 @@
           default: 0.5  # [m/s] occlusions are only ignored behind objects with a higher or equal velocity
           custom_labels: ["PEDESTRIAN"]  # labels for which to define a non-default velocity threshold (see autoware_auto_perception_msgs::msg::ObjectClassification for all the labels)
           custom_thresholds: [0.0]  # velocities of the custom labels
-        extra_objects_size: 0.5  # [m] extra size added to the objects when masking the occlusions
+        extra_predicted_objects_size: 0.5  # [m] extra size added to the objects for masking the occlusions
