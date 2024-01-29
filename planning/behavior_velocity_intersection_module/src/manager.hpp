@@ -23,7 +23,7 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_api_msgs/msg/intersection_status.hpp>
 
 #include <functional>
@@ -45,10 +45,10 @@ private:
   // additional for INTERSECTION_OCCLUSION
   RTCInterface occlusion_rtc_interface_;
 
-  void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+    const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 
@@ -56,7 +56,7 @@ private:
   void sendRTC(const Time & stamp) override;
   void setActivation() override;
   /* called from SceneModuleInterface::updateSceneModuleInstances */
-  void deleteExpiredModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+  void deleteExpiredModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
 class MergeFromPrivateModuleManager : public SceneModuleManagerInterface
@@ -69,10 +69,10 @@ public:
 private:
   MergeFromPrivateRoadModule::PlannerParam merge_from_private_area_param_;
 
-  void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+    const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 };

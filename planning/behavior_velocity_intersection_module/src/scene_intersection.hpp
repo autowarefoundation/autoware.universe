@@ -27,7 +27,7 @@
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 
@@ -498,14 +498,14 @@ private:
    */
   void prepareRTCStatus(
     const intersection::DecisionResult &,
-    const autoware_planning_msgs::msg::PathWithLaneId & path);
+    const tier4_planning_msgs::msg::PathWithLaneId & path);
 
   /**
    * @brief act based on current RTC approval
    */
   void reactRTCApproval(
     const intersection::DecisionResult & decision_result,
-    autoware_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason);
+    tier4_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason);
   /** @}*/
 
 private:
@@ -553,7 +553,7 @@ private:
     const lanelet::ConstLanelet & first_attention_lane,
     const std::optional<lanelet::CompoundPolygon3d> & second_attention_area_opt,
     const intersection::InterpolatedPathInfo & interpolated_path_info,
-    autoware_planning_msgs::msg::PathWithLaneId * original_path) const;
+    tier4_planning_msgs::msg::PathWithLaneId * original_path) const;
 
   /**
    * @brief generate IntersectionLanelets
@@ -623,7 +623,7 @@ private:
    * intersection_lanelets.first_conflicting_lane(). They are ensured in prepareIntersectionData()
    */
   std::optional<intersection::StuckStop> isStuckStatus(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const tier4_planning_msgs::msg::PathWithLaneId & path,
     const intersection::IntersectionStopLines & intersection_stoplines,
     const intersection::PathLanelets & path_lanelets) const;
 
@@ -653,7 +653,7 @@ private:
    * intersection_stoplines.default_stopline, intersection_stoplines.first_attention_stopline
    */
   std::optional<intersection::YieldStuckStop> isYieldStuckStatus(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const tier4_planning_msgs::msg::PathWithLaneId & path,
     const intersection::InterpolatedPathInfo & interpolated_path_info,
     const intersection::IntersectionStopLines & intersection_stoplines) const;
 
@@ -710,7 +710,7 @@ private:
    * intersection_stoplines.occlusion_stopline
    */
   PassJudgeStatus isOverPassJudgeLinesStatus(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const bool is_occlusion_state,
+    const tier4_planning_msgs::msg::PathWithLaneId & path, const bool is_occlusion_state,
     const intersection::IntersectionStopLines & intersection_stoplines);
   /** @} */
 
@@ -773,7 +773,7 @@ private:
    * situation
    */
   std::string generateEgoRiskEvasiveDiagnosis(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
+    const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
     const TimeDistanceArray & ego_time_distance_array,
     const std::vector<
       std::pair<CollisionStatus::BlameType, std::shared_ptr<intersection::ObjectInfo>>> &
@@ -801,7 +801,7 @@ private:
    * intersection_stoplines.first_attention_stopline
    */
   TimeDistanceArray calcIntersectionPassingTime(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const bool is_prioritized,
+    const tier4_planning_msgs::msg::PathWithLaneId & path, const bool is_prioritized,
     const intersection::IntersectionStopLines & intersection_stoplines,
     tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array) const;
   /** @} */

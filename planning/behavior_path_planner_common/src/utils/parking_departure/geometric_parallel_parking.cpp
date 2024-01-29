@@ -31,7 +31,7 @@
 #include <utility>
 #include <vector>
 
-using autoware_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using lanelet::utils::getArcCoordinates;

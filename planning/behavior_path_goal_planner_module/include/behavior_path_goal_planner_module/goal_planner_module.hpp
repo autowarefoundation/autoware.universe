@@ -35,7 +35,7 @@
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <atomic>
 #include <deque>

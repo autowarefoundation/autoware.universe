@@ -20,7 +20,7 @@ from autoware_control_msgs.msg import Control
 from autoware_vehicle_msgs.msg import Engage
 from autoware_vehicle_msgs.msg import VelocityReport
 from autoware_planning_msgs.msg import Path
-from autoware_planning_msgs.msg import PathWithLaneId
+from tier4_planning_msgs.msg import PathWithLaneId
 from autoware_planning_msgs.msg import Trajectory
 from geometry_msgs.msg import Pose
 from nav_msgs.msg import Odometry

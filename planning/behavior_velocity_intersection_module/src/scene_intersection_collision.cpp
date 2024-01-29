@@ -539,7 +539,7 @@ std::string IntersectionModule::generateDetectionBlameDiagnosis(
 }
 
 std::string IntersectionModule::generateEgoRiskEvasiveDiagnosis(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
   const IntersectionModule::TimeDistanceArray & ego_time_distance_array,
   const std::vector<std::pair<
     IntersectionModule::CollisionStatus::BlameType, std::shared_ptr<intersection::ObjectInfo>>> &
@@ -716,7 +716,7 @@ IntersectionModule::CollisionStatus IntersectionModule::detectCollision(
 
 /*
 bool IntersectionModule::checkCollision(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, TargetObjects * target_objects,
+  const tier4_planning_msgs::msg::PathWithLaneId & path, TargetObjects * target_objects,
   const intersection::PathLanelets & path_lanelets, const size_t closest_idx,
   const size_t last_intersection_stopline_candidate_idx, const double time_delay,
   const TrafficPrioritizedLevel & traffic_prioritized_level)
@@ -1004,7 +1004,7 @@ std::optional<size_t> IntersectionModule::checkAngleForTargetLanelets(
 }
 
 IntersectionModule::TimeDistanceArray IntersectionModule::calcIntersectionPassingTime(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const bool is_prioritized,
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const bool is_prioritized,
   const intersection::IntersectionStopLines & intersection_stoplines,
   tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array) const
 {

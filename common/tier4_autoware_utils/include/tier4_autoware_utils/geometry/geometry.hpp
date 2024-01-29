@@ -28,7 +28,7 @@
 #include <Eigen/Core>
 
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -142,14 +142,14 @@ inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::Pat
 
 template <>
 inline geometry_msgs::msg::Point getPoint(
-  const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+  const tier4_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.pose.position;
 }
 
 // template <>
 // inline geometry_msgs::msg::Point getPoint(
-//   const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+//   const tier4_planning_msgs::msg::PathPointWithLaneId & p)
 // {
 //   return p.point.pose.position;
 // }
@@ -199,14 +199,14 @@ inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::PathP
 // }
 
 template <>
-inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+inline geometry_msgs::msg::Pose getPose(const tier4_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.pose;
 }
 
 // template <>
 // inline geometry_msgs::msg::Pose getPose(
-//   const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+//   const tier4_planning_msgs::msg::PathPointWithLaneId & p)
 // {
 //   return p.point.pose;
 // }
@@ -243,14 +243,14 @@ inline double getLongitudinalVelocity(const autoware_planning_msgs::msg::PathPoi
 // }
 
 template <>
-inline double getLongitudinalVelocity(const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+inline double getLongitudinalVelocity(const tier4_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.longitudinal_velocity_mps;
 }
 
 // template <>
 // inline double getLongitudinalVelocity(
-//   const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+//   const tier4_planning_msgs::msg::PathPointWithLaneId & p)
 // {
 //   return p.point.longitudinal_velocity_mps;
 // }
@@ -302,14 +302,14 @@ inline void setPose(
 
 template <>
 inline void setPose(
-  const geometry_msgs::msg::Pose & pose, autoware_planning_msgs::msg::PathPointWithLaneId & p)
+  const geometry_msgs::msg::Pose & pose, tier4_planning_msgs::msg::PathPointWithLaneId & p)
 {
   p.point.pose = pose;
 }
 
 // template <>
 // inline void setPose(
-//   const geometry_msgs::msg::Pose & pose, autoware_planning_msgs::msg::PathPointWithLaneId & p)
+//   const geometry_msgs::msg::Pose & pose, tier4_planning_msgs::msg::PathPointWithLaneId & p)
 // {
 //   p.point.pose = pose;
 // }
@@ -373,14 +373,14 @@ inline void setLongitudinalVelocity(
 
 template <>
 inline void setLongitudinalVelocity(
-  const float velocity, autoware_planning_msgs::msg::PathPointWithLaneId & p)
+  const float velocity, tier4_planning_msgs::msg::PathPointWithLaneId & p)
 {
   p.point.longitudinal_velocity_mps = velocity;
 }
 
 // template <>
 // inline void setLongitudinalVelocity(
-//   const float velocity, autoware_planning_msgs::msg::PathPointWithLaneId & p)
+//   const float velocity, tier4_planning_msgs::msg::PathPointWithLaneId & p)
 // {
 //   p.point.longitudinal_velocity_mps = velocity;
 // }

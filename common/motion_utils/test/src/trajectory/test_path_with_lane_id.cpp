@@ -22,8 +22,8 @@
 
 namespace
 {
-using autoware_planning_msgs::msg::PathPointWithLaneId;
-using autoware_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::createPoint;
 
 geometry_msgs::msg::Pose createPose(
@@ -54,7 +54,7 @@ PathWithLaneId generateTestPathWithLaneId(const size_t num_points, const double 
 
 TEST(path_with_lane_id, getPathIndexRangeWithLaneId)
 {
-  using autoware_planning_msgs::msg::PathWithLaneId;
+  using tier4_planning_msgs::msg::PathWithLaneId;
   using motion_utils::getPathIndexRangeWithLaneId;
 
   // Usual cases

@@ -116,7 +116,7 @@ namespace behavior_velocity_planner
 namespace bg = boost::geometry;
 
 std::optional<intersection::StuckStop> IntersectionModule::isStuckStatus(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const tier4_planning_msgs::msg::PathWithLaneId & path,
   const intersection::IntersectionStopLines & intersection_stoplines,
   const intersection::PathLanelets & path_lanelets) const
 {
@@ -303,7 +303,7 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
 }
 
 std::optional<intersection::YieldStuckStop> IntersectionModule::isYieldStuckStatus(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const tier4_planning_msgs::msg::PathWithLaneId & path,
   const intersection::InterpolatedPathInfo & interpolated_path_info,
   const intersection::IntersectionStopLines & intersection_stoplines) const
 {

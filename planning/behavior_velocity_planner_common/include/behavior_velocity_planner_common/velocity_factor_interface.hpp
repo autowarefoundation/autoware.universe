@@ -19,7 +19,7 @@
 #include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
-#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <string>
@@ -45,7 +45,7 @@ public:
   void reset() { velocity_factor_.behavior = PlanningBehavior::UNKNOWN; }
 
   void set(
-    const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points,
+    const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
     const Pose & curr_pose, const Pose & stop_pose, const VelocityFactorStatus status,
     const std::string detail = "");
 

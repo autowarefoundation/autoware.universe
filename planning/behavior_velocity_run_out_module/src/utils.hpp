@@ -35,14 +35,14 @@ using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::PathPoint;
-using autoware_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::Box2d;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_debug_msgs::msg::Float32Stamped;
 using vehicle_info_util::VehicleInfo;
-using PathPointsWithLaneId = std::vector<autoware_planning_msgs::msg::PathPointWithLaneId>;
+using PathPointsWithLaneId = std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>;
 struct CommonParam
 {
   double normal_min_jerk;  // min jerk limit for mild stop [m/sss]

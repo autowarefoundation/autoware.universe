@@ -27,8 +27,8 @@
 
 namespace
 {
-using autoware_planning_msgs::msg::PathPointWithLaneId;
-using autoware_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_autoware_utils::createPoint;
@@ -351,7 +351,7 @@ TEST(Interpolation, interpolate_path_for_path)
   using motion_utils::calcInterpolatedPoint;
 
   {
-    autoware_planning_msgs::msg::PathWithLaneId path;
+    tier4_planning_msgs::msg::PathWithLaneId path;
     path.points.resize(10);
     for (size_t i = 0; i < 10; ++i) {
       path.points.at(i) = generateTestPathPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);
@@ -515,7 +515,7 @@ TEST(Interpolation, interpolate_path_for_path)
 
   // Duplicated Points
   {
-    autoware_planning_msgs::msg::PathWithLaneId path;
+    tier4_planning_msgs::msg::PathWithLaneId path;
     path.points.resize(10);
     for (size_t i = 0; i < 10; ++i) {
       path.points.at(i) = generateTestPathPoint(i * 1.0, 0.0, 0.0, 0.0, i * 1.0, i * 0.5, i * 0.1);

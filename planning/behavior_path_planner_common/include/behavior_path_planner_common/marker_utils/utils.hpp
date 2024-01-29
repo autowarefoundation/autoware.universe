@@ -20,7 +20,7 @@
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -35,7 +35,7 @@ namespace marker_utils
 {
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
-using autoware_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::DrivableLanes;
 using behavior_path_planner::ShiftLineArray;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;

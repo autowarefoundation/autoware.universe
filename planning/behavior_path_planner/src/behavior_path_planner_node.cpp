@@ -701,7 +701,7 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = motion_utils::convertToPath<autoware_planning_msgs::msg::PathWithLaneId>(
+  output = motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
     *path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();

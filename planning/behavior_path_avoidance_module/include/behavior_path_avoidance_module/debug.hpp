@@ -19,14 +19,14 @@
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <string>
 
 namespace marker_utils::avoidance_marker
 {
-using autoware_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::AvoidancePlanningData;
 using behavior_path_planner::AvoidLineArray;
 using behavior_path_planner::DebugData;

@@ -18,7 +18,7 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -63,7 +63,7 @@ struct DebugData
 
 struct InterpolatedPathInfo
 {
-  autoware_planning_msgs::msg::PathWithLaneId path;
+  tier4_planning_msgs::msg::PathWithLaneId path;
   double ds{0.0};
   lanelet::Id lane_id{0};
   std::set<lanelet::Id> associative_lane_ids{};

@@ -18,15 +18,15 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <vector>
 
 namespace behavior_velocity_planner
 {
 bool splineInterpolate(
-  const autoware_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  autoware_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger logger);
+  const tier4_planning_msgs::msg::PathWithLaneId & input, const double interval,
+  tier4_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger logger);
 autoware_planning_msgs::msg::Path interpolatePath(
   const autoware_planning_msgs::msg::Path & path, const double length, const double interval);
 autoware_planning_msgs::msg::Path filterLitterPathPoint(

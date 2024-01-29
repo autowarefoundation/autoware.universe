@@ -26,8 +26,8 @@ constexpr double DOUBLE_EPSILON = 1e-6;
 namespace behavior_velocity_planner
 {
 bool splineInterpolate(
-  const autoware_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  autoware_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger logger)
+  const tier4_planning_msgs::msg::PathWithLaneId & input, const double interval,
+  tier4_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger logger)
 {
   if (input.points.size() < 2) {
     RCLCPP_DEBUG(logger, "Do not interpolate because path size is 1.");

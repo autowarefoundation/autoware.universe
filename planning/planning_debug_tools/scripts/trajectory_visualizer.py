@@ -19,8 +19,8 @@ import argparse
 from autoware_vehicle_msgs.msg import VelocityReport
 from autoware_planning_msgs.msg import Path
 from autoware_planning_msgs.msg import PathPoint
-from autoware_planning_msgs.msg import PathPointWithLaneId
-from autoware_planning_msgs.msg import PathWithLaneId
+from tier4_planning_msgs.msg import PathPointWithLaneId
+from tier4_planning_msgs.msg import PathWithLaneId
 from autoware_planning_msgs.msg import Trajectory
 from autoware_planning_msgs.msg import TrajectoryPoint
 from geometry_msgs.msg import Pose

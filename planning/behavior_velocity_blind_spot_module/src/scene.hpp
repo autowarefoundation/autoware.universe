@@ -22,7 +22,7 @@
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -111,7 +111,7 @@ private:
   bool checkObstacleInBlindSpot(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const tier4_planning_msgs::msg::PathWithLaneId & path,
     const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const geometry_msgs::msg::Pose & stop_line_pose);
 
@@ -137,7 +137,7 @@ private:
   std::optional<BlindSpotPolygons> generateBlindSpotPolygons(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+    const tier4_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
     const geometry_msgs::msg::Pose & pose) const;
 
   /**
@@ -179,7 +179,7 @@ private:
    */
   std::optional<std::pair<size_t, size_t>> generateStopLine(
     const lanelet::ConstLanelets straight_lanelets,
-    autoware_planning_msgs::msg::PathWithLaneId * path) const;
+    tier4_planning_msgs::msg::PathWithLaneId * path) const;
 
   /**
    * @brief Insert a point to target path
@@ -189,8 +189,8 @@ private:
    * @return inserted point idx in target path, return -1 when could not find valid index
    */
   int insertPoint(
-    const int insert_idx_ip, const autoware_planning_msgs::msg::PathWithLaneId path_ip,
-    autoware_planning_msgs::msg::PathWithLaneId * path) const;
+    const int insert_idx_ip, const tier4_planning_msgs::msg::PathWithLaneId path_ip,
+    tier4_planning_msgs::msg::PathWithLaneId * path) const;
 
   /**
    * @brief Calculate first path index that is conflicting lanelets.
@@ -199,7 +199,7 @@ private:
    * @return path point index
    */
   std::optional<int> getFirstPointConflictingLanelets(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const tier4_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::ConstLanelets & lanelets) const;
 
   /**

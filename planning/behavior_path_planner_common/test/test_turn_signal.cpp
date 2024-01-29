@@ -25,7 +25,7 @@
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_planning_msgs::msg::PathPoint;
-using autoware_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
 using behavior_path_planner::PathWithLaneId;
 using behavior_path_planner::Pose;
 using behavior_path_planner::TurnSignalDecider;

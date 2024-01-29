@@ -18,14 +18,14 @@
 #include "behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "behavior_path_planner_common/data_manager.hpp"
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <memory>
 #include <utility>
 #include <vector>
 
-using autoware_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using tier4_autoware_utils::LinearRing2d;
 

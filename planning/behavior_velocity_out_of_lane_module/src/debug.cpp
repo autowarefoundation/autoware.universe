@@ -113,7 +113,7 @@ void add_lanelet_markers(
 
 void add_range_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array, const OverlapRanges & ranges,
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t first_ego_idx,
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t first_ego_idx,
   const double z, const size_t prev_nb)
 {
   auto debug_marker = get_base_marker();

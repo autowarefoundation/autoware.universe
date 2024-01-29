@@ -39,7 +39,7 @@
 namespace
 {
 size_t calcPointIndexFromSegmentIndex(
-  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points,
+  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
   const geometry_msgs::msg::Point & point, const size_t seg_idx)
 {
   const size_t prev_point_idx = seg_idx;
@@ -105,7 +105,7 @@ using tier4_autoware_utils::createQuaternionFromYaw;
 using tier4_autoware_utils::getPoint;
 
 size_t calcSegmentIndexFromPointIndex(
-  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points,
+  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
   const geometry_msgs::msg::Point & point, const size_t idx)
 {
   if (idx == 0) {
@@ -304,7 +304,7 @@ bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg
 
 geometry_msgs::msg::Pose getAheadPose(
   const size_t start_idx, const double ahead_dist,
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.size() == 0) {
     return geometry_msgs::msg::Pose{};
@@ -605,7 +605,7 @@ std::vector<int64_t> getSubsequentLaneIdsSetOnPath(
 
 // TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex
 bool isOverLine(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const tier4_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose,
   const double offset)
 {

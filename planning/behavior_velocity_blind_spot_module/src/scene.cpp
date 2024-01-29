@@ -207,7 +207,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 }
 
 std::optional<int> BlindSpotModule::getFirstPointConflictingLanelets(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const tier4_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::ConstLanelets & lanelets) const
 {
   using lanelet::utils::to2D;
@@ -238,7 +238,7 @@ std::optional<int> BlindSpotModule::getFirstPointConflictingLanelets(
 
 std::optional<std::pair<size_t, size_t>> BlindSpotModule::generateStopLine(
   const lanelet::ConstLanelets straight_lanelets,
-  autoware_planning_msgs::msg::PathWithLaneId * path) const
+  tier4_planning_msgs::msg::PathWithLaneId * path) const
 {
   /* set parameters */
   constexpr double interval = 0.2;
@@ -247,7 +247,7 @@ std::optional<std::pair<size_t, size_t>> BlindSpotModule::generateStopLine(
   //  std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m / interval);
 
   /* spline interpolation */
-  autoware_planning_msgs::msg::PathWithLaneId path_ip;
+  tier4_planning_msgs::msg::PathWithLaneId path_ip;
   if (!splineInterpolate(*path, interval, path_ip, logger_)) {
     return std::nullopt;
   }
@@ -297,8 +297,8 @@ void BlindSpotModule::cutPredictPathWithDuration(
 }
 
 int BlindSpotModule::insertPoint(
-  const int insert_idx_ip, const autoware_planning_msgs::msg::PathWithLaneId path_ip,
-  autoware_planning_msgs::msg::PathWithLaneId * inout_path) const
+  const int insert_idx_ip, const tier4_planning_msgs::msg::PathWithLaneId path_ip,
+  tier4_planning_msgs::msg::PathWithLaneId * inout_path) const
 {
   double insert_point_s = 0.0;
   for (int i = 1; i <= insert_idx_ip; i++) {
@@ -319,7 +319,7 @@ int BlindSpotModule::insertPoint(
   }
   if (insert_idx >= 0) {
     const auto it = inout_path->points.begin() + insert_idx;
-    autoware_planning_msgs::msg::PathPointWithLaneId inserted_point;
+    tier4_planning_msgs::msg::PathPointWithLaneId inserted_point;
     // copy from previous point
     inserted_point = inout_path->points.at(std::max(insert_idx - 1, 0));
     inserted_point.point.pose = path_ip.points[insert_idx_ip].point.pose;
@@ -346,7 +346,7 @@ int BlindSpotModule::insertPoint(
 
 bool BlindSpotModule::checkObstacleInBlindSpot(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const tier4_planning_msgs::msg::PathWithLaneId & path,
   const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const geometry_msgs::msg::Pose & stop_line_pose)
 {
@@ -538,7 +538,7 @@ lanelet::ConstLanelet BlindSpotModule::generateExtendedOppositeAdjacentLanelet(
 std::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   [[maybe_unused]] lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & stop_line_pose) const
 {
   std::vector<int64_t> lane_ids;
