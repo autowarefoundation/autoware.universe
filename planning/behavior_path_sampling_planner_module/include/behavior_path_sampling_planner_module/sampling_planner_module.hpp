@@ -215,9 +215,7 @@ private:
       motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
     if (!nearest_index) return false;
     auto toYaw = [](const geometry_msgs::msg::Quaternion & quat) -> double {
-      geometry_msgs::msg::Vector3 rpy;
-      tf2::Quaternion q(quat.x, quat.y, quat.z, quat.w);
-      tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
+      const auto rpy = tier4_autoware_utils::getRPY(quat);
       return rpy.z;
     };
     const auto quat = prev_module_reference_path->points[*nearest_index].point.pose.orientation;
