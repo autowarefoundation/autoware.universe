@@ -109,6 +109,12 @@ public:
   }
 
   /**
+   * @brief set time step of the model
+   * @param [in] dt time step
+   */
+  void dtSet(double dt) override { py_model_class.attr("dtSet")(dt); }
+
+  /**
    * @brief get names of inputs of python model
    */
   std::vector<char *> getInputNames() override { return pymodel_input_names; }

@@ -192,6 +192,17 @@ public:
   }
 
   /**
+   * @brief set time step for all the models
+   * @param [in] dt time step
+   */
+  void dtSet(double dt)
+  {
+    for (auto & submodel : submodels) {
+      submodel->dtSet(dt);
+    }
+  }
+
+  /**
    * @brief compute next step of the PSIM model using python sub-models
    * @param [in] psim_input vector of input values provided by PSIM
    */
