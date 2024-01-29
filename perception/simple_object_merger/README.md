@@ -3,6 +3,7 @@
 This package can merge multiple topics of [autoware_auto_perception_msgs/msg/DetectedObject](https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs/-/blob/master/autoware_auto_perception_msgs/msg/DetectedObject.idl) with low calculation cost.
 
 ## Design
+
 ### Background
 
 [Object_merger](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/object_merger) is mainly used for merge process with DetectedObjects. There are 2 characteristics in `Object_merger`. First, `object_merger` solve data association algorithm like Hungarian algorithm for matching problem, but it needs computational cost. Second, `object_merger` can handle only 2 DetectedObjects topics and cannot handle more than 2 topics in one node. To merge 6 DetectedObjects topics, 6 `object_merger` nodes need to stand for now.
