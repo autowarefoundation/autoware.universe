@@ -7,12 +7,12 @@
             "properties": {
                 "twist_additional_delay": {
                     "type": "number",
-                    "description": "Additional delay for twist calculation [s]",
+                    "description": "Additional delay time for twist [s]",
                     "default": 0.0
                 },
                 "twist_smoothing_steps": {
                     "type": "integer",
-                    "description": "Number of steps for twist smoothing",
+                    "description": "A value for smoothing steps",
                     "default": 2
                 },
                 "twist_gate_dist": {

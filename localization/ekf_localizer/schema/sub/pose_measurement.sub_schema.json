@@ -7,17 +7,17 @@
             "properties": {
                 "pose_additional_delay": {
                     "type": "number",
-                    "description": "Additional delay for pose measurements [s]",
+                    "description": "Additional delay time for pose measurement [s]",
                     "default": 0.0
                 },
                 "pose_measure_uncertainty_time": {
                     "type": "number",
-                    "description": "Time uncertainty for covariance calculation [s]",
+                    "description": "Measured time uncertainty used for covariance calculation [s]",
                     "default": 0.01
                 },
                 "pose_smoothing_steps": {
                     "type": "integer",
-                    "description": "Number of steps for pose smoothing",
+                    "description": "A value for smoothing steps",
                     "default": 5
                 },
                 "pose_gate_dist": {
