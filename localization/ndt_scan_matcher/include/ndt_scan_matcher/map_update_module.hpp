@@ -16,8 +16,8 @@
 #define NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
 #include "localization_util/util_func.hpp"
-#include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/hyper_parameters.hpp"
+#include "ndt_scan_matcher/particle.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>

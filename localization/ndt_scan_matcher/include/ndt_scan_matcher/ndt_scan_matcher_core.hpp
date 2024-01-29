@@ -18,8 +18,8 @@
 #define FMT_HEADER_ONLY
 
 #include "localization_util/smart_pose_buffer.hpp"
-#include "ndt_scan_matcher/map_update_module.hpp"
 #include "ndt_scan_matcher/hyper_parameters.hpp"
+#include "ndt_scan_matcher/map_update_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
@@ -198,7 +198,6 @@ private:
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
   HyperParameters param_;
-
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

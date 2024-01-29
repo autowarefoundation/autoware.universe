@@ -16,8 +16,7 @@
 
 MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-  std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
-  HyperParameters::DynamicMapLoading param)
+  std::shared_ptr<NormalDistributionsTransform> ndt_ptr, HyperParameters::DynamicMapLoading param)
 : ndt_ptr_(std::move(ndt_ptr)),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   logger_(node->get_logger()),
