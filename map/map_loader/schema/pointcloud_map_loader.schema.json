@@ -43,13 +43,13 @@
         }
       },
       "required": [
-          "enable_whole_load",
-          "enable_downsampled_whole_load",
-          "enable_partial_load",
-          "enable_selected_load",
-          "leaf_size",
-          "pcd_paths_or_directory",
-          "pcd_metadata_path"
+        "enable_whole_load",
+        "enable_downsampled_whole_load",
+        "enable_partial_load",
+        "enable_selected_load",
+        "leaf_size",
+        "pcd_paths_or_directory",
+        "pcd_metadata_path"
       ],
       "additionalProperties": false
     }
@@ -69,4 +69,3 @@
   "required": ["/**"],
   "additionalProperties": false
 }
-  

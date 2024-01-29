@@ -17,10 +17,7 @@
           "default": ""
         }
       },
-      "required": [
-          "center_line_resolution",
-          "lanelet2_map_path"
-      ],
+      "required": ["center_line_resolution", "lanelet2_map_path"],
       "additionalProperties": false
     }
   },
@@ -39,4 +36,3 @@
   "required": ["/**"],
   "additionalProperties": false
 }
-  
