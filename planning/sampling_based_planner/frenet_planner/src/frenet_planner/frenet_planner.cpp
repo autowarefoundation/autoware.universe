@@ -150,11 +150,6 @@ Path generateCandidate(
 
 void calculateCartesian(const sampler_common::transform::Spline2D & reference, Path & path)
 {
-  auto quaternion_from_rpy = [](double roll, double pitch, double yaw) -> tf2::Quaternion {
-    tf2::Quaternion quaternion_tf2;
-    quaternion_tf2.setRPY(roll, pitch, yaw);
-    return quaternion_tf2;
-  };
   if (!path.frenet_points.empty()) {
     path.points.reserve(path.frenet_points.size());
     path.yaws.reserve(path.frenet_points.size());
@@ -180,12 +175,7 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
       pose.position.x = it->x();
       pose.position.y = it->y();
       pose.position.z = 0.0;
-
-      const auto pose_quaternion = quaternion_from_rpy(0.0, 0.0, yaw);
-      pose.orientation.w = pose_quaternion.w();
-      pose.orientation.x = pose_quaternion.x();
-      pose.orientation.y = pose_quaternion.y();
-      pose.orientation.z = pose_quaternion.z();
+      pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(0.0, 0.0, yaw);
       path.poses.push_back(pose);
     }
     path.yaws.push_back(path.yaws.back());
