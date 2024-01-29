@@ -60,6 +60,7 @@ The module has troubles generating paths that converge rapidly to the goal lanel
 Detection of proper merging can be rough: Sometimes, the module when detects that the ego has converged on the goal lanelet and that there are no more obstacles, the planner transitions to the goal planner, but the transition is not very smooth and could cause discomfort for the user.
 
 ## Future works
+
 Some possible improvements for this module include:
 
 -Implementing a dynamic weight tuning algorithm: Dynamically change weights depending on the scenario (ie. to prioritize more the paths with low curvature and low avg. lat. deviation after all obstacles have been avoided).
@@ -73,4 +74,5 @@ Some possible improvements for this module include:
 -Perform real-life tests of this module once it has matured and some of its limitations have been solved.
 
 ## Other possibilities
+
 The module is currently aimed at creating paths for static obstacle avoidance. However, the nature of sampling planner allows this module to be expanded or repurposed to other tasks such as lane changes, dynamic avoidance and general reaching of a goal. It is possible, with a good dynamic/scenario dependant weight tuning to use the sampling planning approach as a replacement for the other behavior path modules, assuming good candidate pruning and good soft constraints weight tuning.
