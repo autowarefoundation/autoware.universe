@@ -260,9 +260,8 @@ bool SamplingPlannerModule::isReferencePathSafe() const
         !sampler_common::constraints::has_collision(footprint, constraints.obstacle_polygons);
       return path.constraint_results.collision;
     });
-  behavior_path_planner::evaluateHardConstraints(
-    reference_path, internal_params_->constraints, footprint, hard_constraints_reference_path,
-    hard_constraints_results);
+  evaluateHardConstraints(
+    reference_path, internal_params_->constraints, footprint, hard_constraints_reference_path);
   return reference_path.constraints_satisfied;
 }
 
@@ -575,17 +574,14 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   std::vector<std::vector<bool>> hard_constraints_results_full;
   std::vector<std::vector<double>> soft_constraints_results_full;
   for (auto & path : frenet_paths) {
-    std::vector<bool> hard_constraints_results;
-    std::vector<double> soft_constraints_results;
     const auto footprint =
       sampler_common::constraints::buildFootprintPoints(path, internal_params_->constraints);
-    behavior_path_planner::evaluateHardConstraints(
-      path, internal_params_->constraints, footprint, hard_constraints_, hard_constraints_results);
+    std::vector<bool> hard_constraints_results =
+      evaluateHardConstraints(path, internal_params_->constraints, footprint, hard_constraints_);
     path.constraint_results.curvature = true;
     debug_data_.footprints.push_back(footprint);
-    evaluateSoftConstraints(
-      path, internal_params_->constraints, soft_constraints_, soft_constraints_input,
-      soft_constraints_results);
+    std::vector<double> soft_constraints_results = evaluateSoftConstraints(
+      path, internal_params_->constraints, soft_constraints_, soft_constraints_input);
     soft_constraints_results_full.push_back(soft_constraints_results);
   }
 

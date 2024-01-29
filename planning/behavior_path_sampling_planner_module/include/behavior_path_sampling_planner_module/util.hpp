@@ -50,32 +50,31 @@ using SoftConstraintsFunctionVector = std::vector<std::function<double(
 using HardConstraintsFunctionVector = std::vector<std::function<bool(
   sampler_common::Path &, const sampler_common::Constraints &, const MultiPoint2d &)>>;
 
-inline void evaluateSoftConstraints(
+inline std::vector<double> evaluateSoftConstraints(
   sampler_common::Path & path, const sampler_common::Constraints & constraints,
   const SoftConstraintsFunctionVector & soft_constraints_functions,
-  const SoftConstraintsInputs & input_data, std::vector<double> & constraints_results)
+  const SoftConstraintsInputs & input_data)
 {
-  constraints_results.clear();
+  std::vector<double> constraints_results;
   for (const auto & f : soft_constraints_functions) {
     const auto cost = f(path, constraints, input_data);
     constraints_results.push_back(cost);
   }
   if (constraints.soft.weights.size() != constraints_results.size()) {
     path.cost = std::accumulate(constraints_results.begin(), constraints_results.end(), 0.0);
-    return;
+    return constraints_results;
   }
 
   path.cost = std::inner_product(
     constraints_results.begin(), constraints_results.end(), constraints.soft.weights.begin(), 0.0);
-  return;
+  return constraints_results;
 }
 
-inline void evaluateHardConstraints(
+inline std::vector<bool> evaluateHardConstraints(
   sampler_common::Path & path, const sampler_common::Constraints & constraints,
-  const MultiPoint2d & footprint, const HardConstraintsFunctionVector & hard_constraints,
-  std::vector<bool> & constraints_results)
+  const MultiPoint2d & footprint, const HardConstraintsFunctionVector & hard_constraints)
 {
-  constraints_results.clear();
+  std::vector<bool> constraints_results;
   bool constraints_passed = true;
   int idx = 0;
   for (const auto & f : hard_constraints) {
@@ -86,7 +85,7 @@ inline void evaluateHardConstraints(
   }
 
   path.constraints_satisfied = constraints_passed;
-  return;
+  return constraints_results;
 }
 
 inline sampler_common::State getInitialState(
