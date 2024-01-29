@@ -13,7 +13,7 @@
         },
         "lanelet2_map_path": {
           "type": "string",
-          "description": "The lanelet2 map path",
+          "description": "The lanelet2 map path pointing to the .osm file",
           "default": ""
         }
       },
