@@ -136,7 +136,7 @@ Please see [tier4_autoware_msgs/msg/MapProjectorInfo.msg](https://github.com/tie
 
 ### How to run
 
-`ros2 run map_loader lanelet2_map_loader --ros-args -p lanelet2_map_path:=path/to/map.osm`
+`ros2 run map_loader lanelet2_map_loader`
 
 ### Subscribed Topics
 
