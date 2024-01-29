@@ -19,9 +19,8 @@
     <!-- load config files -->
     <param from="$(var common_param_path)"/>
     <param from="$(var adaptive_cruise_control_param_path)"/>
-    <param from="$(var obstacle_stop_planner_param_path)"/>
+    <param from="$(var obstacle_stop_planner_param_path)" allow_substs="true"/>
     <param from="$(var vehicle_info_param_file)"/>
-    <param name="enable_slow_down" value="$(var enable_slow_down)"/>
     <!-- remap topic name -->
     <remap from="~/output/stop_reason" to="/planning/scenario_planning/status/stop_reason"/>
     <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons"/>
