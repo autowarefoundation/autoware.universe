@@ -50,9 +50,6 @@ LaneChangeInterface::LaneChangeInterface(
 void LaneChangeInterface::processOnEntry()
 {
   waitApproval();
-  module_type_->setPreviousModulePaths(
-    getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
-  module_type_->updateLaneChangeStatus();
 }
 
 void LaneChangeInterface::processOnExit()
@@ -80,6 +77,14 @@ void LaneChangeInterface::updateData()
 {
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
+  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
+  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
+
+  if (isWaitingApproval()) {
+    module_type_->updateLaneChangeStatus();
+  }
+  updateDebugMarker();
+
   module_type_->updateSpecialData();
   module_type_->resetStopPose();
 }
@@ -98,15 +103,14 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     return {};
   }
 
-  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
-  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
   auto output = module_type_->generateOutput();
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
   stop_pose_ = module_type_->getStopPose();
 
-  for (const auto & [uuid, data] : module_type_->getAfterApprovalDebugData()) {
+  const auto & lane_change_debug = module_type_->getDebugData();
+  for (const auto & [uuid, data] : lane_change_debug.collision_check_objects_after_approval) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
     setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
   }
@@ -128,22 +132,15 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   out.reference_path = getPreviousModuleOutput().reference_path;
   out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
+  out.turn_signal_info = getCurrentTurnSignalInfo(out.path, out.turn_signal_info);
 
-  module_type_->setPreviousModulePaths(
-    getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
-  module_type_->updateLaneChangeStatus();
-  setObjectDebugVisualization();
-
-  for (const auto & [uuid, data] : module_type_->getDebugData()) {
+  const auto & lane_change_debug = module_type_->getDebugData();
+  for (const auto & [uuid, data] : lane_change_debug.collision_check_objects) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
     setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
   }
 
-  // change turn signal when the vehicle reaches at the end of the path for waiting lane change
-  out.turn_signal_info = getCurrentTurnSignalInfo(out.path, out.turn_signal_info);
-
   path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
-
   stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
@@ -211,6 +208,7 @@ bool LaneChangeInterface::canTransitSuccessState()
   }
 
   if (module_type_->hasFinishedLaneChange()) {
+    module_type_->resetParameters();
     log_debug_throttled("Lane change process has completed.");
     return true;
   }
@@ -295,7 +293,7 @@ bool LaneChangeInterface::canTransitFailureState()
 
 bool LaneChangeInterface::canTransitIdleToRunningState()
 {
-  setObjectDebugVisualization();
+  updateDebugMarker();
 
   auto log_debug_throttled = [&](std::string_view message) -> void {
     RCLCPP_DEBUG(getLogger(), "%s", message.data());
@@ -316,43 +314,15 @@ bool LaneChangeInterface::canTransitIdleToRunningState()
   return true;
 }
 
-void LaneChangeInterface::setObjectDebugVisualization() const
+void LaneChangeInterface::updateDebugMarker() const
 {
-  debug_marker_.markers.clear();
   if (!parameters_->publish_debug_marker) {
     return;
   }
-  using marker_utils::showPolygon;
-  using marker_utils::showPredictedPath;
-  using marker_utils::showSafetyCheckInfo;
-  using marker_utils::lane_change_markers::showAllValidLaneChangePath;
-  using marker_utils::lane_change_markers::showFilteredObjects;
-
-  const auto debug_data = module_type_->getDebugData();
-  const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
-  const auto debug_valid_path = module_type_->getDebugValidPath();
-  const auto debug_filtered_objects = module_type_->getDebugFilteredObjects();
 
   debug_marker_.markers.clear();
-  const auto add = [this](const MarkerArray & added) {
-    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
-  };
-
-  add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
-  add(showFilteredObjects(
-    debug_filtered_objects.current_lane, debug_filtered_objects.target_lane,
-    debug_filtered_objects.other_lane, "object_filtered"));
-  if (!debug_data.empty()) {
-    add(showSafetyCheckInfo(debug_data, "object_debug_info"));
-    add(showPredictedPath(debug_data, "ego_predicted_path"));
-    add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
-  }
-
-  if (!debug_after_approval.empty()) {
-    add(showSafetyCheckInfo(debug_after_approval, "object_debug_info_after_approval"));
-    add(showPredictedPath(debug_after_approval, "ego_predicted_path_after_approval"));
-    add(showPolygon(debug_after_approval, "ego_and_target_polygon_relation_after_approval"));
-  }
+  using marker_utils::lane_change_markers::createDebugMarkerArray;
+  debug_marker_ = createDebugMarkerArray(module_type_->getDebugData());
 }
 
 MarkerArray LaneChangeInterface::getModuleVirtualWall()
