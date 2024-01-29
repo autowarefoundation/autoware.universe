@@ -7,17 +7,17 @@
             "properties": {
                 "twist_additional_delay": {
                     "type": "number",
-                    "description": "Additional delay for twist measurements.",
+                    "description": "Additional delay for twist calculation [s]",
                     "default": 0.0
                 },
                 "twist_smoothing_steps": {
                     "type": "integer",
-                    "description": "Number of steps for twist smoothing.",
+                    "description": "Number of steps for twist smoothing",
                     "default": 2
                 },
                 "twist_gate_dist": {
                     "type": "number",
-                    "description": "Gate distance for twist measurements.",
+                    "description": "Limit of Mahalanobis distance used for outliers detection",
                     "default": 10000.0
                 }
             },

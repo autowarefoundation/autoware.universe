@@ -7,22 +7,22 @@
             "properties": {
                 "pose_additional_delay": {
                     "type": "number",
-                    "description": "Additional delay for pose measurements.",
+                    "description": "Additional delay for pose measurements [s]",
                     "default": 0.0
                 },
                 "pose_measure_uncertainty_time": {
                     "type": "number",
-                    "description": "Time uncertainty for pose measurements.",
+                    "description": "Time uncertainty for covariance calculation [s]",
                     "default": 0.01
                 },
                 "pose_smoothing_steps": {
                     "type": "integer",
-                    "description": "Number of steps for pose smoothing.",
+                    "description": "Number of steps for pose smoothing",
                     "default": 5
                 },
                 "pose_gate_dist": {
                     "type": "number",
-                    "description": "Gate distance for pose measurements.",
+                    "description": "Limit of Mahalanobis distance used for outliers detection",
                     "default": 10000.0
                 }
             },

@@ -7,27 +7,27 @@
             "properties": {
                 "show_debug_info": {
                     "type": "boolean",
-                    "description": "Displays debug information if set to true.",
+                    "description": "Displays debug information if set to true",
                     "default": false
                 },
                 "predict_frequency": {
                     "type": "number",
-                    "description": "Frequency of prediction cycles.",
+                    "description": "Frequency of prediction cycles for filtering and publishing [Hz]",
                     "default": 50.0
                 },
                 "tf_rate": {
                     "type": "number",
-                    "description": "Frequency at which transform frames are published.",
+                    "description": "Frequency at which transform frames are published [Hz]",
                     "default": 50.0
                 },
                 "publish_tf": {
                     "type": "boolean",
-                    "description": "Determines whether transform frames are published.",
+                    "description": "Determines whether transform frames are published",
                     "default": true
                 },
                 "extend_state_step": {
                     "type": "integer",
-                    "description": "Number of steps for extending the state.",
+                    "description": "Number of max delay steps which can be dealt with in EKF. Large number increases computational cost.",
                     "default": 50
                 },
                 "enable_yaw_bias_estimation": {

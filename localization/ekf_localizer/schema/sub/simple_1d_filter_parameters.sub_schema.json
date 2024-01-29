@@ -7,17 +7,17 @@
             "properties": {
                 "z_filter_proc_dev": {
                     "type": "number",
-                    "description": "Process deviation for the Z-axis filter.",
+                    "description": "Simple1DFilter - Z filter process deviation",
                     "default": 1.0
                 },
                 "roll_filter_proc_dev": {
                     "type": "number",
-                    "description": "Process deviation for the roll filter.",
+                    "description": "Simple1DFilter - Roll filter process deviation",
                     "default": 0.01
                 },
                 "pitch_filter_proc_dev": {
                     "type": "number",
-                    "description": "Process deviation for the pitch filter.",
+                    "description": "Simple1DFilter - Pitch filter process deviation",
                     "default": 0.01
                 }
             },

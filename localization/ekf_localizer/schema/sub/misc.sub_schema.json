@@ -7,7 +7,7 @@
             "properties": {
                 "threshold_observable_velocity_mps": {
                     "type": "number",
-                    "description": "Velocity threshold for observability in meters per second.",
+                    "description": "Minimum value for velocity that will be used for EKF. Mainly used for dead zone in velocity sensor [m/s] (0.0 means disabled)",
                     "default": 0.0
                 }
             },

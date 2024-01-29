@@ -5,20 +5,20 @@
         "process_noise": {
             "type": "object",
             "properties": {
-                "proc_stddev_yaw_c": {
-                    "type": "number",
-                    "description": "Standard deviation of yaw in the process model.",
-                    "default": 0.005
-                },
                 "proc_stddev_vx_c": {
                     "type": "number",
-                    "description": "Standard deviation of linear velocity in the process model.",
+                    "description": "Standard deviation of process noise in time differentiation expression of linear velocity x, noise for d_vx = 0",
                     "default": 10.0
                 },
                 "proc_stddev_wz_c": {
                     "type": "number",
-                    "description": "Standard deviation of angular velocity in the process model.",
+                    "description": "Standard deviation of process noise in time differentiation expression of angular velocity z, noise for d_wz = 0",
                     "default": 5.0
+                },
+                "proc_stddev_yaw_c": {
+                    "type": "number",
+                    "description": "Standard deviation of process noise in time differentiation expression of yaw, noise for d_yaw = omega",
+                    "default": 0.005
                 }
             },
             "required": [
