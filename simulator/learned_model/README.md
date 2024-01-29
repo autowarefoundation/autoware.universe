@@ -60,6 +60,14 @@ class CustomPythonSubmodel:
             - path: Path to a parameter file to load by the model.
         """
         pass
+
+    def dtSet(self, dt):
+        """
+        Set dt of the model.
+        Inputs:
+            - dt: time step
+        """
+        pass
 ```
 
 ## API
@@ -82,6 +90,8 @@ Constructor takes no arguments.
 #### ```initState(current_state)```
 
 #### ```updatePymodel(vehicle_input)```
+
+#### ```dtSet(dt)```
 
 ### Example
 Firstly we need to set up the model.
@@ -111,6 +121,9 @@ std::vector<char*> input_names = {(char*)"INPUT_NAME_1", (char*)"INPUT_NAME_2"};
 
 // Automatically connect sub-systems with model input 
 vehicle.generateConnections(input_names, state_names);
+
+// Set the time step of the model
+vehicle.dtSet(dt);
 ```
 
 After the model is correctly set up, we can use it the following way. 

@@ -6,7 +6,13 @@
 class PymodelInterface
 {
 public:
-  // virtual ~PymodelInterface() = 0;  //  <-- build fails after uncommenting this
+  // virtual ~PymodelInterface() = 0;
+
+  /**
+   * @brief set time step of the model
+   * @param [in] dt time step
+   */
+  virtual void dtSet(double dt) = 0;
 
   /**
    * @brief get names of inputs of python model

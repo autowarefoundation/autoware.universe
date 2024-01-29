@@ -33,7 +33,8 @@ SimModelPymodels::SimModelPymodels(double dt,
 
   vehicle.generateConnections(input_names, state_names);
 
-  std::cout << dt << std::endl;
+  vehicle.dtSet(dt);
+
   std::cout << "Python model loaded successfully " << std::endl;
 }
 
