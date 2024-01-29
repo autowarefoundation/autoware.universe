@@ -66,7 +66,7 @@ struct HyperParameters
     } no_ground_points;
   } score_estimation;
 
-  struct Covarinace
+  struct Covariance
   {
     std::array<double, 36> output_pose_covariance;
 
