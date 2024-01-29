@@ -106,7 +106,7 @@ SamplingPlannerModule::SamplingPlannerModule(
   //     - goal_pose_yaw); return angle_difference / (3.141519 / 4.0);
   //   });
 
-  //  Distance to goal
+  //  Remaining path length
   soft_constraints_.emplace_back(
     [&](
       sampler_common::Path & path, [[maybe_unused]] const sampler_common::Constraints & constraints,
