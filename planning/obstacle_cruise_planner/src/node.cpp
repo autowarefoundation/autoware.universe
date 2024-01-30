@@ -945,7 +945,8 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
   std::for_each(
     indexed_obstacles.begin(), indexed_obstacles.end(),
     [&stopped_obstacles, &moving_obstacles, &p](const auto & o) {
-      const bool is_moving = std::hypot(o.second.twist.linear.x, o.second.twist.linear.y) > 0.5;
+      const bool is_moving = std::hypot(o.second.twist.linear.x, o.second.twist.linear.y) >
+                             p.outside_obstacle_min_velocity_threshold;
       if (is_moving) {
         const bool is_within_lat_dist_threshold =
           o.second.lat_dist_from_obstacle_to_traj < p.yield_lat_distance_threshold;
@@ -962,9 +963,7 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
 
   if (stopped_obstacles.empty() || moving_obstacles.empty()) return std::nullopt;
   std::vector<CruiseObstacle> yield_obstacles;
-  // std::cerr << "------------------------------------\n";
   for (const auto & moving_obstacle : moving_obstacles) {
-    // std::cerr << "moving_obstacle uuid " << moving_obstacle.second.uuid << "\n";
     for (const auto & stopped_obstacle : stopped_obstacles) {
       const bool is_moving_obs_behind_of_stopped_obs =
         moving_obstacle.first < stopped_obstacle.first;
@@ -973,7 +972,6 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
 
       if (!is_moving_obs_ahead_of_ego_front || !is_moving_obs_behind_of_stopped_obs) continue;
 
-      // std::cerr << "stopped_obstacle uuid " << stopped_obstacle.second.uuid << "\n";
       const double lateral_distance_between_obstacles = std::abs(
         moving_obstacle.second.lat_dist_from_obstacle_to_traj -
         stopped_obstacle.second.lat_dist_from_obstacle_to_traj);
@@ -990,27 +988,14 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
       const bool obstacles_collide_within_threshold_time =
         longitudinal_distance_between_obstacles / moving_obstacle_speed <
         p.max_obstacles_collision_time;
-      // std::cerr << "lateral_distance_between_obstacles " << lateral_distance_between_obstacles
-      // << "\n";
-      // std::cerr << "longitudinal_distance_between_obstacles "
-      // << longitudinal_distance_between_obstacles << "\n";
-      // std::cerr << "longitudinal_distance_between_obstacles / moving_obstacle_speed "
-      // << longitudinal_distance_between_obstacles / moving_obstacle_speed << "\n";
-      // std::cerr << " moving_obstacle_speed " << moving_obstacle_speed << "\n";
       if (are_obstacles_aligned && obstacles_collide_within_threshold_time) {
-        // std::cerr << "Yield obstacle candidate found " << moving_obstacle.second.uuid << "\n";
         const auto yield_obstacle = createYieldCruiseObstacle(moving_obstacle.second, traj_points);
         if (yield_obstacle) {
           yield_obstacles.push_back(*yield_obstacle);
-          // std::cerr << "Yield obstacle found " << moving_obstacle.second.uuid << "\n";
-          // std::cerr << "moving_obstacle_speed " << moving_obstacle_speed << "\n";
-          // std::cerr << "moving_obstacle.second.ego_to_obstacle_distance "
-          // << moving_obstacle.second.ego_to_obstacle_distance << "\n";
         }
       }
     }
   }
-  // std::cerr << "------------------------------------\n";
   if (yield_obstacles.empty()) return std::nullopt;
   return yield_obstacles;
 }
