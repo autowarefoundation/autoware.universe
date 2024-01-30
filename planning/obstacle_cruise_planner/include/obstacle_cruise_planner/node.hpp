@@ -206,6 +206,7 @@ private:
     bool enable_yield{false};
     double yield_lat_distance_threshold;
     double max_lat_dist_between_obstacles;
+    double stopped_obstacle_velocity_threshold;
     double max_obstacles_collision_time;
   };
   BehaviorDeterminationParam behavior_determination_param_;

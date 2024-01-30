@@ -253,6 +253,8 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     node.declare_parameter<double>("behavior_determination.cruise.yield.lat_distance_threshold");
   max_lat_dist_between_obstacles = node.declare_parameter<double>(
     "behavior_determination.cruise.yield.max_lat_dist_between_obstacles");
+  stopped_obstacle_velocity_threshold = node.declare_parameter<double>(
+    "behavior_determination.cruise.yield.stopped_obstacle_velocity_threshold");
   max_obstacles_collision_time = node.declare_parameter<double>(
     "behavior_determination.cruise.yield.max_obstacles_collision_time");
   max_lat_margin_for_slow_down =
@@ -318,6 +320,9 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.cruise.yield.max_lat_dist_between_obstacles",
     max_lat_dist_between_obstacles);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.cruise.yield.stopped_obstacle_velocity_threshold",
+    stopped_obstacle_velocity_threshold);
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.cruise.yield.max_obstacles_collision_time",
     max_obstacles_collision_time);
@@ -946,7 +951,7 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
     indexed_obstacles.begin(), indexed_obstacles.end(),
     [&stopped_obstacles, &moving_obstacles, &p](const auto & o) {
       const bool is_moving = std::hypot(o.second.twist.linear.x, o.second.twist.linear.y) >
-                             p.outside_obstacle_min_velocity_threshold;
+                             p.stopped_obstacle_velocity_threshold;
       if (is_moving) {
         const bool is_within_lat_dist_threshold =
           o.second.lat_dist_from_obstacle_to_traj < p.yield_lat_distance_threshold;
