@@ -141,8 +141,6 @@ Eigen::VectorXd SimModelDelaySteerAccGeared::calcModel(
   d_state(IDX::STEER) = steer_rate;
   d_state(IDX::ACCX) = -(acc - acc_des) / acc_time_constant_;
 
-  // std::cerr << "steer = " << steer << ", steer_bias_ = "  << steer_bias_ << std::endl;
-
   return d_state;
 }
 
