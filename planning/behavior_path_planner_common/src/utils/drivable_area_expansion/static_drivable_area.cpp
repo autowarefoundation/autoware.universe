@@ -650,14 +650,14 @@ std::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & 
 
     for (const auto & lanelet : lanelets) {
       for (const auto & target_lanelet : target_lanelets) {
-        std::vector<Point2d> intersections{};
+        std::vector<Polygon2d> intersections{};
         boost::geometry::intersection(
-          lanelet.polygon2d().basicPolygon(), target_lanelet.polygon2d().basicPolygon(),
-          intersections);
+          toPolygon2d(lanelet), toPolygon2d(target_lanelet), intersections);
 
-        // if only one point intersects, it is assumed not to be overlapped
-        if (intersections.size() > 1) {
-          return true;
+        for (const auto & polygon : intersections) {
+          if (boost::geometry::area(polygon) > 1e-3) {
+            return true;
+          }
         }
       }
     }
@@ -1569,7 +1569,9 @@ std::vector<geometry_msgs::msg::Point> postProcess(
     // Insert a start point
     processed_bound.push_back(start_point);
 
-    return findNearestSegmentIndexFromLateralDistance(tmp_bound, start_point);
+    const auto p_tmp =
+      geometry_msgs::build<Pose>().position(start_point).orientation(front_pose.orientation);
+    return findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2);
   }();
 
   // Get Closest segment for the goal point
@@ -1579,8 +1581,10 @@ std::vector<geometry_msgs::msg::Point> postProcess(
       findNearestSegmentIndexFromLateralDistance(tmp_bound, goal_pose, M_PI_2);
     const auto goal_point =
       calcLongitudinalOffsetGoalPoint(tmp_bound, goal_pose, goal_start_idx, vehicle_length);
-    const size_t goal_idx =
-      std::max(goal_start_idx, findNearestSegmentIndexFromLateralDistance(tmp_bound, goal_point));
+    const auto p_tmp =
+      geometry_msgs::build<Pose>().position(goal_point).orientation(goal_pose.orientation);
+    const size_t goal_idx = std::max(
+      goal_start_idx, findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2));
 
     return std::make_pair(goal_idx, goal_point);
   }();
