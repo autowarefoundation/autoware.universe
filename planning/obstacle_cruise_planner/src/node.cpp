@@ -928,8 +928,7 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstac
 
   if (!collision_points) return std::nullopt;
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
-  // obstacle is driving on the opposite direction
-  std::cerr << "tangent_vel " << tangent_vel << "\n";
+  // check if obstacle is driving on the opposite direction
   if (tangent_vel < 0.0) return std::nullopt;
   return CruiseObstacle{obstacle.uuid, obstacle.stamp, obstacle.pose,
                         tangent_vel,   normal_vel,     collision_points.value()};
