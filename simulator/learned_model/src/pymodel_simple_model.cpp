@@ -83,3 +83,10 @@ void PymodelSimpleModel::mapInputs(std::vector<char *> signals_vec_names)
 // index in "signals_vec_names"
 map_sig_vec_to_pyin = createConnectionsMap(signals_vec_names, pymodel_input_names);
 }
+
+void PymodelSimpleModel::mapOutputs(std::vector<char *> signals_vec_names) 
+{
+    // index in "map_pyout_to_sig_vec" is index in "pymodel_outputs" and value in
+    // "map_pyout_to_sig_vec" is index in "signals_vec_names"
+    map_pyout_to_sig_vec = createConnectionsMap(signals_vec_names, pymodel_state_names);
+}
