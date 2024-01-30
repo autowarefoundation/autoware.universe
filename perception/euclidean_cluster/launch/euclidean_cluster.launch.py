@@ -80,7 +80,7 @@ def launch_setup(context, *args, **kwargs):
 
     target_container = (
         LaunchConfiguration("pointcloud_container_name")
-        if LaunchConfiguration("use_pointcloud_container")
+        if IfCondition(LaunchConfiguration("use_pointcloud_container"))
         else container
     )
 
