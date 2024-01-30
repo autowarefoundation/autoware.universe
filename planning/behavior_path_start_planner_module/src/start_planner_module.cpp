@@ -21,6 +21,7 @@
 #include "behavior_path_start_planner_module/util.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
@@ -211,7 +212,8 @@ bool StartPlannerModule::receivedNewRoute() const
 
 bool StartPlannerModule::requiresDynamicObjectsCollisionDetection() const
 {
-  return parameters_->safety_check_params.enable_safety_check && status_.driving_forward;
+  return parameters_->safety_check_params.enable_safety_check && status_.driving_forward &&
+         !isOverlapWithCenterLane();
 }
 
 bool StartPlannerModule::noMovingObjectsAround() const
@@ -280,24 +282,26 @@ bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
 
 bool StartPlannerModule::isOverlapWithCenterLane() const
 {
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
   const auto current_lanes = utils::getCurrentLanes(planner_data_);
-  const auto & vehicle_footprint = vehicle_info_.createFootprint();
+  const auto & local_vehicle_footprint = vehicle_info_.createFootprint();
+  const auto & vehicle_footprint =
+    transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
   for (const auto & current_lane : current_lanes) {
     std::vector<geometry_msgs::msg::Point> centerline_points;
     for (const auto & point : current_lane.centerline()) {
-      geometry_msgs::msg::Point center_point;
-      center_point.x = point.basicPoint().x();
-      center_point.y = point.basicPoint().y();
-      center_point.z = point.basicPoint().z();
+      geometry_msgs::msg::Point center_point = lanelet::utils::conversion::toGeomMsgPt(point);
       centerline_points.push_back(center_point);
     }
+
     for (size_t i = 0; i < centerline_points.size() - 1; ++i) {
       const auto & p1 = centerline_points.at(i);
       const auto & p2 = centerline_points.at(i + 1);
       for (size_t j = 0; j < vehicle_footprint.size() - 1; ++j) {
-        const auto & p3 = tier4_autoware_utils::toMsg(vehicle_footprint[i].to_3d());
-        const auto & p4 = tier4_autoware_utils::toMsg(vehicle_footprint[i + 1].to_3d());
+        const auto & p3 = tier4_autoware_utils::toMsg(vehicle_footprint[j].to_3d());
+        const auto & p4 = tier4_autoware_utils::toMsg(vehicle_footprint[j + 1].to_3d());
         const auto intersection = tier4_autoware_utils::intersect(p1, p2, p3, p4);
+
         if (intersection.has_value()) {
           return true;
         }
