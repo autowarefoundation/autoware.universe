@@ -97,8 +97,8 @@ public:
    */
   SimModelDelaySteerMapAccGeared(
     double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
-    double dt, double acc_delay, double acc_time_constant, double steer_delay, double steer_bias,
-    double steer_time_constant, std::string path);
+    double dt, double acc_delay, double acc_time_constant, double steer_delay,
+    double steer_time_constant, double steer_bias, std::string path);
 
   /**
    * @brief default destructor
