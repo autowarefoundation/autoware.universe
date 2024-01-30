@@ -232,6 +232,11 @@ The path is generated with a certain margin (default: `0.75 m`) from the boundar
 The process is time consuming because multiple planners are used to generate path for each candidate goal. Therefore, in this module, the path generation is performed in a thread different from the main thread.
 Path generation is performed at the timing when the shape of the output path of the previous module changes. If a new module launches, it is expected to go to the previous stage before the goal planner, in which case the goal planner re-generates the path. The goal planner is expected to run at the end of multiple modules, which is achieved by `keep_last` in the planner manager.
 
+Threads in the goal planner are shown below.
+
+![threads.png](./images/goal_planner-threads.drawio.svg)
+
+The main thread will be the one called from the planner manager flow. The goal candidate generation and path candidate generation are done in a separate thread(lane path generation thread). The path candidates generated there are referred to by the main thread, and the one judged to be valid for the current planner data (e.g. ego and object information) is selected from among them. valid means no sudden deceleration, no collision with obstacles, etc. The selected path will be the output of this module. If there is no path selected, or if the selected path is collision and ego is stuck, a separate thread(freespace path generation thread) will generate a path using freespace planning algorithm. If a valid free space path is found, it will be the output of the module. If the object moves and the pull over path generated along the lane is collision-free, the path is used as output again. See also the section on freespace parking for more information on the flow of generating freespace paths.
 
 | Name                             | Unit   | Type   | Description                                                                                                                                                                    | Default value                            |
 | :------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
