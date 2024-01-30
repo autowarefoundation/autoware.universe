@@ -6,6 +6,7 @@ This package converts from [radar_msgs/msg/RadarTracks](https://github.com/ros-p
   - n: The number of radar objects
 
 ## Design
+
 ### Background
 
 Autoware uses [radar_msgs/msg/RadarTracks.msg](https://github.com/ros-perception/radar_msgs/blob/ros2/msg/RadarTracks.msg) as radar objects input data.
@@ -32,6 +33,7 @@ Additional vendor-specific classifications are permitted starting from 32000 in 
 Autoware objects label is defined in [ObjectClassification.idl](https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs/-/blob/master/autoware_auto_perception_msgs/msg/ObjectClassification.idl)
 
 ## Interface
+
 ### Input
 
 - `~/input/radar_objects` (`radar_msgs/msg/RadarTracks.msg`)
