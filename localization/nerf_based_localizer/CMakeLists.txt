@@ -18,6 +18,7 @@ find_package(Torch PATHS ${CMAKE_SOURCE_DIR}/external/libtorch NO_DEFAULT_PATH)
 
 # skip if libtorch is not found
 if(NOT Torch_FOUND)
+  message(WARNING "libtorch is not found, so the nerf_based_localizer package won't be built.")
   return()
 endif()
 
