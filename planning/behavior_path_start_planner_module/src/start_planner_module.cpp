@@ -681,7 +681,7 @@ PathWithLaneId StartPlannerModule::extractCollisionCheckSection(
     {behavior_path_planner::PlannerType::GEOMETRIC,
      parameters_->geometric_collision_check_distance_from_end}};
 
-  const double collision_check_distance_from_end = collision_check_distances[planner_type];
+  const double collision_check_distance_from_end = collision_check_distances.at(planner_type);
 
   PathWithLaneId combined_path;
   for (const auto & partial_path : path.partial_paths) {
