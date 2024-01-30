@@ -68,7 +68,7 @@ double SimModelDelaySteerAccGeared::getAx()
 }
 double SimModelDelaySteerAccGeared::getWz()
 {
-  return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
+  return state_(IDX::VX) * std::tan(state_(IDX::STEER) + steer_bias_) / wheelbase_;
 }
 double SimModelDelaySteerAccGeared::getSteer()
 {
@@ -140,6 +140,8 @@ Eigen::VectorXd SimModelDelaySteerAccGeared::calcModel(
   d_state(IDX::VX) = acc;
   d_state(IDX::STEER) = steer_rate;
   d_state(IDX::ACCX) = -(acc - acc_des) / acc_time_constant_;
+
+  // std::cerr << "steer = " << steer << ", steer_bias_ = "  << steer_bias_ << std::endl;
 
   return d_state;
 }
