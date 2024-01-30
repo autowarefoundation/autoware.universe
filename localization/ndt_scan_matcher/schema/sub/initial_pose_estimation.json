@@ -18,10 +18,7 @@
           "minimum": 1
         }
       },
-      "required": [
-          "particles_num",
-          "n_startup_trials"
-      ],
+      "required": ["particles_num", "n_startup_trials"],
       "additionalProperties": false
     }
   }

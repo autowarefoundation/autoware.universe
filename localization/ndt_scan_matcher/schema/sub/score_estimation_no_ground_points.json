@@ -17,10 +17,7 @@
           "minimum": 0.0
         }
       },
-      "required": [
-          "enable",
-          "z_margin_for_ground_removal"
-      ],
+      "required": ["enable", "z_margin_for_ground_removal"],
       "additionalProperties": false
     }
   }

@@ -21,11 +21,7 @@
           "default": [0.5, -0.5, 0.0, 0.0, 0.0, 0.0]
         }
       },
-      "required": [
-          "enable",
-          "initial_pose_offset_model_x",
-          "initial_pose_offset_model_y"
-      ],
+      "required": ["enable", "initial_pose_offset_model_x", "initial_pose_offset_model_y"],
       "additionalProperties": false
     }
   }

@@ -29,9 +29,9 @@
         }
       },
       "required": [
-          "converged_param_type",
-          "converged_param_transform_probability",
-          "no_ground_points"
+        "converged_param_type",
+        "converged_param_transform_probability",
+        "no_ground_points"
       ],
       "additionalProperties": false
     }

@@ -57,21 +57,27 @@ One optional function is regularization. Please see the regularization chapter i
 ### Core Parameters
 
 #### Frame
+
 {{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/frame.json") }}
 
 #### Ndt
+
 {{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/ndt.json") }}
 
 #### Initial Pose Estimation
+
 {{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/initial_pose_estimation.json") }}
 
 #### Validation
+
 {{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/validation.json") }}
 
 #### Score Estimation
+
 {{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/score_estimation.json") }}
 
 #### Covariance
+
 {{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/covariance.json") }}
 
 ## Regularization

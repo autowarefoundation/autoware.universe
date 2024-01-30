@@ -21,11 +21,7 @@
           "default": "map"
         }
       },
-      "required": [
-          "base_frame",
-          "ndt_base_frame",
-          "map_frame"
-      ],
+      "required": ["base_frame", "ndt_base_frame", "map_frame"],
       "additionalProperties": false
     }
   }

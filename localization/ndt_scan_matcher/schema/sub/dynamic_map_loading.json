@@ -24,11 +24,7 @@
           "minimum": 0.0
         }
       },
-      "required": [
-          "update_distance",
-          "map_radius",
-          "lidar_radius"
-      ],
+      "required": ["update_distance", "map_radius", "lidar_radius"],
       "additionalProperties": false
     }
   }

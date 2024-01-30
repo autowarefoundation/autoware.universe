@@ -36,16 +36,16 @@
           "minimum": 1
         },
         "regularization": {
-           "$ref": "ndt_regularization.json#/definitions/regularization" 
+          "$ref": "ndt_regularization.json#/definitions/regularization"
         }
       },
       "required": [
-          "trans_epsilon",
-          "step_size",
-          "resolution",
-          "max_iterations",
-          "num_threads",
-          "regularization"
+        "trans_epsilon",
+        "step_size",
+        "resolution",
+        "max_iterations",
+        "num_threads",
+        "regularization"
       ],
       "additionalProperties": false
     }

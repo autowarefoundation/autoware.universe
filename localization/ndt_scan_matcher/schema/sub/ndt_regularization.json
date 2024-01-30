@@ -17,10 +17,7 @@
           "minimum": 0.0
         }
       },
-      "required": [
-          "enable",
-          "scale_factor"
-      ],
+      "required": ["enable", "scale_factor"],
       "additionalProperties": false
     }
   }

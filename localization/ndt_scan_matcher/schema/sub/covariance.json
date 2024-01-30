@@ -9,22 +9,16 @@
           "type": "array",
           "description": "The covariance of output pose. Note that this covariance matrix is empirically derived.",
           "default": [
-              0.0225, 0.0,   0.0,   0.0,      0.0,      0.0,
-              0.0,   0.0225, 0.0,   0.0,      0.0,      0.0,
-              0.0,   0.0,   0.0225, 0.0,      0.0,      0.0,
-              0.0,   0.0,   0.0,   0.000625, 0.0,      0.0,
-              0.0,   0.0,   0.0,   0.0,      0.000625, 0.0,
-              0.0,   0.0,   0.0,   0.0,      0.0,      0.000625
+            0.0225, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0225, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0225, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.000625, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.000625, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.000625
           ]
         },
         "covariance_estimation": {
           "$ref": "covariance_covariance_estimation.json#/definitions/covariance_estimation"
         }
       },
-      "required": [
-          "output_pose_covariance",
-          "covariance_estimation"
-      ],
+      "required": ["output_pose_covariance", "covariance_estimation"],
       "additionalProperties": false
     }
   }

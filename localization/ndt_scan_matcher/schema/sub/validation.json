@@ -31,10 +31,10 @@
         }
       },
       "required": [
-          "lidar_topic_timeout_sec",
-          "initial_pose_timeout_sec",
-          "initial_pose_distance_tolerance_m",
-          "critical_upper_bound_exe_time_ms"
+        "lidar_topic_timeout_sec",
+        "initial_pose_timeout_sec",
+        "initial_pose_distance_tolerance_m",
+        "critical_upper_bound_exe_time_ms"
       ],
       "additionalProperties": false
     }
