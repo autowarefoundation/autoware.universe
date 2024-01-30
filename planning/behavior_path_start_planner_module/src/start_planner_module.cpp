@@ -675,13 +675,13 @@ bool StartPlannerModule::findPullOutPath(
 PathWithLaneId StartPlannerModule::extractCollisionCheckSection(
   const PullOutPath & path, const behavior_path_planner::PlannerType & planner_type)
 {
-  std::map<PlannerType, double> collision_check_distances = {
+  const std::map<PlannerType, double> collision_check_distances = {
     {behavior_path_planner::PlannerType::SHIFT,
      parameters_->shift_collision_check_distance_from_end},
     {behavior_path_planner::PlannerType::GEOMETRIC,
      parameters_->geometric_collision_check_distance_from_end}};
 
-  double collision_check_distance_from_end = collision_check_distances[planner_type];
+  const double collision_check_distance_from_end = collision_check_distances[planner_type];
 
   PathWithLaneId combined_path;
   for (const auto & partial_path : path.partial_paths) {
