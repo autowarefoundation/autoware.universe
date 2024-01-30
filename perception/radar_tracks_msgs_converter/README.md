@@ -34,14 +34,18 @@ Autoware objects label is defined in [ObjectClassification.idl](https://gitlab.c
 ## Interface
 ### Input
 
-- `~/input/radar_objects` (radar_msgs/msg/RadarTracks.msg): Input radar topic
-- `~/input/odometry` (nav_msgs/msg/Odometry.msg): Ego vehicle odometry topic
+- `~/input/radar_objects` (`radar_msgs/msg/RadarTracks.msg`)
+  - Input radar topic
+- `~/input/odometry` (`nav_msgs/msg/Odometry.msg`)
+  - Ego vehicle odometry topic
 
 ### Output
 
-- `~/output/radar_detected_objects` (autoware_auto_perception_msgs/msg/DetectedObject.idl): The topic converted to Autoware message.
+- `~/output/radar_detected_objects` (`autoware_auto_perception_msgs/msg/DetectedObject.idl`)
+  - DetectedObject topic converted to Autoware message.
   - This is used for radar sensor fusion detection and radar detection.
-- `~/output/radar_tracked_objects` (autoware_auto_perception_msgs/msg/TrackedObject.idl): The topic converted to Autoware message.
+- `~/output/radar_tracked_objects` (`autoware_auto_perception_msgs/msg/TrackedObject.idl`)
+  - TrackedObject topic converted to Autoware message.
   - This is used for tracking layer sensor fusion.
 
 ### Parameters
@@ -67,7 +71,6 @@ If the parameter is true, then the twist of the output objects' topic is compens
   - Default parameter is "false"
 
 This parameter is the flag to use the compensation to yaw rotation of ego vehicle's twist.
-
 If the parameter is true, then the ego motion compensation will also consider yaw motion of the ego vehicle.
 
 - `static_object_speed_threshold` (float) [m/s]
