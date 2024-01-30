@@ -85,7 +85,7 @@
         <param name="input/image7" value="$(var input/image7)"/>
         <extra_arg name="use_intra_process_comms" value="true"/>
       </composable_node>
-  </load_composable_node>
+    </load_composable_node>
   </group>
   <group unless="$(var use_pointcloud_container)">
     <node pkg="image_projection_based_fusion" exec="pointpainting_fusion_node" name="pointpainting" output="screen">
