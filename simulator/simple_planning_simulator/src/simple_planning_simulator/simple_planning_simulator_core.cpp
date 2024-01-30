@@ -385,9 +385,6 @@ void SimplePlanningSimulator::on_timer()
     add_measurement_noise(current_odometry_, current_velocity_, current_steer_);
   }
 
-  // add measurement bias
-  current_steer_.steering_tire_angle += measurement_steer_bias_;
-
   // add estimate covariance
   {
     using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
