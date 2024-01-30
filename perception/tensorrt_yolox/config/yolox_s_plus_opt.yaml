@@ -1,0 +1,15 @@
+/**:
+  ros__parameters:
+    model_path: "$(var data_path)/tensorrt_yolox/$(var model_name).onnx"
+    label_path: "$(var data_path)/tensorrt_yolox/label.txt"
+    score_threshold: 0.35
+    nms_threshold: 0.7
+    precision: "int8"
+    calibration_algorithm: "Entropy"
+    dla_core_id: -1
+    quantize_first_layer: false
+    quantize_last_layer: false
+    profile_per_layer: false
+    clip_value: 6.0
+    preprocess_on_gpu: true
+    calibration_image_list_path: ""
