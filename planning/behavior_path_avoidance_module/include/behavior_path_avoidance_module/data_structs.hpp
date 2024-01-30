@@ -115,6 +115,9 @@ struct AvoidanceParameters
   // use intersection area for avoidance
   bool use_intersection_areas{false};
 
+  // use freespace area for avoidance
+  bool use_freespace_areas{false};
+
   // consider avoidance return dead line
   bool enable_dead_line_for_goal{false};
   bool enable_dead_line_for_traffic_light{false};
@@ -164,9 +167,13 @@ struct AvoidanceParameters
   double object_check_backward_distance{0.0};
   double object_check_yaw_deviation{0.0};
 
-  // if the distance between object and goal position is less than this parameter, the module ignore
-  // the object.
+  // if the distance between object and goal position is less than this parameter, the module do not
+  // return center line.
   double object_check_goal_distance{0.0};
+
+  // if the distance between object and return position is less than this parameter, the module do
+  // not return center line.
+  double object_check_return_pose_distance{0.0};
 
   // use in judge whether the vehicle is parking object on road shoulder
   double object_check_shiftable_ratio{0.0};
@@ -462,14 +469,14 @@ using AvoidLineArray = std::vector<AvoidLine>;
 
 struct AvoidOutline
 {
-  AvoidOutline(AvoidLine avoid_line, AvoidLine return_line)
+  AvoidOutline(AvoidLine avoid_line, const std::optional<AvoidLine> return_line)
   : avoid_line{std::move(avoid_line)}, return_line{std::move(return_line)}
   {
   }
 
   AvoidLine avoid_line{};
 
-  AvoidLine return_line{};
+  std::optional<AvoidLine> return_line{};
 
   AvoidLineArray middle_lines{};
 };
@@ -588,7 +595,7 @@ struct ShiftLineData
  */
 struct DebugData
 {
-  geometry_msgs::msg::Polygon detection_area;
+  std::vector<geometry_msgs::msg::Polygon> detection_areas;
 
   lanelet::ConstLineStrings3d bounds;
 

@@ -19,6 +19,7 @@
       use_opposite_lane: true
       use_intersection_areas: true
       use_hatched_road_markings: true
+      use_freespace_areas: true
 
       # for debug
       publish_debug_marker: false
@@ -122,7 +123,8 @@
           motorcycle: true                               # [-]
           pedestrian: true                               # [-]
         # detection range
-        object_check_goal_distance: 20.0                # [m]
+        object_check_goal_distance: 20.0                 # [m]
+        object_check_return_pose_distance: 20.0          # [m]
         # filtering parking objects
         threshold_distance_object_is_on_center: 1.0     # [m]
         object_check_shiftable_ratio: 0.6               # [-]

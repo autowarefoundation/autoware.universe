@@ -40,6 +40,7 @@ PlannerManager::PlannerManager(
 {
   processing_time_.emplace("total_time", 0.0);
   debug_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
+  state_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
 }
 
 void PlannerManager::launchScenePlugin(rclcpp::Node & node, const std::string & name)
@@ -225,8 +226,7 @@ void PlannerManager::generateCombinedDrivableArea(
   } else if (di.is_already_expanded) {
     // for single side shift
     utils::generateDrivableArea(
-      output.path, di.drivable_lanes, false, false, data->parameters.vehicle_length, data,
-      is_driving_forward);
+      output.path, di.drivable_lanes, false, false, false, data, is_driving_forward);
   } else {
     const auto shorten_lanes = utils::cutOverlappedLanes(output.path, di.drivable_lanes);
 
@@ -238,7 +238,7 @@ void PlannerManager::generateCombinedDrivableArea(
     // for other modules where multiple modules may be launched
     utils::generateDrivableArea(
       output.path, expanded_lanes, di.enable_expanding_hatched_road_markings,
-      di.enable_expanding_intersection_areas, data->parameters.vehicle_length, data,
+      di.enable_expanding_intersection_areas, di.enable_expanding_freespace_areas, data,
       is_driving_forward);
   }
 
@@ -629,32 +629,38 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
     return output;
   }
 
-  const auto move_to_end = [](auto & modules, const auto & cond) {
-    auto itr = modules.begin();
-    while (itr != modules.end()) {
-      const auto satisfied_exit_cond =
-        std::all_of(itr, modules.end(), [&cond](const auto & m) { return cond(m); });
-
-      if (satisfied_exit_cond) {
-        return;
-      }
-
-      if (cond(*itr)) {
-        auto tmp = std::move(*itr);
-        itr = modules.erase(itr);
-        modules.insert(modules.end(), std::move(tmp));
-      } else {
-        itr++;
-      }
-    }
-  };
-
   // move modules whose keep last flag is true to end of the approved_module_ptrs_.
+  // if there are multiple keep last modules, sort by priority
   {
-    const auto keep_last_module_cond = [this](const auto & m) {
-      return getManager(m)->isKeepLast();
+    const auto move_to_end = [](auto & modules, const auto & module_to_move) {
+      auto itr = std::find(modules.begin(), modules.end(), module_to_move);
+
+      if (itr != modules.end()) {
+        auto tmp = std::move(*itr);
+        modules.erase(itr);
+        modules.push_back(std::move(tmp));
+      }
     };
-    move_to_end(approved_module_ptrs_, keep_last_module_cond);
+
+    const auto get_sorted_keep_last_modules = [this](const auto & modules) {
+      std::vector<SceneModulePtr> keep_last_modules;
+
+      std::copy_if(
+        modules.begin(), modules.end(), std::back_inserter(keep_last_modules),
+        [this](const auto & m) { return getManager(m)->isKeepLast(); });
+
+      // sort by priority (low -> high)
+      std::sort(
+        keep_last_modules.begin(), keep_last_modules.end(), [this](const auto & a, const auto & b) {
+          return getManager(a)->getPriority() < getManager(b)->getPriority();
+        });
+
+      return keep_last_modules;
+    };
+
+    for (const auto & module : get_sorted_keep_last_modules(approved_module_ptrs_)) {
+      move_to_end(approved_module_ptrs_, module);
+    }
   }
 
   // lock approved modules besides last one
@@ -767,6 +773,25 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
    * remove success module immediately. if lane change module has succeeded, update root lanelet.
    */
   {
+    const auto move_to_end = [](auto & modules, const auto & cond) {
+      auto itr = modules.begin();
+      while (itr != modules.end()) {
+        const auto satisfied_exit_cond =
+          std::all_of(itr, modules.end(), [&cond](const auto & m) { return cond(m); });
+
+        if (satisfied_exit_cond) {
+          return;
+        }
+
+        if (cond(*itr)) {
+          auto tmp = std::move(*itr);
+          itr = modules.erase(itr);
+          modules.insert(modules.end(), std::move(tmp));
+        } else {
+          itr++;
+        }
+      }
+    };
     const auto success_module_cond = [](const auto & m) {
       return m->getCurrentStatus() == ModuleStatus::SUCCESS;
     };
@@ -859,11 +884,9 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
   // when lane change module is running, don't update root lanelet.
   const bool is_lane_change_running = std::invoke([&]() {
-    const auto lane_change_itr =
-      std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [](const auto & m) {
-        return m->name().find("lane_change") != std::string::npos ||
-               m->name().find("avoidance_by_lc") != std::string::npos;
-      });
+    const auto lane_change_itr = std::find_if(
+      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
+      [](const auto & m) { return m->isRootLaneletToBeUpdated(); });
     return lane_change_itr != approved_module_ptrs_.end();
   });
   if (is_lane_change_running) {
@@ -910,10 +933,6 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
 void PlannerManager::print() const
 {
-  if (!verbose_) {
-    return;
-  }
-
   const auto get_status = [](const auto & m) {
     return magic_enum::enum_name(m->getCurrentStatus());
   };
@@ -961,6 +980,12 @@ void PlannerManager::print() const
                   << std::left << t.first << ":" << std::setw(4) << std::right << t.second
                   << "ms]\n"
                   << std::setw(21);
+  }
+
+  state_publisher_ptr_->publish<DebugStringMsg>("internal_state", string_stream.str());
+
+  if (!verbose_) {
+    return;
   }
 
   RCLCPP_INFO_STREAM(logger_, string_stream.str());
