@@ -34,8 +34,14 @@ For example,
 
 ```bash
 cd nerf_based_localizer/external
+
+# v1.13.1
 wget https://download.pytorch.org/libtorch/cu117/libtorch-cxx11-abi-shared-with-deps-1.13.1%2Bcu117.zip
 unzip ./libtorch-cxx11-abi-shared-with-deps-1.13.1+cu117.zip
+
+# v2.1.2
+wget https://download.pytorch.org/libtorch/cu121/libtorch-cxx11-abi-shared-with-deps-2.1.2%2Bcu121.zip
+unzip ./libtorch-cxx11-abi-shared-with-deps-2.1.2+cu121.zip
 ```
 
 If libtorch is prepared, `nerf_based_localizer` can be built as a normal package.
