@@ -20,7 +20,7 @@
 
 SimModelDelaySteerMapAccGeared::SimModelDelaySteerMapAccGeared(
   double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
-  double dt, double acc_delay, double acc_time_constant, double steer_delay,
+  double dt, double acc_delay, double acc_time_constant, double steer_delay, double steer_bias,
   double steer_time_constant, std::string path)
 : SimModelInterface(6 /* dim x */, 2 /* dim u */),
   MIN_TIME_CONSTANT(0.03),
@@ -32,6 +32,7 @@ SimModelDelaySteerMapAccGeared::SimModelDelaySteerMapAccGeared(
   acc_delay_(acc_delay),
   acc_time_constant_(std::max(acc_time_constant, MIN_TIME_CONSTANT)),
   steer_delay_(steer_delay),
+  steer_bias_(steer_bias),
   steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT)),
   path_(path)
 {
@@ -119,7 +120,7 @@ Eigen::VectorXd SimModelDelaySteerMapAccGeared::calcModel(
   Eigen::VectorXd d_state = Eigen::VectorXd::Zero(dim_x_);
   d_state(IDX::X) = vel * cos(yaw);
   d_state(IDX::Y) = vel * sin(yaw);
-  d_state(IDX::YAW) = vel * std::tan(steer) / wheelbase_;
+  d_state(IDX::YAW) = vel * std::tan(steer + steer_bias_) / wheelbase_;
   d_state(IDX::VX) = acc;
   d_state(IDX::STEER) = steer_rate;
   const double converted_acc =

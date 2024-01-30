@@ -21,8 +21,8 @@
 SimModelDelaySteerAccGeared::SimModelDelaySteerAccGeared(
   double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
   double dt, double acc_delay, double acc_time_constant, double steer_delay,
-  double steer_time_constant, double steer_dead_band, double debug_acc_scaling_factor,
-  double debug_steer_scaling_factor)
+  double steer_time_constant, double steer_dead_band, double steer_bias,
+  double debug_acc_scaling_factor, double debug_steer_scaling_factor)
 : SimModelInterface(6 /* dim x */, 2 /* dim u */),
   MIN_TIME_CONSTANT(0.03),
   vx_lim_(vx_lim),
@@ -35,6 +35,7 @@ SimModelDelaySteerAccGeared::SimModelDelaySteerAccGeared(
   steer_delay_(steer_delay),
   steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT)),
   steer_dead_band_(steer_dead_band),
+  steer_bias_(steer_bias),
   debug_acc_scaling_factor_(std::max(debug_acc_scaling_factor, 0.0)),
   debug_steer_scaling_factor_(std::max(debug_steer_scaling_factor, 0.0))
 {
@@ -135,7 +136,7 @@ Eigen::VectorXd SimModelDelaySteerAccGeared::calcModel(
   Eigen::VectorXd d_state = Eigen::VectorXd::Zero(dim_x_);
   d_state(IDX::X) = vel * cos(yaw);
   d_state(IDX::Y) = vel * sin(yaw);
-  d_state(IDX::YAW) = vel * std::tan(steer) / wheelbase_;
+  d_state(IDX::YAW) = vel * std::tan(steer + steer_bias_) / wheelbase_;
   d_state(IDX::VX) = acc;
   d_state(IDX::STEER) = steer_rate;
   d_state(IDX::ACCX) = -(acc - acc_des) / acc_time_constant_;
