@@ -361,6 +361,13 @@ The following parameters are configurable in `lane_change.param.yaml`.
 
 The following parameters are configurable in `behavior_path_planner.param.yaml` and `lane_change.param.yaml`.
 
+#### common
+
+| Name                                       | Unit | Type   | Description                                                                                                    | Default value |
+| :----------------------------------------- | ---- | ------ | -------------------------------------------------------------------------------------------------------------- | ------------- |
+| `safety_check.lane_expansion.left_offset`  | [m]  | double | When it detects objects for safety check, it will expand corresponding lane with this left offset.             | 0.0           |
+| `safety_check.lane_expansion.right_offset` | [m]  | double | When it detects objects for safety check, it will expand corresponding lane with this right offset.confidence. | 0.0           |
+
 #### execution
 
 | Name                                                              | Unit    | Type    | Description                                                                                                                                                    | Default value |
