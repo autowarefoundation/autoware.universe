@@ -1,7 +1,6 @@
 /**:
   ros__parameters:
     trt_precision: fp16
-    build_only: false
     encoder_onnx_path: "$(var model_path)/pts_voxel_encoder_$(var model_name).onnx"
     encoder_engine_path: "$(var model_path)/pts_voxel_encoder_$(var model_name).engine"
     head_onnx_path: "$(var model_path)/pts_backbone_neck_head_$(var model_name).onnx"
