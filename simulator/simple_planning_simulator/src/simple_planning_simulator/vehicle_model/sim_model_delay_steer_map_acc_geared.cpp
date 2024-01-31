@@ -70,7 +70,7 @@ double SimModelDelaySteerMapAccGeared::getWz()
 }
 double SimModelDelaySteerMapAccGeared::getSteer()
 {
-  return state_(IDX::STEER);
+  return state_(IDX::STEER) + steer_bias_;
 }
 void SimModelDelaySteerMapAccGeared::update(const double & dt)
 {
@@ -114,13 +114,13 @@ Eigen::VectorXd SimModelDelaySteerMapAccGeared::calcModel(
   const double steer = state(IDX::STEER);
   const double acc_des = std::clamp(input(IDX_U::ACCX_DES), -vx_rate_lim_, vx_rate_lim_);
   const double steer_des = std::clamp(input(IDX_U::STEER_DES), -steer_lim_, steer_lim_);
-  double steer_rate = -(steer - steer_des) / steer_time_constant_;
+  double steer_rate = -(getSteer() - steer_des) / steer_time_constant_;
   steer_rate = std::clamp(steer_rate, -steer_rate_lim_, steer_rate_lim_);
 
   Eigen::VectorXd d_state = Eigen::VectorXd::Zero(dim_x_);
   d_state(IDX::X) = vel * cos(yaw);
   d_state(IDX::Y) = vel * sin(yaw);
-  d_state(IDX::YAW) = vel * std::tan(steer + steer_bias_) / wheelbase_;
+  d_state(IDX::YAW) = vel * std::tan(steer) / wheelbase_;
   d_state(IDX::VX) = acc;
   d_state(IDX::STEER) = steer_rate;
   const double converted_acc =
