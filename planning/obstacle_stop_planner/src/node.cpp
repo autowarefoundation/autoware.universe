@@ -1560,8 +1560,15 @@ void ObstacleStopPlannerNode::filterObstacles(
     const double max_length = calcObstacleMaxLength(object.shape);
     const size_t seg_idx = motion_utils::findNearestSegmentIndex(
       traj, object.kinematics.initial_pose_with_covariance.pose.position);
-    const auto p_front = tier4_autoware_utils::getPoint(traj.at(seg_idx));
-    const auto p_back = tier4_autoware_utils::getPoint(traj.at(seg_idx + 1));
+    geometry_msgs::msg::Point p_front;
+    geometry_msgs::msg::Point p_back;
+    if (traj.size() == 1) {
+      p_front = tier4_autoware_utils::getPoint(traj.at(0));
+      p_back = tier4_autoware_utils::getPoint(traj.at(0));
+    } else {
+      p_front = tier4_autoware_utils::getPoint(traj.at(seg_idx));
+      p_back = tier4_autoware_utils::getPoint(traj.at(seg_idx + 1));
+    }
     const auto & p_target = object.kinematics.initial_pose_with_covariance.pose.position;
     const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
     const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
