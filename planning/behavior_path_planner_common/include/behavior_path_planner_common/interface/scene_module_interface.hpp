@@ -459,7 +459,7 @@ protected:
   /**
    * @brief Explicitly set the initial state
    */
-  virtual ModuleStatus setInitState() { return ModuleStatus::RUNNING; }
+  virtual ModuleStatus setInitState() const { return ModuleStatus::RUNNING; }
 
   /**
    * @brief Get candidate path. This information is used for external judgement.
