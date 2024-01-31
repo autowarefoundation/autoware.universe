@@ -13,6 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef TEST_PARAMETER_HPP_
+#define TEST_PARAMETER_HPP_
+
 constexpr double deg2rad = 3.14159265 / 180.0;
 constexpr double kmph2mps = 1.0 / 3.6;
 
@@ -30,3 +33,5 @@ constexpr double THRESHOLD_VELOCITY_DEVIATION = 15.0 * kmph2mps;
 constexpr double THRESHOLD_DISTANCE_DEVIATION = 3.0;
 constexpr double THRESHOLD_LONGITUDINAL_DISTANCE_DEVIATION = 2.0;
 constexpr double THRESHOLD_FORWARD_TRAJECTORY_TIME_LENGTH = 3.0;
+
+#endif  // TEST_PARAMETER_HPP_

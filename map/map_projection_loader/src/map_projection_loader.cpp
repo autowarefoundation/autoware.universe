@@ -95,4 +95,5 @@ MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(publisher_);
   publisher_->publish(msg);
+  RCLCPP_WARN(get_logger(), "published map projection message");
 }
