@@ -7,11 +7,15 @@
   <arg name="model_path" default="$(var data_path)/lidar_centerpoint"/>
   <arg name="model_param_path" default="$(find-pkg-share lidar_centerpoint)/config/$(var model_name).param.yaml"/>
   <arg name="class_remapper_param_path" default="$(find-pkg-share lidar_centerpoint)/config/detection_class_remapper.param.yaml"/>
+  <arg name="build_only" default="false" description="shutdown node after TensorRT engine file is built"/>
 
   <node pkg="lidar_centerpoint" exec="lidar_centerpoint_node" name="lidar_centerpoint" output="screen">
     <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
     <remap from="~/output/objects" to="$(var output/objects)"/>
     <param from="$(var model_param_path)" allow_substs="true"/>
     <param from="$(var class_remapper_param_path)"/>
+
+    <!-- This parameter shall NOT be included in param file. See the PR from the git blame for details. -->
+    <param name="build_only" value="$(var build_only)"/>
   </node>
 </launch>
