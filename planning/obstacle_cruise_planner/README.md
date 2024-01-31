@@ -108,7 +108,8 @@ The obstacles meeting the following condition are determined as obstacles for cr
 | `behavior_determination.cruise.outside_obstacle.obstacle_velocity_threshold`         | double | maximum obstacle velocity for cruise obstacle outside the trajectory |
 | `behavior_determination.cruise.outside_obstacle.ego_obstacle_overlap_time_threshold` | double | maximum overlap time of the collision between the ego and obstacle   |
 
-##### Yield for vehicles that might cut in
+##### Yield for vehicles that might cut in into the ego's lane
+
 It is also possible to yield (cruise) behind vehicles in neighbor lanes if said vehicles might cut in the ego vehicle's current lane.
 
 The obstacles meeting the following condition are determined as obstacles for yielding (cruising).
