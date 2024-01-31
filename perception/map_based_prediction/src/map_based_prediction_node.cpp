@@ -788,6 +788,8 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   acceleration_exponential_half_life_ =
     declare_parameter<double>("acceleration_exponential_half_life");
 
+  use_crosswalk_signal_ = declare_parameter<bool>("use_crosswalk_signal");
+
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_time_horizon_, lateral_control_time_horizon_, prediction_sampling_time_interval_,
     min_crosswalk_user_velocity_);
@@ -1230,18 +1232,13 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   // try to find the edge points for all crosswalks and generate path to the crosswalk edge
   for (const auto & crosswalk : crosswalks_) {
     const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
-    if (crosswalk_signal_id_opt.has_value()) {
-      // If the crosswalk has traffic light, do something.
-      if (traffic_signal_id_map_.count(crosswalk_signal_id_opt.value()) != 0) {
-        const auto & signal_elements =
-          traffic_signal_id_map_.at(crosswalk_signal_id_opt.value()).elements;
-        if (signal_elements.size() > 1) {
-          RCLCPP_ERROR(
-            get_logger(), "[Map Based Prediction]: Multiple TrafficSignalElement_ are received.");
-        } else if (
-          !signal_elements.empty() && signal_elements.front().color == TrafficSignalElement::RED) {
-          continue;
-        }
+    if (crosswalk_signal_id_opt.has_value() && use_crosswalk_signal_) {
+      const auto signal_element_opt = getTrafficSignalElement(crosswalk_signal_id_opt.value());
+      const auto signal_color =
+        signal_element_opt ? signal_element_opt.value().color : TrafficSignalElement::UNKNOWN;
+
+      if (signal_color == TrafficSignalElement::RED) {
+        continue;
       }
     }
 
@@ -2253,6 +2250,21 @@ std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
       "Multiple regulatory elements as TrafficLight are defined to one lanelet object.");
   }
   return traffic_light_reg_elems.front()->id();
+}
+
+std::optional<TrafficSignalElement> MapBasedPredictionNode::getTrafficSignalElement(
+  const lanelet::Id & id)
+{
+  if (traffic_signal_id_map_.count(id) != 0) {
+    const auto & signal_elements = traffic_signal_id_map_.at(id).elements;
+    if (signal_elements.size() > 1) {
+      RCLCPP_ERROR(
+        get_logger(), "[Map Based Prediction]: Multiple TrafficSignalElement_ are received.");
+    } else if (!signal_elements.empty()) {
+      return signal_elements.front();
+    }
+  }
+  return std::nullopt;
 }
 
 }  // namespace map_based_prediction

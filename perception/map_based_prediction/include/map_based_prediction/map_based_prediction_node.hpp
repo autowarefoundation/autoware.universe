@@ -189,6 +189,8 @@ private:
   double speed_limit_multiplier_;
   double acceleration_exponential_half_life_;
 
+  bool use_crosswalk_signal_;
+
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
 
@@ -259,6 +261,7 @@ private:
   bool isDuplicated(
     const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
   std::optional<lanelet::Id> getTrafficSignalId(const lanelet::ConstLanelet & way_lanelet);
+  std::optional<TrafficSignalElement> getTrafficSignalElement(const lanelet::Id & id);
 
   visualization_msgs::msg::Marker getDebugMarker(
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
