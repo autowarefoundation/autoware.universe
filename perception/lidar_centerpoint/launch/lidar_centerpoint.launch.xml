@@ -18,7 +18,7 @@
     <load_composable_node target="$(var pointcloud_container_name)">
       <composable_node pkg="lidar_centerpoint" plugin="centerpoint::LidarCenterPointNode" name="lidar_centerpoint">
         <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
-        <remap from="~/output/objects" to="objects"/>
+        <remap from="~/output/objects" to="$(var output/objects)"/>
         <param name="score_threshold" value="$(var score_threshold)"/>
         <param name="densification_world_frame_id" value="map"/>
         <param name="densification_num_past_frames" value="1"/>
