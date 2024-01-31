@@ -1549,6 +1549,7 @@ void ObstacleStopPlannerNode::filterObstacles(
   const double dist_threshold, PredictedObjects & filtered_objects)
 {
   filtered_objects.header = input_objects.header;
+  if (traj.size() < 2) return;
 
   for (auto & object : input_objects.objects) {
     // Check is it in front of ego vehicle
