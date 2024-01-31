@@ -77,7 +77,7 @@ private Q_SLOTS:
 
 private:  // NOLINT for Qt
   rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Publisher<dummy_perception_publisher::msg::Object>::SharedPtr dummy_object_info_pub_;
+  rclcpp::Publisher<autoware_dummy_perception_publisher::msg::Object>::SharedPtr dummy_object_info_pub_;
 
   rviz_common::properties::StringProperty * topic_property_;
 };
