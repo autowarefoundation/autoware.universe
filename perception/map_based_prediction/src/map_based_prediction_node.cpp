@@ -1233,9 +1233,10 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   for (const auto & crosswalk : crosswalks_) {
     const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
     if (crosswalk_signal_id_opt.has_value() && use_crosswalk_signal_) {
-      const auto signal_element_opt = getTrafficSignalElement(crosswalk_signal_id_opt.value());
-      const auto signal_color =
-        signal_element_opt ? signal_element_opt.value().color : TrafficSignalElement::UNKNOWN;
+      const auto signal_color = [&] {
+        const auto elem_opt = getTrafficSignalElement(crosswalk_signal_id_opt.value());
+        return elem_opt ? elem_opt.value().color : TrafficSignalElement::UNKNOWN;
+      }();
 
       if (signal_color == TrafficSignalElement::RED) {
         continue;
