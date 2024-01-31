@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -224,8 +224,11 @@ private:
     const double yaw_difference = std::abs(ego_yaw - ref_path_yaw);
 
     // TODO(Daniel) magic numbers
+    constexpr double threshold_lat_distance_for_merging = 0.25;
+    constexpr double threshold_yaw_difference_for_merging = M_PI / 36.0;  // 5 degrees
     const bool merged_back_to_path =
-      (std::abs(ego_arc.distance) < 0.25) && (yaw_difference < M_PI / 36.0);
+      (std::abs(ego_arc.distance) < threshold_lat_distance_to_merge) &&
+      (yaw_difference < threshold_yaw_difference_for_merging);
     return isReferencePathSafe() && (merged_back_to_path);
   }
 

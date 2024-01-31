@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -76,12 +76,10 @@ inline std::vector<bool> evaluateHardConstraints(
 {
   std::vector<bool> constraints_results;
   bool constraints_passed = true;
-  int idx = 0;
   for (const auto & f : hard_constraints) {
     const bool constraint_check = f(path, constraints, footprint);
     constraints_passed &= constraint_check;
     constraints_results.push_back(constraint_check);
-    ++idx;
   }
 
   path.constraints_satisfied = constraints_passed;
