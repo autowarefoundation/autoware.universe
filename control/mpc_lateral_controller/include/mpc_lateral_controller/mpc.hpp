@@ -376,10 +376,11 @@ private:
    * @param current_kinematics The current vehicle kinematics.
    * @return The generated diagnostic data.
    */
-  Float32MultiArrayStamped generateDiagData(
-    const MPCTrajectory & reference_trajectory, const MPCData & mpc_data,
-    const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
-    const Odometry & current_kinematics) const;
+Float32MultiArrayStamped generateDiagData(
+  const MPCTrajectory & reference_trajectory, 
+  const MPCData & mpc_data_traj_raw, const MPCData & mpc_data,
+  const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
+  const Odometry & current_kinematics) const;
 
   /**
    * @brief calculate steering rate limit along with the target trajectory
@@ -406,6 +407,7 @@ private:
 
 public:
   MPCTrajectory m_reference_trajectory;  // Reference trajectory to be followed.
+  MPCTrajectory mpc_traj_raw;            // The raw trajectory from the planner.
   MPCParam m_param;                      // MPC design parameters.
   std::deque<double> m_input_buffer;     // MPC output buffer for delay time compensation.
   double m_raw_steer_cmd_prev = 0.0;     // Previous MPC raw output.

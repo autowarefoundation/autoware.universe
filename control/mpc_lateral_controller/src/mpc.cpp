@@ -73,6 +73,20 @@ bool MPC::calculateMPC(
     return fail_warn_throttle("trajectory resampling failed. Stop MPC.");
   }
 
+  // get the diagnostic data
+  const auto [success_data_for_diagnostic, mpc_data_for_diagnostic] =
+    getData(mpc_resampled_ref_trajectory, current_steer, current_kinematics);
+  if (!success_data_for_diagnostic) {
+    return fail_warn_throttle("fail to get MPC Data for the diagnostic. Stop MPC.");
+  }
+
+  // get the diagnostic data w.r.t. the original trajectory
+  const auto [success_data_traj_raw, mpc_data_traj_raw] =
+    getData(mpc_traj_raw, current_steer, current_kinematics);
+  if (!success_data_traj_raw) {
+    return fail_warn_throttle("fail to get MPC Data for the raw trajectory. Stop MPC.");
+  }
+
   // generate mpc matrix : predict equation Xec = Aex * x0 + Bex * Uex + Wex
   const auto mpc_matrix = generateMPCMatrix(mpc_resampled_ref_trajectory, prediction_dt);
 
@@ -110,13 +124,14 @@ bool MPC::calculateMPC(
 
   // prepare diagnostic message
   diagnostic =
-    generateDiagData(reference_trajectory, mpc_data, mpc_matrix, ctrl_cmd, Uex, current_kinematics);
+    generateDiagData(mpc_resampled_ref_trajectory, mpc_data_traj_raw, mpc_data_for_diagnostic, mpc_matrix, ctrl_cmd, Uex, current_kinematics);
 
   return true;
 }
 
 Float32MultiArrayStamped MPC::generateDiagData(
-  const MPCTrajectory & reference_trajectory, const MPCData & mpc_data,
+  const MPCTrajectory & reference_trajectory, 
+  const MPCData & mpc_data_traj_raw, const MPCData & mpc_data,
   const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
   const Odometry & current_kinematics) const
 {
@@ -160,6 +175,7 @@ Float32MultiArrayStamped MPC::generateDiagData(
   append_diag(runtime);                   // [19] runtime of the latest problem solved
   append_diag(objective_value);           // [20] objective value of the latest problem solved
   append_diag(std::clamp(Uex(0), -m_steer_lim, m_steer_lim));          // [21] control signal after the saturation constraint (clamp)
+  append_diag(mpc_data_traj_raw.lateral_err);      // [22] lateral error from raw trajectory
 
   return diagnostic;
 }
@@ -174,7 +190,7 @@ void MPC::setReferenceTrajectory(
   const double ego_offset_to_segment = motion_utils::calcLongitudinalOffsetToSegment(
     trajectory_msg.points, nearest_seg_idx, current_kinematics.pose.pose.position);
 
-  const auto mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
+  mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
 
   // resampling
   const auto [success_resample, mpc_traj_resampled] = MPCUtils::resampleMPCTrajectoryByDistance(
