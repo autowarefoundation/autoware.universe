@@ -284,8 +284,8 @@ bool StartPlannerModule::isOverlapWithCenterLane() const
 {
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
   const auto current_lanes = utils::getCurrentLanes(planner_data_);
-  const auto & local_vehicle_footprint = vehicle_info_.createFootprint();
-  const auto & vehicle_footprint =
+  const auto local_vehicle_footprint = vehicle_info_.createFootprint();
+  const auto vehicle_footprint =
     transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
   for (const auto & current_lane : current_lanes) {
     std::vector<geometry_msgs::msg::Point> centerline_points;
