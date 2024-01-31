@@ -42,7 +42,6 @@
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>behavior_path_planner_common</depend>
-  <depend>bezier_sampler</depend>
   <depend>freespace_planning_algorithms</depend>
   <depend>frenet_planner</depend>
   <depend>geometry_msgs</depend>
