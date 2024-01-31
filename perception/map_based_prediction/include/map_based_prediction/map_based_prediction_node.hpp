@@ -137,7 +137,7 @@ private:
   std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
   std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
 
-  std::unordered_map<lanelet::Id, TrafficSignal> traffic_signal_id_map;
+  std::unordered_map<lanelet::Id, TrafficSignal> traffic_signal_id_map_;
 
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;

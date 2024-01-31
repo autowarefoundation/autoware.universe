@@ -877,9 +877,9 @@ void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
 
 void MapBasedPredictionNode::trafficSignalsCallback(const TrafficSignalArray::ConstSharedPtr msg)
 {
-  traffic_signal_id_map.clear();
+  traffic_signal_id_map_.clear();
   for (const auto & signal : msg->signals) {
-    traffic_signal_id_map[signal.traffic_signal_id] = signal;
+    traffic_signal_id_map_[signal.traffic_signal_id] = signal;
   }
 }
 
@@ -1232,18 +1232,17 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
     const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
     if (crosswalk_signal_id_opt.has_value()) {
       // If the crosswalk has traffic light, do something.
-      if (traffic_signal_id_map.count(crosswalk_signal_id_opt.value()) != 0) {
+      if (traffic_signal_id_map_.count(crosswalk_signal_id_opt.value()) != 0) {
         const auto & signal_elements =
-          traffic_signal_id_map.at(crosswalk_signal_id_opt.value()).elements;
+          traffic_signal_id_map_.at(crosswalk_signal_id_opt.value()).elements;
         if (signal_elements.size() > 1) {
           RCLCPP_ERROR(
-            get_logger(), "[Map Based Prediction]: Multiple TrafficSignalElement_ are recieved.");
+            get_logger(), "[Map Based Prediction]: Multiple TrafficSignalElement_ are received.");
         } else if (
           !signal_elements.empty() && signal_elements.front().color == TrafficSignalElement::RED) {
           continue;
         }
       }
-      // TODO(yuki takagi): If a flag is setted, wait for timeout while the pedestrian is stopping.
     }
 
     const auto edge_points = getCrosswalkEdgePoints(crosswalk);
@@ -2252,7 +2251,6 @@ std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
       get_logger(),
       "[Map Based Prediction]: "
       "Multiple regulatory elements as TrafficLight are defined to one lanelet object.");
-    return std::nullopt;  // Is it appropriate?
   }
   return traffic_light_reg_elems.front()->id();
 }
