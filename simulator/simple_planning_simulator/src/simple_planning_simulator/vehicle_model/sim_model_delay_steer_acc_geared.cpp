@@ -72,6 +72,7 @@ double SimModelDelaySteerAccGeared::getWz()
 }
 double SimModelDelaySteerAccGeared::getSteer()
 {
+  // return measured values with bias added to actual values
   return state_(IDX::STEER) + steer_bias_;
 }
 void SimModelDelaySteerAccGeared::update(const double & dt)
@@ -120,6 +121,9 @@ Eigen::VectorXd SimModelDelaySteerAccGeared::calcModel(
     sat(input(IDX_U::ACCX_DES), vx_rate_lim_, -vx_rate_lim_) * debug_acc_scaling_factor_;
   const double steer_des =
     sat(input(IDX_U::STEER_DES), steer_lim_, -steer_lim_) * debug_steer_scaling_factor_;
+  // NOTE: `steer_des` is calculated by control from measured values. getSteer() also gets the
+  // measured value. The steer_rate used in the motion calculation is obtained from these
+  // differences.
   const double steer_diff = getSteer() - steer_des;
   const double steer_diff_with_dead_band = std::invoke([&]() {
     if (steer_diff > steer_dead_band_) {
