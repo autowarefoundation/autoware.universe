@@ -55,32 +55,37 @@ struct SamplingPlannerParameters
   bool smooth_reference;
 };
 
+struct Preprocessing
+{
+  bool force_zero_deviation{};
+  bool force_zero_heading{};
+  bool smooth_reference{};
+};
+
+struct Frenet
+{
+  std::vector<double> target_lateral_velocities{};
+  std::vector<double> target_lateral_accelerations{};
+};
+
+struct Sampling
+{
+  bool enable_frenet{};
+  bool enable_bezier{};
+  double resolution{};
+  int previous_path_reuse_points_nb{};
+  std::vector<double> target_lengths{};
+  std::vector<double> target_lateral_positions{};
+  int nb_target_lateral_positions{};
+  Frenet frenet;
+  bezier_sampler::SamplingParameters bezier{};
+};
+
 struct SamplingPlannerInternalParameters
 {
   sampler_common::Constraints constraints;
-  struct
-  {
-    bool enable_frenet{};
-    bool enable_bezier{};
-    double resolution{};
-    int previous_path_reuse_points_nb{};
-    std::vector<double> target_lengths{};
-    std::vector<double> target_lateral_positions{};
-    int nb_target_lateral_positions{};
-    struct
-    {
-      std::vector<double> target_lateral_velocities{};
-      std::vector<double> target_lateral_accelerations{};
-    } frenet;
-    bezier_sampler::SamplingParameters bezier{};
-  } sampling;
-
-  struct
-  {
-    bool force_zero_deviation{};
-    bool force_zero_heading{};
-    bool smooth_reference{};
-  } preprocessing{};
+  Sampling sampling;
+  Preprocessing preprocessing{};
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_PARAMETERS_HPP_
