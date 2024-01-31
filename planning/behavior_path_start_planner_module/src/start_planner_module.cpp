@@ -298,8 +298,8 @@ bool StartPlannerModule::isOverlapWithCenterLane() const
       const auto & p1 = centerline_points.at(i);
       const auto & p2 = centerline_points.at(i + 1);
       for (size_t j = 0; j < vehicle_footprint.size() - 1; ++j) {
-        const auto & p3 = tier4_autoware_utils::toMsg(vehicle_footprint[j].to_3d());
-        const auto & p4 = tier4_autoware_utils::toMsg(vehicle_footprint[j + 1].to_3d());
+        const auto p3 = tier4_autoware_utils::toMsg(vehicle_footprint[j].to_3d());
+        const auto p4 = tier4_autoware_utils::toMsg(vehicle_footprint[j + 1].to_3d());
         const auto intersection = tier4_autoware_utils::intersect(p1, p2, p3, p4);
 
         if (intersection.has_value()) {
