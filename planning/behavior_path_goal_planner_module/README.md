@@ -156,6 +156,8 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 `object_recognition_collision_check_margin`
 `object_recognition_collision_check_max_extra_stopping_margin`
 
+![collision_check_margin](./images/goal_planner-collision_check_margin.drawio.svg)
+
 #### Parameters for object recognition based collision check
 
 | Name                                                         | Unit | Type   | Description                                                                                              | Default value |
