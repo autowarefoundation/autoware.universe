@@ -139,8 +139,6 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  ModuleStatus setInitState() override;
-
   /**
    * @brief init member variables.
    */
