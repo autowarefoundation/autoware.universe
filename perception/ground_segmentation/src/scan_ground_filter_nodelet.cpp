@@ -48,13 +48,13 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     grid_size_m_ = static_cast<float>(declare_parameter("grid_size_m", 0.5));
     gnd_grid_buffer_size_ = static_cast<int>(declare_parameter("gnd_grid_buffer_size", 4));
     elevation_grid_mode_ = static_cast<bool>(declare_parameter("elevation_grid_mode", true));
-    global_slope_max_angle_rad_ = deg2rad(declare_parameter("global_slope_max_angle_deg", 8.0));
-    local_slope_max_angle_rad_ = deg2rad(declare_parameter("local_slope_max_angle_deg", 10.0));
-    radial_divider_angle_rad_ = deg2rad(declare_parameter("radial_divider_angle_deg", 1.0));
-    split_points_distance_tolerance_ = declare_parameter("split_points_distance_tolerance", 0.2);
-    split_height_distance_ = declare_parameter("split_height_distance", 0.2);
-    use_virtual_ground_point_ = declare_parameter("use_virtual_ground_point", true);
-    use_recheck_ground_cluster_ = declare_parameter("use_recheck_ground_cluster", true);
+    global_slope_max_angle_rad_ = deg2rad(declare_parameter<double>("global_slope_max_angle_deg"));
+    local_slope_max_angle_rad_ = deg2rad(declare_parameter<double>("local_slope_max_angle_deg"));
+    radial_divider_angle_rad_ = deg2rad(declare_parameter<double>("radial_divider_angle_deg"));
+    split_points_distance_tolerance_ = declare_parameter<double>("split_points_distance_tolerance");
+    split_height_distance_ = declare_parameter<double>("split_height_distance");
+    use_virtual_ground_point_ = declare_parameter<bool>("use_virtual_ground_point");
+    use_recheck_ground_cluster_ = declare_parameter<bool>("use_recheck_ground_cluster");
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
     vehicle_info_ = VehicleInfoUtil(*this).getVehicleInfo();
 
