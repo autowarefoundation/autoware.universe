@@ -11,10 +11,7 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-  <buildtool_depend>autoware_cmake</buildtool_depend>
-  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
-  <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_tf2</depend>
@@ -26,7 +23,6 @@
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
-  <depend>libboost-dev</depend>
   <depend>motion_utils</depend>
   <depend>path_sampler</depend>
   <depend>planning_test_utils</depend>
