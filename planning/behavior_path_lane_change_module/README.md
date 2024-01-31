@@ -363,9 +363,9 @@ The following parameters are configurable in `behavior_path_planner.param.yaml` 
 
 #### common
 
-| Name                                       | Unit | Type   | Description                                                                                                    | Default value |
-| :----------------------------------------- | ---- | ------ | -------------------------------------------------------------------------------------------------------------- | ------------- |
-| `safety_check.lane_expansion.left_offset`  | [m]  | double | Expand the left boundary of the detection area, allowing objects previously outside on the left to be detected and registered as targets.             | 0.0           |
+| Name                                       | Unit | Type   | Description                                                                                                                                 | Default value |
+| :----------------------------------------- | ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `safety_check.lane_expansion.left_offset`  | [m]  | double | Expand the left boundary of the detection area, allowing objects previously outside on the left to be detected and registered as targets.   | 0.0           |
 | `safety_check.lane_expansion.right_offset` | [m]  | double | Expand the right boundary of the detection area, allowing objects previously outside on the right to be detected and registered as targets. | 0.0           |
 
 #### execution
