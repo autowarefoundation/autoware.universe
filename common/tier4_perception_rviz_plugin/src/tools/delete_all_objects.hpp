@@ -57,7 +57,7 @@
 #include <rviz_default_plugins/tools/pose/pose_tool.hpp>
 #endif
 
-#include <dummy_perception_publisher/msg/object.hpp>
+#include <autoware_dummy_perception_publisher/msg/object.hpp>
 
 namespace rviz_plugins
 {
