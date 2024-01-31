@@ -368,13 +368,15 @@ bool isSafetyCheckTargetObjectType(
   return parameters->object_parameters.at(object_type).is_safety_check_target;
 }
 
+bool isUnknownTypeObject(const ObjectData & object)
+{
+  const auto object_type = utils::getHighestProbLabel(object.object.classification);
+  return object_type == ObjectClassification::UNKNOWN;
+}
+
 bool isVehicleTypeObject(const ObjectData & object)
 {
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
-
-  if (object_type == ObjectClassification::UNKNOWN) {
-    return false;
-  }
 
   if (object_type == ObjectClassification::PEDESTRIAN) {
     return false;
@@ -720,6 +722,15 @@ bool isSatisfiedWithNonVehicleCondition(
   // avoidance module ignore pedestrian and bicycle around crosswalk
   if (isWithinCrosswalk(object, planner_data->route_handler->getOverallGraphPtr())) {
     object.reason = "CrosswalkUser";
+    return false;
+  }
+
+  // Object is on center line -> ignore.
+  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
+  object.to_centerline =
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+  if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
+    object.reason = AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE;
     return false;
   }
 
@@ -1626,6 +1637,16 @@ void filterTargetObjects(
     o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
     o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 
+    // TODO(Satoshi Ota) parametrize stop time threshold if need.
+    constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
+    if (filtering_utils::isUnknownTypeObject(o)) {
+      if (o.stop_time < STOP_TIME_THRESHOLD) {
+        o.reason = "UnstableObject";
+        data.other_objects.push_back(o);
+        continue;
+      }
+    }
+
     if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
       data.other_objects.push_back(o);
       continue;
@@ -2278,11 +2299,15 @@ TurnSignalInfo calcTurnSignalInfo(
     return {};
   }
 
-  const auto left_lanelets = rh->getAllLeftSharedLinestringLanelets(lanelet, true, true);
-  const auto right_lanelets = rh->getAllRightSharedLinestringLanelets(lanelet, true, true);
+  const auto left_same_direction_lane = rh->getLeftLanelet(lanelet, true, true);
+  const auto left_opposite_lanes = rh->getLeftOppositeLanelets(lanelet);
+  const auto right_same_direction_lane = rh->getRightLanelet(lanelet, true, true);
+  const auto right_opposite_lanes = rh->getRightOppositeLanelets(lanelet);
+  const auto has_left_lane = left_same_direction_lane.has_value() || !left_opposite_lanes.empty();
+  const auto has_right_lane =
+    right_same_direction_lane.has_value() || !right_opposite_lanes.empty();
 
-  if (!existShiftSideLane(
-        start_shift_length, end_shift_length, left_lanelets.empty(), right_lanelets.empty())) {
+  if (!existShiftSideLane(start_shift_length, end_shift_length, !has_left_lane, !has_right_lane)) {
     return {};
   }
 
