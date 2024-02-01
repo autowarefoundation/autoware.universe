@@ -18,10 +18,7 @@
           "description": "lowpass gain for lowpass filter in estimating acceleration."
         }
       },
-      "required": [
-        "use_odom",
-        "accel_lowpass_gain"
-      ]
+      "required": ["use_odom", "accel_lowpass_gain"]
     }
   },
   "properties": {
