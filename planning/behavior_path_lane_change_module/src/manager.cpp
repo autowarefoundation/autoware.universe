@@ -18,7 +18,6 @@
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
-#include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
