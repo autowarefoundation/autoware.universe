@@ -1,6 +1,9 @@
 /**:
   ros__parameters:
 
+    # marker name
+    marker_name: "reflector"
+
     # for marker detection algorithm
     resolution: 0.05
     # A sequence of high/low intensity to perform pattern matching.

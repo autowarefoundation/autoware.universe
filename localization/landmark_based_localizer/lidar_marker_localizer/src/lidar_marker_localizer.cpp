@@ -36,6 +36,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   using std::placeholders::_1;
   using std::placeholders::_2;
 
+  param_.marker_name = this->declare_parameter<std::string>("marker_name");
   param_.resolution = this->declare_parameter<double>("resolution");
   param_.intensity_pattern = this->declare_parameter<std::vector<int64_t>>("intensity_pattern");
   param_.match_intensity_difference_threshold =
@@ -119,7 +120,7 @@ void LidarMarkerLocalizer::initilize_diagnostics()
 
 void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
 {
-  landmark_manager_.parse_landmarks(msg, "reflective_paint_marker");
+  landmark_manager_.parse_landmarks(msg, param_.marker_name);
   const MarkerArray marker_msg = landmark_manager_.get_landmarks_as_marker_array_msg();
   pub_marker_mapped_->publish(marker_msg);
 }

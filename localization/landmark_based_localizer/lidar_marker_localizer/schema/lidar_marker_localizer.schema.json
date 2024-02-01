@@ -6,6 +6,11 @@
     "lidar_marker_localizer": {
       "type": "object",
       "properties": {
+        "marker_name": {
+          "type": "string",
+          "description": "The name of the markers listed in the HD map.",
+          "default": "reflector"
+        },
         "resolution": {
           "type": "number",
           "description": "Grid size for marker detection algorithm. [m]",

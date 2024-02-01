@@ -63,6 +63,8 @@ class LidarMarkerLocalizer : public rclcpp::Node
 
   struct Param
   {
+    std::string marker_name;
+
     double resolution;
     std::vector<int64_t> intensity_pattern;
     int64_t match_intensity_difference_threshold;
