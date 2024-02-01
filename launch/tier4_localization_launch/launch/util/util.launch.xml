@@ -1,5 +1,4 @@
 <launch>
-
   <!-- topic -->
   <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
 
@@ -9,9 +8,7 @@
   <!-- whether use intra-process -->
   <arg name="use_intra_process" default="true" description="use ROS 2 component container communication"/>
 
-
   <load_composable_node target="$(var lidar_container_name)">
-
     <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::CropBoxFilterComponent" name="crop_box_filter_measurement_range">
       <param from="$(var crop_box_filter_measurement_range_param_path)"/>
       <remap from="input" to="$(var input_pointcloud)"/>
@@ -26,14 +23,11 @@
       <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
     </composable_node>
 
-
     <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::RandomDownsampleFilterComponent" name="random_downsample_filter">
       <param from="$(var random_downsample_filter_param_path)"/>
       <remap from="input" to="voxel_grid_downsample/pointcloud"/>
       <remap from="output" to="$(var output/pointcloud)"/>
       <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
     </composable_node>
-
   </load_composable_node>
-
 </launch>
