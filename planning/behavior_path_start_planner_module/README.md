@@ -16,7 +16,7 @@ Specifically, it includes the following features:
 
 ## Use Cases
 
-Give an typical example of how path generation is executed.
+Give an typical example of how path generation is executed. Showing example of path generation starts from shoulder lane, but also from side of road lane can be generated.
 
 ### **Use Case 1: Shift pull out**
 
@@ -26,15 +26,10 @@ In the shoulder lane, when there are no parked vehicles ahead and the shoulder l
   ![shift_pull_out](images/shift_pull_out_path.drawio.svg){width=1100}
 </figure>
 
-Also not only from shoulder lane, but also from side of road lane, the shift pull out path is generated.
-
-<figure markdown>
-  ![shift_pull_out_in_road_lane](images/shift_pull_out_path_in_road_lane.drawio.svg){width=1100}
-</figure>
 
 ### **Use Case 2: Geometric pull out**
 
-In the shoulder lane, when there are objects in front and the shoulder lane is not sufficiently long behind, a geometric pull out path is generated.
+In the shoulder lane, when there are objects in front and the lane is not sufficiently long behind, a geometric pull out path is generated.
 
 <figure markdown>
   ![geometric_pull_out](images/geometric_pull_out_path.drawio.svg){width=1100}
@@ -42,7 +37,7 @@ In the shoulder lane, when there are objects in front and the shoulder lane is n
 
 ### **Use Case 3: Backward and shift pull out**
 
-In the shoulder lane, when there are parked vehicles ahead and the shoulder lane is sufficiently long behind, a path that involves reversing before generating a forward shift pull out path is created.
+In the shoulder lane, when there are parked vehicles ahead and the lane is sufficiently long behind, a path that involves reversing before generating a forward shift pull out path is created.
 
 <figure markdown>
   ![shift_pull_out_with_back](images/shift_pull_out_path_with_back.drawio.svg){width=1100}
