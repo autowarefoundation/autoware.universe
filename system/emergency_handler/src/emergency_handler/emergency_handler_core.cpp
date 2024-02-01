@@ -36,10 +36,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   using std::placeholders::_1;
 
   // Subscriber
-  sub_prev_control_command_ =
-    create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-      "~/input/prev_control_command", rclcpp::QoS{1},
-      std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onOdometry, this, _1));
   // subscribe control mode
@@ -63,8 +59,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     std::bind(&EmergencyHandler::onOperationModeState, this, _1));
 
   // Publisher
-  pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-    "~/output/control_command", rclcpp::QoS{1});
   pub_hazard_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
     "~/output/hazard", rclcpp::QoS{1});
   pub_gear_cmd_ =
@@ -91,8 +85,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
   control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
-  prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
-    new autoware_auto_control_msgs::msg::AckermannControlCommand);
   mrm_pull_over_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_comfortable_stop_status_ =
     std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
@@ -106,15 +98,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), update_period_ns, std::bind(&EmergencyHandler::onTimer, this));
-}
-
-void EmergencyHandler::onPrevControlCommand(
-  const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
-{
-  auto control_command = new autoware_auto_control_msgs::msg::AckermannControlCommand(*msg);
-  control_command->stamp = msg->stamp;
-  prev_control_command_ =
-    autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(control_command);
 }
 
 void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)

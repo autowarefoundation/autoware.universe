@@ -1,7 +1,6 @@
 <launch>
   <arg name="input_operation_mode_availability" default="/system/operation_mode/availability"/>
   <!-- To be replaced by ControlCommand -->
-  <arg name="input_prev_control_command" default="/control/command/control_cmd"/>
   <arg name="input_odometry" default="/localization/kinematic_state"/>
   <arg name="input_control_mode" default="/vehicle/status/control_mode"/>
   <arg name="input_mrm_pull_over_state" default="/system/mrm/pull_over_manager/status"/>
@@ -21,7 +20,6 @@
   <!-- emergency_handler -->
   <node pkg="emergency_handler" exec="emergency_handler" name="emergency_handler" output="screen">
     <remap from="~/input/operation_mode_availability" to="$(var input_operation_mode_availability)"/>
-    <remap from="~/input/prev_control_command" to="$(var input_prev_control_command)"/>
     <remap from="~/input/odometry" to="$(var input_odometry)"/>
     <remap from="~/input/control_mode" to="$(var input_control_mode)"/>
     <remap from="~/input/mrm/pull_over/status" to="$(var input_mrm_pull_over_state)"/>
