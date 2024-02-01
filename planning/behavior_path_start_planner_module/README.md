@@ -66,6 +66,46 @@ If the map is annotated with the information that a free space path can be gener
 
 **As a note, the patterns for generating these paths are based on default parameters, but as will be explained in the following sections, it is possible to control aspects such as making paths that involve reversing more likely to be generated, or making geometric paths more likely to be generated, by changing the path generation policy or adjusting the margin around static objects.**
 
+## Concept of safety assurance
+
+The safety assurance of the start_planner module is based on the following concepts:
+
+1. **Safety check with static obstacles**: The module checks for collisions with static obstacles, such as parked vehicles, and ensures that the generated path is having specified margin.
+2. **Safety check with dynamic obstacles**: The module checks for collisions with dynamic obstacles in the generated path, and if the collision is detected, 
+
+## Safety check with static obstacles
+
+1. Calculate ego-vehicle's footprint on pull out path between from current position to pull out end point. (Illustrated by blue frame)
+2. Calculate object's polygon
+3. If a distance between the footprint and the polygon is lower than the threshold (default: `1.0 m`), that is judged as a unsafe path
+
+![pull_out_collision_check](./images/pull_out_collision_check.drawio.svg)
+
+## Safety check with dynamic obstacles
+
+### **Basic concept of safety check against dynamic obstacles**
+
+This is based on the concept of RSS. For the logic used, refer to the link below.
+See [safety check feature explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
+
+### **Collision check performed range**
+
+A collision check with dynamic objects is primarily performed between the shift start point and end point. The range for safety check varies depending on the type of path generated, so it will be explained for each pattern.
+
+#### **Shift pull out**
+
+For the "shift pull out", safety verification starts at the beginning of the shift and ends at the shift's conclusion.
+
+#### **Geometric pull out**
+
+Since there's a stop at the midpoint during the shift, this becomes the endpoint for safety verification. After stopping, safety verification resumes.
+
+#### **Backward pull out start point search**
+
+During backward movement, no safety check is performed. Safety check begins at the point where the backward movement ends.
+
+![collision_check_range](./images/collision_check_range.drawio.svg)
+
 ## Limitations
 
 Here are some notable limitations:
@@ -133,39 +173,6 @@ PullOutPath --o PullOutPlannerBase
 | collision_check_distance_from_end                           | [m]   | double   | collision check distance from end shift end pose                            | 1.0             |
 | collision_check_margin_from_front_object                    | [m]   | double   | collision check margin from front object                                    | 5.0             |
 | center_line_path_interval                                   | [m]   | double   | reference center line path point interval                                   | 1.0             |
-
-## Safety check with static obstacles
-
-1. Calculate ego-vehicle's footprint on pull out path between from current position to pull out end point. (Illustrated by blue frame)
-2. Calculate object's polygon
-3. If a distance between the footprint and the polygon is lower than the threshold (default: `1.0 m`), that is judged as a unsafe path
-
-![pull_out_collision_check](./images/pull_out_collision_check.drawio.svg)
-
-## Safety check with dynamic obstacles
-
-### **Basic concept of safety check against dynamic obstacles**
-
-This is based on the concept of RSS. For the logic used, refer to the link below.
-See [safety check feature explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
-
-### **Collision check performed range**
-
-A collision check with dynamic objects is primarily performed between the shift start point and end point. The range for safety check varies depending on the type of path generated, so it will be explained for each pattern.
-
-#### **Shift pull out**
-
-For the "shift pull out", safety verification starts at the beginning of the shift and ends at the shift's conclusion.
-
-#### **Geometric pull out**
-
-Since there's a stop at the midpoint during the shift, this becomes the endpoint for safety verification. After stopping, safety verification resumes.
-
-#### **Backward pull out start point search**
-
-During backward movement, no safety check is performed. Safety check begins at the point where the backward movement ends.
-
-![collision_check_range](./images/collision_check_range.drawio.svg)
 
 ### **Ego vehicle's velocity planning**
 
