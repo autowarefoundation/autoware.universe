@@ -37,8 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check disk space before build
-        run:
-          df -h
+        run: df -h
 
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
@@ -74,8 +73,7 @@ jobs:
           flags: differential
 
       - name: Check disk space after build
-        run:
-          df -h
+        run: df -h
 
   clang-tidy-differential:
     runs-on: ubuntu-latest
