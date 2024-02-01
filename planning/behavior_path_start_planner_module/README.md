@@ -28,7 +28,7 @@ In the shoulder lane, when there are no parked vehicles ahead and the shoulder l
 
 ### **Use Case 2: Geometric pull out**
 
-In the shoulder lane, when there are objects both in front and behind, a geometric pull out path is generated.
+In the shoulder lane, when there are objects in front and the shoulder lane is not sufficiently  long behind, a geometric pull out path is generated.
 
 <figure markdown>
   ![geometric_pull_out](images/geometric_pull_out_path.drawio.svg){width=1100}
