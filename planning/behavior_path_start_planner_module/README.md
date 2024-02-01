@@ -2,11 +2,11 @@
 
 ## Purpose / Role
 
-This module generates and plans a path for safely merging from the shoulder lane into the travel lane.
+This module generates and plans a path for safely merging from the shoulder lane or side of road lane into the center of the road lane.
 
 Specifically, it includes the following features:
 
-- The ability to automatically start from the shoulder lane.
+- Plan the path to automatically start from the shoulder lane or side of road lane to center of road lane.
 - When parked vehicles are present on the shoulder lane, the module generates a path that allows for starting with a gap of a specified margin.
 - If a collision with other traffic participants is detected while traveling on the generated path, it will stop as much as possible.
 
@@ -24,6 +24,12 @@ In the shoulder lane, when there are no parked vehicles ahead and the shoulder l
 
 <figure markdown>
   ![shift_pull_out](images/shift_pull_out_path.drawio.svg){width=1100}
+</figure>
+
+Also not only from shoulder lane, but also from side of road lane, the shift pull out path is generated.
+
+<figure markdown>
+  ![shift_pull_out_in_road_lane](images/shift_pull_out_path_in_road_lane.drawio.svg){width=1100}
 </figure>
 
 ### **Use Case 2: Geometric pull out**
