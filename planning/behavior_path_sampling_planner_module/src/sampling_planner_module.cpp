@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -218,10 +218,10 @@ bool SamplingPlannerModule::isReferencePathSafe() const
   }
 
   {
-    const auto left_bound =
-      (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, true));
-    const auto right_bound =
-      (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, false));
+    const auto left_bound = (utils::calcBound(
+      getPreviousModuleOutput().path, planner_data_, drivable_lanes, false, false, false, true));
+    const auto right_bound = (utils::calcBound(
+      getPreviousModuleOutput().path, planner_data_, drivable_lanes, false, false, false, false));
 
     const auto sampling_planner_data =
       createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
@@ -543,11 +543,10 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
       frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
   }
 
-  const auto left_bound =
-    (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, true));
-  const auto right_bound =
-    (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, false));
-
+  const auto left_bound = (utils::calcBound(
+    getPreviousModuleOutput().path, planner_data_, drivable_lanes, false, false, false, true));
+  const auto right_bound = (utils::calcBound(
+    getPreviousModuleOutput().path, planner_data_, drivable_lanes, false, false, false, false));
   const auto sampling_planner_data =
     createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
 
