@@ -9,13 +9,13 @@
         "use_odom": {
           "type": "boolean",
           "default": true,
-          "description": "Whether to use odom or not."
+          "description": "use odometry if true, else use twist input."
         },
         "accel_lowpass_gain": {
           "type": "number",
           "default": 0.9,
           "minimum": 0.0,
-          "description": "The threshold of diff_position x (m)."
+          "description": "lowpass gain for lowpass filter in estimating acceleration."
         }
       },
       "required": [
