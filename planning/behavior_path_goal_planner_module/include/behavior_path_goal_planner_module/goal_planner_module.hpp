@@ -419,7 +419,7 @@ private:
   bool checkOccupancyGridCollision(const PathWithLaneId & path) const;
   bool checkObjectsCollision(
     const PathWithLaneId & path, const double collision_check_margin,
-    const bool update_debug_data = false) const;
+    const bool extract_static_objects, const bool update_debug_data = false) const;
 
   // goal seach
   Pose calcRefinedGoal(const Pose & goal_pose) const;
@@ -493,6 +493,7 @@ private:
   std::optional<BehaviorModuleOutput> last_previous_module_output_{};
   bool hasPreviousModulePathShapeChanged() const;
   bool hasDeviatedFromLastPreviousModulePath() const;
+  bool hasDeviatedFromCurrentPreviousModulePath() const;
 
   // timer for generating pull over path candidates in a separate thread
   void onTimer();

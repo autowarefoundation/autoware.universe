@@ -220,12 +220,11 @@ private:
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
-  // cspell: ignore degrounded
-  bool estimate_scores_for_degrounded_scan_;
+  bool estimate_scores_by_no_ground_points_;
   double z_margin_for_ground_removal_;
 
   // The execution time which means probably NDT cannot matches scans properly
-  int64_t critical_upper_bound_exe_time_ms_;
+  double critical_upper_bound_exe_time_ms_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
