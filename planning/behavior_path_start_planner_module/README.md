@@ -16,7 +16,7 @@ Specifically, it includes the following features:
 
 ## Use Cases
 
-Give an typical example of how path generation is executed.
+Give an typical example of how path generation is executed. Showing example of path generation starts from shoulder lane, but also from side of road lane can be generated.
 
 ### **Use Case 1: Shift pull out**
 
@@ -26,11 +26,6 @@ In the shoulder lane, when there are no parked vehicles ahead and the shoulder l
   ![shift_pull_out](images/shift_pull_out_path.drawio.svg){width=1100}
 </figure>
 
-Also not only from shoulder lane, but also from side of road lane, the shift pull out path is generated.
-
-<figure markdown>
-  ![shift_pull_out_in_road_lane](images/shift_pull_out_path_in_road_lane.drawio.svg){width=1100}
-</figure>
 
 ### **Use Case 2: Geometric pull out**
 
