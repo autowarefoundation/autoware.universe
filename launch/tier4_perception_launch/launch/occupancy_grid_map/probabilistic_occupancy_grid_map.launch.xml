@@ -22,6 +22,7 @@
       <arg name="output" value="$(var output)"/>
       <arg name="use_intra_process" value="$(var use_intra_process)"/>
       <arg name="use_multithread" value="$(var use_multithread)"/>
+      <arg name="use_pointcloud_container" value="true"/>
       <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
       <arg name="param_file" value="$(var occupancy_grid_map_param_path)"/>
       <arg name="updater_type" value="$(var occupancy_grid_map_updater)"/>
@@ -37,6 +38,7 @@
       <arg name="output" value="$(var output)"/>
       <arg name="use_intra_process" value="$(var use_intra_process)"/>
       <arg name="use_multithread" value="$(var use_multithread)"/>
+      <arg name="use_pointcloud_container" value="true"/>
       <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
       <arg name="param_file" value="$(var occupancy_grid_map_param_path)"/>
       <arg name="updater_type" value="$(var occupancy_grid_map_updater)"/>
@@ -52,6 +54,7 @@
       <arg name="output" value="/perception/occupancy_grid_map/map"/>
       <arg name="use_intra_process" value="true"/>
       <arg name="use_multithread" value="true"/>
+      <arg name="use_pointcloud_container" value="true"/>
       <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
       <arg name="multi_lidar_fusion_config_file" value="$(var occupancy_grid_map_param_path)"/>
       <arg name="updater_type" value="$(var occupancy_grid_map_updater)"/>
