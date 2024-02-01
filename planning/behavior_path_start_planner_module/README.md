@@ -26,7 +26,6 @@ In the shoulder lane, when there are no parked vehicles ahead and the shoulder l
   ![shift_pull_out](images/shift_pull_out_path.drawio.svg){width=1100}
 </figure>
 
-
 ### **Use Case 2: Geometric pull out**
 
 In the shoulder lane, when there are objects in front and the lane is not sufficiently long behind, a geometric pull out path is generated.
