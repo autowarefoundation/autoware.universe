@@ -86,6 +86,6 @@ map_origin:
 
 ## Parameters
 
-Note that these paramters are assumed to be passed from launch arguments, and it is not recommended to directly write them in `map_projection_loader.param.yaml`.
+Note that these parameters are assumed to be passed from launch arguments, and it is not recommended to directly write them in `map_projection_loader.param.yaml`.
 
 {{ json_to_markdown("map/map_projection_loader/schema/map_projection_loader.schema.json") }}
