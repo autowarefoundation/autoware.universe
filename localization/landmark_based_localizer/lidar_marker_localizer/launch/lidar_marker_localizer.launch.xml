@@ -11,20 +11,42 @@
   <arg name="service_trigger_node_srv" default="~/service/trigger_node_srv"/>
 
   <!-- container -->
-  <arg name="use_pointcloud_container" default="True" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="/pointcloud_container" description="container name"/>
 
-  <!-- option -->
+  <!-- whether use intra-process -->
   <arg name="use_intra_process" default="true" description="use ROS 2 component container communication"/>
 
-  <group>
-    <include file="$(find-pkg-share lidar_marker_localizer)/launch/util.launch.py">
-      <arg name="input/pointcloud" value="$(var input_pointcloud)"/>
-      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
-      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
-      <arg name="use_intra_process" value="$(var use_intra_process)"/>
-    </include>
-  </group>
+
+  <load_composable_node target="$(var pointcloud_container_name)">
+    <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::CropBoxFilterComponent" name="crop_box_filter_measurement_range">
+      <param name="input_frame" value="base_link"/>
+      <param name="output_frame" value="base_link"/>
+      <param name="min_x" value="-10.0"/>
+      <param name="max_x" value="10.0"/>
+      <param name="min_y" value="0.0"/>
+      <param name="max_y" value="7.5"/>
+      <param name="min_z" value="-5.0"/>
+      <param name="max_z" value="5.0"/>
+      <param name="negative" value="False"/>
+      <remap from="input" to="$(var input_pointcloud)"/>
+      <remap from="output" to="measurement_range/pointcloud_ex"/>
+      <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
+    </composable_node>
+
+    <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::PassThroughFilterUInt16Component" name="ring_filter">
+      <param name="input_frame" value="base_link"/>
+      <param name="output_frame" value="base_link"/>
+      <param name="filter_field_name" value="ring"/>
+      <param name="filter_limit_min" value="5"/>
+      <param name="filter_limit_max" value="45"/>
+      <param name="filter_limit_negative" value="False"/>
+      <param name="keep_organized" value="False"/>
+      <remap from="input" to="measurement_range/pointcloud_ex"/>
+      <remap from="output" to="ring_filter/pointcloud_ex"/>
+      <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
+    </composable_node>
+
+  </load_composable_node>
 
   <node pkg="lidar_marker_localizer" exec="lidar_marker_localizer" name="lidar_marker_localizer" output="log">
     <remap from="~/input/pointcloud_ex" to="ring_filter/pointcloud_ex"/>
@@ -37,4 +59,5 @@
 
     <param from="$(var param_file)"/>
   </node>
+
 </launch>
