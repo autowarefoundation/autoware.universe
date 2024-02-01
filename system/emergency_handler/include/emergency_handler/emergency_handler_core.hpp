@@ -108,7 +108,8 @@ private:
 
   autoware_auto_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();
   autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
-  void publishControlCommands();
+  void publishHazardCommand();
+  void publishGearCommand();
 
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::MrmState>::SharedPtr pub_mrm_state_;
 

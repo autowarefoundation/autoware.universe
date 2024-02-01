@@ -188,27 +188,25 @@ autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHaz
   return msg;
 }
 
-void EmergencyHandler::publishControlCommands()
+void EmergencyHandler::publishHazardCommand()
 {
-  using autoware_auto_vehicle_msgs::msg::GearCommand;
-
-  // Create timestamp
-  const auto stamp = this->now();
-
   // Publish hazard command
   pub_hazard_cmd_->publish(createHazardCmdMsg());
+}
 
-  // Publish gear
-  {
-    GearCommand msg;
-    msg.stamp = stamp;
-    if (param_.use_parking_after_stopped && isStopped()) {
-      msg.command = GearCommand::PARK;
-    } else {
-      msg.command = GearCommand::DRIVE;
-    }
-    pub_gear_cmd_->publish(msg);
+void EmergencyHandler::publishGearCommand()
+{
+  // Publish gear command
+  using autoware_auto_vehicle_msgs::msg::GearCommand;\
+
+  GearCommand msg;
+  msg.stamp = this->now();
+  if (param_.use_parking_after_stopped && isStopped()) {
+    msg.command = GearCommand::PARK;
+  } else {
+    msg.command = GearCommand::DRIVE;
   }
+  pub_gear_cmd_->publish(msg); 
 }
 
 void EmergencyHandler::publishMrmState()
@@ -386,15 +384,18 @@ void EmergencyHandler::onTimer()
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "heartbeat operation_mode_availability is timeout");
     mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::MRM_OPERATING;
-    publishControlCommands();
+    publishHazardCommand();
+    publishGearCommand();
     return;
   }
 
   // Update Emergency State
   updateMrmState();
 
-  // Publish control commands
-  publishControlCommands();
+  // Publish hazard and gear commands
+  publishHazardCommand();
+  publishGearCommand();
+
   operateMrm();
   publishMrmState();
 }
