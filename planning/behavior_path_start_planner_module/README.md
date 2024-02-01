@@ -34,7 +34,7 @@ Also not only from shoulder lane, but also from side of road lane, the shift pul
 
 ### **Use Case 2: Geometric pull out**
 
-In the shoulder lane, when there are objects in front and the shoulder lane is not sufficiently long behind, a geometric pull out path is generated.
+In the shoulder lane, when there are objects in front and the lane is not sufficiently long behind, a geometric pull out path is generated.
 
 <figure markdown>
   ![geometric_pull_out](images/geometric_pull_out_path.drawio.svg){width=1100}
@@ -42,7 +42,7 @@ In the shoulder lane, when there are objects in front and the shoulder lane is n
 
 ### **Use Case 3: Backward and shift pull out**
 
-In the shoulder lane, when there are parked vehicles ahead and the shoulder lane is sufficiently long behind, a path that involves reversing before generating a forward shift pull out path is created.
+In the shoulder lane, when there are parked vehicles ahead and the lane is sufficiently long behind, a path that involves reversing before generating a forward shift pull out path is created.
 
 <figure markdown>
   ![shift_pull_out_with_back](images/shift_pull_out_path_with_back.drawio.svg){width=1100}
@@ -68,41 +68,41 @@ If the map is annotated with the information that a free space path can be gener
 
 ## Concept of safety assurance
 
-The safety assurance of the start_planner module is based on the following concepts:
+The approach to collision safety is divided into two main components: generating paths that consider static information, and detecting collisions with dynamic obstacles to ensure the safety of the generated paths.
 
-1. **Safety check with static obstacles**: The module checks for collisions with static obstacles, such as parked vehicles, and ensures that the generated path is having specified margin.
-2. **Safety check with dynamic obstacles**: The module checks for collisions with dynamic obstacles in the generated path, and if the collision is detected, 
+### 1. Generating path with static information
 
-## Safety check with static obstacles
+- **Path Deviation Checks**: This ensures that the path remains within the designated lanelets. By default, this feature is active, but it can be deactivated if necessary.
 
-1. Calculate ego-vehicle's footprint on pull out path between from current position to pull out end point. (Illustrated by blue frame)
-2. Calculate object's polygon
-3. If a distance between the footprint and the polygon is lower than the threshold (default: `1.0 m`), that is judged as a unsafe path
+- **Static obstacle clearance from the path**: This involves verifying that a sufficient margin around static obstacles is maintained. The process includes creating a vehicle-sized footprint from the current position to the pull-out endpoint, which can be adjusted via parameters. The distance to static obstacle polygons is then calculated. If this distance is below a specified threshold, the path is deemed unsafe. Threshold levels (e.g., [2.0, 1.0, 0.5, 0.1]) can be configured, and the system searches for paths that meet the highest possible threshold based on a set search priority explained in following section, ensuring the selection of the safe path based on the policy. If no path meets the minimum threshold, it's determined that no safe path is available.
 
-![pull_out_collision_check](./images/pull_out_collision_check.drawio.svg)
+- **Clearance from stationary objects**: Maintaining an adequate distance from stationary objects positioned in front of and behind the vehicle is imperative for safety. Despite the path and stationary objects having a confirmed margin, the path is deemed unsafe if the distance from the shift start position to a front stationary object falls below `collision_check_margin_from_front_object` meters, or if the distance to a rear stationary object is shorter than `back_objects_collision_check_margin` meters.
 
-## Safety check with dynamic obstacles
+  - Why is a margin from the front object necessary?
+    Consider a scenario in a "geometric pull out path" where the clearance from the path to a static obstacle is minimal, and there is a stopped vehicle ahead. In this case, although the path may meet safety standards and thus be generated, a concurrently operating avoidance module might deem it impossible to avoid the obstacle, potentially leading to vehicle deadlock. To ensure there is enough distance for avoidance maneuvers, the distance to the front obstacle is assessed. Increasing this parameter can prevent immobilization within the avoidance module but may also lead to the frequent generation of backward paths or geometric pull out path, resulting in routes that may seem unnatural to humans.
 
-### **Basic concept of safety check against dynamic obstacles**
+  - Why is a margin from the rear object necessary?
+    For objects ahead, another behavior module can intervene, allowing the path to overwrite itself through an avoidance plan, even if the clearance from the path to a static obstacle is minimal, thus maintaining a safe distance from static obstacles. However, for objects behind the vehicle, it is impossible for other behavior modules other than the start_planner to alter the path to secure a margin, potentially leading to a deadlock by an action module like "obstacle_stop_cruise" and subsequent immobilization. Therefore, a margin is set for stationary objects at the rear.
 
-This is based on the concept of RSS. For the logic used, refer to the link below.
-See [safety check feature explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
+### 2. Collision detection with dynamic obstacles
 
-### **Collision check performed range**
+- **Collision response policy**: Should a collision with dynamic objects be detected along the generated path, departure is not permitted if detection occurs before movement. If the vehicle has already commenced movement, an attempt to stop will be made, provided it's feasible within the braking constraints and without crossing the travel lane's centerline.
 
-A collision check with dynamic objects is primarily performed between the shift start point and end point. The range for safety check varies depending on the type of path generated, so it will be explained for each pattern.
+- **Applying RSS in Dynamic Collision Detection**: Collision detection is based on the RSS (Responsibility-Sensitive Safety) model to evaluate if a safe distance is maintained. See [safety check feature explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
 
-#### **Shift pull out**
+- **Collision check performed range**: Safety checks for collisions with dynamic objects are conducted within the defined boundaries between the start and end points of each maneuver, ensuring there is no overlap with the road lane's centerline. This is to avoid hindering the progress of following vehicles. The scope of safety checks varies depending on the type of path generated and will be elaborated upon for each specific maneuver pattern.
 
-For the "shift pull out", safety verification starts at the beginning of the shift and ends at the shift's conclusion.
+#### **collision with dynamic objects for shift pull out**
 
-#### **Geometric pull out**
+For "shift pull out" maneuvers, safety verification begins at the shift's start and concludes at its end.
 
-Since there's a stop at the midpoint during the shift, this becomes the endpoint for safety verification. After stopping, safety verification resumes.
+#### **collision with dynamic objects for geometric pull out**
 
-#### **Backward pull out start point search**
+Given the mid-shift stop, this point serves as the safety verification's endpoint. After halting, safety verification is resumed.
 
-During backward movement, no safety check is performed. Safety check begins at the point where the backward movement ends.
+#### **collision with dynamic objects for backward pull out start point**
+
+No safety check is performed during backward movements. Safety verification commences at the point where the backward motion ceases.
 
 ![collision_check_range](./images/collision_check_range.drawio.svg)
 
