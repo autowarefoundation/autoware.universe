@@ -1568,7 +1568,8 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> planner_data,
   const std::vector<DrivableLanes> & drivable_lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
-  const bool enable_expanding_freespace_areas, const bool is_left, const bool is_driving_forward)
+  const bool enable_expanding_freespace_areas, const bool is_left, const bool is_driving_forward,
+  const bool expand_to_road_edges)
 {
   using motion_utils::removeOverlapPoints;
 
@@ -1619,8 +1620,13 @@ std::vector<geometry_msgs::msg::Point> calcBound(
                  enable_expanding_intersection_areas, is_left, is_driving_forward);
   };
 
+  // If bounds should contain all drivable lanes
+  if (expand_to_road_edges) {
+    return post_process(removeOverlapPoints(to_ros_point(bound_points)), true);
+  }
+
   // Step2. if there is no drivable area defined by polygon, return original drivable bound.
-  if (!enable_expanding_hatched_road_markings && !enable_expanding_intersection_areas) {
+  if (!enable_expanding_hatched_road_markings && !enable_expanding_intersection_areas && false) {
     return post_process(removeOverlapPoints(to_ros_point(bound_points)), skip_post_process);
   }
 

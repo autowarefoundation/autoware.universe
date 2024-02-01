@@ -262,7 +262,8 @@ private:
   std::optional<frenet_planner::Path> prev_sampling_path_ = std::nullopt;
   // move to utils
 
-  void extendOutputDrivableArea(BehaviorModuleOutput & output);
+  void extendOutputDrivableArea(
+    BehaviorModuleOutput & output, std::vector<DrivableLanes> & drivable_lanes);
   bool isEndPointsConnected(
     const lanelet::ConstLanelet & left_lane, const lanelet::ConstLanelet & right_lane) const;
   DrivableLanes generateExpandDrivableLanes(
