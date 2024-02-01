@@ -395,12 +395,13 @@ In addition, the safety check has a time hysteresis, and if the path is judged "
 
 ##### Parameters for RSS safety check
 
-| Name | Unit | Type | Description | Default value |
-| rear_vehicle_reaction_time | [s] | double | Reaction time for rear vehicles | 2.0 |
-| rear_vehicle_safety_time_margin | [s] | double | Safety time margin for rear vehicles | 1.0 |
-| lateral_distance_max_threshold | [m] | double | Maximum lateral distance threshold | 2.0 |
-| longitudinal_distance_min_threshold | [m] | double | Minimum longitudinal distance threshold | 3.0 |
-| longitudinal_velocity_delta_time | [s] | double | Delta time for longitudinal velocity | 0.8 |
+| Name                                | Unit | Type   | Description                             | Default value |
+| :---------------------------------- | :--- | :----- | :-------------------------------------- | :------------ |
+| rear_vehicle_reaction_time          | [s]  | double | Reaction time for rear vehicles         | 2.0           |
+| rear_vehicle_safety_time_margin     | [s]  | double | Safety time margin for rear vehicles    | 1.0           |
+| lateral_distance_max_threshold      | [m]  | double | Maximum lateral distance threshold      | 2.0           |
+| longitudinal_distance_min_threshold | [m]  | double | Minimum longitudinal distance threshold | 3.0           |
+| longitudinal_velocity_delta_time    | [s]  | double | Delta time for longitudinal velocity    | 0.8           |
 
 ##### Parameters for integral_predicted_polygon safety check
 
