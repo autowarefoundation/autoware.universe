@@ -18,6 +18,10 @@ Specifically, it includes the following features:
 
 Give an typical example of how path generation is executed. Showing example of path generation starts from shoulder lane, but also from side of road lane can be generated.
 
+<figure markdown>
+  ![shift_pull_out_from_road_lane](images/shift_pull_out_path_from_road_lane.drawio.svg){width=1100}
+</figure>
+
 ### **Use Case 1: Shift pull out**
 
 In the shoulder lane, when there are no parked vehicles ahead and the shoulder lane is sufficiently long, a forward shift pull out path (a clothoid curve with consistent jerk) is generated.
