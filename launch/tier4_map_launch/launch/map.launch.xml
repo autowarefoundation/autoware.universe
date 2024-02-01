@@ -17,11 +17,14 @@
   <let name="container_type" value="component_container" unless="$(var use_multithread)"/>
   <let name="container_type" value="component_container_mt" if="$(var use_multithread)"/>
 
+  <!-- whether use pointcloud map -->
+  <arg name="launch_pointcloud_map_loader" default="true" description="launch pointcloud map loader"/>
+
   <group>
     <push-ros-namespace namespace="map"/>
 
     <node_container pkg="rclcpp_components" exec="$(var container_type)" name="map_container" namespace="" output="screen">
-      <composable_node pkg="map_loader" plugin="PointCloudMapLoaderNode" name="pointcloud_map_loader">
+      <composable_node pkg="map_loader" plugin="PointCloudMapLoaderNode" name="pointcloud_map_loader" if="$(var launch_pointcloud_map_loader)">
         <param from="$(var pointcloud_map_loader_param_path)"/>
         <param name="pcd_paths_or_directory" value="[$(var pointcloud_map_path)]"/>
         <param name="pcd_metadata_path" value="$(var pointcloud_map_metadata_path)"/>

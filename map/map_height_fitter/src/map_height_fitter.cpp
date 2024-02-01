@@ -72,8 +72,9 @@ MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), n
 
   const auto map_loader_name = node->declare_parameter<std::string>("map_loader_name");
   params_map_loader_ = rclcpp::AsyncParametersClient::make_shared(node, map_loader_name);
-  params_map_loader_->wait_for_service();
-  params_map_loader_->get_parameters({enable_partial_load}, callback);
+  if (params_map_loader_->wait_for_service(std::chrono::seconds(5.0))) {
+    params_map_loader_->get_parameters({enable_partial_load}, callback);
+  }
 }
 
 void MapHeightFitter::Impl::on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
