@@ -17,7 +17,7 @@
     <remap from="~/output/yabloc/image" to="/sensing/camera/traffic_light/image_raw/yabloc_relay"/>
     <remap from="~/yabloc_trigger_srv" to="/localization/pose_estimator/yabloc/pf/yabloc_trigger_srv"/>
     <!-- eagleye -->
-    <remap from="~/input/eagleye/pose_with_covariance" to="/localization/eagleye/pose_with_covariance/to_relay"/>
+    <remap from="~/input/eagleye/pose_with_covariance" to="/localization/pose_estimator/eagleye/pose_with_covariance/to_relay"/>
     <remap from="~/output/eagleye/pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
 
     <!-- switching rule -->

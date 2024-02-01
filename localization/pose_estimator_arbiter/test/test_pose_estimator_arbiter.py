@@ -107,7 +107,7 @@ class TestPoseEstimatorArbiter(unittest.TestCase):
         )
         self.pub_eagleye_input = self.test_node.create_publisher(
             PoseWithCovarianceStamped,
-            "/localization/eagleye/pose_with_covariance/to_relay",
+            "/localization/pose_estimator/eagleye/pose_with_covariance/to_relay",
             QoSProfile(depth=10),
         )
 

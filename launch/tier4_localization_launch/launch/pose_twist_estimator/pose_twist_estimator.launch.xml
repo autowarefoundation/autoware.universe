@@ -50,7 +50,7 @@
     <let name="eagleye_name_space" value="twist_estimator" unless="$(var use_eagleye_pose)"/>
     <let name="eagleye_name_space" value="pose_estimator" unless="$(var use_eagleye_twist)"/>
     <let name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance" unless="$(var multi_localizer_mode)"/>
-    <let name="output_pose_with_cov_name" value="/localization/eagleye/pose_with_covariance/to_relay" if="$(var multi_localizer_mode)"/>
+    <let name="output_pose_with_cov_name" value="/localization/pose_estimator/eagleye/pose_with_covariance/to_relay" if="$(var multi_localizer_mode)"/>
 
     <push-ros-namespace namespace="$(var eagleye_name_space)"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
