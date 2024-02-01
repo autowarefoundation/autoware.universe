@@ -13,6 +13,7 @@
     <remap from="~/expect/rois" to="$(var expect/rois)"/>
     <remap from="~/input/route" to="$(var input/route)"/>
     <remap from="~/output/rois" to="$(var output/rois)"/>
+    <arg name="min_timestamp_offset" value="-0.3"/>
     <param from="$(var param_path)"/>
   </node>
 </launch>
