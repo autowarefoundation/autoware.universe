@@ -79,7 +79,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   bound_publisher_ = create_publisher<MarkerArray>("~/debug/bound", 1);
 
   const auto qos_transient_local = rclcpp::QoS{1}.transient_local();
-
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onOdometry, this, _1),
