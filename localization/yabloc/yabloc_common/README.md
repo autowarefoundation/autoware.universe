@@ -32,11 +32,7 @@ It estimates the height and tilt of the ground from lanelet2.
 
 ### Parameters
 
-| Name              | Type | Description                                              |
-| ----------------- | ---- | -------------------------------------------------------- |
-| `force_zero_tilt` | bool | if true, the tilt is always determined to be horizontal. |
-| `K`               | int  | parameter for nearest k search                           |
-| `R`               | int  | parameter for radius search                              |
+{{ json_to_markdown("localization/yabloc/yabloc_common/schema/ground_server.schema.json") }}
 
 ## ll2_decomposer
 
@@ -63,8 +59,4 @@ This node extracts the elements related to the road surface markings and yabloc 
 
 ### Parameters
 
-| Name                  | Type             | Description                                                            |
-| --------------------- | ---------------- | ---------------------------------------------------------------------- |
-| `road_marking_labels` | vector\<string\> | This label is used to extract the road surface markings from lanelet2. |
-| `sign_board_labels`   | vector\<string\> | This label is used to extract the traffic sign boards from lanelet2.   |
-| `bounding_box_labels` | vector\<string\> | This label is used to extract the bounding boxes from lanelet2.        |
+{{ json_to_markdown("localization/yabloc/yabloc_common/schema/ll2_decomposer.schema.json") }}
