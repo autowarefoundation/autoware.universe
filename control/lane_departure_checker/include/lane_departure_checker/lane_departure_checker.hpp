@@ -126,8 +126,8 @@ private:
   std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
 
   static DerivativeDeviation calcLongitudinalDeviationDerivatives(
-  const Trajectory & trajectory, const double dist_threshold, 
-  const double yaw_threshold, const Input & input);  
+    const Trajectory & trajectory, const double dist_threshold, const double yaw_threshold,
+    const Input & input);
 
   static PoseDeviation calcTrajectoryDeviation(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,

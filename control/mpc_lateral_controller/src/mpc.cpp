@@ -123,17 +123,17 @@ bool MPC::calculateMPC(
     calculatePredictedTrajectory(mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt);
 
   // prepare diagnostic message
-  diagnostic =
-    generateDiagData(mpc_resampled_ref_trajectory, mpc_data_traj_raw, mpc_data_for_diagnostic, mpc_matrix, ctrl_cmd, Uex, current_kinematics);
+  diagnostic = generateDiagData(
+    mpc_resampled_ref_trajectory, mpc_data_traj_raw, mpc_data_for_diagnostic, mpc_matrix, ctrl_cmd,
+    Uex, current_kinematics);
 
   return true;
 }
 
 Float32MultiArrayStamped MPC::generateDiagData(
-  const MPCTrajectory & reference_trajectory, 
-  const MPCData & mpc_data_traj_raw, const MPCData & mpc_data,
-  const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
-  const Odometry & current_kinematics) const
+  const MPCTrajectory & reference_trajectory, const MPCData & mpc_data_traj_raw,
+  const MPCData & mpc_data, const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd,
+  const VectorXd & Uex, const Odometry & current_kinematics) const
 {
   Float32MultiArrayStamped diagnostic;
 
@@ -174,8 +174,10 @@ Float32MultiArrayStamped MPC::generateDiagData(
   append_diag(iteration_num);             // [18] iteration number
   append_diag(runtime);                   // [19] runtime of the latest problem solved
   append_diag(objective_value);           // [20] objective value of the latest problem solved
-  append_diag(std::clamp(Uex(0), -m_steer_lim, m_steer_lim));          // [21] control signal after the saturation constraint (clamp)
-  append_diag(mpc_data_traj_raw.lateral_err);      // [22] lateral error from raw trajectory
+  append_diag(std::clamp(
+    Uex(0), -m_steer_lim,
+    m_steer_lim));  // [21] control signal after the saturation constraint (clamp)
+  append_diag(mpc_data_traj_raw.lateral_err);  // [22] lateral error from raw trajectory
 
   return diagnostic;
 }

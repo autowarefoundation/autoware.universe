@@ -376,11 +376,11 @@ private:
    * @param current_kinematics The current vehicle kinematics.
    * @return The generated diagnostic data.
    */
-Float32MultiArrayStamped generateDiagData(
-  const MPCTrajectory & reference_trajectory, 
-  const MPCData & mpc_data_traj_raw, const MPCData & mpc_data,
-  const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
-  const Odometry & current_kinematics) const;
+  Float32MultiArrayStamped generateDiagData(
+    const MPCTrajectory & reference_trajectory, const MPCData & mpc_data_traj_raw,
+    const MPCData & mpc_data, const MPCMatrix & mpc_matrix,
+    const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
+    const Odometry & current_kinematics) const;
 
   /**
    * @brief calculate steering rate limit along with the target trajectory
