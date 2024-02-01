@@ -3,12 +3,14 @@
 This package contains a sensor fusion module for radar-detected objects and 3D detected objects.
 
 The fusion node can:
+
 - Attach velocity to 3D detections when successfully matching radar data. The tracking modules use the velocity information to enhance the tracking results while planning modules use it to execute actions like adaptive cruise control.
 - Improve the low confidence 3D detections when corresponding radar detections are found.
 
 ![process_low_confidence](docs/radar_fusion_to_detected_object_6.drawio.svg)
 
 ## Design
+
 ### Background
 
 This package is the fusion with LiDAR-based 3D detection output and radar data.
@@ -48,28 +50,28 @@ If the difference of yaw degree between from a LiDAR-based detection object and 
 
 To tune these weight parameters, please see [document](docs/algorithm.md) in detail.
 
--  `velocity_weight_average` (double)
-  - Default parameter is 0.0.
+- `velocity_weight_average` (double)
+- Default parameter is 0.0.
 
 This parameter is the twist coefficient of average twist of radar data in velocity estimation.
 
--  `velocity_weight_median` (double)
-  - Default parameter is 0.0.
+- `velocity_weight_median` (double)
+- Default parameter is 0.0.
 
 This parameter is the twist coefficient of median twist of radar data in velocity estimation.
 
--  `velocity_weight_min_distance` (double)
-  - Default parameter is 1.0.
+- `velocity_weight_min_distance` (double)
+- Default parameter is 1.0.
 
 This parameter is the twist coefficient of radar data nearest to the center of bounding box in velocity estimation.
 
--  `velocity_weight_target_value_average` (double)
-  - Default parameter is 0.0.
+- `velocity_weight_target_value_average` (double)
+- Default parameter is 0.0.
 
 This parameter is the twist coefficient of target value weighted average in velocity estimation. Target value is amplitude if using radar pointcloud. Target value is probability if using radar objects.
 
--  `velocity_weight_target_value_top` (double)
-  - Default parameter is 0.0.
+- `velocity_weight_target_value_top` (double)
+- Default parameter is 0.0.
 
 This parameter is the twist coefficient of top target value radar data in velocity estimation. Target value is amplitude if using radar pointcloud. Target value is probability if using radar objects.
 
