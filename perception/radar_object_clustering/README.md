@@ -8,6 +8,7 @@ In other word, this package can combine multiple radar detections from one objec
 ![radar_clustering](docs/radar_clustering.drawio.svg)
 
 ## Design
+
 ### Background
 
 In radars with object output, there are cases that multiple detection results are obtained from one object, especially for large vehicles such as trucks and trailers.
@@ -51,6 +52,7 @@ For now, size estimation for clustered object is not implemented.
 So `is_fixed_size` parameter is recommended to set `true`, and size parameters is recommended to set to value near to average size of vehicles.
 
 ## Interface
+
 ### Input
 
 - `~/input/objects` (`autoware_auto_perception_msgs/msg/DetectedObjects.msg`)
@@ -120,4 +122,4 @@ If the radar objects do not have label information, then it is recommended to us
   - Default parameter is 1.5.
 
 `is_fixed_label` is the flag to use fixed size parameters.
- If it is true, the size of a clustered object is overwritten by the label set by `size_x`, `size_y`, and `size_z` parameters.
+If it is true, the size of a clustered object is overwritten by the label set by `size_x`, `size_y`, and `size_z` parameters.
