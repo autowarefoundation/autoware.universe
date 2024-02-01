@@ -1626,7 +1626,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   }
 
   // Step2. if there is no drivable area defined by polygon, return original drivable bound.
-  if (!enable_expanding_hatched_road_markings && !enable_expanding_intersection_areas && false) {
+  if (!enable_expanding_hatched_road_markings && !enable_expanding_intersection_areas) {
     return post_process(removeOverlapPoints(to_ros_point(bound_points)), skip_post_process);
   }
 
