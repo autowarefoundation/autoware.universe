@@ -354,8 +354,18 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         : false;
     if (!has_traffic_light_) {
       if (fromEgoDist(occlusion_wo_tl_pass_judge_line_idx) < 0) {
-        return intersection::InternalError{
-          "already passed maximum peeking line in the absence of traffic light"};
+        if (has_collision) {
+          const auto closest_idx = intersection_stoplines.closest_idx;
+          const std::string evasive_diag = generateEgoRiskEvasiveDiagnosis(
+            *path, closest_idx, time_distance_array, too_late_detect_objects, misjudge_objects);
+          return intersection::OverPassJudge{
+            "already passed maximum peeking line in the absence of traffic light.\n" +
+              safety_report,
+            evasive_diag};
+        }
+        return intersection::OverPassJudge{
+          "already passed maximum peeking line in the absence of traffic light safely",
+          "no evasive action required"};
       }
       return intersection::OccludedAbsenceTrafficLight{
         is_occlusion_cleared_with_margin,
@@ -364,7 +374,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         closest_idx,
         first_attention_stopline_idx,
         occlusion_wo_tl_pass_judge_line_idx,
-        safety_report};
+        safety_diag};
     }
 
     // ==========================================================================================
@@ -725,9 +735,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (
-    !rtc_occlusion_approved && decision_result.occlusion_stopline_idx &&
-    planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved && decision_result.occlusion_stopline_idx) {
     const auto occlusion_stopline_idx = decision_result.occlusion_stopline_idx.value();
     planning_utils::setVelocityFromIndex(occlusion_stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -804,7 +812,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
     planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -847,7 +855,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     if (planner_param.occlusion.creep_during_peeking.enable) {
       const size_t occlusion_peeking_stopline = decision_result.occlusion_stopline_idx;
       const size_t closest_idx = decision_result.closest_idx;
@@ -885,7 +893,7 @@ void reactRTCApprovalByDecisionResult(
     "PeekingTowardOcclusion, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
   // NOTE: creep_velocity should be inserted first at closest_idx if !rtc_default_approved
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const size_t occlusion_peeking_stopline =
       decision_result.temporal_stop_before_attention_required
         ? decision_result.first_attention_stopline_idx
@@ -955,7 +963,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.temporal_stop_before_attention_required
                                 ? decision_result.first_attention_stopline_idx
                                 : decision_result.occlusion_stopline_idx;
@@ -1056,7 +1064,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
     planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -1100,7 +1108,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
     planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -1251,7 +1259,22 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
     return first_pass_judge_line_idx;
   }();
 
-  const bool was_safe = std::holds_alternative<intersection::Safe>(prev_decision_result_);
+  // ==========================================================================================
+  // at intersection without traffic light, this module ignores occlusion even if occlusion is
+  // detected for real, so if collision is not detected in that context, that should be interpreted
+  // as "was_safe"
+  // ==========================================================================================
+  const bool was_safe = [&]() {
+    if (std::holds_alternative<intersection::Safe>(prev_decision_result_)) {
+      return true;
+    }
+    if (std::holds_alternative<intersection::OccludedAbsenceTrafficLight>(prev_decision_result_)) {
+      const auto & state =
+        std::get<intersection::OccludedAbsenceTrafficLight>(prev_decision_result_);
+      return !state.collision_detected;
+    }
+    return false;
+  }();
 
   const bool is_over_1st_pass_judge_line =
     util::isOverTargetIndex(path, closest_idx, current_pose, pass_judge_line_idx);

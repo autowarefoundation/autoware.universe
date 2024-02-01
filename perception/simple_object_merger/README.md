@@ -1,23 +1,21 @@
 # simple_object_merger
 
-This package can merge multiple topics of [autoware_auto_perception_msgs/msg/DetectedObject](https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs/-/blob/master/autoware_auto_perception_msgs/msg/DetectedObject.idl) without low calculation cost.
+This package can merge multiple topics of [autoware_auto_perception_msgs/msg/DetectedObject](https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs/-/blob/master/autoware_auto_perception_msgs/msg/DetectedObject.idl) with low calculation cost.
 
-## Algorithm
+## Design
 
 ### Background
 
 [Object_merger](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/object_merger) is mainly used for merge process with DetectedObjects. There are 2 characteristics in `Object_merger`. First, `object_merger` solve data association algorithm like Hungarian algorithm for matching problem, but it needs computational cost. Second, `object_merger` can handle only 2 DetectedObjects topics and cannot handle more than 2 topics in one node. To merge 6 DetectedObjects topics, 6 `object_merger` nodes need to stand for now.
 
-So `simple_object_merger` aim to merge multiple DetectedObjects with low calculation cost.
+Therefore, `simple_object_merger` aim to merge multiple DetectedObjects with low calculation cost.
 The package do not use data association algorithm to reduce the computational cost, and it can handle more than 2 topics in one node to prevent launching a large number of nodes.
 
 ### Use case
 
-Use case is as below.
-
 - Multiple radar detection
 
-`Simple_object_merger` can be used for multiple radar detection. By combining them into one topic from multiple radar topics with `simple_object_merger`, the pipeline for faraway detection with radar is simpler.
+`Simple_object_merger` can be used for multiple radar detection. By combining them into one topic from multiple radar topics, the pipeline for faraway detection with radar can be simpler.
 
 ### Limitation
 
@@ -74,5 +72,19 @@ If the time difference between the first topic of `input_topics` and an input to
   - Default parameter: "[]"
 
 This parameter is the name of input topics.
-For example, when this packages use for radar objects, `"[/sensing/radar/front_center/detected_objects, /sensing/radar/front_left/detected_objects, /sensing/radar/rear_left/detected_objects, /sensing/radar/rear_center/detected_objects, /sensing/radar/rear_right/detected_objects, /sensing/radar/front_right/detected_objects]"` can be set.
+For example, when this packages use for radar objects,
+
+```yaml
+input_topics:
+  [
+    "/sensing/radar/front_center/detected_objects",
+    "/sensing/radar/front_left/detected_objects",
+    "/sensing/radar/rear_left/detected_objects",
+    "/sensing/radar/rear_center/detected_objects",
+    "/sensing/radar/rear_right/detected_objects",
+    "/sensing/radar/front_right/detected_objects",
+  ]
+```
+
+can be set in config yaml file.
 For now, the time difference is calculated by the header time between the first topic of `input_topics` and the input topics, so the most important objects to detect should be set in the first of `input_topics` list.
