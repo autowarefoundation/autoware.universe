@@ -52,6 +52,7 @@
           <arg name="expect/rois" value="expect/rois"/>
           <arg name="output/rois" value="$(var map_based_detector_output_topic)"/>
           <arg name="output/camera_info" value="camera_info"/>
+          <arg name="min_timestamp_offset" value="-0.3"/>
         </include>
       </group>
 
@@ -109,6 +110,7 @@
           <arg name="expect/rois" value="expect/rois"/>
           <arg name="output/rois" value="$(var map_based_detector_output_topic)"/>
           <arg name="output/camera_info" value="camera_info"/>
+          <arg name="min_timestamp_offset" value="-0.3"/>
         </include>
       </group>
 
