@@ -4,7 +4,7 @@
 
 Plan path around the goal.
 
-- Park at the designated goal.
+- Arrive at the designated goal.
 - Modify the goal to avoid obstacles or to pull over at the side of tha lane.
 
 ## Design
@@ -85,6 +85,7 @@ GoalCandidates --o GoalSeacherBase
 ### fixed_goal_planner
 
 This is a very simple function that draws a smooth path to a specified goal. This function does not require approval and always runs with the other modules.
+_NOTE: this planner does not perform the several features described below, such as "goal seach", "collision check", "safety check", etc._
 
 Executed when both conditions are met.
 
@@ -131,41 +132,6 @@ If the target path contains a goal, modify the points of the path so that the pa
 | th_stopped_velocity       | [m/s] | double | velocity threshold for arrival of path termination | 0.01          |
 | th_stopped_time           | [s]   | double | time threshold for arrival of path termination     | 2.0           |
 | center_line_path_interval | [m]   | double | reference center line path point interval          | 1.0           |
-
-## **collision check for path generation**
-
-To select a safe one from the path candidates, a collision check with obstacles is performed.
-
-### **occupancy grid based collision check**
-
-Generate footprints from ego-vehicle path points and determine obstacle collision from the value of occupancy_grid of the corresponding cell.
-
-#### Parameters for occupancy grid based collision check
-
-| Name                                            | Unit | Type   | Description                                                                                                     | Default value |
-| :---------------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
-| use_occupancy_grid_for_goal_search              | [-]  | bool   | flag whether to use occupancy grid for goal search collision check                                              | true          |
-| use_occupancy_grid_for_goal_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
-| use_occupancy_grid_for_path_collision_check     | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | false         |
-| occupancy_grid_collision_check_margin           | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
-| theta_size                                      | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
-| obstacle_threshold                              | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
-
-### **object recognition based collision check**
-
-`object_recognition_collision_check_margin`
-`object_recognition_collision_check_max_extra_stopping_margin`
-
-![collision_check_margin](./images/goal_planner-collision_check_margin.drawio.svg)
-
-#### Parameters for object recognition based collision check
-
-| Name                                                         | Unit | Type   | Description                                                                                              | Default value |
-| :----------------------------------------------------------- | :--- | :----- | :------------------------------------------------------------------------------------------------------- | :------------ |
-| use_object_recognition                                       | [-]  | bool   | flag whether to use object recognition for collision check                                               | true          |
-| object_recognition_collision_check_margin                    | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                    | 0.6           |
-| object_recognition_collision_check_max_extra_stopping_margin | [m]  | double | maximum value when adding longitudinal distance margin for collision check considering stopping distance | 1.0           |
-| detection_bound_offset                                       | [m]  | double | expand pull over lane with this offset to make detection area for collision check of path generation     | 15.0          |
 
 ## **Goal Search**
 
@@ -238,7 +204,11 @@ Threads in the goal planner are shown below.
 
 ![threads.png](./images/goal_planner-threads.drawio.svg)
 
-The main thread will be the one called from the planner manager flow. The goal candidate generation and path candidate generation are done in a separate thread(lane path generation thread). The path candidates generated there are referred to by the main thread, and the one judged to be valid for the current planner data (e.g. ego and object information) is selected from among them. valid means no sudden deceleration, no collision with obstacles, etc. The selected path will be the output of this module. If there is no path selected, or if the selected path is collision and ego is stuck, a separate thread(freespace path generation thread) will generate a path using freespace planning algorithm. If a valid free space path is found, it will be the output of the module. If the object moves and the pull over path generated along the lane is collision-free, the path is used as output again. See also the section on freespace parking for more information on the flow of generating freespace paths.
+The main thread will be the one called from the planner manager flow.
+
+- The goal candidate generation and path candidate generation are done in a separate thread(lane path generation thread).
+- The path candidates generated there are referred to by the main thread, and the one judged to be valid for the current planner data (e.g. ego and object information) is selected from among them. valid means no sudden deceleration, no collision with obstacles, etc. The selected path will be the output of this module.
+- If there is no path selected, or if the selected path is collision and ego is stuck, a separate thread(freespace path generation thread) will generate a path using freespace planning algorithm. If a valid free space path is found, it will be the output of the module. If the object moves and the pull over path generated along the lane is collision-free, the path is used as output again. See also the section on freespace parking for more information on the flow of generating freespace paths.
 
 | Name                             | Unit   | Type   | Description                                                                                                                                                                    | Default value                            |
 | :------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
@@ -331,12 +301,6 @@ Simultaneous execution with `avoidance_module` in the flowchart is under develop
 
 <img src="https://user-images.githubusercontent.com/39142679/221167581-9a654810-2460-4a0c-8afd-7943ca877cf5.png" width="600">
 
-#### Unimplemented parts / limitations for freespace parking
-
-- When a short path is generated, the ego does can not drive with it.
-- Complex cases take longer to generate or fail.
-- The drivable area is not guaranteed to fit in the parking_lot.
-
 #### Parameters freespace parking
 
 | Name                     | Unit | Type | Description                                                                                                          | Default value |
@@ -344,3 +308,124 @@ Simultaneous execution with `avoidance_module` in the flowchart is under develop
 | enable_freespace_parking | [-]  | bool | This flag enables freespace parking, which runs when the vehicle is stuck due to e.g. obstacles in the parking area. | true          |
 
 See [freespace_planner](../freespace_planner/README.md) for other parameters.
+
+## **collision check for path generation**
+
+To select a safe one from the path candidates, a collision check with obstacles is performed.
+
+### **occupancy grid based collision check**
+
+Generate footprints from ego-vehicle path points and determine obstacle collision from the value of occupancy_grid of the corresponding cell.
+
+#### Parameters for occupancy grid based collision check
+
+| Name                                            | Unit | Type   | Description                                                                                                     | Default value |
+| :---------------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
+| use_occupancy_grid_for_goal_search              | [-]  | bool   | flag whether to use occupancy grid for goal search collision check                                              | true          |
+| use_occupancy_grid_for_goal_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
+| use_occupancy_grid_for_path_collision_check     | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | false         |
+| occupancy_grid_collision_check_margin           | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
+| theta_size                                      | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
+| obstacle_threshold                              | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
+
+### **object recognition based collision check**
+
+A collision decision is made for each of the path candidates, and a collision-free path is selected.
+There are three main margins at this point.
+
+- `object_recognition_collision_check_margin` is margin in all directions of ego.
+- In the forward direction, a margin is added by the braking distance calculated from the current speed and maximum deceleration. The maximum distance is The maximum value of the distance is suppressed by the `object_recognition_collision_check_max_extra_stopping_margin`
+- In curves, the lateral margin is larger than in straight lines.This is because curves are more prone to control errors or to fear when close to objects (The maximum value is limited by `object_recognition_collision_check_max_extra_stopping_margin`, although it has no basis.)
+
+![collision_check_margin](./images/goal_planner-collision_check_margin.drawio.svg)
+
+Then there is the concept of soft and hard margins. Although not currently parameterized, if a collision-free path can be generated by a margin several times larger than `object_recognition_collision_check_margin`, then the priority is higher.
+
+#### Parameters for object recognition based collision check
+
+| Name                                                         | Unit | Type   | Description                                                                                              | Default value |
+| :----------------------------------------------------------- | :--- | :----- | :------------------------------------------------------------------------------------------------------- | :------------ |
+| use_object_recognition                                       | [-]  | bool   | flag whether to use object recognition for collision check                                               | true          |
+| object_recognition_collision_check_margin                    | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                    | 0.6           |
+| object_recognition_collision_check_max_extra_stopping_margin | [m]  | double | maximum value when adding longitudinal distance margin for collision check considering stopping distance | 1.0           |
+| detection_bound_offset                                       | [m]  | double | expand pull over lane with this offset to make detection area for collision check of path generation     | 15.0          |
+
+## **safety check**
+
+Perform safety checks on moving objects. If the object is determined to be dangerous, no path decision is made and no approval is given,
+
+- path decision is not made and approval is not granted.
+- After approval, the ego vehicle stops under deceleration and jerk constraints.
+
+This module has two methods of safety check, `RSS` and `integral_predicted_polygon`.
+
+`RSS` method is a method commonly used by other behavior path planner modules, see [RSS based safety check utils explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md).
+
+`integral_predicted_polygon` is a more safety-oriented method. This method is implemented because speeds during pull over are lower than during driving, and fewer objects travel along the edge of the lane. (It is sometimes overreactive and may be less available.)
+This method integrates the footprints of egos and objects at a given time and checks for collisions between them.
+
+![safety_check](./images/goal_planner-safety_check.drawio.svg)
+
+In addition, the safety check has a time hysteresis, and if the path is judged "safe" for a certain period of time(`keep_unsafe_time`), it is finally treated as "safe".
+
+```
+   　　                    ==== is_safe
+   　　                    ---- current_is_safe
+   　　  is_safe
+   　　   ^
+   　　   |
+   　　   |                   time
+   　　 1 +--+    +---+       +---=========   +--+
+   　　   |  |    |   |       |           |   |  |
+   　　   |  |    |   |       |           |   |  |
+   　　   |  |    |   |       |           |   |  |
+   　　   |  |    |   |       |           |   |  |
+   　　 0 =========================-------==========--> t
+```
+
+#### Parameters for safety check
+
+| Name                     | Unit | Type   | Description                                                                                              | Default value                |
+| :----------------------- | :--- | :----- | :------------------------------------------------------------------------------------------------------- | :--------------------------- |
+| enable_safety_check      | [-]  | bool   | flag whether to use safety check                                                                         | true                         |
+| method                   | [-]  | string | method for safety check. `RSS` or `integral_predicted_polygon`                                           | `integral_predicted_polygon` |
+| keep_unsafe_time         | [s]  | double | safety check Hysteresis time. if the path is judged "safe" for the time it is finally treated as "safe". | 3.0                          |
+| check_all_predicted_path | -    | bool   | Flag to check all predicted paths                                                                        | true                         |
+| publish_debug_marker     | -    | bool   | Flag to publish debug markers                                                                            | false                        |
+
+##### Parameters for RSS safety check
+
+| Name | Unit | Type | Description | Default value |
+| rear_vehicle_reaction_time | [s] | double | Reaction time for rear vehicles | 2.0 |
+| rear_vehicle_safety_time_margin | [s] | double | Safety time margin for rear vehicles | 1.0 |
+| lateral_distance_max_threshold | [m] | double | Maximum lateral distance threshold | 2.0 |
+| longitudinal_distance_min_threshold | [m] | double | Minimum longitudinal distance threshold | 3.0 |
+| longitudinal_velocity_delta_time | [s] | double | Delta time for longitudinal velocity | 0.8 |
+
+##### Parameters for integral_predicted_polygon safety check
+
+| Name            | Unit | Type   | Description                            | Default value |
+| :-------------- | :--- | :----- | :------------------------------------- | :------------ |
+| forward_margin  | [m]  | double | forward margin for ego footprint       | 1.0           |
+| backward_margin | [m]  | double | backward margin for ego footprint      | 1.0           |
+| lat_margin      | [m]  | double | lateral margin for ego footprint       | 1.0           |
+| time_horizon    | [s]  | double | Time width to integrate each footprint | 10.0          |
+
+## **path deciding**
+
+When `decide_path_distance` closer to the start of the pull over, if it is collision-free at that time and safe for the predicted path of the objects, it transitions to DECIDING. If it is safe for a certain period of time, it moves to DECIDED.
+
+![path_deciding](./images/goal_planner-deciding_path.drawio.svg)
+
+## Unimplemented parts / limitations
+
+- Only shift pull over can be executed concurrently with other modules
+- Parking in tight spots and securing margins are traded off. A mode is needed to reduce the margin by using a slower speed depending on the situation, but there is no mechanism for dynamic switching of speeds.
+- Parking space available depends on visibility of objects, and sometimes parking decisions cannot be made properly.
+- Margin to unrecognized objects(Not even unknown objects) depends on the occupancy grid. May get too close to unrecognized ground objects because the objects that are allowed to approach (e.g., grass, leaves) are indistinguishable.
+
+Unimplemented parts / limitations for freespace parking
+
+- When a short path is generated, the ego does can not drive with it.
+- Complex cases take longer to generate or fail.
+- The drivable area is not guaranteed to fit in the parking_lot.
