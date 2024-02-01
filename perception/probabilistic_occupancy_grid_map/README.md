@@ -67,6 +67,7 @@ Additional argument is shown below:
 | `map_origin`                        | ``                             | parameter to override `map_origin_frame` which means grid map origin                          |
 | `scan_origin`                       | ``                             | parameter to override `scan_origin_frame` which means scanning center                         |
 | `output`                            | `occupancy_grid`               | output name                                                                                   |
+| `use_pointcloud_container`          | `false`                        |                                                                                               |
 | `container_name`                    | `occupancy_grid_map_container` |                                                                                               |
 | `input_obstacle_pointcloud`         | `false`                        | only for laserscan based method. If true, the node subscribe obstacle pointcloud              |
 | `input_obstacle_and_raw_pointcloud` | `true`                         | only for laserscan based method. If true, the node subscribe both obstacle and raw pointcloud |
