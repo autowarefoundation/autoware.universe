@@ -4,6 +4,7 @@ This package contains a object filter module for [autoware_auto_perception_msgs/
 This package can split DetectedObjects into two messages by object's speed.
 
 ## Interface
+
 ### Input
 
 - `~/input/objects` (`autoware_auto_perception_msgs/msg/DetectedObjects.msg`)
