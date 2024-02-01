@@ -75,8 +75,8 @@
         <arg name="output/objects" value="far_objects"/>
         <arg name="filter/angle_threshold" value="1.0472"/>
         <arg name="filter/velocity_threshold" value="3.0"/>
-        <arg name="split/velocity_threshold" value="4.5"/>
         <arg name="radar_lanelet_filtering_range_param_path" value="$(var radar_lanelet_filtering_range_param_path)"/>
+        <arg name="object_velocity_splitter_param_path" value="$(var object_recognition_detection_object_velocity_splitter_radar_fusion_param_path)"/>
         <arg name="object_range_splitter_param_path" value="$(var object_recognition_detection_object_range_splitter_radar_fusion_param_path)"/>
         <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
       </include>
@@ -176,6 +176,7 @@
         <arg name="input/radar" value="$(var input/radar)"/>
         <arg name="output/objects" value="far_objects"/>
         <arg name="radar_lanelet_filtering_range_param_path" value="$(var radar_lanelet_filtering_range_param_path)"/>
+        <arg name="object_velocity_splitter_param_path" value="$(var object_recognition_detection_object_velocity_splitter_radar_fusion_param_path)"/>
         <arg name="object_range_splitter_param_path" value="$(var object_recognition_detection_object_range_splitter_radar_fusion_param_path)"/>
         <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
       </include>
@@ -236,6 +237,7 @@
       <arg name="input/radar" value="$(var input/radar)"/>
       <arg name="output/objects" value="objects"/>
       <arg name="radar_lanelet_filtering_range_param_path" value="$(var radar_lanelet_filtering_range_param_path)"/>
+      <arg name="object_velocity_splitter_param_path" value="$(var object_recognition_detection_object_velocity_splitter_radar_param_path)"/>
       <arg name="object_range_splitter_param_path" value="$(var object_recognition_detection_object_range_splitter_radar_param_path)"/>
       <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
     </include>
