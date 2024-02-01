@@ -1463,11 +1463,10 @@ std::pair<std::vector<lanelet::ConstPoint3d>, bool> getBoundWithFreeSpaceAreas(
       throw std::domain_error("invalid case.");
   }
 
-  const auto goal_is_in_freespace = boost::geometry::within(
-    to2D(toLaneletPoint(route_handler->getGoalPose().position).basicPoint()),
-    to2D(polygon).basicPolygon());
-
-  return std::make_pair(expanded_bound, is_driving_freespace || goal_is_in_freespace);
+  const auto skip_post_process = route_case == RouteCase::INIT_POS_IS_IN_FREESPACE ||
+                                 route_case == RouteCase::GOAL_POS_IS_IN_FREESPACE ||
+                                 is_driving_freespace;
+  return std::make_pair(expanded_bound, skip_post_process);
 }
 
 std::vector<geometry_msgs::msg::Point> postProcess(
