@@ -499,7 +499,6 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   }
 
   stop_watch_.tic(__func__);
-  const auto & p = behavior_determination_param_;
   *debug_data_ptr_ = DebugData();
 
   const auto is_driving_forward = motion_utils::isDrivingForwardWithTwist(traj_points);
@@ -509,17 +508,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   //    (1) with a proper label
   //    (2) in front of ego
   //    (3) not too far from trajectory
-  const auto target_obstacles = [&]() {
-    auto target_obstacles = convertToObstacles(traj_points);
-    // Sort from closest to farthest obstacle to speed up yield
-    if (p.enable_yield) {
-      std::sort(
-        target_obstacles.begin(), target_obstacles.end(), [](const auto & o1, const auto & o2) {
-          return o1.ego_to_obstacle_distance < o2.ego_to_obstacle_distance;
-        });
-    }
-    return target_obstacles;
-  }();
+  const auto target_obstacles = convertToObstacles(traj_points);
 
   //  2. Determine ego's behavior against each obstacle from stop, cruise and slow down.
   const auto & [stop_obstacles, cruise_obstacles, slow_down_obstacles] =
@@ -940,55 +929,58 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
   if (obstacles.empty() || traj_points.empty()) return std::nullopt;
   const auto & p = behavior_determination_param_;
 
-  // obstacles are sorted by closest to farthest, we want to preserve the order
-  std::vector<std::pair<size_t, Obstacle>> indexed_obstacles;
-  for (std::size_t i = 0; i < obstacles.size(); ++i) {
-    indexed_obstacles.emplace_back(i, obstacles[i]);
-  }
-
-  std::vector<std::pair<size_t, Obstacle>> stopped_obstacles;
-  std::vector<std::pair<size_t, Obstacle>> moving_obstacles;
+  std::vector<Obstacle> stopped_obstacles;
+  std::vector<Obstacle> moving_obstacles;
 
   std::for_each(
-    indexed_obstacles.begin(), indexed_obstacles.end(),
+    obstacles.begin(), obstacles.end(),
     [&stopped_obstacles, &moving_obstacles, &p](const auto & o) {
-      const bool is_moving = std::hypot(o.second.twist.linear.x, o.second.twist.linear.y) >
-                             p.stopped_obstacle_velocity_threshold;
+      const bool is_moving =
+        std::hypot(o.twist.linear.x, o.twist.linear.y) > p.stopped_obstacle_velocity_threshold;
       if (is_moving) {
         const bool is_within_lat_dist_threshold =
-          o.second.lat_dist_from_obstacle_to_traj < p.yield_lat_distance_threshold;
+          o.lat_dist_from_obstacle_to_traj < p.yield_lat_distance_threshold;
         if (is_within_lat_dist_threshold) moving_obstacles.push_back(o);
         return;
       }
       // lat threshold is larger for stopped obstacles
       const bool is_within_lat_dist_threshold =
-        o.second.lat_dist_from_obstacle_to_traj <
+        o.lat_dist_from_obstacle_to_traj <
         p.yield_lat_distance_threshold + p.max_lat_dist_between_obstacles;
       if (is_within_lat_dist_threshold) stopped_obstacles.push_back(o);
       return;
     });
 
   if (stopped_obstacles.empty() || moving_obstacles.empty()) return std::nullopt;
+
+  std::sort(
+    stopped_obstacles.begin(), stopped_obstacles.end(), [](const auto & o1, const auto & o2) {
+      return o1.ego_to_obstacle_distance < o2.ego_to_obstacle_distance;
+    });
+
+  std::sort(moving_obstacles.begin(), moving_obstacles.end(), [](const auto & o1, const auto & o2) {
+    return o1.ego_to_obstacle_distance < o2.ego_to_obstacle_distance;
+  });
+
   std::vector<CruiseObstacle> yield_obstacles;
   for (const auto & moving_obstacle : moving_obstacles) {
     for (const auto & stopped_obstacle : stopped_obstacles) {
       const bool is_moving_obs_behind_of_stopped_obs =
-        moving_obstacle.first < stopped_obstacle.first;
+        moving_obstacle.ego_to_obstacle_distance < stopped_obstacle.ego_to_obstacle_distance;
       const bool is_moving_obs_ahead_of_ego_front =
-        moving_obstacle.second.ego_to_obstacle_distance > vehicle_info_.vehicle_length_m;
+        moving_obstacle.ego_to_obstacle_distance > vehicle_info_.vehicle_length_m;
 
       if (!is_moving_obs_ahead_of_ego_front || !is_moving_obs_behind_of_stopped_obs) continue;
 
       const double lateral_distance_between_obstacles = std::abs(
-        moving_obstacle.second.lat_dist_from_obstacle_to_traj -
-        stopped_obstacle.second.lat_dist_from_obstacle_to_traj);
+        moving_obstacle.lat_dist_from_obstacle_to_traj -
+        stopped_obstacle.lat_dist_from_obstacle_to_traj);
 
       const double longitudinal_distance_between_obstacles = std::abs(
-        moving_obstacle.second.ego_to_obstacle_distance -
-        stopped_obstacle.second.ego_to_obstacle_distance);
+        moving_obstacle.ego_to_obstacle_distance - stopped_obstacle.ego_to_obstacle_distance);
 
       const double moving_obstacle_speed =
-        std::hypot(moving_obstacle.second.twist.linear.x, moving_obstacle.second.twist.linear.y);
+        std::hypot(moving_obstacle.twist.linear.x, moving_obstacle.twist.linear.y);
 
       const bool are_obstacles_aligned =
         lateral_distance_between_obstacles < p.max_lat_dist_between_obstacles;
@@ -996,7 +988,7 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
         longitudinal_distance_between_obstacles / moving_obstacle_speed <
         p.max_obstacles_collision_time;
       if (are_obstacles_aligned && obstacles_collide_within_threshold_time) {
-        const auto yield_obstacle = createYieldCruiseObstacle(moving_obstacle.second, traj_points);
+        const auto yield_obstacle = createYieldCruiseObstacle(moving_obstacle, traj_points);
         if (yield_obstacle) {
           yield_obstacles.push_back(*yield_obstacle);
         }
