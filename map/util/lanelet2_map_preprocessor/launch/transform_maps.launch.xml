@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <arg name="llt_map_path" default=""/>
-  <arg name="pcd_map_path" default=""/>
-  <arg name="llt_output_path" default=""/>
-  <arg name="pcd_output_path" default=""/>
-  <arg name="param_file" default="$(find-pkg-share lanelet2_map_preprocessor)/config/transform_maps.param.yaml"/>
-
   <node pkg="lanelet2_map_preprocessor" exec="transform_maps" name="transform_maps" output="screen">
-    <param name="llt_map_path" value="$(var llt_map_path)"/>
-    <param name="pcd_map_path" value="$(var pcd_map_path)"/>
-    <param name="llt_output_path" value="$(var llt_output_path)"/>
-    <param name="pcd_output_path" value="$(var pcd_output_path)"/>
-    <param from="$(var param_file)"/>
+    <param from="$(find-pkg-share lanelet2_map_preprocessor)/config/transform_maps.param.yaml" allow_substs="true"/>
   </node>
 </launch>
