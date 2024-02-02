@@ -237,8 +237,7 @@ void ScenarioSelectorNode::onParkingState(const std_msgs::msg::Bool::ConstShared
 bool ScenarioSelectorNode::isDataReady()
 {
   if (!current_pose_) {
-    RCLCPP_INFO_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5000, "Waiting for current pose.");
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for current pose.");
     return false;
   }
 
