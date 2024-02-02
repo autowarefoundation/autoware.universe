@@ -172,6 +172,44 @@ SamplingPlannerModule::SamplingPlannerModule(
 
 bool SamplingPlannerModule::isExecutionRequested() const
 {
+  const auto & p = planner_data_->parameters;
+  const auto ego_pose = planner_data_->self_odometry->pose.pose;
+  const auto goal_pose = planner_data_->route_handler->getGoalPose();
+
+  lanelet::ConstLanelet current_lane;
+
+  if (!planner_data_->route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+      "failed to find closest lanelet within route!!!");
+    return false;
+  }
+  const auto current_lane_sequence = planner_data_->route_handler->getLaneletSequence(
+    current_lane, ego_pose, p.backward_path_length, p.forward_path_length);
+  // expand drivable lanes
+  std::vector<DrivableLanes> drivable_lanes{};
+
+  std::for_each(
+    current_lane_sequence.begin(), current_lane_sequence.end(), [&](const auto & lanelet) {
+      drivable_lanes.push_back(generateExpandDrivableLanes(lanelet, planner_data_));
+    });
+
+  lanelet::ConstLanelets current_lanes;
+
+  for (auto & d : drivable_lanes) {
+    current_lanes.push_back(d.right_lane);
+    current_lanes.push_back(d.left_lane);
+    current_lanes.insert(current_lanes.end(), d.middle_lanes.begin(), d.middle_lanes.end());
+  }
+  lanelet::ConstLanelet closest_lanelet_to_ego;
+  lanelet::utils::query::getClosestLanelet(current_lanes, ego_pose, &closest_lanelet_to_ego);
+  lanelet::ConstLanelet closest_lanelet_to_goal;
+  lanelet::utils::query::getClosestLanelet(current_lanes, goal_pose, &closest_lanelet_to_goal);
+  const bool ego_and_goal_on_same_lanelet =
+    closest_lanelet_to_goal.id() == closest_lanelet_to_ego.id();
+
+  if (!ego_and_goal_on_same_lanelet) return false;
+
   if (getPreviousModuleOutput().reference_path.points.empty()) {
     return false;
   }

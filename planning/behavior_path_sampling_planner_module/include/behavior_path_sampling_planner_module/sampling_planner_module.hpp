@@ -205,11 +205,9 @@ private:
     const auto ego_arc = lanelet::utils::getArcCoordinates(current_lanes, ego_pose);
     const auto goal_arc = lanelet::utils::getArcCoordinates(current_lanes, goal_pose);
     const double length_to_goal = std::abs(goal_arc.length - ego_arc.length);
-    const double min_target_length = *std::min_element(
-      internal_params_->sampling.target_lengths.begin(),
-      internal_params_->sampling.target_lengths.end());
 
-    if (length_to_goal < min_target_length) return isReferencePathSafe();
+    constexpr double epsilon = 1E-5;
+    if (length_to_goal < epsilon) return isReferencePathSafe();
 
     const auto nearest_index =
       motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
