@@ -70,7 +70,7 @@ bool LaneChangeInterface::isExecutionRequested() const
 
 bool LaneChangeInterface::isExecutionReady() const
 {
-  return module_type_->isSafe();
+  return module_type_->isSafe() && !module_type_->isAbortState();
 }
 
 void LaneChangeInterface::updateData()
@@ -116,7 +116,16 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   }
 
   updateSteeringFactorPtr(output);
-  clearWaitingApproval();
+  if (module_type_->isAbortState()) {
+    waitApproval();
+    removeRTCStatus();
+    const auto candidate = planCandidate();
+    path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+    updateRTCStatus(
+      candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change);
+  } else {
+    clearWaitingApproval();
+  }
 
   return output;
 }
@@ -286,29 +295,6 @@ bool LaneChangeInterface::canTransitFailureState()
   log_debug_throttled("Lane change path is unsafe. Abort lane change.");
   module_type_->toAbortState();
   return false;
-}
-
-bool LaneChangeInterface::canTransitIdleToRunningState()
-{
-  updateDebugMarker();
-
-  auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_DEBUG(getLogger(), "%s", message.data());
-  };
-
-  log_debug_throttled(__func__);
-
-  if (!isActivated() || isWaitingApproval()) {
-    if (module_type_->specialRequiredCheck()) {
-      return true;
-    }
-    log_debug_throttled("Module is idling.");
-    return false;
-  }
-
-  log_debug_throttled("Can lane change safely. Executing lane change.");
-  module_type_->toNormalState();
-  return true;
 }
 
 void LaneChangeInterface::updateDebugMarker() const
