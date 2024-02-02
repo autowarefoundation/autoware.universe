@@ -180,13 +180,4 @@ double calculate_detection_range(
   const auto time_to_crosswalk = dist_ego_to_crosswalk / std::max(min_ego_velocity, ego_velocity);
   return time_to_crosswalk > 0.0 ? time_to_crosswalk / occluded_object_velocity : 20.0;
 }
-
-void update_occlusion_timers(
-  std::optional<rclcpp::Time> & initial_time,
-  std::optional<rclcpp::Time> & most_recent_slowdown_time, const rclcpp::Time & now,
-  const double buffer)
-{
-  if (!initial_time) initial_time = now;
-  if ((now - *initial_time).seconds() >= buffer) most_recent_slowdown_time = now;
-}
 }  // namespace behavior_velocity_planner

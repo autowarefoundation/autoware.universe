@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <limits>
 #include <set>
 #include <tuple>
@@ -235,6 +236,10 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
       static_cast<float>(crosswalk_.attribute("safety_slow_down_speed").asDouble().get()));
   }
   // Apply safety slow down speed if the crosswalk is occluded
+  const auto now = clock_->now();
+  const auto cmp_with_time_buffer = [&](const auto & t, const auto cmp_fn) {
+    return t && cmp_fn((now - *t).seconds(), planner_param_.occlusion_time_buffer);
+  };
   if (
     planner_param_.occlusion_enable && !path_intersects.empty() &&
     !is_crosswalk_ignored(crosswalk_, planner_param_.occlusion_ignore_with_traffic_light)) {
@@ -248,21 +253,21 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     if (!is_ego_on_the_crosswalk) {
       if (is_crosswalk_occluded(
             crosswalk_, *planner_data_->occupancy_grid, path_intersects.front(), detection_range,
-            objects_ptr->objects, planner_param_))
-        update_occlusion_timers(
-          current_initial_occlusion_time_, most_recent_occlusion_time_, clock_->now(),
-          planner_param_.occlusion_time_buffer);
-      else
+            objects_ptr->objects, planner_param_)) {
+        if (!current_initial_occlusion_time_) current_initial_occlusion_time_ = now;
+        if (cmp_with_time_buffer(current_initial_occlusion_time_, std::greater_equal<double>{}))
+          most_recent_occlusion_time_ = now;
+      } else if (!cmp_with_time_buffer(most_recent_occlusion_time_, std::greater<double>{})) {
         current_initial_occlusion_time_.reset();
+      }
 
-      const auto is_last_occlusion_within_time_buffer =
-        most_recent_occlusion_time_ && (clock_->now() - *most_recent_occlusion_time_).seconds() <=
-                                         planner_param_.occlusion_time_buffer;
-      if (is_last_occlusion_within_time_buffer) {
+      if (cmp_with_time_buffer(most_recent_occlusion_time_, std::less_equal<double>{})) {
         const auto target_velocity = calcTargetVelocity(path_intersects.front(), *path);
         applySafetySlowDownSpeed(
           *path, path_intersects,
           std::max(target_velocity, planner_param_.occlusion_slow_down_velocity));
+      } else {
+        most_recent_occlusion_time_.reset();
       }
     }
   }

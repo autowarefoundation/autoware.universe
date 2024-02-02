@@ -96,15 +96,6 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> select_and_infl
 void clear_occlusions_behind_objects(
   grid_map::GridMap & grid_map,
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects);
-
-/// @brief update timers so that the slowdown activates if the initial time is older than the buffer
-/// @param initial_time initial time
-/// @param most_recent_slowdown_time time to set only if initial_time is older than the buffer
-/// @param buffer [s] time buffer
-void update_occlusion_timers(
-  std::optional<rclcpp::Time> & initial_time,
-  std::optional<rclcpp::Time> & most_recent_slowdown_time, const rclcpp::Time & now,
-  const double buffer);
 }  // namespace behavior_velocity_planner
 
 #endif  // OCCLUDED_CROSSWALK_HPP_
