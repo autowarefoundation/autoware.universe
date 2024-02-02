@@ -16,7 +16,7 @@
 #define PLANNING_DEBUG_TOOLS__TRAJECTORY_ANALYZER_HPP_
 
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "planning_debug_tools/msg/trajectory_debug_info.hpp"
+#include "autoware_planning_debug_tools/msg/trajectory_debug_info.hpp"
 #include "planning_debug_tools/util.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
@@ -39,7 +39,7 @@ using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using nav_msgs::msg::Odometry;
-using planning_debug_tools::msg::TrajectoryDebugInfo;
+using autoware_planning_debug_tools::msg::TrajectoryDebugInfo;
 
 template <typename T>
 class TrajectoryAnalyzer
