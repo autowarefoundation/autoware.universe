@@ -236,8 +236,6 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return prev_sampling_path_.has_value(); }
-
   bool isReferencePathSafe() const;
 
   void updateDebugMarkers();
