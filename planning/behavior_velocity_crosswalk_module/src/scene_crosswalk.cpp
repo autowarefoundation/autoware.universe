@@ -245,9 +245,11 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     !is_crosswalk_ignored(crosswalk_, planner_param_.occlusion_ignore_with_traffic_light)) {
     const auto dist_ego_to_crosswalk =
       calcSignedArcLength(path->points, ego_pos, path_intersects.front());
-    const auto detection_range = calculate_detection_range(
-      planner_param_.occlusion_occluded_object_velocity, dist_ego_to_crosswalk,
-      planner_data_->current_velocity->twist.linear.x);
+    const auto detection_range =
+      planner_data_->vehicle_info_.max_lateral_offset_m +
+      calculate_detection_range(
+        planner_param_.occlusion_occluded_object_velocity, dist_ego_to_crosswalk,
+        planner_data_->current_velocity->twist.linear.x);
     const auto is_ego_on_the_crosswalk =
       dist_ego_to_crosswalk <= planner_data_->vehicle_info_.max_longitudinal_offset_m;
     if (!is_ego_on_the_crosswalk) {
