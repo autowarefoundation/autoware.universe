@@ -82,7 +82,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   const std::vector<DrivableLanes> & drivable_lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
   const bool enable_expanding_freespace_areas, const bool is_left,
-  const bool is_driving_forward = true, const bool expand_to_road_edges = false);
+  const bool is_driving_forward = true);
 
 std::vector<geometry_msgs::msg::Point> postProcess(
   const std::vector<geometry_msgs::msg::Point> & original_bound, const PathWithLaneId & path,

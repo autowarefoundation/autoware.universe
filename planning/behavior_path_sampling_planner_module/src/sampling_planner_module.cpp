@@ -220,11 +220,9 @@ bool SamplingPlannerModule::isReferencePathSafe() const
   {
     const auto path_for_calculating_bounds = getPreviousModuleOutput().reference_path;
     const auto left_bound = (utils::calcBound(
-      path_for_calculating_bounds, planner_data_, drivable_lanes, false, false, false, true, true,
-      true));
+      path_for_calculating_bounds, planner_data_, drivable_lanes, false, false, false, true));
     const auto right_bound = (utils::calcBound(
-      path_for_calculating_bounds, planner_data_, drivable_lanes, false, false, false, false, true,
-      true));
+      path_for_calculating_bounds, planner_data_, drivable_lanes, false, false, false, false));
 
     const auto sampling_planner_data =
       createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
@@ -445,7 +443,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     RCLCPP_ERROR(
       rclcpp::get_logger("behavior_path_planner").get_child("utils"),
       "failed to find closest lanelet within route!!!");
-    return {};
+    return getPreviousModuleOutput();
   }
 
   std::vector<DrivableLanes> drivable_lanes{};
@@ -549,11 +547,9 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   const auto path_for_calculating_bounds = getPreviousModuleOutput().reference_path;
   const auto left_bound = (utils::calcBound(
-    path_for_calculating_bounds, planner_data_, drivable_lanes, false, false, false, true, true,
-    true));
+    path_for_calculating_bounds, planner_data_, drivable_lanes, false, false, false, true));
   const auto right_bound = (utils::calcBound(
-    path_for_calculating_bounds, planner_data_, drivable_lanes, false, false, false, false, true,
-    true));
+    path_for_calculating_bounds, planner_data_, drivable_lanes, false, false, false, false));
 
   const auto sampling_planner_data =
     createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
@@ -630,13 +626,14 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     BehaviorModuleOutput out;
     PathWithLaneId out_path = (prev_sampling_path_)
                                 ? convertFrenetPathToPathWithLaneID(
-                                    prev_sampling_path_.value(), road_lanes,
+                                    prev_sampling_path_.value(), current_lanes,
                                     planner_data_->route_handler->getGoalPose().position.z)
                                 : PathWithLaneId{};
 
     out.path = (prev_sampling_path_) ? out_path : getPreviousModuleOutput().path;
     out.reference_path = getPreviousModuleOutput().reference_path;
     out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
+    extendOutputDrivableArea(out, drivable_lanes);
     return out;
   }
 

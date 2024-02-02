@@ -224,11 +224,13 @@ private:
     const double yaw_difference = std::abs(ego_yaw - ref_path_yaw);
 
     // TODO(Daniel) magic numbers
-    constexpr double threshold_lat_distance_for_merging = 0.25;
-    constexpr double threshold_yaw_difference_for_merging = M_PI / 36.0;  // 5 degrees
+    constexpr double threshold_lat_distance_for_merging = 0.15;
+    constexpr double threshold_yaw_difference_for_merging = M_PI / 72.0;  // 2.5 degrees
     const bool merged_back_to_path =
       (std::abs(ego_arc.distance) < threshold_lat_distance_for_merging) &&
       (yaw_difference < threshold_yaw_difference_for_merging);
+    if (isReferencePathSafe() && (merged_back_to_path))
+      for (int i = 0; i < 10; ++i) std::cerr << "MERGED BACK!!!!!\n";
     return isReferencePathSafe() && (merged_back_to_path);
   }
 
