@@ -8,7 +8,7 @@ Moreover, the planner actively interacts with other traffic participants, predic
 
 !!! note
 
-    The [Planning Component Design](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/) Document outlines the foundational philosophy guiding the design and future development of the Behavior Path Planner module. We strongly encourage readers to consult this document to understand the rationale behind its current configuration and the direction of its ongoing development.
+    The [Planning Component Design](https://autowarefoundation.github.io/autoware-documentation/v1.0/design/autoware-architecture/planning/) Document outlines the foundational philosophy guiding the design and future development of the Behavior Path Planner module. We strongly encourage readers to consult this document to understand the rationale behind its current configuration and the direction of its ongoing development.
 
 ## Purpose / Use Cases
 
@@ -57,7 +57,7 @@ Behavior Path Planner has following scene modules
 
 !!! Note
 
-    Users can refer to [Planning component design](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/#supported-functions) for some additional behavior.
+    Users can refer to [Planning component design](https://autowarefoundation.github.io/autoware-documentation/v1.0/design/autoware-architecture/planning/#supported-functions) for some additional behavior.
 
 #### How to add or implement new module?
 
@@ -100,7 +100,7 @@ The Planner Manager's responsibilities include:
 | ~/input/route                 |     ○     | `autoware_auto_mapping_msgs::msg::LaneletRoute`        | current route from start to goal.                                                                                                                                                                                        |
 | ~/input/scenario              |     ○     | `tier4_planning_msgs::msg::Scenario`                   | Launches behavior path planner if current scenario == `Scenario:LaneDriving`.                                                                                                                                            |
 | ~/input/lateral_offset        |     △     | `tier4_planning_msgs::msg::LateralOffset`              | lateral offset to trigger side shift                                                                                                                                                                                     |
-| ~/system/operation_mode/state |     ○     | `autoware_adapi_v1_msgs::msg::OperationModeState`      | Allows planning module to know if vehicle is in autonomous mode or can be controlled<sup>[ref](https://github.com/autowarefoundation/autoware.universe/blob/main/system/default_ad_api/document/operation-mode.md)</sup> |
+| ~/system/operation_mode/state |     ○     | `autoware_adapi_v1_msgs::msg::OperationModeState`      | Allows planning module to know if vehicle is in autonomous mode or can be controlled<sup>[ref](https://github.com/autowarefoundation/autoware.universe/blob/v1.0/system/default_ad_api/document/operation-mode.md)</sup> |
 
 - ○ Mandatory: Planning Module would not work if anyone of this is not present.
 - △ Optional: Some module would not work, but Planning Module can still be operated.
@@ -143,7 +143,7 @@ The `default_preset.yaml` file acts as a configuration file for enabling or disa
 
 !!! note
 
-    Click [here](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/preset/default_preset.yaml) to view the `default_preset.yaml`.
+    Click [here](https://github.com/autowarefoundation/autoware_launch/blob/v1.0/autoware_launch/config/planning/preset/default_preset.yaml) to view the `default_preset.yaml`.
 
 The `behavior_path_planner.launch.xml` file references the settings defined in `default_preset.yaml` to apply the configurations when the behavior path planner's node is running. For instance, the parameter `avoidance.enable_module` in
 
@@ -239,7 +239,7 @@ The `TurnIndicatorsCommand` message structure has a command field that can take 
 
 ## Parameters and Configuration
 
-The [configuration files](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner) are organized in a hierarchical directory structure for ease of navigation and management. Each subdirectory contains specific configuration files relevant to its module. The root directory holds general configuration files that apply to the overall behavior of the planner. The following is an overview of the directory structure with the respective configuration files.
+The [configuration files](https://github.com/autowarefoundation/autoware_launch/tree/v1.0/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner) are organized in a hierarchical directory structure for ease of navigation and management. Each subdirectory contains specific configuration files relevant to its module. The root directory holds general configuration files that apply to the overall behavior of the planner. The following is an overview of the directory structure with the respective configuration files.
 
 ```text
 behavior_path_planner
@@ -262,7 +262,7 @@ behavior_path_planner
     └── start_planner.param.yaml
 ```
 
-Similarly, the [common](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/common) directory contains configuration files that are used across various modules, providing shared parameters and settings essential for the functioning of the Behavior Path Planner:
+Similarly, the [common](https://github.com/autowarefoundation/autoware_launch/tree/v1.0/autoware_launch/config/planning/scenario_planning/common) directory contains configuration files that are used across various modules, providing shared parameters and settings essential for the functioning of the Behavior Path Planner:
 
 ```text
 common
@@ -271,7 +271,7 @@ common
 └── nearest_search.param.yaml
 ```
 
-The [preset](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/preset) directory contains the configurations for managing the operational state of various modules. It includes the default_preset.yaml file, which specifically caters to enabling and disabling modules within the system.
+The [preset](https://github.com/autowarefoundation/autoware_launch/tree/v1.0/autoware_launch/config/planning/preset) directory contains the configurations for managing the operational state of various modules. It includes the default_preset.yaml file, which specifically caters to enabling and disabling modules within the system.
 
 ```text
 preset

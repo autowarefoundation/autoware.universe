@@ -50,6 +50,6 @@ This node depends on the map height fitter library.
 
 ## Connection with Default AD API
 
-This `pose_initializer` is used via default AD API. For detailed description of the API description, please refer to [the description of `default_ad_api`](https://github.com/autowarefoundation/autoware.universe/blob/main/system/default_ad_api/document/localization.md).
+This `pose_initializer` is used via default AD API. For detailed description of the API description, please refer to [the description of `default_ad_api`](https://github.com/autowarefoundation/autoware.universe/blob/v1.0/system/default_ad_api/document/localization.md).
 
 <img src="../../system/default_ad_api/document/images/localization.drawio.svg" alt="drawing" width="800"/>

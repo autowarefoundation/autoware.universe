@@ -4,7 +4,7 @@ This package contains a node related to initial pose estimation.
 
 - [camera_pose_initializer](#camera_pose_initializer)
 
-This package requires the pre-trained semantic segmentation model for runtime. This model is usually downloaded by `ansible` during env preparation phase of the [installation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/).
+This package requires the pre-trained semantic segmentation model for runtime. This model is usually downloaded by `ansible` during env preparation phase of the [installation](https://autowarefoundation.github.io/autoware-documentation/v1.0/installation/autoware/source-installation/).
 It is also possible to download it manually. Even if the model is not downloaded, initialization will still complete, but the accuracy may be compromised.
 
 To download and extract the model manually:

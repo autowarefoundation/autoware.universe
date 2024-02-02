@@ -18,7 +18,7 @@ This module is activated when the path contains the lanes with turn_direction ta
 
 ## Requirements/Limitations
 
-- The HDMap needs to have the information of turn_direction tag (which should be one of straight, left, right) for all the lanes in intersections and right_of_way tag for specific lanes (refer to [RightOfWay](#how-towhy-set-rightofway-tag) section for more details). See [lanelet2_extension document](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md) for more detail.
+- The HDMap needs to have the information of turn_direction tag (which should be one of straight, left, right) for all the lanes in intersections and right_of_way tag for specific lanes (refer to [RightOfWay](#how-towhy-set-rightofway-tag) section for more details). See [lanelet2_extension document](https://github.com/autowarefoundation/autoware_common/blob/v1.0/tmp/lanelet2_extension/docs/lanelet2_format_extension.md) for more detail.
 - WIP(perception requirements/limitations)
 - WIP(sensor visibility requirements/limitations)
 
@@ -463,7 +463,7 @@ If you want to care the occlusion nearby ego more cautiously, set `occlusion.occ
 
 #### occupancy grid map tuning
 
-Refer to the document of [probabilistic_occupancy_grid_map](https://autowarefoundation.github.io/autoware.universe/main/perception/probabilistic_occupancy_grid_map/) for details. If occlusion tends to be detected at apparently free space, increase `occlusion.free_space_max` to ignore them.
+Refer to the document of [probabilistic_occupancy_grid_map](https://autowarefoundation.github.io/autoware.universe/v1.0/perception/probabilistic_occupancy_grid_map/) for details. If occlusion tends to be detected at apparently free space, increase `occlusion.free_space_max` to ignore them.
 
 #### in simple_planning_simulator
 

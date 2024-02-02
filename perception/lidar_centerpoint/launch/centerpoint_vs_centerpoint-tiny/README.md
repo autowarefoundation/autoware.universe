@@ -4,7 +4,7 @@ This tutorial is for showing `centerpoint` and `centerpoint_tiny`models’ resul
 
 ## Setup Development Environment
 
-Follow the steps in the Source Installation ([link](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/)) in Autoware doc.
+Follow the steps in the Source Installation ([link](https://autowarefoundation.github.io/autoware-documentation/v1.0/installation/autoware/source-installation/)) in Autoware doc.
 
 If you fail to build autoware environment according to lack of memory, then it is recommended to build autoware sequentially.
 
@@ -42,7 +42,7 @@ ros2 bag play /YOUR/ROSBAG/PATH/ --clock 100
 
 Don't forget to add `clock` in order to sync between two rviz display.
 
-You can also use the sample rosbag provided by autoware [here](https://autowarefoundation.github.io/autoware-documentation/main/tutorials/ad-hoc-simulation/rosbag-replay-simulation/).
+You can also use the sample rosbag provided by autoware [here](https://autowarefoundation.github.io/autoware-documentation/v1.0/tutorials/ad-hoc-simulation/rosbag-replay-simulation/).
 
 If you want to merge several rosbags into one, you can refer to [this tool](https://github.com/jerry73204/rosbag2-merge).
 

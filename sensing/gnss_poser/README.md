@@ -14,7 +14,7 @@ The `gnss_poser` is a node that subscribes gnss sensing messages and calculates 
 | ------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `/map/map_projector_info`      | `tier4_map_msgs::msg::MapProjectorInfo`                 | map projection info                                                                                                            |
 | `~/input/fix`                  | `sensor_msgs::msg::NavSatFix`                           | gnss status message                                                                                                            |
-| `~/input/autoware_orientation` | `autoware_sensing_msgs::msg::GnssInsOrientationStamped` | orientation [click here for more details](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_sensing_msgs) |
+| `~/input/autoware_orientation` | `autoware_sensing_msgs::msg::GnssInsOrientationStamped` | orientation [click here for more details](https://github.com/autowarefoundation/autoware_msgs/tree/v1.0/autoware_sensing_msgs) |
 
 ### Output
 

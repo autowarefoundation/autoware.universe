@@ -71,7 +71,7 @@ those are labeled as `UNKNOWN`, while detected rectangles are drawn in the visua
 
 ## Onnx model
 
-A sample model (named `yolox-tiny.onnx`) is downloaded by ansible script on env preparation stage, if not, please, follow [Manual downloading of artifacts](https://github.com/autowarefoundation/autoware/tree/main/ansible/roles/artifacts).
+A sample model (named `yolox-tiny.onnx`) is downloaded by ansible script on env preparation stage, if not, please, follow [Manual downloading of artifacts](https://github.com/autowarefoundation/autoware/tree/v1.0/ansible/roles/artifacts).
 To accelerate Non-maximum-suppression (NMS), which is one of the common post-process after object detection inference,
 `EfficientNMS_TRT` module is attached after the ordinal YOLOX (tiny) network.
 The `EfficientNMS_TRT` module contains fixed values for `score_threshold` and `nms_threshold` in it,

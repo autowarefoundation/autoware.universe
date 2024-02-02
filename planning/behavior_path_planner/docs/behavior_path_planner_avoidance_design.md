@@ -616,13 +616,13 @@ use_hatched_road_markings: false
 
 #### intersection areas
 
-The intersection area is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md)
+The intersection area is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/v1.0/tmp/lanelet2_extension/docs/lanelet2_format_extension.md)
 
 ![fig1](../image/avoidance/use_intersection_areas.svg)
 
 #### hatched road markings
 
-The hatched road marking is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md#hatched-road-markings-area)
+The hatched road marking is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/v1.0/tmp/lanelet2_extension/docs/lanelet2_format_extension.md#hatched-road-markings-area)
 
 ![fig1](../image/avoidance/use_hatched_road_markings.svg)
 

@@ -7,7 +7,7 @@
 #### Neural network
 
 This package will not run without a neural network for its inference.
-The network is provided by ansible script during the installation of Autoware or can be downloaded manually according to [Manual Downloading](https://github.com/autowarefoundation/autoware/tree/main/ansible/roles/artifacts).
+The network is provided by ansible script during the installation of Autoware or can be downloaded manually according to [Manual Downloading](https://github.com/autowarefoundation/autoware/tree/v1.0/ansible/roles/artifacts).
 This package uses 'get_neural_network' function from tvm_utility package to create and provide proper dependency.
 See its design page for more information on how to handle user-compiled networks.
 

@@ -16,8 +16,8 @@ The model was fine-tuned on around 17,000 TIER IV internal images of Japanese tr
 
 ### Trained Onnx model
 
-You can download the ONNX file using these instructions.  
-Please visit [autoware-documentation](https://github.com/autowarefoundation/autoware-documentation/blob/main/docs/models/index.md) for more information.
+You can download the ONNX file using these instructions.
+Please visit [autoware-documentation](https://github.com/autowarefoundation/autoware-documentation/blob/v1.0/docs/models/index.md) for more information.
 
 ## Inner-workings / Algorithms
 
