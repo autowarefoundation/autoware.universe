@@ -270,7 +270,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 bool BehaviorPathPlannerNode::isDataReady()
 {
   const auto missing = [this](const auto & name) {
-    RCLCPP_DEBUG_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", name);
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", name);
     return false;
   };
 

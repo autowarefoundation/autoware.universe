@@ -180,7 +180,7 @@ void ScenarioSelectorNode::updateCurrentScenario()
   }
 
   if (current_scenario_ != prev_scenario) {
-    RCLCPP_INFO_STREAM(
+    RCLCPP_DEBUG_STREAM(
       this->get_logger(), "scenario changed: " << prev_scenario << " -> " << current_scenario_);
   }
 }
@@ -237,23 +237,23 @@ void ScenarioSelectorNode::onParkingState(const std_msgs::msg::Bool::ConstShared
 bool ScenarioSelectorNode::isDataReady()
 {
   if (!current_pose_) {
-    RCLCPP_DEBUG_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000, "Waiting for current pose.");
     return false;
   }
 
   if (!lanelet_map_ptr_) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for lanelet map.");
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for lanelet map.");
     return false;
   }
 
   if (!route_) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for route.");
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for route.");
     return false;
   }
 
   if (!twist_) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for twist.");
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for twist.");
     return false;
   }
 

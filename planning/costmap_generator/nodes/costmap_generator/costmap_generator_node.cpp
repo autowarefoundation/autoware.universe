@@ -189,7 +189,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
       tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
       break;
     } catch (const tf2::TransformException & ex) {
-      RCLCPP_DEBUG(this->get_logger(), "waiting for initial pose...");
+      RCLCPP_INFO(this->get_logger(), "waiting for initial pose...");
     }
     rclcpp::sleep_for(std::chrono::milliseconds(5000));
   }

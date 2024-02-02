@@ -146,7 +146,7 @@ void OperationModeNode::on_timer()
   mode_available_[OperationModeState::Message::AUTONOMOUS] = autonomous_available;
 
   if (!unhealthy_components.empty()) {
-    RCLCPP_DEBUG_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 3000,
       "%s component state is unhealthy. Autonomous is not available.",
       unhealthy_components.c_str());

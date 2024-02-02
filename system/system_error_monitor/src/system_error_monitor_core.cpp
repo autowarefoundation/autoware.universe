@@ -389,22 +389,22 @@ void AutowareErrorMonitor::onControlMode(
 bool AutowareErrorMonitor::isDataReady()
 {
   if (!diag_array_) {
-    RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for diag_array msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for diag_array msg...");
     return false;
   }
 
   if (!current_gate_mode_) {
-    RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_gate_mode msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_gate_mode msg...");
     return false;
   }
 
   if (!autoware_state_) {
-    RCLCPP_DEBUG_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for autoware_state msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for autoware_state msg...");
     return false;
   }
 
   if (!control_mode_) {
-    RCLCPP_DEBUG_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for vehicle_state_report msg...");
     return false;
   }

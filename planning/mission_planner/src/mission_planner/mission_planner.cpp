@@ -133,12 +133,12 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 void MissionPlanner::checkInitialization()
 {
   if (!planner_->ready()) {
-    RCLCPP_DEBUG_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting lanelet map... Route API is not ready.");
     return;
   }
   if (!odometry_) {
-    RCLCPP_DEBUG_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting odometry... Route API is not ready.");
     return;
   }
