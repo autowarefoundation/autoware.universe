@@ -77,4 +77,4 @@ If this parameter is set smaller, more objects are considered noise. In detail. 
   - Default parameter is 3.0.
 
 This parameter is the velocity threshold to filter. If velocity of an object is larger than this parameter, it can be a candidate for noise object. In other words, if velocity of an object is smaller than this parameter, it is a filtered object.
-If this parameter is set smaller, more objects are considered noise. In detail. see algorithm chapter.
+If this parameter is set smaller, more objects are considered noise. In detail, see algorithm chapter.
