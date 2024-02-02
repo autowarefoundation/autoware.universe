@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(autoware_crosswalk_traffic_light_estimator)
+project(crosswalk_traffic_light_estimator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
