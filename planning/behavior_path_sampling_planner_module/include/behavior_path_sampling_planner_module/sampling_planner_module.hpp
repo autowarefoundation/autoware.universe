@@ -229,8 +229,6 @@ private:
     const bool merged_back_to_path =
       (std::abs(ego_arc.distance) < threshold_lat_distance_for_merging) &&
       (yaw_difference < threshold_yaw_difference_for_merging);
-    if (isReferencePathSafe() && (merged_back_to_path))
-      for (int i = 0; i < 10; ++i) std::cerr << "MERGED BACK!!!!!\n";
     return isReferencePathSafe() && (merged_back_to_path);
   }
 
