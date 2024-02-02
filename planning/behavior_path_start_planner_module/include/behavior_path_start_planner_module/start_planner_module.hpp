@@ -139,8 +139,6 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return true; }
-
   /**
    * @brief init member variables.
    */
@@ -164,6 +162,7 @@ private:
 
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
+  bool isOverlapWithCenterLane() const;
   bool isCloseToOriginalStartPose() const;
   bool hasArrivedAtGoal() const;
   bool isMoving() const;
@@ -174,7 +173,8 @@ private:
     const Pose & start_pose_candidate, const std::shared_ptr<PullOutPlannerBase> & planner,
     const Pose & refined_start_pose, const Pose & goal_pose, const double collision_check_margin);
 
-  PathWithLaneId extractCollisionCheckSection(const PullOutPath & path);
+  PathWithLaneId extractCollisionCheckSection(
+    const PullOutPath & path, const behavior_path_planner::PlannerType & planner_type);
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
@@ -242,8 +242,8 @@ private:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
-  void updateDrivableLanes();
-  lanelet::ConstLanelets createDrivableLanes() const;
+  void updateDepartureCheckLanes();
+  lanelet::ConstLanelets createDepartureCheckLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.
   bool isGoalBehindOfEgoInSameRouteSegment() const;
