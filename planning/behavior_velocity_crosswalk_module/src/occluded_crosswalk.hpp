@@ -49,13 +49,6 @@ bool is_occluded(
 lanelet::BasicPoint2d interpolate_point(
   const lanelet::BasicSegment2d & segment, const double extra_distance);
 
-/// @brief check if the crosswalk should be ignored
-/// @param crosswalk_lanelet lanelet of the crosswalk
-/// @param ignore_with_traffic_light if true, ignore the crosswalk if it has a traffic light
-/// @return true if the crosswalk should be ignored
-bool is_crosswalk_ignored(
-  const lanelet::ConstLanelet & crosswalk_lanelet, const bool ignore_with_traffic_light);
-
 /// @brief check if the crosswalk is occluded
 /// @param crosswalk_lanelet lanelet of the crosswalk
 /// @param occupancy_grid occupancy grid with the occlusion information

@@ -51,16 +51,6 @@ lanelet::BasicPoint2d interpolate_point(
   return segment.second + extra_distance * direction_vector;
 }
 
-bool is_crosswalk_ignored(
-  const lanelet::ConstLanelet & crosswalk_lanelet, const bool ignore_with_traffic_light)
-{
-  const auto traffic_lights_reg_elems =
-    crosswalk_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>();
-  const bool has_traffic_light = !traffic_lights_reg_elems.empty();
-  const bool has_skip_attribute = crosswalk_lanelet.hasAttribute("skip_occluded_slowdown");
-  return (ignore_with_traffic_light && has_traffic_light) || has_skip_attribute;
-}
-
 std::vector<lanelet::BasicPolygon2d> calculate_detection_areas(
   const lanelet::ConstLanelet & crosswalk_lanelet, const lanelet::BasicPoint2d & crosswalk_origin,
   const double detection_range)
