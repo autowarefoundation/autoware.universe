@@ -71,6 +71,7 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
       normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
       normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
     tan_grid_size_rad_ = std::tan(grid_size_rad_);
+    offset_initialized_ = false;
   }
 
   using std::placeholders::_1;
