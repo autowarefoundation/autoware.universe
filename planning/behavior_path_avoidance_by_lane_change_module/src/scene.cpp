@@ -166,18 +166,16 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
   std::for_each(
     data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
       data.drivable_lanes.push_back(utils::avoidance::generateExpandDrivableLanes(
-        lanelet, planner_data_, avoidance_parameters_));
+        lanelet, planner_data_, avoidance_parameters_, false));
     });
 
   // calc drivable bound
   const auto shorten_lanes =
     utils::cutOverlappedLanes(data.reference_path_rough, data.drivable_lanes);
   data.left_bound = toLineString3d(utils::calcBound(
-    planner_data_->route_handler, shorten_lanes, avoidance_parameters_->use_hatched_road_markings,
-    avoidance_parameters_->use_intersection_areas, true));
+    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, true));
   data.right_bound = toLineString3d(utils::calcBound(
-    planner_data_->route_handler, shorten_lanes, avoidance_parameters_->use_hatched_road_markings,
-    avoidance_parameters_->use_intersection_areas, false));
+    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, false));
 
   // get related objects from dynamic_objects, and then separates them as target objects and non
   // target objects
@@ -187,7 +185,7 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
 }
 
 void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
-  AvoidancePlanningData & data, DebugData & debug) const
+  AvoidancePlanningData & data, [[maybe_unused]] DebugData & debug) const
 {
   const auto p = std::dynamic_pointer_cast<AvoidanceParameters>(avoidance_parameters_);
 
@@ -227,7 +225,9 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
       [&](const auto & object) { return createObjectData(data, object); });
   }
 
-  utils::avoidance::filterTargetObjects(target_lane_objects, data, debug, planner_data_, p);
+  utils::avoidance::filterTargetObjects(
+    target_lane_objects, data, avoidance_parameters_->object_check_max_forward_distance,
+    planner_data_, p);
 }
 
 ObjectData AvoidanceByLaneChange::createObjectData(
