@@ -43,7 +43,6 @@
         <arg name="src_image" value="$(var src_image)"/>
         <arg name="src_info" value="$(var src_info)"/>
         <arg name="input_pose" value="$(var input_pose)"/>
-        <arg name="multi_localizer_mode" value="$(var multi_localizer_mode)"/>
       </include>
     </group>
 
