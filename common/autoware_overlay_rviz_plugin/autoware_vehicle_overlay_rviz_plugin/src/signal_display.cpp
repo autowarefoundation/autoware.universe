@@ -324,7 +324,7 @@ void SignalDisplay::drawWidget(QImage & hud)
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   QRectF backgroundRect(0, 0, 322, hud.height());
-  drawBackground(painter, backgroundRect);
+  drawHorizontalRoundedRectangle(painter, backgroundRect);
 
   // Draw components
   if (steering_wheel_display_) {
@@ -342,9 +342,9 @@ void SignalDisplay::drawWidget(QImage & hud)
 
   // a 27px space between the two halves of the HUD
 
-  QRectF smallerBackgroundRect(349, 0, 168, hud.height() / 2);
+  QRectF smallerBackgroundRect(340, 0, 190 / 2, hud.height());
 
-  drawBackground(painter, smallerBackgroundRect);
+  drawVerticalRoundedRectangle(painter, smallerBackgroundRect);
 
   if (traffic_display_) {
     traffic_display_->drawTrafficLightIndicator(painter, smallerBackgroundRect);
@@ -357,7 +357,8 @@ void SignalDisplay::drawWidget(QImage & hud)
   painter.end();
 }
 
-void SignalDisplay::drawBackground(QPainter & painter, const QRectF & backgroundRect)
+void SignalDisplay::drawHorizontalRoundedRectangle(
+  QPainter & painter, const QRectF & backgroundRect)
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
@@ -369,6 +370,19 @@ void SignalDisplay::drawBackground(QPainter & painter, const QRectF & background
   painter.setPen(Qt::NoPen);
   painter.drawRoundedRect(
     backgroundRect, backgroundRect.height() / 2, backgroundRect.height() / 2);  // Circular ends
+}
+void SignalDisplay::drawVerticalRoundedRectangle(QPainter & painter, const QRectF & backgroundRect)
+{
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  QColor colorFromHSV;
+  colorFromHSV.setHsv(0, 0, 0);  // Hue, Saturation, Value
+  colorFromHSV.setAlphaF(0.65);  // Transparency
+
+  painter.setBrush(colorFromHSV);
+
+  painter.setPen(Qt::NoPen);
+  painter.drawRoundedRect(
+    backgroundRect, backgroundRect.width() / 2, backgroundRect.width() / 2);  // Circular ends
 }
 
 void SignalDisplay::reset()

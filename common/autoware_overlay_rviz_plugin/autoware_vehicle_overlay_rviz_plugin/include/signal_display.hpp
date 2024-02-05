@@ -84,7 +84,8 @@ private:
   std::unique_ptr<rviz_common::properties::RosTopicProperty> traffic_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> speed_limit_topic_property_;
 
-  void drawBackground(QPainter & painter, const QRectF & backgroundRect);
+  void drawHorizontalRoundedRectangle(QPainter & painter, const QRectF & backgroundRect);
+  void drawVerticalRoundedRectangle(QPainter & painter, const QRectF & backgroundRect);
   void setupRosSubscriptions();
 
   std::unique_ptr<SteeringWheelDisplay> steering_wheel_display_;
