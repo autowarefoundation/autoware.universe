@@ -359,7 +359,13 @@ void SignalDisplay::drawWidget(QImage & hud)
 
 void SignalDisplay::drawBackground(QPainter & painter, const QRectF & backgroundRect)
 {
-  painter.setBrush(QColor(0, 0, 0, 255 * 0.2));  // Black background with opacity
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  QColor colorFromHSV;
+  colorFromHSV.setHsv(0, 0, 0);  // Hue, Saturation, Value
+  colorFromHSV.setAlphaF(0.65);  // Transparency
+
+  painter.setBrush(colorFromHSV);
+
   painter.setPen(Qt::NoPen);
   painter.drawRoundedRect(
     backgroundRect, backgroundRect.height() / 2, backgroundRect.height() / 2);  // Circular ends
