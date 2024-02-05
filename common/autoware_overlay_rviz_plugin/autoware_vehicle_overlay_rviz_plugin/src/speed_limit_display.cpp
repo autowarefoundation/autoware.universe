@@ -67,9 +67,9 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
 
   // Define the area for the outer circle
   QRectF outerCircleRect = backgroundRect;
-  outerCircleRect.setWidth(backgroundRect.width() / 2 - 20);
-  outerCircleRect.setHeight(backgroundRect.height() - 20);
-  outerCircleRect.moveTopLeft(QPointF(backgroundRect.left() + 10, backgroundRect.top() + 10));
+  outerCircleRect.setWidth(backgroundRect.width() - 30);
+  outerCircleRect.setHeight(backgroundRect.width() - 30);
+  outerCircleRect.moveTopLeft(QPointF(backgroundRect.left() + 15, backgroundRect.top() + 10));
 
   // Define the area for the inner circle
   QRectF innerCircleRect = outerCircleRect;

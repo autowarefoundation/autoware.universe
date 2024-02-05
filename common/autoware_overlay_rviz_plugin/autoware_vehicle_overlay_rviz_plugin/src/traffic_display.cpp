@@ -60,10 +60,11 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   painter.setBrush(QBrush(gray, Qt::SolidPattern));
   // Define the area for the circle (background)
   QRectF circleRect = backgroundRect;
-  circleRect.setWidth(backgroundRect.width() / 2 - 20);
-  circleRect.setHeight(backgroundRect.height() - 20);
-  circleRect.moveTopRight(QPointF(backgroundRect.right() - 10, backgroundRect.top() + 10));
-
+  circleRect.setWidth(backgroundRect.width() - 30);
+  circleRect.setHeight(backgroundRect.width() - 30);
+  circleRect.moveTopRight(QPointF(
+    backgroundRect.left() + circleRect.width() + 15,
+    backgroundRect.top() + circleRect.height() + 30));
   painter.drawEllipse(circleRect);
 
   if (current_traffic_.signals.size() > 0) {
