@@ -55,50 +55,60 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
+  // #C2C2C2
+  painter.setPen(QPen(gray, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  painter.setBrush(QBrush(gray, Qt::SolidPattern));
   // Define the area for the circle (background)
   QRectF circleRect = backgroundRect;
   circleRect.setWidth(backgroundRect.width() / 2 - 20);
   circleRect.setHeight(backgroundRect.height() - 20);
   circleRect.moveTopRight(QPointF(backgroundRect.right() - 10, backgroundRect.top() + 10));
 
-  painter.setBrush(QBrush(gray));
-  painter.drawEllipse(circleRect.center(), 30, 30);
-
-  // Define the area for the traffic light image (should be smaller or positioned within the circle)
-  QRectF imageRect =
-    circleRect.adjusted(15, 15, -15, -15);  // Adjusting the rectangle to make the image smaller
-
-  QImage scaled_traffic_image = traffic_light_image_.scaled(
-    imageRect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  painter.drawEllipse(circleRect);
 
   if (current_traffic_.signals.size() > 0) {
     switch (current_traffic_.signals[0].elements[0].color) {
       case 1:
         painter.setBrush(QBrush(red));
-        painter.drawEllipse(circleRect.center(), 30, 30);
+        painter.drawEllipse(circleRect);
         break;
       case 2:
         painter.setBrush(QBrush(yellow));
-        painter.drawEllipse(circleRect.center(), 30, 30);
+        painter.drawEllipse(circleRect);
         break;
       case 3:
         painter.setBrush(QBrush(green));
-        painter.drawEllipse(circleRect.center(), 30, 30);
+        painter.drawEllipse(circleRect);
         break;
       case 4:
         painter.setBrush(QBrush(gray));
-        painter.drawEllipse(circleRect.center(), 30, 30);
+        painter.drawEllipse(circleRect);
         break;
       default:
         painter.setBrush(QBrush(gray));
-        painter.drawEllipse(circleRect.center(), 30, 30);
+        painter.drawEllipse(circleRect);
         break;
     }
   }
-  // make the image thicker
-  painter.setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
-  painter.drawImage(imageRect, scaled_traffic_image);
+  // Scaling factor (e.g., 1.5 for 150% size)
+  qreal scaleFactor = 1.25;
+
+  // Calculate the scaled size
+  QSize scaledSize = traffic_light_image_.size() * scaleFactor;
+
+  // Ensure the scaled image is still within the circle bounds or adjust scaleFactor accordingly
+
+  // Calculate the centered rectangle for the scaled image
+  QRectF scaledImageRect(0, 0, scaledSize.width(), scaledSize.height());
+  scaledImageRect.moveCenter(circleRect.center());
+
+  // Scale the image to the new size
+  QImage scaledTrafficImage =
+    traffic_light_image_.scaled(scaledSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+  // Draw the scaled and centered image
+  painter.drawImage(scaledImageRect.topLeft(), scaledTrafficImage);
 }
 
 QImage TrafficDisplay::coloredImage(const QImage & source, const QColor & color)
