@@ -54,14 +54,15 @@ std::optional<T> getObstacleFromUuid(
   return *itr;
 }
 
-bool isFrontObstacle(
+std::optional<double> calcDistanceToFrontVehicle(
   const std::vector<TrajectoryPoint> & traj_points, const size_t ego_idx,
-  const geometry_msgs::msg::Point & obstacle_pos, double * ego_to_obstacle_distance)
+  const geometry_msgs::msg::Point & obstacle_pos)
 {
   const size_t obstacle_idx = motion_utils::findNearestIndex(traj_points, obstacle_pos);
-
-  *ego_to_obstacle_distance = motion_utils::calcSignedArcLength(traj_points, ego_idx, obstacle_idx);
-  return *ego_to_obstacle_distance >= 0.0;
+  const auto ego_to_obstacle_distance =
+    motion_utils::calcSignedArcLength(traj_points, ego_idx, obstacle_idx);
+  if (ego_to_obstacle_distance < 0.0) return std::nullopt;
+  return ego_to_obstacle_distance;
 }
 
 PredictedPath resampleHighestConfidencePredictedPath(
@@ -629,10 +630,9 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
 
     // 2. Check if the obstacle is in front of the ego.
     const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, ego_odom_ptr_->pose.pose);
-    double ego_to_obstacle_distance;
-    const bool is_front_obstacle = isFrontObstacle(
-      traj_points, ego_idx, current_obstacle_pose.pose.position, &ego_to_obstacle_distance);
-    if (!is_front_obstacle) {
+    const auto ego_to_obstacle_distance =
+      calcDistanceToFrontVehicle(traj_points, ego_idx, current_obstacle_pose.pose.position);
+    if (!ego_to_obstacle_distance) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), enable_debug_info_, "Ignore obstacle (%s) since it is not front obstacle.",
         object_id.c_str());
@@ -640,10 +640,10 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     }
 
     // 3. Check if rough lateral distance is smaller than the threshold
-    double lat_dist_from_obstacle_to_traj;
+    double lat_dist_from_obstacle_to_traj =
+      motion_utils::calcLateralOffset(traj_points, current_obstacle_pose.pose.position);
+
     const double min_lat_dist_to_traj_poly = [&]() {
-      lat_dist_from_obstacle_to_traj =
-        motion_utils::calcLateralOffset(traj_points, current_obstacle_pose.pose.position);
       const double obstacle_max_length = calcObstacleMaxLength(predicted_object.shape);
       return std::abs(lat_dist_from_obstacle_to_traj) - vehicle_info_.vehicle_width_m -
              obstacle_max_length;
@@ -660,7 +660,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     }
 
     const auto target_obstacle = Obstacle(
-      obj_stamp, predicted_object, current_obstacle_pose.pose, ego_to_obstacle_distance,
+      obj_stamp, predicted_object, current_obstacle_pose.pose, ego_to_obstacle_distance.value(),
       lat_dist_from_obstacle_to_traj);
     target_obstacles.push_back(target_obstacle);
   }
