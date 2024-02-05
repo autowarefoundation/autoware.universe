@@ -211,7 +211,7 @@ private:
     IDEAL_STEER_VEL = 4,
     DELAY_STEER_VEL = 5,
     DELAY_STEER_MAP_ACC_GEARED = 6,
-    PYMODELS = 7
+    LEARNED_STEER_VEL = 7
   } vehicle_model_type_;  //!< @brief vehicle model type to decide the model dynamics
   std::shared_ptr<SimModelInterface> vehicle_model_ptr_;  //!< @brief vehicle model pointer
 

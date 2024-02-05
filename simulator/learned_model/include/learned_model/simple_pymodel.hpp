@@ -1,8 +1,8 @@
-#ifndef LEARNED_MODEL__PYMODEL_SIMPLE_MODEL_HPP_
-#define LEARNED_MODEL__PYMODEL_SIMPLE_MODEL_HPP_
+#ifndef LEARNED_MODEL__SIMPLE_PYMODEL_HPP_
+#define LEARNED_MODEL__SIMPLE_PYMODEL_HPP_
 
 #include "learned_model/model_connections_helpers.hpp"
-#include "learned_model/pymodel_interface.hpp"
+#include "learned_model/submodel_interface.hpp"
 
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
@@ -13,7 +13,7 @@ namespace py = pybind11;
  * @class SimModelPymodels
  * @brief This class is an interface between C++ and python models.
  */
-class PymodelSimpleModel : public PymodelInterface
+class SimplePymodel : public SubModelInterface
 {
 private:
   std::string pymodel_import_name;
@@ -40,7 +40,7 @@ public:
    * @param [in] param_file_path path to saved parameter file of the python sub-model
    * @param [in] py_class_name name of the python class
    */
-  PymodelSimpleModel(std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name);
+  SimplePymodel(std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name);
 
   /**
    * @brief calculate the next state of a python model
@@ -79,4 +79,4 @@ public:
 
 };
 
-#endif  // LEARNED_MODEL__PYMODEL_SIMPLE_MODEL_HPP_
+#endif  // LEARNED_MODEL__SIMPLE_PYMODEL_HPP_

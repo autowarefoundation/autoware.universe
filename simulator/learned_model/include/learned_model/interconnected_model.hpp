@@ -1,9 +1,9 @@
-#ifndef LEARNED_MODEL__PYMODEL_INTERCONNECTED_MODEL_HPP_
-#define LEARNED_MODEL__PYMODEL_INTERCONNECTED_MODEL_HPP_
+#ifndef LEARNED_MODEL__INTERCONNECTED_MODEL_HPP_
+#define LEARNED_MODEL__INTERCONNECTED_MODEL_HPP_
 
 #include "learned_model/model_connections_helpers.hpp"
-#include "learned_model/pymodel_interface.hpp"
-#include "learned_model/pymodel_simple_model.hpp"
+#include "learned_model/submodel_interface.hpp"
+#include "learned_model/simple_pymodel.hpp"
 
 #include <dlfcn.h>
 #include <pybind11/embed.h>
@@ -20,7 +20,7 @@ class __attribute__ ((visibility ("default"))) InterconnectedModel
   std::vector<double> model_signals_vec;
   int num_signals;
 
-  std::vector<std::unique_ptr<PymodelInterface>> submodels;
+  std::vector<std::unique_ptr<SubModelInterface>> submodels;
 
   // index in "map_in_to_sig_vec" is index in "py_inputs" and value in "map_in_to_sig_vec" is index
   // in "all_variables_names"
@@ -108,4 +108,4 @@ public:
   std::vector<double> updatePymodel(std::vector<double> psim_input);
 };
 
-#endif  // LEARNED_MODEL__PYMODEL_INTERCONNECTED_MODEL_HPP_
+#endif  // LEARNED_MODEL__INTERCONNECTED_MODEL_HPP_

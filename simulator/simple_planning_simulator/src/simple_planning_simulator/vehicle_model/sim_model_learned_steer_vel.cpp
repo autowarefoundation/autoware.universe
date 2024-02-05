@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "simple_planning_simulator/vehicle_model/sim_model_pymodels.hpp"
+#include "simple_planning_simulator/vehicle_model/sim_model_learned_steer_vel.hpp"
 
-#include "learned_model/pymodel_interconnected_model.hpp"
+#include "learned_model/interconnected_model.hpp"
 
 #include <algorithm>
 
-SimModelPymodels::SimModelPymodels(double dt, 
+SimModelLearnedSteerVel::SimModelLearnedSteerVel(double dt, 
                                   std::vector<std::string> model_python_paths, 
                                   std::vector<std::string> model_param_paths, 
                                   std::vector<std::string> model_class_names
@@ -38,39 +38,39 @@ SimModelPymodels::SimModelPymodels(double dt,
   std::cout << "Python model loaded successfully " << std::endl;
 }
 
-double SimModelPymodels::getX()
+double SimModelLearnedSteerVel::getX()
 {
   return state_(IDX::X);
 }
-double SimModelPymodels::getY()
+double SimModelLearnedSteerVel::getY()
 {
   return state_(IDX::Y);
 }
-double SimModelPymodels::getYaw()
+double SimModelLearnedSteerVel::getYaw()
 {
   return state_(IDX::YAW);
 }
-double SimModelPymodels::getVx()
+double SimModelLearnedSteerVel::getVx()
 {
   return state_(IDX::VX);
 }
-double SimModelPymodels::getVy()
+double SimModelLearnedSteerVel::getVy()
 {
   return state_(IDX::VY);
 }
-double SimModelPymodels::getAx()
+double SimModelLearnedSteerVel::getAx()
 {
   return current_ax_;
 }
-double SimModelPymodels::getWz()
+double SimModelLearnedSteerVel::getWz()
 {
   return state_(IDX::YAW_RATE);
 }
-double SimModelPymodels::getSteer()
+double SimModelLearnedSteerVel::getSteer()
 {
   return state_(IDX::STEER);
 }
-void SimModelPymodels::update(const double & dt)
+void SimModelLearnedSteerVel::update(const double & dt)
 {
   // Eigen::VectorXd to std::vector<double> for model input
   std::vector<double> vehicle_input_(input_.data(), input_.data() + input_.size());

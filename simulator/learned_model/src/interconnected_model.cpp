@@ -1,4 +1,4 @@
-#include "learned_model/pymodel_interconnected_model.hpp"
+#include "learned_model/interconnected_model.hpp"
 
 
 void InterconnectedModel::mapInputs(std::vector<char *> in_names)
@@ -59,8 +59,8 @@ void InterconnectedModel::generateConnections(std::vector<char *> in_names, std:
 void InterconnectedModel::addSubmodel(std::tuple<std::string, std::string, std::string> submodel_desc)
 {
     const auto [lib_path, param_path, class_name] = submodel_desc;
-    auto new_model = new PymodelSimpleModel(lib_path, param_path, class_name);
-    submodels.push_back(std::unique_ptr<PymodelSimpleModel>(new_model));
+    auto new_model = new SimplePymodel(lib_path, param_path, class_name);
+    submodels.push_back(std::unique_ptr<SimplePymodel>(new_model));
 }
 
 void InterconnectedModel::initState(std::vector<double> new_state)
