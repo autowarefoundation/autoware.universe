@@ -66,7 +66,8 @@ double SimModelDelaySteerAcc::getAx()
 }
 double SimModelDelaySteerAcc::getWz()
 {
-  return state_(IDX::VX) * std::tan(state_(IDX::STEER) + steer_bias_) / wheelbase_;
+  return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
+  ;
 }
 double SimModelDelaySteerAcc::getSteer()
 {
