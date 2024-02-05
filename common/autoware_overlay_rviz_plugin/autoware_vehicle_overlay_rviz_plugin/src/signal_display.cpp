@@ -47,7 +47,7 @@ SignalDisplay::SignalDisplay()
   property_top_ = new rviz_common::properties::IntProperty(
     "Top", 10, "Top position of the overlay", this, SLOT(updateOverlayPosition()));
   property_signal_color_ = new rviz_common::properties::ColorProperty(
-    "Signal Color", QColor(94, 130, 255), "Color of the signal arrows", this,
+    "Signal Color", QColor(25, 18, 89), "Color of the signal arrows", this,
     SLOT(updateOverlayColor()));
 
   // Initialize the component displays

@@ -47,7 +47,7 @@ public:
 
 private:
   QImage arrowImage;
-  QColor gray = QColor(194, 194, 194);
+  QColor gray = QColor(46, 46, 46);
 
   int current_turn_signal_;    // Internal variable to store turn signal state
   int current_hazard_lights_;  // Internal variable to store hazard lights state
