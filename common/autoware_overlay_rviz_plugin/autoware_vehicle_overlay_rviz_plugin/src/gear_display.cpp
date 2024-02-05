@@ -92,7 +92,7 @@ void GearDisplay::drawGearIndicator(QPainter & painter, const QRectF & backgroun
   int gearY = backgroundRect.height() - gearBoxSize - 20;
   QRect gearRect(gearX, gearY, gearBoxSize, gearBoxSize);
   painter.setBrush(QColor(0, 0, 0, 0));
-  painter.drawRoundedRect(gearRect, 5, 5);
+  painter.drawRoundedRect(gearRect, 10, 10);
   painter.drawText(gearRect, Qt::AlignCenter, QString::fromStdString(gearString));
 }
 
