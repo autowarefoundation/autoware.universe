@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>awf_2d_overlay_vehicle</name>
+  <name>autoware_vehicle_overlay_rviz_plugin</name>
   <version>0.0.1</version>
   <description>
     RViz2 plugin for 2D overlays in the 3D view. Mainly a port of the JSK overlay plugin
@@ -14,7 +14,7 @@
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>boost</depend>
-  <depend>rviz_2d_overlay_msgs</depend>
+  <depend>autoware_overlay_msgs</depend>
   <depend>rviz_common</depend>
   <depend>rviz_ogre_vendor</depend>
   <depend>rviz_rendering</depend>

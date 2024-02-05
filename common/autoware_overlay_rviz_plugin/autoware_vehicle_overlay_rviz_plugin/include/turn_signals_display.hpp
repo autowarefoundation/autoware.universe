@@ -32,7 +32,7 @@
 
 #include <chrono>
 
-namespace awf_2d_overlay_vehicle
+namespace autoware_vehicle_overlay_rviz_plugin
 {
 
 class TurnSignalsDisplay
@@ -58,6 +58,6 @@ private:
   const std::chrono::milliseconds blink_interval_{500};  // Blink interval in milliseconds
 };
 
-}  // namespace awf_2d_overlay_vehicle
+}  // namespace autoware_vehicle_overlay_rviz_plugin
 
 #endif  // TURN_SIGNALS_DISPLAY_HPP_

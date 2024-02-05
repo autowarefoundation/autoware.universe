@@ -67,7 +67,7 @@
 #include <regex>
 #include <sstream>
 
-namespace awf_2d_overlay_vehicle
+namespace autoware_vehicle_overlay_rviz_plugin
 {
 OverlayTextDisplay::OverlayTextDisplay()
 : texture_width_(0),
@@ -105,15 +105,15 @@ OverlayTextDisplay::OverlayTextDisplay()
   hor_alignment_property_ = new rviz_common::properties::EnumProperty(
     "hor_alignment", "left", "horizontal alignment of the overlay", this,
     SLOT(updateHorizontalAlignment()));
-  hor_alignment_property_->addOption("left", rviz_2d_overlay_msgs::msg::OverlayText::LEFT);
-  hor_alignment_property_->addOption("center", rviz_2d_overlay_msgs::msg::OverlayText::CENTER);
-  hor_alignment_property_->addOption("right", rviz_2d_overlay_msgs::msg::OverlayText::RIGHT);
+  hor_alignment_property_->addOption("left", autoware_overlay_msgs::msg::OverlayText::LEFT);
+  hor_alignment_property_->addOption("center", autoware_overlay_msgs::msg::OverlayText::CENTER);
+  hor_alignment_property_->addOption("right", autoware_overlay_msgs::msg::OverlayText::RIGHT);
   ver_alignment_property_ = new rviz_common::properties::EnumProperty(
     "ver_alignment", "top", "vertical alignment of the overlay", this,
     SLOT(updateVerticalAlignment()));
-  ver_alignment_property_->addOption("top", rviz_2d_overlay_msgs::msg::OverlayText::TOP);
-  ver_alignment_property_->addOption("center", rviz_2d_overlay_msgs::msg::OverlayText::CENTER);
-  ver_alignment_property_->addOption("bottom", rviz_2d_overlay_msgs::msg::OverlayText::BOTTOM);
+  ver_alignment_property_->addOption("top", autoware_overlay_msgs::msg::OverlayText::TOP);
+  ver_alignment_property_->addOption("center", autoware_overlay_msgs::msg::OverlayText::CENTER);
+  ver_alignment_property_->addOption("bottom", autoware_overlay_msgs::msg::OverlayText::BOTTOM);
   width_property_ = new rviz_common::properties::IntProperty(
     "width", 128, "width position", this, SLOT(updateWidth()));
   width_property_->setMin(0);
@@ -212,7 +212,7 @@ void OverlayTextDisplay::update(float /*wall_dt*/, float /*ros_dt*/)
 
   overlay_->updateTextureSize(texture_width_, texture_height_);
   {
-    awf_2d_overlay_vehicle::ScopedPixelBuffer buffer = overlay_->getBuffer();
+    autoware_vehicle_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
     QImage Hud = buffer.getQImage(*overlay_, bg_color_);
     QPainter painter(&Hud);
     painter.setRenderHint(QPainter::Antialiasing, true);
@@ -288,7 +288,7 @@ void OverlayTextDisplay::reset()
   }
 }
 
-void OverlayTextDisplay::processMessage(rviz_2d_overlay_msgs::msg::OverlayText::ConstSharedPtr msg)
+void OverlayTextDisplay::processMessage(autoware_overlay_msgs::msg::OverlayText::ConstSharedPtr msg)
 {
   if (!isEnabled()) {
     return;
@@ -297,13 +297,13 @@ void OverlayTextDisplay::processMessage(rviz_2d_overlay_msgs::msg::OverlayText::
     static int count = 0;
     std::stringstream ss;
     ss << "OverlayTextDisplayObject" << count++;
-    overlay_.reset(new awf_2d_overlay_vehicle::OverlayObject(ss.str()));
+    overlay_.reset(new autoware_vehicle_overlay_rviz_plugin::OverlayObject(ss.str()));
     overlay_->show();
   }
   if (overlay_) {
-    if (msg->action == rviz_2d_overlay_msgs::msg::OverlayText::DELETE) {
+    if (msg->action == autoware_overlay_msgs::msg::OverlayText::DELETE) {
       overlay_->hide();
-    } else if (msg->action == rviz_2d_overlay_msgs::msg::OverlayText::ADD) {
+    } else if (msg->action == autoware_overlay_msgs::msg::OverlayText::ADD) {
       overlay_->show();
     }
   }
@@ -550,7 +550,8 @@ void OverlayTextDisplay::updateLineWidth()
   }
 }
 
-}  // namespace awf_2d_overlay_vehicle
+}  // namespace autoware_vehicle_overlay_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(awf_2d_overlay_vehicle::OverlayTextDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(
+  autoware_vehicle_overlay_rviz_plugin::OverlayTextDisplay, rviz_common::Display)

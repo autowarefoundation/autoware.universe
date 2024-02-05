@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SPEED_DISPLAY_HPP_
-#define SPEED_DISPLAY_HPP_
+#ifndef SPEED_LIMIT_DISPLAY_HPP_
+#define SPEED_LIMIT_DISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -23,27 +23,27 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
 
-#include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
 
-namespace awf_2d_overlay_vehicle
+namespace autoware_vehicle_overlay_rviz_plugin
 {
 
-class SpeedDisplay
+class SpeedLimitDisplay
 {
 public:
-  SpeedDisplay();
-  void drawSpeedDisplay(QPainter & painter, const QRectF & backgroundRect);
-  void updateSpeedData(const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr & msg);
+  SpeedLimitDisplay();
+  void drawSpeedLimitIndicator(QPainter & painter, const QRectF & backgroundRect);
+  void updateSpeedLimitData(const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
 
 private:
-  float current_speed_;  // Internal variable to store current speed
+  float current_limit;  // Internal variable to store current gear
   QColor gray = QColor(194, 194, 194);
 };
 
-}  // namespace awf_2d_overlay_vehicle
+}  // namespace autoware_vehicle_overlay_rviz_plugin
 
-#endif  // SPEED_DISPLAY_HPP_
+#endif  // SPEED_LIMIT_DISPLAY_HPP_

@@ -33,7 +33,7 @@
 #include <mutex>
 #include <string>
 
-namespace awf_2d_overlay_vehicle
+namespace autoware_vehicle_overlay_rviz_plugin
 {
 
 SignalDisplay::SignalDisplay()
@@ -68,7 +68,7 @@ void SignalDisplay::onInitialize()
   static int count = 0;
   std::stringstream ss;
   ss << "SignalDisplayObject" << count++;
-  overlay_.reset(new awf_2d_overlay_vehicle::OverlayObject(ss.str()));
+  overlay_.reset(new autoware_vehicle_overlay_rviz_plugin::OverlayObject(ss.str()));
   overlay_->show();
   updateOverlaySize();
   updateOverlayPosition();
@@ -206,7 +206,7 @@ void SignalDisplay::update(float /* wall_dt */, float /* ros_dt */)
   if (!overlay_) {
     return;
   }
-  awf_2d_overlay_vehicle::ScopedPixelBuffer buffer = overlay_->getBuffer();
+  autoware_vehicle_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
   QImage hud = buffer.getQImage(*overlay_);
   hud.fill(Qt::transparent);
   drawWidget(hud);
@@ -495,7 +495,7 @@ void SignalDisplay::topic_updated_traffic()
         });
 }
 
-}  // namespace awf_2d_overlay_vehicle
+}  // namespace autoware_vehicle_overlay_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(awf_2d_overlay_vehicle::SignalDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(autoware_vehicle_overlay_rviz_plugin::SignalDisplay, rviz_common::Display)

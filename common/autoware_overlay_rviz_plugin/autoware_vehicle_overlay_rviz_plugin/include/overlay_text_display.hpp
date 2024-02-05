@@ -50,7 +50,7 @@
 #ifndef OVERLAY_TEXT_DISPLAY_HPP_
 #define OVERLAY_TEXT_DISPLAY_HPP_
 
-#include "rviz_2d_overlay_msgs/msg/overlay_text.hpp"
+#include "autoware_overlay_msgs/msg/overlay_text.hpp"
 #ifndef Q_MOC_RUN
 #include "overlay_utils.hpp"
 
@@ -69,10 +69,10 @@
 #include <string>
 #endif
 
-namespace awf_2d_overlay_vehicle
+namespace autoware_vehicle_overlay_rviz_plugin
 {
 class OverlayTextDisplay
-: public rviz_common::RosTopicDisplay<rviz_2d_overlay_msgs::msg::OverlayText>
+: public rviz_common::RosTopicDisplay<autoware_overlay_msgs::msg::OverlayText>
 {
   Q_OBJECT
 public:
@@ -80,7 +80,7 @@ public:
   virtual ~OverlayTextDisplay();
 
 protected:
-  awf_2d_overlay_vehicle::OverlayObject::SharedPtr overlay_;
+  autoware_vehicle_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
 
   int texture_width_;
   int texture_height_;
@@ -150,8 +150,8 @@ protected Q_SLOTS:
   void updateLineWidth();
 
 private:
-  void processMessage(rviz_2d_overlay_msgs::msg::OverlayText::ConstSharedPtr msg) override;
+  void processMessage(autoware_overlay_msgs::msg::OverlayText::ConstSharedPtr msg) override;
 };
-}  // namespace awf_2d_overlay_vehicle
+}  // namespace autoware_vehicle_overlay_rviz_plugin
 
 #endif  // OVERLAY_TEXT_DISPLAY_HPP_

@@ -31,12 +31,13 @@
 #include <memory>
 #include <string>
 
-namespace awf_2d_overlay_vehicle
+namespace autoware_vehicle_overlay_rviz_plugin
 {
 
 GearDisplay::GearDisplay() : current_gear_(0)
 {
-  std::string package_path = ament_index_cpp::get_package_share_directory("awf_2d_overlay_vehicle");
+  std::string package_path =
+    ament_index_cpp::get_package_share_directory("autoware_vehicle_overlay_rviz_plugin");
   std::string font_path = package_path + "/assets/font/Quicksand/static/Quicksand-Regular.ttf";
   std::string font_path2 = package_path + "/assets/font/Quicksand/static/Quicksand-Bold.ttf";
   int fontId = QFontDatabase::addApplicationFont(
@@ -95,4 +96,4 @@ void GearDisplay::drawGearIndicator(QPainter & painter, const QRectF & backgroun
   painter.drawText(gearRect, Qt::AlignCenter, QString::fromStdString(gearString));
 }
 
-}  // namespace awf_2d_overlay_vehicle
+}  // namespace autoware_vehicle_overlay_rviz_plugin

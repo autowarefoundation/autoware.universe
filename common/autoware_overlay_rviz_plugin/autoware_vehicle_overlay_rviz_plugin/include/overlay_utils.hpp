@@ -54,7 +54,7 @@
 #include <QColor>
 #include <QImage>
 
-#include "rviz_2d_overlay_msgs/msg/overlay_text.hpp"
+#include "autoware_overlay_msgs/msg/overlay_text.hpp"
 
 #include <OgreHardwarePixelBuffer.h>
 #include <OgreMaterialManager.h>
@@ -70,7 +70,7 @@
 #include <memory>
 #include <string>
 
-namespace awf_2d_overlay_vehicle
+namespace autoware_vehicle_overlay_rviz_plugin
 {
 class OverlayObject;
 
@@ -90,15 +90,15 @@ protected:
 };
 
 enum class VerticalAlignment : uint8_t {
-  CENTER = rviz_2d_overlay_msgs::msg::OverlayText::CENTER,
-  TOP = rviz_2d_overlay_msgs::msg::OverlayText::TOP,
-  BOTTOM = rviz_2d_overlay_msgs::msg::OverlayText::BOTTOM,
+  CENTER = autoware_overlay_msgs::msg::OverlayText::CENTER,
+  TOP = autoware_overlay_msgs::msg::OverlayText::TOP,
+  BOTTOM = autoware_overlay_msgs::msg::OverlayText::BOTTOM,
 };
 
 enum class HorizontalAlignment : uint8_t {
-  LEFT = rviz_2d_overlay_msgs::msg::OverlayText::LEFT,
-  RIGHT = rviz_2d_overlay_msgs::msg::OverlayText::RIGHT,
-  CENTER = rviz_2d_overlay_msgs::msg::OverlayText::CENTER
+  LEFT = autoware_overlay_msgs::msg::OverlayText::LEFT,
+  RIGHT = autoware_overlay_msgs::msg::OverlayText::RIGHT,
+  CENTER = autoware_overlay_msgs::msg::OverlayText::CENTER
 };
 
 /**
@@ -136,6 +136,6 @@ protected:
   Ogre::MaterialPtr panel_material_;
   Ogre::TexturePtr texture_;
 };
-}  // namespace awf_2d_overlay_vehicle
+}  // namespace autoware_vehicle_overlay_rviz_plugin
 
 #endif  // OVERLAY_UTILS_HPP_

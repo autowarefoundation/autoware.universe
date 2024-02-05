@@ -31,13 +31,14 @@
 #include <memory>
 #include <string>
 
-namespace awf_2d_overlay_vehicle
+namespace autoware_vehicle_overlay_rviz_plugin
 {
 
 TrafficDisplay::TrafficDisplay()
 {
   // Load the traffic light image
-  std::string package_path = ament_index_cpp::get_package_share_directory("awf_2d_overlay_vehicle");
+  std::string package_path =
+    ament_index_cpp::get_package_share_directory("autoware_vehicle_overlay_rviz_plugin");
   std::string image_path = package_path + "/assets/images/traffic.png";
   traffic_light_image_.load(image_path.c_str());
 }
@@ -110,4 +111,4 @@ QImage TrafficDisplay::coloredImage(const QImage & source, const QColor & color)
   return result;
 }
 
-}  // namespace awf_2d_overlay_vehicle
+}  // namespace autoware_vehicle_overlay_rviz_plugin

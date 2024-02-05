@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(awf_2d_overlay_vehicle)
+project(autoware_vehicle_overlay_rviz_plugin)
 
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
@@ -9,7 +9,7 @@ find_package(tier4_planning_msgs REQUIRED)
 find_package(autoware_perception_msgs REQUIRED)
 ament_auto_find_build_dependencies()
 
-find_package(rviz_2d_overlay_msgs REQUIRED)
+find_package(autoware_overlay_msgs REQUIRED)
 
 find_package(rviz_common REQUIRED)
 find_package(rviz_rendering REQUIRED)
@@ -90,7 +90,7 @@ ament_target_dependencies(
         PUBLIC
         rviz_common
         rviz_rendering
-        rviz_2d_overlay_msgs
+        autoware_overlay_msgs
         autoware_auto_vehicle_msgs
         tier4_planning_msgs
         autoware_perception_msgs
@@ -136,5 +136,5 @@ install(
 add_definitions(-DQT_NO_KEYWORDS)
 
 ament_package(
-        CONFIG_EXTRAS "awf_2d_overlay_vehicle-extras.cmake"
+        CONFIG_EXTRAS "autoware_vehicle_overlay_rviz_plugin-extras.cmake"
 )
