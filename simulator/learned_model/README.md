@@ -16,7 +16,7 @@ This library creates an interface between models in Python and PSIM (C++). It is
 <!-- Things to consider:
     - How does it work? -->
 
-Using this Python model interface a PSIM model consisting of sub-models implemented in Python can be created. Each sub-model has string names for all of its inputs/outputs which are used to automatically create model interconnections (see image below).  
+The idea behind this package is that the model we want to use for simulation consists of multiple sub-models (e.g., steering model, drive model, vehicle kinematics, etc.). These sub-models are implemented in Python and can be trainable. Each sub-model has string names for all of its inputs/outputs, which are used to create model interconnections automatically (see image below). This allows us to easily switch sub-models for better customization of the simulator.
 
 ![pymodel_interface](./image/python_model_interface.png "PyModel interface")
 
@@ -24,7 +24,7 @@ Using this Python model interface a PSIM model consisting of sub-models implemen
 
 <!-- Required -->
 
-To use this package `python3` and `pybind11` need to be installed. The only assumption on Python sub-models is their interface (see below).
+To use this package `python3` and `pybind11` need to be installed. The only assumption on Python sub-models is their interface.
 
 ```python
 class PythonSubmodelInterface:
@@ -81,16 +81,16 @@ To successfully create a vehicle model an InterconnectedModel class needs to be 
 ### InterconnectedModel class
 
 #### ```Constructor```
-Constructor takes no arguments.
+The constructor takes no arguments.
 
 #### ```void addSubmodel(std::tuple<std::string, std::string, std::string> model_descriptor)```
 Add a new sub-model to the model.
 
 Inputs:
-* model_descriptor: Describes what model should be used. Model descriptor contains three strings:
-    * First string is a path to a file where the model is implemented.
-    * Second string is a path to the file where model parameters are stored
-    * Third string is a name of the class that implement the model.
+* model_descriptor: Describes what model should be used. The model descriptor contains three strings:
+    * The first string is a path to a file where the model is implemented.
+    * The second string is a path to the file where model parameters are stored.
+    * The third string is the name of the class that implements the model.
 
 Outputs:
 * None 
