@@ -13,7 +13,7 @@
 
 namespace py = pybind11;
 
-class InterconnectedModel
+class __attribute__ ((visibility ("default"))) InterconnectedModel
 {
   // Vector of unique names of inputs and outputs of sub-models
   std::vector<char *> signals_vec_names;
