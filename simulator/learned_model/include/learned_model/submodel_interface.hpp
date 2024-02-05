@@ -1,9 +1,9 @@
-#ifndef LEARNED_MODEL__PYMODEL_INTERFACE_HPP_
-#define LEARNED_MODEL__PYMODEL_INTERFACE_HPP_
+#ifndef LEARNED_MODEL__SUBMODEL_INTERFACE_HPP_
+#define LEARNED_MODEL__SUBMODEL_INTERFACE_HPP_
 
 #include <vector>
 
-class PymodelInterface
+class SubModelInterface
 {
 public:
   // virtual ~PymodelInterface() = 0;
@@ -45,4 +45,4 @@ public:
     std::vector<double> model_signals_vec, std::vector<double> model_signals_vec_next) = 0;
 };
 
-#endif  // LEARNED_MODEL__PYMODEL_INTERFACE_HPP_
+#endif  // LEARNED_MODEL__SUBMODEL_INTERFACE_HPP_

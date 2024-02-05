@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_PYMODELS_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_PYMODELS_HPP_
+#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_LEARNED_STEER_VEL_HPP_
+#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_LEARNED_STEER_VEL_HPP_
 
-#include "learned_model/pymodel_interconnected_model.hpp"
+#include "learned_model/interconnected_model.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 #include <Eigen/Core>
@@ -29,17 +29,17 @@
 // namespace py = pybind11;
 
 /**
- * @class SimModelPymodels
+ * @class SimModelLearnedSteerVel
  * @brief calculate delay steering dynamics
  */
-class SimModelPymodels : public SimModelInterface /*delay steer velocity*/
+class SimModelLearnedSteerVel : public SimModelInterface /*delay steer velocity*/
 {
 public:
   /**
    * @brief constructor
    * @param [in] dt delta time information to set input buffer for delay
    */
-  SimModelPymodels(double dt, 
+  SimModelLearnedSteerVel(double dt, 
                   std::vector<std::string> model_python_paths, 
                   std::vector<std::string> model_param_paths, 
                   std::vector<std::string> model_class_names);
@@ -47,7 +47,7 @@ public:
   /**
    * @brief destructor
    */
-  ~SimModelPymodels() = default;
+  ~SimModelLearnedSteerVel() = default;
 
 private:
   /*
@@ -142,4 +142,4 @@ private:
   }
 };
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_PYMODELS_HPP_
+#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_LEARNED_STEER_VEL_HPP_

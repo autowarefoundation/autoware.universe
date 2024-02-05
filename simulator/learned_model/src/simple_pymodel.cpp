@@ -1,4 +1,4 @@
-#include "learned_model/pymodel_simple_model.hpp"
+#include "learned_model/simple_pymodel.hpp"
 
 #include <vector>
 
@@ -7,7 +7,7 @@
 
 namespace py = pybind11;
 
-PymodelSimpleModel::PymodelSimpleModel(std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name)
+SimplePymodel::SimplePymodel(std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name)
 {
 // Import model class
 pymodel_import_name = pymodel_import_name_;
@@ -51,7 +51,7 @@ for (int INPUT_IDX = 0; INPUT_IDX < num_inputs_py; INPUT_IDX++) {
 std::cout << "PymodelInterface import name:  " << pymodel_import_name << std::endl;
 }
 
-std::vector<double> PymodelSimpleModel::getNextState(
+std::vector<double> SimplePymodel::getNextState(
     std::vector<double> model_signals_vec, std::vector<double> model_signals_vec_next)
   {
     // get inputs and states of the python model from the vector of signals
@@ -71,20 +71,20 @@ std::vector<double> PymodelSimpleModel::getNextState(
     return next_state;
   }
 
-void PymodelSimpleModel::dtSet(double dt) { py_model_class.attr("dtSet")(dt); }
+void SimplePymodel::dtSet(double dt) { py_model_class.attr("dtSet")(dt); }
 
-std::vector<char *> PymodelSimpleModel::getInputNames() { return pymodel_input_names; }
+std::vector<char *> SimplePymodel::getInputNames() { return pymodel_input_names; }
 
-std::vector<char *> PymodelSimpleModel::getStateNames() { return pymodel_state_names; }
+std::vector<char *> SimplePymodel::getStateNames() { return pymodel_state_names; }
 
-void PymodelSimpleModel::mapInputs(std::vector<char *> signals_vec_names)
+void SimplePymodel::mapInputs(std::vector<char *> signals_vec_names)
 {
 // index in "map_sig_vec_to_pyin" is index in "py_inputs" and value in "map_sig_vec_to_pyin" is
 // index in "signals_vec_names"
 map_sig_vec_to_pyin = createConnectionsMap(signals_vec_names, pymodel_input_names);
 }
 
-void PymodelSimpleModel::mapOutputs(std::vector<char *> signals_vec_names) 
+void SimplePymodel::mapOutputs(std::vector<char *> signals_vec_names) 
 {
     // index in "map_pyout_to_sig_vec" is index in "pymodel_outputs" and value in
     // "map_pyout_to_sig_vec" is index in "signals_vec_names"

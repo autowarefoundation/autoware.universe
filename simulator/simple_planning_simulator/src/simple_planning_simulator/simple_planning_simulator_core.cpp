@@ -285,10 +285,10 @@ void SimplePlanningSimulator::initialize_vehicle_model()
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_bias,
       acceleration_map_path);
-  } else if (vehicle_model_type_str == "PYMODELS"){
-    vehicle_model_type_ = VehicleModelType::PYMODELS;
+  } else if (vehicle_model_type_str == "LEARNED_STEER_VEL"){
+    vehicle_model_type_ = VehicleModelType::LEARNED_STEER_VEL;
 
-    vehicle_model_ptr_ = std::make_shared<SimModelPymodels>(timer_sampling_time_ms_ / 1000.0, 
+    vehicle_model_ptr_ = std::make_shared<SimModelLearnedSteerVel>(timer_sampling_time_ms_ / 1000.0, 
       model_python_paths, model_param_paths, model_class_names);
 
   }else{
@@ -489,7 +489,7 @@ void SimplePlanningSimulator::set_input(
   if (
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL ||
-    vehicle_model_type_ == VehicleModelType::PYMODELS) {
+    vehicle_model_type_ == VehicleModelType::LEARNED_STEER_VEL) {
     input << vel, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
@@ -595,7 +595,7 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) 
     {
     state << x, y, yaw, vx, steer;
-  } else if (vehicle_model_type_ == VehicleModelType::PYMODELS){
+  } else if (vehicle_model_type_ == VehicleModelType::LEARNED_STEER_VEL){
     state << x, y, yaw, yaw_rate, vx, vy, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
