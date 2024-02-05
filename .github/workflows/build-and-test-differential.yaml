@@ -6,6 +6,8 @@ on:
 jobs:
   build-and-test-differential:
     runs-on: ubuntu-latest
+    concurrency:
+      group: staging_environment
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
@@ -66,6 +68,8 @@ jobs:
 
   clang-tidy-differential:
     runs-on: ubuntu-latest
+    concurrency:
+      group: staging_environment
     container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
     needs: build-and-test-differential
     steps:
