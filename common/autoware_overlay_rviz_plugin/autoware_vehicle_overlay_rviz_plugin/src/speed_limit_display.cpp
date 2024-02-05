@@ -80,12 +80,12 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
   // Draw the outer circle
   painter.drawEllipse(outerCircleRect);
 
-  // Change the composition mode and draw the inner circle
-  painter.setCompositionMode(QPainter::CompositionMode_Clear);
-  painter.drawEllipse(innerCircleRect);
+  painter.setRenderHint(QPainter::Antialiasing, true);
+  QColor colorFromHSV;
+  colorFromHSV.setHsv(0, 0, 0);  // Hue, Saturation, Value
 
-  // Reset the composition mode
-  painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+  painter.setBrush(colorFromHSV);
+  painter.drawEllipse(innerCircleRect);
 
   int current_limit_int = std::round(current_limit * 3.6);
 
