@@ -219,7 +219,7 @@ void RadiusSearch2dFilter::filter(
     }
   }
 
-  outlier.points.erase(outlier.points.begin(),outlier.points.begin() + outlier_points_size);
+  outlier.points.erase(outlier.points.begin(), outlier.points.begin() + outlier_points_size);
 }
 
 OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
