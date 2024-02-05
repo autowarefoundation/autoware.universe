@@ -131,6 +131,7 @@ private:
 
   // Object History
   std::unordered_map<std::string, std::deque<ObjectData>> objects_history_;
+  std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
 
   // Lanelet Map Pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
@@ -190,6 +191,9 @@ private:
   double acceleration_exponential_half_life_;
 
   bool use_crosswalk_signal_;
+  double threshold_speed_as_stopping_;
+  std::vector<double> distance_map_for_no_intention_to_walk_;
+  std::vector<double> timeout_map_for_no_intention_to_walk_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
@@ -214,7 +218,8 @@ private:
 
   PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
 
-  void removeOldObjectsHistory(const double current_time);
+  void removeOldObjectsHistory(
+    const double current_time, const TrackedObjects::ConstSharedPtr in_objects);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
@@ -262,6 +267,9 @@ private:
     const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
   std::optional<lanelet::Id> getTrafficSignalId(const lanelet::ConstLanelet & way_lanelet);
   std::optional<TrafficSignalElement> getTrafficSignalElement(const lanelet::Id & id);
+  bool calcIntentionToCrossWithTrafficSgnal(
+    const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
+    const lanelet::Id & signal_id);
 
   visualization_msgs::msg::Marker getDebugMarker(
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
