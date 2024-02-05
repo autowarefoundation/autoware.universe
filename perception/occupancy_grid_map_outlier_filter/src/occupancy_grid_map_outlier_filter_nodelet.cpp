@@ -215,8 +215,8 @@ void RadiusSearch2dFilter::filter(
 
     if (min_points_threshold <= points_num) {
       output.points.push_back(outlier.points.at(i));
-    }else{
-      outlier.points.push_back(outlier.points.at(i)); 
+    } else {
+      outlier.points.push_back(outlier.points.at(i));
     }
   }
 
