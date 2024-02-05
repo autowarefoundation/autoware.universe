@@ -93,7 +93,7 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   }
 
   // Scaling factor (e.g., 1.5 for 150% size)
-  qreal scaleFactor = 1.25;
+  float scaleFactor = 1.25;
 
   // Calculate the scaled size
   QSize scaledSize = traffic_light_image_.size() * scaleFactor;
