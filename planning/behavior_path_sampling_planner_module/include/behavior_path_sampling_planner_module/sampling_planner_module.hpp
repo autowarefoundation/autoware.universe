@@ -129,12 +129,6 @@ public:
       user_params_->target_lateral_velocities;
     internal_params_->sampling.frenet.target_lateral_accelerations =
       user_params_->target_lateral_accelerations;
-    // internal_params_->sampling.bezier.nb_k = user_params_->nb_k;
-    // internal_params_->sampling.bezier.mk_min = user_params_->mk_min;
-    // internal_params_->sampling.bezier.mk_max = user_params_->mk_max;
-    // internal_params_->sampling.bezier.nb_t = user_params_->nb_t;
-    // internal_params_->sampling.bezier.mt_min = user_params_->mt_min;
-    // internal_params_->sampling.bezier.mt_max = user_params_->mt_max;
 
     // Preprocessing
     internal_params_->preprocessing.force_zero_deviation = user_params_->force_zero_deviation;
