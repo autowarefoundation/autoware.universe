@@ -9,10 +9,16 @@
                     "type": "number",
                     "description": "Minimum value for velocity that will be used for EKF. Mainly used for dead zone in velocity sensor [m/s] (0.0 means disabled)",
                     "default": 0.0
+                },
+                "pose_frame_id": {
+                    "type": "string",
+                    "description": "Parent frame_id of EKF output pose",
+                    "default": "map"
                 }
             },
             "required": [
-                "threshold_observable_velocity_mps"
+                "threshold_observable_velocity_mps",
+                "pose_frame_id"
             ],
             "additionalProperties": false
         }
