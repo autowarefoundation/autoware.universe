@@ -56,6 +56,19 @@ OutOfLaneModule::OutOfLaneModule(
   velocity_factor_.init(PlanningBehavior::UNKNOWN);
 }
 
+size_t calculate_index_ahead(
+  const std::vector<PathPointWithLaneId> & points, const size_t start, const double dist_ahead)
+{
+  auto last_idx = start;
+  auto length = 0.0;
+  while (length < dist_ahead && last_idx + 1 < points.size()) {
+    length +=
+      tier4_autoware_utils::calcDistance2d(points[last_idx].point, points[last_idx + 1].point);
+    ++last_idx;
+  }
+  return last_idx;
+}
+
 bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_.reset_data();
@@ -68,15 +81,9 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   ego_data.path.points = path->points;
   ego_data.first_path_idx =
     motion_utils::findNearestSegmentIndex(path->points, ego_data.pose.position);
-  auto last_idx = ego_data.first_path_idx;
-  auto length = 0.0;
-  while (length < std::max(params_.slow_dist_threshold, params_.stop_dist_threshold) &&
-         last_idx + 1 < path->points.size()) {
-    length += tier4_autoware_utils::calcDistance2d(
-      path->points[last_idx].point, path->points[last_idx + 1].point);
-    ++last_idx;
-  }
-  ego_data.path.points.resize(last_idx + 1);
+  ego_data.path.points.resize(calculate_index_ahead(
+    path->points, ego_data.first_path_idx,
+    std::max(params_.slow_dist_threshold, params_.stop_dist_threshold)));
   motion_utils::removeOverlapPoints(ego_data.path.points);
   ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
   ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;
@@ -86,8 +93,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
   // Calculate lanelets to ignore and consider
   stopwatch.tic("calculate_lanelets");
-  const auto path_lanelets =
-    calculate_path_lanelets(ego_data, *planner_data_->route_handler_, current_ego_footprint);
+  const auto path_lanelets = calculate_path_lanelets(ego_data, *planner_data_->route_handler_);
   const auto ignored_lanelets =
     calculate_ignored_lanelets(ego_data, path_lanelets, *planner_data_->route_handler_, params_);
   const auto other_lanelets = calculate_other_lanelets(
@@ -191,7 +197,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   debug_data_.ranges = inputs.ranges;
 
   const auto total_time_us = stopwatch.toc();
-  RCLCPP_DEBUG(
+  RCLCPP_WARN(
     logger_,
     "Total time = %2.2fus\n"
     "\tcalculate_lanelets = %2.0fus\n"
