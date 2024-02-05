@@ -297,6 +297,7 @@ void SignalDisplay::updateSpeedData(
 
   if (speed_display_) {
     speed_display_->updateSpeedData(msg);
+    speed_limit_display_->updateSpeedData(msg);
     queueRender();
   }
 }
