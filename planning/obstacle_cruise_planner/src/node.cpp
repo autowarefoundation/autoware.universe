@@ -640,7 +640,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     }
 
     // 3. Check if rough lateral distance is smaller than the threshold
-    double lat_dist_from_obstacle_to_traj =
+    const double lat_dist_from_obstacle_to_traj =
       motion_utils::calcLateralOffset(traj_points, current_obstacle_pose.pose.position);
 
     const double min_lat_dist_to_traj_poly = [&]() {
