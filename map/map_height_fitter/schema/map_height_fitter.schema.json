@@ -8,7 +8,7 @@
         "properties": {
           "map_loader_name": {
             "type": "string",
-            "description": "Node name of the map loader from which this map_height_fitter will retreive its parameters",
+            "description": "Node name of the map loader from which this map_height_fitter will retrieve its parameters",
             "default": "/map/pointcloud_map_loader"
           }
         },
