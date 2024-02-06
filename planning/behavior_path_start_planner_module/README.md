@@ -148,25 +148,43 @@ The approach to collision safety is divided into two main components: generating
 
 ### 2. Collision detection with dynamic obstacles
 
-- **Collision response policy**: Should a collision with dynamic objects be detected along the generated path, departure is not permitted if detection occurs before movement. If the vehicle has already commenced movement, an attempt to stop will be made, provided it's feasible within the braking constraints and without crossing the travel lane's centerline.
-
 - **Applying RSS in Dynamic Collision Detection**: Collision detection is based on the RSS (Responsibility-Sensitive Safety) model to evaluate if a safe distance is maintained. See [safety check feature explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
 
 - **Collision check performed range**: Safety checks for collisions with dynamic objects are conducted within the defined boundaries between the start and end points of each maneuver, ensuring there is no overlap with the road lane's centerline. This is to avoid hindering the progress of following vehicles. The scope of safety checks varies depending on the type of path generated and will be elaborated upon for each specific maneuver pattern.
 
-#### **collision with dynamic objects for shift pull out**
+- **Collision response policy**: Should a collision with dynamic objects be detected along the generated path, departure is not permitted if detection occurs before movement. If the vehicle has already commenced movement, an attempt to stop will be made, provided it's feasible within the braking constraints and without crossing the travel lane's centerline.
 
-For "shift pull out" maneuvers, safety verification begins at the shift's start and concludes at its end.
+```plantuml
+@startuml
+start
+:Path Generation;
 
-#### **collision with dynamic objects for geometric pull out**
+if (Collision with dynamic objects detected?) then (yes)
+  if (Before movement?) then (yes)
+    :Departure not permitted;
+  else (no)
+    if (Can stop within constraints \n && \n no crossing centerline?) then (yes)
+      :Stop;
+    else (no)
+      :Continue with caution;
+    endif
+  endif
+else (no)
+endif
 
-Given the mid-shift stop, this point serves as the safety verification's endpoint. After halting, safety verification is resumed.
+stop
+@enduml
+```
 
-#### **collision with dynamic objects for backward pull out start point**
+#### **example of safety check performed range for shift pull out**
 
-No safety check is performed during backward movements. Safety verification commences at the point where the backward motion ceases.
+Give an example of safety verification range for shift pull out. The safety check is performed from the start of the shift to the end of the shift. And if the vehicle footprint overlaps with the center line of the road lane, the safety check against dynamic objects is disabled.
 
-![collision_check_range](./images/collision_check_range.drawio.svg)
+<figure markdown>
+  ![safety check performed range for shift pull out](images/collision_check_range_shift_pull_out.drawio.svg){width=1100}
+</figure>
+
+**As a note, no safety check is performed during backward movements. Safety verification commences at the point where the backward motion ceases.**
 
 ## Manual and auto mode behaviors
 
