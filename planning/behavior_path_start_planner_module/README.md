@@ -146,7 +146,7 @@ The approach to collision safety is divided into two main components: generating
   - Why is a margin from the rear object necessary?
     For objects ahead, another behavior module can intervene, allowing the path to overwrite itself through an avoidance plan, even if the clearance from the path to a static obstacle is minimal, thus maintaining a safe distance from static obstacles. However, for objects behind the vehicle, it is impossible for other behavior modules other than the start_planner to alter the path to secure a margin, potentially leading to a deadlock by an action module like "obstacle_stop_cruise" and subsequent immobilization. Therefore, a margin is set for stationary objects at the rear.
 
-Here's the expression of the steps start pose searching steps, considering the threshold levels are set at [2.0, 1.0, 0.5, 0.1 meters] as example. The process is as follows:
+Here's the expression of the steps start pose searching steps, considering the `collision_check_margins` is set at [2.0, 1.0, 0.5, 0.1] as example. The process is as follows:
 
 1. **Generating start pose candidates**
 
@@ -155,11 +155,16 @@ Here's the expression of the steps start pose searching steps, considering the t
    - Generate candidate points for the start pose in the backward direction at intervals defined by `backward_search_resolution`.
    - Include the current position as one of the start pose candidates.
 
+<figure markdown>
+  ![start pose candidate](images/start_pose_candidate.drawio.svg){width=1100}
+</figure>
+
 2. **Starting search at maximum margin**
 
    - Begin the search with the largest threshold (e.g., 2.0 meters).
    - Evaluate each start pose candidate to see if it maintains a margin of more than 2.0 meters.
    - Simultaneously, verify that the path generated from that start pose meets other necessary criteria (e.g., path deviation check).
+   - Following the search priority described later, evaluate each in turn and adopt the start pose if it meets the conditions.
 
 3. **Repeating search according to threshold levels**
 
@@ -173,9 +178,51 @@ Here's the expression of the steps start pose searching steps, considering the t
 5. **Generating a stop path**
    - If no start pose satisfies the conditions at any threshold level, generate a stop path to ensure safety.
 
-<figure markdown>
-  ![start pose candidate](images/start_pose_candidate.drawio.svg){width=1100}
-</figure>
+#### **search priority**
+
+If a safe path with sufficient clearance for static obstacles cannot be generated forward, a backward search from the vehicle's current position is conducted to locate a suitable start point for a pull out path generation.
+
+During this backward search, different policies can be applied based on `search_priority` parameters:
+
+Selecting `efficient_path` focuses on creating a shift pull out path, regardless of how far back the vehicle needs to move.
+Opting for `short_back_distance` aims to find a location with the least possible backward movement.
+
+![priority_order](./images/priority_order.drawio.svg)
+
+`PriorityOrder` is defined as a vector of pairs, where each element consists of a `size_t` index representing a start pose candidate index, and the planner type. The PriorityOrder vector is processed sequentially from the beginning, meaning that the pairs listed at the top of the vector are given priority in the selection process for pull out path generation.
+
+##### `efficient_path`
+
+When `search_priority` is set to `efficient_path` and the preference is for prioritizing `shift_pull_out`, the `PriorityOrder` array is populated in such a way that `shift_pull_out` is grouped together for all start pose candidates before moving on to the next planner type. This prioritization is reflected in the order of the array, with `shift_pull_out` being listed before geometric_pull_out.
+
+| Index | Planner Type       |
+| ----- | ------------------ |
+| 0     | shift_pull_out     |
+| 1     | shift_pull_out     |
+| ...   | ...                |
+| N     | shift_pull_out     |
+| 0     | geometric_pull_out |
+| 1     | geometric_pull_out |
+| ...   | ...                |
+| N     | geometric_pull_out |
+
+This approach prioritizes trying all candidates with `shift_pull_out` before proceeding to `geometric_pull_out`, which may be efficient in situations where `shift_pull_out` is likely to be appropriate.
+
+##### `short_back_distance`
+
+For `search_priority` set to `short_back_distance`, the array alternates between planner types for each start pose candidate, which can minimize the distance the vehicle needs to move backward if the earlier candidates are successful.
+
+| Index | Planner Type       |
+| ----- | ------------------ |
+| 0     | shift_pull_out     |
+| 0     | geometric_pull_out |
+| 1     | shift_pull_out     |
+| 1     | geometric_pull_out |
+| ...   | ...                |
+| N     | shift_pull_out     |
+| N     | geometric_pull_out |
+
+This ordering is beneficial when the priority is to minimize the backward distance traveled, giving an equal chance for each planner to succeed at the closest possible starting position.
 
 ### 2. Collision detection with dynamic obstacles
 
@@ -429,52 +476,6 @@ If a safe path cannot be generated from the current position, search backwards f
 ![pull_out_after_back](./images/pull_out_after_back.drawio.svg)
 
 [pull out after backward driving video](https://user-images.githubusercontent.com/39142679/181025149-8fb9fb51-9b8f-45c4-af75-27572f4fba78.mp4)
-
-### **search priority**
-
-If a safe path with sufficient clearance for static obstacles cannot be generated forward, a backward search from the vehicle's current position is conducted to locate a suitable start point for a pull out path generation.
-
-During this backward search, different policies can be applied based on `search_priority` parameters:
-
-Selecting `efficient_path` focuses on creating a shift pull out path, regardless of how far back the vehicle needs to move.
-Opting for `short_back_distance` aims to find a location with the least possible backward movement.
-
-![priority_order](./images/priority_order.drawio.svg)
-
-`PriorityOrder` is defined as a vector of pairs, where each element consists of a `size_t` index representing a start pose candidate index, and the planner type. The PriorityOrder vector is processed sequentially from the beginning, meaning that the pairs listed at the top of the vector are given priority in the selection process for pull out path generation.
-
-#### `efficient_path`
-
-When `search_priority` is set to `efficient_path` and the preference is for prioritizing `shift_pull_out`, the `PriorityOrder` array is populated in such a way that `shift_pull_out` is grouped together for all start pose candidates before moving on to the next planner type. This prioritization is reflected in the order of the array, with `shift_pull_out` being listed before geometric_pull_out.
-
-| Index | Planner Type       |
-| ----- | ------------------ |
-| 0     | shift_pull_out     |
-| 1     | shift_pull_out     |
-| ...   | ...                |
-| N     | shift_pull_out     |
-| 0     | geometric_pull_out |
-| 1     | geometric_pull_out |
-| ...   | ...                |
-| N     | geometric_pull_out |
-
-This approach prioritizes trying all candidates with `shift_pull_out` before proceeding to `geometric_pull_out`, which may be efficient in situations where `shift_pull_out` is likely to be appropriate.
-
-#### `short_back_distance`
-
-For `search_priority` set to `short_back_distance`, the array alternates between planner types for each start pose candidate, which can minimize the distance the vehicle needs to move backward if the earlier candidates are successful.
-
-| Index | Planner Type       |
-| ----- | ------------------ |
-| 0     | shift_pull_out     |
-| 0     | geometric_pull_out |
-| 1     | shift_pull_out     |
-| 1     | geometric_pull_out |
-| ...   | ...                |
-| N     | shift_pull_out     |
-| N     | geometric_pull_out |
-
-This ordering is beneficial when the priority is to minimize the backward distance traveled, giving an equal chance for each planner to succeed at the closest possible starting position.
 
 ### **parameters for backward pull out start point search**
 
