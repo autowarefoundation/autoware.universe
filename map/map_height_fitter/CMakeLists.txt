@@ -9,6 +9,7 @@ ament_auto_add_library(map_height_fitter SHARED
   src/map_height_fitter.cpp
 )
 target_link_libraries(map_height_fitter ${PCL_LIBRARIES})
+target_compile_options(map_height_fitter PRIVATE -Wno-pedantic)
 
 ament_auto_add_executable(node
   src/node.cpp
