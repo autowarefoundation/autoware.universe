@@ -73,37 +73,29 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-  // Convert color_min and color_max to QColor
-  QColor colorMin = QColor("#FF9999");
-  QColor colorMax = QColor("#FF3333");
-
-  // Calculate the ratio between the current speed and the speed limit
-  double speed_to_limit_ratio = current_speed_ / current_limit;
+  const double color_s_min = 0.4;
+  const double color_s_max = 0.8;
+  QColor colorMin;
+  colorMin.setHsvF(0.0, color_s_min, 1.0);
+  QColor colorMax;
+  colorMax.setHsvF(0.0, color_s_max, 1.0);
 
   QColor borderColor = colorMin;
+  if (current_limit > 0.0) {
+    double speed_to_limit_ratio = current_speed_ / current_limit;
+    const double speed_to_limit_ratio_min = 0.6;
+    const double speed_to_limit_ratio_max = 0.9;
 
-  if (speed_to_limit_ratio > 0.7 && current_limit > 0.0) {
-    // Adjust the interpolation to start more gradually
-    // Calculate a new factor that slows down the transition
-    double adjusted_speed_to_limit_ratio = (speed_to_limit_ratio - 0.7) / (1.0 - 0.7);
-    double smoothFactor =
-      pow(adjusted_speed_to_limit_ratio, 2);  // Use a power to make it interpolate slower
+    if (speed_to_limit_ratio >= speed_to_limit_ratio_max) {
+      borderColor = colorMax;
+    } else if (speed_to_limit_ratio > speed_to_limit_ratio_min) {
+      double interpolation_factor = (speed_to_limit_ratio - speed_to_limit_ratio_min) /
+                                    (speed_to_limit_ratio_max - speed_to_limit_ratio_min);
+      // Interpolate between colorMin and colorMax
+      double saturation = color_s_min + (color_s_max - color_s_min) * interpolation_factor;
 
-    int r = std::min(
-      std::max(
-        0, colorMin.red() + static_cast<int>((colorMax.red() - colorMin.red()) * smoothFactor)),
-      255);
-    int g = std::min(
-      std::max(
-        0,
-        colorMin.green() + static_cast<int>((colorMax.green() - colorMin.green()) * smoothFactor)),
-      255);
-    int b = std::min(
-      std::max(
-        0, colorMin.blue() + static_cast<int>((colorMax.blue() - colorMin.blue()) * smoothFactor)),
-      255);
-
-    borderColor = QColor(r, g, b);
+      borderColor.setHsvF(0.0, saturation, 1.0);
+    }
   }
 
   // Define the area for the outer circle
