@@ -137,7 +137,7 @@ The approach to collision safety is divided into two main components: generating
 - **Clearance from stationary objects**: Maintaining an adequate distance from stationary objects positioned in front of and behind the vehicle is imperative for safety. Despite the path and stationary objects having a confirmed margin, the path is deemed unsafe if the distance from the shift start position to a front stationary object falls below `collision_check_margin_from_front_object` meters, or if the distance to a rear stationary object is shorter than `back_objects_collision_check_margin` meters.
 
   - Why is a margin from the front object necessary?
-    Consider a scenario in a "geometric pull out path" where the clearance from the path to a static obstacle is minimal, and there is a stopped vehicle ahead. In this case, although the path may meet safety standards and thus be generated, a concurrently operating avoidance module might deem it impossible to avoid the obstacle, potentially leading to vehicle deadlock. To ensure there is enough distance for avoidance maneuvers, the distance to the front obstacle is assessed. Increasing this parameter can prevent immobilization within the avoidance module but may also lead to the frequent generation of backward paths or geometric pull out path, resulting in routes that may seem unnatural to humans.
+    Consider a scenario in a "geometric pull out path" where the clearance from the path to a static obstacle is minimal, and there is a stopped vehicle ahead. In this case, although the path may meet safety standards and thus be generated, a concurrently operating avoidance module might deem it impossible to avoid the obstacle, potentially leading to vehicle deadlock. To ensure there is enough distance for avoidance maneuvers, the distance to the front obstacle is assessed. Increasing this parameter can prevent immobilization within the avoidance module but may also lead to the frequent generation of backward paths or geometric pull out path, resulting in paths that may seem unnatural to humans.
 
   - Why is a margin from the rear object necessary?
     For objects ahead, another behavior module can intervene, allowing the path to overwrite itself through an avoidance plan, even if the clearance from the path to a static obstacle is minimal, thus maintaining a safe distance from static obstacles. However, for objects behind the vehicle, it is impossible for other behavior modules other than the start_planner to alter the path to secure a margin, potentially leading to a deadlock by an action module like "obstacle_stop_cruise" and subsequent immobilization. Therefore, a margin is set for stationary objects at the rear.
@@ -167,7 +167,7 @@ Here's the expression of the steps start pose searching steps, considering the `
 4. **Continuing the search**
 
    - Continue the search until a start pose that meets the conditions is found, or the threshold level reaches the minimum value (e.g., 0.1 meter).
-   - The aim of this process is to find a start pose that not only secures as large a margin as possible but also satisfies the conditions required for the route.
+   - The aim of this process is to find a start pose that not only secures as large a margin as possible but also satisfies the conditions required for the path.
 
 5. **Generating a stop path**
    - If no start pose satisfies the conditions at any threshold level, generate a stop path to ensure safety.
@@ -266,11 +266,11 @@ The system operates distinctly under manual and auto mode, especially concerning
 
 #### Forward driving
 
-- **Start approval required**: Even if a route is generated, approval is required to initiate movement. If a dynamic object poses a risk, such as an approaching vehicle from behind, candidate routes may be displayed, but approval is necessary for departure.
+- **Start approval required**: Even if a path is generated, approval is required to initiate movement. If a dynamic object poses a risk, such as an approaching vehicle from behind, candidate paths may be displayed, but approval is necessary for departure.
 
 #### Backward driving + forward driving
 
-- **Multiple approvals required**: When the planned route includes a backward driving, multiple approvals are needed before starting the reverse and again before restarting forward movement. Before initiating forward movement, the system conducts safety checks against dynamic obstacles. If a detection is detected, approval for departure is necessary.
+- **Multiple approvals required**: When the planned path includes a backward driving, multiple approvals are needed before starting the reverse and again before restarting forward movement. Before initiating forward movement, the system conducts safety checks against dynamic obstacles. If a detection is detected, approval for departure is necessary.
 
 This differentiation ensures that the vehicle operates safely by requiring human intervention in manual mode(`enable_rtc` is true) at critical junctures and incorporating automatic safety checks in both modes to prevent unsafe operations in the presence of dynamic obstacles.
 
