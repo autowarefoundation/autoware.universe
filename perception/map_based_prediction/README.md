@@ -191,6 +191,11 @@ This module treats **Pedestrians** and **Bicycles** as objects using the crosswa
 
 If there are a reachable crosswalk entry points within the `prediction_time_horizon` and the objects satisfies above condition, this module outputs additional predicted path to cross the opposite side via the crosswalk entry point.
 
+This module takes into account the corresponding traffic light information.
+When RED signal is indicated, we assume the target object will not walk across.
+As an optional feature, if the target object is stopping (not moving) against GREEN signal, we assume the target object will not walk across either.
+This prediction comes from the assumption that the object should move if the traffic light is green and the object is intended to cross.
+
 <div align="center">
   <img src="images/outside_road.svg" width=90%>
 </div>
@@ -201,14 +206,27 @@ If the target object is inside the road or crosswalk, this module outputs one or
   <img src="images/inside_road.svg" width=90%>
 </div>
 
+\*1:
+The crosswalk user's intention to walk is calculated in the same way as `Cases without traffic lights`.
+
+<div align="center">
+    <table>
+        <tr>
+            <td><img src="./docs/without_traffic_light.svg" width="600"></td>
+            <td><img src="./docs/with_traffic_light.svg" width="600"></td>
+        </tr>
+    </table>
+</div>
+
 ## Inputs / Outputs
 
 ### Input
 
-| Name                                               | Type                                                 | Description                              |
-| -------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------- |
-| `~/perception/object_recognition/tracking/objects` | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracking objects without predicted path. |
-| `~/vector_map`                                     | `autoware_auto_mapping_msgs::msg::HADMapBin`         | binary data of Lanelet2 Map.             |
+| Name                                                     | Type                                                 | Description                                                |
+| -------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
+| `~/perception/object_recognition/tracking/objects`       | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracking objects without predicted path.                   |
+| `~/vector_map`                                           | `autoware_auto_mapping_msgs::msg::HADMapBin`         | binary data of Lanelet2 Map.                               |
+| '~/perception/traffic_light_recognition/traffic_signals' | 'autoware_perception_msgs::msg::TrafficSignalArray;' | rearranged information on the corresponding traffic lights |
 
 ### Output
 
