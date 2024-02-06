@@ -41,14 +41,12 @@ TBD.
 
 ## Usage
 
-1. Start rviz and select Add under the Displays panel.
+1. Start `rviz2` and click `Add` button under the `Displays` panel.
 
    ![select_add](./assets/images/select_add.png)
 
-2. Select any one of the tier4_vehicle_rviz_plugin and press OK.
+2. Under `By display type` tab, select `autoware_overlay_rviz_plugin/SignalDisplay` and press OK.
 
-   ![select_vehicle_plugin](./assets/images/select_vehicle_plugin.png)
-
-3. Enter the name of the topic where you want to view the status.
+3. Enter the names of the topics if necessary.
 
    ![select_topic_name](./assets/images/select_topic_name.png)
