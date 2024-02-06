@@ -83,7 +83,7 @@ The `StartPlannerModule` is designed to initiate its execution based on specific
 
 2. **Vehicle far from start position**: If the vehicle is far from the start position, the module will not execute. This prevents redundant planning when the vehicle is already in position.
 
-3. **Vehicle reached Goal**: The module will not start if the vehicle has already reached its goal position, avoiding unnecessary execution when the destination is attained.
+3. **Vehicle reached goal**: The module will not start if the vehicle has already reached its goal position, avoiding unnecessary execution when the destination is attained.
 
 4. **Vehicle in motion**: If the vehicle is still moving, the module will defer starting. This ensures that planning occurs from a stable, stationary state for safety.
 
@@ -138,32 +138,6 @@ The approach to collision safety is divided into two main components: generating
 
 - **Static obstacle clearance from the path**: This involves verifying that a sufficient margin around static obstacles is maintained. The process includes creating a vehicle-sized footprint from the current position to the pull-out endpoint, which can be adjusted via parameters. The distance to static obstacle polygons is then calculated. If this distance is below a specified threshold, the path is deemed unsafe. Threshold levels (e.g., [2.0, 1.0, 0.5, 0.1]) can be configured, and the system searches for paths that meet the highest possible threshold based on a set search priority explained in following section, ensuring the selection of the safe path based on the policy. If no path meets the minimum threshold, it's determined that no safe path is available.
 
-```plantuml
-@startuml
-start
-:Generate start pose candidates;
-:Path generation\nbased on start pose and planner type;
-:Calculate distance to static obstacles;
-:Set threshold levels\n[2.0, 1.0, 0.5, 0.1 meters];
-repeat
-    :Search for start pose\nmeeting current threshold;
-    ->[no] decrease Threshold;
-repeat while (Start pose found?) is (no)
--> [yes] Proceed with path;
-if (Any Start Pose Meets Threshold?) then (yes)
-    :Proceed with path;
-else (no)
-    :Generate stop path;
-endif
-stop
-@enduml
-
-```
-
-<figure markdown>
-  ![start pose candidate](images/start_pose_candidate.drawio.svg){width=1100}
-</figure>
-
 - **Clearance from stationary objects**: Maintaining an adequate distance from stationary objects positioned in front of and behind the vehicle is imperative for safety. Despite the path and stationary objects having a confirmed margin, the path is deemed unsafe if the distance from the shift start position to a front stationary object falls below `collision_check_margin_from_front_object` meters, or if the distance to a rear stationary object is shorter than `back_objects_collision_check_margin` meters.
 
   - Why is a margin from the front object necessary?
@@ -172,11 +146,42 @@ stop
   - Why is a margin from the rear object necessary?
     For objects ahead, another behavior module can intervene, allowing the path to overwrite itself through an avoidance plan, even if the clearance from the path to a static obstacle is minimal, thus maintaining a safe distance from static obstacles. However, for objects behind the vehicle, it is impossible for other behavior modules other than the start_planner to alter the path to secure a margin, potentially leading to a deadlock by an action module like "obstacle_stop_cruise" and subsequent immobilization. Therefore, a margin is set for stationary objects at the rear.
 
+Here's the expression of the steps start pose searching steps, considering the threshold levels are set at [2.0, 1.0, 0.5, 0.1 meters] as example. The process is as follows:
+
+1. **Generating start pose candidates**
+
+   - Set the current position of the vehicle as the base point.
+   - Determine the area of consideration behind the vehicle up to the `max_back_distance`.
+   - Generate candidate points for the start pose in the backward direction at intervals defined by `backward_search_resolution`.
+   - Include the current position as one of the start pose candidates.
+
+2. **Starting search at maximum margin**
+
+   - Begin the search with the largest threshold (e.g., 2.0 meters).
+   - Evaluate each start pose candidate to see if it maintains a margin of more than 2.0 meters.
+   - Simultaneously, verify that the path generated from that start pose meets other necessary criteria (e.g., path deviation check).
+
+3. **Repeating search according to threshold levels**
+
+   - If no start pose meeting the conditions is found, lower the threshold to the next level (e.g., 1.0 meter) and repeat the search.
+
+4. **Continuing the search**
+
+   - Continue the search until a start pose that meets the conditions is found, or the threshold level reaches the minimum value (e.g., 0.1 meter).
+   - The aim of this process is to find a start pose that not only secures as large a margin as possible but also satisfies the conditions required for the route.
+
+5. **Generating a stop path**
+   - If no start pose satisfies the conditions at any threshold level, generate a stop path to ensure safety.
+
+<figure markdown>
+  ![start pose candidate](images/start_pose_candidate.drawio.svg){width=1100}
+</figure>
+
 ### 2. Collision detection with dynamic obstacles
 
 - **Applying RSS in Dynamic Collision Detection**: Collision detection is based on the RSS (Responsibility-Sensitive Safety) model to evaluate if a safe distance is maintained. See [safety check feature explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
 
-- **Collision check performed range**: Safety checks for collisions with dynamic objects are conducted within the defined boundaries between the start and end points of each maneuver, ensuring there is no overlap with the road lane's centerline. This is to avoid hindering the progress of following vehicles. The scope of safety checks varies depending on the type of path generated and will be elaborated upon for each specific maneuver pattern.
+- **Collision check performed range**: Safety checks for collisions with dynamic objects are conducted within the defined boundaries between the start and end points of each maneuver, ensuring there is no overlap with the road lane's centerline. This is to avoid hindering the progress of following vehicles.
 
 - **Collision response policy**: Should a collision with dynamic objects be detected along the generated path, departure is not permitted if detection occurs before movement. If the vehicle has already commenced movement, an attempt to stop will be made, provided it's feasible within the braking constraints and without crossing the travel lane's centerline.
 
@@ -186,7 +191,7 @@ start
 :Path Generation;
 
 if (Collision with dynamic objects detected?) then (yes)
-  if (Before movement?) then (yes)
+  if (Before departure?) then (yes)
     :Departure not permitted;
   else (no)
     if (Can stop within constraints \n && \n no crossing centerline?) then (yes)
@@ -212,26 +217,21 @@ Give an example of safety verification range for shift pull out. The safety chec
 
 **As a note, no safety check is performed during backward movements. Safety verification commences at the point where the backward motion ceases.**
 
-## Manual and auto mode behaviors
+## RTC interface
 
-The system operates distinctly under manual and automatic modes, especially concerning the initiation of movement and interaction with dynamic obstacles. Below are the specific behaviors for each mode:
+The system operates distinctly under manual and auto mode, especially concerning the before the departure and interaction with dynamic obstacles. Below are the specific behaviors for each mode:
 
-### Manual mode
+### When approval is required?
 
 #### Forward driving
 
 - **Start approval required**: Even if a route is generated, approval is required to initiate movement. If a dynamic object poses a risk, such as an approaching vehicle from behind, candidate routes may be displayed, but approval is not granted.
 
-### Inclusion of backward route
+#### Backward driving + forward driving
 
-- **Multiple Approvals Required**: When the planned route includes a backward segment, multiple approvals are needed before starting the reverse and again before restarting forward movement. Before initiating forward movement, the system conducts safety checks against dynamic obstacles. If a risk is detected, approval for movement cannot be granted.
+- **Multiple approvals required**: When the planned route includes a backward driving, multiple approvals are needed before starting the reverse and again before restarting forward movement. Before initiating forward movement, the system conducts safety checks against dynamic obstacles. If a detection is detected, approval for departure is necessary.
 
-### Automatic Mode
-
-- **Fully automated movement**: The vehicle starts and operates automatically without the need for manual approvals at each step.
-- **Dynamic Obstacle Consideration**: Similar to manual mode, if a dynamic obstacle is deemed hazardous, the system will prevent the vehicle from initiating movement at points where manual mode would require approval.
-
-This differentiation ensures that the vehicle operates safely by requiring human intervention in manual mode at critical junctures and incorporating automatic safety checks in both modes to prevent unsafe operations in the presence of dynamic obstacles.
+This differentiation ensures that the vehicle operates safely by requiring human intervention in manual mode(`enable_rtc` is true) at critical junctures and incorporating automatic safety checks in both modes to prevent unsafe operations in the presence of dynamic obstacles.
 
 ## Design
 
