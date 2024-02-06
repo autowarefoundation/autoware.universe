@@ -58,19 +58,11 @@ IntersectionModule::getOcclusionStatus(
     (traffic_prioritized_level == TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED) ||
     (traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED) || no_tl_info_ever;
   // check occlusion on detection lane
-  auto occlusion_status = [&]() {
-    if (!planner_param_.occlusion.enable || occlusion_attention_lanelets.empty()) {
-      return OcclusionType::NOT_OCCLUDED;
-    }
-    if (!has_traffic_light_) {
-      return detectOcclusion(interpolated_path_info);
-    }
-    // has_traffic_light_
-    if (is_amber_or_red_or_no_tl_info_ever) {
-      return OcclusionType::NOT_OCCLUDED;
-    }
-    return detectOcclusion(interpolated_path_info);
-  }();
+  auto occlusion_status =
+    (planner_param_.occlusion.enable && !occlusion_attention_lanelets.empty() &&
+     !is_amber_or_red_or_no_tl_info_ever)
+      ? detectOcclusion(interpolated_path_info)
+      : OcclusionType::NOT_OCCLUDED;
   occlusion_stop_state_machine_.setStateWithMarginTime(
     occlusion_status == OcclusionType::NOT_OCCLUDED ? StateMachine::State::GO : StateMachine::STOP,
     logger_.get_child("occlusion_stop"), *clock_);
