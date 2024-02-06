@@ -10,9 +10,9 @@ The node using this library must use multi thread executor.
 
 ## Topic subscription
 
-| Topic Name        | Description                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| ~/pointcloud_map  | The topic containing the whole pointcloud map (only used when `enable_partial_load = false`) |
+| Topic Name       | Description                                                                                  |
+| ---------------- | -------------------------------------------------------------------------------------------- |
+| ~/pointcloud_map | The topic containing the whole pointcloud map (only used when `enable_partial_load = false`) |
 
 ## Service client
 
