@@ -138,6 +138,32 @@ The approach to collision safety is divided into two main components: generating
 
 - **Static obstacle clearance from the path**: This involves verifying that a sufficient margin around static obstacles is maintained. The process includes creating a vehicle-sized footprint from the current position to the pull-out endpoint, which can be adjusted via parameters. The distance to static obstacle polygons is then calculated. If this distance is below a specified threshold, the path is deemed unsafe. Threshold levels (e.g., [2.0, 1.0, 0.5, 0.1]) can be configured, and the system searches for paths that meet the highest possible threshold based on a set search priority explained in following section, ensuring the selection of the safe path based on the policy. If no path meets the minimum threshold, it's determined that no safe path is available.
 
+```plantuml
+@startuml
+start
+:Generate start pose candidates;
+:Path generation\nbased on start pose and planner type;
+:Calculate distance to static obstacles;
+:Set threshold levels\n[2.0, 1.0, 0.5, 0.1 meters];
+repeat
+    :Search for start pose\nmeeting current threshold;
+    ->[no] decrease Threshold;
+repeat while (Start pose found?) is (no)
+-> [yes] Proceed with path;
+if (Any Start Pose Meets Threshold?) then (yes)
+    :Proceed with path;
+else (no)
+    :Generate stop path;
+endif
+stop
+@enduml
+
+```
+
+<figure markdown>
+  ![start pose candidate](images/start_pose_candidate.drawio.svg){width=1100}
+</figure>
+
 - **Clearance from stationary objects**: Maintaining an adequate distance from stationary objects positioned in front of and behind the vehicle is imperative for safety. Despite the path and stationary objects having a confirmed margin, the path is deemed unsafe if the distance from the shift start position to a front stationary object falls below `collision_check_margin_from_front_object` meters, or if the distance to a rear stationary object is shorter than `back_objects_collision_check_margin` meters.
 
   - Why is a margin from the front object necessary?
