@@ -223,6 +223,7 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // safety check rss params
   {
     const std::string ns = "avoidance.safety_check.";
+    p.rss_params.steering = getOrDeclareParameter<std::string>(*node, ns + "steering");
     p.rss_params.longitudinal_distance_min_threshold =
       getOrDeclareParameter<double>(*node, ns + "longitudinal_distance_min_threshold");
     p.rss_params.longitudinal_velocity_delta_time =
