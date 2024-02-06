@@ -42,6 +42,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -192,8 +193,8 @@ private:
 
   bool use_crosswalk_signal_;
   double threshold_speed_as_stopping_;
-  std::vector<double> distance_map_for_no_intention_to_walk_;
-  std::vector<double> timeout_map_for_no_intention_to_walk_;
+  std::vector<double> distance_set_for_no_intention_to_walk_;
+  std::vector<double> timeout_set_for_no_intention_to_walk_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;

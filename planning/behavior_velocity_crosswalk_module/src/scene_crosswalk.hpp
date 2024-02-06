@@ -142,8 +142,8 @@ public:
     double stop_object_velocity;
     double min_object_velocity;
     bool disable_yield_for_new_stopped_object;
-    std::vector<double> distance_map_for_no_intention_to_walk;
-    std::vector<double> timeout_map_for_no_intention_to_walk;
+    std::vector<double> distance_set_for_no_intention_to_walk;
+    std::vector<double> timeout_set_for_no_intention_to_walk;
     double timeout_ego_stop_for_yield;
     // param for input data
     double traffic_light_state_timeout;
@@ -184,8 +184,8 @@ public:
         const double distance_to_crosswalk =
           bg::distance(crosswalk_polygon, lanelet::BasicPoint2d(position.x, position.y));
         const double timeout_no_intention_to_walk = InterpolateMap(
-          planner_param.distance_map_for_no_intention_to_walk,
-          planner_param.timeout_map_for_no_intention_to_walk, distance_to_crosswalk);
+          planner_param.distance_set_for_no_intention_to_walk,
+          planner_param.timeout_set_for_no_intention_to_walk, distance_to_crosswalk);
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < timeout_no_intention_to_walk;
         if (is_ego_yielding && !intent_to_cross) {

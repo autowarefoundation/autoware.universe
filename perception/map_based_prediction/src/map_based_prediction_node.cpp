@@ -20,7 +20,6 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-// #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
@@ -792,10 +791,10 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   use_crosswalk_signal_ = declare_parameter<bool>("crosswalk_with_signal.use_crosswalk_signal");
   threshold_speed_as_stopping_ =
     declare_parameter<double>("crosswalk_with_signal.threshold_speed_as_stopping");
-  distance_map_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
-    "crosswalk_with_signal.distance_map_for_no_intention_to_walk");
-  timeout_map_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
-    "crosswalk_with_signal.timeout_map_for_no_intention_to_walk");
+  distance_set_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
+    "crosswalk_with_signal.distance_set_for_no_intention_to_walk");
+  timeout_set_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
+    "crosswalk_with_signal.timeout_set_for_no_intention_to_walk");
 
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_time_horizon_, lateral_control_time_horizon_, prediction_sampling_time_interval_,
@@ -1238,7 +1237,6 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   }
 
   // try to find the edge points for all crosswalks and generate path to the crosswalk edge
-
   for (const auto & crosswalk : crosswalks_) {
     const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
     if (crosswalk_signal_id_opt.has_value() && use_crosswalk_signal_) {
@@ -2303,37 +2301,41 @@ bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSgnal(
       threshold_speed_as_stopping_) {
     stopped_times_against_green_.try_emplace(key, this->get_clock()->now());
 
-    const auto obj_position = object.kinematics.pose_with_covariance.pose.position;
-    const double distance_to_crosswalk = boost::geometry::distance(
-      crosswalk.polygon2d().basicPolygon(), lanelet::BasicPoint2d(obj_position.x, obj_position.y));
-
-    auto InterpolateMap = [](
-                            const std::vector<double> & key_set,
-                            const std::vector<double> & value_set, const double query) {
-      if (query <= key_set.front()) {
-        return value_set.front();
-      } else if (query >= key_set.back()) {
-        return value_set.back();
-      }
-      for (size_t i = 0; i < key_set.size() - 1; ++i) {
-        if (key_set.at(i) <= query && query <= key_set.at(i + 1)) {
-          auto ratio =
-            (query - key_set.at(i)) / std::max(key_set.at(i + 1) - key_set.at(i), 1.0e-5);
-          ratio = std::clamp(ratio, 0.0, 1.0);
-          return value_set.at(i) + ratio * (value_set.at(i + 1) - value_set.at(i));
+    const auto timeout_no_intention_to_walk = [&]() {
+      auto InterpolateMap = [](
+                              const std::vector<double> & key_set,
+                              const std::vector<double> & value_set, const double query) {
+        if (query <= key_set.front()) {
+          return value_set.front();
+        } else if (query >= key_set.back()) {
+          return value_set.back();
         }
-      }
-      return value_set.back();
-    };
+        for (size_t i = 0; i < key_set.size() - 1; ++i) {
+          if (key_set.at(i) <= query && query <= key_set.at(i + 1)) {
+            auto ratio =
+              (query - key_set.at(i)) / std::max(key_set.at(i + 1) - key_set.at(i), 1.0e-5);
+            ratio = std::clamp(ratio, 0.0, 1.0);
+            return value_set.at(i) + ratio * (value_set.at(i + 1) - value_set.at(i));
+          }
+        }
+        return value_set.back();
+      };
 
-    const double timeout_no_intention_to_walk = InterpolateMap(
-      distance_map_for_no_intention_to_walk_, timeout_map_for_no_intention_to_walk_,
-      distance_to_crosswalk);
+      const auto obj_position = object.kinematics.pose_with_covariance.pose.position;
+      const double distance_to_crosswalk = boost::geometry::distance(
+        crosswalk.polygon2d().basicPolygon(),
+        lanelet::BasicPoint2d(obj_position.x, obj_position.y));
+      return InterpolateMap(
+        distance_set_for_no_intention_to_walk_, timeout_set_for_no_intention_to_walk_,
+        distance_to_crosswalk);
+    }();
+
     if (
       (this->get_clock()->now() - stopped_times_against_green_.at(key)).seconds() >
       timeout_no_intention_to_walk) {
       return false;
     }
+
   } else {
     stopped_times_against_green_.erase(key);
     // If the pedestrian disappears, another function erases the old data.
