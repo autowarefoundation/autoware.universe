@@ -40,7 +40,7 @@ struct MapHeightFitter::Impl
   void on_pcd_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   void on_vector_map(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   bool get_partial_point_cloud_map(const Point & point);
-  double get_ground_height(const tf2::Vector3 & point) const;
+  double get_ground_height(const tf2::Vector3 & point);
   std::optional<Point> fit(const Point & position, const std::string & frame);
 
   tf2::BufferCore tf2_buffer_;
@@ -166,26 +166,46 @@ void MapHeightFitter::Impl::on_vector_map(
 {
   vector_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, vector_map_);
+  const auto logger = node_->get_logger();
+  map_frame_ = msg->header.frame_id;
 }
 
-double MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point) const
+double MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point)
 {
+  const auto logger = node_->get_logger();
+
   const double x = point.getX();
   const double y = point.getY();
 
-  // find distance d to closest point
-  double min_dist2 = INFINITY;
-  for (const auto & p : map_cloud_->points) {
-    const double dx = x - p.x;
-    const double dy = y - p.y;
-    const double sd = (dx * dx) + (dy * dy);
-    min_dist2 = std::min(min_dist2, sd);
-  }
-
-  // find lowest height within radius (d+1.0)
-  const double radius2 = std::pow(std::sqrt(min_dist2) + 1.0, 2.0);
   double height = INFINITY;
   if (fit_target_ == "pointcloud_map") {
+    if (cli_pcd_map_) {
+      geometry_msgs::msg::Point position;
+      position.x = point.getX();
+      position.y = point.getY();
+      position.z = point.getZ();
+      if (!get_partial_point_cloud_map(position)) {
+        return point.getZ();
+      }
+    }
+
+    if (!map_cloud_) {
+      RCLCPP_WARN_STREAM(logger, "point cloud map is not ready");
+      return point.getZ();
+    }
+
+    // find distance d to closest point
+    double min_dist2 = INFINITY;
+    for (const auto & p : map_cloud_->points) {
+      const double dx = x - p.x;
+      const double dy = y - p.y;
+      const double sd = (dx * dx) + (dy * dy);
+      min_dist2 = std::min(min_dist2, sd);
+    }
+
+    // find lowest height within radius (d+1.0)
+    const double radius2 = std::pow(std::sqrt(min_dist2) + 1.0, 2.0);
+
     for (const auto & p : map_cloud_->points) {
       const double dx = x - p.x;
       const double dy = y - p.y;
@@ -202,7 +222,12 @@ double MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point) cons
     pose.position.y = y;
     pose.position.z = 0.0;
     lanelet::ConstLanelet closest_lanelet;
-    lanelet::utils::query::getClosestLanelet(all_lanelets, pose, &closest_lanelet);
+    const bool result =
+      lanelet::utils::query::getClosestLanelet(all_lanelets, pose, &closest_lanelet);
+    if (!result) {
+      RCLCPP_WARN_STREAM(logger, "failed to get closest lanelet");
+      return point.getZ();
+    }
     height = closest_lanelet.centerline().back().z();
   }
 
@@ -215,17 +240,6 @@ std::optional<Point> MapHeightFitter::Impl::fit(const Point & position, const st
   tf2::Vector3 point(position.x, position.y, position.z);
 
   RCLCPP_DEBUG(logger, "original point: %.3f %.3f %.3f", point.getX(), point.getY(), point.getZ());
-
-  if (cli_pcd_map_) {
-    if (!get_partial_point_cloud_map(position)) {
-      return std::nullopt;
-    }
-  }
-
-  if (!map_cloud_) {
-    RCLCPP_WARN_STREAM(logger, "point cloud map is not ready");
-    return std::nullopt;
-  }
 
   try {
     const auto stamped = tf2_buffer_.lookupTransform(map_frame_, frame, tf2::TimePointZero);
