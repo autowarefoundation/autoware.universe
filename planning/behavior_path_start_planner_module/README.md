@@ -183,7 +183,7 @@ Here's the expression of the steps start pose searching steps, considering the t
 
 - **Collision check performed range**: Safety checks for collisions with dynamic objects are conducted within the defined boundaries between the start and end points of each maneuver, ensuring there is no overlap with the road lane's centerline. This is to avoid hindering the progress of following vehicles.
 
-- **Collision response policy**: Should a collision with dynamic objects be detected along the generated path, departure is not permitted if detection occurs before movement. If the vehicle has already commenced movement, an attempt to stop will be made, provided it's feasible within the braking constraints and without crossing the travel lane's centerline.
+- **Collision response policy**: Should a collision with dynamic objects be detected along the generated path, deactivate module decision is registered if collision detection occurs before departure. If the vehicle has already commenced movement, an attempt to stop will be made, provided it's feasible within the braking constraints and without crossing the travel lane's centerline.
 
 ```plantuml
 @startuml
@@ -192,7 +192,7 @@ start
 
 if (Collision with dynamic objects detected?) then (yes)
   if (Before departure?) then (yes)
-    :Departure not permitted;
+    :Deactivate module decision is registered;
   else (no)
     if (Can stop within constraints \n && \n no crossing centerline?) then (yes)
       :Stop;
@@ -225,7 +225,7 @@ The system operates distinctly under manual and auto mode, especially concerning
 
 #### Forward driving
 
-- **Start approval required**: Even if a route is generated, approval is required to initiate movement. If a dynamic object poses a risk, such as an approaching vehicle from behind, candidate routes may be displayed, but approval is not granted.
+- **Start approval required**: Even if a route is generated, approval is required to initiate movement. If a dynamic object poses a risk, such as an approaching vehicle from behind, candidate routes may be displayed, but approval is necessary for departure.
 
 #### Backward driving + forward driving
 
