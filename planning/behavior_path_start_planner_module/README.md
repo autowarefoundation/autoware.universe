@@ -89,10 +89,6 @@ The `StartPlannerModule` is designed to initiate its execution based on specific
 
 5. **Goal behind in same route segment**: The module will not initiate if the goal position is behind the ego vehicle within the same route segment. This condition is checked to avoid complications with planning routes that require the vehicle to move backward on its current path, which is currently not supported.
 
-These conditions are evaluated to ensure that the `StartPlannerModule` only initiates under safe and necessary circumstances, optimizing route planning efficiency and safety.
-
-In summary, the `StartPlannerModule` will initiate if **none** of these conditions apply, ensuring that the module starts only when it is safe and necessary to do so.
-
 ### **End Conditions**
 
 The `StartPlannerModule` terminates if the pull out / freespace maneuver has been completed. The `canTransitSuccessState` function assesses these conditions to decide if the module should terminate its execution.
