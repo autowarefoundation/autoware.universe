@@ -86,7 +86,38 @@ In summary, the `StartPlannerModule` will initiate if **none** of these conditio
 
 ### **End Conditions**
 
+The `StartPlannerModule` terminates if the pull out / freespace maneuver has been completed. The `canTransitSuccessState` function assesses these conditions to decide if the module should terminate its execution.
 
+```plantuml
+@startuml
+start
+:Start hasFinishedPullOut();
+
+if (status_.driving_forward && status_.found_pull_out_path) then (yes)
+  
+  if (status_.planner_type == FREESPACE) then (yes)
+    :Calculate distance\nto pull_out_path.end_pose;
+    if (distance < th_arrived_distance) then (yes)
+      :return true;\n(Terminate module);
+    else (no)
+      :return false;\n(Continue running);
+    endif
+  else (no)
+    :Calculate arclength for\ncurrent_pose and pull_out_path.end_pose;
+    if (arclength_current - arclength_pull_out_end > offset) then (yes)
+      :return true;\n(Terminate module);
+    else (no)
+      :return false;\n(Continue running);
+    endif
+  endif
+  
+else (no)
+  :return false;\n(Continue running);
+endif
+
+stop
+@enduml
+```
 
 ## Concept of safety assurance
 
