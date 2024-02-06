@@ -141,7 +141,6 @@ public:
     double min_jerk_for_no_stop_decision;
     double stop_object_velocity;
     double min_object_velocity;
-    bool disable_stop_for_yield_cancel;
     bool disable_yield_for_new_stopped_object;
     std::vector<double> distance_map_for_no_intention_to_walk;
     std::vector<double> timeout_map_for_no_intention_to_walk;
@@ -168,9 +167,8 @@ public:
 
     void transitState(
       const rclcpp::Time & now, const geometry_msgs::msg::Point & position, const double vel,
-      const bool is_ego_yielding, const bool has_traffic_light,
-      const std::optional<CollisionPoint> & collision_point, const PlannerParam & planner_param,
-      const lanelet::BasicPolygon2d & crosswalk_polygon)
+      const bool is_ego_yielding, const std::optional<CollisionPoint> & collision_point,
+      const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon)
     {
       const bool is_stopped = vel < planner_param.stop_object_velocity;
 
@@ -190,9 +188,7 @@ public:
           planner_param.timeout_map_for_no_intention_to_walk, distance_to_crosswalk);
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < timeout_no_intention_to_walk;
-        if (
-          (is_ego_yielding || (has_traffic_light && planner_param.disable_stop_for_yield_cancel)) &&
-          !intent_to_cross) {
+        if (is_ego_yielding && !intent_to_cross) {
           collision_state = CollisionState::IGNORE;
           return;
         }
@@ -252,9 +248,7 @@ public:
 
       // add new object
       if (objects.count(uuid) == 0) {
-        if (
-          has_traffic_light && planner_param.disable_stop_for_yield_cancel &&
-          planner_param.disable_yield_for_new_stopped_object) {
+        if (has_traffic_light && planner_param.disable_yield_for_new_stopped_object) {
           objects.emplace(uuid, ObjectInfo{CollisionState::IGNORE});
         } else {
           objects.emplace(uuid, ObjectInfo{CollisionState::YIELD});
@@ -263,8 +257,7 @@ public:
 
       // update object state
       objects.at(uuid).transitState(
-        now, position, vel, is_ego_yielding, has_traffic_light, collision_point, planner_param,
-        crosswalk_polygon);
+        now, position, vel, is_ego_yielding, collision_point, planner_param, crosswalk_polygon);
       objects.at(uuid).collision_point = collision_point;
       objects.at(uuid).position = position;
       objects.at(uuid).classification = classification;

@@ -101,8 +101,6 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".pass_judge.stop_object_velocity_threshold");
   cp.min_object_velocity =
     getOrDeclareParameter<double>(node, ns + ".pass_judge.min_object_velocity");
-  cp.disable_stop_for_yield_cancel =
-    getOrDeclareParameter<bool>(node, ns + ".pass_judge.disable_stop_for_yield_cancel");
   cp.disable_yield_for_new_stopped_object =
     getOrDeclareParameter<bool>(node, ns + ".pass_judge.disable_yield_for_new_stopped_object");
   cp.distance_map_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
