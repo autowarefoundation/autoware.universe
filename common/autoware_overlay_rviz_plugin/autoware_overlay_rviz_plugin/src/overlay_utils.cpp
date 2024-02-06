@@ -52,7 +52,7 @@
 
 #include <rviz_common/logging.hpp>
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 ScopedPixelBuffer::ScopedPixelBuffer(Ogre::HardwarePixelBufferSharedPtr pixel_buffer)
 : pixel_buffer_(pixel_buffer)
@@ -264,4 +264,4 @@ unsigned int OverlayObject::getTextureHeight() const
     return 0;
   }
 }
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin

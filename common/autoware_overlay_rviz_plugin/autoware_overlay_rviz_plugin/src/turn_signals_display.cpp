@@ -31,7 +31,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 
 TurnSignalsDisplay::TurnSignalsDisplay() : current_turn_signal_(0)
@@ -40,7 +40,7 @@ TurnSignalsDisplay::TurnSignalsDisplay() : current_turn_signal_(0)
 
   // Load the arrow image
   std::string package_path =
-    ament_index_cpp::get_package_share_directory("autoware_vehicle_overlay_rviz_plugin");
+    ament_index_cpp::get_package_share_directory("autoware_overlay_rviz_plugin");
   std::string image_path = package_path + "/assets/images/arrow.png";
   arrowImage.load(image_path.c_str());
 }
@@ -120,4 +120,4 @@ QImage TurnSignalsDisplay::coloredImage(const QImage & source, const QColor & co
   return result;
 }
 
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin

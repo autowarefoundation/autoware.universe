@@ -30,7 +30,7 @@
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 
 class SpeedLimitDisplay
@@ -47,6 +47,6 @@ private:
   QColor gray = QColor(194, 194, 194);
 };
 
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin
 
 #endif  // SPEED_LIMIT_DISPLAY_HPP_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SPEED_DISPLAY_HPP_
-#define SPEED_DISPLAY_HPP_
+#ifndef GEAR_DISPLAY_HPP_
+#define GEAR_DISPLAY_HPP_
 #include "overlay_utils.hpp"
 
 #include <QImage>
@@ -23,27 +23,27 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
 
-#include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/gear_report.hpp"
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 
-class SpeedDisplay
+class GearDisplay
 {
 public:
-  SpeedDisplay();
-  void drawSpeedDisplay(QPainter & painter, const QRectF & backgroundRect);
-  void updateSpeedData(const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr & msg);
+  GearDisplay();
+  void drawGearIndicator(QPainter & painter, const QRectF & backgroundRect);
+  void updateGearData(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr & msg);
 
 private:
-  float current_speed_;  // Internal variable to store current speed
+  int current_gear_;  // Internal variable to store current gear
   QColor gray = QColor(194, 194, 194);
 };
 
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin
 
-#endif  // SPEED_DISPLAY_HPP_
+#endif  // GEAR_DISPLAY_HPP_

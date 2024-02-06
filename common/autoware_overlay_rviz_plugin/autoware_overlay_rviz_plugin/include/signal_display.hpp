@@ -39,7 +39,7 @@
 #include <mutex>
 #endif
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 class SignalDisplay : public rviz_common::Display
 {
@@ -70,7 +70,7 @@ private Q_SLOTS:
 
 private:
   std::mutex mutex_;
-  autoware_vehicle_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
+  autoware_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
   rviz_common::properties::IntProperty * property_width_;
   rviz_common::properties::IntProperty * property_height_;
   rviz_common::properties::IntProperty * property_left_;
@@ -120,6 +120,6 @@ private:
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
   void drawWidget(QImage & hud);
 };
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin
 
 #endif  // SIGNAL_DISPLAY_HPP_

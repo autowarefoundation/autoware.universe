@@ -69,7 +69,7 @@
 #include <string>
 #endif
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 class OverlayTextDisplay
 : public rviz_common::RosTopicDisplay<autoware_overlay_msgs::msg::OverlayText>
@@ -80,7 +80,7 @@ public:
   virtual ~OverlayTextDisplay();
 
 protected:
-  autoware_vehicle_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
+  autoware_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
 
   int texture_width_;
   int texture_height_;
@@ -152,6 +152,6 @@ protected Q_SLOTS:
 private:
   void processMessage(autoware_overlay_msgs::msg::OverlayText::ConstSharedPtr msg) override;
 };
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin
 
 #endif  // OVERLAY_TEXT_DISPLAY_HPP_

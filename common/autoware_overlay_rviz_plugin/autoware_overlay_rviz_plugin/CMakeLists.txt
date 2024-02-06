@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(autoware_vehicle_overlay_rviz_plugin)
+project(autoware_overlay_rviz_plugin)
 
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
@@ -136,5 +136,5 @@ install(
 add_definitions(-DQT_NO_KEYWORDS)
 
 ament_package(
-        CONFIG_EXTRAS "autoware_vehicle_overlay_rviz_plugin-extras.cmake"
+        CONFIG_EXTRAS "autoware_overlay_rviz_plugin-extras.cmake"
 )

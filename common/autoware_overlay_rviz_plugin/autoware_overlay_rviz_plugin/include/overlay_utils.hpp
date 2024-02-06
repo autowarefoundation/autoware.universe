@@ -70,7 +70,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 class OverlayObject;
 
@@ -136,6 +136,6 @@ protected:
   Ogre::MaterialPtr panel_material_;
   Ogre::TexturePtr texture_;
 };
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin
 
 #endif  // OVERLAY_UTILS_HPP_

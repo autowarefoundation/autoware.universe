@@ -31,13 +31,13 @@
 #include <memory>
 #include <string>
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 
 SpeedDisplay::SpeedDisplay() : current_speed_(0.0)
 {
   std::string package_path =
-    ament_index_cpp::get_package_share_directory("autoware_vehicle_overlay_rviz_plugin");
+    ament_index_cpp::get_package_share_directory("autoware_overlay_rviz_plugin");
   std::string font_path = package_path + "/assets/font/Quicksand/static/Quicksand-Regular.ttf";
   std::string font_path2 = package_path + "/assets/font/Quicksand/static/Quicksand-Bold.ttf";
   int fontId = QFontDatabase::addApplicationFont(
@@ -107,4 +107,4 @@ void SpeedDisplay::drawSpeedDisplay(QPainter & painter, const QRectF & backgroun
   painter.drawText(unitPos, speedUnit);
 }
 
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin

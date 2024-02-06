@@ -33,7 +33,7 @@
 #include <mutex>
 #include <string>
 
-namespace autoware_vehicle_overlay_rviz_plugin
+namespace autoware_overlay_rviz_plugin
 {
 
 SignalDisplay::SignalDisplay()
@@ -47,7 +47,7 @@ SignalDisplay::SignalDisplay()
   property_top_ = new rviz_common::properties::IntProperty(
     "Top", 10, "Top position of the overlay", this, SLOT(updateOverlayPosition()));
   property_signal_color_ = new rviz_common::properties::ColorProperty(
-    "Signal Color", QColor(25, 18, 89), "Color of the signal arrows", this,
+    "Signal Color", QColor("25, 18, 89"), "Color of the signal arrows", this,
     SLOT(updateOverlayColor()));
 
   // Initialize the component displays
@@ -68,7 +68,7 @@ void SignalDisplay::onInitialize()
   static int count = 0;
   std::stringstream ss;
   ss << "SignalDisplayObject" << count++;
-  overlay_.reset(new autoware_vehicle_overlay_rviz_plugin::OverlayObject(ss.str()));
+  overlay_.reset(new autoware_overlay_rviz_plugin::OverlayObject(ss.str()));
   overlay_->show();
   updateOverlaySize();
   updateOverlayPosition();
@@ -206,7 +206,7 @@ void SignalDisplay::update(float /* wall_dt */, float /* ros_dt */)
   if (!overlay_) {
     return;
   }
-  autoware_vehicle_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
+  autoware_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
   QImage hud = buffer.getQImage(*overlay_);
   hud.fill(Qt::transparent);
   drawWidget(hud);
@@ -516,7 +516,7 @@ void SignalDisplay::topic_updated_traffic()
         });
 }
 
-}  // namespace autoware_vehicle_overlay_rviz_plugin
+}  // namespace autoware_overlay_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(autoware_vehicle_overlay_rviz_plugin::SignalDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(autoware_overlay_rviz_plugin::SignalDisplay, rviz_common::Display)

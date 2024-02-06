@@ -1,4 +1,4 @@
-# awf_2d_overlay_vehicle
+# autoware_overlay_rviz_plugin
 
 Plugin for displaying 2D overlays over the RViz2 3D scene.
 
