@@ -155,9 +155,7 @@ Here's the expression of the steps start pose searching steps, considering the `
    - Generate candidate points for the start pose in the backward direction at intervals defined by `backward_search_resolution`.
    - Include the current position as one of the start pose candidates.
 
-<figure markdown>
-  ![start pose candidate](images/start_pose_candidate.drawio.svg){width=1100}
-</figure>
+   ![start pose candidate](images/start_pose_candidate.drawio.svg){width=1100}
 
 2. **Starting search at maximum margin**
 
