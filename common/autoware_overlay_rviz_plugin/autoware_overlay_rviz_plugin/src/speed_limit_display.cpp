@@ -80,7 +80,7 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
   // Calculate the ratio between the current speed and the speed limit
   double speed_to_limit_ratio = current_speed_ / current_limit;
 
-  QColor borderColor = gray;
+  QColor borderColor = colorMin;
 
   if (speed_to_limit_ratio > 0.7 && current_limit > 0.0) {
     // Adjust the interpolation to start more gradually
