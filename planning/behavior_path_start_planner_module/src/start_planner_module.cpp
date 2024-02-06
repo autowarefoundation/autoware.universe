@@ -1202,6 +1202,9 @@ bool StartPlannerModule::isSafePath() const
   // TODO(Sugahara): should safety check for backward path
 
   const auto pull_out_path = getCurrentPath();
+  if (pull_out_path.points.empty()) {
+    return false;
+  }
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const double current_velocity = std::hypot(
     planner_data_->self_odometry->twist.twist.linear.x,
@@ -1359,7 +1362,6 @@ bool StartPlannerModule::planFreespacePath()
 void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
 {
   if (status_.planner_type == PlannerType::FREESPACE) {
-    std::cerr << "Freespace planner updated drivable area." << std::endl;
     const double drivable_area_margin = planner_data_->parameters.vehicle_width;
     output.drivable_area_info.drivable_margin =
       planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
