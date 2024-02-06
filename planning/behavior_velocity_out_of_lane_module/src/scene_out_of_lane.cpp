@@ -197,7 +197,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   debug_data_.ranges = inputs.ranges;
 
   const auto total_time_us = stopwatch.toc();
-  RCLCPP_WARN(
+  RCLCPP_DEBUG(
     logger_,
     "Total time = %2.2fus\n"
     "\tcalculate_lanelets = %2.0fus\n"
