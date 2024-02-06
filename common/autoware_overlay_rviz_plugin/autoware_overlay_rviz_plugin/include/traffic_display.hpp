@@ -45,14 +45,11 @@ public:
 
 private:
   QImage traffic_light_image_;
-  // yellow #CFC353
-  QColor yellow = QColor(207, 195, 83);
-  // red #CF5353
-  QColor red = QColor(207, 83, 83);
-  // green #53CF5F
-  QColor green = QColor(83, 207, 95);
-  // gray #C2C2C2
-  QColor gray = QColor(194, 194, 194);
+
+  const QColor tl_red_;
+  const QColor tl_yellow_;
+  const QColor tl_green_;
+  const QColor tl_gray_;
 
   QImage coloredImage(const QImage & source, const QColor & color);
 };

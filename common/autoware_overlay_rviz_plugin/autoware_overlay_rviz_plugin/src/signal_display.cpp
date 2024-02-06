@@ -343,7 +343,7 @@ void SignalDisplay::drawWidget(QImage & hud)
 
   // a 27px space between the two halves of the HUD
 
-  QRectF smallerBackgroundRect(340, 0, 190 / 2, hud.height());
+  QRectF smallerBackgroundRect(340, 0, 190.0 / 2, hud.height());
 
   drawVerticalRoundedRectangle(painter, smallerBackgroundRect);
 

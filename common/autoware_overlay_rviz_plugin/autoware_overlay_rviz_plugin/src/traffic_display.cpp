@@ -35,6 +35,10 @@ namespace autoware_overlay_rviz_plugin
 {
 
 TrafficDisplay::TrafficDisplay()
+: tl_red_(QString("#cc3d3d")),
+  tl_yellow_(QString("#ccb43d")),
+  tl_green_(QString("#3dcc55")),
+  tl_gray_(QString("#4f4f4f"))
 {
   // Load the traffic light image
   std::string package_path =
@@ -55,9 +59,8 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-  // #C2C2C2
-  painter.setPen(QPen(gray, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-  painter.setBrush(QBrush(gray, Qt::SolidPattern));
+  painter.setBrush(QBrush(tl_gray_, Qt::SolidPattern));
+  painter.setPen(Qt::NoPen);
   // Define the area for the circle (background)
   QRectF circleRect = backgroundRect;
   circleRect.setWidth(backgroundRect.width() - 30);
@@ -67,33 +70,33 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
     backgroundRect.top() + circleRect.height() + 30));
   painter.drawEllipse(circleRect);
 
-  if (current_traffic_.signals.size() > 0) {
+  if (!current_traffic_.signals.empty()) {
     switch (current_traffic_.signals[0].elements[0].color) {
       case 1:
-        painter.setBrush(QBrush(red));
+        painter.setBrush(QBrush(tl_red_));
         painter.drawEllipse(circleRect);
         break;
       case 2:
-        painter.setBrush(QBrush(yellow));
+        painter.setBrush(QBrush(tl_yellow_));
         painter.drawEllipse(circleRect);
         break;
       case 3:
-        painter.setBrush(QBrush(green));
+        painter.setBrush(QBrush(tl_green_));
         painter.drawEllipse(circleRect);
         break;
       case 4:
-        painter.setBrush(QBrush(gray));
+        painter.setBrush(tl_gray_);
         painter.drawEllipse(circleRect);
         break;
       default:
-        painter.setBrush(QBrush(gray));
+        painter.setBrush(tl_gray_);
         painter.drawEllipse(circleRect);
         break;
     }
   }
 
   // Scaling factor (e.g., 1.5 for 150% size)
-  float scaleFactor = 1.25;
+  float scaleFactor = 1.00;
 
   // Calculate the scaled size
   QSize scaledSize = traffic_light_image_.size() * scaleFactor;
