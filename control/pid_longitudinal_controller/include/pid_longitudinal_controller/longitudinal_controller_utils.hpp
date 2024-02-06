@@ -152,6 +152,14 @@ geometry_msgs::msg::Pose findTrajectoryPoseAfterDistance(
   const size_t src_idx, const double distance,
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory);
 
+/**
+ * @brief calculates the translated position of the goal point with respect to extend_distance
+ * @param [in] extend_distance current index
+ * @param [in] goal_point distance to project
+ */
+TrajectoryPoint getExtendedTrajectoryPoint(
+  const double extend_distance, const Trajectory & trajectory);
+
 }  // namespace longitudinal_utils
 }  // namespace autoware::motion::control::pid_longitudinal_controller
 

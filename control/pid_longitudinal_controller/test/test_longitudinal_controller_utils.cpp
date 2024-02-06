@@ -562,3 +562,46 @@ TEST(TestLongitudinalControllerUtils, findTrajectoryPoseAfterDistance)
   EXPECT_NEAR(result.position.y, 1.0, abs_err);
   EXPECT_NEAR(result.position.z, 2.0, abs_err);
 }
+
+TEST(TestLongitudinalControllerUtils, getExtendedTrajectoryPoint)
+{
+  using autoware_auto_planning_msgs::msg::Trajectory;
+  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  const double abs_err = 1e-5;
+  Trajectory traj;
+  TrajectoryPoint point;
+  point.pose.position.x = 0.0;
+  point.pose.position.y = 0.0;
+  point.pose.position.z = 0.0;
+  traj.points.push_back(point);
+  point.pose.position.x = 1.0;
+  point.pose.position.y = 0.0;
+  point.pose.position.z = 0.0;
+  traj.points.push_back(point);
+  point.pose.position.x = 1.0;
+  point.pose.position.y = 1.0;
+  point.pose.position.z = 1.0;
+  traj.points.push_back(point);
+  point.pose.position.x = 2.0;
+  point.pose.position.y = 1.0;
+  point.pose.position.z = 2.0;
+  traj.points.push_back(point);
+  double extend_distance = 0.0;
+  TrajectoryPoint result = longitudinal_utils::getExtendedTrajectoryPoint(extend_distance, traj);
+  EXPECT_NEAR(result.pose.position.x, 2.0, abs_err);
+  EXPECT_NEAR(result.pose.position.y, 1.0, abs_err);
+  EXPECT_NEAR(result.pose.position.z, 2.0, abs_err);
+  EXPECT_NEAR(result.longitudinal_velocity_mps, 0.0, abs_err);
+  extend_distance = 1.0;
+  result = longitudinal_utils::getExtendedTrajectoryPoint(extend_distance, traj);
+  EXPECT_NEAR(result.pose.position.x, 3.0, abs_err);
+  EXPECT_NEAR(result.pose.position.y, 1.0, abs_err);
+  EXPECT_NEAR(result.pose.position.z, 3.0, abs_err);
+  EXPECT_NEAR(result.longitudinal_velocity_mps, 0.0, abs_err);
+  extend_distance = 2.0;
+  result = longitudinal_utils::getExtendedTrajectoryPoint(extend_distance, traj);
+  EXPECT_NEAR(result.pose.position.x, 4.0, abs_err);
+  EXPECT_NEAR(result.pose.position.y, 1.0, abs_err);
+  EXPECT_NEAR(result.pose.position.z, 4.0, abs_err);
+  EXPECT_NEAR(result.longitudinal_velocity_mps, 0.0, abs_err);
+}

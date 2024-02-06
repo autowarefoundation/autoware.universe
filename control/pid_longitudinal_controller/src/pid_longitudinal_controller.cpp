@@ -241,8 +241,12 @@ void PidLongitudinalController::setTrajectory(
     RCLCPP_WARN_THROTTLE(logger_, *clock_, 3000, "Unexpected trajectory size < 2. Ignored.");
     return;
   }
-
+  // If the vehicle pass the last point of trajectory, it causes errors on control_data calculation.
+  // To handle this, we add a virtual point after the last point.
+  constexpr double virtual_point_distance = 5.0;
   m_trajectory = msg;
+  m_trajectory.points.push_back(
+    longitudinal_utils::getExtendedTrajectoryPoint(virtual_point_distance, m_trajectory));
 }
 
 rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallback(

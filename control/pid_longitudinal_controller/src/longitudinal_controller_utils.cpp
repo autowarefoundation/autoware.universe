@@ -186,5 +186,35 @@ geometry_msgs::msg::Pose findTrajectoryPoseAfterDistance(
   }
   return p;
 }
+
+TrajectoryPoint getExtendedTrajectoryPoint(
+  const double extend_distance, const Trajectory & trajectory)
+{
+  constexpr double eps = 1e-3;
+
+  const auto extend_pose =
+    tier4_autoware_utils::calcOffsetPose(trajectory.points.back().pose, extend_distance, 0.0, 0.0);
+
+  // To avoid 0 slope, extend the point with the same slope as the last two points
+  const double z_change_ratio =
+    (trajectory.points.at(trajectory.points.size() - 2).pose.position.z -
+     trajectory.points.back().pose.position.z) /
+    std::max(
+      tier4_autoware_utils::calcDistance2d(
+        trajectory.points.at(trajectory.points.size() - 2).pose.position,
+        trajectory.points.back().pose.position),
+      eps);
+  TrajectoryPoint extend_trajectory_point;
+  extend_trajectory_point.pose = extend_pose;
+
+  extend_trajectory_point.pose.position.z =
+    trajectory.points.back().pose.position.z - extend_distance * z_change_ratio;
+  extend_trajectory_point.longitudinal_velocity_mps =
+    trajectory.points.back().longitudinal_velocity_mps;
+  extend_trajectory_point.lateral_velocity_mps = trajectory.points.back().lateral_velocity_mps;
+  extend_trajectory_point.acceleration_mps2 = trajectory.points.back().acceleration_mps2;
+  return extend_trajectory_point;
+}
+
 }  // namespace longitudinal_utils
 }  // namespace autoware::motion::control::pid_longitudinal_controller
