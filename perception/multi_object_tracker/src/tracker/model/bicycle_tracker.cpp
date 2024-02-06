@@ -378,7 +378,8 @@ bool BicycleTracker::measureWithPose(
 
   // ekf update
   if (!ekf_.update(Y, C, R)) {
-    RCLCPP_WARN(logger_, "Cannot update");
+    rclcpp::Clock clock{RCL_ROS_TIME};
+    RCLCPP_WARN_THROTTLE(logger_, clock, 1000, "Cannot update");
   }
 
   // normalize yaw and limit vel, slip
