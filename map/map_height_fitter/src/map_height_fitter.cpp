@@ -51,6 +51,7 @@ struct MapHeightFitter::Impl
   std::string fit_target_;
 
   // for fitting by pointcloud_map_loader
+  rclcpp::CallbackGroup::SharedPtr group_;
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
   rclcpp::Client<autoware_map_msgs::srv::GetPartialPointCloudMap>::SharedPtr cli_pcd_map_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pcd_map_;
@@ -75,8 +76,9 @@ MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), n
         }
 
         if (partial_load) {
+          group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
           cli_pcd_map_ = node_->create_client<autoware_map_msgs::srv::GetPartialPointCloudMap>(
-            "~/partial_map_load", rmw_qos_profile_default);
+            "~/partial_map_load", rmw_qos_profile_default, group_);
         } else {
           const auto durable_qos = rclcpp::QoS(1).transient_local();
           sub_pcd_map_ = node_->create_subscription<sensor_msgs::msg::PointCloud2>(
