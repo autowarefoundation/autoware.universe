@@ -22,7 +22,7 @@
     crosswalk_with_signal:
       use_crosswalk_signal: true
       threshold_speed_as_stopping: 0.25 # [m/s] velocity threshold for the module to judge whether the objects is stopped
-      # If the pedestrian does not move for X seconds after the ego has stopped in front the crosswalk, the module judge that the pedestrian has no intention to walk and allows the ego to proceed.
+      # If the pedestrian does not move for X seconds against green signal, the module judge that the pedestrian has no intention to walk.
       distance_set_for_no_intention_to_walk: [1.0, 5.0] # [m] ascending order, keys of map
       timeout_set_for_no_intention_to_walk: [1.0, 0.0] # [s] values of map
     # parameter for shoulder lane prediction
