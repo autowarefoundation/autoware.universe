@@ -64,6 +64,30 @@ If the map is annotated with the information that a free space path can be gener
 
 **As a note, the patterns for generating these paths are based on default parameters, but as will be explained in the following sections, it is possible to control aspects such as making paths that involve reversing more likely to be generated, or making geometric paths more likely to be generated, by changing the path generation policy or adjusting the margin around static objects.**
 
+## Start/End Conditions
+
+### **Start Conditions**
+
+The `StartPlannerModule` is designed to initiate its execution based on specific criteria evaluated by the `isExecutionRequested` function. The module will **not** start under the following conditions:
+
+1. **Start pose on the middle of the road**: The module will not initiate if the start pose of the vehicle is determined to be in the middle of the road. This ensures the planner starts from a roadside position.
+
+2. **Vehicle far from start position**: If the vehicle is far from the start position, the module will not execute. This prevents redundant planning when the vehicle is already in position.
+
+3. **Vehicle reached Goal**: The module will not start if the vehicle has already reached its goal position, avoiding unnecessary execution when the destination is attained.
+
+4. **Vehicle in motion**: If the vehicle is still moving, the module will defer starting. This ensures that planning occurs from a stable, stationary state for safety.
+
+5. **Goal behind in same route segment**: The module will not initiate if the goal position is behind the ego vehicle within the same route segment. This condition is checked to avoid complications with planning routes that require the vehicle to move backward on its current path, which is currently not supported.
+
+These conditions are evaluated to ensure that the `StartPlannerModule` only initiates under safe and necessary circumstances, optimizing route planning efficiency and safety.
+
+In summary, the `StartPlannerModule` will initiate if **none** of these conditions apply, ensuring that the module starts only when it is safe and necessary to do so.
+
+### **End Conditions**
+
+
+
 ## Concept of safety assurance
 
 The approach to collision safety is divided into two main components: generating paths that consider static information, and detecting collisions with dynamic obstacles to ensure the safety of the generated paths.
