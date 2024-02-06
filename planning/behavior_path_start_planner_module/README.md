@@ -81,7 +81,7 @@ The `StartPlannerModule` is designed to initiate its execution based on specific
 
 1. **Start pose on the middle of the road**: The module will not initiate if the start pose of the vehicle is determined to be in the middle of the road. This ensures the planner starts from a roadside position.
 
-2. **Vehicle far from start position**: If the vehicle is far from the start position, the module will not execute. This prevents redundant planning when the vehicle is already in position.
+2. **Vehicle is far from start position**: If the vehicle is far from the start position, the module will not execute. This prevents redundant execution when the new goal is given.
 
 3. **Vehicle reached goal**: The module will not start if the vehicle has already reached its goal position, avoiding unnecessary execution when the destination is attained.
 
