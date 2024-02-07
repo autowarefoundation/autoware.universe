@@ -16,3 +16,6 @@
     map_length: 150.0
     map_width: 150.0
     map_resolution: 0.5
+
+    updater_type: "binary_bayes_filter"
+    updater_param_file: $(find-pkg-share probabilistic_occupancy_grid_map)/config/binary_bayes_filter.param.yaml

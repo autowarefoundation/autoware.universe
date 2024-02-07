@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -26,6 +28,20 @@ from launch_ros.descriptions import ComposableNode
 import yaml
 
 
+def replace_pkg_share_path_with_package_name(param_string: str) -> str:
+    # replace $(find-pkg-share ...) with the actual path
+    # get the package name from the string
+    match = re.search(r"\$\(\s*find-pkg-share\s+([a-zA-Z0-9_]+)\s*\)", param_string)
+    if match:
+        package_name = match.group(1)
+        package_path = get_package_share_directory(package_name)
+        # Replace the entire $(find-pkg-share ...) expression with the package path
+        return param_string.replace(match.group(0), package_path)
+    else:
+        # If no match is found, return the original string
+        return param_string
+
+
 def launch_setup(context, *args, **kwargs):
     # load parameter files
     param_file = LaunchConfiguration("param_file").perform(context)
@@ -33,10 +49,12 @@ def launch_setup(context, *args, **kwargs):
         pointcloud_based_occupancy_grid_map_node_params = yaml.safe_load(f)["/**"][
             "ros__parameters"
         ]
-
-    updater_param_file = LaunchConfiguration("updater_param_file").perform(context)
-    with open(updater_param_file, "r") as f:
-        occupancy_grid_map_updater_params = yaml.safe_load(f)["/**"]["ros__parameters"]
+        # replace $(find-pkg-share ...) with the actual path
+        pointcloud_based_occupancy_grid_map_node_params[
+            "updater_param_file"
+        ] = replace_pkg_share_path_with_package_name(
+            pointcloud_based_occupancy_grid_map_node_params["updater_param_file"]
+        )
 
     composable_nodes = [
         ComposableNode(
@@ -56,8 +74,6 @@ def launch_setup(context, *args, **kwargs):
             ],
             parameters=[
                 pointcloud_based_occupancy_grid_map_node_params,
-                occupancy_grid_map_updater_params,
-                {"updater_type": LaunchConfiguration("updater_type")},
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         ),
@@ -112,12 +128,6 @@ def generate_launch_description():
                 "param_file",
                 get_package_share_directory("probabilistic_occupancy_grid_map")
                 + "/config/pointcloud_based_occupancy_grid_map.param.yaml",
-            ),
-            add_launch_arg("updater_type", "binary_bayes_filter"),
-            add_launch_arg(
-                "updater_param_file",
-                get_package_share_directory("probabilistic_occupancy_grid_map")
-                + "/config/binary_bayes_filter_updater.param.yaml",
             ),
             set_container_executable,
             set_container_mt_executable,

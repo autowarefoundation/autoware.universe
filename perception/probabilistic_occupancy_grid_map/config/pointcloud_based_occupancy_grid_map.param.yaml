@@ -21,6 +21,9 @@
     # base_link should not be used with "OccupancyGridMapProjectiveBlindSpot"
     scan_origin_frame: "base_link"
 
+    updater_type: "binary_bayes_filter"
+    updater_param_file: $(find-pkg-share probabilistic_occupancy_grid_map)/config/binary_bayes_filter.param.yaml
+
     grid_map_type: "OccupancyGridMapFixedBlindSpot"
     OccupancyGridMapFixedBlindSpot:
       distance_margin: 1.0
