@@ -112,6 +112,7 @@ private:
   rclcpp::Service<SetBool>::SharedPtr service_trigger_node_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_mapped_;
   rclcpp::Publisher<PoseArray>::SharedPtr pub_marker_detected_;
+  rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pub_debug_pose_with_covariance_;
 
   std::shared_ptr<DiagnosticsModule> diagnostics_module_;
 

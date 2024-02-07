@@ -90,6 +90,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   qos_marker.reliable();
   pub_marker_mapped_ = this->create_publisher<MarkerArray>("~/debug/marker_mapped", qos_marker);
   pub_marker_detected_ = this->create_publisher<PoseArray>("~/debug/marker_detected", 10);
+  pub_debug_pose_with_covariance_ = this->create_publisher<PoseWithCovarianceStamped>("~/debug/pose_with_covariance", 10);
 
   service_trigger_node_ = this->create_service<SetBool>(
     "~/service/trigger_node_srv",
@@ -284,6 +285,7 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
   result.pose.covariance = rotate_covariance(param_.base_covariance, map_to_base_link_rotation);
 
   pub_base_link_pose_with_covariance_on_map_->publish(result);
+  pub_debug_pose_with_covariance_->publish(result);
 }
 
 void LidarMarkerLocalizer::service_trigger_node(
