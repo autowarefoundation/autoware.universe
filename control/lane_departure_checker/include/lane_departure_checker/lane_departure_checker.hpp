@@ -35,6 +35,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/geometry/LaneletMap.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Polygon.h>
 
@@ -117,7 +118,7 @@ public:
     const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path) const;
 
   bool checkPathWillLeaveLane(
-    lanelet::LaneletMapPtr lanelet_map_ptr, const std::vector<LinearRing2d> & vehicle_footprints);
+    lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
 
   static bool isOutOfLane(
     const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);
@@ -146,9 +147,6 @@ private:
   static bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints);
-
-  static bool isPathWithinLanelets(
-    lanelet::Lanelets & route_lanelets, LinearRing2d & footprint_hull);
 
   double calcMaxSearchLengthForBoundaries(const Trajectory & trajectory) const;
 

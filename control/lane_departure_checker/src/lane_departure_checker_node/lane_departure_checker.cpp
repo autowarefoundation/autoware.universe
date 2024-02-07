@@ -301,18 +301,52 @@ bool LaneDepartureChecker::willLeaveLane(
 }
 
 bool LaneDepartureChecker::checkPathWillLeaveLane(
-  lanelet::LaneletMapPtr lanelet_map_ptr, const std::vector<LinearRing2d> & vehicle_footprints)
+  lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const
 {
-  // get all relevant lanelets
-
-  // fix this, requires a boost type
+  // Get Footprint Hull basic polygon
+  std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
   LinearRing2d footprint_hull = createHullFromFootprints(vehicle_footprints);
-  lanelet::BoundingBox2d path_polygon_box =
-    boost::geometry::return_envelope<lanelet::BoundingBox2d, LinearRing2d>(footprint_hull);
-  lanelet::Lanelets lanelets = lanelet_map_ptr->laneletLayer.search(path_polygon_box);
-  if (lanelets.empty()) return true;
-  // check if the footprint is fully contained within the lanelets
-  return !isPathWithinLanelets(lanelets, footprint_hull);
+  auto to_basic_polygon = [](const LinearRing2d & footprint_hull) -> lanelet::BasicPolygon2d {
+    lanelet::BasicPolygon2d basic_polygon;
+    for (const auto & point : footprint_hull) {
+      Eigen::Vector2d p(point.x(), point.y());
+      basic_polygon.push_back(p);
+    }
+    return basic_polygon;
+  };
+  lanelet::BasicPolygon2d footprint_hull_basic_polygon = to_basic_polygon(footprint_hull);
+
+  // Find all lanelets that intersect the footprint hull
+  auto lanelets_distance_pair = lanelet::geometry::findWithin2d(
+    lanelet_map_ptr->laneletLayer, footprint_hull_basic_polygon, 0.0);
+
+  // Fuse lanelets into a single BasicPolygon2d
+  auto fused_lanelets = [&lanelets_distance_pair]() -> std::optional<lanelet::BasicPolygon2d> {
+    if (lanelets_distance_pair.empty()) return std::nullopt;
+    if (lanelets_distance_pair.size() == 1)
+      return lanelets_distance_pair.at(0).second.polygon2d().basicPolygon();
+    std::vector<lanelet::BasicPolygon2d> lanelet_union;
+    for (size_t i = 1; i < lanelets_distance_pair.size(); ++i) {
+      const auto & route_lanelet_1 = lanelets_distance_pair.at(i).second;
+      const auto & poly_1 = route_lanelet_1.polygon2d().basicPolygon();
+      const auto & route_lanelet_2 = lanelets_distance_pair.at(i - 1).second;
+      const auto & poly_2 = route_lanelet_2.polygon2d().basicPolygon();
+      std::vector<lanelet::BasicPolygon2d> lanelet_union_temp;
+      boost::geometry::union_(poly_1, poly_2, lanelet_union_temp);
+      lanelet_union = lanelet_union_temp;
+    }
+    if (lanelet_union.empty()) return std::nullopt;
+    return lanelet_union.back();
+  }();
+
+  if (!fused_lanelets) return true;
+
+  // check if the footprint is not fully contained within the fused lanelets polygon
+  return !std::all_of(
+    vehicle_footprints.begin(), vehicle_footprints.end(),
+    [&fused_lanelets](const auto & footprint) {
+      return boost::geometry::within(footprint, fused_lanelets.value());
+    });
 }
 
 bool LaneDepartureChecker::isOutOfLane(
@@ -380,21 +414,6 @@ bool LaneDepartureChecker::willCrossBoundary(
     }
   }
   return false;
-}
-
-bool LaneDepartureChecker::isPathWithinLanelets(
-  lanelet::Lanelets & route_lanelets, LinearRing2d & footprint_hull)
-{
-  if (route_lanelets.empty()) return false;
-  // Find lanes within the convex hull of footprints
-  std::vector<lanelet::BasicPolygon2d> lanelet_union{
-    route_lanelets.at(0).polygon2d().basicPolygon()};
-  for (size_t i = 1; i < route_lanelets.size(); ++i) {
-    const auto route_lanelet = route_lanelets.at(i);
-    const auto poly = route_lanelet.polygon2d().basicPolygon();
-    boost::geometry::union_(lanelet_union, poly, lanelet_union);
-  }
-  return boost::geometry::within(footprint_hull, lanelet_union);
 }
 
 }  // namespace lane_departure_checker
