@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-
   <!-- input pointcloud topic/container -->
   <arg name="input_pointcloud"/>
   <arg name="lidar_container_name"/>
@@ -28,10 +27,8 @@
           <param from="$(var lidar_marker_localizer/pointcloud_preprocessor/ring_filter_param_path)"/>
           <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
         </composable_node>
-
       </load_composable_node>
     </group>
-
 
     <!-- lidar_marker_localizer -->
     <include file="$(find-pkg-share lidar_marker_localizer)/launch/lidar_marker_localizer.launch.xml">
@@ -42,6 +39,5 @@
       <arg name="service_trigger_node_srv" value="trigger_node_srv"/>
       <arg name="param_file" value="$(var lidar_marker_localizer/lidar_marker_localizer_param_path)"/>
     </include>
-
   </group>
 </launch>
