@@ -107,7 +107,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     // lanelet::ConstLanelets, making it unnecessary to retain departure_check_lanes_ as a member
     // variable.
 
-    const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
+    const auto lanelet_map_ptr = planner_data_->route_handler->getLaneletMapPtr();
 
     // if (
     //   parameters_.check_shift_path_lane_departure &&
