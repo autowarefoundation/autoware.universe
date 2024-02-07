@@ -40,7 +40,7 @@ struct MapHeightFitter::Impl
   void on_pcd_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   void on_vector_map(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   bool get_partial_point_cloud_map(const Point & point);
-  double get_ground_height(const tf2::Vector3 & point);
+  double get_ground_height(const Point & point);
   std::optional<Point> fit(const Point & position, const std::string & frame);
 
   tf2::BufferCore tf2_buffer_;
@@ -170,30 +170,15 @@ void MapHeightFitter::Impl::on_vector_map(
   map_frame_ = msg->header.frame_id;
 }
 
-double MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point)
+double MapHeightFitter::Impl::get_ground_height(const Point & point)
 {
   const auto logger = node_->get_logger();
 
-  const double x = point.getX();
-  const double y = point.getY();
+  const double x = point.x;
+  const double y = point.y;
 
   double height = INFINITY;
   if (fit_target_ == "pointcloud_map") {
-    if (cli_pcd_map_) {
-      geometry_msgs::msg::Point position;
-      position.x = point.getX();
-      position.y = point.getY();
-      position.z = point.getZ();
-      if (!get_partial_point_cloud_map(position)) {
-        return point.getZ();
-      }
-    }
-
-    if (!map_cloud_) {
-      RCLCPP_WARN_STREAM(logger, "point cloud map is not ready");
-      return point.getZ();
-    }
-
     // find distance d to closest point
     double min_dist2 = INFINITY;
     for (const auto & p : map_cloud_->points) {
@@ -226,40 +211,71 @@ double MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point)
       lanelet::utils::query::getClosestLanelet(all_lanelets, pose, &closest_lanelet);
     if (!result) {
       RCLCPP_WARN_STREAM(logger, "failed to get closest lanelet");
-      return point.getZ();
+      return point.z;
     }
     height = closest_lanelet.centerline().back().z();
   }
 
-  return std::isfinite(height) ? height : point.getZ();
+  return std::isfinite(height) ? height : point.z;
 }
 
 std::optional<Point> MapHeightFitter::Impl::fit(const Point & position, const std::string & frame)
 {
   const auto logger = node_->get_logger();
-  tf2::Vector3 point(position.x, position.y, position.z);
+  Point point;
+  point.x = position.x;
+  point.y = position.y;
+  point.z = position.z;
 
-  RCLCPP_DEBUG(logger, "original point: %.3f %.3f %.3f", point.getX(), point.getY(), point.getZ());
+  RCLCPP_DEBUG(logger, "original point: %.3f %.3f %.3f", point.x, point.y, point.z);
 
+  // prepare data
+  if (fit_target_ == "pointcloud_map") {
+    if (!cli_pcd_map_) {
+      RCLCPP_WARN_STREAM(logger, "Partial map loading in pointcloud_map_loader is not enabled");
+      return std::nullopt;
+    }
+    if (!get_partial_point_cloud_map(position)) {
+      RCLCPP_WARN_STREAM(logger, "failed to get partial point cloud map");
+      return std::nullopt;
+    }
+    if (!map_cloud_) {
+      RCLCPP_WARN_STREAM(logger, "point cloud map is not ready");
+      return std::nullopt;
+    }
+  } else if (fit_target_ == "vector_map") {
+    if (!vector_map_) {
+      RCLCPP_WARN_STREAM(logger, "vector map is not ready");
+      return std::nullopt;
+    }
+  } else {
+    throw std::runtime_error("invalid fit_target");
+  }
+
+  // transform frame to map_frame_
   try {
-    const auto stamped = tf2_buffer_.lookupTransform(map_frame_, frame, tf2::TimePointZero);
-    tf2::Transform transform{tf2::Quaternion{}, tf2::Vector3{}};
-    tf2::fromMsg(stamped.transform, transform);
-    point = transform * point;
-    point.setZ(get_ground_height(point));
-    point = transform.inverse() * point;
+    const auto stamped = tf2_buffer_.lookupTransform(frame, map_frame_, tf2::TimePointZero);
+    tf2::doTransform(point, point, stamped);
   } catch (tf2::TransformException & exception) {
     RCLCPP_WARN_STREAM(logger, "failed to lookup transform: " << exception.what());
     return std::nullopt;
   }
 
-  RCLCPP_DEBUG(logger, "modified point: %.3f %.3f %.3f", point.getX(), point.getY(), point.getZ());
+  // fit height on map_frame_
+  point.z = get_ground_height(point);
 
-  Point result;
-  result.x = point.getX();
-  result.y = point.getY();
-  result.z = point.getZ();
-  return result;
+  // transform map_frame_ to frame
+  try {
+    const auto stamped = tf2_buffer_.lookupTransform(map_frame_, frame, tf2::TimePointZero);
+    tf2::doTransform(point, point, stamped);
+  } catch (tf2::TransformException & exception) {
+    RCLCPP_WARN_STREAM(logger, "failed to lookup transform: " << exception.what());
+    return std::nullopt;
+  }
+
+  RCLCPP_DEBUG(logger, "modified point: %.3f %.3f %.3f", point.x, point.y, point.z);
+
+  return point;
 }
 
 MapHeightFitter::MapHeightFitter(rclcpp::Node * node)
