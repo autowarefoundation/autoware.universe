@@ -8,6 +8,8 @@
     ndt_enabled: $(var ndt_enabled)
     stop_check_enabled: $(var stop_check_enabled)
 
+    map_loader_name: /map/pointcloud_map_loader
+
     # from gnss
     gnss_particle_covariance:
       [
