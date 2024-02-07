@@ -21,7 +21,7 @@
     acceleration_exponential_half_life: 2.5 # [s] When using vehicle acceleration. The decaying acceleration model considers that the current vehicle acceleration will be halved after this many seconds
     crosswalk_with_signal:
       use_crosswalk_signal: true
-      threshold_speed_as_stopping: 0.25 # [m/s] velocity threshold for the module to judge whether the objects is stopped
+      threshold_velocity_assumed_as_stopping: 0.25 # [m/s] velocity threshold for the module to judge whether the objects is stopped
       # If the pedestrian does not move for X seconds against green signal, the module judge that the pedestrian has no intention to walk.
       distance_set_for_no_intention_to_walk: [1.0, 5.0] # [m] ascending order, keys of map
       timeout_set_for_no_intention_to_walk: [1.0, 0.0] # [s] values of map

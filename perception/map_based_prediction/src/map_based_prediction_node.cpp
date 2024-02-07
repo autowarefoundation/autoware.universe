@@ -789,8 +789,8 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     declare_parameter<double>("acceleration_exponential_half_life");
 
   use_crosswalk_signal_ = declare_parameter<bool>("crosswalk_with_signal.use_crosswalk_signal");
-  threshold_speed_as_stopping_ =
-    declare_parameter<double>("crosswalk_with_signal.threshold_speed_as_stopping");
+  threshold_velocity_assumed_as_stopping_ =
+    declare_parameter<double>("crosswalk_with_signal.threshold_velocity_assumed_as_stopping");
   distance_set_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
     "crosswalk_with_signal.distance_set_for_no_intention_to_walk");
   timeout_set_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
@@ -2298,7 +2298,7 @@ bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSgnal(
   if (
     signal_color == TrafficSignalElement::GREEN &&
     tier4_autoware_utils::calcNorm(object.kinematics.twist_with_covariance.twist.linear) <
-      threshold_speed_as_stopping_) {
+      threshold_velocity_assumed_as_stopping_) {
     stopped_times_against_green_.try_emplace(key, this->get_clock()->now());
 
     const auto timeout_no_intention_to_walk = [&]() {

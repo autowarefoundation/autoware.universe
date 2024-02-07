@@ -192,7 +192,7 @@ private:
   double acceleration_exponential_half_life_;
 
   bool use_crosswalk_signal_;
-  double threshold_speed_as_stopping_;
+  double threshold_velocity_assumed_as_stopping_;
   std::vector<double> distance_set_for_no_intention_to_walk_;
   std::vector<double> timeout_set_for_no_intention_to_walk_;
 

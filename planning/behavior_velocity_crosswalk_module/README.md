@@ -97,7 +97,7 @@ In the case of the upper figure, `ego_pass_later_margin_x` is `{0, 1, 2}` and `e
 In the same way, the boundary of B and C is calculated from `ego_pass_first_margin_x` and `ego_pass_first_margin_y`.
 In the case of the upper figure, `ego_pass_first_margin_x` is `{3, 5}` and `ego_pass_first_margin_y` is `{0, 1}`.
 
-Of course, if the red signal is indicating to the corresponding croswalk, the ego do not yield against the pedestians.
+If the red signal is indicating to the corresponding crosswalk, the ego do not yield against the pedestrians.
 
 <div align="center">
     <table>

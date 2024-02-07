@@ -206,18 +206,6 @@ If the target object is inside the road or crosswalk, this module outputs one or
   <img src="images/inside_road.svg" width=90%>
 </div>
 
-\*1:
-The crosswalk user's intention to walk is calculated in the same way as `Cases without traffic lights`.
-
-<div align="center">
-    <table>
-        <tr>
-            <td><img src="./docs/without_traffic_light.svg" width="600"></td>
-            <td><img src="./docs/with_traffic_light.svg" width="600"></td>
-        </tr>
-    </table>
-</div>
-
 ## Inputs / Outputs
 
 ### Input
