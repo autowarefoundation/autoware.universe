@@ -13,7 +13,7 @@
         },
         "fit_target": {
           "type": "string",
-          "description": "Node name of the map loader from which this map_height_fitter will retrieve its parameters",
+          "description": "Target map to fit (choose from 'pointcloud_map', 'vector_map')",
           "default": "pointcloud_map"
         }
       },
