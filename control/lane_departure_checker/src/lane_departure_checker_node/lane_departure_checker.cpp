@@ -34,6 +34,7 @@ using motion_utils::calcArcLength;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::MultiPoint2d;
+using tier4_autoware_utils::MultiPolygon2d;
 using tier4_autoware_utils::Point2d;
 
 namespace
@@ -92,6 +93,7 @@ lanelet::ConstLanelets getCandidateLanelets(
 
   return candidate_lanelets;
 }
+
 }  // namespace
 
 namespace lane_departure_checker
@@ -298,6 +300,21 @@ bool LaneDepartureChecker::willLeaveLane(
   return false;
 }
 
+bool LaneDepartureChecker::checkPathWillLeaveLane(
+  lanelet::LaneletMapPtr lanelet_map_ptr, const std::vector<LinearRing2d> & vehicle_footprints)
+{
+  // get all relevant lanelets
+
+  // fix this, requires a boost type
+  LinearRing2d footprint_hull = createHullFromFootprints(vehicle_footprints);
+  lanelet::BoundingBox2d path_polygon_box =
+    boost::geometry::return_envelope<lanelet::BoundingBox2d, LinearRing2d>(footprint_hull);
+  lanelet::Lanelets lanelets = lanelet_map_ptr->laneletLayer.search(path_polygon_box);
+  if (lanelets.empty()) return true;
+  // check if the footprint is fully contained within the lanelets
+  return !isPathWithinLanelets(lanelets, footprint_hull);
+}
+
 bool LaneDepartureChecker::isOutOfLane(
   const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint)
 {
@@ -364,4 +381,20 @@ bool LaneDepartureChecker::willCrossBoundary(
   }
   return false;
 }
+
+bool LaneDepartureChecker::isPathWithinLanelets(
+  lanelet::Lanelets & route_lanelets, LinearRing2d & footprint_hull)
+{
+  if (route_lanelets.empty()) return false;
+  // Find lanes within the convex hull of footprints
+  std::vector<lanelet::BasicPolygon2d> lanelet_union{
+    route_lanelets.at(0).polygon2d().basicPolygon()};
+  for (size_t i = 1; i < route_lanelets.size(); ++i) {
+    const auto route_lanelet = route_lanelets.at(i);
+    const auto poly = route_lanelet.polygon2d().basicPolygon();
+    boost::geometry::union_(lanelet_union, poly, lanelet_union);
+  }
+  return boost::geometry::within(footprint_hull, lanelet_union);
+}
+
 }  // namespace lane_departure_checker

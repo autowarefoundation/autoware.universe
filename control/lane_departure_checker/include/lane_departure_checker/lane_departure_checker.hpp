@@ -29,10 +29,14 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <boost/geometry/algorithms/envelope.hpp>
+#include <boost/geometry/algorithms/union.hpp>
 #include <boost/geometry/index/rtree.hpp>
-#include <boost/optional.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <map>
 #include <memory>
@@ -112,6 +116,9 @@ public:
   bool checkPathWillLeaveLane(
     const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path) const;
 
+  bool checkPathWillLeaveLane(
+    lanelet::LaneletMapPtr lanelet_map_ptr, const std::vector<LinearRing2d> & vehicle_footprints);
+
   static bool isOutOfLane(
     const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);
 
@@ -139,6 +146,9 @@ private:
   static bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints);
+
+  static bool isPathWithinLanelets(
+    lanelet::Lanelets & route_lanelets, LinearRing2d & footprint_hull);
 
   double calcMaxSearchLengthForBoundaries(const Trajectory & trajectory) const;
 
