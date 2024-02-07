@@ -47,7 +47,7 @@ int32_t uuidToInt32(const unique_identifier_msgs::msg::UUID & uuid)
   int32_t ret = 0;
 
   for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
-    ret <<= sizeof(int8_t);
+    ret <<= sizeof(int8_t) * 8;
     ret |= uuid.uuid.at(i);
   }
 
@@ -557,6 +557,7 @@ MarkerArray createDebugMarkerArray(
     addObjects(data.other_objects, std::string("TooNearToGoal"));
     addObjects(data.other_objects, std::string("ParallelToEgoLane"));
     addObjects(data.other_objects, std::string("MergingToEgoLane"));
+    addObjects(data.other_objects, std::string("UnstableObject"));
   }
 
   // shift line pre-process

@@ -21,6 +21,7 @@
 #include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
@@ -368,13 +369,15 @@ bool isSafetyCheckTargetObjectType(
   return parameters->object_parameters.at(object_type).is_safety_check_target;
 }
 
+bool isUnknownTypeObject(const ObjectData & object)
+{
+  const auto object_type = utils::getHighestProbLabel(object.object.classification);
+  return object_type == ObjectClassification::UNKNOWN;
+}
+
 bool isVehicleTypeObject(const ObjectData & object)
 {
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
-
-  if (object_type == ObjectClassification::UNKNOWN) {
-    return false;
-  }
 
   if (object_type == ObjectClassification::PEDESTRIAN) {
     return false;
@@ -385,6 +388,14 @@ bool isVehicleTypeObject(const ObjectData & object)
   }
 
   return true;
+}
+
+bool isMovingObject(
+  const ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  const auto object_type = utils::getHighestProbLabel(object.object.classification);
+  const auto object_parameter = parameters->object_parameters.at(object_type);
+  return object.move_time > object_parameter.moving_time_threshold;
 }
 
 bool isWithinCrosswalk(
@@ -474,11 +485,11 @@ bool isObjectOnRoadShoulder(
   ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  using boost::geometry::return_centroid;
   using boost::geometry::within;
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
   using lanelet::utils::to2D;
+  using lanelet::utils::conversion::toLaneletPoint;
 
   // assume that there are no parked vehicles in intersection.
   std::string turn_direction = object.overhang_lanelet.attributeOr("turn_direction", "else");
@@ -496,13 +507,9 @@ bool isObjectOnRoadShoulder(
   // +: object position
   // o: nearest point on centerline
 
-  lanelet::BasicPoint2d object_centroid(object.centroid.x(), object.centroid.y());
-
   const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
-  const auto centerline_pose =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
-  lanelet::BasicPoint3d centerline_point(
-    centerline_pose.position.x, centerline_pose.position.y, centerline_pose.position.z);
+  const auto centerline_pos =
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position).position;
 
   bool is_left_side_parked_vehicle = false;
   if (!isOnRight(object)) {
@@ -524,8 +531,9 @@ bool isObjectOnRoadShoulder(
         }
       }
 
-      const auto center_to_left_boundary =
-        distance2d(to2D(most_left_lanelet.leftBound().basicLineString()), to2D(centerline_point));
+      const auto center_to_left_boundary = distance2d(
+        to2D(most_left_lanelet.leftBound().basicLineString()),
+        to2D(toLaneletPoint(centerline_pos)).basicPoint());
 
       return std::make_pair(
         center_to_left_boundary - 0.5 * object.object.shape.dimensions.y, sub_type);
@@ -536,7 +544,8 @@ bool isObjectOnRoadShoulder(
     }
 
     const auto arc_coordinates = toArcCoordinates(
-      to2D(object.overhang_lanelet.centerline().basicLineString()), object_centroid);
+      to2D(object.overhang_lanelet.centerline().basicLineString()),
+      to2D(toLaneletPoint(object_pose.position)).basicPoint());
     object.shiftable_ratio = arc_coordinates.distance / object_shiftable_distance;
 
     is_left_side_parked_vehicle = object.shiftable_ratio > parameters->object_check_shiftable_ratio;
@@ -562,8 +571,9 @@ bool isObjectOnRoadShoulder(
         }
       }
 
-      const auto center_to_right_boundary =
-        distance2d(to2D(most_right_lanelet.rightBound().basicLineString()), to2D(centerline_point));
+      const auto center_to_right_boundary = distance2d(
+        to2D(most_right_lanelet.rightBound().basicLineString()),
+        to2D(toLaneletPoint(centerline_pos)).basicPoint());
 
       return std::make_pair(
         center_to_right_boundary - 0.5 * object.object.shape.dimensions.y, sub_type);
@@ -574,7 +584,8 @@ bool isObjectOnRoadShoulder(
     }
 
     const auto arc_coordinates = toArcCoordinates(
-      to2D(object.overhang_lanelet.centerline().basicLineString()), object_centroid);
+      to2D(object.overhang_lanelet.centerline().basicLineString()),
+      to2D(toLaneletPoint(object_pose.position)).basicPoint());
     object.shiftable_ratio = -1.0 * arc_coordinates.distance / object_shiftable_distance;
 
     is_right_side_parked_vehicle =
@@ -663,9 +674,7 @@ bool isSatisfiedWithCommonCondition(
   }
 
   // Step2. filtered stopped objects.
-  const auto object_type = utils::getHighestProbLabel(object.object.classification);
-  const auto object_parameter = parameters->object_parameters.at(object_type);
-  if (object.move_time > object_parameter.moving_time_threshold) {
+  if (filtering_utils::isMovingObject(object, parameters)) {
     object.reason = AvoidanceDebugFactor::MOVING_OBJECT;
     return false;
   }
@@ -723,6 +732,15 @@ bool isSatisfiedWithNonVehicleCondition(
     return false;
   }
 
+  // Object is on center line -> ignore.
+  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
+  object.to_centerline =
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+  if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
+    object.reason = AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE;
+    return false;
+  }
+
   return true;
 }
 
@@ -743,6 +761,8 @@ bool isSatisfiedWithVehicleCondition(
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   using boost::geometry::within;
+  using lanelet::utils::to2D;
+  using lanelet::utils::conversion::toLaneletPoint;
 
   object.behavior = getObjectBehavior(object, parameters);
   object.is_within_intersection = isWithinIntersection(object, planner_data->route_handler);
@@ -753,9 +773,10 @@ bool isSatisfiedWithVehicleCondition(
   }
 
   // check vehicle shift ratio
-  lanelet::BasicPoint2d object_centroid(object.centroid.x(), object.centroid.y());
-  const auto on_ego_driving_lane =
-    within(object_centroid, object.overhang_lanelet.polygon2d().basicPolygon());
+  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
+  const auto on_ego_driving_lane = within(
+    to2D(toLaneletPoint(object_pos)).basicPoint(),
+    object.overhang_lanelet.polygon2d().basicPolygon());
   if (on_ego_driving_lane) {
     if (isObjectOnRoadShoulder(object, planner_data->route_handler, parameters)) {
       return true;
@@ -1626,6 +1647,16 @@ void filterTargetObjects(
     o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
     o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 
+    // TODO(Satoshi Ota) parametrize stop time threshold if need.
+    constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
+    if (filtering_utils::isUnknownTypeObject(o)) {
+      if (o.stop_time < STOP_TIME_THRESHOLD) {
+        o.reason = "UnstableObject";
+        data.other_objects.push_back(o);
+        continue;
+      }
+    }
+
     if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
       data.other_objects.push_back(o);
       continue;
@@ -2278,11 +2309,15 @@ TurnSignalInfo calcTurnSignalInfo(
     return {};
   }
 
-  const auto left_lanelets = rh->getAllLeftSharedLinestringLanelets(lanelet, true, true);
-  const auto right_lanelets = rh->getAllRightSharedLinestringLanelets(lanelet, true, true);
+  const auto left_same_direction_lane = rh->getLeftLanelet(lanelet, true, true);
+  const auto left_opposite_lanes = rh->getLeftOppositeLanelets(lanelet);
+  const auto right_same_direction_lane = rh->getRightLanelet(lanelet, true, true);
+  const auto right_opposite_lanes = rh->getRightOppositeLanelets(lanelet);
+  const auto has_left_lane = left_same_direction_lane.has_value() || !left_opposite_lanes.empty();
+  const auto has_right_lane =
+    right_same_direction_lane.has_value() || !right_opposite_lanes.empty();
 
-  if (!existShiftSideLane(
-        start_shift_length, end_shift_length, left_lanelets.empty(), right_lanelets.empty())) {
+  if (!existShiftSideLane(start_shift_length, end_shift_length, !has_left_lane, !has_right_lane)) {
     return {};
   }
 
