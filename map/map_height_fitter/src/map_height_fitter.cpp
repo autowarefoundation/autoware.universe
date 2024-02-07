@@ -231,19 +231,18 @@ std::optional<Point> MapHeightFitter::Impl::fit(const Point & position, const st
 
   // prepare data
   if (fit_target_ == "pointcloud_map") {
-    if (!cli_pcd_map_) {
-      RCLCPP_WARN_STREAM(logger, "Partial map loading in pointcloud_map_loader is not enabled");
-      return std::nullopt;
-    }
-    if (!get_partial_point_cloud_map(position)) {
-      RCLCPP_WARN_STREAM(logger, "failed to get partial point cloud map");
-      return std::nullopt;
-    }
+    if (cli_pcd_map_) {  // if cli_pcd_map_ is available, prepare pointcloud map by partial loading
+      if (!get_partial_point_cloud_map(position)) {
+        RCLCPP_WARN_STREAM(logger, "failed to get partial point cloud map");
+        return std::nullopt;
+      }
+    }  // otherwise, pointcloud map should be already prepared by on_pcd_map
     if (!map_cloud_) {
       RCLCPP_WARN_STREAM(logger, "point cloud map is not ready");
       return std::nullopt;
     }
   } else if (fit_target_ == "vector_map") {
+    // vector_map_ should be already prepared by on_vector_map
     if (!vector_map_) {
       RCLCPP_WARN_STREAM(logger, "vector map is not ready");
       return std::nullopt;
