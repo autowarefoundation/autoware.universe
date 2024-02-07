@@ -56,19 +56,6 @@ OutOfLaneModule::OutOfLaneModule(
   velocity_factor_.init(PlanningBehavior::UNKNOWN);
 }
 
-size_t calculate_index_ahead(
-  const std::vector<PathPointWithLaneId> & points, const size_t start, const double dist_ahead)
-{
-  auto last_idx = start;
-  auto length = 0.0;
-  while (length < dist_ahead && last_idx + 1 < points.size()) {
-    length +=
-      tier4_autoware_utils::calcDistance2d(points[last_idx].point, points[last_idx + 1].point);
-    ++last_idx;
-  }
-  return last_idx;
-}
-
 bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_.reset_data();
@@ -81,9 +68,6 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   ego_data.path.points = path->points;
   ego_data.first_path_idx =
     motion_utils::findNearestSegmentIndex(path->points, ego_data.pose.position);
-  ego_data.path.points.resize(calculate_index_ahead(
-    path->points, ego_data.first_path_idx,
-    std::max(params_.slow_dist_threshold, params_.stop_dist_threshold)));
   motion_utils::removeOverlapPoints(ego_data.path.points);
   ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
   ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;

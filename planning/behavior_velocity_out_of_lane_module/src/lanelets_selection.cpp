@@ -68,7 +68,8 @@ lanelet::ConstLanelets calculate_other_lanelets(
   const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
   const auto lanelets_within_range = lanelet::geometry::findWithin2d(
     route_handler.getLaneletMapPtr()->laneletLayer, ego_point,
-    std::max(params.slow_dist_threshold, params.stop_dist_threshold));
+    std::max(params.slow_dist_threshold, params.stop_dist_threshold) + params.front_offset +
+      params.extra_front_offset);
   for (const auto & ll : lanelets_within_range) {
     if (std::string(ll.second.attributeOr(lanelet::AttributeName::Subtype, "none")) != "road")
       continue;
