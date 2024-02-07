@@ -13,6 +13,6 @@
     <remap from="/vector_map" to="$(var vector_map_topic)"/>
     <param from="$(var tracker_setting_path)"/>
     <param from="$(var data_association_matrix_path)"/>
-    <param from="$(var radar_object_tracker_param_path)"/>
+    <param from="$(var radar_object_tracker_param_path)" allow_substs="true"/>
   </node>
 </launch>
