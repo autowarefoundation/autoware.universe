@@ -53,9 +53,11 @@ public:
 
   LaneChangePath getLaneChangePath() const override;
 
+  BehaviorModuleOutput getTerminalLaneChangePath() const override;
+
   BehaviorModuleOutput generateOutput() override;
 
-  void extendOutputDrivableArea(BehaviorModuleOutput & output) override;
+  void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;
 
   void insertStopPoint(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
 
@@ -65,13 +67,13 @@ public:
 
   void resetParameters() override;
 
-  TurnSignalInfo updateOutputTurnSignal() override;
+  TurnSignalInfo updateOutputTurnSignal() const override;
 
   bool calcAbortPath() override;
 
   PathSafetyStatus isApprovedPathSafe() const override;
 
-  bool isRequiredStop(const bool is_object_coming_from_rear) const override;
+  bool isRequiredStop(const bool is_object_coming_from_rear) override;
 
   bool isNearEndOfCurrentLanes(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
@@ -89,7 +91,7 @@ public:
 
   bool isAbortState() const override;
 
-  bool isLaneChangeRequired() const override;
+  bool isLaneChangeRequired() override;
 
   bool isStoppedAtRedTrafficLight() const override;
 
@@ -141,7 +143,11 @@ protected:
     const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
     const bool check_safety = true) const override;
 
-  TurnSignalInfo calcTurnSignalInfo() override;
+  std::optional<LaneChangePath> calcTerminalLaneChangePath(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
+
+  TurnSignalInfo calcTurnSignalInfo() const override;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 

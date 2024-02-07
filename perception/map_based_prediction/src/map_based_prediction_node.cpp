@@ -24,7 +24,6 @@
 #include <tier4_autoware_utils/math/constants.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
@@ -385,11 +384,7 @@ bool withinRoadLanelet(
   const TrackedObject & object, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const bool use_yaw_information = false)
 {
-  using Point = boost::geometry::model::d2::point_xy<double>;
-
   const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
-  const Point p_object{obj_pos.x, obj_pos.y};
-
   lanelet::BasicPoint2d search_point(obj_pos.x, obj_pos.y);
   // nearest lanelet
   constexpr double search_radius = 10.0;  // [m]
@@ -415,16 +410,20 @@ bool withinRoadLanelet(
 }
 
 boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
-  const TrackedObject & object, const CrosswalkEdgePoints & edge_points,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr, const double time_horizon,
-  const double min_object_vel)
+  const TrackedObject & object, const lanelet::ConstLanelet & target_crosswalk,
+  const CrosswalkEdgePoints & edge_points, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+  const double time_horizon, const double min_object_vel)
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
-  using Line = boost::geometry::model::linestring<Point>;
 
   const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
   const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
   const auto yaw = tier4_autoware_utils::getRPY(object.kinematics.pose_with_covariance.pose).z;
+
+  lanelet::BasicPoint2d obj_pos_as_lanelet(obj_pos.x, obj_pos.y);
+  if (boost::geometry::within(obj_pos_as_lanelet, target_crosswalk.polygon2d().basicPolygon())) {
+    return {};
+  }
 
   const auto & p1 = edge_points.front_center_point;
   const auto & p2 = edge_points.back_center_point;
@@ -442,62 +441,66 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const auto estimated_velocity = std::hypot(obj_vel.x, obj_vel.y);
   const auto is_stop_object = estimated_velocity < stop_velocity_th;
   const auto velocity = std::max(min_object_vel, estimated_velocity);
-
-  lanelet::BasicPoint2d search_point(obj_pos.x, obj_pos.y);
-  // nearest lanelet
   const auto surrounding_lanelets = lanelet::geometry::findNearest(
-    lanelet_map_ptr->laneletLayer, search_point, time_horizon * velocity);
+    lanelet_map_ptr->laneletLayer, obj_pos_as_lanelet, time_horizon * velocity);
 
-  bool first_intersect_load = false;
-  bool second_intersect_load = false;
-  std::vector<Point> intersects_first;
-  std::vector<Point> intersects_second;
-  for (const auto & lanelet : surrounding_lanelets) {
-    if (withinLanelet(object, lanelet.second)) {
-      return {};
-    }
+  const auto isAcrossAnyRoad = [&surrounding_lanelets](const Point & p_src, const Point & p_dst) {
+    const auto withinAnyCrosswalk = [&surrounding_lanelets](const Point & p) {
+      for (const auto & lanelet : surrounding_lanelets) {
+        const lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
+        if (
+          (attr.value() == lanelet::AttributeValueString::Crosswalk ||
+           attr.value() == lanelet::AttributeValueString::Walkway) &&
+          boost::geometry::within(p, lanelet.second.polygon2d().basicPolygon())) {
+          return true;
+        }
+      }
+      return false;
+    };
 
-    lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
-    if (attr.value() != "road") {
-      continue;
-    }
+    const auto isExist = [](const Point & p, const std::vector<Point> & points) {
+      for (const auto & existingPoint : points) {
+        if (boost::geometry::distance(p, existingPoint) < 1e-1) {
+          return true;
+        }
+      }
+      return false;
+    };
 
-    {
-      const Line object_to_entry_point{
-        {obj_pos.x, obj_pos.y}, {ret.front_center_point.x(), ret.front_center_point.y()}};
+    std::vector<Point> points_of_intersect;
+    const boost::geometry::model::linestring<Point> line{p_src, p_dst};
+    for (const auto & lanelet : surrounding_lanelets) {
+      const lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
+      if (attr.value() != lanelet::AttributeValueString::Road) {
+        continue;
+      }
+
       std::vector<Point> tmp_intersects;
       boost::geometry::intersection(
-        object_to_entry_point, lanelet.second.polygon2d().basicPolygon(), tmp_intersects);
+        line, lanelet.second.polygon2d().basicPolygon(), tmp_intersects);
       for (const auto & p : tmp_intersects) {
-        intersects_first.push_back(p);
+        if (isExist(p, points_of_intersect) || withinAnyCrosswalk(p)) {
+          continue;
+        }
+        points_of_intersect.push_back(p);
+        if (points_of_intersect.size() >= 2) {
+          return true;
+        }
       }
     }
+    return false;
+  };
 
-    {
-      const Line object_to_entry_point{
-        {obj_pos.x, obj_pos.y}, {ret.back_center_point.x(), ret.back_center_point.y()}};
-      std::vector<Point> tmp_intersects;
-      boost::geometry::intersection(
-        object_to_entry_point, lanelet.second.polygon2d().basicPolygon(), tmp_intersects);
-      for (const auto & p : tmp_intersects) {
-        intersects_second.push_back(p);
-      }
-    }
-  }
+  const bool first_intersects_road = isAcrossAnyRoad(
+    {obj_pos.x, obj_pos.y}, {ret.front_center_point.x(), ret.front_center_point.y()});
+  const bool second_intersects_road =
+    isAcrossAnyRoad({obj_pos.x, obj_pos.y}, {ret.back_center_point.x(), ret.back_center_point.y()});
 
-  if (1 < intersects_first.size()) {
-    first_intersect_load = true;
-  }
-
-  if (1 < intersects_second.size()) {
-    second_intersect_load = true;
-  }
-
-  if (first_intersect_load && second_intersect_load) {
+  if (first_intersects_road && second_intersects_road) {
     return {};
   }
 
-  if (first_intersect_load && !second_intersect_load) {
+  if (first_intersects_road && !second_intersects_road) {
     ret.swap();
   }
 
@@ -605,16 +608,16 @@ ObjectClassification::_label_type changeLabelForPrediction(
     case ObjectClassification::BICYCLE: {  // if object is within road lanelet and satisfies yaw
                                            // constraints
       const bool within_road_lanelet = withinRoadLanelet(object, lanelet_map_ptr_, true);
-      const float high_speed_threshold =
+      // if the object is within lanelet, do the same estimation with vehicle
+      if (within_road_lanelet) return ObjectClassification::MOTORCYCLE;
+
+      constexpr float high_speed_threshold =
         tier4_autoware_utils::kmph2mps(25.0);  // High speed bicycle 25 km/h
       // calc abs speed from x and y velocity
       const double abs_speed = std::hypot(
         object.kinematics.twist_with_covariance.twist.linear.x,
         object.kinematics.twist_with_covariance.twist.linear.y);
       const bool high_speed_object = abs_speed > high_speed_threshold;
-
-      // if the object is within lanelet, do the same estimation with vehicle
-      if (within_road_lanelet) return ObjectClassification::MOTORCYCLE;
       // high speed object outside road lanelet will move like unknown object
       // return ObjectClassification::UNKNOWN; // temporary disabled
       if (high_speed_object) return label;  // Do nothing for now
@@ -740,6 +743,12 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sigma_yaw_angle_deg_ = declare_parameter<double>("sigma_yaw_angle_deg");
   object_buffer_time_length_ = declare_parameter<double>("object_buffer_time_length");
   history_time_length_ = declare_parameter<double>("history_time_length");
+
+  check_lateral_acceleration_constraints_ =
+    declare_parameter<bool>("check_lateral_acceleration_constraints");
+  max_lateral_accel_ = declare_parameter<double>("max_lateral_accel");
+  min_acceleration_before_curve_ = declare_parameter<double>("min_acceleration_before_curve");
+
   {  // lane change detection
     lane_change_detection_method_ = declare_parameter<std::string>("lane_change_detection.method");
 
@@ -774,9 +783,19 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   prediction_time_horizon_rate_for_validate_lane_length_ =
     declare_parameter<double>("prediction_time_horizon_rate_for_validate_shoulder_lane_length");
 
+  use_vehicle_acceleration_ = declare_parameter<bool>("use_vehicle_acceleration");
+  speed_limit_multiplier_ = declare_parameter<double>("speed_limit_multiplier");
+  acceleration_exponential_half_life_ =
+    declare_parameter<double>("acceleration_exponential_half_life");
+
+  use_crosswalk_signal_ = declare_parameter<bool>("use_crosswalk_signal");
+
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_time_horizon_, lateral_control_time_horizon_, prediction_sampling_time_interval_,
     min_crosswalk_user_velocity_);
+
+  path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
+  path_generator_->setAccelerationHalfLife(acceleration_exponential_half_life_);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "~/input/objects", 1,
@@ -784,11 +803,40 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sub_map_ = this->create_subscription<LaneletMapBin>(
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
+  sub_traffic_signals_ = this->create_subscription<TrafficSignalArray>(
+    "/traffic_signals", 1,
+    std::bind(&MapBasedPredictionNode::trafficSignalsCallback, this, std::placeholders::_1));
 
   pub_objects_ = this->create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
   pub_debug_markers_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
   pub_calculation_time_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
+
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&MapBasedPredictionNode::onParam, this, std::placeholders::_1));
+}
+
+rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+
+  updateParam(parameters, "max_lateral_accel", max_lateral_accel_);
+  updateParam(parameters, "min_acceleration_before_curve", min_acceleration_before_curve_);
+  updateParam(
+    parameters, "check_lateral_acceleration_constraints", check_lateral_acceleration_constraints_);
+  updateParam(parameters, "use_vehicle_acceleration", use_vehicle_acceleration_);
+  updateParam(parameters, "speed_limit_multiplier", speed_limit_multiplier_);
+  updateParam(
+    parameters, "acceleration_exponential_half_life", acceleration_exponential_half_life_);
+
+  path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
+  path_generator_->setAccelerationHalfLife(acceleration_exponential_half_life_);
+
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+  return result;
 }
 
 PredictedObjectKinematics MapBasedPredictionNode::convertToPredictedKinematics(
@@ -834,6 +882,14 @@ void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg
   const auto walkways = lanelet::utils::query::walkwayLanelets(all_lanelets);
   crosswalks_.insert(crosswalks_.end(), crosswalks.begin(), crosswalks.end());
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
+}
+
+void MapBasedPredictionNode::trafficSignalsCallback(const TrafficSignalArray::ConstSharedPtr msg)
+{
+  traffic_signal_id_map_.clear();
+  for (const auto & signal : msg->signals) {
+    traffic_signal_id_map_[signal.traffic_signal_id] = signal;
+  }
 }
 
 void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPtr in_objects)
@@ -979,16 +1035,53 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         }
         // Generate Predicted Path
         std::vector<PredictedPath> predicted_paths;
+        double min_avg_curvature = std::numeric_limits<double>::max();
+        PredictedPath path_with_smallest_avg_curvature;
+
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
-            yaw_fixed_transformed_object, ref_path.path);
-          if (predicted_path.path.empty()) {
+            yaw_fixed_transformed_object, ref_path.path, ref_path.speed_limit);
+          if (predicted_path.path.empty()) continue;
+
+          if (!check_lateral_acceleration_constraints_) {
+            predicted_path.confidence = ref_path.probability;
+            predicted_paths.push_back(predicted_path);
             continue;
           }
-          predicted_path.confidence = ref_path.probability;
-          predicted_paths.push_back(predicted_path);
+
+          // Check lat. acceleration constraints
+          const auto trajectory_with_const_velocity =
+            toTrajectoryPoints(predicted_path, abs_obj_speed);
+
+          if (isLateralAccelerationConstraintSatisfied(
+                trajectory_with_const_velocity, prediction_sampling_time_interval_)) {
+            predicted_path.confidence = ref_path.probability;
+            predicted_paths.push_back(predicted_path);
+            continue;
+          }
+
+          // Calculate curvature assuming the trajectory points interval is constant
+          // In case all paths are deleted, a copy of the straightest path is kept
+
+          constexpr double curvature_calculation_distance = 2.0;
+          constexpr double points_interval = 1.0;
+          const size_t idx_dist = static_cast<size_t>(
+            std::max(static_cast<int>((curvature_calculation_distance) / points_interval), 1));
+          const auto curvature_v =
+            calcTrajectoryCurvatureFrom3Points(trajectory_with_const_velocity, idx_dist);
+          if (curvature_v.empty()) {
+            continue;
+          }
+          const auto curvature_avg =
+            std::accumulate(curvature_v.begin(), curvature_v.end(), 0.0) / curvature_v.size();
+          if (curvature_avg < min_avg_curvature) {
+            min_avg_curvature = curvature_avg;
+            path_with_smallest_avg_curvature = predicted_path;
+            path_with_smallest_avg_curvature.confidence = ref_path.probability;
+          }
         }
 
+        if (predicted_paths.empty()) predicted_paths.push_back(path_with_smallest_avg_curvature);
         // Normalize Path Confidence and output the predicted object
 
         float sum_confidence = 0.0;
@@ -1142,48 +1235,57 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
         predicted_object.kinematics.predicted_paths.push_back(predicted_path);
       }
     }
+  }
+  // try to find the edge points for all crosswalks and generate path to the crosswalk edge
+  for (const auto & crosswalk : crosswalks_) {
+    const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
+    if (crosswalk_signal_id_opt.has_value() && use_crosswalk_signal_) {
+      const auto signal_color = [&] {
+        const auto elem_opt = getTrafficSignalElement(crosswalk_signal_id_opt.value());
+        return elem_opt ? elem_opt.value().color : TrafficSignalElement::UNKNOWN;
+      }();
 
-    // If the object is not crossing the crosswalk, not in the road lanelets, try to find the edge
-    // points for all crosswalks and generate path to the crosswalk edge
-  } else {
-    for (const auto & crosswalk : crosswalks_) {
-      const auto edge_points = getCrosswalkEdgePoints(crosswalk);
-
-      const auto reachable_first = hasPotentialToReach(
-        object, edge_points.front_center_point, edge_points.front_right_point,
-        edge_points.front_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
-        max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
-      const auto reachable_second = hasPotentialToReach(
-        object, edge_points.back_center_point, edge_points.back_right_point,
-        edge_points.back_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
-        max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
-
-      if (!reachable_first && !reachable_second) {
+      if (signal_color == TrafficSignalElement::RED) {
         continue;
       }
-
-      const auto reachable_crosswalk = isReachableCrosswalkEdgePoints(
-        object, edge_points, lanelet_map_ptr_, prediction_time_horizon_,
-        min_crosswalk_user_velocity_);
-
-      if (!reachable_crosswalk) {
-        continue;
-      }
-
-      PredictedPath predicted_path =
-        path_generator_->generatePathForCrosswalkUser(object, reachable_crosswalk.get());
-      predicted_path.confidence = 1.0;
-
-      if (predicted_path.path.empty()) {
-        continue;
-      }
-      // If the predicted path to the crosswalk is crossing the fence, don't use it
-      if (doesPathCrossAnyFence(predicted_path)) {
-        continue;
-      }
-
-      predicted_object.kinematics.predicted_paths.push_back(predicted_path);
     }
+
+    const auto edge_points = getCrosswalkEdgePoints(crosswalk);
+
+    const auto reachable_first = hasPotentialToReach(
+      object, edge_points.front_center_point, edge_points.front_right_point,
+      edge_points.front_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
+      max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
+    const auto reachable_second = hasPotentialToReach(
+      object, edge_points.back_center_point, edge_points.back_right_point,
+      edge_points.back_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
+      max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
+
+    if (!reachable_first && !reachable_second) {
+      continue;
+    }
+
+    const auto reachable_crosswalk = isReachableCrosswalkEdgePoints(
+      object, crosswalk, edge_points, lanelet_map_ptr_, prediction_time_horizon_,
+      min_crosswalk_user_velocity_);
+
+    if (!reachable_crosswalk) {
+      continue;
+    }
+
+    PredictedPath predicted_path =
+      path_generator_->generatePathForCrosswalkUser(object, reachable_crosswalk.get());
+    predicted_path.confidence = 1.0;
+
+    if (predicted_path.path.empty()) {
+      continue;
+    }
+    // If the predicted path to the crosswalk is crossing the fence, don't use it
+    if (doesPathCrossAnyFence(predicted_path)) {
+      continue;
+    }
+
+    predicted_object.kinematics.predicted_paths.push_back(predicted_path);
   }
 
   const auto n_path = predicted_object.kinematics.predicted_paths.size();
@@ -1495,14 +1597,63 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     object.kinematics.twist_with_covariance.twist.linear.x,
     object.kinematics.twist_with_covariance.twist.linear.y);
 
+  // Using a decaying acceleration model. Consult the README for more information about the model.
+  const double obj_acc = (use_vehicle_acceleration_)
+                           ? std::hypot(
+                               object.kinematics.acceleration_with_covariance.accel.linear.x,
+                               object.kinematics.acceleration_with_covariance.accel.linear.y)
+                           : 0.0;
+  const double t_h = prediction_time_horizon_;
+  const double λ = std::log(2) / acceleration_exponential_half_life_;
+
+  auto get_search_distance_with_decaying_acc = [&]() -> double {
+    const double acceleration_distance =
+      obj_acc * (1.0 / λ) * t_h + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_h) - 1);
+    double search_dist = acceleration_distance + obj_vel * t_h;
+    return search_dist;
+  };
+
+  auto get_search_distance_with_partial_acc = [&](const double final_speed) -> double {
+    constexpr double epsilon = 1E-5;
+    if (std::abs(obj_acc) < epsilon) {
+      // Assume constant speed
+      return obj_vel * t_h;
+    }
+    // Time to reach final speed
+    const double t_f = (-1.0 / λ) * std::log(1 - ((final_speed - obj_vel) * λ) / obj_acc);
+    // It is assumed the vehicle accelerates until final_speed is reached and
+    // then continues at constant speed for the rest of the time horizon
+    const double search_dist =
+      // Distance covered while accelerating
+      obj_acc * (1.0 / λ) * t_f + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_f) - 1) +
+      obj_vel * t_f +
+      // Distance covered at constant speed
+      final_speed * (t_h - t_f);
+    return search_dist;
+  };
+
   std::vector<PredictedRefPath> all_ref_paths;
+
   for (const auto & current_lanelet_data : current_lanelets_data) {
-    // parameter for lanelet::routing::PossiblePathsParams
-    const double search_dist = prediction_time_horizon_ * obj_vel +
-                               lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
+    const lanelet::traffic_rules::SpeedLimitInformation limit =
+      traffic_rules_ptr_->speedLimit(current_lanelet_data.lanelet);
+    const double legal_speed_limit = static_cast<double>(limit.speedLimit.value());
+
+    double final_speed_after_acceleration =
+      obj_vel + obj_acc * (1.0 / λ) * (1.0 - std::exp(-λ * t_h));
+
+    const double final_speed_limit = legal_speed_limit * speed_limit_multiplier_;
+    const bool final_speed_surpasses_limit = final_speed_after_acceleration > final_speed_limit;
+    const bool object_has_surpassed_limit_already = obj_vel > final_speed_limit;
+
+    double search_dist = (final_speed_surpasses_limit && !object_has_surpassed_limit_already)
+                           ? get_search_distance_with_partial_acc(final_speed_limit)
+                           : get_search_distance_with_decaying_acc();
+    search_dist += lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
+
     lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
     const double validate_time_horizon =
-      prediction_time_horizon_ * prediction_time_horizon_rate_for_validate_lane_length_;
+      t_h * prediction_time_horizon_rate_for_validate_lane_length_;
 
     // lambda function to get possible paths for isolated lanelet
     // isolated is often caused by lanelet with no connection e.g. shoulder-lane
@@ -1584,7 +1735,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     // Step4. add candidate reference paths to the all_ref_paths
     const float path_prob = current_lanelet_data.probability;
     const auto addReferencePathsLocal = [&](const auto & paths, const auto & maneuver) {
-      addReferencePaths(object, paths, path_prob, maneuver_prob, maneuver, all_ref_paths);
+      addReferencePaths(
+        object, paths, path_prob, maneuver_prob, maneuver, all_ref_paths, final_speed_limit);
     };
     addReferencePathsLocal(left_paths, Maneuver::LEFT_LANE_CHANGE);
     addReferencePathsLocal(right_paths, Maneuver::RIGHT_LANE_CHANGE);
@@ -1906,7 +2058,8 @@ void MapBasedPredictionNode::updateFuturePossibleLanelets(
 void MapBasedPredictionNode::addReferencePaths(
   const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
   const float path_probability, const ManeuverProbability & maneuver_probability,
-  const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths)
+  const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
+  const double speed_limit)
 {
   if (!candidate_paths.empty()) {
     updateFuturePossibleLanelets(object, candidate_paths);
@@ -1916,6 +2069,7 @@ void MapBasedPredictionNode::addReferencePaths(
       predicted_path.probability = maneuver_probability.at(maneuver) * path_probability;
       predicted_path.path = converted_path;
       predicted_path.maneuver = maneuver;
+      predicted_path.speed_limit = speed_limit;
       reference_paths.push_back(predicted_path);
     }
   }
@@ -2089,6 +2243,38 @@ bool MapBasedPredictionNode::isDuplicated(
 
   return false;
 }
+
+std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
+  const lanelet::ConstLanelet & way_lanelet)
+{
+  const auto traffic_light_reg_elems =
+    way_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>();
+  if (traffic_light_reg_elems.empty()) {
+    return std::nullopt;
+  } else if (traffic_light_reg_elems.size() > 1) {
+    RCLCPP_ERROR(
+      get_logger(),
+      "[Map Based Prediction]: "
+      "Multiple regulatory elements as TrafficLight are defined to one lanelet object.");
+  }
+  return traffic_light_reg_elems.front()->id();
+}
+
+std::optional<TrafficSignalElement> MapBasedPredictionNode::getTrafficSignalElement(
+  const lanelet::Id & id)
+{
+  if (traffic_signal_id_map_.count(id) != 0) {
+    const auto & signal_elements = traffic_signal_id_map_.at(id).elements;
+    if (signal_elements.size() > 1) {
+      RCLCPP_ERROR(
+        get_logger(), "[Map Based Prediction]: Multiple TrafficSignalElement_ are received.");
+    } else if (!signal_elements.empty()) {
+      return signal_elements.front();
+    }
+  }
+  return std::nullopt;
+}
+
 }  // namespace map_based_prediction
 
 #include <rclcpp_components/register_node_macro.hpp>

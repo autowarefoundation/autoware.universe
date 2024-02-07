@@ -14,7 +14,7 @@
 
 #include "planning_topic_converter/path_to_trajectory.hpp"
 
-#include <motion_utils/trajectory/tmp_conversion.hpp>
+#include <motion_utils/trajectory/conversion.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 namespace planning_topic_converter
@@ -40,15 +40,6 @@ std::vector<TrajectoryPoint> convertToTrajectoryPoints(const std::vector<PathPoi
   }
   return traj_points;
 }
-
-Trajectory createTrajectory(
-  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & trajectory_points)
-{
-  auto trajectory = motion_utils::convertToTrajectory(trajectory_points);
-  trajectory.header = header;
-
-  return trajectory;
-}
 }  // namespace
 
 PathToTrajectory::PathToTrajectory(const rclcpp::NodeOptions & options)
@@ -59,7 +50,7 @@ PathToTrajectory::PathToTrajectory(const rclcpp::NodeOptions & options)
 void PathToTrajectory::process(const Path::ConstSharedPtr msg)
 {
   const auto trajectory_points = convertToTrajectoryPoints(msg->points);
-  const auto output = createTrajectory(msg->header, trajectory_points);
+  const auto output = motion_utils::convertToTrajectory(trajectory_points, msg->header);
   pub_->publish(output);
 }
 

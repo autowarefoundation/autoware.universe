@@ -155,7 +155,7 @@ stop
 
 #### Candidate Path's Safety check
 
-See [safety check utils explanation](../behavior_path_planner/docs/behavior_path_planner_safety_check.md)
+See [safety check utils explanation](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
 
 #### Objects selection and classification
 
@@ -163,7 +163,7 @@ First, we divide the target objects into obstacles in the target lane, obstacles
 
 ![object lanes](./images/lane_objects.drawio.svg)
 
-Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light.　The explanation for parked car detection is written in [documentation for avoidance module](../behavior_path_planner/docs/behavior_path_planner_avoidance_design.md).
+Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light.　The explanation for parked car detection is written in [documentation for avoidance module](../behavior_path_avoidance_module/README.md).
 
 ##### Collision check in prepare phase
 
@@ -360,6 +360,13 @@ The following parameters are configurable in `lane_change.param.yaml`.
 ### Collision checks during lane change
 
 The following parameters are configurable in `behavior_path_planner.param.yaml` and `lane_change.param.yaml`.
+
+#### common
+
+| Name                                       | Unit | Type   | Description                                                                                                                                 | Default value |
+| :----------------------------------------- | ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `safety_check.lane_expansion.left_offset`  | [m]  | double | Expand the left boundary of the detection area, allowing objects previously outside on the left to be detected and registered as targets.   | 0.0           |
+| `safety_check.lane_expansion.right_offset` | [m]  | double | Expand the right boundary of the detection area, allowing objects previously outside on the right to be detected and registered as targets. | 0.0           |
 
 #### execution
 

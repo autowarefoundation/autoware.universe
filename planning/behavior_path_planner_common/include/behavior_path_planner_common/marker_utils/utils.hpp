@@ -21,6 +21,7 @@
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <vehicle_info_util/vehicle_info.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -56,6 +57,18 @@ inline int64_t bitShift(int64_t original_id)
   return original_id << (sizeof(int32_t) * 8 / 2);
 }
 
+void addFootprintMarker(
+  visualization_msgs::msg::Marker & marker, const geometry_msgs::msg::Pose & pose,
+  const vehicle_info_util::VehicleInfo & vehicle_info);
+
+MarkerArray createFootprintMarkerArray(
+  const Pose & base_link_pose, const vehicle_info_util::VehicleInfo vehicle_info,
+  const std::string && ns, const int32_t & id, const float & r, const float & g, const float & b);
+
+MarkerArray createPointsMarkerArray(
+  const std::vector<Point> points, const std::string & ns, const int32_t id, const float r,
+  const float g, const float b);
+
 MarkerArray createPoseMarkerArray(
   const Pose & pose, std::string && ns, const int32_t & id, const float & r, const float & g,
   const float & b);
@@ -80,8 +93,6 @@ MarkerArray createShiftGradMarkerArray(
 MarkerArray createLaneletsAreaMarkerArray(
   const std::vector<lanelet::ConstLanelet> & lanelets, std::string && ns, const float & r,
   const float & g, const float & b);
-
-MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3d & linestrings);
 
 MarkerArray createPolygonMarkerArray(
   const Polygon & polygon, std::string && ns, const int64_t & lane_id, const float & r,

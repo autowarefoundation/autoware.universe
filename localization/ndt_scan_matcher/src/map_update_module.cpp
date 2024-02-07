@@ -16,16 +16,12 @@
 
 MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-  std::shared_ptr<NormalDistributionsTransform> ndt_ptr)
+  std::shared_ptr<NormalDistributionsTransform> ndt_ptr, HyperParameters::DynamicMapLoading param)
 : ndt_ptr_(std::move(ndt_ptr)),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   logger_(node->get_logger()),
   clock_(node->get_clock()),
-  dynamic_map_loading_update_distance_(
-    node->declare_parameter<double>("dynamic_map_loading_update_distance")),
-  dynamic_map_loading_map_radius_(
-    node->declare_parameter<double>("dynamic_map_loading_map_radius")),
-  lidar_radius_(node->declare_parameter<double>("lidar_radius"))
+  param_(param)
 {
   loaded_pcd_pub_ = node->create_publisher<sensor_msgs::msg::PointCloud2>(
     "debug/loaded_pointcloud_map", rclcpp::QoS{1}.transient_local());
@@ -42,10 +38,10 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
   const double dx = position.x - last_update_position_.value().x;
   const double dy = position.y - last_update_position_.value().y;
   const double distance = std::hypot(dx, dy);
-  if (distance + lidar_radius_ > dynamic_map_loading_map_radius_) {
+  if (distance + param_.lidar_radius > param_.map_radius) {
     RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, "Dynamic map loading is not keeping up.");
   }
-  return distance > dynamic_map_loading_update_distance_;
+  return distance > param_.update_distance;
 }
 
 void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
@@ -53,14 +49,11 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
   request->area.center_x = static_cast<float>(position.x);
   request->area.center_y = static_cast<float>(position.y);
-  request->area.radius = static_cast<float>(dynamic_map_loading_map_radius_);
+  request->area.radius = static_cast<float>(param_.map_radius);
   request->cached_ids = ndt_ptr_->getCurrentMapIDs();
 
   while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-    RCLCPP_INFO(
-      logger_,
-      "Waiting for pcd loader service. Check if the enable_differential_load in "
-      "pointcloud_map_loader is set `true`.");
+    RCLCPP_INFO(logger_, "Waiting for pcd loader service. Check the pointcloud_map_loader.");
   }
 
   // send a request to map_loader
@@ -92,35 +85,36 @@ void MapUpdateModule::update_ndt(
   }
   const auto exe_start_time = std::chrono::system_clock::now();
 
-  NormalDistributionsTransform backup_ndt = *ndt_ptr_;
+  const size_t add_size = maps_to_add.size();
+
+  // Perform heavy processing outside of the lock scope
+  std::vector<pcl::shared_ptr<pcl::PointCloud<PointTarget>>> points_pcl(add_size);
+  for (size_t i = 0; i < add_size; i++) {
+    points_pcl[i] = pcl::make_shared<pcl::PointCloud<PointTarget>>();
+    pcl::fromROSMsg(maps_to_add[i].pointcloud, *points_pcl[i]);
+  }
+
+  (*ndt_ptr_mutex_).lock();
 
   // Add pcd
-  for (const auto & map_to_add : maps_to_add) {
-    pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
-    pcl::fromROSMsg(map_to_add.pointcloud, *map_points_ptr);
-    backup_ndt.addTarget(map_points_ptr, map_to_add.cell_id);
+  for (size_t i = 0; i < add_size; i++) {
+    ndt_ptr_->addTarget(points_pcl[i], maps_to_add[i].cell_id);
   }
 
   // Remove pcd
   for (const std::string & map_id_to_remove : map_ids_to_remove) {
-    backup_ndt.removeTarget(map_id_to_remove);
+    ndt_ptr_->removeTarget(map_id_to_remove);
   }
 
-  backup_ndt.createVoxelKdtree();
+  ndt_ptr_->createVoxelKdtree();
+
+  (*ndt_ptr_mutex_).unlock();
 
   const auto exe_end_time = std::chrono::system_clock::now();
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
   RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
-
-  // swap
-  (*ndt_ptr_mutex_).lock();
-  // ToDo (kminoda): Here negligible NDT copy occurs during the new map loading phase, which should
-  // ideally be avoided. But I will leave this for now since I cannot come up with a solution other
-  // than using pointer of pointer.
-  *ndt_ptr_ = backup_ndt;
-  (*ndt_ptr_mutex_).unlock();
 
   publish_partial_pcd_map();
 }

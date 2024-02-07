@@ -37,6 +37,7 @@
 | `steering_angle_velocity` | double | steering angle velocity for operation                                                                              |
 | `accel_sensitivity`       | double | sensitivity to calculate acceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity)) |
 | `brake_sensitivity`       | double | sensitivity to calculate deceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity)) |
+| `raw_control`             | bool   | skip input odometry if true                                                                                        |
 | `velocity_gain`           | double | ratio to calculate velocity by acceleration                                                                        |
 | `max_forward_velocity`    | double | absolute max velocity to go forward                                                                                |
 | `max_backward_velocity`   | double | absolute max velocity to go backward                                                                               |
@@ -85,3 +86,25 @@
 | Autoware Disengage   | ○                          |
 | Vehicle Engage       | △                          |
 | Vehicle Disengage    | △                          |
+
+## XBOX Joystick Key Map
+
+| Action               | Button                |
+| -------------------- | --------------------- |
+| Acceleration         | RT                    |
+| Brake                | LT                    |
+| Steering             | Left Stick Left Right |
+| Shift up             | Cursor Up             |
+| Shift down           | Cursor Down           |
+| Shift Drive          | Cursor Left           |
+| Shift Reverse        | Cursor Right          |
+| Turn Signal Left     | LB                    |
+| Turn Signal Right    | RB                    |
+| Clear Turn Signal    | A                     |
+| Gate Mode            | B                     |
+| Emergency Stop       | View                  |
+| Clear Emergency Stop | Menu                  |
+| Autoware Engage      | X                     |
+| Autoware Disengage   | Y                     |
+| Vehicle Engage       | Left Stick Button     |
+| Vehicle Disengage    | Right Stick Button    |
