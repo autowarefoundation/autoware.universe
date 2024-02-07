@@ -222,6 +222,8 @@ double MapHeightFitter::Impl::get_ground_height(const Point & point)
 std::optional<Point> MapHeightFitter::Impl::fit(const Point & position, const std::string & frame)
 {
   const auto logger = node_->get_logger();
+  RCLCPP_INFO_STREAM(logger, "fit_target: " << fit_target_ << ", frame: " << frame);
+
   Point point;
   point.x = position.x;
   point.y = position.y;
