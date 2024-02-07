@@ -30,11 +30,11 @@
 
 ## How to launch
 
-When launching Autoware, set `lidar_marker` for `pose_source`.
+When launching Autoware, set `lidarmarker` for `pose_source`.
 
 ```bash
 ros2 launch autoware_launch ... \
-    pose_source:=lidar_marker \
+    pose_source:=lidarmarker \
     ...
 ```
 
