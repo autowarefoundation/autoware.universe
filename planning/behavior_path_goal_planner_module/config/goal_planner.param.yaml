@@ -163,7 +163,6 @@
           method: "integral_predicted_polygon"
           keep_unsafe_time: 3.0
           # collision check parameters
-          check_all_predicted_path: true
           publish_debug_marker: false
           rss_params:
             rear_vehicle_reaction_time: 2.0
