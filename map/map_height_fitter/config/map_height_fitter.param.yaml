@@ -1,4 +1,4 @@
 /**:
   ros__parameters:
     map_loader_name: "/map/pointcloud_map_loader"
-    fit_target: "vector_map"
+    fit_target: "pointcloud_map"

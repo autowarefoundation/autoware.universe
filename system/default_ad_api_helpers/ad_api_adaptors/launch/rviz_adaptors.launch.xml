@@ -1,5 +1,5 @@
 <launch>
-  <arg name="fit_target" default="vector_map"/>
+  <arg name="fit_target" default="pointcloud_map"/>
 
   <group>
     <push-ros-namespace namespace="default_ad_api/helpers"/>
