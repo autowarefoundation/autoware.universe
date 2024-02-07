@@ -36,7 +36,6 @@
 
 #include <lanelet2_core/geometry/LaneletMap.h>
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
