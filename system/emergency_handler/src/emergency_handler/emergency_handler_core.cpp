@@ -197,7 +197,7 @@ void EmergencyHandler::publishHazardCommand()
 void EmergencyHandler::publishGearCommand()
 {
   // Publish gear command
-  using autoware_auto_vehicle_msgs::msg::GearCommand;\
+  using autoware_auto_vehicle_msgs::msg::GearCommand;
 
   GearCommand msg;
   msg.stamp = this->now();
@@ -206,7 +206,7 @@ void EmergencyHandler::publishGearCommand()
   } else {
     msg.command = GearCommand::DRIVE;
   }
-  pub_gear_cmd_->publish(msg); 
+  pub_gear_cmd_->publish(msg);
 }
 
 void EmergencyHandler::publishMrmState()
@@ -480,8 +480,7 @@ void EmergencyHandler::updateMrmState()
           transitionTo(MrmState::MRM_SUCCEEDED);
           return;
         }
-      }
-      else {
+      } else {
         if (isStopped()) {
           transitionTo(MrmState::MRM_SUCCEEDED);
           return;
