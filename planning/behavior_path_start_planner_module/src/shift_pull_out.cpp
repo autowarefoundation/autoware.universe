@@ -109,19 +109,11 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
 
     const auto lanelet_map_ptr = planner_data_->route_handler->getLaneletMapPtr();
 
-    // if (
-    //   parameters_.check_shift_path_lane_departure &&
-    //   lane_departure_checker_->checkPathWillLeaveLane(
-    //     departure_check_lanes_, path_shift_start_to_end)) {
-    //   continue;
-    // }
-
     if (
       parameters_.check_shift_path_lane_departure &&
       lane_departure_checker_->checkPathWillLeaveLane(lanelet_map_ptr, path_shift_start_to_end)) {
       continue;
     }
-
     shift_path.header = planner_data_->route_handler->getRouteHeader();
 
     return pull_out_path;

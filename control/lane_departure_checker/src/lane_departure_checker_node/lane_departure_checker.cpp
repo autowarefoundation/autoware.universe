@@ -326,13 +326,16 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
     if (lanelets_distance_pair.size() == 1)
       return lanelets_distance_pair.at(0).second.polygon2d().basicPolygon();
     std::vector<lanelet::BasicPolygon2d> lanelet_union;
+
+    lanelet::BasicPolygon2d last_polygon =
+      lanelets_distance_pair.at(0).second.polygon2d().basicPolygon();
     for (size_t i = 1; i < lanelets_distance_pair.size(); ++i) {
-      const auto & route_lanelet_1 = lanelets_distance_pair.at(i).second;
-      const auto & poly_1 = route_lanelet_1.polygon2d().basicPolygon();
-      const auto & route_lanelet_2 = lanelets_distance_pair.at(i - 1).second;
-      const auto & poly_2 = route_lanelet_2.polygon2d().basicPolygon();
+      const auto & route_lanelet = lanelets_distance_pair.at(i).second;
+      const auto & poly = route_lanelet.polygon2d().basicPolygon();
+
       std::vector<lanelet::BasicPolygon2d> lanelet_union_temp;
-      boost::geometry::union_(poly_1, poly_2, lanelet_union_temp);
+      boost::geometry::union_(poly, last_polygon, lanelet_union_temp);
+      last_polygon = lanelet_union_temp.back();
       lanelet_union = lanelet_union_temp;
     }
     if (lanelet_union.empty()) return std::nullopt;
