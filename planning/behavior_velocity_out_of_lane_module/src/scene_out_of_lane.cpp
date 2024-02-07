@@ -99,6 +99,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
       });
     if (overlapped_lanelet_it != other_lanelets.end()) {
       debug_data_.current_overlapped_lanelets.push_back(*overlapped_lanelet_it);
+      // TODO(Maxime): we may want to just add the overlapped lane to the ignored lanelets
       RCLCPP_DEBUG(logger_, "Ego is already overlapping a lane, skipping the module ()\n");
       return true;
     }
