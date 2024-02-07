@@ -25,6 +25,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+import launch_ros.parameter_descriptions
 import yaml
 
 
@@ -74,6 +75,11 @@ def launch_setup(context, *args, **kwargs):
             ],
             parameters=[
                 pointcloud_based_occupancy_grid_map_node_params,
+                launch_ros.parameter_descriptions.ParameterFile(
+                    param_file=pointcloud_based_occupancy_grid_map_node_params[
+                        "updater_param_file"
+                    ],
+                ),
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         ),
