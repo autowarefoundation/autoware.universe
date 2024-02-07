@@ -16,7 +16,7 @@
 #define CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
 
 #include "control_validator/debug_marker.hpp"
-#include "control_validator/msg/control_validator_status.hpp"
+#include "autoware_control_validator/msg/control_validator_status.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -33,7 +33,7 @@ namespace control_validator
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using control_validator::msg::ControlValidatorStatus;
+using autoware_control_validator::msg::ControlValidatorStatus;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using nav_msgs::msg::Odometry;
