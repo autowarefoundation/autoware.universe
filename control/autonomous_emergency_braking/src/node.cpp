@@ -317,22 +317,23 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_b = 205.0 / 256.0;
     constexpr double color_a = 0.999;
     const auto current_time = get_clock()->now();
-    generateEgoPath(current_v, current_w, ego_path, ego_polys);
+    const auto ego_path_opt = generateEgoPath(current_v, current_w, ego_polys);
+    if (ego_path_opt) {
+      const auto & ego_path = ego_path_opt.value();
+      std::vector<ObjectData> objects;
+      createObjectData(ego_path, ego_polys, current_time, objects);
+      has_collision_ego = hasCollision(current_v, ego_path, objects);
 
-    std::vector<ObjectData> objects;
-    createObjectData(ego_path, ego_polys, current_time, objects);
-    has_collision_ego = hasCollision(current_v, ego_path, objects);
-
-    std::string ns = "ego";
-    addMarker(
-      current_time, ego_path, ego_polys, objects, color_r, color_g, color_b, color_a, ns,
-      debug_markers);
+      std::string ns = "ego";
+      addMarker(
+        current_time, ego_path, ego_polys, objects, color_r, color_g, color_b, color_a, ns,
+        debug_markers);
+    }
   }
 
   // step4. transform predicted trajectory from control module
   bool has_collision_predicted = false;
   if (use_predicted_trajectory_) {
-    Path predicted_path;
     std::vector<Polygon2d> predicted_polys;
     const auto predicted_traj_ptr = predicted_traj_ptr_;
     constexpr double color_r = 0.0;
@@ -340,15 +341,18 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_b = 0.0;
     constexpr double color_a = 0.999;
     const auto current_time = predicted_traj_ptr->header.stamp;
-    generateEgoPath(*predicted_traj_ptr, predicted_path, predicted_polys);
-    std::vector<ObjectData> objects;
-    createObjectData(predicted_path, predicted_polys, current_time, objects);
-    has_collision_predicted = hasCollision(current_v, predicted_path, objects);
+    const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr, predicted_polys);
+    if (predicted_path_opt) {
+      const auto & predicted_path = predicted_path_opt.value();
+      std::vector<ObjectData> objects;
+      createObjectData(predicted_path, predicted_polys, current_time, objects);
+      has_collision_predicted = hasCollision(current_v, predicted_path, objects);
 
-    std::string ns = "predicted";
-    addMarker(
-      current_time, predicted_path, predicted_polys, objects, color_r, color_g, color_b, color_a,
-      ns, debug_markers);
+      std::string ns = "predicted";
+      addMarker(
+        current_time, predicted_path, predicted_polys, objects, color_r, color_g, color_b, color_a,
+        ns, debug_markers);
+    }
   }
 
   return has_collision_ego || has_collision_predicted;
@@ -384,9 +388,10 @@ bool AEB::hasCollision(
   return false;
 }
 
-void AEB::generateEgoPath(
-  const double curr_v, const double curr_w, Path & path, std::vector<Polygon2d> & polygons)
+std::optional<Path> AEB::generateEgoPath(
+  const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons)
 {
+  Path path;
   double curr_x = 0.0;
   double curr_y = 0.0;
   double curr_yaw = 0.0;
@@ -397,7 +402,7 @@ void AEB::generateEgoPath(
 
   if (curr_v < 0.1) {
     // if current velocity is too small, assume it stops at the same point
-    return;
+    return std::nullopt;
   }
 
   constexpr double epsilon = 1e-6;
@@ -435,16 +440,17 @@ void AEB::generateEgoPath(
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
   }
+  return path;
 }
 
-void AEB::generateEgoPath(
-  const Trajectory & predicted_traj, Path & path,
-  std::vector<tier4_autoware_utils::Polygon2d> & polygons)
+std::optional<Path> AEB::generateEgoPath(
+  const Trajectory & predicted_traj, std::vector<tier4_autoware_utils::Polygon2d> & polygons)
 {
   if (predicted_traj.points.empty()) {
-    return;
+    return std::nullopt;
   }
 
+  Path path;
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -452,7 +458,7 @@ void AEB::generateEgoPath(
       rclcpp::Duration::from_seconds(0.5));
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
-    return;
+    return std::nullopt;
   }
 
   // create path
@@ -471,6 +477,7 @@ void AEB::generateEgoPath(
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
   }
+  return path;
 }
 
 void AEB::createObjectData(
