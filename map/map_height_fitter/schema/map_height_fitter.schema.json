@@ -10,6 +10,11 @@
           "type": "string",
           "description": "Node name of the map loader from which this map_height_fitter will retrieve its parameters",
           "default": "/map/pointcloud_map_loader"
+        },
+        "fit_target": {
+          "type": "string",
+          "description": "Node name of the map loader from which this map_height_fitter will retrieve its parameters",
+          "default": "pointcloud_map"
         }
       },
       "required": ["map_loader_name"],
