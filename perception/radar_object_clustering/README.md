@@ -121,5 +121,5 @@ If the radar objects do not have label information, then it is recommended to us
 - `size_z` (double) [m]
   - Default parameter is 1.5.
 
-`is_fixed_label` is the flag to use fixed size parameters.
+`is_fixed_size` is the flag to use fixed size parameters.
 If it is true, the size of a clustered object is overwritten by the label set by `size_x`, `size_y`, and `size_z` parameters.
