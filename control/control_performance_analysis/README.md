@@ -7,7 +7,7 @@
 This package is used as a tool to quantify the results of the control module.
 That's why it doesn't interfere with the core logic of autonomous driving.
 
-Based on the various input from planning, control, and vehicle, it publishes the result of analysis as `control_performance_analysis::msg::ErrorStamped` defined in this package.
+Based on the various input from planning, control, and vehicle, it publishes the result of analysis as `autoware_control_performance_analysis::msg::ErrorStamped` defined in this package.
 
 All results in `ErrorStamped` message are calculated in Frenet Frame of curve. Errors and velocity errors are calculated by using paper below.
 
@@ -35,14 +35,14 @@ Error acceleration calculations are made based on the velocity calculations abov
 
 ### Output topics
 
-| Name                                    | Type                                                     | Description                                         |
-| --------------------------------------- | -------------------------------------------------------- | --------------------------------------------------- |
-| `/control_performance/performance_vars` | control_performance_analysis::msg::ErrorStamped          | The result of the performance analysis.             |
-| `/control_performance/driving_status`   | control_performance_analysis::msg::DrivingMonitorStamped | Driving status (acceleration, jerk etc.) monitoring |
+| Name                                    | Type                                                              | Description                                         |
+| --------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
+| `/control_performance/performance_vars` | autoware_control_performance_analysis::msg::ErrorStamped          | The result of the performance analysis.             |
+| `/control_performance/driving_status`   | autoware_control_performance_analysis::msg::DrivingMonitorStamped | Driving status (acceleration, jerk etc.) monitoring |
 
 ### Outputs
 
-#### control_performance_analysis::msg::DrivingMonitorStamped
+#### autoware_control_performance_analysis::msg::DrivingMonitorStamped
 
 | Name                         | Type  | Description                                              |
 | ---------------------------- | ----- | -------------------------------------------------------- |
@@ -53,7 +53,7 @@ Error acceleration calculations are made based on the velocity calculations abov
 | `desired_steering_angle`     | float | [rad]                                                    |
 | `controller_processing_time` | float | Timestamp between last two control command messages [ms] |
 
-#### control_performance_analysis::msg::ErrorStamped
+#### autoware_control_performance_analysis::msg::ErrorStamped
 
 | Name                                       | Type  | Description                                                                                                       |
 | ------------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------- |

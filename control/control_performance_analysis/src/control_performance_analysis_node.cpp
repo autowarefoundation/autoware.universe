@@ -14,8 +14,8 @@
 
 #include "control_performance_analysis/control_performance_analysis_node.hpp"
 
-#include "control_performance_analysis/msg/driving_monitor_stamped.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/error_stamped.hpp"
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -25,8 +25,8 @@
 namespace
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using control_performance_analysis::msg::DrivingMonitorStamped;
-using control_performance_analysis::msg::ErrorStamped;
+using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
+using autoware_control_performance_analysis::msg::ErrorStamped;
 
 }  // namespace
 

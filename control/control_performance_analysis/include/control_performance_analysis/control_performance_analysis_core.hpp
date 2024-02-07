@@ -16,9 +16,9 @@
 #define CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
 
 #include "control_performance_analysis/control_performance_analysis_utils.hpp"
-#include "control_performance_analysis/msg/driving_monitor_stamped.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
-#include "control_performance_analysis/msg/float_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/error_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/float_stamped.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <Eigen/Core>
@@ -42,10 +42,10 @@ namespace control_performance_analysis
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
-using control_performance_analysis::msg::DrivingMonitorStamped;
-using control_performance_analysis::msg::Error;
-using control_performance_analysis::msg::ErrorStamped;
-using control_performance_analysis::msg::FloatStamped;
+using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
+using autoware_control_performance_analysis::msg::Error;
+using autoware_control_performance_analysis::msg::ErrorStamped;
+using autoware_control_performance_analysis::msg::FloatStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;

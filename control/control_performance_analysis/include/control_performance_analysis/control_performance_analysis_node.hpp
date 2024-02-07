@@ -16,8 +16,8 @@
 #define CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
 
 #include "control_performance_analysis/control_performance_analysis_core.hpp"
-#include "control_performance_analysis/msg/driving_monitor_stamped.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/error_stamped.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <signal_processing/lowpass_filter_1d.hpp>
@@ -39,8 +39,8 @@ namespace control_performance_analysis
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
-using control_performance_analysis::msg::DrivingMonitorStamped;
-using control_performance_analysis::msg::ErrorStamped;
+using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
+using autoware_control_performance_analysis::msg::ErrorStamped;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
 
