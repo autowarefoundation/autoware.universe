@@ -90,7 +90,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   qos_marker.reliable();
   pub_marker_mapped_ = this->create_publisher<MarkerArray>("~/debug/marker_mapped", qos_marker);
   pub_marker_detected_ = this->create_publisher<PoseArray>("~/debug/marker_detected", 10);
-  pub_debug_pose_with_covariance_ = this->create_publisher<PoseWithCovarianceStamped>("~/debug/pose_with_covariance", 10);
+  pub_debug_pose_with_covariance_ =
+    this->create_publisher<PoseWithCovarianceStamped>("~/debug/pose_with_covariance", 10);
 
   service_trigger_node_ = this->create_service<SetBool>(
     "~/service/trigger_node_srv",
