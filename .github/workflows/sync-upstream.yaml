@@ -43,7 +43,7 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
           base-branch: ${{ inputs.target_branch }}
           sync-pr-branch: sync-upstream
-          sync-target-repository: https://github.com/autowarefoundation/autoware.universe.git
-          sync-target-branch: main
-          pr-title: "chore: sync upstream"
+          sync-target-repository: https://github.com/tier4/autoware.universe.git
+          sync-target-branch: awf-latest
+          pr-title: "chore: sync tier4/autoware.universe:awf-latest"
           auto-merge-method: merge
