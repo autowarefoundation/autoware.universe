@@ -375,7 +375,7 @@ void AutowareErrorMonitor::onAutowareState(
 void AutowareErrorMonitor::onControlMode(
   const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
-  // used for indicating that onControlMode callback is trigged at least once.
+  // used for indicating that onControlMode callback is called at least once.
   if (!control_mode_activated_) {
     control_mode_activated_ = true;
   }
