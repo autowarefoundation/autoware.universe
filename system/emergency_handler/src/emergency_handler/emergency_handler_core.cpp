@@ -488,7 +488,10 @@ void EmergencyHandler::updateMrmState()
         }
       }
     } else if (mrm_state_.state == MrmState::MRM_SUCCEEDED) {
-      // Do nothing(only checking common recovery events)
+      const auto current_mrm_behavior = getCurrentMrmBehavior();
+      if (current_mrm_behavior != mrm_state_.behavior) {
+        transitionTo(MrmState::MRM_OPERATING);
+      }
     } else if (mrm_state_.state == MrmState::MRM_FAILED) {
       // Do nothing(only checking common recovery events)
     } else {
