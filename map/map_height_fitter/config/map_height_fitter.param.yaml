@@ -2,4 +2,4 @@
   ros__parameters:
     map_height_fitter:
       map_loader_name: "/map/pointcloud_map_loader"
-      fit_target: "pointcloud
+      target: "pointcloud_map"
