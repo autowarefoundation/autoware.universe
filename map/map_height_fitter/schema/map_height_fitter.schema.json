@@ -17,10 +17,7 @@
           "default": "pointcloud_map"
         }
       },
-      "required": [
-        "map_loader_name",
-        "target"
-      ],
+      "required": ["map_loader_name", "target"],
       "additionalProperties": false
     }
   },
