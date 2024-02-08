@@ -40,7 +40,7 @@ struct MapHeightFitter::Impl
   void on_pcd_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   void on_vector_map(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   bool get_partial_point_cloud_map(const Point & point);
-  double get_ground_height(const Point & point);
+  double get_ground_height(const Point & point) const;
   std::optional<Point> fit(const Point & position, const std::string & frame);
 
   tf2::BufferCore tf2_buffer_;
@@ -171,7 +171,7 @@ void MapHeightFitter::Impl::on_vector_map(
   map_frame_ = msg->header.frame_id;
 }
 
-double MapHeightFitter::Impl::get_ground_height(const Point & point)
+double MapHeightFitter::Impl::get_ground_height(const Point & point) const
 {
   const auto logger = node_->get_logger();
 
