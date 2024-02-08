@@ -141,8 +141,7 @@ public:
   bool hasCollision(
     const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects);
 
-  std::optional<Path> generateEgoPath(
-    const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons);
+  Path generateEgoPath(const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons);
   std::optional<Path> generateEgoPath(
     const Trajectory & predicted_traj, std::vector<Polygon2d> & polygons);
   void createObjectData(

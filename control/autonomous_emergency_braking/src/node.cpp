@@ -309,7 +309,6 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   // step3. create ego path based on sensor data
   bool has_collision_ego = false;
   if (use_imu_path_) {
-    Path ego_path;
     std::vector<Polygon2d> ego_polys;
     const double current_w = angular_velocity_ptr_->z;
     constexpr double color_r = 0.0 / 256.0;
@@ -317,18 +316,15 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_b = 205.0 / 256.0;
     constexpr double color_a = 0.999;
     const auto current_time = get_clock()->now();
-    const auto ego_path_opt = generateEgoPath(current_v, current_w, ego_polys);
-    if (ego_path_opt) {
-      const auto & ego_path = ego_path_opt.value();
-      std::vector<ObjectData> objects;
-      createObjectData(ego_path, ego_polys, current_time, objects);
-      has_collision_ego = hasCollision(current_v, ego_path, objects);
+    const auto ego_path = generateEgoPath(current_v, current_w, ego_polys);
+    std::vector<ObjectData> objects;
+    createObjectData(ego_path, ego_polys, current_time, objects);
+    has_collision_ego = hasCollision(current_v, ego_path, objects);
 
-      std::string ns = "ego";
-      addMarker(
-        current_time, ego_path, ego_polys, objects, color_r, color_g, color_b, color_a, ns,
-        debug_markers);
-    }
+    std::string ns = "ego";
+    addMarker(
+      current_time, ego_path, ego_polys, objects, color_r, color_g, color_b, color_a, ns,
+      debug_markers);
   }
 
   // step4. transform predicted trajectory from control module
@@ -388,7 +384,7 @@ bool AEB::hasCollision(
   return false;
 }
 
-std::optional<Path> AEB::generateEgoPath(
+Path AEB::generateEgoPath(
   const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons)
 {
   Path path;
@@ -402,7 +398,7 @@ std::optional<Path> AEB::generateEgoPath(
 
   if (curr_v < 0.1) {
     // if current velocity is too small, assume it stops at the same point
-    return std::nullopt;
+    return path;
   }
 
   constexpr double epsilon = 1e-6;
@@ -450,7 +446,6 @@ std::optional<Path> AEB::generateEgoPath(
     return std::nullopt;
   }
 
-  Path path;
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -462,6 +457,7 @@ std::optional<Path> AEB::generateEgoPath(
   }
 
   // create path
+  Path path;
   path.resize(predicted_traj.points.size());
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
     geometry_msgs::msg::Pose map_pose;
