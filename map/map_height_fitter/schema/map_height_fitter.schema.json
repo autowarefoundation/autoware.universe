@@ -6,18 +6,21 @@
     "map_height_fitter": {
       "type": "object",
       "properties": {
-        "map_height_fitter.map_loader_name": {
+        "map_loader_name": {
           "type": "string",
           "description": "Node name of the map loader from which this map_height_fitter will retrieve its parameters",
           "default": "/map/pointcloud_map_loader"
         },
-        "map_height_fitter.target": {
+        "target": {
           "type": "string",
           "description": "Target map to fit (choose from 'pointcloud_map', 'vector_map')",
           "default": "pointcloud_map"
         }
       },
-      "required": ["map_loader_name"],
+      "required": [
+        "map_loader_name",
+        "target"
+      ],
       "additionalProperties": false
     }
   },
@@ -26,7 +29,12 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/map_height_fitter"
+          "type": "object",
+          "properties": {
+            "map_height_fitter": {
+              "$ref": "#/definitions/map_height_fitter"
+            }
+          }
         }
       },
       "required": ["ros__parameters"],
