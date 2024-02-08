@@ -442,7 +442,7 @@ void FreespacePlannerNode::onTimer()
   }
 
   // Must stop before replanning any new trajectory
-  bool is_reset_required = !reset_in_progress_ && isPlanRequired();
+  const bool is_reset_required = !reset_in_progress_ && isPlanRequired();
   if (is_reset_required) {
     // Stop before planning new trajectory
     const auto stop_trajectory = partial_trajectory_.points.empty()
