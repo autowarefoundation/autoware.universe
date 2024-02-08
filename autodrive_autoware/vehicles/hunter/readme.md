@@ -4,7 +4,7 @@
 
 ## 2D Navigation Demo (Digital Twin Simulation - AutoDRIVE Simulator)
 
-> **Note:** Make sure that lines [347-351](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py#L347-L351) and line [359](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py#L359) of [`autodrive_hunter/autodrive_incoming_bridge.py`](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py) script are uncommented. If not, uncomment these lines and re-build the `autodrive_hunter` package using `colcon build --packages-select autodrive_hunter --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release`.
+> **Note:** Make sure that lines [347-351](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py#L347-L351) and line [359](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py#L359) of [`autodrive_hunter/autodrive_incoming_bridge.py`](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py) script are uncommented. If not, uncomment these lines and re-build the `autodrive_hunter` package using `colcon build --packages-select autodrive_hunter --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` command from the top of `autoware_local` workspace.
 
 1. Launch AutoDRIVE Simulator for Hunter SE and establish Autoware API bridge connection in single or distributed computing setting as applicable.
 2. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
@@ -54,6 +54,8 @@
 | :-----------------: | :-----------------: |
 
 ## 3D Navigation Demo (Digital Twin Simulation - AutoDRIVE Simulator)
+
+> **Note:** Make sure that lines [347-351](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py#L347-L351) and line [359](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py#L359) of [`autodrive_hunter/autodrive_incoming_bridge.py`](https://github.com/Tinker-Twins/AutoDRIVE-Autoware/blob/main/autodrive_autoware/vehicles/hunter/autodrive_hunter/autodrive_incoming_bridge.py) script are commented out. If not, comment out these lines and re-build the `autodrive_hunter` package using `colcon build --packages-select autodrive_hunter --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release` command from the top of `autoware_local` workspace.
 
 1. Launch AutoDRIVE Simulator for Hunter SE and establish Autoware API bridge connection in single or distributed computing setting as applicable.
 2. Install the `rviz_imu_plugin` package (if not already accomplished) using Ubuntu's [Advanced Packaging Tool (APT)](https://en.wikipedia.org/wiki/APT_(software)).
