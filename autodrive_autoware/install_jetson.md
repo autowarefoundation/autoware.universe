@@ -184,7 +184,7 @@ user@jetson-device:~$ source ~/Autoware_WS/autoware_local/install/setup.bash
 
 2. Launch the `planning_simulator` with the `sample-map-planning` map, `sample_vehicle` vehicle, and `sample_sensor_kit` sensor kit.
 ```
-user@jetson-device:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=~/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
+user@jetson-device:~$ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=$HOME/Autoware_WS/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit
 ```
 
 3. Tinker around with the `planning_simulator` and explore the depths of Autoware stack!
