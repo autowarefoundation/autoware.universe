@@ -292,12 +292,6 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "traffic_light.buffer");
   }
 
-  // yield
-  {
-    const std::string ns = "avoidance.yield.";
-    p.yield_velocity = getOrDeclareParameter<double>(*node, ns + "yield_velocity");
-  }
-
   // stop
   {
     const std::string ns = "avoidance.stop.";
