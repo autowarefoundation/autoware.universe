@@ -42,6 +42,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace lane_departure_checker
@@ -117,8 +118,18 @@ public:
   bool checkPathWillLeaveLane(
     const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path) const;
 
+  std::vector<std::pair<double, lanelet::Lanelet>> getLaneletsFromPath(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
+
+  std::optional<lanelet::BasicPolygon2d> getFusedLaneletPolygonForPath(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
+
   bool checkPathWillLeaveLane(
-    lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
+
+  PathWithLaneId cropPointsOutsideOfLanes(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
+    const size_t end_index);
 
   static bool isOutOfLane(
     const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);

@@ -300,8 +300,8 @@ bool LaneDepartureChecker::willLeaveLane(
   return false;
 }
 
-bool LaneDepartureChecker::checkPathWillLeaveLane(
-  lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const
+std::vector<std::pair<double, lanelet::Lanelet>> LaneDepartureChecker::getLaneletsFromPath(
+  const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const
 {
   // Get Footprint Hull basic polygon
   std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
@@ -317,39 +317,70 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
   lanelet::BasicPolygon2d footprint_hull_basic_polygon = to_basic_polygon(footprint_hull);
 
   // Find all lanelets that intersect the footprint hull
-  auto lanelets_distance_pair = lanelet::geometry::findWithin2d(
+  return lanelet::geometry::findWithin2d(
     lanelet_map_ptr->laneletLayer, footprint_hull_basic_polygon, 0.0);
+}
 
+std::optional<lanelet::BasicPolygon2d> LaneDepartureChecker::getFusedLaneletPolygonForPath(
+  const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const
+{
+  const auto lanelets_distance_pair = getLaneletsFromPath(lanelet_map_ptr, path);
   // Fuse lanelets into a single BasicPolygon2d
   auto fused_lanelets = [&lanelets_distance_pair]() -> std::optional<lanelet::BasicPolygon2d> {
     if (lanelets_distance_pair.empty()) return std::nullopt;
     if (lanelets_distance_pair.size() == 1)
       return lanelets_distance_pair.at(0).second.polygon2d().basicPolygon();
-    std::vector<lanelet::BasicPolygon2d> lanelet_union;
 
-    lanelet::BasicPolygon2d last_polygon =
+    std::vector<lanelet::BasicPolygon2d> lanelet_union;
+    lanelet::BasicPolygon2d merged_polygon =
       lanelets_distance_pair.at(0).second.polygon2d().basicPolygon();
     for (size_t i = 1; i < lanelets_distance_pair.size(); ++i) {
       const auto & route_lanelet = lanelets_distance_pair.at(i).second;
       const auto & poly = route_lanelet.polygon2d().basicPolygon();
 
       std::vector<lanelet::BasicPolygon2d> lanelet_union_temp;
-      boost::geometry::union_(poly, last_polygon, lanelet_union_temp);
-      last_polygon = lanelet_union_temp.back();
+      boost::geometry::union_(poly, merged_polygon, lanelet_union_temp);
+      merged_polygon = lanelet_union_temp.back();
       lanelet_union = lanelet_union_temp;
     }
     if (lanelet_union.empty()) return std::nullopt;
     return lanelet_union.back();
   }();
 
-  if (!fused_lanelets) return true;
+  return fused_lanelets;
+}
 
+bool LaneDepartureChecker::checkPathWillLeaveLane(
+  const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const
+{
   // check if the footprint is not fully contained within the fused lanelets polygon
+  const std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
+  const auto fused_lanelets_polygon = getFusedLaneletPolygonForPath(lanelet_map_ptr, path);
+  if (!fused_lanelets_polygon) return true;
   return !std::all_of(
     vehicle_footprints.begin(), vehicle_footprints.end(),
-    [&fused_lanelets](const auto & footprint) {
-      return boost::geometry::within(footprint, fused_lanelets.value());
+    [&fused_lanelets_polygon](const auto & footprint) {
+      return boost::geometry::within(footprint, fused_lanelets_polygon.value());
     });
+}
+
+PathWithLaneId LaneDepartureChecker::cropPointsOutsideOfLanes(
+  const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path, const size_t end_index)
+{
+  PathWithLaneId temp_path;
+  const auto fused_lanelets_polygon = getFusedLaneletPolygonForPath(lanelet_map_ptr, path);
+  if (path.points.empty() || !fused_lanelets_polygon) return temp_path;
+  const auto vehicle_footprints = createVehicleFootprints(path);
+  size_t idx = 0;
+  std::for_each(vehicle_footprints.begin(), vehicle_footprints.end(), [&](const auto & footprint) {
+    if (boost::geometry::within(footprint, fused_lanelets_polygon.value()) || idx > end_index) {
+      temp_path.points.push_back(path.points.at(idx));
+    }
+    ++idx;
+  });
+  PathWithLaneId cropped_path = path;
+  cropped_path.points = temp_path.points;
+  return cropped_path;
 }
 
 bool LaneDepartureChecker::isOutOfLane(
