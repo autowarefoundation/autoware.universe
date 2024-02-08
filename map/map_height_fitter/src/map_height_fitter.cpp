@@ -64,7 +64,7 @@ struct MapHeightFitter::Impl
 
 MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), node_(node)
 {
-  fit_target_ = node->declare_parameter<std::string>("fit_target");
+  fit_target_ = node->declare_parameter<std::string>("map_height_fitter.target");
   if (fit_target_ == "pointcloud_map") {
     const auto callback =
       [this](const std::shared_future<std::vector<rclcpp::Parameter>> & future) {
@@ -87,7 +87,8 @@ MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), n
         }
       };
 
-    const auto map_loader_name = node->declare_parameter<std::string>("map_loader_name");
+    const auto map_loader_name =
+      node->declare_parameter<std::string>("map_height_fitter.map_loader_name");
     params_pcd_map_loader_ = rclcpp::AsyncParametersClient::make_shared(node, map_loader_name);
     params_pcd_map_loader_->wait_for_service();
     params_pcd_map_loader_->get_parameters({enable_partial_load}, callback);

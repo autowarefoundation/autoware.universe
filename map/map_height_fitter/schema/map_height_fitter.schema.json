@@ -6,12 +6,12 @@
     "map_height_fitter": {
       "type": "object",
       "properties": {
-        "map_loader_name": {
+        "map_height_fitter.map_loader_name": {
           "type": "string",
           "description": "Node name of the map loader from which this map_height_fitter will retrieve its parameters",
           "default": "/map/pointcloud_map_loader"
         },
-        "fit_target": {
+        "map_height_fitter.target": {
           "type": "string",
           "description": "Target map to fit (choose from 'pointcloud_map', 'vector_map')",
           "default": "pointcloud_map"
