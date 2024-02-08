@@ -142,7 +142,6 @@ void StartPlannerModule::initVariables()
   info_marker_.markers.clear();
   initializeSafetyCheckParameters();
   initializeCollisionCheckDebugMap(debug_data_.collision_check);
-  updateDepartureCheckLanes();
 }
 
 void StartPlannerModule::updateEgoPredictedPathParams(
@@ -608,7 +607,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 void StartPlannerModule::resetStatus()
 {
   status_ = PullOutStatus{};
-  updateDepartureCheckLanes();
 }
 
 void StartPlannerModule::incrementPathIndex()
@@ -1406,22 +1404,6 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
         ? utils::combineDrivableAreaInfo(
             current_drivable_area_info, getPreviousModuleOutput().drivable_area_info)
         : current_drivable_area_info;
-  }
-}
-
-void StartPlannerModule::updateDepartureCheckLanes()
-{
-  const auto departure_check_lanes = createDepartureCheckLanes();
-  for (auto & planner : start_planners_) {
-    auto shift_pull_out = std::dynamic_pointer_cast<ShiftPullOut>(planner);
-
-    if (shift_pull_out) {
-      shift_pull_out->setDepartureCheckLanes(departure_check_lanes);
-    }
-  }
-  // debug
-  {
-    debug_data_.departure_check_lanes = departure_check_lanes;
   }
 }
 
