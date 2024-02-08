@@ -62,6 +62,8 @@ GoalPlannerModule::GoalPlannerModule(
   parameters_{parameters},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()},
   thread_safe_data_{mutex_, clock_},
+  is_lane_parking_cb_running_{false},
+  is_freespace_parking_cb_running_{false},
   debug_stop_pose_with_info_{&stop_pose_}
 {
   LaneDepartureChecker lane_departure_checker{};
@@ -171,6 +173,8 @@ bool GoalPlannerModule::hasDeviatedFromCurrentPreviousModulePath() const
 // generate pull over candidate paths
 void GoalPlannerModule::onTimer()
 {
+  const ScopedFlag flag(is_lane_parking_cb_running_);
+
   if (getCurrentStatus() == ModuleStatus::IDLE) {
     return;
   }
@@ -187,18 +191,18 @@ void GoalPlannerModule::onTimer()
   // check if new pull over path candidates are needed to be generated
   const bool need_update = std::invoke([&]() {
     if (hasDeviatedFromCurrentPreviousModulePath()) {
-      RCLCPP_ERROR(getLogger(), "has deviated from current previous module path");
+      RCLCPP_DEBUG(getLogger(), "has deviated from current previous module path");
       return false;
     }
     if (thread_safe_data_.get_pull_over_path_candidates().empty()) {
       return true;
     }
     if (hasPreviousModulePathShapeChanged()) {
-      RCLCPP_ERROR(getLogger(), "has previous module path shape changed");
+      RCLCPP_DEBUG(getLogger(), "has previous module path shape changed");
       return true;
     }
     if (hasDeviatedFromLastPreviousModulePath() && !hasDecidedPath()) {
-      RCLCPP_ERROR(getLogger(), "has deviated from last previous module path");
+      RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
     }
     return false;
@@ -287,6 +291,8 @@ void GoalPlannerModule::onTimer()
 
 void GoalPlannerModule::onFreespaceParkingTimer()
 {
+  const ScopedFlag flag(is_freespace_parking_cb_running_);
+
   if (getCurrentStatus() == ModuleStatus::IDLE) {
     return;
   }
@@ -1863,6 +1869,9 @@ void GoalPlannerModule::updateSafetyCheckTargetObjectsData(
 
 std::pair<bool, bool> GoalPlannerModule::isSafePath() const
 {
+  if (!thread_safe_data_.get_pull_over_path()) {
+    return {false, false};
+  }
   const auto pull_over_path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const double current_velocity = std::hypot(
