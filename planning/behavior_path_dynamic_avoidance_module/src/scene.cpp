@@ -1069,27 +1069,25 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
       // The ego and object are the opposite directional or the object is parked.
       return std::min(time_while_collision.time_to_start_collision, 8.0) * std::abs(obj_vel) +
              std::abs(relative_velocity) * parameters_->start_duration_to_avoid_oncoming_object;
-    } else {
-      // The ego and object are the same directional
-      const double obj_acc = -0.5;
-      const double decel_time = 1.0;
-      const double obj_moving_dist =
-        (std::pow(std::max(obj_vel + obj_acc * decel_time, 0.0), 2) - std::pow(obj_vel, 2)) / 2 /
-        obj_acc;
-      const double ego_moving_dist = getEgoSpeed() * decel_time;
-      return std::max(0.0, ego_moving_dist - obj_moving_dist) +
-             std::abs(relative_velocity) * parameters_->start_duration_to_avoid_overtaking_object;
     }
+    // The ego and object are the same directional
+    const double obj_acc = -0.5;
+    const double decel_time = 1.0;
+    const double obj_moving_dist =
+      (std::pow(std::max(obj_vel + obj_acc * decel_time, 0.0), 2) - std::pow(obj_vel, 2)) / 2 /
+      obj_acc;
+    const double ego_moving_dist = getEgoSpeed() * decel_time;
+    return std::max(0.0, ego_moving_dist - obj_moving_dist) +
+           std::abs(relative_velocity) * parameters_->start_duration_to_avoid_overtaking_object;
   }();
   const double end_length_to_avoid = [&]() {
     if (obj_vel < parameters_->max_stopped_object_vel) {
       // The ego and object are the opposite directional or the object is parked.
       return std::abs(relative_velocity) * parameters_->end_duration_to_avoid_oncoming_object;
-    } else {
-      // The ego and object are the same directional
-      return std::min(time_while_collision.time_to_end_collision, 3.0) * obj_vel +
-             std::abs(relative_velocity) * parameters_->end_duration_to_avoid_overtaking_object;
     }
+    // The ego and object are the same directional
+    return std::min(time_while_collision.time_to_end_collision, 3.0) * obj_vel +
+           std::abs(relative_velocity) * parameters_->end_duration_to_avoid_overtaking_object;
   }();
 
   // calculate valid path for the forked object's path from the ego's path
