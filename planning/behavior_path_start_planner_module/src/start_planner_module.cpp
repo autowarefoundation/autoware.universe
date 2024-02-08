@@ -1004,10 +1004,12 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
       continue;
     }
 
-    if (utils::checkCollisionBetweenFootprintAndObjects(
-          local_vehicle_footprint, *backed_pose, back_stop_objects_in_pull_out_lanes,
-          parameters_->back_objects_collision_check_margin)) {
-      break;  // poses behind this has a collision, so break.
+    if (
+      utils::calcLongitudinalDistanceFromEgoToObjects(
+        *backed_pose, planner_data_->parameters.base_link2front,
+        planner_data_->parameters.base_link2rear,
+        back_stop_objects_in_pull_out_lanes) < parameters_->back_objects_collision_check_margin) {
+      break;  // poses behind this is too close to back static object, so break.
     }
 
     pull_out_start_pose_candidates.push_back(*backed_pose);
