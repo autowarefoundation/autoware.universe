@@ -354,8 +354,11 @@ def bridge(sid, data):
         # CONTROL COMMANDS
         ########################################################################
         # Vehicle and traffic light control commands
-        sio.emit('Bridge', data={'V1 Throttle': str(throttle_command), 'V1 Steering': str(steering_command),
-                                 'TL1 State': str(signal_1_command), 'TL2 State': str(signal_2_command), 'TL3 State': str(signal_3_command), 'TL4 State': str(signal_4_command)})
+        sio.emit('Bridge', data={
+                                 'V1 Throttle': str(throttle_command), 'V1 Steering': str(steering_command),
+                                 'TL1 State': str(signal_1_command), 'TL2 State': str(signal_2_command), 'TL3 State': str(signal_3_command), 'TL4 State': str(signal_4_command)
+                                }
+                )
 
 #########################################################
 # AUTODRIVE ROS 2 INCOMING BRIDGE INFRASTRUCTURE
