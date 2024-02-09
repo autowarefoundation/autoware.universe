@@ -371,10 +371,10 @@ void RouteHandler::setLaneletsFromRouteMsg()
   }
   route_lanelets_.clear();
   preferred_lanelets_.clear();
-  const bool is_route_valid = lanelet::utils::route::isRouteValid(*route_ptr_, lanelet_map_ptr_);
-  if (!is_route_valid) {
-    return;
-  }
+  //  const bool is_route_valid = lanelet::utils::route::isRouteValid(*route_ptr_,
+  //  lanelet_map_ptr_); if (!is_route_valid) {
+  //    return;
+  //  }
 
   size_t primitive_size{0};
   for (const auto & route_section : route_ptr_->segments) {
@@ -384,11 +384,19 @@ void RouteHandler::setLaneletsFromRouteMsg()
 
   for (const auto & route_section : route_ptr_->segments) {
     for (const auto & primitive : route_section.primitives) {
-      const auto id = primitive.id;
-      const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
-      route_lanelets_.push_back(llt);
-      if (id == route_section.preferred_primitive.id) {
-        preferred_lanelets_.push_back(llt);
+      try {
+        const auto id = primitive.id;
+        const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
+        route_lanelets_.push_back(llt);
+        if (id == route_section.preferred_primitive.id) {
+          preferred_lanelets_.push_back(llt);
+        }
+      } catch (const std::exception & e) {
+        std::cerr
+          << e.what()
+          << ". Maybe the loaded route was created on a different Map from the current one. "
+             "Try to load the other Route again."
+          << std::endl;
       }
     }
   }
@@ -397,15 +405,31 @@ void RouteHandler::setLaneletsFromRouteMsg()
   if (!route_ptr_->segments.empty()) {
     goal_lanelets_.reserve(route_ptr_->segments.back().primitives.size());
     for (const auto & primitive : route_ptr_->segments.back().primitives) {
-      const auto id = primitive.id;
-      const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
-      goal_lanelets_.push_back(llt);
+      try {
+        const auto id = primitive.id;
+        const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
+        goal_lanelets_.push_back(llt);
+      } catch (const std::exception & e) {
+        std::cerr
+          << e.what()
+          << ". Maybe the loaded route was created on a different Map from the current one. "
+             "Try to load the other Route again."
+          << std::endl;
+      }
     }
     start_lanelets_.reserve(route_ptr_->segments.front().primitives.size());
     for (const auto & primitive : route_ptr_->segments.front().primitives) {
-      const auto id = primitive.id;
-      const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
-      start_lanelets_.push_back(llt);
+      try {
+        const auto id = primitive.id;
+        const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
+        start_lanelets_.push_back(llt);
+      } catch (const std::exception & e) {
+        std::cerr
+          << e.what()
+          << ". Maybe the loaded route was created on a different Map from the current one. "
+             "Try to load the other Route again."
+          << std::endl;
+      }
     }
   }
   is_handler_ready_ = true;

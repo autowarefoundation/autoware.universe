@@ -325,6 +325,7 @@ public:
    * @return vector of shoulder lanelets intersecting with given pose.
    */
   lanelet::ConstLanelets getShoulderLaneletsAtPose(const Pose & pose) const;
+  lanelet::ConstLanelets getRouteLanelets() const;
 
 private:
   // MUST
@@ -355,6 +356,17 @@ private:
   lanelet::ConstLanelets getMainLanelets(const lanelet::ConstLanelets & path_lanelets) const;
 
   // for lanelet
+  bool isBijectiveConnection(
+    const lanelet::ConstLanelets & lanelet_section1,
+    const lanelet::ConstLanelets & lanelet_section2) const;
+  bool getPreviousLaneletWithinRouteExceptGoal(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
+  bool getNextLaneletWithinRouteExceptStart(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
+  bool getRightLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
+  bool getLeftLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet) const;
   lanelet::ConstLanelets getRouteLanelets() const;
   lanelet::ConstLanelets getLaneletSequenceUpTo(
     const lanelet::ConstLanelet & lanelet,
