@@ -83,7 +83,7 @@ public:
   bool checkValidVelocityDeviation(const Trajectory & trajectory);
   bool checkValidDistanceDeviation(const Trajectory & trajectory);
   bool checkValidLongitudinalDistanceDeviation(const Trajectory & trajectory);
-  bool checkValidForwardTrajectoryTimeLength(const Trajectory & trajectory);
+  bool checkValidForwardTrajectoryLength(const Trajectory & trajectory);
 
 private:
   void setupDiag();

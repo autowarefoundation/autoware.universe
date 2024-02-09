@@ -303,7 +303,7 @@ void PlanningValidator::validate(const Trajectory & trajectory)
   s.is_valid_velocity_deviation = checkValidVelocityDeviation(trajectory);
   s.is_valid_distance_deviation = checkValidDistanceDeviation(trajectory);
   s.is_valid_longitudinal_distance_deviation = checkValidLongitudinalDistanceDeviation(trajectory);
-  s.is_valid_forward_trajectory_length = checkValidForwardTrajectoryTimeLength(trajectory);
+  s.is_valid_forward_trajectory_length = checkValidForwardTrajectoryLength(trajectory);
 
   // use resampled trajectory because the following metrics can not be evaluated for closed points.
   // Note: do not interpolate to keep original trajectory shape.
@@ -519,7 +519,7 @@ bool PlanningValidator::checkValidLongitudinalDistanceDeviation(const Trajectory
   return true;
 }
 
-bool PlanningValidator::checkValidForwardTrajectoryTimeLength(const Trajectory & trajectory)
+bool PlanningValidator::checkValidForwardTrajectoryLength(const Trajectory & trajectory)
 {
   const auto ego_speed = std::abs(current_kinematics_->twist.twist.linear.x);
   if (ego_speed < 1.0 / 3.6) {
@@ -529,15 +529,12 @@ bool PlanningValidator::checkValidForwardTrajectoryTimeLength(const Trajectory &
   const auto forward_length = motion_utils::calcSignedArcLength(
     trajectory.points, current_kinematics_->pose.pose.position, trajectory.points.size() - 1);
 
-  const auto tmp_all_length =
-    motion_utils::calcSignedArcLength(trajectory.points, 0, trajectory.points.size() - 1);
-
-  std::cerr << "forward_length = " << forward_length << ", tmp_all_length = " << tmp_all_length
-            << std::endl;
-
   const auto acc = validation_params_.forward_trajectory_length_acceleration;
   const auto forward_length_required = ego_speed * ego_speed / (2.0 * std::abs(acc)) -
                                        validation_params_.forward_trajectory_length_margin;
+
+  std::cerr << "forward_length_required = " << forward_length_required
+            << ", forward_length = " << forward_length << std::endl;
 
   validation_status_.forward_trajectory_length_required = forward_length_required;
   validation_status_.forward_trajectory_length_measured = forward_length;

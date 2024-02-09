@@ -207,7 +207,10 @@ rclcpp::NodeOptions getNodeOptionsWithDefaultParams()
   node_options.append_parameter_override(
     "thresholds.longitudinal_distance_deviation", THRESHOLD_LONGITUDINAL_DISTANCE_DEVIATION);
   node_options.append_parameter_override(
-    "thresholds.forward_trajectory_time_length", THRESHOLD_FORWARD_TRAJECTORY_TIME_LENGTH);
+    "parameters.forward_trajectory_length_acceleration",
+    PARAMETER_FORWARD_TRAJECTORY_LENGTH_ACCELERATION);
+  node_options.append_parameter_override(
+    "parameters.forward_trajectory_length_margin", PARAMETER_FORWARD_TRAJECTORY_LENGTH_MARGIN);
 
   // for vehicle info
   node_options.append_parameter_override("wheel_radius", 0.5);
