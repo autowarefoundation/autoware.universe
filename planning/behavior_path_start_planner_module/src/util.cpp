@@ -17,6 +17,7 @@
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
@@ -102,6 +103,37 @@ lanelet::ConstLanelets getPullOutLanes(
     planner_data, backward_length,
     /*forward_length*/ std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
+}
+
+double calcMinArcLengthDistanceFromEgoToObjects(
+  const tier4_autoware_utils::LinearRing2d & local_vehicle_footprint, const Pose & ego_pose,
+  const lanelet::ConstLanelets & lanelets, const PredictedObjects & static_objects)
+{
+  double min_distance = std::numeric_limits<double>::max();
+  const auto vehicle_footprint =
+    transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(ego_pose));
+  for (const auto & obj : static_objects.objects) {
+    const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj);
+    for (const auto & obj_outer_point : obj_polygon.outer()) {
+      const auto obj_pose_arc_length = getArcLengthForPoint(lanelets, obj_outer_point);
+      for (const auto & vehicle_corner_point : vehicle_footprint) {
+        const auto vehicle_pose_arc_length = getArcLengthForPoint(lanelets, vehicle_corner_point);
+        const double distance = std::abs(obj_pose_arc_length - vehicle_pose_arc_length);
+        min_distance = std::min(min_distance, distance);
+      }
+    }
+  }
+
+  return min_distance;
+}
+
+double getArcLengthForPoint(
+  const lanelet::ConstLanelets & lanelets, const tier4_autoware_utils::Point2d & point)
+{
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = point.x();
+  pose.position.y = point.y();
+  return lanelet::utils::getArcCoordinates(lanelets, pose).length;
 }
 
 }  // namespace behavior_path_planner::start_planner_utils

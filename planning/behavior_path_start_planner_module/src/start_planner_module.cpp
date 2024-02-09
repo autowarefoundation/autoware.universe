@@ -1005,9 +1005,8 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     }
 
     if (
-      utils::calcLongitudinalDistanceFromEgoToObjects(
-        *backed_pose, planner_data_->parameters.base_link2front,
-        planner_data_->parameters.base_link2rear,
+      start_planner_utils::calcMinArcLengthDistanceFromEgoToObjects(
+        local_vehicle_footprint, *backed_pose, pull_out_lanes,
         back_stop_objects_in_pull_out_lanes) < parameters_->back_objects_collision_check_margin) {
       break;  // poses behind this is too close to back static object, so break.
     }
@@ -1019,8 +1018,8 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
 
 PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_point,
-  const double velocity_threshold, const double object_check_forward_distance,
-  const double object_check_backward_distance) const
+  const double velocity_threshold, const double object_check_backward_distance,
+  const double object_check_forward_distance) const
 {
   const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     *planner_data_->dynamic_object, velocity_threshold);
@@ -1034,8 +1033,8 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
     pull_out_lanes, object_check_backward_distance, object_check_forward_distance);
 
   utils::path_safety_checker::filterObjectsByPosition(
-    stop_objects_in_pull_out_lanes, path.points, current_point, object_check_forward_distance,
-    object_check_backward_distance);
+    stop_objects_in_pull_out_lanes, path.points, current_point, object_check_backward_distance,
+    object_check_forward_distance);
 
   return stop_objects_in_pull_out_lanes;
 }

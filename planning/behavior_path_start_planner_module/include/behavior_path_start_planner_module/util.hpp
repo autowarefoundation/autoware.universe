@@ -46,10 +46,35 @@ using route_handler::RouteHandler;
 PathWithLaneId getBackwardPath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & current_pose, const Pose & backed_pose, const double velocity);
+
+/**
+ * @brief Get a sequence of lanelets for pulling out from the current position.
+ *
+ * If the ego vehicle's current position is on a shoulder lane, the function retrieves a sequence of
+ * shoulder lanelets. If it is on a road lane, the function returns a sequence of road lanelets.
+ *
+ */
 lanelet::ConstLanelets getPullOutLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length);
 Pose getBackedPose(
   const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance);
+
+/**
+ * @brief Calculate the minimum arc length distance from the ego vehicle to static objects within
+ the same lanelets.
+ *
+ * Calculates the minimum arc length distance between the ego vehicle and static objects in given
+ * lanelets. It compares each corner of the vehicle's transformed footprint with every corner of
+ * object polygons to find the shortest distance within the lanelet system.
+ */
+
+double calcMinArcLengthDistanceFromEgoToObjects(
+  const tier4_autoware_utils::LinearRing2d & local_vehicle_footprint, const Pose & ego_pose,
+  const lanelet::ConstLanelets & lanelets, const PredictedObjects & static_objects);
+
+double getArcLengthForPoint(
+  const lanelet::ConstLanelets & lanelets, const tier4_autoware_utils::Point2d & point);
+
 }  // namespace behavior_path_planner::start_planner_utils
 
 #endif  // BEHAVIOR_PATH_START_PLANNER_MODULE__UTIL_HPP_
