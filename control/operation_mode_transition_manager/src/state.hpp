@@ -16,7 +16,7 @@
 #define STATE_HPP_
 
 #include "data.hpp"
-#include "operation_mode_transition_manager/msg/operation_mode_transition_manager_debug.hpp"
+#include "autoware_operation_mode_transition_manager/msg/operation_mode_transition_manager_debug.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -39,7 +39,7 @@ public:
   virtual bool isModeChangeCompleted() = 0;
   virtual bool isModeChangeAvailable() = 0;
 
-  using DebugInfo = operation_mode_transition_manager::msg::OperationModeTransitionManagerDebug;
+  using DebugInfo = autoware_operation_mode_transition_manager::msg::OperationModeTransitionManagerDebug;
   virtual DebugInfo getDebugInfo() { return DebugInfo{}; }
 };
 

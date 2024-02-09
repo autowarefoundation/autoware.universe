@@ -73,7 +73,7 @@ For the backward compatibility (to be removed):
 ### Outputs
 
 - /system/operation_mode/state [`autoware_adapi_v1_msgs/msg/OperationModeState`]: to inform the current operation mode
-- /control/operation_mode_transition_manager/debug_info [`operation_mode_transition_manager/msg/OperationModeTransitionManagerDebug`]: detailed information about the operation mode transition
+- /control/operation_mode_transition_manager/debug_info [`autoware_operation_mode_transition_manager/msg/OperationModeTransitionManagerDebug`]: detailed information about the operation mode transition
 
 - /control/gate_mode_cmd [`tier4_control_msgs/msg/GateMode`]: to change the `vehicle_cmd_gate` state to use its features (to be removed)
 - /autoware/engage [`autoware_auto_vehicle_msgs/msg/Engage`]:
