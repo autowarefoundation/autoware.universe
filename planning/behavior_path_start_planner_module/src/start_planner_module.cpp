@@ -725,6 +725,12 @@ PathWithLaneId StartPlannerModule::extractCollisionCheckSection(
     combined_path.points.insert(
       combined_path.points.end(), partial_path.points.begin(), partial_path.points.end());
   }
+  // calculate shift start pose idx
+  const size_t shift_start_idx =
+    motion_utils::findNearestIndex(combined_path.points, path.start_pose.position);
+  // remove front of start pose
+  combined_path.points.erase(
+    combined_path.points.begin(), combined_path.points.begin() + shift_start_idx);
   // calculate collision check end idx
   const size_t collision_check_end_idx = std::invoke([&]() {
     const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
