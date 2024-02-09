@@ -503,6 +503,19 @@ bool isEgoOutOfRoute(
     if (utils::isInLanelets(goal_pose, shoulder_lanes)) {
       return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
     }
+    lanelet::LaneletMapPtr map = route_handler->getLaneletMapPtr();
+    lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(map);
+    lanelet::ConstLanelets route_lanelets = route_handler->getRouteLanelets();
+    for (auto it = route_lanelets.rbegin(); it != route_lanelets.rend(); ++it) {
+      for (auto it2 = all_lanelets.rbegin(); it2 != all_lanelets.rend(); ++it2) {
+        if ((*it).id() == (*it2).id()) {
+          //          std::cout << "Route lanelet id: " << (*it).id() << std::endl;
+          // select the lanelet goal lanelet
+          goal_lane = *it2;
+          return false;
+        }
+      }
+    }
     return !route_handler->getGoalLanelet(&goal_lane);
   });
   if (is_failed_getting_lanelet) {
