@@ -35,6 +35,7 @@
 
 #include <tf2/utils.h>
 
+#include <atomic>
 #include <deque>
 #include <memory>
 #include <string>
@@ -82,6 +83,21 @@ public:
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
       objects_of_interest_marker_interface_ptr_map);
+
+  ~StartPlannerModule()
+  {
+    if (freespace_planner_timer_) {
+      freespace_planner_timer_->cancel();
+    }
+
+    while (is_freespace_planner_cb_running_.load()) {
+      RCLCPP_INFO_THROTTLE(
+        getLogger(), *clock_, 1000, "Waiting for freespace planner callback to finish...");
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    RCLCPP_INFO_THROTTLE(getLogger(), *clock_, 1000, "freespace planner callback finished");
+  }
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -135,11 +151,21 @@ public:
   bool isFreespacePlanning() const { return status_.planner_type == PlannerType::FREESPACE; }
 
 private:
+  // Flag class for managing whether a certain callback is running in multi-threading
+  class ScopedFlag
+  {
+  public:
+    explicit ScopedFlag(std::atomic<bool> & flag) : flag_(flag) { flag_.store(true); }
+
+    ~ScopedFlag() { flag_.store(false); }
+
+  private:
+    std::atomic<bool> & flag_;
+  };
+
   bool canTransitSuccessState() override;
 
   bool canTransitFailureState() override { return false; }
-
-  bool canTransitIdleToRunningState() override;
 
   /**
    * @brief init member variables.
@@ -164,6 +190,7 @@ private:
 
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
+  bool isOverlapWithCenterLane() const;
   bool isCloseToOriginalStartPose() const;
   bool hasArrivedAtGoal() const;
   bool isMoving() const;
@@ -174,7 +201,8 @@ private:
     const Pose & start_pose_candidate, const std::shared_ptr<PullOutPlannerBase> & planner,
     const Pose & refined_start_pose, const Pose & goal_pose, const double collision_check_margin);
 
-  PathWithLaneId extractCollisionCheckSection(const PullOutPath & path);
+  PathWithLaneId extractCollisionCheckSection(
+    const PullOutPath & path, const behavior_path_planner::PlannerType & planner_type);
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
@@ -202,6 +230,8 @@ private:
   std::unique_ptr<PullOutPlannerBase> freespace_planner_;
   rclcpp::TimerBase::SharedPtr freespace_planner_timer_;
   rclcpp::CallbackGroup::SharedPtr freespace_planner_timer_cb_group_;
+  std::atomic<bool> is_freespace_planner_cb_running_;
+
   // TODO(kosuke55)
   // Currently, we only do lock when updating a member of status_.
   // However, we need to ensure that the value does not change when referring to it.
@@ -242,8 +272,8 @@ private:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
-  void updateDrivableLanes();
-  lanelet::ConstLanelets createDrivableLanes() const;
+  void updateDepartureCheckLanes();
+  lanelet::ConstLanelets createDepartureCheckLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.
   bool isGoalBehindOfEgoInSameRouteSegment() const;

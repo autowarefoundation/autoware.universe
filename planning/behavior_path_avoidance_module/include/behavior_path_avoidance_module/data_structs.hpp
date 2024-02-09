@@ -115,6 +115,9 @@ struct AvoidanceParameters
   // use intersection area for avoidance
   bool use_intersection_areas{false};
 
+  // use freespace area for avoidance
+  bool use_freespace_areas{false};
+
   // consider avoidance return dead line
   bool enable_dead_line_for_goal{false};
   bool enable_dead_line_for_traffic_light{false};
@@ -333,12 +336,8 @@ struct ObjectData  // avoidance target
 {
   ObjectData() = default;
 
-  ObjectData(PredictedObject obj, double lat, double lon, double len, double overhang)
-  : object(std::move(obj)),
-    to_centerline(lat),
-    longitudinal(lon),
-    length(len),
-    overhang_dist(overhang)
+  ObjectData(PredictedObject obj, double lat, double lon, double len)
+  : object(std::move(obj)), to_centerline(lat), longitudinal(lon), length(len)
   {
   }
 
@@ -361,9 +360,6 @@ struct ObjectData  // avoidance target
 
   // longitudinal length of vehicle, in Frenet coordinate
   double length{0.0};
-
-  // lateral distance to the closest footprint, in Frenet coordinate
-  double overhang_dist{0.0};
 
   // lateral shiftable ratio
   double shiftable_ratio{0.0};
@@ -388,9 +384,6 @@ struct ObjectData  // avoidance target
 
   // the position at the detected moment
   Pose init_pose;
-
-  // the position of the overhang
-  Pose overhang_pose;
 
   // envelope polygon
   Polygon2d envelope_poly{};
@@ -422,6 +415,9 @@ struct ObjectData  // avoidance target
   // object direction.
   Direction direction{Direction::NONE};
 
+  // overhang points (sort by distance)
+  std::vector<std::pair<double, Point>> overhang_points{};
+
   // unavoidable reason
   std::string reason{};
 
@@ -429,7 +425,7 @@ struct ObjectData  // avoidance target
   std::optional<double> avoid_margin{std::nullopt};
 
   // the nearest bound point (use in road shoulder distance calculation)
-  std::optional<Point> nearest_bound_point{std::nullopt};
+  std::optional<std::pair<Point, Point>> narrowest_place{std::nullopt};
 };
 using ObjectDataArray = std::vector<ObjectData>;
 
@@ -538,9 +534,9 @@ struct AvoidancePlanningData
 
   std::vector<DrivableLanes> drivable_lanes{};
 
-  lanelet::BasicLineString3d right_bound{};
+  std::vector<Point> right_bound{};
 
-  lanelet::BasicLineString3d left_bound{};
+  std::vector<Point> left_bound{};
 
   bool safe{false};
 

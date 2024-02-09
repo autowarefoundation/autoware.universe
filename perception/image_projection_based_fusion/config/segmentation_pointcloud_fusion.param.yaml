@@ -28,3 +28,13 @@
     # this is selected based on semantic segmentation model accuracy,
     # calibration accuracy and unknown reaction distance
     filter_distance_threshold: 60.0
+
+    # debug
+    debug_mode: false
+    filter_scope_min_x: -100
+    filter_scope_max_x: 100
+    filter_scope_min_y: -100
+    filter_scope_max_y: 100
+    filter_scope_min_z: -100
+    filter_scope_max_z: 100
+    image_buffer_size: 15

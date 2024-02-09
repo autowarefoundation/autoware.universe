@@ -34,28 +34,38 @@ std::tuple<
   bool /* reconciled occlusion disapproval */>
 IntersectionModule::getOcclusionStatus(
   const TrafficPrioritizedLevel & traffic_prioritized_level,
-  const intersection::InterpolatedPathInfo & interpolated_path_info,
-  const intersection::IntersectionLanelets & intersection_lanelets,
-  const TargetObjects & target_objects)
+  const intersection::InterpolatedPathInfo & interpolated_path_info)
 {
-  const auto & adjacent_lanelets = intersection_lanelets.adjacent();
+  const auto & intersection_lanelets = intersection_lanelets_.value();
   const auto & occlusion_attention_lanelets = intersection_lanelets.occlusion_attention();
-  const auto & occlusion_attention_area = intersection_lanelets.occlusion_attention_area();
-  const auto first_attention_area = intersection_lanelets.first_attention_area().value();
 
-  const bool is_amber_or_red =
+  // ==========================================================================================
+  // for the convenience of Psim user, this module ignores occlusion if there has not been any
+  // information published for the associated traffic light even if occlusion.enable is true,
+  // and only runs collision checking on that intersection lane.
+  //
+  // this is because Psim-users/scenario-files do not set traffic light information perfectly
+  // most of the times, and they just set bare minimum traffic information only for traffic lights
+  // they are interested in or want to test.
+  //
+  // no_tl_info_ever variable is defined for that purpose. if there has been any
+  // information published for the associated traffic light in the real world through perception/V2I
+  // or in the simulation, then it should be kept in last_tl_valid_observation_ and this variable
+  // becomes false
+  // ==========================================================================================
+  const bool no_tl_info_ever = (has_traffic_light_ && !last_tl_valid_observation_.has_value());
+  const bool is_amber_or_red_or_no_tl_info_ever =
     (traffic_prioritized_level == TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED) ||
-    (traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED);
+    (traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED) || no_tl_info_ever;
   // check occlusion on detection lane
-  const auto & occlusion_attention_divisions = occlusion_attention_divisions_.value();
   auto occlusion_status =
-    (planner_param_.occlusion.enable && !occlusion_attention_lanelets.empty() && !is_amber_or_red)
-      ? detectOcclusion(
-          occlusion_attention_area, adjacent_lanelets, first_attention_area, interpolated_path_info,
-          occlusion_attention_divisions, target_objects)
-      : OcclusionType::NOT_OCCLUDED;
+    (planner_param_.occlusion.enable && !occlusion_attention_lanelets.empty() &&
+     !is_amber_or_red_or_no_tl_info_ever)
+      ? detectOcclusion(interpolated_path_info)
+      : NotOccluded{};
   occlusion_stop_state_machine_.setStateWithMarginTime(
-    occlusion_status == OcclusionType::NOT_OCCLUDED ? StateMachine::State::GO : StateMachine::STOP,
+    std::holds_alternative<NotOccluded>(occlusion_status) ? StateMachine::State::GO
+                                                          : StateMachine::STOP,
     logger_.get_child("occlusion_stop"), *clock_);
   const bool is_occlusion_cleared_with_margin =
     (occlusion_stop_state_machine_.getState() == StateMachine::State::GO);  // module's detection
@@ -63,11 +73,11 @@ IntersectionModule::getOcclusionStatus(
   const bool ext_occlusion_requested =
     (is_occlusion_cleared_with_margin && !occlusion_activated_);  // RTC's detection
   if (ext_occlusion_requested) {
-    occlusion_status = OcclusionType::RTC_OCCLUDED;
+    occlusion_status = RTCOccluded{};
   }
   const bool is_occlusion_state =
     (!is_occlusion_cleared_with_margin || ext_occlusion_requested);  // including approval
-  if (is_occlusion_state && occlusion_status == OcclusionType::NOT_OCCLUDED) {
+  if (is_occlusion_state && std::holds_alternative<NotOccluded>(occlusion_status)) {
     occlusion_status = prev_occlusion_status_;
   } else {
     prev_occlusion_status_ = occlusion_status;
@@ -76,13 +86,14 @@ IntersectionModule::getOcclusionStatus(
 }
 
 IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
-  const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
-  const lanelet::ConstLanelets & adjacent_lanelets,
-  const lanelet::CompoundPolygon3d & first_attention_area,
-  const intersection::InterpolatedPathInfo & interpolated_path_info,
-  const std::vector<lanelet::ConstLineString3d> & lane_divisions,
-  const TargetObjects & target_objects)
+  const intersection::InterpolatedPathInfo & interpolated_path_info) const
 {
+  const auto & intersection_lanelets = intersection_lanelets_.value();
+  const auto & adjacent_lanelets = intersection_lanelets.adjacent();
+  const auto & attention_areas = intersection_lanelets.occlusion_attention_area();
+  const auto first_attention_area = intersection_lanelets.first_attention_area().value();
+  const auto & lane_divisions = occlusion_attention_divisions_.value();
+
   const auto & occ_grid = *planner_data_->occupancy_grid;
   const auto & current_pose = planner_data_->current_odometry->pose;
   const double occlusion_dist_thr = planner_param_.occlusion.occlusion_required_clearance_distance;
@@ -93,7 +104,7 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
   const auto first_attention_area_idx =
     util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_attention_area);
   if (!first_attention_area_idx) {
-    return OcclusionType::NOT_OCCLUDED;
+    return NotOccluded{};
   }
 
   const auto first_inside_attention_idx_ip_opt =
@@ -208,13 +219,15 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
   // re-use attention_mask
   attention_mask = cv::Mat(width, height, CV_8UC1, cv::Scalar(0));
   // (3.1) draw all cells on attention_mask behind blocking vehicles as not occluded
-  const auto & blocking_attention_objects = target_objects.parked_attention_objects;
-  for (const auto & blocking_attention_object : blocking_attention_objects) {
-    debug_data_.blocking_attention_objects.objects.push_back(blocking_attention_object.object);
+  const auto & blocking_attention_objects = object_info_manager_.parkedObjects();
+  for (const auto & blocking_attention_object_info : blocking_attention_objects) {
+    debug_data_.parked_targets.objects.push_back(
+      blocking_attention_object_info->predicted_object());
   }
   std::vector<std::vector<cv::Point>> blocking_polygons;
-  for (const auto & blocking_attention_object : blocking_attention_objects) {
-    const Polygon2d obj_poly = tier4_autoware_utils::toPolygon2d(blocking_attention_object.object);
+  for (const auto & blocking_attention_object_info : blocking_attention_objects) {
+    const Polygon2d obj_poly =
+      tier4_autoware_utils::toPolygon2d(blocking_attention_object_info->predicted_object());
     findCommonCvPolygons(obj_poly.outer(), blocking_polygons);
   }
   for (const auto & blocking_polygon : blocking_polygons) {
@@ -382,7 +395,7 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
   }
 
   if (min_dist == std::numeric_limits<double>::infinity() || min_dist > occlusion_dist_thr) {
-    return OcclusionType::NOT_OCCLUDED;
+    return NotOccluded{min_dist};
   }
 
   debug_data_.nearest_occlusion_projection =
@@ -390,18 +403,13 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
   LineString2d ego_occlusion_line;
   ego_occlusion_line.emplace_back(current_pose.position.x, current_pose.position.y);
   ego_occlusion_line.emplace_back(nearest_occlusion_point.point.x, nearest_occlusion_point.point.y);
-  for (const auto & attention_object : target_objects.all_attention_objects) {
-    const auto obj_poly = tier4_autoware_utils::toPolygon2d(attention_object.object);
+  for (const auto & attention_object_info : object_info_manager_.allObjects()) {
+    const auto obj_poly =
+      tier4_autoware_utils::toPolygon2d(attention_object_info->predicted_object());
     if (bg::intersects(obj_poly, ego_occlusion_line)) {
-      return OcclusionType::DYNAMICALLY_OCCLUDED;
+      return DynamicallyOccluded{min_dist};
     }
   }
-  for (const auto & attention_object : target_objects.intersection_area_objects) {
-    const auto obj_poly = tier4_autoware_utils::toPolygon2d(attention_object.object);
-    if (bg::intersects(obj_poly, ego_occlusion_line)) {
-      return OcclusionType::DYNAMICALLY_OCCLUDED;
-    }
-  }
-  return OcclusionType::STATICALLY_OCCLUDED;
+  return StaticallyOccluded{min_dist};
 }
 }  // namespace behavior_velocity_planner
