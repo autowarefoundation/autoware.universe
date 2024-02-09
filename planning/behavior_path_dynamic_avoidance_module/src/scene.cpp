@@ -1298,7 +1298,6 @@ std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoi
 }
 
 // NOTE: object does not have const only to update min_bound_lat_offset.
-
 std::optional<tier4_autoware_utils::Polygon2d>
 DynamicAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object) const
