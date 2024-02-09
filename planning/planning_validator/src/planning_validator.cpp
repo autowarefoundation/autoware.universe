@@ -82,8 +82,12 @@ void PlanningValidator::setupParameters()
     p.distance_deviation_threshold = declare_parameter<double>(t + "distance_deviation");
     p.longitudinal_distance_deviation_threshold =
       declare_parameter<double>(t + "longitudinal_distance_deviation");
-    p.forward_trajectory_time_length_threshold =
-      declare_parameter<double>(t + "forward_trajectory_time_length");
+
+    const std::string ps = "parameters.";
+    p.forward_trajectory_length_acceleration =
+      declare_parameter<double>(ps + "forward_trajectory_length_acceleration");
+    p.forward_trajectory_length_margin =
+      declare_parameter<double>(ps + "forward_trajectory_length_margin");
   }
 
   try {
@@ -161,10 +165,10 @@ void PlanningValidator::setupDiag()
       stat, validation_status_.is_valid_longitudinal_distance_deviation,
       "longitudinal distance deviation is too large");
   });
-  d->add(ns + "forward_trajectory_time_length", [&](auto & stat) {
+  d->add(ns + "forward_trajectory_length", [&](auto & stat) {
     setStatus(
-      stat, validation_status_.is_valid_forward_trajectory_time_length,
-      "trajectory time length is too short");
+      stat, validation_status_.is_valid_forward_trajectory_length,
+      "trajectory length is too short");
   });
 }
 
@@ -299,7 +303,7 @@ void PlanningValidator::validate(const Trajectory & trajectory)
   s.is_valid_velocity_deviation = checkValidVelocityDeviation(trajectory);
   s.is_valid_distance_deviation = checkValidDistanceDeviation(trajectory);
   s.is_valid_longitudinal_distance_deviation = checkValidLongitudinalDistanceDeviation(trajectory);
-  s.is_valid_forward_trajectory_time_length = checkValidForwardTrajectoryTimeLength(trajectory);
+  s.is_valid_forward_trajectory_length = checkValidForwardTrajectoryTimeLength(trajectory);
 
   // use resampled trajectory because the following metrics can not be evaluated for closed points.
   // Note: do not interpolate to keep original trajectory shape.
@@ -517,17 +521,28 @@ bool PlanningValidator::checkValidLongitudinalDistanceDeviation(const Trajectory
 
 bool PlanningValidator::checkValidForwardTrajectoryTimeLength(const Trajectory & trajectory)
 {
+  const auto ego_speed = std::abs(current_kinematics_->twist.twist.linear.x);
+  if (ego_speed < 1.0 / 3.6) {
+    return true;  // Ego is almost stopped.
+  }
+
   const auto forward_length = motion_utils::calcSignedArcLength(
     trajectory.points, current_kinematics_->pose.pose.position, trajectory.points.size() - 1);
-  const auto ego_speed = std::abs(current_kinematics_->twist.twist.linear.x);
-  if (ego_speed < 0.1) {
-    return true;  // Ego is stopped.
-  }
-  const auto forward_time_length = forward_length / std::max(ego_speed, 0.1);
-  validation_status_.forward_trajectory_time_length = forward_time_length;
 
-  return validation_status_.forward_trajectory_time_length >
-         validation_params_.forward_trajectory_time_length_threshold;
+  const auto tmp_all_length =
+    motion_utils::calcSignedArcLength(trajectory.points, 0, trajectory.points.size() - 1);
+
+  std::cerr << "forward_length = " << forward_length << ", tmp_all_length = " << tmp_all_length
+            << std::endl;
+
+  const auto acc = validation_params_.forward_trajectory_length_acceleration;
+  const auto forward_length_required = ego_speed * ego_speed / (2.0 * std::abs(acc)) -
+                                       validation_params_.forward_trajectory_length_margin;
+
+  validation_status_.forward_trajectory_length_required = forward_length_required;
+  validation_status_.forward_trajectory_length_measured = forward_length;
+
+  return forward_length > forward_length_required;
 }
 
 bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s) const
@@ -537,7 +552,7 @@ bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s) const
          s.is_valid_longitudinal_max_acc && s.is_valid_longitudinal_min_acc &&
          s.is_valid_steering && s.is_valid_steering_rate && s.is_valid_velocity_deviation &&
          s.is_valid_distance_deviation && s.is_valid_longitudinal_distance_deviation &&
-         s.is_valid_forward_trajectory_time_length;
+         s.is_valid_forward_trajectory_length;
 }
 
 void PlanningValidator::displayStatus()
@@ -567,9 +582,7 @@ void PlanningValidator::displayStatus()
   warn(
     s.is_valid_longitudinal_distance_deviation,
     "planning trajectory is too far from ego in longitudinal direction!!");
-  warn(
-    s.is_valid_forward_trajectory_time_length,
-    "planning trajectory forward time length is not enough!!");
+  warn(s.is_valid_forward_trajectory_length, "planning trajectory forward length is not enough!!");
 }
 
 }  // namespace planning_validator

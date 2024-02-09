@@ -45,6 +45,7 @@ using tier4_debug_msgs::msg::Float64Stamped;
 
 struct ValidationParams
 {
+  // thresholds
   double interval_threshold;
   double relative_angle_threshold;
   double curvature_threshold;
@@ -56,7 +57,10 @@ struct ValidationParams
   double velocity_deviation_threshold;
   double distance_deviation_threshold;
   double longitudinal_distance_deviation_threshold;
-  double forward_trajectory_time_length_threshold;
+
+  // parameters
+  double forward_trajectory_length_acceleration;
+  double forward_trajectory_length_margin;
 };
 
 class PlanningValidator : public rclcpp::Node
