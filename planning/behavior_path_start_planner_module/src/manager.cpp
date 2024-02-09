@@ -49,6 +49,22 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   p.collision_check_margin_from_front_object =
     node->declare_parameter<double>(ns + "collision_check_margin_from_front_object");
   p.th_moving_object_velocity = node->declare_parameter<double>(ns + "th_moving_object_velocity");
+  p.object_types_to_check_for_path_generation.check_car =
+    node->declare_parameter<bool>(ns + "check_car");
+  p.object_types_to_check_for_path_generation.check_truck =
+    node->declare_parameter<bool>(ns + "check_truck");
+  p.object_types_to_check_for_path_generation.check_bus =
+    node->declare_parameter<bool>(ns + "check_bus");
+  p.object_types_to_check_for_path_generation.check_trailer =
+    node->declare_parameter<bool>(ns + "check_trailer");
+  p.object_types_to_check_for_path_generation.check_unknown =
+    node->declare_parameter<bool>(ns + "check_unknown");
+  p.object_types_to_check_for_path_generation.check_bicycle =
+    node->declare_parameter<bool>(ns + "check_bicycle");
+  p.object_types_to_check_for_path_generation.check_motorcycle =
+    node->declare_parameter<bool>(ns + "check_motorcycle");
+  p.object_types_to_check_for_path_generation.check_pedestrian =
+    node->declare_parameter<bool>(ns + "check_pedestrian");
   p.center_line_path_interval = node->declare_parameter<double>(ns + "center_line_path_interval");
   // shift pull out
   p.enable_shift_pull_out = node->declare_parameter<bool>(ns + "enable_shift_pull_out");
