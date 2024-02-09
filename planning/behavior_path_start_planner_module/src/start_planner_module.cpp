@@ -69,7 +69,8 @@ StartPlannerModule::StartPlannerModule(
       std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
+    start_planners_.push_back(
+      std::make_shared<GeometricPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (start_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
