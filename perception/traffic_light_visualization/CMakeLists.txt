@@ -19,11 +19,6 @@ rclcpp_components_register_node(traffic_light_roi_visualizer_nodelet
   EXECUTABLE traffic_light_visualization_node
 )
 
-ament_auto_add_executable(traffic_light_map_visualizer_node
-  src/traffic_light_map_visualizer/node.cpp
-  src/traffic_light_map_visualizer/main.cpp
-)
-
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
