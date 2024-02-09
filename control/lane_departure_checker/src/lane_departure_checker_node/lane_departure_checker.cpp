@@ -331,7 +331,6 @@ std::optional<lanelet::BasicPolygon2d> LaneDepartureChecker::getFusedLaneletPoly
     if (lanelets_distance_pair.size() == 1)
       return lanelets_distance_pair.at(0).second.polygon2d().basicPolygon();
 
-    std::vector<lanelet::BasicPolygon2d> lanelet_union;
     lanelet::BasicPolygon2d merged_polygon =
       lanelets_distance_pair.at(0).second.polygon2d().basicPolygon();
     for (size_t i = 1; i < lanelets_distance_pair.size(); ++i) {
@@ -340,11 +339,16 @@ std::optional<lanelet::BasicPolygon2d> LaneDepartureChecker::getFusedLaneletPoly
 
       std::vector<lanelet::BasicPolygon2d> lanelet_union_temp;
       boost::geometry::union_(poly, merged_polygon, lanelet_union_temp);
-      merged_polygon = lanelet_union_temp.back();
-      lanelet_union = lanelet_union_temp;
+
+      // Update merged_polygon by accumulating all merged results
+      merged_polygon.clear();
+      for (const auto & temp_poly : lanelet_union_temp) {
+        merged_polygon.insert(merged_polygon.end(), temp_poly.begin(), temp_poly.end());
+      }
+
     }
-    if (lanelet_union.empty()) return std::nullopt;
-    return lanelet_union.back();
+    if(merged_polygon.empty()) return std::nullopt;
+    return merged_polygon;
   }();
 
   return fused_lanelets;
