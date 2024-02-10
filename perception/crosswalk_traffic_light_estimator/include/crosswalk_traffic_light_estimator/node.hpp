@@ -24,7 +24,7 @@
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_element.hpp>
-#include <tier4_perception_msgs/msg/traffic_signal.hpp>
+#include <tier4_perception_msgs/msg/traffic_light.hpp>
 #include <tier4_perception_msgs/msg/traffic_signal_array.hpp>
 
 #include <lanelet2_core/Attribute.h>

@@ -64,7 +64,7 @@ public:
 
   bool getTrafficSignals(
     const std::vector<cv::Mat> & images,
-    tier4_perception_msgs::msg::TrafficSignalArray & traffic_signals) override;
+    tier4_perception_msgs::msg::TrafficLightArray & traffic_signals) override;
 
 private:
   bool filterHSV(

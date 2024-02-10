@@ -43,7 +43,7 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
   }
 
   traffic_signal_array_pub_ =
-    this->create_publisher<tier4_perception_msgs::msg::TrafficSignalArray>(
+    this->create_publisher<tier4_perception_msgs::msg::TrafficLightArray>(
       "~/output/traffic_signals", rclcpp::QoS{1});
 
   using std::chrono_literals::operator""ms;
@@ -95,7 +95,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
       input_image_msg->encoding.c_str());
   }
 
-  tier4_perception_msgs::msg::TrafficSignalArray output_msg;
+  tier4_perception_msgs::msg::TrafficLightArray output_msg;
 
   output_msg.signals.resize(input_rois_msg->rois.size());
 
@@ -131,7 +131,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   // append the undetected rois as unknown
   for (const auto & input_roi : input_rois_msg->rois) {
     if (input_roi.roi.height == 0 && input_roi.traffic_light_type == classify_traffic_light_type_) {
-      tier4_perception_msgs::msg::TrafficSignal tlr_sig;
+      tier4_perception_msgs::msg::TrafficLight tlr_sig;
       tlr_sig.traffic_light_id = input_roi.traffic_light_id;
       tlr_sig.traffic_light_type = input_roi.traffic_light_type;
       tier4_perception_msgs::msg::TrafficLightElement element;
