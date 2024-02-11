@@ -1492,18 +1492,8 @@ void StartPlannerModule::setDebugData()
         info_marker_);
       auto marker = createDefaultMarker(
         "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "static_collision_check_end_polygon", 0,
-        Marker::LINE_LIST, createMarkerScale(0.1, 0.1, 0.1), red_color);
-      const auto footprint = transformVector(
-        local_footprint, tier4_autoware_utils::pose2transform(*collision_check_end_pose));
-      const double ego_z = planner_data_->self_odometry->pose.pose.position.z;
-      for (size_t i = 0; i < footprint.size(); i++) {
-        const auto & current_point = footprint.at(i);
-        const auto & next_point = footprint.at((i + 1) % footprint.size());
-        marker.points.push_back(
-          tier4_autoware_utils::createPoint(current_point.x(), current_point.y(), ego_z));
-        marker.points.push_back(
-          tier4_autoware_utils::createPoint(next_point.x(), next_point.y(), ego_z));
-      }
+        Marker::LINE_STRIP, createMarkerScale(0.1, 0.1, 0.1), red_color);
+      addFootprintMarker(marker, *collision_check_end_pose, vehicle_info_);
       marker.lifetime = life_time;
       info_marker_.markers.push_back(marker);
     }
