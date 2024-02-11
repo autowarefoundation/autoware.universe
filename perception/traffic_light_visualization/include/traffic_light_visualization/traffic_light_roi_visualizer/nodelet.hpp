@@ -112,8 +112,7 @@ private:
 
   typedef message_filters::sync_policies::ApproximateTime<
     sensor_msgs::msg::Image, tier4_perception_msgs::msg::TrafficLightRoiArray,
-    tier4_perception_msgs::msg::TrafficLightRoiArray,
-    tier4_perception_msgs::msg::TrafficLightArray>
+    tier4_perception_msgs::msg::TrafficLightRoiArray, tier4_perception_msgs::msg::TrafficLightArray>
     SyncPolicyWithRoughRoi;
   typedef message_filters::Synchronizer<SyncPolicyWithRoughRoi> SyncWithRoughRoi;
   std::shared_ptr<SyncWithRoughRoi> sync_with_rough_roi_;

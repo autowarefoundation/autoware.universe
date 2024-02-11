@@ -92,9 +92,8 @@ private:
    */
   std::shared_ptr<CloudOcclusionPredictor> cloud_occlusion_predictor_;
   typedef perception_utils::PrimeSynchronizer<
-    tier4_perception_msgs::msg::TrafficLightArray,
-    tier4_perception_msgs::msg::TrafficLightRoiArray, sensor_msgs::msg::CameraInfo,
-    sensor_msgs::msg::PointCloud2>
+    tier4_perception_msgs::msg::TrafficLightArray, tier4_perception_msgs::msg::TrafficLightRoiArray,
+    sensor_msgs::msg::CameraInfo, sensor_msgs::msg::PointCloud2>
     SynchronizerType;
 
   std::shared_ptr<SynchronizerType> synchronizer_;

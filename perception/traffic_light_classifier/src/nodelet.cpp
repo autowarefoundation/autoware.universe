@@ -42,9 +42,8 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
       std::bind(&TrafficLightClassifierNodelet::imageRoiCallback, this, _1, _2));
   }
 
-  traffic_signal_array_pub_ =
-    this->create_publisher<tier4_perception_msgs::msg::TrafficLightArray>(
-      "~/output/traffic_signals", rclcpp::QoS{1});
+  traffic_signal_array_pub_ = this->create_publisher<tier4_perception_msgs::msg::TrafficLightArray>(
+    "~/output/traffic_signals", rclcpp::QoS{1});
 
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(

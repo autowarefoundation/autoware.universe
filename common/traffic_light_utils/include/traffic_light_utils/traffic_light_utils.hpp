@@ -17,9 +17,9 @@
 
 #include "autoware_perception_msgs/msg/traffic_signal.hpp"
 #include "autoware_perception_msgs/msg/traffic_signal_element.hpp"
+#include "tier4_perception_msgs/msg/traffic_light.hpp"
 #include "tier4_perception_msgs/msg/traffic_light_element.hpp"
 #include "tier4_perception_msgs/msg/traffic_light_roi.hpp"
-#include "tier4_perception_msgs/msg/traffic_light.hpp"
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/LineString.h>
