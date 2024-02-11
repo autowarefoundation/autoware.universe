@@ -25,9 +25,9 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <std_msgs/msg/header.hpp>
 #include <tier4_perception_msgs/msg/traffic_light.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_array.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_element.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
-#include <tier4_perception_msgs/msg/traffic_signal_array.hpp>
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>

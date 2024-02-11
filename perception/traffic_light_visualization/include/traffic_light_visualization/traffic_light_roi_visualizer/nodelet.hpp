@@ -20,8 +20,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/image.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_array.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
-#include <tier4_perception_msgs/msg/traffic_signal_array.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>
