@@ -1007,7 +1007,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     if (
       (start_planner_utils::calcMinArcLengthDistanceFromEgoToObjects(
          local_vehicle_footprint, *backed_pose, pull_out_lanes,
-         back_stop_objects_in_pull_out_lanes) > parameters_->back_objects_collision_check_margin) &&
+         back_stop_objects_in_pull_out_lanes) < parameters_->back_objects_collision_check_margin) ||
       (utils::checkCollisionBetweenFootprintAndObjects(
         local_vehicle_footprint, *backed_pose, back_stop_objects_in_pull_out_lanes,
         parameters_->objects_collision_check_margins.back()))) {

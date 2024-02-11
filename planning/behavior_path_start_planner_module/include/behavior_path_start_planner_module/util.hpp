@@ -67,7 +67,6 @@ Pose getBackedPose(
  * lanelets. It compares each corner of the vehicle's transformed footprint with every corner of
  * object polygons to find the shortest distance within the lanelet system.
  */
-
 double calcMinArcLengthDistanceFromEgoToObjects(
   const tier4_autoware_utils::LinearRing2d & local_vehicle_footprint, const Pose & ego_pose,
   const lanelet::ConstLanelets & lanelets, const PredictedObjects & static_objects);
