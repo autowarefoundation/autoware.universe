@@ -48,13 +48,13 @@ Example:
 
 | Name      | Type                                                  | Description |
 | --------- | ----------------------------------------------------- | ----------- |
-| `~/input` | `autoware_auto_perception_msgs::msg::DetectedObjects` | obstacles   |
+| `~/input` | `autoware_perception_msgs::msg::DetectedObjects` | obstacles   |
 
 ### Output
 
 | Name       | Type                                                 | Description        |
 | ---------- | ---------------------------------------------------- | ------------------ |
-| `~/output` | `autoware_auto_perception_msgs::msg::TrackedObjects` | modified obstacles |
+| `~/output` | `autoware_perception_msgs::msg::TrackedObjects` | modified obstacles |
 
 ## Parameters
 

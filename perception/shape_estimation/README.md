@@ -32,7 +32,7 @@ This node calculates a refined object shape (bounding box, cylinder, convex hull
 
 | Name             | Type                                                  | Description                         |
 | ---------------- | ----------------------------------------------------- | ----------------------------------- |
-| `output/objects` | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects with refined shape |
+| `output/objects` | `autoware_perception_msgs::msg::DetectedObjects` | detected objects with refined shape |
 
 ## Parameters
 

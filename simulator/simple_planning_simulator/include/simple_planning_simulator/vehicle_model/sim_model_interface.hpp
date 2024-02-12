@@ -31,7 +31,7 @@ protected:
   Eigen::VectorXd state_;  //!< @brief vehicle state vector
   Eigen::VectorXd input_;  //!< @brief vehicle input vector
 
-  //!< @brief gear command defined in autoware_auto_msgs/GearCommand
+  //!< @brief gear command defined in autoware_vehicle_msgs/GearCommand
   uint8_t gear_ = autoware_vehicle_msgs::msg::GearCommand::DRIVE;
 
 public:
@@ -73,7 +73,7 @@ public:
 
   /**
    * @brief set gear
-   * @param [in] gear gear command defined in autoware_auto_msgs/GearCommand
+   * @param [in] gear gear command defined in autoware_vehicle_msgs/GearCommand
    */
   void setGear(const uint8_t gear);
 

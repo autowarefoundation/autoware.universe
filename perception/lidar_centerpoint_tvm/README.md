@@ -30,7 +30,7 @@ It defaults to `llvm`.
 
 | Name                       | Type                                                  | Description          |
 | -------------------------- | ----------------------------------------------------- | -------------------- |
-| `~/output/objects`         | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects     |
+| `~/output/objects`         | `autoware_perception_msgs::msg::DetectedObjects` | detected objects     |
 | `debug/cyclic_time_ms`     | `tier4_debug_msgs::msg::Float64Stamped`               | cyclic time (msg)    |
 | `debug/processing_time_ms` | `tier4_debug_msgs::msg::Float64Stamped`               | processing time (ms) |
 
