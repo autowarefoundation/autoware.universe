@@ -374,7 +374,6 @@ void AutowareErrorMonitor::onAutowareState(
 void AutowareErrorMonitor::onControlMode(
   const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
-
   control_mode_ = msg;
 
   // for Heartbeat
