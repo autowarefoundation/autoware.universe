@@ -134,7 +134,7 @@ To avoid Bounding Boxes blinking on rviz, you can extend bbox marker lifetime.
 
 Set `marker_ptr->lifetime` and `marker.lifetime` to a longer lifetime.
 
-- `marker_ptr->lifetime` are in `PATH/autoware/src/universe/autoware.universe/common/autoware_auto_perception_rviz_plugin/src/object_detection/object_polygon_detail.cpp`
+- `marker_ptr->lifetime` are in `PATH/autoware/src/universe/autoware.universe/common/autoware_perception_rviz_plugin/src/object_detection/object_polygon_detail.cpp`
 - `marker.lifetime` are in `PATH/autoware/src/universe/autoware.universe/common/tier4_autoware_utils/include/tier4_autoware_utils/ros/marker_helper.hpp`
 
 Make sure to rebuild packages after any change.

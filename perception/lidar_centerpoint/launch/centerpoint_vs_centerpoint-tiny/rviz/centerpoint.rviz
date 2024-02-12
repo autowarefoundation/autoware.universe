@@ -573,7 +573,7 @@ Visualization Manager:
                   CYCLIST:
                     Alpha: 0.9990000128746033
                     Color: 119; 11; 32
-                  Class: autoware_auto_perception_rviz_plugin/DetectedObjects
+                  Class: autoware_perception_rviz_plugin/DetectedObjects
                   Display 3d polygon: true
                   Display Acceleration: true
                   Display Label: true
@@ -623,7 +623,7 @@ Visualization Manager:
                   CYCLIST:
                     Alpha: 0.9990000128746033
                     Color: 119; 11; 32
-                  Class: autoware_auto_perception_rviz_plugin/TrackedObjects
+                  Class: autoware_perception_rviz_plugin/TrackedObjects
                   Display 3d polygon: true
                   Display Acceleration: true
                   Display Label: true
@@ -673,7 +673,7 @@ Visualization Manager:
                   CYCLIST:
                     Alpha: 0.9990000128746033
                     Color: 119; 11; 32
-                  Class: autoware_auto_perception_rviz_plugin/PredictedObjects
+                  Class: autoware_perception_rviz_plugin/PredictedObjects
                   Display 3d polygon: true
                   Display Acceleration: true
                   Display Label: true
@@ -1576,7 +1576,7 @@ Visualization Manager:
       CYCLIST:
         Alpha: 0.9990000128746033
         Color: 30; 144; 255
-      Class: autoware_auto_perception_rviz_plugin/DetectedObjects
+      Class: autoware_perception_rviz_plugin/DetectedObjects
       Display 3d polygon: true
       Display Acceleration: true
       Display Label: true

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License..
 
-#include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_detail.hpp"
+#include "autoware_perception_rviz_plugin/object_detection/object_polygon_detail.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Eigen>
@@ -536,7 +536,7 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->ns = std::string("shape");
 
-  using autoware_auto_perception_msgs::msg::Shape;
+  using autoware_perception_msgs::msg::Shape;
   if (shape_msg.type == Shape::BOUNDING_BOX) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_2d_bounding_box_bottom_line_list(shape_msg, marker_ptr->points);

@@ -1,4 +1,4 @@
-# autoware_auto_perception_plugin
+# autoware_perception_rviz_plugin
 
 ## Purpose
 
@@ -21,7 +21,7 @@ Example:
 
 | Name | Type                                                  | Description            |
 | ---- | ----------------------------------------------------- | ---------------------- |
-|      | `autoware_auto_perception_msgs::msg::DetectedObjects` | detection result array |
+|      | `autoware_perception_msgs::msg::DetectedObjects` | detection result array |
 
 #### Visualization Result
 
@@ -33,7 +33,7 @@ Example:
 
 | Name | Type                                                 | Description           |
 | ---- | ---------------------------------------------------- | --------------------- |
-|      | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracking result array |
+|      | `autoware_perception_msgs::msg::TrackedObjects` | tracking result array |
 
 #### Visualization Result
 
