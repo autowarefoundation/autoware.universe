@@ -135,7 +135,6 @@ private:
   rclcpp::Time autoware_state_stamp_;
   rclcpp::Time current_gate_mode_stamp_;
   rclcpp::Time control_mode_stamp_;
-  bool control_mode_activated_;
 
   // Algorithm
   boost::optional<DiagStamped> getLatestDiag(const std::string & diag_name) const;
