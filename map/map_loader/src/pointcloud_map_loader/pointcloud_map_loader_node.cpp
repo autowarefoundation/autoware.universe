@@ -89,7 +89,7 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
   const std::string & pcd_metadata_path, const std::vector<std::string> & pcd_paths) const
 {
   if (fs::exists(pcd_metadata_path)) {
-    std::map<std::string, PCDFileMetadata> pcd_metadata_dict = loadPCDMetadata(pcd_metadata_path);
+    auto pcd_metadata_dict = loadPCDMetadata(pcd_metadata_path);
     pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict, pcd_paths);
     return pcd_metadata_dict;
   } else if (pcd_paths.size() == 1) {
