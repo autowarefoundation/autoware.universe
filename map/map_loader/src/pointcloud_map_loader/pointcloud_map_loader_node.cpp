@@ -99,7 +99,7 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
     // Autoware users get used to handling the PCD file(s) with metadata.
     RCLCPP_INFO_STREAM(get_logger(), "Create PCD metadata, as the pointcloud is a single file.");
     pcl::PointCloud<pcl::PointXYZ> single_pcd;
-    const auto& pcd_path = pcd_paths.front();
+    const auto & pcd_path = pcd_paths.front();
     if (pcl::io::loadPCDFile(pcd_path, single_pcd) == -1) {
       throw std::runtime_error("PCD load failed: " + pcd_path);
     }
