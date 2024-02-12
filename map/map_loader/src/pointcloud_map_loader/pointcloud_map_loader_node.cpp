@@ -89,15 +89,12 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
   const std::string & pcd_metadata_path, const std::vector<std::string> & pcd_paths) const
 {
   std::map<std::string, PCDFileMetadata> pcd_metadata_dict;
-  if (pcd_paths.size() != 1) {
-    if (!fs::exists(pcd_metadata_path)) {
-      throw std::runtime_error("PCD metadata file not found: " + pcd_metadata_path);
-    }
 
+  if (fs::exists(pcd_metadata_path)) {
     pcd_metadata_dict = loadPCDMetadata(pcd_metadata_path);
     pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict, pcd_paths);
-    RCLCPP_INFO_STREAM(get_logger(), "Loaded PCD metadata: " << pcd_metadata_path);
-  } else {
+    return pcd_metadata_dict;
+  } else if (pcd_paths.size() == 1) {
     // An exception when using a single file PCD map so that the users do not have to provide
     // a metadata file.
     // Note that this should ideally be avoided and thus eventually be removed by someone, until
@@ -110,8 +107,10 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
     PCDFileMetadata metadata = {};
     pcl::getMinMax3D(single_pcd, metadata.min, metadata.max);
     pcd_metadata_dict[pcd_paths[0]] = metadata;
+    return pcd_metadata_dict;
+  } else {
+    throw std::runtime_error("PCD metadata file not found: " + pcd_metadata_path);
   }
-  return pcd_metadata_dict;
 }
 
 std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
