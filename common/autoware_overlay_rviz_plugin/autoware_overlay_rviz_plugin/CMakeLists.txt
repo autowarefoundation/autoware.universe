@@ -4,7 +4,7 @@ project(autoware_overlay_rviz_plugin)
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
 find_package(ament_cmake REQUIRED)
-find_package(autoware_auto_vehicle_msgs REQUIRED)
+find_package(autoware_vehicle_msgs REQUIRED)
 find_package(tier4_planning_msgs REQUIRED)
 find_package(autoware_perception_msgs REQUIRED)
 ament_auto_find_build_dependencies()
@@ -91,7 +91,7 @@ ament_target_dependencies(
         rviz_common
         rviz_rendering
         autoware_overlay_msgs
-        autoware_auto_vehicle_msgs
+        autoware_vehicle_msgs
         tier4_planning_msgs
         autoware_perception_msgs
 )
