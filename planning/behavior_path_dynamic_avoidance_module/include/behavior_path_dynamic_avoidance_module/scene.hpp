@@ -348,8 +348,6 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  ModuleStatus setInitState() const override { return ModuleStatus::IDLE; }
-
   bool isLabelTargetObstacle(const uint8_t label) const;
   void updateTargetObjects();
   LatFeasiblePaths generateLateralFeasiblePaths(
