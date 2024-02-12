@@ -1173,7 +1173,7 @@ void IntersectionModule::reactRTCApproval(
 
 bool IntersectionModule::isGreenSolidOn() const
 {
-  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficLightElement;
 
   if (!last_tl_valid_observation_) {
     return false;
@@ -1191,7 +1191,7 @@ bool IntersectionModule::isGreenSolidOn() const
 
 IntersectionModule::TrafficPrioritizedLevel IntersectionModule::getTrafficPrioritizedLevel() const
 {
-  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficLightElement;
 
   auto corresponding_arrow = [&](const TrafficSignalElement & element) {
     if (turn_direction_ == "straight" && element.shape == TrafficSignalElement::UP_ARROW) {

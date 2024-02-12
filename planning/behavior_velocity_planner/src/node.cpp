@@ -104,7 +104,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1),
     createSubscriptionOptions(this));
   sub_traffic_signals_ =
-    this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+    this->create_subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>(
       "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
@@ -323,7 +323,7 @@ void BehaviorVelocityPlannerNode::onLaneletMap(
 }
 
 void BehaviorVelocityPlannerNode::onTrafficSignals(
-  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
+  const autoware_perception_msgs::msg::TrafficLightGroupArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -332,27 +332,27 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
   const auto traffic_light_id_map_last_observed_old =
     planner_data_.traffic_light_id_map_last_observed_;
   planner_data_.traffic_light_id_map_last_observed_.clear();
-  for (const auto & signal : msg->signals) {
+  for (const auto & signal : msg->traffic_light_groups) {
     TrafficSignalStamped traffic_signal;
     traffic_signal.stamp = msg->stamp;
     traffic_signal.signal = signal;
-    planner_data_.traffic_light_id_map_raw_[signal.traffic_signal_id] = traffic_signal;
+    planner_data_.traffic_light_id_map_raw_[signal.traffic_light_group_id] = traffic_signal;
     const bool is_unknown_observation =
       std::any_of(signal.elements.begin(), signal.elements.end(), [](const auto & element) {
-        return element.color == autoware_perception_msgs::msg::TrafficSignalElement::UNKNOWN;
+        return element.color == autoware_perception_msgs::msg::TrafficLightElement::UNKNOWN;
       });
     // if the observation is UNKNOWN and past observation is available, only update the timestamp
     // and keep the body of the info
-    const auto old_data = traffic_light_id_map_last_observed_old.find(signal.traffic_signal_id);
+    const auto old_data = traffic_light_id_map_last_observed_old.find(signal.traffic_light_group_id);
     if (is_unknown_observation && old_data != traffic_light_id_map_last_observed_old.end()) {
       // copy last observation
-      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id] =
+      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_light_group_id] =
         old_data->second;
       // update timestamp
-      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id].stamp =
+      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_light_group_id].stamp =
         msg->stamp;
     } else {
-      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id] = traffic_signal;
+      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_light_group_id] = traffic_signal;
     }
   }
 }

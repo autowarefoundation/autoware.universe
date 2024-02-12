@@ -21,7 +21,7 @@ This plugin provides a visual and easy-to-understand display of vehicle speed, t
 | `/vehicle/status/steering_status`                       | `autoware_vehicle_msgs::msg::SteeringReport`       | The topic is status of steering      |
 | `/vehicle/status/gear_status`                           | `autoware_vehicle_msgs::msg::GearReport`           | The topic is status of gear          |
 | `/planning/scenario_planning/current_max_velocity`      | `tier4_planning_msgs::msg::VelocityLimit`               | The topic is velocity limit          |
-| `/perception/traffic_light_recognition/traffic_signals` | `autoware_perception_msgs::msg::TrafficSignalArray`     | The topic is status of traffic light |
+| `/perception/traffic_light_recognition/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray`     | The topic is status of traffic light |
 
 ## Parameter
 

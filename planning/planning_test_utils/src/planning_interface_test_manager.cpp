@@ -169,7 +169,7 @@ void PlanningInterfaceTestManager::publishTrafficSignals(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, traffic_signals_pub_, TrafficSignalArray{});
+    test_node_, target_node, topic_name, traffic_signals_pub_, TrafficLightGroupArray{});
 }
 
 void PlanningInterfaceTestManager::publishVirtualTrafficLightState(

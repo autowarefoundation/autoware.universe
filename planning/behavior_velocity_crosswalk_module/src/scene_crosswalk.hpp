@@ -52,7 +52,7 @@ namespace bg = boost::geometry;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
-using autoware_perception_msgs::msg::TrafficSignalElement;
+using autoware_perception_msgs::msg::TrafficLightElement;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using lanelet::autoware::Crosswalk;
 using tier4_api_msgs::msg::CrosswalkStatus;

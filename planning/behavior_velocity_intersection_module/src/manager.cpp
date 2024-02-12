@@ -297,7 +297,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 
   decision_state_pub_ =
     node.create_publisher<std_msgs::msg::String>("~/debug/intersection/decision_state", 1);
-  tl_observation_pub_ = node.create_publisher<autoware_perception_msgs::msg::TrafficSignal>(
+  tl_observation_pub_ = node.create_publisher<autoware_perception_msgs::msg::TrafficLightGroup>(
     "~/debug/intersection_traffic_signal", 1);
 }
 

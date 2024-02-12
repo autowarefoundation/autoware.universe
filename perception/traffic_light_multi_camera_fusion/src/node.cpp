@@ -96,11 +96,11 @@ V at_or(const std::unordered_map<K, V> & map, const K & key, const V & value)
   return map.count(key) ? map.at(key) : value;
 }
 
-autoware_perception_msgs::msg::TrafficSignalElement convert(
+autoware_perception_msgs::msg::TrafficLightElement convert(
   const tier4_perception_msgs::msg::TrafficLightElement & input)
 {
   typedef tier4_perception_msgs::msg::TrafficLightElement OldElem;
-  typedef autoware_perception_msgs::msg::TrafficSignalElement NewElem;
+  typedef autoware_perception_msgs::msg::TrafficLightElement NewElem;
   static const std::unordered_map<OldElem::_color_type, NewElem::_color_type> color_map(
     {{OldElem::RED, NewElem::RED},
      {OldElem::AMBER, NewElem::AMBER},
@@ -223,16 +223,16 @@ void MultiCameraFusion::mapCallback(
 void MultiCameraFusion::convertOutputMsg(
   const std::map<IdType, FusionRecord> & grouped_record_map, NewSignalArrayType & msg_out)
 {
-  msg_out.signals.clear();
+  msg_out.traffic_light_groups.clear();
   for (const auto & p : grouped_record_map) {
     IdType reg_ele_id = p.first;
     const SignalType & signal = p.second.signal;
     NewSignalType signal_out;
-    signal_out.traffic_signal_id = reg_ele_id;
+    signal_out.traffic_light_group_id = reg_ele_id;
     for (const auto & ele : signal.elements) {
       signal_out.elements.push_back(convert(ele));
     }
-    msg_out.signals.push_back(signal_out);
+    msg_out.traffic_light_groups.push_back(signal_out);
   }
 }
 

@@ -46,7 +46,7 @@
 namespace behavior_path_planner::utils::avoidance
 {
 
-using autoware_perception_msgs::msg::TrafficSignalElement;
+using autoware_perception_msgs::msg::TrafficLightElement;
 using behavior_path_planner::utils::traffic_light::calcDistanceToRedTrafficLight;
 using behavior_path_planner::utils::traffic_light::getDistanceToNextTrafficLight;
 using geometry_msgs::msg::TransformStamped;

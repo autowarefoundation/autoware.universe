@@ -39,7 +39,7 @@
 #include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
@@ -74,7 +74,7 @@ namespace planning_test_utils
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_perception_msgs::msg::PredictedObjects;
-using autoware_perception_msgs::msg::TrafficSignalArray;
+using autoware_perception_msgs::msg::TrafficLightGroupArray;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::Path;
 using tier4_planning_msgs::msg::PathWithLaneId;
@@ -201,7 +201,7 @@ private:
   rclcpp::Publisher<TFMessage>::SharedPtr initial_pose_tf_pub_;
   rclcpp::Publisher<LateralOffset>::SharedPtr lateral_offset_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_state_pub_;
-  rclcpp::Publisher<TrafficSignalArray>::SharedPtr traffic_signals_pub_;
+  rclcpp::Publisher<TrafficLightGroupArray>::SharedPtr traffic_signals_pub_;
   rclcpp::Publisher<VirtualTrafficLightStateArray>::SharedPtr virtual_traffic_light_states_pub_;
 
   // Subscriber

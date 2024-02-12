@@ -36,8 +36,8 @@ namespace behavior_velocity_planner
 class TrafficLightModule : public SceneModuleInterface
 {
 public:
-  using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
-  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+  using TrafficSignal = autoware_perception_msgs::msg::TrafficLightGroup;
+  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficLightElement;
   using Time = rclcpp::Time;
   enum class State { APPROACH, GO_OUT };
 
@@ -45,7 +45,7 @@ public:
   {
     double base_link2front;
     std::vector<std::tuple<
-      std::shared_ptr<const lanelet::TrafficLight>, autoware_perception_msgs::msg::TrafficSignal>>
+      std::shared_ptr<const lanelet::TrafficLight>, autoware_perception_msgs::msg::TrafficLightGroup>>
       tl_state;
     std::vector<geometry_msgs::msg::Pose> stop_poses;
     geometry_msgs::msg::Pose first_stop_pose;

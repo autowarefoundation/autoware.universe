@@ -37,7 +37,7 @@ So for example, in order to stop at a stop line with the vehicles' front on the 
 | `~input/dynamic_objects`                  | autoware_perception_msgs::msg::PredictedObjects   | dynamic objects                                                                                                                 |
 | `~input/no_ground_pointcloud`             | sensor_msgs::msg::PointCloud2                     | obstacle pointcloud                                                                                                             |
 | `~/input/compare_map_filtered_pointcloud` | sensor_msgs::msg::PointCloud2                     | obstacle pointcloud filtered by compare map. Note that this is used only when the detection method of run out module is Points. |
-| `~input/traffic_signals`                  | autoware_perception_msgs::msg::TrafficSignalArray | traffic light states                                                                                                            |
+| `~input/traffic_signals`                  | autoware_perception_msgs::msg::TrafficLightGroupArray | traffic light states                                                                                                            |
 
 ## Output topics
 

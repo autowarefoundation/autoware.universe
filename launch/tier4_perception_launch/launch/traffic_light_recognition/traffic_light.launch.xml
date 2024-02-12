@@ -162,7 +162,7 @@
     <node pkg="topic_tools" exec="relay" name="fusion_signals_relay" output="screen">
       <param name="input_topic" value="$(var fusion/traffic_signals)"/>
       <param name="output_topic" value="$(var internal/traffic_signals)"/>
-      <param name="type" value="autoware_perception_msgs/msg/TrafficSignalArray"/>
+      <param name="type" value="autoware_perception_msgs/msg/TrafficLightGroupArray"/>
     </node>
   </group>
 

@@ -19,7 +19,7 @@ The `traffic_light_visualization` is a package that includes two visualizing nod
 
 | Name                 | Type                                             | Description              |
 | -------------------- | ------------------------------------------------ | ------------------------ |
-| `~/input/tl_state`   | `tier4_perception_msgs::msg::TrafficSignalArray` | status of traffic lights |
+| `~/input/tl_state`   | `tier4_perception_msgs::msg::TrafficLightGroupArray` | status of traffic lights |
 | `~/input/vector_map` | `autoware_map_msgs::msg::LaneletMapBin`          | vector map               |
 
 #### Output
