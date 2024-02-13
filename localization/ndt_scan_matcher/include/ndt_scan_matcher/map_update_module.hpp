@@ -37,6 +37,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <thread>
 
 class MapUpdateModule
 {
@@ -44,36 +45,46 @@ class MapUpdateModule
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
     pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
+  using NdtPtrType = std::shared_ptr<NormalDistributionsTransform>;
 
 public:
   MapUpdateModule(
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-    std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
+    std::shared_ptr<NormalDistributionsTransform>& ndt_ptr,
     HyperParameters::DynamicMapLoading param);
 
 private:
   friend class NDTScanMatcher;
 
-  void update_ndt(
+  // Update the specified NDT
+  void update_ndt(NdtPtrType& ndt,
     const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
     const std::vector<std::string> & map_ids_to_remove);
   void update_map(const geometry_msgs::msg::Point & position);
-  [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position) const;
+  [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position);
   void publish_partial_pcd_map();
+
+  // Pre-fetch NDT map in a child thread
+  void prefetch_map(const geometry_msgs::msg::Point& position, NdtPtrType& ndt);
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 
   rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr
     pcd_loader_client_;
 
-  std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
-  std::mutex * ndt_ptr_mutex_;
+  // TODO: Replace pointer by a reference to pointer
+  NdtPtrType& ndt_ptr_;
+  std::mutex* ndt_ptr_mutex_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
 
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
 
   HyperParameters::DynamicMapLoading param_;
+
+  // Indicate if there is a prefetch thread waiting for being collected
+  NdtPtrType secondary_ndt_ptr_;
+  bool rebuild_;
 };
 
 #endif  // NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
