@@ -167,7 +167,6 @@ void MapHeightFitter::Impl::on_vector_map(
 {
   vector_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, vector_map_);
-  const auto logger = node_->get_logger();
   map_frame_ = msg->header.frame_id;
 }
 
