@@ -16,7 +16,7 @@
 
 MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-  std::shared_ptr<NormalDistributionsTransform>& ndt_ptr, HyperParameters::DynamicMapLoading param)
+  std::shared_ptr<NormalDistributionsTransform> & ndt_ptr, HyperParameters::DynamicMapLoading param)
 : ndt_ptr_(ndt_ptr),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   logger_(node->get_logger()),
@@ -31,8 +31,7 @@ MapUpdateModule::MapUpdateModule(
 
   secondary_ndt_ptr_.reset(new NormalDistributionsTransform);
 
-  if (ndt_ptr_)
-  {
+  if (ndt_ptr_) {
     *secondary_ndt_ptr_ = *ndt_ptr_;
   }
 
@@ -40,14 +39,13 @@ MapUpdateModule::MapUpdateModule(
   // ndt_ptr_'s mutex is locked until it is fully rebuilt.
   // From the second update, the update is done on secondary_ndt_ptr_,
   // and ndt_ptr_ is only locked when swapping its pointer with
-  // secondary_ndt_ptr_. 
+  // secondary_ndt_ptr_.
   rebuild_ = true;
 }
 
-bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & position) 
+bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & position)
 {
-  if (last_update_position_ == std::nullopt) 
-  {
+  if (last_update_position_ == std::nullopt) {
     return false;
   }
 
@@ -64,7 +62,7 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
   return distance > param_.update_distance;
 }
 
-void MapUpdateModule::prefetch_map(const geometry_msgs::msg::Point& position, NdtPtrType& ndt)
+void MapUpdateModule::prefetch_map(const geometry_msgs::msg::Point & position, NdtPtrType & ndt)
 {
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
 
@@ -93,32 +91,29 @@ void MapUpdateModule::prefetch_map(const geometry_msgs::msg::Point& position, Nd
   update_ndt(ndt, result.get()->new_pointcloud_with_ids, result.get()->ids_to_remove);
 }
 
-void MapUpdateModule::update_map(const geometry_msgs::msg::Point& position)
+void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 {
   // If the current position is super far from the previous loading position,
   // lock and rebuild ndt_ptr_
-  if (rebuild_)
-  {
+  if (rebuild_) {
     ndt_ptr_mutex_->lock();
     auto param = ndt_ptr_->getParams();
 
     ndt_ptr_.reset(new NormalDistributionsTransform);
 
     ndt_ptr_->setParams(param);
-    
-    prefetch_map(position, ndt_ptr_);  
+
+    prefetch_map(position, ndt_ptr_);
     ndt_ptr_mutex_->unlock();
     rebuild_ = false;
-  }
-  else
-  {
+  } else {
     // Load map to the secondary_ndt_ptr, which does not require a mutex lock
-    // Since the update of the secondary ndt ptr and the NDT align (done on 
+    // Since the update of the secondary ndt ptr and the NDT align (done on
     // the main ndt_ptr_) overlap, the latency of updating/alignment reduces partly.
-    // If the updating is done the main ndt_ptr_, either the update or the NDT 
+    // If the updating is done the main ndt_ptr_, either the update or the NDT
     // align will be blocked by the other.
     prefetch_map(position, secondary_ndt_ptr_);
-    
+
     ndt_ptr_mutex_->lock();
     auto input_source = ndt_ptr_->getInputSource();
     ndt_ptr_ = secondary_ndt_ptr_;
@@ -136,7 +131,8 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point& position)
   publish_partial_pcd_map();
 }
 
-void MapUpdateModule::update_ndt(NdtPtrType& ndt,
+void MapUpdateModule::update_ndt(
+  NdtPtrType & ndt,
   const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
   const std::vector<std::string> & map_ids_to_remove)
 {
@@ -187,4 +183,3 @@ void MapUpdateModule::publish_partial_pcd_map()
 
   loaded_pcd_pub_->publish(map_msg);
 }
-

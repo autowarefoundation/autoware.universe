@@ -36,8 +36,8 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <vector>
 #include <thread>
+#include <vector>
 
 class MapUpdateModule
 {
@@ -50,14 +50,15 @@ class MapUpdateModule
 public:
   MapUpdateModule(
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-    std::shared_ptr<NormalDistributionsTransform>& ndt_ptr,
+    std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
     HyperParameters::DynamicMapLoading param);
 
 private:
   friend class NDTScanMatcher;
 
   // Update the specified NDT
-  void update_ndt(NdtPtrType& ndt,
+  void update_ndt(
+    NdtPtrType & ndt,
     const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
     const std::vector<std::string> & map_ids_to_remove);
   void update_map(const geometry_msgs::msg::Point & position);
@@ -65,7 +66,7 @@ private:
   void publish_partial_pcd_map();
 
   // Pre-fetch NDT map in a child thread
-  void prefetch_map(const geometry_msgs::msg::Point& position, NdtPtrType& ndt);
+  void prefetch_map(const geometry_msgs::msg::Point & position, NdtPtrType & ndt);
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 
@@ -73,8 +74,8 @@ private:
     pcd_loader_client_;
 
   // TODO: Replace pointer by a reference to pointer
-  NdtPtrType& ndt_ptr_;
-  std::mutex* ndt_ptr_mutex_;
+  NdtPtrType & ndt_ptr_;
+  std::mutex * ndt_ptr_mutex_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
 
