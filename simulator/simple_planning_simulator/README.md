@@ -86,11 +86,11 @@ The table below shows which models correspond to what parameters. The model name
 | debug_acc_scaling_factor   | double | scaling factor for accel command                                                                            | x      | x      | x        | x      | o      | o        | x            | x     | 1.0           | [-]     |
 | debug_steer_scaling_factor | double | scaling factor for steer command                                                                            | x      | x      | x        | x      | o      | o        | x            | x     | 1.0           | [-]     |
 | acceleration_map_path      | string | path to csv file for acceleration map which converts velocity and ideal acceleration to actual acceleration | x      | x      | x        | x      | x      | x        | o            | x     | -             | [-]     |
-| model_python_paths         | string | path to a file where the model is implemented                                                               | x      | x      | x        | x      | x      | x        | x            | o     | -             | [-]     |
+| model_module_paths         | string | path to a python module where the model is implemented                                                      | x      | x      | x        | x      | x      | x        | x            | o     | -             | [-]     |
 | model_param_paths          | string | path to the file where model parameters are stored (can be empty string if no parameter file is required)   | x      | x      | x        | x      | x      | x        | x            | o     | -             | [-]     |
 | model_class_names          | string | name of the class that implements the model                                                                 | x      | x      | x        | x      | x      | x        | x            | o     | -             | [-]     |
 
-_Note:_ Parameters `model_python_paths`, `model_param_paths`, and `model_class_names` need to have the same length.
+_Note:_ Parameters `model_module_paths`, `model_param_paths`, and `model_class_names` need to have the same length.
 
 The `acceleration_map` is used only for `DELAY_STEER_MAP_ACC_GEARED` and it shows the acceleration command on the vertical axis and the current velocity on the horizontal axis, with each cell representing the converted acceleration command that is actually used in the simulator's motion calculation. Values in between are linearly interpolated.
 

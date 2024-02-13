@@ -88,7 +88,7 @@ Add a new sub-model to the model.
 
 Inputs:
 * model_descriptor: Describes what model should be used. The model descriptor contains three strings:
-    * The first string is a path to a file where the model is implemented.
+    * The first string is a path to a python module where the model is implemented.
     * The second string is a path to the file where model parameters are stored.
     * The third string is the name of the class that implements the model.
 
@@ -139,13 +139,13 @@ InterconnectedModel vehicle;
 
 // Example of model descriptors
 std::tuple<char*, char*, char*> model_descriptor_1 = {
-    (char*)"path_to_file_with_model_class_1",
+    (char*)"path_to_python_module_with_model_class_1",
     (char*)nullptr,  // If no param file is needed you can pass 'nullptr' 
     (char*)"ModelClass1"
     };
 
 std::tuple<char*, char*, char*> model_descriptor_2 =   {
-    (char*)"path_to_file_with_model_class_2",
+    (char*)"path_to_python_module_with_model_class_2",
     (char*)"/path_to/param_file",
     (char*)"ModelClass2"  // Name of the python class. Needs to use the interface from 'Assumptions'
     };
