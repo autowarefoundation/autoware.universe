@@ -34,7 +34,7 @@ class PythonSubmodelInterface:
         Calculate forward pass through the model and returns next_state.
         """
         return list()
-    
+
     def get_state_names(self):  # Required
         """
         Return list of string names of the model states (outputs).
@@ -55,7 +55,7 @@ class PythonSubmodelInterface:
 
     def load_params(self, path):  # Required
         """
-        Load parameters of the model. 
+        Load parameters of the model.
         Inputs:
             - path: Path to a parameter file to load by the model.
         """
@@ -76,71 +76,89 @@ class PythonSubmodelInterface:
 <!-- Things to consider:
     - How do you use the package / API? -->
 
-To successfully create a vehicle model an InterconnectedModel class needs to be set up correctly. 
+To successfully create a vehicle model an InterconnectedModel class needs to be set up correctly.
 
 ### InterconnectedModel class
 
-#### ```Constructor```
+#### `Constructor`
+
 The constructor takes no arguments.
 
-#### ```void addSubmodel(std::tuple<std::string, std::string, std::string> model_descriptor)```
+#### `void addSubmodel(std::tuple<std::string, std::string, std::string> model_descriptor)`
+
 Add a new sub-model to the model.
 
 Inputs:
-* model_descriptor: Describes what model should be used. The model descriptor contains three strings:
-    * The first string is a path to a python module where the model is implemented.
-    * The second string is a path to the file where model parameters are stored.
-    * The third string is the name of the class that implements the model.
+
+- model_descriptor: Describes what model should be used. The model descriptor contains three strings:
+  - The first string is a path to a python module where the model is implemented.
+  - The second string is a path to the file where model parameters are stored.
+  - The third string is the name of the class that implements the model.
 
 Outputs:
-* None 
 
-#### ```void generateConnections(std::vector<char *> in_names, std::vector<char *> out_names)```
+- None
+
+#### `void generateConnections(std::vector<char *> in_names, std::vector<char*> out_names)`
+
 Generate connections between sub-models and inputs/outputs of the model.
 
 Inputs:
-* in_names: String names for all of the model inputs in order.
-* out_names: String names for all of the model outputs in order.
+
+- in_names: String names for all of the model inputs in order.
+- out_names: String names for all of the model outputs in order.
 
 Outputs:
-* None 
 
-#### ```void initState(std::vector<double> new_state)```
+- None
+
+#### `void initState(std::vector<double> new_state)`
+
 Set the initial state of the model.
 
 Inputs:
-* new_state: New state of the model.
+
+- new_state: New state of the model.
 
 Outputs:
-* None 
 
-#### ```std::vector<double> updatePymodel(std::vector<double> psim_input)```
+- None
+
+#### `std::vector<double> updatePymodel(std::vector<double> psim_input)`
+
 Calculate the next state of the model by calculating the next state of all of the sub-models.
 
 Inputs:
-* psim_input: Input to the model.
+
+- psim_input: Input to the model.
 
 Outputs:
-* next_state: Next state of the model.
 
-#### ```dtSet(double dt)```
-Set the time step of the model. 
+- next_state: Next state of the model.
+
+#### `dtSet(double dt)`
+
+Set the time step of the model.
 
 Inputs:
-* dt: time step
+
+- dt: time step
 
 Outputs:
-* None 
+
+- None
 
 ### Example
+
 Firstly we need to set up the model.
+
 ```C++
 InterconnectedModel vehicle;
 
 // Example of model descriptors
 std::tuple<char*, char*, char*> model_descriptor_1 = {
     (char*)"path_to_python_module_with_model_class_1",
-    (char*)nullptr,  // If no param file is needed you can pass 'nullptr' 
+    (char*)nullptr,  // If no param file is needed you can pass 'nullptr'
     (char*)"ModelClass1"
     };
 
@@ -158,14 +176,14 @@ vehicle.addSubmodel(model_descriptor_2);
 std::vector<char*> state_names = {(char*)"STATE_NAME_1", (char*)"STATE_NAME_2"};
 std::vector<char*> input_names = {(char*)"INPUT_NAME_1", (char*)"INPUT_NAME_2"};
 
-// Automatically connect sub-systems with model input 
+// Automatically connect sub-systems with model input
 vehicle.generateConnections(input_names, state_names);
 
 // Set the time step of the model
 vehicle.dtSet(dt);
 ```
 
-After the model is correctly set up, we can use it the following way. 
+After the model is correctly set up, we can use it the following way.
 
 ```C++
 // Example of an model input
@@ -174,7 +192,7 @@ std::vector<double> vehicle_input = {0.0, 1.0}; // INPUT_NAME_1, INPUT_NAME_2
 // Example of an model state
 std::vector<double> current_state = {0.2, 0.5}; // STATE_NAME_1, STATE_NAME_2
 
-// Set model state 
+// Set model state
 vehicle.initState(current_state);
 
 // Calculate the next state of the model

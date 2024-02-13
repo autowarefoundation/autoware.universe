@@ -238,9 +238,12 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   const double wheelbase = vehicle_info.wheel_base_m;
 
-  std::vector<std::string> model_module_paths = declare_parameter<std::vector<std::string>>("model_module_paths", std::vector<std::string>({""}));
-  std::vector<std::string> model_param_paths = declare_parameter<std::vector<std::string>>("model_param_paths", std::vector<std::string>({""}));
-  std::vector<std::string> model_class_names = declare_parameter<std::vector<std::string>>("model_class_names", std::vector<std::string>({""}));
+  std::vector<std::string> model_module_paths = declare_parameter<std::vector<std::string>>(
+    "model_module_paths", std::vector<std::string>({""}));
+  std::vector<std::string> model_param_paths = declare_parameter<std::vector<std::string>>(
+    "model_param_paths", std::vector<std::string>({""}));
+  std::vector<std::string> model_class_names = declare_parameter<std::vector<std::string>>(
+    "model_class_names", std::vector<std::string>({""}));
 
   if (vehicle_model_type_str == "IDEAL_STEER_VEL") {
     vehicle_model_type_ = VehicleModelType::IDEAL_STEER_VEL;
@@ -285,13 +288,13 @@ void SimplePlanningSimulator::initialize_vehicle_model()
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_bias,
       acceleration_map_path);
-  } else if (vehicle_model_type_str == "LEARNED_STEER_VEL"){
+  } else if (vehicle_model_type_str == "LEARNED_STEER_VEL") {
     vehicle_model_type_ = VehicleModelType::LEARNED_STEER_VEL;
 
-    vehicle_model_ptr_ = std::make_shared<SimModelLearnedSteerVel>(timer_sampling_time_ms_ / 1000.0, 
-      model_module_paths, model_param_paths, model_class_names);
+    vehicle_model_ptr_ = std::make_shared<SimModelLearnedSteerVel>(
+      timer_sampling_time_ms_ / 1000.0, model_module_paths, model_param_paths, model_class_names);
 
-  }else{
+  } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
 }
@@ -592,10 +595,9 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED) {
     state << x, y, yaw, vx;
   } else if (  // NOLINT
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) 
-    {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) {
     state << x, y, yaw, vx, steer;
-  } else if (vehicle_model_type_ == VehicleModelType::LEARNED_STEER_VEL){
+  } else if (vehicle_model_type_ == VehicleModelType::LEARNED_STEER_VEL) {
     state << x, y, yaw, yaw_rate, vx, vy, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||

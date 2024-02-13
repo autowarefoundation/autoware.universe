@@ -18,16 +18,14 @@
 
 #include <algorithm>
 
-SimModelLearnedSteerVel::SimModelLearnedSteerVel(double dt, 
-                                  std::vector<std::string> model_python_paths, 
-                                  std::vector<std::string> model_param_paths, 
-                                  std::vector<std::string> model_class_names
-                                  ) : SimModelInterface(7 /* dim x */, 2 /* dim u */)
+SimModelLearnedSteerVel::SimModelLearnedSteerVel(
+  double dt, std::vector<std::string> model_python_paths,
+  std::vector<std::string> model_param_paths, std::vector<std::string> model_class_names)
+: SimModelInterface(7 /* dim x */, 2 /* dim u */)
 {
-  for (size_t i = 0; i < model_python_paths.size(); i++){
+  for (size_t i = 0; i < model_python_paths.size(); i++) {
     std::tuple<std::string, std::string, std::string> descriptor = {
-      model_python_paths[i], model_param_paths[i], model_class_names[i]
-    };
+      model_python_paths[i], model_param_paths[i], model_class_names[i]};
     vehicle.addSubmodel(descriptor);
   }
 

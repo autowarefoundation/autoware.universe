@@ -40,7 +40,8 @@ public:
    * @param [in] param_file_path path to saved parameter file of the python sub-model
    * @param [in] py_class_name name of the python class
    */
-  SimplePymodel(std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name);
+  SimplePymodel(
+    std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name);
 
   /**
    * @brief calculate the next state of a python model
@@ -76,7 +77,6 @@ public:
    * @param [in] signal_vec_names names of signals in model signal vector
    */
   void mapOutputs(std::vector<char *> signals_vec_names) override;
-
 };
 
 #endif  // LEARNED_MODEL__SIMPLE_PYMODEL_HPP_

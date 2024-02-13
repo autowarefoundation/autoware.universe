@@ -2,8 +2,8 @@
 #define LEARNED_MODEL__INTERCONNECTED_MODEL_HPP_
 
 #include "learned_model/model_connections_helpers.hpp"
-#include "learned_model/submodel_interface.hpp"
 #include "learned_model/simple_pymodel.hpp"
+#include "learned_model/submodel_interface.hpp"
 
 #include <dlfcn.h>
 #include <pybind11/embed.h>
@@ -13,7 +13,7 @@
 
 namespace py = pybind11;
 
-class __attribute__ ((visibility ("default"))) InterconnectedModel
+class __attribute__((visibility("default"))) InterconnectedModel
 {
   // Vector of unique names of inputs and outputs of sub-models
   std::vector<char *> signals_vec_names;
