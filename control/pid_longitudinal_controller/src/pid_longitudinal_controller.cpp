@@ -456,7 +456,7 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
     current_interpolated_pose.first);
   control_data.nearest_idx = current_interpolated_pose.second + 1;
   control_data.target_idx = control_data.nearest_idx;
-  auto nearest_point = current_interpolated_pose.first;
+  const auto nearest_point = current_interpolated_pose.first;
   auto target_point = current_interpolated_pose.first;
 
   // check if the deviation is worth emergency
