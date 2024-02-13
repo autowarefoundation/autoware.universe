@@ -6,6 +6,7 @@
 #include "service_utils.hpp"
 
 #include <array>
+#include <memory>
 #include <random>
 
 namespace mission_planner::uuid
@@ -159,6 +160,15 @@ void RouteSelector::on_set_lanelet_route_main(
 void RouteSelector::on_clear_route_mrm(
   ClearRoute::Request::SharedPtr req, ClearRoute::Response::SharedPtr res)
 {
+  const auto create_resume_request = [](const auto request) {
+    const auto r = std::make_shared<SetWaypointRoute::Request>();
+    r->header = request->header;
+    r->goal_pose = request->goal_pose;
+    r->uuid = request->uuid;
+    r->allow_modification = request->allow_modification;
+    return r;
+  };
+
   mrm_operating_ = false;
   mrm_.change_state(now(), RouteState::UNSET);
 
@@ -167,14 +177,16 @@ void RouteSelector::on_clear_route_mrm(
     res->status = service_utils::sync_call(cli_clear_route_, req);
     return;
   }
-  if (auto request = std::get_if<RoutePointRequest>(&main_request_)) {
-    // NOTE: Clear the waypoint to avoid returning. Remove this once resuming is supported.
-    (**request).waypoints.clear();
-    res->status = service_utils::sync_call(cli_set_waypoint_route_, *request);
+  if (auto request = std::get_if<WaypointRequest>(&main_request_)) {
+    // NOTE: Clear the waypoints to avoid returning. Remove this once resuming is supported.
+    const auto r = create_resume_request(*request);
+    res->status = service_utils::sync_call(cli_set_waypoint_route_, r);
     return;
   }
-  if (auto request = std::get_if<RouteRequest>(&main_request_)) {
-    res->status = service_utils::sync_call(cli_set_lanelet_route_, *request);
+  if (auto request = std::get_if<LaneletRequest>(&main_request_)) {
+    // NOTE: Clear the segments to avoid returning. Remove this once resuming is supported.
+    const auto r = create_resume_request(*request);
+    res->status = service_utils::sync_call(cli_set_waypoint_route_, r);
     return;
   }
   RCLCPP_ERROR_STREAM(get_logger(), "unknown main route request");

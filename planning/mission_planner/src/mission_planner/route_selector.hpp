@@ -58,11 +58,11 @@ private:
   rclcpp::Subscription<RouteState>::SharedPtr sub_state_;
   rclcpp::Subscription<LaneletRoute>::SharedPtr sub_route_;
 
-  using RoutePointRequest = SetWaypointRoute::Request::SharedPtr;
-  using RouteRequest = SetLaneletRoute::Request::SharedPtr;
+  using WaypointRequest = SetWaypointRoute::Request::SharedPtr;
+  using LaneletRequest = SetLaneletRoute::Request::SharedPtr;
   bool initialized_;
   bool mrm_operating_;
-  std::variant<std::monostate, RoutePointRequest, RouteRequest> main_request_;
+  std::variant<std::monostate, WaypointRequest, LaneletRequest> main_request_;
 
   void on_state(const RouteState::ConstSharedPtr msg);
   void on_route(const LaneletRoute::ConstSharedPtr msg);
