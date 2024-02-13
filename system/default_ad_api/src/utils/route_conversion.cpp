@@ -122,6 +122,7 @@ ExternalState convert_state(const InternalState & internal)
       case InternalState::REROUTING:    return ExternalState::CHANGING;
       case InternalState::ARRIVED:      return ExternalState::ARRIVED;
       case InternalState::ABORTED:      return ExternalState::SET;
+      case InternalState::INTERRUPTED:  return ExternalState::SET;
       default:                          return ExternalState::UNKNOWN;
     }
   };
