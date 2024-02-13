@@ -24,6 +24,7 @@ QString to_string_state(const RouteState & state)
     case RouteState::REROUTING:    return "rerouting";
     case RouteState::ARRIVED:      return "arrived";
     case RouteState::ABORTED:      return "aborted";
+    case RouteState::INTERRUPTED:  return "interrupted";
     default:                       return "-----";
   }
   // clang-format on
