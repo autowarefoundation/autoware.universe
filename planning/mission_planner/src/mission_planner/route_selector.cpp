@@ -195,15 +195,19 @@ void RouteSelector::on_clear_route_mrm(
 void RouteSelector::on_set_waypoint_route_mrm(
   SetWaypointRoute::Request::SharedPtr req, SetWaypointRoute::Response::SharedPtr res)
 {
-  mrm_operating_ = true;
   res->status = service_utils::sync_call(cli_set_waypoint_route_, req);
+  if (res->status.success) {
+    mrm_operating_ = true;
+  }
 }
 
 void RouteSelector::on_set_lanelet_route_mrm(
   SetLaneletRoute::Request::SharedPtr req, SetLaneletRoute::Response::SharedPtr res)
 {
-  mrm_operating_ = true;
   res->status = service_utils::sync_call(cli_set_lanelet_route_, req);
+  if (res->status.success) {
+    mrm_operating_ = true;
+  }
 }
 
 void RouteInterface::change_state(const rclcpp::Time & stamp, RouteState::_state_type state)
