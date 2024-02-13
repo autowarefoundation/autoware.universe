@@ -870,11 +870,11 @@ PredictedObject MapBasedPredictionNode::convertToPredictedObject(
 
 void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
 {
-  RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Start loading lanelet");
+  RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Map is loaded");
+  RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Map is loaded");
 
   const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   const auto crosswalks = lanelet::utils::query::crosswalkLanelets(all_lanelets);
@@ -1308,6 +1308,13 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
 
   // assumption: the object vx is much larger than vy
   if (object.kinematics.twist_with_covariance.twist.linear.x >= 0.0) return;
+
+  // calculate absolute velocity and do nothing if it is too slow
+  const double abs_object_speed = std::hypot(
+    object.kinematics.twist_with_covariance.twist.linear.x,
+    object.kinematics.twist_with_covariance.twist.linear.y);
+  constexpr double min_abs_speed = 1e-1;  // 0.1 m/s
+  if (abs_object_speed < min_abs_speed) return;
 
   switch (object.kinematics.orientation_availability) {
     case autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN: {
