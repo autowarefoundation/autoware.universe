@@ -73,7 +73,6 @@ private:
   rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr
     pcd_loader_client_;
 
-  // TODO: Replace pointer by a reference to pointer
   NdtPtrType & ndt_ptr_;
   std::mutex * ndt_ptr_mutex_;
   rclcpp::Logger logger_;
