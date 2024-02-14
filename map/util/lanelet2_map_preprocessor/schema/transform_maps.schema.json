@@ -57,14 +57,7 @@
           "description": "yaw factor of Rotation vector for transforming maps [rad]"
         }
       },
-      "required": [
-        "x",
-        "y",
-        "z",
-        "roll",
-        "pitch",
-        "yaw"
-      ]
+      "required": ["x", "y", "z", "roll", "pitch", "yaw"]
     }
   },
   "properties": {
@@ -75,12 +68,8 @@
           "$ref": "#/definitions/transform_maps"
         }
       },
-      "required": [
-        "ros__parameters"
-      ]
+      "required": ["ros__parameters"]
     }
   },
-  "required": [
-    "/**"
-  ]
+  "required": ["/**"]
 }
