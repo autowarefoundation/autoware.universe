@@ -85,6 +85,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   mrm_state_.stamp = this->now();
   mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::NORMAL;
   mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MrmState::NONE;
+  is_hazard_status_timeout_ = false;
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -137,7 +138,7 @@ autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHaz
   HazardLightsCommand msg;
 
   // Check emergency
-  const bool is_emergency = isEmergency(hazard_status_stamped_->status);
+  const bool is_emergency = isEmergency();
 
   if (hazard_status_stamped_->status.emergency_holding) {
     // turn hazard on during emergency holding
@@ -311,21 +312,25 @@ bool EmergencyHandler::isDataReady()
   return true;
 }
 
+void EmergencyHandler::checkHazardStatusTimeout() {
+  if ((this->now() - stamp_hazard_status_).seconds() > param_.timeout_hazard_status) {
+    is_hazard_status_timeout_ = true;
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "heartbeat_hazard_status is timeout");
+  } else {
+    is_hazard_status_timeout_ = false;
+  }
+}
+
 void EmergencyHandler::onTimer()
 {
   if (!isDataReady()) {
     return;
   }
-  const bool is_hazard_status_timeout =
-    (this->now() - stamp_hazard_status_).seconds() > param_.timeout_hazard_status;
-  if (is_hazard_status_timeout) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "heartbeat_hazard_status is timeout");
-    mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::MRM_OPERATING;
-    publishControlCommands();
-    return;
-  }
+
+  // Check whether heartbeat hazard_status is timeout
+  checkHazardStatusTimeout();
 
   // Update Emergency State
   updateMrmState();
@@ -371,7 +376,7 @@ void EmergencyHandler::updateMrmState()
   using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
   // Check emergency
-  const bool is_emergency = isEmergency(hazard_status_stamped_->status);
+  const bool is_emergency = isEmergency();
 
   // Get mode
   const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
@@ -432,7 +437,10 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurre
   using autoware_auto_system_msgs::msg::HazardStatus;
 
   // Get hazard level
-  const auto level = hazard_status_stamped_->status.level;
+  auto level = hazard_status_stamped_->status.level;
+  if (is_hazard_status_timeout_) {
+    level = HazardStatus::SINGLE_POINT_FAULT;
+  }
 
   // State machine
   if (mrm_state_.behavior == MrmState::NONE) {
@@ -455,10 +463,11 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurre
   return mrm_state_.behavior;
 }
 
-bool EmergencyHandler::isEmergency(
-  const autoware_auto_system_msgs::msg::HazardStatus & hazard_status)
+bool EmergencyHandler::isEmergency()
 {
-  return hazard_status.emergency || hazard_status.emergency_holding;
+  return hazard_status_stamped_->status.emergency ||
+         hazard_status_stamped_->status.emergency_holding ||
+         is_hazard_status_timeout_;
 }
 
 bool EmergencyHandler::isStopped()
