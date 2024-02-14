@@ -533,9 +533,6 @@ bool PlanningValidator::checkValidForwardTrajectoryLength(const Trajectory & tra
   const auto forward_length_required = ego_speed * ego_speed / (2.0 * std::abs(acc)) -
                                        validation_params_.forward_trajectory_length_margin;
 
-  std::cerr << "forward_length_required = " << forward_length_required
-            << ", forward_length = " << forward_length << std::endl;
-
   validation_status_.forward_trajectory_length_required = forward_length_required;
   validation_status_.forward_trajectory_length_measured = forward_length;
 
