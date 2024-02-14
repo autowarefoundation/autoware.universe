@@ -2,7 +2,7 @@
 
 ## Purpose
 
-MRM Handler is a node to select proper MRM from from system failure state contained in OperationModeAvailability.
+MRM Handler is a node to select a proper MRM from a system failure state contained in OperationModeAvailability.
 
 ## Inner-workings / Algorithms
 
