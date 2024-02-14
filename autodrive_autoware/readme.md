@@ -57,6 +57,8 @@
 
 Deployment videos pertaining to [AutoDRIVE-Autoware Integration](https://github.com/Tinker-Twins/AutoDRIVE-Autoware) are available within the [Autoware Playlist](https://youtube.com/playlist?list=PL5Hd4DIMOmEJgpsPYCoLBGNb_91PZVxgA&si=UCN1iTwrKbx51Jry) on [AutoDRIVE Ecosystem's YouTube Channel](https://www.youtube.com/@AutoDRIVE-Ecosystem).
 
+---
+
 ## Citation
 
 We encourage you to read and cite the following paper if you use any part of this work for your research:
