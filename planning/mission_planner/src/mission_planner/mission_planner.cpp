@@ -350,12 +350,11 @@ LaneletRoute MissionPlanner::create_route(const SetWaypointRoute::Request & req)
 LaneletRoute MissionPlanner::create_route(const PoseWithUuidStamped & msg)
 {
   const auto & header = msg.header;
-  const auto & waypoints = std::vector<Pose>();
   const auto & goal_pose = msg.pose;
   const auto & uuid = msg.uuid;
   const auto & allow_goal_modification = current_route_->allow_modification;
 
-  return create_route(header, waypoints, goal_pose, uuid, allow_goal_modification);
+  return create_route(header, std::vector<Pose>(), goal_pose, uuid, allow_goal_modification);
 }
 
 LaneletRoute MissionPlanner::create_route(
