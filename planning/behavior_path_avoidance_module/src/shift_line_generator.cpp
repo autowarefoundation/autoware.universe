@@ -342,15 +342,14 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       al_return.start_shift_length = feasible_shift_profile.value().first;
       al_return.start_longitudinal = to_shift_start;
 
-      // end point
-      al_return.end_longitudinal = [&]() {
-        if (data.to_return_point > to_shift_start) {
-          return std::clamp(
-            data.to_return_point, to_shift_start, feasible_return_distance + to_shift_start);
-        }
+      const auto min_return_distance =
+        helper_->getMinAvoidanceDistance(feasible_shift_profile.value().first);
 
-        return to_shift_start + feasible_return_distance;
-      }();
+      // end point
+      constexpr double BUFFER = 1.0;
+      al_return.end_longitudinal = std::clamp(
+        data.to_return_point, min_return_distance + to_shift_start + BUFFER,
+        feasible_return_distance + to_shift_start);
       al_return.end_shift_length = 0.0;
 
       // misc
@@ -1042,14 +1041,6 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     }
   }
 
-  const auto exist_unavoidable_object = std::any_of(
-    data.target_objects.begin(), data.target_objects.end(),
-    [](const auto & o) { return !o.is_avoidable && o.longitudinal > 0.0; });
-
-  if (exist_unavoidable_object) {
-    return ret;
-  }
-
   if (last_.has_value()) {
     if (std::abs(last_.value().end_shift_length) < RETURN_SHIFT_THRESHOLD) {
       return ret;
@@ -1147,9 +1138,6 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
 
   const auto & arclength_from_ego = data.arclength_from_ego;
 
-  const auto nominal_prepare_distance = helper_->getNominalPrepareDistance();
-  const auto nominal_avoid_distance = helper_->getMaxAvoidanceDistance(last_sl.end_shift_length);
-
   if (arclength_from_ego.empty()) {
     return ret;
   }
@@ -1163,11 +1151,24 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   // If the avoidance point has already been set, the return shift must be set after the point.
   const auto last_sl_distance = data.arclength_from_ego.at(last_sl.end_idx);
 
-  // check if there is enough distance for return.
-  if (last_sl_distance > remaining_distance) {  // tmp: add some small number (+1.0)
-    RCLCPP_DEBUG(rclcpp::get_logger(""), "No enough distance for return.");
-    return ret;
-  }
+  const auto minimum_prepare_distance = [&]() {
+    if (data.target_objects.empty()) {
+      return std::max(helper_->getMinimumPrepareDistance(), last_sl_distance);
+    }
+
+    const auto & base_link2rear = data_->parameters.base_link2rear;
+    const auto object = data.target_objects.front();
+    const auto object_type = utils::getHighestProbLabel(object.object.classification);
+    const auto object_parameter = parameters_->object_parameters.at(object_type);
+    const auto offset =
+      object_parameter.safety_buffer_longitudinal + base_link2rear + object.length;
+    const auto to_shift_start = object.longitudinal + offset;
+    return std::max({helper_->getMinimumPrepareDistance(), to_shift_start, last_sl_distance});
+  }();
+  const auto nominal_prepare_distance = helper_->getNominalPrepareDistance();
+
+  const auto minimum_avoid_distance = helper_->getMinAvoidanceDistance(last_sl.end_shift_length);
+  const auto nominal_avoid_distance = helper_->getMaxAvoidanceDistance(last_sl.end_shift_length);
 
   // If the remaining distance is not enough, the return shift needs to be shrunk.
   // (or another option is just to ignore the return-shift.)
@@ -1188,16 +1189,19 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   const double variable_prepare_distance =
     std::max(nominal_prepare_distance - last_sl_distance, 0.0);
 
-  double prepare_distance_scaled = std::max(
-    helper_->getMinimumPrepareDistance(), std::max(nominal_prepare_distance, last_sl_distance));
-  double avoid_distance_scaled = nominal_avoid_distance;
-  if (remaining_distance < prepare_distance_scaled + avoid_distance_scaled) {
-    const auto scale = (remaining_distance - last_sl_distance) /
-                       std::max(nominal_avoid_distance + variable_prepare_distance, 0.1);
-    prepare_distance_scaled = std::max(
-      helper_->getMinimumPrepareDistance(), last_sl_distance + scale * nominal_prepare_distance);
-    avoid_distance_scaled *= scale;
-  }
+  const auto [prepare_distance_scaled, avoid_distance_scaled] = [&]() {
+    if (remaining_distance > nominal_prepare_distance + nominal_avoid_distance) {
+      return std::make_pair(nominal_prepare_distance, nominal_avoid_distance);
+    }
+
+    const double scale = (remaining_distance - last_sl_distance) /
+                         std::max(nominal_avoid_distance + variable_prepare_distance, 0.1);
+    const double prepare_distance_scaled =
+      std::max(minimum_prepare_distance, last_sl_distance + scale * variable_prepare_distance);
+    const double avoid_distance_scaled =
+      std::max(minimum_avoid_distance, scale * nominal_avoid_distance);
+    return std::make_pair(prepare_distance_scaled, avoid_distance_scaled);
+  }();
 
   // shift point for prepare distance: from last shift to return-start point.
   if (nominal_prepare_distance > last_sl_distance) {
