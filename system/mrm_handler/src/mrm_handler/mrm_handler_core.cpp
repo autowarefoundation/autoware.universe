@@ -583,9 +583,5 @@ bool MrmHandler::isArrivedAtGoal()
 {
   using autoware_adapi_v1_msgs::msg::OperationModeState;
 
-  if (operation_mode_state_->mode == OperationModeState::STOP) {
-    return true;
-  }
-
-  return false;
+  return operation_mode_state_->mode == OperationModeState::STOP;
 }
