@@ -190,7 +190,7 @@ void MrmHandler::publishControlCommands()
 
   // Create timestamp
   const auto stamp = this->now();
-  
+
   // Publish hazard command
   pub_hazard_cmd_->publish(createHazardCmdMsg());
 
