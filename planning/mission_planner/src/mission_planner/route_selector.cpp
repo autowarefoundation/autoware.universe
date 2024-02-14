@@ -195,7 +195,9 @@ void RouteSelector::on_clear_route_mrm(
 void RouteSelector::on_set_waypoint_route_mrm(
   SetWaypointRoute::Request::SharedPtr req, SetWaypointRoute::Response::SharedPtr res)
 {
+  req->uuid = uuid::generate_if_empty(req->uuid);
   res->status = service_utils::sync_call(cli_set_waypoint_route_, req);
+
   if (res->status.success) {
     mrm_operating_ = true;
     if (main_.get_state() != RouteState::UNSET) {
@@ -207,7 +209,9 @@ void RouteSelector::on_set_waypoint_route_mrm(
 void RouteSelector::on_set_lanelet_route_mrm(
   SetLaneletRoute::Request::SharedPtr req, SetLaneletRoute::Response::SharedPtr res)
 {
+  req->uuid = uuid::generate_if_empty(req->uuid);
   res->status = service_utils::sync_call(cli_set_lanelet_route_, req);
+
   if (res->status.success) {
     mrm_operating_ = true;
     if (main_.get_state() != RouteState::UNSET) {
