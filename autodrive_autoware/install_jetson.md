@@ -80,14 +80,16 @@ user@jetson-device:~$ mkdir -p Autoware_WS
 user@jetson-device:~$ cd Autoware_WS
 ```
 
-2. Clone the [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_local` (to differentiate it from `autoware_docker` installation, if any) and move to the directory.
+2. Clone the [`galactic branch`](https://github.com/autowarefoundation/autoware/tree/galactic) of [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_local` (to differentiate it from `autoware_docker` installation, if any) and move to the directory.
 ```bash
-user@jetson-device:~$ git clone https://github.com/autowarefoundation/autoware.git
+user@jetson-device:~$ git clone -b galactic https://github.com/autowarefoundation/autoware.git
 user@jetson-device:~$ sudo mv ~/Autoware_WS/autoware ~/Autoware_WS/autoware_local
 user@jetson-device:~$ cd autoware_local
 ```
 
-3. Install the required dependencies (Autoware uses [`Ansible`](https://www.ansible.com/) scripts to automate dependency and configuration management).
+3. Under the `autoware_local` directory, open the `autoware.repos` file, change the `version` of `universe/autoware.universe` from `galactic` to `autodrive_ecosystem` and save it.
+
+4. Install the required dependencies (Autoware uses [`Ansible`](https://www.ansible.com/) scripts to automate dependency and configuration management).
 ```bash
 user@jetson-device:~$ ./setup-dev-env.sh --no-nvidia --no-cuda-drivers # On certain systems, modifying any existing NVIDIA libraries can break things!
 user@jetson-device:~$ # Setting up the build environment can take up to 1 hour.
@@ -100,7 +102,7 @@ user@jetson-device:~$ # [Warning] Some Autoware components depend on the CUDA, c
 > **Note:** The NVIDIA library and CUDA driver installation are disabled as they are already installed with the L4T JetPack SDK. If you force installation here, it may potentially mess up the kernel and cause errors at bootup. You will need to reflash the Jetson-Device if this happens.
 
 
-4. Create `autoware_map` directory within `Autoware_WS` to store map files, and download & unzip `sample-map-planning` (later used for planning simulation) within this directory.
+5. Create `autoware_map` directory within `Autoware_WS` to store map files, and download & unzip `sample-map-planning` (later used for planning simulation) within this directory.
 ```bash
 user@jetson-device:~$ cd .. # cd ~/Autoware_WS
 user@jetson-device:~$ mkdir -p autoware_map
@@ -111,7 +113,7 @@ user@jetson-device:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware
 ## Set Up Autoware Workspace:
 #### (Approximate Time Investment: >6.0 Hours - Depends on the Jetson-Device)
 
-1. Create an `src` directory within the `autoware_local` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
+1. Create an `src` directory within the `autoware_local` workspace and import `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
 ```bash
 user@jetson-device:~$ cd Autoware_WS/autoware_local/
 user@jetson-device:~$ mkdir src
