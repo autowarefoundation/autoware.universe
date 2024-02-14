@@ -16,7 +16,7 @@
 #define PLANNING_VALIDATOR__PLANNING_VALIDATOR_HPP_
 
 #include "planning_validator/debug_marker.hpp"
-#include "planning_validator/msg/planning_validator_status.hpp"
+#include "autoware_planning_validator/msg/planning_validator_status.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -39,7 +39,7 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using nav_msgs::msg::Odometry;
-using planning_validator::msg::PlanningValidatorStatus;
+using autoware_planning_validator::msg::PlanningValidatorStatus;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
 
