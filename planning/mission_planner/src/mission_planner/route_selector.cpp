@@ -130,7 +130,7 @@ void RouteSelector::on_set_waypoint_route_main(
 
   // During MRM, only change the state.
   if (mrm_operating_) {
-    main_.change_state(now(), RouteState::SET);
+    main_.change_state(now(), RouteState::INTERRUPTED);
     res->status.success = true;
     return;
   }
@@ -148,7 +148,7 @@ void RouteSelector::on_set_lanelet_route_main(
 
   // During MRM, only change the state.
   if (mrm_operating_) {
-    main_.change_state(now(), RouteState::SET);
+    main_.change_state(now(), RouteState::INTERRUPTED);
     res->status.success = true;
     return;
   }
@@ -198,6 +198,9 @@ void RouteSelector::on_set_waypoint_route_mrm(
   res->status = service_utils::sync_call(cli_set_waypoint_route_, req);
   if (res->status.success) {
     mrm_operating_ = true;
+    if (main_.get_state() != RouteState::UNSET) {
+      main_.change_state(now(), RouteState::INTERRUPTED);
+    }
   }
 }
 
@@ -207,7 +210,15 @@ void RouteSelector::on_set_lanelet_route_mrm(
   res->status = service_utils::sync_call(cli_set_lanelet_route_, req);
   if (res->status.success) {
     mrm_operating_ = true;
+    if (main_.get_state() != RouteState::UNSET) {
+      main_.change_state(now(), RouteState::INTERRUPTED);
+    }
   }
+}
+
+RouteState::_state_type RouteInterface::get_state() const
+{
+  return state_.state;
 }
 
 void RouteInterface::change_state(const rclcpp::Time & stamp, RouteState::_state_type state)

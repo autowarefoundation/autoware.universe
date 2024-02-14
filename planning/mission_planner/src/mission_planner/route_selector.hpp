@@ -27,6 +27,7 @@ using unique_identifier_msgs::msg::UUID;
 class RouteInterface
 {
 public:
+  RouteState::_state_type get_state() const;
   void change_state(const rclcpp::Time & stamp, RouteState::_state_type state);
   void update_state(const RouteState & state);
   void update_route(const LaneletRoute & route);
