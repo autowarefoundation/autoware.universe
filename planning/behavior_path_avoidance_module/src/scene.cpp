@@ -1396,6 +1396,11 @@ void AvoidanceModule::insertReturnDeadLine(
 {
   const auto & data = avoid_data_;
 
+  if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
+    RCLCPP_DEBUG(getLogger(), "goal pose is modified. do nothing.");
+    return;
+  }
+
   if (data.to_return_point > planner_data_->parameters.forward_path_length) {
     RCLCPP_DEBUG(getLogger(), "return dead line is far enough.");
     return;
