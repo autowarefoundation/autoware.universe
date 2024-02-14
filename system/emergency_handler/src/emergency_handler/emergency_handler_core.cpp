@@ -312,7 +312,8 @@ bool EmergencyHandler::isDataReady()
   return true;
 }
 
-void EmergencyHandler::checkHazardStatusTimeout() {
+void EmergencyHandler::checkHazardStatusTimeout()
+{
   if ((this->now() - stamp_hazard_status_).seconds() > param_.timeout_hazard_status) {
     is_hazard_status_timeout_ = true;
     RCLCPP_WARN_THROTTLE(
@@ -466,8 +467,7 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurre
 bool EmergencyHandler::isEmergency()
 {
   return hazard_status_stamped_->status.emergency ||
-         hazard_status_stamped_->status.emergency_holding ||
-         is_hazard_status_timeout_;
+         hazard_status_stamped_->status.emergency_holding || is_hazard_status_timeout_;
 }
 
 bool EmergencyHandler::isStopped()
