@@ -22,7 +22,7 @@
 #include "motion_utils/trajectory/conversion.hpp"
 #include "obstacle_avoidance_planner/node.hpp"
 #include "path_smoother/elastic_band_smoother.hpp"
-#include "static_centerline_optimizer/msg/points_with_lane_id.hpp"
+#include "autoware_static_centerline_optimizer/msg/points_with_lane_id.hpp"
 #include "static_centerline_optimizer/type_alias.hpp"
 #include "static_centerline_optimizer/utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
@@ -577,7 +577,7 @@ void StaticCenterlineOptimizerNode::on_plan_path(
 
     if (!current_lanelet_points.empty()) {
       // register points with lane_id
-      static_centerline_optimizer::msg::PointsWithLaneId points_with_lane_id;
+      autoware_static_centerline_optimizer::msg::PointsWithLaneId points_with_lane_id;
       points_with_lane_id.lane_id = lanelet.id();
       points_with_lane_id.points = current_lanelet_points;
       response->points_with_lane_ids.push_back(points_with_lane_id);
