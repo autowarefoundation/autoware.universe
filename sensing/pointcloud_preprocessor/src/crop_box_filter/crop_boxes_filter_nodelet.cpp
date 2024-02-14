@@ -104,6 +104,7 @@ bool CropBoxesFilterComponent::load_crop_boxes_parameters()
 {
   // 1. load crop boxes names
   std::vector<std::string> box_names;  // example: {"right", "left"}
+  this->declare_parameter<std::vector<std::string>>("cropboxes_names", std::vector<std::string>());
   if (!this->get_parameter("cropboxes_names", box_names)) {
     RCLCPP_ERROR(this->get_logger(), "Failed to load cropbox names.");
     return false;
@@ -113,6 +114,14 @@ bool CropBoxesFilterComponent::load_crop_boxes_parameters()
   // 2. lamdba function to load single crop box
   auto load_single_crop_box = [this](const std::string & name, CropBoxParam & box) -> bool {
     std::string ns = "cropboxes." + name;
+
+    this->declare_parameter<float>(ns + ".min_x");
+    this->declare_parameter<float>(ns + ".min_y");
+    this->declare_parameter<float>(ns + ".min_z");
+    this->declare_parameter<float>(ns + ".max_x");
+    this->declare_parameter<float>(ns + ".max_y");
+    this->declare_parameter<float>(ns + ".max_z");
+    this->declare_parameter<bool>(ns + ".negative");
     if (!this->get_parameter(ns + ".min_x", box.min_x)) {
       RCLCPP_ERROR(this->get_logger(), "Failed to load %s.min_x", name.c_str());
       return false;
