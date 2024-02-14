@@ -40,7 +40,7 @@ MapUpdateModule::MapUpdateModule(
   // From the second update, the update is done on secondary_ndt_ptr_,
   // and ndt_ptr_ is only locked when swapping its pointer with
   // secondary_ndt_ptr_.
-  rebuild_ = true;
+  need_rebuild_ = true;
 }
 
 bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & position)
@@ -56,7 +56,7 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
     RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, "Dynamic map loading is not keeping up.");
     // If the map does not keep up with the current position,
     // lock ndt_ptr_ entirely until it is fully rebuilt.
-    rebuild_ = true;
+    need_rebuild_ = true;
   }
 
   return distance > param_.update_distance;
@@ -95,7 +95,7 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 {
   // If the current position is super far from the previous loading position,
   // lock and rebuild ndt_ptr_
-  if (rebuild_) {
+  if (need_rebuild_) {
     ndt_ptr_mutex_->lock();
     auto param = ndt_ptr_->getParams();
 
@@ -105,7 +105,7 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 
     prefetch_map(position, ndt_ptr_);
     ndt_ptr_mutex_->unlock();
-    rebuild_ = false;
+    need_rebuild_ = false;
   } else {
     // Load map to the secondary_ndt_ptr, which does not require a mutex lock
     // Since the update of the secondary ndt ptr and the NDT align (done on
@@ -171,8 +171,6 @@ void MapUpdateModule::update_ndt(
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
   RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
 }
-
-int count = 0;
 
 void MapUpdateModule::publish_partial_pcd_map()
 {

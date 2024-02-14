@@ -84,7 +84,7 @@ private:
 
   // Indicate if there is a prefetch thread waiting for being collected
   NdtPtrType secondary_ndt_ptr_;
-  bool rebuild_;
+  bool need_rebuild_;
 };
 
 #endif  // NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
