@@ -40,14 +40,16 @@ user@host-pc:~$ mkdir -p Autoware_WS
 user@host-pc:~$ cd Autoware_WS
 ```
 
-2. Clone the [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_local` (to differentiate it from `autoware_docker` installation, if any) and move to the directory.
+2. Clone the [`galactic branch`](https://github.com/autowarefoundation/autoware/tree/galactic) of [`autowarefoundation/autoware`](https://github.com/autowarefoundation/autoware.git) repository into `Autoware_WS`, rename it to `autoware_local` (to differentiate it from `autoware_docker` installation, if any) and move to the directory.
 ```bash
-user@host-pc:~$ git clone https://github.com/autowarefoundation/autoware.git
+user@host-pc:~$ git clone -b galactic https://github.com/autowarefoundation/autoware.git
 user@host-pc:~$ sudo mv ~/Autoware_WS/autoware ~/Autoware_WS/autoware_local
 user@host-pc:~$ cd autoware_local
 ```
 
-3. Install the required dependencies (Autoware uses [`Ansible`](https://www.ansible.com/) scripts to automate dependency and configuration management).
+3. Under the `autoware_local` directory, open the `autoware.repos` file, change the `version` of `universe/autoware.universe` from `galactic` to `autodrive_ecosystem` and save it.
+
+4. Install the required dependencies (Autoware uses [`Ansible`](https://www.ansible.com/) scripts to automate dependency and configuration management).
 ```bash
 user@host-pc:~$ ./setup-dev-env.sh # --no-nvidia --no-cuda-drivers (for installation without NVIDIA libraries & CUDA drivers)
 user@host-pc:~$ # Setting up the build environment can take up to 1 hour.
@@ -59,7 +61,7 @@ user@host-pc:~$ # [Warning] Some Autoware components depend on the CUDA, cuDNN a
                         y # If you are confident about your system dependencies, you may choose to proceed with the installation of NVIDIA libraries.
 ```
 
-4. Create `autoware_map` directory within `Autoware_WS` to store map files, and download & unzip `sample-map-planning` (later used for planning simulation) within this directory.
+5. Create `autoware_map` directory within `Autoware_WS` to store map files, and download & unzip `sample-map-planning` (later used for planning simulation) within this directory.
 ```bash
 user@host-pc:~$ cd .. # cd ~/Autoware_WS
 user@host-pc:~$ mkdir -p autoware_map
@@ -70,7 +72,7 @@ user@host-pc:~$ unzip -d ~/Autoware_WS/autoware_map ~/Autoware_WS/autoware_map/s
 ## Set Up Autoware Workspace:
 #### (Approximate Time Investment: 2.0 Hours)
 
-1. Create an `src` directory within the `autoware_local` workspace and clone `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
+1. Create an `src` directory within the `autoware_local` workspace and import `autoware` repositories into it (Autoware uses [vcstool](https://github.com/dirk-thomas/vcstool) to construct workspaces).
 ```bash
 user@host-pc:~$ cd Autoware_WS/autoware_local/
 user@host-pc:~$ mkdir src
