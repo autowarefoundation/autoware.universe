@@ -770,7 +770,7 @@ std::vector<PullOverPath> GoalPlannerModule::sortPullOverPathCandidatesByGoalPri
       if (goal_candidate_it != goal_candidates.end() && !goal_candidate_it->is_safe) {
         return 0.0;
       }
-      // check path collsion margin
+      // check path collision margin
       const auto resampled_path =
         utils::resamplePathWithSpline(pull_over_path.getParkingPath(), 0.5);
       for (const auto & margin : margins) {
