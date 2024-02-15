@@ -228,6 +228,25 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
+    const std::optional<double> rest_time_to_red_signal =
+      planner_data_->getRestTimeToRedSignal(traffic_light_reg_elem_.id());
+    if (planner_param_.v2i_use_rest_time && rest_time_to_red_signal) {
+      const double rest_time_allowed_to_go_ahead =
+        rest_time_to_red_signal.value() - planner_param_.v2i_last_time_allowed_to_pass;
+
+      const double ego_v = planner_data_->current_velocity->twist.linear.x;
+      if (ego_v >= planner_param_.v2i_velocity_threshold) {
+        if (ego_v * rest_time_allowed_to_go_ahead <= signed_arc_length_to_stop_point) {
+          *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
+        }
+      } else {
+        if (rest_time_allowed_to_go_ahead < planner_param_.v2i_required_time_to_departure) {
+          *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
+        }
+      }
+      return true;
+    }
+
     // Check if stop is coming.
     const bool is_stop_signal = isStopSignal();
 

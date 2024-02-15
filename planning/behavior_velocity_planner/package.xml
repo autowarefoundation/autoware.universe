@@ -41,6 +41,7 @@
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
+  <depend>jpn_signal_v2i_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>motion_utils</depend>
