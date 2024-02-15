@@ -6,12 +6,11 @@ autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/converter.cpp
-  src/merger.cpp
 )
 
-rclcpp_components_register_nodes(${PROJECT_NAME}
-  "hazard_status_converter::Converter"
-  "hazard_status_converter::Merger"
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "hazard_status_converter::Converter"
+  EXECUTABLE converter
 )
 
 ament_auto_package(INSTALL_TO_SHARE config launch)
