@@ -80,15 +80,16 @@ void set_auto_tree(std::vector<TempNode> & nodes, int index)
   }
 }
 
-void merge_hazard_status(
-  HazardStatusStamped & hazard, const std::string prefix, const DiagnosticGraph & graph)
+HazardStatusStamped convert_hazard_diagnostics(const DiagnosticGraph & graph)
 {
+  // Create temporary tree for conversion.
   std::vector<TempNode> nodes;
   nodes.reserve(graph.nodes.size());
   for (const auto & node : graph.nodes) {
     nodes.push_back({node, false});
   }
 
+  // Mark nodes included in the auto mode tree.
   DiagnosticLevel auto_mode_level = DiagnosticStatus::STALE;
   for (size_t index = 0; index < nodes.size(); ++index) {
     const auto & status = nodes[index].node.status;
@@ -98,26 +99,25 @@ void merge_hazard_status(
     }
   }
 
+  // Calculate hazard level from node level and root level.
+  HazardStatusStamped hazard;
   for (const auto & node : nodes) {
     switch (get_hazard_level(node, auto_mode_level)) {
       case HazardLevel::NF:
         hazard.status.diag_no_fault.push_back(node.node.status);
-        hazard.status.diag_no_fault.back().name = prefix + node.node.status.name;
         break;
       case HazardLevel::SF:
         hazard.status.diag_safe_fault.push_back(node.node.status);
-        hazard.status.diag_safe_fault.back().name = prefix + node.node.status.name;
         break;
       case HazardLevel::LF:
         hazard.status.diag_latent_fault.push_back(node.node.status);
-        hazard.status.diag_latent_fault.back().name = prefix + node.node.status.name;
         break;
       case HazardLevel::SPF:
         hazard.status.diag_single_point_fault.push_back(node.node.status);
-        hazard.status.diag_single_point_fault.back().name = prefix + node.node.status.name;
         break;
     }
   }
+  return hazard;
 }
 
 }  // namespace
@@ -127,32 +127,15 @@ namespace hazard_status_converter
 
 Converter::Converter(const rclcpp::NodeOptions & options) : Node("converter", options)
 {
-  const auto inputs = std::vector<std::pair<std::string, std::string>>(
-    {{"/mm", "/main/diagnostics_graph/main"},
-     {"/ss", "/sub/diagnostics_graph/sub"},
-     {"/vm", "/supervisor/diagnostics_graph/main"},
-     {"/vs", "/supervisor/diagnostics_graph/sub"},
-     {"/vv", "/supervisor/diagnostics_graph/supervisor"}});
-
-  for (const auto & [prefix, topic] : inputs) {
-    const std::function<void(const DiagnosticGraph::ConstSharedPtr)> callback =
-      std::bind(&Converter::on_graph, this, prefix, std::placeholders::_1);
-    sub_graphs_.push_back(create_subscription<DiagnosticGraph>(topic, rclcpp::QoS(1), callback));
-  }
   pub_hazard_ = create_publisher<HazardStatusStamped>("/hazard_status", rclcpp::QoS(1));
-
-  const auto period = rclcpp::Rate(declare_parameter<double>("rate")).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period, [this] { on_timer(); });
+  sub_graph_ = create_subscription<DiagnosticGraph>(
+    "/diagnostics_graph", rclcpp::QoS(3),
+    std::bind(&Converter::on_graph, this, std::placeholders::_1));
 }
 
-void Converter::on_graph(const std::string & prefix, const DiagnosticGraph::ConstSharedPtr msg)
+void Converter::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
 {
-  graphs_[prefix] = msg;
-}
-
-void Converter::on_timer()
-{
-  const auto get_level = [](const HazardStatus & status) {
+  const auto get_system_level = [](const HazardStatus & status) {
     if (!status.diag_single_point_fault.empty()) {
       return HazardStatus::SINGLE_POINT_FAULT;
     }
@@ -165,12 +148,9 @@ void Converter::on_timer()
     return HazardStatus::NO_FAULT;
   };
 
-  HazardStatusStamped hazard;
-  hazard.stamp = now();
-  for (const auto & [prefix, graph] : graphs_) {
-    merge_hazard_status(hazard, prefix, *graph);
-  }
-  hazard.status.level = get_level(hazard.status);
+  HazardStatusStamped hazard = convert_hazard_diagnostics(*msg);
+  hazard.stamp = msg->stamp;
+  hazard.status.level = get_system_level(hazard.status);
   hazard.status.emergency = hazard.status.level == HazardStatus::SINGLE_POINT_FAULT;
   hazard.status.emergency_holding = false;
   pub_hazard_->publish(hazard);
