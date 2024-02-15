@@ -232,14 +232,14 @@ Polygon2d createExtendedPolygonAlongPath(
   }
 
   {
-    const auto p_offset = tier4_autoware_utils::calcOffsetPose(
-      lon_offset_pose.value(), forward_lon_offset, lat_offset, 0.0);
+    const auto p_offset =
+      tier4_autoware_utils::calcOffsetPose(lon_offset_pose.value(), base_to_front, lat_offset, 0.0);
     appendPointToPolygon(polygon, p_offset.position);
   }
 
   {
     const auto p_offset = tier4_autoware_utils::calcOffsetPose(
-      lon_offset_pose.value(), forward_lon_offset, -lat_offset, 0.0);
+      lon_offset_pose.value(), base_to_front, -lat_offset, 0.0);
     appendPointToPolygon(polygon, p_offset.position);
   }
 
