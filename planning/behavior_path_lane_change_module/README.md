@@ -297,8 +297,8 @@ if (Perform collision check?) then (<color:green><b>SAFE</b></color>)
   :Reset unsafe_hysteresis_count_;
 else (<color:red><b>UNSAFE</b></color>)
   :Increase unsafe_hysteresis_count_;
-  if (unsafe_hysteresis_count_ > unsafe_hysteresis_threshold?) then (<color:green><b>SAFE</b></color>)
-  else (<color:red><b>UNSAFE</b></color>)
+  if (unsafe_hysteresis_count_ > unsafe_hysteresis_threshold?) then (<color:green><b>FALSE</b></color>)
+  else (<color:red><b>TRUE</b></color>)
     #LightPink:Check abort condition;
     stop
   endif
