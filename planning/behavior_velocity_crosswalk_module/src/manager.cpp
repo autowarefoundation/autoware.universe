@@ -31,8 +31,7 @@ using tier4_autoware_utils::getOrDeclareParameter;
 
 CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".common.enable_rtc"))
+    node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".common.enable_rtc"))
 {
   const std::string ns(getModuleName());
 
@@ -69,8 +68,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_velocity");
   cp.max_stuck_vehicle_lateral_offset =
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.max_stuck_vehicle_lateral_offset");
-  cp.stuck_vehicle_attention_range =
-    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_attention_range");
+  cp.required_clearance =
+    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.required_clearance");
   cp.min_acc_for_stuck_vehicle = getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.min_acc");
   cp.max_jerk_for_stuck_vehicle =
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.max_jerk");
@@ -102,14 +101,12 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".pass_judge.stop_object_velocity_threshold");
   cp.min_object_velocity =
     getOrDeclareParameter<double>(node, ns + ".pass_judge.min_object_velocity");
-  cp.disable_stop_for_yield_cancel =
-    getOrDeclareParameter<bool>(node, ns + ".pass_judge.disable_stop_for_yield_cancel");
   cp.disable_yield_for_new_stopped_object =
     getOrDeclareParameter<bool>(node, ns + ".pass_judge.disable_yield_for_new_stopped_object");
-  cp.distance_map_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
-    node, ns + ".pass_judge.distance_map_for_no_intention_to_walk");
-  cp.timeout_map_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
-    node, ns + ".pass_judge.timeout_map_for_no_intention_to_walk");
+  cp.distance_set_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
+    node, ns + ".pass_judge.distance_set_for_no_intention_to_walk");
+  cp.timeout_set_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
+    node, ns + ".pass_judge.timeout_set_for_no_intention_to_walk");
   cp.timeout_ego_stop_for_yield =
     getOrDeclareParameter<double>(node, ns + ".pass_judge.timeout_ego_stop_for_yield");
 

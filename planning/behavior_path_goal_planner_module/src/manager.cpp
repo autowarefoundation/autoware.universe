@@ -101,6 +101,11 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
       node->declare_parameter<double>(
         ns + "object_recognition_collision_check_max_extra_stopping_margin");
     p.th_moving_object_velocity = node->declare_parameter<double>(ns + "th_moving_object_velocity");
+    p.detection_bound_offset = node->declare_parameter<double>(ns + "detection_bound_offset");
+    p.outer_road_detection_offset =
+      node->declare_parameter<double>(ns + "outer_road_detection_offset");
+    p.inner_road_detection_offset =
+      node->declare_parameter<double>(ns + "inner_road_detection_offset");
   }
 
   // pull over general params
@@ -419,7 +424,7 @@ bool GoalPlannerModuleManager::isAlwaysExecutableModule() const
 {
   // enable AlwaysExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
-  if (!goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+  if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return true;
   }
 
@@ -434,7 +439,7 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
-  if (!goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+  if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return true;
   }
 
@@ -449,7 +454,7 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
 
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
-  if (!goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+  if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return true;
   }
 
