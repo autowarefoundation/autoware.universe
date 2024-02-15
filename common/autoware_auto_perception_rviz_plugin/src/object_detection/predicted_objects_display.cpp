@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <object_detection/predicted_objects_display.hpp>
+#include "autoware_auto_perception_rviz_plugin/object_detection/predicted_objects_display.hpp"
 
 #include <memory>
 #include <set>
@@ -77,12 +77,12 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.initial_pose_with_covariance.pose.position,
       object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification,
-      get_line_width());
+      get_line_width(), true);
     if (shape_marker) {
-      auto shape_marker_ptr = shape_marker.value();
-      shape_marker_ptr->header = msg->header;
-      shape_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(shape_marker_ptr);
+      auto marker_ptr = shape_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(marker_ptr);
     }
 
     // Get marker for label
@@ -90,10 +90,10 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
       object.kinematics.initial_pose_with_covariance.pose.position,
       object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification);
     if (label_marker) {
-      auto label_marker_ptr = label_marker.value();
-      label_marker_ptr->header = msg->header;
-      label_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(label_marker_ptr);
+      auto marker_ptr = label_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(marker_ptr);
     }
 
     // Get marker for id
@@ -111,16 +111,46 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
       markers.push_back(id_marker_ptr);
     }
 
-    // Get marker for pose with covariance
+    // Get marker for pose covariance
     auto pose_with_covariance_marker =
-      get_pose_with_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance);
+      get_pose_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance);
     if (pose_with_covariance_marker) {
-      auto pose_with_covariance_marker_ptr = pose_with_covariance_marker.value();
-      pose_with_covariance_marker_ptr->header = msg->header;
-      pose_with_covariance_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(pose_with_covariance_marker_ptr);
+      auto marker_ptr = pose_with_covariance_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(marker_ptr);
     }
 
+    // Get marker for yaw covariance
+    auto yaw_covariance_marker = get_yaw_covariance_marker_ptr(
+      object.kinematics.initial_pose_with_covariance, object.shape.dimensions.x * 0.65,
+      get_line_width() * 0.5);
+    if (yaw_covariance_marker) {
+      auto marker_ptr = yaw_covariance_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(marker_ptr);
+    }
+
+    // Get marker for existence probability
+    geometry_msgs::msg::Point existence_probability_position;
+    existence_probability_position.x =
+      object.kinematics.initial_pose_with_covariance.pose.position.x + 0.5;
+    existence_probability_position.y =
+      object.kinematics.initial_pose_with_covariance.pose.position.y;
+    existence_probability_position.z =
+      object.kinematics.initial_pose_with_covariance.pose.position.z + 0.5;
+    const float existence_probability = object.existence_probability;
+    auto existence_prob_marker = get_existence_probability_marker_ptr(
+      existence_probability_position,
+      object.kinematics.initial_pose_with_covariance.pose.orientation, existence_probability,
+      object.classification);
+    if (existence_prob_marker) {
+      auto existence_prob_marker_ptr = existence_prob_marker.value();
+      existence_prob_marker_ptr->header = msg->header;
+      existence_prob_marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(existence_prob_marker_ptr);
+    }
     // Get marker for velocity text
     geometry_msgs::msg::Point vel_vis_position;
     vel_vis_position.x = uuid_vis_position.x - 0.5;
@@ -154,12 +184,45 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     // Get marker for twist
     auto twist_marker = get_twist_marker_ptr(
       object.kinematics.initial_pose_with_covariance,
-      object.kinematics.initial_twist_with_covariance);
+      object.kinematics.initial_twist_with_covariance, get_line_width());
     if (twist_marker) {
       auto twist_marker_ptr = twist_marker.value();
       twist_marker_ptr->header = msg->header;
       twist_marker_ptr->id = uuid_to_marker_id(object.object_id);
       markers.push_back(twist_marker_ptr);
+    }
+
+    // Get marker for twist covariance
+    auto twist_covariance_marker = get_twist_covariance_marker_ptr(
+      object.kinematics.initial_pose_with_covariance,
+      object.kinematics.initial_twist_with_covariance);
+    if (twist_covariance_marker) {
+      auto marker_ptr = twist_covariance_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(marker_ptr);
+    }
+
+    // Get marker for yaw rate
+    auto yaw_rate_marker = get_yaw_rate_marker_ptr(
+      object.kinematics.initial_pose_with_covariance,
+      object.kinematics.initial_twist_with_covariance, get_line_width() * 0.4);
+    if (yaw_rate_marker) {
+      auto marker_ptr = yaw_rate_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      add_marker(marker_ptr);
+    }
+
+    // Get marker for twist covariance
+    auto yaw_rate_covariance_marker = get_yaw_rate_covariance_marker_ptr(
+      object.kinematics.initial_pose_with_covariance,
+      object.kinematics.initial_twist_with_covariance, get_line_width() * 0.3);
+    if (yaw_rate_covariance_marker) {
+      auto marker_ptr = yaw_rate_covariance_marker.value();
+      marker_ptr->header = msg->header;
+      marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(marker_ptr);
     }
 
     // Add marker for each candidate path
