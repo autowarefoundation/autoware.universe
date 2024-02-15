@@ -9,8 +9,9 @@ This package receives traffic signals from perception and external (e.g., V2X) c
 A node that merges traffic light/signal state from image recognition and external (e.g., V2X) systems to provide to a planning component.
 
 ### Signal Match Validator
+
 When `enable_signal_matching` is set to true, this node validates the match between perception signals and external signals.
-The table below outlines how the matching process determines the output based on the combination of perception and external signal colors. Each cell represents the outcome when a specific color from a perception signal (columns) intersects with a color from an external signal (rows). 
+The table below outlines how the matching process determines the output based on the combination of perception and external signal colors. Each cell represents the outcome when a specific color from a perception signal (columns) intersects with a color from an external signal (rows).
 
 | External \ Perception | RED     | AMBER   | GREEN   | UNKNOWN | Not Received |
 | --------------------- | ------- | ------- | ------- | ------- | ------------ |
@@ -19,7 +20,6 @@ The table below outlines how the matching process determines the output based on
 | GREEN                 | UNKNOWN | UNKNOWN | GREEN   | UNKNOWN | UNKNOWN      |
 | UNKNOWN               | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN      |
 | Not Received          | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN      |
-
 
 ### Inputs / Outputs
 

@@ -100,4 +100,4 @@ private:
   bool isPedestrianSignal(const lanelet::Id & signal_id);
 };
 
-#endif
+#endif  // TRAFFIC_LIGHT_ARBITER__SIGNAL_MATCH_VALIDATOR_HPP_
