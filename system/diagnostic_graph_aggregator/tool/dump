@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2023 The Autoware Contributors
+# Copyright 2024 The Autoware Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ def get_level_text(level: int):
         return "WARN"
     if level == DiagnosticStatus.ERROR:
         return "ERROR"
-    if level == DiagnosticStatus.SATLE:
-        return "SATLE"
+    if level == DiagnosticStatus.STALE:
+        return "STALE"
     return "-----"
 
 
