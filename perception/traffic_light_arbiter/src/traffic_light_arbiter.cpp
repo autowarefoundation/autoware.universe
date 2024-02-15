@@ -107,7 +107,7 @@ void TrafficLightArbiter::onMap(const LaneletMapBin::ConstSharedPtr msg)
   }
 
   if (enable_signal_matching_) {
-    // Filter only pedestrian signals to distinguish them in compare function
+    // Filter only pedestrian signals to distinguish them in signal matching
     const auto pedestrian_signals = lanelet::filter_pedestrian_signals(map);
     signal_match_validator_->setPedestrianSignals(pedestrian_signals);
   }
