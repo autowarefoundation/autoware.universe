@@ -34,7 +34,38 @@ UUID generate_if_empty(const UUID & uuid)
 namespace mission_planner
 {
 
-RouteSelector::RouteSelector(const rclcpp::NodeOptions & options) : Node("route_selector", options)
+RouteInterface::RouteInterface(rclcpp::Clock::SharedPtr clock)
+{
+  clock_ = clock;
+  state_.state = RouteState::UNKNOWN;
+}
+
+RouteState::_state_type RouteInterface::get_state() const
+{
+  return state_.state;
+}
+
+void RouteInterface::change_state(RouteState::_state_type state)
+{
+  state_.stamp = clock_->now();
+  state_.state = state;
+  pub_state_->publish(state_);
+}
+
+void RouteInterface::update_state(const RouteState & state)
+{
+  state_ = state;
+  pub_state_->publish(state_);
+}
+
+void RouteInterface::update_route(const LaneletRoute & route)
+{
+  route_ = route;
+  pub_route_->publish(route);
+}
+
+RouteSelector::RouteSelector(const rclcpp::NodeOptions & options)
+: Node("route_selector", options), main_(get_clock()), mrm_(get_clock())
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -79,9 +110,8 @@ RouteSelector::RouteSelector(const rclcpp::NodeOptions & options) : Node("route_
     "~/planner/route", durable_qos, std::bind(&RouteSelector::on_route, this, _1));
 
   // Set initial state.
-  const auto stamp = now();
-  main_.change_state(stamp, RouteState::INITIALIZING);
-  mrm_.change_state(stamp, RouteState::INITIALIZING);
+  main_.change_state(RouteState::INITIALIZING);
+  mrm_.change_state(RouteState::INITIALIZING);
   initialized_ = false;
   mrm_operating_ = false;
   main_request_ = std::monostate{};
@@ -90,9 +120,8 @@ RouteSelector::RouteSelector(const rclcpp::NodeOptions & options) : Node("route_
 void RouteSelector::on_state(const RouteState::ConstSharedPtr msg)
 {
   if (msg->state == RouteState::UNSET && !initialized_) {
-    const auto stamp = now();
-    main_.change_state(stamp, RouteState::UNSET);
-    mrm_.change_state(stamp, RouteState::UNSET);
+    main_.change_state(RouteState::UNSET);
+    mrm_.change_state(RouteState::UNSET);
     initialized_ = true;
   }
 
@@ -112,7 +141,7 @@ void RouteSelector::on_clear_route_main(
 
   // During MRM, only change the state.
   if (mrm_operating_) {
-    main_.change_state(now(), RouteState::UNSET);
+    main_.change_state(RouteState::UNSET);
     res->status.success = true;
     return;
   }
@@ -130,7 +159,7 @@ void RouteSelector::on_set_waypoint_route_main(
 
   // During MRM, only change the state.
   if (mrm_operating_) {
-    main_.change_state(now(), RouteState::INTERRUPTED);
+    main_.change_state(RouteState::INTERRUPTED);
     res->status.success = true;
     return;
   }
@@ -148,7 +177,7 @@ void RouteSelector::on_set_lanelet_route_main(
 
   // During MRM, only change the state.
   if (mrm_operating_) {
-    main_.change_state(now(), RouteState::INTERRUPTED);
+    main_.change_state(RouteState::INTERRUPTED);
     res->status.success = true;
     return;
   }
@@ -160,36 +189,12 @@ void RouteSelector::on_set_lanelet_route_main(
 void RouteSelector::on_clear_route_mrm(
   ClearRoute::Request::SharedPtr req, ClearRoute::Response::SharedPtr res)
 {
-  const auto create_resume_request = [](const auto request) {
-    const auto r = std::make_shared<SetWaypointRoute::Request>();
-    r->header = request->header;
-    r->goal_pose = request->goal_pose;
-    r->uuid = request->uuid;
-    r->allow_modification = request->allow_modification;
-    return r;
-  };
+  res->status = resume_main_route(req);
 
-  mrm_operating_ = false;
-  mrm_.change_state(now(), RouteState::UNSET);
-
-  // Resume main route using the saved request.
-  if (std::holds_alternative<std::monostate>(main_request_)) {
-    res->status = service_utils::sync_call(cli_clear_route_, req);
-    return;
+  if (res->status.success) {
+    mrm_operating_ = false;
+    mrm_.change_state(RouteState::UNSET);
   }
-  if (auto request = std::get_if<WaypointRequest>(&main_request_)) {
-    // NOTE: Clear the waypoints to avoid returning. Remove this once resuming is supported.
-    const auto r = create_resume_request(*request);
-    res->status = service_utils::sync_call(cli_set_waypoint_route_, r);
-    return;
-  }
-  if (auto request = std::get_if<LaneletRequest>(&main_request_)) {
-    // NOTE: Clear the segments to avoid returning. Remove this once resuming is supported.
-    const auto r = create_resume_request(*request);
-    res->status = service_utils::sync_call(cli_set_waypoint_route_, r);
-    return;
-  }
-  RCLCPP_ERROR_STREAM(get_logger(), "unknown main route request");
 }
 
 void RouteSelector::on_set_waypoint_route_mrm(
@@ -201,7 +206,7 @@ void RouteSelector::on_set_waypoint_route_mrm(
   if (res->status.success) {
     mrm_operating_ = true;
     if (main_.get_state() != RouteState::UNSET) {
-      main_.change_state(now(), RouteState::INTERRUPTED);
+      main_.change_state(RouteState::INTERRUPTED);
     }
   }
 }
@@ -215,32 +220,37 @@ void RouteSelector::on_set_lanelet_route_mrm(
   if (res->status.success) {
     mrm_operating_ = true;
     if (main_.get_state() != RouteState::UNSET) {
-      main_.change_state(now(), RouteState::INTERRUPTED);
+      main_.change_state(RouteState::INTERRUPTED);
     }
   }
 }
 
-RouteState::_state_type RouteInterface::get_state() const
+ResponseStatus RouteSelector::resume_main_route(ClearRoute::Request::SharedPtr req)
 {
-  return state_.state;
-}
+  const auto create_resume_request = [](const auto request) {
+    const auto r = std::make_shared<SetWaypointRoute::Request>();
+    r->header = request->header;
+    r->goal_pose = request->goal_pose;
+    r->uuid = request->uuid;
+    r->allow_modification = request->allow_modification;
+    return r;
+  };
 
-void RouteInterface::change_state(const rclcpp::Time & stamp, RouteState::_state_type state)
-{
-  state_.stamp = stamp;
-  state_.state = state;
-  pub_state_->publish(state_);
-}
-
-void RouteInterface::update_state(const RouteState & state)
-{
-  state_ = state;
-  pub_state_->publish(state_);
-}
-
-void RouteInterface::update_route(const LaneletRoute & route)
-{
-  pub_route_->publish(route);
+  // Resume main route using the saved request.
+  if (std::holds_alternative<std::monostate>(main_request_)) {
+    return service_utils::sync_call(cli_clear_route_, req);
+  }
+  // NOTE: Clear the waypoints to avoid returning. Remove this once resuming is supported.
+  if (auto request = std::get_if<WaypointRequest>(&main_request_)) {
+    const auto r = create_resume_request(*request);
+    return service_utils::sync_call(cli_set_waypoint_route_, r);
+  }
+  // NOTE: Clear the segments to avoid returning. Remove this once resuming is supported.
+  if (auto request = std::get_if<LaneletRequest>(&main_request_)) {
+    const auto r = create_resume_request(*request);
+    return service_utils::sync_call(cli_set_waypoint_route_, r);
+  }
+  throw std::logic_error("route_selector: unknown main route request");
 }
 
 }  // namespace mission_planner

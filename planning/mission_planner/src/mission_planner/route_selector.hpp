@@ -12,11 +12,13 @@
 #include <tier4_planning_msgs/srv/set_lanelet_route.hpp>
 #include <tier4_planning_msgs/srv/set_waypoint_route.hpp>
 
+#include <optional>
 #include <variant>
 
 namespace mission_planner
 {
 
+using autoware_common_msgs::msg::ResponseStatus;
 using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_planning_msgs::msg::RouteState;
 using tier4_planning_msgs::srv::ClearRoute;
@@ -27,8 +29,7 @@ using unique_identifier_msgs::msg::UUID;
 class RouteInterface
 {
 public:
-  RouteState::_state_type get_state() const;
-  void change_state(const rclcpp::Time & stamp, RouteState::_state_type state);
+  explicit RouteInterface(rclcpp::Clock::SharedPtr clock);
   void update_state(const RouteState & state);
   void update_route(const LaneletRoute & route);
 
@@ -38,9 +39,13 @@ public:
   rclcpp::Publisher<RouteState>::SharedPtr pub_state_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr pub_route_;
 
+  RouteState::_state_type get_state() const;
+  void change_state(RouteState::_state_type state);
+
 private:
   RouteState state_;
-  UUID uuid_;
+  std::optional<LaneletRoute> route_;
+  rclcpp::Clock::SharedPtr clock_;
 };
 
 class RouteSelector : public rclcpp::Node
@@ -49,6 +54,9 @@ public:
   explicit RouteSelector(const rclcpp::NodeOptions & options);
 
 private:
+  using WaypointRequest = SetWaypointRoute::Request::SharedPtr;
+  using LaneletRequest = SetLaneletRoute::Request::SharedPtr;
+
   RouteInterface main_;
   RouteInterface mrm_;
 
@@ -59,8 +67,6 @@ private:
   rclcpp::Subscription<RouteState>::SharedPtr sub_state_;
   rclcpp::Subscription<LaneletRoute>::SharedPtr sub_route_;
 
-  using WaypointRequest = SetWaypointRoute::Request::SharedPtr;
-  using LaneletRequest = SetLaneletRoute::Request::SharedPtr;
   bool initialized_;
   bool mrm_operating_;
   std::variant<std::monostate, WaypointRequest, LaneletRequest> main_request_;
@@ -79,6 +85,8 @@ private:
     SetWaypointRoute::Request::SharedPtr req, SetWaypointRoute::Response::SharedPtr res);
   void on_set_lanelet_route_mrm(
     SetLaneletRoute::Request::SharedPtr req, SetLaneletRoute::Response::SharedPtr res);
+
+  ResponseStatus resume_main_route(ClearRoute::Request::SharedPtr req);
 };
 
 }  // namespace mission_planner
