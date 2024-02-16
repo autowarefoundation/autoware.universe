@@ -82,16 +82,8 @@ int compareRecord(const traffic_light::FusionRecord & r1, const traffic_light::F
   int visible_score_1 = calVisibleScore(r1);
   int visible_score_2 = calVisibleScore(r2);
   if (visible_score_1 == visible_score_2) {
-    double sum_1 = 0;
-    for_each(r1.signal.elements.begin(), r1.signal.elements.end(), [&sum_1](const auto & elem) {
-      sum_1 = sum_1 + elem.confidence;
-    });
-    double sum_2 = 0;
-    for_each(r2.signal.elements.begin(), r2.signal.elements.end(), [&sum_2](const auto & elem) {
-      sum_2 = sum_2 + elem.confidence;
-    });
-    double confidence_1 = sum_1 / r1.signal.elements.size();
-    double confidence_2 = sum_2 / r2.signal.elements.size();
+    double confidence_1 = r1.signal.elements[0].confidence;
+    double confidence_2 = r2.signal.elements[0].confidence;
     return confidence_1 < confidence_2 ? -1 : 1;
   } else {
     return visible_score_1 < visible_score_2 ? -1 : 1;
