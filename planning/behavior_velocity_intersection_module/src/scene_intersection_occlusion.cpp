@@ -219,7 +219,7 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
   // re-use attention_mask
   attention_mask = cv::Mat(width, height, CV_8UC1, cv::Scalar(0));
   // (3.1) draw all cells on attention_mask behind blocking vehicles as not occluded
-  const auto & blocking_attention_objects = object_info_manager_.parkedObjects();
+  const auto & blocking_attention_objects = object_info_manager_.parkedAttentionObjects();
   for (const auto & blocking_attention_object_info : blocking_attention_objects) {
     debug_data_.parked_targets.objects.push_back(
       blocking_attention_object_info->predicted_object());
@@ -403,7 +403,7 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
   LineString2d ego_occlusion_line;
   ego_occlusion_line.emplace_back(current_pose.position.x, current_pose.position.y);
   ego_occlusion_line.emplace_back(nearest_occlusion_point.point.x, nearest_occlusion_point.point.y);
-  for (const auto & attention_object_info : object_info_manager_.allObjects()) {
+  for (const auto & attention_object_info : object_info_manager_.allAttentionObjects()) {
     const auto obj_poly =
       tier4_autoware_utils::toPolygon2d(attention_object_info->predicted_object());
     if (bg::intersects(obj_poly, ego_occlusion_line)) {

@@ -229,12 +229,12 @@ class ObjectInfoManager
 {
 public:
   std::shared_ptr<ObjectInfo> registerObject(
-    const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
-    const bool belong_intersection_area, const bool is_parked);
+    const unique_identifier_msgs::msg::UUID & uuid, const bool belong_violating_area,
+    const bool belong_attention_area, const bool belong_intersection_area, const bool is_parked);
 
   void registerExistingObject(
-    const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
-    const bool belong_intersection_area, const bool is_parked,
+    const unique_identifier_msgs::msg::UUID & uuid, const bool belong_violating_area,
+    const bool belong_attention_area, const bool belong_intersection_area, const bool is_parked,
     std::shared_ptr<intersection::ObjectInfo> object);
 
   void clearObjects();
@@ -244,9 +244,17 @@ public:
     return attention_area_objects_;
   }
 
-  const std::vector<std::shared_ptr<ObjectInfo>> & parkedObjects() const { return parked_objects_; }
+  const std::vector<std::shared_ptr<ObjectInfo>> & parkedAttentionObjects() const
+  {
+    return parked_objects_;
+  }
 
-  std::vector<std::shared_ptr<ObjectInfo>> allObjects() const;
+  const std::vector<std::shared_ptr<ObjectInfo>> & violatingObjects() const
+  {
+    return violating_objects_;
+  }
+
+  std::vector<std::shared_ptr<ObjectInfo>> allAttentionObjects() const;
 
   const std::unordered_map<unique_identifier_msgs::msg::UUID, std::shared_ptr<ObjectInfo>> &
   getObjectsMap()
@@ -274,6 +282,9 @@ private:
 
   //! parked objects on attention_area/intersection_area
   std::vector<std::shared_ptr<ObjectInfo>> parked_objects_;
+
+  //! objects violating right of way
+  std::vector<std::shared_ptr<ObjectInfo>> violating_objects_;
 
   std::optional<rclcpp::Time> passed_1st_judge_line_first_time_{std::nullopt};
   std::optional<rclcpp::Time> passed_2nd_judge_line_first_time_{std::nullopt};

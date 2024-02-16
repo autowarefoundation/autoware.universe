@@ -52,19 +52,28 @@ public:
   {
     return is_prioritized_ ? attention_non_preceding_stoplines_ : attention_stoplines_;
   }
+  const lanelet::ConstLanelets & attention_non_preceding() const
+  {
+    return attention_non_preceding_;
+  }
   const lanelet::ConstLanelets & conflicting() const { return conflicting_; }
   const lanelet::ConstLanelets & adjacent() const { return adjacent_; }
   const lanelet::ConstLanelets & occlusion_attention() const
   {
     return is_prioritized_ ? attention_non_preceding_ : occlusion_attention_;
   }
-  const lanelet::ConstLanelets & attention_non_preceding() const
+  const lanelet::ConstLanelets & yield() const { return yield_; }
+  const std::vector<std::optional<lanelet::ConstLineString3d>> & yield_stoplines() const
   {
-    return attention_non_preceding_;
+    return yield_stoplines_;
   }
   const std::vector<lanelet::CompoundPolygon3d> & attention_area() const
   {
     return is_prioritized_ ? attention_non_preceding_area_ : attention_area_;
+  }
+  const std::optional<lanelet::CompoundPolygon3d> & first_attention_area() const
+  {
+    return first_attention_area_;
   }
   const std::vector<lanelet::CompoundPolygon3d> & conflicting_area() const
   {
@@ -75,6 +84,7 @@ public:
   {
     return occlusion_attention_area_;
   }
+  const std::vector<lanelet::CompoundPolygon3d> & yield_area() const { return yield_area_; }
   const std::optional<lanelet::ConstLanelet> & first_conflicting_lane() const
   {
     return first_conflicting_lane_;
@@ -86,10 +96,6 @@ public:
   const std::optional<lanelet::ConstLanelet> & first_attention_lane() const
   {
     return first_attention_lane_;
-  }
-  const std::optional<lanelet::CompoundPolygon3d> & first_attention_area() const
-  {
-    return first_attention_area_;
   }
   const std::optional<lanelet::ConstLanelet> & second_attention_lane() const
   {
@@ -103,48 +109,55 @@ public:
   /**
    * the set of attention lanelets which is topologically merged
    */
-  lanelet::ConstLanelets attention_;
-  std::vector<lanelet::CompoundPolygon3d> attention_area_;
+  lanelet::ConstLanelets attention_{};
+  std::vector<lanelet::CompoundPolygon3d> attention_area_{};
 
   /**
    * the stop lines for each attention_lanelets associated with traffic lights. At intersection
    * without traffic lights, each value is null
    */
-  std::vector<std::optional<lanelet::ConstLineString3d>> attention_stoplines_;
+  std::vector<std::optional<lanelet::ConstLineString3d>> attention_stoplines_{};
 
   /**
    * the conflicting part of attention lanelets
    */
-  lanelet::ConstLanelets attention_non_preceding_;
-  std::vector<lanelet::CompoundPolygon3d> attention_non_preceding_area_;
+  lanelet::ConstLanelets attention_non_preceding_{};
+  std::vector<lanelet::CompoundPolygon3d> attention_non_preceding_area_{};
 
   /**
    * the stop lines for each attention_non_preceding_
    */
-  std::vector<std::optional<lanelet::ConstLineString3d>> attention_non_preceding_stoplines_;
+  std::vector<std::optional<lanelet::ConstLineString3d>> attention_non_preceding_stoplines_{};
 
   /**
    * the conflicting lanelets of the objective intersection lanelet
    */
-  lanelet::ConstLanelets conflicting_;
-  std::vector<lanelet::CompoundPolygon3d> conflicting_area_;
+  lanelet::ConstLanelets conflicting_{};
+  std::vector<lanelet::CompoundPolygon3d> conflicting_area_{};
 
   /**
    *
    */
-  lanelet::ConstLanelets adjacent_;
-  std::vector<lanelet::CompoundPolygon3d> adjacent_area_;
+  lanelet::ConstLanelets adjacent_{};
+  std::vector<lanelet::CompoundPolygon3d> adjacent_area_{};
 
   /**
    * the set of attention lanelets for occlusion detection which is topologically merged
    */
-  lanelet::ConstLanelets occlusion_attention_;
-  std::vector<lanelet::CompoundPolygon3d> occlusion_attention_area_;
+  lanelet::ConstLanelets occlusion_attention_{};
+  std::vector<lanelet::CompoundPolygon3d> occlusion_attention_area_{};
+
+  /**
+   * the set of lanelets that the objective intersection lanelet has RightOfWay over
+   */
+  lanelet::ConstLanelets yield_{};
+  std::vector<std::optional<lanelet::ConstLineString3d>> yield_stoplines_{};
+  std::vector<lanelet::CompoundPolygon3d> yield_area_{};
 
   /**
    * the vector of sum of each occlusion_attention lanelet
    */
-  std::vector<double> occlusion_attention_size_;
+  std::vector<double> occlusion_attention_size_{};
 
   /**
    * the first conflicting lanelet which ego path points intersect for the first time

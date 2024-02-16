@@ -190,8 +190,7 @@ IntersectionModule::prepareIntersectionData(const bool is_prioritized, PathWithL
   }
 
   if (!intersection_lanelets_) {
-    intersection_lanelets_ =
-      generateObjectiveLanelets(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
+    intersection_lanelets_ = generateObjectiveLanelets();
   }
   auto & intersection_lanelets = intersection_lanelets_.value();
   debug_data_.attention_area = intersection_lanelets.attention_area();
@@ -199,6 +198,7 @@ IntersectionModule::prepareIntersectionData(const bool is_prioritized, PathWithL
   debug_data_.second_attention_area = intersection_lanelets.second_attention_area();
   debug_data_.occlusion_attention_area = intersection_lanelets.occlusion_attention_area();
   debug_data_.adjacent_area = intersection_lanelets.adjacent_area();
+  debug_data_.yield_area = intersection_lanelets.yield_area();
 
   // ==========================================================================================
   // at the very first time of registration of this module, the path may not be conflicting with
@@ -573,24 +573,17 @@ IntersectionModule::generateIntersectionStopLines(
   return intersection_stoplines;
 }
 
-intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
-  lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const lanelet::ConstLanelet assigned_lanelet) const
+intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets() const
 {
+  const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
+  const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
+  const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
+
   const double detection_area_length = planner_param_.common.attention_area_length;
   const double occlusion_detection_area_length =
     planner_param_.occlusion.occlusion_attention_area_length;
   const bool consider_wrong_direction_vehicle =
     planner_param_.collision_detection.consider_wrong_direction_vehicle;
-
-  // retrieve a stopline associated with a traffic light
-  bool has_traffic_light = false;
-  if (const auto tl_reg_elems = assigned_lanelet.regulatoryElementsAs<lanelet::TrafficLight>();
-      tl_reg_elems.size() != 0) {
-    const auto tl_reg_elem = tl_reg_elems.front();
-    const auto stopline_opt = tl_reg_elem->stopLine();
-    if (!!stopline_opt) has_traffic_light = true;
-  }
 
   // for low priority lane
   // if ego_lane has right of way (i.e. is high priority),
@@ -644,7 +637,7 @@ intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets
   }
 
   // exclude yield lanelets and ego lanelets from detection_lanelets
-  if (turn_direction_ == std::string("straight") && has_traffic_light) {
+  if (turn_direction_ == std::string("straight") && has_traffic_light_) {
     // if assigned lanelet is "straight" with traffic light, detection area is not necessary
   } else {
     if (consider_wrong_direction_vehicle) {
@@ -724,6 +717,23 @@ intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets
   auto [attention_lanelets, original_attention_lanelet_sequences] =
     util::mergeLaneletsByTopologicalSort(detection_and_preceding_lanelets, routing_graph_ptr);
 
+  const auto adjacent_lanes =
+    planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids_);
+
+  // yield
+  lanelet::ConstLanelets yield{};
+  for (const auto & conflicting : conflicting_ex_ego_lanelets) {
+    if (!yield_lanelets.empty()) {
+      if (lanelet::utils::contains(yield_lanelets, conflicting)) {
+        yield.push_back(conflicting);
+      }
+    } else if (has_traffic_light_ && turn_direction_ == "straight") {
+      if (!lanelet::utils::contains(adjacent_lanes, conflicting)) {
+        yield.push_back(conflicting);
+      }
+    }
+  }
+
   intersection::IntersectionLanelets result;
   result.attention_ = std::move(attention_lanelets);
   for (const auto & original_attention_lanelet_seq : original_attention_lanelet_sequences) {
@@ -743,6 +753,7 @@ intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets
     }
     result.attention_stoplines_.push_back(stopline);
   }
+
   result.attention_non_preceding_ = std::move(detection_lanelets);
   for (unsigned i = 0; i < result.attention_non_preceding_.size(); ++i) {
     std::optional<lanelet::ConstLineString3d> stopline = std::nullopt;
@@ -752,11 +763,39 @@ intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets
       const auto stopline_opt = traffic_light->stopLine();
       if (!stopline_opt) continue;
       stopline = stopline_opt.get();
+      break;
     }
     result.attention_non_preceding_stoplines_.push_back(stopline);
   }
+
+  result.yield_ = std::move(yield);
+  for (unsigned i = 0; i < result.yield_.size(); ++i) {
+    std::optional<lanelet::ConstLineString3d> stopline = std::nullopt;
+    const auto & ll = result.yield_.at(i);
+    // ==========================================================================================
+    // NOTE: for yield_lanes we should prioritize road_marking stopline over traffic light stopline
+    // ==========================================================================================
+    const auto traffic_lights = ll.regulatoryElementsAs<lanelet::TrafficLight>();
+    for (const auto & traffic_light : traffic_lights) {
+      const auto stopline_opt = traffic_light->stopLine();
+      if (!stopline_opt) continue;
+      stopline = stopline_opt.get();
+      break;
+    }
+    const auto road_markings = ll.regulatoryElementsAs<lanelet::autoware::RoadMarking>();
+    for (const auto & road_marking : road_markings) {
+      const std::string type =
+        road_marking->roadMarking().attributeOr(lanelet::AttributeName::Type, "none");
+      if (type == lanelet::AttributeValueString::StopLine) {
+        stopline = road_marking->roadMarking();
+        break;
+      }
+    }
+    result.yield_stoplines_.push_back(stopline);
+  }
+
   result.conflicting_ = std::move(conflicting_ex_ego_lanelets);
-  result.adjacent_ = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids_);
+  result.adjacent_ = adjacent_lanes;
   // NOTE: occlusion_attention is not inverted here
   // TODO(Mamoru Sobue): apply mergeLaneletsByTopologicalSort for occlusion lanelets as well and
   // then trim part of them based on curvature threshold
@@ -771,6 +810,7 @@ intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets
   result.conflicting_area_ = util::getPolygon3dFromLanelets(result.conflicting_);
   result.adjacent_area_ = util::getPolygon3dFromLanelets(result.adjacent_);
   result.occlusion_attention_area_ = util::getPolygon3dFromLanelets(result.occlusion_attention_);
+  result.yield_area_ = util::getPolygon3dFromLanelets(result.yield_);
   return result;
 }
 

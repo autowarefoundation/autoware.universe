@@ -74,6 +74,8 @@ void IntersectionModule::updateObjectInfoManagerArea()
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
+  const auto & violating_lanelets = intersection_lanelets.yield();
+  const auto & violating_stoplines = intersection_lanelets.yield_stoplines();
 
   // ==========================================================================================
   // entries that are not observed in this iteration need to be cleared
@@ -104,37 +106,52 @@ void IntersectionModule::updateObjectInfoManagerArea()
     if (belong_adjacent_lanelet_id) {
       continue;
     }
-    const auto belong_attention_lanelet_id =
-      checkAngleForTargetLanelets(object_direction, attention_lanelets, is_parked_vehicle);
-    const auto & obj_pos = predicted_object.kinematics.initial_pose_with_covariance.pose.position;
-    const bool in_intersection_area = [&]() {
-      if (!intersection_area) {
-        return false;
-      }
-      return bg::within(
-        tier4_autoware_utils::Point2d{obj_pos.x, obj_pos.y}, intersection_area.value());
-    }();
+
     std::optional<lanelet::ConstLanelet> attention_lanelet{std::nullopt};
     std::optional<lanelet::ConstLineString3d> stopline{std::nullopt};
-    if (!belong_attention_lanelet_id && !in_intersection_area) {
-      continue;
-    } else if (belong_attention_lanelet_id) {
-      const auto idx = belong_attention_lanelet_id.value();
-      attention_lanelet = attention_lanelets.at(idx);
-      stopline = attention_lanelet_stoplines.at(idx);
+
+    const auto belong_violating_lanelet_id = checkAngleForTargetLanelets(
+      object_direction, violating_lanelets, false /* if is_parked, it is negligible */);
+    bool is_violating_vehicle{false};
+    if (belong_violating_lanelet_id) {
+      const auto idx = belong_violating_lanelet_id.value();
+      attention_lanelet = violating_lanelets.at(idx);
+      stopline = violating_stoplines.at(idx);
+      is_violating_vehicle = true;
+    }
+
+    std::optional<size_t> belong_attention_lanelet_id{std::nullopt};
+    bool in_intersection_area{false};
+    if (!is_violating_vehicle) {
+      belong_attention_lanelet_id =
+        checkAngleForTargetLanelets(object_direction, attention_lanelets, is_parked_vehicle);
+      in_intersection_area = [&]() {
+        const auto & obj_pos =
+          predicted_object.kinematics.initial_pose_with_covariance.pose.position;
+        if (!intersection_area) {
+          return false;
+        }
+        return bg::within(
+          tier4_autoware_utils::Point2d{obj_pos.x, obj_pos.y}, intersection_area.value());
+      }();
+      if (belong_attention_lanelet_id) {
+        const auto idx = belong_attention_lanelet_id.value();
+        attention_lanelet = attention_lanelets.at(idx);
+        stopline = attention_lanelet_stoplines.at(idx);
+      }
     }
 
     const auto object_it = old_map.find(predicted_object.object_id);
     if (object_it != old_map.end()) {
       auto object_info = object_it->second;
       object_info_manager_.registerExistingObject(
-        predicted_object.object_id, belong_attention_lanelet_id.has_value(), in_intersection_area,
-        is_parked_vehicle, object_info);
+        predicted_object.object_id, is_violating_vehicle, belong_attention_lanelet_id.has_value(),
+        in_intersection_area, is_parked_vehicle, object_info);
       object_info->initialize(predicted_object, attention_lanelet, stopline);
     } else {
       auto object_info = object_info_manager_.registerObject(
-        predicted_object.object_id, belong_attention_lanelet_id.has_value(), in_intersection_area,
-        is_parked_vehicle);
+        predicted_object.object_id, is_violating_vehicle, belong_attention_lanelet_id.has_value(),
+        in_intersection_area, is_parked_vehicle);
       object_info->initialize(predicted_object, attention_lanelet, stopline);
     }
   }

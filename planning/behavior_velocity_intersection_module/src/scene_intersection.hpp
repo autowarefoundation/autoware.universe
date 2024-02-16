@@ -224,6 +224,7 @@ public:
     std::optional<lanelet::CompoundPolygon3d> ego_lane{std::nullopt};
     std::optional<geometry_msgs::msg::Polygon> stuck_vehicle_detect_area{std::nullopt};
     std::optional<std::vector<lanelet::CompoundPolygon3d>> yield_stuck_detect_area{std::nullopt};
+    std::optional<std::vector<lanelet::CompoundPolygon3d>> yield_area{std::nullopt};
 
     std::optional<geometry_msgs::msg::Polygon> candidate_collision_ego_lane_polygon{std::nullopt};
     autoware_auto_perception_msgs::msg::PredictedObjects safe_under_traffic_control_targets;
@@ -558,10 +559,7 @@ private:
   /**
    * @brief generate IntersectionLanelets
    */
-  intersection::IntersectionLanelets generateObjectiveLanelets(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const lanelet::ConstLanelet assigned_lanelet) const;
+  intersection::IntersectionLanelets generateObjectiveLanelets() const;
 
   /**
    * @brief generate PathLanelets
