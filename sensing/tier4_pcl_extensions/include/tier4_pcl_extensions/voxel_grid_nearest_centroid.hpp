@@ -153,21 +153,21 @@ public:
     // }
 
     /** \brief Get the eigen vectors of the voxel covariance.
-     * \note Order corresponds with \ref getEvals
+     * \note Order corresponds with \ref getEigenValues
      * \return matrix whose columns contain eigen vectors
      */
     // Eigen::Matrix3d
-    // getEvecs () const
+    // getEigenVectors () const
     // {
     //   return (eigen_vectors_);
     // }
 
     /** \brief Get the eigen values of the voxel covariance.
-     * \note Order corresponds with \ref getEvecs
+     * \note Order corresponds with \ref getEigenVectors
      * \return vector of eigen values
      */
     // Eigen::Vector3d
-    // getEvals () const
+    // getEigenValues () const
     // {
     //   return (eigen_values_);
     // }
