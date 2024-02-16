@@ -42,9 +42,10 @@ private:
 
 public:
   explicit VoxelDistanceBasedStaticMapLoader(
-    rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
+    rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis, double voxel_height_offset,
     std::string * tf_map_input_frame, std::mutex * mutex)
-  : VoxelGridStaticMapLoader(node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, mutex)
+  : VoxelGridStaticMapLoader(
+      node, leaf_size, downsize_ratio_z_axis, voxel_height_offset, tf_map_input_frame, mutex)
   {
     RCLCPP_INFO(logger_, "VoxelDistanceBasedStaticMapLoader initialized.\n");
   }
@@ -60,11 +61,12 @@ private:
   /* data */
 public:
   explicit VoxelDistanceBasedDynamicMapLoader(
-    rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
+    rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis, double distance_threshold,
     std::string * tf_map_input_frame, std::mutex * mutex,
     rclcpp::CallbackGroup::SharedPtr main_callback_group)
   : VoxelGridDynamicMapLoader(
-      node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, mutex, main_callback_group)
+      node, leaf_size, downsize_ratio_z_axis, distance_threshold, tf_map_input_frame, mutex,
+      main_callback_group)
   {
     RCLCPP_INFO(logger_, "VoxelDistanceBasedDynamicMapLoader initialized.\n");
   }

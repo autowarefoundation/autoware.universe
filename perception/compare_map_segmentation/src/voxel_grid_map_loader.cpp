@@ -15,11 +15,12 @@
 #include "compare_map_segmentation/voxel_grid_map_loader.hpp"
 
 VoxelGridMapLoader::VoxelGridMapLoader(
-  rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
+  rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis, double voxel_height_offset,
   std::string * tf_map_input_frame, std::mutex * mutex)
 : logger_(node->get_logger()),
   voxel_leaf_size_(leaf_size),
-  downsize_ratio_z_axis_(downsize_ratio_z_axis)
+  downsize_ratio_z_axis_(downsize_ratio_z_axis),
+  voxel_height_offset_(voxel_height_offset)
 {
   tf_map_input_frame_ = tf_map_input_frame;
   mutex_ptr_ = mutex;
@@ -240,7 +241,7 @@ bool VoxelGridMapLoader::is_in_voxel(
   if (voxel_index != -1) {  // not empty voxel
     const double dist_x = map->points.at(voxel_index).x - target_point.x;
     const double dist_y = map->points.at(voxel_index).y - target_point.y;
-    const double dist_z = map->points.at(voxel_index).z - target_point.z;
+    const double dist_z = map->points.at(voxel_index).z - target_point.z - voxel_height_offset_;
     // check if the point is inside the distance threshold voxel
     if (
       std::abs(dist_x) < distance_threshold && std::abs(dist_y) < distance_threshold &&
@@ -252,9 +253,10 @@ bool VoxelGridMapLoader::is_in_voxel(
 }
 
 VoxelGridStaticMapLoader::VoxelGridStaticMapLoader(
-  rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
+  rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis, double voxel_height_offset,
   std::string * tf_map_input_frame, std::mutex * mutex)
-: VoxelGridMapLoader(node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, mutex)
+: VoxelGridMapLoader(
+    node, leaf_size, downsize_ratio_z_axis, voxel_height_offset, tf_map_input_frame, mutex)
 {
   voxel_leaf_size_z_ = voxel_leaf_size_ * downsize_ratio_z_axis_;
   sub_map_ = node->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -292,10 +294,11 @@ bool VoxelGridStaticMapLoader::is_close_to_map(
 }
 
 VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
-  rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
+  rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis, double voxel_height_offset,
   std::string * tf_map_input_frame, std::mutex * mutex,
   rclcpp::CallbackGroup::SharedPtr main_callback_group)
-: VoxelGridMapLoader(node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, mutex)
+: VoxelGridMapLoader(
+    node, leaf_size, downsize_ratio_z_axis, voxel_height_offset, tf_map_input_frame, mutex)
 {
   voxel_leaf_size_z_ = voxel_leaf_size_ * downsize_ratio_z_axis_;
   auto timer_interval_ms = node->declare_parameter<int>("timer_interval_ms");

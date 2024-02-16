@@ -34,7 +34,7 @@ public:
   explicit VoxelBasedApproximateStaticMapLoader(
     rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
     std::string * tf_map_input_frame, std::mutex * mutex)
-  : VoxelGridStaticMapLoader(node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, mutex)
+  : VoxelGridStaticMapLoader(node, leaf_size, downsize_ratio_z_axis, 0.0, tf_map_input_frame, mutex)
   {
     RCLCPP_INFO(logger_, "VoxelBasedApproximateStaticMapLoader initialized.\n");
   }
@@ -49,7 +49,7 @@ public:
     std::string * tf_map_input_frame, std::mutex * mutex,
     rclcpp::CallbackGroup::SharedPtr main_callback_group)
   : VoxelGridDynamicMapLoader(
-      node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, mutex, main_callback_group)
+      node, leaf_size, downsize_ratio_z_axis, 0.0, tf_map_input_frame, mutex, main_callback_group)
   {
     RCLCPP_INFO(logger_, "VoxelBasedApproximateDynamicMapLoader initialized.\n");
   }

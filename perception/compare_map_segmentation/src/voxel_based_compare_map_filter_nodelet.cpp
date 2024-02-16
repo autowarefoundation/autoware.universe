@@ -46,16 +46,18 @@ VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
     RCLCPP_ERROR(this->get_logger(), "downsize_ratio_z_axis should be positive");
     return;
   }
+  double voxel_height_offset = declare_parameter<double>("voxel_height_offset");
   set_map_in_voxel_grid_ = false;
   if (use_dynamic_map_loading) {
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     voxel_grid_map_loader_ = std::make_unique<VoxelGridDynamicMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_,
-      main_callback_group);
+      this, distance_threshold_, downsize_ratio_z_axis, voxel_height_offset, &tf_input_frame_,
+      &mutex_, main_callback_group);
   } else {
     voxel_grid_map_loader_ = std::make_unique<VoxelGridStaticMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_);
+      this, distance_threshold_, downsize_ratio_z_axis, voxel_height_offset, &tf_input_frame_,
+      &mutex_);
   }
   tf_input_frame_ = *(voxel_grid_map_loader_->tf_map_input_frame_);
   RCLCPP_INFO(this->get_logger(), "tf_map_input_frame: %s", tf_input_frame_.c_str());
