@@ -636,18 +636,18 @@ std::vector<Polygon2d> getCollidedPolygons(
         return ego_polygon;
       }
 
-      if (rss_parameters.steering == "fixed") {
+      if (rss_parameters.extended_polygon_policy == "rectangle") {
         return createExtendedPolygon(
           ego_pose, ego_vehicle_info, lon_offset, lat_margin, is_stopped_object, debug);
       }
 
-      if (rss_parameters.steering == "free") {
+      if (rss_parameters.extended_polygon_policy == "along_path") {
         return createExtendedPolygonAlongPath(
           planned_path, ego_pose, ego_vehicle_info, lon_offset, lat_margin, is_stopped_object,
           debug);
       }
 
-      throw std::domain_error("invalid rss parameter. please select 'fixed' or 'free'.");
+      throw std::domain_error("invalid rss parameter. please select 'rectangle' or 'along_path'.");
     }();
     const auto & extended_obj_polygon =
       is_object_front
