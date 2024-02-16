@@ -269,7 +269,6 @@ ResponseStatus RouteSelector::resume_main_route(ClearRoute::Request::SharedPtr r
   if (const auto route = main_.get_route()) {
     const auto r = create_lanelet_request(route.value());
     const auto status = service_utils::sync_call(cli_set_lanelet_route_, r);
-    RCLCPP_INFO_STREAM(get_logger(), "lanelet resume: " << std::boolalpha << status.success);
     if (status.success) return status;
   }
 
