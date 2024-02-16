@@ -30,6 +30,10 @@ class RouteInterface
 {
 public:
   explicit RouteInterface(rclcpp::Clock::SharedPtr clock);
+  RouteState::_state_type get_state() const;
+  std::optional<LaneletRoute> get_route() const;
+  void change_route();
+  void change_state(RouteState::_state_type state);
   void update_state(const RouteState & state);
   void update_route(const LaneletRoute & route);
 
@@ -38,9 +42,6 @@ public:
   rclcpp::Service<SetWaypointRoute>::SharedPtr srv_set_waypoint_route;
   rclcpp::Publisher<RouteState>::SharedPtr pub_state_;
   rclcpp::Publisher<LaneletRoute>::SharedPtr pub_route_;
-
-  RouteState::_state_type get_state() const;
-  void change_state(RouteState::_state_type state);
 
 private:
   RouteState state_;
