@@ -111,8 +111,8 @@ public:
   struct Leaf
   {
     /** \brief Constructor.
-     * Sets \ref nr_points, \ref icov_, \ref mean_ and \ref e_vals_ to 0 and \ref cov_ and \ref
-     * e_vecs_ to the identity matrix
+     * Sets \ref nr_points, \ref icov_, \ref mean_ and \ref eigen_values_ to 0 and \ref cov_ and \ref
+     * eigen_vectors_ to the identity matrix
      */
     Leaf()
     : nr_points(0),
@@ -120,8 +120,8 @@ public:
       centroid()
     // cov_ (Eigen::Matrix3d::Identity ()),
     // icov_ (Eigen::Matrix3d::Zero ()),
-    // e_vecs_ (Eigen::Matrix3d::Identity ()),
-    // e_vals_ (Eigen::Vector3d::Zero ())
+    // eigen_vectors_ (Eigen::Matrix3d::Identity ()),
+    // eigen_values_ (Eigen::Vector3d::Zero ())
     {
     }
 
@@ -159,7 +159,7 @@ public:
     // Eigen::Matrix3d
     // getEvecs () const
     // {
-    //   return (e_vecs_);
+    //   return (eigen_vectors_);
     // }
 
     /** \brief Get the eigen values of the voxel covariance.
@@ -169,7 +169,7 @@ public:
     // Eigen::Vector3d
     // getEvals () const
     // {
-    //   return (e_vals_);
+    //   return (eigen_values_);
     // }
 
     /** \brief Get the number of points contained by this voxel.
@@ -195,10 +195,10 @@ public:
     // Eigen::Matrix3d icov_;
 
     /** \brief Eigen vectors of voxel covariance matrix */
-    // Eigen::Matrix3d e_vecs_;
+    // Eigen::Matrix3d eigen_vectors_;
 
     /** \brief Eigen values of voxel covariance matrix */
-    // Eigen::Vector3d e_vals_;
+    // Eigen::Vector3d eigen_values_;
 
     PointCloud points;
   };
