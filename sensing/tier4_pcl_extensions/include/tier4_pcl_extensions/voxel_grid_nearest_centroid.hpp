@@ -111,8 +111,8 @@ public:
   struct Leaf
   {
     /** \brief Constructor.
-     * Sets \ref nr_points, \ref icov_, \ref mean_ and \ref eigen_values_ to 0 and \ref cov_ and \ref
-     * eigen_vectors_ to the identity matrix
+     * Sets \ref nr_points, \ref icov_, \ref mean_ and \ref eigen_values_ to 0 and \ref cov_ and
+     * \ref eigen_vectors_ to the identity matrix
      */
     Leaf()
     : nr_points(0),
