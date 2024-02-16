@@ -16,7 +16,7 @@
 #define VEHICLE_CMD_FILTER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
+#include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
@@ -25,7 +25,7 @@
 namespace vehicle_cmd_gate
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using vehicle_cmd_gate::msg::IsFilterActivated;
+using autoware_vehicle_cmd_gate::msg::IsFilterActivated;
 using LimitArray = std::vector<double>;
 
 struct VehicleCmdFilterParam

@@ -23,7 +23,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
+#include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
@@ -68,7 +68,7 @@ using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
-using vehicle_cmd_gate::msg::IsFilterActivated;
+using autoware_vehicle_cmd_gate::msg::IsFilterActivated;
 using visualization_msgs::msg::MarkerArray;
 
 using diagnostic_msgs::msg::DiagnosticStatus;
