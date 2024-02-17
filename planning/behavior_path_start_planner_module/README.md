@@ -329,8 +329,9 @@ PullOutPath --o PullOutPlannerBase
 | intersection_search_length                                  | [m]   | double   | check if intersections exist within this length                                                                     | 30.0                 |
 | length_ratio_for_turn_signal_deactivation_near_intersection | [m]   | double   | deactivate turn signal of this module near intersection                                                             | 0.5                  |
 | objects_collision_check_margins                             | [m]   | [double] | obstacle collision check margins against static objects from the footprint on the trajectory in pull_out_lanes      | [2.0, 1.0, 0.5, 0.1] |
-| collision_check_distance_from_end                           | [m]   | double   | collision check distance from end shift end pose                                                                    | 1.0                  |
 | back_objects_collision_check_margin                         | [m]   | double   | obstacle collision check margin against back static objects from the footprint on the start pose in pull_out_lanes  | 3.0                  |
+| shift_collision_check_distance_from_end                     | [m]   | double   | collision check distance from end shift end pose                                                                    | -10.0                |
+| geometric_collision_check_distance_from_end                 | [m]   | double   | collision check distance from end geometric end pose                                                                | 0.0                  |
 | collision_check_margin_from_front_object                    | [m]   | double   | obstacle collision check margin against front static objects from the footprint on the start pose in pull_out_lanes | 5.0                  |
 | center_line_path_interval                                   | [m]   | double   | reference center line path point interval                                                                           | 1.0                  |
 
