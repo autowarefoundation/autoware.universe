@@ -163,8 +163,6 @@ void BlockageDiagComponent::filter(
     static_cast<uint>((angle_range_deg_[1] - angle_range_deg_[0]) / horizontal_resolution_);
   pcl::PointCloud<PointXYZIRADRT>::Ptr pcl_input(new pcl::PointCloud<PointXYZIRADRT>);
   pcl::fromROSMsg(*input, *pcl_input);
-  std::vector<float> horizontal_bin_reference(ideal_horizontal_bins);
-  std::vector<pcl::PointCloud<PointXYZIRADRT>> each_ring_pointcloud(vertical_bins);
   cv::Mat full_size_depth_map(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
   cv::Mat lidar_depth_map(cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
@@ -184,25 +182,18 @@ void BlockageDiagComponent::filter(
     sky_blockage_range_deg_[0] = angle_range_deg_[0];
     sky_blockage_range_deg_[1] = angle_range_deg_[1];
   } else {
-    for (int i = 0; i < ideal_horizontal_bins; ++i) {
-      horizontal_bin_reference.at(i) = angle_range_deg_[0] + i * horizontal_resolution_;
-    }
     for (const auto p : pcl_input->points) {
-      for (int horizontal_bin = 0;
-           horizontal_bin < static_cast<int>(horizontal_bin_reference.size()); horizontal_bin++) {
-        if (
-          (p.azimuth / 100 >
-           (horizontal_bin_reference.at(horizontal_bin) - horizontal_resolution_ / 2)) &&
-          (p.azimuth / 100 <=
-           (horizontal_bin_reference.at(horizontal_bin) + horizontal_resolution_ / 2))) {
-          if (lidar_model_ == "Pandar40P") {
-            full_size_depth_map.at<uint16_t>(p.ring, horizontal_bin) =
-              UINT16_MAX - distance_coefficient * p.distance;
-          } else if (lidar_model_ == "PandarQT") {
-            full_size_depth_map.at<uint16_t>(vertical_bins - p.ring - 1, horizontal_bin) =
-              UINT16_MAX - distance_coefficient * p.distance;
-          }
-        }
+      int bin_idx =
+        static_cast<int>((p.azimuth / 100. - angle_range_deg_[0]) / horizontal_resolution_);
+      if (bin_idx < 0 || bin_idx >= ideal_horizontal_bins) {
+        continue;
+      }
+      if (lidar_model_ == "Pandar40P") {
+        full_size_depth_map.at<uint16_t>(p.ring, bin_idx) =
+          UINT16_MAX - distance_coefficient * p.distance;
+      } else if (lidar_model_ == "PandarQT") {
+        full_size_depth_map.at<uint16_t>(vertical_bins - p.ring - 1, bin_idx) =
+          UINT16_MAX - distance_coefficient * p.distance;
       }
     }
   }
