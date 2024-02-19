@@ -43,30 +43,22 @@ class MapUpdateModule
 {
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
-  using NormalDistributionsTransform =
-    pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
-  using NdtPtrType = std::shared_ptr<NormalDistributionsTransform>;
+  using NdtType = pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
+  using NdtPtrType = std::shared_ptr<NdtType>;
 
 public:
   MapUpdateModule(
-    rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-    std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
+    rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
     HyperParameters::DynamicMapLoading param);
 
 private:
   friend class NDTScanMatcher;
 
   // Update the specified NDT
-  void update_ndt(
-    NdtPtrType & ndt,
-    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
-    const std::vector<std::string> & map_ids_to_remove);
+  void update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt);
   void update_map(const geometry_msgs::msg::Point & position);
   [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position);
   void publish_partial_pcd_map();
-
-  // Pre-fetch NDT map in a child thread
-  void prefetch_map(const geometry_msgs::msg::Point & position, NdtPtrType & ndt);
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 

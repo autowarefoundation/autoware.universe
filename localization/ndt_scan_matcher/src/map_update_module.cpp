@@ -16,7 +16,7 @@
 
 MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-  std::shared_ptr<NormalDistributionsTransform> & ndt_ptr, HyperParameters::DynamicMapLoading param)
+  NdtPtrType & ndt_ptr, HyperParameters::DynamicMapLoading param)
 : ndt_ptr_(ndt_ptr),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   logger_(node->get_logger()),
@@ -29,9 +29,10 @@ MapUpdateModule::MapUpdateModule(
   pcd_loader_client_ =
     node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>("pcd_loader_service");
 
-  secondary_ndt_ptr_.reset(new NormalDistributionsTransform);
+  secondary_ndt_ptr_.reset(new NdtType);
 
   if (ndt_ptr_) {
+      RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, "Attempt to update a null NDT pointer.");
     *secondary_ndt_ptr_ = *ndt_ptr_;
   }
 
@@ -62,14 +63,54 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
   return distance > param_.update_distance;
 }
 
-void MapUpdateModule::prefetch_map(const geometry_msgs::msg::Point & position, NdtPtrType & ndt)
+void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
+{
+  // If the current position is super far from the previous loading position,
+  // lock and rebuild ndt_ptr_
+  if (need_rebuild_) {
+    ndt_ptr_mutex_->lock();
+    auto param = ndt_ptr_->getParams();
+
+    ndt_ptr_.reset(new NdtType);
+
+    ndt_ptr_->setParams(param);
+
+    update_ndt(position, *ndt_ptr_);
+    ndt_ptr_mutex_->unlock();
+    need_rebuild_ = false;
+  } else {
+    // Load map to the secondary_ndt_ptr, which does not require a mutex lock
+    // Since the update of the secondary ndt ptr and the NDT align (done on
+    // the main ndt_ptr_) overlap, the latency of updating/alignment reduces partly.
+    // If the updating is done the main ndt_ptr_, either the update or the NDT
+    // align will be blocked by the other.
+    update_ndt(position, *secondary_ndt_ptr_);
+
+    ndt_ptr_mutex_->lock();
+    auto input_source = ndt_ptr_->getInputSource();
+    ndt_ptr_ = secondary_ndt_ptr_;
+    ndt_ptr_->setInputSource(input_source);
+    ndt_ptr_mutex_->unlock();
+  }
+
+  secondary_ndt_ptr_.reset(new NdtType);
+  *secondary_ndt_ptr_ = *ndt_ptr_;
+
+  // Memorize the position of the last update
+  last_update_position_ = position;
+
+  // Publish the new ndt maps
+  publish_partial_pcd_map();
+}
+
+void MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt)
 {
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
 
   request->area.center_x = static_cast<float>(position.x);
   request->area.center_y = static_cast<float>(position.y);
   request->area.radius = static_cast<float>(param_.map_radius);
-  request->cached_ids = ndt->getCurrentMapIDs();
+  request->cached_ids = ndt.getCurrentMapIDs();
 
   while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(logger_, "Waiting for pcd loader service. Check the pointcloud_map_loader.");
@@ -88,66 +129,22 @@ void MapUpdateModule::prefetch_map(const geometry_msgs::msg::Point & position, N
     }
     status = result.wait_for(std::chrono::seconds(1));
   }
-  update_ndt(ndt, result.get()->new_pointcloud_with_ids, result.get()->ids_to_remove);
-}
 
-void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
-{
-  // If the current position is super far from the previous loading position,
-  // lock and rebuild ndt_ptr_
-  if (need_rebuild_) {
-    ndt_ptr_mutex_->lock();
-    auto param = ndt_ptr_->getParams();
+  auto& maps_to_add = result.get()->new_pointcloud_with_ids;
+  auto& map_ids_to_remove = result.get()->ids_to_remove;
 
-    ndt_ptr_.reset(new NormalDistributionsTransform);
-
-    ndt_ptr_->setParams(param);
-
-    prefetch_map(position, ndt_ptr_);
-    ndt_ptr_mutex_->unlock();
-    need_rebuild_ = false;
-  } else {
-    // Load map to the secondary_ndt_ptr, which does not require a mutex lock
-    // Since the update of the secondary ndt ptr and the NDT align (done on
-    // the main ndt_ptr_) overlap, the latency of updating/alignment reduces partly.
-    // If the updating is done the main ndt_ptr_, either the update or the NDT
-    // align will be blocked by the other.
-    prefetch_map(position, secondary_ndt_ptr_);
-
-    ndt_ptr_mutex_->lock();
-    auto input_source = ndt_ptr_->getInputSource();
-    ndt_ptr_ = secondary_ndt_ptr_;
-    ndt_ptr_->setInputSource(input_source);
-    ndt_ptr_mutex_->unlock();
-  }
-
-  secondary_ndt_ptr_.reset(new NormalDistributionsTransform);
-  *secondary_ndt_ptr_ = *ndt_ptr_;
-
-  // Memorize the position of the last update
-  last_update_position_ = position;
-
-  // Publish the new ndt maps
-  publish_partial_pcd_map();
-}
-
-void MapUpdateModule::update_ndt(
-  NdtPtrType & ndt,
-  const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
-  const std::vector<std::string> & map_ids_to_remove)
-{
   RCLCPP_INFO(
     logger_, "Update map (Add: %lu, Remove: %lu)", maps_to_add.size(), map_ids_to_remove.size());
   if (maps_to_add.empty() && map_ids_to_remove.empty()) {
     RCLCPP_INFO(logger_, "Skip map update");
     return;
   }
+
   const auto exe_start_time = std::chrono::system_clock::now();
-
   const size_t add_size = maps_to_add.size();
-
   // Perform heavy processing outside of the lock scope
   std::vector<pcl::shared_ptr<pcl::PointCloud<PointTarget>>> points_pcl(add_size);
+
   for (size_t i = 0; i < add_size; i++) {
     points_pcl[i] = pcl::make_shared<pcl::PointCloud<PointTarget>>();
     pcl::fromROSMsg(maps_to_add[i].pointcloud, *points_pcl[i]);
@@ -155,15 +152,15 @@ void MapUpdateModule::update_ndt(
 
   // Add pcd
   for (size_t i = 0; i < add_size; i++) {
-    ndt->addTarget(points_pcl[i], maps_to_add[i].cell_id);
+    ndt.addTarget(points_pcl[i], maps_to_add[i].cell_id);
   }
 
   // Remove pcd
   for (const std::string & map_id_to_remove : map_ids_to_remove) {
-    ndt->removeTarget(map_id_to_remove);
+    ndt.removeTarget(map_id_to_remove);
   }
 
-  ndt->createVoxelKdtree();
+  ndt.createVoxelKdtree();
 
   const auto exe_end_time = std::chrono::system_clock::now();
   const auto duration_micro_sec =
