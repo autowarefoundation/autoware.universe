@@ -23,16 +23,26 @@ using Time = builtin_interfaces::msg::Time;
 
 // Finds a signal by its ID within a TrafficSignalArray
 std::optional<TrafficSignal> find_signal_by_id(
-  const TrafficSignalArray & signals, int64_t signal_id)
+  const std::unordered_map<lanelet::Id, TrafficSignal> & id_signal_map, int64_t signal_id)
 {
-  auto it = std::find_if(
-    signals.signals.begin(), signals.signals.end(),
-    [signal_id](const TrafficSignal & signal) { return signal.traffic_signal_id == signal_id; });
-  if (it != signals.signals.end()) {
-    return *it;  // Return the found signal
+  auto it = id_signal_map.find(signal_id);
+  if (it != id_signal_map.end()) {
+    return it->second;  // Return the found signal
   } else {
     return std::nullopt;  // Return an empty optional if not found
   }
+}
+
+// Creates a map from signal IDs to TrafficSignal objects.
+std::unordered_map<lanelet::Id, TrafficSignal> create_id_signal_map(
+  const TrafficSignalArray & signals)
+{
+  std::unordered_map<lanelet::Id, TrafficSignal> id_signal_map;
+  for (const auto & signal : signals.signals) {
+    id_signal_map[signal.traffic_signal_id] = signal;
+  }
+
+  return id_signal_map;
 }
 
 // Creates a TrafficSignalElement with specified attributes
@@ -204,15 +214,18 @@ autoware_perception_msgs::msg::TrafficSignalArray SignalMatchValidator::validate
   // Set newer stamp
   validated_signals.stamp = util::get_newer_stamp(perception_signals.stamp, external_signals.stamp);
 
+  // Create a map from signals to reduce the calculation cost
+  const auto perception_id_signal_map = util::create_id_signal_map(perception_signals);
+  const auto external_id_signal_map = util::create_id_signal_map(external_signals);
+
   // Create the unique set of the received id,
   // then compare the signal element for each received signal id
   const auto received_signal_id_set =
     util::create_signal_id_set(perception_signals.signals, external_signals.signals);
 
   for (const auto & signal_id : received_signal_id_set) {
-    const auto perception_result = util::find_signal_by_id(perception_signals, signal_id);
-    const auto external_result = util::find_signal_by_id(external_signals, signal_id);
-
+    const auto perception_result = util::find_signal_by_id(perception_id_signal_map, signal_id);
+    const auto external_result = util::find_signal_by_id(external_id_signal_map, signal_id);
     // Neither result exists
     if (!perception_result && !external_result) {
       continue;
