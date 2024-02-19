@@ -75,15 +75,15 @@ private:
   /**
    * @brief check if the goal_footprint is within the combined lanelet of route_lanelets plus the
    * succeeding lanelets around the goal
-   * @attetion this function will terminate when the accumulated search length from the initial
-   * current_lanelet execeeds max_longitudinal_offset_m + search_margin, so under normal assumptions
+   * @attention this function will terminate when the accumulated search length from the initial
+   * current_lanelet exceeds max_longitudinal_offset_m + search_margin, so under normal assumptions
    * (i.e. the map is composed of finite elements of practically normal sized lanelets), it is
    * assured to terminate
    * @param current_lanelet the start lanelet to begin recursive query
    * @param combined_prev_lanelet initial entire route_lanelets plus the small consecutive lanelets
    * around the goal during the query
-   * @param next_lane_length the accumulated total legth from the start lanelet of the search to the
-   * lanelet of current goal query
+   * @param next_lane_length the accumulated total length from the start lanelet of the search to
+   * the lanelet of current goal query
    */
   bool check_goal_footprint_inside_lanes(
     const lanelet::ConstLanelet & current_lanelet,
