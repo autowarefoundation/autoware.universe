@@ -56,9 +56,8 @@ std::vector<TrafficLightConstPtr> filter_pedestrian_signals(const LaneletMapCons
   for (const auto & crosswalk : crosswalks) {
     const auto traffic_light_reg_elems =
       crosswalk.regulatoryElementsAs<const lanelet::TrafficLight>();
-    std::transform(
-      traffic_light_reg_elems.begin(), traffic_light_reg_elems.end(), std::back_inserter(signals),
-      [](const auto & elem) { return elem; });
+    std::copy(
+      traffic_light_reg_elems.begin(), traffic_light_reg_elems.end(), std::back_inserter(signals));
   }
 
   return signals;
