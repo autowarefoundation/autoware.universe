@@ -71,7 +71,7 @@ private:
   std::string map_frame_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  PoseStamped transform_pose(const PoseStamped & input);
+  PoseStamped transform_pose(const PoseStamped & input) const;
 
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
@@ -144,7 +144,8 @@ private:
 
   double reroute_time_threshold_{10.0};
   double minimum_reroute_length_{30.0};
-  bool check_reroute_safety(const LaneletRoute & original_route, const LaneletRoute & target_route);
+  bool check_reroute_safety(
+    const LaneletRoute & original_route, const LaneletRoute & target_route) const;
 
   std::shared_ptr<LaneletRoute> normal_route_{nullptr};
   std::shared_ptr<LaneletRoute> mrm_route_{nullptr};

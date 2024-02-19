@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <array>
 #include <random>
+#include <utility>
 
 namespace
 {
@@ -174,7 +175,7 @@ void MissionPlanner::on_map(const HADMapBin::ConstSharedPtr msg)
   map_ptr_ = msg;
 }
 
-PoseStamped MissionPlanner::transform_pose(const PoseStamped & input)
+PoseStamped MissionPlanner::transform_pose(const PoseStamped & input) const
 {
   PoseStamped output;
   geometry_msgs::msg::TransformStamped transform;
@@ -728,7 +729,7 @@ void MissionPlanner::on_change_route_points(
 }
 
 bool MissionPlanner::check_reroute_safety(
-  const LaneletRoute & original_route, const LaneletRoute & target_route)
+  const LaneletRoute & original_route, const LaneletRoute & target_route) const
 {
   if (original_route.segments.empty() || target_route.segments.empty() || !map_ptr_ || !odometry_) {
     RCLCPP_ERROR(get_logger(), "Check reroute safety failed. Route, map or odometry is not set.");
@@ -749,80 +750,86 @@ bool MissionPlanner::check_reroute_safety(
       return false;
     }
 
-    bool is_same = false;
     for (const auto & primitive : original_primitives) {
       const auto has_same = [&](const auto & p) { return p.id == primitive.id; };
-      is_same = std::find_if(target_primitives.begin(), target_primitives.end(), has_same) !=
-                target_primitives.end();
+      const bool is_same =
+        std::find_if(target_primitives.begin(), target_primitives.end(), has_same) !=
+        target_primitives.end();
+      if (is_same) {
+        return true;
+      }
     }
-    return is_same;
+    return false;
   };
 
   // find idx of original primitives that matches the target primitives
-  const auto start_idx_opt = std::invoke([&]() -> std::optional<size_t> {
-    /*
-     * find the index of the original route that has same idx with the front segment of the new
-     * route
-     *
-     *                          start_idx
-     * +-----------+-----------+-----------+-----------+-----------+
-     * |           |           |           |           |           |
-     * +-----------+-----------+-----------+-----------+-----------+
-     * |           |           |           |           |           |
-     * +-----------+-----------+-----------+-----------+-----------+
-     *  original    original    original    original    original
-     *                          target      target      target
-     */
-    const auto target_front_primitives = target_route.segments.front().primitives;
-    for (size_t i = 0; i < original_route.segments.size(); ++i) {
-      const auto & original_primitives = original_route.segments.at(i).primitives;
-      if (hasSamePrimitives(original_primitives, target_front_primitives)) {
-        return i;
+  const auto start_idx_opt =
+    std::invoke([&]() -> std::optional<std::pair<size_t /* original */, size_t /* target */>> {
+      /*
+       * find the index of the original route that has same idx with the front segment of the new
+       * route
+       *
+       *                                start_idx == 2
+       * +--------------+--------------+--------------+--------------+-------------+
+       * |              |              |              |              |             |
+       * +--------------+--------------+--------------+--------------+-------------+
+       * |              |              |              |              |             |
+       * +--------------+--------------+--------------+--------------+-------------+
+       *  original[0]    original[1]    original[2]    original[3]    original[4]
+       *                                target[0]      target[1]      target[2]
+       */
+      const auto target_front_primitives = target_route.segments.front().primitives;
+      for (size_t i = 0; i < original_route.segments.size(); ++i) {
+        const auto & original_primitives = original_route.segments.at(i).primitives;
+        if (hasSamePrimitives(original_primitives, target_front_primitives)) {
+          return std::make_pair(i, 0);
+        }
       }
-    }
 
-    /*
-     * find the target route that has same idx with the front segment of the original route
-     *
-     *                          start_idx
-     * +-----------+-----------+-----------+-----------+-----------+
-     * |           |           |           |           |           |
-     * +-----------+-----------+-----------+-----------+-----------+
-     * |           |           |           |           |           |
-     * +-----------+-----------+-----------+-----------+-----------+
-     * 　　　　　　　　　　　　　　　original    original    original
-     *  target      target      target      target      target
-     */
-    const auto original_front_primitives = original_route.segments.front().primitives;
-    for (size_t i = 0; i < target_route.segments.size(); ++i) {
-      const auto & target_primitives = target_route.segments.at(i).primitives;
-      if (hasSamePrimitives(target_primitives, original_front_primitives)) {
-        return 0;
+      /*
+       * find the target route that has same idx with the front segment of the original route
+       *
+       *                                start_idx == 0
+       * +--------------+--------------+--------------+--------------+-------------+
+       * |              |              |              |              |             |
+       * +--------------+--------------+--------------+--------------+-------------+
+       * |              |              |              |              |             |
+       * +--------------+--------------+--------------+--------------+-------------+
+       *                                original[0]    original[1]    original[2]
+       *  target[0]      target[1]      target[2]      target[3]      target[4]
+       */
+      const auto original_front_primitives = original_route.segments.front().primitives;
+      for (size_t i = 0; i < target_route.segments.size(); ++i) {
+        const auto & target_primitives = target_route.segments.at(i).primitives;
+        if (hasSamePrimitives(target_primitives, original_front_primitives)) {
+          return std::make_pair(0, i);
+        }
       }
-    }
 
-    return std::nullopt;
-  });
+      return std::nullopt;
+    });
   if (!start_idx_opt.has_value()) {
     RCLCPP_ERROR(
       get_logger(), "Check reroute safety failed. Cannot find the start index of the route.");
     return false;
   }
-  const size_t start_idx = start_idx_opt.value();
+  const auto [start_idx, start_idx_target] = start_idx_opt.value();
 
   // find last idx that matches the target primitives
   size_t end_idx = start_idx;
-  for (size_t i = 1; i < target_route.segments.size(); ++i) {
+  size_t end_idx_target = start_idx_target;
+  for (size_t i = 1; i < target_route.segments.size() - start_idx_target; ++i) {
     if (start_idx + i > original_route.segments.size() - 1) {
       break;
     }
 
     const auto & original_primitives = original_route.segments.at(start_idx + i).primitives;
-    const auto & target_primitives = target_route.segments.at(i).primitives;
+    const auto & target_primitives = target_route.segments.at(start_idx_target + i).primitives;
     if (!hasSamePrimitives(original_primitives, target_primitives)) {
       break;
     }
     end_idx = start_idx + i;
+    end_idx_target = end_idx_target + i;
   }
 
   // create map
@@ -870,7 +877,7 @@ bool MissionPlanner::check_reroute_safety(
   }
 
   // check if the goal is inside of the target terminal lanelet
-  const auto & target_end_primitives = target_route.segments.at(end_idx - start_idx).primitives;
+  const auto & target_end_primitives = target_route.segments.at(end_idx_target).primitives;
   const auto & target_goal = target_route.goal_pose;
   for (const auto & target_end_primitive : target_end_primitives) {
     const auto lanelet = lanelet_map_ptr_->laneletLayer.get(target_end_primitive.id);
@@ -882,8 +889,11 @@ bool MissionPlanner::check_reroute_safety(
                                     lanelet::utils::to2D(target_goal_position).basicPoint())
                                     .length;
       const double target_lanelet_length = lanelet::utils::getLaneletLength2d(lanelet);
-      const double dist = target_lanelet_length - dist_to_goal;
-      accumulated_length = std::max(accumulated_length - dist, 0.0);
+      // NOTE: `accumulated_length` here contains the length of the entire target_end_primitive, so
+      // the remaining distance from the goal to the end of the target_end_primitive needs to be
+      // subtracted.
+      const double remaining_dist = target_lanelet_length - dist_to_goal;
+      accumulated_length = std::max(accumulated_length - remaining_dist, 0.0);
       break;
     }
   }
