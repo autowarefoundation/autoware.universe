@@ -40,7 +40,6 @@ SimplePymodel::SimplePymodel(
   if (!param_file_path.empty()) {
     py::object load_params_succ = py_model_class.attr("load_params")(param_file_path.c_str());
     py_model_class.attr("reset")();
-    std::cout << "Params loaded" << std::endl;
   } else {
     // TODO warning that using default model params
   }
@@ -62,8 +61,6 @@ SimplePymodel::SimplePymodel(
     pymodel_input_names.push_back(PyBytes_AS_STRING(
       PyUnicode_AsEncodedString(pymodel_input_names_[INPUT_IDX].ptr(), "UTF-8", "strict")));
   }
-
-  std::cout << "PymodelInterface import name:  " << pymodel_import_name << std::endl;
 }
 
 std::vector<double> SimplePymodel::getNextState(

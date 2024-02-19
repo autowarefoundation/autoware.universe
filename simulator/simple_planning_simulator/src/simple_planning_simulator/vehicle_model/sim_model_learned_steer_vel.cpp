@@ -32,8 +32,6 @@ SimModelLearnedSteerVel::SimModelLearnedSteerVel(
   vehicle.generateConnections(input_names, state_names);
 
   vehicle.dtSet(dt);
-
-  std::cout << "Python model loaded successfully " << std::endl;
 }
 
 double SimModelLearnedSteerVel::getX()

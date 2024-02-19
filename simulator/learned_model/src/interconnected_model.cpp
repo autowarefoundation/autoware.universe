@@ -95,8 +95,6 @@ void InterconnectedModel::initState(std::vector<double> new_state)
 
   if (state_changed_externally) {
     // Reinitialize model
-    std::cout << "Reseting model" << std::endl;
-
     // Currently initializing model to zero -> TODO find a way how to initialize them to some
     // other default values
     std::fill(model_signals_vec.begin(), model_signals_vec.end(), 0.0);
