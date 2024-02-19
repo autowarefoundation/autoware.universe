@@ -228,6 +228,10 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
+    // Check if stop is coming.
+    const bool is_stop_signal = isStopSignal();
+
+    // Decide if stop or proceed using the remaining time to red signal
     const auto rest_time_to_red_signal =
       planner_data_->getRestTimeToRedSignal(traffic_light_reg_elem_.id());
     if (
@@ -248,9 +252,6 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       }
       return true;
     }
-
-    // Check if stop is coming.
-    const bool is_stop_signal = isStopSignal();
 
     // Update stop signal received time
     if (is_stop_signal) {
@@ -319,6 +320,9 @@ void TrafficLightModule::updateTrafficSignal()
   TrafficSignalStamped signal;
   if (!findValidTrafficSignal(signal)) {
     // Don't stop if it never receives traffic light topic.
+    // Reset looking_tl_state
+    looking_tl_state_.elements.clear();
+    looking_tl_state_.traffic_signal_id = 0;
     return;
   }
 
