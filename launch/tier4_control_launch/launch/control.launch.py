@@ -375,11 +375,18 @@ def launch_setup(context, *args, **kwargs):
         [
             PushRosNamespace("control"),
             ComposableNodeContainer(
-                name="control_validator_container",
+                name="control_container_validator",
                 namespace="",
                 package="rclcpp_components",
                 executable=LaunchConfiguration("container_executable"),
-                composable_node_descriptions=[control_validator_component, glog_component],
+                composable_node_descriptions=[
+                    control_validator_component,
+                    ComposableNode(
+                        package="glog_component",
+                        plugin="GlogComponent",
+                        name="glog_component_validator",
+                    ),
+                ],
             ),
         ]
     )
