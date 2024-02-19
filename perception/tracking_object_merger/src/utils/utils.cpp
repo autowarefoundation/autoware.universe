@@ -323,22 +323,24 @@ autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsVXMe
   autoware_auto_perception_msgs::msg::TrackedObjectKinematics output_kinematics;
   // copy main object at first
   output_kinematics = main_obj.kinematics;
-  // if the main object is run opposite direction, flip the main object
+
+    // if the main object is run opposite direction, flip the main object
   if (output_kinematics.twist_with_covariance.twist.linear.x < 0.0) {
     // flip velocity
     output_kinematics.twist_with_covariance.twist.linear.x *= -1.0;
     output_kinematics.twist_with_covariance.twist.linear.y *= -1.0;
-    // flip orientation, convert quaternion to have the opposite direction
+    // flip orientation, rotate 180 deg
     const auto q = tf2::Quaternion(
       output_kinematics.pose_with_covariance.pose.orientation.x,
       output_kinematics.pose_with_covariance.pose.orientation.y,
       output_kinematics.pose_with_covariance.pose.orientation.z,
       output_kinematics.pose_with_covariance.pose.orientation.w);
-    const auto q_flip = q * tf2::Quaternion(0, 0, 1, 0);
-    output_kinematics.pose_with_covariance.pose.orientation.x = q_flip.x();
-    output_kinematics.pose_with_covariance.pose.orientation.y = q_flip.y();
-    output_kinematics.pose_with_covariance.pose.orientation.z = q_flip.z();
-    output_kinematics.pose_with_covariance.pose.orientation.w = q_flip.w();
+    const auto q_rot = tf2::Quaternion(tf2::Vector3(0, 0, 1), M_PI);
+    const auto q_rotated = q * q_rot;
+    output_kinematics.pose_with_covariance.pose.orientation.x = q_rotated.x();
+    output_kinematics.pose_with_covariance.pose.orientation.y = q_rotated.y();
+    output_kinematics.pose_with_covariance.pose.orientation.z = q_rotated.z();
+    output_kinematics.pose_with_covariance.pose.orientation.w = q_rotated.w();
   }
 
   auto sub_obj_ = sub_obj;
