@@ -99,11 +99,18 @@ We created a few basic models to showcase how `LEARNED_STEER_VEL` works.
 1. Install [a library](https://github.com/atomyks/control_analysis_pipeline/tree/v0.1_autoware) that contains basic Python models. (branch: `v0.1_autoware`)
 
 2. In a file `src/vehicle/sample_vehicle_launch/sample_vehicle_description/config/simulator_model.param.yaml` set `vehicle_model_type` to `LEARNED_STEER_VEL`. In the same file set the following parameters. These models are for testing and do not require any parameter file.
+
 ```yaml
-model_module_paths: ["control_analysis_pipeline.autoware_models.vehicle.kinematic", "control_analysis_pipeline.autoware_models.steering.steer_example", "control_analysis_pipeline.autoware_models.drive.drive_example"]
+model_module_paths:
+  [
+    "control_analysis_pipeline.autoware_models.vehicle.kinematic",
+    "control_analysis_pipeline.autoware_models.steering.steer_example",
+    "control_analysis_pipeline.autoware_models.drive.drive_example",
+  ]
 model_param_paths: ["", "", ""]
 model_class_names: ["KinematicModel", "SteerExample", "DriveExample"]
 ```
+
 3. Build the Autoware packages.
 
 4. Launch the script `ros2 launch autoware_launch planning_simulator.launch.xml map_path:=$HOME/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit`
