@@ -456,7 +456,7 @@ void MrmHandler::updateMrmState()
       transitionTo(MrmState::NORMAL);
       return;
     }
-    // TODO(Kenji Miyake): Check if human can safely override, for example using DSM
+    // TODO(TetsuKawa): Check if human can safely override, for example using DSM
     if (is_takeover_done) {
       transitionTo(MrmState::NORMAL);
       return;
@@ -469,7 +469,7 @@ void MrmHandler::updateMrmState()
         return;
       }
     } else if (mrm_state_.state == MrmState::MRM_OPERATING) {
-      // TODO(Kenji Miyake): Check MRC is accomplished
+      // TODO(TetsuKawa): Check MRC is accomplished
       if (mrm_state_.behavior == MrmState::PULL_OVER) {
         if (isStopped() && isArrivedAtGoal()) {
           transitionTo(MrmState::MRM_SUCCEEDED);
