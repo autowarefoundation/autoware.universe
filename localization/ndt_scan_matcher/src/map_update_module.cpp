@@ -15,8 +15,8 @@
 #include "ndt_scan_matcher/map_update_module.hpp"
 
 MapUpdateModule::MapUpdateModule(
-  rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-  NdtPtrType & ndt_ptr, HyperParameters::DynamicMapLoading param)
+  rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
+  HyperParameters::DynamicMapLoading param)
 : ndt_ptr_(ndt_ptr),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   logger_(node->get_logger()),
@@ -133,8 +133,8 @@ void MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
     status = result.wait_for(std::chrono::seconds(1));
   }
 
-  auto& maps_to_add = result.get()->new_pointcloud_with_ids;
-  auto& map_ids_to_remove = result.get()->ids_to_remove;
+  auto & maps_to_add = result.get()->new_pointcloud_with_ids;
+  auto & map_ids_to_remove = result.get()->ids_to_remove;
 
   RCLCPP_INFO(
     logger_, "Update map (Add: %lu, Remove: %lu)", maps_to_add.size(), map_ids_to_remove.size());
