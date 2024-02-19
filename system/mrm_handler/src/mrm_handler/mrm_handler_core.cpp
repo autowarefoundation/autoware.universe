@@ -264,7 +264,7 @@ void MrmHandler::callMrmBehavior(
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Pull over is operated");
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Pull over is failed to operate");
+      RCLCPP_ERROR(this->get_logger(), "Pull over failed to operate");
     }
     return;
   }
@@ -273,7 +273,7 @@ void MrmHandler::callMrmBehavior(
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is operated");
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Comfortable stop is failed to operate");
+      RCLCPP_ERROR(this->get_logger(), "Comfortable stop failed to operate");
     }
     return;
   }
@@ -282,7 +282,7 @@ void MrmHandler::callMrmBehavior(
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Emergency stop is operated");
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Emergency stop is failed to operate");
+      RCLCPP_ERROR(this->get_logger(), "Emergency stop failed to operate");
     }
     return;
   }
@@ -306,7 +306,7 @@ void MrmHandler::cancelMrmBehavior(
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Pull over is canceled");
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Pull over is failed to cancel");
+      RCLCPP_ERROR(this->get_logger(), "Pull over failed to cancel");
     }
     return;
   }
@@ -315,7 +315,7 @@ void MrmHandler::cancelMrmBehavior(
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is canceled");
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Comfortable stop is failed to cancel");
+      RCLCPP_ERROR(this->get_logger(), "Comfortable stop failed to cancel");
     }
     return;
   }
@@ -324,7 +324,7 @@ void MrmHandler::cancelMrmBehavior(
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Emergency stop is canceled");
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Emergency stop is failed to cancel");
+      RCLCPP_ERROR(this->get_logger(), "Emergency stop failed to cancel");
     }
     return;
   }
