@@ -213,7 +213,7 @@ autoware_perception_msgs::msg::TrafficSignalArray SignalMatchValidator::validate
     const auto perception_result = util::find_signal_by_id(perception_signals, signal_id);
     const auto external_result = util::find_signal_by_id(external_signals, signal_id);
 
-    // Both results doesn't exist
+    // Neither result exists
     if (!perception_result && !external_result) {
       continue;
     }
