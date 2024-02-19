@@ -11,3 +11,4 @@
     dust_buffering_interval: 1
     max_distance_range: 200.0
     horizontal_resolution: 0.4
+    blockage_kernel: 10

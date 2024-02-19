@@ -63,6 +63,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `blockage_buffering_interval` | int    | The interval of buffering about blockage detection                                                                            |
 | `dust_ratio_threshold`        | float  | The threshold of dusty area ratio                                                                                             |
 | `dust_count_threshold`        | int    | The threshold of number continuous frames include dusty area                                                                  |
+| `blockage_kernel`             | int    | The kernel size of morphology processing the detected blockage area                                                           |
 | `dust_kernel_size`            | int    | The kernel size of morphology processing in dusty area detection                                                              |
 | `dust_buffering_frames`       | int    | The number of buffering about dusty area detection [range:1-200]                                                              |
 | `dust_buffering_interval`     | int    | The interval of buffering about dusty area detection                                                                          |

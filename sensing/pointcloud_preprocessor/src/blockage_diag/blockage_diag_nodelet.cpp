@@ -44,6 +44,7 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     dust_buffering_interval_ = declare_parameter<int>("dust_buffering_interval");
     max_distance_range_ = declare_parameter<double>("max_distance_range");
     horizontal_resolution_ = declare_parameter<double>("horizontal_resolution");
+    blockage_kernel_ = declare_parameter<int>("blockage_kernel");
   }
   dust_mask_buffer.set_capacity(dust_buffering_frames_);
   no_return_mask_buffer.set_capacity(blockage_buffering_frames_);
