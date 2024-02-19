@@ -60,17 +60,17 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11_vendor REQUIRED)
 find_package(pybind11 REQUIRED)
 
-pybind11_add_module(freespace_planning_algorithms_python SHARED
+pybind11_add_module(${PROJECT_NAME}_pybind SHARED
   scripts/bind/astar_search_pybind.cpp
 )
 
-include_directories(freespace_planning_algorithms_python PRIVATE
+include_directories(${PROJECT_NAME}_pybind PRIVATE
   include/
 )
-target_link_libraries(freespace_planning_algorithms_python PRIVATE
-  freespace_planning_algorithms
+target_link_libraries(${PROJECT_NAME}_pybind PRIVATE
+  ${PROJECT_NAME}
 )
 
-install(TARGETS freespace_planning_algorithms_python
+install(TARGETS ${PROJECT_NAME}_pybind
   DESTINATION "${PYTHON_INSTALL_DIR}/${PROJECT_NAME}"
 )
