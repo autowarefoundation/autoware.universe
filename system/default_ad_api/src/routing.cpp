@@ -89,12 +89,14 @@ void RoutingNode::on_operation_mode(const OperationModeState::Message::ConstShar
 
 void RoutingNode::on_state(const State::Message::ConstSharedPtr msg)
 {
-  state_ = *msg;
-
   // TODO(Takagi, Isamu): Add adapi initializing state.
-  if (State::Message::INITIALIZING) {
-    pub_state_->publish(conversion::convert_state(*msg));
+  // Represent initializing state by not publishing the topic for now.
+  if (msg->state == State::Message::INITIALIZING) {
+    return;
   }
+
+  state_ = *msg;
+  pub_state_->publish(conversion::convert_state(*msg));
 
   // Change operation mode to stop when the vehicle arrives.
   if (msg->state == State::Message::ARRIVED) {
