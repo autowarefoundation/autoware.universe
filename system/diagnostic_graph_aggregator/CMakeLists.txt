@@ -39,7 +39,8 @@ if(BUILD_TESTING)
 endif()
 
 install(PROGRAMS
-  tool/dump
+  script/dump.py
+  RENAME dump
   DESTINATION lib/${PROJECT_NAME}
 )
 
