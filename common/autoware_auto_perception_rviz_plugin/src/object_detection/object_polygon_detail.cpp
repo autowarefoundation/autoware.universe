@@ -170,9 +170,9 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
 
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.15);
   marker_ptr->color.a = alpha;
-  marker_ptr->color.r = 1.0;
-  marker_ptr->color.g = 0.2;
-  marker_ptr->color.b = 0.4;
+  marker_ptr->color.r = 0.2;
+  marker_ptr->color.g = 0.4;
+  marker_ptr->color.b = 0.9;
 
   return marker_ptr;
 }
@@ -394,9 +394,9 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_covariance_marker_ptr(
   // marker configuration
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.15);
   marker_ptr->color.a = alpha;
-  marker_ptr->color.r = 1.0;
-  marker_ptr->color.g = 1.0;
-  marker_ptr->color.b = 1.0;
+  marker_ptr->color.r = 0.8;
+  marker_ptr->color.g = 0.8;
+  marker_ptr->color.b = 0.8;
   return marker_ptr;
 }
 
