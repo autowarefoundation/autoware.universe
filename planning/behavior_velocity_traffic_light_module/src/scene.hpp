@@ -63,6 +63,10 @@ public:
     double yellow_lamp_period;
     double stop_time_hysteresis;
     bool enable_pass_judge;
+    bool v2i_use_rest_time;
+    double v2i_last_time_allowed_to_pass;
+    double v2i_velocity_threshold;
+    double v2i_required_time_to_departure;
   };
 
 public:
@@ -107,6 +111,8 @@ private:
   bool isTrafficSignalTimedOut() const;
 
   void updateTrafficSignal();
+
+  bool isDataTimeout(const rclcpp::Time & data_time) const;
 
   // Lane id
   const int64_t lane_id_;

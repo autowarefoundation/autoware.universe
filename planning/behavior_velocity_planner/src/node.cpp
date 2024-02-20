@@ -108,6 +108,11 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
+  sub_traffic_signals_raw_v2i_ =
+    this->create_subscription<jpn_signal_v2i_msgs::msg::TrafficLightInfo>(
+      "~/input/traffic_signals_raw_v2i", 1,
+      std::bind(&BehaviorVelocityPlannerNode::onTrafficSignalsRawV2I, this, _1),
+      createSubscriptionOptions(this));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
@@ -327,6 +332,21 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
     traffic_signal.stamp = msg->stamp;
     traffic_signal.signal = signal;
     planner_data_.traffic_light_id_map[signal.traffic_signal_id] = traffic_signal;
+  }
+}
+
+void BehaviorVelocityPlannerNode::onTrafficSignalsRawV2I(
+  const jpn_signal_v2i_msgs::msg::TrafficLightInfo::ConstSharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  for (const auto & car_light : msg->car_lights) {
+    for (const auto & state : car_light.states) {
+      TrafficSignalTimeToRedStamped time_to_red;
+      time_to_red.stamp = msg->header.stamp;
+      time_to_red.time_to_red = car_light.min_rest_time_to_red;
+      planner_data_.traffic_light_time_to_red_id_map[state.traffic_signal_id] = time_to_red;
+    }
   }
 }
 

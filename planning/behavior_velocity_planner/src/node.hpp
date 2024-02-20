@@ -27,6 +27,8 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <jpn_signal_v2i_msgs/msg/extra_traffic_signal.hpp>
+#include <jpn_signal_v2i_msgs/msg/traffic_light_info.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -71,6 +73,8 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_perception_msgs::msg::TrafficSignalArray>::SharedPtr
     sub_traffic_signals_;
+  rclcpp::Subscription<jpn_signal_v2i_msgs::msg::TrafficLightInfo>::SharedPtr
+    sub_traffic_signals_raw_v2i_;
   rclcpp::Subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
     sub_virtual_traffic_light_states_;
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_occupancy_grid_;
@@ -86,6 +90,7 @@ private:
   void onLaneletMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   void onTrafficSignals(
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
+  void onTrafficSignalsRawV2I(const jpn_signal_v2i_msgs::msg::TrafficLightInfo::ConstSharedPtr msg);
   void onVirtualTrafficLightStates(
     const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
   void onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);

@@ -228,6 +228,7 @@
       <remap from="~/input/vector_map_inside_area_filtered_pointcloud" to="vector_map_inside_area_filtered/pointcloud"/>
       <remap from="~/input/external_velocity_limit_mps" to="/planning/scenario_planning/max_velocity_default"/>
       <remap from="~/input/traffic_signals" to="$(var input_traffic_light_topic_name)"/>
+      <remap from="~/input/traffic_signals_raw_v2i" to="/v2i/external/v2i_traffic_light_info"/>
       <remap from="~/input/virtual_traffic_light_states" to="$(var input_virtual_traffic_light_topic_name)"/>
       <remap from="~/input/occupancy_grid" to="/perception/occupancy_grid_map/map"/>
       <remap from="~/output/path" to="path"/>

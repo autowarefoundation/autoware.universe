@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -78,6 +79,7 @@ struct PlannerData
   // other internal data
   std::map<int, TrafficSignalStamped> traffic_light_id_map;
   std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
+  std::map<int, TrafficSignalTimeToRedStamped> traffic_light_time_to_red_id_map;
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
 
   // velocity smoother
@@ -131,6 +133,15 @@ struct PlannerData
       return {};
     }
     return std::make_shared<TrafficSignalStamped>(traffic_light_id_map.at(id));
+  }
+
+  std::optional<TrafficSignalTimeToRedStamped> getRestTimeToRedSignal(const int id) const
+  {
+    try {
+      return traffic_light_time_to_red_id_map.at(id);
+    } catch (std::out_of_range &) {
+      return std::nullopt;
+    }
   }
 };
 }  // namespace behavior_velocity_planner
