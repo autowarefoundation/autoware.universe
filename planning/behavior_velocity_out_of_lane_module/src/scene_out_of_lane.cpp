@@ -113,7 +113,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   DecisionInputs inputs;
   inputs.ranges = ranges;
   inputs.ego_data = ego_data;
-  inputs.objects = filter_predicted_objects(*planner_data_->predicted_objects, ego_data, params_);
+  inputs.objects = filter_predicted_objects(*planner_data_, ego_data, params_);
   inputs.route_handler = planner_data_->route_handler_;
   inputs.lanelets = other_lanelets;
   const auto decisions = calculate_decisions(inputs, params_, logger_);
@@ -157,7 +157,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   }
   if (point_to_insert) {
     prev_inserted_point_ = point_to_insert;
-    RCLCPP_INFO(logger_, "Avoiding lane %lu", point_to_insert->slowdown.lane_to_avoid.id());
+    RCLCPP_DEBUG(logger_, "Avoiding lane %lu", point_to_insert->slowdown.lane_to_avoid.id());
     debug_data_.slowdowns = {*point_to_insert};
     auto path_idx = motion_utils::findNearestSegmentIndex(
                       path->points, point_to_insert->point.point.pose.position) +
