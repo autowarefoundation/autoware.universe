@@ -35,11 +35,11 @@ std::optional<TrafficSignal> find_signal_by_id(
 
 // Creates a map from signal IDs to TrafficSignal objects.
 std::unordered_map<lanelet::Id, TrafficSignal> create_id_signal_map(
-  const TrafficSignalArray & signals)
+  const TrafficSignalArray & traffic_signals)
 {
   std::unordered_map<lanelet::Id, TrafficSignal> id_signal_map;
-  for (const auto & signal : signals.signals) {
-    id_signal_map[signal.traffic_signal_id] = signal;
+  for (const auto & traffic_signal : traffic_signals.signals) {
+    id_signal_map[traffic_signal.traffic_signal_id] = traffic_signal;
   }
 
   return id_signal_map;
@@ -82,11 +82,11 @@ std::vector<Element> create_unknown_elements(
 }
 
 // Creates a 'unknown' signal with elements matching the shapes of a given signal's elements
-TrafficSignal create_unknown_signal(const TrafficSignal & signal)
+TrafficSignal create_unknown_signal(const TrafficSignal & traffic_signal)
 {
   TrafficSignal unknown_signal;
-  unknown_signal.traffic_signal_id = signal.traffic_signal_id;
-  for (const auto & element : signal.elements) {
+  unknown_signal.traffic_signal_id = traffic_signal.traffic_signal_id;
+  for (const auto & element : traffic_signal.elements) {
     // Confidence is set to a default value as it is not relevant for unknown signals
     const auto unknown_element =
       create_element(Element::UNKNOWN, element.shape, Element::UNKNOWN, /* confidence */ 1.0);
@@ -139,11 +139,11 @@ std::unordered_set<lanelet::Id> create_signal_id_set(
   const std::vector<TrafficSignal> & signals1, const std::vector<TrafficSignal> & signals2)
 {
   std::unordered_set<lanelet::Id> signal_id_set;
-  for (const auto & signal : signals1) {
-    signal_id_set.emplace(signal.traffic_signal_id);
+  for (const auto & traffic_signal : signals1) {
+    signal_id_set.emplace(traffic_signal.traffic_signal_id);
   }
-  for (const auto & signal : signals2) {
-    signal_id_set.emplace(signal.traffic_signal_id);
+  for (const auto & traffic_signal : signals2) {
+    signal_id_set.emplace(traffic_signal.traffic_signal_id);
   }
 
   return signal_id_set;
@@ -270,8 +270,8 @@ autoware_perception_msgs::msg::TrafficSignalArray SignalMatchValidator::validate
 void SignalMatchValidator::setPedestrianSignals(
   const std::vector<TrafficLightConstPtr> & pedestrian_signals)
 {
-  for (const auto & signal : pedestrian_signals) {
-    map_pedestrian_signal_regulatory_elements_set_.emplace(signal->id());
+  for (const auto & pedestrian_signal : pedestrian_signals) {
+    map_pedestrian_signal_regulatory_elements_set_.emplace(pedestrian_signal->id());
   }
 }
 
