@@ -506,6 +506,8 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
     calc_bounding_box_line_list(shape_msg, marker_ptr->points);
     if (is_orientation_available) {
       calc_bounding_box_direction_line_list(shape_msg, marker_ptr->points);
+    } else {
+      calc_bounding_box_orientation_line_list(shape_msg, marker_ptr->points);
     }
   } else if (shape_msg.type == Shape::CYLINDER) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
@@ -542,6 +544,8 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
     calc_2d_bounding_box_bottom_line_list(shape_msg, marker_ptr->points);
     if (is_orientation_available) {
       calc_2d_bounding_box_bottom_direction_line_list(shape_msg, marker_ptr->points);
+    } else {
+      calc_2d_bounding_box_bottom_orientation_line_list(shape_msg, marker_ptr->points);
     }
   } else if (shape_msg.type == Shape::CYLINDER) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
@@ -629,6 +633,30 @@ void calc_bounding_box_direction_line_list(
   calc_line_list_from_points(point_list, point_pairs, 5, points);
 }
 
+void calc_bounding_box_orientation_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  const double length_half = shape.dimensions.x / 2.0;
+  const double width_half = shape.dimensions.y / 2.0;
+  const double height_half = shape.dimensions.z / 2.0;
+  const double tick_width = width_half * 0.4;
+  const double tick_length = std::min(tick_width * 1.4, length_half);
+  geometry_msgs::msg::Point point;
+
+  // triangle-shaped direction indicator
+  const double point_list[3][3] = {
+    {length_half, 0, height_half},
+    {length_half - tick_length, tick_width, height_half},
+    {length_half - tick_length, -tick_width, height_half},
+  };
+  const int point_pairs[2][2] = {
+    {0, 1},
+    {0, 2},
+  };
+  calc_line_list_from_points(point_list, point_pairs, 2, points);
+}
+
 void calc_2d_bounding_box_bottom_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
@@ -662,7 +690,7 @@ void calc_2d_bounding_box_bottom_direction_line_list(
   const double length_half = shape.dimensions.x / 2.0;
   const double width_half = shape.dimensions.y / 2.0;
   const double height_half = shape.dimensions.z / 2.0;
-  const double triangle_size_half = shape.dimensions.y / 1.4;
+  const double triangle_size_half = std::min(width_half * 1.4, shape.dimensions.x);
   geometry_msgs::msg::Point point;
 
   // triangle-shaped direction indicator
@@ -677,6 +705,30 @@ void calc_2d_bounding_box_bottom_direction_line_list(
     {0, 2},
   };
   calc_line_list_from_points(point_list, point_pairs, 3, points);
+}
+
+void calc_2d_bounding_box_bottom_orientation_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  const double length_half = shape.dimensions.x / 2.0;
+  const double width_half = shape.dimensions.y / 2.0;
+  const double height_half = shape.dimensions.z / 2.0;
+  const double tick_width = width_half * 0.4;
+  const double tick_length = std::min(tick_width * 1.4, length_half);
+  geometry_msgs::msg::Point point;
+
+  // triangle-shaped direction indicator
+  const double point_list[3][3] = {
+    {length_half, 0, -height_half},
+    {length_half - tick_length, tick_width, -height_half},
+    {length_half - tick_length, -tick_width, -height_half},
+  };
+  const int point_pairs[2][2] = {
+    {0, 1},
+    {0, 2},
+  };
+  calc_line_list_from_points(point_list, point_pairs, 2, points);
 }
 
 void calc_cylinder_line_list(
