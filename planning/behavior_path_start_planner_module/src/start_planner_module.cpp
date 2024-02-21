@@ -176,7 +176,9 @@ void StartPlannerModule::updateData()
     DEBUG_PRINT("StartPlannerModule::updateData() received new route, reset status");
   }
 
-  if (!status_.first_approved_time && isActivated()) {
+  if (
+    planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
+    !status_.first_approved_time && isActivated()) {
     status_.first_approved_time = clock_->now();
   }
 
