@@ -282,8 +282,13 @@ bool TrafficLightModule::isStopSignal()
   updateTrafficSignal();
 
   // If it never receives traffic signal, it will PASS.
-  if (!traffic_signal_stamp_) {
+  if (!planner_data_->has_received_signal_) {
     return false;
+  }
+
+  // If the signal data is not received, the ego stops.
+  if (!traffic_signal_stamp_) {
+    return true;
   }
 
   if (isTrafficSignalTimedOut()) {
