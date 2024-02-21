@@ -195,9 +195,6 @@ private:
   bool is_initialized_ = false;         //!< @brief flag to check the initial position is set
   bool add_measurement_noise_ = false;  //!< @brief flag to add measurement noise
 
-  /* measurement bias */
-  double measurement_steer_bias_ = 0.0;  //!< @brief measurement bias for steering measurement
-
   DeltaTime delta_time_{};  //!< @brief to calculate delta time
 
   MeasurementNoiseGenerator measurement_noise_{};  //!< @brief for measurement noise
@@ -280,9 +277,10 @@ private:
    * @brief get z-position from trajectory
    * @param [in] x current x-position
    * @param [in] y current y-position
+   * @param [in] prev_odometry odometry calculated in the previous step
    * @return get z-position from trajectory
    */
-  double get_z_pose_from_trajectory(const double x, const double y);
+  double get_z_pose_from_trajectory(const double x, const double y, const Odometry & prev_odometry);
 
   /**
    * @brief get transform from two frame_ids

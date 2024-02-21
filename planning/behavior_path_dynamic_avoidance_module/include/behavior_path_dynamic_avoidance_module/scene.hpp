@@ -345,8 +345,6 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return false; }
-
   bool isLabelTargetObstacle(const uint8_t label) const;
   void updateTargetObjects();
   LatFeasiblePaths generateLateralFeasiblePaths(
@@ -382,8 +380,9 @@ private:
     const TimeWhileCollision & time_while_collision) const;
   std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoid(
     const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
-    const Polygon2d & obj_points, const double obj_vel, const bool is_collision_left,
-    const double obj_normal_vel, const std::optional<DynamicAvoidanceObject> & prev_object) const;
+    const Polygon2d & obj_points, const geometry_msgs::msg::Point & obj_pos, const double obj_vel,
+    const bool is_collision_left, const double obj_normal_vel,
+    const std::optional<DynamicAvoidanceObject> & prev_object) const;
 
   std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;
