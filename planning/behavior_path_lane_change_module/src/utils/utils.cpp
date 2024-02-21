@@ -23,6 +23,7 @@
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -40,7 +41,9 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
+#include <iterator>
 #include <limits>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -385,6 +388,19 @@ std::optional<LaneChangePath> constructCandidatePath(
     return std::nullopt;
   }
 
+  if (prepare_segment.points.size() > 1 && shifted_path.path.points.size() > 1) {
+    const auto & prepare_segment_second_last_point =
+      std::prev(prepare_segment.points.end() - 1)->point.pose;
+    const auto & lane_change_start_from_shifted =
+      std::next(shifted_path.path.points.begin())->point.pose;
+    const auto yaw_diff2 = std::abs(tier4_autoware_utils::normalizeRadian(
+      tf2::getYaw(prepare_segment_second_last_point.orientation) -
+      tf2::getYaw(lane_change_start_from_shifted.orientation)));
+    if (yaw_diff2 > tier4_autoware_utils::deg2rad(5.0)) {
+      return std::nullopt;
+    }
+  }
+
   candidate_path.path = utils::combinePath(prepare_segment, shifted_path.path);
   candidate_path.shifted_path = shifted_path;
 
@@ -412,16 +428,16 @@ PathWithLaneId getReferencePathFromTargetLane(
     return std::min(dist_from_lc_start, target_lane_length - next_lane_change_buffer);
   });
 
-  if (s_end - s_start < lane_changing_length) {
-    return PathWithLaneId();
-  }
-
   RCLCPP_DEBUG(
     rclcpp::get_logger("behavior_path_planner")
       .get_child("lane_change")
       .get_child("util")
       .get_child("getReferencePathFromTargetLane"),
     "start: %f, end: %f", s_start, s_end);
+
+  if (s_end - s_start < lane_changing_length) {
+    return PathWithLaneId();
+  }
 
   const auto lane_changing_reference_path =
     route_handler.getCenterLinePath(target_lanes, s_start, s_end);
@@ -437,6 +453,14 @@ ShiftLine getLaneChangingShiftLine(
   const Pose & lane_changing_start_pose = prepare_segment.points.back().point.pose;
   const Pose & lane_changing_end_pose = target_segment.points.front().point.pose;
 
+  return getLaneChangingShiftLine(
+    lane_changing_start_pose, lane_changing_end_pose, reference_path, shift_length);
+}
+
+ShiftLine getLaneChangingShiftLine(
+  const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
+  const PathWithLaneId & reference_path, const double shift_length)
+{
   ShiftLine shift_line;
   shift_line.end_shift_length = shift_length;
   shift_line.start = lane_changing_start_pose;

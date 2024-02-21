@@ -57,6 +57,7 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.use_intersection_areas = getOrDeclareParameter<bool>(*node, ns + "use_intersection_areas");
     p.use_hatched_road_markings =
       getOrDeclareParameter<bool>(*node, ns + "use_hatched_road_markings");
+    p.use_freespace_areas = getOrDeclareParameter<bool>(*node, ns + "use_freespace_areas");
   }
 
   // target object
@@ -122,6 +123,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
 
     p.object_check_goal_distance =
       getOrDeclareParameter<double>(*node, ns + "object_check_goal_distance");
+    p.object_check_return_pose_distance =
+      getOrDeclareParameter<double>(*node, ns + "object_check_return_pose_distance");
     p.threshold_distance_object_is_on_center =
       getOrDeclareParameter<double>(*node, ns + "threshold_distance_object_is_on_center");
     p.object_check_shiftable_ratio =
@@ -140,6 +143,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<bool>(*node, ns + "enable");
     p.threshold_time_force_avoidance_for_stopped_vehicle =
       getOrDeclareParameter<double>(*node, ns + "time_threshold");
+    p.force_avoidance_distance_threshold =
+      getOrDeclareParameter<double>(*node, ns + "distance_threshold");
     p.object_ignore_section_traffic_light_in_front_distance =
       getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
     p.object_ignore_section_crosswalk_in_front_distance =
@@ -205,6 +210,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "max_velocity");
     p.ego_predicted_path_params.acceleration =
       getOrDeclareParameter<double>(*node, "avoidance.constraints.longitudinal.max_acceleration");
+    p.ego_predicted_path_params.time_horizon_for_front_object =
+      getOrDeclareParameter<double>(*node, ns + "time_horizon_for_front_object");
     p.ego_predicted_path_params.time_horizon_for_rear_object =
       getOrDeclareParameter<double>(*node, ns + "time_horizon_for_rear_object");
     p.ego_predicted_path_params.time_resolution =
@@ -216,6 +223,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // safety check rss params
   {
     const std::string ns = "avoidance.safety_check.";
+    p.rss_params.extended_polygon_policy =
+      getOrDeclareParameter<std::string>(*node, ns + "extended_polygon_policy");
     p.rss_params.longitudinal_distance_min_threshold =
       getOrDeclareParameter<double>(*node, ns + "longitudinal_distance_min_threshold");
     p.rss_params.longitudinal_velocity_delta_time =

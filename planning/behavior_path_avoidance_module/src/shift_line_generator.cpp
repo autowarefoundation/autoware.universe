@@ -19,7 +19,7 @@
 
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+#include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
 
 namespace behavior_path_planner::utils::avoidance
 {
@@ -81,7 +81,9 @@ AvoidLineArray toArray(const AvoidOutlines & outlines)
   AvoidLineArray ret{};
   for (const auto & outline : outlines) {
     ret.push_back(outline.avoid_line);
-    ret.push_back(outline.return_line);
+    if (outline.return_line.has_value()) {
+      ret.push_back(outline.return_line.value());
+    }
 
     std::for_each(
       outline.middle_lines.begin(), outline.middle_lines.end(),
@@ -183,29 +185,36 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // prepare distance is not enough. unavoidable.
-    if (remaining_distance < 1e-3) {
+    if (avoidance_distance < 1e-3) {
       object.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
       return std::nullopt;
     }
 
     // calculate lateral jerk.
     const auto required_jerk = PathShifter::calcJerkFromLatLonDistance(
-      avoiding_shift, remaining_distance, helper_->getAvoidanceEgoSpeed());
+      avoiding_shift, avoidance_distance, helper_->getAvoidanceEgoSpeed());
 
     // relax lateral jerk limit. avoidable.
     if (required_jerk < helper_->getLateralMaxJerkLimit()) {
       return std::make_pair(desire_shift_length, avoidance_distance);
     }
 
+    constexpr double LON_DIST_BUFFER = 1e-3;
+
     // avoidance distance is not enough. unavoidable.
     if (!isBestEffort(parameters_->policy_deceleration)) {
-      object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
-      return std::nullopt;
+      if (avoidance_distance < helper_->getMinAvoidanceDistance(avoiding_shift) + LON_DIST_BUFFER) {
+        object.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
+        return std::nullopt;
+      } else {
+        object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
+        return std::nullopt;
+      }
     }
 
     // output avoidance path under lateral jerk constraints.
     const auto feasible_relative_shift_length = PathShifter::calcLateralDistFromJerk(
-      remaining_distance, helper_->getLateralMaxJerkLimit(), helper_->getAvoidanceEgoSpeed());
+      avoidance_distance, helper_->getLateralMaxJerkLimit(), helper_->getAvoidanceEgoSpeed());
 
     if (std::abs(feasible_relative_shift_length) < parameters_->lateral_execution_threshold) {
       object.reason = "LessThanExecutionThreshold";
@@ -216,8 +225,17 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       desire_shift_length > 0.0 ? feasible_relative_shift_length + current_ego_shift
                                 : -1.0 * feasible_relative_shift_length + current_ego_shift;
 
+    if (
+      avoidance_distance <
+      helper_->getMinAvoidanceDistance(feasible_shift_length) + LON_DIST_BUFFER) {
+      object.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
+      return std::nullopt;
+    }
+
+    const double LAT_DIST_BUFFER = desire_shift_length > 0.0 ? 1e-3 : -1e-3;
+
     const auto infeasible =
-      std::abs(feasible_shift_length - object.overhang_dist) <
+      std::abs(feasible_shift_length - object.overhang_points.front().first) - LAT_DIST_BUFFER <
       0.5 * data_->parameters.vehicle_width + object_parameter.safety_buffer_lateral;
     if (infeasible) {
       RCLCPP_DEBUG(rclcpp::get_logger(""), "feasible shift length is not enough to avoid. ");
@@ -225,7 +243,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       return std::nullopt;
     }
 
-    return std::make_pair(feasible_shift_length, avoidance_distance);
+    return std::make_pair(feasible_shift_length - LAT_DIST_BUFFER, avoidance_distance);
   };
 
   const auto is_forward_object = [](const auto & object) { return object.longitudinal > 0.0; };
@@ -341,7 +359,30 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       al_return.object_on_right = utils::avoidance::isOnRight(o);
     }
 
-    if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
+    const bool skip_return_shift = [&]() {
+      if (!utils::isAllowedGoalModification(data_->route_handler)) {
+        return false;
+      }
+      const auto goal_pose = data_->route_handler->getGoalPose();
+      const double goal_longitudinal_distance =
+        motion_utils::calcSignedArcLength(data.reference_path.points, 0, goal_pose.position);
+      const bool is_return_shift_to_goal =
+        std::abs(al_return.end_longitudinal - goal_longitudinal_distance) <
+        parameters_->object_check_return_pose_distance;
+      if (is_return_shift_to_goal) {
+        return true;
+      }
+      const auto & object_pos = o.object.kinematics.initial_pose_with_covariance.pose.position;
+      const bool has_object_near_goal =
+        tier4_autoware_utils::calcDistance2d(goal_pose.position, object_pos) <
+        parameters_->object_check_goal_distance;
+      return has_object_near_goal;
+    }();
+
+    if (skip_return_shift) {
+      // if the object is close to goal or ego is about to return near GOAL, do not return
+      outlines.emplace_back(al_avoid, std::nullopt);
+    } else if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
       outlines.emplace_back(al_avoid, al_return);
     } else {
       o.reason = "InvalidShiftLine";
@@ -637,35 +678,43 @@ AvoidOutlines ShiftLineGenerator::applyMergeProcess(
     auto & next_outline = outlines.at(i);
 
     const auto & return_line = last_outline.return_line;
-    const auto & avoid_line = next_outline.avoid_line;
+    if (!return_line.has_value()) {
+      ret.push_back(outlines.at(i));
+      break;
+    }
 
-    if (no_conflict(return_line, avoid_line)) {
+    const auto & avoid_line = next_outline.avoid_line;
+    if (no_conflict(return_line.value(), avoid_line)) {
       ret.push_back(outlines.at(i));
       continue;
     }
 
-    const auto merged_shift_line = merge(return_line, avoid_line, generateUUID());
+    const auto merged_shift_line = merge(return_line.value(), avoid_line, generateUUID());
 
     if (!helper_->isComfortable(AvoidLineArray{merged_shift_line})) {
       ret.push_back(outlines.at(i));
       continue;
     }
 
-    if (same_side_shift(return_line, avoid_line)) {
+    if (same_side_shift(return_line.value(), avoid_line)) {
       last_outline.middle_lines.push_back(merged_shift_line);
       last_outline.return_line = next_outline.return_line;
       debug.step1_merged_shift_line.push_back(merged_shift_line);
       continue;
     }
 
-    if (within(return_line, avoid_line.end_idx) && within(avoid_line, return_line.start_idx)) {
+    if (
+      within(return_line.value(), avoid_line.end_idx) &&
+      within(avoid_line, return_line->start_idx)) {
       last_outline.middle_lines.push_back(merged_shift_line);
       last_outline.return_line = next_outline.return_line;
       debug.step1_merged_shift_line.push_back(merged_shift_line);
       continue;
     }
 
-    if (within(return_line, avoid_line.start_idx) && within(avoid_line, return_line.end_idx)) {
+    if (
+      within(return_line.value(), avoid_line.start_idx) &&
+      within(avoid_line, return_line->end_idx)) {
       last_outline.middle_lines.push_back(merged_shift_line);
       last_outline.return_line = next_outline.return_line;
       debug.step1_merged_shift_line.push_back(merged_shift_line);
@@ -686,7 +735,10 @@ AvoidOutlines ShiftLineGenerator::applyFillGapProcess(
 
   for (auto & outline : ret) {
     if (outline.middle_lines.empty()) {
-      const auto new_line = fill(outline.avoid_line, outline.return_line, generateUUID());
+      const auto new_line =
+        outline.return_line.has_value()
+          ? fill(outline.avoid_line, outline.return_line.value(), generateUUID())
+          : outline.avoid_line;
       outline.middle_lines.push_back(new_line);
       debug.step1_filled_shift_line.push_back(new_line);
     }
@@ -701,8 +753,11 @@ AvoidOutlines ShiftLineGenerator::applyFillGapProcess(
 
     helper_->alignShiftLinesOrder(outline.middle_lines, false);
 
-    if (outline.middle_lines.back().end_longitudinal < outline.return_line.start_longitudinal) {
-      const auto new_line = fill(outline.middle_lines.back(), outline.return_line, generateUUID());
+    if (
+      outline.return_line.has_value() &&
+      outline.middle_lines.back().end_longitudinal < outline.return_line->start_longitudinal) {
+      const auto new_line =
+        fill(outline.middle_lines.back(), outline.return_line.value(), generateUUID());
       outline.middle_lines.push_back(new_line);
       debug.step1_filled_shift_line.push_back(new_line);
     }
@@ -890,7 +945,7 @@ void ShiftLineGenerator::applySmallShiftFilter(
       continue;
     }
 
-    if (s.start_longitudinal < helper_->getMinimumPrepareDistance()) {
+    if (s.start_longitudinal + 1e-3 < helper_->getMinimumPrepareDistance()) {
       continue;
     }
 
@@ -973,6 +1028,20 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   const bool has_candidate_point = !ret.empty();
   const bool has_registered_point = last_.has_value();
 
+  if (utils::isAllowedGoalModification(data_->route_handler)) {
+    const auto has_object_near_goal =
+      std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
+        return tier4_autoware_utils::calcDistance2d(
+                 data_->route_handler->getGoalPose().position,
+                 o.object.kinematics.initial_pose_with_covariance.pose.position) <
+               parameters_->object_check_goal_distance;
+      });
+    if (has_object_near_goal) {
+      RCLCPP_DEBUG(rclcpp::get_logger(""), "object near goal exists so skip adding return shift");
+      return ret;
+    }
+  }
+
   const auto exist_unavoidable_object = std::any_of(
     data.target_objects.begin(), data.target_objects.end(),
     [](const auto & o) { return !o.is_avoidable && o.longitudinal > 0.0; });
@@ -1027,6 +1096,21 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     }
   }
 
+  // if last shift line is near the objects, do not add return shift.
+  if (utils::isAllowedGoalModification(data_->route_handler)) {
+    const bool has_last_shift_near_goal =
+      std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
+        return tier4_autoware_utils::calcDistance2d(
+                 last_sl.end.position,
+                 o.object.kinematics.initial_pose_with_covariance.pose.position) <
+               parameters_->object_check_goal_distance;
+      });
+    if (has_last_shift_near_goal) {
+      RCLCPP_DEBUG(rclcpp::get_logger(""), "last shift line is near the objects");
+      return ret;
+    }
+  }
+
   // There already is a shift point candidates to go back to center line, but it could be too sharp
   // due to detection noise or timing.
   // Here the return-shift from ego is added for the in case.
@@ -1070,8 +1154,11 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     return ret;
   }
 
-  const auto remaining_distance = std::min(
-    arclength_from_ego.back() - parameters_->dead_line_buffer_for_goal, data.to_return_point);
+  const auto remaining_distance =
+    utils::isAllowedGoalModification(data_->route_handler)
+      ? data.to_return_point
+      : std::min(
+          arclength_from_ego.back() - parameters_->dead_line_buffer_for_goal, data.to_return_point);
 
   // If the avoidance point has already been set, the return shift must be set after the point.
   const auto last_sl_distance = data.arclength_from_ego.at(last_sl.end_idx);
@@ -1101,12 +1188,14 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   const double variable_prepare_distance =
     std::max(nominal_prepare_distance - last_sl_distance, 0.0);
 
-  double prepare_distance_scaled = std::max(nominal_prepare_distance, last_sl_distance);
+  double prepare_distance_scaled = std::max(
+    helper_->getMinimumPrepareDistance(), std::max(nominal_prepare_distance, last_sl_distance));
   double avoid_distance_scaled = nominal_avoid_distance;
   if (remaining_distance < prepare_distance_scaled + avoid_distance_scaled) {
     const auto scale = (remaining_distance - last_sl_distance) /
                        std::max(nominal_avoid_distance + variable_prepare_distance, 0.1);
-    prepare_distance_scaled = last_sl_distance + scale * nominal_prepare_distance;
+    prepare_distance_scaled = std::max(
+      helper_->getMinimumPrepareDistance(), last_sl_distance + scale * nominal_prepare_distance);
     avoid_distance_scaled *= scale;
   }
 
@@ -1120,7 +1209,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     al.end_idx =
       utils::avoidance::findPathIndexFromArclength(arclength_from_ego, prepare_distance_scaled);
     al.end = data.reference_path.points.at(al.end_idx).point.pose;
-    al.end_longitudinal = arclength_from_ego.at(al.end_idx);
+    al.end_longitudinal = prepare_distance_scaled;
     al.end_shift_length = last_sl.end_shift_length;
     al.start_shift_length = last_sl.end_shift_length;
     ret.push_back(al);
@@ -1134,7 +1223,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     al.start_idx =
       utils::avoidance::findPathIndexFromArclength(arclength_from_ego, prepare_distance_scaled);
     al.start = data.reference_path.points.at(al.start_idx).point.pose;
-    al.start_longitudinal = arclength_from_ego.at(al.start_idx);
+    al.start_longitudinal = prepare_distance_scaled;
     al.end_idx = utils::avoidance::findPathIndexFromArclength(
       arclength_from_ego, prepare_distance_scaled + avoid_distance_scaled);
     al.end = data.reference_path.points.at(al.end_idx).point.pose;
@@ -1219,7 +1308,7 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
     const auto & candidate = shift_lines.at(i);
 
     // prevent sudden steering.
-    if (candidate.start_longitudinal < helper_->getMinimumPrepareDistance()) {
+    if (candidate.start_longitudinal + 1e-3 < helper_->getMinimumPrepareDistance()) {
       break;
     }
 
