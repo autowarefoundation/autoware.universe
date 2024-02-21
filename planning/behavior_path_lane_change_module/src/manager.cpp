@@ -215,6 +215,8 @@ void LaneChangeModuleManager::init(rclcpp::Node * node)
     getOrDeclareParameter<double>(*node, parameter("cancel.max_lateral_jerk"));
   p.cancel.overhang_tolerance =
     getOrDeclareParameter<double>(*node, parameter("cancel.overhang_tolerance"));
+  p.cancel.unsafe_hysteresis_threshold =
+    getOrDeclareParameter<int>(*node, parameter("cancel.unsafe_hysteresis_threshold"));
 
   p.finish_judge_lateral_threshold =
     getOrDeclareParameter<double>(*node, parameter("finish_judge_lateral_threshold"));

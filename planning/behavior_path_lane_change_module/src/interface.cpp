@@ -116,7 +116,8 @@ ModuleStatus LaneChangeInterface::updateState()
     return isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::SUCCESS;
   }
 
-  const auto [is_safe, is_object_coming_from_rear] = module_type_->isApprovedPathSafe();
+  const auto [is_safe, is_object_coming_from_rear] =
+    module_type_->evaluateApprovedPathWithUnsafeHysteresis(module_type_->isApprovedPathSafe());
 
   setObjectDebugVisualization();
   if (is_safe) {
