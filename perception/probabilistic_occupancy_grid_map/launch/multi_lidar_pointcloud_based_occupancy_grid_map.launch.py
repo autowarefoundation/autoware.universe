@@ -48,7 +48,7 @@ def fusion_config_sanity_check(fusion_config: dict):
     listed_param_names = [
         "raw_pointcloud_topics",
         "fusion_input_ogm_topics",
-        "each_ogm_sensor_frames",
+        # "each_ogm_sensor_frames",
         "input_ogm_reliabilities",
     ]
     param_length_list = []
@@ -81,11 +81,11 @@ def get_fusion_config(total_config: dict) -> dict:
 def get_ogm_creation_config(total_config: dict, list_iter: int) -> dict:
     ogm_creation_config = total_config["ogm_creation_config"]
     shared_config = total_config["shared_config"]
-    fusion_config_ = total_config["fusion_config"]
+    # fusion_config_ = total_config["fusion_config"]
     # merge shared config and ogm creation config
     ogm_creation_config.update(shared_config)
     # overwrite scan_origin_frame with sensor frame settings
-    ogm_creation_config["scan_origin_frame"] = fusion_config_["each_ogm_sensor_frames"][list_iter]
+    # ogm_creation_config["scan_origin_frame"] = fusion_config_["each_ogm_sensor_frames"][list_iter]
     # use fusion_map_length to set map_length
     ogm_creation_config["map_length"] = max(
         shared_config["map_length_x"], shared_config["map_length_y"]
