@@ -65,7 +65,7 @@
       },
       "required": [
         "update_rate",
-        "timeout_timeout_operation_mode_availability",
+        "timeout_operation_mode_availability",
         "use_emergency_holding",
         "timeout_emergency_recovery",
         "timeout_takeover_request",
