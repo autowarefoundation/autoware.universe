@@ -52,6 +52,7 @@ IntersectionModule::IntersectionModule(
   const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
+  planner_param_(planner_param),
   lane_id_(lane_id),
   associative_ids_(associative_ids),
   turn_direction_(turn_direction),
@@ -59,7 +60,6 @@ IntersectionModule::IntersectionModule(
   occlusion_uuid_(tier4_autoware_utils::generateUUID())
 {
   velocity_factor_.init(PlanningBehavior::INTERSECTION);
-  planner_param_ = planner_param;
 
   {
     collision_state_machine_.setMarginTime(
@@ -86,8 +86,6 @@ IntersectionModule::IntersectionModule(
     static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
   }
 
-  decision_state_pub_ =
-    node.create_publisher<std_msgs::msg::String>("~/debug/intersection/decision_state", 1);
   ego_ttc_pub_ = node.create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>(
     "~/debug/intersection/ego_ttc", 1);
   object_ttc_pub_ = node.create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>(
@@ -107,9 +105,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   {
     const std::string decision_type = "intersection" + std::to_string(module_id_) + " : " +
                                       intersection::formatDecisionResult(decision_result);
-    std_msgs::msg::String decision_result_msg;
-    decision_result_msg.data = decision_type;
-    decision_state_pub_->publish(decision_result_msg);
+    internal_debug_data_.decision_type = decision_type;
   }
 
   prepareRTCStatus(decision_result, *path);
@@ -1254,6 +1250,7 @@ void IntersectionModule::updateTrafficSignalObservation()
     return;
   }
   last_tl_valid_observation_ = tl_info_opt.value();
+  internal_debug_data_.tl_observation = tl_info_opt.value();
 }
 
 IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStatus(
