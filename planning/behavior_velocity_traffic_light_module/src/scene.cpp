@@ -291,6 +291,7 @@ bool TrafficLightModule::isStopSignal()
     return true;
   }
 
+  // If the signal data is timeout, the ego stops.
   if (isTrafficSignalTimedOut()) {
     return true;
   }
