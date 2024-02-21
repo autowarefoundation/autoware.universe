@@ -19,7 +19,7 @@
         "behavior_output_path_interval": {
           "type": "number",
           "default": "1.0",
-          "description": "output path interval"
+          "description": "the output path will be interpolated by this interval"
         },
         "max_accel": {
           "type": "number",
@@ -56,6 +56,7 @@
         "forward_path_length",
         "behavior_output_path_interval",
         "backward_path_length",
+        "behavior_output_path_interval",
         "max_accel",
         "system_delay",
         "delay_response_time",
