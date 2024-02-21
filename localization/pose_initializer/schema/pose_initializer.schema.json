@@ -52,11 +52,6 @@
           "type": "array",
           "description": "output pose covariance",
           "default": "[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.0,  0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2]"
-        },
-        "map_loader_name": {
-          "type": "string",
-          "description": "Node name of the map loader from which this node will retrieve its parameters",
-          "default": "/map/pointcloud_map_loader"
         }
       },
       "required": [
@@ -68,8 +63,7 @@
         "ndt_enabled",
         "stop_check_enabled",
         "gnss_particle_covariance",
-        "output_pose_covariance",
-        "map_loader_name"
+        "output_pose_covariance"
       ],
       "additionalProperties": false
     }
@@ -82,10 +76,14 @@
           "$ref": "#/definitions/pose_initializer"
         }
       },
-      "required": ["ros__parameters"],
+      "required": [
+        "ros__parameters"
+      ],
       "additionalProperties": false
     }
   },
-  "required": ["/**"],
+  "required": [
+    "/**"
+  ],
   "additionalProperties": false
 }
