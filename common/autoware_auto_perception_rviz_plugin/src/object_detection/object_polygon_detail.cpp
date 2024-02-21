@@ -85,7 +85,7 @@ visualization_msgs::msg::Marker::SharedPtr get_predicted_path_marker_ptr(
   marker_ptr->scale.x = 0.015;
   calc_path_line_list(predicted_path, marker_ptr->points, is_simple);
   for (size_t k = 0; k < marker_ptr->points.size(); ++k) {
-    marker_ptr->points.at(k).z -= shape.dimensions.z / 2.0;
+    marker_ptr->points.at(k).z -= shape.dimensions.z * 0.5;
   }
   return marker_ptr;
 }
@@ -160,8 +160,8 @@ visualization_msgs::msg::Marker::SharedPtr get_twist_covariance_marker_ptr(
   // ellipse orientation
   marker_ptr->pose.orientation.x = 0.0;
   marker_ptr->pose.orientation.y = 0.0;
-  marker_ptr->pose.orientation.z = std::sin(phi / 2.0);
-  marker_ptr->pose.orientation.w = std::cos(phi / 2.0);
+  marker_ptr->pose.orientation.z = std::sin(phi * 0.5);
+  marker_ptr->pose.orientation.w = std::cos(phi * 0.5);
 
   // ellipse size
   marker_ptr->scale.x = sigma1 * confidence_interval_coefficient;
@@ -378,8 +378,8 @@ visualization_msgs::msg::Marker::SharedPtr get_pose_covariance_marker_ptr(
   // ellipse orientation
   marker_ptr->pose.orientation.x = 0.0;
   marker_ptr->pose.orientation.y = 0.0;
-  marker_ptr->pose.orientation.z = std::sin(yaw / 2.0);
-  marker_ptr->pose.orientation.w = std::cos(yaw / 2.0);
+  marker_ptr->pose.orientation.z = std::sin(yaw * 0.5);
+  marker_ptr->pose.orientation.w = std::cos(yaw * 0.5);
 
   // ellipse size
   marker_ptr->scale.x = sigma1 * confidence_interval_coefficient;
@@ -588,9 +588,9 @@ void calc_bounding_box_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
 {
-  const double length_half = shape.dimensions.x / 2.0;
-  const double width_half = shape.dimensions.y / 2.0;
-  const double height_half = shape.dimensions.z / 2.0;
+  const double length_half = shape.dimensions.x * 0.5;
+  const double width_half = shape.dimensions.y * 0.5;
+  const double height_half = shape.dimensions.z * 0.5;
   geometry_msgs::msg::Point point;
 
   // bounding box corner points
@@ -612,10 +612,10 @@ void calc_bounding_box_direction_line_list(
   std::vector<geometry_msgs::msg::Point> & points)
 {
   // direction triangle
-  const double length_half = shape.dimensions.x / 2.0;
-  const double width_half = shape.dimensions.y / 2.0;
-  const double height_half = shape.dimensions.z / 2.0;
-  const double triangle_size_half = shape.dimensions.y / 1.4;
+  const double length_half = shape.dimensions.x * 0.5;
+  const double width_half = shape.dimensions.y * 0.5;
+  const double height_half = shape.dimensions.z * 0.5;
+  const double triangle_size_half = std::min(width_half * 1.4, shape.dimensions.x);
   geometry_msgs::msg::Point point;
 
   // triangle-shaped direction indicator
@@ -637,22 +637,23 @@ void calc_bounding_box_orientation_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
 {
-  const double length_half = shape.dimensions.x / 2.0;
-  const double width_half = shape.dimensions.y / 2.0;
-  const double height_half = shape.dimensions.z / 2.0;
-  const double tick_width = width_half * 0.4;
-  const double tick_length = std::min(tick_width * 1.4, length_half);
+  const double length_half = shape.dimensions.x * 0.5;
+  const double width_half = shape.dimensions.y * 0.5;
+  const double height_half = shape.dimensions.z * 0.5;
+  const double tick_width = width_half * 0.5;
+  const double tick_length = std::min(tick_width, length_half);
   geometry_msgs::msg::Point point;
 
-  // triangle-shaped direction indicator
-  const double point_list[3][3] = {
-    {length_half, 0, height_half},
-    {length_half - tick_length, tick_width, height_half},
-    {length_half - tick_length, -tick_width, height_half},
+  // front corner cuts for orientation
+  const double point_list[4][3] = {
+    {length_half, width_half - tick_width, height_half},
+    {length_half - tick_length, width_half, height_half},
+    {length_half, -width_half + tick_width, height_half},
+    {length_half - tick_length, -width_half, height_half},
   };
   const int point_pairs[2][2] = {
     {0, 1},
-    {0, 2},
+    {2, 3},
   };
   calc_line_list_from_points(point_list, point_pairs, 2, points);
 }
@@ -661,9 +662,9 @@ void calc_2d_bounding_box_bottom_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
 {
-  const double length_half = shape.dimensions.x / 2.0;
-  const double width_half = shape.dimensions.y / 2.0;
-  const double height_half = shape.dimensions.z / 2.0;
+  const double length_half = shape.dimensions.x * 0.5;
+  const double width_half = shape.dimensions.y * 0.5;
+  const double height_half = shape.dimensions.z * 0.5;
   geometry_msgs::msg::Point point;
 
   // bounding box corner points
@@ -687,9 +688,9 @@ void calc_2d_bounding_box_bottom_direction_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
 {
-  const double length_half = shape.dimensions.x / 2.0;
-  const double width_half = shape.dimensions.y / 2.0;
-  const double height_half = shape.dimensions.z / 2.0;
+  const double length_half = shape.dimensions.x * 0.5;
+  const double width_half = shape.dimensions.y * 0.5;
+  const double height_half = shape.dimensions.z * 0.5;
   const double triangle_size_half = std::min(width_half * 1.4, shape.dimensions.x);
   geometry_msgs::msg::Point point;
 
@@ -711,22 +712,23 @@ void calc_2d_bounding_box_bottom_orientation_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
 {
-  const double length_half = shape.dimensions.x / 2.0;
-  const double width_half = shape.dimensions.y / 2.0;
-  const double height_half = shape.dimensions.z / 2.0;
-  const double tick_width = width_half * 0.4;
-  const double tick_length = std::min(tick_width * 1.4, length_half);
+  const double length_half = shape.dimensions.x * 0.5;
+  const double width_half = shape.dimensions.y * 0.5;
+  const double height_half = shape.dimensions.z * 0.5;
+  const double tick_width = width_half * 0.5;
+  const double tick_length = std::min(tick_width, length_half);
   geometry_msgs::msg::Point point;
 
-  // triangle-shaped direction indicator
-  const double point_list[3][3] = {
-    {length_half, 0, -height_half},
-    {length_half - tick_length, tick_width, -height_half},
-    {length_half - tick_length, -tick_width, -height_half},
+  // front corner cuts for orientation
+  const double point_list[4][3] = {
+    {length_half, width_half - tick_width, height_half},
+    {length_half - tick_length, width_half, height_half},
+    {length_half, -width_half + tick_width, height_half},
+    {length_half - tick_length, -width_half, height_half},
   };
   const int point_pairs[2][2] = {
     {0, 1},
-    {0, 2},
+    {2, 3},
   };
   calc_line_list_from_points(point_list, point_pairs, 2, points);
 }
@@ -836,7 +838,7 @@ void calc_polygon_line_list(
     geometry_msgs::msg::Point point;
     point.x = shape.footprint.points.at(i).x;
     point.y = shape.footprint.points.at(i).y;
-    point.z = shape.dimensions.z / 2.0;
+    point.z = shape.dimensions.z * 0.5;
     points.push_back(point);
     point.x = shape.footprint.points
                 .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
@@ -844,14 +846,14 @@ void calc_polygon_line_list(
     point.y = shape.footprint.points
                 .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
                 .y;
-    point.z = shape.dimensions.z / 2.0;
+    point.z = shape.dimensions.z * 0.5;
     points.push_back(point);
   }
   for (size_t i = 0; i < shape.footprint.points.size(); ++i) {
     geometry_msgs::msg::Point point;
     point.x = shape.footprint.points.at(i).x;
     point.y = shape.footprint.points.at(i).y;
-    point.z = -shape.dimensions.z / 2.0;
+    point.z = -shape.dimensions.z * 0.5;
     points.push_back(point);
     point.x = shape.footprint.points
                 .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
@@ -859,18 +861,18 @@ void calc_polygon_line_list(
     point.y = shape.footprint.points
                 .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
                 .y;
-    point.z = -shape.dimensions.z / 2.0;
+    point.z = -shape.dimensions.z * 0.5;
     points.push_back(point);
   }
   for (size_t i = 0; i < shape.footprint.points.size(); ++i) {
     geometry_msgs::msg::Point point;
     point.x = shape.footprint.points.at(i).x;
     point.y = shape.footprint.points.at(i).y;
-    point.z = shape.dimensions.z / 2.0;
+    point.z = shape.dimensions.z * 0.5;
     points.push_back(point);
     point.x = shape.footprint.points.at(i).x;
     point.y = shape.footprint.points.at(i).y;
-    point.z = -shape.dimensions.z / 2.0;
+    point.z = -shape.dimensions.z * 0.5;
     points.push_back(point);
   }
 }
@@ -889,7 +891,7 @@ void calc_2d_polygon_bottom_line_list(
     geometry_msgs::msg::Point point;
     point.x = shape.footprint.points.at(i).x;
     point.y = shape.footprint.points.at(i).y;
-    point.z = -shape.dimensions.z / 2.0;
+    point.z = -shape.dimensions.z * 0.5;
     points.push_back(point);
     point.x = shape.footprint.points
                 .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
@@ -897,7 +899,7 @@ void calc_2d_polygon_bottom_line_list(
     point.y = shape.footprint.points
                 .at(static_cast<int>(i + 1) % static_cast<int>(shape.footprint.points.size()))
                 .y;
-    point.z = -shape.dimensions.z / 2.0;
+    point.z = -shape.dimensions.z * 0.5;
     points.push_back(point);
   }
 }
