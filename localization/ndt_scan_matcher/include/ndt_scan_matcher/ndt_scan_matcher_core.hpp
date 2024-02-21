@@ -83,13 +83,17 @@ private:
   void service_trigger_node(
     const std_srvs::srv::SetBool::Request::SharedPtr req,
     std_srvs::srv::SetBool::Response::SharedPtr res);
-
+  void activate_pose_covariance_modifier(
+    const std_srvs::srv::SetBool::Request::SharedPtr req,
+    std_srvs::srv::SetBool::Response::SharedPtr res);
   void callback_timer();
   void callback_sensor_points(
     sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
   void callback_initial_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr);
   void callback_regularization_pose(
+    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
+  void callback_trusted_source_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
   geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
@@ -136,8 +140,9 @@ private:
   rclcpp::TimerBase::SharedPtr map_update_timer_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr regularization_pose_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    regularization_pose_sub_;
+    trusted_source_pose_sub_;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_aligned_pose_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr no_ground_points_aligned_pose_pub_;
@@ -172,6 +177,7 @@ private:
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr  server_covariance_modifier_;
 
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
   tf2_ros::Buffer tf2_buffer_;
@@ -193,9 +199,19 @@ private:
 
   std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
 
+  geometry_msgs::msg::PoseWithCovarianceStamped trusted_source_pose_;
+  bool activate_pose_covariance_modifier_;
+  bool close_ndt_pose_source_ = false;
+  struct trusted_pose_{
+      double pose_avarage_rmse_xy = 0.0;
+      double yaw_rmse = 0.0;
+  }trustedPose;
+
   std::atomic<bool> is_activated_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::array<double, 36> covariance_modifier(std::array<double, 36> & in_ndt_covariance);
 
   HyperParameters param_;
 };

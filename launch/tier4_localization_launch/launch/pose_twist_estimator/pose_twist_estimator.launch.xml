@@ -7,6 +7,9 @@
   <!-- When gnss_enabled is false, automatic_pose_initializer will not run, only manual initial position estimation is available. -->
   <arg name="gnss_enabled" default="true" description="gnss availability for initial position estimation"/>
 
+  <!-- When use_pose_covariance_modifier is true, gnss and NDT poses will be used together in localization-->
+  <arg name="use_pose_covariance_modifier" default="true" description="parameter for using gnss and NDT together with covariance modifier"/>
+
   <!-- split string with underscores -->
   <let name="available_args" value="[\'ndt\',\'yabloc\',\'eagleye\',\'artag\']"/>
   <let name="split_function" value="list(set('$(var pose_source)'.split('_')).intersection($(var available_args)))"/>
@@ -80,6 +83,11 @@
     </include>
   </group>
 
+  <!-- AW Pose Covariance Modifier Node -->
+  <group if="$(var use_pose_covariance_modifier)">
+    <include file="$(find-pkg-share aw_pose_covariance_modifier_node)/launch/aw_pose_covariance_modifier_node.launch.xml"/>
+  </group>
+
   <!-- Util Launch -->
   <group>
     <push-ros-namespace namespace="util"/>
@@ -113,4 +121,5 @@
       <arg name="input_pointcloud" value="$(var override_input_pointcloud)"/>
     </include>
   </group>
+
 </launch>
