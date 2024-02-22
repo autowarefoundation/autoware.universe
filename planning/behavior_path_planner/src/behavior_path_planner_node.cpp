@@ -139,6 +139,14 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     }
 
     for (const auto & manager : planner_manager_->getSceneModuleManagers()) {
+      std::cout << "planner manager name +++++++++++++++++++++++ " << manager->name() << std::endl;
+     /*
+      [component_container_mt-30] planner manager name +++++++++++++++++++++++ avoidance
+      [component_container_mt-30] planner manager name +++++++++++++++++++++++ side_shift
+      [component_container_mt-30] planner manager name +++++++++++++++++++++++ start_planner
+      [component_container_mt-30] planner manager name +++++++++++++++++++++++ goal_planner
+      [component_container_mt-30] planner manager name +++++++++++++++++++++++ lane_change_right
+     */
       path_candidate_publishers_.emplace(
         manager->name(), create_publisher<Path>(path_candidate_name_space + manager->name(), 1));
       path_reference_publishers_.emplace(
