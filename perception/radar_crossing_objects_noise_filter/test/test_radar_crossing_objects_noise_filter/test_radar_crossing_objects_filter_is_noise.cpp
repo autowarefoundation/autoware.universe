@@ -18,6 +18,7 @@
 #include <geometry_msgs/msg/point32.hpp>
 
 #include "radar_crossing_objects_noise_filter/radar_crossing_objects_noise_filter_node.hpp"
+
 #include <gtest/gtest.h>
 
 std::shared_ptr<radar_crossing_objects_noise_filter::RadarCrossingObjectsNoiseFilterNode> get_node(
@@ -26,13 +27,10 @@ std::shared_ptr<radar_crossing_objects_noise_filter::RadarCrossingObjectsNoiseFi
   rclcpp::NodeOptions node_options;
 
   node_options.parameter_overrides(
-  {
-    {"angle_threshold", angle_threshold},
-    {"velocity_threshold", velocity_threshold}
-  }
-);
+    {{"angle_threshold", angle_threshold}, {"velocity_threshold", velocity_threshold}});
   auto node =
-    std::make_shared<radar_crossing_objects_noise_filter::RadarCrossingObjectsNoiseFilterNode>(node_options);
+    std::make_shared<radar_crossing_objects_noise_filter::RadarCrossingObjectsNoiseFilterNode>(
+      node_options);
   return node;
 }
 
@@ -64,12 +62,14 @@ TEST(RadarCrossingObjectsFilter, IsNoise)
     {
       double velocity_threshold = 40.0;
       double angle_threshold = -1.0472; 
+
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_TRUE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
       double angle_threshold = 1.0472; 
+
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_TRUE(node->isNoise(object));
     }
@@ -174,4 +174,3 @@ TEST(RadarCrossingObjectsFilter, IsNoise)
     }
   }
 }
-
