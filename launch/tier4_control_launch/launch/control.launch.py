@@ -320,11 +320,11 @@ def launch_setup(context, *args, **kwargs):
         target_container="/control/control_container",
     )
 
-    glog_component = ComposableNode(
-        package="glog_component",
-        plugin="GlogComponent",
-        name="glog_component",
-    )
+    # glog_component = ComposableNode(
+    #     package="glog_component",
+    #     plugin="GlogComponent",
+    #     name="glog_component",
+    # )
 
     # set container to run all required components in the same process
     container = ComposableNodeContainer(
@@ -338,7 +338,7 @@ def launch_setup(context, *args, **kwargs):
             shift_decider_component,
             vehicle_cmd_gate_component,
             operation_mode_transition_manager_component,
-            glog_component,
+            # glog_component,
         ],
     )
 
@@ -379,7 +379,7 @@ def launch_setup(context, *args, **kwargs):
                 namespace="",
                 package="rclcpp_components",
                 executable=LaunchConfiguration("container_executable"),
-                composable_node_descriptions=[control_validator_component, glog_component],
+                composable_node_descriptions=[control_validator_component],
             ),
         ]
     )

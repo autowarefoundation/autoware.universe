@@ -5,7 +5,7 @@
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='logging_simulation'&quot;)" value="false"/>
 
   <!-- When gnss_enabled is false, automatic_pose_initializer will not run, only manual initial position estimation is available. -->
-  <arg name="gnss_enabled" default="true" description="gnss availability for initial position estimation"/>
+  <arg name="gnss_enabled" default="false" description="gnss availability for initial position estimation"/>
 
   <!-- split string with underscores -->
   <let name="available_args" value="[\'ndt\',\'yabloc\',\'eagleye\',\'artag\']"/>

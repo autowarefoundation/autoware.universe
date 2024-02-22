@@ -3,7 +3,7 @@
   <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
 
   <!-- container -->
-  <arg name="lidar_container_name" default="/sensing/lidar/top/pointcloud_preprocessor/pointcloud_container" description="container name of main lidar used for localization"/>
+  <arg name="lidar_container_name" default="/sensing/lidar/front/pointcloud_preprocessor/pointcloud_container" description="container name of main lidar used for localization"/>
 
   <!-- whether use intra-process -->
   <arg name="use_intra_process" default="true" description="use ROS 2 component container communication"/>

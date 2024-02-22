@@ -15,7 +15,7 @@
   <arg name="node_name" default="ndt_scan_matcher" description="Use a different name for this node"/>
 
   <node pkg="ndt_scan_matcher" exec="ndt_scan_matcher" name="$(var node_name)" output="log">
-    <remap from="points_raw" to="$(var input_pointcloud)"/>
+    <remap from="points_raw" to="/sensing/lidar/front/pointcloud"/>
     <remap from="ekf_pose_with_covariance" to="$(var input_initial_pose_topic)"/>
     <remap from="regularization_pose_with_covariance" to="$(var input_regularization_pose_topic)"/>
     <remap from="trigger_node_srv" to="$(var input_service_trigger_node)"/>
