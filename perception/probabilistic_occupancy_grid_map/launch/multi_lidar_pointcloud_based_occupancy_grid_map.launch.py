@@ -124,7 +124,7 @@ def launch_setup(context, *args, **kwargs):
         node = ComposableNode(
             package="probabilistic_occupancy_grid_map",
             plugin="occupancy_grid_map::PointcloudBasedOccupancyGridMapNode",
-            name="occupancy_grid_map_node_in_" + ogm_creation_config["scan_origin_frame"],
+            name="occupancy_grid_map_node_in_" + str(i),
             remappings=[
                 ("~/input/obstacle_pointcloud", fusion_config["obstacle_pointcloud_topic"]),
                 ("~/input/raw_pointcloud", fusion_config["raw_pointcloud_topics"][i]),
