@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "radar_crossing_objects_noise_filter/radar_crossing_objects_noise_filter_node.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
-
-#include "radar_crossing_objects_noise_filter/radar_crossing_objects_noise_filter_node.hpp"
 
 #include <gtest/gtest.h>
 
@@ -35,15 +34,15 @@ std::shared_ptr<radar_crossing_objects_noise_filter::RadarCrossingObjectsNoiseFi
 }
 
 autoware_auto_perception_msgs::msg::DetectedObject get_object(
-  geometry_msgs::msg::Vector3 velocity, geometry_msgs::msg::Point position, geometry_msgs::msg::Quaternion orientation
-  ){
-    autoware_auto_perception_msgs::msg::DetectedObject object;
-    object.kinematics.twist_with_covariance.twist.linear = velocity;
-    object.kinematics.pose_with_covariance.pose.position = position;
-    object.kinematics.pose_with_covariance.pose.orientation = orientation;
-    return object;
+  geometry_msgs::msg::Vector3 velocity, geometry_msgs::msg::Point position,
+  geometry_msgs::msg::Quaternion orientation)
+{
+  autoware_auto_perception_msgs::msg::DetectedObject object;
+  object.kinematics.twist_with_covariance.twist.linear = velocity;
+  object.kinematics.pose_with_covariance.pose.position = position;
+  object.kinematics.pose_with_covariance.pose.orientation = orientation;
+  return object;
 }
-
 
 TEST(RadarCrossingObjectsFilter, IsNoise)
 {
@@ -55,27 +54,27 @@ TEST(RadarCrossingObjectsFilter, IsNoise)
     auto object = get_object(velocity, position, orientation);
     {
       double velocity_threshold = 40.0;
-      double angle_threshold = 1.0472; 
+      double angle_threshold = 1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_TRUE(node->isNoise(object));
     }
     {
       double velocity_threshold = 40.0;
-      double angle_threshold = -1.0472; 
+      double angle_threshold = -1.0472;
 
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_TRUE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
-      double angle_threshold = 1.0472; 
+      double angle_threshold = 1.0472;
 
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_TRUE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
-      double angle_threshold = -1.0472; 
+      double angle_threshold = -1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_TRUE(node->isNoise(object));
     }
@@ -88,25 +87,25 @@ TEST(RadarCrossingObjectsFilter, IsNoise)
     auto object = get_object(velocity, position, orientation);
     {
       double velocity_threshold = 40.0;
-      double angle_threshold = 1.0472; 
+      double angle_threshold = 1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
     {
       double velocity_threshold = 40.0;
-      double angle_threshold = -1.0472; 
+      double angle_threshold = -1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
-      double angle_threshold = 1.0472; 
+      double angle_threshold = 1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
-      double angle_threshold = -1.0472; 
+      double angle_threshold = -1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
@@ -119,25 +118,25 @@ TEST(RadarCrossingObjectsFilter, IsNoise)
     auto object = get_object(velocity, position, orientation);
     {
       double velocity_threshold = 40.0;
-      double angle_threshold = 1.0472; 
+      double angle_threshold = 1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
     {
       double velocity_threshold = 40.0;
-      double angle_threshold = -1.0472; 
+      double angle_threshold = -1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
-      double angle_threshold = 1.0472; 
+      double angle_threshold = 1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_TRUE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
-      double angle_threshold = -1.0472; 
+      double angle_threshold = -1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_TRUE(node->isNoise(object));
     }
@@ -150,25 +149,25 @@ TEST(RadarCrossingObjectsFilter, IsNoise)
     auto object = get_object(velocity, position, orientation);
     {
       double velocity_threshold = 40.0;
-      double angle_threshold = 1.0472; 
+      double angle_threshold = 1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
     {
       double velocity_threshold = 40.0;
-      double angle_threshold = -1.0472; 
+      double angle_threshold = -1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
-      double angle_threshold = 1.0472; 
+      double angle_threshold = 1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
     {
       double velocity_threshold = -40.0;
-      double angle_threshold = -1.0472; 
+      double angle_threshold = -1.0472;
       auto node = get_node(angle_threshold, velocity_threshold);
       EXPECT_FALSE(node->isNoise(object));
     }
