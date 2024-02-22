@@ -43,35 +43,41 @@ namespace behavior_velocity_planner::out_of_lane
 {
 void cut_predicted_path_beyond_line(
   autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
-  const lanelet::BasicLineString2d & stop_line)
+  const lanelet::BasicLineString2d & stop_line, const double object_front_overhang)
 {
+  auto stop_line_idx = 0UL;
+  bool found = false;
   lanelet::BasicSegment2d path_segment;
   path_segment.first.x() = predicted_path.path.front().position.x;
   path_segment.first.y() = predicted_path.path.front().position.y;
-  for (auto i = 1; i < predicted_path.path.size(); ++i) {
-    path_segment.second.x() = predicted_path.path[i].position.x;
-    path_segment.second.y() = predicted_path.path[i].position.y;
+  for (stop_line_idx = 1; stop_line_idx < predicted_path.path.size(); ++stop_line_idx) {
+    path_segment.second.x() = predicted_path.path[stop_line_idx].position.x;
+    path_segment.second.y() = predicted_path.path[stop_line_idx].position.y;
     if (boost::geometry::intersects(stop_line, path_segment)) {
-      predicted_path.path.resize(i - std::min(i, 10));
-      return;
+      found = true;
+      break;
     }
     path_segment.first = path_segment.second;
   }
+  auto cut_idx = stop_line_idx;
+  double arc_length = 0;
+  while (cut_idx > 0 && arc_length < object_front_overhang) {
+    arc_length += tier4_autoware_utils::calcDistance2d(
+      predicted_path.path[cut_idx], predicted_path.path[cut_idx - 1]);
+    --cut_idx;
+  }
+  predicted_path.path.resize(cut_idx);
 }
 
 std::optional<const lanelet::BasicLineString2d> find_next_stop_line(
-  const autoware_auto_perception_msgs::msg::PredictedPath & path, const PlannerData & planner_data,
-  const double max_length)
+  const autoware_auto_perception_msgs::msg::PredictedPath & path, const PlannerData & planner_data)
 {
   lanelet::ConstLanelets lanelets;
-  lanelet::BasicPoint2d query_point;
-  for (const auto & p : path.path) {
-    query_point.x() = p.position.x;
-    query_point.y() = p.position.y;
-    const auto results = lanelet::geometry::findWithin2d(
-      planner_data.route_handler_->getLaneletMapPtr()->laneletLayer, query_point);
-    for (const auto & r : results) lanelets.push_back(r.second);
-  }
+  lanelet::BasicLineString2d query_line;
+  for (const auto & p : path.path) query_line.emplace_back(p.position.x, p.position.y);
+  const auto query_results = lanelet::geometry::findWithin2d(
+    planner_data.route_handler_->getLaneletMapPtr()->laneletLayer, query_line);
+  for (const auto & r : query_results) lanelets.push_back(r.second);
   for (const auto & ll : lanelets) {
     for (const auto & element : ll.regulatoryElementsAs<lanelet::TrafficLight>()) {
       const auto traffic_signal_stamped = planner_data.getTrafficSignal(element->id());
@@ -92,24 +98,22 @@ std::optional<const lanelet::BasicLineString2d> find_next_stop_line(
 /// @param [in] planner_data planner data to get the map and traffic light information
 void cut_predicted_path_beyond_red_lights(
   autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
-  const PlannerData & planner_data)
+  const PlannerData & planner_data, const double object_front_overhang, int i)
 {
   // Declare a stream and an SVG mapper
-  std::ofstream svg("/home/mclement/Pictures/image.svg");  // /!\ CHANGE PATH
+  std::ofstream svg(
+    "/home/mclement/Pictures/image" + std::to_string(i) + ".svg");  // /!\ CHANGE PATH
   boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
-  const lanelet::BasicPoint2d first_point = {
-    predicted_path.path.front().position.x, predicted_path.path.front().position.y};
-  const auto stop_line = find_next_stop_line(
-    predicted_path, planner_data,
-    motion_utils::calcSignedArcLength(predicted_path.path, 0, predicted_path.path.size() - 1));
+  const auto stop_line = find_next_stop_line(predicted_path, planner_data);
   lanelet::BasicLineString2d path_ls;
   for (const auto & p : predicted_path.path) path_ls.emplace_back(p.position.x, p.position.y);
-  if (stop_line) cut_predicted_path_beyond_line(predicted_path, *stop_line);
+  if (stop_line) cut_predicted_path_beyond_line(predicted_path, *stop_line, object_front_overhang);
   lanelet::BasicLineString2d cut_path_ls;
   for (const auto & p : predicted_path.path) cut_path_ls.emplace_back(p.position.x, p.position.y);
   mapper.add(cut_path_ls);
-  mapper.map(first_point, "opacity:1.0;fill:red;stroke:green;stroke-width:2", 2);
+  if (stop_line) mapper.add(*stop_line);
   mapper.map(path_ls, "opacity:0.3;fill:black;stroke:black;stroke-width:2");
+  if (stop_line) mapper.map(*stop_line, "opacity:0.5;fill:black;stroke:red;stroke-width:2");
   mapper.map(cut_path_ls, "opacity:0.3;fill:red;stroke:red;stroke-width:2");
 }
 
@@ -149,11 +153,15 @@ autoware_auto_perception_msgs::msg::PredictedObjects filter_predicted_objects(
       const auto new_end =
         std::remove_if(predicted_paths.begin(), predicted_paths.end(), is_invalid_predicted_path);
       predicted_paths.erase(new_end, predicted_paths.end());
+      auto i = 0;
       if (true || params.objects_cut_predicted_paths_beyond_red_lights)
         for (auto & predicted_path : predicted_paths)
-          cut_predicted_path_beyond_red_lights(predicted_path, planner_data);
+          cut_predicted_path_beyond_red_lights(
+            predicted_path, planner_data, filtered_object.shape.dimensions.x, i++);
       predicted_paths.erase(
-        std::remove_if(predicted_paths.begin(), predicted_paths.end(), is_invalid_predicted_path),
+        std::remove_if(
+          predicted_paths.begin(), predicted_paths.end(),
+          [](const auto & p) { return p.path.empty(); }),
         predicted_paths.end());
     }
 
