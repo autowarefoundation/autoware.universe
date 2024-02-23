@@ -331,6 +331,8 @@ void NDTScanMatcher::callback_trusted_source_pose(
     trusted_source_pose_ = *pose_conv_msg_ptr;
     trustedPose.pose_avarage_rmse_xy = (std::sqrt(trusted_source_pose_.pose.covariance[0]) + std::sqrt(trusted_source_pose_.pose.covariance[7])) / 2;
     trustedPose.yaw_rmse = std::sqrt(trusted_source_pose_.pose.covariance[35]);
+    // To be used for timeout control
+    trustedPoseCallbackTime = this->now();
 }
 
 
@@ -571,10 +573,22 @@ void NDTScanMatcher::publish_tf(
     tier4_autoware_utils::pose2transform(result_pose_stamped_msg, param_.frame.ndt_base_frame));
 }
 
+bool NDTScanMatcher::checkTrustedPoseTimeout(){
+    auto timeDiff =  this->now() - trustedPoseCallbackTime;
+    if (timeDiff.seconds() > 1.0){
+        return true;
+    }
+    return false;
+}
 std::array<double, 36> NDTScanMatcher::covariance_modifier(std::array<double, 36> & in_ndt_covariance){
     std::array<double, 36> ndt_covariance;
     ndt_covariance = in_ndt_covariance;
     close_ndt_pose_source_ = false;
+
+    if (NDTScanMatcher::checkTrustedPoseTimeout()){
+        RCLCPP_WARN(this->get_logger(),"Trusted Pose Timeout");
+        return ndt_covariance;
+    }
 
     if(trustedPose.pose_avarage_rmse_xy <= 0.10 && trustedPose.yaw_rmse < std::sqrt(in_ndt_covariance[35])){
         close_ndt_pose_source_ = true;

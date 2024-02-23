@@ -213,6 +213,10 @@ private:
 
   std::array<double, 36> covariance_modifier(std::array<double, 36> & in_ndt_covariance);
 
+  // To be used for timeout control
+  bool checkTrustedPoseTimeout();
+  rclcpp::Time trustedPoseCallbackTime;
+
   HyperParameters param_;
 };
 
