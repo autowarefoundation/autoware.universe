@@ -16,9 +16,9 @@
 
 ### Output
 
-| Name                       | Type                                             | Description                                               |
-| -------------------------- | ------------------------------------------------ | --------------------------------------------------------- |
-| `~/output/traffic_signals` | `tier4_perception_msgs::msg::TrafficSignalArray` | output that contains estimated pedestrian traffic signals |
+| Name                       | Type                                                | Description                                               |
+| -------------------------- | --------------------------------------------------- | --------------------------------------------------------- |
+| `~/output/traffic_signals` | `autoware_perception_msgs::msg::TrafficSignalArray` | output that contains estimated pedestrian traffic signals |
 
 ## Parameters
 

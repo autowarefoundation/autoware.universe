@@ -55,6 +55,7 @@ namespace vehicle_cmd_gate
 using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_control_msgs::msg::Control;
+using autoware_control_msgs::msg::Longitudinal;
 using autoware_vehicle_msgs::msg::GearCommand;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_vehicle_msgs::msg::SteeringReport;
@@ -220,6 +221,7 @@ private:
   // Algorithm
   Control prev_control_cmd_;
   Control createStopControlCmd() const;
+  Longitudinal createLongitudinalStopControlCmd() const;
   Control createEmergencyStopControlCmd() const;
 
   std::shared_ptr<rclcpp::Time> prev_time_;

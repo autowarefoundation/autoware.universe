@@ -877,11 +877,11 @@ PredictedObject MapBasedPredictionNode::convertToPredictedObject(
 
 void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg)
 {
-  RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Start loading lanelet");
+  RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Map is loaded");
+  RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Map is loaded");
 
   const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   const auto crosswalks = lanelet::utils::query::crosswalkLanelets(all_lanelets);
@@ -1247,7 +1247,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   for (const auto & crosswalk : crosswalks_) {
     const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
     if (crosswalk_signal_id_opt.has_value() && use_crosswalk_signal_) {
-      if (!calcIntentionToCrossWithTrafficSgnal(
+      if (!calcIntentionToCrossWithTrafficSignal(
             object, crosswalk, crosswalk_signal_id_opt.value())) {
         continue;
       }
@@ -2299,7 +2299,7 @@ std::optional<TrafficSignalElement> MapBasedPredictionNode::getTrafficSignalElem
   return std::nullopt;
 }
 
-bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSgnal(
+bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSignal(
   const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
   const lanelet::Id & signal_id)
 {
