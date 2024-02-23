@@ -29,6 +29,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `num_points_threshold`    | int     | 4             |                                                                                     |
 | `max_rings_num`           | uint_16 | 128           |                                                                                     |
 | `max_points_num_per_ring` | size_t  | 4000          | Set this value large enough such that `HFoV / resolution < max_points_num_per_ring` |
+| `publish_excluded_points` | bool    | false         | Flag to publish excluded pointcloud                                                 |
 
 ## Assumptions / Known limits
 
