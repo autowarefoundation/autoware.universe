@@ -576,25 +576,33 @@ std::array<double, 36> NDTScanMatcher::covariance_modifier(std::array<double, 36
     ndt_covariance = in_ndt_covariance;
     close_ndt_pose_source_ = false;
 
-    if(trustedPose.pose_avarage_rmse_xy <= 0.10 && trustedPose.yaw_rmse < 0.3){
+    if(trustedPose.pose_avarage_rmse_xy <= 0.10 && trustedPose.yaw_rmse < std::sqrt(in_ndt_covariance[35])){
         close_ndt_pose_source_ = true;
     }
     else if(trustedPose.pose_avarage_rmse_xy <= 0.10){
         ndt_covariance[0] = 1000000;
         ndt_covariance[7] = 1000000;
     }
-    else if(trustedPose.pose_avarage_rmse_xy <= 0.25){
-        ndt_covariance[0]  = std::pow((std::sqrt(in_ndt_covariance[0])  * 2) - std::sqrt(trusted_source_pose_.pose.covariance[0]),2);
-        ndt_covariance[7]  = std::pow((std::sqrt(in_ndt_covariance[7])  * 2) - std::sqrt(trusted_source_pose_.pose.covariance[7]),2);
-        ndt_covariance[14] = std::pow((std::sqrt(in_ndt_covariance[14]) * 2) - std::sqrt(trusted_source_pose_.pose.covariance[14]),2);
+    else if(trustedPose.pose_avarage_rmse_xy <= 0.25)
+     {
+     /*
+      * ndt_rmse = ndt_max_rmse_meters - (gnss_rmse * (ndt_max_rmse_meters - ndt_min_rmse_meters) / normalization_coeff)
+      * ndt_min_rmse_meters = in_ndt_rmse
+      * ndt_max_rmse_meters = in_ndt_rmse  * 2
+     */
+     double normalization_coeff = 0.1;
+     ndt_covariance[0]  = std::pow(((std::sqrt(in_ndt_covariance[0])  * 2 ) - std::sqrt(trusted_source_pose_.pose.covariance[0]))  * (std::sqrt(in_ndt_covariance[0]))  / normalization_coeff,2);
+     ndt_covariance[7]  = std::pow(((std::sqrt(in_ndt_covariance[7])  * 2 ) - std::sqrt(trusted_source_pose_.pose.covariance[7]))  * (std::sqrt(in_ndt_covariance[7]))  / normalization_coeff,2);
+     ndt_covariance[14] = std::pow(((std::sqrt(in_ndt_covariance[14]) * 2 ) - std::sqrt(trusted_source_pose_.pose.covariance[14])) * (std::sqrt(in_ndt_covariance[14])) / normalization_coeff,2);
 
-        ndt_covariance[0]  = (ndt_covariance[0]  >= in_ndt_covariance[0])  ? ndt_covariance[0]  : in_ndt_covariance[0];
-        ndt_covariance[7]  = (ndt_covariance[7]  >= in_ndt_covariance[7])  ? ndt_covariance[7]  : in_ndt_covariance[0];
-        ndt_covariance[14] = (ndt_covariance[14] >= in_ndt_covariance[14]) ? ndt_covariance[14] : in_ndt_covariance[0];
+     // ndt_rmse = std::max(ndt_rmse, ndt_min_rmse_meters);
+     ndt_covariance[0]  = std::max(ndt_covariance[0] , in_ndt_covariance[0]);
+     ndt_covariance[7]  = std::max(ndt_covariance[7] , in_ndt_covariance[7]);
+     ndt_covariance[14] = std::max(ndt_covariance[14], in_ndt_covariance[14]);
 
-        if (trustedPose.yaw_rmse <= 0.3){
-            ndt_covariance[35] = 1000000;
-        }
+     if (trustedPose.yaw_rmse <= std::sqrt(in_ndt_covariance[35])){
+         ndt_covariance[35] = 1000000;
+     }
     }
     else{
         RCLCPP_INFO(this->get_logger(), "NDT input covariance values will be used ");
