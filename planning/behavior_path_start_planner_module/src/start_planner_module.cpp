@@ -632,7 +632,7 @@ void StartPlannerModule::planWithPriority(
   const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
-  for (const auto & collision_check_margin : parameters_->collision_check_margins) {
+  for (const auto & collision_check_margin : parameters_->objects_collision_check_margins) {
     for (const auto & [index, planner] : order_priority) {
       if (findPullOutPath(
             start_pose_candidates[index], planner, refined_start_pose, goal_pose,
@@ -978,13 +978,13 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
 
-  const auto stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
-    pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity,
-    backward_path_length, std::numeric_limits<double>::max());
+  const auto back_stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
+    pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity, 0,
+    backward_path_length);
 
   const auto front_stop_objects_in_pull_out_lanes = filterStopObjectsInPullOutLanes(
-    pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity, 0,
-    std::numeric_limits<double>::max());
+    pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity,
+    std::numeric_limits<double>::max(), 0);
 
   // Set the maximum backward distance less than the distance from the vehicle's base_link to
   // the lane's rearmost point to prevent lane departure.
@@ -1018,10 +1018,14 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
       continue;
     }
 
-    if (utils::checkCollisionBetweenFootprintAndObjects(
-          local_vehicle_footprint, *backed_pose, stop_objects_in_pull_out_lanes,
-          parameters_->collision_check_margins.back())) {
-      break;  // poses behind this has a collision, so break.
+    if (
+      (start_planner_utils::calcMinArcLengthDistanceFromEgoToObjects(
+         local_vehicle_footprint, *backed_pose, pull_out_lanes,
+         back_stop_objects_in_pull_out_lanes) < parameters_->back_objects_collision_check_margin) ||
+      (utils::checkCollisionBetweenFootprintAndObjects(
+        local_vehicle_footprint, *backed_pose, back_stop_objects_in_pull_out_lanes,
+        parameters_->objects_collision_check_margins.back()))) {
+      break;  // poses behind this is too close to back static object, so break.
     }
 
     pull_out_start_pose_candidates.push_back(*backed_pose);
@@ -1031,8 +1035,8 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
 
 PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_point,
-  const double velocity_threshold, const double object_check_forward_distance,
-  const double object_check_backward_distance) const
+  const double velocity_threshold, const double object_check_backward_distance,
+  const double object_check_forward_distance) const
 {
   const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     *planner_data_->dynamic_object, velocity_threshold);
@@ -1046,8 +1050,8 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
     pull_out_lanes, object_check_backward_distance, object_check_forward_distance);
 
   utils::path_safety_checker::filterObjectsByPosition(
-    stop_objects_in_pull_out_lanes, path.points, current_point, object_check_forward_distance,
-    object_check_backward_distance);
+    stop_objects_in_pull_out_lanes, path.points, current_point, object_check_backward_distance,
+    object_check_forward_distance);
 
   return stop_objects_in_pull_out_lanes;
 }
