@@ -340,7 +340,7 @@ We can also put constraints on the input deviations. As the derivative of steeri
 
 $$
 \begin{align}
-\dot{u}_{min} < \dot{u} < \dot{u}_{max}
+u_{min} < u < u_{max}
 \end{align}
 $$
 
