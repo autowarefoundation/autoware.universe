@@ -340,7 +340,7 @@ We can also put constraints on the input deviations. As the derivative of steeri
 
 $$
 \begin{align}
-u_{min} < u < u_{max}
+\dot u_{min} < \dot u < \dot u_{max}
 \end{align}
 $$
 
@@ -348,7 +348,7 @@ We discretize $\dot{u}$ as $\left(u_{k} - u_{k-1}\right)/\text{d}t$ and multiply
 
 $$
 \begin{align}
-\dot{u}_{min}\text{d}t < u_{k} - u_{k-1} < \dot{u}_{max}\text{d}t
+\dot u_{min}\text{d}t < u_{k} - u_{k-1} < \dot u_{max}\text{d}t
 \end{align}
 $$
 
@@ -356,8 +356,8 @@ Along the prediction or control horizon, i.e for setting $n=3$
 
 $$
 \begin{align}
-\dot{u}_{min}\text{d}t < u_{1} - u_{0} < \dot{u}_{max}\text{d}t \\
-\dot{u}_{min}\text{d}t < u_{2} - u_{1} < \dot{u}_{max}\text{d}t
+\dot u_{min}\text{d}t < u_{1} - u_{0} < \dot u_{max}\text{d}t \\
+\dot u_{min}\text{d}t < u_{2} - u_{1} < \dot u_{max}\text{d}t
 \end{align}
 $$
 
@@ -365,10 +365,10 @@ and aligning the inequality signs
 
 $$
 \begin{align}
-u_{1} - u_{0} &< \dot{u}_{max}\text{d}t \\ +
-u_{1} + u_{0} &< -\dot{u}_{min}\text{d}t \\
-u_{2} - u_{1} &< \dot{u}_{max}\text{d}t \\ +
-u_{2} + u_{1} &< - \dot{u}_{min}\text{d}t
+u_{1} - u_{0} &< \dot u_{max}\text{d}t \\ +
+u_{1} + u_{0} &< -\dot u_{min}\text{d}t \\
+u_{2} - u_{1} &< \dot u_{max}\text{d}t \\ +
+u_{2} + u_{1} &< - \dot u_{min}\text{d}t
 \end{align}
 $$
 
@@ -384,6 +384,6 @@ Thus, putting this inequality to fit the form above, the constraints against $\d
 
 $$
 \begin{align}
-\begin{bmatrix} -1 & 1 & 0 \\ 1 & -1 & 0 \\ 0 & -1 & 1 \\ 0 & 1 & -1 \end{bmatrix}\begin{bmatrix} u_{0} \\ u_{1} \\ u_{2} \end{bmatrix} \leq \begin{bmatrix} \dot{u}_{max}\text{d}t \\ -\dot{u}_{min}\text{d}t \\ \dot{u}_{max}\text{d}t \\ -\dot{u}_{min}\text{d}t \end{bmatrix}
+\begin{bmatrix} -1 & 1 & 0 \\ 1 & -1 & 0 \\ 0 & -1 & 1 \\ 0 & 1 & -1 \end{bmatrix}\begin{bmatrix} u_{0} \\ u_{1} \\ u_{2} \end{bmatrix} \leq \begin{bmatrix} \dot u_{max}\text{d}t \\ -\dot u_{min}\text{d}t \\ \dot u_{max}\text{d}t \\ -\dot u_{min}\text{d}t \end{bmatrix}
 \end{align}
 $$
