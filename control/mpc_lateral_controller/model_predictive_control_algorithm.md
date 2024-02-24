@@ -125,7 +125,7 @@ Substituting equation (8) into equation (9) and tidying up the equation for $U$.
 $$
 \begin{align}
 J(U) &= (H(Fx_{0}+GU+SW)-Y_{ref})^{T}Q(H(Fx_{0}+GU+SW)-Y_{ref})+(U-U_{ref})^{T}R(U-U_{ref}) \\
-& =U^{T}(G^{T}H^{T}QHG+R)U+2\left\{(H(Fx_{0}+SW)-Y_{ref})^{T}QHG-U_{ref}^{T}R\right\}U +(\rm{constant}) \tag{10}
+& =U^{T}(G^{T}H^{T}QHG+R)U+2\lbrace\{(H(Fx_{0}+SW)-Y_{ref})^{T}QHG-U_{ref}^{T}R\rbrace\}U +(\rm{constant}) \tag{10}
 \end{align}
 $$
 
