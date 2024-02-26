@@ -6,7 +6,7 @@
 
 ## Usage
 
-### ROS2 launch
+### ROS 2 launch
 
 ```bash
 # With default config (ds4)
