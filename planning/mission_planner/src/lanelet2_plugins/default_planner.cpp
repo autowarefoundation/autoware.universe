@@ -164,7 +164,7 @@ void DefaultPlanner::initialize(rclcpp::Node * node)
 {
   initialize_common(node);
   map_subscriber_ = node_->create_subscription<LaneletMapBin>(
-    "input/vector_map", rclcpp::QoS{10}.transient_local(),
+    "~/input/vector_map", rclcpp::QoS{10}.transient_local(),
     std::bind(&DefaultPlanner::map_callback, this, std::placeholders::_1));
 }
 
