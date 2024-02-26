@@ -343,13 +343,9 @@ bool isNearEndOfShift(
     return false;
   }
 
-  for (const auto & lane : original_lanes) {
-    if (within(to2D(toLaneletPoint(ego_pos)), lane.polygon2d().basicPolygon())) {
-      return true;
-    }
-  }
-
-  return false;
+  return std::any_of(original_lanes.begin(), original_lanes.end(), [&ego_pos](const auto & lane) {
+    return within(to2D(toLaneletPoint(ego_pos)), lane.polygon2d().basicPolygon());
+  });
 }
 
 bool straddleRoadBound(
