@@ -318,6 +318,9 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   for (const auto & e : cloud_stdmap_) {
     transformed_clouds[e.first] = nullptr;
     if (e.second != nullptr) {
+      if (e.second->data.size() == 0) {
+        continue;
+      }
       pc_stamps.push_back(rclcpp::Time(e.second->header.stamp));
     }
   }
@@ -332,6 +335,9 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   // Step2. Calculate compensation transform and concatenate with the oldest stamp
   for (const auto & e : cloud_stdmap_) {
     if (e.second != nullptr) {
+      if (e.second->data.size() == 0) {
+        continue;
+      }
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
       transformPointCloud(e.second, transformed_cloud_ptr);
@@ -379,6 +385,20 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
 
   const auto & transformed_raw_points =
     PointCloudConcatenateDataSynchronizerComponent::combineClouds(concat_cloud_ptr);
+
+  for (const auto & e : cloud_stdmap_) {
+    if (e.second != nullptr) {
+      if (debug_publisher_) {
+        const auto pipeline_latency_ms =
+          std::chrono::duration<double, std::milli>(
+            std::chrono::nanoseconds(
+              (this->get_clock()->now() - e.second->header.stamp).nanoseconds()))
+            .count();
+        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+          "debug" + e.first + "/pipeline_latency_ms", pipeline_latency_ms);
+      }
+    }
+  }
 
   // publish concatenated pointcloud
   if (concat_cloud_ptr) {
@@ -479,15 +499,15 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  sensor_msgs::msg::PointCloud2::SharedPtr xyzi_input_ptr(new sensor_msgs::msg::PointCloud2());
   auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
   if (input->data.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
-    return;
+  } else {
+    // convert to XYZI pointcloud if pointcloud is not empty
+    convertToXYZICloud(input, xyzi_input_ptr);
   }
-
-  sensor_msgs::msg::PointCloud2::SharedPtr xyzi_input_ptr(new sensor_msgs::msg::PointCloud2());
-  convertToXYZICloud(input, xyzi_input_ptr);
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(

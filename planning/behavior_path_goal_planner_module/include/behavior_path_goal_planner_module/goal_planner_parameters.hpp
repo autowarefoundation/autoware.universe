@@ -71,10 +71,13 @@ struct GoalPlannerParameters
 
   // object recognition
   bool use_object_recognition{false};
-  double object_recognition_collision_check_margin{0.0};
+  std::vector<double> object_recognition_collision_check_soft_margins{};
+  std::vector<double> object_recognition_collision_check_hard_margins{};
   double object_recognition_collision_check_max_extra_stopping_margin{0.0};
   double th_moving_object_velocity{0.0};
   double detection_bound_offset{0.0};
+  double outer_road_detection_offset{0.0};
+  double inner_road_detection_offset{0.0};
 
   // pull over general params
   double pull_over_minimum_request_length{0.0};

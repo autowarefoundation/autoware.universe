@@ -53,15 +53,7 @@ This node extract road surface region by [graph-based-segmentation](https://docs
 
 ### Parameters
 
-| Name                              | Type   | Description                                                        |
-| --------------------------------- | ------ | ------------------------------------------------------------------ |
-| `target_height_ratio`             | double | height on the image to retrieve the candidate road surface         |
-| `target_candidate_box_width`      | int    | size of the square area to search for candidate road surfaces      |
-| `pickup_additional_graph_segment` | bool   | if this is true, additional regions of similar color are retrieved |
-| `similarity_score_threshold`      | double | threshold for picking up additional areas                          |
-| `sigma`                           | double | parameters for cv::ximgproc::segmentation                          |
-| `k`                               | double | parameters for cv::ximgproc::segmentation                          |
-| `min_size`                        | double | parameters for cv::ximgproc::segmentation                          |
+{{ json_to_markdown("localization/yabloc/yabloc_image_processing/schema/graph_segment.schema.json") }}
 
 ## segment_filter
 
@@ -89,14 +81,7 @@ This is a node that integrates the results of graph_segment and lsd to extract r
 
 ### Parameters
 
-| Name                                   | Type   | Description                                                         |
-| -------------------------------------- | ------ | ------------------------------------------------------------------- |
-| `min_segment_length`                   | double | min length threshold (if it is negative, it is unlimited)           |
-| `max_segment_distance`                 | double | max distance threshold (if it is negative, it is unlimited)         |
-| `max_lateral_distance`                 | double | max lateral distance threshold (if it is negative, it is unlimited) |
-| `publish_image_with_segment_for_debug` | bool   | toggle whether to publish the filtered line segment for debug       |
-| `max_range`                            | double | range of debug projection visualization                             |
-| `image_size`                           | int    | image size of debug projection visualization                        |
+{{ json_to_markdown("localization/yabloc/yabloc_image_processing/schema/segment_filter.schema.json") }}
 
 ## undistort
 
@@ -127,11 +112,7 @@ This is to avoid redundant decompression within Autoware.
 
 ### Parameters
 
-| Name                | Type   | Description                                                                                    |
-| ------------------- | ------ | ---------------------------------------------------------------------------------------------- |
-| `use_sensor_qos`    | bool   | where to use sensor qos or not                                                                 |
-| `width`             | int    | resized image width size                                                                       |
-| `override_frame_id` | string | value for overriding the camera's frame_id. if blank, frame_id of static_tf is not overwritten |
+{{ json_to_markdown("localization/yabloc/yabloc_image_processing/schema/undistort.schema.json") }}
 
 #### about tf_static overriding
 

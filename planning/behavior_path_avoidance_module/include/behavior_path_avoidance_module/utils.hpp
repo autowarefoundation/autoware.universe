@@ -36,6 +36,9 @@ bool isOnRight(const ObjectData & obj);
 double calcShiftLength(
   const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
 
+bool isWithinLanes(
+  const lanelet::ConstLanelets & lanelets, std::shared_ptr<const PlannerData> & planner_data);
+
 bool isShiftNecessary(const bool & is_object_on_right, const double & shift_length);
 
 bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length);
@@ -56,8 +59,8 @@ double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
 void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   const PathWithLaneId & path, const Point & ego_pos, ObjectData & obj);
 
-double calcEnvelopeOverhangDistance(
-  const ObjectData & object_data, const PathWithLaneId & path, Point & overhang_pose);
+std::vector<std::pair<double, Point>> calcEnvelopeOverhangDistance(
+  const ObjectData & object_data, const PathWithLaneId & path);
 
 void setEndData(
   AvoidLine & al, const double length, const geometry_msgs::msg::Pose & end, const size_t end_idx,
@@ -78,6 +81,7 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
   const double vehicle_width);
 
 lanelet::ConstLanelets getAdjacentLane(
+  const lanelet::ConstLanelet & current_lane,
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift);
 
@@ -127,6 +131,10 @@ void filterTargetObjects(
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
+void updateRoadShoulderDistance(
+  AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
+
 void fillAdditionalInfoFromPoint(const AvoidancePlanningData & data, AvoidLineArray & lines);
 
 void fillAdditionalInfoFromLongitudinal(const AvoidancePlanningData & data, AvoidLine & line);
@@ -143,8 +151,8 @@ AvoidLineArray combineRawShiftLinesWithUniqueCheck(
 
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift,
-  DebugData & debug);
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool has_left_shift,
+  const bool has_right_shift, DebugData & debug);
 
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & reference_path, const PathWithLaneId & spline_path,
@@ -152,9 +160,11 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const std::shared_ptr<AvoidanceParameters> & parameters,
   const double object_check_forward_distance, DebugData & debug);
 
-DrivableLanes generateExpandDrivableLanes(
+DrivableLanes generateNotExpandedDrivableLanes(const lanelet::ConstLanelet & lanelet);
+
+DrivableLanes generateExpandedDrivableLanes(
   const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool in_avoidance_maneuver);
+  const std::shared_ptr<AvoidanceParameters> & parameters);
 
 double calcDistanceToReturnDeadLine(
   const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,

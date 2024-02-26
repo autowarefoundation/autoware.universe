@@ -57,6 +57,7 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.use_intersection_areas = getOrDeclareParameter<bool>(*node, ns + "use_intersection_areas");
     p.use_hatched_road_markings =
       getOrDeclareParameter<bool>(*node, ns + "use_hatched_road_markings");
+    p.use_freespace_areas = getOrDeclareParameter<bool>(*node, ns + "use_freespace_areas");
   }
 
   // target object
@@ -222,6 +223,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // safety check rss params
   {
     const std::string ns = "avoidance.safety_check.";
+    p.rss_params.extended_polygon_policy =
+      getOrDeclareParameter<std::string>(*node, ns + "extended_polygon_policy");
     p.rss_params.longitudinal_distance_min_threshold =
       getOrDeclareParameter<double>(*node, ns + "longitudinal_distance_min_threshold");
     p.rss_params.longitudinal_velocity_delta_time =

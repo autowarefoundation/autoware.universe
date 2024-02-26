@@ -176,7 +176,8 @@ public:
   {
     using utils::avoidance::calcShiftLength;
 
-    const auto shift_length = calcShiftLength(is_on_right, object.overhang_dist, margin);
+    const auto shift_length =
+      calcShiftLength(is_on_right, object.overhang_points.front().first, margin);
     return is_on_right ? std::min(shift_length, getLeftShiftBound())
                        : std::max(shift_length, getRightShiftBound());
   }
@@ -261,10 +262,11 @@ public:
 
   bool isComfortable(const AvoidLineArray & shift_lines) const
   {
+    const auto JERK_BUFFER = 0.1;  // [m/sss]
     return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
       return PathShifter::calcJerkFromLatLonDistance(
                line.getRelativeLength(), line.getRelativeLongitudinal(), getAvoidanceEgoSpeed()) <
-             getLateralMaxJerkLimit();
+             getLateralMaxJerkLimit() + JERK_BUFFER;
     });
   }
 
