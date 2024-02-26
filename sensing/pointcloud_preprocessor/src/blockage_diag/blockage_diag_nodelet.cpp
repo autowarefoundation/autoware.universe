@@ -54,6 +54,7 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
       "The horizontal_ring_id should be smaller than vertical_bins. Skip blockage diag!");
     return;
   }
+
   updater_.setHardwareID("blockage_diag");
   updater_.add(
     std::string(this->get_namespace()) + ": blockage_validation", this,
@@ -249,8 +250,13 @@ void BlockageDiagComponent::filter(
   ground_blockage_ratio_ =
     static_cast<float>(cv::countNonZero(ground_no_return_mask)) /
     static_cast<float>(ideal_horizontal_bins * (vertical_bins - horizontal_ring_id_));
-  sky_blockage_ratio_ = static_cast<float>(cv::countNonZero(sky_no_return_mask)) /
-                        static_cast<float>(ideal_horizontal_bins * horizontal_ring_id_);
+
+  if (horizontal_ring_id_ == 0) {
+    sky_blockage_ratio_ = 0.0f;
+  } else {
+    sky_blockage_ratio_ = static_cast<float>(cv::countNonZero(sky_no_return_mask)) /
+                          static_cast<float>(ideal_horizontal_bins * horizontal_ring_id_);
+  }
 
   if (ground_blockage_ratio_ > blockage_ratio_threshold_) {
     cv::Rect ground_blockage_bb = cv::boundingRect(ground_no_return_mask);
