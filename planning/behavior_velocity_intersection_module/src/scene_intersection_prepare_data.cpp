@@ -258,19 +258,27 @@ IntersectionModule::prepareIntersectionData(const bool is_prioritized, PathWithL
       planner_data_->occupancy_grid->info.resolution);
   }
 
-  const bool is_green_solid_on = isGreenSolidOn();
-  if (is_green_solid_on && !initial_green_light_observed_time_) {
-    const auto assigned_lane_begin_point = assigned_lanelet.centerline().front();
-    const bool approached_assigned_lane =
-      motion_utils::calcSignedArcLength(
-        path->points, closest_idx,
-        tier4_autoware_utils::createPoint(
-          assigned_lane_begin_point.x(), assigned_lane_begin_point.y(),
-          assigned_lane_begin_point.z())) <
-      planner_param_.collision_detection.yield_on_green_traffic_light
-        .distance_to_assigned_lanelet_start;
-    if (approached_assigned_lane) {
-      initial_green_light_observed_time_ = clock_->now();
+  // ==========================================================================================
+  // update traffic light information
+  // updateTrafficSignalObservation() must be called at first to because other traffic signal
+  // fuctions use last_valid_observation_
+  // ==========================================================================================
+  if (has_traffic_light_) {
+    updateTrafficSignalObservation();
+    const bool is_green_solid_on = isGreenSolidOn();
+    if (is_green_solid_on && !initial_green_light_observed_time_) {
+      const auto assigned_lane_begin_point = assigned_lanelet.centerline().front();
+      const bool approached_assigned_lane =
+        motion_utils::calcSignedArcLength(
+          path->points, closest_idx,
+          tier4_autoware_utils::createPoint(
+            assigned_lane_begin_point.x(), assigned_lane_begin_point.y(),
+            assigned_lane_begin_point.z())) <
+        planner_param_.collision_detection.yield_on_green_traffic_light
+          .distance_to_assigned_lanelet_start;
+      if (approached_assigned_lane) {
+        initial_green_light_observed_time_ = clock_->now();
+      }
     }
   }
 
@@ -280,7 +288,7 @@ IntersectionModule::prepareIntersectionData(const bool is_prioritized, PathWithL
 
 std::optional<size_t> IntersectionModule::getStopLineIndexFromMap(
   const intersection::InterpolatedPathInfo & interpolated_path_info,
-  lanelet::ConstLanelet assigned_lanelet)
+  lanelet::ConstLanelet assigned_lanelet) const
 {
   const auto & path = interpolated_path_info.path;
   const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
@@ -336,7 +344,7 @@ IntersectionModule::generateIntersectionStopLines(
   const lanelet::ConstLanelet & first_attention_lane,
   const std::optional<lanelet::CompoundPolygon3d> & second_attention_area_opt,
   const intersection::InterpolatedPathInfo & interpolated_path_info,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path) const
 {
   const bool use_stuck_stopline = planner_param_.stuck_vehicle.use_stuck_stopline;
   const double stopline_margin = planner_param_.common.default_stopline_margin;
@@ -567,7 +575,7 @@ IntersectionModule::generateIntersectionStopLines(
 
 intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const lanelet::ConstLanelet assigned_lanelet)
+  const lanelet::ConstLanelet assigned_lanelet) const
 {
   const double detection_area_length = planner_param_.common.attention_area_length;
   const double occlusion_detection_area_length =
@@ -772,7 +780,7 @@ std::optional<intersection::PathLanelets> IntersectionModule::generatePathLanele
   const lanelet::CompoundPolygon3d & first_conflicting_area,
   const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
-  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx)
+  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx) const
 {
   const double width = planner_data_->vehicle_info_.vehicle_width_m;
   static constexpr double path_lanelet_interval = 1.5;
@@ -840,7 +848,7 @@ std::optional<intersection::PathLanelets> IntersectionModule::generatePathLanele
 
 std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution)
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution) const
 {
   const double curvature_threshold =
     planner_param_.occlusion.attention_lane_crop_curvature_threshold;

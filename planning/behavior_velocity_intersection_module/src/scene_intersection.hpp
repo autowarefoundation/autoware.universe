@@ -41,6 +41,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -73,8 +74,20 @@ public:
       bool straight;
     };
 
+    struct TargetType
+    {
+      bool car;
+      bool bus;
+      bool truck;
+      bool trailer;
+      bool motorcycle;
+      bool bicycle;
+      bool unknown;
+    };
+
     struct StuckVehicle
     {
+      TargetType target_type;
       TurnDirection turn_direction;
       bool use_stuck_stopline;
       double stuck_vehicle_detect_dist;
@@ -84,6 +97,7 @@ public:
 
     struct YieldStuck
     {
+      TargetType target_type;
       TurnDirection turn_direction;
       double distance_threshold;
     } yield_stuck;
@@ -93,6 +107,7 @@ public:
       bool consider_wrong_direction_vehicle;
       double collision_detection_hold_time;
       double min_predicted_path_confidence;
+      TargetType target_type;
       struct VelocityProfile
       {
         bool use_upstream;
@@ -123,7 +138,11 @@ public:
       } yield_on_green_traffic_light;
       struct IgnoreOnAmberTrafficLight
       {
-        double object_expected_deceleration;
+        struct ObjectExpectedDeceleration
+        {
+          double car;
+          double bike;
+        } object_expected_deceleration;
       } ignore_on_amber_traffic_light;
       struct IgnoreOnRedTrafficLight
       {
@@ -166,16 +185,25 @@ public:
     } debug;
   };
 
-  enum OcclusionType {
-    //! occlusion is not detected
-    NOT_OCCLUDED,
-    //! occlusion is not caused by dynamic objects
-    STATICALLY_OCCLUDED,
-    //! occlusion is caused by dynamic objects
-    DYNAMICALLY_OCCLUDED,
-    //! actual occlusion does not exist, only disapproved by RTC
-    RTC_OCCLUDED,
+  //! occlusion is not detected
+  struct NotOccluded
+  {
+    double best_clearance_distance{-1.0};
   };
+  //! occlusion is not caused by dynamic objects
+  struct StaticallyOccluded
+  {
+    double best_clearance_distance{0.0};
+  };
+  //! occlusion is caused by dynamic objects
+  struct DynamicallyOccluded
+  {
+    double best_clearance_distance{0.0};
+  };
+  //! actual occlusion does not exist, only disapproved by RTC
+  using RTCOccluded = std::monostate;
+  using OcclusionType =
+    std::variant<NotOccluded, StaticallyOccluded, DynamicallyOccluded, RTCOccluded>;
 
   struct DebugData
   {
@@ -209,6 +237,9 @@ public:
     std::optional<std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
       nearest_occlusion_projection{std::nullopt};
     std::optional<double> static_occlusion_with_traffic_light_timeout{std::nullopt};
+
+    std::optional<std::tuple<geometry_msgs::msg::Pose, lanelet::ConstPoint3d, lanelet::Id, uint8_t>>
+      traffic_light_observation{std::nullopt};
   };
 
   using TimeDistanceArray = std::vector<std::pair<double /* time*/, double /* distance*/>>;
@@ -294,11 +325,9 @@ public:
   bool getOcclusionSafety() const { return occlusion_safety_; }
   double getOcclusionDistance() const { return occlusion_stop_distance_; }
   void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
-  bool isOcclusionFirstStopRequired() { return occlusion_first_stop_required_; }
+  bool isOcclusionFirstStopRequired() const { return occlusion_first_stop_required_; }
 
 private:
-  rclcpp::Node & node_;
-
   /**
    ***********************************************************
    ***********************************************************
@@ -393,10 +422,24 @@ private:
    ***********************************************************
    ***********************************************************
    ***********************************************************
+   * @defgroup collision-variables [var] collision detection
+   * @{
+   */
+  //! save the last UNKNOWN traffic light information of this intersection(keep even if the info got
+  //! unavailable)
+  std::optional<std::pair<lanelet::Id, lanelet::ConstPoint3d>> tl_id_and_point_;
+  std::optional<TrafficSignalStamped> last_tl_valid_observation_{std::nullopt};
+  /** @} */
+
+private:
+  /**
+   ***********************************************************
+   ***********************************************************
+   ***********************************************************
    * @defgroup occlusion-variables [var] occlusion detection variables
    * @{
    */
-  OcclusionType prev_occlusion_status_;
+  OcclusionType prev_occlusion_status_{NotOccluded{}};
 
   //! debouncing for the first brief stop at the default stopline
   StateMachine before_creep_state_machine_;
@@ -499,7 +542,7 @@ private:
    */
   std::optional<size_t> getStopLineIndexFromMap(
     const intersection::InterpolatedPathInfo & interpolated_path_info,
-    lanelet::ConstLanelet assigned_lanelet);
+    lanelet::ConstLanelet assigned_lanelet) const;
 
   /**
    * @brief generate IntersectionStopLines
@@ -510,7 +553,7 @@ private:
     const lanelet::ConstLanelet & first_attention_lane,
     const std::optional<lanelet::CompoundPolygon3d> & second_attention_area_opt,
     const intersection::InterpolatedPathInfo & interpolated_path_info,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
+    autoware_auto_planning_msgs::msg::PathWithLaneId * original_path) const;
 
   /**
    * @brief generate IntersectionLanelets
@@ -518,7 +561,7 @@ private:
   intersection::IntersectionLanelets generateObjectiveLanelets(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const lanelet::ConstLanelet assigned_lanelet);
+    const lanelet::ConstLanelet assigned_lanelet) const;
 
   /**
    * @brief generate PathLanelets
@@ -529,14 +572,15 @@ private:
     const lanelet::CompoundPolygon3d & first_conflicting_area,
     const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
     const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
-    const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx);
+    const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
+    const size_t closest_idx) const;
 
   /**
    * @brief generate discretized detection lane linestring.
    */
   std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
     lanelet::ConstLanelets detection_lanelets,
-    const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution);
+    const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution) const;
   /** @} */
 
 private:
@@ -556,6 +600,13 @@ private:
    * @brief find TrafficPrioritizedLevel
    */
   TrafficPrioritizedLevel getTrafficPrioritizedLevel() const;
+
+  /**
+   * @brief update the valid traffic signal information if still available, otherwise keep last
+   * observation
+   */
+  void updateTrafficSignalObservation();
+
   /** @} */
 
 private:
@@ -577,6 +628,9 @@ private:
     const intersection::PathLanelets & path_lanelets) const;
 
   bool isTargetStuckVehicleType(
+    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
+
+  bool isTargetYieldStuckVehicleType(
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
@@ -636,7 +690,8 @@ private:
    * @attention this function has access to value() of intersection_lanelets_,
    * intersection_lanelets.first_attention_area(), occlusion_attention_divisions_
    */
-  OcclusionType detectOcclusion(const intersection::InterpolatedPathInfo & interpolated_path_info);
+  OcclusionType detectOcclusion(
+    const intersection::InterpolatedPathInfo & interpolated_path_info) const;
   /** @} */
 
 private:
@@ -699,7 +754,7 @@ private:
    */
   std::optional<intersection::NonOccludedCollisionStop> isGreenPseudoCollisionStatus(
     const size_t closest_idx, const size_t collision_stopline_idx,
-    const intersection::IntersectionStopLines & intersection_stoplines);
+    const intersection::IntersectionStopLines & intersection_stoplines) const;
 
   /**
    * @brief generate the message explaining why too_late_detect_objects/misjudge_objects exist and
@@ -731,7 +786,8 @@ private:
    * @brief return if collision is detected and the collision position
    */
   CollisionStatus detectCollision(
-    const bool is_over_1st_pass_judge_line, const std::optional<bool> is_over_2nd_pass_judge_line);
+    const bool is_over_1st_pass_judge_line,
+    const std::optional<bool> is_over_2nd_pass_judge_line) const;
 
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
@@ -747,7 +803,7 @@ private:
   TimeDistanceArray calcIntersectionPassingTime(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const bool is_prioritized,
     const intersection::IntersectionStopLines & intersection_stoplines,
-    tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
+    tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array) const;
   /** @} */
 
   mutable DebugData debug_data_;
