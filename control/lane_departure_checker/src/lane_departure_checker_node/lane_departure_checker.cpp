@@ -345,9 +345,8 @@ std::optional<lanelet::BasicPolygon2d> LaneDepartureChecker::getFusedLaneletPoly
       for (const auto & temp_poly : lanelet_union_temp) {
         merged_polygon.insert(merged_polygon.end(), temp_poly.begin(), temp_poly.end());
       }
-
     }
-    if(merged_polygon.empty()) return std::nullopt;
+    if (merged_polygon.empty()) return std::nullopt;
     return merged_polygon;
   }();
 
