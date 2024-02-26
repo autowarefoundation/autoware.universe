@@ -206,25 +206,25 @@ Defined in the `steering_offset` namespace. This logic is designed as simple as 
 
 Some signals are published as topics to evaluate the quality of the control results. A control researcher can visualize these information using the plotting tool such as PlotJuggler. Note that the 'deviation' and the 'state error' are defined as the difference between the state and the reference. That is state - reference. This definition is different from the conventional sign of the 'state error' defined in the control theory.
 
-`/control/trajectory_follower/lane_departure_checker_node/debug/deviation/longitudinal`: 
+`/control/trajectory_follower/lane_departure_checker_node/debug/deviation/longitudinal`:
 This topic represents the longitudinal deviation of the position at the current time.
 
-`/control/trajectory_follower/lane_departure_checker_node/debug/deviation/longitudinal_velocity`: 
+`/control/trajectory_follower/lane_departure_checker_node/debug/deviation/longitudinal_velocity`:
 This topic represents the longitudinal deviation of the velocity at the current time.
 
-`/control/trajectory_follower/lateral/diagnostic`: 
+`/control/trajectory_follower/lateral/diagnostic`:
 The signals in this topic evaluate the quality of MPC.
 
 Some commonly used signal are listed below:
 
-| The signal | Number |
+| The signal                                                     | Number |
 | :------------------------------------------------------------- | :----- |
-| final steering command (MPC + Clamp + LPF) | [0] |
-| MPC result | [1] |
-| MPC after Clamp (MPC + Clamp) | [21] |
-| feedforward term (reference steering angle) | [2] |
-| lateral error w.r.t the modified reference, feeding MPC module | [5] |
-| lateral error w.r.t the original reference, feeding mpc.cpp | [22] |
+| final steering command (MPC + Clamp + LPF)                     | [0]    |
+| MPC result                                                     | [1]    |
+| MPC after Clamp (MPC + Clamp)                                  | [21]   |
+| feedforward term (reference steering angle)                    | [2]    |
+| lateral error w.r.t the modified reference, feeding MPC module | [5]    |
+| lateral error w.r.t the original reference, feeding mpc.cpp    | [22]   |
 
 ### How to tune MPC parameters
 
