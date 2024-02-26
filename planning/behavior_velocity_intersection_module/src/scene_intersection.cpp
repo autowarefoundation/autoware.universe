@@ -126,6 +126,25 @@ void IntersectionModule::initializeRTCStatus()
   // activated_ and occlusion_activated_ must be set from manager's RTC callback
 }
 
+static std::string formatOcclusionType(const IntersectionModule::OcclusionType & type)
+{
+  if (std::holds_alternative<IntersectionModule::NotOccluded>(type)) {
+    return "NotOccluded and the best occlusion clearance is " +
+           std::to_string(std::get<IntersectionModule::NotOccluded>(type).best_clearance_distance);
+  }
+  if (std::holds_alternative<IntersectionModule::StaticallyOccluded>(type)) {
+    return "StaticallyOccluded and the best occlusion clearance is " +
+           std::to_string(
+             std::get<IntersectionModule::StaticallyOccluded>(type).best_clearance_distance);
+  }
+  if (std::holds_alternative<IntersectionModule::DynamicallyOccluded>(type)) {
+    return "DynamicallyOccluded and the best occlusion clearance is " +
+           std::to_string(
+             std::get<IntersectionModule::DynamicallyOccluded>(type).best_clearance_distance);
+  }
+  return "RTCOccluded";
+}
+
 intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
@@ -235,6 +254,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     detectCollision(is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line);
   const std::string safety_diag =
     generateDetectionBlameDiagnosis(too_late_detect_objects, misjudge_objects);
+  const std::string occlusion_diag = formatOcclusionType(occlusion_status);
+
   if (is_permanent_go_) {
     if (has_collision) {
       const auto closest_idx = intersection_stoplines.closest_idx;
@@ -283,7 +304,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     isYieldStuckStatus(*path, interpolated_path_info, intersection_stoplines);
   if (is_yield_stuck_status) {
     auto yield_stuck = is_yield_stuck_status.value();
-    yield_stuck.safety_report = safety_report;
+    yield_stuck.occlusion_report = occlusion_diag;
     return yield_stuck;
   }
 
@@ -301,12 +322,13 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   // Safe
   if (!is_occlusion_state && !has_collision_with_margin) {
-    return intersection::Safe{closest_idx, collision_stopline_idx, occlusion_stopline_idx};
+    return intersection::Safe{
+      closest_idx, collision_stopline_idx, occlusion_stopline_idx, occlusion_diag};
   }
   // Only collision
   if (!is_occlusion_state && has_collision_with_margin) {
     return intersection::NonOccludedCollisionStop{
-      closest_idx, collision_stopline_idx, occlusion_stopline_idx, safety_report};
+      closest_idx, collision_stopline_idx, occlusion_stopline_idx, occlusion_diag};
   }
   // Occluded
   // utility functions
@@ -380,7 +402,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         closest_idx,
         first_attention_stopline_idx,
         occlusion_wo_tl_pass_judge_line_idx,
-        safety_report};
+        occlusion_diag};
     }
 
     // ==========================================================================================
@@ -403,7 +425,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     const bool release_static_occlusion_stuck =
       (static_occlusion_timeout_state_machine_.getState() == StateMachine::State::GO);
     if (!has_collision_with_margin && release_static_occlusion_stuck) {
-      return intersection::Safe{closest_idx, collision_stopline_idx, occlusion_stopline_idx};
+      return intersection::Safe{
+        closest_idx, collision_stopline_idx, occlusion_stopline_idx, occlusion_diag};
     }
     // occlusion_status is either STATICALLY_OCCLUDED or DYNAMICALLY_OCCLUDED
     const double max_timeout =
@@ -424,7 +447,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         first_attention_stopline_idx,
         occlusion_stopline_idx,
         static_occlusion_timeout,
-        safety_report};
+        occlusion_diag};
     } else {
       return intersection::PeekingTowardOcclusion{
         is_occlusion_cleared_with_margin,
@@ -433,7 +456,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         collision_stopline_idx,
         first_attention_stopline_idx,
         occlusion_stopline_idx,
-        static_occlusion_timeout};
+        static_occlusion_timeout,
+        occlusion_diag};
     }
   } else {
     const auto occlusion_stopline =
@@ -441,7 +465,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         ? first_attention_stopline_idx
         : occlusion_stopline_idx;
     return intersection::FirstWaitBeforeOcclusion{
-      is_occlusion_cleared_with_margin, closest_idx, default_stopline_idx, occlusion_stopline};
+      is_occlusion_cleared_with_margin, closest_idx, default_stopline_idx, occlusion_stopline,
+      occlusion_diag};
   }
 }
 
