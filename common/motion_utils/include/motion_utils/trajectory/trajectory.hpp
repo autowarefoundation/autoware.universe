@@ -30,10 +30,12 @@
 #include <limits>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 namespace motion_utils
 {
+#define log_error(message) std::cerr << "\033[31m " << message << " \033[0m" << std::endl;
 
 /**
  * @brief validate if points container is empty or not
@@ -44,7 +46,7 @@ void validateNonEmpty(const T & points)
 {
   if (points.empty()) {
     tier4_autoware_utils::print_backtrace();
-    throw std::invalid_argument("Points is empty.");
+    throw std::invalid_argument("[motion_utils] validateNonEmpty(): Points is empty.");
   }
 }
 
@@ -82,7 +84,7 @@ void validateNonSharpAngle(
   constexpr double epsilon = 1e-3;
   if (std::cos(angle_threshold) < product / dist_1to2 / dist_3to2 + epsilon) {
     tier4_autoware_utils::print_backtrace();
-    throw std::invalid_argument("Sharp angle.");
+    throw std::invalid_argument("[motion_utils] validateNonSharpAngle(): Too sharp angle.");
   }
 }
 
@@ -130,11 +132,11 @@ std::optional<bool> isDrivingForwardWithTwist(const T & points_with_twist)
   if (points_with_twist.size() == 1) {
     if (0.0 < tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
       return true;
-    } else if (0.0 > tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
-      return false;
-    } else {
-      return std::nullopt;
     }
+    if (0.0 > tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.front())) {
+      return false;
+    }
+    return std::nullopt;
   }
 
   return isDrivingForward(points_with_twist);
@@ -214,7 +216,7 @@ std::optional<size_t> searchZeroVelocityIndex(
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -246,7 +248,7 @@ std::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist, const
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -336,7 +338,7 @@ std::optional<size_t> findNearestIndex(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -401,12 +403,17 @@ double calcLongitudinalOffsetToSegment(
   const bool throw_exception = false)
 {
   if (seg_idx >= points.size() - 1) {
-    const std::out_of_range e("Segment index is invalid.");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      ": Failed to calculate longitudinal offset because the given segment index is out of the "
+      "points size.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::out_of_range(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -418,18 +425,22 @@ double calcLongitudinalOffsetToSegment(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      log_error(e.what());
       return std::nan("");
     }
   }
 
   if (seg_idx >= overlap_removed_points.size() - 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      ": Longitudinal offset calculation is not supported for the same points.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::runtime_error(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -575,18 +586,24 @@ double calcLateralOffset(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      log_error(
+        std::string(e.what()) +
+        " Return NaN since no_throw option is enabled. The maintainer must check the code.");
       return std::nan("");
     }
   }
 
   if (overlap_removed_points.size() == 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      ": Lateral offset calculation is not supported for the same points.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::runtime_error(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -637,18 +654,24 @@ double calcLateralOffset(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      log_error(
+        std::string(e.what()) +
+        " Return NaN since no_throw option is enabled. The maintainer must check the code.");
       return std::nan("");
     }
   }
 
   if (overlap_removed_points.size() == 1) {
-    const std::runtime_error e("Same points are given.");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      ": Lateral offset calculation is not supported for the same points.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::runtime_error(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return std::nan("");
   }
 
@@ -684,7 +707,7 @@ double calcSignedArcLength(const T & points, const size_t src_idx, const size_t 
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
@@ -727,7 +750,7 @@ std::vector<double> calcSignedArcLengthPartialSum(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -779,7 +802,7 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
@@ -822,7 +845,7 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
@@ -861,7 +884,7 @@ double calcSignedArcLength(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
@@ -901,7 +924,7 @@ double calcArcLength(const T & points)
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return 0.0;
   }
 
@@ -929,7 +952,10 @@ calcArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
 template <class T>
 std::vector<double> calcCurvature(const T & points)
 {
-  std::vector<double> curvature_vec(points.size());
+  std::vector<double> curvature_vec(points.size(), 0.0);
+  if (points.size() < 3) {
+    return curvature_vec;
+  }
 
   for (size_t i = 1; i < points.size() - 1; ++i) {
     const auto p1 = tier4_autoware_utils::getPoint(points.at(i - 1));
@@ -968,7 +994,7 @@ std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T & point
 {
   // Note that arclength is for the segment, not the sum.
   std::vector<std::pair<double, double>> curvature_arc_length_vec;
-  curvature_arc_length_vec.push_back(std::pair(0.0, 0.0));
+  curvature_arc_length_vec.emplace_back(0.0, 0.0);
   for (size_t i = 1; i < points.size() - 1; ++i) {
     const auto p1 = tier4_autoware_utils::getPoint(points.at(i - 1));
     const auto p2 = tier4_autoware_utils::getPoint(points.at(i));
@@ -976,9 +1002,9 @@ std::vector<std::pair<double, double>> calcCurvatureAndArcLength(const T & point
     const double curvature = tier4_autoware_utils::calcCurvature(p1, p2, p3);
     const double arc_length = tier4_autoware_utils::calcDistance2d(points.at(i - 1), points.at(i)) +
                               tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i + 1));
-    curvature_arc_length_vec.push_back(std::pair(curvature, arc_length));
+    curvature_arc_length_vec.emplace_back(curvature, arc_length);
   }
-  curvature_arc_length_vec.push_back(std::pair(0.0, 0.0));
+  curvature_arc_length_vec.emplace_back(0.0, 0.0);
 
   return curvature_arc_length_vec;
 }
@@ -1007,7 +1033,7 @@ std::optional<double> calcDistanceToForwardStopPoint(
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -1041,17 +1067,22 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
   if (points.size() - 1 < src_idx) {
-    const auto e = std::out_of_range("Invalid source index");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      " error: The given source index is out of the points size. Failed to calculate longitudinal "
+      "offset.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::out_of_range(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
     return {};
   }
 
@@ -1118,7 +1149,7 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error("Failed to calculate longitudinal offset: " + std::string(e.what()));
     return {};
   }
 
@@ -1166,21 +1197,25 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error("Failed to calculate longitudinal offset: " + std::string(e.what()));
     return {};
   }
 
   if (points.size() - 1 < src_idx) {
-    const auto e = std::out_of_range("Invalid source index");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      " error: The given source index is out of the points size. Failed to calculate longitudinal "
+      "offset.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::out_of_range(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(error_message);
     return {};
   }
 
   if (points.size() == 1) {
+    log_error("Failed to calculate longitudinal offset: points size is one.");
     return {};
   }
 
@@ -1265,7 +1300,7 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -1311,7 +1346,7 @@ std::optional<size_t> insertTargetPoint(
   try {
     validateNonEmpty(points);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -1326,7 +1361,7 @@ std::optional<size_t> insertTargetPoint(
   try {
     validateNonSharpAngle(p_front, p_target, p_back);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error(e.what());
     return {};
   }
 
@@ -2041,9 +2076,8 @@ size_t findFirstNearestIndexWithSoftConstraints(
       if (squared_dist_threshold < squared_dist || yaw_threshold < std::abs(yaw)) {
         if (is_within_constraints) {
           break;
-        } else {
-          continue;
         }
+        continue;
       }
 
       if (min_squared_dist <= squared_dist) {
@@ -2073,9 +2107,8 @@ size_t findFirstNearestIndexWithSoftConstraints(
       if (squared_dist_threshold < squared_dist) {
         if (is_within_constraints) {
           break;
-        } else {
-          continue;
         }
+        continue;
       }
 
       if (min_squared_dist <= squared_dist) {
@@ -2194,7 +2227,7 @@ std::optional<double> calcDistanceToForwardStopPoint(
   try {
     validateNonEmpty(points_with_twist);
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    log_error("Failed to calculate stop distance" + std::string(e.what()));
     return {};
   }
 
@@ -2333,9 +2366,7 @@ T cropPoints(
     cropped_forward_points, target_pos, modified_target_seg_idx, backward_length);
 
   if (cropped_points.size() < 2) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("obstacle_avoidance_planner.trajectory_utils"),
-      ". Return original points since cropped_points size is less than 2.");
+    log_error("Return original points since cropped_points size is less than 2.");
     return points;
   }
 
@@ -2380,18 +2411,22 @@ double calcYawDeviation(
     try {
       validateNonEmpty(overlap_removed_points);
     } catch (const std::exception & e) {
-      std::cerr << e.what() << std::endl;
+      log_error(e.what());
       return 0.0;
     }
   }
 
   if (overlap_removed_points.size() <= 1) {
-    const std::runtime_error e("points size is less than 2");
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) +
+      " Given points size is less than 2. Failed to calculate yaw deviation.");
     tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
-      throw e;
+      throw std::runtime_error(error_message);
     }
-    std::cerr << e.what() << std::endl;
+    log_error(
+      error_message +
+      " Return 0 since no_throw option is enabled. The maintainer must check the code.");
     return 0.0;
   }
 

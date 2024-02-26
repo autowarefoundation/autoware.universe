@@ -54,6 +54,7 @@ struct RunOutParam
 {
   std::string detection_method;
   bool use_partition_lanelet;
+  bool suppress_on_crosswalk;
   bool specify_decel_jerk;
   double stop_margin;
   double passing_margin;
@@ -84,19 +85,20 @@ struct MandatoryArea
   float decel_jerk;
 };
 
-struct ApproachingParam
-{
-  bool enable;
-  float margin;
-  float limit_vel_kmph;
-};
-
 struct StateParam
 {
   float stop_thresh;
   float stop_time_thresh;
   float disable_approach_dist;
   float keep_approach_duration;
+};
+
+struct ApproachingParam
+{
+  bool enable;
+  float margin;
+  float limit_vel_kmph;
+  StateParam state;
 };
 
 struct SlowDownLimit
@@ -142,7 +144,6 @@ struct PlannerParam
   DetectionArea detection_area;
   MandatoryArea mandatory_area;
   ApproachingParam approaching;
-  StateParam state_param;
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
   Smoother smoother;

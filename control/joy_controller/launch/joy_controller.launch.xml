@@ -1,5 +1,5 @@
 <launch>
-  <arg name="joy_type" default="DS4" description="options: DS4, G29, P65"/>
+  <arg name="joy_type" default="DS4" description="options: DS4, G29, P65, XBOX"/>
   <arg name="external_cmd_source" default="remote" description="options: local, remote"/>
 
   <arg name="input_joy" default="/joy"/>
@@ -30,8 +30,7 @@
     <remap from="service/emergency_stop" to="/api/autoware/set/emergency"/>
     <remap from="service/autoware_engage" to="/api/autoware/set/engage"/>
 
-    <param from="$(var config_file)"/>
-    <param name="joy_type" value="$(var joy_type)"/>
+    <param from="$(var config_file)" allow_substs="true"/>
   </node>
 
   <node pkg="joy" exec="joy_node" name="joy_node" output="screen">

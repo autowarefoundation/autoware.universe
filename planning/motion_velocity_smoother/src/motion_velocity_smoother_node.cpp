@@ -173,7 +173,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     update_param_bool("enable_lateral_acc_limit", p.enable_lateral_acc_limit);
     update_param_bool("enable_steering_rate_limit", p.enable_steering_rate_limit);
 
-    update_param("max_velocity", p.max_velocity);
+    update_param("max_vel", p.max_velocity);
     update_param(
       "margin_to_insert_external_velocity_limit", p.margin_to_insert_external_velocity_limit);
     update_param("replan_vel_deviation", p.replan_vel_deviation);
@@ -277,7 +277,7 @@ void MotionVelocitySmootherNode::initCommonParam()
   p.enable_lateral_acc_limit = declare_parameter<bool>("enable_lateral_acc_limit");
   p.enable_steering_rate_limit = declare_parameter<bool>("enable_steering_rate_limit");
 
-  p.max_velocity = declare_parameter<double>("max_velocity");  // 72.0 kmph
+  p.max_velocity = declare_parameter<double>("max_vel");
   p.margin_to_insert_external_velocity_limit =
     declare_parameter<double>("margin_to_insert_external_velocity_limit");
   p.replan_vel_deviation = declare_parameter<double>("replan_vel_deviation");
@@ -452,6 +452,9 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     RCLCPP_ERROR(get_logger(), "No enough points in trajectory after overlap points removal");
     return;
   }
+
+  // Set 0 at the end of the trajectory
+  input_points.back().longitudinal_velocity_mps = 0.0;
 
   // calculate prev closest point
   if (!prev_output_.empty()) {
@@ -799,7 +802,8 @@ MotionVelocitySmootherNode::calcInitialMotion(
   // use ego velocity/acceleration in the planning for smooth transition from MANUAL to AUTONOMOUS.
   if (node_param_.plan_from_ego_speed_on_manual_mode) {  // could be false for debug purpose
     const bool is_in_autonomous_control = operation_mode_.is_autoware_control_enabled &&
-                                          operation_mode_.mode == OperationModeState::AUTONOMOUS;
+                                          (operation_mode_.mode == OperationModeState::AUTONOMOUS ||
+                                           operation_mode_.mode == OperationModeState::STOP);
     if (!is_in_autonomous_control) {
       RCLCPP_INFO_THROTTLE(
         get_logger(), *clock_, 10000, "Not in autonomous control. Plan from ego velocity.");

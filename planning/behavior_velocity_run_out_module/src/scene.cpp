@@ -14,6 +14,7 @@
 
 #include "scene.hpp"
 
+#include "behavior_velocity_crosswalk_module/util.hpp"
 #include "path_utils.hpp"
 
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
@@ -23,6 +24,10 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
+#include <boost/geometry/algorithms/within.hpp>
+
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <algorithm>
 #include <limits>
@@ -41,7 +46,7 @@ RunOutModule::RunOutModule(
   planner_param_(planner_param),
   dynamic_obstacle_creator_(std::move(dynamic_obstacle_creator)),
   debug_ptr_(debug_ptr),
-  state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.state_param))
+  state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.approaching.state))
 {
   velocity_factor_.init(PlanningBehavior::UNKNOWN);
 
@@ -60,7 +65,7 @@ bool RunOutModule::modifyPathVelocity(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
   // timer starts
-  const auto t1_modify_path = std::chrono::system_clock::now();
+  const auto t_start = std::chrono::system_clock::now();
 
   // set planner data
   const auto current_vel = planner_data_->current_velocity->twist.linear.x;
@@ -70,20 +75,27 @@ bool RunOutModule::modifyPathVelocity(
   // set height of debug data
   debug_ptr_->setHeight(current_pose.position.z);
 
-  // smooth velocity of the path to calculate time to collision accurately
-  PathWithLaneId smoothed_path;
-  if (!smoothPath(*path, smoothed_path, planner_data_)) {
-    return true;
-  }
-
   // extend path to consider obstacles after the goal
-  const auto extended_smoothed_path =
-    run_out_utils::extendPath(smoothed_path, planner_param_.vehicle_param.base_to_front);
+  const auto extended_path =
+    run_out_utils::extendPath(*path, planner_param_.vehicle_param.base_to_front);
 
   // trim path ahead of the base_link to make calculation easier
   const double trim_distance = planner_param_.run_out.detection_distance;
-  const auto trim_smoothed_path =
-    run_out_utils::trimPathFromSelfPose(extended_smoothed_path, current_pose, trim_distance);
+  const auto trim_path =
+    run_out_utils::trimPathFromSelfPose(extended_path, current_pose, trim_distance);
+
+  // smooth velocity of the path to calculate time to collision accurately
+  PathWithLaneId extended_smoothed_path;
+  if (!smoothPath(trim_path, extended_smoothed_path, planner_data_)) {
+    return true;
+  }
+
+  // record time for path processing
+  const auto t_path_processing = std::chrono::system_clock::now();
+  const auto elapsed_path_processing =
+    std::chrono::duration_cast<std::chrono::microseconds>(t_path_processing - t_start);
+  debug_ptr_->setDebugValues(
+    DebugValues::TYPE::CALCULATION_TIME_PATH_PROCESSING, elapsed_path_processing.count() / 1000.0);
 
   // create abstracted dynamic obstacles from objects or points
   dynamic_obstacle_creator_->setData(*planner_data_, planner_param_, *path, extended_smoothed_path);
@@ -92,18 +104,30 @@ bool RunOutModule::modifyPathVelocity(
 
   // extract obstacles using lanelet information
   const auto partition_excluded_obstacles =
-    excludeObstaclesOutSideOfPartition(dynamic_obstacles, trim_smoothed_path, current_pose);
+    excludeObstaclesOutSideOfPartition(dynamic_obstacles, extended_smoothed_path, current_pose);
 
-  // timer starts
-  const auto t1_collision_check = std::chrono::system_clock::now();
+  // record time for obstacle creation
+  const auto t_obstacle_creation = std::chrono::system_clock::now();
+  const auto elapsed_obstacle_creation =
+    std::chrono::duration_cast<std::chrono::microseconds>(t_obstacle_creation - t_path_processing);
+  debug_ptr_->setDebugValues(
+    DebugValues::TYPE::CALCULATION_TIME_OBSTACLE_CREATION,
+    elapsed_obstacle_creation.count() / 1000.0);
 
   // detect collision with dynamic obstacles using velocity planning of ego
-  const auto dynamic_obstacle = detectCollision(partition_excluded_obstacles, trim_smoothed_path);
+  const auto crosswalk_lanelets = planner_param_.run_out.suppress_on_crosswalk
+                                    ? getCrosswalksOnPath(
+                                        planner_data_->current_odometry->pose, *path,
+                                        planner_data_->route_handler_->getLaneletMapPtr(),
+                                        planner_data_->route_handler_->getOverallGraphPtr())
+                                    : std::vector<std::pair<int64_t, lanelet::ConstLanelet>>();
+  const auto dynamic_obstacle =
+    detectCollision(partition_excluded_obstacles, extended_smoothed_path, crosswalk_lanelets);
 
-  // timer ends
-  const auto t2_collision_check = std::chrono::system_clock::now();
+  // record time for collision check
+  const auto t_collision_check = std::chrono::system_clock::now();
   const auto elapsed_collision_check =
-    std::chrono::duration_cast<std::chrono::microseconds>(t2_collision_check - t1_collision_check);
+    std::chrono::duration_cast<std::chrono::microseconds>(t_collision_check - t_obstacle_creation);
   debug_ptr_->setDebugValues(
     DebugValues::TYPE::CALCULATION_TIME_COLLISION_CHECK, elapsed_collision_check.count() / 1000.0);
 
@@ -112,7 +136,7 @@ bool RunOutModule::modifyPathVelocity(
     // after a certain amount of time has elapsed since the ego stopped,
     // approach the obstacle with slow velocity
     insertVelocityForState(
-      dynamic_obstacle, *planner_data_, planner_param_, trim_smoothed_path, *path);
+      dynamic_obstacle, *planner_data_, planner_param_, extended_smoothed_path, *path);
   } else {
     // just insert zero velocity for stopping
     insertStoppingVelocity(dynamic_obstacle, current_pose, current_vel, current_acc, *path);
@@ -124,20 +148,26 @@ bool RunOutModule::modifyPathVelocity(
   }
 
   publishDebugValue(
-    trim_smoothed_path, partition_excluded_obstacles, dynamic_obstacle, current_pose);
+    extended_smoothed_path, partition_excluded_obstacles, dynamic_obstacle, current_pose);
 
-  // timer ends
-  const auto t2_modify_path = std::chrono::system_clock::now();
-  const auto elapsed_modify_path =
-    std::chrono::duration_cast<std::chrono::microseconds>(t2_modify_path - t1_modify_path);
+  // record time for collision check
+  const auto t_path_planning = std::chrono::system_clock::now();
+  const auto elapsed_path_planning =
+    std::chrono::duration_cast<std::chrono::microseconds>(t_path_planning - t_collision_check);
   debug_ptr_->setDebugValues(
-    DebugValues::TYPE::CALCULATION_TIME, elapsed_modify_path.count() / 1000.0);
+    DebugValues::TYPE::CALCULATION_TIME_PATH_PLANNING, elapsed_path_planning.count() / 1000.0);
+
+  // record time for the function
+  const auto t_end = std::chrono::system_clock::now();
+  const auto elapsed_all = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+  debug_ptr_->setDebugValues(DebugValues::TYPE::CALCULATION_TIME, elapsed_all.count() / 1000.0);
 
   return true;
 }
 
 std::optional<DynamicObstacle> RunOutModule::detectCollision(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path)
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
+  const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets)
 {
   if (path.points.size() < 2) {
     RCLCPP_WARN_STREAM(logger_, "path doesn't have enough points.");
@@ -171,7 +201,7 @@ std::optional<DynamicObstacle> RunOutModule::detectCollision(
     debug_ptr_->pushTravelTimeTexts(travel_time, p2.pose, /* lateral_offset */ 3.0);
 
     auto obstacles_collision =
-      checkCollisionWithObstacles(dynamic_obstacles, vehicle_poly, travel_time);
+      checkCollisionWithObstacles(dynamic_obstacles, vehicle_poly, travel_time, crosswalk_lanelets);
     if (obstacles_collision.empty()) {
       continue;
     }
@@ -291,7 +321,8 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createVehiclePolygon(
 
 std::vector<DynamicObstacle> RunOutModule::checkCollisionWithObstacles(
   const std::vector<DynamicObstacle> & dynamic_obstacles,
-  std::vector<geometry_msgs::msg::Point> poly, const float travel_time) const
+  std::vector<geometry_msgs::msg::Point> poly, const float travel_time,
+  const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets) const
 {
   const auto bg_poly_vehicle = run_out_utils::createBoostPolyFromMsg(poly);
 
@@ -320,8 +351,8 @@ std::vector<DynamicObstacle> RunOutModule::checkCollisionWithObstacles(
       *predicted_obstacle_pose_min_vel, *predicted_obstacle_pose_max_vel};
 
     std::vector<geometry_msgs::msg::Point> collision_points;
-    const bool collision_detected =
-      checkCollisionWithShape(bg_poly_vehicle, pose_with_range, obstacle.shape, collision_points);
+    const bool collision_detected = checkCollisionWithShape(
+      bg_poly_vehicle, pose_with_range, obstacle.shape, crosswalk_lanelets, collision_points);
 
     if (!collision_detected) {
       continue;
@@ -380,6 +411,7 @@ std::optional<geometry_msgs::msg::Pose> RunOutModule::calcPredictedObstaclePose(
 
 bool RunOutModule::checkCollisionWithShape(
   const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
+  const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets,
   std::vector<geometry_msgs::msg::Point> & collision_points) const
 {
   bool collision_detected = false;
@@ -400,6 +432,23 @@ bool RunOutModule::checkCollisionWithShape(
 
     default:
       break;
+  }
+
+  if (!collision_points.empty()) {
+    for (const auto & crosswalk : crosswalk_lanelets) {
+      const auto poly = crosswalk.second.polygon2d().basicPolygon();
+      for (auto it = collision_points.begin(); it != collision_points.end();) {
+        if (boost::geometry::within(lanelet::BasicPoint2d(it->x, it->y), poly)) {
+          it = collision_points.erase(it);
+        } else {
+          ++it;
+        }
+      }
+      if (collision_points.empty()) {
+        break;
+      }
+    }
+    collision_detected = !collision_points.empty();
   }
 
   return collision_detected;
@@ -566,14 +615,23 @@ std::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
   // vehicle have to decelerate if there is not enough distance with deceleration_jerk
   const bool deceleration_needed =
     *stop_dist > dist_to_collision - planner_param_.run_out.stop_margin;
-  // avoid acceleration when ego is decelerating
-  // TODO(Tomohito Ando): replace with more appropriate method
-  constexpr float epsilon = 1.0e-2;
-  constexpr float stopping_vel_mps = 2.5 / 3.6;
-  const bool is_stopping = current_vel < stopping_vel_mps && current_acc < epsilon;
-  if (!deceleration_needed && !is_stopping) {
+  const auto & detection_method = planner_param_.run_out.detection_method;
+
+  if (!deceleration_needed && detection_method == "Object") {
     debug_ptr_->setAccelReason(RunOutDebug::AccelReason::LOW_JERK);
     return {};
+  }
+
+  // If the detection method assumes running out, avoid acceleration when the ego is decelerating.
+  // TODO(Tomohito Ando): replace with more appropriate way
+  if (!deceleration_needed && detection_method != "Object") {
+    constexpr float epsilon = 1.0e-2;
+    constexpr float stopping_vel_mps = 2.5 / 3.6;
+    const bool is_stopping = current_vel < stopping_vel_mps && current_acc < epsilon;
+    if (!is_stopping) {
+      debug_ptr_->setAccelReason(RunOutDebug::AccelReason::LOW_JERK);
+      return {};
+    }
   }
 
   // calculate the stop point for base link

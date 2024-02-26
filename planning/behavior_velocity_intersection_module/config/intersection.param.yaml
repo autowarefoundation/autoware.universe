@@ -12,8 +12,18 @@
         max_accel: -2.8
         max_jerk: -5.0
         delay_response_time: 0.5
+        enable_pass_judge_before_default_stopline: false
 
       stuck_vehicle:
+        target_type:
+          car: true
+          bus: true
+          truck: true
+          trailer: true
+          motorcycle: false
+          bicycle: false
+          unknown: false
+
         turn_direction:
           left: true
           right: true
@@ -23,21 +33,35 @@
         stuck_vehicle_velocity_threshold: 0.833
         # enable_front_car_decel_prediction: false
         # assumed_front_car_decel: 1.0
-        timeout_private_area: 3.0
-        enable_private_area_stuck_disregard: false
+        disable_against_private_lane: true
 
       yield_stuck:
+        target_type:
+          car: true
+          bus: true
+          truck: true
+          trailer: true
+          motorcycle: false
+          bicycle: false
+          unknown: false
         turn_direction:
           left: true
-          right: false
+          right: true
           straight: false
-        distance_threshold: 1.0
+        distance_threshold: 5.0
 
       collision_detection:
         consider_wrong_direction_vehicle: false
         collision_detection_hold_time: 0.5
         min_predicted_path_confidence: 0.05
-        keep_detection_velocity_threshold: 0.833
+        target_type:
+          car: true
+          bus: true
+          truck: true
+          trailer: true
+          motorcycle: true
+          bicycle: true
+          unknown: false
         velocity_profile:
           use_upstream: true
           minimum_upstream_velocity: 0.01
@@ -57,9 +81,13 @@
           duration: 3.0
           object_dist_to_stopline: 10.0
         ignore_on_amber_traffic_light:
-          object_expected_deceleration: 2.0
+          object_expected_deceleration:
+            car: 2.0
+            bike: 5.0
         ignore_on_red_traffic_light:
           object_margin_to_path: 2.0
+        avoid_collision_by_acceleration:
+          object_time_margin_to_collision_point: 4.0
 
       occlusion:
         enable: false
@@ -73,7 +101,7 @@
           enable: false
           creep_velocity: 0.8333
         peeking_offset: -0.5
-        occlusion_required_clearance_distance: 55
+        occlusion_required_clearance_distance: 55.0
         possible_object_bbox: [1.5, 2.5]
         ignore_parked_vehicle_speed_threshold: 0.8333
         occlusion_detection_hold_time: 1.5

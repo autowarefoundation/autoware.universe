@@ -15,8 +15,8 @@
 #ifndef NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 #define NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
-#include "localization_util/tf2_listener_module.hpp"
 #include "localization_util/util_func.hpp"
+#include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -36,56 +36,47 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 class MapUpdateModule
 {
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
-  using NormalDistributionsTransform =
-    pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
+  using NdtType = pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
+  using NdtPtrType = std::shared_ptr<NdtType>;
 
 public:
   MapUpdateModule(
-    rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-    std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
-    std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
-    rclcpp::CallbackGroup::SharedPtr main_callback_group);
+    rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
+    HyperParameters::DynamicMapLoading param);
 
 private:
   friend class NDTScanMatcher;
-  void callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr odom_ptr);
-  void map_update_timer_callback();
 
-  void update_ndt(
-    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
-    const std::vector<std::string> & map_ids_to_remove);
+  // Update the specified NDT
+  void update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt);
   void update_map(const geometry_msgs::msg::Point & position);
-  [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position) const;
+  [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position);
   void publish_partial_pcd_map();
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 
   rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr
     pcd_loader_client_;
-  rclcpp::TimerBase::SharedPtr map_update_timer_;
 
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_odom_sub_;
-
-  rclcpp::CallbackGroup::SharedPtr map_callback_group_;
-
-  std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
+  NdtPtrType & ndt_ptr_;
   std::mutex * ndt_ptr_mutex_;
-  std::string map_frame_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
-  std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
 
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
-  std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
-  const double dynamic_map_loading_update_distance_;
-  const double dynamic_map_loading_map_radius_;
-  const double lidar_radius_;
+
+  HyperParameters::DynamicMapLoading param_;
+
+  // Indicate if there is a prefetch thread waiting for being collected
+  NdtPtrType secondary_ndt_ptr_;
+  bool need_rebuild_;
 };
 
 #endif  // NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_

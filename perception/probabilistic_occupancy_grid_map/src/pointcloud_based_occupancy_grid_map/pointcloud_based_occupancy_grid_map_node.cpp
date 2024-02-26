@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_based_occupancy_grid_map/pointcloud_based_occupancy_grid_map_node.hpp"
+#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/pointcloud_based_occupancy_grid_map_node.hpp"
 
-#include "cost_value.hpp"
-#include "pointcloud_based_occupancy_grid_map/occupancy_grid_map_fixed.hpp"
-#include "pointcloud_based_occupancy_grid_map/occupancy_grid_map_projective.hpp"
-#include "utils/utils.hpp"
+#include "probabilistic_occupancy_grid_map/cost_value.hpp"
+#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_fixed.hpp"
+#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_projective.hpp"
+#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 #include <pcl_ros/transforms.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
@@ -206,10 +206,17 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   if (debug_publisher_ptr_ && stop_watch_ptr_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    const double pipeline_latency_ms =
+      std::chrono::duration<double, std::milli>(
+        std::chrono::nanoseconds(
+          (this->get_clock()->now() - input_raw_msg->header.stamp).nanoseconds()))
+        .count();
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
+    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 }
 
