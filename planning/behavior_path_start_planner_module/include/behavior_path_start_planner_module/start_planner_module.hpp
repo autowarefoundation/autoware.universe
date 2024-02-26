@@ -71,7 +71,7 @@ struct PullOutStatus
   bool has_stop_point{false};
   std::optional<Pose> stop_pose{std::nullopt};
   //! record the first time when the state changed from !isActivated() to isActivated()
-  std::optional<rclcpp::Time> first_approved_time{std::nullopt};
+  std::optional<rclcpp::Time> first_engaged_time{std::nullopt};
 
   PullOutStatus() {}
 };
