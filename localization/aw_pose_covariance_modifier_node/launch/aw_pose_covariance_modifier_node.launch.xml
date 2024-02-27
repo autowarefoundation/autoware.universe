@@ -3,10 +3,8 @@
   <arg name="input_trusted_pose_with_cov_topic" default="/sensing/gnss/pose_with_covariance" description="Trusted pose input .. "/>
   <arg name="output_pose_with_covariance_topic" default="/localization/pose_estimator/pose_with_covariance" description="Estimated self position with covariance"/>
 
-
-  <node pkg="aw_pose_covariance_modifier_node" exec="aw_pose_covariance_modifier_node" name="aw_pose_covariance_modifier_node" output="screen" >
-  <remap from="input_trusted_pose_with_cov_topic" to="$(var input_trusted_pose_with_cov_topic)"/>
-  <remap from="output_pose_with_covariance_topic" to="$(var output_pose_with_covariance_topic)"/>
-
+  <node pkg="aw_pose_covariance_modifier_node" exec="aw_pose_covariance_modifier_node" name="aw_pose_covariance_modifier_node" output="screen">
+    <remap from="input_trusted_pose_with_cov_topic" to="$(var input_trusted_pose_with_cov_topic)"/>
+    <remap from="output_pose_with_covariance_topic" to="$(var output_pose_with_covariance_topic)"/>
   </node>
 </launch>

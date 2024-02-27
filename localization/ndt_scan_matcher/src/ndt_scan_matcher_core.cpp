@@ -103,11 +103,11 @@ NDTScanMatcher::NDTScanMatcher()
     std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1),
     sensor_sub_opt);
 
-  trusted_source_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "input_trusted_pose_topic", 100,
-    std::bind(&NDTScanMatcher::callback_trusted_source_pose, this, std::placeholders::_1),
-    initial_pose_sub_opt);
-
+  trusted_source_pose_sub_ =
+    this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "input_trusted_pose_topic", 100,
+      std::bind(&NDTScanMatcher::callback_trusted_source_pose, this, std::placeholders::_1),
+      initial_pose_sub_opt);
 
   // Only if regularization is enabled, subscribe to the regularization base pose
   if (param_.ndt_regularization_enable) {
@@ -183,10 +183,11 @@ NDTScanMatcher::NDTScanMatcher()
     rclcpp::ServicesQoS().get_rmw_qos_profile(), sensor_callback_group);
 
   server_covariance_modifier_ = this->create_service<std_srvs::srv::SetBool>(
-            "/localization/pose_estimator/covariance_modifier",
-            std::bind(
-                &NDTScanMatcher::activate_pose_covariance_modifier, this, std::placeholders::_1, std::placeholders::_2),
-            rclcpp::ServicesQoS().get_rmw_qos_profile(),sensor_callback_group);
+    "/localization/pose_estimator/covariance_modifier",
+    std::bind(
+      &NDTScanMatcher::activate_pose_covariance_modifier, this, std::placeholders::_1,
+      std::placeholders::_2),
+    rclcpp::ServicesQoS().get_rmw_qos_profile(), sensor_callback_group);
 
   ndt_ptr_->setParams(param_.ndt);
 
@@ -200,13 +201,14 @@ NDTScanMatcher::NDTScanMatcher()
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
-void NDTScanMatcher::activate_pose_covariance_modifier(const std_srvs::srv::SetBool::Request::SharedPtr req,
-                                                       std_srvs::srv::SetBool::Response::SharedPtr res) {
-    activate_pose_covariance_modifier_ = req->data;
-    RCLCPP_INFO(this->get_logger(), " Pose Covariance Modifier Activated ...");
-    res->success = true;
-    res->message = "Covariance Modifier Activated for NDT";
-
+void NDTScanMatcher::activate_pose_covariance_modifier(
+  const std_srvs::srv::SetBool::Request::SharedPtr req,
+  std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  activate_pose_covariance_modifier_ = req->data;
+  RCLCPP_INFO(this->get_logger(), " Pose Covariance Modifier Activated ...");
+  res->success = true;
+  res->message = "Covariance Modifier Activated for NDT";
 }
 
 void NDTScanMatcher::publish_diagnostic()
@@ -326,15 +328,16 @@ void NDTScanMatcher::callback_regularization_pose(
 }
 
 void NDTScanMatcher::callback_trusted_source_pose(
-        geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr)
+  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr)
 {
-    trusted_source_pose_ = *pose_conv_msg_ptr;
-    trustedPose.pose_avarage_rmse_xy = (std::sqrt(trusted_source_pose_.pose.covariance[0]) + std::sqrt(trusted_source_pose_.pose.covariance[7])) / 2;
-    trustedPose.yaw_rmse = std::sqrt(trusted_source_pose_.pose.covariance[35]);
-    // To be used for timeout control
-    trustedPoseCallbackTime = this->now();
+  trusted_source_pose_ = *pose_conv_msg_ptr;
+  trustedPose.pose_avarage_rmse_xy = (std::sqrt(trusted_source_pose_.pose.covariance[0]) +
+                                      std::sqrt(trusted_source_pose_.pose.covariance[7])) /
+                                     2;
+  trustedPose.yaw_rmse = std::sqrt(trusted_source_pose_.pose.covariance[35]);
+  // To be used for timeout control
+  trustedPoseCallbackTime = this->now();
 }
-
 
 void NDTScanMatcher::callback_sensor_points(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame)
@@ -445,11 +448,10 @@ void NDTScanMatcher::callback_sensor_points(
     map_to_base_link_quat.normalized().toRotationMatrix();
 
   std::array<double, 36> ndt_covariance_in_;
-  if (activate_pose_covariance_modifier_){
-      ndt_covariance_in_ = covariance_modifier(param_.covariance.output_pose_covariance);
-  }
-  else{
-      ndt_covariance_in_ = param_.covariance.output_pose_covariance;
+  if (activate_pose_covariance_modifier_) {
+    ndt_covariance_in_ = covariance_modifier(param_.covariance.output_pose_covariance);
+  } else {
+    ndt_covariance_in_ = param_.covariance.output_pose_covariance;
   }
 
   std::array<double, 36> ndt_covariance =
@@ -459,7 +461,6 @@ void NDTScanMatcher::callback_sensor_points(
       estimate_covariance(ndt_result, initial_pose_matrix, sensor_ros_time);
     ndt_covariance = estimated_covariance;
   }
-
 
   const auto exe_end_time = std::chrono::system_clock::now();
   const auto duration_micro_sec =
@@ -573,56 +574,66 @@ void NDTScanMatcher::publish_tf(
     tier4_autoware_utils::pose2transform(result_pose_stamped_msg, param_.frame.ndt_base_frame));
 }
 
-bool NDTScanMatcher::checkTrustedPoseTimeout(){
-    auto timeDiff =  this->now() - trustedPoseCallbackTime;
-    if (timeDiff.seconds() > 1.0){
-        return true;
-    }
-    return false;
+bool NDTScanMatcher::checkTrustedPoseTimeout()
+{
+  auto timeDiff = this->now() - trustedPoseCallbackTime;
+  if (timeDiff.seconds() > 1.0) {
+    return true;
+  }
+  return false;
 }
-std::array<double, 36> NDTScanMatcher::covariance_modifier(std::array<double, 36> & in_ndt_covariance){
-    std::array<double, 36> ndt_covariance;
-    ndt_covariance = in_ndt_covariance;
-    close_ndt_pose_source_ = false;
+std::array<double, 36> NDTScanMatcher::covariance_modifier(
+  std::array<double, 36> & in_ndt_covariance)
+{
+  std::array<double, 36> ndt_covariance;
+  ndt_covariance = in_ndt_covariance;
+  close_ndt_pose_source_ = false;
 
-    if (NDTScanMatcher::checkTrustedPoseTimeout()){
-        RCLCPP_WARN(this->get_logger(),"Trusted Pose Timeout");
-        return ndt_covariance;
-    }
-
-    if(trustedPose.pose_avarage_rmse_xy <= 0.10 && trustedPose.yaw_rmse < std::sqrt(in_ndt_covariance[35])){
-        close_ndt_pose_source_ = true;
-    }
-    else if(trustedPose.pose_avarage_rmse_xy <= 0.10){
-        ndt_covariance[0] = 1000000;
-        ndt_covariance[7] = 1000000;
-    }
-    else if(trustedPose.pose_avarage_rmse_xy <= 0.25)
-     {
-     /*
-      * ndt_rmse = ndt_max_rmse_meters - (gnss_rmse * (ndt_max_rmse_meters - ndt_min_rmse_meters) / normalization_coeff)
-      * ndt_min_rmse_meters = in_ndt_rmse
-      * ndt_max_rmse_meters = in_ndt_rmse  * 2
-     */
-     double normalization_coeff = 0.1;
-     ndt_covariance[0]  = std::pow(((std::sqrt(in_ndt_covariance[0])  * 2 ) - std::sqrt(trusted_source_pose_.pose.covariance[0]))  * (std::sqrt(in_ndt_covariance[0]))  / normalization_coeff,2);
-     ndt_covariance[7]  = std::pow(((std::sqrt(in_ndt_covariance[7])  * 2 ) - std::sqrt(trusted_source_pose_.pose.covariance[7]))  * (std::sqrt(in_ndt_covariance[7]))  / normalization_coeff,2);
-     ndt_covariance[14] = std::pow(((std::sqrt(in_ndt_covariance[14]) * 2 ) - std::sqrt(trusted_source_pose_.pose.covariance[14])) * (std::sqrt(in_ndt_covariance[14])) / normalization_coeff,2);
-
-     // ndt_rmse = std::max(ndt_rmse, ndt_min_rmse_meters);
-     ndt_covariance[0]  = std::max(ndt_covariance[0] , in_ndt_covariance[0]);
-     ndt_covariance[7]  = std::max(ndt_covariance[7] , in_ndt_covariance[7]);
-     ndt_covariance[14] = std::max(ndt_covariance[14], in_ndt_covariance[14]);
-
-     if (trustedPose.yaw_rmse <= std::sqrt(in_ndt_covariance[35])){
-         ndt_covariance[35] = 1000000;
-     }
-    }
-    else{
-        RCLCPP_INFO(this->get_logger(), "NDT input covariance values will be used ");
-    }
-
+  if (NDTScanMatcher::checkTrustedPoseTimeout()) {
+    RCLCPP_WARN(this->get_logger(), "Trusted Pose Timeout");
     return ndt_covariance;
+  }
+
+  if (
+    trustedPose.pose_avarage_rmse_xy <= 0.10 &&
+    trustedPose.yaw_rmse < std::sqrt(in_ndt_covariance[35])) {
+    close_ndt_pose_source_ = true;
+  } else if (trustedPose.pose_avarage_rmse_xy <= 0.10) {
+    ndt_covariance[0] = 1000000;
+    ndt_covariance[7] = 1000000;
+  } else if (trustedPose.pose_avarage_rmse_xy <= 0.25) {
+    /*
+     * ndt_rmse = ndt_max_rmse_meters - (gnss_rmse * (ndt_max_rmse_meters - ndt_min_rmse_meters) /
+     * normalization_coeff) ndt_min_rmse_meters = in_ndt_rmse ndt_max_rmse_meters = in_ndt_rmse  * 2
+     */
+    double normalization_coeff = 0.1;
+    ndt_covariance[0] = std::pow(
+      ((std::sqrt(in_ndt_covariance[0]) * 2) - std::sqrt(trusted_source_pose_.pose.covariance[0])) *
+        (std::sqrt(in_ndt_covariance[0])) / normalization_coeff,
+      2);
+    ndt_covariance[7] = std::pow(
+      ((std::sqrt(in_ndt_covariance[7]) * 2) - std::sqrt(trusted_source_pose_.pose.covariance[7])) *
+        (std::sqrt(in_ndt_covariance[7])) / normalization_coeff,
+      2);
+    ndt_covariance[14] = std::pow(
+      ((std::sqrt(in_ndt_covariance[14]) * 2) -
+       std::sqrt(trusted_source_pose_.pose.covariance[14])) *
+        (std::sqrt(in_ndt_covariance[14])) / normalization_coeff,
+      2);
+
+    // ndt_rmse = std::max(ndt_rmse, ndt_min_rmse_meters);
+    ndt_covariance[0] = std::max(ndt_covariance[0], in_ndt_covariance[0]);
+    ndt_covariance[7] = std::max(ndt_covariance[7], in_ndt_covariance[7]);
+    ndt_covariance[14] = std::max(ndt_covariance[14], in_ndt_covariance[14]);
+
+    if (trustedPose.yaw_rmse <= std::sqrt(in_ndt_covariance[35])) {
+      ndt_covariance[35] = 1000000;
+    }
+  } else {
+    RCLCPP_INFO(this->get_logger(), "NDT input covariance values will be used ");
+  }
+
+  return ndt_covariance;
 }
 void NDTScanMatcher::publish_pose(
   const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
@@ -639,17 +650,15 @@ void NDTScanMatcher::publish_pose(
   result_pose_with_cov_msg.pose.pose = result_pose_msg;
   result_pose_with_cov_msg.pose.covariance = ndt_covariance;
 
-  if(activate_pose_covariance_modifier_ && close_ndt_pose_source_){
+  if (activate_pose_covariance_modifier_ && close_ndt_pose_source_) {
+    ndt_pose_pub_->publish(result_pose_stamped_msg);
+    RCLCPP_INFO(this->get_logger(), "NDT pose with covariance topic closed.");
+  } else {
+    if (is_converged) {
       ndt_pose_pub_->publish(result_pose_stamped_msg);
-      RCLCPP_INFO(this->get_logger(),"NDT pose with covariance topic closed.");
+      ndt_pose_with_covariance_pub_->publish(result_pose_with_cov_msg);
+    }
   }
-  else{
-      if (is_converged) {
-          ndt_pose_pub_->publish(result_pose_stamped_msg);
-          ndt_pose_with_covariance_pub_->publish(result_pose_with_cov_msg);
-      }
-  }
-
 }
 
 void NDTScanMatcher::publish_point_cloud(

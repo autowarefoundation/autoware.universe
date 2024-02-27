@@ -121,5 +121,4 @@
       <arg name="input_pointcloud" value="$(var override_input_pointcloud)"/>
     </include>
   </group>
-
 </launch>

@@ -140,7 +140,8 @@ private:
   rclcpp::TimerBase::SharedPtr map_update_timer_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr regularization_pose_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+    regularization_pose_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     trusted_source_pose_sub_;
 
@@ -177,7 +178,7 @@ private:
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
-  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr  server_covariance_modifier_;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr server_covariance_modifier_;
 
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
   tf2_ros::Buffer tf2_buffer_;
@@ -202,10 +203,11 @@ private:
   geometry_msgs::msg::PoseWithCovarianceStamped trusted_source_pose_;
   bool activate_pose_covariance_modifier_;
   bool close_ndt_pose_source_ = false;
-  struct trusted_pose_{
-      double pose_avarage_rmse_xy = 0.0;
-      double yaw_rmse = 0.0;
-  }trustedPose;
+  struct trusted_pose_
+  {
+    double pose_avarage_rmse_xy = 0.0;
+    double yaw_rmse = 0.0;
+  } trustedPose;
 
   std::atomic<bool> is_activated_;
   std::unique_ptr<MapUpdateModule> map_update_module_;

@@ -13,78 +13,82 @@
 // limitations under the License.
 
 #include "include/aw_pose_covariance_modifier_node.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
-
-AWPoseCovarianceModifierNode::AWPoseCovarianceModifierNode()
-            : Node("AWPoseCovarianceModifierNode")
+AWPoseCovarianceModifierNode::AWPoseCovarianceModifierNode() : Node("AWPoseCovarianceModifierNode")
 {
-    trusted_pose_with_cov_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "input_trusted_pose_with_cov_topic",10000,std::bind(&AWPoseCovarianceModifierNode::trusted_pose_with_cov_callback,this,std::placeholders::_1));
+  trusted_pose_with_cov_sub_ =
+    this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "input_trusted_pose_with_cov_topic", 10000,
+      std::bind(
+        &AWPoseCovarianceModifierNode::trusted_pose_with_cov_callback, this,
+        std::placeholders::_1));
 
+  new_pose_estimator_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "output_pose_with_covariance_topic", 10);
 
-    new_pose_estimator_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("output_pose_with_covariance_topic",10);
+  client_ =
+    this->create_client<std_srvs::srv::SetBool>("/localization/pose_estimator/covariance_modifier");
 
-    client_ = this->create_client<std_srvs::srv::SetBool>("/localization/pose_estimator/covariance_modifier");
-
-    startNDTCovModifier = AWPoseCovarianceModifierNode::callNDTCovarianceModifier();
-    if(startNDTCovModifier == 1){
-        RCLCPP_INFO(get_logger(), "NDT pose covariance modifier activated ...");
-
-    }
-
+  startNDTCovModifier = AWPoseCovarianceModifierNode::callNDTCovarianceModifier();
+  if (startNDTCovModifier == 1) {
+    RCLCPP_INFO(get_logger(), "NDT pose covariance modifier activated ...");
+  }
 }
 
-bool AWPoseCovarianceModifierNode::callNDTCovarianceModifier(){
-
-    while (!client_->wait_for_service(std::chrono::seconds(1))) {
-        if (!rclcpp::ok()) {
-            RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service. Exiting.");
-            return false;
-        }
-        RCLCPP_INFO(get_logger(), "Service not available, waiting again...");
+bool AWPoseCovarianceModifierNode::callNDTCovarianceModifier()
+{
+  while (!client_->wait_for_service(std::chrono::seconds(1))) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service. Exiting.");
+      return false;
     }
+    RCLCPP_INFO(get_logger(), "Service not available, waiting again...");
+  }
 
-    auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-    request->data = true;
+  auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+  request->data = true;
 
-    auto future_result = client_->async_send_request(request);
-    if (rclcpp::spin_until_future_complete(get_node_base_interface(), future_result) ==
-        rclcpp::FutureReturnCode::SUCCESS)
-    {
-        auto response = future_result.get();
-        RCLCPP_INFO(get_logger(), "Response: %d", response->success);
-        return true;
-    }
-    else {
-        RCLCPP_ERROR(get_logger(), "Failed to receive response.");
-        return false;
-    }
+  auto future_result = client_->async_send_request(request);
+  if (
+    rclcpp::spin_until_future_complete(get_node_base_interface(), future_result) ==
+    rclcpp::FutureReturnCode::SUCCESS) {
+    auto response = future_result.get();
+    RCLCPP_INFO(get_logger(), "Response: %d", response->success);
+    return true;
+  } else {
+    RCLCPP_ERROR(get_logger(), "Failed to receive response.");
+    return false;
+  }
 }
-void AWPoseCovarianceModifierNode::trusted_pose_with_cov_callback(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr &msg) {
+void AWPoseCovarianceModifierNode::trusted_pose_with_cov_callback(
+  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg)
+{
+  geometry_msgs::msg::PoseWithCovarianceStamped pose_estimator_pose = *msg;
 
-    geometry_msgs::msg::PoseWithCovarianceStamped  pose_estimator_pose = *msg;
+  trusted_pose_rmse_ = (std::sqrt(pose_estimator_pose.pose.covariance[0]) +
+                        std::sqrt(pose_estimator_pose.pose.covariance[7])) /
+                       2;
+  trusted_pose_yaw_rmse_in_degrees_ =
+    std::sqrt(pose_estimator_pose.pose.covariance[35]) * 180 / M_PI;
 
-    trusted_pose_rmse_ = (std::sqrt(pose_estimator_pose.pose.covariance[0]) + std::sqrt(pose_estimator_pose.pose.covariance[7]) ) / 2;
-    trusted_pose_yaw_rmse_in_degrees_ = std::sqrt(pose_estimator_pose.pose.covariance[35]) * 180 / M_PI;
-
-    if (trusted_pose_rmse_ > 0.25){
-        RCLCPP_INFO(this->get_logger(),"Trusted Pose RMSE is under the threshold. It will not be used as a pose source.");
+  if (trusted_pose_rmse_ > 0.25) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Trusted Pose RMSE is under the threshold. It will not be used as a pose source.");
+  } else {
+    if (trusted_pose_yaw_rmse_in_degrees_ >= 0.3) {
+      pose_estimator_pose.pose.covariance[35] = 1000000;
     }
-    else{
 
-        if (trusted_pose_yaw_rmse_in_degrees_ >= 0.3){
-            pose_estimator_pose.pose.covariance[35] = 1000000;
-        }
-
-        new_pose_estimator_pub_->publish(pose_estimator_pose);
-
-    }
-
+    new_pose_estimator_pub_->publish(pose_estimator_pose);
+  }
 }
-int main(int argc, char *argv[]) {
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<AWPoseCovarianceModifierNode>());
-    rclcpp::shutdown();
-    return 0;
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<AWPoseCovarianceModifierNode>());
+  rclcpp::shutdown();
+  return 0;
 }
