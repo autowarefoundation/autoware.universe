@@ -18,6 +18,8 @@
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
+#include <pcl/search/pcl_search.h>
+
 #include <algorithm>
 #include <vector>
 namespace pointcloud_preprocessor
@@ -282,23 +284,21 @@ sensor_msgs::msg::PointCloud2 RingOutlierFilterComponent::extractExcludedPoints(
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr excluded_points(new pcl::PointCloud<pcl::PointXYZ>);
 
-  for (const auto & input_point : *input_cloud) {
-    bool is_excluded = true;
-
-    for (const auto & output_point : *output_cloud) {
-      float distance = autoware::common::geometry::distance_3d(input_point, output_point);
-
-      // If the distance is less than the threshold (epsilon), the point is not excluded
-      if (distance < epsilon) {
-        is_excluded = false;
-        break;
-      }
+  pcl::search::Search<pcl::PointXYZ>::Ptr tree;
+  if (output_cloud->isOrganized()) {
+    tree.reset(new pcl::search::OrganizedNeighbor<pcl::PointXYZ>());
+  } else {
+    tree.reset(new pcl::search::KdTree<pcl::PointXYZ>(false));
+  }
+  tree->setInputCloud(output_cloud);
+  std::vector<int> nn_indices(1);
+  std::vector<float> nn_dists(1);
+  for (const auto & point : input_cloud->points) {
+    if (!tree->nearestKSearch(point, 1, nn_indices, nn_dists)) {
+      continue;
     }
-
-    // If the point is still marked as excluded after all comparisons, add it to the excluded
-    // pointcloud
-    if (is_excluded) {
-      excluded_points->push_back(input_point);
+    if (nn_dists[0] > epsilon) {
+      excluded_points->points.push_back(point);
     }
   }
 
