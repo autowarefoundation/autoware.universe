@@ -376,7 +376,7 @@ PathWithLaneId LaneDepartureChecker::cropPointsOutsideOfLanes(
   const auto vehicle_footprints = createVehicleFootprints(path);
   size_t idx = 0;
   std::for_each(vehicle_footprints.begin(), vehicle_footprints.end(), [&](const auto & footprint) {
-    if (boost::geometry::within(footprint, fused_lanelets_polygon.value()) || idx > end_index) {
+    if (idx > end_index || boost::geometry::within(footprint, fused_lanelets_polygon.value())) {
       temp_path.points.push_back(path.points.at(idx));
     }
     ++idx;
