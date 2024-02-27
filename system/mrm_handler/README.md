@@ -17,12 +17,12 @@ MRM Handler is a node to select a proper MRM from a system failure state contain
 | Name                                   | Type                                                 | Description                                                                                         |
 | -------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `/localization/kinematic_state`        | `nav_msgs::msg::Odometry`                            | Used to decide whether vehicle is stopped or not                                                    |
-| `/system/operation_mode/availability`  | `autoware_adapi_v1_msgs::msg::OperationModeState`    | Used to select proper MRM from system available mrm behavior contained in operationModeAvailability |
+| `/system/operation_mode/availability`  | `tier4_system_msgs::msg::OperationModeAvailability`  | Used to select proper MRM from system available mrm behavior contained in operationModeAvailability |
 | `/vehicle/status/control_mode`         | `autoware_auto_vehicle_msgs::msg::ControlModeReport` | Used to check vehicle mode: autonomous or manual                                                    |
 | `/system/mrm/emergency_stop/status`    | `tier4_system_msgs::msg::MrmBehaviorStatus`          | Used to check if MRM emergency stop operation is available                                          |
 | `/system/mrm/comfortable_stop/status`  | `tier4_system_msgs::msg::MrmBehaviorStatus`          | Used to check if MRM comfortable stop operation is available                                        |
 | `/system/mrm/pull_over_manager/status` | `tier4_system_msgs::msg::MrmBehaviorStatus`          | Used to check if MRM pull over operation is available                                               |
-| `/api/mrm/emergency_stop/status`       | `tier4_system_msgs::msg::MrmBehaviorStatus`          | Used to check if MRM pull over operation is finished                                                |
+| `/api/operation_mode/state`            | `tier4_system_msgs::msg::MrmBehaviorStatus`          | Used to check whether the current operation mode is AUTO or STOP.                                   |
 
 ### Output
 
