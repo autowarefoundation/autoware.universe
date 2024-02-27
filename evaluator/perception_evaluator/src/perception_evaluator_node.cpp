@@ -153,7 +153,7 @@ void PerceptionEvaluatorNode::publishDebugMarker()
       }
       if (p.show_history_path_arrows) {
         add(createPosesMarkerArray(
-          history_path.first, "history_path_arrows_" + uuid, 0, c.r, c.g, c.b, 0.1, 0.05, 0.05));
+          history_path.first, "history_path_arrows_" + uuid, c.r, c.g, c.b, 0.1, 0.05, 0.05));
       }
     }
     {
@@ -164,7 +164,7 @@ void PerceptionEvaluatorNode::publishDebugMarker()
       }
       if (p.show_smoothed_history_path_arrows) {
         add(createPosesMarkerArray(
-          history_path.second, "smoothed_history_path_arrows_" + uuid, c.r, c.g, c.b, 0, 0.1, 0.05,
+          history_path.second, "smoothed_history_path_arrows_" + uuid, c.r, c.g, c.b, 0.1, 0.05,
           0.05));
       }
     }
@@ -175,14 +175,13 @@ void PerceptionEvaluatorNode::publishDebugMarker()
     const auto predicted_path = object_data.getPredictedPath();
     const auto history_path = object_data.getHistoryPath();
     if (p.show_predicted_path) {
-      add(createPosesMarkerArray(predicted_path, "predicted_path_" + uuid, 0, 0, 0, 1));
+      add(createPosesMarkerArray(predicted_path, "predicted_path_" + uuid, 0, 0, 1));
     }
     if (p.show_predicted_path_gt) {
-      add(createPosesMarkerArray(history_path, "predicted_path_gt_" + uuid, 0, 1, 0, 0));
+      add(createPosesMarkerArray(history_path, "predicted_path_gt_" + uuid, 1, 0, 0));
     }
     if (p.show_deviation_lines) {
-      add(
-        createDeviationLines(predicted_path, history_path, "deviation_lines_" + uuid, 0, 1, 1, 1));
+      add(createDeviationLines(predicted_path, history_path, "deviation_lines_" + uuid, 1, 1, 1));
     }
     if (p.show_object_polygon) {
       add(createObjectPolygonMarkerArray(

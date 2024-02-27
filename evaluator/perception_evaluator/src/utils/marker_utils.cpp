@@ -17,7 +17,6 @@
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
@@ -112,7 +111,7 @@ MarkerArray createPointsMarkerArray(
 
 MarkerArray createDeviationLines(
   const std::vector<Pose> poses1, const std::vector<Pose> poses2, const std::string & ns,
-  const int32_t id, const float r, const float g, const float b)
+  const float r, const float g, const float b)
 {
   MarkerArray msg;
 
@@ -145,15 +144,14 @@ MarkerArray createPoseMarkerArray(
 }
 
 MarkerArray createPosesMarkerArray(
-  const std::vector<Pose> poses, std::string && ns, const int32_t & id, const float & r,
-  const float & g, const float & b, const float & x_scale, const float & y_scale,
-  const float & z_scale)
+  const std::vector<Pose> poses, std::string && ns, const float & r, const float & g,
+  const float & b, const float & x_scale, const float & y_scale, const float & z_scale)
 {
   MarkerArray msg;
 
   for (size_t i = 0; i < poses.size(); ++i) {
     Marker marker = createDefaultMarker(
-      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, id + i, Marker::ARROW,
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i, Marker::ARROW,
       createMarkerScale(x_scale, y_scale, z_scale), createMarkerColor(r, g, b, 0.5));
     marker.pose = poses.at(i);
     msg.markers.push_back(marker);
