@@ -7,6 +7,7 @@
       <param from="$(find-pkg-share perception_evaluator)/param/perception_evaluator.defaults.yaml"/>
       <remap from="~/input/objects" to="$(var input/objects)"/>
       <remap from="~/metrics" to="/diagnostic/perception_evaluator/metrics"/>
+      <remap from="~/markers" to="/diagnostic/perception_evaluator/markers"/>
     </node>
   </group>
 </launch>
