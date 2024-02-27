@@ -55,6 +55,7 @@ PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
   }
 
   // Set parameters
+  std::string synchronized_pointcloud_postfix;
   {
     output_frame_ = static_cast<std::string>(declare_parameter("output_frame", ""));
     if (output_frame_.empty()) {
@@ -71,6 +72,9 @@ PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
       RCLCPP_ERROR(get_logger(), "Only one topic given. Need at least two topics to continue.");
       return;
     }
+    // output topic name postfix
+    synchronized_pointcloud_postfix =
+      declare_parameter("synchronized_pointcloud_postfix", "pointcloud");
 
     // Optional parameters
     maximum_queue_size_ = static_cast<int>(declare_parameter("max_queue_size", 5));
@@ -150,7 +154,15 @@ PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
   // Transformed Raw PointCloud2 Publisher
   {
     for (auto & topic : input_topics_) {
-      std::string new_topic = topic + POSTFIX_NAME;
+      std::string new_topic = replace_topic_name_postfix(topic, synchronized_pointcloud_postfix);
+      if (new_topic == topic) {
+        RCLCPP_WARN_STREAM(
+          get_logger(),
+          "The topic name "
+            << topic
+            << " does not have a postfix. The postfix will be added to the end of the topic name.");
+        new_topic = topic + POSTFIX_NAME;
+      }
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
       transformed_raw_pc_publisher_map_.insert({topic, publisher});

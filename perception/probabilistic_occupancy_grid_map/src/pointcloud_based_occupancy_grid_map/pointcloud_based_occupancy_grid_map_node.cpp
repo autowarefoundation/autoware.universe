@@ -136,6 +136,11 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   if (stop_watch_ptr_) {
     stop_watch_ptr_->toc("processing_time", true);
   }
+  // if scan_origin_frame_ is "", replace it with input_raw_msg->header.frame_id
+  if (scan_origin_frame_.empty()) {
+    scan_origin_frame_ = input_raw_msg->header.frame_id;
+  }
+
   // Apply height filter
   PointCloud2 cropped_obstacle_pc{};
   PointCloud2 cropped_raw_pc{};

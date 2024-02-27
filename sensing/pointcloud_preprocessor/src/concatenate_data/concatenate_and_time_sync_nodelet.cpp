@@ -61,7 +61,7 @@
 #include <utility>
 #include <vector>
 
-#define POSTFIX_NAME "_synchronized"
+#define POSTFIX_NAME "_synchronized"  // default postfix name for synchronized pointcloud
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -112,6 +112,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
     // Check if publish synchronized pointcloud
     publish_synchronized_pointcloud_ = declare_parameter("publish_synchronized_pointcloud", false);
+    synchronized_pointcloud_postfix_ =
+      declare_parameter("synchronized_pointcloud_postfix", "pointcloud");
   }
 
   // Initialize not_subscribed_topic_names_
@@ -185,10 +187,18 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
   }
 
-  // Transformed Raw PointCloud2 Publisher
-  {
+  // Transformed Raw PointCloud2 Publisher to publish the transformed pointcloud
+  if (publish_synchronized_pointcloud_) {
     for (auto & topic : input_topics_) {
-      std::string new_topic = topic + POSTFIX_NAME;
+      std::string new_topic = replace_topic_name_postfix(topic, synchronized_pointcloud_postfix_);
+      if (new_topic == topic) {
+        RCLCPP_WARN_STREAM(
+          get_logger(),
+          "The topic name "
+            << topic
+            << " does not have a postfix. The postfix will be added to the end of the topic name.");
+        new_topic = topic + POSTFIX_NAME;
+      }
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
       transformed_raw_pc_publisher_map_.insert({topic, publisher});
