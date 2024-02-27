@@ -182,18 +182,14 @@ void StartPlannerModule::updateData()
     status_.first_engaged_time = clock_->now();
   }
 
-  if (hasFinishedBackwardDriving()) {
+  status_.backward_driving_complete = hasFinishedBackwardDriving();
+  if (status_.backward_driving_complete) {
     updateStatusAfterBackwardDriving();
     DEBUG_PRINT("StartPlannerModule::updateData() completed backward driving");
-  } else {
-    status_.backward_driving_complete = false;
   }
 
-  if (requiresDynamicObjectsCollisionDetection()) {
-    status_.is_safe_dynamic_objects = !hasCollisionWithDynamicObjects();
-  } else {
-    status_.is_safe_dynamic_objects = true;
-  }
+  status_.is_safe_dynamic_objects =
+    (!requiresDynamicObjectsCollisionDetection()) ? true : !hasCollisionWithDynamicObjects();
 }
 
 bool StartPlannerModule::hasFinishedBackwardDriving() const
