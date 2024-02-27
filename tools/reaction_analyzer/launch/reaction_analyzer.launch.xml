@@ -1,0 +1,44 @@
+<launch>
+  <arg name="reaction_analyzer_param_path" default="$(find-pkg-share reaction_analyzer)/param/reaction_analyzer.param.yaml"/>
+  <arg name="running_mode" default="planning_control"/>
+  <!-- planning_control or perception_planning -->
+  <!-- Essential parameters -->
+  <arg name="map_path" description="point cloud and lanelet2 map directory path"/>
+  <arg name="vehicle_model" default="sample_vehicle" description="vehicle model name"/>
+  <arg name="sensor_model" default="sample_sensor_kit" description="sensor model name"/>
+
+  <group if="$(eval &quot;'$(var running_mode)'=='perception_planning'&quot;)">
+    <include file="$(find-pkg-share autoware_launch)/launch/e2e_simulator.launch.xml">
+      <arg name="map_path" value="$(var map_path)"/>
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+      <arg name="sensor_model" value="$(var sensor_model)"/>
+      <arg name="use_sim_time" value="false"/>
+      <arg name="enable_image_decompressor" value="false"/>
+    </include>
+  </group>
+  <group if="$(eval &quot;'$(var running_mode)'=='planning_control'&quot;)">
+    <include file="$(find-pkg-share autoware_launch)/launch/planning_simulator.launch.xml">
+      <arg name="map_path" value="$(var map_path)"/>
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+      <arg name="sensor_model" value="$(var sensor_model)"/>
+      <arg name="launch_simulator_perception_modules" value="false"/>
+    </include>
+  </group>
+
+  <node_container pkg="rclcpp_components" exec="component_container_mt" name="reaction_analyzer_container" namespace="" args="" output="screen">
+    <composable_node pkg="reaction_analyzer" plugin="reaction_analyzer::ReactionAnalyzerNode" name="reaction_analyzer" namespace="">
+      <param from="$(var reaction_analyzer_param_path)"/>
+      <remap from="output/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
+      <remap from="output/objects" to="/perception/object_recognition/objects"/>
+      <remap from="output/initialpose" to="/initialpose"/>
+      <remap from="output/goal" to="/planning/mission_planning/goal"/>
+      <remap from="service/change_to_autonomous" to="/api/operation_mode/change_to_autonomous"/>
+      <remap from="input/kinematics" to="/localization/kinematic_state"/>
+      <remap from="input/localization_initialization_state" to="/api/localization/initialization_state"/>
+      <remap from="input/routing_state" to="/api/routing/state"/>
+      <remap from="input/operation_mode_state" to="/api/operation_mode/state"/>
+      <param name="running_mode" value="$(var running_mode)"/>
+      <extra_arg name="use_intra_process_comms" value="false"/>
+    </composable_node>
+  </node_container>
+</launch>

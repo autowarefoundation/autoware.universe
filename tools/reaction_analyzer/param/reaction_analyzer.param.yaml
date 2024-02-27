@@ -1,0 +1,111 @@
+/**:
+  ros__parameters:
+    timer_period: 0.033 # s
+    published_time_expire_duration: 5.0 # s
+    test_iteration: 15
+    output_file_path: /home/berkay/projects/reaction_analyzer_results/
+    object_search_radius_offset: 0.1 # m
+    spawn_time_after_init: 5.0 # s
+    spawn_distance_threshold: 15.0 # m
+    spawned_pointcloud_sampling_distance: 0.1
+    dummy_perception_publisher_period: 0.1 # s
+    first_brake_params:
+      debug_control_commands: false
+      control_cmd_buffer_time_interval: 1.0 # s
+      min_number_descending_order_control_cmd: 3
+      min_jerk_for_brake_cmd: 0.3 # m/s^3
+    initialization_pose:
+      x: 81247.9609375
+      y: 49828.87890625
+      z: 0.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 35.5
+    entity_params:
+      x: 81392.97671487389
+      y: 49927.361443601316
+      z: 42.13605499267578
+      roll: 0.2731273
+      pitch: -0.6873504
+      yaw: 33.7664809
+      x_dimension: 4.118675972722859
+      y_dimension: 1.7809072588403219
+      z_dimension: 0.8328610206872963
+    goal_pose:
+      x: 81462.78125
+      y: 49978.484375
+      z: 0.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 35.0
+    topic_publisher:
+      path_bag_without_object: /home/berkay/projects/bags/awsim-bag/bag/lexus_bag_without_car/rosbag2_2024_01_30-13_50_45_0.db3
+      path_bag_with_object: /home/berkay/projects/bags/awsim-bag/bag/lexus_bag_with_car/rosbag2_2024_01_30-13_50_17_0.db3
+      pointcloud_publisher:
+        pointcloud_publisher_type: "sync_header_sync_publish" # "async_header_sync_publish", "sync_header_sync_publish" or "async_publish"
+        pointcloud_publisher_period: 0.1 # s
+    reaction_chain:
+#      common_ground_filter:
+#        topic_name: /perception/obstacle_segmentation/single_frame/pointcloud_raw
+#        time_debug_topic_name: /perception/obstacle_segmentation/single_frame/pointcloud_raw/debug/published_time
+#        message_type: sensor_msgs::msg::PointCloud2
+#      occupancy_grid_map_outlier:
+#        topic_name: /perception/obstacle_segmentation/pointcloud
+#        time_debug_topic_name: /perception/obstacle_segmentation/pointcloud/debug/published_time
+#        message_type: sensor_msgs::msg::PointCloud2
+#      multi_object_tracker:
+#        topic_name: /perception/object_recognition/tracking/near_objects
+#        time_debug_topic_name: /perception/object_recognition/tracking/near_objects/debug/published_time
+#        message_type: autoware_auto_perception_msgs::msg::TrackedObjects
+#      lidar_centerpoint:
+#        topic_name: /perception/object_recognition/detection/centerpoint/objects
+#        time_debug_topic_name: /perception/object_recognition/detection/centerpoint/objects/debug/published_time
+#        message_type: autoware_auto_perception_msgs::msg::DetectedObjects
+#      obstacle_pointcloud_based_validator:
+#        topic_name: /perception/object_recognition/detection/centerpoint/validation/objects
+#        time_debug_topic_name: /perception/object_recognition/detection/centerpoint/validation/objects/debug/published_time
+#        message_type: autoware_auto_perception_msgs::msg::DetectedObjects
+#      decorative_tracker_merger:
+#        topic_name: /perception/object_recognition/tracking/objects
+#        time_debug_topic_name: /perception/object_recognition/tracking/objects/debug/published_time
+#        message_type: autoware_auto_perception_msgs::msg::TrackedObjects
+#      detected_object_feature_remover:
+#        topic_name: /perception/object_recognition/detection/clustering/objects
+#        time_debug_topic_name: /perception/object_recognition/detection/clustering/objects/debug/published_time
+#        message_type: autoware_auto_perception_msgs::msg::DetectedObjects
+#      detection_by_tracker:
+#        topic_name: /perception/object_recognition/detection/detection_by_tracker/objects
+#        time_debug_topic_name: /perception/object_recognition/detection/detection_by_tracker/objects/debug/published_time
+#        message_type: autoware_auto_perception_msgs::msg::DetectedObjects
+#      object_lanelet_filter:
+#        topic_name: /perception/object_recognition/detection/objects
+#        time_debug_topic_name: /perception/object_recognition/detection/objects/debug/published_time
+#        message_type: autoware_auto_perception_msgs::msg::DetectedObjects
+#      map_based_prediction:
+#        topic_name: /perception/object_recognition/objects
+#        time_debug_topic_name: /perception/object_recognition/objects/debug/published_time
+#        message_type: autoware_auto_perception_msgs::msg::PredictedObjects
+      obstacle_stop_planner:
+        topic_name: /planning/scenario_planning/lane_driving/trajectory
+        time_debug_topic_name: /planning/scenario_planning/lane_driving/trajectory/debug/published_time
+        message_type: autoware_auto_planning_msgs::msg::Trajectory
+      scenario_selector:
+        topic_name: /planning/scenario_planning/scenario_selector/trajectory
+        time_debug_topic_name: /planning/scenario_planning/scenario_selector/trajectory/debug/published_time
+        message_type: autoware_auto_planning_msgs::msg::Trajectory
+      motion_velocity_smoother:
+        topic_name: /planning/scenario_planning/motion_velocity_smoother/trajectory
+        time_debug_topic_name: /planning/scenario_planning/motion_velocity_smoother/trajectory/debug/published_time
+        message_type: autoware_auto_planning_msgs::msg::Trajectory
+      planning_validator:
+        topic_name: /planning/scenario_planning/trajectory
+        time_debug_topic_name: /planning/scenario_planning/trajectory/debug/published_time
+        message_type: autoware_auto_planning_msgs::msg::Trajectory
+      trajectory_follower:
+        topic_name: /control/trajectory_follower/control_cmd
+        time_debug_topic_name: /control/trajectory_follower/control_cmd/debug/published_time
+        message_type: autoware_auto_control_msgs::msg::AckermannControlCommand
+      vehicle_cmd_gate:
+        topic_name: /control/command/control_cmd
+        time_debug_topic_name: /control/command/control_cmd/debug/published_time
+        message_type: autoware_auto_control_msgs::msg::AckermannControlCommand
