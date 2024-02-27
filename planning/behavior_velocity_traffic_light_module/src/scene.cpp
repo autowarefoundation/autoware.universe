@@ -282,9 +282,9 @@ bool TrafficLightModule::isStopSignal()
   updateTrafficSignal();
 
   // If there is no upcoming traffic signal information,
-  //   in the simulation, it will PASS to prevent stopping on the planning simulator
+  //   SIMULATION: it will PASS to prevent stopping on the planning simulator
   //   or scenario simulator.
-  //   in the real environment, it will STOP for safety in cases such that traffic light
+  //   REAL ENVIRONMENT: it will STOP for safety in cases such that traffic light
   //   recognition is not working properly or the map is incorrect.
   if (!traffic_signal_stamp_) {
     if (planner_data_->is_simulation) {
