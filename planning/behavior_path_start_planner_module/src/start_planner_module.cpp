@@ -668,9 +668,8 @@ bool StartPlannerModule::findPullOutPath(
   // extract stop objects in pull out lane for collision check
   const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     *dynamic_objects, parameters_->th_moving_object_velocity);
-  auto [pull_out_lane_stop_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(
-      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
+  auto [pull_out_lane_stop_objects, others] = utils::path_safety_checker::separateObjectsByLanelets(
+    stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
   utils::path_safety_checker::filterObjectsByClass(
     pull_out_lane_stop_objects, parameters_->object_types_to_check_for_path_generation);
 
