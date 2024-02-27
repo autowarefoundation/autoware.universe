@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_EVALUATOR__PARAMETERS_HPP_
-#define PERCEPTION_EVALUATOR__PARAMETERS_HPP_
+#ifndef PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_
+#define PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_
 
-#include "perception_evaluator/metrics/metric.hpp"
+#include "perception_online_evaluator/metrics/metric.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -55,4 +55,4 @@ struct Parameters
 
 }  // namespace perception_diagnostics
 
-#endif  // PERCEPTION_EVALUATOR__PARAMETERS_HPP_
+#endif  // PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "perception_evaluator/perception_evaluator_node.hpp"
+#include "perception_online_evaluator/perception_online_evaluator_node.hpp"
 
-#include "perception_evaluator/utils/marker_utils.hpp"
+#include "perception_online_evaluator/utils/marker_utils.hpp"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
@@ -35,8 +35,8 @@
 
 namespace perception_diagnostics
 {
-PerceptionEvaluatorNode::PerceptionEvaluatorNode(const rclcpp::NodeOptions & node_options)
-: Node("perception_evaluator", node_options),
+PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(const rclcpp::NodeOptions & node_options)
+: Node("perception_online_evaluator", node_options),
   parameters_(std::make_shared<Parameters>()),
   metrics_calculator_(parameters_)
 {
@@ -46,7 +46,7 @@ PerceptionEvaluatorNode::PerceptionEvaluatorNode(const rclcpp::NodeOptions & nod
   google::InstallFailureSignalHandler();
 
   objects_sub_ = create_subscription<PredictedObjects>(
-    "~/input/objects", 1, std::bind(&PerceptionEvaluatorNode::onObjects, this, _1));
+    "~/input/objects", 1, std::bind(&PerceptionOnlineEvaluatorNode::onObjects, this, _1));
   metrics_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
   pub_marker_ = create_publisher<MarkerArray>("~/markers", 10);
 
@@ -57,25 +57,25 @@ PerceptionEvaluatorNode::PerceptionEvaluatorNode(const rclcpp::NodeOptions & nod
   initParameter();
 
   set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&PerceptionEvaluatorNode::onParameter, this, std::placeholders::_1));
+    std::bind(&PerceptionOnlineEvaluatorNode::onParameter, this, std::placeholders::_1));
 
   // Timer
   initTimer(/*period_s=*/0.1);
 }
 
-PerceptionEvaluatorNode::~PerceptionEvaluatorNode()
+PerceptionOnlineEvaluatorNode::~PerceptionOnlineEvaluatorNode()
 {
 }
 
-void PerceptionEvaluatorNode::initTimer(double period_s)
+void PerceptionOnlineEvaluatorNode::initTimer(double period_s)
 {
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&PerceptionEvaluatorNode::onTimer, this));
+    this, get_clock(), period_ns, std::bind(&PerceptionOnlineEvaluatorNode::onTimer, this));
 }
 
-void PerceptionEvaluatorNode::onTimer()
+void PerceptionOnlineEvaluatorNode::onTimer()
 {
   DiagnosticArray metrics_msg;
   for (const Metric & metric : parameters_->metrics) {
@@ -98,7 +98,7 @@ void PerceptionEvaluatorNode::onTimer()
   publishDebugMarker();
 }
 
-DiagnosticStatus PerceptionEvaluatorNode::generateDiagnosticStatus(
+DiagnosticStatus PerceptionOnlineEvaluatorNode::generateDiagnosticStatus(
   const std::string metric, const Stat<double> & metric_stat) const
 {
   DiagnosticStatus status;
@@ -120,12 +120,12 @@ DiagnosticStatus PerceptionEvaluatorNode::generateDiagnosticStatus(
   return status;
 }
 
-void PerceptionEvaluatorNode::onObjects(const PredictedObjects::ConstSharedPtr objects_msg)
+void PerceptionOnlineEvaluatorNode::onObjects(const PredictedObjects::ConstSharedPtr objects_msg)
 {
   metrics_calculator_.setPredictedObjects(*objects_msg);
 }
 
-void PerceptionEvaluatorNode::publishDebugMarker()
+void PerceptionOnlineEvaluatorNode::publishDebugMarker()
 {
   using marker_utils::createColorFromString;
   using marker_utils::createDeviationLines;
@@ -192,7 +192,7 @@ void PerceptionEvaluatorNode::publishDebugMarker()
   pub_marker_->publish(marker);
 }
 
-rcl_interfaces::msg::SetParametersResult PerceptionEvaluatorNode::onParameter(
+rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParameter(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
@@ -280,7 +280,7 @@ rcl_interfaces::msg::SetParametersResult PerceptionEvaluatorNode::onParameter(
   return result;
 }
 
-void PerceptionEvaluatorNode::initParameter()
+void PerceptionOnlineEvaluatorNode::initParameter()
 {
   using tier4_autoware_utils::getOrDeclareParameter;
   using tier4_autoware_utils::updateParam;
@@ -344,4 +344,4 @@ void PerceptionEvaluatorNode::initParameter()
 }  // namespace perception_diagnostics
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(perception_diagnostics::PerceptionEvaluatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(perception_diagnostics::PerceptionOnlineEvaluatorNode)

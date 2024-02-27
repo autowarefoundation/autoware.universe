@@ -15,8 +15,8 @@
 #include <iostream>
 #include <limits>
 
-#ifndef PERCEPTION_EVALUATOR__STAT_HPP_
-#define PERCEPTION_EVALUATOR__STAT_HPP_
+#ifndef PERCEPTION_ONLINE_EVALUATOR__STAT_HPP_
+#define PERCEPTION_ONLINE_EVALUATOR__STAT_HPP_
 
 namespace perception_diagnostics
 {
@@ -90,4 +90,4 @@ std::ostream & operator<<(std::ostream & os, const Stat<T> & stat)
 
 }  // namespace perception_diagnostics
 
-#endif  // PERCEPTION_EVALUATOR__STAT_HPP_
+#endif  // PERCEPTION_ONLINE_EVALUATOR__STAT_HPP_

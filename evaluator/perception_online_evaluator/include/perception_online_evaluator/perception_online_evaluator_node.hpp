@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_EVALUATOR__PERCEPTION_EVALUATOR_NODE_HPP_
-#define PERCEPTION_EVALUATOR__PERCEPTION_EVALUATOR_NODE_HPP_
+#ifndef PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
+#define PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
 
-#include "perception_evaluator/metrics_calculator.hpp"
-#include "perception_evaluator/parameters.hpp"
-#include "perception_evaluator/stat.hpp"
+#include "perception_online_evaluator/metrics_calculator.hpp"
+#include "perception_online_evaluator/parameters.hpp"
+#include "perception_online_evaluator/stat.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -46,11 +46,11 @@ using MarkerArray = visualization_msgs::msg::MarkerArray;
 /**
  * @brief Node for perception evaluation
  */
-class PerceptionEvaluatorNode : public rclcpp::Node
+class PerceptionOnlineEvaluatorNode : public rclcpp::Node
 {
 public:
-  explicit PerceptionEvaluatorNode(const rclcpp::NodeOptions & node_options);
-  ~PerceptionEvaluatorNode();
+  explicit PerceptionOnlineEvaluatorNode(const rclcpp::NodeOptions & node_options);
+  ~PerceptionOnlineEvaluatorNode();
 
   /**
    * @brief callback on receiving a dynamic objects array
@@ -92,4 +92,4 @@ private:
 };
 }  // namespace perception_diagnostics
 
-#endif  // PERCEPTION_EVALUATOR__PERCEPTION_EVALUATOR_NODE_HPP_
+#endif  // PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_

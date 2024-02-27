@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_EVALUATOR__METRICS__METRIC_HPP_
-#define PERCEPTION_EVALUATOR__METRICS__METRIC_HPP_
+#ifndef PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_
+#define PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_
 
-#include "perception_evaluator/stat.hpp"
+#include "perception_online_evaluator/stat.hpp"
 
 #include <iostream>
 #include <string>
@@ -72,4 +72,4 @@ static struct CheckCorrectMaps
 }  // namespace details
 }  // namespace perception_diagnostics
 
-#endif  // PERCEPTION_EVALUATOR__METRICS__METRIC_HPP_
+#endif  // PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_

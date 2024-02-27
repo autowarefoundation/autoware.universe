@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
-#define PERCEPTION_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
+#ifndef PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
+#define PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
 
-#include "perception_evaluator/stat.hpp"
+#include "perception_online_evaluator/stat.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -50,4 +50,4 @@ std::vector<double> calcPredictedPathDeviation(
 }  // namespace metrics
 }  // namespace perception_diagnostics
 
-#endif  // PERCEPTION_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
+#endif  // PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
