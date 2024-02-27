@@ -117,7 +117,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
 BehaviorModuleOutput StartPlannerModule::run()
 {
   updateData();
-  if (!isActivated()) {
+  if (!isActivated() || needToPrepareBlinkerBeforeStart()) {
     return planWaitingApproval();
   }
 
@@ -174,6 +174,12 @@ void StartPlannerModule::updateData()
   if (receivedNewRoute()) {
     resetStatus();
     DEBUG_PRINT("StartPlannerModule::updateData() received new route, reset status");
+  }
+
+  if (
+    planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
+    !status_.first_engaged_time) {
+    status_.first_engaged_time = clock_->now();
   }
 
   if (hasFinishedBackwardDriving()) {
@@ -1076,6 +1082,16 @@ bool StartPlannerModule::hasFinishedPullOut() const
   const bool has_finished = arclength_current.length - arclength_pull_out_end.length > offset;
 
   return has_finished;
+}
+
+bool StartPlannerModule::needToPrepareBlinkerBeforeStart() const
+{
+  if (!status_.first_engaged_time) {
+    return true;
+  }
+  const auto first_engaged_time = status_.first_engaged_time.value();
+  const double elapsed = rclcpp::Duration(clock_->now() - first_engaged_time).seconds();
+  return elapsed < parameters_->prepare_time_before_start;
 }
 
 bool StartPlannerModule::isStuck()
