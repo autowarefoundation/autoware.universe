@@ -22,7 +22,7 @@ MRM Handler is a node to select a proper MRM from a system failure state contain
 | `/system/mrm/emergency_stop/status`    | `tier4_system_msgs::msg::MrmBehaviorStatus`          | Used to check if MRM emergency stop operation is available                                          |
 | `/system/mrm/comfortable_stop/status`  | `tier4_system_msgs::msg::MrmBehaviorStatus`          | Used to check if MRM comfortable stop operation is available                                        |
 | `/system/mrm/pull_over_manager/status` | `tier4_system_msgs::msg::MrmBehaviorStatus`          | Used to check if MRM pull over operation is available                                               |
-| `/api/operation_mode/state`            | `autoware_adapi_v1_msgs::msg::OperationModeState`          | Used to check whether the current operation mode is AUTO or STOP.                                   |
+| `/api/operation_mode/state`            | `autoware_adapi_v1_msgs::msg::OperationModeState`    | Used to check whether the current operation mode is AUTO or STOP.                                   |
 
 ### Output
 
