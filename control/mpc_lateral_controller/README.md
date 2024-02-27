@@ -215,7 +215,7 @@ This topic represents the longitudinal deviation of the velocity at the current 
 `/control/trajectory_follower/lateral/diagnostic`:
 The signals in this topic evaluate the quality of MPC.
 
-Some commonly used signal are listed below:
+Some commonly used signals are listed below:
 
 | The signal                                                     | Number |
 | :------------------------------------------------------------- | :----- |
