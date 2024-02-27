@@ -24,6 +24,9 @@
 
 #include <boost/geometry/index/rtree.hpp>
 
+#include <optional>
+#include <vector>
+
 namespace drivable_area_expansion
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
@@ -41,20 +44,31 @@ using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_autoware_utils::Segment2d;
 
-typedef boost::geometry::index::rtree<Segment2d, boost::geometry::index::rstar<16>> SegmentRtree;
+using SegmentRtree = boost::geometry::index::rtree<Segment2d, boost::geometry::index::rstar<16>>;
 
 struct PointDistance
 {
-  Point2d point;
-  double distance;
+  Point2d point{};
+  double distance{};
 };
 struct Projection
 {
-  Point2d projected_point;
-  double distance;
-  double arc_length;
+  Point2d projected_point{};
+  double distance{};
+  double arc_length{};
 };
 enum Side { LEFT, RIGHT };
-
+struct Expansion
+{
+  // mappings from bound index
+  std::vector<double> left_distances;
+  std::vector<double> right_distances;
+  // mappings from path index
+  std::vector<size_t> left_bound_indexes;
+  std::vector<PointDistance> left_projections;
+  std::vector<size_t> right_bound_indexes;
+  std::vector<PointDistance> right_projections;
+  std::vector<double> min_lane_widths;
+};
 }  // namespace drivable_area_expansion
 #endif  // BEHAVIOR_PATH_PLANNER_COMMON__UTILS__DRIVABLE_AREA_EXPANSION__TYPES_HPP_

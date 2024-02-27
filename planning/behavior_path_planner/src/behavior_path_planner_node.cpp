@@ -17,6 +17,7 @@
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -72,11 +73,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
-
-  if (planner_data_->parameters.visualize_maximum_drivable_area) {
-    debug_maximum_drivable_area_publisher_ =
-      create_publisher<MarkerArray>("~/maximum_drivable_area", 1);
-  }
 
   debug_turn_signal_info_publisher_ = create_publisher<MarkerArray>("~/debug/turn_signal_info", 1);
 
@@ -264,7 +260,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.enable_cog_on_centerline = declare_parameter<bool>("enable_cog_on_centerline");
   p.input_path_interval = declare_parameter<double>("input_path_interval");
   p.output_path_interval = declare_parameter<double>("output_path_interval");
-  p.visualize_maximum_drivable_area = declare_parameter<bool>("visualize_maximum_drivable_area");
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
@@ -447,12 +442,6 @@ void BehaviorPathPlannerNode::run()
 
   planner_data_->prev_route_id = planner_data_->route_handler->getRouteUuid();
 
-  if (planner_data_->parameters.visualize_maximum_drivable_area) {
-    const auto maximum_drivable_area = marker_utils::createFurthestLineStringMarkerArray(
-      utils::getMaximumDrivableArea(planner_data_));
-    debug_maximum_drivable_area_publisher_->publish(maximum_drivable_area);
-  }
-
   lk_pd.unlock();  // release planner_data_
 
   planner_manager_->print();
@@ -502,16 +491,10 @@ void BehaviorPathPlannerNode::publish_steering_factor(
 
     const auto [intersection_pose, intersection_distance] =
       planner_data->turn_signal_decider.getIntersectionPoseAndDistance();
-    const uint16_t steering_factor_state = std::invoke([&intersection_flag]() {
-      if (intersection_flag) {
-        return SteeringFactor::TURNING;
-      }
-      return SteeringFactor::TRYING;
-    });
 
     steering_factor_interface_ptr_->updateSteeringFactor(
       {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
-      PlanningBehavior::INTERSECTION, steering_factor_direction, steering_factor_state, "");
+      PlanningBehavior::INTERSECTION, steering_factor_direction, SteeringFactor::TURNING, "");
   } else {
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
@@ -522,7 +505,7 @@ void BehaviorPathPlannerNode::publish_reroute_availability() const
 {
   // In the current behavior path planner, we might encounter unexpected behavior when rerouting
   // while modules other than lane following are active. If non-lane-following module except
-  // always-executable module is approved and running, rerouting will not be　possible.
+  // always-executable module is approved and running, rerouting will not be possible.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
   if (planner_manager_->hasNonAlwaysExecutableApprovedModules()) {
@@ -718,7 +701,8 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = utils::toPath(*path_candidate_ptr);
+  output = motion_utils::convertToPath<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+    *path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();
   output.header.stamp = this->now();
@@ -800,6 +784,7 @@ void BehaviorPathPlannerNode::onTrafficSignals(const TrafficSignalArray::ConstSh
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
 
+  planner_data_->traffic_light_id_map.clear();
   for (const auto & signal : msg->signals) {
     TrafficSignalStamped traffic_signal;
     traffic_signal.stamp = msg->stamp;
@@ -929,8 +914,8 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, DrivableAreaExpansionParameters::SMOOTHING_MAX_BOUND_RATE_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_bound_rate);
     updateParam(
-      parameters, DrivableAreaExpansionParameters::SMOOTHING_EXTRA_ARC_LENGTH_PARAM,
-      planner_data_->drivable_area_expansion_parameters.extra_arc_length);
+      parameters, DrivableAreaExpansionParameters::SMOOTHING_ARC_LENGTH_RANGE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.arc_length_range);
     updateParam(
       parameters, DrivableAreaExpansionParameters::PRINT_RUNTIME_PARAM,
       planner_data_->drivable_area_expansion_parameters.print_runtime);

@@ -14,15 +14,14 @@
 
 #include "behavior_path_avoidance_module/debug.hpp"
 
+#include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
+#include <lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-
-#include <lanelet2_core/primitives/LineString.h>
-#include <tf2/utils.h>
 
 #include <string>
 #include <vector>
@@ -48,7 +47,7 @@ int32_t uuidToInt32(const unique_identifier_msgs::msg::UUID & uuid)
   int32_t ret = 0;
 
   for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
-    ret <<= sizeof(int8_t);
+    ret <<= sizeof(int8_t) * 8;
     ret |= uuid.uuid.at(i);
   }
 
@@ -114,7 +113,7 @@ MarkerArray createToDrivableBoundDistance(const ObjectDataArray & objects, std::
   MarkerArray msg;
 
   for (const auto & object : objects) {
-    if (!object.nearest_bound_point.has_value()) {
+    if (!object.narrowest_place.has_value()) {
       continue;
     }
 
@@ -123,8 +122,8 @@ MarkerArray createToDrivableBoundDistance(const ObjectDataArray & objects, std::
         "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::LINE_STRIP,
         createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 0.0, 0.42, 0.999));
 
-      marker.points.push_back(object.overhang_pose.position);
-      marker.points.push_back(object.nearest_bound_point.value());
+      marker.points.push_back(object.narrowest_place.value().first);
+      marker.points.push_back(object.narrowest_place.value().second);
       marker.id = uuidToInt32(object.object.object_id);
       msg.markers.push_back(marker);
     }
@@ -134,7 +133,7 @@ MarkerArray createToDrivableBoundDistance(const ObjectDataArray & objects, std::
         "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::TEXT_VIEW_FACING,
         createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 0.0, 1.0));
 
-      marker.pose.position = object.nearest_bound_point.value();
+      marker.pose.position = object.narrowest_place.value().second;
       std::ostringstream string_stream;
       string_stream << object.to_road_shoulder_distance << "[m]";
       marker.text = string_stream.str();
@@ -160,7 +159,7 @@ MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::st
       std::ostringstream string_stream;
       string_stream << std::fixed << std::setprecision(2) << std::boolalpha;
       string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
-                    << "lateral:" << object.lateral << " [m]\n"
+                    << "lateral:" << object.to_centerline << " [m]\n"
                     << "necessity:" << object.avoid_required << " [-]\n"
                     << "stoppable:" << object.is_stoppable << " [-]\n"
                     << "stop_factor:" << object.to_stop_factor_distance << " [m]\n"
@@ -470,7 +469,7 @@ MarkerArray createDrivableBounds(
       createMarkerColor(r, g, b, 0.999));
 
     for (const auto & p : data.right_bound) {
-      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      marker.points.push_back(p);
     }
 
     msg.markers.push_back(marker);
@@ -483,7 +482,7 @@ MarkerArray createDrivableBounds(
       createMarkerColor(r, g, b, 0.999));
 
     for (const auto & p : data.left_bound) {
-      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      marker.points.push_back(p);
     }
 
     msg.markers.push_back(marker);
@@ -495,6 +494,8 @@ MarkerArray createDrivableBounds(
 MarkerArray createDebugMarkerArray(
   const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug)
 {
+  using behavior_path_planner::utils::transformToLanelets;
+  using lanelet::visualization::laneletsAsTriangleMarkerArray;
   using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::createObjectsMarkerArray;
   using marker_utils::createPathMarkerArray;
@@ -554,6 +555,9 @@ MarkerArray createDebugMarkerArray(
     addObjects(data.other_objects, std::string("NotNeedAvoidance"));
     addObjects(data.other_objects, std::string("LessThanExecutionThreshold"));
     addObjects(data.other_objects, std::string("TooNearToGoal"));
+    addObjects(data.other_objects, std::string("ParallelToEgoLane"));
+    addObjects(data.other_objects, std::string("MergingToEgoLane"));
+    addObjects(data.other_objects, std::string("UnstableObject"));
   }
 
   // shift line pre-process
@@ -605,12 +609,23 @@ MarkerArray createDebugMarkerArray(
     addShiftGrad(debug.total_backward_grad, debug.total_shift, "grad_backward", 0.4, 0.2, 0.9);
   }
 
+  // detection area
+  size_t i = 0;
+  for (const auto & detection_area : debug.detection_areas) {
+    add(createPolygonMarkerArray(detection_area, "detection_area", i++, 0.16, 1.0, 0.69, 0.1));
+  }
+
   // misc
   {
     add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
-    add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
-    add(createPolygonMarkerArray(debug.detection_area, "detection_area", 0L, 0.16, 1.0, 0.69, 0.1));
     add(createDrivableBounds(data, "drivable_bound", 1.0, 0.0, 0.42));
+    add(laneletsAsTriangleMarkerArray(
+      "drivable_lanes", transformToLanelets(data.drivable_lanes),
+      createMarkerColor(0.16, 1.0, 0.69, 0.2)));
+    add(laneletsAsTriangleMarkerArray(
+      "current_lanes", data.current_lanelets, createMarkerColor(1.0, 1.0, 1.0, 0.2)));
+    add(laneletsAsTriangleMarkerArray(
+      "safety_check_lanes", debug.safety_check_lanes, createMarkerColor(1.0, 0.0, 0.42, 0.2)));
   }
 
   return msg;

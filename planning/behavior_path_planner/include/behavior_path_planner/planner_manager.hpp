@@ -46,6 +46,7 @@ using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
 using DebugPublisher = tier4_autoware_utils::DebugPublisher;
 using DebugDoubleMsg = tier4_debug_msgs::msg::Float64Stamped;
+using DebugStringMsg = tier4_debug_msgs::msg::StringStamped;
 
 enum Action {
   ADD = 0,
@@ -435,7 +436,16 @@ private:
     const std::vector<SceneModulePtr> & request_modules, const std::shared_ptr<PlannerData> & data,
     const BehaviorModuleOutput & previous_module_output);
 
-  std::string getNames(const std::vector<SceneModulePtr> & modules) const;
+  /**
+   * @brief run keep last approved modules
+   * @param planner data.
+   * @param previous module output.
+   * @return planning result.
+   */
+  BehaviorModuleOutput runKeepLastModules(
+    const std::shared_ptr<PlannerData> & data, const BehaviorModuleOutput & previous_output) const;
+
+  static std::string getNames(const std::vector<SceneModulePtr> & modules);
 
   std::optional<lanelet::ConstLanelet> root_lanelet_{std::nullopt};
 
@@ -446,6 +456,8 @@ private:
   std::vector<SceneModulePtr> candidate_module_ptrs_;
 
   std::unique_ptr<DebugPublisher> debug_publisher_ptr_;
+
+  std::unique_ptr<DebugPublisher> state_publisher_ptr_;
 
   pluginlib::ClassLoader<SceneModuleManagerInterface> plugin_loader_;
 

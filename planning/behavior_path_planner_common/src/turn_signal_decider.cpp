@@ -266,7 +266,7 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
         turn_signal_info.required_start_point = lane_front_pose;
         turn_signal_info.required_end_point = get_required_end_point(combined_lane.centerline3d());
         turn_signal_info.desired_end_point = lane_back_pose;
-        turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
+        turn_signal_info.turn_signal.command = g_signal_map.at(lane_attribute);
         signal_queue.push(turn_signal_info);
       }
     }
@@ -415,15 +415,7 @@ TurnSignalInfo TurnSignalDecider::use_prior_turn_signal(
 
   const double dist_to_original_desired_start =
     get_distance(original_desired_start_point) - base_link2front_;
-  const double dist_to_original_desired_end = get_distance(original_desired_end_point);
-  const double dist_to_original_required_start =
-    get_distance(original_required_start_point) - base_link2front_;
-  const double dist_to_original_required_end = get_distance(original_required_end_point);
   const double dist_to_new_desired_start = get_distance(new_desired_start_point) - base_link2front_;
-  const double dist_to_new_desired_end = get_distance(new_desired_end_point);
-  const double dist_to_new_required_start =
-    get_distance(new_required_start_point) - base_link2front_;
-  const double dist_to_new_required_end = get_distance(new_required_end_point);
 
   // If we still do not reach the desired front point we ignore it
   if (dist_to_original_desired_start > 0.0 && dist_to_new_desired_start > 0.0) {
@@ -435,6 +427,9 @@ TurnSignalInfo TurnSignalDecider::use_prior_turn_signal(
     return original_signal;
   }
 
+  const double dist_to_original_desired_end = get_distance(original_desired_end_point);
+  const double dist_to_new_desired_end = get_distance(new_desired_end_point);
+
   // If we already passed the desired end point, return the other signal
   if (dist_to_original_desired_end < 0.0 && dist_to_new_desired_end < 0.0) {
     TurnSignalInfo empty_signal_info;
@@ -444,6 +439,13 @@ TurnSignalInfo TurnSignalDecider::use_prior_turn_signal(
   } else if (dist_to_new_desired_end < 0.0) {
     return original_signal;
   }
+
+  const double dist_to_original_required_start =
+    get_distance(original_required_start_point) - base_link2front_;
+  const double dist_to_original_required_end = get_distance(original_required_end_point);
+  const double dist_to_new_required_start =
+    get_distance(new_required_start_point) - base_link2front_;
+  const double dist_to_new_required_end = get_distance(new_required_end_point);
 
   if (dist_to_original_desired_start <= dist_to_new_desired_start) {
     const auto enable_prior = use_prior_turn_signal(
