@@ -111,7 +111,7 @@ mim install 'mmdet>=3.0.0rc5, <3.3.0'
 
 Introduced several valuable enhancements in our fork of the mmdetection3d repository.
 Notably, we've made the PointPillar z voxel feature input optional to maintain compatibility with the original paper.
-In addition, we've integrated a PyTorch to ONNX converter and a Tier4 Dataset format reader for added functionality.
+In addition, we've integrated a PyTorch to ONNX converter and a T4 format reader for added functionality.
 
 ```bash
 git clone https://github.com/autowarefoundation/mmdetection3d.git
@@ -160,7 +160,7 @@ python tools/train.py projects/AutowareCenterPoint/configs/centerpoint_custom.py
 For evaluation purposes, we have included a sample dataset captured from the vehicle which consists of the following LiDAR sensors:
 1 x Velodyne VLS128, 4 x Velodyne VLP16, and 1 x Robosense RS Bpearl. This dataset comprises 600 LiDAR frames and encompasses 5 distinct classes, 6905 cars, 3951 pedestrians,
 75 cyclists, 162 buses, and 326 trucks 3D annotation. In the sample dataset, frames are annotated as 2 frames for each second. You can employ this dataset for a wide range of purposes,
-including training, evaluation, and fine-tuning of models. It is organized in the Tier4Dataset format.
+including training, evaluation, and fine-tuning of models. It is organized in the T4 format.
 
 ##### Download the sample dataset
 
@@ -179,7 +179,7 @@ Create .pkl files for training, evaluation, and testing.
 
 ```bash
 
-python tools/create_data.py Tier4Dataset --root-path data/sample_dataset/ --out-dir data/sample_dataset/ --extra-tag Tier4Dataset --version sample_dataset --annotation-hz 2
+python tools/create_data.py T4Dataset --root-path data/sample_dataset/ --out-dir data/sample_dataset/ --extra-tag T4Dataset --version sample_dataset --annotation-hz 2
 ```
 
 Run evaluation
