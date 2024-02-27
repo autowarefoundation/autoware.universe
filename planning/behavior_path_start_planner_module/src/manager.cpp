@@ -350,7 +350,8 @@ void StartPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "length_ratio_for_turn_signal_deactivation_near_intersection",
       p->length_ratio_for_turn_signal_deactivation_near_intersection);
-
+    updateParam<std::vector<double>>(
+      parameters, ns + "collision_check_margins", p->collision_check_margins);
     updateParam<double>(
       parameters, ns + "collision_check_margin_from_front_object",
       p->collision_check_margin_from_front_object);
@@ -380,6 +381,16 @@ void StartPlannerModuleManager::updateModuleParams(
       parameters, ns + "pull_out_max_steer_angle",
       p->parallel_parking_parameters.pull_out_max_steer_angle);
     updateParam<bool>(parameters, ns + "enable_back", p->enable_back);
+    updateParam<double>(parameters, ns + "backward_velocity", p->backward_velocity);
+    updateParam<double>(
+      parameters, ns + "geometric_pull_out_velocity",
+      p->parallel_parking_parameters.pull_out_velocity);
+    updateParam<double>(
+      parameters, ns + "geometric_collision_check_distance_from_end",
+      p->geometric_collision_check_distance_from_end);
+    updateParam<bool>(
+      parameters, ns + "check_shift_path_lane_departure", p->check_shift_path_lane_departure);
+    updateParam<std::string>(parameters, ns + "search_priority", p->search_priority);
     updateParam<double>(parameters, ns + "max_back_distance", p->max_back_distance);
     updateParam<double>(
       parameters, ns + "backward_search_resolution", p->backward_search_resolution);
@@ -392,6 +403,8 @@ void StartPlannerModuleManager::updateModuleParams(
     const std::string ns = "start_planner.freespace_planner.";
 
     updateParam<bool>(parameters, ns + "enable_freespace_planner", p->enable_freespace_planner);
+    updateParam<std::string>(
+      parameters, ns + "freespace_planner_algorithm", p->freespace_planner_algorithm);
     updateParam<double>(
       parameters, ns + "end_pose_search_start_distance", p->end_pose_search_start_distance);
     updateParam<double>(
@@ -410,6 +423,11 @@ void StartPlannerModuleManager::updateModuleParams(
     updateParam<int>(
       parameters, ns + "turning_radius_size",
       p->freespace_planner_common_parameters.turning_radius_size);
+    p->freespace_planner_common_parameters.maximum_turning_radius = std::max(
+      p->freespace_planner_common_parameters.maximum_turning_radius,
+      p->freespace_planner_common_parameters.minimum_turning_radius);
+    p->freespace_planner_common_parameters.turning_radius_size =
+      std::max(p->freespace_planner_common_parameters.turning_radius_size, 1);
   }
   {
     const std::string ns = "start_planner.freespace_planner.search_configs.";
@@ -442,6 +460,10 @@ void StartPlannerModuleManager::updateModuleParams(
     const std::string ns = "start_planner.freespace_planner.astar.";
 
     updateParam<bool>(parameters, ns + "use_back", p->astar_parameters.use_back);
+    updateParam<bool>(
+      parameters, ns + "only_behind_solutions", p->astar_parameters.only_behind_solutions);
+    updateParam<double>(
+      parameters, ns + "distance_heuristic_weight", p->astar_parameters.distance_heuristic_weight);
   }
   {
     const std::string ns = "start_planner.freespace_planner.rrtstar.";
@@ -453,6 +475,9 @@ void StartPlannerModuleManager::updateModuleParams(
       parameters, ns + "max_planning_time", p->rrt_star_parameters.max_planning_time);
     updateParam<double>(parameters, ns + "neighbor_radius", p->rrt_star_parameters.neighbor_radius);
     updateParam<double>(parameters, ns + "margin", p->rrt_star_parameters.margin);
+  }
+
+  {
     updateParam<double>(
       parameters, ns + "stop_condition.maximum_deceleration_for_stop",
       p->maximum_deceleration_for_stop);
@@ -461,7 +486,6 @@ void StartPlannerModuleManager::updateModuleParams(
   }
 
   const std::string base_ns = "start_planner.path_safety_check.";
-
   const std::string ego_path_ns = base_ns + "ego_predicted_path.";
 
   {
@@ -607,6 +631,35 @@ void StartPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, surround_moving_obstacle_check_ns + "th_moving_obstacle_velocity",
       p->th_moving_obstacle_velocity);
+
+    // ObjectTypesToCheck
+    std::string obj_types_ns = surround_moving_obstacle_check_ns + "object_types_to_check.";
+    {
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_car",
+        p->surround_moving_obstacles_type_to_check.check_car);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_truck",
+        p->surround_moving_obstacles_type_to_check.check_truck);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_bus",
+        p->surround_moving_obstacles_type_to_check.check_bus);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_trailer",
+        p->surround_moving_obstacles_type_to_check.check_trailer);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_unknown",
+        p->surround_moving_obstacles_type_to_check.check_unknown);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_bicycle",
+        p->surround_moving_obstacles_type_to_check.check_bicycle);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_motorcycle",
+        p->surround_moving_obstacles_type_to_check.check_motorcycle);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_pedestrian",
+        p->surround_moving_obstacles_type_to_check.check_pedestrian);
+    }
   }
 
   std::string debug_ns = ns + "debug.";
