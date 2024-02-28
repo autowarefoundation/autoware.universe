@@ -1191,14 +1191,14 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   const double lateral_offset =
     lanelet::utils::getLateralDistanceToCenterline(closest_road_lane, start_pose);
 
-  if (distance_from_end < 0.0 && lateral_offset > parameters_->th_turn_signal_on_lateral_offset) {
-    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-  } else if (
-    distance_from_end < 0.0 && lateral_offset < -parameters_->th_turn_signal_on_lateral_offset) {
-    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-  } else {
-    turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
-  }
+  turn_signal.turn_signal.command = std::invoke([&]() {
+    if (distance_from_end >= 0.0) return TurnIndicatorsCommand::DISABLE;
+    if (lateral_offset > parameters_->th_turn_signal_on_lateral_offset)
+      return TurnIndicatorsCommand::ENABLE_RIGHT;
+    if (lateral_offset < -parameters_->th_turn_signal_on_lateral_offset)
+      return TurnIndicatorsCommand::ENABLE_LEFT;
+    return TurnIndicatorsCommand::DISABLE;
+  });
 
   turn_signal.desired_start_point = start_pose;
   turn_signal.required_start_point = start_pose;
