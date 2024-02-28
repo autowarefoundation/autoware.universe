@@ -294,7 +294,7 @@ public:
 
     // keep waiting the other side shift approval until the ego reaches shift length threshold.
     const auto ego_shift_ratio = (current_shift_length - getEgoShift()) / current_shift_length;
-    return ego_shift_ratio < parameters_->ratio_for_return_shift_approval;
+    return ego_shift_ratio < parameters_->ratio_for_return_shift_approval + 1e-3;
   }
 
   bool isShifted() const
