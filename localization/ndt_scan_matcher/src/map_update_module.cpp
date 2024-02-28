@@ -70,6 +70,7 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
   // lock and rebuild ndt_ptr_
   if (need_rebuild_) {
     ndt_ptr_mutex_->lock();
+
     auto param = ndt_ptr_->getParams();
     auto input_source = ndt_ptr_->getInputSource();
 
@@ -87,13 +88,20 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
     // the main ndt_ptr_) overlap, the latency of updating/alignment reduces partly.
     // If the updating is done the main ndt_ptr_, either the update or the NDT
     // align will be blocked by the other.
-    update_ndt(position, *secondary_ndt_ptr_);
+    const bool updated = update_ndt(position, *secondary_ndt_ptr_);
+    if (!updated) {
+      last_update_position_ = position;
+      return;
+    }
 
     ndt_ptr_mutex_->lock();
+    auto dummy_ptr = ndt_ptr_;
     auto input_source = ndt_ptr_->getInputSource();
     ndt_ptr_ = secondary_ndt_ptr_;
     ndt_ptr_->setInputSource(input_source);
     ndt_ptr_mutex_->unlock();
+
+    dummy_ptr.reset();
   }
 
   secondary_ndt_ptr_.reset(new NdtType);
@@ -106,7 +114,7 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
   publish_partial_pcd_map();
 }
 
-void MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt)
+bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt)
 {
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
 
@@ -128,7 +136,7 @@ void MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   while (status != std::future_status::ready) {
     RCLCPP_INFO(logger_, "waiting response");
     if (!rclcpp::ok()) {
-      return;
+      return false;  // No update
     }
     status = result.wait_for(std::chrono::seconds(1));
   }
@@ -140,7 +148,7 @@ void MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
     logger_, "Update map (Add: %lu, Remove: %lu)", maps_to_add.size(), map_ids_to_remove.size());
   if (maps_to_add.empty() && map_ids_to_remove.empty()) {
     RCLCPP_INFO(logger_, "Skip map update");
-    return;
+    return false;  // No update
   }
 
   const auto exe_start_time = std::chrono::system_clock::now();
@@ -170,6 +178,7 @@ void MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
   RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
+  return true;  // Updated
 }
 
 void MapUpdateModule::publish_partial_pcd_map()
