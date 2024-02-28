@@ -35,7 +35,8 @@
 
 namespace perception_diagnostics
 {
-PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(const rclcpp::NodeOptions & node_options)
+PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(
+  const rclcpp::NodeOptions & node_options)
 : Node("perception_online_evaluator", node_options),
   parameters_(std::make_shared<Parameters>()),
   metrics_calculator_(parameters_)
@@ -58,26 +59,13 @@ PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(const rclcpp::NodeO
 
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&PerceptionOnlineEvaluatorNode::onParameter, this, std::placeholders::_1));
-
-  // Timer
-  initTimer(/*period_s=*/0.1);
 }
 
-PerceptionOnlineEvaluatorNode::~PerceptionOnlineEvaluatorNode()
-{
-}
-
-void PerceptionOnlineEvaluatorNode::initTimer(double period_s)
-{
-  const auto period_ns =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&PerceptionOnlineEvaluatorNode::onTimer, this));
-}
-
-void PerceptionOnlineEvaluatorNode::onTimer()
+void PerceptionOnlineEvaluatorNode::publishMetrics()
 {
   DiagnosticArray metrics_msg;
+
+  // calculate metrics
   for (const Metric & metric : parameters_->metrics) {
     const auto metric_stat_map = metrics_calculator_.calculate(Metric(metric));
     if (!metric_stat_map.has_value()) {
@@ -91,6 +79,7 @@ void PerceptionOnlineEvaluatorNode::onTimer()
     }
   }
 
+  // publish metrics
   if (!metrics_msg.status.empty()) {
     metrics_msg.header.stamp = now();
     metrics_pub_->publish(metrics_msg);
@@ -123,6 +112,7 @@ DiagnosticStatus PerceptionOnlineEvaluatorNode::generateDiagnosticStatus(
 void PerceptionOnlineEvaluatorNode::onObjects(const PredictedObjects::ConstSharedPtr objects_msg)
 {
   metrics_calculator_.setPredictedObjects(*objects_msg);
+  publishMetrics();
 }
 
 void PerceptionOnlineEvaluatorNode::publishDebugMarker()

@@ -50,7 +50,7 @@ class PerceptionOnlineEvaluatorNode : public rclcpp::Node
 {
 public:
   explicit PerceptionOnlineEvaluatorNode(const rclcpp::NodeOptions & node_options);
-  ~PerceptionOnlineEvaluatorNode();
+  ~PerceptionOnlineEvaluatorNode() {};
 
   /**
    * @brief callback on receiving a dynamic objects array
@@ -62,11 +62,6 @@ public:
     const std::string metric, const Stat<double> & metric_stat) const;
 
 private:
-  // Timer
-  rclcpp::TimerBase::SharedPtr timer_;
-  void initTimer(double period_s);
-  void onTimer();
-
   // Subscribers and publishers
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
@@ -86,6 +81,7 @@ private:
   // Metrics Calculator
   MetricsCalculator metrics_calculator_;
   std::deque<rclcpp::Time> stamps_;
+  void publishMetrics();
 
   // Debug
   void publishDebugMarker();
