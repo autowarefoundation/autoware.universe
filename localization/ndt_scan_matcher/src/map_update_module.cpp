@@ -153,16 +153,15 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
 
   const auto exe_start_time = std::chrono::system_clock::now();
   // Perform heavy processing outside of the lock scope
-  
+
   // Add pcd
-  for (auto& map : maps_to_add)
-  {
+  for (auto & map : maps_to_add) {
     auto cloud = pcl::make_shared<pcl::PointCloud<PointTarget>>();
-    
+
     pcl::fromROSMsg(map.pointcloud, *cloud);
     ndt.addTarget(cloud, map.cell_id);
   }
-  
+
   // Remove pcd
   for (const std::string & map_id_to_remove : map_ids_to_remove) {
     ndt.removeTarget(map_id_to_remove);
