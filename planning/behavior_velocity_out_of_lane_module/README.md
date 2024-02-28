@@ -16,31 +16,30 @@ The algorithm is made of the following steps.
 2. Calculate the other lanes (magenta).
 3. Calculate the overlapping ranges between the ego path footprints and the other lanes (green).
 4. For each overlapping range, decide if a stop or slow down action must be taken.
-5. For each action, insert the corresponding stop or slow down point in the path.
+5. For each stop or slow down action, insert the corresponding stop or slow down point in the ego path.
 
 ![overview](./docs/out_of_lane-footprints_other_lanes_overlaps_ranges.png)
 
 #### 1. Ego Path Footprints
 
-In this first step, the ego footprint is projected at each path point and are eventually inflated based on the `extra_..._offset` parameters.
+In this first step, the ego footprint is projected at each path point and is eventually inflated based on the `extra_..._offset` parameters.
 
 #### 2. Other lanes
 
 In the second step, the set of lanes to consider for overlaps is generated.
-This set is built by selecting all lanelets within some distance from the ego vehicle, and then removing non-relevant lanelets.
+This set is built by selecting all road lanelets within some distance from the ego vehicle, and then removing non-relevant lanelets.
 The selection distance is chosen as the maximum between the `slowdown.distance_threshold` and the `stop.distance_threshold`.
 
 A lanelet is deemed non-relevant if it meets one of the following conditions.
 
-- It is part of the lanelets followed by the ego path.
+- It is part of the lanelets crossed by the ego path linestring.
 - It contains the rear point of the ego footprint.
-- It follows one of the ego path lanelets.
 
 #### 3. Overlapping ranges
 
 In the third step, overlaps between the ego path footprints and the other lanes are calculated.
 For each pair of other lane $l$ and ego path footprint $f$, we calculate the overlapping polygons using `boost::geometry::intersection`.
-For each overlapping polygon found, if the distance inside the other lane $l$ is above the `overlap.minimum_distance` threshold, then the overlap is ignored.
+For each overlapping polygon found, if the distance inside the other lane $l$ is lower than the `overlap.minimum_distance` threshold, then the overlap is ignored.
 Otherwise, the arc length range (relative to the ego path) and corresponding points of the overlapping polygons are stored.
 Ultimately, for each other lane $l$, overlapping ranges of successive overlaps are built with the following information:
 
@@ -118,6 +117,12 @@ it is skipped.
 
 Moreover, parameter `action.distance_buffer` adds an extra distance between the ego footprint and the overlap when possible.
 
+#### Avoiding chattering
+
+In order to avoid chattering caused by unstable predicted paths,
+parameter `action.min_duration` allows to set a minimum time during which a slow down or stop point is inserted.
+The slow down or stop point is only removed if no out of lane collision is detected for that duration.
+
 ### Module Parameters
 
 | Parameter                     | Type   | Description                                                                       |
@@ -143,6 +148,7 @@ Moreover, parameter `action.distance_buffer` adds an extra distance between the 
 | `minimum_velocity`              | double | [m/s] ignore objects with a velocity lower than this value                                                                                                                |
 | `predicted_path_min_confidence` | double | [-] minimum confidence required for a predicted path to be considered                                                                                                     |
 | `use_predicted_paths`           | bool   | [-] if true, use the predicted paths to estimate future positions; if false, assume the object moves at constant velocity along _all_ lanelets it currently is located in |
+| `distance_buffer`               | double | [m] distance buffer used to determine if a collision will occur in the other lane                                                                                         |
 
 | Parameter /overlap | Type   | Description                                                                                          |
 | ------------------ | ------ | ---------------------------------------------------------------------------------------------------- |
@@ -152,14 +158,17 @@ Moreover, parameter `action.distance_buffer` adds an extra distance between the 
 | Parameter /action             | Type   | Description                                                                                    |
 | ----------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
 | `skip_if_over_max_decel`      | bool   | [-] if true, do not take an action that would cause more deceleration than the maximum allowed |
+| `precision`                   | double | [m] precision when inserting a stop pose in the path                                           |
 | `distance_buffer`             | double | [m] buffer distance to try to keep between the ego footprint and lane                          |
+| `min_duration`                | double | [s] minimum duration needed before a decision can be canceled                                  |
 | `slowdown.distance_threshold` | double | [m] insert a slow down when closer than this distance from an overlap                          |
 | `slowdown.velocity`           | double | [m] slow down velocity                                                                         |
 | `stop.distance_threshold`     | double | [m] insert a stop when closer than this distance from an overlap                               |
 
-| Parameter /ego       | Type   | Description                                          |
-| -------------------- | ------ | ---------------------------------------------------- |
-| `extra_front_offset` | double | [m] extra front distance to add to the ego footprint |
-| `extra_rear_offset`  | double | [m] extra rear distance to add to the ego footprint  |
-| `extra_left_offset`  | double | [m] extra left distance to add to the ego footprint  |
-| `extra_right_offset` | double | [m] extra right distance to add to the ego footprint |
+| Parameter /ego         | Type   | Description                                                              |
+| ---------------------- | ------ | ------------------------------------------------------------------------ |
+| `min_assumed_velocity` | double | [m/s] minimum velocity used to calculate the enter and exit times of ego |
+| `extra_front_offset`   | double | [m] extra front distance to add to the ego footprint                     |
+| `extra_rear_offset`    | double | [m] extra rear distance to add to the ego footprint                      |
+| `extra_left_offset`    | double | [m] extra left distance to add to the ego footprint                      |
+| `extra_right_offset`   | double | [m] extra right distance to add to the ego footprint                     |
