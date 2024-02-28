@@ -50,7 +50,7 @@ class PerceptionOnlineEvaluatorNode : public rclcpp::Node
 {
 public:
   explicit PerceptionOnlineEvaluatorNode(const rclcpp::NodeOptions & node_options);
-  ~PerceptionOnlineEvaluatorNode(){};
+  ~PerceptionOnlineEvaluatorNode() {}
 
   /**
    * @brief callback on receiving a dynamic objects array

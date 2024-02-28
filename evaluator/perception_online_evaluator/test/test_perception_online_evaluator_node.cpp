@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ament_index_cpp/get_package_share_directory.hpp"
-#include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
 
@@ -61,7 +59,7 @@ protected:
       {"--ros-args", "--params-file",
        share_dir + "/param/perception_online_evaluator.defaults.yaml"});
     options.append_parameter_override("prediction_time_horizons", std::vector<double>{5.0});
-    options.append_parameter_override("smoothing_window_size", int(11));
+    options.append_parameter_override("smoothing_window_size", 11);
 
     dummy_node = std::make_shared<rclcpp::Node>("perception_online_evaluator_test", options);
     eval_node = std::make_shared<EvalNode>(options);
@@ -418,15 +416,15 @@ TEST_F(EvalTest, testYawDeviation_oscillation_rotate)
     if (time == time_delay_) {
       objects = rotateObjects(makeDeviatedStraightPredictedObjects(time, 0), yaw);
     } else {
-      objects =
-        rotateObjects(makeDeviatedStraightPredictedObjects(time, deviation * sign), 2 * M_PI * std::rand());
+      objects = rotateObjects(
+        makeDeviatedStraightPredictedObjects(time, deviation * sign), 2 * M_PI * std::rand());
       sign *= -1.0;
     }
     publishObjects(objects);
   }
 
-  const auto last_objects =
-    rotateObjects(makeDeviatedStraightPredictedObjects(time_delay_ * 2, deviation), 2 * M_PI * std::rand());
+  const auto last_objects = rotateObjects(
+    makeDeviatedStraightPredictedObjects(time_delay_ * 2, deviation), 2 * M_PI * std::rand());
   EXPECT_NEAR(publishObjectsAndGetMetric(last_objects), yaw, epsilon);
 }
 
@@ -442,14 +440,17 @@ TEST_F(EvalTest, testYawDeviation_distortion_rotate)
     if (time == time_delay_) {
       objects = rotateObjects(makeDeviatedStraightPredictedObjects(time, deviation), yaw);
     } else if (time == time_delay_ + time_step_) {
-      objects = rotateObjects(makeDeviatedStraightPredictedObjects(time, -deviation), 2 * M_PI * std::rand());
+      objects = rotateObjects(
+        makeDeviatedStraightPredictedObjects(time, -deviation), 2 * M_PI * std::rand());
     } else {
-      objects = rotateObjects(makeDeviatedStraightPredictedObjects(time, 0), 2 * M_PI * std::rand());
+      objects =
+        rotateObjects(makeDeviatedStraightPredictedObjects(time, 0), 2 * M_PI * std::rand());
     }
     publishObjects(objects);
   }
 
-  const auto last_objects = rotateObjects(makeDeviatedStraightPredictedObjects(time_delay_ * 2, deviation), 2 * M_PI * std::rand());
+  const auto last_objects = rotateObjects(
+    makeDeviatedStraightPredictedObjects(time_delay_ * 2, deviation), 2 * M_PI * std::rand());
   EXPECT_NEAR(publishObjectsAndGetMetric(last_objects), yaw, epsilon);
 }
 
