@@ -43,7 +43,7 @@ PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(
 {
   using std::placeholders::_1;
 
-  google::InitGoogleLogging("map_based_prediction_node");
+  google::InitGoogleLogging("perception_online_evaluator_node");
   google::InstallFailureSignalHandler();
 
   objects_sub_ = create_subscription<PredictedObjects>(
