@@ -120,20 +120,24 @@ pip install -v -e .
 ```
 
 #### Use Training Repository with Docker
+
 Alternatively, you can use Docker to run the mmdetection3d repository.We provide a Dockerfile to build a Docker image with the mmdetection3d repository and its dependencies.
 
 Clone fork of the mmdetection3d repository
+
 ```bash
 git clone https://github.com/autowarefoundation/mmdetection3d.git
 ```
 
 Build the Docker image by running the following command
+
 ```bash
 cd mmdetection3d
 docker build -t mmdetection3d -f docker/Dockerfile .
 ```
 
 Run the Docker container
+
 ```bash
 docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdetection3d
 ```
