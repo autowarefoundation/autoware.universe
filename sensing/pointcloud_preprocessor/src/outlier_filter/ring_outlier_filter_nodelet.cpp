@@ -292,12 +292,12 @@ sensor_msgs::msg::PointCloud2 RingOutlierFilterComponent::extractExcludedPoints(
   }
   tree->setInputCloud(output_cloud);
   std::vector<int> nn_indices(1);
-  std::vector<float> nn_dists(1);
+  std::vector<float> nn_distances(1);
   for (const auto & point : input_cloud->points) {
-    if (!tree->nearestKSearch(point, 1, nn_indices, nn_dists)) {
+    if (!tree->nearestKSearch(point, 1, nn_indices, nn_distances)) {
       continue;
     }
-    if (nn_dists[0] > epsilon) {
+    if (nn_distances[0] > epsilon) {
       excluded_points->points.push_back(point);
     }
   }
