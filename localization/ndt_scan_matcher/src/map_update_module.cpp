@@ -152,20 +152,17 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   }
 
   const auto exe_start_time = std::chrono::system_clock::now();
-  const size_t add_size = maps_to_add.size();
   // Perform heavy processing outside of the lock scope
-  std::vector<pcl::shared_ptr<pcl::PointCloud<PointTarget>>> points_pcl(add_size);
-
-  for (size_t i = 0; i < add_size; i++) {
-    points_pcl[i] = pcl::make_shared<pcl::PointCloud<PointTarget>>();
-    pcl::fromROSMsg(maps_to_add[i].pointcloud, *points_pcl[i]);
-  }
-
+  
   // Add pcd
-  for (size_t i = 0; i < add_size; i++) {
-    ndt.addTarget(points_pcl[i], maps_to_add[i].cell_id);
+  for (auto& map : maps_to_add)
+  {
+    auto cloud = pcl::make_shared<pcl::PointCloud<PointTarget>>();
+    
+    pcl::fromROSMsg(map.pointcloud, *cloud);
+    ndt.addTarget(cloud, map.cell_id);
   }
-
+  
   // Remove pcd
   for (const std::string & map_id_to_remove : map_ids_to_remove) {
     ndt.removeTarget(map_id_to_remove);
