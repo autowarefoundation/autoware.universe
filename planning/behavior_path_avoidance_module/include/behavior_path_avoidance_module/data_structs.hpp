@@ -69,9 +69,11 @@ struct ObjectParameter
 
   double envelope_buffer_margin{0.0};
 
-  double avoid_margin_lateral{1.0};
+  double lateral_soft_margin{1.0};
 
-  double safety_buffer_lateral{1.0};
+  double lateral_hard_margin{1.0};
+
+  double lateral_hard_margin_for_parked_vehicle{1.0};
 
   double safety_buffer_longitudinal{0.0};
 

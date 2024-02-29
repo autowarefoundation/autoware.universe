@@ -862,10 +862,13 @@ std::optional<double> getAvoidMargin(
   const auto & vehicle_width = planner_data->parameters.vehicle_width;
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters->object_parameters.at(object_type);
+  const auto lateral_hard_margin = object.is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
 
-  const auto max_avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
-                                object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
-  const auto min_avoid_margin = object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
+  const auto max_avoid_margin = lateral_hard_margin * object.distance_factor +
+                                object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
+  const auto min_avoid_margin = lateral_hard_margin + 0.5 * vehicle_width;
   const auto soft_lateral_distance_limit =
     object.to_road_shoulder_distance - parameters->soft_road_shoulder_margin - 0.5 * vehicle_width;
   const auto hard_lateral_distance_limit =
@@ -1505,8 +1508,11 @@ void fillAvoidanceNecessity(
 {
   const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
   const auto object_parameter = parameters->object_parameters.at(object_type);
+  const auto lateral_hard_margin = object_data.is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
   const auto safety_margin =
-    0.5 * vehicle_width + object_parameter.safety_buffer_lateral * object_data.distance_factor;
+    0.5 * vehicle_width + lateral_hard_margin * object_data.distance_factor;
 
   const auto check_necessity = [&](const auto hysteresis_factor) {
     return (isOnRight(object_data) && std::abs(object_data.overhang_points.front().first) <
@@ -1689,8 +1695,11 @@ void updateRoadShoulderDistance(
     const auto & vehicle_width = planner_data->parameters.vehicle_width;
     const auto object_type = utils::getHighestProbLabel(o.object.classification);
     const auto object_parameter = parameters->object_parameters.at(object_type);
+    const auto lateral_hard_margin = o.is_parked
+                                       ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                       : object_parameter.lateral_hard_margin;
 
-    o.avoid_margin = object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
+    o.avoid_margin = lateral_hard_margin + 0.5 * vehicle_width;
   }
   const auto extract_obstacles = generateObstaclePolygonsForDrivableArea(
     clip_objects, parameters, planner_data->parameters.vehicle_width / 2.0);
@@ -2074,8 +2083,10 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   double max_offset = 0.0;
   for (const auto & object_parameter : parameters->object_parameters) {
     const auto p = object_parameter.second;
+    const auto lateral_hard_margin =
+      std::max(p.lateral_hard_margin, p.lateral_hard_margin_for_parked_vehicle);
     const auto offset =
-      2.0 * p.envelope_buffer_margin + p.safety_buffer_lateral + p.avoid_margin_lateral;
+      2.0 * p.envelope_buffer_margin + lateral_hard_margin + p.lateral_soft_margin;
     max_offset = std::max(max_offset, offset);
   }
 
