@@ -1,6 +1,6 @@
 # Autoware Universe
 
-## Welcome to Autoware Universe!
+## Welcome to Autoware Universe
 
 Autoware Universe serves as a foundational pillar within the Autoware ecosystem, playing a critical role in enhancing the core functionalities of autonomous driving technologies.
 This repository is a pivotal element of the Autoware Core/Universe concept, managing a wide array of packages that significantly extend the capabilities of autonomous vehicles.
