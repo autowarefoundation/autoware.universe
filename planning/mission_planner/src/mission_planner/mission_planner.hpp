@@ -148,6 +148,7 @@ private:
 
   std::shared_ptr<LaneletRoute> normal_route_{nullptr};
   std::shared_ptr<LaneletRoute> mrm_route_{nullptr};
+  lanelet::LaneletMapPtr lanelet_map_ptr_{nullptr};
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
