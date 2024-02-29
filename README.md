@@ -7,6 +7,10 @@ This repository is a pivotal element of the Autoware Core/Universe concept, mana
 
 ![autoware_universe_front](docs/assets/images/autoware_universe_front.png)
 
-The code and documentation managed here represent a vital part of the Autoware ecosystem. To gain a comprehensive understanding of the entirety of Autoware, please visit the [Autoware Documentation](https://autowarefoundation.github.io/autoware-documentation/).
+## Getting Started
 
-For detailed documents of Autoware Universe components, see [Autoware Universe Documentation](https://autowarefoundation.github.io/autoware.universe/) deployed by MKDocs.
+To dive into the vast world of Autoware and understand how Autoware Universe fits into the bigger picture, we recommend starting with the [Autoware Documentation](https://autowarefoundation.github.io/autoware-documentation/). This resource provides a thorough overview of the Autoware ecosystem, guiding you through its components, functionalities, and how to get started with development.
+
+### Explore Autoware Universe documentation
+
+For those looking to explore the specifics of Autoware Universe components, the [Autoware Universe Documentation](https://autowarefoundation.github.io/autoware.universe/), deployed with MKDocs, offers detailed insights.
