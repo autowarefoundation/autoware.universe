@@ -459,7 +459,7 @@ bool NormalVehicleTracker::measureWithShape(
     bbox_object = object;
   }
 
-  constexpr float gain = 0.9;
+  constexpr float gain = 0.8;
   bounding_box_.length =
     gain * bounding_box_.length + (1.0 - gain) * bbox_object.shape.dimensions.x;
   bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * bbox_object.shape.dimensions.y;
@@ -468,10 +468,16 @@ bool NormalVehicleTracker::measureWithShape(
   last_input_bounding_box_ = {
     bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y, bbox_object.shape.dimensions.z};
 
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
+  // update offset into position
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
+  ekf_.getX(X_t);
+  ekf_.getP(P_t);
+  X_t(IDX::X) = X_t(IDX::X) + (1.0 - gain) * tracking_offset_.x();
+  X_t(IDX::Y) = X_t(IDX::Y) + (1.0 - gain) * tracking_offset_.y();
+  tracking_offset_.x() = gain * tracking_offset_.x();
+  tracking_offset_.y() = gain * tracking_offset_.y();
+  ekf_.init(X_t, P_t);
 
   // update lf, lr
   lf_ = std::max(bounding_box_.length * 0.3, 1.0);   // 30% front from the center, minimum of 1.0m
