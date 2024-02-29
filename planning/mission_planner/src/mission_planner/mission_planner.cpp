@@ -432,10 +432,10 @@ bool MissionPlanner::check_reroute_safety(
 
   // =============================================================================================
   // NOTE: the target route is calculated while ego is driving on the original route, so basically
-  // the first lane of the target route should be in the orginal route lanelets. So the common
-  // segment interval matches the beginning of the target route. The exeception is that if ego is
+  // the first lane of the target route should be in the original route lanelets. So the common
+  // segment interval matches the beginning of the target route. The exception is that if ego is
   // on an intersection lanelet, getClosestLanelet() may not return the same lanelet which exists
-  // in the original route. In that case the common segment interval does not match the beginnng of
+  // in the original route. In that case the common segment interval does not match the beginning of
   // the target lanelet
   // =============================================================================================
   const auto start_idx_opt =
@@ -474,6 +474,22 @@ bool MissionPlanner::check_reroute_safety(
     }
     end_idx_original = start_idx_original + i;
     end_idx_target = start_idx_target + i;
+  }
+
+  // at the very first transition from main/MRM to MRM/main, the requested route from the
+  // route_selector may not begin from ego current lane (because route_selector requests the
+  // previous route once, and then replan)
+  const bool ego_is_on_first_target_section = std::any_of(
+    target_route.segments.front().primitives.begin(),
+    target_route.segments.front().primitives.end(), [&](const auto & primitive) {
+      const auto lanelet = lanelet_map_ptr_->laneletLayer.get(primitive.id);
+      return lanelet::utils::isInLanelet(target_route.start_pose, lanelet);
+    });
+  if (!ego_is_on_first_target_section) {
+    RCLCPP_ERROR(
+      get_logger(),
+      "Check reroute safety failed. Ego is not on the first section of target route.");
+    return false;
   }
 
   // if the front of target route is not the front of common segment, it is expected that the front
