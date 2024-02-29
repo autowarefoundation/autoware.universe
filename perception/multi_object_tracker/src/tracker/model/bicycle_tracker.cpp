@@ -307,6 +307,7 @@ bool BicycleTracker::measureWithPose(
   double measurement_yaw = 0.0;
   bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
 
+  // Decide dimension of measurement vector and matrix
   // pos x, pos y, (pos yaw) depending on pose measurement
   const int dim_y = is_yaw_available ? 3 : 2;
 
@@ -331,14 +332,10 @@ bool BicycleTracker::measureWithPose(
     R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
     R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
   }
-
-  // if there are orientation available
+  // update the yaw when available
   if (dim_y == 3) {
-    // fill yaw observation and measurement matrix
     Y(IDX::YAW, 0) = measurement_yaw;
     C(2, IDX::YAW) = 1.0;
-
-    // fill yaw covariance
     if (!object.kinematics.has_position_covariance) {
       R(2, 2) = ekf_params_.r_cov_yaw;  // yaw - yaw
     } else {

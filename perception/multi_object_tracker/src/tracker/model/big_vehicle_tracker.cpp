@@ -318,6 +318,37 @@ bool BigVehicleTracker::measureWithPose(
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   ekf_.getX(X_t);
 
+  // get measurement yaw angle to update
+  double measurement_yaw = 0.0;
+  bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
+
+  // velocity capability is checked only when the object has velocity measurement
+  // and the predicted velocity is close to the observed velocity
+  bool is_velocity_available = false;
+  if (object.kinematics.has_twist) {
+    const double & predicted_vel = X_t(IDX::VEL);
+    const double & observed_vel = object.kinematics.twist_with_covariance.twist.linear.x;
+    if (std::fabs(predicted_vel - observed_vel) < velocity_deviation_threshold_) {
+      // Velocity deviation is small
+      is_velocity_available = true;
+    }
+  }
+
+  // Object Shape
+  // convert to bounding box if input is convex shape
+  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    utils::convertConvexHullToBoundingBox(object, bbox_object);
+  } else {
+    bbox_object = object;
+  }
+  // extension (size) adjustment
+  // get offset measurement
+  autoware_auto_perception_msgs::msg::DetectedObject offset_object;
+  utils::calcAnchorPointOffset(
+    last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
+    bbox_object, X_t(IDX::YAW), offset_object, tracking_offset_);
+
   // measurement noise covariance
   float r_cov_x;
   float r_cov_y;
@@ -337,39 +368,9 @@ bool BigVehicleTracker::measureWithPose(
     r_cov_y = ekf_params_.r_cov_y;
   }
 
-  // get measurement yaw angle to update
-  double measurement_yaw = 0.0;
-  bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
-
   // Decide dimension of measurement vector and matrix
-  // velocity capability is checked only when the object has velocity measurement
-  // and the predicted velocity is close to the observed velocity
-  bool enable_velocity_measurement = false;
-  if (object.kinematics.has_twist) {
-    const double & predicted_vel = X_t(IDX::VEL);
-    const double & observed_vel = object.kinematics.twist_with_covariance.twist.linear.x;
-    if (std::fabs(predicted_vel - observed_vel) < velocity_deviation_threshold_) {
-      // Velocity deviation is small
-      enable_velocity_measurement = true;
-    }
-  }
   // pos x, pos y, pos yaw, (vel) depending on pose measurement
-  const int dim_y = enable_velocity_measurement ? 4 : 3;
-
-  // convert to bounding box if input is convex shape
-  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    utils::convertConvexHullToBoundingBox(object, bbox_object);
-  } else {
-    bbox_object = object;
-  }
-
-  // Object extension (size) adjustment
-  // get offset measurement
-  autoware_auto_perception_msgs::msg::DetectedObject offset_object;
-  utils::calcAnchorPointOffset(
-    last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
-    bbox_object, X_t(IDX::YAW), offset_object, tracking_offset_);
+  const int dim_y = is_velocity_available ? 4 : 3;
 
   // Set measurement matrix C and observation vector Y
   Eigen::MatrixXd Y(dim_y, 1);
@@ -406,12 +407,10 @@ bool BigVehicleTracker::measureWithPose(
     R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
     R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
   }
-
-  // Update the velocity when necessary
-  if (dim_y == 4) {
+  // update the velocity when it is available
+  if (is_velocity_available) {
     Y(IDX::VEL, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
     C(3, IDX::VEL) = 1.0;  // for vel
-
     if (!object.kinematics.has_twist_covariance) {
       R(3, 3) = ekf_params_.r_cov_vel;  // vel -vel
     } else {
