@@ -339,7 +339,7 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
 
       // do not take extra distance and exit as soon as p is outside no stopping area
       // just a temporary fix
-      ego_area_end_idx = i-1;
+      ego_area_end_idx = i - 1;
       break;
     }
     if (dist_from_start_sum > extra_dist || dist_from_area_sum > margin) {
