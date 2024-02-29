@@ -57,15 +57,15 @@ BigVehicleTracker::BigVehicleTracker(
   // measurement noise covariance: detector uncertainty + ego vehicle motion uncertainty
   float r_stddev_x = 0.5;                                  // in vehicle coordinate [m]
   float r_stddev_y = 0.4;                                  // in vehicle coordinate [m]
-  float r_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad]
-  float r_stddev_vel = 1.0;                                // [m/s]
+  float r_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // in map coordinate [rad]
+  float r_stddev_vel = 1.0;                                // in object coordinate [m/s]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
   ekf_params_.r_cov_vel = std::pow(r_stddev_vel, 2.0);
   // initial state covariance
-  float p0_stddev_x = 1.5;                                     // [m]
-  float p0_stddev_y = 0.5;                                     // [m]
+  float p0_stddev_x = 1.5;                                     // in object coordinate [m]
+  float p0_stddev_y = 0.5;                                     // in object coordinate [m]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(25);     // in map coordinate [rad]
   float p0_stddev_vel = tier4_autoware_utils::kmph2mps(1000);  // in object coordinate [m/s]
   float p0_stddev_slip = tier4_autoware_utils::deg2rad(5);     // in object coordinate [rad/s]
@@ -314,16 +314,20 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
 bool BigVehicleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  // predicted state
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  ekf_.getX(X_t);
 
+  // measurement noise covariance
   float r_cov_x;
   float r_cov_y;
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
   const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
-
   if (utils::isLargeVehicleLabel(label)) {
     r_cov_x = ekf_params_.r_cov_x;
     r_cov_y = ekf_params_.r_cov_y;
   } else if (label == Label::CAR) {
+    // if label is changed, enlarge the measurement noise covariance
     constexpr float r_stddev_x = 2.0;  // [m]
     constexpr float r_stddev_y = 2.0;  // [m]
     r_cov_x = std::pow(r_stddev_x, 2.0);
@@ -333,27 +337,30 @@ bool BigVehicleTracker::measureWithPose(
     r_cov_y = ekf_params_.r_cov_y;
   }
 
-  // Decide dimension of measurement vector
+  // get measurement yaw angle to update
+  double measurement_yaw = 0.0;
+  bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
+  if (!is_yaw_available) {
+    RCLCPP_WARN(logger_, "Cannot get measurement yaw");
+    return false;
+  }
+
+  // Decide dimension of measurement vector and matrix
+  // velocity capability is checked only when the object has velocity measurement
+  // and the predicted velocity is close to the observed velocity
   bool enable_velocity_measurement = false;
   if (object.kinematics.has_twist) {
-    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
-    ekf_.getX(X_t);
-    const double predicted_vel = X_t(IDX::VEL);
-    const double observed_vel = object.kinematics.twist_with_covariance.twist.linear.x;
-
+    const double & predicted_vel = X_t(IDX::VEL);
+    const double & observed_vel = object.kinematics.twist_with_covariance.twist.linear.x;
     if (std::fabs(predicted_vel - observed_vel) < velocity_deviation_threshold_) {
       // Velocity deviation is small
       enable_velocity_measurement = true;
     }
   }
-
-  // pos x, pos y, yaw, vel depending on pose measurement
+  // pos x, pos y, pos yaw, (vel) depending on pose measurement
   const int dim_y = enable_velocity_measurement ? 4 : 3;
-  double measurement_yaw = getMeasurementYaw(object);  // get sign-solved yaw angle
-  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);           // predicted state
-  ekf_.getX(X_t);
 
-  // convert to boundingbox if input is convex shape
+  // convert to bounding box if input is convex shape
   autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     utils::convertConvexHullToBoundingBox(object, bbox_object);
@@ -361,7 +368,8 @@ bool BigVehicleTracker::measureWithPose(
     bbox_object = object;
   }
 
-  /* get offset measurement*/
+  // Object extension (size) adjustment
+  // get offset measurement
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
   utils::calcAnchorPointOffset(
     last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
@@ -543,6 +551,7 @@ bool BigVehicleTracker::getTrackedObject(
     pose_with_cov.pose.orientation.y = filtered_quaternion.y();
     pose_with_cov.pose.orientation.z = filtered_quaternion.z();
     pose_with_cov.pose.orientation.w = filtered_quaternion.w();
+    // orientation availability is assumed to be unknown
     object.kinematics.orientation_availability =
       autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
   }
@@ -621,21 +630,3 @@ void BigVehicleTracker::setNearestCornerOrSurfaceIndex(
     self_transform);
 }
 
-double BigVehicleTracker::getMeasurementYaw(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
-{
-  double measurement_yaw = tier4_autoware_utils::normalizeRadian(
-    tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
-  {
-    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-    ekf_.getX(X_t);
-    // Fixed measurement_yaw to be in the range of +-90 degrees of X_t(IDX::YAW)
-    while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
-      measurement_yaw = measurement_yaw + M_PI;
-    }
-    while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
-      measurement_yaw = measurement_yaw - M_PI;
-    }
-  }
-  return measurement_yaw;
-}

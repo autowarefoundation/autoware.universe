@@ -299,38 +299,16 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
 bool BicycleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  // yaw measurement
-  double measurement_yaw = tier4_autoware_utils::normalizeRadian(
-    tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
-
-  // prediction
+  // predicted state
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   ekf_.getX(X_t);
 
-  // validate if orientation is available
-  bool use_orientation_information = false;
-  if (
-    object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {  // has 180 degree
-                                                                                   // uncertainty
-    // fix orientation
-    while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
-      measurement_yaw = measurement_yaw + M_PI;
-    }
-    while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
-      measurement_yaw = measurement_yaw - M_PI;
-    }
-    use_orientation_information = true;
+  // get measurement yaw angle to update
+  double measurement_yaw = 0.0;
+  bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
 
-  } else if (
-    object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {  // know full angle
-
-    use_orientation_information = true;
-  }
-
-  const int dim_y =
-    use_orientation_information ? 3 : 2;  // pos x, pos y, (pos yaw) depending on Pose output
+  // pos x, pos y, (pos yaw) depending on pose measurement
+  const int dim_y = is_yaw_available ? 3 : 2;  
 
   // Set measurement matrix C and observation vector Y
   Eigen::MatrixXd Y(dim_y, 1);

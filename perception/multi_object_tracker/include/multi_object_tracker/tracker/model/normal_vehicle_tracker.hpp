@@ -90,7 +90,6 @@ public:
     const rclcpp::Time & time,
     autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
   void setNearestCornerOrSurfaceIndex(const geometry_msgs::msg::Transform & self_transform);
-  double getMeasurementYaw(const autoware_auto_perception_msgs::msg::DetectedObject & object);
   virtual ~NormalVehicleTracker() {}
 };
 

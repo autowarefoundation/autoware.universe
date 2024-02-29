@@ -86,7 +86,6 @@ public:
   bool getTrackedObject(
     const rclcpp::Time & time,
     autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
-  double getMeasurementYaw(const autoware_auto_perception_msgs::msg::DetectedObject & object);
   void setNearestCornerOrSurfaceIndex(const geometry_msgs::msg::Transform & self_transform);
   virtual ~BigVehicleTracker() {}
 };
