@@ -163,7 +163,8 @@ void MrmHandler::onOperationModeState(
   operation_mode_state_ = msg;
 }
 
-void MrmHandler::publishHazardCmd() {
+void MrmHandler::publishHazardCmd()
+{
   using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
   HazardLightsCommand msg;
 
@@ -181,7 +182,8 @@ void MrmHandler::publishHazardCmd() {
   pub_hazard_cmd_->publish(msg);
 }
 
-void MrmHandler::publishGearCmd() {
+void MrmHandler::publishGearCmd()
+{
   using autoware_auto_vehicle_msgs::msg::GearCommand;
   GearCommand msg;
 
