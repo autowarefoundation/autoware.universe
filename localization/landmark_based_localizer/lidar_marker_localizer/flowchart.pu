@@ -1,0 +1,28 @@
+@startuml
+
+group callbackLiDARPointCloud
+  start
+  :Calculate the distance from the ego-vehicle's position
+           to the marker's position on the lanelet2 map;
+  if (Is there a marker nearby?) then (yes)
+    :search a marker;
+    if (Find a marker?) then (yes)
+      :Calculate the distance from the found marker's position
+                           to the one on the lanelet2 map;
+      if (Is the found marker's position close
+      to the one on the lanelet2 map?") then (yes)
+      :Calculate the correction amount from the ego-vehicle's position;
+      :Publish result;
+      else (no)
+        stop
+      endif
+    else (no)
+        stop
+    endif
+  else (no)
+    stop
+  endif
+  stop
+end group
+
+@enduml
