@@ -56,13 +56,13 @@ BicycleTracker::BicycleTracker(
   // measurement noise covariance: detector uncertainty + ego vehicle motion uncertainty
   float r_stddev_x = 0.5;                                  // in vehicle coordinate [m]
   float r_stddev_y = 0.4;                                  // in vehicle coordinate [m]
-  float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);  // [rad]
+  float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);  // in map coordinate [rad]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
   // initial state covariance
-  float p0_stddev_x = 0.8;                                     // [m]
-  float p0_stddev_y = 0.5;                                     // [m]
+  float p0_stddev_x = 0.8;                                     // in object coordinate [m]
+  float p0_stddev_y = 0.5;                                     // in object coordinate [m]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(25);     // in map coordinate [rad]
   float p0_stddev_vel = tier4_autoware_utils::kmph2mps(1000);  // in object coordinate [m/s]
   float p0_stddev_slip = tier4_autoware_utils::deg2rad(5);     // in object coordinate [rad/s]
@@ -87,7 +87,7 @@ BicycleTracker::BicycleTracker(
   ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
   // limitations
   max_vel_ = tier4_autoware_utils::kmph2mps(100);  // [m/s]
-  max_slip_ = tier4_autoware_utils::deg2rad(30);   // [rad/s]
+  max_slip_ = tier4_autoware_utils::deg2rad(30);   // [rad]
 
   // initialize state vector X
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -308,7 +308,7 @@ bool BicycleTracker::measureWithPose(
   bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
 
   // pos x, pos y, (pos yaw) depending on pose measurement
-  const int dim_y = is_yaw_available ? 3 : 2;  
+  const int dim_y = is_yaw_available ? 3 : 2;
 
   // Set measurement matrix C and observation vector Y
   Eigen::MatrixXd Y(dim_y, 1);

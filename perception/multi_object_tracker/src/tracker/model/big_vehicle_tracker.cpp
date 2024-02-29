@@ -629,4 +629,3 @@ void BigVehicleTracker::setNearestCornerOrSurfaceIndex(
     X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
     self_transform);
 }
-

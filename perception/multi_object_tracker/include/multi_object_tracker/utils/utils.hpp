@@ -344,19 +344,21 @@ inline void convertConvexHullToBoundingBox(
 }
 
 inline bool getMeasurementYaw(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, 
-  const double & predicted_yaw, double & measurement_yaw)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const double & predicted_yaw,
+  double & measurement_yaw)
 {
-  if (object.kinematics.orientation_availability ==
-      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE) {
+  if (
+    object.kinematics.orientation_availability ==
+    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE) {
     return false;
   }
   measurement_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  
+
   // check orientation sign is known or not, and fix the limiting delta yaw
   double limiting_delta_yaw = M_PI;
-  if (object.kinematics.orientation_availability ==
-      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {
+  if (
+    object.kinematics.orientation_availability ==
+    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {
     limiting_delta_yaw = M_PI_2;
   }
   // limiting delta yaw
