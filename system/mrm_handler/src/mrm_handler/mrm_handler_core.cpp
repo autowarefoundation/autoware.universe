@@ -93,6 +93,7 @@ MrmHandler::MrmHandler() : Node("mrm_handler")
   mrm_state_.stamp = this->now();
   mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::NORMAL;
   mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MrmState::NONE;
+  is_operation_mode_availability_timeout = false;
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -369,22 +370,26 @@ bool MrmHandler::isDataReady()
   return true;
 }
 
+void MrmHandler::checkOperationModeAvailabilityTimeout() {
+  if ((this->now() - stamp_operation_mode_availability_).seconds() >
+    param_.timeout_operation_mode_availability) {
+    is_operation_mode_availability_timeout = true;
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "operation_mode_availability is timeout");
+  } else {
+    is_operation_mode_availability_timeout = false;
+  }
+}
+
 void MrmHandler::onTimer()
 {
   if (!isDataReady()) {
     return;
   }
-  const bool is_operation_mode_availability_timeout =
-    (this->now() - stamp_operation_mode_availability_).seconds() >
-    param_.timeout_operation_mode_availability;
-  if (is_operation_mode_availability_timeout) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "heartbeat operation_mode_availability is timeout");
-    mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::MRM_OPERATING;
-    publishControlCommands();
-    return;
-  }
+
+  // Check whether operation_mode_availability is timeout
+  checkOperationModeAvailabilityTimeout();
 
   // Update Emergency State
   updateMrmState();
@@ -576,7 +581,9 @@ bool MrmHandler::isStopped()
 
 bool MrmHandler::isEmergency() const
 {
-  return !operation_mode_availability_->autonomous || is_emergency_holding_;
+  return !operation_mode_availability_->autonomous ||
+         is_emergency_holding_ ||
+         is_operation_mode_availability_timeout;
 }
 
 bool MrmHandler::isArrivedAtGoal()

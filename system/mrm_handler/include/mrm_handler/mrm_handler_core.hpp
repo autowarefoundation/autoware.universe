@@ -143,6 +143,8 @@ private:
   // Heartbeat
   rclcpp::Time stamp_operation_mode_availability_;
   std::optional<rclcpp::Time> stamp_autonomous_become_unavailable_ = std::nullopt;
+  bool is_operation_mode_availability_timeout;
+  void checkOperationModeAvailabilityTimeout();
 
   // Algorithm
   rclcpp::Time takeover_requested_time_;
