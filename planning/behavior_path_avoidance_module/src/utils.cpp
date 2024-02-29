@@ -516,35 +516,18 @@ bool isMergingToEgoLane(const ObjectData & object)
   return true;
 }
 
-bool isObjectOnRoadShoulder(
+bool isParkedVehicle(
   ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  using boost::geometry::within;
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
   using lanelet::utils::to2D;
   using lanelet::utils::conversion::toLaneletPoint;
 
-  // assume that there are no parked vehicles in intersection.
-  std::string turn_direction = object.overhang_lanelet.attributeOr("turn_direction", "else");
-  if (turn_direction == "right" || turn_direction == "left" || turn_direction == "straight") {
-    return false;
-  }
-
-  // ============================================ <- most_left_lanelet.leftBound()
-  // y              road shoulder
-  // ^ ------------------------------------------
-  // |   x                                +
-  // +---> --- object closest lanelet --- o ----- <- object_closest_lanelet.centerline()
-  //
-  // --------------------------------------------
-  // +: object position
-  // o: nearest point on centerline
-
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
+  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
   const auto centerline_pos =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position).position;
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pos).position;
 
   bool is_left_side_parked_vehicle = false;
   if (!isOnRight(object)) {
@@ -580,7 +563,7 @@ bool isObjectOnRoadShoulder(
 
     const auto arc_coordinates = toArcCoordinates(
       to2D(object.overhang_lanelet.centerline().basicLineString()),
-      to2D(toLaneletPoint(object_pose.position)).basicPoint());
+      to2D(toLaneletPoint(object_pos)).basicPoint());
     object.shiftable_ratio = arc_coordinates.distance / object_shiftable_distance;
 
     is_left_side_parked_vehicle = object.shiftable_ratio > parameters->object_check_shiftable_ratio;
@@ -620,7 +603,7 @@ bool isObjectOnRoadShoulder(
 
     const auto arc_coordinates = toArcCoordinates(
       to2D(object.overhang_lanelet.centerline().basicLineString()),
-      to2D(toLaneletPoint(object_pose.position)).basicPoint());
+      to2D(toLaneletPoint(object_pos)).basicPoint());
     object.shiftable_ratio = -1.0 * arc_coordinates.distance / object_shiftable_distance;
 
     is_right_side_parked_vehicle =
@@ -813,7 +796,7 @@ bool isSatisfiedWithVehicleCondition(
     to2D(toLaneletPoint(object_pos)).basicPoint(),
     object.overhang_lanelet.polygon2d().basicPolygon());
   if (on_ego_driving_lane) {
-    if (isObjectOnRoadShoulder(object, planner_data->route_handler, parameters)) {
+    if (object.is_parked) {
       return true;
     } else {
       object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
@@ -1751,7 +1734,6 @@ void filterTargetObjects(
     // Find the footprint point closest to the path, set to object_data.overhang_distance.
     o.overhang_points = utils::avoidance::calcEnvelopeOverhangDistance(o, data.reference_path);
     o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
-    o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 
     // TODO(Satoshi Ota) parametrize stop time threshold if need.
     constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
@@ -1763,17 +1745,28 @@ void filterTargetObjects(
       }
     }
 
-    if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
-      data.other_objects.push_back(o);
-      continue;
-    }
-
     if (filtering_utils::isVehicleTypeObject(o)) {
+      o.is_parked = filtering_utils::isParkedVehicle(o, planner_data->route_handler, parameters);
+      o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
+
+      if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
+        data.other_objects.push_back(o);
+        continue;
+      }
+
       if (!filtering_utils::isSatisfiedWithVehicleCondition(o, data, planner_data, parameters)) {
         data.other_objects.push_back(o);
         continue;
       }
     } else {
+      o.is_parked = false;
+      o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
+
+      if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
+        data.other_objects.push_back(o);
+        continue;
+      }
+
       if (!filtering_utils::isSatisfiedWithNonVehicleCondition(o, data, planner_data, parameters)) {
         data.other_objects.push_back(o);
         continue;

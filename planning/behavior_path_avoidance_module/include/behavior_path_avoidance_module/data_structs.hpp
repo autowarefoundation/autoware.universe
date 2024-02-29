@@ -415,6 +415,9 @@ struct ObjectData  // avoidance target
   // is within intersection area
   bool is_within_intersection{false};
 
+  // is parked vehicle on road shoulder
+  bool is_parked{false};
+
   // object direction.
   Direction direction{Direction::NONE};
 
