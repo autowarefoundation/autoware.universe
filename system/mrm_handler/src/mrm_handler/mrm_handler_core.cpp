@@ -370,8 +370,10 @@ bool MrmHandler::isDataReady()
   return true;
 }
 
-void MrmHandler::checkOperationModeAvailabilityTimeout() {
-  if ((this->now() - stamp_operation_mode_availability_).seconds() >
+void MrmHandler::checkOperationModeAvailabilityTimeout()
+{
+  if (
+    (this->now() - stamp_operation_mode_availability_).seconds() >
     param_.timeout_operation_mode_availability) {
     is_operation_mode_availability_timeout = true;
     RCLCPP_WARN_THROTTLE(
@@ -581,8 +583,7 @@ bool MrmHandler::isStopped()
 
 bool MrmHandler::isEmergency() const
 {
-  return !operation_mode_availability_->autonomous ||
-         is_emergency_holding_ ||
+  return !operation_mode_availability_->autonomous || is_emergency_holding_ ||
          is_operation_mode_availability_timeout;
 }
 
