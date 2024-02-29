@@ -4,7 +4,6 @@
     avoidance:
       resample_interval_for_planning: 0.3               # [m]
       resample_interval_for_output: 4.0                 # [m]
-      
       # avoidance module common setting
       enable_bound_clipping: false
       enable_yield_maneuver: true
