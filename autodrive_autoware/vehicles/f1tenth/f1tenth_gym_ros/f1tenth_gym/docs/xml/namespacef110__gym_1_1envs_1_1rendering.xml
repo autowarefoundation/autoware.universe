@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1envs_1_1rendering" kind="namespace" language="Python">
+    <compoundname>f110_gym::envs::rendering</compoundname>
+    <innerclass refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer" prot="public">f110_gym::envs::rendering::EnvRenderer</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="rendering_8py_1adcb93d33a17b4cc05e3a17a79389ca9f" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float f110_gym::envs::rendering.ZOOM_IN_FACTOR</definition>
+        <argsstring></argsstring>
+        <name>ZOOM_IN_FACTOR</name>
+        <initializer>=  1.2</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" line="43" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="rendering_8py_1aacc77603b42e49b0cfad2a0d5156d033" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int f110_gym::envs::rendering.ZOOM_OUT_FACTOR</definition>
+        <argsstring></argsstring>
+        <name>ZOOM_OUT_FACTOR</name>
+        <initializer>=  1/ZOOM_IN_FACTOR</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" line="44" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" bodystart="44" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="rendering_8py_1a15030f21ebdcc600d4cdcba2cb4efdbb" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float f110_gym::envs::rendering.CAR_LENGTH</definition>
+        <argsstring></argsstring>
+        <name>CAR_LENGTH</name>
+        <initializer>=  0.58</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" line="47" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" bodystart="47" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="rendering_8py_1abad083fa3d5353b3326b71aedf095e69" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float f110_gym::envs::rendering.CAR_WIDTH</definition>
+        <argsstring></argsstring>
+        <name>CAR_WIDTH</name>
+        <initializer>=  0.31</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" line="48" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" bodystart="48" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/rendering.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

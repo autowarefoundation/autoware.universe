@@ -1,0 +1,146 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="pyglet__test__camera_8py" kind="file" language="Python">
+    <compoundname>pyglet_test_camera.py</compoundname>
+    <innerclass refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app" prot="public">f110_gym::unittest::pyglet_test_camera::App</innerclass>
+    <innernamespace refid="namespacef110__gym_1_1unittest_1_1pyglet__test__camera">f110_gym::unittest::pyglet_test_camera</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="keyword">import</highlight><highlight class="normal"><sp/>pyglet</highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="keyword">from</highlight><highlight class="normal"><sp/><ref refid="namespacepyglet_1_1gl" kindref="compound">pyglet.gl</ref><sp/></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>*</highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="comment">#<sp/>Zooming<sp/>constants</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal">ZOOM_IN_FACTOR<sp/>=<sp/>1.2</highlight></codeline>
+<codeline lineno="6"><highlight class="normal">ZOOM_OUT_FACTOR<sp/>=<sp/>1/ZOOM_IN_FACTOR</highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8" refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app" kindref="compound">App</ref>(pyglet.window.Window):</highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">def<sp/></highlight><highlight class="normal">__init__(self,<sp/>width,<sp/>height,<sp/>*args,<sp/>**kwargs):</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>conf<sp/>=<sp/>Config(sample_buffers=1,</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>samples=4,</highlight></codeline>
+<codeline lineno="13"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>depth_size=16,</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>double_buffer=</highlight><highlight class="keyword">True</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="15"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>super().__init__(width,<sp/>height,<sp/>config=conf,<sp/>*args,<sp/>**kwargs)</highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#Initialize<sp/>camera<sp/>values</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1aaca4f571369fc95e45355634d41fc24e" kindref="member">left</ref><sp/><sp/><sp/>=<sp/>0</highlight></codeline>
+<codeline lineno="19"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a9c3fdc6ea9bbe0407668091c4b6effb5" kindref="member">right</ref><sp/><sp/>=<sp/>width</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a155af5e767867bdf910d8b0936219b5a" kindref="member">bottom</ref><sp/>=<sp/>0</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2145d5c781e3f33fefd7b46af2fadd69" kindref="member">top</ref><sp/><sp/><sp/><sp/>=<sp/>height</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a1e58de5242a50711d35ef7d422466a66" kindref="member">zoom_level</ref><sp/>=<sp/>1</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1af92e414bc48f782207e5891ea82e3ad1" kindref="member">zoomed_width</ref><sp/><sp/>=<sp/>width</highlight></codeline>
+<codeline lineno="24"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2f88138801a909d8826f61792745409f" kindref="member">zoomed_height</ref><sp/>=<sp/>height</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">def<sp/></highlight><highlight class="normal">init_gl(self,<sp/>width,<sp/>height):</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Set<sp/>clear<sp/>color</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glClearColor(0/255,<sp/>0/255,<sp/>0/255,<sp/>0/255)</highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Set<sp/>antialiasing</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glEnable(<sp/>GL_LINE_SMOOTH<sp/>)</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glEnable(<sp/>GL_POLYGON_SMOOTH<sp/>)</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glHint(<sp/>GL_LINE_SMOOTH_HINT,<sp/>GL_NICEST<sp/>)</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Set<sp/>alpha<sp/>blending</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glEnable(<sp/>GL_BLEND<sp/>)</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glBlendFunc(<sp/>GL_SRC_ALPHA,<sp/>GL_ONE_MINUS_SRC_ALPHA<sp/>)</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Set<sp/>viewport</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glViewport(<sp/>0,<sp/>0,<sp/>width,<sp/>height<sp/>)</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">def<sp/></highlight><highlight class="normal">on_resize(self,<sp/>width,<sp/>height):</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>super().on_resize(width,<sp/>height)</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>size<sp/>=<sp/>self.get_size()</highlight></codeline>
+<codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1aaca4f571369fc95e45355634d41fc24e" kindref="member">left</ref><sp/>=<sp/>0</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a9c3fdc6ea9bbe0407668091c4b6effb5" kindref="member">right</ref><sp/>=<sp/>size[0]</highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a155af5e767867bdf910d8b0936219b5a" kindref="member">bottom</ref><sp/>=<sp/>0</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2145d5c781e3f33fefd7b46af2fadd69" kindref="member">top</ref><sp/>=<sp/>size[1]</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1af92e414bc48f782207e5891ea82e3ad1" kindref="member">zoomed_width</ref><sp/>=<sp/>size[0]</highlight></codeline>
+<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2f88138801a909d8826f61792745409f" kindref="member">zoomed_height</ref><sp/>=<sp/>size[1]</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>#<sp/>Set<sp/>window<sp/>values</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>self.width<sp/><sp/>=<sp/>width</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>self.height<sp/>=<sp/>height</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>#<sp/>Initialize<sp/>OpenGL<sp/>context</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>self.init_gl(width,<sp/>height)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>self.width<sp/>=<sp/>width</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>self.height<sp/>=<sp/>height</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>pass</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">def<sp/></highlight><highlight class="normal">on_mouse_drag(self,<sp/>x,<sp/>y,<sp/>dx,<sp/>dy,<sp/>buttons,<sp/>modifiers):</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Move<sp/>camera</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1aaca4f571369fc95e45355634d41fc24e" kindref="member">left</ref><sp/><sp/><sp/>-=<sp/>dx*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a1e58de5242a50711d35ef7d422466a66" kindref="member">zoom_level</ref></highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a9c3fdc6ea9bbe0407668091c4b6effb5" kindref="member">right</ref><sp/><sp/>-=<sp/>dx*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a1e58de5242a50711d35ef7d422466a66" kindref="member">zoom_level</ref></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a155af5e767867bdf910d8b0936219b5a" kindref="member">bottom</ref><sp/>-=<sp/>dy*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a1e58de5242a50711d35ef7d422466a66" kindref="member">zoom_level</ref></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2145d5c781e3f33fefd7b46af2fadd69" kindref="member">top</ref><sp/><sp/><sp/><sp/>-=<sp/>dy*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a1e58de5242a50711d35ef7d422466a66" kindref="member">zoom_level</ref></highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">def<sp/></highlight><highlight class="normal">on_mouse_scroll(self,<sp/>x,<sp/>y,<sp/>dx,<sp/>dy):</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Get<sp/>scale<sp/>factor</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>f<sp/>=<sp/>ZOOM_IN_FACTOR<sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>dy<sp/>&gt;<sp/>0<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>ZOOM_OUT_FACTOR<sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>dy<sp/>&lt;<sp/>0<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>1</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>If<sp/>zoom_level<sp/>is<sp/>in<sp/>the<sp/>proper<sp/>range</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>.2<sp/>&lt;<sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a1e58de5242a50711d35ef7d422466a66" kindref="member">zoom_level</ref>*f<sp/>&lt;<sp/>5:</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a1e58de5242a50711d35ef7d422466a66" kindref="member">zoom_level</ref><sp/>*=<sp/>f</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"></highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>size<sp/>=<sp/>self.get_size()</highlight></codeline>
+<codeline lineno="77"><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mouse_x<sp/>=<sp/>x/size[0]</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mouse_y<sp/>=<sp/>y/size[1]</highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight></codeline>
+<codeline lineno="81"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mouse_x_in_world<sp/>=<sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1aaca4f571369fc95e45355634d41fc24e" kindref="member">left</ref><sp/><sp/><sp/>+<sp/>mouse_x*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1af92e414bc48f782207e5891ea82e3ad1" kindref="member">zoomed_width</ref></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mouse_y_in_world<sp/>=<sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a155af5e767867bdf910d8b0936219b5a" kindref="member">bottom</ref><sp/>+<sp/>mouse_y*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2f88138801a909d8826f61792745409f" kindref="member">zoomed_height</ref></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1af92e414bc48f782207e5891ea82e3ad1" kindref="member">zoomed_width</ref><sp/><sp/>*=<sp/>f</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2f88138801a909d8826f61792745409f" kindref="member">zoomed_height</ref><sp/>*=<sp/>f</highlight></codeline>
+<codeline lineno="86"><highlight class="normal"></highlight></codeline>
+<codeline lineno="87"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1aaca4f571369fc95e45355634d41fc24e" kindref="member">left</ref><sp/><sp/><sp/>=<sp/>mouse_x_in_world<sp/>-<sp/>mouse_x*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1af92e414bc48f782207e5891ea82e3ad1" kindref="member">zoomed_width</ref></highlight></codeline>
+<codeline lineno="88"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a9c3fdc6ea9bbe0407668091c4b6effb5" kindref="member">right</ref><sp/><sp/>=<sp/>mouse_x_in_world<sp/>+<sp/>(1<sp/>-<sp/>mouse_x)*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1af92e414bc48f782207e5891ea82e3ad1" kindref="member">zoomed_width</ref></highlight></codeline>
+<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a155af5e767867bdf910d8b0936219b5a" kindref="member">bottom</ref><sp/>=<sp/>mouse_y_in_world<sp/>-<sp/>mouse_y*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2f88138801a909d8826f61792745409f" kindref="member">zoomed_height</ref></highlight></codeline>
+<codeline lineno="90"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2145d5c781e3f33fefd7b46af2fadd69" kindref="member">top</ref><sp/><sp/><sp/><sp/>=<sp/>mouse_y_in_world<sp/>+<sp/>(1<sp/>-<sp/>mouse_y)*self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2f88138801a909d8826f61792745409f" kindref="member">zoomed_height</ref></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">def<sp/></highlight><highlight class="normal">on_draw(self):</highlight></codeline>
+<codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Initialize<sp/>Projection<sp/>matrix</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glMatrixMode(<sp/>GL_PROJECTION<sp/>)</highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glLoadIdentity()</highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Initialize<sp/>Modelview<sp/>matrix</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glMatrixMode(<sp/>GL_MODELVIEW<sp/>)</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glLoadIdentity()</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Save<sp/>the<sp/>default<sp/>modelview<sp/>matrix</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glPushMatrix()</highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Clear<sp/>window<sp/>with<sp/>ClearColor</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glClear(<sp/>GL_COLOR_BUFFER_BIT<sp/>)</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Set<sp/>orthographic<sp/>projection<sp/>matrix</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glOrtho(<sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1aaca4f571369fc95e45355634d41fc24e" kindref="member">left</ref>,<sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a9c3fdc6ea9bbe0407668091c4b6effb5" kindref="member">right</ref>,<sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a155af5e767867bdf910d8b0936219b5a" kindref="member">bottom</ref>,<sp/>self.<ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2145d5c781e3f33fefd7b46af2fadd69" kindref="member">top</ref>,<sp/>1,<sp/>-1<sp/>)</highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Draw<sp/>quad</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glBegin(<sp/>GL_QUADS<sp/>)</highlight></codeline>
+<codeline lineno="111"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glColor3ub(<sp/>0xFF,<sp/>0,<sp/>0<sp/>)</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glVertex2i(<sp/>10,<sp/>10<sp/>)</highlight></codeline>
+<codeline lineno="113"><highlight class="normal"></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glColor3ub(<sp/>0xFF,<sp/>0xFF,<sp/>0<sp/>)</highlight></codeline>
+<codeline lineno="115"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glVertex2i(<sp/>110,<sp/>10<sp/>)</highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glColor3ub(<sp/>0,<sp/>0xFF,<sp/>0<sp/>)</highlight></codeline>
+<codeline lineno="118"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glVertex2i(<sp/>110,<sp/>110<sp/>)</highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glColor3ub(<sp/>0,<sp/>0,<sp/>0xFF<sp/>)</highlight></codeline>
+<codeline lineno="121"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glVertex2i(<sp/>10,<sp/>110<sp/>)</highlight></codeline>
+<codeline lineno="122"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glEnd()</highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">#<sp/>Remove<sp/>default<sp/>modelview<sp/>matrix</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>glPopMatrix()</highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">def<sp/></highlight><highlight class="normal">run(self):</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pyglet.app.run()</highlight></codeline>
+<codeline lineno="129"><highlight class="normal"></highlight></codeline>
+<codeline lineno="130"><highlight class="normal"></highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><ref refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app" kindref="compound">App</ref>(800,<sp/>800,<sp/>resizable=</highlight><highlight class="keyword">True</highlight><highlight class="normal">).run()</highlight></codeline>
+    </programlisting>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test_camera.py"/>
+  </compounddef>
+</doxygen>

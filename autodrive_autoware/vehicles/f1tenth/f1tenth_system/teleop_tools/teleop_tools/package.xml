@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>teleop_tools</name>
+  <version>1.2.1</version>
+  <description>A set of generic teleoperation tools for any robot.</description>
+  <maintainer email="bence.magyar.robotics@gmail.com">Bence Magyar</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>joy_teleop</exec_depend>
+  <exec_depend>key_teleop</exec_depend>
+  <exec_depend>teleop_tools_msgs</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,555 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1envs_1_1laser__models" kind="namespace" language="Python">
+    <compoundname>f110_gym::envs::laser_models</compoundname>
+    <innerclass refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d" prot="public">f110_gym::envs::laser_models::ScanSimulator2D</innerclass>
+    <innerclass refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests" prot="public">f110_gym::envs::laser_models::ScanTests</innerclass>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="laser__models_8py_1a7898aaf5a3f1aa50a77e241bcc99812f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.get_dt</definition>
+        <argsstring>(bitmap, resolution)</argsstring>
+        <name>get_dt</name>
+        <param>
+          <type>bitmap</type>
+          <defname>bitmap</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Distance transformation, returns the distance matrix from the input bitmap.
+Uses scipy.ndimage, cannot be JITted.
+
+    Args:
+        bitmap (numpy.ndarray, (n, m)): input binary bitmap of the environment, where 0 is obstacles, and 255 (or anything &gt; 0) is freespace
+        resolution (float): resolution of the input bitmap (m/cell)
+
+    Returns:
+        dt (numpy.ndarray, (n, m)): output distance matrix, where each cell has the corresponding distance (in meters) to the closest obstacle
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="40" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="40" bodyend="55"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1a9e392a639b2b55df60f828ae13a88fef" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.xy_2_rc</definition>
+        <argsstring>(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution)</argsstring>
+        <name>xy_2_rc</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>y</type>
+          <defname>y</defname>
+        </param>
+        <param>
+          <type>orig_x</type>
+          <defname>orig_x</defname>
+        </param>
+        <param>
+          <type>orig_y</type>
+          <defname>orig_y</defname>
+        </param>
+        <param>
+          <type>orig_c</type>
+          <defname>orig_c</defname>
+        </param>
+        <param>
+          <type>orig_s</type>
+          <defname>orig_s</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Translate (x, y) coordinate into (r, c) in the matrix
+
+    Args:
+        x (float): coordinate in x (m)
+        y (float): coordinate in y (m)
+        orig_x (float): x coordinate of the map origin (m)
+        orig_y (float): y coordinate of the map origin (m)
+    
+    Returns:
+        r (int): row number in the transform matrix of the given point
+        c (int): column number in the transform matrix of the given point
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="56" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="56" bodyend="88"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1adc41ff0ca728f48f7bbc304eae86445f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.distance_transform</definition>
+        <argsstring>(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)</argsstring>
+        <name>distance_transform</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>y</type>
+          <defname>y</defname>
+        </param>
+        <param>
+          <type>orig_x</type>
+          <defname>orig_x</defname>
+        </param>
+        <param>
+          <type>orig_y</type>
+          <defname>orig_y</defname>
+        </param>
+        <param>
+          <type>orig_c</type>
+          <defname>orig_c</defname>
+        </param>
+        <param>
+          <type>orig_s</type>
+          <defname>orig_s</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <param>
+          <type>dt</type>
+          <defname>dt</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Look up corresponding distance in the distance matrix
+
+    Args:
+        x (float): x coordinate of the lookup point
+        y (float): y coordinate of the lookup point
+        orig_x (float): x coordinate of the map origin (m)
+        orig_y (float): y coordinate of the map origin (m)
+
+    Returns:
+        distance (float): corresponding shortest distance to obstacle in meters
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="89" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="89" bodyend="106"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1a5a9617e07fa391720bfa8e48de4e29ea" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.trace_ray</definition>
+        <argsstring>(x, y, theta_index, sines, cosines, eps, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt, max_range)</argsstring>
+        <name>trace_ray</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>y</type>
+          <defname>y</defname>
+        </param>
+        <param>
+          <type>theta_index</type>
+          <defname>theta_index</defname>
+        </param>
+        <param>
+          <type>sines</type>
+          <defname>sines</defname>
+        </param>
+        <param>
+          <type>cosines</type>
+          <defname>cosines</defname>
+        </param>
+        <param>
+          <type>eps</type>
+          <defname>eps</defname>
+        </param>
+        <param>
+          <type>orig_x</type>
+          <defname>orig_x</defname>
+        </param>
+        <param>
+          <type>orig_y</type>
+          <defname>orig_y</defname>
+        </param>
+        <param>
+          <type>orig_c</type>
+          <defname>orig_c</defname>
+        </param>
+        <param>
+          <type>orig_s</type>
+          <defname>orig_s</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <param>
+          <type>dt</type>
+          <defname>dt</defname>
+        </param>
+        <param>
+          <type>max_range</type>
+          <defname>max_range</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Find the length of a specific ray at a specific scan angle theta
+Purely math calculation and loops, should be JITted.
+
+    Args:
+        x (float): current x coordinate of the ego (scan) frame
+        y (float): current y coordinate of the ego (scan) frame
+        theta_index(int): current index of the scan beam in the scan range
+        sines (numpy.ndarray (n, )): pre-calculated sines of the angle array
+        cosines (numpy.ndarray (n, )): pre-calculated cosines ...
+
+    Returns:
+        total_distance (float): the distance to first obstacle on the current scan beam
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="107" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="107" bodyend="148"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1a479dfd891b317f6625c5075b0aa73579" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.get_scan</definition>
+        <argsstring>(pose, theta_dis, fov, num_beams, theta_index_increment, sines, cosines, eps, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt, max_range)</argsstring>
+        <name>get_scan</name>
+        <param>
+          <type>pose</type>
+          <defname>pose</defname>
+        </param>
+        <param>
+          <type>theta_dis</type>
+          <defname>theta_dis</defname>
+        </param>
+        <param>
+          <type>fov</type>
+          <defname>fov</defname>
+        </param>
+        <param>
+          <type>num_beams</type>
+          <defname>num_beams</defname>
+        </param>
+        <param>
+          <type>theta_index_increment</type>
+          <defname>theta_index_increment</defname>
+        </param>
+        <param>
+          <type>sines</type>
+          <defname>sines</defname>
+        </param>
+        <param>
+          <type>cosines</type>
+          <defname>cosines</defname>
+        </param>
+        <param>
+          <type>eps</type>
+          <defname>eps</defname>
+        </param>
+        <param>
+          <type>orig_x</type>
+          <defname>orig_x</defname>
+        </param>
+        <param>
+          <type>orig_y</type>
+          <defname>orig_y</defname>
+        </param>
+        <param>
+          <type>orig_c</type>
+          <defname>orig_c</defname>
+        </param>
+        <param>
+          <type>orig_s</type>
+          <defname>orig_s</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <param>
+          <type>dt</type>
+          <defname>dt</defname>
+        </param>
+        <param>
+          <type>max_range</type>
+          <defname>max_range</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Perform the scan for each discretized angle of each beam of the laser, loop heavy, should be JITted
+
+    Args:
+        pose (numpy.ndarray(3, )): current pose of the scan frame in the map
+        theta_dis (int): number of steps to discretize the angles between 0 and 2pi for look up
+        fov (float): field of view of the laser scan
+        num_beams (int): number of beams in the scan
+        theta_index_increment (float): increment between angle indices after discretization
+
+    Returns:
+        scan (numpy.ndarray(n, )): resulting laser scan at the pose, n=num_beams
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="149" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="149" bodyend="188"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1abb054b963ce9a2b09aaf27d5b7c94776" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.check_ttc_jit</definition>
+        <argsstring>(scan, vel, scan_angles, cosines, side_distances, ttc_thresh)</argsstring>
+        <name>check_ttc_jit</name>
+        <param>
+          <type>scan</type>
+          <defname>scan</defname>
+        </param>
+        <param>
+          <type>vel</type>
+          <defname>vel</defname>
+        </param>
+        <param>
+          <type>scan_angles</type>
+          <defname>scan_angles</defname>
+        </param>
+        <param>
+          <type>cosines</type>
+          <defname>cosines</defname>
+        </param>
+        <param>
+          <type>side_distances</type>
+          <defname>side_distances</defname>
+        </param>
+        <param>
+          <type>ttc_thresh</type>
+          <defname>ttc_thresh</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Checks the iTTC of each beam in a scan for collision with environment
+
+Args:
+    scan (np.ndarray(num_beams, )): current scan to check
+    vel (float): current velocity
+    scan_angles (np.ndarray(num_beams, )): precomped angles of each beam
+    cosines (np.ndarray(num_beams, )): precomped cosines of the scan angles
+    side_distances (np.ndarray(num_beams, )): precomped distances at each beam from the laser to the sides of the car
+    ttc_thresh (float): threshold for iTTC for collision
+
+Returns:
+    in_collision (bool): whether vehicle is in collision with environment
+    collision_angle (float): at which angle the collision happened
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="189" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="189" bodyend="218"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1a63c2d60d1bb4f8399198bec4b423034b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.cross</definition>
+        <argsstring>(v1, v2)</argsstring>
+        <name>cross</name>
+        <param>
+          <type>v1</type>
+          <defname>v1</defname>
+        </param>
+        <param>
+          <type>v2</type>
+          <defname>v2</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Cross product of two 2-vectors
+
+Args:
+    v1, v2 (np.ndarray(2, )): input vectors
+
+Returns:
+    crossproduct (float): cross product
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="219" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="219" bodyend="231"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1a3ca13ea1c8037713bf309a354c614cc3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.are_collinear</definition>
+        <argsstring>(pt_a, pt_b, pt_c)</argsstring>
+        <name>are_collinear</name>
+        <param>
+          <type>pt_a</type>
+          <defname>pt_a</defname>
+        </param>
+        <param>
+          <type>pt_b</type>
+          <defname>pt_b</defname>
+        </param>
+        <param>
+          <type>pt_c</type>
+          <defname>pt_c</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Checks if three points are collinear in 2D
+
+Args:
+    pt_a, pt_b, pt_c (np.ndarray(2, )): points to check in 2D
+
+Returns:
+    col (bool): whether three points are collinear
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="232" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="232" bodyend="248"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1a1bc7982bd73954850a7b9c3c53d98b0f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.get_range</definition>
+        <argsstring>(pose, beam_theta, va, vb)</argsstring>
+        <name>get_range</name>
+        <param>
+          <type>pose</type>
+          <defname>pose</defname>
+        </param>
+        <param>
+          <type>beam_theta</type>
+          <defname>beam_theta</defname>
+        </param>
+        <param>
+          <type>va</type>
+          <defname>va</defname>
+        </param>
+        <param>
+          <type>vb</type>
+          <defname>vb</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Get the distance at a beam angle to the vector formed by two of the four vertices of a vehicle
+
+Args:
+    pose (np.ndarray(3, )): pose of the scanning vehicle
+    beam_theta (float): angle of the current beam (world frame)
+    va, vb (np.ndarray(2, )): the two vertices forming an edge
+
+Returns:
+    distance (float): smallest distance at beam theta from scanning pose to edge
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="249" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="249" bodyend="281"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1ad4250e0339dc216ca15099bcfca8eb07" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.ray_cast</definition>
+        <argsstring>(pose, scan, scan_angles, vertices)</argsstring>
+        <name>ray_cast</name>
+        <param>
+          <type>pose</type>
+          <defname>pose</defname>
+        </param>
+        <param>
+          <type>scan</type>
+          <defname>scan</defname>
+        </param>
+        <param>
+          <type>scan_angles</type>
+          <defname>scan_angles</defname>
+        </param>
+        <param>
+          <type>vertices</type>
+          <defname>vertices</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Modify a scan by ray casting onto another agent&apos;s four vertices
+
+Args:
+    pose (np.ndarray(3, )): pose of the vehicle performing scan
+    scan (np.ndarray(num_beams, )): original scan to modify
+    scan_angles (np.ndarray(num_beams, )): corresponding beam angles
+    vertices (np.ndarray(4, 2)): four vertices of a vehicle pose
+
+Returns:
+    new_scan (np.ndarray(num_beams, )): modified scan
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="282" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="282" bodyend="312"/>
+      </memberdef>
+      <memberdef kind="function" id="laser__models_8py_1a369f6a199d7e45afbbeafa1a04879dd3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.laser_models.main</definition>
+        <argsstring>()</argsstring>
+        <name>main</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="515" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" bodystart="515" bodyend="555"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/laser_models.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

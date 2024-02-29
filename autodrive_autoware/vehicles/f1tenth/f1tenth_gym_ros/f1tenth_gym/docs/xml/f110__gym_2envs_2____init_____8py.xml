@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="f110__gym_2envs_2____init_____8py" kind="file" language="Python">
+    <compoundname>__init__.py</compoundname>
+    <innernamespace refid="namespacef110__gym_1_1envs">f110_gym::envs</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="keyword">from</highlight><highlight class="normal"><sp/><ref refid="namespacef110__gym_1_1envs_1_1f110__env" kindref="compound">f110_gym.envs.f110_env</ref><sp/></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>F110Env</highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="keyword">from</highlight><highlight class="normal"><sp/><ref refid="namespacef110__gym_1_1envs_1_1dynamic__models" kindref="compound">f110_gym.envs.dynamic_models</ref><sp/></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>*</highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="keyword">from</highlight><highlight class="normal"><sp/><ref refid="namespacef110__gym_1_1envs_1_1laser__models" kindref="compound">f110_gym.envs.laser_models</ref><sp/></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>*</highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="keyword">from</highlight><highlight class="normal"><sp/><ref refid="namespacef110__gym_1_1envs_1_1base__classes" kindref="compound">f110_gym.envs.base_classes</ref><sp/></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>*</highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="keyword">from</highlight><highlight class="normal"><sp/><ref refid="namespacef110__gym_1_1envs_1_1collision__models" kindref="compound">f110_gym.envs.collision_models</ref><sp/></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>*</highlight></codeline>
+    </programlisting>
+    <location file="/home/f1tenth-eval/f1tenth_gym/gym/f110_gym/envs/__init__.py"/>
+  </compounddef>
+</doxygen>

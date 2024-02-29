@@ -1,0 +1,10 @@
+scan_matcher:
+    ros__parameters:
+      registration_method: "NDT"
+      ndt_resolution: 5.0
+      ndt_num_threads: 4
+      trans_for_mapupdate: 1.5
+      vg_size_for_input: 2.5
+      vg_size_for_map: 0.05
+      set_initial_pose: false
+      use_imu: false

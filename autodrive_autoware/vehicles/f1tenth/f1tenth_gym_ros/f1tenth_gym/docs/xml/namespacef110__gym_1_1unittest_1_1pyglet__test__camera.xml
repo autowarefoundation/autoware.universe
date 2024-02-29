@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1unittest_1_1pyglet__test__camera" kind="namespace" language="Python">
+    <compoundname>f110_gym::unittest::pyglet_test_camera</compoundname>
+    <innerclass refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app" prot="public">f110_gym::unittest::pyglet_test_camera::App</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="pyglet__test__camera_8py_1ad60c292ad7eac4ed7de1777dcd5435b2" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float f110_gym::unittest::pyglet_test_camera.ZOOM_IN_FACTOR</definition>
+        <argsstring></argsstring>
+        <name>ZOOM_IN_FACTOR</name>
+        <initializer>=  1.2</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test_camera.py" line="5" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test_camera.py" bodystart="5" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test__camera_8py_1a4ec694cd82738b571eaaa90eea919fe8" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int f110_gym::unittest::pyglet_test_camera.ZOOM_OUT_FACTOR</definition>
+        <argsstring></argsstring>
+        <name>ZOOM_OUT_FACTOR</name>
+        <initializer>=  1/ZOOM_IN_FACTOR</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test_camera.py" line="6" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test_camera.py" bodystart="6" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test_camera.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

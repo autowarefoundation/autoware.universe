@@ -1,0 +1,484 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1unittest_1_1pyglet__test" kind="namespace" language="Python">
+    <compoundname>f110_gym::unittest::pyglet_test</compoundname>
+    <innerclass refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera" prot="public">f110_gym::unittest::pyglet_test::Camera</innerclass>
+    <innerclass refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_centered_camera" prot="public">f110_gym::unittest::pyglet_test::CenteredCamera</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="pyglet__test_8py_1a3d69f486cb21f39a06dad8857f9b7d50" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.parser</definition>
+        <argsstring></argsstring>
+        <name>parser</name>
+        <initializer>=  argparse.ArgumentParser()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="99" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="99" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a981fb3f820ad2e7741085fe4f5dea096" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.type</definition>
+        <argsstring></argsstring>
+        <name>type</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="100" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="100" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a2005fab57ddd5da6ff3394c03dc13cd5" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.str</definition>
+        <argsstring></argsstring>
+        <name>str</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="100" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="100" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1acc7e94317a1b95945b9baf3623660350" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.required</definition>
+        <argsstring></argsstring>
+        <name>required</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="100" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="100" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a41b4d9d2099f3bffde0a78849b8f6e9b" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.True</definition>
+        <argsstring></argsstring>
+        <name>True</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="100" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="100" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1af457772f551e51c84059b1619cac6f6f" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.help</definition>
+        <argsstring></argsstring>
+        <name>help</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="100" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="100" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a45eb1549d05c60fdad09c712bda5a759" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.args</definition>
+        <argsstring></argsstring>
+        <name>args</name>
+        <initializer>=  parser.parse_args()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="102" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="102" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a3174957b3d9e1f51302c419ae772a7d7" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.map_metada</definition>
+        <argsstring></argsstring>
+        <name>map_metada</name>
+        <initializer>=  yaml.safe_load(yaml_stream)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="107" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="107" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a087834fb591571e3b9590537ab43f2a4" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.map_resolution</definition>
+        <argsstring></argsstring>
+        <name>map_resolution</name>
+        <initializer>=  map_metada[&apos;resolution&apos;]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="108" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="108" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a7ccec01d1694c9ce188a100eae74a9eb" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.origin</definition>
+        <argsstring></argsstring>
+        <name>origin</name>
+        <initializer>=  map_metada[&apos;origin&apos;]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="109" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="109" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a489a47127c8b26ff6a6c2f32b22b7c4e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.origin_x</definition>
+        <argsstring></argsstring>
+        <name>origin_x</name>
+        <initializer>=  origin[0]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="110" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="110" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a8ba1eb7ca846ae091a7a0208bab2d8e5" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.origin_y</definition>
+        <argsstring></argsstring>
+        <name>origin_y</name>
+        <initializer>=  origin[1]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="111" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="111" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1afae1d6e5e857392c773fb99b539676bc" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.map_img</definition>
+        <argsstring></argsstring>
+        <name>map_img</name>
+        <initializer>=  np.array(Image.open(args.map_path + args.map_ext).transpose(Image.FLIP_TOP_BOTTOM)).astype(np.float64)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="116" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="116" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a481a4c3d659a7730333145e5fe7c4367" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.map_height</definition>
+        <argsstring></argsstring>
+        <name>map_height</name>
+        <initializer>=  map_img.shape[0]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="117" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="117" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a2e254b24420bdda87cd30f367b65552d" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.map_width</definition>
+        <argsstring></argsstring>
+        <name>map_width</name>
+        <initializer>=  map_img.shape[1]</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="118" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="118" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a4c371730daa6fa2b932e0d6bdc28e700" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.range_x</definition>
+        <argsstring></argsstring>
+        <name>range_x</name>
+        <initializer>=  np.arange(map_width)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="121" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="121" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a85be62a46ea83891f58f723d84164389" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.range_y</definition>
+        <argsstring></argsstring>
+        <name>range_y</name>
+        <initializer>=  np.arange(map_height)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="122" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="122" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a2b3d64a285759e09b06db641e7b3ef76" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>tuple f110_gym::unittest::pyglet_test::map_x</definition>
+        <argsstring></argsstring>
+        <name>map_x</name>
+        <initializer>=  (map_x * map_resolution + origin_x).flatten()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="123" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="123" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a7a58fce71597c750f41fe4aa8f5d0d89" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>tuple f110_gym::unittest::pyglet_test::map_y</definition>
+        <argsstring></argsstring>
+        <name>map_y</name>
+        <initializer>=  (map_y * map_resolution + origin_y).flatten()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="123" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="123" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a3186da83d330b11ad5d0f0adfc57dab7" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.map_z</definition>
+        <argsstring></argsstring>
+        <name>map_z</name>
+        <initializer>=  np.zeros(map_y.shape)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="126" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="126" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1aa4a56a9e36d04e7211af58fc468903ba" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.map_coords</definition>
+        <argsstring></argsstring>
+        <name>map_coords</name>
+        <initializer>=  np.vstack((map_x, map_y, map_z))</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="127" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="127" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a83cf143d5d4d4fbe4aa56cf8c6699c78" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float f110_gym::unittest::pyglet_test.map_mask</definition>
+        <argsstring></argsstring>
+        <name>map_mask</name>
+        <initializer>=  0.0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="130" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="130" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a53860be358d7cdfc130c75ca444c9939" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float f110_gym::unittest::pyglet_test.map_mask_flat</definition>
+        <argsstring></argsstring>
+        <name>map_mask_flat</name>
+        <initializer>=  map_mask.flatten()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="131" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="131" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a8c5958c53e522bb0dc390ad0421a6057" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.map_points</definition>
+        <argsstring></argsstring>
+        <name>map_points</name>
+        <initializer>=  map_coords[:, map_mask_flat].T</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="132" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="132" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a61b9b5ee2dc42c296dc48e8ddaf5a173" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.config</definition>
+        <argsstring></argsstring>
+        <name>config</name>
+        <initializer>=  Config(sample_buffers=1, samples=4,
+                    depth_size=16, double_buffer=True, )</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="137" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="137" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1abbdafa8876f8f50a0f98b0ccf20e58df" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.window</definition>
+        <argsstring></argsstring>
+        <name>window</name>
+        <initializer>=  window.Window(resizable=True, config=config)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="139" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="139" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a1546787b3b7976676236a790f8d70c5c" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.cam</definition>
+        <argsstring></argsstring>
+        <name>cam</name>
+        <initializer>=  <ref refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera" kindref="compound">Camera</ref>(window)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="148" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="148" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a3405d8b8ab8878375ce14241e071c6fd" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.batch</definition>
+        <argsstring></argsstring>
+        <name>batch</name>
+        <initializer>=  graphics.Batch()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="160" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="160" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a88390b60af94b8cc39c9c11c7471bea5" prot="public" static="no" mutable="no">
+        <type>list</type>
+        <definition>list f110_gym::unittest::pyglet_test.points</definition>
+        <argsstring></argsstring>
+        <name>points</name>
+        <initializer>=  []</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="162" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="162" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="pyglet__test_8py_1a3710a56d6d768172240edd7f43b56d90" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::pyglet_test.particle</definition>
+        <argsstring></argsstring>
+        <name>particle</name>
+        <initializer>=  batch.add(1, GL_POINTS, None, (&apos;v3f/stream&apos;, [map_points[i, 0], map_points[i, 1], map_points[i, 2]]))</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="164" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="164" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="pyglet__test_8py_1adf83272f4af52d9e64b6469c409f49c2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.pyglet_test.on_resize</definition>
+        <argsstring>(width, height)</argsstring>
+        <name>on_resize</name>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="151" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="151" bodyend="159"/>
+      </memberdef>
+      <memberdef kind="function" id="pyglet__test_8py_1a8e03464647800bf112a3656d9679c1c4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.pyglet_test.loop</definition>
+        <argsstring>(dt)</argsstring>
+        <name>loop</name>
+        <param>
+          <type>dt</type>
+          <defname>dt</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="167" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="167" bodyend="171"/>
+      </memberdef>
+      <memberdef kind="function" id="pyglet__test_8py_1adf4782832213b50f1e079698656cdddb" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.pyglet_test.on_draw</definition>
+        <argsstring>()</argsstring>
+        <name>on_draw</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="172" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" bodystart="172" bodyend="180"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/pyglet_test.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

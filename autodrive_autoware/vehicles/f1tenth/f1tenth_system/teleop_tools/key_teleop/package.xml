@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>key_teleop</name>
+  <version>1.2.1</version>
+  <description>A text-based interface to send a robot movement commands.</description>
+
+  <maintainer email="bence.magyar.robotics@gmail.com">Bence Magyar</maintainer>
+  <license>BSD</license>
+
+  <author email="siegfried.gevatter@pal-robotics.com">Siegfried-A. Gevatter Pujals</author>
+
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+
+</package>

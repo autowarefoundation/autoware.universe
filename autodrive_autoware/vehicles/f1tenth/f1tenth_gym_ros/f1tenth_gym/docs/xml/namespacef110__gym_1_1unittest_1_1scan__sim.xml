@@ -1,0 +1,363 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1unittest_1_1scan__sim" kind="namespace" language="Python">
+    <compoundname>f110_gym::unittest::scan_sim</compoundname>
+    <innerclass refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d" prot="public">f110_gym::unittest::scan_sim::ScanSimulator2D</innerclass>
+    <innerclass refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests" prot="public">f110_gym::unittest::scan_sim::ScanTests</innerclass>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="scan__sim_8py_1a79849d1485e5078a2792710ce3c7fc97" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.get_dt</definition>
+        <argsstring>(bitmap, resolution)</argsstring>
+        <name>get_dt</name>
+        <param>
+          <type>bitmap</type>
+          <defname>bitmap</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Distance transformation, returns the distance matrix from the input bitmap.
+Uses scipy.ndimage, cannot be JITted.
+
+    Args:
+        bitmap (numpy.ndarray, (n, m)): input binary bitmap of the environment, where 0 is obstacles, and 255 (or anything &gt; 0) is freespace
+        resolution (float): resolution of the input bitmap (m/cell)
+
+    Returns:
+        dt (numpy.ndarray, (n, m)): output distance matrix, where each cell has the corresponding distance (in meters) to the closest obstacle
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="40" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="40" bodyend="55"/>
+      </memberdef>
+      <memberdef kind="function" id="scan__sim_8py_1a990edc2fbfab8d957303d4b100bc6c9a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.xy_2_rc</definition>
+        <argsstring>(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution)</argsstring>
+        <name>xy_2_rc</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>y</type>
+          <defname>y</defname>
+        </param>
+        <param>
+          <type>orig_x</type>
+          <defname>orig_x</defname>
+        </param>
+        <param>
+          <type>orig_y</type>
+          <defname>orig_y</defname>
+        </param>
+        <param>
+          <type>orig_c</type>
+          <defname>orig_c</defname>
+        </param>
+        <param>
+          <type>orig_s</type>
+          <defname>orig_s</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Translate (x, y) coordinate into (r, c) in the matrix
+
+    Args:
+        x (float): coordinate in x (m)
+        y (float): coordinate in y (m)
+        orig_x (float): x coordinate of the map origin (m)
+        orig_y (float): y coordinate of the map origin (m)
+    
+    Returns:
+        r (int): row number in the transform matrix of the given point
+        c (int): column number in the transform matrix of the given point
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="56" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="56" bodyend="88"/>
+      </memberdef>
+      <memberdef kind="function" id="scan__sim_8py_1aa2c2d251010dae8940a87e69cadffa07" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.distance_transform</definition>
+        <argsstring>(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)</argsstring>
+        <name>distance_transform</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>y</type>
+          <defname>y</defname>
+        </param>
+        <param>
+          <type>orig_x</type>
+          <defname>orig_x</defname>
+        </param>
+        <param>
+          <type>orig_y</type>
+          <defname>orig_y</defname>
+        </param>
+        <param>
+          <type>orig_c</type>
+          <defname>orig_c</defname>
+        </param>
+        <param>
+          <type>orig_s</type>
+          <defname>orig_s</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <param>
+          <type>dt</type>
+          <defname>dt</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Look up corresponding distance in the distance matrix
+
+    Args:
+        x (float): x coordinate of the lookup point
+        y (float): y coordinate of the lookup point
+        orig_x (float): x coordinate of the map origin (m)
+        orig_y (float): y coordinate of the map origin (m)
+
+    Returns:
+        distance (float): corresponding shortest distance to obstacle in meters
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="89" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="89" bodyend="106"/>
+      </memberdef>
+      <memberdef kind="function" id="scan__sim_8py_1a0f9a2bc118cafc22f7ae057be76d01dd" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.trace_ray</definition>
+        <argsstring>(x, y, theta_index, sines, cosines, eps, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt, max_range)</argsstring>
+        <name>trace_ray</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>y</type>
+          <defname>y</defname>
+        </param>
+        <param>
+          <type>theta_index</type>
+          <defname>theta_index</defname>
+        </param>
+        <param>
+          <type>sines</type>
+          <defname>sines</defname>
+        </param>
+        <param>
+          <type>cosines</type>
+          <defname>cosines</defname>
+        </param>
+        <param>
+          <type>eps</type>
+          <defname>eps</defname>
+        </param>
+        <param>
+          <type>orig_x</type>
+          <defname>orig_x</defname>
+        </param>
+        <param>
+          <type>orig_y</type>
+          <defname>orig_y</defname>
+        </param>
+        <param>
+          <type>orig_c</type>
+          <defname>orig_c</defname>
+        </param>
+        <param>
+          <type>orig_s</type>
+          <defname>orig_s</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <param>
+          <type>dt</type>
+          <defname>dt</defname>
+        </param>
+        <param>
+          <type>max_range</type>
+          <defname>max_range</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Find the length of a specific ray at a specific scan angle theta
+Purely math calculation and loops, should be JITted.
+
+    Args:
+        x (float): current x coordinate of the ego (scan) frame
+        y (float): current y coordinate of the ego (scan) frame
+        theta_index(int): current index of the scan beam in the scan range
+        sines (numpy.ndarray (n, )): pre-calculated sines of the angle array
+        cosines (numpy.ndarray (n, )): pre-calculated cosines ...
+
+    Returns:
+        total_distance (float): the distance to first obstacle on the current scan beam
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="107" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="107" bodyend="145"/>
+      </memberdef>
+      <memberdef kind="function" id="scan__sim_8py_1ad9b4dde85991dfc78a65b7804c27d010" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.get_scan</definition>
+        <argsstring>(pose, theta_dis, fov, num_beams, theta_index_increment, sines, cosines, eps, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt, max_range)</argsstring>
+        <name>get_scan</name>
+        <param>
+          <type>pose</type>
+          <defname>pose</defname>
+        </param>
+        <param>
+          <type>theta_dis</type>
+          <defname>theta_dis</defname>
+        </param>
+        <param>
+          <type>fov</type>
+          <defname>fov</defname>
+        </param>
+        <param>
+          <type>num_beams</type>
+          <defname>num_beams</defname>
+        </param>
+        <param>
+          <type>theta_index_increment</type>
+          <defname>theta_index_increment</defname>
+        </param>
+        <param>
+          <type>sines</type>
+          <defname>sines</defname>
+        </param>
+        <param>
+          <type>cosines</type>
+          <defname>cosines</defname>
+        </param>
+        <param>
+          <type>eps</type>
+          <defname>eps</defname>
+        </param>
+        <param>
+          <type>orig_x</type>
+          <defname>orig_x</defname>
+        </param>
+        <param>
+          <type>orig_y</type>
+          <defname>orig_y</defname>
+        </param>
+        <param>
+          <type>orig_c</type>
+          <defname>orig_c</defname>
+        </param>
+        <param>
+          <type>orig_s</type>
+          <defname>orig_s</defname>
+        </param>
+        <param>
+          <type>height</type>
+          <defname>height</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <param>
+          <type>resolution</type>
+          <defname>resolution</defname>
+        </param>
+        <param>
+          <type>dt</type>
+          <defname>dt</defname>
+        </param>
+        <param>
+          <type>max_range</type>
+          <defname>max_range</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Perform the scan for each discretized angle of each beam of the laser, loop heavy, should be JITted
+
+    Args:
+        pose (numpy.ndarray(3, )): current pose of the scan frame in the map
+        theta_dis (int): number of steps to discretize the angles between 0 and 2pi for look up
+        fov (float): field of view of the laser scan
+        num_beams (int): number of beams in the scan
+        theta_index_increment (float): increment between angle indices after discretization
+
+    Returns:
+        scan (numpy.ndarray(n, )): resulting laser scan at the pose, n=num_beams
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="146" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="146" bodyend="184"/>
+      </memberdef>
+      <memberdef kind="function" id="scan__sim_8py_1a710653eef2a82aae113e889794ee511e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.scan_sim.main</definition>
+        <argsstring>()</argsstring>
+        <name>main</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="387" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" bodystart="387" bodyend="427"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/scan_sim.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

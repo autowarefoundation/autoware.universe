@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: f1tenth-gym-ros
+Version: 0.0.0
+Summary: Bridge for using f1tenth_gym in ROS2
+Maintainer: Billy Zheng
+Maintainer-email: billyzheng.bz@gmail.com
+License: MIT
+License-File: LICENSE

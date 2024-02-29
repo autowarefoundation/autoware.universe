@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+
+  <name>autodrive_opencav</name>
+  <version>0.1.0</version>
+  <description>AutoDRIVE Ecosystem Autoware Integration for OpenCAV</description>
+
+  <maintainer email="tsamak@clemson.edu">Tanmay Vilas Samak</maintainer>
+  <maintainer email="csamak@clemson.edu">Chinmay Vilas Samak</maintainer>
+
+  <license>BSD</license>
+
+  <url type="repository">https://autodrive-ecosystem.github.io</url>
+  <url type="repository">https://github.com/Tinker-Twins/AutoDRIVE</url>
+  <url type="bugtracker">https://github.com/Tinker-Twins/AutoDRIVE/issues</url>
+
+  <author email="tsamak@clemson.edu">Tanmay Vilas Samak</author>
+  <author email="csamak@clemson.edu">Chinmay Vilas Samak</author>
+
+  <depend>rclpy</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+    <build_depend>std_msgs</build_depend>
+    <build_depend>geometry_msgs</build_depend>
+    <build_depend>sensor_msgs</build_depend>
+  </export>
+
+</package>

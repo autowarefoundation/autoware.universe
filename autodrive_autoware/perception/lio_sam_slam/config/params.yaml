@@ -1,0 +1,93 @@
+/**:
+  ros__parameters:
+
+    # Topics
+    pointCloudTopic: "autodrive/hunter_1/lidar"  # LIDAR (pointcloud) data
+    imuTopic: "/autodrive/hunter_1/imu"          # IMU data
+    odomTopic: "/autodrive/hunter_1/odom"        # IMU pre-preintegration odometry, same frequency as IMU
+    gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
+
+    # Frames
+    lidarFrame: "lidar"
+    baselinkFrame: "hunter_1"
+    odometryFrame: "odom"
+    mapFrame: "world"
+
+    # Export Settings
+    savePCD: true                                # If interested in saving the map (pointcloud data), set to "true"
+    savePCDDirectory: "/map/"                    # Map save path (as a suffix of home folder, starts and ends with "/"). Warning: the code deletes existing folder (if any) and then recreates it, see "mapOptimization.cpp" for implementation
+
+    # GPS Settings
+    useImuHeadingInitialization: false           # If using GPS data, set to "true"
+    useGpsElevation: false                       # If GPS elevation is bad, set to "false"
+    gpsCovThreshold: 2.0                         # Threshold for using GPS data (m^2)
+    poseCovThreshold: 25.0                       # Threshold for using GPS data (m^2)
+
+    # LIDAR Settings
+    sensor: velodyne                             # LIDAR sensor type, either 'velodyne', 'ouster' or 'livox'
+    N_SCAN: 16                                   # Number of LIDAR channels (i.e., Velodyne/Ouster: 16, 32, 64, 128, Livox Horizon: 6)
+    Horizon_SCAN: 1800                           # LIDAR horizontal resolution (Velodyne:1800, Ouster:512,1024,2048, Livox Horizon: 4000)
+    downsampleRate: 1                            # Default: 1, downsample your data if too many points, i.e., 16 = 64 / 4, 16 = 16 / 1
+    lidarMinRange: 1.0                           # Default: 1.0, minimum LIDAR range to be used (m)
+    lidarMaxRange: 1000.0                        # Default: 1000.0, maximum LIDAR range to be used (m)
+
+    # IMU Settings
+    imuAccNoise: 3.9939570888238808e-03
+    imuGyrNoise: 1.5636343949698187e-03
+    imuAccBiasN: 6.4356659353532566e-05
+    imuGyrBiasN: 3.5640318696367613e-05
+    imuGravity: 9.80511
+    imuRPYWeight: 0.01
+    # LIO-SAM transforms IMU raw data from the IMU frame to the LIDAR frame, which follows the ROS REP-105 convention (x - forward, y - left, z - upward)
+    extrinsicTrans: [ 0.0,  0.0,  -0.0103 ]     # Relative translation from LIDAR frame to IMU frame
+    #extrinsicRot:    [-1.0,  0.0,  0.0,
+    #                   0.0,  1.0,  0.0,
+    #                   0.0,  0.0, -1.0 ]
+    #extrinsicRPY: [ 0.0,  1.0,  0.0,
+    #               -1.0,  0.0,  0.0,
+    #                0.0,  0.0,  1.0 ]
+    extrinsicRot: [ 1.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0,
+                    0.0, 0.0, 1.0 ]              # Relative rotation from LIDAR frame to IMU frame for x-z acceleration measurements
+    extrinsicRPY: [ 1.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0,
+                    0.0, 0.0, 1.0 ]              # Relative rotation from LIDAR frame to IMU frame for attitude measurements (same as "extrinsicRot" if acceleration and attitude have same coordinate system)
+
+    # LOAM Feature Threshold
+    edgeThreshold: 1.0
+    surfThreshold: 0.1
+    edgeFeatureMinValidNum: 10
+    surfFeatureMinValidNum: 100
+
+    # Voxel Filter Parameters
+    odometrySurfLeafSize: 0.2                    # Default: 0.4 - outdoor, 0.2 - indoor
+    mappingCornerLeafSize: 0.1                   # Default: 0.2 - outdoor, 0.1 - indoor
+    mappingSurfLeafSize: 0.2                     # Default: 0.4 - outdoor, 0.2 - indoor
+
+    # Vehicle Motion Constraint (For 2D Planar Motion)
+    z_tollerance: 1000.0                         # Meters
+    rotation_tollerance: 1000.0                  # Radians
+
+    # CPU Parameters
+    numberOfCores: 4                             # Number of cores for mapping optimization
+    mappingProcessInterval: 0.15                 # Seconds, regulate mapping frequency
+
+    # Surrounding Map
+    surroundingkeyframeAddingDistThreshold: 1.0  # Meters, regulate keyframe adding threshold
+    surroundingkeyframeAddingAngleThreshold: 0.2 # Radians, regulate keyframe adding threshold
+    surroundingKeyframeDensity: 2.0              # Meters, downsample surrounding keyframe poses   
+    surroundingKeyframeSearchRadius: 50.0        # Meters, within n meters scan-to-map optimization (when loop closure disabled)
+
+    # Loop Closure
+    loopClosureEnableFlag: true                  # If using loop closure, set to "true"
+    loopClosureFrequency: 1.0                    # Hz, regulate loop closure constraint add frequency
+    surroundingKeyframeSize: 50                  # Submap size (when loop closure enabled)
+    historyKeyframeSearchRadius: 15.0            # Meters, key frame that is within n meters from current pose will be considerd for loop closure
+    historyKeyframeSearchTimeDiff: 30.0          # Seconds, key frame that is n seconds older will be considered for loop closure
+    historyKeyframeSearchNum: 25                 # Number of history key frames will be fused into a submap for loop closure
+    historyKeyframeFitnessScore: 0.3             # ICP threshold, the smaller the better alignment
+
+    # Visualization
+    globalMapVisualizationSearchRadius: 1000.0   # Meters, global map visualization radius
+    globalMapVisualizationPoseDensity: 10.0      # Meters, global map visualization keyframe density
+    globalMapVisualizationLeafSize: 1.0          # Meters, global map visualization cloud density

@@ -1,0 +1,7 @@
+image: tiny_town.pgm
+mode: trinary
+resolution: 1.2
+origin: [-25.8, -48.2, 0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25

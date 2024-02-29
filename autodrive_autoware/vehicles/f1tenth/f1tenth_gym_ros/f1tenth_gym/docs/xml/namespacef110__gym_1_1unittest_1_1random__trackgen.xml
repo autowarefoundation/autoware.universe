@@ -1,0 +1,204 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1unittest_1_1random__trackgen" kind="namespace" language="Python">
+    <compoundname>f110_gym::unittest::random_trackgen</compoundname>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="random__trackgen_8py_1a9d47282619ade831e74f78ea802fdd0c" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.parser</definition>
+        <argsstring></argsstring>
+        <name>parser</name>
+        <initializer>=  argparse.ArgumentParser()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="40" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="40" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1a7487bc05dd5dec9378a0cef668123d11" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.type</definition>
+        <argsstring></argsstring>
+        <name>type</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="41" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1a0726f3cb3017bc7a0e22ffb30e53eefa" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.int</definition>
+        <argsstring></argsstring>
+        <name>int</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="41" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1aa72b8a2db3b63f9ed42cb896235fb4ac" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.default</definition>
+        <argsstring></argsstring>
+        <name>default</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="41" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1acfe582339d8be9075a6160eae33e10aa" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.help</definition>
+        <argsstring></argsstring>
+        <name>help</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="41" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1adaa99201e805097500ed2491766a2938" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.args</definition>
+        <argsstring></argsstring>
+        <name>args</name>
+        <initializer>=  parser.parse_args()</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="43" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1a3457cee9b138a50f02af8eb4e071173e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.NUM_MAPS</definition>
+        <argsstring></argsstring>
+        <name>NUM_MAPS</name>
+        <initializer>=  args.num_maps</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="54" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="54" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1a2fe20a3d4b091cfa0c3eb867adc992ce" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float f110_gym::unittest::random_trackgen.WIDTH</definition>
+        <argsstring></argsstring>
+        <name>WIDTH</name>
+        <initializer>=  10.0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="55" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="55" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1a8f9627599e2526027f715cd162b7155f" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.track</definition>
+        <argsstring></argsstring>
+        <name>track</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="230" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="230" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1a55ebef782ee46bdd7cd03aa6a404cd02" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.track_int</definition>
+        <argsstring></argsstring>
+        <name>track_int</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="230" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="230" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="random__trackgen_8py_1a492ff0fd0e3e2e4b53c804fe4656e19f" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::random_trackgen.track_ext</definition>
+        <argsstring></argsstring>
+        <name>track_ext</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="230" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="230" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="random__trackgen_8py_1af5ac6d92744435a0c2572146ec14cd00" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.random_trackgen.create_track</definition>
+        <argsstring>()</argsstring>
+        <name>create_track</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="56" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="56" bodyend="174"/>
+      </memberdef>
+      <memberdef kind="function" id="random__trackgen_8py_1a10f9f980a813a2beca515c9965995c12" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.random_trackgen.convert_track</definition>
+        <argsstring>(track, track_int, track_ext, iter)</argsstring>
+        <name>convert_track</name>
+        <param>
+          <type>track</type>
+          <defname>track</defname>
+        </param>
+        <param>
+          <type>track_int</type>
+          <defname>track_int</defname>
+        </param>
+        <param>
+          <type>track_ext</type>
+          <defname>track_ext</defname>
+        </param>
+        <param>
+          <type>iter</type>
+          <defname>iter</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="175" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" bodystart="175" bodyend="226"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/random_trackgen.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

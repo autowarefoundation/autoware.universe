@@ -1,0 +1,48 @@
+name: ROS2 CI Workflow
+
+on:
+  pull_request:
+    branches:
+      - ros2
+  push:
+    branches:
+      - ros2
+
+jobs:
+
+  build-ros2:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+          ros_distro: "humble"
+        }
+        - {
+          ros_distro: "foxy"
+        }
+    runs-on: ubuntu-latest
+    container:
+      image: ros:${{ matrix.config.ros_distro }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Create Workspace
+        run: |
+          mkdir -p src_tmp/vesc
+          mv `find -maxdepth 1 -not -name . -not -name src_tmp` src_tmp/vesc/
+          mv src_tmp/ src/
+      - name: Install Dependencies
+        run: |
+          bash -c 'source /opt/ros/$ROS_DISTRO/setup.bash; \
+          apt-get update && rosdep update; \
+          rosdep install --from-paths src --ignore-src -y'
+      - name: Build Workspace
+        run: |
+          bash -c 'source /opt/ros/$ROS_DISTRO/setup.bash; \
+          colcon build --event-handlers console_cohesion+'
+      - name: Run Tests
+        run: |
+          bash -c 'source /opt/ros/$ROS_DISTRO/setup.bash; \
+          colcon test --event-handlers console_cohesion+; \
+          colcon test-result --verbose'

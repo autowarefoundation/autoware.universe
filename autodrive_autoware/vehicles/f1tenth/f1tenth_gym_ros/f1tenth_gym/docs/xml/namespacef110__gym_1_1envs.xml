@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1envs" kind="namespace" language="Python">
+    <compoundname>f110_gym::envs</compoundname>
+    <innernamespace refid="namespacef110__gym_1_1envs_1_1base__classes">f110_gym::envs::base_classes</innernamespace>
+    <innernamespace refid="namespacef110__gym_1_1envs_1_1collision__models">f110_gym::envs::collision_models</innernamespace>
+    <innernamespace refid="namespacef110__gym_1_1envs_1_1dynamic__models">f110_gym::envs::dynamic_models</innernamespace>
+    <innernamespace refid="namespacef110__gym_1_1envs_1_1f110__env">f110_gym::envs::f110_env</innernamespace>
+    <innernamespace refid="namespacef110__gym_1_1envs_1_1f110__env__backup">f110_gym::envs::f110_env_backup</innernamespace>
+    <innernamespace refid="namespacef110__gym_1_1envs_1_1laser__models">f110_gym::envs::laser_models</innernamespace>
+    <innernamespace refid="namespacef110__gym_1_1envs_1_1rendering">f110_gym::envs::rendering</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/__init__.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

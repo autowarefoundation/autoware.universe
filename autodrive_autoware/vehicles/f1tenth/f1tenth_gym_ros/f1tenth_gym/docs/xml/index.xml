@@ -1,0 +1,572 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.8.17">
+  <compound refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app" kind="class"><name>f110_gym::unittest::pyglet_test_camera::App</name>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1aaca4f571369fc95e45355634d41fc24e" kind="variable"><name>left</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a9c3fdc6ea9bbe0407668091c4b6effb5" kind="variable"><name>right</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a155af5e767867bdf910d8b0936219b5a" kind="variable"><name>bottom</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2145d5c781e3f33fefd7b46af2fadd69" kind="variable"><name>top</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a1e58de5242a50711d35ef7d422466a66" kind="variable"><name>zoom_level</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1af92e414bc48f782207e5891ea82e3ad1" kind="variable"><name>zoomed_width</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a2f88138801a909d8826f61792745409f" kind="variable"><name>zoomed_height</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a199a531d847f94eb9d32b481c2af26e1" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1abadceb7d7c110cfa99df741b6ccae7e0" kind="function"><name>init_gl</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a4d55c63110f9bd78721a57e88e199cd8" kind="function"><name>on_resize</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1ab20811f9348c1eb9beb45c95e6b1ba42" kind="function"><name>on_mouse_drag</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a3846658fe03460fa2f057e5b954fc28f" kind="function"><name>on_mouse_scroll</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1abaf8b849008238cb0c17901b87329a71" kind="function"><name>on_draw</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test__camera_1_1_app_1a4478fc4a6666cf2d5cb5a3d574250404" kind="function"><name>run</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera" kind="class"><name>f110_gym::unittest::pyglet_test::Camera</name>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a2a4b65e4c2c87b3ed27ea4d694f6d9a4" kind="variable"><name>_window</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1aec06bae6c67e84720de17c8a80544b27" kind="variable"><name>_zoom</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a81dae02fbeac037bfcba9afeeac9a0ca" kind="variable"><name>scroll_speed</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1aa8efeba81038cc57db534857a61b0d4b" kind="variable"><name>max_zoom</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1aa5e9b9a6cca61ed9f997cd23ed1ea8b6" kind="variable"><name>min_zoom</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a2f36f3e98a13b1cb3513bb28ee49bfa3" kind="variable"><name>offset_x</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a92ee123bd19379417dd3e36759024df9" kind="variable"><name>offset_y</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1aa972fc123abe2bc9f8dd5bdba0025f20" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1ab01149f5d7b76ca39aa8c2604c8a65db" kind="function"><name>zoom</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a6f0bedfc6f5801b398d5ce537d70c059" kind="function"><name>zoom</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a3d2948dc5b1a9d2a6c597a2850ac989b" kind="function"><name>position</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1ac8e5a2d90df8cd68463746be6e65bee8" kind="function"><name>position</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1aab35e83f0748c949b8e3a8414097d193" kind="function"><name>move</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a1b32a1178f97029e2833a1f127a2c114" kind="function"><name>begin</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a30b46cfaa38e4956b06bfe9e98c3cbe3" kind="function"><name>end</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a7823f2901412f9075d7de211c14ad534" kind="function"><name>__enter__</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_camera_1a05542a21a9fa4adc9bcac8c77d37c2ad" kind="function"><name>__exit__</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_centered_camera" kind="class"><name>f110_gym::unittest::pyglet_test::CenteredCamera</name>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_centered_camera_1ae864ffed52c4415558b3bd15ad42c87a" kind="function"><name>begin</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1pyglet__test_1_1_centered_camera_1a37149e6bf7b5e551f38201696d01794e" kind="function"><name>end</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests" kind="class"><name>f110_gym::unittest::collision_checks::CollisionTests</name>
+    <member refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests_1a0585073942d116dea495e02c4b79f7f0" kind="variable"><name>vertices1</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests_1a407fd8ac2cb6e79b84590434fc6d7c6d" kind="variable"><name>length</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests_1a4b7f88b6f9a80c8bef02a1856ac068de" kind="variable"><name>width</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests_1acf1126ffde5105c455d850ff5286e4b7" kind="function"><name>setUp</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests_1a8de52029859d1c7731e5683d23ccf007" kind="function"><name>test_get_vert</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests_1acc104fececdc2724a5c5e8998100b633" kind="function"><name>test_get_vert_fps</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests_1a8ea861cfb3721bfa636ada8787cc3b85" kind="function"><name>test_random_collision</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests_1ab764a2cbf50b5cab461c5d6d017856b9" kind="function"><name>test_fps</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests" kind="class"><name>f110_gym::envs::collision_models::CollisionTests</name>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1a8ec590c2d0ff249236b6167903b177e4" kind="variable"><name>vertices1</name></member>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1a9cbff98529b08cc1cd52b56ba407e55e" kind="variable"><name>length</name></member>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1a00391f07693559253e82dbbe849da73e" kind="variable"><name>width</name></member>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1a4aa54131afe81f4a6790930e7d5a639e" kind="function"><name>setUp</name></member>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1a3137d9576fd99c1f56980a6cc61dc58f" kind="function"><name>test_get_vert</name></member>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1a588513dfce9c9c7843f2aef501e993f1" kind="function"><name>test_get_vert_fps</name></member>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1a484c3bfdab68d8ff8d298191a0cfdd4b" kind="function"><name>test_random_collision</name></member>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1af59482dbded9f1f915e666553316855d" kind="function"><name>test_multiple_collisions</name></member>
+    <member refid="classf110__gym_1_1envs_1_1collision__models_1_1_collision_tests_1a95425d03ea60792f2e523f3838ee9928" kind="function"><name>test_fps</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test" kind="class"><name>f110_gym::envs::dynamic_models::DynamicsTest</name>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1ac283c8565d5702a36fe2aef5ac801ec6" kind="variable"><name>mu</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1ace0f724e5d6de2b84ad6f26aa1f825de" kind="variable"><name>C_Sf</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a5ef6d0ca5f09db415133dd4fefe04a61" kind="variable"><name>C_Sr</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a46f6b69e0406f1cb669efe188354e88b" kind="variable"><name>lf</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a8c72ad994a42ae128b4b3902b8963ce7" kind="variable"><name>lr</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a3d565e1337d599401b34e4c6473d07e4" kind="variable"><name>h</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1af07025dc1443d5b524c54cabcda24092" kind="variable"><name>m</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a80b2b5e9fd9772596b8c0441ac3501a2" kind="variable"><name>I</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a703d1a956eba2dc93e5db243995105e6" kind="variable"><name>s_min</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a8269ff10bd35d86f1a02190ab39fb897" kind="variable"><name>s_max</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a17ce4b00ab832e2cccf565796aa77d56" kind="variable"><name>sv_min</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1abce143f8803056ea016677f51bc7179a" kind="variable"><name>sv_max</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1aee44ef320e9d70ffa4d0966cec9962ef" kind="variable"><name>v_min</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1aa6c8d413765dd13de77f1dcd1038d759" kind="variable"><name>v_max</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1aeb89635ca78746bfba5025b7e9890be4" kind="variable"><name>v_switch</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1af37b667196efbbced8b042c53c159641" kind="variable"><name>a_max</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a5ef057974425be84e5672fec6367237b" kind="function"><name>setUp</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a8d72833c7e5cf3717a4326ee6809c527" kind="function"><name>test_derivatives</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a00e95bc713471556c1d5f62c70d50f78" kind="function"><name>test_zeroinit_roll</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1aee6c565405df1ec196e88d5ca42238cd" kind="function"><name>test_zeroinit_dec</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1abfdac96452f8e54e0233b68626cf33bf" kind="function"><name>test_zeroinit_acc</name></member>
+    <member refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test_1a3e47a38cf845b941eea719550bcc1994" kind="function"><name>test_zeroinit_rollleft</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test" kind="class"><name>f110_gym::unittest::dynamics_test::DynamicsTest</name>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a48626036e76ba11fd936f4de26bf6ce0" kind="variable"><name>mu</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a74cd8e77b722fb8d92a392a4fc2dcbc7" kind="variable"><name>C_Sf</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a6d3bbaee07094af4095dfd258cebd10d" kind="variable"><name>C_Sr</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a7c0f434a69248caa58b34a50dbca3f2e" kind="variable"><name>lf</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1ac9ac96fd528006d18d309b0a49c3b8b9" kind="variable"><name>lr</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a779b25a77fc53165bd39448ece8d9f7c" kind="variable"><name>h</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a90efa4ba6c24eb526afa67eceb153be2" kind="variable"><name>m</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1aebb331386dd83145c82d5bedf1cae5b1" kind="variable"><name>I</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1ab762929e3e5bb2db0c153a203ffe5273" kind="variable"><name>s_min</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a8089d918c83d2631fbd7550557049956" kind="variable"><name>s_max</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a78c38627c81a0da299fcec08c600bfd1" kind="variable"><name>sv_min</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1ac16553e55f0c5e695994719ce1381b5b" kind="variable"><name>sv_max</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1adadbd3f491f56eaee3da91244cf8cc06" kind="variable"><name>v_min</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a906eb31597c8374bb916f6644780dc0c" kind="variable"><name>v_max</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a6d2c11940d9e0529f4ecba00d92fb7de" kind="variable"><name>v_switch</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a90bf691612ff54dc56c54e03fe8a27f8" kind="variable"><name>a_max</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1ae9a07469d0654888251d3bf6e76b6b49" kind="function"><name>setUp</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a084bad82c8b5d2879bcdd84ff4ddfbcb" kind="function"><name>test_derivatives</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a2119ee12155d35d32dfdff6ef9948635" kind="function"><name>test_zeroinit_roll</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a7be24bdc75f206643e35081eae280120" kind="function"><name>test_zeroinit_dec</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1aaf4fa412b0c16cb6bc89dd58b36d8e44" kind="function"><name>test_zeroinit_acc</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1dynamics__test_1_1_dynamics_test_1a386d5445884c46ecec8205ada9a3a185" kind="function"><name>test_zeroinit_rollleft</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer" kind="class"><name>f110_gym::envs::rendering::EnvRenderer</name>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a10e0980201fca6f3392fc5c333a6ad99" kind="variable"><name>left</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1acb665a6f4d150da3b2159b1cd86f4117" kind="variable"><name>right</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1ab6f1d3bbdf185a2489a9c444413e72b6" kind="variable"><name>bottom</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a6e8e1a6e3f6c1f681f0fcbe6c04ffc27" kind="variable"><name>top</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a46bb51fb7c77939d2c4b023cfe2ca867" kind="variable"><name>zoom_level</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1af71d3702c2e9fa5e8e109111b4a337ce" kind="variable"><name>zoomed_width</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a769be9782b9452fd8c3c1984985e419b" kind="variable"><name>zoomed_height</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a0f6f622b6ffe98f7ee038c2ce72af276" kind="variable"><name>batch</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1ae423459dd9ee2da53cf7929e4591e366" kind="variable"><name>map_points</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a227e60c781a0e50f827ea2f4f11a3f85" kind="variable"><name>poses</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a8a458f2ce6a733888d1a6bfaab243f31" kind="variable"><name>vertices</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1ad3328a46ae8641dc60b24d53219ffcb3" kind="variable"><name>score_label</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a2ecadd7a3ea2a4525bd7b0b4d362db81" kind="variable"><name>fps_display</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1ad2c50c6e7d890771c7173768b6eef5c2" kind="variable"><name>ego_idx</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a4d90f610c36a7c83b054a2233276f36a" kind="variable"><name>cars</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a1b24abdbb4d13744255ebfdb3d509354" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1ae9c12c08c2f799504b6390b2d0ffda3f" kind="function"><name>update_map</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1ac8bbef5b8910515dd18c8a6624730898" kind="function"><name>on_resize</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a557710400bb370a7509dbc17658eadd8" kind="function"><name>on_mouse_drag</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a10f7c38d921015b5574ba0c858a245bb" kind="function"><name>on_mouse_scroll</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a05cb0faf5893e3cbed58cf20d0997bf7" kind="function"><name>on_close</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a0cbcdabef2cdda765d6721ca796ecfd0" kind="function"><name>on_draw</name></member>
+    <member refid="classf110__gym_1_1envs_1_1rendering_1_1_env_renderer_1a1b9284f2e59c9000f10bd18e1ec6a9b3" kind="function"><name>update_obs</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env" kind="class"><name>f110_gym::envs::f110_env_backup::F110Env</name>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a33621c905b3ce566450c77b923ef79ee" kind="variable"><name>metadata</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a2efb58b38020d194c865ac289009ba4a" kind="variable"><name>params_set</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a58740f3bf62a7bf263a13b47cdf5d797" kind="variable"><name>map_inited</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a9e292f161315ed1a0f3c3886bf49ded9" kind="variable"><name>params</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ac6a6a423017697870d6f1c6828325336" kind="variable"><name>num_agents</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a89f5296784405aeaa52325a8dac4420e" kind="variable"><name>timestep</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ad417d87c39e8046ab2a66fd11d5910b8" kind="variable"><name>map_path</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a52b5d0f196c9cd9e34464d3cf4cf1f34" kind="variable"><name>map_img</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ae4babdba55642fab735d03c5672ed5ad" kind="variable"><name>ego_idx</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ae2047312369a5e949b09e1c5b067412f" kind="variable"><name>timeout</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1af3d3f69953f78a141b98f3d738a15530" kind="variable"><name>start_thresh</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a0a9dbd46041d336a1d6b28ea01418d91" kind="variable"><name>x</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a2fd95411b8a24759642863111ed0f513" kind="variable"><name>y</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a1dc4f5c9ab99353e2c364d42daf5a180" kind="variable"><name>theta</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a68efc45c0a66e4652697146e18c8a570" kind="variable"><name>in_collision</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a88dd2fd1f2dc0ef251a079d3e74622fe" kind="variable"><name>collision_angle</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a1c3ac639a2b0773d99043c2b911970d7" kind="variable"><name>near_start</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ac19a932655f1f9a6e8065df37bbe9f80" kind="variable"><name>num_toggles</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1aa7af900e93ae4b180e89e7d48e242033" kind="variable"><name>lap_times</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a3eb59d52fbc4d767e2c7ed0c64b8650f" kind="variable"><name>lap_counts</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a476dab30a81d8794d89f0bd85b3e7884" kind="variable"><name>map_height</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a2f4a85b1b83b203bc5549b6bff0bf2d1" kind="variable"><name>map_width</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a1ec9b2bc2142334a2b8a2d028adcace8" kind="variable"><name>map_resolution</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a7456387ff1b9e6832dd205ed891bc750" kind="variable"><name>free_thresh</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a2e1491609720111b7065748ad37e8512" kind="variable"><name>origin</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a0e6a85d0de7165369ce8fcd18be9d885" kind="variable"><name>port</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1aa3367f6570455c5311e075b4b9f91c56" kind="variable"><name>context</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1afc0972d462163211e9b9e47a2844e64f" kind="variable"><name>socket</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a23d4e3c74f19290571ce06f57c68de01" kind="variable"><name>sim_p</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1aeb9374dba01e21d5fd618d0736573f77" kind="variable"><name>all_x</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1aebf4ff49efe573bdbe29b190528256f1" kind="variable"><name>all_y</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ab629b0d75ade059476f2bf4237798101" kind="variable"><name>current_time</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a34545b59df83e520f7c3031106c5c954" kind="variable"><name>collision_angles</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ab224af4cddca309ab854b9c26f40868f" kind="variable"><name>near_starts</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ad6e649f8338d89746244b9e6c4bce71b" kind="variable"><name>toggle_list</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ab5e2d4e41534916caaa9fa2a94979053" kind="variable"><name>start_x</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a0959bbc593917d214789b9785a8f8b0c" kind="variable"><name>start_y</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a6f808319f37385f5f8f8e9198ad208f6" kind="variable"><name>start_theta</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a894820aea9c0b9c750f165798ab60ba0" kind="variable"><name>start_xs</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ae28edcae46735a4e684140aa05fd099b" kind="variable"><name>start_ys</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a82dcb09e9adb3f73dc1c61a3e406dfe9" kind="variable"><name>start_thetas</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a50b6912954290c4c5fb9165fc0103628" kind="variable"><name>start_rot</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a59e7a0edc30712fb482c246e01a72368" kind="variable"><name>double_finish</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a20cf7bc892fe043174eb7c656b49e54d" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ab53974d19ae639eaa8d922db303d21c4" kind="function"><name>__del__</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a5613fa6844441b3e94e6c75d2d6235e7" kind="function"><name>step</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1acc334d94e1a842ed26b8820a9730566e" kind="function"><name>reset</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1acb0331bb92b190cdd592060385726160" kind="function"><name>init_map</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1ad8af92604458991c85e4714ea1db581d" kind="function"><name>render</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1afd60c71c7b15c805310a4ac3510d70d2" kind="function"><name>update_params</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a9d9675c2f9268fc77a8521ffdcf09b07" kind="function"><name>_start_executable</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a21067a7283751af26448552a976a9c71" kind="function"><name>_set_map</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a0fd67b8765be08da96125421849d3144" kind="function"><name>_check_done</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a1d022634e984cb72c21b0a4b097dd4bc" kind="function"><name>_check_passed</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a2bf2e9b454b5088eee0cacfaf806ef5a" kind="function"><name>_update_state</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env__backup_1_1_f110_env_1a8c9a1d3421c51841565bee8a1f9a464c" kind="function"><name>_raycast_opponents</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env" kind="class"><name>f110_gym::envs::f110_env::F110Env</name>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1aee31e18855f6a73aa5051d7e4d693aa8" kind="variable"><name>metadata</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a6fbb8c9dad98bbad696936dec9633939" kind="variable"><name>map_name</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a584bf97317bbe8d38d8e0136753ded60" kind="variable"><name>map_path</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a147cde741845fcded400365a9d495ce3" kind="variable"><name>map_ext</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ab1c1a4b9cb08b685c597b1d40402a479" kind="variable"><name>params</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a4eefdcfd9a5f09eedfad9b27bf6ce45e" kind="variable"><name>num_agents</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1abdc8699b0f8fb2412efef070affa8ccb" kind="variable"><name>timestep</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1aebce8c6c42f258d8c561da27dde0c01b" kind="variable"><name>ego_idx</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a2496c3576ebb86df560fb09004583527" kind="variable"><name>start_thresh</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ae83c6ed936fe9e1a542be6b2eb76395c" kind="variable"><name>poses_x</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a03432e028beff28596178dc9236fc4e8" kind="variable"><name>poses_y</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a3ffb6fa7e705c18d5316444488cb649b" kind="variable"><name>poses_theta</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ada1a8cc0681447645b811448f516885a" kind="variable"><name>collisions</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1afc0a35ce8ff234279acffc66092d72a1" kind="variable"><name>near_start</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a6c19f5c3146fa6be496639ab4ed0d63f" kind="variable"><name>num_toggles</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a83f64f867c24f12d9ad3e14745e23aa1" kind="variable"><name>lap_times</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a0b2cc3bd151748987c6e23f34f16d1a2" kind="variable"><name>lap_counts</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a6539fde56adcb5755acfe1c86251f193" kind="variable"><name>current_time</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a24602450e500c08f3190672922de25de" kind="variable"><name>near_starts</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a45f4f52ca91b4efa14118d3718213eb6" kind="variable"><name>toggle_list</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ae867a64de7fea1f98cb6db6e9ff9d4ed" kind="variable"><name>start_xs</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a814ae4233f0c96728a9a5f47f5add06e" kind="variable"><name>start_ys</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a064dc8d975b3da3e0ac29f73b626b6aa" kind="variable"><name>start_thetas</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a613e153a969b6e3df72893eed2da061f" kind="variable"><name>start_rot</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1aa8a35ba4818fe79c1e2c6f9058a31dde" kind="variable"><name>sim</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1aaa2e9426a3f641b295203f9166c33fac" kind="variable"><name>renderer</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ad293c8b43306e47c4430b16b9f7b8d8c" kind="variable"><name>current_obs</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a6fbba07db5d7d79bdd27f3487192e6e2" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ae193b905b3d1c213ec4324283ebdf201" kind="function"><name>__del__</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a0df471828ba39c5228bf5c814a5d0e6e" kind="function"><name>step</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ab213d62cea216bbd82d0f6d7061452fb" kind="function"><name>reset</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1afc210c3941c1548692c75c961ad443df" kind="function"><name>update_map</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a79d419bbf2ff0e377d808e4a8f41cc81" kind="function"><name>update_params</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ab8e76450e63ef88c1ac9721f717fa375" kind="function"><name>render</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1a1422010e34cb61bad1e3321c2df7e58d" kind="function"><name>_check_done</name></member>
+    <member refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env_1ada4d88e20d24bdddc03e5acfe1be325a" kind="function"><name>_update_state</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car" kind="class"><name>f110_gym::envs::base_classes::RaceCar</name>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1af3ba3709a5dfd62c730a8896126a2539" kind="variable"><name>params</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5408c25f5507645e351b33c7b93d09e9" kind="variable"><name>is_ego</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a507e48bfae2cd153ce988acfa915f4e3" kind="variable"><name>time_step</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a32283ca467927cb92fd4cebaf4572788" kind="variable"><name>num_beams</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1ab17edc5d7143043b17160ce593da0e05" kind="variable"><name>fov</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1aea2c21a52410444a2502ee4e7d370bad" kind="variable"><name>state</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a3dc163d182be2760a4f8322417fd2332" kind="variable"><name>opp_poses</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5f298f55e8dc14fb39e5145699e90bfa" kind="variable"><name>accel</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5a1dbcba00b5c54afc700873df015eba" kind="variable"><name>steer_angle_vel</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a462d1ce0e070187aba97a24d75961884" kind="variable"><name>steer_buffer</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a51405046f30a27487241455cb51481ff" kind="variable"><name>steer_buffer_size</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a04ac46193f2706b71aa6ccc616484a1b" kind="variable"><name>in_collision</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5eb8a1fa8d27dfccd008573e2d720c44" kind="variable"><name>ttc_thresh</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a35674ca4c4a0eda359249216bee094b3" kind="variable"><name>scan_simulator</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1aeaedd3e39c14a7904e8417ad264b3168" kind="variable"><name>current_scan</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a47e2229884b30c3640f75cc46a4b1fe9" kind="variable"><name>cosines</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a7a416feebdc5bf3289495877a722ac5e" kind="variable"><name>scan_angles</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a45934ce2c731e21cee3b3890d5713a1e" kind="variable"><name>side_distances</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1af342754a877c42b3828a03b6425801d4" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a6ab5b5dd420b182b5156ee9566c03411" kind="function"><name>update_params</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a2a60c9ee34f2f09fb0a7e5cc7b287897" kind="function"><name>set_map</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a0fa587dc3c1a12c9217f0bd093c1bc08" kind="function"><name>reset</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a7d15e74a1b82646675d60ce02cdce6b5" kind="function"><name>ray_cast_agents</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a4577a30fd8879de7df1d0ace7702f450" kind="function"><name>check_ttc</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1ae12c14c1353e6aab2f72036593d85518" kind="function"><name>update_pose</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a4800c5ac90ba93b79a0338e5e34ead43" kind="function"><name>update_opp_poses</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a356ec05a0a0c056f4d43f5fb0451c83d" kind="function"><name>update_scan</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d" kind="class"><name>f110_gym::unittest::scan_sim::ScanSimulator2D</name>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ab651a44dfee70e7f2c2c8389b95e6e51" kind="variable"><name>num_beams</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a675555c29ace0ea5ddea92835965e654" kind="variable"><name>fov</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1af5f188b7150482f5518461af89d61fe7" kind="variable"><name>std_dev</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ae0b3e8aec78d765f2c64fc274b9e447f" kind="variable"><name>eps</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1aad699977c807e3ad150b6dac8b2bb1a0" kind="variable"><name>theta_dis</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a510e60d159e716bcd62b54dac8a69066" kind="variable"><name>max_range</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a7cf918616a14c3d8f76bc359cf2f1c4c" kind="variable"><name>angle_increment</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a52a218f72d96e62281f00e3aa01f6616" kind="variable"><name>theta_index_increment</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a6fb0a8e58e42af2934c5f3e35ab3488e" kind="variable"><name>orig_c</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ac1a4dcaf191c8308accbcf86999efd5c" kind="variable"><name>orig_s</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a49263002630bb21764217caa6c3314b7" kind="variable"><name>orig_x</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ab6b56af3b1396d900b097d4e0463941f" kind="variable"><name>orig_y</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a7b15deec5d81ddfa0c6297523cdfc295" kind="variable"><name>map_height</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1ac5acff270a2a66d20a8bb514001cc3c4" kind="variable"><name>map_width</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a935128be3649ba7d230f63bf7480bfa1" kind="variable"><name>map_resolution</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a184ddbfb8a5aaebb9c523625f716ad7c" kind="variable"><name>dt</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1afcb7de24911c98dd85473247c7d4af17" kind="variable"><name>rng</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1af2c50f973462f4717c9c02d6c8d47004" kind="variable"><name>sines</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a578ecb22495b2d227517b8a54a505c7e" kind="variable"><name>cosines</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a15778cb625d962a2481cbc34854044dd" kind="variable"><name>map_img</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a62fb5e7c6a7060685208643a265aaa95" kind="variable"><name>origin</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1aaa079c96c4018da2b7e80388bcd2d417" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a00925f5100ae8b2e556154e8935ea86e" kind="function"><name>set_map</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a038a0fc7e42df7827c175fdb3755f2c4" kind="function"><name>scan</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_simulator2_d_1a492d1949d030fb6b8665f399db5cdb4d" kind="function"><name>get_increment</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d" kind="class"><name>f110_gym::envs::laser_models::ScanSimulator2D</name>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a8fd8d9f11c319090584c221e51aa4975" kind="variable"><name>num_beams</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1ae57ad1092f12be1967de4853eca1327d" kind="variable"><name>fov</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a2aa400b42babfa82f677356aaa16a0f4" kind="variable"><name>std_dev</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a02bf0c833e93628643a20cceeb33b029" kind="variable"><name>eps</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1af21e0a0ddd2fc95ec4291db6b33cd591" kind="variable"><name>theta_dis</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1af08e1ef6b6397c51fdd3e612dceb17b5" kind="variable"><name>max_range</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a68ab73d8b055703de7c4eb33ec54520a" kind="variable"><name>angle_increment</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1aabde525512f31433f532639175f50ba3" kind="variable"><name>theta_index_increment</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a12a635318c521153364d75b103905673" kind="variable"><name>orig_c</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1aedb545195be8c54364e38ccf0c0b3d00" kind="variable"><name>orig_s</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1aecd0f30707bb8c82f59ae48ae2a478c2" kind="variable"><name>orig_x</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a03e555b505b745f98dfd8a5cc4e1d013" kind="variable"><name>orig_y</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1ae2c136fdda428bed3de1f7ab30cda72c" kind="variable"><name>map_height</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a53beebf974cdf3cb04dac5e4311b2f36" kind="variable"><name>map_width</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a11d13f00e6d8a08d7b758f420ff464c5" kind="variable"><name>map_resolution</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a617e6b987673100484c5fdb0c17c9848" kind="variable"><name>dt</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a6a2a4cc31c05bb623699e24df56d8989" kind="variable"><name>rng</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a76ce07e27a1f3efecae222b25bfd3c98" kind="variable"><name>sines</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1aedc4121c126a5bcda9b5f321cb679208" kind="variable"><name>cosines</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1af63828a83efca93f50b04324fdd74820" kind="variable"><name>map_img</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a301f79d5db56a5c5eeb44f33ac3d0b7d" kind="variable"><name>origin</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a006ba0ddc5d9d6d2f2b74e945ef61f2c" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a989dd691fd4c08d0f18d6c241862d03c" kind="function"><name>set_map</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1a12c4b2f39bda5dd3a1ea14e70e4370cc" kind="function"><name>scan</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_simulator2_d_1ab11345c77e843234e6a71f3f0293d4f5" kind="function"><name>get_increment</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests" kind="class"><name>f110_gym::unittest::scan_sim::ScanTests</name>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1af6405e794509630382bd714bfc01e833" kind="variable"><name>num_beams</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1a320c224064a2dcdba7ad712525e32e88" kind="variable"><name>fov</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1a3beafc32194d2dd32a0a97885ba97539" kind="variable"><name>num_test</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1ad63cebbd6245dfa62dd57168287598b1" kind="variable"><name>test_poses</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1a44186810ed5ab4fecb230b7a842d294a" kind="variable"><name>berlin_scan</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1a9c595846d38b4691fd34352eea08cdcf" kind="variable"><name>skirk_scan</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1a24b9cbdb8f7d0ed8cea83067baf28c5e" kind="function"><name>setUp</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1adef88a30b7aa6e2f3daa6ffecd979562" kind="function"><name>test_map_berlin</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1aa76985ccd5313eaf5c8e7cc5892ca155" kind="function"><name>test_map_skirk</name></member>
+    <member refid="classf110__gym_1_1unittest_1_1scan__sim_1_1_scan_tests_1a1133ea3a82cffacc03e22a273d6e8cae" kind="function"><name>test_fps</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests" kind="class"><name>f110_gym::envs::laser_models::ScanTests</name>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1af13ee1aeb4326b4391e30f64ae267ca6" kind="variable"><name>num_beams</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1a5377c17def38ead4ba0fc005ba239b3a" kind="variable"><name>fov</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1ac0c91b73132b25fce081ec9c11c91abe" kind="variable"><name>num_test</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1a31eb3b8ba28e16af8b39bd39c2254090" kind="variable"><name>test_poses</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1a2958e581294bc423f58a1df94a030b9e" kind="variable"><name>berlin_scan</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1abfb81eedfc585622f28ba8f81443af80" kind="variable"><name>skirk_scan</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1a55ab0dc9841fe835d01b87b9b0fce3c0" kind="function"><name>setUp</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1a54056154757449495862bb07f7fd4119" kind="function"><name>test_map_berlin</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1ac7855c2d63a63159b19ecc01f92194bc" kind="function"><name>test_map_skirk</name></member>
+    <member refid="classf110__gym_1_1envs_1_1laser__models_1_1_scan_tests_1a38ed452c3c86c8812726a8524d1eb034" kind="function"><name>test_fps</name></member>
+  </compound>
+  <compound refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator" kind="class"><name>f110_gym::envs::base_classes::Simulator</name>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1ad99c964e6df64e8264ab729be118aa8c" kind="variable"><name>num_agents</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1aab539724143dd42fca12ec1d6043c984" kind="variable"><name>time_step</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1a08fd902fa242da70c1bcf34a1fe80802" kind="variable"><name>ego_idx</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1a877c852c32ff108df0ff6bfa2ab3bf6f" kind="variable"><name>params</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1ade120757dde31d2130e4b0f9b01e3a7d" kind="variable"><name>agent_poses</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1ae665b35ec7d9ced7de789a02cafdd566" kind="variable"><name>agents</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1a2266104910535f06f31c1212e62fde8b" kind="variable"><name>collisions</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1a5d716c6ccd3b649f407560f28bdcd84d" kind="variable"><name>collision_idx</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1ab865873c6f0afa3741add4f39e5fd872" kind="function"><name>__init__</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1a0a566351f20a16b7545fcd20ca9adb57" kind="function"><name>set_map</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1a974c58957a6b14582149d704ef28a68c" kind="function"><name>update_params</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1a7f32c68e14bf47447ce9599c8db21236" kind="function"><name>check_collision</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1af1fb175457362d7419301180b1b3b4c6" kind="function"><name>step</name></member>
+    <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_simulator_1ab63c655ff0cd1bb2accce7be9fff69e8" kind="function"><name>reset</name></member>
+  </compound>
+  <compound refid="namespacef110__gym" kind="namespace"><name>f110_gym</name>
+    <member refid="____init_____8py_1a053265813f14380af323db53967da5f4" kind="variable"><name>id</name></member>
+    <member refid="____init_____8py_1a5a9b8348f0cb72c71b742a16e2bd2c4e" kind="variable"><name>entry_point</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1envs" kind="namespace"><name>f110_gym::envs</name>
+  </compound>
+  <compound refid="namespacef110__gym_1_1envs_1_1base__classes" kind="namespace"><name>f110_gym::envs::base_classes</name>
+  </compound>
+  <compound refid="namespacef110__gym_1_1envs_1_1collision__models" kind="namespace"><name>f110_gym::envs::collision_models</name>
+    <member refid="collision__models_8py_1a3f4abf61f205b8557a851b8dc0c28f80" kind="variable"><name>cache</name></member>
+    <member refid="collision__models_8py_1a7f066238cdec7f7f53b10bcb26647752" kind="function"><name>perpendicular</name></member>
+    <member refid="collision__models_8py_1a8229a841f9f647231dad0a56b8b0c303" kind="function"><name>tripleProduct</name></member>
+    <member refid="collision__models_8py_1ab37064c328f60306b8c34aeb1360f684" kind="function"><name>avgPoint</name></member>
+    <member refid="collision__models_8py_1a2f317029afdf11c1bd71062939fcabac" kind="function"><name>indexOfFurthestPoint</name></member>
+    <member refid="collision__models_8py_1a03c077ea056df0f1ab45ca392fb79a54" kind="function"><name>support</name></member>
+    <member refid="collision__models_8py_1a653f859844d65a7ae27a6ae46631fea7" kind="function"><name>collision</name></member>
+    <member refid="collision__models_8py_1aa40d5d95afb6a98d4c2766acbf174adb" kind="function"><name>collision_multiple</name></member>
+    <member refid="collision__models_8py_1a246a31b398ede8d389c1968899be94ac" kind="function"><name>get_trmtx</name></member>
+    <member refid="collision__models_8py_1a344bb9ab1af76db9d028fd7f89384231" kind="function"><name>get_vertices</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1envs_1_1dynamic__models" kind="namespace"><name>f110_gym::envs::dynamic_models</name>
+    <member refid="dynamic__models_8py_1ab8a10c74a1f1dbbfd4adf3d8b264647f" kind="variable"><name>cache</name></member>
+    <member refid="dynamic__models_8py_1a431101ae67a4c958eb02126cf2ee5e66" kind="function"><name>accl_constraints</name></member>
+    <member refid="dynamic__models_8py_1a08dd4fc40f33742219b2798addf0aaf2" kind="function"><name>steering_constraint</name></member>
+    <member refid="dynamic__models_8py_1a44ce97966ffccf3d94aad7e3a766cf91" kind="function"><name>vehicle_dynamics_ks</name></member>
+    <member refid="dynamic__models_8py_1a2491848cc1db2e106c039da6ed7041c6" kind="function"><name>vehicle_dynamics_st</name></member>
+    <member refid="dynamic__models_8py_1acadb3628c14a8cc2a59509833762f9c5" kind="function"><name>pid</name></member>
+    <member refid="dynamic__models_8py_1a57b901e4cb2e0ad2ff8df6ad2b6035b1" kind="function"><name>func_KS</name></member>
+    <member refid="dynamic__models_8py_1a99b883cf5f7f438b805dcbc2cff6b4ef" kind="function"><name>func_ST</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1envs_1_1f110__env" kind="namespace"><name>f110_gym::envs::f110_env</name>
+    <member refid="f110__env_8py_1a118efb91786ec1caaf67464c1d4d4962" kind="variable"><name>VIDEO_W</name></member>
+    <member refid="f110__env_8py_1ac753c679a3d5a173c8ad99d14c5fc47b" kind="variable"><name>VIDEO_H</name></member>
+    <member refid="f110__env_8py_1a72a6be22a508a795985d604b0add267d" kind="variable"><name>WINDOW_W</name></member>
+    <member refid="f110__env_8py_1a9a35e98c8a439e76515bdcd473fd9e2d" kind="variable"><name>WINDOW_H</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1envs_1_1f110__env__backup" kind="namespace"><name>f110_gym::envs::f110_env_backup</name>
+  </compound>
+  <compound refid="namespacef110__gym_1_1envs_1_1laser__models" kind="namespace"><name>f110_gym::envs::laser_models</name>
+    <member refid="laser__models_8py_1a7898aaf5a3f1aa50a77e241bcc99812f" kind="function"><name>get_dt</name></member>
+    <member refid="laser__models_8py_1a9e392a639b2b55df60f828ae13a88fef" kind="function"><name>xy_2_rc</name></member>
+    <member refid="laser__models_8py_1adc41ff0ca728f48f7bbc304eae86445f" kind="function"><name>distance_transform</name></member>
+    <member refid="laser__models_8py_1a5a9617e07fa391720bfa8e48de4e29ea" kind="function"><name>trace_ray</name></member>
+    <member refid="laser__models_8py_1a479dfd891b317f6625c5075b0aa73579" kind="function"><name>get_scan</name></member>
+    <member refid="laser__models_8py_1abb054b963ce9a2b09aaf27d5b7c94776" kind="function"><name>check_ttc_jit</name></member>
+    <member refid="laser__models_8py_1a63c2d60d1bb4f8399198bec4b423034b" kind="function"><name>cross</name></member>
+    <member refid="laser__models_8py_1a3ca13ea1c8037713bf309a354c614cc3" kind="function"><name>are_collinear</name></member>
+    <member refid="laser__models_8py_1a1bc7982bd73954850a7b9c3c53d98b0f" kind="function"><name>get_range</name></member>
+    <member refid="laser__models_8py_1ad4250e0339dc216ca15099bcfca8eb07" kind="function"><name>ray_cast</name></member>
+    <member refid="laser__models_8py_1a369f6a199d7e45afbbeafa1a04879dd3" kind="function"><name>main</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1envs_1_1rendering" kind="namespace"><name>f110_gym::envs::rendering</name>
+    <member refid="rendering_8py_1adcb93d33a17b4cc05e3a17a79389ca9f" kind="variable"><name>ZOOM_IN_FACTOR</name></member>
+    <member refid="rendering_8py_1aacc77603b42e49b0cfad2a0d5156d033" kind="variable"><name>ZOOM_OUT_FACTOR</name></member>
+    <member refid="rendering_8py_1a15030f21ebdcc600d4cdcba2cb4efdbb" kind="variable"><name>CAR_LENGTH</name></member>
+    <member refid="rendering_8py_1abad083fa3d5353b3326b71aedf095e69" kind="variable"><name>CAR_WIDTH</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1unittest" kind="namespace"><name>f110_gym::unittest</name>
+  </compound>
+  <compound refid="namespacef110__gym_1_1unittest_1_1collision__checks" kind="namespace"><name>f110_gym::unittest::collision_checks</name>
+    <member refid="collision__checks_8py_1a01c6f10da145f4b9db113a17360e45ed" kind="variable"><name>cache</name></member>
+    <member refid="collision__checks_8py_1a1718aedaf888fb6bcc90e1814732e56e" kind="function"><name>perpendicular</name></member>
+    <member refid="collision__checks_8py_1a662cb9cf2ce661a420f4aa6170856959" kind="function"><name>tripleProduct</name></member>
+    <member refid="collision__checks_8py_1ace038ce6c1efa0f8884f63d84a1a8e9d" kind="function"><name>avgPoint</name></member>
+    <member refid="collision__checks_8py_1afed234ffedde9f63c687aabc78ecf191" kind="function"><name>indexOfFurthestPoint</name></member>
+    <member refid="collision__checks_8py_1a2c384f130b286e7c1d1dc3dd7b04dcfc" kind="function"><name>support</name></member>
+    <member refid="collision__checks_8py_1ae6955c70ffe9171e85ef49d48c0ffbfc" kind="function"><name>collision</name></member>
+    <member refid="collision__checks_8py_1a696ebc81dbf2bb5f08dd7a8bc9aca517" kind="function"><name>get_trmtx</name></member>
+    <member refid="collision__checks_8py_1aafb53c9e57ec13d9b34ec1cc4a4e6197" kind="function"><name>get_vertices</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1unittest_1_1dynamics__test" kind="namespace"><name>f110_gym::unittest::dynamics_test</name>
+    <member refid="dynamics__test_8py_1a158e09a987de07230ae61a296fd35d65" kind="variable"><name>cache</name></member>
+    <member refid="dynamics__test_8py_1aec9c2f3b2629f179fad25db2d240924a" kind="function"><name>accl_constraints</name></member>
+    <member refid="dynamics__test_8py_1a179f2b21768e81215cc2298cdd226c6e" kind="function"><name>steering_constraint</name></member>
+    <member refid="dynamics__test_8py_1adce043c0433e0993c7aced5dd6b0475c" kind="function"><name>vehicle_dynamics_ks</name></member>
+    <member refid="dynamics__test_8py_1ae0437476ef39a9fc5bc592ef2bfee40b" kind="function"><name>vehicle_dynamics_st</name></member>
+    <member refid="dynamics__test_8py_1a6a70b034b943e12edb3aa7f50c12f607" kind="function"><name>pid</name></member>
+    <member refid="dynamics__test_8py_1a8c9025a83517af7f85dddb53f1b04bb7" kind="function"><name>func_KS</name></member>
+    <member refid="dynamics__test_8py_1a6ccba55ff647ba033dec08a79dc5c74e" kind="function"><name>func_ST</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1unittest_1_1legacy__scan__gen" kind="namespace"><name>f110_gym::unittest::legacy_scan_gen</name>
+    <member refid="legacy__scan__gen_8py_1a3acf2d94fb6d1955f85ef97490d79597" kind="variable"><name>thetas</name></member>
+    <member refid="legacy__scan__gen_8py_1a3c16a5361e5e50935df3d60cc43be9d8" kind="variable"><name>executable_dir</name></member>
+    <member refid="legacy__scan__gen_8py_1ad230fce994060d2760dbaa3011046d99" kind="variable"><name>mass</name></member>
+    <member refid="legacy__scan__gen_8py_1a9b23723bde43aa19f3103b670e48a274" kind="variable"><name>l_r</name></member>
+    <member refid="legacy__scan__gen_8py_1aec6027e075b6c232872ecdeb9557901f" kind="variable"><name>I_z</name></member>
+    <member refid="legacy__scan__gen_8py_1a4b8eae395b3ba7745b4707730a4e0342" kind="variable"><name>mu</name></member>
+    <member refid="legacy__scan__gen_8py_1a4a2f09273283a00dd9f0e2a0202819d8" kind="variable"><name>h_cg</name></member>
+    <member refid="legacy__scan__gen_8py_1a3ecbcf35be2c3b1c5de27a80a75fd6b6" kind="variable"><name>cs_f</name></member>
+    <member refid="legacy__scan__gen_8py_1a187af2aab0e56a6814c20dc624e44066" kind="variable"><name>cs_r</name></member>
+    <member refid="legacy__scan__gen_8py_1a5dc0c5eb3920673ad54793bf5a242c7f" kind="variable"><name>num_test</name></member>
+    <member refid="legacy__scan__gen_8py_1a16cb81b5670b7cb02da350ca06e782e0" kind="variable"><name>test_poses</name></member>
+    <member refid="legacy__scan__gen_8py_1a13cfce268a3d58a9bb340c49e52c7358" kind="variable"><name>num</name></member>
+    <member refid="legacy__scan__gen_8py_1a9b44a820cb923dd21ad53ca3ce1a1a3e" kind="variable"><name>map_path</name></member>
+    <member refid="legacy__scan__gen_8py_1a104eddedf6dffa3cfbb48fd10a54fbaa" kind="variable"><name>map_ext</name></member>
+    <member refid="legacy__scan__gen_8py_1a61f0e3e1d2267e520e06606e1face7b1" kind="variable"><name>racecar_env</name></member>
+    <member refid="legacy__scan__gen_8py_1adb3290404d3f4b8b78c064260da612b4" kind="variable"><name>double_finish</name></member>
+    <member refid="legacy__scan__gen_8py_1af8a3966f4a9b1c148801c9f0faeb2ab9" kind="variable"><name>vegas_scan</name></member>
+    <member refid="legacy__scan__gen_8py_1ae0259831a38cf476e0dd42babc9961bf" kind="variable"><name>x</name></member>
+    <member refid="legacy__scan__gen_8py_1a2b203158766bea1a4c5f63348e259b68" kind="variable"><name>y</name></member>
+    <member refid="legacy__scan__gen_8py_1a04710a5417dc947ecea68c85b283ae50" kind="variable"><name>theta</name></member>
+    <member refid="legacy__scan__gen_8py_1aa1acb0415bfee00854f8be477f4e7f44" kind="variable"><name>obs</name></member>
+    <member refid="legacy__scan__gen_8py_1a9520e850caa600c8d5083e90ac4fe127" kind="variable"><name>_</name></member>
+    <member refid="legacy__scan__gen_8py_1ac94bf3002239f74774b33264d13e088d" kind="variable"><name>berlin_scan</name></member>
+    <member refid="legacy__scan__gen_8py_1a7569d745c961e7f9967aad0c5d6f2672" kind="variable"><name>skirk_scan</name></member>
+    <member refid="legacy__scan__gen_8py_1a8385064c1f35018e19bd2c8fe359cc3c" kind="variable"><name>vegas</name></member>
+    <member refid="legacy__scan__gen_8py_1a0413a2d9da052bbc95719cafd822cbb5" kind="variable"><name>berlin</name></member>
+    <member refid="legacy__scan__gen_8py_1a1943209d1e4c42cb37681e790e21a71e" kind="variable"><name>skirk</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1unittest_1_1pyglet__test" kind="namespace"><name>f110_gym::unittest::pyglet_test</name>
+    <member refid="pyglet__test_8py_1a3d69f486cb21f39a06dad8857f9b7d50" kind="variable"><name>parser</name></member>
+    <member refid="pyglet__test_8py_1a981fb3f820ad2e7741085fe4f5dea096" kind="variable"><name>type</name></member>
+    <member refid="pyglet__test_8py_1a2005fab57ddd5da6ff3394c03dc13cd5" kind="variable"><name>str</name></member>
+    <member refid="pyglet__test_8py_1acc7e94317a1b95945b9baf3623660350" kind="variable"><name>required</name></member>
+    <member refid="pyglet__test_8py_1a41b4d9d2099f3bffde0a78849b8f6e9b" kind="variable"><name>True</name></member>
+    <member refid="pyglet__test_8py_1af457772f551e51c84059b1619cac6f6f" kind="variable"><name>help</name></member>
+    <member refid="pyglet__test_8py_1a45eb1549d05c60fdad09c712bda5a759" kind="variable"><name>args</name></member>
+    <member refid="pyglet__test_8py_1a3174957b3d9e1f51302c419ae772a7d7" kind="variable"><name>map_metada</name></member>
+    <member refid="pyglet__test_8py_1a087834fb591571e3b9590537ab43f2a4" kind="variable"><name>map_resolution</name></member>
+    <member refid="pyglet__test_8py_1a7ccec01d1694c9ce188a100eae74a9eb" kind="variable"><name>origin</name></member>
+    <member refid="pyglet__test_8py_1a489a47127c8b26ff6a6c2f32b22b7c4e" kind="variable"><name>origin_x</name></member>
+    <member refid="pyglet__test_8py_1a8ba1eb7ca846ae091a7a0208bab2d8e5" kind="variable"><name>origin_y</name></member>
+    <member refid="pyglet__test_8py_1afae1d6e5e857392c773fb99b539676bc" kind="variable"><name>map_img</name></member>
+    <member refid="pyglet__test_8py_1a481a4c3d659a7730333145e5fe7c4367" kind="variable"><name>map_height</name></member>
+    <member refid="pyglet__test_8py_1a2e254b24420bdda87cd30f367b65552d" kind="variable"><name>map_width</name></member>
+    <member refid="pyglet__test_8py_1a4c371730daa6fa2b932e0d6bdc28e700" kind="variable"><name>range_x</name></member>
+    <member refid="pyglet__test_8py_1a85be62a46ea83891f58f723d84164389" kind="variable"><name>range_y</name></member>
+    <member refid="pyglet__test_8py_1a2b3d64a285759e09b06db641e7b3ef76" kind="variable"><name>map_x</name></member>
+    <member refid="pyglet__test_8py_1a7a58fce71597c750f41fe4aa8f5d0d89" kind="variable"><name>map_y</name></member>
+    <member refid="pyglet__test_8py_1a3186da83d330b11ad5d0f0adfc57dab7" kind="variable"><name>map_z</name></member>
+    <member refid="pyglet__test_8py_1aa4a56a9e36d04e7211af58fc468903ba" kind="variable"><name>map_coords</name></member>
+    <member refid="pyglet__test_8py_1a83cf143d5d4d4fbe4aa56cf8c6699c78" kind="variable"><name>map_mask</name></member>
+    <member refid="pyglet__test_8py_1a53860be358d7cdfc130c75ca444c9939" kind="variable"><name>map_mask_flat</name></member>
+    <member refid="pyglet__test_8py_1a8c5958c53e522bb0dc390ad0421a6057" kind="variable"><name>map_points</name></member>
+    <member refid="pyglet__test_8py_1a61b9b5ee2dc42c296dc48e8ddaf5a173" kind="variable"><name>config</name></member>
+    <member refid="pyglet__test_8py_1abbdafa8876f8f50a0f98b0ccf20e58df" kind="variable"><name>window</name></member>
+    <member refid="pyglet__test_8py_1a1546787b3b7976676236a790f8d70c5c" kind="variable"><name>cam</name></member>
+    <member refid="pyglet__test_8py_1a3405d8b8ab8878375ce14241e071c6fd" kind="variable"><name>batch</name></member>
+    <member refid="pyglet__test_8py_1a88390b60af94b8cc39c9c11c7471bea5" kind="variable"><name>points</name></member>
+    <member refid="pyglet__test_8py_1a3710a56d6d768172240edd7f43b56d90" kind="variable"><name>particle</name></member>
+    <member refid="pyglet__test_8py_1adf83272f4af52d9e64b6469c409f49c2" kind="function"><name>on_resize</name></member>
+    <member refid="pyglet__test_8py_1a8e03464647800bf112a3656d9679c1c4" kind="function"><name>loop</name></member>
+    <member refid="pyglet__test_8py_1adf4782832213b50f1e079698656cdddb" kind="function"><name>on_draw</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1unittest_1_1pyglet__test__camera" kind="namespace"><name>f110_gym::unittest::pyglet_test_camera</name>
+    <member refid="pyglet__test__camera_8py_1ad60c292ad7eac4ed7de1777dcd5435b2" kind="variable"><name>ZOOM_IN_FACTOR</name></member>
+    <member refid="pyglet__test__camera_8py_1a4ec694cd82738b571eaaa90eea919fe8" kind="variable"><name>ZOOM_OUT_FACTOR</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1unittest_1_1random__trackgen" kind="namespace"><name>f110_gym::unittest::random_trackgen</name>
+    <member refid="random__trackgen_8py_1a9d47282619ade831e74f78ea802fdd0c" kind="variable"><name>parser</name></member>
+    <member refid="random__trackgen_8py_1a7487bc05dd5dec9378a0cef668123d11" kind="variable"><name>type</name></member>
+    <member refid="random__trackgen_8py_1a0726f3cb3017bc7a0e22ffb30e53eefa" kind="variable"><name>int</name></member>
+    <member refid="random__trackgen_8py_1aa72b8a2db3b63f9ed42cb896235fb4ac" kind="variable"><name>default</name></member>
+    <member refid="random__trackgen_8py_1acfe582339d8be9075a6160eae33e10aa" kind="variable"><name>help</name></member>
+    <member refid="random__trackgen_8py_1adaa99201e805097500ed2491766a2938" kind="variable"><name>args</name></member>
+    <member refid="random__trackgen_8py_1a3457cee9b138a50f02af8eb4e071173e" kind="variable"><name>NUM_MAPS</name></member>
+    <member refid="random__trackgen_8py_1a2fe20a3d4b091cfa0c3eb867adc992ce" kind="variable"><name>WIDTH</name></member>
+    <member refid="random__trackgen_8py_1a8f9627599e2526027f715cd162b7155f" kind="variable"><name>track</name></member>
+    <member refid="random__trackgen_8py_1a55ebef782ee46bdd7cd03aa6a404cd02" kind="variable"><name>track_int</name></member>
+    <member refid="random__trackgen_8py_1a492ff0fd0e3e2e4b53c804fe4656e19f" kind="variable"><name>track_ext</name></member>
+    <member refid="random__trackgen_8py_1af5ac6d92744435a0c2572146ec14cd00" kind="function"><name>create_track</name></member>
+    <member refid="random__trackgen_8py_1a10f9f980a813a2beca515c9965995c12" kind="function"><name>convert_track</name></member>
+  </compound>
+  <compound refid="namespacef110__gym_1_1unittest_1_1scan__sim" kind="namespace"><name>f110_gym::unittest::scan_sim</name>
+    <member refid="scan__sim_8py_1a79849d1485e5078a2792710ce3c7fc97" kind="function"><name>get_dt</name></member>
+    <member refid="scan__sim_8py_1a990edc2fbfab8d957303d4b100bc6c9a" kind="function"><name>xy_2_rc</name></member>
+    <member refid="scan__sim_8py_1aa2c2d251010dae8940a87e69cadffa07" kind="function"><name>distance_transform</name></member>
+    <member refid="scan__sim_8py_1a0f9a2bc118cafc22f7ae057be76d01dd" kind="function"><name>trace_ray</name></member>
+    <member refid="scan__sim_8py_1ad9b4dde85991dfc78a65b7804c27d010" kind="function"><name>get_scan</name></member>
+    <member refid="scan__sim_8py_1a710653eef2a82aae113e889794ee511e" kind="function"><name>main</name></member>
+  </compound>
+  <compound refid="namespacegym_1_1envs_1_1unittest_1_1scan__sim" kind="namespace"><name>gym::envs::unittest::scan_sim</name>
+  </compound>
+  <compound refid="namespacepyglet_1_1gl" kind="namespace"><name>pyglet::gl</name>
+  </compound>
+  <compound refid="____init_____8py" kind="file"><name>__init__.py</name>
+  </compound>
+  <compound refid="envs_2____init_____8py" kind="file"><name>__init__.py</name>
+  </compound>
+  <compound refid="unittest_2____init_____8py" kind="file"><name>__init__.py</name>
+  </compound>
+  <compound refid="base__classes_8py" kind="file"><name>base_classes.py</name>
+  </compound>
+  <compound refid="collision__models_8py" kind="file"><name>collision_models.py</name>
+  </compound>
+  <compound refid="dynamic__models_8py" kind="file"><name>dynamic_models.py</name>
+  </compound>
+  <compound refid="f110__env_8py" kind="file"><name>f110_env.py</name>
+  </compound>
+  <compound refid="f110__env__backup_8py" kind="file"><name>f110_env_backup.py</name>
+  </compound>
+  <compound refid="laser__models_8py" kind="file"><name>laser_models.py</name>
+  </compound>
+  <compound refid="rendering_8py" kind="file"><name>rendering.py</name>
+  </compound>
+  <compound refid="collision__checks_8py" kind="file"><name>collision_checks.py</name>
+  </compound>
+  <compound refid="dynamics__test_8py" kind="file"><name>dynamics_test.py</name>
+  </compound>
+  <compound refid="legacy__scan__gen_8py" kind="file"><name>legacy_scan_gen.py</name>
+  </compound>
+  <compound refid="pyglet__test_8py" kind="file"><name>pyglet_test.py</name>
+  </compound>
+  <compound refid="pyglet__test__camera_8py" kind="file"><name>pyglet_test_camera.py</name>
+  </compound>
+  <compound refid="random__trackgen_8py" kind="file"><name>random_trackgen.py</name>
+  </compound>
+  <compound refid="scan__sim_8py" kind="file"><name>scan_sim.py</name>
+  </compound>
+  <compound refid="dir_87aab0849a7ff80b67f27d7f0ecafd88" kind="dir"><name>/home/billyzheng/f1tenth_gym/gym/f110_gym/envs</name>
+  </compound>
+  <compound refid="dir_0d9aa0052a6017cb7aea189bf393af42" kind="dir"><name>/home/billyzheng/f1tenth_gym/gym/f110_gym</name>
+  </compound>
+  <compound refid="dir_cc06cd2fc16f827f09405fcedd02c7bb" kind="dir"><name>/home/billyzheng/f1tenth_gym/gym</name>
+  </compound>
+  <compound refid="dir_70fc25f479e8e19f7e6bd12b95eca2dc" kind="dir"><name>/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest</name>
+  </compound>
+</doxygenindex>

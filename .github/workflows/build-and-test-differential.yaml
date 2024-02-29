@@ -2,26 +2,34 @@ name: build-and-test-differential
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - labeled
 
 jobs:
+  prevent-no-label-execution:
+    uses: autowarefoundation/autoware-github-actions/.github/workflows/prevent-no-label-execution.yaml@v1
+    with:
+      label: tag:run-build-and-test-differential
+
   build-and-test-differential:
-    runs-on: ubuntu-latest
+    needs: prevent-no-label-execution
+    if: ${{ needs.prevent-no-label-execution.outputs.run == 'true' }}
+    runs-on: [self-hosted, linux, X64]
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
       matrix:
         rosdistro:
-          - galactic
           - humble
         container-suffix:
+          - ""
           - -cuda
         include:
-          - rosdistro: galactic
-            container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest
-            build-depends-repos: build_depends.repos
           - rosdistro: humble
             container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
-            build-depends-repos: build_depends.humble.repos
+            build-depends-repos: build_depends.repos
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -62,7 +70,7 @@ jobs:
           flags: differential
 
   clang-tidy-differential:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, X64]
     container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
     needs: build-and-test-differential
     steps:
@@ -80,7 +88,7 @@ jobs:
 
       - name: Get modified files
         id: get-modified-files
-        uses: tj-actions/changed-files@v34
+        uses: tj-actions/changed-files@v35
         with:
           files: |
             **/*.cpp
@@ -94,4 +102,4 @@ jobs:
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           target-files: ${{ steps.get-modified-files.outputs.all_changed_files }}
           clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy
-          build-depends-repos: build_depends.humble.repos
+          build-depends-repos: build_depends.repos
