@@ -67,6 +67,12 @@ enum class PolygonGenerationMethod {
   OBJECT_PATH_BASE,
 };
 
+enum class ObjectBehaviorType {
+  NOT_TO_AVOID = 0,
+  LaneDriveObject,
+  FreeRunObject,
+};
+
 struct DynamicAvoidanceParameters
 {
   // common
@@ -148,6 +154,7 @@ public:
       const bool arg_is_object_on_ego_path,
       const std::optional<rclcpp::Time> & arg_latest_time_inside_ego_path)
     : uuid(tier4_autoware_utils::toHexString(predicted_object.object_id)),
+      label(predicted_object.classification.front().label),
       pose(predicted_object.kinematics.initial_pose_with_covariance.pose),
       shape(predicted_object.shape),
       vel(arg_vel),
@@ -161,6 +168,7 @@ public:
     }
 
     std::string uuid{};
+    uint8_t label{};
     geometry_msgs::msg::Pose pose{};
     autoware_auto_perception_msgs::msg::Shape shape;
     double vel{0.0};
@@ -345,8 +353,13 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool isLabelTargetObstacle(const uint8_t label) const;
-  void updateTargetObjects();
+  ObjectBehaviorType isLabelTargetObstacle(const uint8_t label) const;
+  void registerLaneDriveObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
+  void registerFreeRunObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
+  void determineWheterToAvoidAgainstLaneDriveObjects(
+    const std::vector<DynamicAvoidanceObject> & prev_objects);
+  void determineWheterToAvoidAgainstFreeRunObjects(
+    const std::vector<DynamicAvoidanceObject> & prev_objects);
   LatFeasiblePaths generateLateralFeasiblePaths(
     const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const;
   void updateRefPathBeforeLaneChange(const std::vector<PathPointWithLaneId> & ego_ref_path_points);
