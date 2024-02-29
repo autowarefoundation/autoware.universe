@@ -347,21 +347,16 @@ inline bool getMeasurementYaw(
   const autoware_auto_perception_msgs::msg::DetectedObject & object, const double & predicted_yaw,
   double & measurement_yaw)
 {
-  if (
-    object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE) {
-    return false;
-  }
   measurement_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
 
   // check orientation sign is known or not, and fix the limiting delta yaw
-  double limiting_delta_yaw = M_PI;
+  double limiting_delta_yaw = M_PI_2;
   if (
     object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {
-    limiting_delta_yaw = M_PI_2;
+    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
+    limiting_delta_yaw = M_PI;
   }
-  // limiting delta yaw
+  // limiting delta yaw, even the availability is unknown
   while (std::fabs(predicted_yaw - measurement_yaw) > limiting_delta_yaw) {
     if (measurement_yaw < predicted_yaw) {
       measurement_yaw += 2 * limiting_delta_yaw;
@@ -369,7 +364,9 @@ inline bool getMeasurementYaw(
       measurement_yaw -= 2 * limiting_delta_yaw;
     }
   }
-  return true;
+  // return false if the orientation is unknown
+  return object.kinematics.orientation_availability !=
+         autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
 }
 
 }  // namespace utils

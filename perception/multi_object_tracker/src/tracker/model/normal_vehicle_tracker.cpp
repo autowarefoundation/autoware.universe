@@ -340,10 +340,6 @@ bool NormalVehicleTracker::measureWithPose(
   // get measurement yaw angle to update
   double measurement_yaw = 0.0;
   bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
-  if (!is_yaw_available) {
-    RCLCPP_WARN(logger_, "Cannot get measurement yaw");
-    return false;
-  }
 
   // Decide dimension of measurement vector and matrix
   // velocity capability is checked only when the object has velocity measurement
@@ -396,6 +392,9 @@ bool NormalVehicleTracker::measureWithPose(
     R(1, 1) = r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;  // y - y
     R(1, 0) = R(0, 1);                                                    // y - x
     R(2, 2) = ekf_params_.r_cov_yaw;                                      // yaw - yaw
+    if (!is_yaw_available) {
+      R(2, 2) *= 1e3;  // yaw is not available, multiply large value
+    }
   } else {
     R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
