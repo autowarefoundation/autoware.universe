@@ -84,11 +84,6 @@ struct Input
   std::vector<std::string> boundary_types_to_detect{};
 };
 
-struct DerivativeDeviation
-{
-  double longitudinal_vel{0.0};
-};
-
 struct Output
 {
   std::map<std::string, double> processing_time_map{};
@@ -96,7 +91,7 @@ struct Output
   bool is_out_of_lane{};
   bool will_cross_boundary{};
   PoseDeviation trajectory_deviation{};
-  DerivativeDeviation trajectory_der_deviation{};
+  double deviation_longitudinal_vel{0.0};
   lanelet::ConstLanelets candidate_lanelets{};
   TrajectoryPoints resampled_trajectory{};
   std::vector<LinearRing2d> vehicle_footprints{};
@@ -144,7 +139,7 @@ private:
   Param param_;
   std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
 
-  static DerivativeDeviation calcLongitudinalDeviationDerivatives(
+  static double calcLongitudinalDeviationDerivatives(
     const Trajectory & trajectory, const double dist_threshold, const double yaw_threshold,
     const Input & input);
 
