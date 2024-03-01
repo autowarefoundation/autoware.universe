@@ -80,8 +80,12 @@ void visualizeBound(
       if (diff_angle == 0.0) {
         return std::make_pair(normal_vector_angle, width);
       }
-
-      return std::make_pair(normal_vector_angle, width / std::sin(diff_angle));
+      const float adp_width = width / std::sin(diff_angle);
+      if(std::abs(adp_width)>1.0){
+        return std::make_pair(normal_vector_angle, adp_width / std::abs(adp_width));
+      }else{
+        return std::make_pair(normal_vector_angle, adp_width);
+      }
     }();
 
     normal_vector_angles.push_back(normal_vector_angle);
