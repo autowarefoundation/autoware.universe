@@ -205,7 +205,7 @@ private:
   bool close_ndt_pose_source_ = false;
   struct trusted_pose_
   {
-    double pose_avarage_rmse_xy = 0.0;
+    double pose_average_rmse_xy = 0.0;
     double yaw_rmse = 0.0;
   } trustedPose;
 

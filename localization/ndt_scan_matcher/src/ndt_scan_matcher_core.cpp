@@ -331,7 +331,7 @@ void NDTScanMatcher::callback_trusted_source_pose(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr)
 {
   trusted_source_pose_ = *pose_conv_msg_ptr;
-  trustedPose.pose_avarage_rmse_xy = (std::sqrt(trusted_source_pose_.pose.covariance[0]) +
+  trustedPose.pose_average_rmse_xy = (std::sqrt(trusted_source_pose_.pose.covariance[0]) +
                                       std::sqrt(trusted_source_pose_.pose.covariance[7])) /
                                      2;
   trustedPose.yaw_rmse = std::sqrt(trusted_source_pose_.pose.covariance[35]);
@@ -595,13 +595,13 @@ std::array<double, 36> NDTScanMatcher::covariance_modifier(
   }
 
   if (
-    trustedPose.pose_avarage_rmse_xy <= 0.10 &&
+    trustedPose.pose_average_rmse_xy <= 0.10 &&
     trustedPose.yaw_rmse < std::sqrt(in_ndt_covariance[35])) {
     close_ndt_pose_source_ = true;
-  } else if (trustedPose.pose_avarage_rmse_xy <= 0.10) {
+  } else if (trustedPose.pose_average_rmse_xy <= 0.10) {
     ndt_covariance[0] = 1000000;
     ndt_covariance[7] = 1000000;
-  } else if (trustedPose.pose_avarage_rmse_xy <= 0.25) {
+  } else if (trustedPose.pose_average_rmse_xy <= 0.25) {
     /*
      * ndt_rmse = ndt_max_rmse_meters - (gnss_rmse * (ndt_max_rmse_meters - ndt_min_rmse_meters) /
      * normalization_coeff) ndt_min_rmse_meters = in_ndt_rmse ndt_max_rmse_meters = in_ndt_rmse  * 2
