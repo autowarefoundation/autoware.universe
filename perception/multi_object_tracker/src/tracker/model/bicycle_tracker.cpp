@@ -297,6 +297,33 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   return true;
 }
 
+autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
+{
+  autoware_auto_perception_msgs::msg::DetectedObject updating_object;
+
+  // OBJECT SHAPE MODEL
+  // convert to bounding box if input is convex shape
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    utils::convertConvexHullToBoundingBox(object, updating_object);
+  } else {
+    updating_object = object;
+  }
+
+  // UNCERTAINTY MODEL
+  if (!object.kinematics.has_position_covariance) {
+    auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
+    pose_cov[utils::MSG_COV_IDX::X_X] = ekf_params_.r_cov_x;        // x - x
+    pose_cov[utils::MSG_COV_IDX::X_Y] = 0;                          // x - y
+    pose_cov[utils::MSG_COV_IDX::Y_X] = 0;                          // y - x
+    pose_cov[utils::MSG_COV_IDX::Y_Y] = ekf_params_.r_cov_y;        // y - y
+    pose_cov[utils::MSG_COV_IDX::YAW_YAW] = ekf_params_.r_cov_yaw;  // yaw - yaw
+  }
+
+  return updating_object;
+}
+
 bool BicycleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
@@ -328,26 +355,17 @@ bool BicycleTracker::measureWithPose(
 
   // Set noise covariance matrix R
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
-  if (!object.kinematics.has_position_covariance) {
-    R(0, 0) = ekf_params_.r_cov_x;  // x - x
-    R(0, 1) = 0.0;                  // x - y
-    R(1, 1) = ekf_params_.r_cov_y;  // y - y
-    R(1, 0) = R(0, 1);              // y - x
-    if (is_yaw_available) {
-      R(2, 2) = ekf_params_.r_cov_yaw;  // yaw - yaw
-    }
-  } else {
-    R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-    R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-    R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
-    R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    if (is_yaw_available) {
-      R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
-      R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
-      R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
-      R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
-      R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
-    }
+  const auto & pose_cov = object.kinematics.pose_with_covariance.covariance;
+  R(0, 0) = pose_cov[utils::MSG_COV_IDX::X_X];
+  R(0, 1) = pose_cov[utils::MSG_COV_IDX::X_Y];
+  R(1, 0) = pose_cov[utils::MSG_COV_IDX::Y_X];
+  R(1, 1) = pose_cov[utils::MSG_COV_IDX::Y_Y];
+  if (is_yaw_available) {
+    R(0, 2) = pose_cov[utils::MSG_COV_IDX::X_YAW];
+    R(1, 2) = pose_cov[utils::MSG_COV_IDX::Y_YAW];
+    R(2, 0) = pose_cov[utils::MSG_COV_IDX::YAW_X];
+    R(2, 1) = pose_cov[utils::MSG_COV_IDX::YAW_Y];
+    R(2, 2) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
   }
 
   // ekf update
@@ -381,27 +399,14 @@ bool BicycleTracker::measureWithPose(
 bool BicycleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  // if the input shape is convex type, convert it to bbox type
-  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    bbox_object = object;
-  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
-    // convert cylinder to bbox
-    bbox_object.shape.dimensions.x = object.shape.dimensions.x;
-    bbox_object.shape.dimensions.y = object.shape.dimensions.x;
-    bbox_object.shape.dimensions.z = object.shape.dimensions.z;
-  } else {
-    utils::convertConvexHullToBoundingBox(object, bbox_object);
-  }
-
   constexpr float gain = 0.9;
-  bounding_box_.length =
-    gain * bounding_box_.length + (1.0 - gain) * bbox_object.shape.dimensions.x;
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * bbox_object.shape.dimensions.y;
-  bounding_box_.height =
-    gain * bounding_box_.height + (1.0 - gain) * bbox_object.shape.dimensions.z;
+
+  // update object size
+  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
+  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
+  bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
   last_input_bounding_box_ = {
-    bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y, bbox_object.shape.dimensions.z};
+    object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
 
   // set minimum size
   bounding_box_.length = std::max(bounding_box_.length, 0.3);
@@ -417,7 +422,7 @@ bool BicycleTracker::measureWithShape(
 
 bool BicycleTracker::measure(
   const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & /*self_transform*/)
+  const geometry_msgs::msg::Transform & self_transform)
 {
   const auto & current_classification = getClassification();
   object_ = object;
@@ -431,8 +436,11 @@ bool BicycleTracker::measure(
       (time - last_update_time_).seconds());
   }
 
-  measureWithPose(object);
-  measureWithShape(object);
+  const autoware_auto_perception_msgs::msg::DetectedObject updating_object =
+    getUpdatingObject(object, self_transform);
+
+  measureWithPose(updating_object);
+  measureWithShape(updating_object);
 
   return true;
 }

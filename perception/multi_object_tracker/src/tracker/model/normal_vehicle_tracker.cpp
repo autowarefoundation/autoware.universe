@@ -432,15 +432,16 @@ bool NormalVehicleTracker::measureWithPose(
 
   // Set noise covariance matrix R
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
-  R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-  R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-  R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
-  R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-  R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
-  R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
-  R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
-  R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
-  R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+  const auto & pose_cov = object.kinematics.pose_with_covariance.covariance;
+  R(0, 0) = pose_cov[utils::MSG_COV_IDX::X_X];
+  R(0, 1) = pose_cov[utils::MSG_COV_IDX::X_Y];
+  R(1, 0) = pose_cov[utils::MSG_COV_IDX::Y_X];
+  R(1, 1) = pose_cov[utils::MSG_COV_IDX::Y_Y];
+  R(0, 2) = pose_cov[utils::MSG_COV_IDX::X_YAW];
+  R(1, 2) = pose_cov[utils::MSG_COV_IDX::Y_YAW];
+  R(2, 0) = pose_cov[utils::MSG_COV_IDX::YAW_X];
+  R(2, 1) = pose_cov[utils::MSG_COV_IDX::YAW_Y];
+  R(2, 2) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
   if (is_velocity_available) {
     R(3, 3) = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
   }
@@ -476,12 +477,13 @@ bool NormalVehicleTracker::measureWithPose(
 bool NormalVehicleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  constexpr float gain = 0.8;
+  constexpr float gain = 0.2;
+  constexpr float gain_inv = 1.0 - gain;
 
   // update object size
-  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
-  bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
+  bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
+  bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
+  bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
   last_input_bounding_box_ = {
     object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
 
@@ -490,10 +492,10 @@ bool NormalVehicleTracker::measureWithShape(
   Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  X_t(IDX::X) = X_t(IDX::X) + (1.0 - gain) * tracking_offset_.x();
-  X_t(IDX::Y) = X_t(IDX::Y) + (1.0 - gain) * tracking_offset_.y();
-  tracking_offset_.x() = gain * tracking_offset_.x();
-  tracking_offset_.y() = gain * tracking_offset_.y();
+  X_t(IDX::X) = X_t(IDX::X) + gain * tracking_offset_.x();
+  X_t(IDX::Y) = X_t(IDX::Y) + gain * tracking_offset_.y();
+  tracking_offset_.x() = gain_inv * tracking_offset_.x();
+  tracking_offset_.y() = gain_inv * tracking_offset_.y();
   ekf_.init(X_t, P_t);
 
   // update lf, lr
