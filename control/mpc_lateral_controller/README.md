@@ -226,6 +226,8 @@ Some commonly used signals are listed below:
 | lateral error w.r.t the modified reference, feeding MPC module | [5]    |
 | lateral error w.r.t the original reference, feeding mpc.cpp    | [22]   |
 
+Note: The default error output for each signal is -1.
+
 ### How to tune MPC parameters
 
 #### Set kinematics information
