@@ -129,7 +129,8 @@ private:
   rclcpp::Client<tier4_system_msgs::srv::OperateMrm>::SharedPtr client_mrm_emergency_stop_;
 
   bool requestMrmBehavior(
-    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior, bool call_or_cancel) const;
+    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior,
+    bool call_or_cancel) const;
   void logMrmCallingResult(
     const tier4_system_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
     bool is_call) const;

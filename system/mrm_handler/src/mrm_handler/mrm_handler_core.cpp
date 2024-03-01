@@ -22,9 +22,11 @@ MrmHandler::MrmHandler() : Node("mrm_handler")
 {
   // Parameter
   param_.update_rate = declare_parameter<int>("update_rate", 10);
-  param_.timeout_operation_mode_availability = declare_parameter<double>("timeout_operation_mode_availability", 0.5);
+  param_.timeout_operation_mode_availability =
+    declare_parameter<double>("timeout_operation_mode_availability", 0.5);
   param_.timeout_call_mrm_behavior = declare_parameter<double>("timeout_call_mrm_behavior", 0.01);
-  param_.timeout_cancel_mrm_behavior = declare_parameter<double>("timeout_cancel_mrm_behavior", 0.01);
+  param_.timeout_cancel_mrm_behavior =
+    declare_parameter<double>("timeout_cancel_mrm_behavior", 0.01);
   param_.use_emergency_holding = declare_parameter<bool>("use_emergency_holding", false);
   param_.timeout_emergency_recovery = declare_parameter<double>("timeout_emergency_recovery", 5.0);
   param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request", 10.0);
@@ -261,7 +263,7 @@ void MrmHandler::handlePostFailureRequest()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
-  if(requestMrmBehavior(MrmState::EMERGENCY_STOP, CALL)) {
+  if (requestMrmBehavior(MrmState::EMERGENCY_STOP, CALL)) {
     if (mrm_state_.state != MrmState::MRM_OPERATING) transitionTo(MrmState::MRM_OPERATING);
   } else {
     transitionTo(MrmState::MRM_FAILED);
@@ -270,13 +272,15 @@ void MrmHandler::handlePostFailureRequest()
 }
 
 bool MrmHandler::requestMrmBehavior(
-  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior, bool call_or_cancel) const
+  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior,
+  bool call_or_cancel) const
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
   auto request = std::make_shared<tier4_system_msgs::srv::OperateMrm::Request>();
   request->operate = call_or_cancel;  // true: call, false: cancel
-  const auto duration = std::chrono::duration<double, std::ratio<1>>(call_or_cancel ? param_.timeout_call_mrm_behavior : param_.timeout_cancel_mrm_behavior);
+  const auto duration = std::chrono::duration<double, std::ratio<1>>(
+    call_or_cancel ? param_.timeout_call_mrm_behavior : param_.timeout_cancel_mrm_behavior);
   std::shared_future<std::shared_ptr<tier4_system_msgs::srv::OperateMrm::Response>> future;
 
   const auto behavior2string = [](const int behavior) {
@@ -317,17 +321,23 @@ bool MrmHandler::requestMrmBehavior(
       return false;
   }
 
-  if(future.wait_for(duration) == std::future_status::ready) {
+  if (future.wait_for(duration) == std::future_status::ready) {
     const auto result = future.get();
     if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), call_or_cancel ? "%s is operated." : "%s is canceled.", behavior2string(mrm_behavior));
+      RCLCPP_WARN(
+        this->get_logger(), call_or_cancel ? "%s is operated." : "%s is canceled.",
+        behavior2string(mrm_behavior));
       return true;
     } else {
-      RCLCPP_ERROR(this->get_logger(), call_or_cancel ? "%s failed to operate." : "%s failed to cancel.", behavior2string(mrm_behavior));
+      RCLCPP_ERROR(
+        this->get_logger(), call_or_cancel ? "%s failed to operate." : "%s failed to cancel.",
+        behavior2string(mrm_behavior));
       return false;
     }
   } else {
-    RCLCPP_ERROR(this->get_logger(), call_or_cancel ? "%s call timed out." : "%s cancel timed out.", behavior2string(mrm_behavior));
+    RCLCPP_ERROR(
+      this->get_logger(), call_or_cancel ? "%s call timed out." : "%s cancel timed out.",
+      behavior2string(mrm_behavior));
     return false;
   }
 }
