@@ -8,7 +8,7 @@ jobs:
   pre-check:
     runs-on: ubuntu-latest
     outputs:
-      run-check: ${{ steps.set-run-check.outputs.run }}
+      run-check: ${{ steps.paths_filter.outputs.json_or_yaml }}
     steps:
       - uses: actions/checkout@v3
       - uses: dorny/paths-filter@v3
@@ -18,8 +18,6 @@ jobs:
             json_or_yaml:
               - '**/schema/*.schema.json'
               - '**/config/*.param.yaml'
-      - id: set-run-check
-        run: echo "::set-output name=run::${{ steps.paths_filter.outputs.json_or_yaml == 'true' }}"
 
   json-schema-check:
     needs: pre-check
