@@ -38,6 +38,9 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#define CALL true
+#define CANCEL false
+
 struct HazardLampPolicy
 {
   bool emergency;
@@ -47,6 +50,8 @@ struct Param
 {
   int update_rate;
   double timeout_operation_mode_availability;
+  double timeout_call_mrm_behavior;
+  double timeout_cancel_mrm_behavior;
   bool use_emergency_holding;
   double timeout_emergency_recovery;
   double timeout_takeover_request;
@@ -123,10 +128,8 @@ private:
   rclcpp::CallbackGroup::SharedPtr client_mrm_emergency_stop_group_;
   rclcpp::Client<tier4_system_msgs::srv::OperateMrm>::SharedPtr client_mrm_emergency_stop_;
 
-  void callMrmBehavior(
-    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
-  void cancelMrmBehavior(
-    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
+  bool requestMrmBehavior(
+    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior, bool call_or_cancel) const;
   void logMrmCallingResult(
     const tier4_system_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
     bool is_call) const;
@@ -151,6 +154,7 @@ private:
   void transitionTo(const int new_state);
   void updateMrmState();
   void operateMrm();
+  void handlePostFailureRequest();
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
   bool isEmergency() const;
