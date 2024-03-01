@@ -291,42 +291,111 @@ bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
 
 bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
 {
-  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
-  const auto current_lanes = utils::getCurrentLanes(planner_data_);
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+  // const auto & dynamic_object = planner_data_->dynamic_object;
+  const auto & route_handler = planner_data_->route_handler;
+  // const double backward_path_length =
+  //   planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
+  const auto target_lanes = utils::getCurrentLanes(planner_data_);
+
+  if (target_lanes.empty()) return false;
+
+  // auto calc_right_lateral_offset = [&](
+  //                                    const lanelet::ConstLineString2d & boundary_line,
+  //                                    const geometry_msgs::msg::Pose & search_pose) {
+  //   std::vector<geometry_msgs::msg::Point> boundary_path;
+  //   std::for_each(
+  //     boundary_line.begin(), boundary_line.end(), [&boundary_path](const auto & boundary_point) {
+  //       const double x = boundary_point.x();
+  //       const double y = boundary_point.y();
+  //       boundary_path.push_back(tier4_autoware_utils::createPoint(x, y, 0.0));
+  //     });
+
+  //   return std::fabs(calcLateralOffset(boundary_path, search_pose.position));
+  // };
+
+  // auto calc_left_lateral_offset = [&](
+  //                                   const lanelet::ConstLineString2d & boundary_line,
+  //                                   const geometry_msgs::msg::Pose & search_pose) {
+  //   return -calc_right_lateral_offset(boundary_line, search_pose);
+  // };
+
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
   const auto vehicle_footprint =
     transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
 
-  auto calc_right_lateral_offset = [&](
-                                     const lanelet::ConstLineString2d & boundary_line,
-                                     const geometry_msgs::msg::Pose & search_pose) {
-    std::vector<geometry_msgs::msg::Point> boundary_path;
-    std::for_each(
-      boundary_line.begin(), boundary_line.end(), [&boundary_path](const auto & boundary_point) {
-        const double x = boundary_point.x();
-        const double y = boundary_point.y();
-        boundary_path.push_back(tier4_autoware_utils::createPoint(x, y, 0.0));
-      });
+  const auto target_backward_lanes = behavior_path_planner::utils::getBackwardLanelets(
+    *route_handler, target_lanes, current_pose, 200.0);
 
-    return std::fabs(calcLateralOffset(boundary_path, search_pose.position));
-  };
+  const auto centerline_path =
+    route_handler->getCenterLinePath(target_lanes, 0.0, std::numeric_limits<double>::max());
 
-  auto calc_left_lateral_offset = [&](
-                                    const lanelet::ConstLineString2d & boundary_line,
-                                    const geometry_msgs::msg::Pose & search_pose) {
-    return -calc_right_lateral_offset(boundary_line, search_pose);
-  };
+  double smallest_lateral_offset = std::numeric_limits<double>::max();
+  geometry_msgs::msg::Pose ego_overhang_point;
+  for (const auto & point : vehicle_footprint) {
+    geometry_msgs::msg::Pose point_pose;
+    point_pose.position.x = point.x();
+    point_pose.position.y = point.y();
+    point_pose.position.z = 0.0;
 
-  for (const auto & current_lane : current_lanes) {
-    const lanelet::ConstLineString2d current_left_bound = current_lane.leftBound2d();
-    const lanelet::ConstLineString2d current_right_bound = current_lane.rightBound2d();
-    const double current_left_dist = calc_left_lateral_offset(current_left_bound, current_pose);
-    const double current_right_dist = calc_right_lateral_offset(current_right_bound, current_pose);
-    const double current_lane_width = std::fabs(current_left_dist) + std::fabs(current_right_dist);
+    const auto nearest_index = motion_utils::findNearestIndex(centerline_path.points, point_pose);
+    if (!nearest_index) continue;
 
-    std::cerr << "current_lane_id" << current_lane.id() << " current_lane_width "
-              << current_lane_width << "\n";
+    const auto point_msg = tier4_autoware_utils::createPoint(point.x(), point.y(), 0.0);
+    const auto lateral_offset =
+      std::abs(motion_utils::calcLateralOffset(centerline_path.points, point_msg));
+    if (lateral_offset < smallest_lateral_offset) {
+      smallest_lateral_offset = lateral_offset;
+      ego_overhang_point.position.x = point.x();
+      ego_overhang_point.position.y = point.y();
+      ego_overhang_point.position.z = 0.0;
+    }
   }
+
+  if (smallest_lateral_offset == std::numeric_limits<double>::max()) return false;
+  std::cerr << "ego_overhang_point.position.x " << ego_overhang_point.position.x << "\n";
+  std::cerr << "ego_overhang_point.position.y " << ego_overhang_point.position.y << "\n";
+  std::cerr << "ego_overhang_point.position.z " << ego_overhang_point.position.z << "\n";
+  std::cerr << "smallest_lateral_offset " << smallest_lateral_offset << "\n";
+
+  // // filtering objects with velocity, position and class
+  // const auto filtered_objects = utils::path_safety_checker::filterObjects(
+  //   dynamic_object, route_handler, target_lanes, current_pose.position,
+  //   objects_filtering_params_);
+
+  // if (filtered_objects.objects.empty()) return false;
+
+  // for (const auto & point : vehicle_footprint) {
+  //   geometry_msgs::msg::Pose point_pose;
+  //   point_pose.position.x = point.x();
+  //   point_pose.position.y = point.y();
+  //   point_pose.position.z = point.z();
+
+  //   lanelet::Lanelet closest_lanelet;
+  //   lanelet::utils::query::getClosestLanelet(target_lanes, point_pose, &closest_lanelet);
+  //   lanelet::ConstLanelet closest_lanelet_const(closest_lanelet.constData());
+  //   // Check backwards just in case the Vehicle behind ego is in a different lanelet
+  //   const auto prev_lanes = route_handler->getPreviousLanelets(closest_lanelet);
+  //   lanelet::ConstLanelets relevant_lanelets{closest_lanelet_const};
+  //   relevant_lanelets.insert(relevant_lanelets.end(), prev_lanes.begin(), prev_lanes.end());
+
+  //   for (const auto & current_lane : relevant_lanelets) {
+  //     const lanelet::ConstLineString2d current_left_bound = current_lane.leftBound2d();
+  //     const lanelet::ConstLineString2d current_right_bound = current_lane.rightBound2d();
+  //     const double current_left_dist = calc_left_lateral_offset(current_left_bound,
+  //     current_pose); const double current_right_dist =
+  //       calc_right_lateral_offset(current_right_bound, current_pose);
+  //     const double current_lane_width =
+  //       std::fabs(current_left_dist) + std::fabs(current_right_dist);
+
+  //     // filtering objects based on the current position's lane
+  //     const auto target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
+  //       target_lanes, route_handler, filtered_objects, objects_filtering_params_);
+
+  //     std::cerr << "current_lane_id " << current_lane.id() << " current_lane_width "
+  //               << current_lane_width << "\n";
+  //   }
+  // }
   return false;
 }
 
