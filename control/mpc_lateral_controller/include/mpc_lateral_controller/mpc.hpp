@@ -407,7 +407,7 @@ private:
 
 public:
   MPCTrajectory m_reference_trajectory;  // Reference trajectory to be followed.
-  MPCTrajectory mpc_traj_raw;            // The raw trajectory from the planner.
+  MPCTrajectory m_mpc_traj_raw;            // The raw trajectory from the planner.
   MPCParam m_param;                      // MPC design parameters.
   std::deque<double> m_input_buffer;     // MPC output buffer for delay time compensation.
   double m_raw_steer_cmd_prev = 0.0;     // Previous MPC raw output.

@@ -82,7 +82,7 @@ bool MPC::calculateMPC(
 
   // get the diagnostic data w.r.t. the original trajectory
   const auto [success_data_traj_raw, mpc_data_traj_raw] =
-    getData(mpc_traj_raw, current_steer, current_kinematics);
+    getData(m_mpc_traj_raw, current_steer, current_kinematics);
   if (!success_data_traj_raw) {
     return fail_warn_throttle("fail to get MPC Data for the raw trajectory. Stop MPC.");
   }
@@ -192,11 +192,11 @@ void MPC::setReferenceTrajectory(
   const double ego_offset_to_segment = motion_utils::calcLongitudinalOffsetToSegment(
     trajectory_msg.points, nearest_seg_idx, current_kinematics.pose.pose.position);
 
-  mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
+  m_mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
 
   // resampling
   const auto [success_resample, mpc_traj_resampled] = MPCUtils::resampleMPCTrajectoryByDistance(
-    mpc_traj_raw, param.traj_resample_dist, nearest_seg_idx, ego_offset_to_segment);
+    m_mpc_traj_raw, param.traj_resample_dist, nearest_seg_idx, ego_offset_to_segment);
   if (!success_resample) {
     warn_throttle("[setReferenceTrajectory] spline error when resampling by distance");
     return;
@@ -233,7 +233,7 @@ void MPC::setReferenceTrajectory(
    */
   if (param.extend_trajectory_for_end_yaw_control) {
     MPCUtils::extendTrajectoryInYawDirection(
-      mpc_traj_raw.yaw.back(), param.traj_resample_dist, m_is_forward_shift, mpc_traj_smoothed);
+      m_mpc_traj_raw.yaw.back(), param.traj_resample_dist, m_is_forward_shift, mpc_traj_smoothed);
   }
 
   // calculate yaw angle
