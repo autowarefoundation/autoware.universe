@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  pre-check:
+  check-if-relevant-files-changed:
     runs-on: ubuntu-latest
     outputs:
       run-check: ${{ steps.paths_filter.outputs.json_or_yaml }}
@@ -20,8 +20,8 @@ jobs:
               - '**/config/*.param.yaml'
 
   json-schema-check:
-    needs: pre-check
-    if: needs.pre-check.outputs.run-check == 'true'
+    needs: check-if-relevant-files-changed
+    if: needs.check-if-relevant-files-changed.outputs.run-check == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -31,8 +31,8 @@ jobs:
         uses: autowarefoundation/autoware-github-actions/json-schema-check@v1
 
   no-relevant-changes:
-    needs: pre-check
-    if: needs.pre-check.outputs.run-check == 'false'
+    needs: check-if-relevant-files-changed
+    if: needs.check-if-relevant-files-changed.outputs.run-check == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Dummy step
