@@ -50,7 +50,7 @@ void cut_predicted_path_beyond_line(
     }
     path_segment.first = path_segment.second;
   }
-  if(found) {
+  if (found) {
     auto cut_idx = stop_line_idx;
     double arc_length = 0;
     while (cut_idx > 0 && arc_length < object_front_overhang) {

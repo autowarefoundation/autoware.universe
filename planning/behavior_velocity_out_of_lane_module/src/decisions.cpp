@@ -79,7 +79,7 @@ std::optional<std::pair<double, double>> object_time_to_range(
 
   for (const auto & predicted_path : object.kinematics.predicted_paths) {
     const auto unique_path_points = motion_utils::removeOverlapPoints(predicted_path.path);
-    if(unique_path_points.size() < 2) continue;
+    if (unique_path_points.size() < 2) continue;
     const auto time_step = rclcpp::Duration(predicted_path.time_step).seconds();
     const auto enter_point =
       geometry_msgs::msg::Point().set__x(range.entering_point.x()).set__y(range.entering_point.y());
