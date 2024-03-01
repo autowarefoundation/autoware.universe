@@ -180,7 +180,7 @@ double LaneDepartureChecker::calcLongitudinalDeviationDerivatives(
   const auto & ref_point = trajectory.points.at(nearest_idx);
 
   const auto current_vel = input.current_odom->twist.twist.linear.x;
-  const auto & ref_vel = ref_point.longitudinal_velocity_mps;
+  const double ref_vel = ref_point.longitudinal_velocity_mps;
   deviation_longitudinal_vel = current_vel - ref_vel;
 
   return deviation_longitudinal_vel;
