@@ -38,9 +38,9 @@
             "process_noise",
             "simple_1d_filter_parameters",
             "diagnostics",
-            "misc-break things to test the action"
+            "misc"
           ],
-          "additionalProperties": false
+          "additionalProperties": true
         }
       },
       "required": ["ros__parameters"],
