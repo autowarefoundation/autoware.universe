@@ -8,28 +8,28 @@
       "properties": {
         "update_rate_hz": {
           "type": "number",
-          "description": "The update rate [hz] for the `onTimer` function. Should be the same as the frame rate of input topics.",
+          "description": "The update rate [hz] of the output topic",
           "default": "20.0",
           "minimum": 0.0
         },
         "new_frame_id": {
           "type": "string",
-          "description": "The header frame_id of the output topic.",
+          "description": "The header frame_id of the output topic",
           "default": "base_link"
         },
         "use_twist_compensation": {
           "type": "boolean",
-          "description": "Flag to enable the compensation to linear of ego vehicle's twist. If true, the twist of the output objects' topic is compensated by the ego vehicle linear motion.",
+          "description": "Flag to enable the linear compensation of ego vehicle's twist",
           "default": "false"
         },
         "use_twist_yaw_compensation": {
           "type": "boolean",
-          "description": "Flag to enable the compensation to yaw rotation of ego vehicle's twist. If true, the ego motion compensation will also consider yaw motion of the ego vehicle.",
+          "description": "Flag to enable the compensation of yaw rotation of ego vehicle's twist",
           "default": "false"
         },
         "static_object_speed_threshold": {
           "type": "number",
-          "description": "Threshold to determine the flag `is_stationary`. If the velocity is lower than this parameter, the flag `is_stationary` of DetectedObject is set to `true` and dealt as a static object.",
+          "description": "Threshold to treat detected objects as static objects",
           "default": "1.0"
         }
       },
