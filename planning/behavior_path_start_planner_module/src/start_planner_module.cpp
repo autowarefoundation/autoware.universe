@@ -1418,7 +1418,7 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
       const double drivable_area_margin = planner_data_->parameters.vehicle_width;
       output.drivable_area_info.drivable_margin =
         planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
-      break;
+      return;
     }
     default: {
       const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
@@ -1432,7 +1432,7 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
           ? utils::combineDrivableAreaInfo(
               current_drivable_area_info, getPreviousModuleOutput().drivable_area_info)
           : current_drivable_area_info;
-      break;
+      return;
     }
   }
 }
