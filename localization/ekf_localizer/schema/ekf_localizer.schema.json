@@ -40,7 +40,7 @@
             "diagnostics",
             "misc"
           ],
-          "additionalProperties": true
+          "additionalProperties": false
         }
       },
       "required": ["ros__parameters"],
