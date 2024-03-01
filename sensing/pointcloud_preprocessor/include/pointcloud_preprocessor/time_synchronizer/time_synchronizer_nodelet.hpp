@@ -99,7 +99,7 @@ inline std::string replace_topic_name_postfix(
     return original_topic_name + postfix;
   } else {
     // replace the last element with the new postfix
-    return original_topic_name.substr(0, pos) + postfix;
+    return original_topic_name.substr(0, pos) + '/' + postfix;
   }
 }
 namespace pointcloud_preprocessor
