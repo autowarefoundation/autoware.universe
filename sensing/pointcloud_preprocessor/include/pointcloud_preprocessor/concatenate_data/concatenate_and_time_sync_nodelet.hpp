@@ -85,24 +85,6 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-// replace topic name postfix
-inline std::string replace_topic_name_postfix(
-  const std::string & original_topic_name, const std::string & postfix)
-{
-  // separate the topic name by '/' and replace the last element with the new postfix
-  size_t pos = original_topic_name.find_last_of("/");
-  if (pos == std::string::npos) {
-    // not found '/': this is not a namespaced topic
-    std::cerr
-      << "The topic name is not namespaced. The postfix will be added to the end of the topic name."
-      << std::endl;
-    return original_topic_name + postfix;
-  } else {
-    // replace the last element with the new postfix
-    return original_topic_name.substr(0, pos) + "/" + postfix;
-  }
-}
-
 namespace pointcloud_preprocessor
 {
 using autoware_point_types::PointXYZI;
@@ -198,6 +180,8 @@ private:
   void timer_callback();
 
   void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  std::string replaceSyncTopicNamePostfix(
+    const std::string & original_topic_name, const std::string & postfix);
 
   /** \brief processing time publisher. **/
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;

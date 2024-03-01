@@ -61,7 +61,8 @@
 #include <utility>
 #include <vector>
 
-#define POSTFIX_NAME "_synchronized"  // default postfix name for synchronized pointcloud
+#define DEFAULT_SYNC_TOPIC_POSTFIX \
+  "_synchronized"  // default postfix name for synchronized pointcloud
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -190,15 +191,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   // Transformed Raw PointCloud2 Publisher to publish the transformed pointcloud
   if (publish_synchronized_pointcloud_) {
     for (auto & topic : input_topics_) {
-      std::string new_topic = replace_topic_name_postfix(topic, synchronized_pointcloud_postfix_);
-      if (new_topic == topic) {
-        RCLCPP_WARN_STREAM(
-          get_logger(),
-          "The topic name "
-            << topic
-            << " does not have a postfix. The postfix will be added to the end of the topic name.");
-        new_topic = topic + POSTFIX_NAME;
-      }
+      std::string new_topic = replaceSyncTopicNamePostfix(topic, synchronized_pointcloud_postfix_);
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
       transformed_raw_pc_publisher_map_.insert({topic, publisher});
@@ -239,6 +232,35 @@ void PointCloudConcatenateDataSynchronizerComponent::transformPointCloud(
   } else {
     out = std::make_shared<PointCloud2>(*in);
   }
+}
+
+std::string PointCloudConcatenateDataSynchronizerComponent::replaceSyncTopicNamePostfix(
+  const std::string & original_topic_name, const std::string & postfix)
+{
+  std::string replaced_topic_name;
+  // separate the topic name by '/' and replace the last element with the new postfix
+  size_t pos = original_topic_name.find_last_of("/");
+  if (pos == std::string::npos) {
+    // not found '/': this is not a namespaced topic
+    RCLCPP_WARN_STREAM(
+      get_logger(),
+      "The topic name is not namespaced. The postfix will be added to the end of the topic name.");
+    return original_topic_name + postfix;
+  } else {
+    // replace the last element with the new postfix
+    replaced_topic_name = original_topic_name.substr(0, pos) + "/" + postfix;
+  }
+
+  // if topic name is the same with original topic name, add postfix to the end of the topic name
+  if (replaced_topic_name == original_topic_name) {
+    RCLCPP_WARN_STREAM(
+      get_logger(), "The topic name "
+                      << original_topic_name
+                      << " have the same postfix with synchronized pointcloud. We use the postfix "
+                         "to the end of the topic name.");
+    replaced_topic_name = original_topic_name + DEFAULT_SYNC_TOPIC_POSTFIX;
+  }
+  return replaced_topic_name;
 }
 
 /**
