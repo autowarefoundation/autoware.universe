@@ -39,6 +39,7 @@
 #include <vector>
 
 using behavior_path_planner::utils::parking_departure::initializeCollisionCheckDebugMap;
+using motion_utils::calcLateralOffset;
 using motion_utils::calcLongitudinalOffsetPose;
 using tier4_autoware_utils::calcOffsetPose;
 
@@ -219,6 +220,7 @@ bool StartPlannerModule::receivedNewRoute() const
 
 bool StartPlannerModule::requiresDynamicObjectsCollisionDetection() const
 {
+  isPreventingRearVehicleFromCrossing();
   return parameters_->safety_check_params.enable_safety_check && status_.driving_forward &&
          !isOverlapWithCenterLane();
 }
@@ -285,6 +287,47 @@ bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
     lanelet::utils::getArcCoordinates(current_lanes, current_pose).distance;
 
   return std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road;
+}
+
+bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
+{
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const auto current_lanes = utils::getCurrentLanes(planner_data_);
+  const auto local_vehicle_footprint = vehicle_info_.createFootprint();
+  const auto vehicle_footprint =
+    transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
+
+  auto calc_right_lateral_offset = [&](
+                                     const lanelet::ConstLineString2d & boundary_line,
+                                     const geometry_msgs::msg::Pose & search_pose) {
+    std::vector<geometry_msgs::msg::Point> boundary_path;
+    std::for_each(
+      boundary_line.begin(), boundary_line.end(), [&boundary_path](const auto & boundary_point) {
+        const double x = boundary_point.x();
+        const double y = boundary_point.y();
+        boundary_path.push_back(tier4_autoware_utils::createPoint(x, y, 0.0));
+      });
+
+    return std::fabs(calcLateralOffset(boundary_path, search_pose.position));
+  };
+
+  auto calc_left_lateral_offset = [&](
+                                    const lanelet::ConstLineString2d & boundary_line,
+                                    const geometry_msgs::msg::Pose & search_pose) {
+    return -calc_right_lateral_offset(boundary_line, search_pose);
+  };
+
+  for (const auto & current_lane : current_lanes) {
+    const lanelet::ConstLineString2d current_left_bound = current_lane.leftBound2d();
+    const lanelet::ConstLineString2d current_right_bound = current_lane.rightBound2d();
+    const double current_left_dist = calc_left_lateral_offset(current_left_bound, current_pose);
+    const double current_right_dist = calc_right_lateral_offset(current_right_bound, current_pose);
+    const double current_lane_width = std::fabs(current_left_dist) + std::fabs(current_right_dist);
+
+    std::cerr << "current_lane_id" << current_lane.id() << " current_lane_width "
+              << current_lane_width << "\n";
+  }
+  return false;
 }
 
 bool StartPlannerModule::isOverlapWithCenterLane() const
