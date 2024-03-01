@@ -52,31 +52,4 @@ Autoware objects label is defined in [ObjectClassification.idl](https://gitlab.c
 
 ### Parameters
 
-- `update_rate_hz` (double) [hz]
-  - Default parameter is 20.0
-
-This parameter is update rate for the `onTimer` function.
-This parameter should be same as the frame rate of input topics.
-
-- `new_frame_id` (string)
-  - Default parameter is "base_link"
-
-This parameter is the header frame_id of the output topic.
-
-- `use_twist_compensation` (bool)
-  - Default parameter is "true"
-
-This parameter is the flag to use the compensation to linear of ego vehicle's twist.
-If the parameter is true, then the twist of the output objects' topic is compensated by the ego vehicle linear motion.
-
-- `use_twist_yaw_compensation` (bool)
-  - Default parameter is "false"
-
-This parameter is the flag to use the compensation to yaw rotation of ego vehicle's twist.
-If the parameter is true, then the ego motion compensation will also consider yaw motion of the ego vehicle.
-
-- `static_object_speed_threshold` (float) [m/s]
-  - Default parameter is 1.0
-
-This parameter is the threshold to determine the flag `is_stationary`.
-If the velocity is lower than this parameter, the flag `is_stationary` of DetectedObject is set to `true` and dealt as a static object.
+{{ json_to_markdown("perception/radar_tracks_msgs_converter/schema/radar_tracks_msgs_converter.schema.json") }}
