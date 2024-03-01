@@ -168,6 +168,7 @@ void MrmHandler::publishHazardCmd()
   using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
   HazardLightsCommand msg;
 
+  msg.stamp = this->now();
   if (is_emergency_holding_) {
     // turn hazard on during emergency holding
     msg.command = HazardLightsCommand::ENABLE;
