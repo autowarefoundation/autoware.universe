@@ -105,6 +105,7 @@ NormalVehicleTracker::NormalVehicleTracker(
     X(IDX::VEL) = 0.0;
   }
 
+  // UNCERTAINTY MODEL
   // initialize state covariance matrix P
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   if (!object.kinematics.has_position_covariance) {
@@ -138,13 +139,15 @@ NormalVehicleTracker::NormalVehicleTracker(
     P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
   }
 
+  // MOTION MODEL (set initial state and covariance)
+  ekf_.init(X, P);
+
+  // OBJECT SHAPE MODEL
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
     last_input_bounding_box_ = bounding_box_;
   } else {
-    // past default value
-    // bounding_box_ = {4.0, 1.7, 2.0};
     autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
     utils::convertConvexHullToBoundingBox(object, bbox_object);
     bounding_box_ = {
@@ -152,16 +155,8 @@ NormalVehicleTracker::NormalVehicleTracker(
       bbox_object.shape.dimensions.z};
     last_input_bounding_box_ = bounding_box_;
   }
-  ekf_.init(X, P);
-
-  /* calc nearest corner index*/
+  // calc nearest corner index
   setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
-
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
-
   // Set lf, lr
   lf_ = std::max(bounding_box_.length * 0.3, 1.0);   // 30% front from the center, minimum of 1.0m
   lr_ = std::max(bounding_box_.length * 0.25, 1.0);  // 25% rear from the center, minimum of 1.0m
@@ -169,6 +164,7 @@ NormalVehicleTracker::NormalVehicleTracker(
 
 bool NormalVehicleTracker::predict(const rclcpp::Time & time)
 {
+  // MOTION MODEL (predict)
   const double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) {
     RCLCPP_WARN(logger_, "dt is negative. (%f)", dt);
@@ -217,6 +213,8 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
    *     [ 0, 0,  0,                  0,                   1]
    *
    */
+
+  // MOTION MODEL (predict)
 
   // Current state vector X t
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
@@ -314,27 +312,11 @@ bool NormalVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
 bool NormalVehicleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  // predicted state
+  // current (predicted) state
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   ekf_.getX(X_t);
 
-  // get measurement yaw angle to update
-  double measurement_yaw = 0.0;
-  bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
-
-  // velocity capability is checked only when the object has velocity measurement
-  // and the predicted velocity is close to the observed velocity
-  bool is_velocity_available = false;
-  if (object.kinematics.has_twist) {
-    const double & predicted_vel = X_t(IDX::VEL);
-    const double & observed_vel = object.kinematics.twist_with_covariance.twist.linear.x;
-    if (std::fabs(predicted_vel - observed_vel) < velocity_deviation_threshold_) {
-      // Velocity deviation is small
-      is_velocity_available = true;
-    }
-  }
-
-  // Object Shape
+  // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
   autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -349,6 +331,7 @@ bool NormalVehicleTracker::measureWithPose(
     last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
     bbox_object, X_t(IDX::YAW), offset_object, tracking_offset_);
 
+  // UNCERTAINTY MODEL
   // measurement noise covariance
   float r_cov_x;
   float r_cov_y;
@@ -368,6 +351,24 @@ bool NormalVehicleTracker::measureWithPose(
     r_cov_y = ekf_params_.r_cov_y;
   }
 
+  // MOTION MODEL (update)
+
+  // get measurement yaw angle to update
+  double measurement_yaw = 0.0;
+  bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
+
+  // velocity capability is checked only when the object has velocity measurement
+  // and the predicted velocity is close to the observed velocity
+  bool is_velocity_available = false;
+  if (object.kinematics.has_twist) {
+    const double & predicted_vel = X_t(IDX::VEL);
+    const double & observed_vel = object.kinematics.twist_with_covariance.twist.linear.x;
+    if (std::fabs(predicted_vel - observed_vel) < velocity_deviation_threshold_) {
+      // Velocity deviation is small
+      is_velocity_available = true;
+    }
+  }
+
   // Decide dimension of measurement vector and matrix
   // pos x, pos y, pos yaw, (vel) depending on pose measurement
   const int dim_y = is_velocity_available ? 4 : 3;
@@ -381,6 +382,10 @@ bool NormalVehicleTracker::measureWithPose(
   C(0, IDX::X) = 1.0;    // for pos x
   C(1, IDX::Y) = 1.0;    // for pos y
   C(2, IDX::YAW) = 1.0;  // for yaw
+  if (is_velocity_available) {
+    Y(IDX::VEL, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
+    C(3, IDX::VEL) = 1.0;  // for vel
+  }
 
   // Set noise covariance matrix R
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
@@ -396,6 +401,9 @@ bool NormalVehicleTracker::measureWithPose(
     if (!is_yaw_available) {
       R(2, 2) *= 1e3;  // yaw is not available, multiply large value
     }
+    if (is_velocity_available) {
+      R(3, 3) = ekf_params_.r_cov_vel;  // vel -vel
+    }
   } else {
     R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
@@ -406,14 +414,7 @@ bool NormalVehicleTracker::measureWithPose(
     R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
     R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
     R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
-  }
-  // update the velocity when it is available
-  if (is_velocity_available) {
-    Y(IDX::VEL, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
-    C(3, IDX::VEL) = 1.0;  // for vel
-    if (!object.kinematics.has_twist_covariance) {
-      R(3, 3) = ekf_params_.r_cov_vel;  // vel -vel
-    } else {
+    if (is_velocity_available) {
       R(3, 3) = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     }
   }

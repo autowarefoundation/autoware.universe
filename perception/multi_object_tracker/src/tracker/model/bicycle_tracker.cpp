@@ -101,6 +101,7 @@ BicycleTracker::BicycleTracker(
     X(IDX::VEL) = 0.0;
   }
 
+  // UNCERTAINTY MODEL
   // initialize state covariance matrix P
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   if (!object.kinematics.has_position_covariance) {
@@ -134,19 +135,16 @@ BicycleTracker::BicycleTracker(
     P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
   }
 
+  // MOTION MODEL (set initial state and covariance)
+  ekf_.init(X, P);
+
+  // OBJECT SHAPE MODEL
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
     bounding_box_ = {1.0, 0.5, 1.7};
   }
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
-
-  ekf_.init(X, P);
-
   // Set lf, lr
   lf_ = std::max(bounding_box_.length * 0.3, 0.3);  // 30% front from the center, minimum of 0.3m
   lr_ = std::max(bounding_box_.length * 0.3, 0.3);  // 30% rear from the center, minimum of 0.3m
@@ -154,6 +152,7 @@ BicycleTracker::BicycleTracker(
 
 bool BicycleTracker::predict(const rclcpp::Time & time)
 {
+  // MOTION MODEL (predict)
   const double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) {
     RCLCPP_WARN(logger_, "dt is negative. (%f)", dt);
@@ -202,6 +201,8 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
    *     [ 0, 0,  0,                  0,                   1]
    *
    */
+
+  // MOTION MODEL (predict)
 
   // Current state vector X t
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
@@ -299,9 +300,11 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
 bool BicycleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  // predicted state
+  // current (predicted) state
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   ekf_.getX(X_t);
+
+  // MOTION MODEL (update)
 
   // get measurement yaw angle to update
   double measurement_yaw = 0.0;
@@ -318,6 +321,10 @@ bool BicycleTracker::measureWithPose(
   Y(IDX::Y, 0) = object.kinematics.pose_with_covariance.pose.position.y;
   C(0, IDX::X) = 1.0;  // for pos x
   C(1, IDX::Y) = 1.0;  // for pos y
+  if (is_yaw_available) {
+    Y(IDX::YAW, 0) = measurement_yaw;
+    C(2, IDX::YAW) = 1.0;
+  }
 
   // Set noise covariance matrix R
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
@@ -326,19 +333,15 @@ bool BicycleTracker::measureWithPose(
     R(0, 1) = 0.0;                  // x - y
     R(1, 1) = ekf_params_.r_cov_y;  // y - y
     R(1, 0) = R(0, 1);              // y - x
+    if (is_yaw_available) {
+      R(2, 2) = ekf_params_.r_cov_yaw;  // yaw - yaw
+    }
   } else {
     R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
     R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
     R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-  }
-  // update the yaw when available
-  if (dim_y == 3) {
-    Y(IDX::YAW, 0) = measurement_yaw;
-    C(2, IDX::YAW) = 1.0;
-    if (!object.kinematics.has_position_covariance) {
-      R(2, 2) = ekf_params_.r_cov_yaw;  // yaw - yaw
-    } else {
+    if (is_yaw_available) {
       R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
       R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
       R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
@@ -472,6 +475,7 @@ bool BicycleTracker::getTrackedObject(
     pose_with_cov.pose.orientation.y = filtered_quaternion.y();
     pose_with_cov.pose.orientation.z = filtered_quaternion.z();
     pose_with_cov.pose.orientation.w = filtered_quaternion.w();
+    // orientation availability is assumed to be unknown
     object.kinematics.orientation_availability =
       autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
   }
