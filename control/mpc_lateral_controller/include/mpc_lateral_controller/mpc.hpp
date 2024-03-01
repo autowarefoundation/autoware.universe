@@ -380,7 +380,7 @@ private:
     const MPCTrajectory & reference_trajectory, const MPCData & mpc_data_traj_raw,
     const MPCData & mpc_data, const MPCMatrix & mpc_matrix,
     const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
-    const Odometry & current_kinematics, bool success_data_for_diagnostic,
+    const Odometry & current_kinematics, 
     bool success_data_traj_raw) const;
 
   /**
