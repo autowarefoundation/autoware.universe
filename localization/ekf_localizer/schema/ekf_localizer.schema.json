@@ -38,7 +38,7 @@
             "process_noise",
             "simple_1d_filter_parameters",
             "diagnostics",
-            "misc"
+            "misc-break things to test the action"
           ],
           "additionalProperties": false
         }
