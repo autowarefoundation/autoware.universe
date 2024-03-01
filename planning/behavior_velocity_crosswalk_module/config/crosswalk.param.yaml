@@ -41,7 +41,7 @@
         ego_pass_first_margin_y: [3.0] # [[s]] time to vehicle margin vector for ego pass first situation (the module judges that ego don't have to stop at TTC + MARGIN < TTV condition)
         ego_pass_first_additional_margin: 0.5 # [s] additional time margin for ego pass first situation to suppress chattering
         ego_pass_later_margin_x: [0.0] # [[s]] time to vehicle margin vector for object pass first situation (the module judges that ego don't have to stop at TTV + MARGIN < TTC condition)
-        ego_pass_later_margin_y: [10.0] # [[s]] time to collision margin vector for object pass first situation (the module judges that ego don't have to stop at TTV + MARGIN < TTC condition)
+        ego_pass_later_margin_y: [13.0] # [[s]] time to collision margin vector for object pass first situation (the module judges that ego don't have to stop at TTV + MARGIN < TTC condition)
         ego_pass_later_additional_margin: 0.5 # [s] additional time margin for object pass first situation to suppress chattering
 
         no_stop_decision: # parameters to determine if it is safe to attempt stopping before the crosswalk
@@ -53,11 +53,10 @@
         stop_object_velocity_threshold: 0.25 # [m/s] velocity threshold for the module to judge whether the objects is stopped (0.28 m/s = 1.0 kmph)
         min_object_velocity: 1.39 # [m/s] minimum object velocity (compare the estimated velocity by perception module with this parameter and adopt the larger one to calculate TTV. 1.39 m/s = 5.0 kmph)
         ## param for yielding
-        disable_stop_for_yield_cancel: true # for the crosswalks with traffic signal
         disable_yield_for_new_stopped_object: true # for the crosswalks with traffic signal
         # If the pedestrian does not move for X seconds after the ego has stopped in front the crosswalk, the module judge that the pedestrian has no intention to walk and allows the ego to proceed.
-        distance_map_for_no_intention_to_walk: [1.0, 5.0] # [m] ascending order
-        timeout_map_for_no_intention_to_walk: [1.0, 0.0] # [s]
+        distance_set_for_no_intention_to_walk: [1.0, 5.0] # [m] ascending order
+        timeout_set_for_no_intention_to_walk: [1.0, 0.0] # [s]
         timeout_ego_stop_for_yield: 1.0 # [s] If the ego maintains the stop for this amount of time, then the ego proceeds, assuming it has stopped long time enough.
 
       # param for target object filtering
@@ -69,3 +68,20 @@
           bicycle: true # [-] whether to look and stop by BICYCLE objects
           motorcycle: true # [-] whether to look and stop by MOTORCYCLE objects (tmp: currently it is difficult for perception modules to detect bicycles and motorcycles separately.)
           pedestrian: true # [-] whether to look and stop by PEDESTRIAN objects
+
+      # param for occlusions
+      occlusion:
+        enable: true  # if true, ego will slowdown around crosswalks that are occluded
+        occluded_object_velocity: 1.0 # [m/s] assumed velocity of objects that may come out of the occluded space
+        slow_down_velocity: 1.0  # [m/s]
+        time_buffer: 1.0  # [s] consecutive time with/without an occlusion to add/remove the slowdown
+        min_size: 0.5  # [m] minimum size of an occlusion (square side size)
+        free_space_max: 43  # [-] maximum value of a free space cell in the occupancy grid
+        occupied_min: 58    # [-] minimum value of an occupied cell in the occupancy grid
+        ignore_with_red_traffic_light: true  # [-] if true, occlusions at crosswalks with traffic lights are ignored
+        ignore_behind_predicted_objects: true  # [-] if true, occlusions behind predicted objects are ignored
+        ignore_velocity_thresholds:
+          default: 0.5  # [m/s] occlusions are only ignored behind objects with a higher or equal velocity
+          custom_labels: ["PEDESTRIAN"]  # labels for which to define a non-default velocity threshold (see autoware_auto_perception_msgs::msg::ObjectClassification for all the labels)
+          custom_thresholds: [0.0]  # velocities of the custom labels
+        extra_predicted_objects_size: 0.5  # [m] extra size added to the objects for masking the occlusions

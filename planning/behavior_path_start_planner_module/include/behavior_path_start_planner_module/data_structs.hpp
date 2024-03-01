@@ -46,6 +46,7 @@ struct StartPlannerDebugData
   std::vector<PoseWithVelocityStamped> ego_predicted_path;
   // collision check debug map
   CollisionCheckDebugMap collision_check;
+  lanelet::ConstLanelets departure_check_lanes;
 
   Pose refined_start_pose;
   std::vector<Pose> start_pose_candidates;
@@ -58,6 +59,7 @@ struct StartPlannerParameters
   double th_arrived_distance{0.0};
   double th_stopped_velocity{0.0};
   double th_stopped_time{0.0};
+  double prepare_time_before_start{0.0};
   double th_turn_signal_on_lateral_offset{0.0};
   double th_distance_to_middle_of_the_road{0.0};
   double intersection_search_length{0.0};
@@ -70,6 +72,7 @@ struct StartPlannerParameters
   // shift pull out
   bool enable_shift_pull_out{false};
   bool check_shift_path_lane_departure{false};
+  bool allow_check_shift_path_lane_departure_override{false};
   double shift_collision_check_distance_from_end{0.0};
   double minimum_shift_pull_out_distance{0.0};
   int lateral_acceleration_sampling_num{0};

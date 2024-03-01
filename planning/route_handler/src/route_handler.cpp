@@ -377,7 +377,7 @@ Header RouteHandler::getRouteHeader() const
 UUID RouteHandler::getRouteUuid() const
 {
   if (!route_ptr_) {
-    RCLCPP_WARN(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
+    RCLCPP_WARN_SKIPFIRST(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
     return UUID();
   }
   return route_ptr_->uuid;
@@ -431,6 +431,11 @@ std::vector<lanelet::ConstLanelet> RouteHandler::getLanesAfterGoal(
 lanelet::ConstLanelets RouteHandler::getRouteLanelets() const
 {
   return route_lanelets_;
+}
+
+lanelet::ConstLanelets RouteHandler::getPreferredLanelets() const
+{
+  return preferred_lanelets_;
 }
 
 Pose RouteHandler::getStartPose() const
