@@ -377,6 +377,33 @@ void StartPlannerModuleManager::updateModuleParams(
       parameters, ns + "collision_check_margin_from_front_object",
       p->collision_check_margin_from_front_object);
     updateParam<double>(parameters, ns + "th_moving_object_velocity", p->th_moving_object_velocity);
+    const std::string obj_types_ns = ns + "object_types_to_check_for_path_generation.";
+    {
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_car",
+        p->object_types_to_check_for_path_generation.check_car);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_truck",
+        p->object_types_to_check_for_path_generation.check_truck);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_bus",
+        p->object_types_to_check_for_path_generation.check_bus);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_trailer",
+        p->object_types_to_check_for_path_generation.check_trailer);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_unknown",
+        p->object_types_to_check_for_path_generation.check_unknown);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_bicycle",
+        p->object_types_to_check_for_path_generation.check_bicycle);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_motorcycle",
+        p->object_types_to_check_for_path_generation.check_motorcycle);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_pedestrian",
+        p->object_types_to_check_for_path_generation.check_pedestrian);
+    }
     updateParam<double>(parameters, ns + "center_line_path_interval", p->center_line_path_interval);
     updateParam<bool>(parameters, ns + "enable_shift_pull_out", p->enable_shift_pull_out);
     updateParam<double>(
