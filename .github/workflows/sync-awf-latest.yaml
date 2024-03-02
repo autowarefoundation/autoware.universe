@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          token: ${{ secrets.TOKEN_TO_MODIFY_WOKFLOW  }}
           fetch-depth: 0
       - name: Commit Results
         run: |
