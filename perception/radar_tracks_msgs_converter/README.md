@@ -53,6 +53,7 @@ Autoware objects label is defined in [ObjectClassification.idl](https://gitlab.c
 ### Parameters
 
 #### Parameter Summary
+
 {{ json_to_markdown("perception/radar_tracks_msgs_converter/schema/radar_tracks_msgs_converter.schema.json") }}
 
 #### Parameter Description
@@ -85,4 +86,3 @@ If the parameter is true, then the ego motion compensation will also consider ya
 
 This parameter is the threshold to determine the flag `is_stationary`.
 If the velocity is lower than this parameter, the flag `is_stationary` of DetectedObject is set to `true` and dealt as a static object.
-
