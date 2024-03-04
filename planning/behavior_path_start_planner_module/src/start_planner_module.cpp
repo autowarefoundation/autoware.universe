@@ -300,25 +300,25 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
 
   if (target_lanes.empty()) return false;
 
-  // auto calc_right_lateral_offset = [&](
-  //                                    const lanelet::ConstLineString2d & boundary_line,
-  //                                    const geometry_msgs::msg::Pose & search_pose) {
-  //   std::vector<geometry_msgs::msg::Point> boundary_path;
-  //   std::for_each(
-  //     boundary_line.begin(), boundary_line.end(), [&boundary_path](const auto & boundary_point) {
-  //       const double x = boundary_point.x();
-  //       const double y = boundary_point.y();
-  //       boundary_path.push_back(tier4_autoware_utils::createPoint(x, y, 0.0));
-  //     });
+  auto calc_right_lateral_offset = [&](
+                                     const lanelet::ConstLineString2d & boundary_line,
+                                     const geometry_msgs::msg::Pose & search_pose) {
+    std::vector<geometry_msgs::msg::Point> boundary_path;
+    std::for_each(
+      boundary_line.begin(), boundary_line.end(), [&boundary_path](const auto & boundary_point) {
+        const double x = boundary_point.x();
+        const double y = boundary_point.y();
+        boundary_path.push_back(tier4_autoware_utils::createPoint(x, y, 0.0));
+      });
 
-  //   return std::fabs(calcLateralOffset(boundary_path, search_pose.position));
-  // };
+    return std::fabs(calcLateralOffset(boundary_path, search_pose.position));
+  };
 
-  // auto calc_left_lateral_offset = [&](
-  //                                   const lanelet::ConstLineString2d & boundary_line,
-  //                                   const geometry_msgs::msg::Pose & search_pose) {
-  //   return -calc_right_lateral_offset(boundary_line, search_pose);
-  // };
+  auto calc_left_lateral_offset = [&](
+                                    const lanelet::ConstLineString2d & boundary_line,
+                                    const geometry_msgs::msg::Pose & search_pose) {
+    return -calc_right_lateral_offset(boundary_line, search_pose);
+  };
 
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
   const auto vehicle_footprint =
@@ -331,6 +331,8 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
     route_handler->getCenterLinePath(target_lanes, 0.0, std::numeric_limits<double>::max());
 
   double smallest_lateral_offset = std::numeric_limits<double>::max();
+  double left_dist = 0;
+  double right_dist = 0;
   geometry_msgs::msg::Pose ego_overhang_point;
   for (const auto & point : vehicle_footprint) {
     geometry_msgs::msg::Pose point_pose;
@@ -349,6 +351,16 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
       ego_overhang_point.position.x = point.x();
       ego_overhang_point.position.y = point.y();
       ego_overhang_point.position.z = 0.0;
+
+      lanelet::Lanelet closest_lanelet;
+      lanelet::utils::query::getClosestLanelet(target_lanes, point_pose, &closest_lanelet);
+      lanelet::ConstLanelet closest_lanelet_const(closest_lanelet.constData());
+
+      const lanelet::ConstLineString2d current_left_bound = closest_lanelet_const.leftBound2d();
+      const lanelet::ConstLineString2d current_right_bound = closest_lanelet_const.rightBound2d();
+      left_dist = calc_left_lateral_offset(current_left_bound, point_pose);
+      right_dist = calc_right_lateral_offset(current_right_bound, point_pose);
+      // const double current_lane_width = std::fabs(left_dist) + std::fabs(right_dist);
     }
   }
 
@@ -357,6 +369,8 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
   std::cerr << "ego_overhang_point.position.y " << ego_overhang_point.position.y << "\n";
   std::cerr << "ego_overhang_point.position.z " << ego_overhang_point.position.z << "\n";
   std::cerr << "smallest_lateral_offset " << smallest_lateral_offset << "\n";
+  std::cerr << "left_dist " << left_dist << "\n";
+  std::cerr << "right_dist " << right_dist << "\n";
 
   // // filtering objects with velocity, position and class
   // const auto filtered_objects = utils::path_safety_checker::filterObjects(
