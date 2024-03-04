@@ -56,6 +56,7 @@ void LaneChangeInterface::processOnExit()
 {
   module_type_->resetParameters();
   debug_marker_.markers.clear();
+  post_process_safety_status_ = {};
   resetPathCandidate();
 }
 
@@ -91,7 +92,11 @@ void LaneChangeInterface::updateData()
 
 void LaneChangeInterface::postProcess()
 {
-  post_process_safety_status_ = module_type_->isApprovedPathSafe();
+  if (getCurrentStatus() == ModuleStatus::RUNNING) {
+    const auto safety_status = module_type_->isApprovedPathSafe();
+    post_process_safety_status_ =
+      module_type_->evaluateApprovedPathWithUnsafeHysteresis(safety_status);
+  }
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
@@ -299,11 +304,10 @@ bool LaneChangeInterface::canTransitFailureState()
 
 void LaneChangeInterface::updateDebugMarker() const
 {
+  debug_marker_.markers.clear();
   if (!parameters_->publish_debug_marker) {
     return;
   }
-
-  debug_marker_.markers.clear();
   using marker_utils::lane_change_markers::createDebugMarkerArray;
   debug_marker_ = createDebugMarkerArray(module_type_->getDebugData());
 }

@@ -132,19 +132,17 @@ FusionNode<Msg, ObjType, Msg2D>::FusionNode(
     using tier4_autoware_utils::DebugPublisher;
     using tier4_autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
-    debug_publisher_ = std::make_unique<DebugPublisher>(this, "image_projection_based_fusion");
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, get_name());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
 
-  // cspell: ignore minx, maxx, miny, maxy, minz, maxz
-  // FIXME: use min_x instead of minx
-  filter_scope_minx_ = declare_parameter<double>("filter_scope_min_x");
-  filter_scope_maxx_ = declare_parameter<double>("filter_scope_max_x");
-  filter_scope_miny_ = declare_parameter<double>("filter_scope_min_y");
-  filter_scope_maxy_ = declare_parameter<double>("filter_scope_max_y");
-  filter_scope_minz_ = declare_parameter<double>("filter_scope_min_z");
-  filter_scope_maxz_ = declare_parameter<double>("filter_scope_max_z");
+  filter_scope_min_x_ = declare_parameter<double>("filter_scope_min_x");
+  filter_scope_max_x_ = declare_parameter<double>("filter_scope_max_x");
+  filter_scope_min_y_ = declare_parameter<double>("filter_scope_min_y");
+  filter_scope_max_y_ = declare_parameter<double>("filter_scope_max_y");
+  filter_scope_min_z_ = declare_parameter<double>("filter_scope_min_z");
+  filter_scope_max_z_ = declare_parameter<double>("filter_scope_max_z");
 }
 
 template <class Msg, class Obj, class Msg2D>
@@ -169,19 +167,27 @@ void FusionNode<Msg, Obj, Msg2D>::subCallback(const typename Msg::ConstSharedPtr
     timer_->cancel();
     postprocess(*(cached_msg_.second));
     publish(*(cached_msg_.second));
-    cached_msg_.second = nullptr;
     std::fill(is_fused_.begin(), is_fused_.end(), false);
 
     // add processing time for debug
     if (debug_publisher_) {
       const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+      const double pipeline_latency_ms =
+        std::chrono::duration<double, std::milli>(
+          std::chrono::nanoseconds(
+            (this->get_clock()->now() - cached_msg_.second->header.stamp).nanoseconds()))
+          .count();
       debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
         "debug/cyclic_time_ms", cyclic_time_ms);
       debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
         "debug/processing_time_ms",
         processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
+      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        "debug/pipeline_latency_ms", pipeline_latency_ms);
       processing_time_ms = 0;
     }
+
+    cached_msg_.second = nullptr;
   }
 
   std::lock_guard<std::mutex> lock(mutex_cached_msgs_);

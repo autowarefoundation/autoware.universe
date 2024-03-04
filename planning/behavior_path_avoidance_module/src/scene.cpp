@@ -21,6 +21,7 @@
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -31,8 +32,6 @@
 
 #include "tier4_planning_msgs/msg/detail/avoidance_debug_msg_array__struct.hpp"
 #include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
-
-#include <boost/geometry/algorithms/centroid.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -134,7 +133,7 @@ bool AvoidanceModule::isExecutionRequested() const
 bool AvoidanceModule::isExecutionReady() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionReady");
-  return avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid;
+  return avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid && avoid_data_.ready;
 }
 
 bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const
@@ -223,25 +222,52 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
     utils::avoidance::getExtendLanes(data.current_lanelets, getEgoPose(), planner_data_);
 
   // expand drivable lanes
-  const auto has_shift_point = !path_shifter_.getShiftLines().empty();
-  const auto in_avoidance_maneuver = has_shift_point || helper_->isShifted();
+  const auto is_within_current_lane =
+    utils::avoidance::isWithinLanes(data.current_lanelets, planner_data_);
+  const auto red_signal_lane_itr = std::find_if(
+    data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
+      const auto next_lanes = planner_data_->route_handler->getNextLanelets(lanelet);
+      return utils::traffic_light::isTrafficSignalStop(next_lanes, planner_data_);
+    });
+  const auto not_use_adjacent_lane =
+    is_within_current_lane && red_signal_lane_itr != data.current_lanelets.end();
+
   std::for_each(
     data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
-      data.drivable_lanes.push_back(utils::avoidance::generateExpandDrivableLanes(
-        lanelet, planner_data_, parameters_, in_avoidance_maneuver));
+      if (!not_use_adjacent_lane) {
+        data.drivable_lanes.push_back(
+          utils::avoidance::generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
+      } else if (red_signal_lane_itr->id() != lanelet.id()) {
+        data.drivable_lanes.push_back(
+          utils::avoidance::generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
+      } else {
+        data.drivable_lanes.push_back(utils::avoidance::generateNotExpandedDrivableLanes(lanelet));
+      }
     });
 
   // calc drivable bound
   auto tmp_path = getPreviousModuleOutput().path;
   const auto shorten_lanes = utils::cutOverlappedLanes(tmp_path, data.drivable_lanes);
-  data.left_bound = toLineString3d(utils::calcBound(
+  const auto use_left_side_hatched_road_marking_area = [&]() {
+    if (!not_use_adjacent_lane) {
+      return true;
+    }
+    return !planner_data_->route_handler->getRoutingGraphPtr()->left(*red_signal_lane_itr);
+  }();
+  const auto use_right_side_hatched_road_marking_area = [&]() {
+    if (!not_use_adjacent_lane) {
+      return true;
+    }
+    return !planner_data_->route_handler->getRoutingGraphPtr()->right(*red_signal_lane_itr);
+  }();
+  data.left_bound = utils::calcBound(
     getPreviousModuleOutput().path, planner_data_, shorten_lanes,
-    parameters_->use_hatched_road_markings, parameters_->use_intersection_areas,
-    parameters_->use_freespace_areas, true));
-  data.right_bound = toLineString3d(utils::calcBound(
+    use_left_side_hatched_road_marking_area, parameters_->use_intersection_areas,
+    parameters_->use_freespace_areas, true);
+  data.right_bound = utils::calcBound(
     getPreviousModuleOutput().path, planner_data_, shorten_lanes,
-    parameters_->use_hatched_road_markings, parameters_->use_intersection_areas,
-    parameters_->use_freespace_areas, false));
+    use_right_side_hatched_road_marking_area, parameters_->use_intersection_areas,
+    parameters_->use_freespace_areas, false);
 
   // reference path
   if (isDrivingSameLane(helper_->getPreviousDrivingLanes(), data.current_lanelets)) {
@@ -294,6 +320,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   using utils::avoidance::filterTargetObjects;
   using utils::avoidance::getTargetLanelets;
   using utils::avoidance::separateObjectsByPath;
+  using utils::avoidance::updateRoadShoulderDistance;
 
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
   constexpr double MARGIN = 10.0;
@@ -315,6 +342,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
 
   // Filter out the objects to determine the ones to be avoided.
   filterTargetObjects(objects, data, forward_detection_range, planner_data_, parameters_);
+  updateRoadShoulderDistance(data, planner_data_, parameters_);
 
   // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
@@ -485,6 +513,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    */
   data.comfortable = helper_->isComfortable(data.new_shift_line);
   data.safe = isSafePath(data.candidate_path, debug);
+  data.ready = helper_->isReady(data.new_shift_line, path_shifter_.getLastShiftLength());
 }
 
 void AvoidanceModule::fillEgoStatus(
@@ -693,30 +722,39 @@ bool AvoidanceModule::isSafePath(
   }
 
   const auto ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
-  const auto is_right_shift = [&]() -> std::optional<bool> {
+
+  const auto has_left_shift = [&]() {
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
       if (parameters_->lateral_avoid_check_threshold < length) {
-        return false;
+        return true;
       }
+    }
+
+    return false;
+  }();
+
+  const auto has_right_shift = [&]() {
+    for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
+      const auto length = shifted_path.shift_length.at(i);
 
       if (parameters_->lateral_avoid_check_threshold < -1.0 * length) {
         return true;
       }
     }
 
-    return std::nullopt;
+    return false;
   }();
 
-  if (!is_right_shift.has_value()) {
+  if (!has_left_shift && !has_right_shift) {
     return true;
   }
 
   const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
 
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
-    avoid_data_, planner_data_, parameters_, is_right_shift.value(), debug);
+    avoid_data_, planner_data_, parameters_, has_left_shift, has_right_shift, debug);
 
   if (safety_check_target_objects.empty()) {
     return true;
@@ -881,12 +919,26 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   BehaviorModuleOutput output;
 
+  const auto is_ignore_signal = [this](const UUID & uuid) {
+    if (!ignore_signal_.has_value()) {
+      return false;
+    }
+
+    return ignore_signal_.value() == uuid;
+  };
+
+  const auto update_ignore_signal = [this](const UUID & uuid, const bool is_ignore) {
+    ignore_signal_ = is_ignore ? std::make_optional(uuid) : std::nullopt;
+  };
+
   // turn signal info
   if (path_shifter_.getShiftLines().empty()) {
     output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  } else if (is_ignore_signal(path_shifter_.getShiftLines().front().id)) {
+    output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   } else {
     const auto original_signal = getPreviousModuleOutput().turn_signal_info;
-    const auto new_signal = utils::avoidance::calcTurnSignalInfo(
+    const auto [new_signal, is_ignore] = utils::avoidance::calcTurnSignalInfo(
       linear_shift_path, path_shifter_.getShiftLines().front(), helper_->getEgoShift(), avoid_data_,
       planner_data_);
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
@@ -894,6 +946,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
       spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
       planner_data_->parameters.ego_nearest_dist_threshold,
       planner_data_->parameters.ego_nearest_yaw_threshold);
+    update_ignore_signal(path_shifter_.getShiftLines().front().id, is_ignore);
   }
 
   // sparse resampling for computational cost
@@ -928,11 +981,11 @@ BehaviorModuleOutput AvoidanceModule::plan()
   {
     DrivableAreaInfo current_drivable_area_info;
     // generate drivable lanes
-    current_drivable_area_info.drivable_lanes = avoid_data_.drivable_lanes;
-    // generate obstacle polygons
-    current_drivable_area_info.obstacles =
-      utils::avoidance::generateObstaclePolygonsForDrivableArea(
-        avoid_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    std::for_each(
+      data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
+        current_drivable_area_info.drivable_lanes.push_back(
+          utils::avoidance::generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
+      });
     // expand hatched road markings
     current_drivable_area_info.enable_expanding_hatched_road_markings =
       parameters_->use_hatched_road_markings;
@@ -941,6 +994,21 @@ BehaviorModuleOutput AvoidanceModule::plan()
       parameters_->use_intersection_areas;
     // expand freespace areas
     current_drivable_area_info.enable_expanding_freespace_areas = parameters_->use_freespace_areas;
+    // generate obstacle polygons
+    if (parameters_->enable_bound_clipping) {
+      ObjectDataArray clip_objects;
+      // If avoidance is executed by both behavior and motion, only non-avoidable object will be
+      // extracted from the drivable area.
+      std::for_each(
+        data.target_objects.begin(), data.target_objects.end(), [&](const auto & object) {
+          if (!object.is_avoidable) clip_objects.push_back(object);
+        });
+      current_drivable_area_info.obstacles =
+        utils::avoidance::generateObstaclePolygonsForDrivableArea(
+          clip_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    } else {
+      current_drivable_area_info.obstacles.clear();
+    }
 
     output.drivable_area_info = utils::combineDrivableAreaInfo(
       current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
@@ -1150,8 +1218,8 @@ bool AvoidanceModule::isValidShiftLine(
     const size_t end_idx = shift_lines.back().end_idx;
 
     const auto path = shifter_for_validate.getReferencePath();
-    const auto left_bound = lanelet::utils::to2D(avoid_data_.left_bound);
-    const auto right_bound = lanelet::utils::to2D(avoid_data_.right_bound);
+    const auto left_bound = lanelet::utils::to2D(toLineString3d(avoid_data_.left_bound));
+    const auto right_bound = lanelet::utils::to2D(toLineString3d(avoid_data_.right_bound));
     for (size_t i = start_idx; i <= end_idx; ++i) {
       const auto p = getPoint(path.points.at(i));
       lanelet::BasicPoint2d basic_point{p.x, p.y};

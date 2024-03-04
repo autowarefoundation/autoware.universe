@@ -189,6 +189,12 @@ IntersectionModule::prepareIntersectionData(const bool is_prioritized, PathWithL
       "Path has no interval on intersection lane " + std::to_string(lane_id_));
   }
 
+  const auto & path_ip = interpolated_path_info.path;
+  const auto & path_ip_intersection_end = interpolated_path_info.lane_id_interval.value().second;
+  internal_debug_data_.distance = motion_utils::calcSignedArcLength(
+    path->points, current_pose.position,
+    path_ip.points.at(path_ip_intersection_end).point.pose.position);
+
   if (!intersection_lanelets_) {
     intersection_lanelets_ =
       generateObjectiveLanelets(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
@@ -288,7 +294,7 @@ IntersectionModule::prepareIntersectionData(const bool is_prioritized, PathWithL
 
 std::optional<size_t> IntersectionModule::getStopLineIndexFromMap(
   const intersection::InterpolatedPathInfo & interpolated_path_info,
-  lanelet::ConstLanelet assigned_lanelet)
+  lanelet::ConstLanelet assigned_lanelet) const
 {
   const auto & path = interpolated_path_info.path;
   const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
@@ -344,7 +350,7 @@ IntersectionModule::generateIntersectionStopLines(
   const lanelet::ConstLanelet & first_attention_lane,
   const std::optional<lanelet::CompoundPolygon3d> & second_attention_area_opt,
   const intersection::InterpolatedPathInfo & interpolated_path_info,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path) const
 {
   const bool use_stuck_stopline = planner_param_.stuck_vehicle.use_stuck_stopline;
   const double stopline_margin = planner_param_.common.default_stopline_margin;
@@ -575,7 +581,7 @@ IntersectionModule::generateIntersectionStopLines(
 
 intersection::IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const lanelet::ConstLanelet assigned_lanelet)
+  const lanelet::ConstLanelet assigned_lanelet) const
 {
   const double detection_area_length = planner_param_.common.attention_area_length;
   const double occlusion_detection_area_length =
@@ -780,7 +786,7 @@ std::optional<intersection::PathLanelets> IntersectionModule::generatePathLanele
   const lanelet::CompoundPolygon3d & first_conflicting_area,
   const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
-  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx)
+  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx) const
 {
   const double width = planner_data_->vehicle_info_.vehicle_width_m;
   static constexpr double path_lanelet_interval = 1.5;
@@ -848,7 +854,7 @@ std::optional<intersection::PathLanelets> IntersectionModule::generatePathLanele
 
 std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution)
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution) const
 {
   const double curvature_threshold =
     planner_param_.occlusion.attention_lane_crop_curvature_threshold;
