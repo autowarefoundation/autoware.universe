@@ -298,6 +298,8 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  planner_data_.has_received_signal_ = true;
+
   for (const auto & signal : msg->signals) {
     TrafficSignalStamped traffic_signal;
     traffic_signal.stamp = msg->stamp;
