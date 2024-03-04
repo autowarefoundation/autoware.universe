@@ -115,7 +115,7 @@ public:
     const double & x, const double & y, const double & yaw, const double & vel,
     const std::array<double, 36> & pose_cov, const std::array<double, 36> & twist_cov);
 
-  bool adjustPosition(const double & x, const double & y, const double & yaw);
+  bool adjustPosition(const double & x, const double & y);
 
   bool limitStates();
 
@@ -126,6 +126,9 @@ public:
   bool predictState(const double dt, KalmanFilter & ekf) const;
 
   bool getPredictedState(const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P) const;
+
+  bool getPredictedState(
+    const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P, double & lr) const;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_

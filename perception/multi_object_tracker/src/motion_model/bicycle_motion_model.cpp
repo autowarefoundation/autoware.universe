@@ -263,6 +263,23 @@ bool BicycleMotionModel::updateExtendedState(const double & length)
   return true;
 }
 
+bool BicycleMotionModel::adjustPosition(const double & x, const double & y)
+{
+  // check if the state is initialized
+  if (!checkInitialized()) return false;
+
+  // adjust position
+  Eigen::MatrixXd X_t(DIM, 1);
+  Eigen::MatrixXd P_t(DIM, DIM);
+  ekf_.getX(X_t);
+  ekf_.getP(P_t);
+  X_t(IDX::X) += x;
+  X_t(IDX::Y) += y;
+  ekf_.init(X_t, P_t);
+
+  return true;
+}
+
 bool BicycleMotionModel::predictState(const rclcpp::Time & time)
 {
   // check if the state is initialized
@@ -270,7 +287,7 @@ bool BicycleMotionModel::predictState(const rclcpp::Time & time)
 
   const double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) {
-    RCLCPP_WARN(logger_, "dt is negative. (%f)", dt);
+    RCLCPP_WARN(logger_, "predictState: dt is negative. (%f)", dt);
     return false;
   }
   // if dt is too large, shorten dt and repeat prediction
@@ -418,21 +435,34 @@ bool BicycleMotionModel::getPredictedState(
   KalmanFilter tmp_ekf_for_no_update = ekf_;
 
   const double dt = (time - last_update_time_).seconds();
-  if (dt < 0.0) {
-    RCLCPP_WARN(logger_, "dt is negative. (%f)", dt);
-    return false;
-  }
-  // if dt is too large, shorten dt and repeat prediction
-  const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
-  const double dt_ = dt / repeat;
+  // if (dt < 0.0) {
+  //   RCLCPP_WARN(logger_, "getPredictedState: dt is negative. (%f)", dt);
+  //   return false;
+  // }
+
+  // naive conditioning, since dt of negative value was not considered
+
   bool ret = false;
-  for (uint32_t i = 0; i < repeat; ++i) {
-    ret = predictState(dt_, tmp_ekf_for_no_update);
-    if (!ret) {
-      return false;
+  // predeict only when dt is small enough
+  if (0.001 /*1msec*/ < dt) {
+    // if dt is too large, shorten dt and repeat prediction
+    const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
+    const double dt_ = dt / repeat;
+    for (uint32_t i = 0; i < repeat; ++i) {
+      ret = predictState(dt_, tmp_ekf_for_no_update);
+      if (!ret) {
+        return false;
+      }
     }
   }
   tmp_ekf_for_no_update.getX(X);
   tmp_ekf_for_no_update.getP(P);
   return ret;
+}
+
+bool BicycleMotionModel::getPredictedState(
+  const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P, double & lr) const
+{
+  lr = lr_;
+  return getPredictedState(time, X, P);
 }
