@@ -10,8 +10,12 @@ find_package(Eigen3 REQUIRED)
 ament_auto_add_library(reaction_analyzer SHARED
   include/reaction_analyzer_node.hpp
   src/reaction_analyzer_node.cpp
+  include/subscriber.hpp
+  src/subscriber.cpp
   include/topic_publisher.hpp
   src/topic_publisher.cpp
+  include/utils.hpp
+  src/utils.cpp
 )
 
 target_include_directories(reaction_analyzer
