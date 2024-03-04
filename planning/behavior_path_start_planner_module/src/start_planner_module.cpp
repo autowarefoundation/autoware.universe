@@ -412,7 +412,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
 
   std::cerr << "remaining_gap " << remaining_gap << "\n";
 
-  return target_object_itr->shape.dimensions.y < remaining_gap;
+  return target_object_itr->shape.dimensions.y > remaining_gap;
 }
 
 bool StartPlannerModule::isOverlapWithCenterLane() const
