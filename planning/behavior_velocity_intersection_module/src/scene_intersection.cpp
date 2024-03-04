@@ -18,6 +18,7 @@
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>  // for toGeomPoly
 #include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
@@ -51,7 +52,7 @@ IntersectionModule::IntersectionModule(
   const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
-  node_(node),
+  planner_param_(planner_param),
   lane_id_(lane_id),
   associative_ids_(associative_ids),
   turn_direction_(turn_direction),
@@ -59,7 +60,6 @@ IntersectionModule::IntersectionModule(
   occlusion_uuid_(tier4_autoware_utils::generateUUID())
 {
   velocity_factor_.init(PlanningBehavior::INTERSECTION);
-  planner_param_ = planner_param;
 
   {
     collision_state_machine_.setMarginTime(
@@ -86,11 +86,9 @@ IntersectionModule::IntersectionModule(
     static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
   }
 
-  decision_state_pub_ =
-    node_.create_publisher<std_msgs::msg::String>("~/debug/intersection/decision_state", 1);
-  ego_ttc_pub_ = node_.create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>(
+  ego_ttc_pub_ = node.create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>(
     "~/debug/intersection/ego_ttc", 1);
-  object_ttc_pub_ = node_.create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>(
+  object_ttc_pub_ = node.create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>(
     "~/debug/intersection/object_ttc", 1);
 }
 
@@ -104,11 +102,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   const auto decision_result = modifyPathVelocityDetail(path, stop_reason);
   prev_decision_result_ = decision_result;
 
-  const std::string decision_type = "intersection" + std::to_string(module_id_) + " : " +
-                                    intersection::formatDecisionResult(decision_result);
-  std_msgs::msg::String decision_result_msg;
-  decision_result_msg.data = decision_type;
-  decision_state_pub_->publish(decision_result_msg);
+  {
+    const std::string decision_type = "intersection" + std::to_string(module_id_) + " : " +
+                                      intersection::formatDecisionResult(decision_result);
+    internal_debug_data_.decision_type = decision_type;
+  }
 
   prepareRTCStatus(decision_result, *path);
 
@@ -126,6 +124,25 @@ void IntersectionModule::initializeRTCStatus()
   occlusion_stop_distance_ = std::numeric_limits<double>::lowest();
   occlusion_first_stop_required_ = false;
   // activated_ and occlusion_activated_ must be set from manager's RTC callback
+}
+
+static std::string formatOcclusionType(const IntersectionModule::OcclusionType & type)
+{
+  if (std::holds_alternative<IntersectionModule::NotOccluded>(type)) {
+    return "NotOccluded and the best occlusion clearance is " +
+           std::to_string(std::get<IntersectionModule::NotOccluded>(type).best_clearance_distance);
+  }
+  if (std::holds_alternative<IntersectionModule::StaticallyOccluded>(type)) {
+    return "StaticallyOccluded and the best occlusion clearance is " +
+           std::to_string(
+             std::get<IntersectionModule::StaticallyOccluded>(type).best_clearance_distance);
+  }
+  if (std::holds_alternative<IntersectionModule::DynamicallyOccluded>(type)) {
+    return "DynamicallyOccluded and the best occlusion clearance is " +
+           std::to_string(
+             std::get<IntersectionModule::DynamicallyOccluded>(type).best_clearance_distance);
+  }
+  return "RTCOccluded";
 }
 
 intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
@@ -224,11 +241,21 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   updateObjectInfoManagerCollision(
     path_lanelets, time_distance_array, traffic_prioritized_level, safely_passed_1st_judge_line,
     safely_passed_2nd_judge_line);
+  for (const auto & object_info : object_info_manager_.attentionObjects()) {
+    if (!object_info->unsafe_info()) {
+      continue;
+    }
+    setObjectsOfInterestData(
+      object_info->predicted_object().kinematics.initial_pose_with_covariance.pose,
+      object_info->predicted_object().shape, ColorName::RED);
+  }
 
   const auto [has_collision, collision_position, too_late_detect_objects, misjudge_objects] =
     detectCollision(is_over_1st_pass_judge_line, is_over_2nd_pass_judge_line);
   const std::string safety_diag =
     generateDetectionBlameDiagnosis(too_late_detect_objects, misjudge_objects);
+  const std::string occlusion_diag = formatOcclusionType(occlusion_status);
+
   if (is_permanent_go_) {
     if (has_collision) {
       const auto closest_idx = intersection_stoplines.closest_idx;
@@ -240,17 +267,17 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       "no collision is detected", "ego can safely pass the intersection at this rate"};
   }
 
-  const bool collision_on_1st_attention_lane =
-    has_collision && (collision_position == intersection::CollisionInterval::LanePosition::FIRST);
   // ==========================================================================================
   // this state is very dangerous because ego is very close/over the boundary of 1st attention lane
   // and collision is detected on the 1st lane. Since the 2nd attention lane also exists in this
   // case, possible another collision may be expected on the 2nd attention lane too.
   // ==========================================================================================
   std::string safety_report = safety_diag;
-  if (
-    is_over_1st_pass_judge_line && is_over_2nd_pass_judge_line &&
-    is_over_2nd_pass_judge_line.value() && collision_on_1st_attention_lane) {
+  if (const bool collision_on_1st_attention_lane =
+        has_collision &&
+        (collision_position == intersection::CollisionInterval::LanePosition::FIRST);
+      is_over_1st_pass_judge_line && is_over_2nd_pass_judge_line.has_value() &&
+      !is_over_2nd_pass_judge_line.value() && collision_on_1st_attention_lane) {
     safety_report +=
       "\nego is between the 1st and 2nd pass judge line but collision is expected on the 1st "
       "attention lane, which is dangerous.";
@@ -277,7 +304,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     isYieldStuckStatus(*path, interpolated_path_info, intersection_stoplines);
   if (is_yield_stuck_status) {
     auto yield_stuck = is_yield_stuck_status.value();
-    yield_stuck.safety_report = safety_report;
+    yield_stuck.occlusion_report = occlusion_diag;
     return yield_stuck;
   }
 
@@ -295,12 +322,13 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   // Safe
   if (!is_occlusion_state && !has_collision_with_margin) {
-    return intersection::Safe{closest_idx, collision_stopline_idx, occlusion_stopline_idx};
+    return intersection::Safe{
+      closest_idx, collision_stopline_idx, occlusion_stopline_idx, occlusion_diag};
   }
   // Only collision
   if (!is_occlusion_state && has_collision_with_margin) {
     return intersection::NonOccludedCollisionStop{
-      closest_idx, collision_stopline_idx, occlusion_stopline_idx, safety_report};
+      closest_idx, collision_stopline_idx, occlusion_stopline_idx, occlusion_diag};
   }
   // Occluded
   // utility functions
@@ -374,7 +402,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         closest_idx,
         first_attention_stopline_idx,
         occlusion_wo_tl_pass_judge_line_idx,
-        safety_diag};
+        occlusion_diag};
     }
 
     // ==========================================================================================
@@ -382,7 +410,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     //
     // if ego is stuck by static occlusion in the presence of traffic light, start timeout count
     // ==========================================================================================
-    const bool is_static_occlusion = occlusion_status == OcclusionType::STATICALLY_OCCLUDED;
+    const bool is_static_occlusion = std::holds_alternative<StaticallyOccluded>(occlusion_status);
     const bool is_stuck_by_static_occlusion =
       stoppedAtPosition(
         occlusion_stopline_idx, planner_param_.occlusion.temporal_stop_time_before_peeking) &&
@@ -397,7 +425,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     const bool release_static_occlusion_stuck =
       (static_occlusion_timeout_state_machine_.getState() == StateMachine::State::GO);
     if (!has_collision_with_margin && release_static_occlusion_stuck) {
-      return intersection::Safe{closest_idx, collision_stopline_idx, occlusion_stopline_idx};
+      return intersection::Safe{
+        closest_idx, collision_stopline_idx, occlusion_stopline_idx, occlusion_diag};
     }
     // occlusion_status is either STATICALLY_OCCLUDED or DYNAMICALLY_OCCLUDED
     const double max_timeout =
@@ -418,7 +447,7 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         first_attention_stopline_idx,
         occlusion_stopline_idx,
         static_occlusion_timeout,
-        safety_report};
+        occlusion_diag};
     } else {
       return intersection::PeekingTowardOcclusion{
         is_occlusion_cleared_with_margin,
@@ -427,7 +456,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         collision_stopline_idx,
         first_attention_stopline_idx,
         occlusion_stopline_idx,
-        static_occlusion_timeout};
+        static_occlusion_timeout,
+        occlusion_diag};
     }
   } else {
     const auto occlusion_stopline =
@@ -435,7 +465,8 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         ? first_attention_stopline_idx
         : occlusion_stopline_idx;
     return intersection::FirstWaitBeforeOcclusion{
-      is_occlusion_cleared_with_margin, closest_idx, default_stopline_idx, occlusion_stopline};
+      is_occlusion_cleared_with_margin, closest_idx, default_stopline_idx, occlusion_stopline,
+      occlusion_diag};
   }
 }
 
@@ -735,9 +766,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (
-    !rtc_occlusion_approved && decision_result.occlusion_stopline_idx &&
-    planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved && decision_result.occlusion_stopline_idx) {
     const auto occlusion_stopline_idx = decision_result.occlusion_stopline_idx.value();
     planning_utils::setVelocityFromIndex(occlusion_stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -814,7 +843,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
     planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -857,7 +886,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     if (planner_param.occlusion.creep_during_peeking.enable) {
       const size_t occlusion_peeking_stopline = decision_result.occlusion_stopline_idx;
       const size_t closest_idx = decision_result.closest_idx;
@@ -895,7 +924,7 @@ void reactRTCApprovalByDecisionResult(
     "PeekingTowardOcclusion, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
   // NOTE: creep_velocity should be inserted first at closest_idx if !rtc_default_approved
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const size_t occlusion_peeking_stopline =
       decision_result.temporal_stop_before_attention_required
         ? decision_result.first_attention_stopline_idx
@@ -965,7 +994,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.temporal_stop_before_attention_required
                                 ? decision_result.first_attention_stopline_idx
                                 : decision_result.occlusion_stopline_idx;
@@ -1066,7 +1095,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
     planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -1110,7 +1139,7 @@ void reactRTCApprovalByDecisionResult(
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
     }
   }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+  if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
     planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
@@ -1145,25 +1174,11 @@ void IntersectionModule::reactRTCApproval(
 bool IntersectionModule::isGreenSolidOn() const
 {
   using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
-  const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
-  const auto & lane = lanelet_map_ptr->laneletLayer.get(lane_id_);
 
-  std::optional<lanelet::Id> tl_id = std::nullopt;
-  for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    tl_id = tl_reg_elem->id();
-    break;
-  }
-  if (!tl_id) {
-    // this lane has no traffic light
+  if (!last_tl_valid_observation_) {
     return false;
   }
-  const auto tl_info_opt = planner_data_->getTrafficSignal(
-    tl_id.value(), true /* traffic light module keeps last observation*/);
-  if (!tl_info_opt) {
-    // the info of this traffic light is not available
-    return false;
-  }
-  const auto & tl_info = tl_info_opt.value();
+  const auto & tl_info = last_tl_valid_observation_.value();
   for (auto && tl_light : tl_info.signal.elements) {
     if (
       tl_light.color == TrafficSignalElement::GREEN &&
@@ -1178,38 +1193,89 @@ IntersectionModule::TrafficPrioritizedLevel IntersectionModule::getTrafficPriori
 {
   using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
 
+  auto corresponding_arrow = [&](const TrafficSignalElement & element) {
+    if (turn_direction_ == "straight" && element.shape == TrafficSignalElement::UP_ARROW) {
+      return true;
+    }
+    if (turn_direction_ == "left" && element.shape == TrafficSignalElement::LEFT_ARROW) {
+      return true;
+    }
+    if (turn_direction_ == "right" && element.shape == TrafficSignalElement::RIGHT_ARROW) {
+      return true;
+    }
+    return false;
+  };
+
+  // ==========================================================================================
+  // if no traffic light information has been available, it is UNKNOWN state which is treated as
+  // NOT_PRIORITIZED
+  //
+  // if there has been any information available in the past more than once, the last valid
+  // information is kept and used for planning
+  // ==========================================================================================
+  auto level = TrafficPrioritizedLevel::NOT_PRIORITIZED;
+  if (last_tl_valid_observation_) {
+    auto color = TrafficSignalElement::GREEN;
+    const auto & tl_info = last_tl_valid_observation_.value();
+    bool has_amber_signal{false};
+    for (auto && tl_light : tl_info.signal.elements) {
+      if (
+        tl_light.color == TrafficSignalElement::AMBER &&
+        tl_light.shape == TrafficSignalElement::CIRCLE) {
+        has_amber_signal = true;
+      }
+      if (
+        (tl_light.color == TrafficSignalElement::RED &&
+         tl_light.shape == TrafficSignalElement::CIRCLE) ||
+        (tl_light.color == TrafficSignalElement::GREEN && corresponding_arrow(tl_light))) {
+        // NOTE: Return here since the red signal has the highest priority.
+        level = TrafficPrioritizedLevel::FULLY_PRIORITIZED;
+        color = TrafficSignalElement::RED;
+        break;
+      }
+    }
+    if (has_amber_signal) {
+      level = TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED;
+      color = TrafficSignalElement::AMBER;
+    }
+    if (tl_id_and_point_) {
+      const auto [tl_id, point] = tl_id_and_point_.value();
+      debug_data_.traffic_light_observation =
+        std::make_tuple(planner_data_->current_odometry->pose, point, tl_id, color);
+    }
+  }
+  return level;
+}
+
+void IntersectionModule::updateTrafficSignalObservation()
+{
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
   const auto & lane = lanelet_map_ptr->laneletLayer.get(lane_id_);
 
-  std::optional<lanelet::Id> tl_id = std::nullopt;
-  for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    tl_id = tl_reg_elem->id();
-    break;
+  if (!tl_id_and_point_) {
+    for (auto && tl_reg_elem :
+         lane.regulatoryElementsAs<lanelet::autoware::AutowareTrafficLight>()) {
+      for (const auto & ls : tl_reg_elem->lightBulbs()) {
+        if (ls.hasAttribute("traffic_light_id")) {
+          tl_id_and_point_ = std::make_pair(tl_reg_elem->id(), ls.front());
+          break;
+        }
+      }
+    }
   }
-  if (!tl_id) {
+  if (!tl_id_and_point_) {
     // this lane has no traffic light
-    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
+    return;
   }
-  const auto tl_info_opt = planner_data_->getTrafficSignal(
-    tl_id.value(), true /* traffic light module keeps last observation*/);
+  const auto [tl_id, point] = tl_id_and_point_.value();
+  const auto tl_info_opt =
+    planner_data_->getTrafficSignal(tl_id, true /* traffic light module keeps last observation*/);
   if (!tl_info_opt) {
-    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
+    // the info of this traffic light is not available
+    return;
   }
-  const auto & tl_info = tl_info_opt.value();
-  bool has_amber_signal{false};
-  for (auto && tl_light : tl_info.signal.elements) {
-    if (tl_light.color == TrafficSignalElement::AMBER) {
-      has_amber_signal = true;
-    }
-    if (tl_light.color == TrafficSignalElement::RED) {
-      // NOTE: Return here since the red signal has the highest priority.
-      return TrafficPrioritizedLevel::FULLY_PRIORITIZED;
-    }
-  }
-  if (has_amber_signal) {
-    return TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED;
-  }
-  return TrafficPrioritizedLevel::NOT_PRIORITIZED;
+  last_tl_valid_observation_ = tl_info_opt.value();
+  internal_debug_data_.tl_observation = tl_info_opt.value();
 }
 
 IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStatus(

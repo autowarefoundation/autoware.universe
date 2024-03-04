@@ -21,8 +21,10 @@
 #include "behavior_path_start_planner_module/util.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -55,7 +57,8 @@ StartPlannerModule::StartPlannerModule(
     objects_of_interest_marker_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{parameters},
-  vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
+  vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()},
+  is_freespace_planner_cb_running_{false}
 {
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
@@ -66,7 +69,8 @@ StartPlannerModule::StartPlannerModule(
       std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
+    start_planners_.push_back(
+      std::make_shared<GeometricPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (start_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
@@ -86,6 +90,8 @@ StartPlannerModule::StartPlannerModule(
 
 void StartPlannerModule::onFreespacePlannerTimer()
 {
+  const ScopedFlag flag(is_freespace_planner_cb_running_);
+
   if (getCurrentStatus() == ModuleStatus::IDLE) {
     return;
   }
@@ -112,7 +118,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
 BehaviorModuleOutput StartPlannerModule::run()
 {
   updateData();
-  if (!isActivated()) {
+  if (!isActivated() || needToPrepareBlinkerBeforeStart()) {
     return planWaitingApproval();
   }
 
@@ -134,9 +140,9 @@ void StartPlannerModule::initVariables()
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();
+  info_marker_.markers.clear();
   initializeSafetyCheckParameters();
   initializeCollisionCheckDebugMap(debug_data_.collision_check);
-  updateDrivableLanes();
 }
 
 void StartPlannerModule::updateEgoPredictedPathParams(
@@ -170,18 +176,20 @@ void StartPlannerModule::updateData()
     DEBUG_PRINT("StartPlannerModule::updateData() received new route, reset status");
   }
 
-  if (hasFinishedBackwardDriving()) {
-    updateStatusAfterBackwardDriving();
-    DEBUG_PRINT("StartPlannerModule::updateData() completed backward driving");
-  } else {
-    status_.backward_driving_complete = false;
+  if (
+    planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
+    !status_.first_engaged_time) {
+    status_.first_engaged_time = clock_->now();
   }
 
-  if (requiresDynamicObjectsCollisionDetection()) {
-    status_.is_safe_dynamic_objects = !hasCollisionWithDynamicObjects();
-  } else {
-    status_.is_safe_dynamic_objects = true;
+  status_.backward_driving_complete = hasFinishedBackwardDriving();
+  if (status_.backward_driving_complete) {
+    updateStatusAfterBackwardDriving();
+    DEBUG_PRINT("StartPlannerModule::updateData() completed backward driving");
   }
+
+  status_.is_safe_dynamic_objects =
+    (!requiresDynamicObjectsCollisionDetection()) ? true : !hasCollisionWithDynamicObjects();
 }
 
 bool StartPlannerModule::hasFinishedBackwardDriving() const
@@ -211,7 +219,8 @@ bool StartPlannerModule::receivedNewRoute() const
 
 bool StartPlannerModule::requiresDynamicObjectsCollisionDetection() const
 {
-  return parameters_->safety_check_params.enable_safety_check && status_.driving_forward;
+  return parameters_->safety_check_params.enable_safety_check && status_.driving_forward &&
+         !isOverlapWithCenterLane();
 }
 
 bool StartPlannerModule::noMovingObjectsAround() const
@@ -278,6 +287,37 @@ bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
   return std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road;
 }
 
+bool StartPlannerModule::isOverlapWithCenterLane() const
+{
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const auto current_lanes = utils::getCurrentLanes(planner_data_);
+  const auto local_vehicle_footprint = vehicle_info_.createFootprint();
+  const auto vehicle_footprint =
+    transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
+  for (const auto & current_lane : current_lanes) {
+    std::vector<geometry_msgs::msg::Point> centerline_points;
+    for (const auto & point : current_lane.centerline()) {
+      geometry_msgs::msg::Point center_point = lanelet::utils::conversion::toGeomMsgPt(point);
+      centerline_points.push_back(center_point);
+    }
+
+    for (size_t i = 0; i < centerline_points.size() - 1; ++i) {
+      const auto & p1 = centerline_points.at(i);
+      const auto & p2 = centerline_points.at(i + 1);
+      for (size_t j = 0; j < vehicle_footprint.size() - 1; ++j) {
+        const auto p3 = tier4_autoware_utils::toMsg(vehicle_footprint[j].to_3d());
+        const auto p4 = tier4_autoware_utils::toMsg(vehicle_footprint[j + 1].to_3d());
+        const auto intersection = tier4_autoware_utils::intersect(p1, p2, p3, p4);
+
+        if (intersection.has_value()) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 bool StartPlannerModule::isCloseToOriginalStartPose() const
 {
   const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
@@ -320,20 +360,17 @@ bool StartPlannerModule::isStopped()
 
 bool StartPlannerModule::isExecutionReady() const
 {
-  bool is_safe = true;
   // Evaluate safety. The situation is not safe if any of the following conditions are met:
   // 1. pull out path has not been found
   // 2. there is a moving objects around ego
   // 3. waiting for approval and there is a collision with dynamic objects
-  if (!status_.found_pull_out_path) {
-    is_safe = false;
-  } else if (isWaitingApproval()) {
-    if (!noMovingObjectsAround()) {
-      is_safe = false;
-    } else if (requiresDynamicObjectsCollisionDetection() && hasCollisionWithDynamicObjects()) {
-      is_safe = false;
-    }
-  }
+
+  const bool is_safe = [&]() -> bool {
+    if (!status_.found_pull_out_path) return false;
+    if (!isWaitingApproval()) return true;
+    if (!noMovingObjectsAround()) return false;
+    return !(requiresDynamicObjectsCollisionDetection() && hasCollisionWithDynamicObjects());
+  }();
 
   if (!is_safe) {
     stop_pose_ = planner_data_->self_odometry->pose.pose;
@@ -415,14 +452,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   setDrivableAreaInfo(output);
 
-  const uint16_t steering_factor_direction = std::invoke([&output]() {
-    if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-      return SteeringFactor::LEFT;
-    } else if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-      return SteeringFactor::RIGHT;
-    }
-    return SteeringFactor::STRAIGHT;
-  });
+  const auto steering_factor_direction = getSteeringFactorDirection(output);
 
   if (status_.driving_forward) {
     const double start_distance = motion_utils::calcSignedArcLength(
@@ -436,15 +466,16 @@ BehaviorModuleOutput StartPlannerModule::plan()
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
       {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
       SteeringFactor::TURNING, "");
-  } else {
-    const double distance = motion_utils::calcSignedArcLength(
-      path.points, planner_data_->self_odometry->pose.pose.position,
-      status_.pull_out_path.start_pose.position);
-    updateRTCStatus(0.0, distance);
-    steering_factor_interface_ptr_->updateSteeringFactor(
-      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
+    setDebugData();
+    return output;
   }
+  const double distance = motion_utils::calcSignedArcLength(
+    path.points, planner_data_->self_odometry->pose.pose.position,
+    status_.pull_out_path.start_pose.position);
+  updateRTCStatus(0.0, distance);
+  steering_factor_interface_ptr_->updateSteeringFactor(
+    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
+    PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
 
   setDebugData();
 
@@ -525,14 +556,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 
   setDrivableAreaInfo(output);
 
-  const uint16_t steering_factor_direction = std::invoke([&output]() {
-    if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-      return SteeringFactor::LEFT;
-    } else if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-      return SteeringFactor::RIGHT;
-    }
-    return SteeringFactor::STRAIGHT;
-  });
+  const auto steering_factor_direction = getSteeringFactorDirection(output);
 
   if (status_.driving_forward) {
     const double start_distance = motion_utils::calcSignedArcLength(
@@ -546,15 +570,17 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
       {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
       SteeringFactor::APPROACHING, "");
-  } else {
-    const double distance = motion_utils::calcSignedArcLength(
-      stop_path.points, planner_data_->self_odometry->pose.pose.position,
-      status_.pull_out_path.start_pose.position);
-    updateRTCStatus(0.0, distance);
-    steering_factor_interface_ptr_->updateSteeringFactor(
-      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
+    setDebugData();
+
+    return output;
   }
+  const double distance = motion_utils::calcSignedArcLength(
+    stop_path.points, planner_data_->self_odometry->pose.pose.position,
+    status_.pull_out_path.start_pose.position);
+  updateRTCStatus(0.0, distance);
+  steering_factor_interface_ptr_->updateSteeringFactor(
+    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
+    PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
 
   setDebugData();
 
@@ -564,7 +590,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 void StartPlannerModule::resetStatus()
 {
   status_ = PullOutStatus{};
-  updateDrivableLanes();
 }
 
 void StartPlannerModule::incrementPathIndex()
@@ -615,16 +640,20 @@ PriorityOrder StartPlannerModule::determinePriorityOrder(
         order_priority.emplace_back(i, planner);
       }
     }
-  } else if (search_priority == "short_back_distance") {
+    return order_priority;
+  }
+
+  if (search_priority == "short_back_distance") {
     for (size_t i = 0; i < start_pose_candidates_num; i++) {
       for (const auto & planner : start_planners_) {
         order_priority.emplace_back(i, planner);
       }
     }
-  } else {
-    RCLCPP_ERROR(getLogger(), "Invalid search_priority: %s", search_priority.c_str());
-    throw std::domain_error("[start_planner] invalid search_priority");
+    return order_priority;
   }
+
+  RCLCPP_ERROR(getLogger(), "Invalid search_priority: %s", search_priority.c_str());
+  throw std::domain_error("[start_planner] invalid search_priority");
   return order_priority;
 }
 
@@ -639,9 +668,10 @@ bool StartPlannerModule::findPullOutPath(
   // extract stop objects in pull out lane for collision check
   const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     *dynamic_objects, parameters_->th_moving_object_velocity);
-  const auto [pull_out_lane_stop_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(
-      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
+  auto [pull_out_lane_stop_objects, others] = utils::path_safety_checker::separateObjectsByLanelets(
+    stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
+  utils::path_safety_checker::filterObjectsByClass(
+    pull_out_lane_stop_objects, parameters_->object_types_to_check_for_path_generation);
 
   // if start_pose_candidate is far from refined_start_pose, backward driving is necessary
   const bool backward_is_unnecessary =
@@ -657,8 +687,8 @@ bool StartPlannerModule::findPullOutPath(
 
   // check collision
   if (utils::checkCollisionBetweenPathFootprintsAndObjects(
-        vehicle_footprint, extractCollisionCheckSection(*pull_out_path), pull_out_lane_stop_objects,
-        collision_check_margin)) {
+        vehicle_footprint, extractCollisionCheckSection(*pull_out_path, planner->getPlannerType()),
+        pull_out_lane_stop_objects, collision_check_margin)) {
     return false;
   }
 
@@ -672,29 +702,47 @@ bool StartPlannerModule::findPullOutPath(
   return true;
 }
 
-PathWithLaneId StartPlannerModule::extractCollisionCheckSection(const PullOutPath & path)
+PathWithLaneId StartPlannerModule::extractCollisionCheckSection(
+  const PullOutPath & path, const behavior_path_planner::PlannerType & planner_type)
 {
-  PathWithLaneId combined_path;
-  for (const auto & partial_path : path.partial_paths) {
-    combined_path.points.insert(
-      combined_path.points.end(), partial_path.points.begin(), partial_path.points.end());
-  }
-  // calculate collision check end idx
-  const size_t collision_check_end_idx = std::invoke([&]() {
-    const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
-      combined_path.points, path.end_pose.position, parameters_->collision_check_distance_from_end);
+  const std::map<PlannerType, double> collision_check_distances = {
+    {behavior_path_planner::PlannerType::SHIFT,
+     parameters_->shift_collision_check_distance_from_end},
+    {behavior_path_planner::PlannerType::GEOMETRIC,
+     parameters_->geometric_collision_check_distance_from_end}};
 
-    if (collision_check_end_pose) {
-      return motion_utils::findNearestIndex(
-        combined_path.points, collision_check_end_pose->position);
-    } else {
-      return combined_path.points.size() - 1;
-    }
-  });
-  // remove the point behind of collision check end pose
-  combined_path.points.erase(
-    combined_path.points.begin() + collision_check_end_idx + 1, combined_path.points.end());
-  return combined_path;
+  const double collision_check_distance_from_end = collision_check_distances.at(planner_type);
+
+  PathWithLaneId full_path;
+  for (const auto & partial_path : path.partial_paths) {
+    full_path.points.insert(
+      full_path.points.end(), partial_path.points.begin(), partial_path.points.end());
+  }
+
+  // Find the start index for collision check section based on the shift start pose
+  const auto shift_start_idx =
+    motion_utils::findNearestIndex(full_path.points, path.start_pose.position);
+
+  // Find the end index for collision check section based on the end pose and collision check
+  // distance
+  const auto collision_check_end_idx = [&]() -> size_t {
+    const auto end_pose_offset = motion_utils::calcLongitudinalOffsetPose(
+      full_path.points, path.end_pose.position, collision_check_distance_from_end);
+
+    return end_pose_offset
+             ? motion_utils::findNearestIndex(full_path.points, end_pose_offset->position)
+             : full_path.points.size() - 1;  // Use the last point if offset pose is not calculable
+  }();
+
+  // Extract the collision check section from the full path
+  PathWithLaneId collision_check_section;
+  if (shift_start_idx < collision_check_end_idx) {
+    collision_check_section.points.assign(
+      full_path.points.begin() + shift_start_idx,
+      full_path.points.begin() + collision_check_end_idx + 1);
+  }
+
+  return collision_check_section;
 }
 
 void StartPlannerModule::updateStatusWithCurrentPath(
@@ -926,8 +974,8 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     pull_out_lanes, start_pose.position, parameters_->th_moving_object_velocity, 0,
     std::numeric_limits<double>::max());
 
-  // Set the maximum backward distance less than the distance from the vehicle's base_link to the
-  // lane's rearmost point to prevent lane departure.
+  // Set the maximum backward distance less than the distance from the vehicle's base_link to
+  // the lane's rearmost point to prevent lane departure.
   const double current_arc_length =
     lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose).length;
   const double allowed_backward_distance = std::clamp(
@@ -989,6 +1037,9 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
     stop_objects_in_pull_out_lanes, path.points, current_point, object_check_forward_distance,
     object_check_backward_distance);
 
+  utils::path_safety_checker::filterObjectsByClass(
+    stop_objects_in_pull_out_lanes, parameters_->object_types_to_check_for_path_generation);
+
   return stop_objects_in_pull_out_lanes;
 }
 
@@ -1022,18 +1073,23 @@ bool StartPlannerModule::hasFinishedPullOut() const
   return has_finished;
 }
 
+bool StartPlannerModule::needToPrepareBlinkerBeforeStart() const
+{
+  if (!status_.first_engaged_time) {
+    return true;
+  }
+  const auto first_engaged_time = status_.first_engaged_time.value();
+  const double elapsed = rclcpp::Duration(clock_->now() - first_engaged_time).seconds();
+  return elapsed < parameters_->prepare_time_before_start;
+}
+
 bool StartPlannerModule::isStuck()
 {
   if (!isStopped()) {
     return false;
   }
 
-  if (status_.planner_type == PlannerType::STOP) {
-    return true;
-  }
-
-  // not found safe path
-  if (!status_.found_pull_out_path) {
+  if (status_.planner_type == PlannerType::STOP || !status_.found_pull_out_path) {
     return true;
   }
 
@@ -1126,30 +1182,26 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
     return false;
   });
 
-  if (is_near_intersection) {
-    // offset required end pose with ration to activate turn signal for intersection
-    turn_signal.required_end_point = std::invoke([&]() {
-      const double length_start_to_end =
-        motion_utils::calcSignedArcLength(path.points, start_pose.position, end_pose.position);
-      const auto ratio = std::clamp(
-        parameters_->length_ratio_for_turn_signal_deactivation_near_intersection, 0.0, 1.0);
+  turn_signal.required_end_point = std::invoke([&]() {
+    if (is_near_intersection) return end_pose;
+    const double length_start_to_end =
+      motion_utils::calcSignedArcLength(path.points, start_pose.position, end_pose.position);
+    const auto ratio = std::clamp(
+      parameters_->length_ratio_for_turn_signal_deactivation_near_intersection, 0.0, 1.0);
 
-      const double required_end_length = length_start_to_end * ratio;
-      double accumulated_length = 0.0;
-      const size_t start_idx = motion_utils::findNearestIndex(path.points, start_pose.position);
-      for (size_t i = start_idx; i < path.points.size() - 1; ++i) {
-        accumulated_length +=
-          tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
-        if (accumulated_length > required_end_length) {
-          return path.points.at(i).point.pose;
-        }
+    const double required_end_length = length_start_to_end * ratio;
+    double accumulated_length = 0.0;
+    const size_t start_idx = motion_utils::findNearestIndex(path.points, start_pose.position);
+    for (size_t i = start_idx; i < path.points.size() - 1; ++i) {
+      accumulated_length +=
+        tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
+      if (accumulated_length > required_end_length) {
+        return path.points.at(i).point.pose;
       }
-      // not found required end point
-      return end_pose;
-    });
-  } else {
-    turn_signal.required_end_point = end_pose;
-  }
+    }
+    // not found required end point
+    return end_pose;
+  });
 
   return turn_signal;
 }
@@ -1159,6 +1211,9 @@ bool StartPlannerModule::isSafePath() const
   // TODO(Sugahara): should safety check for backward path
 
   const auto pull_out_path = getCurrentPath();
+  if (pull_out_path.points.empty()) {
+    return false;
+  }
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const double current_velocity = std::hypot(
     planner_data_->self_odometry->twist.twist.linear.x,
@@ -1202,8 +1257,12 @@ bool StartPlannerModule::isSafePath() const
   const double hysteresis_factor =
     status_.is_safe_dynamic_objects ? 1.0 : safety_check_params_->hysteresis_factor_expand_rate;
 
-  behavior_path_planner::updateSafetyCheckDebugData(
-    debug_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
+  // debug
+  {
+    debug_data_.filtered_objects = filtered_objects;
+    debug_data_.target_objects_on_lane = target_objects_on_lane;
+    debug_data_.ego_predicted_path = ego_predicted_path;
+  }
 
   return behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
     pull_out_path, ego_predicted_path, target_objects_on_lane.on_current_lane,
@@ -1215,8 +1274,8 @@ bool StartPlannerModule::isGoalBehindOfEgoInSameRouteSegment() const
 {
   const auto & rh = planner_data_->route_handler;
 
-  // Check if the goal and ego are in the same route segment. If not, this is out of scope of this
-  // function. Return false.
+  // Check if the goal and ego are in the same route segment. If not, this is out of scope of
+  // this function. Return false.
   lanelet::ConstLanelet ego_lanelet;
   rh->getClosestLaneletWithinRoute(getEgoPose(), &ego_lanelet);
   const auto is_ego_in_goal_route_section = rh->isInGoalRouteSection(ego_lanelet);
@@ -1311,39 +1370,31 @@ bool StartPlannerModule::planFreespacePath()
 
 void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
 {
-  if (status_.planner_type == PlannerType::FREESPACE) {
-    std::cerr << "Freespace planner updated drivable area." << std::endl;
-    const double drivable_area_margin = planner_data_->parameters.vehicle_width;
-    output.drivable_area_info.drivable_margin =
-      planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
-  } else {
-    const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
-      output.path, generateDrivableLanes(output.path),
-      planner_data_->drivable_area_expansion_parameters);
+  switch (status_.planner_type) {
+    case PlannerType::FREESPACE: {
+      const double drivable_area_margin = planner_data_->parameters.vehicle_width;
+      output.drivable_area_info.drivable_margin =
+        planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
+      break;
+    }
+    default: {
+      const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
+        output.path, generateDrivableLanes(output.path),
+        planner_data_->drivable_area_expansion_parameters);
 
-    DrivableAreaInfo current_drivable_area_info;
-    current_drivable_area_info.drivable_lanes = target_drivable_lanes;
-    output.drivable_area_info =
-      status_.driving_forward
-        ? utils::combineDrivableAreaInfo(
-            current_drivable_area_info, getPreviousModuleOutput().drivable_area_info)
-        : current_drivable_area_info;
-  }
-}
-
-void StartPlannerModule::updateDrivableLanes()
-{
-  const auto drivable_lanes = createDrivableLanes();
-  for (auto & planner : start_planners_) {
-    auto shift_pull_out = std::dynamic_pointer_cast<ShiftPullOut>(planner);
-
-    if (shift_pull_out) {
-      shift_pull_out->setDrivableLanes(drivable_lanes);
+      DrivableAreaInfo current_drivable_area_info;
+      current_drivable_area_info.drivable_lanes = target_drivable_lanes;
+      output.drivable_area_info =
+        status_.driving_forward
+          ? utils::combineDrivableAreaInfo(
+              current_drivable_area_info, getPreviousModuleOutput().drivable_area_info)
+          : current_drivable_area_info;
+      break;
     }
   }
 }
 
-lanelet::ConstLanelets StartPlannerModule::createDrivableLanes() const
+lanelet::ConstLanelets StartPlannerModule::createDepartureCheckLanes() const
 {
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
@@ -1362,13 +1413,14 @@ lanelet::ConstLanelets StartPlannerModule::createDrivableLanes() const
     [this](const auto & pull_out_lane) {
       return planner_data_->route_handler->isShoulderLanelet(pull_out_lane);
     });
-  const auto drivable_lanes = utils::transformToLanelets(
+  const auto departure_check_lanes = utils::transformToLanelets(
     utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes));
-  return drivable_lanes;
+  return departure_check_lanes;
 }
 
 void StartPlannerModule::setDebugData()
 {
+  using lanelet::visualization::laneletsAsTriangleMarkerArray;
   using marker_utils::addFootprintMarker;
   using marker_utils::createFootprintMarkerArray;
   using marker_utils::createObjectsMarkerArray;
@@ -1383,62 +1435,74 @@ void StartPlannerModule::setDebugData()
   using tier4_autoware_utils::createMarkerScale;
   using visualization_msgs::msg::Marker;
 
+  const auto red_color = createMarkerColor(1.0, 0.0, 0.0, 0.999);
+  const auto cyan_color = createMarkerColor(0.0, 1.0, 1.0, 0.2);
+  const auto pink_color = createMarkerColor(1.0, 0.5, 0.5, 0.35);
+  const auto purple_color = createMarkerColor(1.0, 0.0, 1.0, 0.99);
+  const auto white_color = createMarkerColor(1.0, 1.0, 1.0, 0.99);
+
   const auto life_time = rclcpp::Duration::from_seconds(1.5);
-  auto add = [&](MarkerArray added) {
+  auto add = [&](MarkerArray added, MarkerArray & target_marker_array) {
     for (auto & marker : added.markers) {
       marker.lifetime = life_time;
     }
-    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
+    tier4_autoware_utils::appendMarkerArray(added, &target_marker_array);
   };
 
   debug_marker_.markers.clear();
-  add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
-  add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
-  add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
-  add(createFootprintMarkerArray(
-    debug_data_.refined_start_pose, vehicle_info_, "refined_start_pose", 0, 0.9, 0.9, 0.3));
-  add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
-  add(createPathMarkerArray(status_.backward_path, "backward_driving_path", 0, 0.0, 0.9, 0.0));
+  info_marker_.markers.clear();
+  add(
+    createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3),
+    info_marker_);
+  add(
+    createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3),
+    info_marker_);
+  add(
+    createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3),
+    info_marker_);
+  add(
+    createFootprintMarkerArray(
+      debug_data_.refined_start_pose, vehicle_info_, "refined_start_pose", 0, 0.9, 0.9, 0.3),
+    debug_marker_);
+  add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9), debug_marker_);
+  add(
+    createPathMarkerArray(status_.backward_path, "backward_driving_path", 0, 0.0, 0.9, 0.0),
+    debug_marker_);
 
   // visualize collision_check_end_pose and footprint
   {
-    const auto local_footprint = vehicle_info_.createFootprint();
+    std::map<PlannerType, double> collision_check_distances = {
+      {PlannerType::SHIFT, parameters_->shift_collision_check_distance_from_end},
+      {PlannerType::GEOMETRIC, parameters_->geometric_collision_check_distance_from_end}};
+
+    double collision_check_distance_from_end = collision_check_distances[status_.planner_type];
     const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
       getFullPath().points, status_.pull_out_path.end_pose.position,
-      parameters_->collision_check_distance_from_end);
+      collision_check_distance_from_end);
     if (collision_check_end_pose) {
-      add(createPoseMarkerArray(
-        *collision_check_end_pose, "static_collision_check_end_pose", 0, 1.0, 0.0, 0.0));
-      auto marker = tier4_autoware_utils::createDefaultMarker(
+      add(
+        createPoseMarkerArray(
+          *collision_check_end_pose, "static_collision_check_end_pose", 0, 1.0, 0.0, 0.0),
+        info_marker_);
+      auto marker = createDefaultMarker(
         "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "static_collision_check_end_polygon", 0,
-        Marker::LINE_LIST, tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1),
-        tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
-      const auto footprint = transformVector(
-        local_footprint, tier4_autoware_utils::pose2transform(*collision_check_end_pose));
-      const double ego_z = planner_data_->self_odometry->pose.pose.position.z;
-      for (size_t i = 0; i < footprint.size(); i++) {
-        const auto & current_point = footprint.at(i);
-        const auto & next_point = footprint.at((i + 1) % footprint.size());
-        marker.points.push_back(
-          tier4_autoware_utils::createPoint(current_point.x(), current_point.y(), ego_z));
-        marker.points.push_back(
-          tier4_autoware_utils::createPoint(next_point.x(), next_point.y(), ego_z));
-      }
+        Marker::LINE_STRIP, createMarkerScale(0.1, 0.1, 0.1), red_color);
+      addFootprintMarker(marker, *collision_check_end_pose, vehicle_info_);
       marker.lifetime = life_time;
-      debug_marker_.markers.push_back(marker);
+      info_marker_.markers.push_back(marker);
     }
   }
   // start pose candidates
   {
     MarkerArray start_pose_footprint_marker_array{};
     MarkerArray start_pose_text_marker_array{};
-    const auto purple = createMarkerColor(1.0, 0.0, 1.0, 0.99);
     Marker footprint_marker = createDefaultMarker(
       "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "start_pose_candidates", 0, Marker::LINE_STRIP,
-      createMarkerScale(0.2, 0.2, 0.2), purple);
+      createMarkerScale(0.2, 0.2, 0.2), purple_color);
     Marker text_marker = createDefaultMarker(
       "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "start_pose_candidates_idx", 0,
-      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.3, 0.3, 0.3), purple);
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.3, 0.3, 0.3),
+      purple_color);
     footprint_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
     text_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
     for (size_t i = 0; i < debug_data_.start_pose_candidates.size(); ++i) {
@@ -1452,17 +1516,16 @@ void StartPlannerModule::setDebugData()
       start_pose_text_marker_array.markers.push_back(text_marker);
     }
 
-    add(start_pose_footprint_marker_array);
-    add(start_pose_text_marker_array);
+    add(start_pose_footprint_marker_array, debug_marker_);
+    add(start_pose_text_marker_array, debug_marker_);
   }
 
   // visualize the footprint from pull_out_start pose to pull_out_end pose along the path
   {
     MarkerArray pull_out_path_footprint_marker_array{};
-    const auto pink = createMarkerColor(1.0, 0.0, 1.0, 0.99);
     Marker pull_out_path_footprint_marker = createDefaultMarker(
       "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "shift_path_footprint", 0, Marker::LINE_STRIP,
-      createMarkerScale(0.2, 0.2, 0.2), pink);
+      createMarkerScale(0.2, 0.2, 0.2), pink_color);
     pull_out_path_footprint_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
     PathWithLaneId path_shift_start_to_end{};
     const auto shift_path = status_.pull_out_path.partial_paths.front();
@@ -1486,7 +1549,7 @@ void StartPlannerModule::setDebugData()
       pull_out_path_footprint_marker_array.markers.push_back(pull_out_path_footprint_marker);
     }
 
-    add(pull_out_path_footprint_marker_array);
+    add(pull_out_path_footprint_marker_array, debug_marker_);
   }
 
   // safety check
@@ -1494,18 +1557,24 @@ void StartPlannerModule::setDebugData()
     if (debug_data_.ego_predicted_path.size() > 0) {
       const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
         debug_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
-      add(createPredictedPathMarkerArray(
-        ego_predicted_path, vehicle_info_, "ego_predicted_path_start_planner", 0, 0.0, 0.5, 0.9));
+      add(
+        createPredictedPathMarkerArray(
+          ego_predicted_path, vehicle_info_, "ego_predicted_path_start_planner", 0, 0.0, 0.5, 0.9),
+        debug_marker_);
     }
 
     if (debug_data_.filtered_objects.objects.size() > 0) {
-      add(createObjectsMarkerArray(
-        debug_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+      add(
+        createObjectsMarkerArray(
+          debug_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9),
+        info_marker_);
     }
 
-    add(showSafetyCheckInfo(debug_data_.collision_check, "object_debug_info"));
-    add(showPredictedPath(debug_data_.collision_check, "ego_predicted_path"));
-    add(showPolygon(debug_data_.collision_check, "ego_and_target_polygon_relation"));
+    add(showSafetyCheckInfo(debug_data_.collision_check, "object_debug_info"), debug_marker_);
+    add(
+      showPredictedPath(debug_data_.collision_check, "predicted_path_for_safety_check"),
+      info_marker_);
+    add(showPolygon(debug_data_.collision_check, "ego_and_target_polygon_relation"), info_marker_);
 
     // set objects of interest
     for (const auto & [uuid, data] : debug_data_.collision_check) {
@@ -1520,8 +1589,7 @@ void StartPlannerModule::setDebugData()
   const auto header = planner_data_->route_handler->getRouteHeader();
   {
     visualization_msgs::msg::MarkerArray planner_type_marker_array{};
-    const auto color = status_.found_pull_out_path ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
-                                                   : createMarkerColor(1.0, 0.0, 0.0, 0.99);
+    const auto color = status_.found_pull_out_path ? white_color : red_color;
     auto marker = createDefaultMarker(
       header.frame_id, header.stamp, "planner_type", 0,
       visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0), color);
@@ -1534,8 +1602,21 @@ void StartPlannerModule::setDebugData()
                    std::to_string(status_.pull_out_path.partial_paths.size() - 1);
     marker.lifetime = life_time;
     planner_type_marker_array.markers.push_back(marker);
-    add(planner_type_marker_array);
+    add(planner_type_marker_array, info_marker_);
   }
+
+  add(
+    laneletsAsTriangleMarkerArray(
+      "departure_check_lanes_for_shift_pull_out_path", debug_data_.departure_check_lanes,
+      cyan_color),
+    debug_marker_);
+
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+  add(
+    laneletsAsTriangleMarkerArray(
+      "pull_out_lanes_for_static_objects_collision_check", pull_out_lanes, pink_color),
+    debug_marker_);
 }
 
 void StartPlannerModule::logPullOutStatus(rclcpp::Logger::Level log_level) const
