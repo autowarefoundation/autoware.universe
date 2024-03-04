@@ -47,7 +47,7 @@ DetectionAreaModule::DetectionAreaModule(
   state_(State::GO),
   planner_param_(planner_param)
 {
-  velocity_factor_.init(VelocityFactor::USER_DEFINED_DETECTION_AREA);
+  velocity_factor_.init(PlanningBehavior::USER_DEFINED_DETECTION_AREA);
 }
 
 LineString2d DetectionAreaModule::getStopLineGeometry2d() const
@@ -110,7 +110,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
       return false;
     }
 
-    modified_stop_pose = ego_pos_on_path.get();
+    modified_stop_pose = ego_pos_on_path.value();
     modified_stop_line_seg_idx = current_seg_idx;
   }
 

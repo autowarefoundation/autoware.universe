@@ -21,13 +21,13 @@
 EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 {
   // Parameter
-  param_.update_rate = declare_parameter<int>("update_rate", 10);
-  param_.timeout_hazard_status = declare_parameter<double>("timeout_hazard_status", 0.5);
-  param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request", 10.0);
-  param_.use_takeover_request = declare_parameter<bool>("use_takeover_request", false);
-  param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped", false);
-  param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop", false);
-  param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency", true);
+  param_.update_rate = declare_parameter<int>("update_rate");
+  param_.timeout_hazard_status = declare_parameter<double>("timeout_hazard_status");
+  param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request");
+  param_.use_takeover_request = declare_parameter<bool>("use_takeover_request");
+  param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped");
+  param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop");
+  param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency");
 
   using std::placeholders::_1;
 
@@ -358,7 +358,7 @@ void EmergencyHandler::transitionTo(const int new_state)
     throw std::runtime_error(msg);
   };
 
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "MRM State changed: %s -> %s", state2string(mrm_state_.state),
     state2string(new_state));
 

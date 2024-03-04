@@ -4,6 +4,21 @@
 
 `joy_controller` is the package to convert a joy msg to autoware commands (e.g. steering wheel, shift, turn signal, engage) for a vehicle.
 
+## Usage
+
+### ROS 2 launch
+
+```bash
+# With default config (ds4)
+ros2 launch joy_controller joy_controller.launch.xml
+
+# Default config but select from the existing parameter files
+ros2 launch joy_controller joy_controller_param_selection.launch.xml joy_type:=ds4 # or g29, p65, xbox
+
+# Override the param file
+ros2 launch joy_controller joy_controller.launch.xml config_file:=/path/to/your/param.yaml
+```
+
 ## Input / Output
 
 ### Input topics
@@ -37,6 +52,7 @@
 | `steering_angle_velocity` | double | steering angle velocity for operation                                                                              |
 | `accel_sensitivity`       | double | sensitivity to calculate acceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity)) |
 | `brake_sensitivity`       | double | sensitivity to calculate deceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity)) |
+| `raw_control`             | bool   | skip input odometry if true                                                                                        |
 | `velocity_gain`           | double | ratio to calculate velocity by acceleration                                                                        |
 | `max_forward_velocity`    | double | absolute max velocity to go forward                                                                                |
 | `max_backward_velocity`   | double | absolute max velocity to go backward                                                                               |
@@ -85,3 +101,25 @@
 | Autoware Disengage   | ○                          |
 | Vehicle Engage       | △                          |
 | Vehicle Disengage    | △                          |
+
+## XBOX Joystick Key Map
+
+| Action               | Button                |
+| -------------------- | --------------------- |
+| Acceleration         | RT                    |
+| Brake                | LT                    |
+| Steering             | Left Stick Left Right |
+| Shift up             | Cursor Up             |
+| Shift down           | Cursor Down           |
+| Shift Drive          | Cursor Left           |
+| Shift Reverse        | Cursor Right          |
+| Turn Signal Left     | LB                    |
+| Turn Signal Right    | RB                    |
+| Clear Turn Signal    | A                     |
+| Gate Mode            | B                     |
+| Emergency Stop       | View                  |
+| Clear Emergency Stop | Menu                  |
+| Autoware Engage      | X                     |
+| Autoware Disengage   | Y                     |
+| Vehicle Engage       | Left Stick Button     |
+| Vehicle Disengage    | Right Stick Button    |

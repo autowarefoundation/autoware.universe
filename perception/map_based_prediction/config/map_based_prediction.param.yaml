@@ -13,6 +13,18 @@
     sigma_yaw_angle_deg: 5.0 #[angle degree]
     object_buffer_time_length: 2.0 #[s]
     history_time_length: 1.0 #[s]
+    check_lateral_acceleration_constraints: false # whether to check if the predicted path complies with lateral acceleration constraints
+    max_lateral_accel: 2.0 # [m/ss] max acceptable lateral acceleration for predicted vehicle paths
+    min_acceleration_before_curve: -2.0 # [m/ss] min acceleration a vehicle might take to decelerate before a curve
+    use_vehicle_acceleration: false # whether to consider current vehicle acceleration when predicting paths or not
+    speed_limit_multiplier: 1.5 # When using vehicle acceleration. Set vehicle's maximum predicted speed as the legal speed limit in that lanelet times this value
+    acceleration_exponential_half_life: 2.5 # [s] When using vehicle acceleration. The decaying acceleration model considers that the current vehicle acceleration will be halved after this many seconds
+    crosswalk_with_signal:
+      use_crosswalk_signal: true
+      threshold_velocity_assumed_as_stopping: 0.25 # [m/s] velocity threshold for the module to judge whether the objects is stopped
+      # If the pedestrian does not move for X seconds against green signal, the module judge that the pedestrian has no intention to walk.
+      distance_set_for_no_intention_to_walk: [1.0, 5.0] # [m] ascending order, keys of map
+      timeout_set_for_no_intention_to_walk: [1.0, 0.0] # [s] values of map
     # parameter for shoulder lane prediction
     prediction_time_horizon_rate_for_validate_shoulder_lane_length: 0.8
 
@@ -29,5 +41,6 @@
         diff_dist_threshold_to_left_bound: 0.29 #[m]
         diff_dist_threshold_to_right_bound: -0.29 #[m]
       num_continuous_state_transition: 3
+      consider_only_routable_neighbours: false
 
     reference_path_resolution: 0.5 #[m]

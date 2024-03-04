@@ -16,6 +16,7 @@
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "obstacle_avoidance_planner/debug_marker.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
@@ -57,7 +58,7 @@ void setZeroVelocityAfterStopPoint(std::vector<TrajectoryPoint> & traj_points)
 {
   const auto opt_zero_vel_idx = motion_utils::searchZeroVelocityIndex(traj_points);
   if (opt_zero_vel_idx) {
-    for (size_t i = opt_zero_vel_idx.get(); i < traj_points.size(); ++i) {
+    for (size_t i = opt_zero_vel_idx.value(); i < traj_points.size(); ++i) {
       traj_points.at(i).longitudinal_velocity_mps = 0.0;
     }
   }
@@ -205,7 +206,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
 
 void ObstacleAvoidancePlanner::initializePlanning()
 {
-  RCLCPP_INFO(get_logger(), "Initialize planning");
+  RCLCPP_DEBUG(get_logger(), "Initialize planning");
 
   mpt_optimizer_ptr_->initialize(enable_debug_info_, traj_param_);
 
@@ -236,7 +237,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
       "Backward path is NOT supported. Just converting path to trajectory");
 
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
-    const auto output_traj_msg = trajectory_utils::createTrajectory(path_ptr->header, traj_points);
+    const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
     return;
   }
@@ -268,7 +269,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
     createFloat64Stamped(now(), time_keeper_ptr_->getAccumulatedTime()));
 
   const auto output_traj_msg =
-    trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
+    motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
   traj_pub_->publish(output_traj_msg);
 }
 
@@ -363,7 +364,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data, p.traj_points);
+  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data);
 
   time_keeper_ptr_->toc(__func__, "    ");
   return mpt_traj;
@@ -447,7 +448,7 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
   // insert stop point explicitly
   const auto stop_idx = motion_utils::searchZeroVelocityIndex(forward_cropped_input_traj_points);
   if (stop_idx) {
-    const auto & input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.get()).pose;
+    const auto & input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.value()).pose;
     // NOTE: motion_utils::findNearestSegmentIndex is used instead of
     // trajectory_utils::findEgoSegmentIndex
     //       for the case where input_traj_points is much longer than output_traj_points, and the
@@ -656,7 +657,7 @@ void ObstacleAvoidancePlanner::publishDebugData(const Header & header) const
 
   // publish trajectories
   const auto debug_extended_traj =
-    trajectory_utils::createTrajectory(header, debug_data_ptr_->extended_traj_points);
+    motion_utils::convertToTrajectory(debug_data_ptr_->extended_traj_points, header);
   debug_extended_traj_pub_->publish(debug_extended_traj);
 
   time_keeper_ptr_->toc(__func__, "  ");

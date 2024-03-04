@@ -35,153 +35,270 @@ using tier4_autoware_utils::getOrDeclareParameter;
 IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
+    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
   occlusion_rtc_interface_(
     &node, "intersection_occlusion",
-    getOrDeclareParameter<bool>(
-      node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
+    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
-  ip.common.attention_area_margin =
-    getOrDeclareParameter<double>(node, ns + ".common.attention_area_margin");
-  ip.common.attention_area_length =
-    getOrDeclareParameter<double>(node, ns + ".common.attention_area_length");
-  ip.common.attention_area_angle_thr =
-    getOrDeclareParameter<double>(node, ns + ".common.attention_area_angle_threshold");
-  ip.common.stop_line_margin = getOrDeclareParameter<double>(node, ns + ".common.stop_line_margin");
-  ip.common.intersection_velocity =
-    getOrDeclareParameter<double>(node, ns + ".common.intersection_velocity");
-  ip.common.intersection_max_acc =
-    getOrDeclareParameter<double>(node, ns + ".common.intersection_max_accel");
-  ip.common.stop_overshoot_margin =
-    getOrDeclareParameter<double>(node, ns + ".common.stop_overshoot_margin");
-  ip.common.use_intersection_area =
-    getOrDeclareParameter<bool>(node, ns + ".common.use_intersection_area");
-  ip.common.path_interpolation_ds =
-    getOrDeclareParameter<double>(node, ns + ".common.path_interpolation_ds");
-  ip.common.consider_wrong_direction_vehicle =
-    getOrDeclareParameter<bool>(node, ns + ".common.consider_wrong_direction_vehicle");
-  ip.common.max_accel = getOrDeclareParameter<double>(node, ns + ".common.max_accel");
-  ip.common.max_jerk = getOrDeclareParameter<double>(node, ns + ".common.max_jerk");
-  ip.common.delay_response_time =
-    getOrDeclareParameter<double>(node, ns + ".common.delay_response_time");
 
-  ip.stuck_vehicle.turn_direction.left =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.left");
-  ip.stuck_vehicle.turn_direction.right =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.right");
-  ip.stuck_vehicle.turn_direction.straight =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.straight");
-  ip.stuck_vehicle.use_stuck_stopline =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.use_stuck_stopline");
-  ip.stuck_vehicle.stuck_vehicle_detect_dist =
-    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_detect_dist");
-  ip.stuck_vehicle.stuck_vehicle_vel_thr =
-    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_vel_thr");
-  /*
-  ip.stuck_vehicle.assumed_front_car_decel =
-    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.assumed_front_car_decel");
-  ip.stuck_vehicle.enable_front_car_decel_prediction =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.enable_front_car_decel_prediction");
-  */
-  ip.stuck_vehicle.timeout_private_area =
-    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.timeout_private_area");
-  ip.stuck_vehicle.enable_private_area_stuck_disregard =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.enable_private_area_stuck_disregard");
-  ip.stuck_vehicle.yield_stuck_turn_direction.left =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.left");
-  ip.stuck_vehicle.yield_stuck_turn_direction.right =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.right");
-  ip.stuck_vehicle.yield_stuck_turn_direction.straight =
-    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.straight");
-  ip.stuck_vehicle.yield_stuck_distance_thr =
-    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.yield_stuck.distance_thr");
+  // common
+  {
+    ip.common.attention_area_length =
+      getOrDeclareParameter<double>(node, ns + ".common.attention_area_length");
+    ip.common.attention_area_margin =
+      getOrDeclareParameter<double>(node, ns + ".common.attention_area_margin");
+    ip.common.attention_area_angle_threshold =
+      getOrDeclareParameter<double>(node, ns + ".common.attention_area_angle_threshold");
+    ip.common.use_intersection_area =
+      getOrDeclareParameter<bool>(node, ns + ".common.use_intersection_area");
+    ip.common.default_stopline_margin =
+      getOrDeclareParameter<double>(node, ns + ".common.default_stopline_margin");
+    ip.common.stopline_overshoot_margin =
+      getOrDeclareParameter<double>(node, ns + ".common.stopline_overshoot_margin");
+    ip.common.path_interpolation_ds =
+      getOrDeclareParameter<double>(node, ns + ".common.path_interpolation_ds");
+    ip.common.max_accel = getOrDeclareParameter<double>(node, ns + ".common.max_accel");
+    ip.common.max_jerk = getOrDeclareParameter<double>(node, ns + ".common.max_jerk");
+    ip.common.delay_response_time =
+      getOrDeclareParameter<double>(node, ns + ".common.delay_response_time");
+    ip.common.enable_pass_judge_before_default_stopline =
+      getOrDeclareParameter<bool>(node, ns + ".common.enable_pass_judge_before_default_stopline");
+  }
 
-  ip.collision_detection.min_predicted_path_confidence =
-    getOrDeclareParameter<double>(node, ns + ".collision_detection.min_predicted_path_confidence");
-  ip.collision_detection.minimum_ego_predicted_velocity =
-    getOrDeclareParameter<double>(node, ns + ".collision_detection.minimum_ego_predicted_velocity");
-  ip.collision_detection.state_transit_margin_time =
-    getOrDeclareParameter<double>(node, ns + ".collision_detection.state_transit_margin_time");
-  ip.collision_detection.fully_prioritized.collision_start_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.fully_prioritized.collision_start_margin_time");
-  ip.collision_detection.fully_prioritized.collision_end_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.fully_prioritized.collision_end_margin_time");
-  ip.collision_detection.partially_prioritized.collision_start_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.partially_prioritized.collision_start_margin_time");
-  ip.collision_detection.partially_prioritized.collision_end_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.partially_prioritized.collision_end_margin_time");
-  ip.collision_detection.not_prioritized.collision_start_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.not_prioritized.collision_start_margin_time");
-  ip.collision_detection.not_prioritized.collision_end_margin_time = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.not_prioritized.collision_end_margin_time");
-  ip.collision_detection.keep_detection_vel_thr =
-    getOrDeclareParameter<double>(node, ns + ".collision_detection.keep_detection_vel_thr");
-  ip.collision_detection.use_upstream_velocity =
-    getOrDeclareParameter<bool>(node, ns + ".collision_detection.use_upstream_velocity");
-  ip.collision_detection.minimum_upstream_velocity =
-    getOrDeclareParameter<double>(node, ns + ".collision_detection.minimum_upstream_velocity");
-  ip.collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start =
-    getOrDeclareParameter<double>(
-      node,
-      ns + ".collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start");
-  ip.collision_detection.yield_on_green_traffic_light.duration = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.yield_on_green_traffic_light.duration");
-  ip.collision_detection.yield_on_green_traffic_light.object_dist_to_stopline =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.yield_on_green_traffic_light.object_dist_to_stopline");
-  ip.collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration");
-  ip.collision_detection.ignore_on_red_traffic_light.object_margin_to_path =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.ignore_on_red_traffic_light.object_margin_to_path");
+  // stuck
+  {
+    // target_type
+    {
+      ip.stuck_vehicle.target_type.car =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.target_type.car");
+      ip.stuck_vehicle.target_type.bus =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.target_type.bus");
+      ip.stuck_vehicle.target_type.truck =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.target_type.truck");
+      ip.stuck_vehicle.target_type.trailer =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.target_type.trailer");
+      ip.stuck_vehicle.target_type.motorcycle =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.target_type.motorcycle");
+      ip.stuck_vehicle.target_type.bicycle =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.target_type.bicycle");
+      ip.stuck_vehicle.target_type.unknown =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.target_type.unknown");
+    }
 
-  ip.occlusion.enable = getOrDeclareParameter<bool>(node, ns + ".occlusion.enable");
-  ip.occlusion.occlusion_attention_area_length =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.occlusion_attention_area_length");
-  ip.occlusion.enable_creeping =
-    getOrDeclareParameter<bool>(node, ns + ".occlusion.enable_creeping");
-  ip.occlusion.occlusion_creep_velocity =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.occlusion_creep_velocity");
-  ip.occlusion.peeking_offset =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.peeking_offset");
-  ip.occlusion.free_space_max = getOrDeclareParameter<int>(node, ns + ".occlusion.free_space_max");
-  ip.occlusion.occupied_min = getOrDeclareParameter<int>(node, ns + ".occlusion.occupied_min");
-  ip.occlusion.do_dp = getOrDeclareParameter<bool>(node, ns + ".occlusion.do_dp");
-  ip.occlusion.before_creep_stop_time =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.before_creep_stop_time");
-  ip.occlusion.min_vehicle_brake_for_rss =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.min_vehicle_brake_for_rss");
-  ip.occlusion.max_vehicle_velocity_for_rss =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.max_vehicle_velocity_for_rss");
-  ip.occlusion.denoise_kernel =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.denoise_kernel");
-  ip.occlusion.possible_object_bbox =
-    getOrDeclareParameter<std::vector<double>>(node, ns + ".occlusion.possible_object_bbox");
-  ip.occlusion.ignore_parked_vehicle_speed_threshold =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.ignore_parked_vehicle_speed_threshold");
-  ip.occlusion.stop_release_margin_time =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.stop_release_margin_time");
-  ip.occlusion.temporal_stop_before_attention_area =
-    getOrDeclareParameter<bool>(node, ns + ".occlusion.temporal_stop_before_attention_area");
-  ip.occlusion.absence_traffic_light.creep_velocity =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.absence_traffic_light.creep_velocity");
-  ip.occlusion.absence_traffic_light.maximum_peeking_distance = getOrDeclareParameter<double>(
-    node, ns + ".occlusion.absence_traffic_light.maximum_peeking_distance");
-  ip.occlusion.attention_lane_crop_curvature_threshold =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_crop_curvature_threshold");
-  ip.occlusion.attention_lane_curvature_calculation_ds =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_curvature_calculation_ds");
-  ip.occlusion.static_occlusion_with_traffic_light_timeout = getOrDeclareParameter<double>(
-    node, ns + ".occlusion.static_occlusion_with_traffic_light_timeout");
+    // turn_direction
+    {
+      ip.stuck_vehicle.turn_direction.left =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.left");
+      ip.stuck_vehicle.turn_direction.right =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.right");
+      ip.stuck_vehicle.turn_direction.straight =
+        getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.straight");
+    }
+
+    ip.stuck_vehicle.use_stuck_stopline =
+      getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.use_stuck_stopline");
+    ip.stuck_vehicle.stuck_vehicle_detect_dist =
+      getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_detect_dist");
+    ip.stuck_vehicle.stuck_vehicle_velocity_threshold =
+      getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_velocity_threshold");
+    ip.stuck_vehicle.disable_against_private_lane =
+      getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.disable_against_private_lane");
+  }
+
+  // yield_stuck
+  {
+    // target_type
+    {
+      ip.yield_stuck.target_type.car =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.target_type.car");
+      ip.yield_stuck.target_type.bus =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.target_type.bus");
+      ip.yield_stuck.target_type.truck =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.target_type.truck");
+      ip.yield_stuck.target_type.trailer =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.target_type.trailer");
+      ip.yield_stuck.target_type.motorcycle =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.target_type.motorcycle");
+      ip.yield_stuck.target_type.bicycle =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.target_type.bicycle");
+      ip.yield_stuck.target_type.unknown =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.target_type.unknown");
+    }
+
+    // turn_direction
+    {
+      ip.yield_stuck.turn_direction.left =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.turn_direction.left");
+      ip.yield_stuck.turn_direction.right =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.turn_direction.right");
+      ip.yield_stuck.turn_direction.straight =
+        getOrDeclareParameter<bool>(node, ns + ".yield_stuck.turn_direction.straight");
+    }
+
+    ip.yield_stuck.distance_threshold =
+      getOrDeclareParameter<double>(node, ns + ".yield_stuck.distance_threshold");
+  }
+
+  // collision_detection
+  {
+    ip.collision_detection.consider_wrong_direction_vehicle = getOrDeclareParameter<bool>(
+      node, ns + ".collision_detection.consider_wrong_direction_vehicle");
+    ip.collision_detection.collision_detection_hold_time = getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.collision_detection_hold_time");
+    ip.collision_detection.min_predicted_path_confidence = getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.min_predicted_path_confidence");
+
+    // target_type
+    {
+      ip.collision_detection.target_type.car =
+        getOrDeclareParameter<bool>(node, ns + ".collision_detection.target_type.car");
+      ip.collision_detection.target_type.bus =
+        getOrDeclareParameter<bool>(node, ns + ".collision_detection.target_type.bus");
+      ip.collision_detection.target_type.truck =
+        getOrDeclareParameter<bool>(node, ns + ".collision_detection.target_type.truck");
+      ip.collision_detection.target_type.trailer =
+        getOrDeclareParameter<bool>(node, ns + ".collision_detection.target_type.trailer");
+      ip.collision_detection.target_type.motorcycle =
+        getOrDeclareParameter<bool>(node, ns + ".collision_detection.target_type.motorcycle");
+      ip.collision_detection.target_type.bicycle =
+        getOrDeclareParameter<bool>(node, ns + ".collision_detection.target_type.bicycle");
+      ip.collision_detection.target_type.unknown =
+        getOrDeclareParameter<bool>(node, ns + ".collision_detection.target_type.unknown");
+    }
+
+    // velocity_profile
+    {
+      ip.collision_detection.velocity_profile.use_upstream = getOrDeclareParameter<bool>(
+        node, ns + ".collision_detection.velocity_profile.use_upstream");
+      ip.collision_detection.velocity_profile.minimum_upstream_velocity =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.velocity_profile.minimum_upstream_velocity");
+      ip.collision_detection.velocity_profile.default_velocity = getOrDeclareParameter<double>(
+        node, ns + ".collision_detection.velocity_profile.default_velocity");
+      ip.collision_detection.velocity_profile.minimum_default_velocity =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.velocity_profile.minimum_default_velocity");
+    }
+
+    // fully_prioritized
+    {
+      ip.collision_detection.fully_prioritized.collision_start_margin_time =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.fully_prioritized.collision_start_margin_time");
+      ip.collision_detection.fully_prioritized.collision_end_margin_time =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.fully_prioritized.collision_end_margin_time");
+    }
+
+    // partially_prioritized
+    {
+      ip.collision_detection.partially_prioritized.collision_start_margin_time =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.partially_prioritized.collision_start_margin_time");
+      ip.collision_detection.partially_prioritized.collision_end_margin_time =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.partially_prioritized.collision_end_margin_time");
+    }
+
+    // not_prioritized
+    {
+      ip.collision_detection.not_prioritized.collision_start_margin_time =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.not_prioritized.collision_start_margin_time");
+      ip.collision_detection.not_prioritized.collision_end_margin_time =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.not_prioritized.collision_end_margin_time");
+    }
+
+    // yield_on_green_traffic_light
+    {
+      ip.collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start =
+        getOrDeclareParameter<double>(
+          node,
+          ns +
+            ".collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start");
+      ip.collision_detection.yield_on_green_traffic_light.duration = getOrDeclareParameter<double>(
+        node, ns + ".collision_detection.yield_on_green_traffic_light.duration");
+      ip.collision_detection.yield_on_green_traffic_light.object_dist_to_stopline =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.yield_on_green_traffic_light.object_dist_to_stopline");
+    }
+
+    // ignore_on_amber_traffic_light, ignore_on_red_traffic_light
+    {
+      ip.collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration.car =
+        getOrDeclareParameter<double>(
+          node,
+          ns +
+            ".collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration.car");
+      ip.collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration.bike =
+        getOrDeclareParameter<double>(
+          node,
+          ns +
+            ".collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration.bike");
+      ip.collision_detection.ignore_on_red_traffic_light.object_margin_to_path =
+        getOrDeclareParameter<double>(
+          node, ns + ".collision_detection.ignore_on_red_traffic_light.object_margin_to_path");
+    }
+
+    ip.collision_detection.avoid_collision_by_acceleration.object_time_margin_to_collision_point =
+      getOrDeclareParameter<double>(
+        node, ns +
+                ".collision_detection.avoid_collision_by_acceleration.object_time_margin_to_"
+                "collision_point");
+  }
+
+  // occlusion
+  {
+    ip.occlusion.enable = getOrDeclareParameter<bool>(node, ns + ".occlusion.enable");
+    ip.occlusion.occlusion_attention_area_length =
+      getOrDeclareParameter<double>(node, ns + ".occlusion.occlusion_attention_area_length");
+    ip.occlusion.free_space_max =
+      getOrDeclareParameter<int>(node, ns + ".occlusion.free_space_max");
+    ip.occlusion.occupied_min = getOrDeclareParameter<int>(node, ns + ".occlusion.occupied_min");
+    ip.occlusion.denoise_kernel =
+      getOrDeclareParameter<double>(node, ns + ".occlusion.denoise_kernel");
+    ip.occlusion.attention_lane_crop_curvature_threshold = getOrDeclareParameter<double>(
+      node, ns + ".occlusion.attention_lane_crop_curvature_threshold");
+    ip.occlusion.attention_lane_curvature_calculation_ds = getOrDeclareParameter<double>(
+      node, ns + ".occlusion.attention_lane_curvature_calculation_ds");
+
+    // creep_during_peeking
+    {
+      ip.occlusion.creep_during_peeking.enable =
+        getOrDeclareParameter<bool>(node, ns + ".occlusion.creep_during_peeking.enable");
+      ip.occlusion.creep_during_peeking.creep_velocity =
+        getOrDeclareParameter<double>(node, ns + ".occlusion.creep_during_peeking.creep_velocity");
+    }
+
+    ip.occlusion.peeking_offset =
+      getOrDeclareParameter<double>(node, ns + ".occlusion.peeking_offset");
+    ip.occlusion.occlusion_required_clearance_distance =
+      getOrDeclareParameter<double>(node, ns + ".occlusion.occlusion_required_clearance_distance");
+    ip.occlusion.possible_object_bbox =
+      getOrDeclareParameter<std::vector<double>>(node, ns + ".occlusion.possible_object_bbox");
+    ip.occlusion.ignore_parked_vehicle_speed_threshold =
+      getOrDeclareParameter<double>(node, ns + ".occlusion.ignore_parked_vehicle_speed_threshold");
+    ip.occlusion.occlusion_detection_hold_time =
+      getOrDeclareParameter<double>(node, ns + ".occlusion.occlusion_detection_hold_time");
+    ip.occlusion.temporal_stop_time_before_peeking =
+      getOrDeclareParameter<double>(node, ns + ".occlusion.temporal_stop_time_before_peeking");
+    ip.occlusion.temporal_stop_before_attention_area =
+      getOrDeclareParameter<bool>(node, ns + ".occlusion.temporal_stop_before_attention_area");
+    ip.occlusion.creep_velocity_without_traffic_light =
+      getOrDeclareParameter<double>(node, ns + ".occlusion.creep_velocity_without_traffic_light");
+    ip.occlusion.static_occlusion_with_traffic_light_timeout = getOrDeclareParameter<double>(
+      node, ns + ".occlusion.static_occlusion_with_traffic_light_timeout");
+  }
+
   ip.debug.ttc = getOrDeclareParameter<std::vector<int64_t>>(node, ns + ".debug.ttc");
+
+  decision_state_pub_ =
+    node.create_publisher<std_msgs::msg::String>("~/debug/intersection/decision_state", 1);
+  tl_observation_pub_ = node.create_publisher<autoware_perception_msgs::msg::TrafficSignal>(
+    "~/debug/intersection_traffic_signal", 1);
 }
 
 void IntersectionModuleManager::launchNewModules(
@@ -193,8 +310,6 @@ void IntersectionModuleManager::launchNewModules(
   const auto lanelets =
     planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
   // run occlusion detection only in the first intersection
-  // TODO(Mamoru Sobue): remove `enable_occlusion_detection` variable
-  const bool enable_occlusion_detection = intersection_param_.occlusion.enable;
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();
@@ -213,20 +328,18 @@ void IntersectionModuleManager::launchNewModules(
     }
 
     const std::string location = ll.attributeOr("location", "else");
-    const bool is_private_area = (location.compare("private") == 0);
     const auto associative_ids =
       planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
     bool has_traffic_light = false;
     if (const auto tl_reg_elems = ll.regulatoryElementsAs<lanelet::TrafficLight>();
         tl_reg_elems.size() != 0) {
       const auto tl_reg_elem = tl_reg_elems.front();
-      const auto stop_line_opt = tl_reg_elem->stopLine();
-      if (!!stop_line_opt) has_traffic_light = true;
+      const auto stopline_opt = tl_reg_elem->stopLine();
+      if (!!stopline_opt) has_traffic_light = true;
     }
     const auto new_module = std::make_shared<IntersectionModule>(
       module_id, lane_id, planner_data_, intersection_param_, associative_ids, turn_direction,
-      has_traffic_light, enable_occlusion_detection, is_private_area, node_,
-      logger_.get_child("intersection_module"), clock_);
+      has_traffic_light, node_, logger_.get_child("intersection_module"), clock_);
     generateUUID(module_id);
     /* set RTC status as non_occluded status initially */
     const UUID uuid = getUUID(new_module->getModuleId());
@@ -282,6 +395,10 @@ bool IntersectionModuleManager::hasSameParentLaneletAndTurnDirectionWithRegister
 
 void IntersectionModuleManager::sendRTC(const Time & stamp)
 {
+  double min_distance = std::numeric_limits<double>::infinity();
+  std::optional<TrafficSignalStamped> nearest_tl_observation{std::nullopt};
+  std_msgs::msg::String decision_type;
+
   for (const auto & scene_module : scene_modules_) {
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
     const UUID uuid = getUUID(scene_module->getModuleId());
@@ -293,9 +410,27 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
     const auto occlusion_safety = intersection_module->getOcclusionSafety();
     occlusion_rtc_interface_.updateCooperateStatus(
       occlusion_uuid, occlusion_safety, occlusion_distance, occlusion_distance, stamp);
+
+    // ==========================================================================================
+    // module debug data
+    // ==========================================================================================
+    const auto internal_debug_data = intersection_module->getInternalDebugData();
+    if (internal_debug_data.distance < min_distance) {
+      min_distance = internal_debug_data.distance;
+      nearest_tl_observation = internal_debug_data.tl_observation;
+    }
+    decision_type.data += (internal_debug_data.decision_type + "\n");
   }
   rtc_interface_.publishCooperateStatus(stamp);  // publishRTCStatus()
   occlusion_rtc_interface_.publishCooperateStatus(stamp);
+
+  // ==========================================================================================
+  // publish module debug data
+  // ==========================================================================================
+  decision_state_pub_->publish(decision_type);
+  if (nearest_tl_observation) {
+    tl_observation_pub_->publish(nearest_tl_observation.value().signal);
+  }
 }
 
 void IntersectionModuleManager::setActivation()
@@ -340,7 +475,7 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   mp.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
   mp.attention_area_length =
     node.get_parameter("intersection.common.attention_area_length").as_double();
-  mp.stop_line_margin = getOrDeclareParameter<double>(node, ns + ".stop_line_margin");
+  mp.stopline_margin = getOrDeclareParameter<double>(node, ns + ".stopline_margin");
   mp.path_interpolation_ds =
     node.get_parameter("intersection.common.path_interpolation_ds").as_double();
   mp.stop_distance_threshold = getOrDeclareParameter<double>(node, ns + ".stop_distance_threshold");

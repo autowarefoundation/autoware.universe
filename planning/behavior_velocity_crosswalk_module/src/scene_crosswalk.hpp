@@ -121,9 +121,10 @@ public:
     double max_slow_down_accel;
     double no_relax_velocity;
     // param for stuck vehicle
+    bool enable_stuck_check_in_intersection{false};
     double stuck_vehicle_velocity;
     double max_stuck_vehicle_lateral_offset;
-    double stuck_vehicle_attention_range;
+    double required_clearance;
     double min_acc_for_stuck_vehicle;
     double max_jerk_for_stuck_vehicle;
     double min_jerk_for_stuck_vehicle;
@@ -140,34 +141,46 @@ public:
     double min_jerk_for_no_stop_decision;
     double stop_object_velocity;
     double min_object_velocity;
-    bool disable_stop_for_yield_cancel;
     bool disable_yield_for_new_stopped_object;
-    std::vector<double> distance_map_for_no_intention_to_walk;
-    std::vector<double> timeout_map_for_no_intention_to_walk;
+    std::vector<double> distance_set_for_no_intention_to_walk;
+    std::vector<double> timeout_set_for_no_intention_to_walk;
     double timeout_ego_stop_for_yield;
     // param for input data
     double traffic_light_state_timeout;
     // param for target area & object
     double crosswalk_attention_range;
+    double vehicle_object_cross_angle_threshold;
     bool look_unknown;
     bool look_bicycle;
     bool look_motorcycle;
     bool look_pedestrian;
+    // param for occlusions
+    bool occlusion_enable;
+    double occlusion_occluded_object_velocity;
+    float occlusion_slow_down_velocity;
+    double occlusion_time_buffer;
+    double occlusion_min_size;
+    int occlusion_free_space_max;
+    int occlusion_occupied_min;
+    bool occlusion_ignore_with_red_traffic_light;
+    bool occlusion_ignore_behind_predicted_objects;
+    std::vector<double> occlusion_ignore_velocity_thresholds;
+    double occlusion_extra_objects_size;
   };
 
   struct ObjectInfo
   {
     CollisionState collision_state{};
     std::optional<rclcpp::Time> time_to_start_stopped{std::nullopt};
+    uint8_t classification{ObjectClassification::UNKNOWN};
 
     geometry_msgs::msg::Point position{};
     std::optional<CollisionPoint> collision_point{};
 
     void transitState(
       const rclcpp::Time & now, const geometry_msgs::msg::Point & position, const double vel,
-      const bool is_ego_yielding, const bool has_traffic_light,
-      const std::optional<CollisionPoint> & collision_point, const PlannerParam & planner_param,
-      const lanelet::BasicPolygon2d & crosswalk_polygon)
+      const bool is_ego_yielding, const std::optional<CollisionPoint> & collision_point,
+      const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon)
     {
       const bool is_stopped = vel < planner_param.stop_object_velocity;
 
@@ -183,13 +196,11 @@ public:
         const double distance_to_crosswalk =
           bg::distance(crosswalk_polygon, lanelet::BasicPoint2d(position.x, position.y));
         const double timeout_no_intention_to_walk = InterpolateMap(
-          planner_param.distance_map_for_no_intention_to_walk,
-          planner_param.timeout_map_for_no_intention_to_walk, distance_to_crosswalk);
+          planner_param.distance_set_for_no_intention_to_walk,
+          planner_param.timeout_set_for_no_intention_to_walk, distance_to_crosswalk);
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < timeout_no_intention_to_walk;
-        if (
-          (is_ego_yielding || (has_traffic_light && planner_param.disable_stop_for_yield_cancel)) &&
-          !intent_to_cross) {
+        if (is_ego_yielding && !intent_to_cross) {
           collision_state = CollisionState::IGNORE;
           return;
         }
@@ -241,17 +252,15 @@ public:
     void update(
       const std::string & uuid, const geometry_msgs::msg::Point & position, const double vel,
       const rclcpp::Time & now, const bool is_ego_yielding, const bool has_traffic_light,
-      const std::optional<CollisionPoint> & collision_point, const PlannerParam & planner_param,
-      const lanelet::BasicPolygon2d & crosswalk_polygon)
+      const std::optional<CollisionPoint> & collision_point, const uint8_t classification,
+      const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon)
     {
       // update current uuids
       current_uuids_.push_back(uuid);
 
       // add new object
       if (objects.count(uuid) == 0) {
-        if (
-          has_traffic_light && planner_param.disable_stop_for_yield_cancel &&
-          planner_param.disable_yield_for_new_stopped_object) {
+        if (has_traffic_light && planner_param.disable_yield_for_new_stopped_object) {
           objects.emplace(uuid, ObjectInfo{CollisionState::IGNORE});
         } else {
           objects.emplace(uuid, ObjectInfo{CollisionState::YIELD});
@@ -260,10 +269,10 @@ public:
 
       // update object state
       objects.at(uuid).transitState(
-        now, position, vel, is_ego_yielding, has_traffic_light, collision_point, planner_param,
-        crosswalk_polygon);
+        now, position, vel, is_ego_yielding, collision_point, planner_param, crosswalk_polygon);
       objects.at(uuid).collision_point = collision_point;
       objects.at(uuid).position = position;
+      objects.at(uuid).classification = classification;
     }
     void finalize()
     {
@@ -299,9 +308,10 @@ public:
   };
 
   CrosswalkModule(
-    rclcpp::Node & node, const int64_t module_id, const std::optional<int64_t> & reg_elem_id,
-    const lanelet::LaneletMapPtr & lanelet_map_ptr, const PlannerParam & planner_param,
-    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
+    rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
+    const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+    const PlannerParam & planner_param, const rclcpp::Logger & logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
@@ -311,7 +321,8 @@ public:
 private:
   // main functions
   void applySafetySlowDownSpeed(
-    PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects);
+    PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects,
+    const float speed);
 
   std::optional<std::pair<geometry_msgs::msg::Point, double>> getStopPointWithMargin(
     const PathWithLaneId & ego_path,
@@ -326,7 +337,12 @@ private:
   std::optional<StopFactor> checkStopForStuckVehicles(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
-    const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
+    const std::optional<geometry_msgs::msg::Pose> & stop_pose);
+
+  std::optional<double> findEgoPassageDirectionAlongPath(
+    const PathWithLaneId & sparse_resample_path) const;
+  std::optional<double> findObjectPassageDirectionAlongVehicleLane(
+    const autoware_auto_perception_msgs::msg::PredictedPath & path) const;
 
   std::optional<CollisionPoint> getCollisionPoint(
     const PathWithLaneId & ego_path, const PredictedObject & object,
@@ -364,7 +380,8 @@ private:
   CollisionPoint createCollisionPoint(
     const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
     const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
-    const geometry_msgs::msg::Vector3 & obj_vel) const;
+    const geometry_msgs::msg::Vector3 & obj_vel,
+    const std::optional<double> object_crosswalk_passage_direction) const;
 
   float calcTargetVelocity(
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
@@ -406,6 +423,8 @@ private:
 
   lanelet::ConstLanelet crosswalk_;
 
+  lanelet::ConstLanelet road_;
+
   lanelet::ConstLineStrings3d stop_lines_;
 
   // Parameter
@@ -424,6 +443,10 @@ private:
 
   // whether use regulatory element
   const bool use_regulatory_element_;
+
+  // occluded space time buffer
+  std::optional<rclcpp::Time> current_initial_occlusion_time_;
+  std::optional<rclcpp::Time> most_recent_occlusion_time_;
 };
 }  // namespace behavior_velocity_planner
 

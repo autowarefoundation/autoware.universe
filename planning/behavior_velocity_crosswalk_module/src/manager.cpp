@@ -17,6 +17,7 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <set>
@@ -31,8 +32,7 @@ using tier4_autoware_utils::getOrDeclareParameter;
 
 CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".common.enable_rtc"))
+    node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".common.enable_rtc"))
 {
   const std::string ns(getModuleName());
 
@@ -63,12 +63,14 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.no_relax_velocity = getOrDeclareParameter<double>(node, ns + ".slow_down.no_relax_velocity");
 
   // param for stuck vehicle
+  cp.enable_stuck_check_in_intersection =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.enable_stuck_check_in_intersection");
   cp.stuck_vehicle_velocity =
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_velocity");
   cp.max_stuck_vehicle_lateral_offset =
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.max_stuck_vehicle_lateral_offset");
-  cp.stuck_vehicle_attention_range =
-    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.stuck_vehicle_attention_range");
+  cp.required_clearance =
+    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.required_clearance");
   cp.min_acc_for_stuck_vehicle = getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.min_acc");
   cp.max_jerk_for_stuck_vehicle =
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.max_jerk");
@@ -100,20 +102,20 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".pass_judge.stop_object_velocity_threshold");
   cp.min_object_velocity =
     getOrDeclareParameter<double>(node, ns + ".pass_judge.min_object_velocity");
-  cp.disable_stop_for_yield_cancel =
-    getOrDeclareParameter<bool>(node, ns + ".pass_judge.disable_stop_for_yield_cancel");
   cp.disable_yield_for_new_stopped_object =
     getOrDeclareParameter<bool>(node, ns + ".pass_judge.disable_yield_for_new_stopped_object");
-  cp.distance_map_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
-    node, ns + ".pass_judge.distance_map_for_no_intention_to_walk");
-  cp.timeout_map_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
-    node, ns + ".pass_judge.timeout_map_for_no_intention_to_walk");
+  cp.distance_set_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
+    node, ns + ".pass_judge.distance_set_for_no_intention_to_walk");
+  cp.timeout_set_for_no_intention_to_walk = getOrDeclareParameter<std::vector<double>>(
+    node, ns + ".pass_judge.timeout_set_for_no_intention_to_walk");
   cp.timeout_ego_stop_for_yield =
     getOrDeclareParameter<double>(node, ns + ".pass_judge.timeout_ego_stop_for_yield");
 
   // param for target area & object
   cp.crosswalk_attention_range =
     getOrDeclareParameter<double>(node, ns + ".object_filtering.crosswalk_attention_range");
+  cp.vehicle_object_cross_angle_threshold = getOrDeclareParameter<double>(
+    node, ns + ".object_filtering.vehicle_object_cross_angle_threshold");
   cp.look_unknown =
     getOrDeclareParameter<bool>(node, ns + ".object_filtering.target_object.unknown");
   cp.look_bicycle =
@@ -122,6 +124,46 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns + ".object_filtering.target_object.motorcycle");
   cp.look_pedestrian =
     getOrDeclareParameter<bool>(node, ns + ".object_filtering.target_object.pedestrian");
+
+  // param for occlusions
+  cp.occlusion_enable = getOrDeclareParameter<bool>(node, ns + ".occlusion.enable");
+  cp.occlusion_occluded_object_velocity =
+    getOrDeclareParameter<double>(node, ns + ".occlusion.occluded_object_velocity");
+  cp.occlusion_slow_down_velocity =
+    getOrDeclareParameter<float>(node, ns + ".occlusion.slow_down_velocity");
+  cp.occlusion_time_buffer = getOrDeclareParameter<double>(node, ns + ".occlusion.time_buffer");
+  cp.occlusion_min_size = getOrDeclareParameter<double>(node, ns + ".occlusion.min_size");
+  cp.occlusion_free_space_max = getOrDeclareParameter<int>(node, ns + ".occlusion.free_space_max");
+  cp.occlusion_occupied_min = getOrDeclareParameter<int>(node, ns + ".occlusion.occupied_min");
+  cp.occlusion_ignore_with_red_traffic_light =
+    getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_with_red_traffic_light");
+  cp.occlusion_ignore_behind_predicted_objects =
+    getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_behind_predicted_objects");
+
+  cp.occlusion_ignore_velocity_thresholds.resize(
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN + 1,
+    getOrDeclareParameter<double>(node, ns + ".occlusion.ignore_velocity_thresholds.default"));
+  const auto get_label = [](const std::string & s) {
+    if (s == "CAR") return autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+    if (s == "TRUCK") return autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK;
+    if (s == "BUS") return autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
+    if (s == "TRAILER") return autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER;
+    if (s == "MOTORCYCLE")
+      return autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
+    if (s == "BICYCLE") return autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
+    if (s == "PEDESTRIAN")
+      return autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+    return autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+  };
+  const auto custom_labels = getOrDeclareParameter<std::vector<std::string>>(
+    node, ns + ".occlusion.ignore_velocity_thresholds.custom_labels");
+  const auto custom_velocities = getOrDeclareParameter<std::vector<double>>(
+    node, ns + ".occlusion.ignore_velocity_thresholds.custom_thresholds");
+  for (auto idx = 0UL; idx < std::min(custom_labels.size(), custom_velocities.size()); ++idx) {
+    cp.occlusion_ignore_velocity_thresholds[get_label(custom_labels[idx])] = custom_velocities[idx];
+  }
+  cp.occlusion_extra_objects_size =
+    getOrDeclareParameter<double>(node, ns + ".occlusion.extra_predicted_objects_size");
 }
 
 void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
@@ -129,8 +171,9 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
   const auto rh = planner_data_->route_handler_;
 
   const auto launch = [this, &path](
-                        const auto lane_id, const std::optional<int64_t> & reg_elem_id) {
-    if (isModuleRegistered(lane_id)) {
+                        const auto road_lanelet_id, const auto crosswalk_lanelet_id,
+                        const std::optional<int64_t> & reg_elem_id) {
+    if (isModuleRegistered(crosswalk_lanelet_id)) {
       return;
     }
 
@@ -141,25 +184,27 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
     // NOTE: module_id is always a lane id so that isModuleRegistered works correctly in the case
     //       where both regulatory element and non-regulatory element crosswalks exist.
     registerModule(std::make_shared<CrosswalkModule>(
-      node_, lane_id, reg_elem_id, lanelet_map_ptr, p, logger, clock_));
-    generateUUID(lane_id);
+      node_, road_lanelet_id, crosswalk_lanelet_id, reg_elem_id, lanelet_map_ptr, p, logger,
+      clock_));
+    generateUUID(crosswalk_lanelet_id);
     updateRTCStatus(
-      getUUID(lane_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
+      getUUID(crosswalk_lanelet_id), true, std::numeric_limits<double>::lowest(),
+      path.header.stamp);
   };
 
-  const auto crosswalk_leg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
+  const auto crosswalk_reg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
     path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  for (const auto & crosswalk : crosswalk_leg_elem_map) {
+  for (const auto & crosswalk : crosswalk_reg_elem_map) {
     // NOTE: The former id is a lane id, and the latter one is a regulatory element's id.
-    launch(crosswalk.first->crosswalkLanelet().id(), crosswalk.first->id());
+    launch(crosswalk.second.id(), crosswalk.first->crosswalkLanelet().id(), crosswalk.first->id());
   }
 
   const auto crosswalk_lanelets = getCrosswalksOnPath(
     planner_data_->current_odometry->pose, path, rh->getLaneletMapPtr(), rh->getOverallGraphPtr());
 
   for (const auto & crosswalk : crosswalk_lanelets) {
-    launch(crosswalk.id(), std::nullopt);
+    launch(crosswalk.first, crosswalk.second.id(), std::nullopt);
   }
 }
 
@@ -173,10 +218,10 @@ CrosswalkModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
   crosswalk_id_set = getCrosswalkIdSetOnPath(
     planner_data_->current_odometry->pose, path, rh->getLaneletMapPtr(), rh->getOverallGraphPtr());
 
-  const auto crosswalk_leg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
+  const auto crosswalk_reg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
     path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  for (const auto & crosswalk : crosswalk_leg_elem_map) {
+  for (const auto & crosswalk : crosswalk_reg_elem_map) {
     crosswalk_id_set.insert(crosswalk.first->crosswalkLanelet().id());
   }
 

@@ -14,11 +14,15 @@
 
 #include "path_smoother/elastic_band.hpp"
 
+#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "path_smoother/type_alias.hpp"
 #include "path_smoother/utils/geometry_utils.hpp"
 #include "path_smoother/utils/trajectory_utils.hpp"
 #include "tf2/utils.h"
+
+#include <Eigen/Core>
+#include <Eigen/Sparse>
 
 #include <algorithm>
 #include <chrono>
@@ -26,42 +30,44 @@
 
 namespace
 {
-Eigen::MatrixXd makePMatrix(const int num_points)
+Eigen::SparseMatrix<double> makePMatrix(const int num_points)
 {
-  // create P block matrix
-  Eigen::MatrixXd P_quarter = Eigen::MatrixXd::Zero(num_points, num_points);
+  std::vector<Eigen::Triplet<double>> triplet_vec;
+  const auto assign_value_to_triplet_vec =
+    [&](const double row, const double colum, const double value) {
+      triplet_vec.push_back(Eigen::Triplet<double>(row, colum, value));
+      triplet_vec.push_back(Eigen::Triplet<double>(row + num_points, colum + num_points, value));
+    };
+
   for (int r = 0; r < num_points; ++r) {
     for (int c = 0; c < num_points; ++c) {
       if (r == c) {
         if (r == 0 || r == num_points - 1) {
-          P_quarter(r, c) = 1.0;
+          assign_value_to_triplet_vec(r, c, 1.0);
         } else if (r == 1 || r == num_points - 2) {
-          P_quarter(r, c) = 5.0;
+          assign_value_to_triplet_vec(r, c, 5.0);
         } else {
-          P_quarter(r, c) = 6.0;
+          assign_value_to_triplet_vec(r, c, 6.0);
         }
       } else if (std::abs(c - r) == 1) {
         if (r == 0 || r == num_points - 1) {
-          P_quarter(r, c) = -2.0;
+          assign_value_to_triplet_vec(r, c, -2.0);
         } else if (c == 0 || c == num_points - 1) {
-          P_quarter(r, c) = -2.0;
+          assign_value_to_triplet_vec(r, c, -2.0);
         } else {
-          P_quarter(r, c) = -4.0;
+          assign_value_to_triplet_vec(r, c, -4.0);
         }
       } else if (std::abs(c - r) == 2) {
-        P_quarter(r, c) = 1.0;
+        assign_value_to_triplet_vec(r, c, 1.0);
       } else {
-        P_quarter(r, c) = 0.0;
+        assign_value_to_triplet_vec(r, c, 0.0);
       }
     }
   }
 
-  // create P matrix
-  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(num_points * 2, num_points * 2);
-  P.block(0, 0, num_points, num_points) = P_quarter;
-  P.block(num_points, num_points, num_points, num_points) = P_quarter;
-
-  return P;
+  Eigen::SparseMatrix<double> sparse_mat(num_points * 2, num_points * 2);
+  sparse_mat.setFromTriplets(triplet_vec.begin(), triplet_vec.end());
+  return sparse_mat;
 }
 
 std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
@@ -257,7 +263,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::smoothTrajectory(
 
   // 8. publish eb trajectory
   const auto eb_traj =
-    trajectory_utils::createTrajectory(createHeader(clock_.now()), *eb_traj_points);
+    motion_utils::convertToTrajectory(*eb_traj_points, createHeader(clock_.now()));
   debug_eb_traj_pub_->publish(eb_traj);
 
   time_keeper_ptr_->toc(__func__, "      ");
@@ -344,25 +350,28 @@ void EBPathSmoother::updateConstraint(
   }
 
   Eigen::VectorXd x_mat(2 * p.num_points);
-  Eigen::MatrixXd theta_mat = Eigen::MatrixXd::Zero(p.num_points, 2 * p.num_points);
+  std::vector<Eigen::Triplet<double>> theta_triplet_vec;
   for (size_t i = 0; i < static_cast<size_t>(p.num_points); ++i) {
     x_mat(i) = traj_points.at(i).pose.position.x;
     x_mat(i + p.num_points) = traj_points.at(i).pose.position.y;
 
     const double yaw = tf2::getYaw(traj_points.at(i).pose.orientation);
-    theta_mat(i, i) = -std::sin(yaw);
-    theta_mat(i, i + p.num_points) = std::cos(yaw);
+    theta_triplet_vec.push_back(Eigen::Triplet<double>(i, i, -std::sin(yaw)));
+    theta_triplet_vec.push_back(Eigen::Triplet<double>(i, i + p.num_points, std::cos(yaw)));
   }
+  Eigen::SparseMatrix<double> sparse_theta_mat(p.num_points, 2 * p.num_points);
+  sparse_theta_mat.setFromTriplets(theta_triplet_vec.begin(), theta_triplet_vec.end());
 
   // calculate P
-  const Eigen::MatrixXd raw_P_for_smooth = p.smooth_weight * makePMatrix(p.num_points);
-  const Eigen::MatrixXd P_for_smooth = theta_mat * raw_P_for_smooth * theta_mat.transpose();
+  const Eigen::SparseMatrix<double> raw_P_for_smooth = p.smooth_weight * makePMatrix(p.num_points);
+  const Eigen::MatrixXd theta_P_mat = sparse_theta_mat * raw_P_for_smooth;
+  const Eigen::MatrixXd P_for_smooth = theta_P_mat * sparse_theta_mat.transpose();
   const Eigen::MatrixXd P_for_lat_error =
     p.lat_error_weight * Eigen::MatrixXd::Identity(p.num_points, p.num_points);
   const Eigen::MatrixXd P = P_for_smooth + P_for_lat_error;
 
   // calculate q
-  const Eigen::VectorXd raw_q_for_smooth = theta_mat * raw_P_for_smooth * x_mat;
+  const Eigen::VectorXd raw_q_for_smooth = theta_P_mat * x_mat;
   const auto q = toStdVector(raw_q_for_smooth);
 
   if (p.enable_warm_start && osqp_solver_ptr_) {
@@ -381,7 +390,7 @@ void EBPathSmoother::updateConstraint(
 
   // publish fixed trajectory
   const auto eb_fixed_traj =
-    trajectory_utils::createTrajectory(createHeader(clock_.now()), debug_fixed_traj_points);
+    motion_utils::convertToTrajectory(debug_fixed_traj_points, createHeader(clock_.now()));
   debug_eb_fixed_traj_pub_->publish(eb_fixed_traj);
 
   time_keeper_ptr_->toc(__func__, "        ");

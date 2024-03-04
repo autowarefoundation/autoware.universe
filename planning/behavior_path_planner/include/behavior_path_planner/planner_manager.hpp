@@ -15,12 +15,13 @@
 #ifndef BEHAVIOR_PATH_PLANNER__PLANNER_MANAGER_HPP_
 #define BEHAVIOR_PATH_PLANNER__PLANNER_MANAGER_HPP_
 
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
-#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
+#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
+#include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
 #include "tier4_autoware_utils/ros/debug_publisher.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
+#include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -45,6 +46,7 @@ using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
 using DebugPublisher = tier4_autoware_utils::DebugPublisher;
 using DebugDoubleMsg = tier4_debug_msgs::msg::Float64Stamped;
+using DebugStringMsg = tier4_debug_msgs::msg::StringStamped;
 
 enum Action {
   ADD = 0,
@@ -104,14 +106,17 @@ public:
 
   /**
    * @brief register managers.
-   * @param manager pointer.
+   * @param node.
+   * @param plugin name.
    */
-  void registerSceneModuleManager(const SceneModuleManagerPtr & manager_ptr)
-  {
-    RCLCPP_INFO(logger_, "register %s module", manager_ptr->name().c_str());
-    manager_ptrs_.push_back(manager_ptr);
-    processing_time_.emplace(manager_ptr->name(), 0.0);
-  }
+  void launchScenePlugin(rclcpp::Node & node, const std::string & name);
+
+  /**
+   * @brief unregister managers.
+   * @param node.
+   * @param plugin name.
+   */
+  void removeScenePlugin(rclcpp::Node & node, const std::string & name);
 
   /**
    * @brief update module parameters. used for dynamic reconfigure.
@@ -132,7 +137,7 @@ public:
     std::for_each(manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->reset(); });
     approved_module_ptrs_.clear();
     candidate_module_ptrs_.clear();
-    root_lanelet_ = boost::none;
+    root_lanelet_ = std::nullopt;
     resetProcessingTime();
   }
 
@@ -222,6 +227,13 @@ public:
    */
   bool hasApprovedModules() const { return !approved_module_ptrs_.empty(); }
 
+  bool hasNonAlwaysExecutableApprovedModules() const
+  {
+    return std::any_of(
+      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
+      [this](const auto & m) { return !getManager(m)->isAlwaysExecutableModule(); });
+  }
+
   /**
    * @brief check if there are candidate modules.
    */
@@ -275,6 +287,10 @@ private:
 
     module_ptr->publishRTCStatus();
 
+    module_ptr->publishSteeringFactor();
+
+    module_ptr->publishObjectsOfInterestMarker();
+
     processing_time_.at(module_ptr->name()) += stop_watch_.toc(module_ptr->name(), true);
 
     return result;
@@ -298,6 +314,7 @@ private:
   {
     module_ptr->onExit();
     module_ptr->publishRTCStatus();
+    module_ptr->publishObjectsOfInterestMarker();
     module_ptr.reset();
   }
 
@@ -419,9 +436,18 @@ private:
     const std::vector<SceneModulePtr> & request_modules, const std::shared_ptr<PlannerData> & data,
     const BehaviorModuleOutput & previous_module_output);
 
-  std::string getNames(const std::vector<SceneModulePtr> & modules) const;
+  /**
+   * @brief run keep last approved modules
+   * @param planner data.
+   * @param previous module output.
+   * @return planning result.
+   */
+  BehaviorModuleOutput runKeepLastModules(
+    const std::shared_ptr<PlannerData> & data, const BehaviorModuleOutput & previous_output) const;
 
-  boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
+  static std::string getNames(const std::vector<SceneModulePtr> & modules);
+
+  std::optional<lanelet::ConstLanelet> root_lanelet_{std::nullopt};
 
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
 
@@ -430,6 +456,10 @@ private:
   std::vector<SceneModulePtr> candidate_module_ptrs_;
 
   std::unique_ptr<DebugPublisher> debug_publisher_ptr_;
+
+  std::unique_ptr<DebugPublisher> state_publisher_ptr_;
+
+  pluginlib::ClassLoader<SceneModuleManagerInterface> plugin_loader_;
 
   mutable rclcpp::Logger logger_;
 

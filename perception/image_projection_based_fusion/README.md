@@ -22,23 +22,29 @@ current default value at autoware.universe for TIER IV Robotaxi are: - input_off
 ![roi_sync_image2](./docs/images/roi_sync_2.png)
 
 The subscription status of the message is signed with 'O'.
+
 1.if a pointcloud message is subscribed under the below condition:
-| | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
+
+|                     | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
-| subscription status | | O | O | O |
+| subscription status |            |     O     |     O     |     O     |
 
 If the roi msgs can be matched, fuse them and postprocess the pointcloud message.
 Otherwise, fuse the matched roi msgs and cache the pointcloud.
+
 2.if a pointcloud message is subscribed under the below condition:
-| | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
+
+|                     | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
-| subscription status | | O | O | |
+| subscription status |            |     O     |     O     |           |
 
 if the roi msgs can be matched, fuse them and cache the pointcloud.
+
 3.if a pointcloud message is subscribed under the below condition:
-| | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
+
+|                     | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
-| subscription status | O | O | O | |
+| subscription status |     O      |     O     |     O     |           |
 
 If the roi msg 3 is subscribed before the next pointcloud message coming or timeout, fuse it if matched, otherwise wait for the next roi msg 3.
 If the roi msg 3 is not subscribed before the next pointcloud message coming or timeout, postprocess the pointcloud message as it is.
@@ -46,6 +52,15 @@ If the roi msg 3 is not subscribed before the next pointcloud message coming or 
 The timeout threshold should be set according to the postprocessing time.
 E.g, if the postprocessing time is around 50ms, the timeout threshold should be set smaller than 50ms, so that the whole processing time could be less than 100ms.
 current default value at autoware.universe for XX1: - timeout_ms: 50.0
+
+#### The `build_only` option
+
+The `pointpainting_fusion` node has `build_only` option to build the TensorRT engine file from the ONNX file.
+Although it is preferred to move all the ROS parameters in `.param.yaml` file in Autoware Universe, the `build_only` option is not moved to the `.param.yaml` file for now, because it may be used as a flag to execute the build as a pre-task. You can execute with the following command:
+
+```bash
+ros2 launch image_projection_based_fusion pointpainting_fusion.launch.xml model_name:=pointpainting model_path:=/home/autoware/autoware_data/image_projection_based_fusion model_param_path:=$(ros2 pkg prefix image_projection_based_fusion --share)/config/pointpainting.param.yaml build_only:=true
+```
 
 #### Known Limits
 

@@ -31,7 +31,6 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   tf2_listener_(tf2_buffer_),
   tf2_broadcaster_(*this),
   base_frame_(declare_parameter<std::string>("base_frame")),
-  gnss_frame_(declare_parameter<std::string>("gnss_frame")),
   gnss_base_frame_(declare_parameter<std::string>("gnss_base_frame")),
   map_frame_(declare_parameter<std::string>("map_frame")),
   use_gnss_ins_orientation_(declare_parameter<bool>("use_gnss_ins_orientation")),
@@ -76,6 +75,13 @@ void GNSSPoser::callbackNavSatFix(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "map_projector_info has not been received yet. Check if the map_projection_loader is "
       "successfully launched.");
+    return;
+  }
+
+  if (projector_info_.projector_type == MapProjectorInfo::Message::LOCAL) {
+    RCLCPP_ERROR_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
+      "map_projector_info is local projector type. Unable to convert GNSS pose.");
     return;
   }
 
@@ -142,8 +148,9 @@ void GNSSPoser::callbackNavSatFix(
   // get TF from gnss_antenna to base_link
   auto tf_gnss_antenna2base_link_msg_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
 
+  const std::string gnss_frame = nav_sat_fix_msg_ptr->header.frame_id;
   getStaticTransform(
-    base_frame_, gnss_frame_, tf_gnss_antenna2base_link_msg_ptr, nav_sat_fix_msg_ptr->header.stamp);
+    gnss_frame, base_frame_, tf_gnss_antenna2base_link_msg_ptr, nav_sat_fix_msg_ptr->header.stamp);
   tf2::Transform tf_gnss_antenna2base_link{};
   tf2::fromMsg(tf_gnss_antenna2base_link_msg_ptr->transform, tf_gnss_antenna2base_link);
 

@@ -28,13 +28,12 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
-// cspell: ignore minx, maxx, miny, maxy, minz, maxz
-
 namespace image_projection_based_fusion
 {
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>("roi_cluster_fusion", options)
+: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
+    "roi_cluster_fusion", options)
 {
   trust_object_iou_mode_ = declare_parameter<std::string>("trust_object_iou_mode");
   non_trust_object_iou_mode_ = declare_parameter<std::string>("non_trust_object_iou_mode");
@@ -177,17 +176,18 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       double iou(0.0);
       bool is_use_non_trust_object_iou_mode = is_far_enough(
         input_cluster_msg.feature_objects.at(cluster_map.first), trust_object_distance_);
+      auto image_roi = feature_obj.feature.roi;
+      auto cluster_roi = cluster_map.second;
+      sanitizeROI(image_roi, camera_info.width, camera_info.height);
+      sanitizeROI(cluster_roi, camera_info.width, camera_info.height);
       if (is_use_non_trust_object_iou_mode || is_roi_label_known) {
-        iou =
-          cal_iou_by_mode(cluster_map.second, feature_obj.feature.roi, non_trust_object_iou_mode_);
+        iou = cal_iou_by_mode(cluster_roi, image_roi, non_trust_object_iou_mode_);
       } else {
-        iou = cal_iou_by_mode(cluster_map.second, feature_obj.feature.roi, trust_object_iou_mode_);
+        iou = cal_iou_by_mode(cluster_roi, image_roi, trust_object_iou_mode_);
       }
 
       const bool passed_inside_cluster_gate =
-        only_allow_inside_cluster_
-          ? is_inside(feature_obj.feature.roi, cluster_map.second, roi_scale_factor_)
-          : true;
+        only_allow_inside_cluster_ ? is_inside(image_roi, cluster_roi, roi_scale_factor_) : true;
       if (max_iou < iou && passed_inside_cluster_gate) {
         index = cluster_map.first;
         max_iou = iou;
@@ -251,17 +251,17 @@ bool RoiClusterFusionNode::out_of_scope(const DetectedObjectWithFeature & obj)
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(cluster, "x"), iter_y(cluster, "y"),
        iter_z(cluster, "z");
        iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
-    if (!valid_point(*iter_x, filter_scope_minx_, filter_scope_maxx_)) {
+    if (!valid_point(*iter_x, filter_scope_min_x_, filter_scope_max_x_)) {
       is_out = true;
       break;
     }
 
-    if (!valid_point(*iter_y, filter_scope_miny_, filter_scope_maxy_)) {
+    if (!valid_point(*iter_y, filter_scope_min_y_, filter_scope_max_y_)) {
       is_out = true;
       break;
     }
 
-    if (!valid_point(*iter_z, filter_scope_minz_, filter_scope_maxz_)) {
+    if (!valid_point(*iter_z, filter_scope_min_z_, filter_scope_max_z_)) {
       is_out = true;
       break;
     }

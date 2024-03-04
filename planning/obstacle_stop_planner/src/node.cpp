@@ -325,7 +325,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
 
   // TODO(someone): support backward path
   const auto is_driving_forward = motion_utils::isDrivingForwardWithTwist(input_msg->points);
-  is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+  is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
   if (!is_driving_forward_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 3000, "Backward path is NOT supported. publish input as it is.");
@@ -749,11 +749,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
     }
 
     {
-      double min_collision_norm = 0.0;
-      bool is_init = false;
-      size_t nearest_collision_object_index = 0;
-      geometry_msgs::msg::Point nearest_collision_point;
-
+      bool collision_found_on_trajectory_point = false;
       for (size_t j = 0; j < filtered_objects.objects.size(); ++j) {
         const auto & obj = filtered_objects.objects.at(j);
         if (node_param_.enable_z_axis_obstacle_filtering) {
@@ -798,42 +794,9 @@ void ObstacleStopPlannerNode::searchPredictedObject(
           continue;
         }
         if (found_collision_object) {
-          geometry_msgs::msg::PoseArray collision_points_tmp;
-
-          std::vector<Point2d> collision_point;
-          bg::intersection(one_step_move_collision_polygon, object_polygon, collision_point);
-          for (const auto & point : collision_point) {
-            geometry_msgs::msg::Pose pose;
-            pose.position.x = point.x();
-            pose.position.y = point.y();
-            collision_points_tmp.poses.push_back(pose);
-          }
-
-          // Also check the corner points
-          for (const auto & point : object_polygon.outer()) {
-            if (bg::within(point, one_step_move_collision_polygon)) {
-              geometry_msgs::msg::Pose pose;
-              pose.position.x = point.x();
-              pose.position.y = point.y();
-              collision_points_tmp.poses.push_back(pose);
-            }
-          }
-          geometry_msgs::msg::Point nearest_collision_point_tmp;
-          const double norm = getNearestPointAndDistanceForPredictedObject(
-            collision_points_tmp, p_front, &nearest_collision_point_tmp);
-          if (norm < min_collision_norm || !is_init) {
-            min_collision_norm = norm;
-            nearest_collision_point = nearest_collision_point_tmp;
-            is_init = true;
-            nearest_collision_object_index = j;
-          }
+          addPredictedObstacleToHistory(obj, now);
+          collision_found_on_trajectory_point = true;
         }
-      }
-      if (is_init) {
-        predicted_object_history_.emplace_back(
-          now, nearest_collision_point,
-          filtered_objects.objects.at(nearest_collision_object_index));
-        break;
       }
 
       // only used for pedestrian
@@ -847,6 +810,10 @@ void ObstacleStopPlannerNode::searchPredictedObject(
       } else {
         debug_ptr_->pushPolygon(
           one_step_move_collision_dbg, p_front.position.z, PolygonType::Vehicle);
+      }
+
+      if (collision_found_on_trajectory_point) {
+        break;
       }
     }
   }
@@ -863,9 +830,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
     const auto z_axis_max =
       p_front.position.z + vehicle_info.vehicle_height_m + node_param_.z_axis_filtering_buffer;
 
-    double min_collision_norm = 0.0;
-    bool is_init = false;
-    size_t nearest_collision_object_index = 0;
+    std::vector<IntersectedPredictedObject> intersected_predicted_obj{};
 
     for (size_t j = 0; j < predicted_object_history_.size(); ++j) {
       // check new collision points
@@ -875,93 +840,118 @@ void ObstacleStopPlannerNode::searchPredictedObject(
           continue;
         }
       }
-      Point2d collision_point;
-      collision_point.x() = predicted_object_history_.at(j).point.x;
-      collision_point.y() = predicted_object_history_.at(j).point.y;
+      Polygon2d object_polygon{};
       Polygon2d one_step_move_vehicle_polygon;
-      // create one step polygon for vehicle
+      bool found_collision_object = false;
       if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+        object_polygon = convertCylindricalObjectToGeometryPolygon(
+          obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.pedestrian_lateral_margin);
 
+        found_collision_object = bg::intersects(one_step_move_vehicle_polygon, object_polygon);
       } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+        const double & length_m = obj.shape.dimensions.x / 2;
+        const double & width_m = obj.shape.dimensions.y / 2;
+        object_polygon = convertBoundingBoxObjectToGeometryPolygon(
+          obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.vehicle_lateral_margin);
 
+        found_collision_object = bg::intersects(one_step_move_vehicle_polygon, object_polygon);
       } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+        object_polygon = convertPolygonObjectToGeometryPolygon(
+          obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
         createOneStepPolygon(
           p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
           stop_param.unknown_lateral_margin);
 
+        found_collision_object = bg::intersects(one_step_move_vehicle_polygon, object_polygon);
       } else {
         RCLCPP_WARN_THROTTLE(
           get_logger(), *get_clock(), 3000, "Object type is not supported. type: %d",
           obj.shape.type);
         continue;
       }
-      if (bg::within(collision_point, one_step_move_vehicle_polygon)) {
-        const double norm = calcDistance2d(predicted_object_history_.at(j).point, p_front.position);
+      if (found_collision_object) {
+        intersected_predicted_obj.emplace_back(
+          predicted_object_history_.at(j).detection_time, obj, object_polygon,
+          one_step_move_vehicle_polygon);
+      }
+    }
+
+    planner_data.found_collision_points = !intersected_predicted_obj.empty();
+
+    if (planner_data.found_collision_points) {
+      // find the nearest point for each object polygon
+      double min_collision_norm = 0.0;
+      bool is_init = false;
+      size_t nearest_collision_object_index = 0;
+      geometry_msgs::msg::Point nearest_collision_point;
+
+      for (size_t j = 0; j < intersected_predicted_obj.size(); ++j) {
+        const auto & one_step_move_vehicle_polygon =
+          intersected_predicted_obj.at(j).vehicle_polygon;
+        const auto & obj_polygon = intersected_predicted_obj.at(j).object_polygon;
+        geometry_msgs::msg::PoseArray collision_points_tmp;
+
+        std::vector<Point2d> collision_point;
+        bg::intersection(one_step_move_vehicle_polygon, obj_polygon, collision_point);
+        for (const auto & point : collision_point) {
+          geometry_msgs::msg::Pose pose;
+          pose.position.x = point.x();
+          pose.position.y = point.y();
+          collision_points_tmp.poses.push_back(pose);
+        }
+
+        // Also check the corner points
+        for (const auto & point : obj_polygon.outer()) {
+          if (bg::within(point, one_step_move_vehicle_polygon)) {
+            geometry_msgs::msg::Pose pose;
+            pose.position.x = point.x();
+            pose.position.y = point.y();
+            collision_points_tmp.poses.push_back(pose);
+          }
+        }
+        geometry_msgs::msg::Point nearest_collision_point_tmp;
+        const double norm = getNearestPointAndDistanceForPredictedObject(
+          collision_points_tmp, p_front, &nearest_collision_point_tmp);
         if (norm < min_collision_norm || !is_init) {
           min_collision_norm = norm;
+          nearest_collision_point = nearest_collision_point_tmp;
           is_init = true;
           nearest_collision_object_index = j;
         }
       }
-    }
 
-    planner_data.found_collision_points = is_init;
-
-    if (planner_data.found_collision_points) {
-      planner_data.nearest_collision_point = pointToPcl(
-        predicted_object_history_.at(nearest_collision_object_index).point.x,
-        predicted_object_history_.at(nearest_collision_object_index).point.y, p_front.position.z);
+      planner_data.nearest_collision_point =
+        pointToPcl(nearest_collision_point.x, nearest_collision_point.y, p_front.position.z);
 
       planner_data.decimate_trajectory_collision_index = i;
 
       planner_data.nearest_collision_point_time =
-        predicted_object_history_.at(nearest_collision_object_index).detection_time;
+        intersected_predicted_obj.at(nearest_collision_object_index).detection_time;
 
-      // create one step polygon for vehicle collision debug
-      Polygon2d one_step_move_vehicle_polygon;
-      Polygon2d object_polygon{};
-
-      const auto & obj = predicted_object_history_.at(nearest_collision_object_index).object;
-      if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
-        createOneStepPolygon(
-          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
-          stop_param.pedestrian_lateral_margin);
-        object_polygon = convertCylindricalObjectToGeometryPolygon(
-          obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
-      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-        createOneStepPolygon(
-          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
-          stop_param.vehicle_lateral_margin);
-        const double & length_m = obj.shape.dimensions.x / 2;
-        const double & width_m = obj.shape.dimensions.y / 2;
-        object_polygon = convertBoundingBoxObjectToGeometryPolygon(
-          obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
-
-      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
-        createOneStepPolygon(
-          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
-          stop_param.unknown_lateral_margin);
-        object_polygon = convertPolygonObjectToGeometryPolygon(
-          obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
-      }
+      // debug
       debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
 
       if (node_param_.enable_z_axis_obstacle_filtering) {
         debug_ptr_->pushPolyhedron(
-          one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Collision);
+          intersected_predicted_obj.at(nearest_collision_object_index).vehicle_polygon, z_axis_min,
+          z_axis_max, PolygonType::Collision);
       } else {
         debug_ptr_->pushPolygon(
-          one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
+          intersected_predicted_obj.at(nearest_collision_object_index).vehicle_polygon,
+          p_front.position.z, PolygonType::Collision);
       }
 
       if (node_param_.publish_obstacle_polygon) {
-        debug_ptr_->pushPolygon(object_polygon, p_front.position.z, PolygonType::Obstacle);
+        debug_ptr_->pushPolygon(
+          intersected_predicted_obj.at(nearest_collision_object_index).object_polygon,
+          p_front.position.z, PolygonType::Obstacle);
       }
 
       planner_data.stop_require = planner_data.found_collision_points;
@@ -970,10 +960,12 @@ void ObstacleStopPlannerNode::searchPredictedObject(
       const auto latest_object_ptr = object_ptr_;
       mutex_.unlock();
       // find latest state of predicted object to get latest velocity and acceleration values
-      auto obj_latest_state = getObstacleFromUuid(*latest_object_ptr, obj.object_id);
+      auto obj_latest_state = getObstacleFromUuid(
+        *latest_object_ptr,
+        intersected_predicted_obj.at(nearest_collision_object_index).object.object_id);
       if (!obj_latest_state) {
         // Can not find the object in the latest object list. Send previous state.
-        obj_latest_state = boost::make_optional(obj);
+        obj_latest_state = intersected_predicted_obj.at(nearest_collision_object_index).object;
       }
 
       acc_controller_->insertAdaptiveCruiseVelocity(
@@ -1003,7 +995,7 @@ void ObstacleStopPlannerNode::insertVelocity(
     const auto idx = planner_data.decimate_trajectory_index_map.at(
                        planner_data.decimate_trajectory_collision_index) +
                      planner_data.trajectory_trim_index;
-    boost::optional<std::pair<size_t, double>> index_with_dist_remain;
+    std::optional<std::pair<size_t, double>> index_with_dist_remain;
 
     index_with_dist_remain = findNearestFrontIndex(
       std::min(idx, traj_end_idx), output,
@@ -1013,14 +1005,14 @@ void ObstacleStopPlannerNode::insertVelocity(
     if (index_with_dist_remain) {
       const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
       const auto dist_baselink_to_obstacle =
-        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.get().first);
+        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.value().first);
 
       debug_ptr_->setDebugValues(
         DebugValues::TYPE::COLLISION_OBSTACLE_DISTANCE,
-        dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
+        dist_baselink_to_obstacle + index_with_dist_remain.value().second - base_link2front);
 
       const auto stop_point = searchInsertPoint(
-        index_with_dist_remain.get().first, output, index_with_dist_remain.get().second,
+        index_with_dist_remain.value().first, output, index_with_dist_remain.value().second,
         stop_param);
 
       const auto & ego_pose = planner_data.current_pose;
@@ -1064,7 +1056,7 @@ void ObstacleStopPlannerNode::insertVelocity(
           current_stop_pos.index = findFirstNearestSegmentIndexWithSoftConstraints(
             output, ego_pose, node_param_.ego_nearest_dist_threshold,
             node_param_.ego_nearest_yaw_threshold);
-          current_stop_pos.point.pose = ego_pos_on_path.get();
+          current_stop_pos.point.pose = ego_pos_on_path.value();
 
           insertStopPoint(current_stop_pos, output, planner_data.stop_reason_diag);
 
@@ -1094,19 +1086,19 @@ void ObstacleStopPlannerNode::insertVelocity(
     if (index_with_dist_remain) {
       const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
       const auto dist_baselink_to_obstacle =
-        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.get().first);
+        calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.value().first);
 
       debug_ptr_->setDebugValues(
         DebugValues::TYPE::SLOWDOWN_OBSTACLE_DISTANCE,
-        dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
+        dist_baselink_to_obstacle + index_with_dist_remain.value().second - base_link2front);
       const auto slow_down_section = createSlowDownSection(
-        index_with_dist_remain.get().first, output, planner_data.lateral_deviation,
-        index_with_dist_remain.get().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
+        index_with_dist_remain.value().first, output, planner_data.lateral_deviation,
+        index_with_dist_remain.value().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
         current_vel);
 
       if (
         !latest_slow_down_section_ &&
-        dist_baselink_to_obstacle + index_with_dist_remain.get().second <
+        dist_baselink_to_obstacle + index_with_dist_remain.value().second <
           vehicle_info.max_longitudinal_offset_m) {
         latest_slow_down_section_ = slow_down_section;
       }
@@ -1117,8 +1109,8 @@ void ObstacleStopPlannerNode::insertVelocity(
 
   if (node_param_.enable_slow_down && latest_slow_down_section_) {
     // check whether ego is in slow down section or not
-    const auto & p_start = latest_slow_down_section_.get().start_point.pose.position;
-    const auto & p_end = latest_slow_down_section_.get().end_point.pose.position;
+    const auto & p_start = latest_slow_down_section_.value().start_point.pose.position;
+    const auto & p_end = latest_slow_down_section_.value().end_point.pose.position;
     const auto reach_slow_down_start_point =
       isInFrontOfTargetPoint(planner_data.current_pose, p_start);
     const auto reach_slow_down_end_point = isInFrontOfTargetPoint(planner_data.current_pose, p_end);
@@ -1127,7 +1119,7 @@ void ObstacleStopPlannerNode::insertVelocity(
 
     if (is_in_slow_down_section && index_with_dist_remain) {
       const auto end_insert_point_with_idx = getBackwardInsertPointFromBasePoint(
-        index_with_dist_remain.get().first, output, -index_with_dist_remain.get().second);
+        index_with_dist_remain.value().first, output, -index_with_dist_remain.value().second);
 
       double slow_down_velocity;
       if (node_param_.use_predicted_objects) {
@@ -1175,8 +1167,8 @@ void ObstacleStopPlannerNode::insertVelocity(
       SlowDownSection slow_down_section{};
       slow_down_section.slow_down_start_idx = 0;
       slow_down_section.start_point = output.front();
-      slow_down_section.slow_down_end_idx = end_insert_point_with_idx.get().first;
-      slow_down_section.end_point = end_insert_point_with_idx.get().second;
+      slow_down_section.slow_down_end_idx = end_insert_point_with_idx.value().first;
+      slow_down_section.end_point = end_insert_point_with_idx.value().second;
       slow_down_section.velocity =
         set_velocity_limit_ ? std::numeric_limits<double>::max() : target_velocity;
 
@@ -1258,8 +1250,8 @@ StopPoint ObstacleStopPlannerNode::createTargetPoint(
   }
 
   StopPoint stop_point{};
-  stop_point.index = insert_point_with_idx.get().first;
-  stop_point.point = insert_point_with_idx.get().second;
+  stop_point.index = insert_point_with_idx.value().first;
+  stop_point.point = insert_point_with_idx.value().second;
 
   return stop_point;
 }
@@ -1273,7 +1265,7 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
     const auto margin_with_vel = calcFeasibleMarginAndVelocity(
       slow_down_param_, dist_baselink_to_obstacle + dist_remain, current_vel, current_acc);
 
-    const auto relax_target_vel = margin_with_vel == boost::none;
+    const auto relax_target_vel = margin_with_vel.has_value();
     if (relax_target_vel && !set_velocity_limit_) {
       setExternalVelocityLimit();
     }
@@ -1288,12 +1280,12 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
 
     const auto update_forward_margin_from_vehicle =
       use_velocity_limit ? slow_down_param_.min_longitudinal_forward_margin - dist_remain
-                         : margin_with_vel.get().first - dist_remain;
+                         : margin_with_vel.value().first - dist_remain;
     const auto update_backward_margin_from_vehicle =
       slow_down_param_.longitudinal_backward_margin + dist_remain;
 
     const auto velocity =
-      use_velocity_limit ? std::numeric_limits<double>::max() : margin_with_vel.get().second;
+      use_velocity_limit ? std::numeric_limits<double>::max() : margin_with_vel.value().second;
 
     return createSlowDownSectionFromMargin(
       idx, base_trajectory, update_forward_margin_from_vehicle, update_backward_margin_from_vehicle,
@@ -1335,10 +1327,10 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSectionFromMargin(
   }
 
   SlowDownSection slow_down_section{};
-  slow_down_section.slow_down_start_idx = start_insert_point_with_idx.get().first;
-  slow_down_section.start_point = start_insert_point_with_idx.get().second;
-  slow_down_section.slow_down_end_idx = end_insert_point_with_idx.get().first;
-  slow_down_section.end_point = end_insert_point_with_idx.get().second;
+  slow_down_section.slow_down_start_idx = start_insert_point_with_idx.value().first;
+  slow_down_section.start_point = start_insert_point_with_idx.value().second;
+  slow_down_section.slow_down_end_idx = end_insert_point_with_idx.value().first;
+  slow_down_section.end_point = end_insert_point_with_idx.value().second;
   slow_down_section.velocity = velocity;
 
   return slow_down_section;
@@ -1548,6 +1540,8 @@ void ObstacleStopPlannerNode::filterObstacles(
   const PredictedObjects & input_objects, const Pose & ego_pose, const TrajectoryPoints & traj,
   const double dist_threshold, PredictedObjects & filtered_objects)
 {
+  if (traj.size() < 2) return;
+
   filtered_objects.header = input_objects.header;
 
   for (auto & object : input_objects.objects) {
