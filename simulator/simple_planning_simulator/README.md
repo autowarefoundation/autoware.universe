@@ -94,27 +94,6 @@ _Note:_ Parameters `model_module_paths`, `model_param_paths`, and `model_class_n
 
 The `acceleration_map` is used only for `DELAY_STEER_MAP_ACC_GEARED` and it shows the acceleration command on the vertical axis and the current velocity on the horizontal axis, with each cell representing the converted acceleration command that is actually used in the simulator's motion calculation. Values in between are linearly interpolated.
 
-We created a few basic models to showcase how `LEARNED_STEER_VEL` works.
-
-1. Install [a library](https://github.com/atomyks/control_analysis_pipeline/tree/v0.1_autoware) that contains basic Python models. (branch: `v0.1_autoware`)
-
-2. In a file `src/vehicle/sample_vehicle_launch/sample_vehicle_description/config/simulator_model.param.yaml` set `vehicle_model_type` to `LEARNED_STEER_VEL`. In the same file set the following parameters. These models are for testing and do not require any parameter file.
-
-```yaml
-model_module_paths:
-  [
-    "control_analysis_pipeline.autoware_models.vehicle.kinematic",
-    "control_analysis_pipeline.autoware_models.steering.steer_example",
-    "control_analysis_pipeline.autoware_models.drive.drive_example",
-  ]
-model_param_paths: ["", "", ""]
-model_class_names: ["KinematicModel", "SteerExample", "DriveExample"]
-```
-
-3. Build the Autoware packages.
-
-4. Launch the script `ros2 launch autoware_launch planning_simulator.launch.xml map_path:=$HOME/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit`
-
 Example of `acceleration_map.csv`
 
 ```csv
@@ -145,6 +124,25 @@ default,  0.00,  1.39,  2.78,  4.17,  5.56,  6.94,  8.33,  9.72, 11.11, 12.50, 1
 <!-- deadzone_delta_steer | double | dead zone for the steering dynamics                  | x      | x      | x        | o      | o      | 0.0      | [rad]         |         | -->
 
 _Note_: The steering/velocity/acceleration dynamics is modeled by a first order system with a deadtime in a _delay_ model. The definition of the _time constant_ is the time it takes for the step response to rise up to 63% of its final value. The _deadtime_ is a delay in the response to a control input.
+
+### Example of LEARNED_STEER_VEL model
+
+We created a few basic models to showcase how `LEARNED_STEER_VEL` works.
+
+1. Install [a library](https://github.com/atomyks/control_analysis_pipeline/tree/v0.1_autoware) that contains basic Python models. (branch: `v0.1_autoware`)
+
+2. In a file `src/vehicle/sample_vehicle_launch/sample_vehicle_description/config/simulator_model.param.yaml` set `vehicle_model_type` to `LEARNED_STEER_VEL`. In the same file set the following parameters. These models are for testing and do not require any parameter file.
+
+```yaml
+model_module_paths:
+  [
+    "control_analysis_pipeline.autoware_models.vehicle.kinematic",
+    "control_analysis_pipeline.autoware_models.steering.steer_example",
+    "control_analysis_pipeline.autoware_models.drive.drive_example",
+  ]
+model_param_paths: ["", "", ""]
+model_class_names: ["KinematicModel", "SteerExample", "DriveExample"]
+```
 
 ### Default TF configuration
 
