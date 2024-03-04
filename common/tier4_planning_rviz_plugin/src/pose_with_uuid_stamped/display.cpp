@@ -72,7 +72,7 @@ void AutowarePoseWithUuidStampedDisplay::onEnable()
 
 void AutowarePoseWithUuidStampedDisplay::onDisable()
 {
-  unsubscribe();
+  // unsubscribe();
   axes_->getSceneNode()->setVisible(false);
 }
 
