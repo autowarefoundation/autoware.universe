@@ -54,6 +54,7 @@ struct RunOutParam
 {
   std::string detection_method;
   bool use_partition_lanelet;
+  bool suppress_on_crosswalk;
   bool specify_decel_jerk;
   double stop_margin;
   double passing_margin;
@@ -84,19 +85,20 @@ struct MandatoryArea
   float decel_jerk;
 };
 
-struct ApproachingParam
-{
-  bool enable;
-  float margin;
-  float limit_vel_kmph;
-};
-
 struct StateParam
 {
   float stop_thresh;
   float stop_time_thresh;
   float disable_approach_dist;
   float keep_approach_duration;
+};
+
+struct ApproachingParam
+{
+  bool enable;
+  float margin;
+  float limit_vel_kmph;
+  StateParam state;
 };
 
 struct SlowDownLimit
@@ -114,16 +116,24 @@ struct Smoother
 struct DynamicObstacleParam
 {
   bool use_mandatory_area;
+  bool assume_fixed_velocity;
 
   float min_vel_kmph;
   float max_vel_kmph;
 
   // parameter to convert points to dynamic obstacle
+  float std_dev_multiplier;
   float diameter;             // [m]
   float height;               // [m]
   float max_prediction_time;  // [sec]
   float time_step;            // [sec]
   float points_interval;      // [m]
+};
+
+struct IgnoreMomentaryDetection
+{
+  bool enable;
+  double time_threshold;
 };
 
 struct PlannerParam
@@ -134,10 +144,10 @@ struct PlannerParam
   DetectionArea detection_area;
   MandatoryArea mandatory_area;
   ApproachingParam approaching;
-  StateParam state_param;
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
   Smoother smoother;
+  IgnoreMomentaryDetection ignore_momentary_detection;
 };
 
 enum class DetectionMethod {
@@ -200,7 +210,7 @@ std::vector<geometry_msgs::msg::Point> findLateralSameSidePoints(
 bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2);
 
 // if path points have the same point as target_point, return the index
-boost::optional<size_t> haveSamePoint(
+std::optional<size_t> haveSamePoint(
   const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & target_point);
 
 // insert path velocity which doesn't exceed original velocity
@@ -210,7 +220,7 @@ void insertPathVelocityFromIndexLimited(
 void insertPathVelocityFromIndex(
   const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
 
-boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points);
+std::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points);
 
 LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly);
 
@@ -228,7 +238,7 @@ PathWithLaneId trimPathFromSelfPose(
 
 // create polygon for passing lines and deceleration line calculated by stopping jerk
 // note that this polygon is not closed
-boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
+std::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
   const std::vector<std::vector<geometry_msgs::msg::Point>> & passing_lines,
   const size_t deceleration_line_idx);
 

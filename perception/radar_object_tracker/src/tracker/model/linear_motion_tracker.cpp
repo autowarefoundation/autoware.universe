@@ -44,9 +44,21 @@
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
+// initialize static parameter
+bool LinearMotionTracker::is_initialized_ = false;
+LinearMotionTracker::EkfParams LinearMotionTracker::ekf_params_;
+double LinearMotionTracker::max_vx_;
+double LinearMotionTracker::max_vy_;
+double LinearMotionTracker::filter_tau_;
+double LinearMotionTracker::filter_dt_;
+bool LinearMotionTracker::estimate_acc_;
+bool LinearMotionTracker::trust_yaw_input_;
+bool LinearMotionTracker::trust_twist_input_;
+bool LinearMotionTracker::use_polar_coordinate_in_measurement_noise_;
+
 LinearMotionTracker::LinearMotionTracker(
   const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const std::string & /*tracker_param_file*/, const std::uint8_t & /*label*/)
+  const std::string & tracker_param_file, const std::uint8_t & /*label*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("LinearMotionTracker")),
   last_update_time_(time),
@@ -55,11 +67,13 @@ LinearMotionTracker::LinearMotionTracker(
   object_ = object;
 
   // load setting from yaml file
-  const std::string default_setting_file =
-    ament_index_cpp::get_package_share_directory("radar_object_tracker") +
-    "/config/tracking/linear_motion_tracker.yaml";
-  loadDefaultModelParameters(default_setting_file);
-  // loadModelParameters(tracker_param_file, label);
+  if (!is_initialized_) {
+    loadDefaultModelParameters(tracker_param_file);
+    is_initialized_ = true;
+  }
+  // shape initialization
+  bounding_box_ = {0.5, 0.5, 1.7};
+  cylinder_ = {0.3, 1.7};
 
   // initialize X matrix and position
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -193,6 +207,12 @@ void LinearMotionTracker::loadDefaultModelParameters(const std::string & path)
     config["default"]["ekf_params"]["initial_covariance_std"]["ax"].as<float>();  // [m/(s*s)]
   const float p0_stddev_ay =
     config["default"]["ekf_params"]["initial_covariance_std"]["ay"].as<float>();  // [m/(s*s)]
+  estimate_acc_ = config["default"]["ekf_params"]["estimate_acc"].as<bool>();
+  trust_yaw_input_ = config["default"]["trust_yaw_input"].as<bool>(false);      // default false
+  trust_twist_input_ = config["default"]["trust_twist_input"].as<bool>(false);  // default false
+  use_polar_coordinate_in_measurement_noise_ =
+    config["default"]["use_polar_coordinate_in_measurement_noise"].as<bool>(
+      false);  // default false
   ekf_params_.q_cov_ax = std::pow(q_stddev_ax, 2.0);
   ekf_params_.q_cov_ay = std::pow(q_stddev_ay, 2.0);
   ekf_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
@@ -219,11 +239,6 @@ void LinearMotionTracker::loadDefaultModelParameters(const std::string & path)
   const float max_speed_kmph = config["default"]["limit"]["max_speed"].as<float>();  // [km/h]
   max_vx_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);                          // [m/s]
   max_vy_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);                          // [rad/s]
-
-  // shape initialization
-  // (TODO): this may be written in another yaml file based on classify result
-  bounding_box_ = {0.5, 0.5, 1.7};
-  cylinder_ = {0.3, 1.7};
 }
 
 bool LinearMotionTracker::predict(const rclcpp::Time & time)
@@ -257,6 +272,8 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
    *      0, 0, 0,  0,  1,          0,
    *      0, 0, 0,  0,  0,          1]
    */
+  // estimate acc
+  const double acc_coeff = estimate_acc_ ? 1.0 : 0.0;
 
   // X t
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
@@ -270,10 +287,10 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
 
   // X t+1
   Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);
-  X_next_t(IDX::X) = x + vx * dt + 0.5 * ax * dt * dt;
-  X_next_t(IDX::Y) = y + vy * dt + 0.5 * ay * dt * dt;
-  X_next_t(IDX::VX) = vx + ax * dt;
-  X_next_t(IDX::VY) = vy + ay * dt;
+  X_next_t(IDX::X) = x + vx * dt + 0.5 * ax * dt * dt * acc_coeff;
+  X_next_t(IDX::Y) = y + vy * dt + 0.5 * ay * dt * dt * acc_coeff;
+  X_next_t(IDX::VX) = vx + ax * dt * acc_coeff;
+  X_next_t(IDX::VY) = vy + ay * dt * acc_coeff;
   X_next_t(IDX::AX) = ax;
   X_next_t(IDX::AY) = ay;
 
@@ -281,10 +298,10 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
   A(IDX::X, IDX::VX) = dt;
   A(IDX::Y, IDX::VY) = dt;
-  A(IDX::X, IDX::AX) = 0.5 * dt * dt;
-  A(IDX::Y, IDX::AY) = 0.5 * dt * dt;
-  A(IDX::VX, IDX::AX) = dt;
-  A(IDX::VY, IDX::AY) = dt;
+  A(IDX::X, IDX::AX) = 0.5 * dt * dt * acc_coeff;
+  A(IDX::Y, IDX::AY) = 0.5 * dt * dt * acc_coeff;
+  A(IDX::VX, IDX::AX) = dt * acc_coeff;
+  A(IDX::VY, IDX::AY) = dt * acc_coeff;
 
   // Q: system noise
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -333,7 +350,8 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
 }
 
 bool LinearMotionTracker::measureWithPose(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & self_transform)
 {
   // Observation pattern will be:
   // 1. x, y, vx, vy
@@ -348,8 +366,25 @@ bool LinearMotionTracker::measureWithPose(
 
   // rotation matrix
   Eigen::Matrix2d RotationYaw;
-  const auto yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  RotationYaw << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
+  if (trust_yaw_input_) {
+    const auto yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    RotationYaw << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
+  } else {
+    RotationYaw << std::cos(yaw_), -std::sin(yaw_), std::sin(yaw_), std::cos(yaw_);
+  }
+  const auto base_link_yaw = tf2::getYaw(self_transform.rotation);
+  Eigen::Matrix2d RotationBaseLink;
+  RotationBaseLink << std::cos(base_link_yaw), -std::sin(base_link_yaw), std::sin(base_link_yaw),
+    std::cos(base_link_yaw);
+
+  // depth from base_link to object
+  const auto dx =
+    object.kinematics.pose_with_covariance.pose.position.x - self_transform.translation.x;
+  const auto dy =
+    object.kinematics.pose_with_covariance.pose.position.y - self_transform.translation.y;
+  Eigen::Vector2d pose_diff_in_map(dx, dy);
+  Eigen::Vector2d pose_diff_in_base_link = RotationBaseLink * pose_diff_in_map;
+  const auto depth = abs(pose_diff_in_base_link(0));
 
   // gather matrices as vector
   std::vector<Eigen::MatrixXd> C_list;
@@ -371,21 +406,27 @@ bool LinearMotionTracker::measureWithPose(
 
     // covariance need to be rotated since it is in the vehicle coordinate system
     Eigen::MatrixXd Rxy_local = Eigen::MatrixXd::Zero(2, 2);
+    Eigen::MatrixXd Rxy = Eigen::MatrixXd::Zero(2, 2);
     if (!object.kinematics.has_position_covariance) {
-      Rxy_local << ekf_params_.r_cov_x, 0, 0, ekf_params_.r_cov_y;
+      // switch noise covariance in polar coordinate or cartesian coordinate
+      const auto r_cov_y = use_polar_coordinate_in_measurement_noise_
+                             ? depth * depth * ekf_params_.r_cov_x
+                             : ekf_params_.r_cov_y;
+      Rxy_local << ekf_params_.r_cov_x, 0, 0, r_cov_y;  // xy in base_link coordinate
+      Rxy = RotationBaseLink * Rxy_local * RotationBaseLink.transpose();
     } else {
       Rxy_local << object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X],
         object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y],
         object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X],
-        object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+        object.kinematics.pose_with_covariance
+          .covariance[utils::MSG_COV_IDX::Y_Y];  // xy in vehicle coordinate
+      Rxy = RotationYaw * Rxy_local * RotationYaw.transpose();
     }
-    Eigen::MatrixXd Rxy = Eigen::MatrixXd::Zero(2, 2);
-    Rxy = RotationYaw * Rxy_local * RotationYaw.transpose();
     R_block_list.push_back(Rxy);
   }
 
   // 2. add linear velocity measurement
-  const bool enable_velocity_measurement = object.kinematics.has_twist;
+  const bool enable_velocity_measurement = object.kinematics.has_twist && trust_twist_input_;
   if (enable_velocity_measurement) {
     Eigen::MatrixXd C_vx_vy = Eigen::MatrixXd::Zero(2, ekf_params_.dim_x);
     C_vx_vy(0, IDX::VX) = 1;
@@ -401,14 +442,15 @@ bool LinearMotionTracker::measureWithPose(
     Y_list.push_back(Vxy);
 
     Eigen::Matrix2d R_v_xy_local = Eigen::MatrixXd::Zero(2, 2);
+    Eigen::MatrixXd R_v_xy = Eigen::MatrixXd::Zero(2, 2);
     if (!object.kinematics.has_twist_covariance) {
       R_v_xy_local << ekf_params_.r_cov_vx, 0, 0, ekf_params_.r_cov_vy;
+      R_v_xy = RotationBaseLink * R_v_xy_local * RotationBaseLink.transpose();
     } else {
       R_v_xy_local << object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X],
         0, 0, object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+      R_v_xy = RotationYaw * R_v_xy_local * RotationYaw.transpose();
     }
-    Eigen::MatrixXd R_v_xy = Eigen::MatrixXd::Zero(2, 2);
-    R_v_xy = RotationYaw * R_v_xy_local * RotationYaw.transpose();
     R_block_list.push_back(R_v_xy);
   }
 
@@ -453,8 +495,16 @@ bool LinearMotionTracker::measureWithPose(
   // first order low pass filter
   const float gain = filter_tau_ / (filter_tau_ + filter_dt_);
   z_ = gain * z_ + (1.0 - gain) * object.kinematics.pose_with_covariance.pose.position.z;
-  yaw_ = gain * yaw_ + (1.0 - gain) * yaw;
-
+  // get yaw from twist atan
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  ekf_.getX(X_t);
+  const auto twist_yaw =
+    std::atan2(X_t(IDX::VY), X_t(IDX::VX));  // calc from lateral and longitudinal velocity
+  if (trust_yaw_input_) {
+    yaw_ = gain * yaw_ + (1.0 - gain) * twist_yaw;
+  } else {
+    yaw_ = twist_yaw;
+  }
   return true;
 }
 
@@ -494,10 +544,10 @@ bool LinearMotionTracker::measure(
       (time - last_update_time_).seconds());
   }
 
-  measureWithPose(object);
+  measureWithPose(object, self_transform);
   measureWithShape(object);
 
-  (void)self_transform;  // currently do not use self vehicle position
+  // (void)self_transform;  // currently do not use self vehicle position
   return true;
 }
 
@@ -543,8 +593,13 @@ bool LinearMotionTracker::getTrackedObject(
     pose_with_cov.pose.orientation.y = filtered_quaternion.y();
     pose_with_cov.pose.orientation.z = filtered_quaternion.z();
     pose_with_cov.pose.orientation.w = filtered_quaternion.w();
-    object.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
+    if (trust_yaw_input_) {
+      object.kinematics.orientation_availability =
+        autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
+    } else {
+      object.kinematics.orientation_availability =
+        autoware_auto_perception_msgs::msg::TrackedObjectKinematics::UNAVAILABLE;
+    }
   }
   // twist
   // twist need to converted to local coordinate

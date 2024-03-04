@@ -19,8 +19,9 @@
 #include "obstacle_stop_planner/debug_marker.hpp"
 #include "obstacle_stop_planner/planner_data.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
-#include <motion_utils/trajectory/tmp_conversion.hpp>
+#include <motion_utils/trajectory/conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -37,6 +38,7 @@
 #include <tier4_debug_msgs/msg/bool_stamped.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
@@ -55,6 +57,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -78,9 +81,11 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::BoolStamped;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_debug_msgs::msg::Float32Stamped;
+using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
@@ -102,15 +107,31 @@ struct ObstacleWithDetectionTime
 
 struct PredictedObjectWithDetectionTime
 {
-  explicit PredictedObjectWithDetectionTime(
-    const rclcpp::Time & t, geometry_msgs::msg::Point & p, PredictedObject obj)
-  : detection_time(t), point(p), object(std::move(obj))
+  explicit PredictedObjectWithDetectionTime(const rclcpp::Time & t, PredictedObject obj)
+  : detection_time(t), object(std::move(obj))
   {
   }
 
   rclcpp::Time detection_time;
-  geometry_msgs::msg::Point point;
   PredictedObject object;
+};
+
+struct IntersectedPredictedObject
+{
+  explicit IntersectedPredictedObject(
+    const rclcpp::Time & t, PredictedObject obj, const Polygon2d obj_polygon,
+    const Polygon2d ego_polygon)
+  : detection_time(t),
+    object(std::move(obj)),
+    object_polygon{obj_polygon},
+    vehicle_polygon{ego_polygon}
+  {
+  }
+
+  rclcpp::Time detection_time;
+  PredictedObject object;
+  Polygon2d object_polygon;
+  Polygon2d vehicle_polygon;
 };
 
 class ObstacleStopPlannerNode : public rclcpp::Node
@@ -143,9 +164,11 @@ private:
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_collision_pointcloud_debug_;
 
+  rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_ms_;
+
   std::unique_ptr<AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
-  boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
+  std::optional<SlowDownSection> latest_slow_down_section_{std::nullopt};
   std::vector<ObstacleWithDetectionTime> obstacle_history_{};
   std::vector<PredictedObjectWithDetectionTime> predicted_object_history_{};
   tf2_ros::Buffer tf_buffer_{get_clock()};
@@ -165,6 +188,8 @@ private:
   NodeParam node_param_;
   StopParam stop_param_;
   SlowDownParam slow_down_param_;
+
+  StopWatch<std::chrono::milliseconds> stop_watch_;
 
   // mutex for vehicle_info_, stop_param_, current_acc_, obstacle_ros_pointcloud_ptr_
   // NOTE: shared_ptr itself is thread safe so we do not have to care if *ptr is not used
@@ -263,6 +288,19 @@ private:
 
       itr++;
     }
+  }
+
+  void addPredictedObstacleToHistory(const PredictedObject & obj, const rclcpp::Time & now)
+  {
+    for (auto itr = predicted_object_history_.begin(); itr != predicted_object_history_.end();) {
+      if (obj.object_id.uuid == itr->object.object_id.uuid) {
+        // Erase the itr from the vector
+        itr = predicted_object_history_.erase(itr);
+      } else {
+        ++itr;
+      }
+    }
+    predicted_object_history_.emplace_back(now, obj);
   }
 
   PointCloud::Ptr getOldPointCloudPtr() const

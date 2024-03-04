@@ -46,6 +46,7 @@ VelocityLimit getHardestLimit(
     // find hardest max velocity
     if (max_velocity < hardest_max_velocity) {
       hardest_limit.stamp = limit.second.stamp;
+      hardest_limit.sender = limit.first;
       hardest_limit.max_velocity = max_velocity;
       hardest_max_velocity = max_velocity;
     }
@@ -111,7 +112,7 @@ ExternalVelocityLimitSelectorNode::ExternalVelocityLimitSelectorNode(
   // Params
   {
     auto & p = node_param_;
-    p.max_velocity = this->declare_parameter<double>("max_velocity");
+    p.max_velocity = this->declare_parameter<double>("max_vel");
     p.normal_min_acc = this->declare_parameter<double>("normal.min_acc");
     p.normal_max_acc = this->declare_parameter<double>("normal.max_acc");
     p.normal_min_jerk = this->declare_parameter<double>("normal.min_jerk");

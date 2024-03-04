@@ -12,6 +12,7 @@ endif()
 ### Find Eigen Dependencies
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(glog REQUIRED)
 
 include_directories(
   SYSTEM
@@ -31,9 +32,6 @@ set(MULTI_OBJECT_TRACKER_SRC
   src/tracker/model/unknown_tracker.cpp
   src/tracker/model/pass_through_tracker.cpp
   src/data_association/data_association.cpp
-)
-
-ament_auto_add_library(mu_successive_shortest_path SHARED
   src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
 )
 
@@ -42,8 +40,8 @@ ament_auto_add_library(multi_object_tracker_node SHARED
 )
 
 target_link_libraries(multi_object_tracker_node
-  mu_successive_shortest_path
   Eigen3::Eigen
+  glog::glog
 )
 
 rclcpp_components_register_node(multi_object_tracker_node

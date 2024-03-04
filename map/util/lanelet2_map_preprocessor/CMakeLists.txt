@@ -4,10 +4,16 @@ project(lanelet2_map_preprocessor)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(PCL REQUIRED COMPONENTS common io kdtree)
+
 include_directories(
   include
   SYSTEM
     ${PCL_INCLUDE_DIRS}
+)
+
+link_libraries(
+  ${PCL_LIBRARIES}
 )
 
 ament_auto_add_executable(fix_z_value_by_pcd src/fix_z_value_by_pcd.cpp)
@@ -23,5 +29,6 @@ if(BUILD_TESTING)
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
+  config
   launch
 )

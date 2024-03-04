@@ -38,7 +38,7 @@ WalkwayModule::WalkwayModule(
   planner_param_(planner_param),
   use_regulatory_element_(use_regulatory_element)
 {
-  velocity_factor_.init(VelocityFactor::SIDEWALK);
+  velocity_factor_.init(PlanningBehavior::SIDEWALK);
 
   if (use_regulatory_element_) {
     const auto reg_elem_ptr = std::dynamic_pointer_cast<const lanelet::autoware::Crosswalk>(
@@ -123,16 +123,16 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
 
     const auto inserted_pose = planning_utils::insertStopPoint(stop_pose->position, *path);
     if (inserted_pose) {
-      debug_data_.stop_poses.push_back(inserted_pose.get());
+      debug_data_.stop_poses.push_back(inserted_pose.value());
     }
 
     /* get stop point and stop factor */
     StopFactor stop_factor;
-    stop_factor.stop_pose = stop_pose.get();
+    stop_factor.stop_pose = stop_pose.value();
     stop_factor.stop_factor_points.push_back(path_intersects.front());
     planning_utils::appendStopReason(stop_factor, stop_reason);
     velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_pose.get(),
+      path->points, planner_data_->current_odometry->pose, stop_pose.value(),
       VelocityFactor::UNKNOWN);
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.

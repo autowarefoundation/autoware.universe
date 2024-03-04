@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "node.hpp"
-#include "planning_interface_test_manager/planning_interface_test_manager.hpp"
-#include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <planning_test_utils/planning_interface_test_manager.hpp>
+#include <planning_test_utils/planning_interface_test_manager_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -58,6 +59,28 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
     const auto package_path = ament_index_cpp::get_package_share_directory(package_name);
     return package_path + "/config/" + module + ".param.yaml";
   };
+
+  std::vector<std::string> module_names;
+  module_names.emplace_back("behavior_velocity_planner::CrosswalkModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::WalkwayModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::TrafficLightModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::IntersectionModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::MergeFromPrivateModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::BlindSpotModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::DetectionAreaModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::VirtualTrafficLightModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::NoStoppingAreaModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::StopLineModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::OcclusionSpotModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::RunOutModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::SpeedBumpModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::OutOfLaneModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::NoDrivableLaneModulePlugin");
+
+  std::vector<rclcpp::Parameter> params;
+  params.emplace_back("launch_modules", module_names);
+  params.emplace_back("is_simulation", false);
+  node_options.parameter_overrides(params);
 
   test_utils::updateNodeOptions(
     node_options,

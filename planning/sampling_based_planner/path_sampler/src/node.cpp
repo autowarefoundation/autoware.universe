@@ -16,6 +16,7 @@
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "path_sampler/path_generation.hpp"
 #include "path_sampler/prepare_inputs.hpp"
 #include "path_sampler/utils/geometry_utils.hpp"
@@ -244,13 +245,12 @@ void PathSampler::onPath(const Path::SharedPtr path_ptr)
   if (!generated_traj_points.empty()) {
     auto full_traj_points = extendTrajectory(planner_data.traj_points, generated_traj_points);
     const auto output_traj_msg =
-      trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
+      motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
   } else {
     auto stopping_traj = trajectory_utils::convertToTrajectoryPoints(planner_data.traj_points);
     for (auto & p : stopping_traj) p.longitudinal_velocity_mps = 0.0;
-    const auto output_traj_msg =
-      trajectory_utils::createTrajectory(path_ptr->header, stopping_traj);
+    const auto output_traj_msg = motion_utils::convertToTrajectory(stopping_traj, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
   }
 
@@ -298,7 +298,8 @@ PlannerData PathSampler::createPlannerData(const Path & path) const
   return planner_data;
 }
 
-void copyZ(const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj)
+void PathSampler::copyZ(
+  const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj)
 {
   if (from_traj.empty() || to_traj.empty()) return;
   to_traj.front().pose.position.z = from_traj.front().pose.position.z;
@@ -320,7 +321,7 @@ void copyZ(const std::vector<TrajectoryPoint> & from_traj, std::vector<Trajector
   to_traj.back().pose.position.z = from->pose.position.z;
 }
 
-void copyVelocity(
+void PathSampler::copyVelocity(
   const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj,
   const geometry_msgs::msg::Pose & ego_pose)
 {

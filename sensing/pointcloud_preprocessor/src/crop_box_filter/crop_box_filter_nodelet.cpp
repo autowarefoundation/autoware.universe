@@ -65,7 +65,7 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
     using tier4_autoware_utils::DebugPublisher;
     using tier4_autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
-    debug_publisher_ = std::make_unique<DebugPublisher>(this, "crop_box_filter");
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, this->get_name());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
@@ -119,7 +119,8 @@ void CropBoxFilterComponent::faster_filter(
   stop_watch_ptr_->toc("processing_time", true);
 
   if (indices) {
-    RCLCPP_WARN(get_logger(), "Indices are not supported and will be ignored");
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 1000, "Indices are not supported and will be ignored");
   }
 
   int x_offset = input->fields[pcl::getFieldIndex(*input, "x")].offset;
@@ -128,6 +129,8 @@ void CropBoxFilterComponent::faster_filter(
 
   output.data.resize(input->data.size());
   size_t output_size = 0;
+
+  int skipped_count = 0;
 
   for (size_t global_offset = 0; global_offset + input->point_step <= input->data.size();
        global_offset += input->point_step) {
@@ -138,7 +141,7 @@ void CropBoxFilterComponent::faster_filter(
     point[3] = 1;
 
     if (!std::isfinite(point[0]) || !std::isfinite(point[1]) || !std::isfinite(point[2])) {
-      RCLCPP_WARN(this->get_logger(), "Ignoring point containing NaN values");
+      skipped_count++;
       continue;
     }
 
@@ -160,6 +163,12 @@ void CropBoxFilterComponent::faster_filter(
 
       output_size += input->point_step;
     }
+  }
+
+  if (skipped_count > 0) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 1000, "%d points contained NaN values and have been ignored",
+      skipped_count);
   }
 
   output.data.resize(output_size);
@@ -186,6 +195,14 @@ void CropBoxFilterComponent::faster_filter(
       "debug/cyclic_time_ms", cyclic_time_ms);
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
+
+    auto pipeline_latency_ms =
+      std::chrono::duration<double, std::milli>(
+        std::chrono::nanoseconds((this->get_clock()->now() - input->header.stamp).nanoseconds()))
+        .count();
+
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 }
 

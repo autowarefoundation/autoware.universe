@@ -16,6 +16,8 @@
 
 #include <motion_utils/trajectory/trajectory.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>

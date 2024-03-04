@@ -14,15 +14,12 @@
 
 #include "motion_utils/resample/resample.hpp"
 
-#include "interpolation/interpolation_utils.hpp"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "interpolation/zero_order_hold.hpp"
 #include "motion_utils/resample/resample_utils.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "tier4_autoware_utils/geometry/pose_deviation.hpp"
-#include "tier4_autoware_utils/math/constants.hpp"
 
 namespace motion_utils
 {
@@ -489,7 +486,7 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
   autoware_auto_planning_msgs::msg::Path resampled_path;
   resampled_path.header = input_path.header;
   resampled_path.left_bound = input_path.left_bound;
-  resampled_path.right_bound = resampled_path.right_bound;
+  resampled_path.right_bound = input_path.right_bound;
   resampled_path.points.resize(interpolated_pose.size());
   for (size_t i = 0; i < resampled_path.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::PathPoint path_point;

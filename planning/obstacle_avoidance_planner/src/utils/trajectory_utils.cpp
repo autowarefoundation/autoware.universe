@@ -15,7 +15,7 @@
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
 
 #include "motion_utils/resample/resample.hpp"
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
@@ -115,15 +115,6 @@ geometry_msgs::msg::Point getNearestPosition(
   }
 
   return points.back().pose.position;
-}
-
-Trajectory createTrajectory(
-  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points)
-{
-  auto traj = motion_utils::convertToTrajectory(traj_points);
-  traj.header = header;
-
-  return traj;
 }
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
