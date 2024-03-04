@@ -14,243 +14,11 @@
 
 #include "reaction_analyzer_node.hpp"
 
-#include "tf2/transform_datatypes.h"
-
-#include <pcl/impl/point_types.hpp>
-#include <pcl_ros/transforms.hpp>
-#include <tf2_eigen/tf2_eigen/tf2_eigen.hpp>
-
-#include <boost/uuid/string_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
-#include <message_filters/sync_policies/approximate_time.h>
-
-#include <algorithm>
+#include <functional>
 #include <memory>
 
 namespace reaction_analyzer
 {
-
-// Callbacks
-
-void ReactionAnalyzerNode::publishedTimeOutputCallback(
-  const std::string & node_name, const PublishedTime::ConstSharedPtr & msg_ptr)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  auto & published_time_vector = published_time_vector_map_[node_name];
-  pushPublishedTime(published_time_vector, *msg_ptr);
-}
-
-void ReactionAnalyzerNode::controlCommandOutputCallback(
-  const std::string & node_name, const AckermannControlCommand::ConstSharedPtr & msg_ptr)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  auto & variant = message_buffers_[node_name];
-  const auto is_spawned = spawn_cmd_time_;
-  if (!std::holds_alternative<ControlCommandBuffer>(variant)) {
-    ControlCommandBuffer buffer(std::vector<AckermannControlCommand>{*msg_ptr}, std::nullopt);
-    variant = buffer;
-  }
-
-  if (std::get<ControlCommandBuffer>(variant).second) {
-    // reacted
-    return;
-  }
-  setControlCommandToBuffer(std::get<ControlCommandBuffer>(variant).first, *msg_ptr);
-  const auto brake_idx =
-    findFirstBrakeIdx(std::get<ControlCommandBuffer>(variant).first, is_spawned);
-  if (brake_idx) {
-    std::get<ControlCommandBuffer>(variant).second =
-      std::get<ControlCommandBuffer>(variant).first.at(brake_idx.value());
-    RCLCPP_INFO(this->get_logger(), "Reacted %s", node_name.c_str());
-  }
-}
-
-void ReactionAnalyzerNode::trajectoryOutputCallback(
-  const std::string & node_name, const Trajectory::ConstSharedPtr & msg_ptr)
-{
-  mutex_.lock();
-  auto variant = message_buffers_[node_name];
-  const auto current_odometry_ptr = odometry_;
-  const auto is_spawned = spawn_cmd_time_;
-  if (!std::holds_alternative<TrajectoryBuffer>(variant)) {
-    TrajectoryBuffer buffer(std::nullopt);
-    variant = buffer;
-    message_buffers_[node_name] = variant;
-  }
-  mutex_.unlock();
-
-  if (!current_odometry_ptr || !is_spawned || std::get<TrajectoryBuffer>(variant).has_value()) {
-    return;
-  }
-
-  const auto nearest_seg_idx = motion_utils::findNearestSegmentIndex(
-    msg_ptr->points, current_odometry_ptr->pose.pose.position);
-
-  const auto nearest_objects_seg_idx =
-    motion_utils::findNearestIndex(msg_ptr->points, entity_pose_.position);
-
-  const auto zero_vel_idx = motion_utils::searchZeroVelocityIndex(
-    msg_ptr->points, nearest_seg_idx, nearest_objects_seg_idx);
-
-  if (zero_vel_idx) {
-    std::get<TrajectoryBuffer>(variant) = *msg_ptr;
-    RCLCPP_INFO(this->get_logger(), "Reacted %s", node_name.c_str());
-    mutex_.lock();
-    message_buffers_[node_name] = variant;
-    mutex_.unlock();
-  }
-}
-
-void ReactionAnalyzerNode::pointcloud2OutputCallback(
-  const std::string & node_name, const PointCloud2::ConstSharedPtr & msg_ptr)
-{
-  mutex_.lock();
-  auto variant = message_buffers_[node_name];
-  const auto is_spawned = spawn_cmd_time_;
-  if (!std::holds_alternative<PointCloud2Buffer>(variant)) {
-    PointCloud2Buffer buffer(std::nullopt);
-    variant = buffer;
-    message_buffers_[node_name] = variant;
-  }
-  mutex_.unlock();
-
-  if (!is_spawned || std::get<PointCloud2Buffer>(variant).has_value()) {
-    return;
-  }
-
-  // transform pointcloud
-  geometry_msgs::msg::TransformStamped transform_stamped{};
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      "map", msg_ptr->header.frame_id, this->now(), rclcpp::Duration::from_seconds(0.5));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR_STREAM(
-      get_logger(), "Failed to look up transform from " << msg_ptr->header.frame_id << " to map");
-    return;
-  }
-
-  // transform by using eigen matrix
-  PointCloud2 transformed_points{};
-  const Eigen::Matrix4f affine_matrix =
-    tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
-  pcl_ros::transformPointCloud(affine_matrix, *msg_ptr, transformed_points);
-
-  pcl::PointCloud<pcl::PointXYZ> pcl_pointcloud;
-  pcl::fromROSMsg(transformed_points, pcl_pointcloud);
-
-  if (searchPointcloudNearEntity(pcl_pointcloud)) {
-    std::get<PointCloud2Buffer>(variant) = *msg_ptr;
-    RCLCPP_INFO(this->get_logger(), "Reacted %s", node_name.c_str());
-    mutex_.lock();
-    message_buffers_[node_name] = variant;
-    mutex_.unlock();
-  }
-}
-
-void ReactionAnalyzerNode::predictedObjectsOutputCallback(
-  const std::string & node_name, const PredictedObjects::ConstSharedPtr & msg_ptr)
-{
-  mutex_.lock();
-  auto variant = message_buffers_[node_name];
-  const auto is_spawned = spawn_cmd_time_;
-  if (!std::holds_alternative<PredictedObjectsBuffer>(variant)) {
-    PredictedObjectsBuffer buffer(std::nullopt);
-    variant = buffer;
-    message_buffers_[node_name] = variant;
-  }
-  mutex_.unlock();
-
-  if (
-    !is_spawned || msg_ptr->objects.empty() ||
-    std::get<PredictedObjectsBuffer>(variant).has_value()) {
-    return;
-  }
-
-  if (searchPredictedObjectsNearEntity(*msg_ptr)) {
-    std::get<PredictedObjectsBuffer>(variant) = *msg_ptr;
-    RCLCPP_INFO(this->get_logger(), "Reacted %s", node_name.c_str());
-
-    mutex_.lock();
-    message_buffers_[node_name] = variant;
-    mutex_.unlock();
-  }
-}
-
-void ReactionAnalyzerNode::detectedObjectsOutputCallback(
-  const std::string & node_name, const DetectedObjects::ConstSharedPtr & msg_ptr)
-{
-  mutex_.lock();
-  auto variant = message_buffers_[node_name];
-  const auto is_spawned = spawn_cmd_time_;
-  if (!std::holds_alternative<DetectedObjectsBuffer>(variant)) {
-    DetectedObjectsBuffer buffer(std::nullopt);
-    variant = buffer;
-    message_buffers_[node_name] = variant;
-  }
-  mutex_.unlock();
-  if (
-    !is_spawned || msg_ptr->objects.empty() ||
-    std::get<DetectedObjectsBuffer>(variant).has_value()) {
-    return;
-  }
-
-  // transform objects
-  geometry_msgs::msg::TransformStamped transform_stamped{};
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      "map", msg_ptr->header.frame_id, this->now(), rclcpp::Duration::from_seconds(0.5));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR_STREAM(
-      get_logger(), "Failed to look up transform from " << msg_ptr->header.frame_id << " to map");
-    return;
-  }
-
-  DetectedObjects output_objs;
-  output_objs = *msg_ptr;
-  for (auto & obj : output_objs.objects) {
-    geometry_msgs::msg::PoseStamped output_stamped, input_stamped;
-    input_stamped.pose = obj.kinematics.pose_with_covariance.pose;
-    tf2::doTransform(input_stamped, output_stamped, transform_stamped);
-    obj.kinematics.pose_with_covariance.pose = output_stamped.pose;
-  }
-  if (searchDetectedObjectsNearEntity(output_objs)) {
-    std::get<DetectedObjectsBuffer>(variant) = *msg_ptr;
-    RCLCPP_INFO(this->get_logger(), "Reacted %s", node_name.c_str());
-    mutex_.lock();
-    message_buffers_[node_name] = variant;
-    mutex_.unlock();
-  }
-}
-
-void ReactionAnalyzerNode::trackedObjectsOutputCallback(
-  const std::string & node_name, const TrackedObjects::ConstSharedPtr & msg_ptr)
-{
-  mutex_.lock();
-  auto variant = message_buffers_[node_name];
-  const auto is_spawned = spawn_cmd_time_;
-  if (!std::holds_alternative<TrackedObjectsBuffer>(variant)) {
-    TrackedObjectsBuffer buffer(std::nullopt);
-    variant = buffer;
-    message_buffers_[node_name] = variant;
-  }
-  mutex_.unlock();
-  if (
-    !is_spawned || msg_ptr->objects.empty() ||
-    std::get<TrackedObjectsBuffer>(variant).has_value()) {
-    return;
-  }
-
-  if (searchTrackedObjectsNearEntity(*msg_ptr)) {
-    std::get<TrackedObjectsBuffer>(variant) = *msg_ptr;
-    RCLCPP_INFO(this->get_logger(), "Reacted %s", node_name.c_str());
-    mutex_.lock();
-    message_buffers_[node_name] = variant;
-    mutex_.unlock();
-  }
-}
 
 void ReactionAnalyzerNode::operationModeCallback(OperationModeState::ConstSharedPtr msg_ptr)
 {
@@ -267,7 +35,7 @@ void ReactionAnalyzerNode::routeStateCallback(RouteState::ConstSharedPtr msg_ptr
 void ReactionAnalyzerNode::vehiclePoseCallback(Odometry::ConstSharedPtr msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  odometry_ = std::move(msg_ptr);
+  odometry_ = msg_ptr;
 }
 
 void ReactionAnalyzerNode::initializationStateCallback(
@@ -296,25 +64,14 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
 
   node_params_.timer_period = get_parameter("timer_period").as_double();
   node_params_.test_iteration = get_parameter("test_iteration").as_int();
-  node_params_.published_time_expire_duration =
-    get_parameter("published_time_expire_duration").as_double();
   node_params_.output_file_path = get_parameter("output_file_path").as_string();
-  node_params_.object_search_radius_offset =
-    get_parameter("object_search_radius_offset").as_double();
+
   node_params_.spawn_time_after_init = get_parameter("spawn_time_after_init").as_double();
   node_params_.spawn_distance_threshold = get_parameter("spawn_distance_threshold").as_double();
   node_params_.spawned_pointcloud_sampling_distance =
     get_parameter("spawned_pointcloud_sampling_distance").as_double();
   node_params_.dummy_perception_publisher_period =
     get_parameter("dummy_perception_publisher_period").as_double();
-  node_params_.debug_control_commands =
-    get_parameter("first_brake_params.debug_control_commands").as_bool();
-  node_params_.control_cmd_buffer_time_interval =
-    get_parameter("first_brake_params.control_cmd_buffer_time_interval").as_double();
-  node_params_.min_number_descending_order_control_cmd =
-    get_parameter("first_brake_params.min_number_descending_order_control_cmd").as_int();
-  node_params_.min_jerk_for_brake_cmd =
-    get_parameter("first_brake_params.min_jerk_for_brake_cmd").as_double();
 
   // Position parameters
   node_params_.initial_pose.x = get_parameter("initialization_pose.x").as_double();
@@ -341,30 +98,25 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
   node_params_.entity_params.y_l = get_parameter("entity_params.y_dimension").as_double();
   node_params_.entity_params.z_l = get_parameter("entity_params.z_dimension").as_double();
 
-  // initialize the reaction chain
-  if (!loadChainModules()) {
-    RCLCPP_ERROR(
-      get_logger(), "Modules in chain are invalid. Node couldn't be initialized. Failed.");
-    return;
-  }
-
-  initAnalyzerVariables();
-
   sub_kinematics_ = create_subscription<Odometry>(
     "input/kinematics", 1, std::bind(&ReactionAnalyzerNode::vehiclePoseCallback, this, _1),
-    createSubscriptionOptions());
+    createSubscriptionOptions(this));
   sub_localization_init_state_ = create_subscription<LocalizationInitializationState>(
     "input/localization_initialization_state", rclcpp::QoS(1).transient_local(),
     std::bind(&ReactionAnalyzerNode::initializationStateCallback, this, _1),
-    createSubscriptionOptions());
+    createSubscriptionOptions(this));
   sub_route_state_ = create_subscription<RouteState>(
     "input/routing_state", rclcpp::QoS{1}.transient_local(),
-    std::bind(&ReactionAnalyzerNode::routeStateCallback, this, _1), createSubscriptionOptions());
+    std::bind(&ReactionAnalyzerNode::routeStateCallback, this, _1),
+    createSubscriptionOptions(this));
   sub_operation_mode_ = create_subscription<OperationModeState>(
     "input/operation_mode_state", rclcpp::QoS{1}.transient_local(),
-    std::bind(&ReactionAnalyzerNode::operationModeCallback, this, _1), createSubscriptionOptions());
+    std::bind(&ReactionAnalyzerNode::operationModeCallback, this, _1),
+    createSubscriptionOptions(this));
 
   pub_goal_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("output/goal", rclcpp::QoS(1));
+
+  initAnalyzerVariables();
 
   if (node_running_mode_ == RunningMode::PlanningControl) {
     pub_initial_pose_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -388,6 +140,11 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
       std::make_shared<topic_publisher::TopicPublisher>(this, spawn_object_cmd_, spawn_cmd_time_);
   }
 
+  // Load the subscriber to listen the topics for reactions
+  odometry_ = std::make_shared<Odometry>();  // initialize the odometry before init the subscriber
+  subscriber_ptr_ =
+    std::make_unique<subscriber::SubscriberBase>(this, odometry_, entity_pose_, spawn_object_cmd_);
+
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(node_params_.timer_period));
   timer_ = rclcpp::create_timer(
@@ -401,9 +158,7 @@ void ReactionAnalyzerNode::onTimer()
   const auto initialization_state_ptr = initialization_state_ptr_;
   const auto route_state_ptr = current_route_state_ptr_;
   const auto operation_mode_ptr = operation_mode_ptr_;
-  const auto message_buffers = message_buffers_;
   const auto spawn_cmd_time = spawn_cmd_time_;
-  const auto published_time_vector_map = published_time_vector_map_;
   mutex_.unlock();
 
   // Init the test environment
@@ -417,11 +172,12 @@ void ReactionAnalyzerNode::onTimer()
 
   if (!spawn_cmd_time) return;
 
-  if (!allReacted(message_buffers)) return;
+  const auto message_buffers = subscriber_ptr_->getMessageBuffersMap();
 
-  if (!is_output_printed_) {
-    calculateResults(message_buffers, published_time_vector_map, spawn_cmd_time.value());
-  } else {
+  if (message_buffers) {
+    // if reacted, calculate the results
+
+    calculateResults(message_buffers.value(), spawn_cmd_time.value());
     reset();
   }
 }
@@ -449,7 +205,7 @@ void ReactionAnalyzerNode::dummyPerceptionPublisher()
     geometry_msgs::msg::TransformStamped transform_stamped{};
     try {
       transform_stamped = tf_buffer_.lookupTransform(
-        "base_link", "map", this->now(), rclcpp::Duration::from_seconds(0.5));
+        "base_link", "map", this->now(), rclcpp::Duration::from_seconds(0.1));
     } catch (tf2::TransformException & ex) {
       RCLCPP_ERROR_STREAM(get_logger(), "Failed to look up transform from map to base_link");
       return;
@@ -501,58 +257,8 @@ void ReactionAnalyzerNode::spawnObstacle(const geometry_msgs::msg::Point & ego_p
   }
 }
 
-bool ReactionAnalyzerNode::allReacted(
-  const std::unordered_map<std::string, BufferVariant> & message_buffers)
-{
-  bool all_reacted = true;
-  for (const auto & [key, variant] : message_buffers) {
-    if (auto * control_message = std::get_if<ControlCommandBuffer>(&variant)) {
-      if (!control_message->second) {
-        all_reacted = false;
-      }
-    } else if (auto * planning_message = std::get_if<TrajectoryBuffer>(&variant)) {
-      if (!planning_message->has_value()) {
-        all_reacted = false;
-      }
-    } else if (auto * pointcloud_message = std::get_if<PointCloud2Buffer>(&variant)) {
-      if (!pointcloud_message->has_value()) {
-        all_reacted = false;
-      }
-    } else if (auto * predicted_objects_message = std::get_if<PredictedObjectsBuffer>(&variant)) {
-      if (!predicted_objects_message->has_value()) {
-        all_reacted = false;
-      }
-    } else if (auto * detected_objects_message = std::get_if<DetectedObjectsBuffer>(&variant)) {
-      if (!detected_objects_message->has_value()) {
-        all_reacted = false;
-      }
-    } else if (auto * tracked_objects_message = std::get_if<TrackedObjectsBuffer>(&variant)) {
-      if (!tracked_objects_message->has_value()) {
-        all_reacted = false;
-      }
-    }
-  }
-  return all_reacted;
-}
-
-std::optional<size_t> findConjugatePublishedTimeIdx(
-  const std::vector<PublishedTime> & published_time_vector, const rclcpp::Time & time)
-{
-  auto it = std::find_if(
-    published_time_vector.begin(), published_time_vector.end(),
-    [&time](const PublishedTime & timeInVector) { return timeInVector.header.stamp == time; });
-
-  if (it != published_time_vector.end()) {
-    return std::optional<int>(
-      std::distance(published_time_vector.begin(), it));  // Return the index of the found time
-  } else {
-    return std::nullopt;
-  }
-}
-
 void ReactionAnalyzerNode::calculateResults(
-  const std::unordered_map<std::string, BufferVariant> & message_buffers,
-  const std::unordered_map<std::string, std::vector<PublishedTime>> & published_time_vector_map,
+  const std::unordered_map<std::string, subscriber::BufferVariant> & message_buffers,
   const rclcpp::Time & spawn_cmd_time)
 {
   auto createDurationMs = [](const rclcpp::Time & start_time, const rclcpp::Time & end_time) {
@@ -562,123 +268,35 @@ void ReactionAnalyzerNode::calculateResults(
   for (const auto & [key, variant] : message_buffers) {
     rclcpp::Time reaction_time;
 
-    if (auto * control_message = std::get_if<ControlCommandBuffer>(&variant)) {
+    if (auto * control_message = std::get_if<subscriber::ControlCommandBuffer>(&variant)) {
       if (control_message->second) {
-        auto it = published_time_vector_map.find(key);
-        if (it != published_time_vector_map.end()) {
-          const auto & published_time_vec = it->second;
-          const auto idx =
-            findConjugatePublishedTimeIdx(published_time_vec, control_message->second->stamp);
-          if (idx) {
-            reaction_time = rclcpp::Time(published_time_vec.at(idx.value()).published_stamp);
-          } else {
-            RCLCPP_ERROR(
-              this->get_logger(), "Published time for %s node is not found", key.c_str());
-
-            reaction_time = control_message->second->stamp;
-          }
-        } else {
-          // It might do not have a published time debug topic
-          reaction_time = control_message->second->stamp;
-        }
+        reaction_time = control_message->second->stamp;
       }
-    } else if (auto * planning_message = std::get_if<TrajectoryBuffer>(&variant)) {
+    } else if (auto * planning_message = std::get_if<subscriber::TrajectoryBuffer>(&variant)) {
       if (planning_message->has_value()) {
-        auto it = published_time_vector_map.find(key);
-        if (it != published_time_vector_map.end()) {
-          const auto & published_time_vec = it->second;
-          const auto idx = findConjugatePublishedTimeIdx(
-            published_time_vec, planning_message->value().header.stamp);
-          if (idx) {
-            reaction_time = rclcpp::Time(published_time_vec.at(idx.value()).published_stamp);
-          } else {
-            RCLCPP_ERROR(
-              this->get_logger(), "Published time for %s node is not found", key.c_str());
-
-            reaction_time = planning_message->value().header.stamp;
-          }
-        } else {
-          reaction_time = planning_message->value().header.stamp;
-        }
+        reaction_time = planning_message->value().header.stamp;
       }
-    } else if (auto * pointcloud_message = std::get_if<PointCloud2Buffer>(&variant)) {
+    } else if (auto * pointcloud_message = std::get_if<subscriber::PointCloud2Buffer>(&variant)) {
       if (pointcloud_message->has_value()) {
-        auto it = published_time_vector_map.find(key);
-        if (it != published_time_vector_map.end()) {
-          const auto & published_time_vec = it->second;
-          const auto idx = findConjugatePublishedTimeIdx(
-            published_time_vec, pointcloud_message->value().header.stamp);
-          if (idx) {
-            reaction_time = rclcpp::Time(published_time_vec.at(idx.value()).published_stamp);
-          } else {
-            RCLCPP_ERROR(
-              this->get_logger(), "Published time for %s node is not found", key.c_str());
-
-            reaction_time = pointcloud_message->value().header.stamp;
-          }
-        } else {
-          reaction_time = pointcloud_message->value().header.stamp;
-        }
+        reaction_time = pointcloud_message->value().header.stamp;
       }
-    } else if (auto * predicted_objects_message = std::get_if<PredictedObjectsBuffer>(&variant)) {
+    } else if (
+      auto * predicted_objects_message =
+        std::get_if<subscriber::PredictedObjectsBuffer>(&variant)) {
       if (predicted_objects_message->has_value()) {
-        auto it = published_time_vector_map.find(key);
-        if (it != published_time_vector_map.end()) {
-          const auto & published_time_vec = it->second;
-          const auto idx = findConjugatePublishedTimeIdx(
-            published_time_vec, predicted_objects_message->value().header.stamp);
-          if (idx) {
-            reaction_time = rclcpp::Time(published_time_vec.at(idx.value()).published_stamp);
-          } else {
-            RCLCPP_ERROR(
-              this->get_logger(), "Published time for %s node is not found", key.c_str());
-
-            reaction_time = predicted_objects_message->value().header.stamp;
-          }
-        } else {
-          reaction_time = predicted_objects_message->value().header.stamp;
-        }
+        reaction_time = predicted_objects_message->value().header.stamp;
       }
-    } else if (auto * detected_objects_message = std::get_if<DetectedObjectsBuffer>(&variant)) {
+    } else if (
+      auto * detected_objects_message = std::get_if<subscriber::DetectedObjectsBuffer>(&variant)) {
       if (detected_objects_message->has_value()) {
-        auto it = published_time_vector_map.find(key);
-        if (it != published_time_vector_map.end()) {
-          const auto & published_time_vec = it->second;
-          const auto idx = findConjugatePublishedTimeIdx(
-            published_time_vec, detected_objects_message->value().header.stamp);
-          if (idx) {
-            reaction_time = rclcpp::Time(published_time_vec.at(idx.value()).published_stamp);
-          } else {
-            RCLCPP_ERROR(
-              this->get_logger(), "Published time for %s node is not found", key.c_str());
-
-            reaction_time = detected_objects_message->value().header.stamp;
-          }
-        } else {
-          reaction_time = detected_objects_message->value().header.stamp;
-        }
+        reaction_time = detected_objects_message->value().header.stamp;
       }
-    } else if (auto * tracked_objects_message = std::get_if<TrackedObjectsBuffer>(&variant)) {
+    } else if (
+      auto * tracked_objects_message = std::get_if<subscriber::TrackedObjectsBuffer>(&variant)) {
       if (tracked_objects_message->has_value()) {
-        auto it = published_time_vector_map.find(key);
-        if (it != published_time_vector_map.end()) {
-          const auto & published_time_vec = it->second;
-          const auto idx = findConjugatePublishedTimeIdx(
-            published_time_vec, tracked_objects_message->value().header.stamp);
-          if (idx) {
-            reaction_time = rclcpp::Time(published_time_vec.at(idx.value()).published_stamp);
-          } else {
-            RCLCPP_ERROR(
-              this->get_logger(), "Published time for %s node is not found", key.c_str());
-
-            reaction_time = tracked_objects_message->value().header.stamp;
-          }
-        } else {
-          reaction_time = tracked_objects_message->value().header.stamp;
-        }
+        reaction_time = tracked_objects_message->value().header.stamp;
       }
     }
-
     const auto duration = createDurationMs(spawn_cmd_time, reaction_time);
 
     RCLCPP_INFO(
@@ -686,61 +304,6 @@ void ReactionAnalyzerNode::calculateResults(
     test_results_[key].emplace_back(duration);
   }
   test_iteration_count_++;
-  is_output_printed_ = true;
-}
-
-bool ReactionAnalyzerNode::loadChainModules()
-{
-  auto split = [](const std::string & str, const char delim) {
-    std::vector<std::string> elems;
-    std::stringstream ss(str);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-      elems.push_back(item);
-    }
-    return elems;
-  };
-
-  auto stringToMessageType = [](const std::string & input) {
-    if (input == "autoware_auto_control_msgs::msg::AckermannControlCommand") {
-      return SubscriberMessageType::AckermannControlCommand;
-    } else if (input == "autoware_auto_planning_msgs::msg::Trajectory") {
-      return SubscriberMessageType::Trajectory;
-    } else if (input == "sensor_msgs::msg::PointCloud2") {
-      return SubscriberMessageType::PointCloud2;
-    } else if (input == "autoware_auto_perception_msgs::msg::PredictedObjects") {
-      return SubscriberMessageType::PredictedObjects;
-    } else if (input == "autoware_auto_perception_msgs::msg::DetectedObjects") {
-      return SubscriberMessageType::DetectedObjects;
-    } else if (input == "autoware_auto_perception_msgs::msg::TrackedObjects") {
-      return SubscriberMessageType::TrackedObjects;
-    } else {
-      return SubscriberMessageType::Unknown;
-    }
-  };
-
-  // get the topic addresses and message types of the modules in chain
-  const auto param_key = std::string("reaction_chain");
-  const auto module_names = this->list_parameters({param_key}, 3).prefixes;
-  ChainModules chain_modules;
-  for (const auto & module_name : module_names) {
-    const auto splitted_name = split(module_name, '.');
-    TopicConfig tmp;
-    tmp.node_name = splitted_name.back();
-    tmp.topic_address = this->get_parameter(module_name + ".topic_name").as_string();
-    tmp.time_debug_topic_address =
-      this->get_parameter_or(module_name + ".time_debug_topic_name", std::string(""));
-    tmp.message_type =
-      stringToMessageType(this->get_parameter(module_name + ".message_type").as_string());
-    if (tmp.message_type != SubscriberMessageType::Unknown) {
-      chain_modules.emplace_back(tmp);
-    } else {
-      RCLCPP_WARN(
-        this->get_logger(), "Unknown message type for module name: %s, skipping..",
-        tmp.node_name.c_str());
-    }
-  }
-  return (initSubscribers(chain_modules));
 }
 
 void ReactionAnalyzerNode::initAnalyzerVariables()
@@ -757,15 +320,6 @@ void ReactionAnalyzerNode::initAnalyzerVariables()
   entity_pose_.orientation.set__y(entity_q_orientation.y());
   entity_pose_.orientation.set__z(entity_q_orientation.z());
   entity_pose_.orientation.set__w(entity_q_orientation.w());
-
-  // find minimum radius of sphere that encloses the entity
-
-  entity_search_radius_ =
-    std::sqrt(
-      std::pow(node_params_.entity_params.x_l, 2) + std::pow(node_params_.entity_params.y_l, 2) +
-      std::pow(node_params_.entity_params.z_l, 2)) /
-      2.0 +
-    node_params_.object_search_radius_offset;
 
   tf2::Quaternion goal_pose_q_orientation;
   goal_pose_q_orientation.setRPY(
@@ -843,101 +397,6 @@ void ReactionAnalyzerNode::initPointcloud()
   pcl::toROSMsg(point_cloud, *entity_pointcloud_ptr_);
 }
 
-bool ReactionAnalyzerNode::initSubscribers(const reaction_analyzer::ChainModules & modules)
-{
-  if (modules.empty()) {
-    RCLCPP_ERROR(get_logger(), "No module to initialize, failed.");
-    return false;
-  }
-  for (const auto & module : modules) {
-    if (!module.time_debug_topic_address.empty()) {
-      auto callback = [this, module](const PublishedTime::ConstSharedPtr & msg) {
-        this->publishedTimeOutputCallback(module.node_name, msg);
-      };
-      auto subscriber = this->create_subscription<PublishedTime>(
-        module.time_debug_topic_address, rclcpp::QoS(1), callback, createSubscriptionOptions());
-      subscribers_.push_back(subscriber);
-      published_time_vector_map_[module.node_name] = std::vector<PublishedTime>();
-    } else {
-      RCLCPP_WARN(
-        this->get_logger(), "Time debug topic is not provided for module name: %s, skipping..",
-        module.node_name.c_str());
-    }
-    switch (module.message_type) {
-      case SubscriberMessageType::AckermannControlCommand: {
-        auto callback = [this, module](const AckermannControlCommand::ConstSharedPtr & msg) {
-          this->controlCommandOutputCallback(module.node_name, msg);
-        };
-        auto subscriber = this->create_subscription<AckermannControlCommand>(
-          module.topic_address, rclcpp::QoS(1), callback, createSubscriptionOptions());
-        subscribers_.push_back(subscriber);
-        break;
-      }
-      case SubscriberMessageType::Trajectory: {
-        auto callback = [this, module](const Trajectory::ConstSharedPtr & msg) {
-          this->trajectoryOutputCallback(module.node_name, msg);
-        };
-        auto subscriber = this->create_subscription<Trajectory>(
-          module.topic_address, rclcpp::QoS(1), callback, createSubscriptionOptions());
-        subscribers_.push_back(subscriber);
-        break;
-      }
-      case SubscriberMessageType::PointCloud2: {
-        auto callback = [this, module](const PointCloud2::ConstSharedPtr & msg) {
-          this->pointcloud2OutputCallback(module.node_name, msg);
-        };
-        auto subscriber = this->create_subscription<PointCloud2>(
-          module.topic_address, rclcpp::SensorDataQoS(), callback, createSubscriptionOptions());
-        subscribers_.push_back(subscriber);
-        break;
-      }
-      case SubscriberMessageType::PredictedObjects: {
-        auto callback = [this, module](const PredictedObjects::ConstSharedPtr & msg) {
-          this->predictedObjectsOutputCallback(module.node_name, msg);
-        };
-        auto subscriber = this->create_subscription<PredictedObjects>(
-          module.topic_address, rclcpp::QoS(1), callback, createSubscriptionOptions());
-        subscribers_.push_back(subscriber);
-        break;
-      }
-      case SubscriberMessageType::DetectedObjects: {
-        auto callback = [this, module](const DetectedObjects::ConstSharedPtr & msg) {
-          this->detectedObjectsOutputCallback(module.node_name, msg);
-        };
-        auto subscriber = this->create_subscription<DetectedObjects>(
-          module.topic_address, rclcpp::QoS(1), callback, createSubscriptionOptions());
-        subscribers_.push_back(subscriber);
-        break;
-      }
-      case SubscriberMessageType::TrackedObjects: {
-        auto callback = [this, module](const TrackedObjects::ConstSharedPtr & msg) {
-          this->trackedObjectsOutputCallback(module.node_name, msg);
-        };
-        auto subscriber = this->create_subscription<TrackedObjects>(
-          module.topic_address, rclcpp::QoS(1), callback, createSubscriptionOptions());
-        subscribers_.push_back(subscriber);
-        break;
-      }
-      case SubscriberMessageType::Unknown:
-        RCLCPP_WARN(
-          this->get_logger(), "Unknown message type for module name: %s, skipping..",
-          module.node_name.c_str());
-        break;
-      default:
-        RCLCPP_WARN(
-          this->get_logger(), "Unknown message type for module name: %s, skipping..",
-          module.node_name.c_str());
-        break;
-    }
-  }
-  if (subscribers_.empty()) {
-    RCLCPP_ERROR(
-      get_logger(), "Subscribers for modules are empty. Node couldn't be initialized. Failed");
-    return false;
-  }
-  return true;
-}
-
 void ReactionAnalyzerNode::initPredictedObjects()
 {
   auto generateUUIDMsg = [](const std::string & input) {
@@ -968,106 +427,6 @@ void ReactionAnalyzerNode::initPredictedObjects()
   PredictedObjects pred_objects;
   pred_objects.objects.emplace_back(obj);
   predicted_objects_ptr_ = std::make_shared<PredictedObjects>(pred_objects);
-}
-
-void ReactionAnalyzerNode::setControlCommandToBuffer(
-  std::vector<AckermannControlCommand> & buffer, const AckermannControlCommand & cmd)
-{
-  const auto last_cmd_time = cmd.stamp;
-  if (!buffer.empty()) {
-    for (auto itr = buffer.begin(); itr != buffer.end();) {
-      const auto expired = (rclcpp::Time(last_cmd_time) - rclcpp::Time(itr->stamp)).seconds() >
-                           node_params_.control_cmd_buffer_time_interval;
-
-      if (expired) {
-        itr = buffer.erase(itr);
-        continue;
-      }
-
-      itr++;
-    }
-  }
-  buffer.emplace_back(cmd);
-}
-
-void ReactionAnalyzerNode::pushPublishedTime(
-  std::vector<PublishedTime> & published_time_vec, const PublishedTime & published_time)
-{
-  published_time_vec.emplace_back(published_time);
-  if (published_time_vec.size() > 1) {
-    for (auto itr = published_time_vec.begin(); itr != published_time_vec.end();) {
-      const auto expired =
-        (rclcpp::Time(published_time.header.stamp) - rclcpp::Time(itr->header.stamp)).seconds() >
-        node_params_.published_time_expire_duration;
-
-      if (expired) {
-        itr = published_time_vec.erase(itr);
-        continue;
-      }
-
-      itr++;
-    }
-  }
-}
-
-std::optional<size_t> ReactionAnalyzerNode::findFirstBrakeIdx(
-  const std::vector<AckermannControlCommand> & cmd_array,
-  const std::optional<rclcpp::Time> & spawn_cmd_time)
-{
-  if (
-    cmd_array.size() < static_cast<size_t>(node_params_.min_number_descending_order_control_cmd) ||
-    !spawn_cmd_time)
-    return {};
-
-  // wait for enough data after spawn_cmd_time
-  if (
-    rclcpp::Time(
-      cmd_array.at(cmd_array.size() - node_params_.min_number_descending_order_control_cmd).stamp) <
-    spawn_cmd_time)
-    return {};
-
-  for (size_t i = 0;
-       i < cmd_array.size() - node_params_.min_number_descending_order_control_cmd + 1; ++i) {
-    size_t decreased_cmd_counter = 1;  // because # of the decreased cmd = iteration + 1
-    for (size_t j = i; j < cmd_array.size() - 1; ++j) {
-      const auto & cmd_first = cmd_array.at(j).longitudinal;
-      const auto & cmd_second = cmd_array.at(j + 1).longitudinal;
-      constexpr double jerk_time_epsilon = 0.001;
-      const auto jerk =
-        abs(cmd_second.acceleration - cmd_first.acceleration) /
-        std::max(
-          (rclcpp::Time(cmd_second.stamp) - rclcpp::Time(cmd_first.stamp)).seconds(),
-          jerk_time_epsilon);
-
-      if (
-        (cmd_second.acceleration < cmd_first.acceleration) &&
-        (jerk > node_params_.min_jerk_for_brake_cmd)) {
-        decreased_cmd_counter++;
-      } else {
-        break;
-      }
-    }
-    if (
-      decreased_cmd_counter <
-      static_cast<size_t>(node_params_.min_number_descending_order_control_cmd))
-      continue;
-    if (node_params_.debug_control_commands) {
-      std::stringstream ss;
-
-      // debug print to show the first brake command in the all control commands
-      for (size_t k = 0; k < cmd_array.size(); ++k) {
-        if (k == i + 1) {
-          ss << "First Brake(" << cmd_array.at(k).longitudinal.acceleration << ") ";
-        } else {
-          ss << cmd_array.at(k).longitudinal.acceleration << " ";
-        }
-      }
-
-      RCLCPP_INFO(this->get_logger(), "%s", ss.str().c_str());
-    }
-    return i + 1;
-  }
-  return {};
 }
 
 void ReactionAnalyzerNode::initEgoForTest(
@@ -1130,17 +489,6 @@ void ReactionAnalyzerNode::initEgoForTest(
   }
 }
 
-rclcpp::SubscriptionOptions ReactionAnalyzerNode::createSubscriptionOptions()
-{
-  rclcpp::CallbackGroup::SharedPtr callback_group =
-    this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  auto sub_opt = rclcpp::SubscriptionOptions();
-  sub_opt.callback_group = callback_group;
-
-  return sub_opt;
-}
-
 void ReactionAnalyzerNode::callOperationModeServiceWithoutResponse()
 {
   auto req = std::make_shared<ChangeOperationMode::Request>();
@@ -1160,71 +508,6 @@ void ReactionAnalyzerNode::callOperationModeServiceWithoutResponse()
     });
 }
 
-bool ReactionAnalyzerNode::searchPointcloudNearEntity(
-  const pcl::PointCloud<pcl::PointXYZ> & pcl_pointcloud)
-{
-  bool isAnyPointWithinRadius = std::any_of(
-    pcl_pointcloud.points.begin(), pcl_pointcloud.points.end(), [this](const auto & point) {
-      return tier4_autoware_utils::calcDistance3d(entity_pose_.position, point) <=
-             entity_search_radius_;
-    });
-
-  if (isAnyPointWithinRadius) {
-    return true;
-  }
-  return false;
-}
-
-bool ReactionAnalyzerNode::searchPredictedObjectsNearEntity(
-  const PredictedObjects & predicted_objects)
-{
-  bool isAnyObjectWithinRadius = std::any_of(
-    predicted_objects.objects.begin(), predicted_objects.objects.end(),
-    [this](const PredictedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
-               entity_pose_.position,
-               object.kinematics.initial_pose_with_covariance.pose.position) <=
-             entity_search_radius_;
-    });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
-}
-
-bool ReactionAnalyzerNode::searchDetectedObjectsNearEntity(const DetectedObjects & detected_objects)
-{
-  bool isAnyObjectWithinRadius = std::any_of(
-    detected_objects.objects.begin(), detected_objects.objects.end(),
-    [this](const DetectedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
-               entity_pose_.position, object.kinematics.pose_with_covariance.pose.position) <=
-             entity_search_radius_;
-    });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
-}
-
-bool ReactionAnalyzerNode::searchTrackedObjectsNearEntity(const TrackedObjects & tracked_objects)
-{
-  bool isAnyObjectWithinRadius = std::any_of(
-    tracked_objects.objects.begin(), tracked_objects.objects.end(),
-    [this](const TrackedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
-               entity_pose_.position, object.kinematics.pose_with_covariance.pose.position) <=
-             entity_search_radius_;
-    });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
-}
-
 void ReactionAnalyzerNode::reset()
 {
   if (test_iteration_count_ >= node_params_.test_iteration) {
@@ -1238,53 +521,20 @@ void ReactionAnalyzerNode::reset()
   test_environment_init_time_ = std::nullopt;
   last_test_environment_init_request_time_ = std::nullopt;
   spawn_object_cmd_ = false;
-  is_output_printed_ = false;
   is_object_spawned_message_published_ = false;
   if (topic_publisher_ptr_) {
     topic_publisher_ptr_->reset();
   }
   std::lock_guard<std::mutex> lock(mutex_);
-  message_buffers_.clear();
   spawn_cmd_time_ = std::nullopt;
-  for (auto & [key, value] : published_time_vector_map_) {
-    value.clear();
-  }
+  subscriber_ptr_->reset();
   RCLCPP_INFO(this->get_logger(), "Test - %zu is done, resetting..", test_iteration_count_);
 }
 
 void ReactionAnalyzerNode::writeResultsToFile()
 {
   // sort the results w.r.t the median value
-
-  const auto sort_by_median =
-    [this]() -> std::vector<std::tuple<std::string, std::vector<double>, double>> {
-    std::vector<std::tuple<std::string, std::vector<double>, double>> sorted_data;
-
-    for (const auto & pair : test_results_) {
-      auto vec = pair.second;
-
-      // Calculate the median
-      std::sort(vec.begin(), vec.end());
-      double median = 0.0;
-      size_t size = vec.size();
-      if (size % 2 == 0) {
-        median = (vec[size / 2 - 1] + vec[size / 2]) / 2.0;
-      } else {
-        median = vec[size / 2];
-      }
-
-      sorted_data.emplace_back(pair.first, pair.second, median);
-    }
-
-    // Sort based on the computed median
-    std::sort(sorted_data.begin(), sorted_data.end(), [](const auto & a, const auto & b) {
-      return std::get<2>(a) < std::get<2>(b);  // Change to > for descending order
-    });
-
-    return sorted_data;
-  };
-
-  const auto sorted_data_by_median = sort_by_median();
+  const auto sorted_data_by_median = sortResultsByMedian(test_results_);
 
   // create csv file
   auto now = std::chrono::system_clock::now();

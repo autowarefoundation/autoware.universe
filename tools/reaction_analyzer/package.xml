@@ -3,7 +3,7 @@
 <package format="3">
   <name>reaction_analyzer</name>
   <version>1.0.0</version>
-  <description>Nodes to measure reaction times of the nodes</description>
+  <description>Analyzer that measures reaction times of the nodes</description>
 
   <maintainer email="berkay@leodrive.ai">Berkay Karaman</maintainer>
 

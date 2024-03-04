@@ -17,6 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rosbag2_cpp/reader.hpp>
+#include <utils.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
@@ -69,18 +70,21 @@ enum class PublisherMessageType {
 
 struct TopicPublisherParams
 {
-  std::string path_bag_without_object;
-  std::string path_bag_with_object;
-  std::string pointcloud_publisher_type;
-  double pointcloud_publisher_period;
+  std::string path_bag_without_object;    // Path to the bag file without object
+  std::string path_bag_with_object;       // Path to the bag file with object
+  std::string pointcloud_publisher_type;  // Type of the pointcloud publisher
+  double pointcloud_publisher_period;     // Period of the pointcloud publisher
 };
 
 enum class PointcloudPublisherType {
-  AsyncPublisher = 0,
-  SyncHeaderSyncPublisher = 1,
-  AsyncHeaderSyncPublisher = 2,
+  AsyncPublisher = 0,            // Asynchronous publisher
+  SyncHeaderSyncPublisher = 1,   // Synchronous publisher with header synchronization
+  AsyncHeaderSyncPublisher = 2,  // Asynchronous publisher with header synchronization
 };
 
+/**
+ * @brief Message type template struct for the variables of the Publisher.
+ */
 template <typename MessageType>
 struct PublisherVariables
 {
@@ -91,8 +95,12 @@ struct PublisherVariables
   rclcpp::TimerBase::SharedPtr timer;
 };
 
+/**
+ * @brief Struct for accessing the variables of the Publisher.
+ */
 struct PublisherVarAccessor
 {
+  // Template struct to check if a type has a header member.
   template <typename T, typename = std::void_t<>>
   struct has_header : std::false_type
   {
@@ -103,6 +111,7 @@ struct PublisherVarAccessor
   {
   };
 
+  // Template struct to check if a type has a stamp member.
   template <typename T, typename = std::void_t<>>
   struct has_stamp : std::false_type
   {
@@ -133,28 +142,24 @@ struct PublisherVarAccessor
     publisherVar.publisher->publish(std::move(msg_to_be_published));
   }
 
-  // Set Period
   template <typename T>
   void setPeriod(T & publisherVar, double newPeriod)
   {
     publisherVar.period_ns = newPeriod;
   }
 
-  // Get Period
   template <typename T>
   double getPeriod(const T & publisherVar) const
   {
     return publisherVar.period_ns;
   }
 
-  // Get Empty Area Message
   template <typename T>
   std::shared_ptr<void> getEmptyAreaMessage(const T & publisherVar) const
   {
     return std::static_pointer_cast<void>(publisherVar.empty_area_message);
   }
 
-  // Get Object Spawned Message
   template <typename T>
   std::shared_ptr<void> getObjectSpawnedMessage(const T & publisherVar) const
   {
@@ -174,6 +179,10 @@ using PublisherVariablesVariant = std::variant<
   PublisherVariables<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>,
   PublisherVariables<autoware_auto_vehicle_msgs::msg::VelocityReport>>;
 
+using LidarOutputPair = std::pair<
+  std::shared_ptr<PublisherVariables<PointCloud2>>,
+  std::shared_ptr<PublisherVariables<PointCloud2>>>;
+
 class TopicPublisher
 {
 public:
@@ -187,7 +196,7 @@ public:
 private:
   std::mutex mutex_;
 
-  // Initialize
+  // Initialized variables
   rclcpp::Node * node_;
   std::atomic<bool> & spawn_object_cmd_;
   std::optional<rclcpp::Time> & spawn_cmd_time_;
@@ -207,10 +216,7 @@ private:
   // Variables
   PointcloudPublisherType pointcloud_publisher_type_;
   std::unordered_map<std::string, PublisherVariablesVariant> topic_publisher_map_;
-  std::unordered_map<
-    std::string, std::pair<
-                   std::shared_ptr<PublisherVariables<PointCloud2>>,
-                   std::shared_ptr<PublisherVariables<PointCloud2>>>>
+  std::unordered_map<std::string, LidarOutputPair>
     lidar_pub_variable_pair_map_;  // used to publish pointcloud_raw and pointcloud_raw_ex
   bool is_object_spawned_message_published{false};
   std::shared_ptr<rclcpp::TimerBase> one_shot_timer_shared_ptr_;
@@ -219,7 +225,6 @@ private:
   std::unordered_map<std::string, rclcpp::TimerBase::SharedPtr> pointcloud_publish_timers_map_;
   rclcpp::TimerBase::SharedPtr pointcloud_sync_publish_timer_;
 };
-
 }  // namespace reaction_analyzer::topic_publisher
 
 #endif  // TOPIC_PUBLISHER_HPP_

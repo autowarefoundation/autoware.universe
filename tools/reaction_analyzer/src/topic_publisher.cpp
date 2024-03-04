@@ -145,17 +145,6 @@ void TopicPublisher::reset()
 
 void TopicPublisher::initRosbagPublishers()
 {
-  // Necessary lambda functions for string manipulation and message type conversion
-  auto split = [](const std::string & str, const char delim) {
-    std::vector<std::string> elems;
-    std::stringstream ss(str);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-      elems.push_back(item);
-    }
-    return elems;
-  };
-
   auto string_to_publisher_message_type = [](const std::string & input) {
     if (input == "sensor_msgs/msg/PointCloud2") {
       return PublisherMessageType::PointCloud2;
@@ -223,6 +212,7 @@ void TopicPublisher::initRosbagPublishers()
           current_topic.c_str());
         continue;
       }
+
       // Record timestamp
       timestamps_per_topic[current_topic].emplace_back(bag_message->time_stamp);
       // Deserialize and store the first message as a sample
@@ -498,7 +488,7 @@ void TopicPublisher::initRosbagPublishers()
         return string_to_publisher_message_type(
           it->topic_metadata.type);  // Return the message type if found
       } else {
-        return PublisherMessageType::Unknown;  //
+        return PublisherMessageType::Unknown;
       }
     };
 
@@ -780,14 +770,13 @@ void TopicPublisher::initRosbagPublishers()
     }
   }
 
-  // initialize timers and message publishers
-
   std::unordered_map<std::string, PublisherVariables<PointCloud2>>
     pointcloud_variables_map;  // temp map for pointcloud publishers
 
+  // initialize timers and message publishers
   for (auto & [topic_name, variant] : topic_publisher_map_) {
     PublisherVarAccessor accessor;
-    const auto & topic_ref = topic_name;  // Create a reference to topic_name for capture
+    const auto & topic_ref = topic_name;
     const auto period_ns = std::chrono::duration<double, std::nano>(
       std::visit([&](const auto & var) { return accessor.getPeriod(var); }, variant));
 
@@ -825,11 +814,7 @@ void TopicPublisher::initRosbagPublishers()
       variant);
   }
 
-  // Set the pointcloud publisher
-
-  const auto period_pointcloud_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(topic_publisher_params_.pointcloud_publisher_period));
-
+  // Set the point cloud publisher timers
   if (pointcloud_variables_map.empty()) {
     RCLCPP_ERROR(node_->get_logger(), "No pointcloud publishers found!");
     rclcpp::shutdown();
@@ -856,6 +841,9 @@ void TopicPublisher::initRosbagPublishers()
   }
 
   // Create the timer(s) to publish PointCloud2 Messages
+  const auto period_pointcloud_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::chrono::duration<double>(topic_publisher_params_.pointcloud_publisher_period));
+
   if (pointcloud_publisher_type_ != PointcloudPublisherType::AsyncPublisher) {
     // Create 1 timer to publish all PointCloud2 messages
     pointcloud_sync_publish_timer_ = node_->create_wall_timer(period_pointcloud_ns, [this]() {
@@ -888,5 +876,4 @@ void TopicPublisher::initRosbagPublishers()
     one_shot_timer_shared_ptr_ = one_shot_timer;  // Store a weak pointer to the timer
   }
 }
-
 }  // namespace reaction_analyzer::topic_publisher
