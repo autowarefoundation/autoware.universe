@@ -289,6 +289,7 @@ Trajectory convertToAutowareTrajectory(const MPCTrajectory & input)
       break;
     }
   }
+  output.points = motion_utils::removeOverlapPoints(output.points);
   return output;
 }
 
