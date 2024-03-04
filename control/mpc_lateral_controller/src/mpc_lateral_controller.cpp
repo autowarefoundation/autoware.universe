@@ -243,7 +243,9 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   Trajectory predicted_traj;
   Float32MultiArrayStamped debug_values;
 
-  if (!m_is_ctrl_cmd_prev_initialized) {
+  if (
+    !m_is_ctrl_cmd_prev_initialized ||
+    !input_data.current_operation_mode.is_autoware_control_enabled) {
     m_ctrl_cmd_prev = getInitialControlCommand();
     m_is_ctrl_cmd_prev_initialized = true;
   }
