@@ -229,7 +229,7 @@ void MrmHandler::operateMrm()
     if (requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
       mrm_state_.behavior = current_mrm_behavior;
     } else {
-      handlePostFailureRequest();
+      handleFailureRequest();
     }
     return;
   }
@@ -239,11 +239,11 @@ void MrmHandler::operateMrm()
       return;
     }
     if (!requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
-      handlePostFailureRequest();
+      handleFailureRequest();
     } else if (requestMrmBehavior(current_mrm_behavior, RequestType::CALL)) {
       mrm_state_.behavior = current_mrm_behavior;
     } else {
-      handlePostFailureRequest();
+      handleFailureRequest();
     }
     return;
   }
@@ -259,7 +259,7 @@ void MrmHandler::operateMrm()
   RCLCPP_WARN(this->get_logger(), "invalid MRM state: %d", mrm_state_.state);
 }
 
-void MrmHandler::handlePostFailureRequest()
+void MrmHandler::handleFailureRequest()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
