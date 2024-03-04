@@ -38,7 +38,6 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
-
 struct HazardLampPolicy
 {
   bool emergency;
@@ -66,12 +65,8 @@ public:
   MrmHandler();
 
 private:
-  //type
-  enum RequestType
-  {
-    CALL,
-    CANCEL
-  };
+  // type
+  enum RequestType { CALL, CANCEL };
 
   // Subscribers
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
@@ -134,7 +129,8 @@ private:
   rclcpp::Client<tier4_system_msgs::srv::OperateMrm>::SharedPtr client_mrm_emergency_stop_;
 
   bool requestMrmBehavior(
-    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior, RequestType request_type) const;
+    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior,
+    RequestType request_type) const;
   void logMrmCallingResult(
     const tier4_system_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
     bool is_call) const;
