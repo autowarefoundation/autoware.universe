@@ -82,6 +82,9 @@ struct PlannerData
   std::map<int, TrafficSignalTimeToRedStamped> traffic_light_time_to_red_id_map;
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
 
+  // this value becomes true once the signal message is received
+  bool has_received_signal_ = false;
+
   // velocity smoother
   std::shared_ptr<motion_velocity_smoother::SmootherBase> velocity_smoother_;
   // route handler
