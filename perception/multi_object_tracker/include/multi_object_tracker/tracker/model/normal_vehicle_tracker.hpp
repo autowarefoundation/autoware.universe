@@ -19,6 +19,7 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
 
+#include "multi_object_tracker/motion_model/bicycle_motion_model.hpp"
 #include "tracker_base.hpp"
 
 #include <kalman_filter/kalman_filter.hpp>
@@ -72,6 +73,9 @@ private:
   BoundingBox bounding_box_;
   BoundingBox last_input_bounding_box_;
   Eigen::Vector2d tracking_offset_;
+
+private:
+  BicycleMotionModel motion_model_;
 
 public:
   NormalVehicleTracker(

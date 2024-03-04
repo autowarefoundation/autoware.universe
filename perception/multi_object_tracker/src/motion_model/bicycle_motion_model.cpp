@@ -27,19 +27,30 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-BicycleMotionModel::BicycleMotionModel(
-  const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
-  const double & length)
-: logger_(rclcpp::get_logger("BicycleMotionModel")), last_update_time_(time)
+BicycleMotionModel::BicycleMotionModel()
+: logger_(rclcpp::get_logger("BicycleMotionModel")), last_update_time_(rclcpp::Time(0, 0))
 {
   // Initialize motion parameters
   setDefaultParams();
+}
+
+bool BicycleMotionModel::init(
+  const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
+  const double & length)
+{
+  // set last update time
+  last_update_time_ = time;
 
   // initialize Kalman filter
   ekf_.init(X, P);
 
   // set initial extended state
   updateExtendedState(length);
+
+  // set initialized flag
+  is_initialized_ = true;
+
+  return true;
 }
 
 void BicycleMotionModel::setDefaultParams()
@@ -111,8 +122,11 @@ void BicycleMotionModel::setMotionLimits(const double & max_vel, const double & 
 }
 
 bool BicycleMotionModel::updateStatePose(
-  const double & x, const double & y, const double (&pose_cov)[36])
+  const double & x, const double & y, const std::array<double, 36> & pose_cov)
 {
+  // check if the state is initialized
+  if (!checkInitialized()) return false;
+
   // update state, without velocity
   constexpr int DIM_Y = 2;
 
@@ -134,8 +148,11 @@ bool BicycleMotionModel::updateStatePose(
 }
 
 bool BicycleMotionModel::updateStatePoseHead(
-  const double & x, const double & y, const double & yaw, const double (&pose_cov)[36])
+  const double & x, const double & y, const double & yaw, const std::array<double, 36> & pose_cov)
 {
+  // check if the state is initialized
+  if (!checkInitialized()) return false;
+
   // update state, without velocity
   constexpr int DIM_Y = 3;
 
@@ -176,8 +193,11 @@ bool BicycleMotionModel::updateStatePoseHead(
 
 bool BicycleMotionModel::updateStatePoseHeadVel(
   const double & x, const double & y, const double & yaw, const double & vel,
-  const double (&pose_cov)[36], const double (&twist_cov)[36])
+  const std::array<double, 36> & pose_cov, const std::array<double, 36> & twist_cov)
 {
+  // check if the state is initialized
+  if (!checkInitialized()) return false;
+
   // update state, with velocity
   constexpr int DIM_Y = 4;
 
@@ -245,6 +265,9 @@ bool BicycleMotionModel::updateExtendedState(const double & length)
 
 bool BicycleMotionModel::predictState(const rclcpp::Time & time)
 {
+  // check if the state is initialized
+  if (!checkInitialized()) return false;
+
   const double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) {
     RCLCPP_WARN(logger_, "dt is negative. (%f)", dt);
@@ -388,6 +411,9 @@ bool BicycleMotionModel::predictState(const double dt, KalmanFilter & ekf) const
 bool BicycleMotionModel::getPredictedState(
   const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P) const
 {
+  // check if the state is initialized
+  if (!checkInitialized()) return false;
+
   // copy the predicted state and covariance
   KalmanFilter tmp_ekf_for_no_update = ekf_;
 

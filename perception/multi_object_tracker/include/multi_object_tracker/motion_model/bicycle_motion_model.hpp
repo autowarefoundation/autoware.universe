@@ -36,6 +36,7 @@ private:
 
 private:
   // state
+  bool is_initialized_{false};
   KalmanFilter ekf_;
 
   // extended state
@@ -68,9 +69,21 @@ protected:
   const char DIM = 5;
 
 public:
-  BicycleMotionModel(
+  BicycleMotionModel();
+
+  bool init(
     const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
     const double & length);
+
+  bool checkInitialized() const
+  {
+    // if the state is not initialized, return false
+    if (!is_initialized_) {
+      RCLCPP_WARN(logger_, "BicycleMotionModel is not initialized.");
+      return false;
+    }
+    return true;
+  }
 
   void setDefaultParams();
 
@@ -92,14 +105,17 @@ public:
 
   double getStateElement(unsigned int idx) const { return ekf_.getXelement(idx); }
 
-  bool updateStatePose(const double & x, const double & y, const double (&pose_cov)[36]);
+  bool updateStatePose(const double & x, const double & y, const std::array<double, 36> & pose_cov);
 
   bool updateStatePoseHead(
-    const double & x, const double & y, const double & yaw, const double (&pose_cov)[36]);
+    const double & x, const double & y, const double & yaw,
+    const std::array<double, 36> & pose_cov);
 
   bool updateStatePoseHeadVel(
     const double & x, const double & y, const double & yaw, const double & vel,
-    const double (&pose_cov)[36], const double (&twist_cov)[36]);
+    const std::array<double, 36> & pose_cov, const std::array<double, 36> & twist_cov);
+
+  bool adjustPosition(const double & x, const double & y, const double & yaw);
 
   bool limitStates();
 

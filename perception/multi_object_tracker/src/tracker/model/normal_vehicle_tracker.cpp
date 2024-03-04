@@ -158,6 +158,30 @@ NormalVehicleTracker::NormalVehicleTracker(
   // Set lf, lr
   lf_ = std::max(bounding_box_.length * 0.3, 1.0);   // 30% front from the center, minimum of 1.0m
   lr_ = std::max(bounding_box_.length * 0.25, 1.0);  // 25% rear from the center, minimum of 1.0m
+
+  // Set motion model
+  motion_model_.init(time, X, P, bounding_box_.length);
+
+  // Set motion model parameters
+  motion_model_.setMotionParams(
+    9.8 * 0.35, /* [m/(s*s)] uncertain longitudinal acceleration */
+    9.8 * 0.15, /* [m/(s*s)] uncertain lateral acceleration */
+    1.5,        /* [deg/s] uncertain yaw change rate, minimum */
+    15.0,       /* [deg/s] uncertain yaw change rate, maximum */
+    0.3,        /* [deg/s] uncertain slip angle change rate, minimum */
+    10.0,       /* [deg/s] uncertain slip angle change rate, maximum */
+    30,         /* [deg] max slip angle */
+    0.3,        /* [-] ratio of front wheel*/
+    1.0,        /* [m] minimum front wheel position*/
+    0.25,       /* [-] ratio of rear wheel*/
+    1.0         /* [m] minimum rear wheel position*/
+  );
+
+  // Set motion limits
+  motion_model_.setMotionLimits(
+    tier4_autoware_utils::kmph2mps(100), /* [m/s] maximum velocity */
+    30                                   /* [deg] maximum slip angle */
+  );
 }
 
 bool NormalVehicleTracker::predict(const rclcpp::Time & time)
@@ -182,6 +206,9 @@ bool NormalVehicleTracker::predict(const rclcpp::Time & time)
   if (ret) {
     last_update_time_ = time;
   }
+
+  motion_model_.predictState(time);
+
   return ret;
 }
 
@@ -471,6 +498,24 @@ bool NormalVehicleTracker::measureWithPose(
   constexpr float gain = 0.9;
   z_ = gain * z_ + (1.0 - gain) * object.kinematics.pose_with_covariance.pose.position.z;
 
+  // motion model
+  {
+    const double x = object.kinematics.pose_with_covariance.pose.position.x;
+    const double y = object.kinematics.pose_with_covariance.pose.position.y;
+    const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const double vel = object.kinematics.twist_with_covariance.twist.linear.x;
+
+    if (is_velocity_available) {
+      motion_model_.updateStatePoseHeadVel(
+        x, y, yaw, vel, object.kinematics.pose_with_covariance.covariance,
+        object.kinematics.twist_with_covariance.covariance);
+    } else {
+      motion_model_.updateStatePoseHead(
+        x, y, yaw, object.kinematics.pose_with_covariance.covariance);
+    }
+    motion_model_.limitStates();
+  }
+
   return true;
 }
 
@@ -501,6 +546,9 @@ bool NormalVehicleTracker::measureWithShape(
   // update lf, lr
   lf_ = std::max(bounding_box_.length * 0.3, 1.0);   // 30% front from the center, minimum of 1.0m
   lr_ = std::max(bounding_box_.length * 0.25, 1.0);  // 25% rear from the center, minimum of 1.0m
+
+  // update motion model
+  motion_model_.updateExtendedState(bounding_box_.length);
 
   return true;
 }
@@ -547,6 +595,9 @@ bool NormalVehicleTracker::getTrackedObject(
   Eigen::MatrixXd P(ekf_params_.dim_x, ekf_params_.dim_x);  // predicted state
   tmp_ekf_for_no_update.getX(X_t);
   tmp_ekf_for_no_update.getP(P);
+
+  // predict from motion model
+  motion_model_.getPredictedState(time, X_t, P);
 
   /*  put predicted pose and twist to output object  */
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
