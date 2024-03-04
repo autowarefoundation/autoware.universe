@@ -36,17 +36,13 @@
         # Setting1: tune ogm creation parameters
         obstacle_pointcloud_topic: "/perception/obstacle_segmentation/single_frame/pointcloud_raw"
         raw_pointcloud_topics: # put each sensor's pointcloud topic
-          - "/sensing/lidar/top/pointcloud_synchronized"
-          - "/sensing/lidar/left/pointcloud_synchronized"
-          - "/sensing/lidar/right/pointcloud_synchronized"
+          - "/sensing/lidar/top/pointcloud"
+          - "/sensing/lidar/left/pointcloud"
+          - "/sensing/lidar/right/pointcloud"
         fusion_input_ogm_topics:
           - "/perception/occupancy_grid_map/top_lidar/map"
           - "/perception/occupancy_grid_map/left_lidar/map"
           - "/perception/occupancy_grid_map/right_lidar/map"
-        # each_ogm_sensor_frames:
-        #   - "velodyne_top"
-        #   - "velodyne_left"
-        #   - "velodyne_right"
         # reliability of each sensor (0.0 ~ 1.0) only work with "log-odds" and "dempster-shafer"
         input_ogm_reliabilities:
           - 1.0
