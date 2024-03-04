@@ -226,7 +226,7 @@ void MrmHandler::operateMrm()
     if (current_mrm_behavior == mrm_state_.behavior) {
       return;
     }
-    if (requestMrmBehavior(mrm_state_.behavior, CANCEL)) {
+    if (requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
       mrm_state_.behavior = current_mrm_behavior;
     } else {
       handlePostFailureRequest();
@@ -238,9 +238,9 @@ void MrmHandler::operateMrm()
     if (current_mrm_behavior == mrm_state_.behavior) {
       return;
     }
-    if (!requestMrmBehavior(mrm_state_.behavior, CANCEL)) {
+    if (!requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
       handlePostFailureRequest();
-    } else if (requestMrmBehavior(current_mrm_behavior, CALL)) {
+    } else if (requestMrmBehavior(current_mrm_behavior, RequestType::CALL)) {
       mrm_state_.behavior = current_mrm_behavior;
     } else {
       handlePostFailureRequest();
@@ -272,15 +272,20 @@ void MrmHandler::handlePostFailureRequest()
 }
 
 bool MrmHandler::requestMrmBehavior(
-  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior,
-  bool call_or_cancel) const
+  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior, RequestType request_type) const
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
   auto request = std::make_shared<tier4_system_msgs::srv::OperateMrm::Request>();
-  request->operate = call_or_cancel;  // true: call, false: cancel
-  const auto duration = std::chrono::duration<double, std::ratio<1>>(
-    call_or_cancel ? param_.timeout_call_mrm_behavior : param_.timeout_cancel_mrm_behavior);
+  if (request_type == RequestType::CALL) {
+    request->operate = true;
+  } else if (request_type == RequestType::CANCEL) {
+    request->operate = false;
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "invalid request type: %d", request_type);
+    return false;
+  }
+  const auto duration = std::chrono::duration<double, std::ratio<1>>(request->operate ? param_.timeout_call_mrm_behavior : param_.timeout_cancel_mrm_behavior);
   std::shared_future<std::shared_ptr<tier4_system_msgs::srv::OperateMrm::Response>> future;
 
   const auto behavior2string = [](const int behavior) {
@@ -324,20 +329,14 @@ bool MrmHandler::requestMrmBehavior(
   if (future.wait_for(duration) == std::future_status::ready) {
     const auto result = future.get();
     if (result->response.success == true) {
-      RCLCPP_WARN(
-        this->get_logger(), call_or_cancel ? "%s is operated." : "%s is canceled.",
-        behavior2string(mrm_behavior));
+      RCLCPP_WARN(this->get_logger(), request->operate ? "%s is operated." : "%s is canceled.", behavior2string(mrm_behavior));
       return true;
     } else {
-      RCLCPP_ERROR(
-        this->get_logger(), call_or_cancel ? "%s failed to operate." : "%s failed to cancel.",
-        behavior2string(mrm_behavior));
+      RCLCPP_ERROR(this->get_logger(), request->operate ? "%s failed to operate." : "%s failed to cancel.", behavior2string(mrm_behavior));
       return false;
     }
   } else {
-    RCLCPP_ERROR(
-      this->get_logger(), call_or_cancel ? "%s call timed out." : "%s cancel timed out.",
-      behavior2string(mrm_behavior));
+    RCLCPP_ERROR(this->get_logger(), request->operate ? "%s call timed out." : "%s cancel timed out.", behavior2string(mrm_behavior));
     return false;
   }
 }
