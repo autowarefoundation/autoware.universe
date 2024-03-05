@@ -224,7 +224,7 @@ public:
 
       // increase counter
       if (counter_map_.count(uuid) != 0) {
-        counter_map_.at(uuid) = std::min(max_count_ + 1, std::max(1, counter_map_.at(uuid) + 1));
+        counter_map_.at(uuid) = std::min(max_count_, counter_map_.at(uuid) + 1);
       } else {
         counter_map_.emplace(uuid, 1);
       }
@@ -244,7 +244,7 @@ public:
       }
       for (const auto & uuid : not_updated_uuids) {
         if (counter_map_.count(uuid) != 0) {
-          counter_map_.at(uuid) = std::max(min_count_ - 1, std::min(-1, counter_map_.at(uuid) - 1));
+          counter_map_.at(uuid) = std::max(0, counter_map_.at(uuid) - 1);
         } else {
           counter_map_.emplace(uuid, -1);
         }
@@ -261,16 +261,17 @@ public:
         std::remove_if(
           valid_object_uuids_.begin(), valid_object_uuids_.end(),
           [&](const auto & uuid) {
-            return counter_map_.count(uuid) == 0 || counter_map_.at(uuid) < max_count_;
+            return counter_map_.count(uuid) == 0 || counter_map_.at(uuid) < min_count_;
           }),
         valid_object_uuids_.end());
 
       // remove objects whose counter is lower than threshold
       const auto counter_map_keys = getAllKeys(counter_map_);
       for (const auto & key : counter_map_keys) {
-        if (counter_map_.at(key) < min_count_) {
+        if (counter_map_.at(key) == 0) {
           counter_map_.erase(key);
           object_map_.erase(key);
+          std::cerr << "delete: " << key << std::endl;
         }
       }
     }
