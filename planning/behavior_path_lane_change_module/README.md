@@ -303,8 +303,18 @@ The detection area for the target lane can be expanded beyond its original bound
 <div align="center">
   <table>
     <tr>
-      <td><img src="./images/lane_change-lane_expansion-without" alt="Without lane expansion" width="400"></td>
-      <td><img src="./images/lane_change-lane_expansion-with.png" alt="With lane expansion" width="400"></td>
+      <td>
+        <div style="text-align: center;">
+          <div style="color: black; font-size: 20px; margin-bottom: 10px;">Without Lane Expansion</div>
+          <img src="./images/lane_change-lane_expansion-without.png" alt="Without lane expansion">
+        </div>
+      </td>
+      <td>
+        <div style="text-align: center;">
+          <div style="color: black; font-size: 20px; margin-bottom: 10px;">With Lane Expansion</div>
+          <img src="./images/lane_change-lane_expansion-with.png" alt="With lane expansion">
+        </div>
+      </td>
     </tr>
   </table>
 </div>
