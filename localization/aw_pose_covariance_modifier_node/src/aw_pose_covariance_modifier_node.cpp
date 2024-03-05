@@ -28,27 +28,23 @@ AWPoseCovarianceModifierNode::AWPoseCovarianceModifierNode() : Node("AWPoseCovar
   new_pose_estimator_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "output_pose_with_covariance_topic", 10);
 
-  client_ =
-    this->create_client<rcl_interfaces::srv::SetParameters>("/localization/pose_estimator/ndt_scan_matcher/set_parameters");
+  client_ = this->create_client<rcl_interfaces::srv::SetParameters>(
+    "/localization/pose_estimator/ndt_scan_matcher/set_parameters");
 
   while (!client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-    RCLCPP_INFO(
-      this->get_logger(),
-      "Waiting for aw_pose_covariance_modifier_node service...");
+    RCLCPP_INFO(this->get_logger(), "Waiting for aw_pose_covariance_modifier_node service...");
   }
 
   activateNDTCovModifier = AWPoseCovarianceModifierNode::callNDTCovarianceModifier();
   if (activateNDTCovModifier == 1) {
     RCLCPP_INFO(get_logger(), "NDT pose covariance modifier activated ...");
-  }
-  else{
+  } else {
     RCLCPP_WARN(get_logger(), "Failed to enable NDT pose covariance modifier ...");
   }
 }
 
 bool AWPoseCovarianceModifierNode::callNDTCovarianceModifier()
 {
-
   auto request = std::make_shared<rcl_interfaces::srv::SetParameters::Request>();
 
   rcl_interfaces::msg::Parameter parameter;
@@ -66,14 +62,18 @@ bool AWPoseCovarianceModifierNode::callNDTCovarianceModifier()
         auto response = result_.get();
 
         if (response && response->results.data()) {
-          RCLCPP_INFO(this->get_logger(), "aw_pose_covariance_modifier.enable parameter set successfully.");
+          RCLCPP_INFO(
+            this->get_logger(), "aw_pose_covariance_modifier.enable parameter set successfully.");
           return true;
         } else {
-          RCLCPP_ERROR(this->get_logger(), "An error occurred while setting the aw_pose_covariance_modifier.enable parameter.");
+          RCLCPP_ERROR(
+            this->get_logger(),
+            "An error occurred while setting the aw_pose_covariance_modifier.enable parameter.");
           return false;
         }
       } else {
-        RCLCPP_ERROR(this->get_logger(), "The request was not completed within the specified time.");
+        RCLCPP_ERROR(
+          this->get_logger(), "The request was not completed within the specified time.");
         return false;
       }
     });

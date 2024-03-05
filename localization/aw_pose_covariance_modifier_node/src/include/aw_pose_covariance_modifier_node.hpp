@@ -14,10 +14,11 @@
 #ifndef AW_POSE_COVARIANCE_MODIFIER_NODE_HPP_
 #define AW_POSE_COVARIANCE_MODIFIER_NODE_HPP_
 
+#include <rcl_interfaces/srv/set_parameters.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <rcl_interfaces/srv/set_parameters.hpp>
+
 #include <string>
 
 class AWPoseCovarianceModifierNode : public rclcpp::Node

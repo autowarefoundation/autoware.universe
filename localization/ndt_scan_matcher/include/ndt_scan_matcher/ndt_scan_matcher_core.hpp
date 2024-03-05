@@ -20,6 +20,7 @@
 #include "localization_util/smart_pose_buffer.hpp"
 #include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
+#include "rcl_interfaces/srv/set_parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
@@ -42,7 +43,6 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-#include "rcl_interfaces/srv/set_parameters.hpp"
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>

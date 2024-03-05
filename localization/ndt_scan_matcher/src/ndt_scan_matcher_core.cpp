@@ -198,12 +198,12 @@ void NDTScanMatcher::setParametersCallback(
 {
   std::lock_guard<std::mutex> lock(mutex_cov_modifier_);
 
-  for (const auto &param : request->parameters) {
-
-    if(param.name  == "aw_pose_covariance_modifier.enable"){
-
+  for (const auto & param : request->parameters) {
+    if (param.name == "aw_pose_covariance_modifier.enable") {
       activate_pose_covariance_modifier_ = param.value.bool_value;
-      RCLCPP_INFO(this->get_logger(), "aw_pose_covariance_modifier.enable set to : %d", activate_pose_covariance_modifier_);
+      RCLCPP_INFO(
+        this->get_logger(), "aw_pose_covariance_modifier.enable set to : %d",
+        activate_pose_covariance_modifier_);
 
       rcl_interfaces::msg::SetParametersResult result;
       result.successful = true;
@@ -213,11 +213,12 @@ void NDTScanMatcher::setParametersCallback(
     }
   }
 
-  if(activate_pose_covariance_modifier_ == 1){
+  if (activate_pose_covariance_modifier_ == 1) {
     NDTScanMatcher::createTrustedSourcePoseSubscriber();
   }
 }
-void NDTScanMatcher::createTrustedSourcePoseSubscriber(){
+void NDTScanMatcher::createTrustedSourcePoseSubscriber()
+{
   trusted_source_pose_sub_ =
     this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "input_trusted_pose_topic", 100,
