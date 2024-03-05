@@ -34,6 +34,7 @@ set(MULTI_OBJECT_TRACKER_SRC
   src/data_association/data_association.cpp
   src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
   src/motion_model/bicycle_motion_model.cpp
+  src/motion_model/ctrv_motion_model.cpp
 )
 
 ament_auto_add_library(multi_object_tracker_node SHARED

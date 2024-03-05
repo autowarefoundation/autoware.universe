@@ -16,8 +16,8 @@
 // Author: v1.0 Taekjin Lee
 //
 
-#ifndef MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
-#define MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
+#ifndef MULTI_OBJECT_TRACKER__MOTION_MODEL__CTRV_MOTION_MODEL_HPP_
+#define MULTI_OBJECT_TRACKER__MOTION_MODEL__CTRV_MOTION_MODEL_HPP_
 
 #include "multi_object_tracker/utils/utils.hpp"
 
@@ -27,7 +27,7 @@
 
 #include "autoware_auto_perception_msgs/msg/detected_object.hpp"
 
-class BicycleMotionModel
+class CTRVMotionModel
 {
 private:
   // attributes
@@ -39,44 +39,32 @@ private:
   bool is_initialized_{false};
   KalmanFilter ekf_;
 
-  // extended state
-  double lf_;
-  double lr_;
-
   // motion parameters
   struct MotionParams
   {
-    double q_stddev_acc_long;
-    double q_stddev_acc_lat;
-    double q_stddev_yaw_rate_min;
-    double q_stddev_yaw_rate_max;
-    double q_cov_slip_rate_min;
-    double q_cov_slip_rate_max;
-    double q_max_slip_angle;
-    double lf_ratio;
-    double lr_ratio;
-    double lf_min;
-    double lr_min;
+    double q_cov_x;
+    double q_cov_y;
+    double q_cov_yaw;
+    double q_cov_vx;
+    double q_cov_wz;
     double max_vel;
-    double max_slip;
+    double max_wz;
     double dt_max;
   } motion_params_;
 
 public:
-  BicycleMotionModel();
+  CTRVMotionModel();
 
-  enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, SLIP = 4 };
+  enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, WZ = 4 };
   const char DIM = 5;
 
-  bool init(
-    const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
-    const double & length);
+  bool init(const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P);
 
   bool checkInitialized() const
   {
     // if the state is not initialized, return false
     if (!is_initialized_) {
-      RCLCPP_WARN(logger_, "BicycleMotionModel is not initialized.");
+      RCLCPP_WARN(logger_, "CTRVMotionModel is not initialized.");
       return false;
     }
     return true;
@@ -85,13 +73,10 @@ public:
   void setDefaultParams();
 
   void setMotionParams(
-    const double & q_stddev_acc_long, const double & q_stddev_acc_lat,
-    const double & q_stddev_yaw_rate_min, const double & q_stddev_yaw_rate_max,
-    const double & q_stddev_slip_rate_min, const double & q_stddev_slip_rate_max,
-    const double & q_max_slip_angle, const double & lf_ratio, const double & lf_min,
-    const double & lr_ratio, const double & lr_min);
+    const double & q_stddev_x, const double & q_stddev_y, const double & q_stddev_yaw,
+    const double & q_stddev_vx, const double & q_stddev_wz);
 
-  void setMotionLimits(const double & max_vel, const double & max_slip);
+  void setMotionLimits(const double & max_vel, const double & max_wz);
 
   Eigen::MatrixXd getStateVector() const
   {
@@ -116,8 +101,6 @@ public:
 
   bool limitStates();
 
-  bool updateExtendedState(const double & length);
-
   bool predictState(const rclcpp::Time & time);
 
   bool predictState(const double dt, KalmanFilter & ekf) const;
@@ -129,4 +112,4 @@ public:
     geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const;
 };
 
-#endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
+#endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__CTRV_MOTION_MODEL_HPP_

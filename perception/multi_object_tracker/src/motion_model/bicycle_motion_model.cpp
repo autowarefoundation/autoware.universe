@@ -28,7 +28,7 @@
 #include <Eigen/Geometry>
 
 // Bicycle CTRV motion model
-// CTRV : Constant turn-rate and velocity
+// CTRV : Constant Turn Rate and constant Velocity
 
 BicycleMotionModel::BicycleMotionModel()
 : logger_(rclcpp::get_logger("BicycleMotionModel")), last_update_time_(rclcpp::Time(0, 0))
@@ -84,12 +84,6 @@ void BicycleMotionModel::setDefaultParams()
   // set prediction parameters
   constexpr double dt_max = 0.11;  // [s]
   motion_params_.dt_max = dt_max;
-
-  // set initial covariance for velocity and slip angle
-  constexpr double p0_stddev_vel = tier4_autoware_utils::kmph2mps(1000);
-  constexpr double p0_stddev_slip = tier4_autoware_utils::deg2rad(5);
-  motion_params_.p0_cov_vel = std::pow(p0_stddev_vel, 2.0);
-  motion_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
 }
 
 void BicycleMotionModel::setMotionParams(
