@@ -74,24 +74,6 @@ NormalVehicleTracker::NormalVehicleTracker(
   ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
   ekf_params_.p0_cov_vel = std::pow(p0_stddev_vel, 2.0);
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
-  // process noise covariance
-  ekf_params_.q_stddev_acc_long = 9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
-  ekf_params_.q_stddev_acc_lat = 9.8 * 0.15;   // [m/(s*s)] uncertain lateral acceleration
-  ekf_params_.q_stddev_yaw_rate_min =
-    tier4_autoware_utils::deg2rad(1.5);  // [rad/s] uncertain yaw change rate
-  ekf_params_.q_stddev_yaw_rate_max =
-    tier4_autoware_utils::deg2rad(15.0);  // [rad/s] uncertain yaw change rate
-  float q_stddev_slip_rate_min =
-    tier4_autoware_utils::deg2rad(0.3);  // [rad/s] uncertain slip angle change rate
-  float q_stddev_slip_rate_max =
-    tier4_autoware_utils::deg2rad(10.0);  // [rad/s] uncertain slip angle change rate
-  ekf_params_.q_cov_slip_rate_min = std::pow(q_stddev_slip_rate_min, 2.0);
-  ekf_params_.q_cov_slip_rate_max = std::pow(q_stddev_slip_rate_max, 2.0);
-  ekf_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(30);  // [rad] max slip angle
-  // limitations
-  max_vel_ = tier4_autoware_utils::kmph2mps(100);                      // [m/s]
-  max_slip_ = tier4_autoware_utils::deg2rad(30);                       // [rad]
-  velocity_deviation_threshold_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
 
   // initialize state vector X
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -194,8 +176,6 @@ autoware_auto_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpda
   autoware_auto_perception_msgs::msg::DetectedObject updating_object = object;
 
   // current (predicted) state
-  // Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-  // ekf_.getX(X_t);
   Eigen::MatrixXd X_t = motion_model_.getStateVector();
 
   // OBJECT SHAPE MODEL
@@ -272,16 +252,9 @@ bool NormalVehicleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
   // current (predicted) state
-  // Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-  // ekf_.getX(X_t);
-
   Eigen::MatrixXd X_t = motion_model_.getStateVector();
 
   // MOTION MODEL (update)
-
-  // get measurement yaw angle to update
-  double measurement_yaw = 0.0;
-  utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
 
   // velocity capability is checked only when the object has velocity measurement
   // and the predicted velocity is close to the observed velocity
@@ -347,21 +320,25 @@ bool NormalVehicleTracker::measure(
   const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
-  const auto & current_classification = getClassification();
+  // keep the latest input object
   object_ = object;
+
+  // update classification
+  const auto & current_classification = getClassification();
   if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
+  // check time gap
   if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
     RCLCPP_WARN(
       logger_, "There is a large gap between predicted time and measurement time. (%f)",
       (time - last_update_time_).seconds());
   }
 
+  // update object
   const autoware_auto_perception_msgs::msg::DetectedObject updating_object =
     getUpdatingObject(object, self_transform);
-
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
@@ -375,88 +352,20 @@ bool NormalVehicleTracker::getTrackedObject(
   object.object_id = getUUID();
   object.classification = getClassification();
 
-  // predict from motion model
-  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);                // predicted state
-  Eigen::MatrixXd P(ekf_params_.dim_x, ekf_params_.dim_x);  // predicted state
-  double lr = lr_;
-  motion_model_.getPredictedState(time, X_t, P, lr);
-
   /*  put predicted pose and twist to output object  */
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
 
-  // position
-  pose_with_cov.pose.position.x = X_t(IDX::X);
-  pose_with_cov.pose.position.y = X_t(IDX::Y);
-  pose_with_cov.pose.position.z = z_;
-  // quaternion
-  {
-    double roll, pitch, yaw;
-    tf2::Quaternion original_quaternion;
-    tf2::fromMsg(object_.kinematics.pose_with_covariance.pose.orientation, original_quaternion);
-    tf2::Matrix3x3(original_quaternion).getRPY(roll, pitch, yaw);
-    tf2::Quaternion filtered_quaternion;
-    filtered_quaternion.setRPY(roll, pitch, X_t(IDX::YAW));
-    pose_with_cov.pose.orientation.x = filtered_quaternion.x();
-    pose_with_cov.pose.orientation.y = filtered_quaternion.y();
-    pose_with_cov.pose.orientation.z = filtered_quaternion.z();
-    pose_with_cov.pose.orientation.w = filtered_quaternion.w();
-    // orientation availability is assumed to be unknown
-    object.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
+  // predict from motion model
+  if (!motion_model_.getPredictedState(
+        time, pose_with_cov.pose, pose_with_cov.covariance, twist_with_cov.twist,
+        twist_with_cov.covariance)) {
+    RCLCPP_WARN(logger_, "NormalVehicleTracker::getTrackedObject: Failed to get predicted state.");
+    return false;
   }
-  // position covariance
-  constexpr double z_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  constexpr double r_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  constexpr double p_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  pose_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::X, IDX::X);
-  pose_with_cov.covariance[utils::MSG_COV_IDX::X_Y] = P(IDX::X, IDX::Y);
-  pose_with_cov.covariance[utils::MSG_COV_IDX::Y_X] = P(IDX::Y, IDX::X);
-  pose_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
-  pose_with_cov.covariance[utils::MSG_COV_IDX::Z_Z] = z_cov;
-  pose_with_cov.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = r_cov;
-  pose_with_cov.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = p_cov;
-  pose_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
 
-  // twist
-  twist_with_cov.twist.linear.x = X_t(IDX::VEL) * std::cos(X_t(IDX::SLIP));
-  twist_with_cov.twist.linear.y = X_t(IDX::VEL) * std::sin(X_t(IDX::SLIP));
-  twist_with_cov.twist.angular.z =
-    X_t(IDX::VEL) * std::sin(X_t(IDX::SLIP)) / lr;  // yaw_rate = vel_k * sin(slip_k) / l_r
-  /* twist covariance
-   * convert covariance from velocity, slip angle to vx, vy, and yaw angle
-   *
-   * vx = vel * cos(slip)
-   * vy = vel * sin(slip)
-   * wz = vel * sin(slip) / l_r = vy / l_r
-   *
-   */
-
-  constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-
-  Eigen::MatrixXd cov_jacob(3, 2);
-  cov_jacob << std::cos(X_t(IDX::SLIP)), -X_t(IDX::VEL) * std::sin(X_t(IDX::SLIP)),
-    std::sin(X_t(IDX::SLIP)), X_t(IDX::VEL) * std::cos(X_t(IDX::SLIP)),
-    std::sin(X_t(IDX::SLIP)) / lr, X_t(IDX::VEL) * std::cos(X_t(IDX::SLIP)) / lr;
-  Eigen::MatrixXd cov_twist(2, 2);
-  cov_twist << P(IDX::VEL, IDX::VEL), P(IDX::VEL, IDX::SLIP), P(IDX::SLIP, IDX::VEL),
-    P(IDX::SLIP, IDX::SLIP);
-  Eigen::MatrixXd twist_cov_mat = cov_jacob * cov_twist * cov_jacob.transpose();
-
-  twist_with_cov.covariance[utils::MSG_COV_IDX::X_X] = twist_cov_mat(0, 0);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::X_Y] = twist_cov_mat(0, 1);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::X_YAW] = twist_cov_mat(0, 2);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::Y_X] = twist_cov_mat(1, 0);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = twist_cov_mat(1, 1);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::Y_YAW] = twist_cov_mat(1, 2);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_X] = twist_cov_mat(2, 0);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_Y] = twist_cov_mat(2, 1);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = twist_cov_mat(2, 2);
-  twist_with_cov.covariance[utils::MSG_COV_IDX::Z_Z] = vz_cov;
-  twist_with_cov.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
-  twist_with_cov.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
+  // position
+  pose_with_cov.pose.position.z = z_;
 
   // set shape
   object.shape.dimensions.x = bounding_box_.length;

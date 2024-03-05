@@ -287,7 +287,7 @@ bool BicycleMotionModel::predictState(const rclcpp::Time & time)
 
   const double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) {
-    RCLCPP_WARN(logger_, "predictState: dt is negative. (%f)", dt);
+    RCLCPP_WARN(logger_, "BicycleMotionModel::predictState: dt is negative. (%f)", dt);
     return false;
   }
   // if dt is too large, shorten dt and repeat prediction
@@ -434,16 +434,14 @@ bool BicycleMotionModel::getPredictedState(
   // copy the predicted state and covariance
   KalmanFilter tmp_ekf_for_no_update = ekf_;
 
-  const double dt = (time - last_update_time_).seconds();
-  // if (dt < 0.0) {
-  //   RCLCPP_WARN(logger_, "getPredictedState: dt is negative. (%f)", dt);
-  //   return false;
-  // }
+  double dt = (time - last_update_time_).seconds();
+  if (dt < 0.0) {
+    RCLCPP_WARN(logger_, "BicycleMotionModel::getPredictedState: dt is negative. (%f)", dt);
+    dt = 0.0;
+  }
 
-  // naive conditioning, since dt of negative value was not considered
-
-  bool ret = false;
-  // predeict only when dt is small enough
+  bool ret = true;
+  // predict only when dt is small enough
   if (0.001 /*1msec*/ < dt) {
     // if dt is too large, shorten dt and repeat prediction
     const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
@@ -457,12 +455,78 @@ bool BicycleMotionModel::getPredictedState(
   }
   tmp_ekf_for_no_update.getX(X);
   tmp_ekf_for_no_update.getP(P);
-  return ret;
+  return true;
 }
 
 bool BicycleMotionModel::getPredictedState(
-  const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P, double & lr) const
+  const rclcpp::Time & time, geometry_msgs::msg::Pose & pose, std::array<double, 36> & pose_cov,
+  geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const
 {
-  lr = lr_;
-  return getPredictedState(time, X, P);
+  // get predicted state
+  Eigen::MatrixXd X(DIM, 1);
+  Eigen::MatrixXd P(DIM, DIM);
+  if (!getPredictedState(time, X, P)) {
+    return false;
+  }
+
+  // set position
+  pose.position.x = X(IDX::X);
+  pose.position.y = X(IDX::Y);
+  pose.position.z = 0.0;
+
+  // set orientation
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(0.0, 0.0, X(IDX::YAW));
+  pose.orientation.x = quaternion.x();
+  pose.orientation.y = quaternion.y();
+  pose.orientation.z = quaternion.z();
+  pose.orientation.w = quaternion.w();
+
+  // set twist
+  twist.linear.x = X(IDX::VEL) * std::cos(X(IDX::SLIP));
+  twist.linear.y = X(IDX::VEL) * std::sin(X(IDX::SLIP));
+  twist.linear.z = 0.0;
+  twist.angular.x = 0.0;
+  twist.angular.y = 0.0;
+  twist.angular.z = twist.linear.y / lr_;
+
+  // set pose covariance
+  constexpr double zz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double rr_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double pp_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  pose_cov[utils::MSG_COV_IDX::X_X] = P(IDX::X, IDX::X);
+  pose_cov[utils::MSG_COV_IDX::X_Y] = P(IDX::X, IDX::Y);
+  pose_cov[utils::MSG_COV_IDX::Y_X] = P(IDX::Y, IDX::X);
+  pose_cov[utils::MSG_COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
+  pose_cov[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
+  pose_cov[utils::MSG_COV_IDX::Z_Z] = zz_cov;
+  pose_cov[utils::MSG_COV_IDX::ROLL_ROLL] = rr_cov;
+  pose_cov[utils::MSG_COV_IDX::PITCH_PITCH] = pp_cov;
+
+  // set twist covariance
+  Eigen::MatrixXd cov_jacob(3, 2);
+  cov_jacob << std::cos(X(IDX::SLIP)), -X(IDX::VEL) * std::sin(X(IDX::SLIP)),
+    std::sin(X(IDX::SLIP)), X(IDX::VEL) * std::cos(X(IDX::SLIP)), std::sin(X(IDX::SLIP)) / lr_,
+    X(IDX::VEL) * std::cos(X(IDX::SLIP)) / lr_;
+  Eigen::MatrixXd cov_twist(2, 2);
+  cov_twist << P(IDX::VEL, IDX::VEL), P(IDX::VEL, IDX::SLIP), P(IDX::SLIP, IDX::VEL),
+    P(IDX::SLIP, IDX::SLIP);
+  Eigen::MatrixXd twist_cov_mat = cov_jacob * cov_twist * cov_jacob.transpose();
+  constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  twist_cov[utils::MSG_COV_IDX::X_X] = twist_cov_mat(0, 0);
+  twist_cov[utils::MSG_COV_IDX::X_Y] = twist_cov_mat(0, 1);
+  twist_cov[utils::MSG_COV_IDX::X_YAW] = twist_cov_mat(0, 2);
+  twist_cov[utils::MSG_COV_IDX::Y_X] = twist_cov_mat(1, 0);
+  twist_cov[utils::MSG_COV_IDX::Y_Y] = twist_cov_mat(1, 1);
+  twist_cov[utils::MSG_COV_IDX::Y_YAW] = twist_cov_mat(1, 2);
+  twist_cov[utils::MSG_COV_IDX::YAW_X] = twist_cov_mat(2, 0);
+  twist_cov[utils::MSG_COV_IDX::YAW_Y] = twist_cov_mat(2, 1);
+  twist_cov[utils::MSG_COV_IDX::YAW_YAW] = twist_cov_mat(2, 2);
+  twist_cov[utils::MSG_COV_IDX::Z_Z] = vz_cov;
+  twist_cov[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
+  twist_cov[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
+
+  return true;
 }

@@ -128,7 +128,8 @@ public:
   bool getPredictedState(const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P) const;
 
   bool getPredictedState(
-    const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P, double & lr) const;
+    const rclcpp::Time & time, geometry_msgs::msg::Pose & pose, std::array<double, 36> & pose_cov,
+    geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
