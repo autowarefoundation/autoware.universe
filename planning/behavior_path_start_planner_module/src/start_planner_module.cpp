@@ -366,9 +366,6 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
       ? std::abs(left_dist_to_lane_border)
       : std::abs(right_dist_to_lane_border);
 
-  std::cerr << "smallest_lateral_offset " << smallest_lateral_offset << "\n";
-  std::cerr << "remaining gap " << gap_between_ego_and_lane_border << "\n";
-
   // Get the lanelets that will be queried for target objects
   const auto relevant_lanelets = std::invoke([&]() -> std::optional<lanelet::ConstLanelets> {
     lanelet::Lanelet closest_lanelet;
@@ -386,7 +383,6 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
   if (!relevant_lanelets) return false;
 
   // filtering objects with velocity, position and class
-  std::cerr << "Filter objects \n";
   const auto filtered_objects = utils::path_safety_checker::filterObjects(
     dynamic_object, route_handler, relevant_lanelets.value(), current_pose.position,
     objects_filtering_params_);
@@ -415,12 +411,6 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
     return closest_object_width;
   });
   if (!closest_object_width) return false;
-
-  std::cerr << "Dims \n";
-  std::cerr << "target_object_itr->shape.dimensions.y " << closest_object_width.value() << "\n";
-  std::cerr << "gap_between_ego_and_lane_border " << gap_between_ego_and_lane_border << "\n";
-  std::cerr << "parameters_->extra_width_margin_for_rear_obstacle "
-            << parameters_->extra_width_margin_for_rear_obstacle << "\n";
   // Decide if the closest object does not fit in the gap left by the ego vehicle.
   return closest_object_width.value() + parameters_->extra_width_margin_for_rear_obstacle >
          gap_between_ego_and_lane_border;
