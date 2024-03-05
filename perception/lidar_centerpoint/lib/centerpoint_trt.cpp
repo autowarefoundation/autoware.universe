@@ -107,7 +107,7 @@ void CenterPointTRT::initPtr()
 
 bool CenterPointTRT::detect(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-  std::vector<Box3D> & det_boxes3d)
+  std::vector<Box3D> & det_boxes3d, std::vector<Variance> & det_variance)
 {
   CHECK_CUDA_ERROR(cudaMemsetAsync(
     encoder_in_features_d_.get(), 0, encoder_in_feature_size_ * sizeof(float), stream_));
@@ -122,7 +122,7 @@ bool CenterPointTRT::detect(
 
   inference();
 
-  postProcess(det_boxes3d);
+  postProcess(det_boxes3d, det_variance);
 
   return true;
 }
@@ -192,11 +192,12 @@ void CenterPointTRT::inference()
   head_trt_ptr_->context_->enqueueV2(head_buffers.data(), stream_, nullptr);
 }
 
-void CenterPointTRT::postProcess(std::vector<Box3D> & det_boxes3d)
+void CenterPointTRT::postProcess(
+  std::vector<Box3D> & det_boxes3d, std::vector<Variance> & det_variance)
 {
   CHECK_CUDA_ERROR(post_proc_ptr_->generateDetectedBoxes3D_launch(
     head_out_heatmap_d_.get(), head_out_offset_d_.get(), head_out_z_d_.get(), head_out_dim_d_.get(),
-    head_out_rot_d_.get(), head_out_vel_d_.get(), det_boxes3d, stream_));
+    head_out_rot_d_.get(), head_out_vel_d_.get(), det_boxes3d, det_variance, stream_));
   if (det_boxes3d.size() == 0) {
     RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_centerpoint"), "No detected boxes.");
   }

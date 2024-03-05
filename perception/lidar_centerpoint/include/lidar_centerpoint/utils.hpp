@@ -35,6 +35,19 @@ struct Box3D
   float vel_y;
 };
 
+struct Variance
+{
+  float x_variance;
+  float y_variance;
+  float z_variance;
+  float length_variance;
+  float width_variance;
+  float height_variance;
+  float yaw_variance;
+  float vel_x_variance;
+  float vel_y_variance;
+};
+
 // cspell: ignore divup
 std::size_t divup(const std::size_t a, const std::size_t b);
 
