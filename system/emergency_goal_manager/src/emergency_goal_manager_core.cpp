@@ -88,7 +88,7 @@ void EmergencyGoalManager::callSetMrmRoutePoints()
   request->option.allow_goal_modification = true;
 
   while (!emergency_goals_map_.empty()) {
-    // TODO: set goals with the highest priority
+    // TODO(Makoto Kurihara): set goals with the highest priority
     auto goals = emergency_goals_map_.begin();
 
     auto sender = goals->first;
