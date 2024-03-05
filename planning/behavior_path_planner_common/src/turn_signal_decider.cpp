@@ -392,6 +392,32 @@ TurnIndicatorsCommand TurnSignalDecider::resolve_turn_signal(
   return intersection_signal_info.turn_signal;
 }
 
+TurnSignalInfo TurnSignalDecider::overwrite_turn_signal(
+  const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+  const TurnSignalInfo & original_signal, const TurnSignalInfo & new_signal,
+  const double nearest_dist_threshold, const double nearest_yaw_threshold)
+{
+  const auto get_distance = [&](const Pose & input_point) {
+    const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, input_point, nearest_dist_threshold, nearest_yaw_threshold);
+    return motion_utils::calcSignedArcLength(
+      path.points, current_pose.position, current_seg_idx, input_point.position, nearest_seg_idx);
+  };
+
+  const auto & new_desired_start_point = new_signal.desired_start_point;
+  const auto & new_required_start_point = new_signal.required_start_point;
+
+  const double dist_to_new_desired_start = get_distance(new_desired_start_point) - base_link2front_;
+  const double dist_to_new_required_start =
+    get_distance(new_required_start_point) - base_link2front_;
+
+  if (dist_to_new_desired_start > 0.0 && dist_to_new_required_start > 0.0) {
+    return original_signal;
+  }
+
+  return new_signal;
+}
+
 TurnSignalInfo TurnSignalDecider::use_prior_turn_signal(
   const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
   const TurnSignalInfo & original_signal, const TurnSignalInfo & new_signal,
