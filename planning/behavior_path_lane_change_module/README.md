@@ -172,14 +172,16 @@ lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_latera
 
 #### Candidate Path's validity check
 
-A candidate path is valid if the total lane change distance is less than
+A candidate path is considered valid if it meets the following criteria:
 
-1. distance to the end of current lane
-2. distance to the next intersection
-3. distance from current pose to the goal.
-4. distance to the crosswalk.
-
-The goal must also be in the list of the preferred lane.
+1. The distance from the ego vehicle's current position to the end of the current lanes is sufficient to perform a single lane change.
+2. The distance from the ego vehicle's current position to the goal, if within the current lanes, allows for multiple lane changes.
+3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for executing multiple lane changes, regardless of whether the goal is within the current lanes.
+4. Intersection requirements are met (conditions are parameterized).
+5. Crosswalk requirements are satisfied (conditions are parameterized).
+6. Traffic light regulations are adhered to (conditions are parameterized).
+7. The lane change can be completed after passing a parked vehicle.
+8. The lane change is deemed safe to execute.
 
 The following flow chart illustrates the validity check.
 
