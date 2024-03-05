@@ -49,11 +49,32 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   p.collision_check_margin_from_front_object =
     node->declare_parameter<double>(ns + "collision_check_margin_from_front_object");
   p.th_moving_object_velocity = node->declare_parameter<double>(ns + "th_moving_object_velocity");
+  {
+    const std::string ns = "start_planner.object_types_to_check_for_path_generation.";
+    p.object_types_to_check_for_path_generation.check_car =
+      node->declare_parameter<bool>(ns + "check_car");
+    p.object_types_to_check_for_path_generation.check_truck =
+      node->declare_parameter<bool>(ns + "check_truck");
+    p.object_types_to_check_for_path_generation.check_bus =
+      node->declare_parameter<bool>(ns + "check_bus");
+    p.object_types_to_check_for_path_generation.check_trailer =
+      node->declare_parameter<bool>(ns + "check_trailer");
+    p.object_types_to_check_for_path_generation.check_unknown =
+      node->declare_parameter<bool>(ns + "check_unknown");
+    p.object_types_to_check_for_path_generation.check_bicycle =
+      node->declare_parameter<bool>(ns + "check_bicycle");
+    p.object_types_to_check_for_path_generation.check_motorcycle =
+      node->declare_parameter<bool>(ns + "check_motorcycle");
+    p.object_types_to_check_for_path_generation.check_pedestrian =
+      node->declare_parameter<bool>(ns + "check_pedestrian");
+  }
   p.center_line_path_interval = node->declare_parameter<double>(ns + "center_line_path_interval");
   // shift pull out
   p.enable_shift_pull_out = node->declare_parameter<bool>(ns + "enable_shift_pull_out");
   p.check_shift_path_lane_departure =
     node->declare_parameter<bool>(ns + "check_shift_path_lane_departure");
+  p.allow_check_shift_path_lane_departure_override =
+    node->declare_parameter<bool>(ns + "allow_check_shift_path_lane_departure_override");
   p.shift_collision_check_distance_from_end =
     node->declare_parameter<double>(ns + "shift_collision_check_distance_from_end");
   p.minimum_shift_pull_out_distance =
@@ -356,6 +377,33 @@ void StartPlannerModuleManager::updateModuleParams(
       parameters, ns + "collision_check_margin_from_front_object",
       p->collision_check_margin_from_front_object);
     updateParam<double>(parameters, ns + "th_moving_object_velocity", p->th_moving_object_velocity);
+    const std::string obj_types_ns = ns + "object_types_to_check_for_path_generation.";
+    {
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_car",
+        p->object_types_to_check_for_path_generation.check_car);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_truck",
+        p->object_types_to_check_for_path_generation.check_truck);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_bus",
+        p->object_types_to_check_for_path_generation.check_bus);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_trailer",
+        p->object_types_to_check_for_path_generation.check_trailer);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_unknown",
+        p->object_types_to_check_for_path_generation.check_unknown);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_bicycle",
+        p->object_types_to_check_for_path_generation.check_bicycle);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_motorcycle",
+        p->object_types_to_check_for_path_generation.check_motorcycle);
+      updateParam<bool>(
+        parameters, obj_types_ns + "check_pedestrian",
+        p->object_types_to_check_for_path_generation.check_pedestrian);
+    }
     updateParam<double>(parameters, ns + "center_line_path_interval", p->center_line_path_interval);
     updateParam<bool>(parameters, ns + "enable_shift_pull_out", p->enable_shift_pull_out);
     updateParam<double>(
@@ -390,6 +438,9 @@ void StartPlannerModuleManager::updateModuleParams(
       p->geometric_collision_check_distance_from_end);
     updateParam<bool>(
       parameters, ns + "check_shift_path_lane_departure", p->check_shift_path_lane_departure);
+    updateParam<bool>(
+      parameters, ns + "allow_check_shift_path_lane_departure_override",
+      p->allow_check_shift_path_lane_departure_override);
     updateParam<std::string>(parameters, ns + "search_priority", p->search_priority);
     updateParam<double>(parameters, ns + "max_back_distance", p->max_back_distance);
     updateParam<double>(
