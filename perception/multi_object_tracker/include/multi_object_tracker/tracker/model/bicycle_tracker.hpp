@@ -32,11 +32,9 @@ private:
 
 private:
   rclcpp::Time last_update_time_;
-  enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, SLIP = 4 };
 
   struct EkfParams
   {
-    char dim_x = 5;
     float p0_cov_vel;
     float p0_cov_slip;
     float p0_cov_x;
@@ -59,6 +57,8 @@ private:
 
 private:
   BicycleMotionModel motion_model_;
+  const char DIM = motion_model_.DIM;
+  using IDX = BicycleMotionModel::IDX;
 
 public:
   BicycleTracker(

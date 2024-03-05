@@ -122,7 +122,7 @@ bool UnknownTracker::predict(const rclcpp::Time & time)
 
 bool UnknownTracker::predict(const double dt, KalmanFilter & ekf) const
 {
-  /*  == Nonlinear model ==
+  /*  Motion model: Constant velocity model
    *
    * x_{k+1}   = x_k + vx_k * dt
    * y_{k+1}   = y_k + vx_k * dt
@@ -131,7 +131,7 @@ bool UnknownTracker::predict(const double dt, KalmanFilter & ekf) const
    *
    */
 
-  /*  == Linearized model ==
+  /*  Jacobian Matrix
    *
    * A = [ 1, 0, dt,  0]
    *     [ 0, 1,  0, dt]

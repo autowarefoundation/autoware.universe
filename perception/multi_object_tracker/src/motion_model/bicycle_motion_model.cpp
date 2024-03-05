@@ -27,6 +27,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+// Bicycle CTRV motion model
+// CTRV : Constant turn-rate and velocity
+
 BicycleMotionModel::BicycleMotionModel()
 : logger_(rclcpp::get_logger("BicycleMotionModel")), last_update_time_(rclcpp::Time(0, 0))
 {
@@ -293,17 +296,13 @@ bool BicycleMotionModel::predictState(const rclcpp::Time & time)
   // if dt is too large, shorten dt and repeat prediction
   const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
   const double dt_ = dt / repeat;
-  bool ret = false;
   for (uint32_t i = 0; i < repeat; ++i) {
-    ret = predictState(dt_, ekf_);
-    if (!ret) {
+    if (!predictState(dt_, ekf_)) {
       return false;
     }
-  }
-  if (ret) {
     last_update_time_ = time;
   }
-  return ret;
+  return true;
 }
 
 bool BicycleMotionModel::predictState(const double dt, KalmanFilter & ekf) const
@@ -440,15 +439,13 @@ bool BicycleMotionModel::getPredictedState(
     dt = 0.0;
   }
 
-  bool ret = true;
   // predict only when dt is small enough
   if (0.001 /*1msec*/ < dt) {
     // if dt is too large, shorten dt and repeat prediction
     const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
     const double dt_ = dt / repeat;
     for (uint32_t i = 0; i < repeat; ++i) {
-      ret = predictState(dt_, tmp_ekf_for_no_update);
-      if (!ret) {
+      if (!predictState(dt_, tmp_ekf_for_no_update)) {
         return false;
       }
     }

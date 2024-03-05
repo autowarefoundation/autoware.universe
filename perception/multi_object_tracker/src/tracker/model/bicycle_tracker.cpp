@@ -73,7 +73,7 @@ BicycleTracker::BicycleTracker(
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
 
   // initialize state vector X
-  Eigen::MatrixXd X(ekf_params_.dim_x, 1);
+  Eigen::MatrixXd X(DIM, 1);
   X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
   X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
   X(IDX::YAW) = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
@@ -86,7 +86,7 @@ BicycleTracker::BicycleTracker(
 
   // UNCERTAINTY MODEL
   // initialize state covariance matrix P
-  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
+  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(DIM, DIM);
   if (!object.kinematics.has_position_covariance) {
     const double cos_yaw = std::cos(X(IDX::YAW));
     const double sin_yaw = std::sin(X(IDX::YAW));
@@ -154,10 +154,11 @@ BicycleTracker::BicycleTracker(
 bool BicycleTracker::predict(const rclcpp::Time & time)
 {
   // predict state vector X t+1
-  if (motion_model_.predictState(time)) {
+  bool is_predicted = motion_model_.predictState(time);
+  if (is_predicted) {
     last_update_time_ = time;
   }
-  return true;
+  return is_predicted;
 }
 
 autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(

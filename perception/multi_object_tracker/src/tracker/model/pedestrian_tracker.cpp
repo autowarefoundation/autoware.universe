@@ -99,6 +99,7 @@ PedestrianTracker::PedestrianTracker(
     X(IDX::WZ) = 0.0;
   }
 
+  // UNCERTAINTY MODEL
   // initialize state covariance matrix P
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   if (!object.kinematics.has_position_covariance) {
@@ -134,6 +135,7 @@ PedestrianTracker::PedestrianTracker(
     }
   }
 
+  // OBJECT SHAPE MODEL
   bounding_box_ = {0.5, 0.5, 1.7};
   cylinder_ = {0.3, 1.7};
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -143,18 +145,13 @@ PedestrianTracker::PedestrianTracker(
     cylinder_ = {object.shape.dimensions.x, object.shape.dimensions.z};
   }
 
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
-  cylinder_.width = std::max(cylinder_.width, 0.3);
-  cylinder_.height = std::max(cylinder_.height, 0.3);
-
+  // Set motion model
   ekf_.init(X, P);
 }
 
 bool PedestrianTracker::predict(const rclcpp::Time & time)
 {
+  // Set motion model
   const double dt = (time - last_update_time_).seconds();
   bool ret = predict(dt, ekf_);
   if (ret) {
@@ -235,22 +232,6 @@ bool PedestrianTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
   constexpr int dim_y = 2;  // pos x, pos y depending on Pose output
-  // double measurement_yaw =
-  //   tier4_autoware_utils::normalizeRadian(tf2::getYaw(object.state.pose_covariance.pose.orientation));
-  // {
-  //   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-  //   ekf_.getX(X_t);
-  //   while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
-  //     measurement_yaw = measurement_yaw + M_PI;
-  //   }
-  //   while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
-  //     measurement_yaw = measurement_yaw - M_PI;
-  //   }
-  //   float theta = std::acos(
-  //     std::cos(X_t(IDX::YAW)) * std::cos(measurement_yaw) +
-  //     std::sin(X_t(IDX::YAW)) * std::sin(measurement_yaw));
-  //   if (tier4_autoware_utils::deg2rad(60) < std::fabs(theta)) return false;
-  // }
 
   // Set measurement matrix C and observation vector Y
   Eigen::MatrixXd Y(dim_y, 1);
@@ -268,17 +249,11 @@ bool PedestrianTracker::measureWithPose(
     R(0, 1) = 0.0;                  // x - y
     R(1, 1) = ekf_params_.r_cov_y;  // y - y
     R(1, 0) = R(0, 1);              // y - x
-    // R(2, 2) = ekf_params_.r_cov_yaw;                        // yaw - yaw
   } else {
     R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-    // R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
     R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
     R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    // R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
-    // R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
-    // R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
-    // R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
   }
 
   // ekf update
