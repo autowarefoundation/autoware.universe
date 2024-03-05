@@ -38,17 +38,17 @@ SubscriberBase::SubscriberBase(
 void SubscriberBase::initReactionChainsAndParams()
 {
   auto stringToMessageType = [](const std::string & input) {
-    if (input == "autoware_auto_control_msgs::msg::AckermannControlCommand") {
+    if (input == "autoware_auto_control_msgs/msg/AckermannControlCommand") {
       return SubscriberMessageType::ACKERMANN_CONTROL_COMMAND;
-    } else if (input == "autoware_auto_planning_msgs::msg::Trajectory") {
+    } else if (input == "autoware_auto_planning_msgs/msg/Trajectory") {
       return SubscriberMessageType::TRAJECTORY;
-    } else if (input == "sensor_msgs::msg::PointCloud2") {
+    } else if (input == "sensor_msgs/msg/PointCloud2") {
       return SubscriberMessageType::POINTCLOUD2;
-    } else if (input == "autoware_auto_perception_msgs::msg::PredictedObjects") {
+    } else if (input == "autoware_auto_perception_msgs/msg/PredictedObjects") {
       return SubscriberMessageType::PREDICTED_OBJECTS;
-    } else if (input == "autoware_auto_perception_msgs::msg::DetectedObjects") {
+    } else if (input == "autoware_auto_perception_msgs/msg/DetectedObjects") {
       return SubscriberMessageType::DETECTED_OBJECTS;
-    } else if (input == "autoware_auto_perception_msgs::msg::TrackedObjects") {
+    } else if (input == "autoware_auto_perception_msgs/msg/TrackedObjects") {
       return SubscriberMessageType::TRACKED_OBJECTS;
     } else {
       return SubscriberMessageType::UNKNOWN;
@@ -448,7 +448,6 @@ bool SubscriberBase::initSubscribers()
         break;
     }
   }
-  std::cout << "---------- size: " << subscriber_variables_map_.size() << std::endl;
   return true;
 }
 
@@ -522,7 +521,6 @@ void SubscriberBase::controlCommandOutputCallback(
 
   const auto brake_idx = findFirstBrakeIdx(cmd_buffer.first);
   if (brake_idx) {
-    RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     const auto brake_cmd = cmd_buffer.first.at(brake_idx.value());
 
     // TODO(brkay54): update here if message_filters package add the support for the messages which
@@ -554,6 +552,7 @@ void SubscriberBase::controlCommandOutputCallback(
       }
     } else {
       cmd_buffer.second = brake_cmd;
+      RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     }
   }
 }
