@@ -374,7 +374,9 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
     if (!is_closest_lanelet) return std::nullopt;
     lanelet::ConstLanelet closest_lanelet_const(closest_lanelet.constData());
     // Check backwards just in case the Vehicle behind ego is in a different lanelet
-    const auto prev_lanes = route_handler->getPreviousLanelets(closest_lanelet);
+    constexpr double backwards_length = 200.0;
+    const auto prev_lanes = behavior_path_planner::utils::getBackwardLanelets(
+      *route_handler, target_lanes, current_pose, backwards_length);
     // return all the relevant lanelets
     lanelet::ConstLanelets relevant_lanelets{closest_lanelet_const};
     relevant_lanelets.insert(relevant_lanelets.end(), prev_lanes.begin(), prev_lanes.end());
