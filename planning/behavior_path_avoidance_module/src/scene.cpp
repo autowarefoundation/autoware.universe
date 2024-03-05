@@ -928,7 +928,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
       helper_->getEgoShift(), is_driving_forward, egos_lane_is_shifted);
 
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
-    output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+    output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
       spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
       planner_data_->parameters.ego_nearest_dist_threshold,
       planner_data_->parameters.ego_nearest_yaw_threshold);
