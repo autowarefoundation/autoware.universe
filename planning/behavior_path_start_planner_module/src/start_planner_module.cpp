@@ -401,7 +401,6 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
   const auto closest_object_width = std::invoke([&]() -> std::optional<double> {
     double arc_length_to_closet_object = std::numeric_limits<double>::max();
     double closest_object_width = -1.0;
-
     std::for_each(
       target_objects_on_lane.on_current_lane.begin(), target_objects_on_lane.on_current_lane.end(),
       [&](const auto & o) {
@@ -420,8 +419,11 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
   std::cerr << "Dims \n";
   std::cerr << "target_object_itr->shape.dimensions.y " << closest_object_width.value() << "\n";
   std::cerr << "gap_between_ego_and_lane_border " << gap_between_ego_and_lane_border << "\n";
+  std::cerr << "parameters_->extra_width_margin_for_rear_obstacle "
+            << parameters_->extra_width_margin_for_rear_obstacle << "\n";
   // Decide if the closest object does not fit in the gap left by the ego vehicle.
-  return closest_object_width.value() > gap_between_ego_and_lane_border;
+  return closest_object_width.value() + parameters_->extra_width_margin_for_rear_obstacle >
+         gap_between_ego_and_lane_border;
 }
 
 bool StartPlannerModule::isOverlapWithCenterLane() const
