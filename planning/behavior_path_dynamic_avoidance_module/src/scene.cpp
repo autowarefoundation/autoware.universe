@@ -34,6 +34,40 @@
 #include <string>
 #include <vector>
 
+#define debug(var)                                                     \
+  do {                                                                 \
+    std::cerr << __LINE__ << ", " << __func__ << ", " << #var << ": "; \
+    view(var);                                                         \
+  } while (0)
+template <typename T>
+void view(T e)
+{
+  std::cerr << e << std::endl;
+}
+template <typename T>
+void view(const std::vector<T> & v)
+{
+  for (const auto & e : v) {
+    std::cerr << e << " ";
+  }
+  std::cerr << std::endl;
+}
+template <typename T>
+void view(const std::vector<std::vector<T>> & vv)
+{
+  for (const auto & v : vv) {
+    view(v);
+  }
+}
+#define line()                                              \
+  {                                                         \
+    std::cerr << __LINE__ << ", " << __func__ << std::endl; \
+  }
+#define line_with_file()                                                               \
+  {                                                                                    \
+    std::cerr << "(" << __FILE__ << ") " << __func__ << ": " << __LINE__ << std::endl; \
+  }
+
 namespace behavior_path_planner
 {
 namespace
@@ -585,12 +619,13 @@ void DynamicAvoidanceModule::registerFreeRunObjects(
     }
 
     // 1.c. check if object is not crossing ego's path
-    constexpr double max_object_crossing_vel = 1.0;
+    constexpr double max_object_crossing_vel = 1.5;
     if (obj_normal_vel > max_object_crossing_vel) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since it crosses the ego's path.",
-        obj_uuid.c_str());
+        "[DynamicAvoidance] Ignore obstacle (%s) since it crosses the ego's path with its normal "
+        "vel (%s) m/s.",
+        obj_uuid.c_str(), std::to_string(obj_normal_vel).c_str());
       continue;
     }
 
@@ -600,7 +635,8 @@ void DynamicAvoidanceModule::registerFreeRunObjects(
     if (is_object_far_from_path) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since lateral offset is large.", obj_uuid.c_str());
+        "[DynamicAvoidance] Ignore obstacle (%s) since lateral offset (%s) is large.",
+        obj_uuid.c_str(), std::to_string(obj_dist_to_path).c_str());
       continue;
     }
 
