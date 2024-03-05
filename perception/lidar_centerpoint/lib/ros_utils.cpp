@@ -55,6 +55,7 @@ void box3DToDetectedObject(
     tier4_autoware_utils::createPoint(box3d.x, box3d.y, box3d.z);
   obj.kinematics.pose_with_covariance.pose.orientation =
     tier4_autoware_utils::createQuaternionFromYaw(yaw);
+  // obj.kinematrc.pose_with_covariance.covariance =
   obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
   obj.shape.dimensions =
     tier4_autoware_utils::createTranslation(box3d.length, box3d.width, box3d.height);
@@ -91,5 +92,23 @@ uint8_t getSemanticType(const std::string & class_name)
     return Label::UNKNOWN;
   }
 }
+
+// std::array<double, 36> RadarTracksMsgsConverterNode::convertPoseCovarianceMatrix(
+//   const radar_msgs::msg::RadarTrack & radar_track)
+// {
+//   using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+//   using RADAR_IDX = tier4_autoware_utils::xyz_upper_covariance_index::XYZ_UPPER_COV_IDX;
+//   std::array<double, 36> pose_covariance{};
+//   pose_covariance[POSE_IDX::X_X] = radar_track.position_covariance[RADAR_IDX::X_X];
+//   pose_covariance[POSE_IDX::X_Y] = radar_track.position_covariance[RADAR_IDX::X_Y];
+//   pose_covariance[POSE_IDX::X_Z] = radar_track.position_covariance[RADAR_IDX::X_Z];
+//   pose_covariance[POSE_IDX::Y_X] = radar_track.position_covariance[RADAR_IDX::X_Y];
+//   pose_covariance[POSE_IDX::Y_Y] = radar_track.position_covariance[RADAR_IDX::Y_Y];
+//   pose_covariance[POSE_IDX::Y_Z] = radar_track.position_covariance[RADAR_IDX::Y_Z];
+//   pose_covariance[POSE_IDX::Z_X] = radar_track.position_covariance[RADAR_IDX::X_Z];
+//   pose_covariance[POSE_IDX::Z_Y] = radar_track.position_covariance[RADAR_IDX::Y_Z];
+//   pose_covariance[POSE_IDX::Z_Z] = radar_track.position_covariance[RADAR_IDX::Z_Z];
+//   return pose_covariance;
+// }
 
 }  // namespace centerpoint
