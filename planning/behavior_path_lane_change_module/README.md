@@ -8,6 +8,7 @@ The Lane Change module is activated when lane change is needed and can be safely
   - Dashed lane marking: Lane changes are permitted in both directions.
   - Dashed marking on the left and solid on the right: Lane changes are allowed from left to right.
   - Dashed marking on the right and solid on the left: Lane changes are allowed from right to left.
+  - `allow_lane_change` tags is set as `true`
 - During lane change request condition
   - The ego-vehicle isn’t on a `preferred_lane`.
   - There is neither intersection nor crosswalk on the path of the lane change
@@ -179,8 +180,8 @@ lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_latera
 A candidate path is considered valid if it meets the following criteria:
 
 1. The distance from the ego vehicle's current position to the end of the current lanes is sufficient to perform a single lane change.
-2. The distance from the ego vehicle's current position to the goal, if within the current lanes, allows for multiple lane changes.
-3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for executing multiple lane changes, regardless of whether the goal is within the current lanes.
+2. The distance from the ego vehicle's current position to the goal along the current lanes is adequate to complete multiple lane changes.
+3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for completing multiple lane changes.
 4. Intersection requirements are met (conditions are parameterized).
 5. Crosswalk requirements are satisfied (conditions are parameterized).
 6. Traffic light regulations are adhered to (conditions are parameterized).
