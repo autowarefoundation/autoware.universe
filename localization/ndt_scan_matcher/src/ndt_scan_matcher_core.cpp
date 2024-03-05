@@ -71,7 +71,6 @@ NDTScanMatcher::NDTScanMatcher()
   tf2_listener_(tf2_buffer_),
   ndt_ptr_(new NormalDistributionsTransform),
   state_ptr_(new std::map<std::string, std::string>),
-  activate_pose_covariance_modifier_(false),
   is_activated_(false),
   param_(this)
 {
@@ -102,12 +101,6 @@ NDTScanMatcher::NDTScanMatcher()
     "points_raw", rclcpp::SensorDataQoS().keep_last(1),
     std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1),
     sensor_sub_opt);
-
-  trusted_source_pose_sub_ =
-    this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "input_trusted_pose_topic", 100,
-      std::bind(&NDTScanMatcher::callback_trusted_source_pose, this, std::placeholders::_1),
-      initial_pose_sub_opt);
 
   // Only if regularization is enabled, subscribe to the regularization base pose
   if (param_.ndt_regularization_enable) {
@@ -182,11 +175,10 @@ NDTScanMatcher::NDTScanMatcher()
       &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), sensor_callback_group);
 
-  server_covariance_modifier_ = this->create_service<std_srvs::srv::SetBool>(
-    "/localization/pose_estimator/covariance_modifier",
+  set_parameters_service_ = this->create_service<rcl_interfaces::srv::SetParameters>(
+    "ndt_scan_matcher/set_parameters",
     std::bind(
-      &NDTScanMatcher::activate_pose_covariance_modifier, this, std::placeholders::_1,
-      std::placeholders::_2),
+      &NDTScanMatcher::setParametersCallback, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), sensor_callback_group);
 
   ndt_ptr_->setParams(param_.ndt);
@@ -200,17 +192,37 @@ NDTScanMatcher::NDTScanMatcher()
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
-
-void NDTScanMatcher::activate_pose_covariance_modifier(
-  const std_srvs::srv::SetBool::Request::SharedPtr req,
-  std_srvs::srv::SetBool::Response::SharedPtr res)
+void NDTScanMatcher::setParametersCallback(
+  const rcl_interfaces::srv::SetParameters::Request::SharedPtr request,
+  rcl_interfaces::srv::SetParameters::Response::SharedPtr response)
 {
-  activate_pose_covariance_modifier_ = req->data;
-  RCLCPP_INFO(this->get_logger(), " Pose Covariance Modifier Activated ...");
-  res->success = true;
-  res->message = "Covariance Modifier Activated for NDT";
-}
+  std::lock_guard<std::mutex> lock(mutex_cov_modifier_);
 
+  for (const auto &param : request->parameters) {
+
+    if(param.name  == "aw_pose_covariance_modifier.enable"){
+
+      activate_pose_covariance_modifier_ = param.value.bool_value;
+      RCLCPP_INFO(this->get_logger(), "aw_pose_covariance_modifier.enable set to : %d", activate_pose_covariance_modifier_);
+
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = true;
+      result.reason = "Parameter successfully set.";
+
+      response->results.push_back(result);
+    }
+  }
+
+  if(activate_pose_covariance_modifier_ == 1){
+    NDTScanMatcher::createTrustedSourcePoseSubscriber();
+  }
+}
+void NDTScanMatcher::createTrustedSourcePoseSubscriber(){
+  trusted_source_pose_sub_ =
+    this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "input_trusted_pose_topic", 100,
+      std::bind(&NDTScanMatcher::callback_trusted_source_pose, this, std::placeholders::_1));
+}
 void NDTScanMatcher::publish_diagnostic()
 {
   diagnostic_msgs::msg::DiagnosticStatus diag_status_msg;

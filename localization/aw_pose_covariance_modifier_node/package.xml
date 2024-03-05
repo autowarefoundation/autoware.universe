@@ -17,7 +17,7 @@
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>std_srvs</depend>
+  <depend>rcl_interfaces</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -29,39 +29,57 @@ AWPoseCovarianceModifierNode::AWPoseCovarianceModifierNode() : Node("AWPoseCovar
     "output_pose_with_covariance_topic", 10);
 
   client_ =
-    this->create_client<std_srvs::srv::SetBool>("/localization/pose_estimator/covariance_modifier");
+    this->create_client<rcl_interfaces::srv::SetParameters>("/localization/pose_estimator/ndt_scan_matcher/set_parameters");
 
-  startNDTCovModifier = AWPoseCovarianceModifierNode::callNDTCovarianceModifier();
-  if (startNDTCovModifier == 1) {
+  while (!client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Waiting for aw_pose_covariance_modifier_node service...");
+  }
+
+  activateNDTCovModifier = AWPoseCovarianceModifierNode::callNDTCovarianceModifier();
+  if (activateNDTCovModifier == 1) {
     RCLCPP_INFO(get_logger(), "NDT pose covariance modifier activated ...");
+  }
+  else{
+    RCLCPP_WARN(get_logger(), "Failed to enable NDT pose covariance modifier ...");
   }
 }
 
 bool AWPoseCovarianceModifierNode::callNDTCovarianceModifier()
 {
-  while (!client_->wait_for_service(std::chrono::seconds(1))) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service. Exiting.");
-      return false;
-    }
-    RCLCPP_INFO(get_logger(), "Service not available, waiting again...");
-  }
 
-  auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-  request->data = true;
+  auto request = std::make_shared<rcl_interfaces::srv::SetParameters::Request>();
 
-  auto future_result = client_->async_send_request(request);
-  if (
-    rclcpp::spin_until_future_complete(get_node_base_interface(), future_result) ==
-    rclcpp::FutureReturnCode::SUCCESS) {
-    auto response = future_result.get();
-    RCLCPP_INFO(get_logger(), "Response: %d", response->success);
-    return true;
-  } else {
-    RCLCPP_ERROR(get_logger(), "Failed to receive response.");
-    return false;
-  }
+  rcl_interfaces::msg::Parameter parameter;
+  parameter.name = "aw_pose_covariance_modifier.enable";
+  parameter.value.type = rcl_interfaces::msg::ParameterType::PARAMETER_BOOL;
+  parameter.value.bool_value = true;
+
+  request->parameters.push_back(parameter);
+
+  client_->async_send_request(
+    request, [this](rclcpp::Client<rcl_interfaces::srv::SetParameters>::SharedFuture result_) {
+      auto result_status = result_.wait_for(std::chrono::seconds(1));
+
+      if (result_status == std::future_status::ready) {
+        auto response = result_.get();
+
+        if (response && response->results.data()) {
+          RCLCPP_INFO(this->get_logger(), "aw_pose_covariance_modifier.enable parameter set successfully.");
+          return true;
+        } else {
+          RCLCPP_ERROR(this->get_logger(), "An error occurred while setting the aw_pose_covariance_modifier.enable parameter.");
+          return false;
+        }
+      } else {
+        RCLCPP_ERROR(this->get_logger(), "The request was not completed within the specified time.");
+        return false;
+      }
+    });
+  return true;
 }
+
 void AWPoseCovarianceModifierNode::trusted_pose_with_cov_callback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {

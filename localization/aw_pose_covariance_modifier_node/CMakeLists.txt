@@ -5,14 +5,13 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
-
+find_package(rcl_interfaces REQUIRED)
 set(NODE_NAME ${PROJECT_NAME})
 set(EXEC_NAME ${PROJECT_NAME}_exe)
 
 add_executable(${PROJECT_NAME}  src/aw_pose_covariance_modifier_node.cpp)
 
-ament_target_dependencies(${PROJECT_NAME} rclcpp geometry_msgs std_srvs)
+ament_target_dependencies(${PROJECT_NAME} rclcpp geometry_msgs rcl_interfaces)
 
 install(TARGETS
         ${PROJECT_NAME}
@@ -30,4 +29,4 @@ include_directories(src/include/)
 
 
 ament_auto_package(INSTALL_TO_SHARE
-  launch)
+        launch)

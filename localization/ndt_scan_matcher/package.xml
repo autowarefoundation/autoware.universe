@@ -42,6 +42,7 @@
   <depend>tier4_localization_msgs</depend>
   <depend>tree_structured_parzen_estimator</depend>
   <depend>visualization_msgs</depend>
+  <depend>rcl_interfaces</depend>
 
   <test_depend>ament_cmake_cppcheck</test_depend>
   <test_depend>ament_lint_auto</test_depend>
