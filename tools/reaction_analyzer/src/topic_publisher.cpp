@@ -40,11 +40,11 @@ TopicPublisher::TopicPublisher(
 
   // set pointcloud publisher type
   if (topic_publisher_params_.pointcloud_publisher_type == "sync_header_sync_publish") {
-    pointcloud_publisher_type_ = PointcloudPublisherType::SyncHeaderSyncPublisher;
+    pointcloud_publisher_type_ = PointcloudPublisherType::SYNC_HEADER_SYNC_PUBLISHER;
   } else if (topic_publisher_params_.pointcloud_publisher_type == "async_header_sync_publish") {
-    pointcloud_publisher_type_ = PointcloudPublisherType::AsyncHeaderSyncPublisher;
+    pointcloud_publisher_type_ = PointcloudPublisherType::ASYNC_HEADER_SYNC_PUBLISHER;
   } else if (topic_publisher_params_.pointcloud_publisher_type == "async_publish") {
-    pointcloud_publisher_type_ = PointcloudPublisherType::AsyncPublisher;
+    pointcloud_publisher_type_ = PointcloudPublisherType::ASYNC_PUBLISHER;
   } else {
     RCLCPP_ERROR(node_->get_logger(), "Invalid pointcloud_publisher_type");
     rclcpp::shutdown();
@@ -60,7 +60,7 @@ void TopicPublisher::pointcloudMessagesSyncPublisher(const PointcloudPublisherTy
   const bool is_object_spawned = spawn_object_cmd_;
 
   switch (type) {
-    case PointcloudPublisherType::SyncHeaderSyncPublisher: {
+    case PointcloudPublisherType::SYNC_HEADER_SYNC_PUBLISHER: {
       PublisherVarAccessor accessor;
       for (const auto & publisher_var_pair : lidar_pub_variable_pair_map_) {
         accessor.publishWithCurrentTime(
@@ -76,7 +76,7 @@ void TopicPublisher::pointcloudMessagesSyncPublisher(const PointcloudPublisherTy
       }
       break;
     }
-    case PointcloudPublisherType::AsyncHeaderSyncPublisher: {
+    case PointcloudPublisherType::ASYNC_HEADER_SYNC_PUBLISHER: {
       PublisherVarAccessor accessor;
       const auto period_pointcloud_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
         std::chrono::duration<double>(topic_publisher_params_.pointcloud_publisher_period));
@@ -147,29 +147,29 @@ void TopicPublisher::initRosbagPublishers()
 {
   auto string_to_publisher_message_type = [](const std::string & input) {
     if (input == "sensor_msgs/msg/PointCloud2") {
-      return PublisherMessageType::PointCloud2;
+      return PublisherMessageType::POINTCLOUD2;
     } else if (input == "sensor_msgs/msg/CameraInfo") {
-      return PublisherMessageType::CameraInfo;
+      return PublisherMessageType::CAMERA_INFO;
     } else if (input == "sensor_msgs/msg/Image") {
-      return PublisherMessageType::Image;
+      return PublisherMessageType::IMAGE;
     } else if (input == "geometry_msgs/msg/PoseWithCovarianceStamped") {
-      return PublisherMessageType::PoseWithCovarianceStamped;
+      return PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED;
     } else if (input == "sensor_msgs/msg/Imu") {
-      return PublisherMessageType::Imu;
+      return PublisherMessageType::IMU;
     } else if (input == "autoware_auto_vehicle_msgs/msg/ControlModeReport") {
-      return PublisherMessageType::ControlModeReport;
+      return PublisherMessageType::CONTROL_MODE_REPORT;
     } else if (input == "autoware_auto_vehicle_msgs/msg/GearReport") {
-      return PublisherMessageType::GearReport;
+      return PublisherMessageType::GEAR_REPORT;
     } else if (input == "autoware_auto_vehicle_msgs/msg/HazardLightsReport") {
-      return PublisherMessageType::HazardLightsReport;
+      return PublisherMessageType::HAZARD_LIGHTS_REPORT;
     } else if (input == "autoware_auto_vehicle_msgs/msg/SteeringReport") {
-      return PublisherMessageType::SteeringReport;
+      return PublisherMessageType::STEERING_REPORT;
     } else if (input == "autoware_auto_vehicle_msgs/msg/TurnIndicatorsReport") {
-      return PublisherMessageType::TurnIndicatorsReport;
+      return PublisherMessageType::TURN_INDICATORS_REPORT;
     } else if (input == "autoware_auto_vehicle_msgs/msg/VelocityReport") {
-      return PublisherMessageType::VelocityReport;
+      return PublisherMessageType::VELOCITY_REPORT;
     } else {
-      return PublisherMessageType::Unknown;
+      return PublisherMessageType::UNKNOWN;
     }
   };
 
@@ -196,7 +196,7 @@ void TopicPublisher::initRosbagPublishers()
         return string_to_publisher_message_type(
           it->topic_metadata.type);  // Return the message type if found
       } else {
-        return PublisherMessageType::Unknown;  //
+        return PublisherMessageType::UNKNOWN;  //
       }
     };
     std::unordered_map<std::string, std::vector<rclcpp::Time>> timestamps_per_topic;
@@ -206,7 +206,7 @@ void TopicPublisher::initRosbagPublishers()
       const auto current_topic = bag_message->topic_name;
 
       const auto message_type = getMessageTypeForTopic(current_topic);
-      if (message_type == PublisherMessageType::Unknown) {
+      if (message_type == PublisherMessageType::UNKNOWN) {
         RCLCPP_WARN(
           node_->get_logger(), "Unknown message type for topic name: %s, skipping..",
           current_topic.c_str());
@@ -218,7 +218,7 @@ void TopicPublisher::initRosbagPublishers()
       // Deserialize and store the first message as a sample
       if (timestamps_per_topic[current_topic].size() == 1) {
         switch (message_type) {
-          case PublisherMessageType::PointCloud2: {
+          case PublisherMessageType::POINTCLOUD2: {
             rclcpp::Serialization<PointCloud2> serialization;
             auto & publisher_var = topic_publisher_map_[current_topic];
             if (!std::holds_alternative<PublisherVariables<PointCloud2>>(publisher_var)) {
@@ -232,7 +232,7 @@ void TopicPublisher::initRosbagPublishers()
               &(*std::get<PublisherVariables<PointCloud2>>(publisher_var).empty_area_message));
             break;
           }
-          case PublisherMessageType::CameraInfo: {
+          case PublisherMessageType::CAMERA_INFO: {
             rclcpp::Serialization<sensor_msgs::msg::CameraInfo> serialization;
 
             auto & publisher_var = topic_publisher_map_[current_topic];
@@ -249,7 +249,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::Image: {
+          case PublisherMessageType::IMAGE: {
             rclcpp::Serialization<sensor_msgs::msg::Image> serialization;
 
             auto & publisher_var = topic_publisher_map_[current_topic];
@@ -266,7 +266,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::PoseWithCovarianceStamped: {
+          case PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED: {
             rclcpp::Serialization<geometry_msgs::msg::PoseWithCovarianceStamped> serialization;
             auto & publisher_var = topic_publisher_map_[current_topic];
             if (!std::holds_alternative<
@@ -286,7 +286,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::Imu: {
+          case PublisherMessageType::IMU: {
             rclcpp::Serialization<sensor_msgs::msg::Imu> serialization;
 
             auto & publisher_var = topic_publisher_map_[current_topic];
@@ -302,7 +302,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::ControlModeReport: {
+          case PublisherMessageType::CONTROL_MODE_REPORT: {
             rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::ControlModeReport> serialization;
 
             auto & publisher_var = topic_publisher_map_[current_topic];
@@ -324,7 +324,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::GearReport: {
+          case PublisherMessageType::GEAR_REPORT: {
             rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::GearReport> serialization;
             auto & publisher_var = topic_publisher_map_[current_topic];
             if (!std::holds_alternative<
@@ -341,7 +341,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::HazardLightsReport: {
+          case PublisherMessageType::HAZARD_LIGHTS_REPORT: {
             rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::HazardLightsReport>
               serialization;
             auto & publisher_var = topic_publisher_map_[current_topic];
@@ -363,7 +363,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::SteeringReport: {
+          case PublisherMessageType::STEERING_REPORT: {
             rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::SteeringReport> serialization;
             auto & publisher_var = topic_publisher_map_[current_topic];
             if (!std::holds_alternative<
@@ -383,7 +383,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::TurnIndicatorsReport: {
+          case PublisherMessageType::TURN_INDICATORS_REPORT: {
             rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>
               serialization;
             auto & publisher_var = topic_publisher_map_[current_topic];
@@ -406,7 +406,7 @@ void TopicPublisher::initRosbagPublishers()
                    .empty_area_message));
             break;
           }
-          case PublisherMessageType::VelocityReport: {
+          case PublisherMessageType::VELOCITY_REPORT: {
             rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::VelocityReport> serialization;
             auto & publisher_var = topic_publisher_map_[current_topic];
             if (!std::holds_alternative<
@@ -488,7 +488,7 @@ void TopicPublisher::initRosbagPublishers()
         return string_to_publisher_message_type(
           it->topic_metadata.type);  // Return the message type if found
       } else {
-        return PublisherMessageType::Unknown;
+        return PublisherMessageType::UNKNOWN;
       }
     };
 
@@ -497,14 +497,14 @@ void TopicPublisher::initRosbagPublishers()
       const auto current_topic = bag_message->topic_name;
 
       const auto message_type = getMessageTypeForTopic(current_topic);
-      if (message_type == PublisherMessageType::Unknown) {
+      if (message_type == PublisherMessageType::UNKNOWN) {
         RCLCPP_WARN(
           node_->get_logger(), "Unknown message type for topic name: %s, skipping..",
           current_topic.c_str());
         continue;
       }
       switch (message_type) {
-        case PublisherMessageType::PointCloud2: {
+        case PublisherMessageType::POINTCLOUD2: {
           rclcpp::Serialization<PointCloud2> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<PublisherVariables<PointCloud2>>(publisher_var)) {
@@ -522,7 +522,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::CameraInfo: {
+        case PublisherMessageType::CAMERA_INFO: {
           rclcpp::Serialization<sensor_msgs::msg::CameraInfo> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::CameraInfo>>(
@@ -542,7 +542,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::Image: {
+        case PublisherMessageType::IMAGE: {
           rclcpp::Serialization<sensor_msgs::msg::Image> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::Image>>(publisher_var)) {
@@ -561,7 +561,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::PoseWithCovarianceStamped: {
+        case PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED: {
           rclcpp::Serialization<geometry_msgs::msg::PoseWithCovarianceStamped> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<
@@ -583,7 +583,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::Imu: {
+        case PublisherMessageType::IMU: {
           rclcpp::Serialization<sensor_msgs::msg::Imu> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::Imu>>(publisher_var)) {
@@ -602,7 +602,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::ControlModeReport: {
+        case PublisherMessageType::CONTROL_MODE_REPORT: {
           rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::ControlModeReport> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<
@@ -625,7 +625,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::GearReport: {
+        case PublisherMessageType::GEAR_REPORT: {
           rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::GearReport> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<
@@ -646,7 +646,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::HazardLightsReport: {
+        case PublisherMessageType::HAZARD_LIGHTS_REPORT: {
           rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::HazardLightsReport> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<
@@ -669,7 +669,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::SteeringReport: {
+        case PublisherMessageType::STEERING_REPORT: {
           rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::SteeringReport> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<
@@ -692,7 +692,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::TurnIndicatorsReport: {
+        case PublisherMessageType::TURN_INDICATORS_REPORT: {
           rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>
             serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
@@ -716,7 +716,7 @@ void TopicPublisher::initRosbagPublishers()
           }
           break;
         }
-        case PublisherMessageType::VelocityReport: {
+        case PublisherMessageType::VELOCITY_REPORT: {
           rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::VelocityReport> serialization;
           auto & publisher_var = topic_publisher_map_[current_topic];
           if (!std::holds_alternative<
@@ -844,7 +844,7 @@ void TopicPublisher::initRosbagPublishers()
   const auto period_pointcloud_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(topic_publisher_params_.pointcloud_publisher_period));
 
-  if (pointcloud_publisher_type_ != PointcloudPublisherType::AsyncPublisher) {
+  if (pointcloud_publisher_type_ != PointcloudPublisherType::ASYNC_PUBLISHER) {
     // Create 1 timer to publish all PointCloud2 messages
     pointcloud_sync_publish_timer_ = node_->create_wall_timer(period_pointcloud_ns, [this]() {
       this->pointcloudMessagesSyncPublisher(this->pointcloud_publisher_type_);

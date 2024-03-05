@@ -162,7 +162,6 @@ void ReactionAnalyzerNode::onTimer()
   mutex_.unlock();
 
   // Init the test environment
-
   if (!test_environment_init_time_) {
     initEgoForTest(initialization_state_ptr, route_state_ptr, operation_mode_ptr);
     return;
@@ -176,7 +175,6 @@ void ReactionAnalyzerNode::onTimer()
 
   if (message_buffers) {
     // if reacted, calculate the results
-
     calculateResults(message_buffers.value(), spawn_cmd_time.value());
     reset();
   }

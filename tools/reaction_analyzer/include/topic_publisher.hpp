@@ -54,18 +54,18 @@ using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 
 enum class PublisherMessageType {
-  Unknown = 0,
-  CameraInfo = 1,
-  Image = 2,
-  PointCloud2 = 3,
-  PoseWithCovarianceStamped = 4,
-  Imu = 5,
-  ControlModeReport = 6,
-  GearReport = 7,
-  HazardLightsReport = 8,
-  SteeringReport = 9,
-  TurnIndicatorsReport = 10,
-  VelocityReport = 11,
+  UNKNOWN = 0,
+  CAMERA_INFO = 1,
+  IMAGE = 2,
+  POINTCLOUD2 = 3,
+  POSE_WITH_COVARIANCE_STAMPED = 4,
+  IMU = 5,
+  CONTROL_MODE_REPORT = 6,
+  GEAR_REPORT = 7,
+  HAZARD_LIGHTS_REPORT = 8,
+  STEERING_REPORT = 9,
+  TURN_INDICATORS_REPORT = 10,
+  VELOCITY_REPORT = 11,
 };
 
 struct TopicPublisherParams
@@ -77,9 +77,9 @@ struct TopicPublisherParams
 };
 
 enum class PointcloudPublisherType {
-  AsyncPublisher = 0,            // Asynchronous publisher
-  SyncHeaderSyncPublisher = 1,   // Synchronous publisher with header synchronization
-  AsyncHeaderSyncPublisher = 2,  // Asynchronous publisher with header synchronization
+  ASYNC_PUBLISHER = 0,              // Asynchronous publisher
+  SYNC_HEADER_SYNC_PUBLISHER = 1,   // Synchronous publisher with header synchronization
+  ASYNC_HEADER_SYNC_PUBLISHER = 2,  // Asynchronous publisher with header synchronization
 };
 
 /**
