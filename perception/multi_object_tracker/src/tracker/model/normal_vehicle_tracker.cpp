@@ -147,9 +147,9 @@ NormalVehicleTracker::NormalVehicleTracker(
     0.3,        /* [deg/s] uncertain slip angle change rate, minimum */
     10.0,       /* [deg/s] uncertain slip angle change rate, maximum */
     30,         /* [deg] max slip angle */
-    0.3,        /* [-] ratio of front wheel*/
+    0.3,        /* [-] ratio of front wheel position*/
     1.0,        /* [m] minimum front wheel position*/
-    0.25,       /* [-] ratio of rear wheel*/
+    0.25,       /* [-] ratio of rear wheel position*/
     1.0         /* [m] minimum rear wheel position*/
   );
 
@@ -308,8 +308,9 @@ bool NormalVehicleTracker::measureWithShape(
 
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);
-  // update offset into position
+  // update offset into object position
   motion_model_.adjustPosition(gain * tracking_offset_.x(), gain * tracking_offset_.y());
+  // update offset
   tracking_offset_.x() = gain_inv * tracking_offset_.x();
   tracking_offset_.y() = gain_inv * tracking_offset_.y();
 
