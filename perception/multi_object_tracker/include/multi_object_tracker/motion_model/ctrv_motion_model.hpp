@@ -59,6 +59,10 @@ public:
   const char DIM = 5;
 
   bool init(const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P);
+  bool init(
+    const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
+    const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
+    const double & wz, const double & wz_cov);
 
   bool checkInitialized() const
   {
@@ -94,8 +98,8 @@ public:
     const std::array<double, 36> & pose_cov);
 
   bool updateStatePoseHeadVel(
-    const double & x, const double & y, const double & yaw, const double & vel,
-    const std::array<double, 36> & pose_cov, const std::array<double, 36> & twist_cov);
+    const double & x, const double & y, const double & yaw, const std::array<double, 36> & pose_cov,
+    const double & vel, const std::array<double, 36> & twist_cov);
 
   bool adjustPosition(const double & x, const double & y);
 

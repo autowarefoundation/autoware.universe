@@ -60,66 +60,6 @@ PedestrianTracker::PedestrianTracker(
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
-  // initial state covariance
-  float p0_stddev_x = 2.0;                                    // [m]
-  float p0_stddev_y = 2.0;                                    // [m]
-  float p0_stddev_yaw = tier4_autoware_utils::deg2rad(1000);  // [rad]
-  float p0_stddev_vx = tier4_autoware_utils::kmph2mps(120);   // [m/s]
-  float p0_stddev_wz = tier4_autoware_utils::deg2rad(360);    // [rad/s]
-  ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
-  ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
-  ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
-  ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
-  ekf_params_.p0_cov_wz = std::pow(p0_stddev_wz, 2.0);
-
-  // initialize state vector X
-  Eigen::MatrixXd X(DIM, 1);
-  X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
-  X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
-  X(IDX::YAW) = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  if (object.kinematics.has_twist) {
-    X(IDX::VEL) = object.kinematics.twist_with_covariance.twist.linear.x;
-    X(IDX::WZ) = object.kinematics.twist_with_covariance.twist.angular.z;
-  } else {
-    X(IDX::VEL) = 0.0;
-    X(IDX::WZ) = 0.0;
-  }
-
-  // UNCERTAINTY MODEL
-  // initialize state covariance matrix P
-  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(DIM, DIM);
-  if (!object.kinematics.has_position_covariance) {
-    const double cos_yaw = std::cos(X(IDX::YAW));
-    const double sin_yaw = std::sin(X(IDX::YAW));
-    const double sin_2yaw = std::sin(2.0f * X(IDX::YAW));
-    // Rotate the covariance matrix according to the vehicle yaw
-    // because p0_cov_x and y are in the vehicle coordinate system.
-    P(IDX::X, IDX::X) =
-      ekf_params_.p0_cov_x * cos_yaw * cos_yaw + ekf_params_.p0_cov_y * sin_yaw * sin_yaw;
-    P(IDX::X, IDX::Y) = 0.5f * (ekf_params_.p0_cov_x - ekf_params_.p0_cov_y) * sin_2yaw;
-    P(IDX::Y, IDX::Y) =
-      ekf_params_.p0_cov_x * sin_yaw * sin_yaw + ekf_params_.p0_cov_y * cos_yaw * cos_yaw;
-    P(IDX::Y, IDX::X) = P(IDX::X, IDX::Y);
-    P(IDX::YAW, IDX::YAW) = ekf_params_.p0_cov_yaw;
-    P(IDX::VEL, IDX::VEL) = ekf_params_.p0_cov_vx;
-    P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
-  } else {
-    P(IDX::X, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-    P(IDX::X, IDX::Y) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-    P(IDX::Y, IDX::Y) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    P(IDX::Y, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
-    P(IDX::YAW, IDX::YAW) =
-      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
-    if (object.kinematics.has_twist_covariance) {
-      P(IDX::VEL, IDX::VEL) =
-        object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-      P(IDX::WZ, IDX::WZ) =
-        object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
-    } else {
-      P(IDX::VEL, IDX::VEL) = ekf_params_.p0_cov_vx;
-      P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
-    }
-  }
 
   // OBJECT SHAPE MODEL
   bounding_box_ = {0.5, 0.5, 1.7};
@@ -131,8 +71,59 @@ PedestrianTracker::PedestrianTracker(
     cylinder_ = {object.shape.dimensions.x, object.shape.dimensions.z};
   }
 
-  // Set motion model
-  motion_model_.init(time, X, P);
+  // Set initial state
+  {
+    const double x = object.kinematics.pose_with_covariance.pose.position.x;
+    const double y = object.kinematics.pose_with_covariance.pose.position.y;
+    const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    auto pose_cov = object.kinematics.pose_with_covariance.covariance;
+    double vel = 0.0;
+    double wz = 0.0;
+    double vel_cov;
+    double wz_cov;
+
+    if (object.kinematics.has_twist) {
+      vel = object.kinematics.twist_with_covariance.twist.linear.x;
+      wz = object.kinematics.twist_with_covariance.twist.angular.z;
+    }
+
+    if (!object.kinematics.has_position_covariance) {
+      // initial state covariance
+      constexpr double p0_stddev_x = 2.0;  // in object coordinate [m]
+      constexpr double p0_stddev_y = 2.0;  // in object coordinate [m]
+      constexpr double p0_stddev_yaw =
+        tier4_autoware_utils::deg2rad(1000);  // in map coordinate [rad]
+      constexpr double p0_cov_x = std::pow(p0_stddev_x, 2.0);
+      constexpr double p0_cov_y = std::pow(p0_stddev_y, 2.0);
+      constexpr double p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
+
+      const double cos_yaw = std::cos(yaw);
+      const double sin_yaw = std::sin(yaw);
+      const double sin_2yaw = std::sin(2.0 * yaw);
+      pose_cov[utils::MSG_COV_IDX::X_X] =
+        p0_cov_x * cos_yaw * cos_yaw + p0_cov_y * sin_yaw * sin_yaw;
+      pose_cov[utils::MSG_COV_IDX::X_Y] = 0.5 * (p0_cov_x - p0_cov_y) * sin_2yaw;
+      pose_cov[utils::MSG_COV_IDX::Y_Y] =
+        p0_cov_x * sin_yaw * sin_yaw + p0_cov_y * cos_yaw * cos_yaw;
+      pose_cov[utils::MSG_COV_IDX::Y_X] = pose_cov[utils::MSG_COV_IDX::X_Y];
+      pose_cov[utils::MSG_COV_IDX::YAW_YAW] = p0_cov_yaw;
+    }
+
+    if (!object.kinematics.has_twist_covariance) {
+      constexpr double p0_stddev_vel =
+        tier4_autoware_utils::kmph2mps(120);  // in object coordinate [m/s]
+      constexpr double p0_stddev_wz =
+        tier4_autoware_utils::deg2rad(360);  // in object coordinate [rad/s]
+      vel_cov = std::pow(p0_stddev_vel, 2.0);
+      wz_cov = std::pow(p0_stddev_wz, 2.0);
+    } else {
+      vel_cov = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+      wz_cov = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+    }
+
+    // initialize motion model
+    motion_model_.init(time, x, y, yaw, pose_cov, vel, vel_cov, wz, wz_cov);
+  }
 
   // Set motion model parameters
   constexpr double q_stddev_x = 0.4;                                  // [m/s]

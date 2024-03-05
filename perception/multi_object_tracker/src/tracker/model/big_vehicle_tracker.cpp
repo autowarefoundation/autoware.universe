@@ -63,68 +63,11 @@ BigVehicleTracker::BigVehicleTracker(
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
   ekf_params_.r_cov_vel = std::pow(r_stddev_vel, 2.0);
-  // initial state covariance
-  float p0_stddev_x = 1.5;                                     // in object coordinate [m]
-  float p0_stddev_y = 0.5;                                     // in object coordinate [m]
-  float p0_stddev_yaw = tier4_autoware_utils::deg2rad(25);     // in map coordinate [rad]
-  float p0_stddev_vel = tier4_autoware_utils::kmph2mps(1000);  // in object coordinate [m/s]
-  float p0_stddev_slip = tier4_autoware_utils::deg2rad(5);     // in object coordinate [rad/s]
-  ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
-  ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
-  ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
-  ekf_params_.p0_cov_vel = std::pow(p0_stddev_vel, 2.0);
-  ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
 
   // velocity deviation threshold
   //   if the predicted velocity is close to the observed velocity,
   //   the observed velocity is used as the measurement.
   velocity_deviation_threshold_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
-
-  // initialize state vector X
-  Eigen::MatrixXd X(DIM, 1);
-  X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
-  X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
-  X(IDX::YAW) = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  X(IDX::SLIP) = 0.0;
-  if (object.kinematics.has_twist) {
-    X(IDX::VEL) = object.kinematics.twist_with_covariance.twist.linear.x;
-  } else {
-    X(IDX::VEL) = 0.0;
-  }
-
-  // UNCERTAINTY MODEL
-  // initialize state covariance matrix P
-  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(DIM, DIM);
-  if (!object.kinematics.has_position_covariance) {
-    const double cos_yaw = std::cos(X(IDX::YAW));
-    const double sin_yaw = std::sin(X(IDX::YAW));
-    const double sin_2yaw = std::sin(2.0f * X(IDX::YAW));
-    // Rotate the covariance matrix according to the vehicle yaw
-    // because p0_cov_x and y are in the vehicle coordinate system.
-    P(IDX::X, IDX::X) =
-      ekf_params_.p0_cov_x * cos_yaw * cos_yaw + ekf_params_.p0_cov_y * sin_yaw * sin_yaw;
-    P(IDX::X, IDX::Y) = 0.5f * (ekf_params_.p0_cov_x - ekf_params_.p0_cov_y) * sin_2yaw;
-    P(IDX::Y, IDX::Y) =
-      ekf_params_.p0_cov_x * sin_yaw * sin_yaw + ekf_params_.p0_cov_y * cos_yaw * cos_yaw;
-    P(IDX::Y, IDX::X) = P(IDX::X, IDX::Y);
-    P(IDX::YAW, IDX::YAW) = ekf_params_.p0_cov_yaw;
-    P(IDX::VEL, IDX::VEL) = ekf_params_.p0_cov_vel;
-    P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
-  } else {
-    P(IDX::X, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-    P(IDX::X, IDX::Y) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-    P(IDX::Y, IDX::Y) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    P(IDX::Y, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
-    P(IDX::YAW, IDX::YAW) =
-      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
-    if (object.kinematics.has_twist_covariance) {
-      P(IDX::VEL, IDX::VEL) =
-        object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-    } else {
-      P(IDX::VEL, IDX::VEL) = ekf_params_.p0_cov_vel;
-    }
-    P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
-  }
 
   // OBJECT SHAPE MODEL
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -140,8 +83,57 @@ BigVehicleTracker::BigVehicleTracker(
     last_input_bounding_box_ = bounding_box_;
   }
 
-  // Set motion model
-  motion_model_.init(time, X, P, bounding_box_.length);
+  // Set initial state
+  {
+    const double x = object.kinematics.pose_with_covariance.pose.position.x;
+    const double y = object.kinematics.pose_with_covariance.pose.position.y;
+    const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    auto pose_cov = object.kinematics.pose_with_covariance.covariance;
+    double vel = 0.0;
+    double vel_cov;
+    const double & length = bounding_box_.length;
+
+    if (object.kinematics.has_twist) {
+      vel = object.kinematics.twist_with_covariance.twist.linear.x;
+    }
+
+    if (!object.kinematics.has_position_covariance) {
+      // initial state covariance
+      constexpr double p0_stddev_x = 1.5;  // in object coordinate [m]
+      constexpr double p0_stddev_y = 0.5;  // in object coordinate [m]
+      constexpr double p0_stddev_yaw =
+        tier4_autoware_utils::deg2rad(25);  // in map coordinate [rad]
+      constexpr double p0_cov_x = std::pow(p0_stddev_x, 2.0);
+      constexpr double p0_cov_y = std::pow(p0_stddev_y, 2.0);
+      constexpr double p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
+
+      const double cos_yaw = std::cos(yaw);
+      const double sin_yaw = std::sin(yaw);
+      const double sin_2yaw = std::sin(2.0 * yaw);
+      pose_cov[utils::MSG_COV_IDX::X_X] =
+        p0_cov_x * cos_yaw * cos_yaw + p0_cov_y * sin_yaw * sin_yaw;
+      pose_cov[utils::MSG_COV_IDX::X_Y] = 0.5 * (p0_cov_x - p0_cov_y) * sin_2yaw;
+      pose_cov[utils::MSG_COV_IDX::Y_Y] =
+        p0_cov_x * sin_yaw * sin_yaw + p0_cov_y * cos_yaw * cos_yaw;
+      pose_cov[utils::MSG_COV_IDX::Y_X] = pose_cov[utils::MSG_COV_IDX::X_Y];
+      pose_cov[utils::MSG_COV_IDX::YAW_YAW] = p0_cov_yaw;
+    }
+
+    if (!object.kinematics.has_twist_covariance) {
+      constexpr double p0_stddev_vel =
+        tier4_autoware_utils::kmph2mps(1000);  // in object coordinate [m/s]
+      vel_cov = std::pow(p0_stddev_vel, 2.0);
+    } else {
+      vel_cov = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+    }
+
+    const double slip = 0.0;
+    const double p0_stddev_slip = tier4_autoware_utils::deg2rad(5);  // in object coordinate [rad/s]
+    const double slip_cov = std::pow(p0_stddev_slip, 2.0);
+
+    // initialize motion model
+    motion_model_.init(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
+  }
 
   // Set motion model parameters
   constexpr double q_stddev_acc_long = 9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
@@ -287,7 +279,7 @@ bool BigVehicleTracker::measureWithPose(
 
     if (is_velocity_available) {
       is_updated = motion_model_.updateStatePoseHeadVel(
-        x, y, yaw, vel, object.kinematics.pose_with_covariance.covariance,
+        x, y, yaw, object.kinematics.pose_with_covariance.covariance, vel,
         object.kinematics.twist_with_covariance.covariance);
     } else {
       is_updated = motion_model_.updateStatePoseHead(

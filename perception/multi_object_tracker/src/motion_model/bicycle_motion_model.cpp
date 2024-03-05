@@ -56,6 +56,26 @@ bool BicycleMotionModel::init(
   return true;
 }
 
+bool BicycleMotionModel::init(
+  const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
+  const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
+  const double & slip, const double & slip_cov, const double & length)
+{
+  // initialize state vector X
+  Eigen::MatrixXd X(DIM, 1);
+  X << x, y, yaw, vel, slip;
+
+  // initialize covariance matrix P
+  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(DIM, DIM);
+  P(IDX::X, IDX::X) = pose_cov[utils::MSG_COV_IDX::X_X];
+  P(IDX::Y, IDX::Y) = pose_cov[utils::MSG_COV_IDX::Y_Y];
+  P(IDX::YAW, IDX::YAW) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
+  P(IDX::VEL, IDX::VEL) = vel_cov;
+  P(IDX::SLIP, IDX::SLIP) = slip_cov;
+
+  return init(time, X, P, length);
+}
+
 void BicycleMotionModel::setDefaultParams()
 {
   // set default motion parameters
@@ -189,8 +209,8 @@ bool BicycleMotionModel::updateStatePoseHead(
 }
 
 bool BicycleMotionModel::updateStatePoseHeadVel(
-  const double & x, const double & y, const double & yaw, const double & vel,
-  const std::array<double, 36> & pose_cov, const std::array<double, 36> & twist_cov)
+  const double & x, const double & y, const double & yaw, const std::array<double, 36> & pose_cov,
+  const double & vel, const std::array<double, 36> & twist_cov)
 {
   // check if the state is initialized
   if (!checkInitialized()) return false;

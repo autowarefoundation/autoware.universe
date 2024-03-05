@@ -45,13 +45,30 @@ bool CTRVMotionModel::init(
   // initialize Kalman filter
   ekf_.init(X, P);
 
-  // // set initial extended state
-  // updateExtendedState(length);
-
   // set initialized flag
   is_initialized_ = true;
 
   return true;
+}
+
+bool CTRVMotionModel::init(
+  const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
+  const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
+  const double & wz, const double & wz_cov)
+{
+  // initialize state vector X
+  Eigen::MatrixXd X(DIM, 1);
+  X << x, y, yaw, vel, wz;
+
+  // initialize covariance matrix P
+  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(DIM, DIM);
+  P(IDX::X, IDX::X) = pose_cov[utils::MSG_COV_IDX::X_X];
+  P(IDX::Y, IDX::Y) = pose_cov[utils::MSG_COV_IDX::Y_Y];
+  P(IDX::YAW, IDX::YAW) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
+  P(IDX::VEL, IDX::VEL) = vel_cov;
+  P(IDX::WZ, IDX::WZ) = wz_cov;
+
+  return init(time, X, P);
 }
 
 void CTRVMotionModel::setDefaultParams()
@@ -165,8 +182,8 @@ bool CTRVMotionModel::updateStatePoseHead(
 }
 
 bool CTRVMotionModel::updateStatePoseHeadVel(
-  const double & x, const double & y, const double & yaw, const double & vel,
-  const std::array<double, 36> & pose_cov, const std::array<double, 36> & twist_cov)
+  const double & x, const double & y, const double & yaw, const std::array<double, 36> & pose_cov,
+  const double & vel, const std::array<double, 36> & twist_cov)
 {
   // check if the state is initialized
   if (!checkInitialized()) return false;
