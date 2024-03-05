@@ -298,6 +298,17 @@ First, we divide the target objects into obstacles in the target lane, obstacles
 
 Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light. The explanation for parked car detection is written in [documentation for avoidance module](../behavior_path_avoidance_module/README.md).
 
+The detection area for the target lane can be expanded beyond its original boundaries to enable detection of objects that are outside the target lane's limits.
+
+<div align="center">
+  <table>
+    <tr>
+      <td><img src="./images/lane_change-lane_expansion-without" alt="Without lane expansion" width="400"></td>
+      <td><img src="./images/lane_change-lane_expansion-with.png" alt="With lane expansion" width="400"></td>
+    </tr>
+  </table>
+</div>
+
 ##### Collision check in prepare phase
 
 The ego vehicle may need to secure ample inter-vehicle distance ahead of the target vehicle before attempting a lane change. The flag `enable_collision_check_at_prepare_phase` can be enabled to gain this behavior. The following image illustrates the differences between the `false` and `true` cases.
