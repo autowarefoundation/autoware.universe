@@ -509,6 +509,9 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type MrmHandler::getCurrentMrmB
 
   // State machine
   if (mrm_state_.behavior == MrmState::NONE) {
+    if (is_operation_mode_availability_timeout) {
+      return MrmState::EMERGENCY_STOP;
+    }
     if (operation_mode_availability_->pull_over) {
       if (param_.use_pull_over) {
         return MrmState::PULL_OVER;
@@ -525,6 +528,9 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type MrmHandler::getCurrentMrmB
     return MrmState::EMERGENCY_STOP;
   }
   if (mrm_state_.behavior == MrmState::PULL_OVER) {
+    if (is_operation_mode_availability_timeout) {
+      return MrmState::EMERGENCY_STOP;
+    }
     if (operation_mode_availability_->pull_over) {
       if (param_.use_pull_over) {
         return MrmState::PULL_OVER;
@@ -541,6 +547,9 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type MrmHandler::getCurrentMrmB
     return MrmState::EMERGENCY_STOP;
   }
   if (mrm_state_.behavior == MrmState::COMFORTABLE_STOP) {
+    if (is_operation_mode_availability_timeout) {
+      return MrmState::EMERGENCY_STOP;
+    }
     if (isStopped() && operation_mode_availability_->pull_over) {
       if (param_.use_pull_over) {
         return MrmState::PULL_OVER;
@@ -557,6 +566,9 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type MrmHandler::getCurrentMrmB
     return MrmState::EMERGENCY_STOP;
   }
   if (mrm_state_.behavior == MrmState::EMERGENCY_STOP) {
+    if (is_operation_mode_availability_timeout) {
+      return MrmState::EMERGENCY_STOP;
+    }
     if (isStopped() && operation_mode_availability_->pull_over) {
       if (param_.use_pull_over) {
         return MrmState::PULL_OVER;
