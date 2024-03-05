@@ -121,7 +121,7 @@ start
 :Initialize sampled_values with min_acc;
 
 if (min_acc > max_acc) then (yes)
-  :Return {};
+  :Return empty list;
   stop
 elseif (max_acc - min_acc < epsilon) then (yes)
   :Return {0.0};
@@ -185,54 +185,97 @@ The following flow chart illustrates the validity check.
 
 ```plantuml
 @startuml
-skinparam monochrome true
 skinparam defaultTextAlignment center
-skinparam noteTextAlignment left
+skinparam backgroundColor #White
 
-title Selecting Valid Candidate Paths
 start
-:**INPUT** std::vector<LaneChangePath> input_paths;
-
-partition selectValidPaths {
-:**INITIALIZE** std::vector<LaneChangePath> valid_paths;
-
-:idx = 0;
-
-while (idx < input_paths.size()?)
-
-:path = input_paths.at(idx);
-
-partition hasEnoughDistance {
-
-if(lane_change_total_distance < distance to end of current lanes
-&&
-lane_change_total_distance < distance to the next intersection
-&&
-lane_change_total_distance < distance from current pose to the goal
-&&
-lane_change_total_distance < distance to crosswalk
-&&
-goal is in route
-) then (true)
-:path_validity  = true;
-else (\n false)
-:path_validity  = false;
+if (Check if start point is valid by check if it is covered by neighbour lanes polygon) then (not covered)
+  #LightPink:Reject path;
+  stop
+else (covered)
 endif
-}
 
-if(path_validity == true)then (true)
+group check for distance #LightYellow
+    :Calculate total length and goal related distances;
+    if (total lane change length considering single lane change > distance from current pose to end of current lanes) then (yes)
+      #LightPink:Reject path;
+      stop
+    else (no)
+    endif
 
-:valid_paths.push_back(path);
+    if (goal is in current lanes) then (yes)
+      if (total lane change length considering multiple lane changes > distance from ego to goal along current lanes) then (yes)
+         #LightPink:Reject path;
+        stop
+      else (no)
+      endif
+    else (no)
+    endif
 
-else (\nfalse)
+    if (target lanes is empty) then (yes)
+      #LightPink:Reject path;
+      stop
+    else (no)
+    endif
+    if (total lane change length considering multiple lane changes  > distance from ego to the end of target lanes) then (yes)
+      #LightPink:Reject path;
+      stop
+    else (no)
+    endif
+end group
+
+
+
+group evaluate on Crosswalk #LightCyan
+if (regulate_on_crosswalk and not enough length to crosswalk) then (yes)
+  if (stop time < stop time threshold\n(Related to stuck detection)) then (yes)
+    #LightPink:Reject path;
+    stop
+  else (no)
+    :Allow lane change in crosswalk;
+  endif
+else (no)
 endif
-:++idx;
-endwhile (false)
+end group
 
-:**RETURN** valid_paths;
+group evaluate on Intersection #LightGreen
+if (regulate_on_intersection and not enough length to intersection) then (yes)
+  if (stop time < stop time threshold\n(Related to stuck detection)) then (yes)
+    #LightPink:Reject path;
+    stop
+  else (no)
+    :Allow lane change in intersection;
+  endif
+else (no)
+endif
+end group
 
-}
+group evaluate on Traffic Light #Lavender
+if (regulate_on_traffic_light and not enough length to complete lane change before stop line) then (yes)
+  #LightPink:Reject path;
+  stop
+elseif (stopped at red traffic light within distance) then (yes)
+  #LightPink:Reject path;
+  stop
+else (no)
+endif
+end group
+
+if (ego is not stuck but parked vehicle exists in target lane) then (yes)
+  #LightPink:Reject path;
+  stop
+else (no)
+endif
+
+if (is safe to perform lane change) then (yes)
+  #Cyan:Return candidate path list;
+  stop
+else (no)
+  #LightPink:Reject path;
+endif
+
 stop
+
 @enduml
 ```
 
