@@ -296,6 +296,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
   const auto target_lanes = utils::getCurrentLanes(planner_data_);
   if (target_lanes.empty()) return false;
 
+  // Define functions to get distance between a point and a lane's boundaries.
   auto calc_right_lateral_offset = [&](
                                      const lanelet::ConstLineString2d & boundary_line,
                                      const geometry_msgs::msg::Pose & search_pose) {
@@ -316,20 +317,17 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
     return -calc_right_lateral_offset(boundary_line, search_pose);
   };
 
+  // Get the ego's overhang point closest to the centerline path and the gap between said point an
+  // the lane's border.
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
   const auto vehicle_footprint =
     transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
-
-  const auto target_backward_lanes = behavior_path_planner::utils::getBackwardLanelets(
-    *route_handler, target_lanes, current_pose, 200.0);
-
   const auto centerline_path =
     route_handler->getCenterLinePath(target_lanes, 0.0, std::numeric_limits<double>::max());
-
   double smallest_lateral_offset = std::numeric_limits<double>::max();
-  double left_dist = 0;
-  double right_dist = 0;
-  geometry_msgs::msg::Pose ego_overhang_pose;
+  double left_dist_to_lane_border = 0.0;
+  double right_dist_to_lane_border = 0.0;
+  geometry_msgs::msg::Pose ego_overhang_point_as_pose;
   for (const auto & point : vehicle_footprint) {
     geometry_msgs::msg::Pose point_pose;
     point_pose.position.x = point.x();
@@ -347,9 +345,9 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
 
     if (lateral_offset < smallest_lateral_offset) {
       smallest_lateral_offset = lateral_offset;
-      ego_overhang_pose.position.x = point.x();
-      ego_overhang_pose.position.y = point.y();
-      ego_overhang_pose.position.z = 0.0;
+      ego_overhang_point_as_pose.position.x = point.x();
+      ego_overhang_point_as_pose.position.y = point.y();
+      ego_overhang_point_as_pose.position.z = 0.0;
 
       lanelet::Lanelet closest_lanelet;
       lanelet::utils::query::getClosestLanelet(target_lanes, point_pose, &closest_lanelet);
@@ -357,62 +355,73 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
 
       const lanelet::ConstLineString2d current_left_bound = closest_lanelet_const.leftBound2d();
       const lanelet::ConstLineString2d current_right_bound = closest_lanelet_const.rightBound2d();
-      left_dist = calc_left_lateral_offset(current_left_bound, point_pose);
-      right_dist = calc_right_lateral_offset(current_right_bound, point_pose);
-      // const double current_lane_width = std::fabs(left_dist) + std::fabs(right_dist);
+      left_dist_to_lane_border = calc_left_lateral_offset(current_left_bound, point_pose);
+      right_dist_to_lane_border = calc_right_lateral_offset(current_right_bound, point_pose);
     }
   }
-
   if (smallest_lateral_offset == std::numeric_limits<double>::max()) return false;
+
+  const double gap_between_ego_and_lane_border =
+    (std::abs(left_dist_to_lane_border) > std::abs(right_dist_to_lane_border))
+      ? std::abs(left_dist_to_lane_border)
+      : std::abs(right_dist_to_lane_border);
+
   std::cerr << "smallest_lateral_offset " << smallest_lateral_offset << "\n";
-  std::cerr << "left_dist " << left_dist << "\n";
-  std::cerr << "right_dist " << right_dist << "\n";
+  std::cerr << "remaining gap " << gap_between_ego_and_lane_border << "\n";
 
-  lanelet::Lanelet closest_lanelet;
-  const bool is_closest_lanelet =
-    lanelet::utils::query::getClosestLanelet(target_lanes, ego_overhang_pose, &closest_lanelet);
-  if (!is_closest_lanelet) return false;
-  lanelet::ConstLanelet closest_lanelet_const(closest_lanelet.constData());
-  // Check backwards just in case the Vehicle behind ego is in a different lanelet
-  const auto prev_lanes = route_handler->getPreviousLanelets(closest_lanelet);
-  lanelet::ConstLanelets relevant_lanelets{closest_lanelet_const};
-  relevant_lanelets.insert(relevant_lanelets.end(), prev_lanes.begin(), prev_lanes.end());
+  // Get the lanelets that will be queried for target objects
+  const auto relevant_lanelets = std::invoke([&]() -> std::optional<lanelet::ConstLanelets> {
+    lanelet::Lanelet closest_lanelet;
+    const bool is_closest_lanelet = lanelet::utils::query::getClosestLanelet(
+      target_lanes, ego_overhang_point_as_pose, &closest_lanelet);
+    if (!is_closest_lanelet) return std::nullopt;
+    lanelet::ConstLanelet closest_lanelet_const(closest_lanelet.constData());
+    // Check backwards just in case the Vehicle behind ego is in a different lanelet
+    const auto prev_lanes = route_handler->getPreviousLanelets(closest_lanelet);
+    // return all the relevant lanelets
+    lanelet::ConstLanelets relevant_lanelets{closest_lanelet_const};
+    relevant_lanelets.insert(relevant_lanelets.end(), prev_lanes.begin(), prev_lanes.end());
+    return relevant_lanelets;
+  });
+  if (!relevant_lanelets) return false;
 
-  // // filtering objects with velocity, position and class
+  // filtering objects with velocity, position and class
   std::cerr << "Filter objects \n";
   const auto filtered_objects = utils::path_safety_checker::filterObjects(
-    dynamic_object, route_handler, relevant_lanelets, current_pose.position,
+    dynamic_object, route_handler, relevant_lanelets.value(), current_pose.position,
     objects_filtering_params_);
   if (filtered_objects.objects.empty()) return false;
 
   // filtering objects based on the current position's lane
   const auto target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
-    relevant_lanelets, route_handler, filtered_objects, objects_filtering_params_);
+    relevant_lanelets.value(), route_handler, filtered_objects, objects_filtering_params_);
   if (target_objects_on_lane.on_current_lane.empty()) return false;
 
-  double arc_length_to_closet_object = std::numeric_limits<double>::max();
-  auto target_object_itr = target_objects_on_lane.on_current_lane.begin();
-  for (auto itr = target_objects_on_lane.on_current_lane.begin();
-       itr != target_objects_on_lane.on_current_lane.end(); itr++) {
-    const auto arc_length = motion_utils::calcSignedArcLength(
-      centerline_path.points, current_pose.position, itr->initial_pose.pose.position);
-    if (arc_length > 0.0) continue;  // Object in front of ego is ignored
-    if (std::abs(arc_length) < std::abs(arc_length_to_closet_object)) {
-      arc_length_to_closet_object = arc_length;
-      target_object_itr = itr;
-    }
-  }
+  // Get the closest target obj in the relevant lanes
+  const auto closest_object_width = std::invoke([&]() -> std::optional<double> {
+    double arc_length_to_closet_object = std::numeric_limits<double>::max();
+    double closest_object_width = -1.0;
 
-  if (arc_length_to_closet_object == std::numeric_limits<double>::max()) return false;
-  const double remaining_gap =
-    (std::abs(left_dist) > std::abs(right_dist)) ? std::abs(left_dist) : std::abs(right_dist);
+    std::for_each(
+      target_objects_on_lane.on_current_lane.begin(), target_objects_on_lane.on_current_lane.end(),
+      [&](const auto & o) {
+        const auto arc_length = motion_utils::calcSignedArcLength(
+          centerline_path.points, current_pose.position, o.initial_pose.pose.position);
+        if (arc_length > 0.0) return;
+        if (std::abs(arc_length) >= std::abs(arc_length_to_closet_object)) return;
+        arc_length_to_closet_object = arc_length;
+        closest_object_width = o.shape.dimensions.y;
+      });
+    if (closest_object_width < 0.0) return std::nullopt;
+    return closest_object_width;
+  });
+  if (!closest_object_width) return false;
+
   std::cerr << "Dims \n";
-  std::cerr << "target_object_itr->shape.dimensions.y " << target_object_itr->shape.dimensions.y
-            << "\n";
-
-  std::cerr << "remaining_gap " << remaining_gap << "\n";
-
-  return target_object_itr->shape.dimensions.y > remaining_gap;
+  std::cerr << "target_object_itr->shape.dimensions.y " << closest_object_width.value() << "\n";
+  std::cerr << "gap_between_ego_and_lane_border " << gap_between_ego_and_lane_border << "\n";
+  // Decide if the closest object does not fit in the gap left by the ego vehicle.
+  return closest_object_width.value() > gap_between_ego_and_lane_border;
 }
 
 bool StartPlannerModule::isOverlapWithCenterLane() const
