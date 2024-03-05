@@ -75,6 +75,11 @@ NormalVehicleTracker::NormalVehicleTracker(
   ekf_params_.p0_cov_vel = std::pow(p0_stddev_vel, 2.0);
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
 
+  // velocity deviation threshold
+  //   if the predicted velocity is close to the observed velocity,
+  //   the observed velocity is used as the measurement.
+  velocity_deviation_threshold_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
+
   // initialize state vector X
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
   X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
@@ -273,6 +278,7 @@ bool NormalVehicleTracker::measureWithPose(
   z_ = gain * z_ + (1.0 - gain) * object.kinematics.pose_with_covariance.pose.position.z;
 
   // motion model
+  bool is_updated = false;
   {
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
@@ -280,17 +286,17 @@ bool NormalVehicleTracker::measureWithPose(
     const double vel = object.kinematics.twist_with_covariance.twist.linear.x;
 
     if (is_velocity_available) {
-      motion_model_.updateStatePoseHeadVel(
+      is_updated = motion_model_.updateStatePoseHeadVel(
         x, y, yaw, vel, object.kinematics.pose_with_covariance.covariance,
         object.kinematics.twist_with_covariance.covariance);
     } else {
-      motion_model_.updateStatePoseHead(
+      is_updated = motion_model_.updateStatePoseHead(
         x, y, yaw, object.kinematics.pose_with_covariance.covariance);
     }
     motion_model_.limitStates();
   }
 
-  return true;
+  return is_updated;
 }
 
 bool NormalVehicleTracker::measureWithShape(
@@ -353,7 +359,6 @@ bool NormalVehicleTracker::getTrackedObject(
   object.object_id = getUUID();
   object.classification = getClassification();
 
-  /*  put predicted pose and twist to output object  */
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
 
