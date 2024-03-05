@@ -4,6 +4,10 @@ The Lane Change module is activated when lane change is needed and can be safely
 
 ## Lane Change Requirement
 
+- As the prerequisite, the type of lane boundary in the HD map has to be one of the following:
+  - Dashed lane marking: Lane changes are permitted in both directions.
+  - Dashed marking on the left and solid on the right: Lane changes are allowed from left to right.
+  - Dashed marking on the right and solid on the left: Lane changes are allowed from right to left.
 - During lane change request condition
   - The ego-vehicle isn’t on a `preferred_lane`.
   - There is neither intersection nor crosswalk on the path of the lane change
