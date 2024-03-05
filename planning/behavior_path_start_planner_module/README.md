@@ -319,19 +319,27 @@ PullOutPath --o PullOutPlannerBase
 
 ## General parameters for start_planner
 
-| Name                                                        | Unit  | Type     | Description                                                                 | Default value   |
-| :---------------------------------------------------------- | :---- | :------- | :-------------------------------------------------------------------------- | :-------------- |
-| th_arrived_distance_m                                       | [m]   | double   | distance threshold for arrival of path termination                          | 1.0             |
-| th_distance_to_middle_of_the_road                           | [m]   | double   | distance threshold to determine if the vehicle is on the middle of the road | 0.1             |
-| th_stopped_velocity_mps                                     | [m/s] | double   | velocity threshold for arrival of path termination                          | 0.01            |
-| th_stopped_time_sec                                         | [s]   | double   | time threshold for arrival of path termination                              | 1.0             |
-| th_turn_signal_on_lateral_offset                            | [m]   | double   | lateral distance threshold for turning on blinker                           | 1.0             |
-| intersection_search_length                                  | [m]   | double   | check if intersections exist within this length                             | 30.0            |
-| length_ratio_for_turn_signal_deactivation_near_intersection | [m]   | double   | deactivate turn signal of this module near intersection                     | 0.5             |
-| collision_check_margins                                     | [m]   | [double] | Obstacle collision check margins list                                       | [2.0, 1.5, 1.0] |
-| collision_check_distance_from_end                           | [m]   | double   | collision check distance from end shift end pose                            | 1.0             |
-| collision_check_margin_from_front_object                    | [m]   | double   | collision check margin from front object                                    | 5.0             |
-| center_line_path_interval                                   | [m]   | double   | reference center line path point interval                                   | 1.0             |
+| Name                                                        | Unit  | Type   | Description                                                                 | Default value        |
+| :---------------------------------------------------------- | :---- | :----- | :-------------------------------------------------------------------------- | :------------------- |
+| th_arrived_distance_m                                       | [m]   | double | distance threshold for arrival of path termination                          | 1.0                  |
+| th_distance_to_middle_of_the_road                           | [m]   | double | distance threshold to determine if the vehicle is on the middle of the road | 0.1                  |
+| th_stopped_velocity_mps                                     | [m/s] | double | velocity threshold for arrival of path termination                          | 0.01                 |
+| th_stopped_time_sec                                         | [s]   | double | time threshold for arrival of path termination                              | 1.0                  |
+| th_turn_signal_on_lateral_offset                            | [m]   | double | lateral distance threshold for turning on blinker                           | 1.0                  |
+| intersection_search_length                                  | [m]   | double | check if intersections exist within this length                             | 30.0                 |
+| length_ratio_for_turn_signal_deactivation_near_intersection | [m]   | double | deactivate turn signal of this module near intersection                     | 0.5                  |
+| collision_check_margins                                     | [m]   | double | Obstacle collision check margins list                                       | [2.0, 1.0, 0.5, 0.1] |
+| shift_collision_check_distance_from_end                     | [m]   | double | collision check distance from end shift end pose                            | -10.0                |
+| geometric_collision_check_distance_from_end                 | [m]   | double | collision check distance from end geometric end pose                        | 0.0                  |
+| collision_check_margin_from_front_object                    | [m]   | double | collision check margin from front object                                    | 5.0                  |
+| object_types_to_check_for_path_generation.check_car         | -     | bool   | flag to check car for path generation                                       | true                 |
+| object_types_to_check_for_path_generation.check_truck       | -     | bool   | flag to check truck for path generation                                     | true                 |
+| object_types_to_check_for_path_generation.check_bus         | -     | bool   | flag to check bus for path generation                                       | true                 |
+| object_types_to_check_for_path_generation.check_bicycle     | -     | bool   | flag to check bicycle for path generation                                   | true                 |
+| object_types_to_check_for_path_generation.check_motorcycle  | -     | bool   | flag to check motorcycle for path generation                                | true                 |
+| object_types_to_check_for_path_generation.check_pedestrian  | -     | bool   | flag to check pedestrian for path generation                                | true                 |
+| object_types_to_check_for_path_generation.check_unknown     | -     | bool   | flag to check unknown for path generation                                   | true                 |
+| center_line_path_interval                                   | [m]   | double | reference center line path point interval                                   | 1.0                  |
 
 ### **Ego vehicle's velocity planning**
 
@@ -432,16 +440,17 @@ Pull out distance is calculated by the speed, lateral deviation, and the lateral
 
 #### parameters for shift pull out
 
-| Name                            | Unit   | Type   | Description                                                                                                          | Default value |
-| :------------------------------ | :----- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_shift_pull_out           | [-]    | bool   | flag whether to enable shift pull out                                                                                | true          |
-| check_shift_path_lane_departure | [-]    | bool   | flag whether to check if shift path footprints are out of lane                                                       | false         |
-| shift_pull_out_velocity         | [m/s]  | double | velocity of shift pull out                                                                                           | 2.0           |
-| pull_out_sampling_num           | [-]    | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                                  | 4             |
-| maximum_lateral_jerk            | [m/s3] | double | maximum lateral jerk                                                                                                 | 2.0           |
-| minimum_lateral_jerk            | [m/s3] | double | minimum lateral jerk                                                                                                 | 0.1           |
-| minimum_shift_pull_out_distance | [m]    | double | minimum shift pull out distance. if calculated pull out distance is shorter than this, use this for path generation. | 0.0           |
-| maximum_curvature               | [m]    | double | maximum curvature. The pull out distance is calculated so that the curvature is smaller than this value.             | 0.07          |
+| Name                                           | Unit   | Type   | Description                                                                                                          | Default value |
+| :--------------------------------------------- | :----- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
+| enable_shift_pull_out                          | [-]    | bool   | flag whether to enable shift pull out                                                                                | true          |
+| check_shift_path_lane_departure                | [-]    | bool   | flag whether to check if shift path footprints are out of lane                                                       | true          |
+| allow_check_shift_path_lane_departure_override | [-]    | bool   | flag to override/cancel lane departure check if the ego vehicle's starting pose is already out of lane               | false         |
+| shift_pull_out_velocity                        | [m/s]  | double | velocity of shift pull out                                                                                           | 2.0           |
+| pull_out_sampling_num                          | [-]    | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                                  | 4             |
+| maximum_lateral_jerk                           | [m/s3] | double | maximum lateral jerk                                                                                                 | 2.0           |
+| minimum_lateral_jerk                           | [m/s3] | double | minimum lateral jerk                                                                                                 | 0.1           |
+| minimum_shift_pull_out_distance                | [m]    | double | minimum shift pull out distance. if calculated pull out distance is shorter than this, use this for path generation. | 0.0           |
+| maximum_curvature                              | [m]    | double | maximum curvature. The pull out distance is calculated so that the curvature is smaller than this value.             | 0.07          |
 
 ### **geometric pull out**
 

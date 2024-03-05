@@ -223,6 +223,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // safety check rss params
   {
     const std::string ns = "avoidance.safety_check.";
+    p.rss_params.extended_polygon_policy =
+      getOrDeclareParameter<std::string>(*node, ns + "extended_polygon_policy");
     p.rss_params.longitudinal_distance_min_threshold =
       getOrDeclareParameter<double>(*node, ns + "longitudinal_distance_min_threshold");
     p.rss_params.longitudinal_velocity_delta_time =
@@ -256,6 +258,12 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.max_left_shift_length = getOrDeclareParameter<double>(*node, ns + "max_left_shift_length");
     p.max_deviation_from_lane =
       getOrDeclareParameter<double>(*node, ns + "max_deviation_from_lane");
+    p.ratio_for_return_shift_approval =
+      getOrDeclareParameter<double>(*node, ns + "ratio_for_return_shift_approval");
+    if (p.ratio_for_return_shift_approval < 0.0 || p.ratio_for_return_shift_approval > 1.0) {
+      throw std::domain_error(
+        "ratio_for_return_shift_approval should be within range of 0.0 to 1.0");
+    }
   }
 
   // avoidance maneuver (longitudinal)
