@@ -60,6 +60,89 @@ longitudinal_acceleration_resolution = (maximum_longitudinal_acceleration - mini
 
 Note that when the `current_velocity` is lower than `minimum_lane_changing_velocity`, the vehicle needs to accelerate its velocity to `minimum_lane_changing_velocity`. Therefore, longitudinal acceleration becomes positive value (not decelerate).
 
+The chart illustrates the conditions under which longitudinal acceleration values are sampled.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+if (prev_module_path is empty?) then (yes)
+  :Return empty list;
+  stop
+else (no)
+endif
+
+if (max_acc <= 0.0) then (yes)
+  :Return **sampled acceleration values**;
+  note left: Calculated sampled acceleration using\n<color:red>getAccelerationValues(min_acc, max_acc, longitudinal_acc_sampling_num)</color>
+  stop
+endif
+
+if (max_lane_change_length >  ego's distance to the end of the current lanes.) then (yes)
+  :Return **sampled acceleration values**;
+  stop
+endif
+
+if (isVehicleStuck(current_lanes)) then (yes)
+  :Return **sampled acceleration values**;
+  stop
+else (no)
+endif
+
+if (is goal is in target lanes) then (yes)
+  if (max_lane_change_length < ego's distance to the goal along the target lanes) then (yes)
+    :Return {max_acc};
+    stop
+  else (no)
+  endif
+else (no)
+  if (max_lane_change_length < ego's distance to the end of the target lanes.) then (yes)
+    :Return {max_acc};
+    stop
+  else (no)
+  endif
+endif
+
+:Return **sampled acceleration values**;
+stop
+
+@enduml
+
+```
+
+while the following describes the process by which longitudinal accelerations are sampled.
+
+```plantuml
+@startuml
+start
+:Initialize sampled_values with min_acc;
+
+if (min_acc > max_acc) then (yes)
+  :Return {};
+  stop
+elseif (max_acc - min_acc < epsilon) then (yes)
+  :Return {0.0};
+  stop
+else (no)
+  :Calculate resolution;
+endif
+
+:Start loop from min_acc to max_acc with resolution step;
+repeat
+  if (sampled_values.back() < -epsilon AND next_value > epsilon) then (yes)
+    :Insert 0.0 into sampled_values;
+  endif
+  :Add sampled_acc to sampled_values;
+  repeat while (sampled_acc < max_acc + epsilon) is (TRUE)
+
+:Return sampled_values;
+stop
+@enduml
+```
+
 The following figure illustrates when `longitudinal_acceleration_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
 
 ![path_samples](./images/lane_change-candidate_path_samples.png)
