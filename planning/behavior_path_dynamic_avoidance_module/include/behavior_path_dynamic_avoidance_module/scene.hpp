@@ -354,7 +354,7 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  ObjectBehaviorType isLabelTargetObstacle(const uint8_t label) const;
+  ObjectBehaviorType getLabelAsTargetObstacle(const uint8_t label) const;
   void registerLaneDriveObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
   void registerFreeRunObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
   void determineWheterToAvoidAgainstLaneDriveObjects(
