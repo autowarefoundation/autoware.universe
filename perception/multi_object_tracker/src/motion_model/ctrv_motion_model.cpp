@@ -444,7 +444,7 @@ bool CTRVMotionModel::getPredictedState(
   twist_cov[utils::MSG_COV_IDX::Y_X] = 0.0;
   twist_cov[utils::MSG_COV_IDX::Y_Y] = vy_cov;
   twist_cov[utils::MSG_COV_IDX::Y_YAW] = 0.0;
-  twist_cov[utils::MSG_COV_IDX::YAW_X] = 0.0;
+  twist_cov[utils::MSG_COV_IDX::YAW_X] = P(IDX::WZ, IDX::VEL);
   twist_cov[utils::MSG_COV_IDX::YAW_Y] = 0.0;
   twist_cov[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
   twist_cov[utils::MSG_COV_IDX::Z_Z] = vz_cov;
