@@ -73,8 +73,11 @@ UnknownTracker::UnknownTracker(
   X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
   X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
   if (object.kinematics.has_twist) {
-    X(IDX::VX) = object.kinematics.twist_with_covariance.twist.linear.x;
-    X(IDX::VY) = object.kinematics.twist_with_covariance.twist.linear.y;
+    const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const double & vx = object.kinematics.twist_with_covariance.twist.linear.x;
+    const double & vy = object.kinematics.twist_with_covariance.twist.linear.y;
+    X(IDX::VX) = std::cos(yaw) * vx - std::sin(yaw) * vy;
+    X(IDX::VY) = std::sin(yaw) * vx + std::cos(yaw) * vy;
   } else {
     X(IDX::VX) = 0.0;
     X(IDX::VY) = 0.0;
