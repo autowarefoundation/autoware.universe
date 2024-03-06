@@ -78,7 +78,7 @@ class GroundSegmentationPipeline:
         )
         min_z = (
             self.vehicle_info["min_height_offset"]
-            - self.ground_segmentation_param[f"{lidar_name}_crop_box_filter"]["parameters"][
+            + self.ground_segmentation_param[f"{lidar_name}_crop_box_filter"]["parameters"][
                 "margin_min_z"
             ]
         )
@@ -226,7 +226,7 @@ class GroundSegmentationPipeline:
         )
         min_z = (
             self.vehicle_info["min_height_offset"]
-            - self.ground_segmentation_param["common_crop_box_filter"]["parameters"]["margin_min_z"]
+            + self.ground_segmentation_param["common_crop_box_filter"]["parameters"]["margin_min_z"]
         )
         components = []
         components.append(
