@@ -12,7 +12,7 @@ jobs:
   prevent-no-label-execution:
     uses: autowarefoundation/autoware-github-actions/.github/workflows/prevent-no-label-execution.yaml@v1
     with:
-      label: ARM64
+      label: type:arm64
 
   build-and-test-differential-arm64:
     needs: prevent-no-label-execution
