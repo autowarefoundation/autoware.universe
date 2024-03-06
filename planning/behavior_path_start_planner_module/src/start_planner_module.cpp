@@ -317,7 +317,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
     return -calc_right_lateral_offset(boundary_line, search_pose);
   };
 
-  // Get the ego's overhang point closest to the centerline path and the gap between said point an
+  // Get the ego's overhang point closest to the centerline path and the gap between said point and
   // the lane's border.
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
   const auto vehicle_footprint =
