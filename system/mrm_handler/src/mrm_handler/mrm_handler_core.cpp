@@ -259,7 +259,7 @@ void MrmHandler::operateMrm()
   RCLCPP_WARN(this->get_logger(), "invalid MRM state: %d", mrm_state_.state);
 }
 
-void MrmHandler::handleFailureRequest()
+void MrmHandler::handleFailedRequest()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 

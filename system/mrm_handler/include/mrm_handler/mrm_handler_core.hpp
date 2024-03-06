@@ -155,7 +155,7 @@ private:
   void transitionTo(const int new_state);
   void updateMrmState();
   void operateMrm();
-  void handleFailureRequest();
+  void handleFailedRequest();
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
   bool isEmergency() const;
