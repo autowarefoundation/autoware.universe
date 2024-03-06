@@ -126,12 +126,14 @@ PedestrianTracker::PedestrianTracker(
   }
 
   // Set motion model parameters
-  constexpr double q_stddev_x = 0.4;                                  // [m/s]
-  constexpr double q_stddev_y = 0.4;                                  // [m/s]
-  constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
-  constexpr double q_stddev_vx = tier4_autoware_utils::kmph2mps(5);   // [m/(s*s)]
-  constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
-  motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vx, q_stddev_wz);
+  {
+    constexpr double q_stddev_x = 0.4;                                  // [m/s]
+    constexpr double q_stddev_y = 0.4;                                  // [m/s]
+    constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
+    constexpr double q_stddev_vx = tier4_autoware_utils::kmph2mps(5);   // [m/(s*s)]
+    constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
+    motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vx, q_stddev_wz);
+  }
 
   // Set motion limits
   motion_model_.setMotionLimits(
@@ -218,6 +220,7 @@ bool PedestrianTracker::measure(
       (time - last_update_time_).seconds());
   }
 
+  // update object
   measureWithPose(object);
   measureWithShape(object);
 

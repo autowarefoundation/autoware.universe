@@ -27,6 +27,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+// cspell: ignore CTRV
 // Constant Turn Rate and constant Velocity (CTRV) motion model
 
 CTRVMotionModel::CTRVMotionModel()
