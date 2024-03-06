@@ -425,7 +425,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::planWaitingApproval()
   return out;
 }
 
-ObjectBehaviorType DynamicAvoidanceModule::isLabelTargetObstacle(const uint8_t label) const
+ObjectBehaviorType DynamicAvoidanceModule::getLabelAsTargetObstacle(const uint8_t label) const
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
 
@@ -480,7 +480,7 @@ void DynamicAvoidanceModule::registerLaneDriveObjects(
 
     // 1.a. check label
     if (
-      isLabelTargetObstacle(predicted_object.classification.front().label) !=
+      getLabelAsTargetObstacle(predicted_object.classification.front().label) !=
       ObjectBehaviorType::LaneDriveObject) {
       continue;
     }
@@ -571,7 +571,7 @@ void DynamicAvoidanceModule::registerFreeRunObjects(
 
     // 1.a. check label
     if (
-      isLabelTargetObstacle(predicted_object.classification.front().label) !=
+      getLabelAsTargetObstacle(predicted_object.classification.front().label) !=
       ObjectBehaviorType::FreeRunObject) {
       continue;
     }
@@ -591,8 +591,8 @@ void DynamicAvoidanceModule::registerFreeRunObjects(
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
         "[DynamicAvoidance] Ignore obstacle (%s) since it crosses the ego's path with its normal "
-        "vel (%s) m/s.",
-        obj_uuid.c_str(), std::to_string(obj_normal_vel).c_str());
+        "vel (%5.2f) m/s.",
+        obj_uuid.c_str(), obj_normal_vel);
       continue;
     }
 
@@ -608,8 +608,8 @@ void DynamicAvoidanceModule::registerFreeRunObjects(
     if (space_between_obj_and_ego > parameters_->max_obj_lat_offset_to_ego_path) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since lateral offset (%s) is large.",
-        obj_uuid.c_str(), std::to_string(estimated_dist_obj_center_to_path).c_str());
+        "[DynamicAvoidance] Ignore obstacle (%s) since lateral offset (%7.3f) is large.",
+        obj_uuid.c_str(), estimated_dist_obj_center_to_path);
       continue;
     }
 
@@ -646,7 +646,7 @@ void DynamicAvoidanceModule::determineWheterToAvoidAgainstLaneDriveObjects(
   const auto & input_path = getPreviousModuleOutput().path;
 
   for (const auto & object : target_objects_manager_.getValidObjects()) {
-    if (isLabelTargetObstacle(object.label) != ObjectBehaviorType::LaneDriveObject) {
+    if (getLabelAsTargetObstacle(object.label) != ObjectBehaviorType::LaneDriveObject) {
       continue;
     }
 
@@ -805,7 +805,7 @@ void DynamicAvoidanceModule::determineWheterToAvoidAgainstFreeRunObjects(
   const auto & input_path = getPreviousModuleOutput().path;
 
   for (const auto & object : target_objects_manager_.getValidObjects()) {
-    if (isLabelTargetObstacle(object.label) != ObjectBehaviorType::FreeRunObject) {
+    if (getLabelAsTargetObstacle(object.label) != ObjectBehaviorType::FreeRunObject) {
       continue;
     }
 
@@ -1075,10 +1075,10 @@ bool DynamicAvoidanceModule::isObjectFarFromPath(
   const PredictedObject & predicted_object, const double obj_dist_to_path) const
 {
   const double obj_max_length = calcObstacleMaxLength(predicted_object.shape);
-  const double space_between_obj_and_ego = std::max(
+  const double min_obj_dist_to_path = std::max(
     0.0, obj_dist_to_path - planner_data_->parameters.vehicle_width / 2.0 - obj_max_length);
 
-  return parameters_->max_obj_lat_offset_to_ego_path < space_between_obj_and_ego;
+  return parameters_->max_obj_lat_offset_to_ego_path < min_obj_dist_to_path;
 }
 
 bool DynamicAvoidanceModule::willObjectCutIn(
