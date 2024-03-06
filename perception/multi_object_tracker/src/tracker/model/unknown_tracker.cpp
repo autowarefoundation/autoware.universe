@@ -182,8 +182,8 @@ bool UnknownTracker::measureWithPose(
   }
 
   // position z
-  constexpr double gain = 0.9;
-  z_ = gain * z_ + (1.0 - gain) * object.kinematics.pose_with_covariance.pose.position.z;
+  constexpr double gain = 0.1;
+  z_ = (1.0 - gain) * z_ + gain * object.kinematics.pose_with_covariance.pose.position.z;
 
   return is_updated;
 }

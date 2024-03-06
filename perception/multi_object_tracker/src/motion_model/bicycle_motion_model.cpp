@@ -314,8 +314,11 @@ bool BicycleMotionModel::predictState(const rclcpp::Time & time)
     if (!predictState(dt_, ekf_)) {
       return false;
     }
-    last_update_time_ = time;
+    // add interval to last_update_time_
+    last_update_time_ += rclcpp::Duration::from_seconds(dt_);
   }
+  // update last_update_time_ to the estimation time
+  last_update_time_ = time;
   return true;
 }
 
@@ -345,8 +348,6 @@ bool BicycleMotionModel::predictState(const double dt, KalmanFilter & ekf) const
    *     [ 0, 0,  0,                  0,                   1]
    *
    */
-
-  // MOTION MODEL (predict)
 
   // Current state vector X t
   Eigen::MatrixXd X_t = getStateVector();

@@ -78,7 +78,7 @@ void CTRVMotionModel::setDefaultParams()
   constexpr double q_stddev_x = 0.5;                                  // [m/s]
   constexpr double q_stddev_y = 0.5;                                  // [m/s]
   constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
-  constexpr double q_stddev_vel = 9.8 * 0.3;                           // [m/(s*s)]
+  constexpr double q_stddev_vel = 9.8 * 0.3;                          // [m/(s*s)]
   constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
 
   setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vel, q_stddev_wz);
@@ -281,8 +281,11 @@ bool CTRVMotionModel::predictState(const rclcpp::Time & time)
     if (!predictState(dt_, ekf_)) {
       return false;
     }
-    last_update_time_ = time;
+    // add interval to last_update_time_
+    last_update_time_ += rclcpp::Duration::from_seconds(dt_);
   }
+  // update last_update_time_ to the estimation time
+  last_update_time_ = time;
   return true;
 }
 
@@ -306,8 +309,6 @@ bool CTRVMotionModel::predictState(const double dt, KalmanFilter & ekf) const
    *     [ 0, 0,               0,           1,  0]
    *     [ 0, 0,               0,           0,  1]
    */
-
-  // MOTION MODEL (predict)
 
   // Current state vector X t
   Eigen::MatrixXd X_t = getStateVector();

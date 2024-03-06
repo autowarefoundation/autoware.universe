@@ -128,9 +128,9 @@ PedestrianTracker::PedestrianTracker(
   // Set motion model parameters
   {
     constexpr double q_stddev_x = 0.5;                                  // [m/s]
-    constexpr double q_stddev_y = 0.3;                                  // [m/s]
+    constexpr double q_stddev_y = 0.5;                                  // [m/s]
     constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
-    constexpr double q_stddev_vx = tier4_autoware_utils::kmph2mps(5);   // [m/(s*s)]
+    constexpr double q_stddev_vx = 9.8 * 0.3;                           // [m/(s*s)]
     constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
     motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vx, q_stddev_wz);
   }
@@ -192,8 +192,8 @@ bool PedestrianTracker::measureWithPose(
   }
 
   // position z
-  constexpr float gain = 0.9;
-  z_ = gain * z_ + (1.0 - gain) * object.kinematics.pose_with_covariance.pose.position.z;
+  constexpr double gain = 0.1;
+  z_ = (1.0 - gain) * z_ + gain * object.kinematics.pose_with_covariance.pose.position.z;
 
   return is_updated;
 }
@@ -201,8 +201,8 @@ bool PedestrianTracker::measureWithPose(
 bool PedestrianTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  constexpr float gain = 0.2;
-  constexpr float gain_inv = 1.0 - gain;
+  constexpr double gain = 0.1;
+  constexpr double gain_inv = 1.0 - gain;
 
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;

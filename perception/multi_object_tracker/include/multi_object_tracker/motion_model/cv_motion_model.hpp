@@ -52,6 +52,7 @@ private:
     double q_cov_vy;
     double max_vx;
     double max_vy;
+    double dt_max;
   } motion_params_;
 
 public:

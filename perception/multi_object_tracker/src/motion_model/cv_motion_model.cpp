@@ -86,6 +86,10 @@ void CVMotionModel::setDefaultParams()
   constexpr double max_vx = tier4_autoware_utils::kmph2mps(60);  // [m/s]
   constexpr double max_vy = tier4_autoware_utils::kmph2mps(60);  // [m/s]
   setMotionLimits(max_vx, max_vy);
+
+  // set prediction parameters
+  constexpr double dt_max = 0.11;  // [s]
+  motion_params_.dt_max = dt_max;
 }
 
 void CVMotionModel::setMotionParams(
@@ -209,9 +213,17 @@ bool CVMotionModel::predictState(const rclcpp::Time & time)
     RCLCPP_WARN(logger_, "CVMotionModel::predictState: dt is negative. (%f)", dt);
     return false;
   }
-  if (!predictState(dt, ekf_)) {
-    return false;
+  // if dt is too large, shorten dt and repeat prediction
+  const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
+  const double dt_ = dt / repeat;
+  for (uint32_t i = 0; i < repeat; ++i) {
+    if (!predictState(dt_, ekf_)) {
+      return false;
+    }
+    // add interval to last_update_time_
+    last_update_time_ += rclcpp::Duration::from_seconds(dt_);
   }
+  // update last_update_time_ to the estimation time
   last_update_time_ = time;
   return true;
 }
@@ -286,8 +298,13 @@ bool CVMotionModel::getPredictedState(
 
   // predict only when dt is small enough
   if (0.001 /*1msec*/ < dt) {
-    if (!predictState(dt, tmp_ekf_for_no_update)) {
-      return false;
+    // if dt is too large, shorten dt and repeat prediction
+    const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
+    const double dt_ = dt / repeat;
+    for (uint32_t i = 0; i < repeat; ++i) {
+      if (!predictState(dt_, tmp_ekf_for_no_update)) {
+        return false;
+      }
     }
   }
   tmp_ekf_for_no_update.getX(X);
@@ -308,6 +325,10 @@ bool CVMotionModel::getPredictedState(
 
   // get yaw from pose
   const double yaw = tf2::getYaw(pose.orientation);
+  // const double yaw = std::atan2(
+  //   2.0 * (pose.orientation.w * pose.orientation.z + pose.orientation.x * pose.orientation.y),
+  //   1.0 - 2.0 * (pose.orientation.y * pose.orientation.y + pose.orientation.z *
+  //   pose.orientation.z));
 
   // set position
   pose.position.x = X(IDX::X);

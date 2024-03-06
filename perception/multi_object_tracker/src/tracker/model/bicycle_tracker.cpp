@@ -210,8 +210,8 @@ bool BicycleTracker::measureWithPose(
   }
 
   // position z
-  constexpr float gain = 0.9;
-  z_ = gain * z_ + (1.0 - gain) * object.kinematics.pose_with_covariance.pose.position.z;
+  constexpr double gain = 0.1;
+  z_ = (1.0 - gain) * z_ + gain * object.kinematics.pose_with_covariance.pose.position.z;
 
   return is_updated;
 }
@@ -219,8 +219,8 @@ bool BicycleTracker::measureWithPose(
 bool BicycleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  constexpr float gain = 0.2;
-  constexpr float gain_inv = 1.0 - gain;
+  constexpr double gain = 0.1;
+  constexpr double gain_inv = 1.0 - gain;
 
   // update object size
   bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
