@@ -1,4 +1,4 @@
-name: build-and-test-differential-self-hosted
+name: build-and-test-differential-arm64
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ jobs:
     with:
       label: ARM64
 
-  build-and-test-differential-self-hosted:
+  build-and-test-differential-arm64:
     needs: prevent-no-label-execution
     if: ${{ needs.prevent-no-label-execution.outputs.run == 'true' }}
     runs-on: [self-hosted, linux, ARM64]
@@ -29,7 +29,7 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
+            container: ghcr.io/autowarefoundation/autoware-openadk:latest-prebuilt
             build-depends-repos: build_depends.repos
     steps:
       - name: Check out repository

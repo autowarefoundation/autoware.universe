@@ -1,4 +1,4 @@
-name: build-and-test-self-hosted
+name: build-and-test-arm64
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test-self-hosted:
+  build-and-test-arm64:
     runs-on: [self-hosted, linux, ARM64]
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
@@ -19,7 +19,7 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
+            container: ghcr.io/autowarefoundation/autoware-openadk:latest-prebuilt
             build-depends-repos: build_depends.repos
     steps:
       - name: Check out repository
