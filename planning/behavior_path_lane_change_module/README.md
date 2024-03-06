@@ -163,7 +163,7 @@ First, we divide the target objects into obstacles in the target lane, obstacles
 
 ![object lanes](./images/lane_objects.drawio.svg)
 
-Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light.　The explanation for parked car detection is written in [documentation for avoidance module](../behavior_path_avoidance_module/README.md).
+Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light. The explanation for parked car detection is written in [documentation for avoidance module](../behavior_path_avoidance_module/README.md).
 
 ##### Collision check in prepare phase
 
@@ -284,6 +284,29 @@ detach
 @enduml
 ```
 
+To preventive measure for lane change path oscillations caused by alternating safe and unsafe conditions, an additional hysteresis count check is implemented before executing an abort or cancel maneuver. If unsafe, the `unsafe_hysteresis_count_` is incremented and compared against `unsafe_hysteresis_threshold`; exceeding it prompts an abort condition check, ensuring decisions are made with consideration to recent safety assessments as shown in flow chart above. This mechanism stabilizes decision-making, preventing abrupt changes due to transient unsafe conditions.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title Abort Lane Change
+
+if (Perform collision check?) then (<color:green><b>SAFE</b></color>)
+  :Reset unsafe_hysteresis_count_;
+else (<color:red><b>UNSAFE</b></color>)
+  :Increase unsafe_hysteresis_count_;
+  if (unsafe_hysteresis_count_ > unsafe_hysteresis_threshold?) then (<color:green><b>FALSE</b></color>)
+  else (<color:red><b>TRUE</b></color>)
+    #LightPink:Check abort condition;
+    stop
+  endif
+endif
+:Continue lane changing;
+@enduml
+```
+
 #### Cancel
 
 Suppose the lane change trajectory is evaluated as unsafe. In that case, if the ego vehicle has not departed from the current lane yet, the trajectory will be reset, and the ego vehicle will resume the lane following the maneuver.
@@ -361,6 +384,13 @@ The following parameters are configurable in `lane_change.param.yaml`.
 
 The following parameters are configurable in `behavior_path_planner.param.yaml` and `lane_change.param.yaml`.
 
+#### common
+
+| Name                                       | Unit | Type   | Description                                                                                                                                 | Default value |
+| :----------------------------------------- | ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `safety_check.lane_expansion.left_offset`  | [m]  | double | Expand the left boundary of the detection area, allowing objects previously outside on the left to be detected and registered as targets.   | 0.0           |
+| `safety_check.lane_expansion.right_offset` | [m]  | double | Expand the right boundary of the detection area, allowing objects previously outside on the right to be detected and registered as targets. | 0.0           |
+
 #### execution
 
 | Name                                                              | Unit    | Type    | Description                                                                                                                                                    | Default value |
@@ -423,6 +453,7 @@ The following parameters are configurable in `lane_change.param.yaml`.
 | `cancel.duration`                      | [s]     | double  | The time taken to complete returning to the center line.                                                         | 3.0           |
 | `cancel.max_lateral_jerk`              | [m/sss] | double  | The maximum lateral jerk for abort path                                                                          | 1000.0        |
 | `cancel.overhang_tolerance`            | [m]     | double  | Lane change cancel is prohibited if the vehicle head exceeds the lane boundary more than this tolerance distance | 0.0           |
+| `unsafe_hysteresis_threshold`          | [-]     | int     | threshold that helps prevent frequent switching between safe and unsafe decisions                                | 10            |
 
 ### Debug
 

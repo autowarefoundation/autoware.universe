@@ -78,8 +78,6 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return true; }
-
   /**
    * @brief update RTC status for candidate shift line.
    * @param candidate path.
@@ -405,6 +403,8 @@ private:
   bool arrived_path_end_{false};
 
   bool safe_{true};
+
+  std::optional<UUID> ignore_signal_{std::nullopt};
 
   std::shared_ptr<AvoidanceHelper> helper_;
 
