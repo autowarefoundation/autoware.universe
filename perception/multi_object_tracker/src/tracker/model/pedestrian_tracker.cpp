@@ -152,6 +152,32 @@ bool PedestrianTracker::predict(const rclcpp::Time & time)
   return is_predicted;
 }
 
+
+autoware_auto_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
+{
+  autoware_auto_perception_msgs::msg::DetectedObject updating_object = object;
+
+  // UNCERTAINTY MODEL
+  if (!object.kinematics.has_position_covariance) {
+    float & r_cov_x= ekf_params_.r_cov_x;
+    float & r_cov_y= ekf_params_.r_cov_y;
+    auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
+    const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const double cos_yaw = std::cos(pose_yaw);
+    const double sin_yaw = std::sin(pose_yaw);
+    const double sin_2yaw = std::sin(2.0f * pose_yaw);
+    pose_cov[utils::MSG_COV_IDX::X_X] =
+      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;                // x - x
+    pose_cov[utils::MSG_COV_IDX::X_Y] = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
+    pose_cov[utils::MSG_COV_IDX::Y_Y] =
+      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;            // y - y
+    pose_cov[utils::MSG_COV_IDX::Y_X] = pose_cov[utils::MSG_COV_IDX::X_Y];  // y - x
+  }
+  return updating_object;
+}
+
 bool PedestrianTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
@@ -216,13 +242,16 @@ bool PedestrianTracker::measure(
   // check time gap
   if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
     RCLCPP_WARN(
-      logger_, "There is a large gap between predicted time and measurement time. (%f)",
+      logger_, "PedestrianTracker: There is a large gap between predicted time and measurement time. (%f)",
       (time - last_update_time_).seconds());
   }
 
   // update object
-  measureWithPose(object);
-  measureWithShape(object);
+  const autoware_auto_perception_msgs::msg::DetectedObject updating_object =
+    getUpdatingObject(object, self_transform);
+  measureWithPose(updating_object);
+  measureWithShape(updating_object);
+
 
   (void)self_transform;  // currently do not use self vehicle position
   return true;

@@ -27,6 +27,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+#include <tf2/utils.h>
+
 // cspell: ignore CV
 // Constant Velocity (CV) motion model
 
@@ -255,7 +257,7 @@ bool CVMotionModel::predictState(const double dt, KalmanFilter & ekf) const
   Q(IDX::X, IDX::X) = motion_params_.q_cov_x * dt * dt;
   Q(IDX::X, IDX::Y) = 0.0;
   Q(IDX::Y, IDX::Y) = motion_params_.q_cov_y * dt * dt;
-  Q(IDX::Y, IDX::X) = Q(IDX::X, IDX::Y);
+  Q(IDX::Y, IDX::X) = 0.0;
   Q(IDX::VX, IDX::VX) = motion_params_.q_cov_vx * dt * dt;
   Q(IDX::VY, IDX::VY) = motion_params_.q_cov_vy * dt * dt;
 
@@ -305,7 +307,8 @@ bool CVMotionModel::getPredictedState(
   }
 
   // get yaw from pose
-  double yaw = tf2::getYaw(pose.orientation);
+  // const double yaw = tf2::getYaw(pose.orientation);
+  const double yaw = 0.0;
 
   // set position
   pose.position.x = X(IDX::X);
@@ -345,12 +348,12 @@ bool CVMotionModel::getPredictedState(
   twist_cov_rotate(0, 1) = P(IDX::VX, IDX::VY);
   twist_cov_rotate(1, 0) = P(IDX::VY, IDX::VX);
   twist_cov_rotate(1, 1) = P(IDX::VY, IDX::VY);
-  Eigen::MatrixXd R_yaw = Eigen::Rotation2Dd(yaw).toRotationMatrix();
-  twist_cov_rotate = R_yaw * twist_cov_rotate * R_yaw.transpose();
-  twist_cov[utils::MSG_COV_IDX::X_X] = twist_cov_rotate(0, 0);
-  twist_cov[utils::MSG_COV_IDX::X_Y] = twist_cov_rotate(0, 1);
-  twist_cov[utils::MSG_COV_IDX::Y_X] = twist_cov_rotate(1, 0);
-  twist_cov[utils::MSG_COV_IDX::Y_Y] = twist_cov_rotate(1, 1);
+  Eigen::MatrixXd R_yaw = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
+  Eigen::MatrixXd twist_cov_rotated = R_yaw * twist_cov_rotate * R_yaw.transpose();
+  twist_cov[utils::MSG_COV_IDX::X_X] = twist_cov_rotated(0, 0);
+  twist_cov[utils::MSG_COV_IDX::X_Y] = twist_cov_rotated(0, 1);
+  twist_cov[utils::MSG_COV_IDX::Y_X] = twist_cov_rotated(1, 0);
+  twist_cov[utils::MSG_COV_IDX::Y_Y] = twist_cov_rotated(1, 1);
   twist_cov[utils::MSG_COV_IDX::Z_Z] = vz_cov;
   twist_cov[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
   twist_cov[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;

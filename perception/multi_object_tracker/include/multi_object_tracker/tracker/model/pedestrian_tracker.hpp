@@ -34,11 +34,6 @@ private:
   rclcpp::Time last_update_time_;
   struct EkfParams
   {
-    float p0_cov_vx;
-    float p0_cov_wz;
-    float p0_cov_x;
-    float p0_cov_y;
-    float p0_cov_yaw;
     float r_cov_x;
     float r_cov_y;
     float r_cov_yaw;
@@ -74,6 +69,9 @@ public:
   bool measure(
     const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;
+  autoware_auto_perception_msgs::msg::DetectedObject getUpdatingObject(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    const geometry_msgs::msg::Transform & self_transform);
   bool measureWithPose(const autoware_auto_perception_msgs::msg::DetectedObject & object);
   bool measureWithShape(const autoware_auto_perception_msgs::msg::DetectedObject & object);
   bool getTrackedObject(
