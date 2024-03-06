@@ -26,8 +26,6 @@ MrmHandler::MrmHandler() : Node("mrm_handler")
     declare_parameter<double>("timeout_operation_mode_availability", 0.5);
   param_.use_emergency_holding = declare_parameter<bool>("use_emergency_holding", false);
   param_.timeout_emergency_recovery = declare_parameter<double>("timeout_emergency_recovery", 5.0);
-  param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request", 10.0);
-  param_.use_takeover_request = declare_parameter<bool>("use_takeover_request", false);
   param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped", false);
   param_.use_pull_over = declare_parameter<bool>("use_pull_over", false);
   param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop", false);
@@ -164,48 +162,39 @@ void MrmHandler::onOperationModeState(
   operation_mode_state_ = msg;
 }
 
-autoware_auto_vehicle_msgs::msg::HazardLightsCommand MrmHandler::createHazardCmdMsg()
+void MrmHandler::publishHazardCmd()
 {
   using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
   HazardLightsCommand msg;
 
-  // Check emergency
-  const bool is_emergency = isEmergency();
-
+  msg.stamp = this->now();
   if (is_emergency_holding_) {
     // turn hazard on during emergency holding
     msg.command = HazardLightsCommand::ENABLE;
-  } else if (is_emergency && param_.turning_hazard_on.emergency) {
+  } else if (isEmergency() && param_.turning_hazard_on.emergency) {
     // turn hazard on if vehicle is in emergency state and
     // turning hazard on if emergency flag is true
     msg.command = HazardLightsCommand::ENABLE;
   } else {
     msg.command = HazardLightsCommand::NO_COMMAND;
   }
-  return msg;
+
+  pub_hazard_cmd_->publish(msg);
 }
 
-void MrmHandler::publishControlCommands()
+void MrmHandler::publishGearCmd()
 {
   using autoware_auto_vehicle_msgs::msg::GearCommand;
+  GearCommand msg;
 
-  // Create timestamp
-  const auto stamp = this->now();
-
-  // Publish hazard command
-  pub_hazard_cmd_->publish(createHazardCmdMsg());
-
-  // Publish gear
-  {
-    GearCommand msg;
-    msg.stamp = stamp;
-    if (param_.use_parking_after_stopped && isStopped()) {
-      msg.command = GearCommand::PARK;
-    } else {
-      msg.command = GearCommand::DRIVE;
-    }
-    pub_gear_cmd_->publish(msg);
+  msg.stamp = this->now();
+  if (param_.use_parking_after_stopped && isStopped()) {
+    msg.command = GearCommand::PARK;
+  } else {
+    msg.command = GearCommand::DRIVE;
   }
+
+  pub_gear_cmd_->publish(msg);
 }
 
 void MrmHandler::publishMrmState()
@@ -396,10 +385,13 @@ void MrmHandler::onTimer()
   // Update Emergency State
   updateMrmState();
 
-  // Publish control commands
-  publishControlCommands();
+  // Operate MRM
   operateMrm();
+
+  // Publish
   publishMrmState();
+  publishHazardCmd();
+  publishGearCmd();
 }
 
 void MrmHandler::transitionTo(const int new_state)
@@ -441,41 +433,23 @@ void MrmHandler::updateMrmState()
 
   // Get mode
   const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
-  const bool is_takeover_done = control_mode_->mode == ControlModeReport::MANUAL;
 
   // State Machine
   if (mrm_state_.state == MrmState::NORMAL) {
     // NORMAL
     if (is_auto_mode && is_emergency) {
-      if (param_.use_takeover_request) {
-        takeover_requested_time_ = this->get_clock()->now();
-        is_takeover_request_ = true;
-        return;
-      } else {
-        transitionTo(MrmState::MRM_OPERATING);
-        return;
-      }
+      transitionTo(MrmState::MRM_OPERATING);
+      return;
     }
   } else {
     // Emergency
-    // Send recovery events if "not emergency" or "takeover done"
+    // Send recovery events if "not emergency"
     if (!is_emergency) {
       transitionTo(MrmState::NORMAL);
       return;
     }
-    // TODO(TetsuKawa): Check if human can safely override, for example using DSM
-    if (is_takeover_done) {
-      transitionTo(MrmState::NORMAL);
-      return;
-    }
 
-    if (is_takeover_request_) {
-      const auto time_from_takeover_request = this->get_clock()->now() - takeover_requested_time_;
-      if (time_from_takeover_request.seconds() > param_.timeout_takeover_request) {
-        transitionTo(MrmState::MRM_OPERATING);
-        return;
-      }
-    } else if (mrm_state_.state == MrmState::MRM_OPERATING) {
+    if (mrm_state_.state == MrmState::MRM_OPERATING) {
       // TODO(TetsuKawa): Check MRC is accomplished
       if (mrm_state_.behavior == MrmState::PULL_OVER) {
         if (isStopped() && isArrivedAtGoal()) {

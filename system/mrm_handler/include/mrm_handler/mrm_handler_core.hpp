@@ -49,8 +49,6 @@ struct Param
   double timeout_operation_mode_availability;
   bool use_emergency_holding;
   double timeout_emergency_recovery;
-  double timeout_takeover_request;
-  bool use_takeover_request;
   bool use_parking_after_stopped;
   bool use_pull_over;
   bool use_comfortable_stop;
@@ -106,9 +104,8 @@ private:
     pub_hazard_cmd_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_gear_cmd_;
 
-  autoware_auto_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();
-  autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
-  void publishControlCommands();
+  void publishHazardCmd();
+  void publishGearCmd();
 
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::MrmState>::SharedPtr pub_mrm_state_;
 
@@ -147,8 +144,6 @@ private:
   void checkOperationModeAvailabilityTimeout();
 
   // Algorithm
-  rclcpp::Time takeover_requested_time_;
-  bool is_takeover_request_ = false;
   bool is_emergency_holding_ = false;
   void transitionTo(const int new_state);
   void updateMrmState();
