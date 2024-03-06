@@ -114,6 +114,10 @@ std::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const
   output.start_pose = planner_.getArcPaths().at(0).points.front().point.pose;
   output.end_pose = planner_.getArcPaths().at(1).points.back().point.pose;
 
+  if (isPullOutPathCollided(output)) {
+    return {};
+  }
+
   return output;
 }
 }  // namespace behavior_path_planner
