@@ -25,7 +25,11 @@
 #include <kalman_filter/kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_auto_perception_msgs/msg/detected_object.hpp"
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 class BicycleMotionModel
 {

@@ -127,8 +127,8 @@ PedestrianTracker::PedestrianTracker(
 
   // Set motion model parameters
   {
-    constexpr double q_stddev_x = 0.4;                                  // [m/s]
-    constexpr double q_stddev_y = 0.4;                                  // [m/s]
+    constexpr double q_stddev_x = 0.5;                                  // [m/s]
+    constexpr double q_stddev_y = 0.3;                                  // [m/s]
     constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
     constexpr double q_stddev_vx = tier4_autoware_utils::kmph2mps(5);   // [m/(s*s)]
     constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]

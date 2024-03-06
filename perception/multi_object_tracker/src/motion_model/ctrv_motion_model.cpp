@@ -75,13 +75,13 @@ bool CTRVMotionModel::init(
 void CTRVMotionModel::setDefaultParams()
 {
   // process noise covariance
-  constexpr double q_stddev_x = 0.4;                                  // [m/s]
-  constexpr double q_stddev_y = 0.4;                                  // [m/s]
+  constexpr double q_stddev_x = 0.5;                                  // [m/s]
+  constexpr double q_stddev_y = 0.5;                                  // [m/s]
   constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
-  constexpr double q_stddev_vx = tier4_autoware_utils::kmph2mps(5);   // [m/(s*s)]
+  constexpr double q_stddev_vel = 9.8 * 0.3;                           // [m/(s*s)]
   constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
 
-  setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vx, q_stddev_wz);
+  setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vel, q_stddev_wz);
 
   // set motion limitations
   constexpr double max_vel = tier4_autoware_utils::kmph2mps(10);  // [m/s]
@@ -95,13 +95,13 @@ void CTRVMotionModel::setDefaultParams()
 
 void CTRVMotionModel::setMotionParams(
   const double & q_stddev_x, const double & q_stddev_y, const double & q_stddev_yaw,
-  const double & q_stddev_vx, const double & q_stddev_wz)
+  const double & q_stddev_vel, const double & q_stddev_wz)
 {
   // set process noise covariance parameters
   motion_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
   motion_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
   motion_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
-  motion_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
+  motion_params_.q_cov_vel = std::pow(q_stddev_vel, 2.0);
   motion_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
 }
 
@@ -333,21 +333,21 @@ bool CTRVMotionModel::predictState(const double dt, KalmanFilter & ekf) const
   A(IDX::YAW, IDX::WZ) = dt;
 
   // Process noise covariance Q
+  const double q_cov_x = std::pow(0.5 * motion_params_.q_cov_x * dt, 2);
+  const double q_cov_y = std::pow(0.5 * motion_params_.q_cov_y * dt, 2);
+  const double q_cov_yaw = std::pow(motion_params_.q_cov_yaw * dt, 2);
+  const double q_cov_vel = std::pow(motion_params_.q_cov_vel * dt, 2);
+  const double q_cov_wz = std::pow(motion_params_.q_cov_wz * dt, 2);
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(DIM, DIM);
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.
-  Q(IDX::X, IDX::X) =
-    (motion_params_.q_cov_x * cos_yaw * cos_yaw + motion_params_.q_cov_y * sin_yaw * sin_yaw) * dt *
-    dt;
-  Q(IDX::X, IDX::Y) =
-    (0.5f * (motion_params_.q_cov_x - motion_params_.q_cov_y) * sin_2yaw) * dt * dt;
-  Q(IDX::Y, IDX::Y) =
-    (motion_params_.q_cov_x * sin_yaw * sin_yaw + motion_params_.q_cov_y * cos_yaw * cos_yaw) * dt *
-    dt;
+  Q(IDX::X, IDX::X) = (q_cov_x * cos_yaw * cos_yaw + q_cov_y * sin_yaw * sin_yaw);
+  Q(IDX::X, IDX::Y) = (0.5f * (q_cov_x - q_cov_y) * sin_2yaw);
+  Q(IDX::Y, IDX::Y) = (q_cov_x * sin_yaw * sin_yaw + q_cov_y * cos_yaw * cos_yaw);
   Q(IDX::Y, IDX::X) = Q(IDX::X, IDX::Y);
-  Q(IDX::YAW, IDX::YAW) = motion_params_.q_cov_yaw * dt * dt;
-  Q(IDX::VEL, IDX::VEL) = motion_params_.q_cov_vx * dt * dt;
-  Q(IDX::WZ, IDX::WZ) = motion_params_.q_cov_wz * dt * dt;
+  Q(IDX::YAW, IDX::YAW) = q_cov_yaw;
+  Q(IDX::VEL, IDX::VEL) = q_cov_vel;
+  Q(IDX::WZ, IDX::WZ) = q_cov_wz;
 
   // control-input model B and control-input u are not used
   // Eigen::MatrixXd B = Eigen::MatrixXd::Zero(DIM, DIM);

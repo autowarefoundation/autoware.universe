@@ -23,11 +23,11 @@
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
+#include <tf2/utils.h>
+
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-
-#include <tf2/utils.h>
 
 // cspell: ignore CV
 // Constant Velocity (CV) motion model
@@ -307,12 +307,7 @@ bool CVMotionModel::getPredictedState(
   }
 
   // get yaw from pose
-  // const double yaw = tf2::getYaw(pose.orientation);
-  const double yaw = 0.0;
-
-  // print pose orientatin
-  // RCLCPP_INFO(logger_, "CVMotionModel::getPredictedState: pose.orientation: %f, %f, %f, %f",
-  // pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+  const double yaw = tf2::getYaw(pose.orientation);
 
   // set position
   pose.position.x = X(IDX::X);
