@@ -224,7 +224,7 @@ This ordering is beneficial when the priority is to minimize the backward distan
 
 - **Collision check performed range**: Safety checks for collisions with dynamic objects are conducted within the defined boundaries between the start and end points of each maneuver, ensuring the ego vehicle does not impede or hinder the progress of dynamic objects that come from behind it.
 
-- **Collision response policy**: Should a collision with dynamic objects be detected along the generated path, deactivate module decision is registered if collision detection occurs before departure. If the vehicle has already commenced movement, an attempt to stop will be made, provided it's feasible within the braking constraints and without crossing the travel lane's centerline.
+- **Collision response policy**: Should a collision with dynamic objects be detected along the generated path, deactivate module decision is registered if collision detection occurs before departure. If the vehicle has already commenced movement, an attempt to stop will be made, provided it's feasible within the braking constraints and that the rear vehicle can pass through the gap between the ego vehicle and the lane border.
 
 ```plantuml
 @startuml
@@ -235,7 +235,7 @@ if (Collision with dynamic objects detected?) then (yes)
   if (Before departure?) then (yes)
     :Deactivate module decision is registered;
   else (no)
-    if (Can stop within constraints \n && \n no crossing centerline?) then (yes)
+    if (Can stop within constraints \n && \n Has sufficient space for rear vehicle to drive?) then (yes)
       :Stop;
     else (no)
       :Continue with caution;
@@ -250,7 +250,7 @@ stop
 
 #### **example of safety check performed range for shift pull out**
 
-Give an example of safety verification range for shift pull out. The safety check is performed from the start of the shift to the end of the shift. And if the vehicle footprint overlaps with the center line of the road lane, the safety check against dynamic objects is disabled.
+Give an example of safety verification range for shift pull out. The safety check is performed from the start of the shift to the end of the shift. And if the vehicle footprint does not leave enough space for a rear vehicle to drive through, the safety check against dynamic objects is disabled.
 
 <figure markdown>
   ![safety check performed range for shift pull out](images/collision_check_range_shift_pull_out.drawio.svg){width=1100}
