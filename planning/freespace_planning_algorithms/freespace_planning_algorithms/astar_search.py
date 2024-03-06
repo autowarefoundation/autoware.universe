@@ -13,11 +13,14 @@
 # limitations under the License.
 
 import freespace_planning_algorithms.freespace_planning_algorithms_pybind as _fp
+import rclpy
+from rclpy.node import Node
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Quaternion
 from nav_msgs.msg import OccupancyGrid
 from rclpy.serialization import serialize_message
+from autoware_auto_planning_msgs.msg import Trajectory, TrajectoryPoint
 
 PlannerCommonParam = _fp.PlannerCommonParam
 VehicleShape = _fp.VehicleShape
@@ -62,3 +65,20 @@ class AstarSearch:
             waypoints.waypoints.append(Pose(position=pos, orientation=quat))
 
         return waypoints
+
+class AstarPythonNode(Node):
+    def __init__(self, msg):
+        # Node.__init__を引数node_nameにtalkerを渡して継承
+        super().__init__("publisher")
+        self.count = 0
+        self.msg = msg
+
+        # Node.create_publisher(msg_type, topic)に引数を渡してpublisherを作成
+        self.pub_trajectory = self.create_publisher(Trajectory, 'planning/freespace_param_tuning/trajectory', 1)
+        # self.sub_point = self.create_subscription()
+        
+        timer_period = 0.5  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+
+    def timer_callback(self):
+        self.pub_trajectory.publish(self.msg)

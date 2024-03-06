@@ -53,6 +53,7 @@ ament_auto_package(
 
 install(PROGRAMS
   test/debug_plot.py
+  scripts/parameter_tuning_tools/search_gridgoal.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
