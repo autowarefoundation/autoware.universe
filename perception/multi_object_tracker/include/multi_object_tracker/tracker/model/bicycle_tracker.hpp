@@ -35,16 +35,11 @@ private:
 
   struct EkfParams
   {
-    float p0_cov_vel;
-    float p0_cov_slip;
-    float p0_cov_x;
-    float p0_cov_y;
-    float p0_cov_yaw;
-    float r_cov_x;
-    float r_cov_y;
-    float r_cov_yaw;
+    double r_cov_x;
+    double r_cov_y;
+    double r_cov_yaw;
   } ekf_params_;
-  float z_;
+  double z_;
 
 private:
   struct BoundingBox

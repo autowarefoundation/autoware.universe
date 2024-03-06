@@ -48,8 +48,8 @@ UnknownTracker::UnknownTracker(
 
   // initialize params
   // measurement noise covariance
-  float r_stddev_x = 1.0;                                   // [m]
-  float r_stddev_y = 1.0;                                   // [m]
+  constexpr double r_stddev_x = 1.0;  // [m]
+  constexpr double r_stddev_y = 1.0;  // [m]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
 
@@ -70,9 +70,9 @@ UnknownTracker::UnknownTracker(
       vy = std::sin(yaw) * vel_x + std::cos(yaw) * vel_y;
     }
 
-    if(!object.kinematics.has_position_covariance){
-      constexpr double p0_stddev_x = 1.0;                                  // [m]
-      constexpr double p0_stddev_y = 1.0;                                  // [m]
+    if (!object.kinematics.has_position_covariance) {
+      constexpr double p0_stddev_x = 1.0;  // [m]
+      constexpr double p0_stddev_y = 1.0;  // [m]
 
       const double p0_cov_x = std::pow(p0_stddev_x, 2.0);
       const double p0_cov_y = std::pow(p0_stddev_y, 2.0);
@@ -118,10 +118,10 @@ UnknownTracker::UnknownTracker(
 
   // Set motion model parameters
   {
-  constexpr double q_stddev_x = 0.5;         // [m/s]
-  constexpr double q_stddev_y = 0.5;         // [m/s]
-  constexpr double q_stddev_vx = 9.8 * 0.3;  // [m/(s*s)]
-  constexpr double q_stddev_vy = 9.8 * 0.3;  // [m/(s*s)]
+    constexpr double q_stddev_x = 0.5;         // [m/s]
+    constexpr double q_stddev_y = 0.5;         // [m/s]
+    constexpr double q_stddev_vx = 9.8 * 0.3;  // [m/(s*s)]
+    constexpr double q_stddev_vy = 9.8 * 0.3;  // [m/(s*s)]
     motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_vx, q_stddev_vy);
   }
 
@@ -150,8 +150,8 @@ autoware_auto_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingOb
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
-    float & r_cov_x= ekf_params_.r_cov_x;
-    float & r_cov_y= ekf_params_.r_cov_y;
+    const double & r_cov_x = ekf_params_.r_cov_x;
+    const double & r_cov_y = ekf_params_.r_cov_y;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
     const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
     const double cos_yaw = std::cos(pose_yaw);
@@ -182,7 +182,7 @@ bool UnknownTracker::measureWithPose(
   }
 
   // position z
-  constexpr float gain = 0.9;
+  constexpr double gain = 0.9;
   z_ = gain * z_ + (1.0 - gain) * object.kinematics.pose_with_covariance.pose.position.z;
 
   return is_updated;

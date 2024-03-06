@@ -34,11 +34,11 @@ private:
   rclcpp::Time last_update_time_;
   struct EkfParams
   {
-    float r_cov_x;
-    float r_cov_y;
-    float r_cov_yaw;
+    double r_cov_x;
+    double r_cov_y;
+    double r_cov_yaw;
   } ekf_params_;
-  float z_;
+  double z_;
 
 private:
   struct BoundingBox

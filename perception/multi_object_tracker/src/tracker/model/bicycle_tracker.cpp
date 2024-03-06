@@ -54,9 +54,9 @@ BicycleTracker::BicycleTracker(
 
   // Initialize parameters
   // measurement noise covariance: detector uncertainty + ego vehicle motion uncertainty
-  float r_stddev_x = 0.5;                                  // in vehicle coordinate [m]
-  float r_stddev_y = 0.4;                                  // in vehicle coordinate [m]
-  float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);  // in map coordinate [rad]
+  double r_stddev_x = 0.5;                                  // in vehicle coordinate [m]
+  double r_stddev_y = 0.4;                                  // in vehicle coordinate [m]
+  double r_stddev_yaw = tier4_autoware_utils::deg2rad(30);  // in map coordinate [rad]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);

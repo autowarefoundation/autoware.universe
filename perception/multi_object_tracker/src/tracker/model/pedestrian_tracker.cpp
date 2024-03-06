@@ -152,7 +152,6 @@ bool PedestrianTracker::predict(const rclcpp::Time & time)
   return is_predicted;
 }
 
-
 autoware_auto_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObject(
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
@@ -161,8 +160,8 @@ autoware_auto_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatin
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
-    float & r_cov_x= ekf_params_.r_cov_x;
-    float & r_cov_y= ekf_params_.r_cov_y;
+    const double & r_cov_x = ekf_params_.r_cov_x;
+    const double & r_cov_y = ekf_params_.r_cov_y;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
     const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
     const double cos_yaw = std::cos(pose_yaw);
@@ -205,7 +204,6 @@ bool PedestrianTracker::measureWithShape(
   constexpr float gain = 0.2;
   constexpr float gain_inv = 1.0 - gain;
 
-  // constexpr float gain = 0.9;
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
     bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
@@ -242,7 +240,8 @@ bool PedestrianTracker::measure(
   // check time gap
   if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
     RCLCPP_WARN(
-      logger_, "PedestrianTracker: There is a large gap between predicted time and measurement time. (%f)",
+      logger_,
+      "PedestrianTracker: There is a large gap between predicted time and measurement time. (%f)",
       (time - last_update_time_).seconds());
   }
 
@@ -251,7 +250,6 @@ bool PedestrianTracker::measure(
     getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
-
 
   (void)self_transform;  // currently do not use self vehicle position
   return true;

@@ -21,6 +21,7 @@
 
 #include "multi_object_tracker/motion_model/cv_motion_model.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
+
 #include <kalman_filter/kalman_filter.hpp>
 
 class UnknownTracker : public Tracker
@@ -33,12 +34,12 @@ private:
   rclcpp::Time last_update_time_;
   struct EkfParams
   {
-    float r_cov_x;
-    float r_cov_y;
-    float r_cov_vx;
-    float r_cov_vy;
+    double r_cov_x;
+    double r_cov_y;
+    double r_cov_vx;
+    double r_cov_vy;
   } ekf_params_;
-  float z_;
+  double z_;
 
 private:
   CVMotionModel motion_model_;
