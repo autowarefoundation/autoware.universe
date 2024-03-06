@@ -34,40 +34,6 @@
 #include <string>
 #include <vector>
 
-#define debug(var)                                                     \
-  do {                                                                 \
-    std::cerr << __LINE__ << ", " << __func__ << ", " << #var << ": "; \
-    view(var);                                                         \
-  } while (0)
-template <typename T>
-void view(T e)
-{
-  std::cerr << e << std::endl;
-}
-template <typename T>
-void view(const std::vector<T> & v)
-{
-  for (const auto & e : v) {
-    std::cerr << e << " ";
-  }
-  std::cerr << std::endl;
-}
-template <typename T>
-void view(const std::vector<std::vector<T>> & vv)
-{
-  for (const auto & v : vv) {
-    view(v);
-  }
-}
-#define line()                                              \
-  {                                                         \
-    std::cerr << __LINE__ << ", " << __func__ << std::endl; \
-  }
-#define line_with_file()                                                               \
-  {                                                                                    \
-    std::cerr << "(" << __FILE__ << ") " << __func__ << ": " << __LINE__ << std::endl; \
-  }
-
 namespace behavior_path_planner
 {
 namespace
@@ -670,7 +636,7 @@ void DynamicAvoidanceModule::registerFreeRunObjects(
       predicted_object, obj_tangent_vel, obj_normal_vel, is_object_on_ego_path,
       latest_time_inside_ego_path);
     target_objects_manager_.updateObject(obj_uuid, target_object);
-    std::cerr << "register object: " << obj_uuid << std::endl;
+    // std::cerr << "register object: " << obj_uuid << std::endl;
   }
 }
 
@@ -945,7 +911,7 @@ void DynamicAvoidanceModule::determineWheterToAvoidAgainstFreeRunObjects(
     target_objects_manager_.updateObjectVariables(
       obj_uuid, lon_offset_to_avoid, *lat_offset_to_avoid, is_collision_left, should_be_avoided,
       ref_path_points_for_obj_poly);
-    std::cerr << "labeling as avoid object: " << obj_uuid << std::endl;
+    // std::cerr << "labeling as avoid object: " << obj_uuid << std::endl;
   }
 }
 
@@ -1312,7 +1278,6 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
 
     return getMinMaxValues(obj_lon_offset_vec);
   }();
-  debug(obj_lon_offset.max_value);
 
   const double relative_velocity = getEgoSpeed() - obj_vel;
 
@@ -1334,18 +1299,14 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
            std::abs(relative_velocity) * parameters_->start_duration_to_avoid_overtaking_object;
   }();
   const double end_length_to_avoid = [&]() {
-    debug(relative_velocity);
-    debug(obj_vel);
     if (obj_vel < parameters_->max_stopped_object_vel) {
       // The ego and object are the opposite directional or the object is parked.
       return std::abs(relative_velocity) * parameters_->end_duration_to_avoid_oncoming_object;
     }
     // The ego and object are the same directional.
-    debug(time_while_collision.time_to_end_collision);
     return std::min(time_while_collision.time_to_end_collision, 3.0) * obj_vel +
            std::abs(relative_velocity) * parameters_->end_duration_to_avoid_overtaking_object;
   }();
-  debug(end_length_to_avoid);
 
   // calculate valid path for the forked object's path from the ego's path
   if (obj_vel < -parameters_->max_stopped_object_vel) {
@@ -1360,8 +1321,6 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
     const bool is_object_same_direction = true;
     const double valid_length_to_avoid =
       calcValidLengthToAvoid(obj_path, obj_pose, obj_shape, is_object_same_direction);
-    debug(valid_length_to_avoid);
-    debug(obj_lon_offset.max_value + std::min(end_length_to_avoid, valid_length_to_avoid));
     return MinMaxValue{
       obj_lon_offset.min_value - start_length_to_avoid,
       obj_lon_offset.max_value + std::min(end_length_to_avoid, valid_length_to_avoid)};
@@ -1598,8 +1557,6 @@ DynamicAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
       0.0));
   }
 
-  debug(object.is_collision_left);
-
   // calculate start index laterally feasible for ego to shift considering maximum lateral jerk and
   // acceleration
   const auto obj_inner_bound_start_idx = [&]() -> std::optional<size_t> {
@@ -1627,16 +1584,12 @@ DynamicAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
     if (
       (!object.is_collision_left && 0 < obj_poly_lat_offset) ||
       (object.is_collision_left && obj_poly_lat_offset < 0)) {
-      debug(obj_poly_lat_offset);
-      debug(obj_inner_bound_poses.front().position.x);
-      debug(obj_inner_bound_poses.front().position.y);
       return std::nullopt;
     }
 
     return 0;
   }();
   if (!obj_inner_bound_start_idx) {
-    line();
     return std::nullopt;
   }
 

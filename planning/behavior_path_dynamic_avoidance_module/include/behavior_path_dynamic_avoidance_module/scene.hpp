@@ -271,7 +271,7 @@ public:
         if (counter_map_.at(key) == 0) {
           counter_map_.erase(key);
           object_map_.erase(key);
-          std::cerr << "delete: " << key << std::endl;
+          // std::cerr << "delete: " << key << std::endl;
         }
       }
     }
