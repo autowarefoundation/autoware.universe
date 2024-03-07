@@ -11,9 +11,7 @@
           "default": "10.0"
         }
       },
-      "required": [
-        "required_distance"
-      ],
+      "required": ["required_distance"],
       "additionalProperties": false
     }
   }
