@@ -33,13 +33,12 @@ public:
 
   cudaError_t generateDetectedBoxes3D_launch(
     const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
-    const float * out_rot, const float * out_vel, std::vector<Box3D> & det_boxes3d, std::vector<Variance> & det_variance,
+    const float * out_rot, const float * out_vel, std::vector<Box3D> & det_boxes3d,
     cudaStream_t stream);
 
 private:
   CenterPointConfig config_;
   thrust::device_vector<Box3D> boxes3d_d_;
-  thrust::device_vector<Variance> variance_d_;
   thrust::device_vector<float> yaw_norm_thresholds_d_;
 };
 
