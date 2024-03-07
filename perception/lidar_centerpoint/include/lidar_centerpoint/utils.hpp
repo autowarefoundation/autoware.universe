@@ -33,10 +33,8 @@ struct Box3D
   float yaw;
   float vel_x;
   float vel_y;
-};
 
-struct Variance
-{
+  // variance
   float x_variance;
   float y_variance;
   float z_variance;

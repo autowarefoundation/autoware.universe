@@ -58,7 +58,7 @@ __global__ void generateBoxes3D_kernel(
   const float * out_rot, const float * out_vel, const float voxel_size_x, const float voxel_size_y,
   const float range_min_x, const float range_min_y, const std::size_t down_grid_size_x,
   const std::size_t down_grid_size_y, const std::size_t downsample_factor, const int class_size,
-  const float * yaw_norm_thresholds, Box3D * det_boxes3d, Variance * det_variance)
+  const float * yaw_norm_thresholds, Box3D * det_boxes3d)
 {
   // generate boxes3d from the outputs of the network.
   // shape of out_*: (N, DOWN_GRID_SIZE_Y, DOWN_GRID_SIZE_X)
@@ -98,15 +98,12 @@ __global__ void generateBoxes3D_kernel(
 
   const float offset_x_variance = out_offset[down_grid_size * 2 + idx];
   const float offset_y_variance = out_offset[down_grid_size * 3 + idx];
-  // const float x_variance = voxel_size_x * downsample_factor * (xi + offset_x) + range_min_x;
-  // const float y_variance = voxel_size_y * downsample_factor * (yi + offset_y) + range_min_y;
-  const float z_variance = out_z[idx];
+  const float z_variance = out_z[down_grid_size * 1  + idx];
   const float w_variance = out_dim[down_grid_size * 3 + idx];
   const float l_variance = out_dim[down_grid_size * 4 + idx];
   const float h_variance = out_dim[down_grid_size * 5 + idx];
   const float yaw_sin_log_variance = out_rot[down_grid_size * 2 + idx];
   const float yaw_cos_log_variance = out_rot[down_grid_size * 3 + idx];
-  // const float yaw_norm_variance = sqrtf(yaw_sin * yaw_sin + yaw_cos * yaw_cos);
   const float vel_x_variance = out_vel[down_grid_size * 2 + idx];
   const float vel_y_variance = out_vel[down_grid_size * 3 + idx];
 
@@ -122,16 +119,16 @@ __global__ void generateBoxes3D_kernel(
   det_boxes3d[idx].vel_x = vel_x;
   det_boxes3d[idx].vel_y = vel_y;
 
-  det_variance[idx].x_variance = offset_x_variance;
-  det_variance[idx].y_variance = offset_y_variance;
-  det_variance[idx].z_variance = z_variance;
-  det_variance[idx].length_variance = l_variance;
-  det_variance[idx].width_variance = w_variance;
-  det_variance[idx].height_variance = h_variance;
-  det_variance[idx].yaw_variance = (powf(yaw_cos,2) * expf(yaw_sin_log_variance) + powf(yaw_sin,2) * expf(yaw_cos_log_variance)) /
+  det_boxes3d[idx].x_variance = expf(offset_x_variance);
+  det_boxes3d[idx].y_variance = expf(offset_y_variance);
+  det_boxes3d[idx].z_variance = expf(z_variance);
+  det_boxes3d[idx].length_variance = expf(l_variance);
+  det_boxes3d[idx].width_variance = expf(w_variance);
+  det_boxes3d[idx].height_variance = expf(h_variance);
+  det_boxes3d[idx].yaw_variance = (powf(yaw_cos,2) * expf(yaw_sin_log_variance) + powf(yaw_sin,2) * expf(yaw_cos_log_variance)) /
                                    (powf((powf(yaw_sin,2) + powf(yaw_cos,2)),2));
-  det_variance[idx].vel_x_variance = vel_x_variance;
-  det_variance[idx].vel_y_variance = vel_y_variance;
+  det_boxes3d[idx].vel_x_variance = expf(vel_x_variance);
+  det_boxes3d[idx].vel_y_variance = expf(vel_y_variance);
 }
 
 PostProcessCUDA::PostProcessCUDA(const CenterPointConfig & config) : config_(config)
@@ -145,7 +142,7 @@ PostProcessCUDA::PostProcessCUDA(const CenterPointConfig & config) : config_(con
 // cspell: ignore divup
 cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
-  const float * out_rot, const float * out_vel, std::vector<Box3D> & det_boxes3d, std::vector<Variance> & det_variance,
+  const float * out_rot, const float * out_vel, std::vector<Box3D> & det_boxes3d,
   cudaStream_t stream)
 {
   dim3 blocks(
@@ -157,8 +154,7 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
     config_.voxel_size_y_, config_.range_min_x_, config_.range_min_y_, config_.down_grid_size_x_,
     config_.down_grid_size_y_, config_.downsample_factor_, config_.class_size_,
     thrust::raw_pointer_cast(yaw_norm_thresholds_d_.data()),
-    thrust::raw_pointer_cast(boxes3d_d_.data()),
-    thrust::raw_pointer_cast(variance_d_.data()));
+    thrust::raw_pointer_cast(boxes3d_d_.data()));
 
   // suppress by score
   const auto num_det_boxes3d = thrust::count_if(
@@ -184,17 +180,10 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   thrust::copy_if(
     thrust::device, det_boxes3d_d.begin(), det_boxes3d_d.end(), final_keep_mask_d.begin(),
     final_det_boxes3d_d.begin(), is_kept());
-  thrust::device_vector<Variance> final_det_variance_d(num_final_det_boxes3d);
-  thrust::copy_if(
-    thrust::device, variance_d_.begin(), variance_d_.end(), final_keep_mask_d.begin(),
-    final_det_variance_d.begin(), is_kept());
-
 
   // memcpy device to host
   det_boxes3d.resize(num_final_det_boxes3d);
   thrust::copy(final_det_boxes3d_d.begin(), final_det_boxes3d_d.end(), det_boxes3d.begin());
-  det_variance.resize(num_final_det_boxes3d);
-  thrust::copy(final_det_variance_d.begin(), final_det_variance_d.end(), det_variance.begin());
 
   return cudaGetLastError();
 }

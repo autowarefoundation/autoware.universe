@@ -143,28 +143,17 @@ void LidarCenterPointNode::pointCloudCallback(
   }
 
   std::vector<Box3D> det_boxes3d;
-  std::vector<Variance> det_variance;
-  bool is_success =
-    detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d, det_variance);
+  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d);
   if (!is_success) {
     return;
   }
 
-  std::cout << "-------------------------det_variance:" << det_variance.size() << std::endl;
-  // << det_variance[0] << std::endl;
-
   std::vector<autoware_auto_perception_msgs::msg::DetectedObject> raw_objects;
   raw_objects.reserve(det_boxes3d.size());
-  // for (const auto & box3d : det_boxes3d) {
-  //   autoware_auto_perception_msgs::msg::DetectedObject obj;
-  //   box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
-  //   raw_objects.emplace_back(obj);
-  // }
-  for (size_t i = 0; i < det_boxes3d.size(); ++i) {
+  for (const auto & box3d : det_boxes3d) {
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    box3DToDetectedObject(det_boxes3d[i], class_names_, has_twist_, obj);
+    box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
     raw_objects.emplace_back(obj);
-    std::cout << i << " /// x_variance:" << det_variance[i].x_variance << std::endl;
   }
 
   autoware_auto_perception_msgs::msg::DetectedObjects output_msg;

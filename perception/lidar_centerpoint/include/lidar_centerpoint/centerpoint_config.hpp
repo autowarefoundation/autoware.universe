@@ -97,11 +97,11 @@ public:
   std::size_t encoder_in_feature_size_{9};
   const std::size_t encoder_out_feature_size_{32};
   const std::size_t head_out_size_{6};
-  const std::size_t head_out_offset_size_{2};
-  const std::size_t head_out_z_size_{1};
-  const std::size_t head_out_dim_size_{3};
-  const std::size_t head_out_rot_size_{2};
-  const std::size_t head_out_vel_size_{2};
+  const std::size_t head_out_offset_size_{4};
+  const std::size_t head_out_z_size_{2};
+  const std::size_t head_out_dim_size_{6};
+  const std::size_t head_out_rot_size_{4};
+  const std::size_t head_out_vel_size_{4};
 
   // post-process params
   float score_threshold_{0.35f};
