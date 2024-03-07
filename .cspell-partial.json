@@ -1,5 +1,14 @@
 {
   "ignorePaths": ["sensing/tier4_pcl_extensions/include/**", "perception/bytetrack/lib/**"],
   "ignoreRegExpList": [],
+  "overrides": [
+    {
+      "filename": "perception/bytetrack/src//{*.cpp,*.hpp}",
+      "ignoreRegExpList": [
+        "stracks",
+        "tlwh"
+      ]
+    }
+  ],
   "words": ["dltype", "tvmgen"]
 }
