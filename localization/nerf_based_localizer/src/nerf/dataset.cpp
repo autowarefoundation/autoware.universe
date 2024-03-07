@@ -27,6 +27,7 @@
 #include <fmt/core.h>
 #include <glob.h>
 
+#include <fstream>
 #include <iostream>
 
 using Tensor = torch::Tensor;
