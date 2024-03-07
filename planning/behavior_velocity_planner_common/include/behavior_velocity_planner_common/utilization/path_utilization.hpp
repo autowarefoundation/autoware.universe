@@ -28,7 +28,8 @@ bool splineInterpolate(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const double interval,
   autoware_auto_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger logger);
 autoware_auto_planning_msgs::msg::Path interpolatePath(
-  const autoware_auto_planning_msgs::msg::Path & path, const double length, const double interval);
+  const autoware_auto_planning_msgs::msg::Path & path, const double length,
+  const double interval = 1.0);
 autoware_auto_planning_msgs::msg::Path filterLitterPathPoint(
   const autoware_auto_planning_msgs::msg::Path & path);
 autoware_auto_planning_msgs::msg::Path filterStopPathPoint(

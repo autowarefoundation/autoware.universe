@@ -25,8 +25,7 @@ namespace image_projection_based_fusion
 const std::map<std::string, uint8_t> IOU_MODE_MAP{{"iou", 0}, {"iou_x", 1}, {"iou_y", 2}};
 
 class RoiClusterFusionNode
-: public FusionNode<
-    DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>
+: public FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>
 {
 public:
   explicit RoiClusterFusionNode(const rclcpp::NodeOptions & options);

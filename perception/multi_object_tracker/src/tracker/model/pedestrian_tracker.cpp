@@ -19,6 +19,7 @@
 #include "multi_object_tracker/tracker/model/pedestrian_tracker.hpp"
 
 #include "multi_object_tracker/utils/utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
@@ -34,7 +35,6 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
@@ -52,41 +52,37 @@ PedestrianTracker::PedestrianTracker(
 {
   object_ = object;
 
-  // Initialize parameters
-  // measurement noise covariance
-  float r_stddev_x = 0.4;                                  // [m]
-  float r_stddev_y = 0.4;                                  // [m]
-  float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);  // [rad]
-  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
-  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
-  ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
-  // initial state covariance
-  float p0_stddev_x = 2.0;                                    // [m]
-  float p0_stddev_y = 2.0;                                    // [m]
-  float p0_stddev_yaw = tier4_autoware_utils::deg2rad(1000);  // [rad]
-  float p0_stddev_vx = tier4_autoware_utils::kmph2mps(120);   // [m/s]
-  float p0_stddev_wz = tier4_autoware_utils::deg2rad(360);    // [rad/s]
-  ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
-  ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
-  ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
-  ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
-  ekf_params_.p0_cov_wz = std::pow(p0_stddev_wz, 2.0);
-  // process noise covariance
-  float q_stddev_x = 0.4;                                  // [m/s]
-  float q_stddev_y = 0.4;                                  // [m/s]
-  float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
-  float q_stddev_vx = tier4_autoware_utils::kmph2mps(5);   // [m/(s*s)]
-  float q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
+  // initialize params
+  float q_stddev_x = 0.4;                                     // [m/s]
+  float q_stddev_y = 0.4;                                     // [m/s]
+  float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
+  float q_stddev_vx = tier4_autoware_utils::kmph2mps(5);      // [m/(s*s)]
+  float q_stddev_wz = tier4_autoware_utils::deg2rad(20);      // [rad/(s*s)]
+  float r_stddev_x = 0.4;                                     // [m]
+  float r_stddev_y = 0.4;                                     // [m]
+  float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // [rad]
+  float p0_stddev_x = 1.0;                                    // [m/s]
+  float p0_stddev_y = 1.0;                                    // [m/s]
+  float p0_stddev_yaw = tier4_autoware_utils::deg2rad(1000);  // [rad/s]
+  float p0_stddev_vx = tier4_autoware_utils::kmph2mps(5);     // [m/(s*s)]
+  float p0_stddev_wz = tier4_autoware_utils::deg2rad(10);     // [rad/(s*s)]
   ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
   ekf_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
   ekf_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
   ekf_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
   ekf_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
-  // limitations
+  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
+  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
+  ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
+  ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
+  ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
+  ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
+  ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
+  ekf_params_.p0_cov_wz = std::pow(p0_stddev_wz, 2.0);
   max_vx_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
   max_wz_ = tier4_autoware_utils::deg2rad(30);   // [rad/s]
 
-  // initialize state vector X
+  // initialize X matrix
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
   X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
   X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
@@ -99,7 +95,7 @@ PedestrianTracker::PedestrianTracker(
     X(IDX::WZ) = 0.0;
   }
 
-  // initialize state covariance matrix P
+  // initialize P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   if (!object.kinematics.has_position_covariance) {
     const double cos_yaw = std::cos(X(IDX::YAW));
@@ -158,8 +154,7 @@ bool PedestrianTracker::predict(const rclcpp::Time & time)
 
 bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
 {
-  // cspell: ignore CTRV
-  /*  Motion model: Constant turn-rate motion model (CTRV)
+  /*  == Nonlinear model ==
    *
    * x_{k+1}   = x_k + vx_k * cos(yaw_k) * dt
    * y_{k+1}   = y_k + vx_k * sin(yaw_k) * dt
@@ -169,7 +164,7 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
    *
    */
 
-  /*  Jacobian Matrix
+  /*  == Linearized model ==
    *
    * A = [ 1, 0, -vx*sin(yaw)*dt, cos(yaw)*dt,  0]
    *     [ 0, 1,  vx*cos(yaw)*dt, sin(yaw)*dt,  0]
@@ -178,14 +173,14 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
    *     [ 0, 0,               0,           0,  1]
    */
 
-  // Current state vector X t
+  // X t
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
   ekf.getX(X_t);
   const double cos_yaw = std::cos(X_t(IDX::YAW));
   const double sin_yaw = std::sin(X_t(IDX::YAW));
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
 
-  // Predict state vector X t+1
+  // X t+1
   Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);                // predicted state
   X_next_t(IDX::X) = X_t(IDX::X) + X_t(IDX::VX) * cos_yaw * dt;  // dx = v * cos(yaw)
   X_next_t(IDX::Y) = X_t(IDX::Y) + X_t(IDX::VX) * sin_yaw * dt;  // dy = v * sin(yaw)
@@ -193,7 +188,7 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
   X_next_t(IDX::VX) = X_t(IDX::VX);
   X_next_t(IDX::WZ) = X_t(IDX::WZ);
 
-  // State transition matrix A
+  // A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
   A(IDX::X, IDX::YAW) = -X_t(IDX::VX) * sin_yaw * dt;
   A(IDX::X, IDX::VX) = cos_yaw * dt;
@@ -201,7 +196,7 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
   A(IDX::Y, IDX::VX) = sin_yaw * dt;
   A(IDX::YAW, IDX::WZ) = dt;
 
-  // Process noise covariance Q
+  // Q
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.
@@ -245,16 +240,18 @@ bool PedestrianTracker::measureWithPose(
   //   if (tier4_autoware_utils::deg2rad(60) < std::fabs(theta)) return false;
   // }
 
-  // Set measurement matrix C and observation vector Y
+  /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
-  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
   Y << object.kinematics.pose_with_covariance.pose.position.x,
     object.kinematics.pose_with_covariance.pose.position.y;
+
+  /* Set measurement matrix */
+  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
   C(0, IDX::X) = 1.0;  // for pos x
   C(1, IDX::Y) = 1.0;  // for pos y
   // C(2, IDX::YAW) = 1.0;  // for yaw
 
-  // Set noise covariance matrix R
+  /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
   if (!object.kinematics.has_position_covariance) {
     R(0, 0) = ekf_params_.r_cov_x;  // x - x
@@ -273,8 +270,6 @@ bool PedestrianTracker::measureWithPose(
     // R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
     // R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
   }
-
-  // ekf update
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
@@ -350,7 +345,7 @@ bool PedestrianTracker::getTrackedObject(
   object.object_id = getUUID();
   object.classification = getClassification();
 
-  // predict state
+  // predict kinematics
   KalmanFilter tmp_ekf_for_no_update = ekf_;
   const double dt = (time - last_update_time_).seconds();
   if (0.001 /*1msec*/ < dt) {
@@ -361,7 +356,6 @@ bool PedestrianTracker::getTrackedObject(
   tmp_ekf_for_no_update.getX(X_t);
   tmp_ekf_for_no_update.getP(P);
 
-  /*  put predicted pose and twist to output object  */
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
 
@@ -405,7 +399,6 @@ bool PedestrianTracker::getTrackedObject(
   constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-
   twist_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::VX, IDX::VX);
   twist_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = vy_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::Z_Z] = vz_cov;

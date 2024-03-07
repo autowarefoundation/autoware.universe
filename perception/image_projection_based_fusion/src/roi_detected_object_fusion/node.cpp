@@ -19,12 +19,13 @@
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 
+// cspell: ignore minx, maxx, miny, maxy, minz, maxz
+
 namespace image_projection_based_fusion
 {
 
 RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjects, DetectedObject, DetectedObjectsWithFeature>(
-    "roi_detected_object_fusion", options)
+: FusionNode<DetectedObjects, DetectedObject>("roi_detected_object_fusion", options)
 {
   fusion_params_.passthrough_lower_bound_probability_thresholds =
     declare_parameter<std::vector<double>>("passthrough_lower_bound_probability_thresholds");
@@ -266,13 +267,13 @@ bool RoiDetectedObjectFusionNode::out_of_scope(const DetectedObject & obj)
     return (p > min_num) && (p < max_num);
   };
 
-  if (!valid_point(pose.position.x, filter_scope_min_x_, filter_scope_max_x_)) {
+  if (!valid_point(pose.position.x, filter_scope_minx_, filter_scope_maxx_)) {
     return is_out;
   }
-  if (!valid_point(pose.position.y, filter_scope_min_y_, filter_scope_max_y_)) {
+  if (!valid_point(pose.position.y, filter_scope_miny_, filter_scope_maxy_)) {
     return is_out;
   }
-  if (!valid_point(pose.position.z, filter_scope_min_z_, filter_scope_max_z_)) {
+  if (!valid_point(pose.position.z, filter_scope_minz_, filter_scope_maxz_)) {
     return is_out;
   }
 

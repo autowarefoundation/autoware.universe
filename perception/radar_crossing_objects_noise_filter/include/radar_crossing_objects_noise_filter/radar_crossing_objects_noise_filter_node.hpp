@@ -58,7 +58,6 @@ private:
   // Parameter
   NodeParam node_param_{};
 
-public:
   // Core
   bool isNoise(const DetectedObject & object);
 };

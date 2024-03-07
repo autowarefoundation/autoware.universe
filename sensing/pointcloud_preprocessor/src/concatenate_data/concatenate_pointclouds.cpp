@@ -74,6 +74,12 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
       return;
     }
   }
+  // add postfix to topic names
+  {
+    for (auto & topic : input_topics_) {
+      topic = topic + POSTFIX_NAME;
+    }
+  }
 
   // Initialize not_subscribed_topic_names_
   {

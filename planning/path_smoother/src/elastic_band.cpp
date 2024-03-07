@@ -14,7 +14,6 @@
 
 #include "path_smoother/elastic_band.hpp"
 
-#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "path_smoother/type_alias.hpp"
 #include "path_smoother/utils/geometry_utils.hpp"
@@ -263,7 +262,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::smoothTrajectory(
 
   // 8. publish eb trajectory
   const auto eb_traj =
-    motion_utils::convertToTrajectory(*eb_traj_points, createHeader(clock_.now()));
+    trajectory_utils::createTrajectory(createHeader(clock_.now()), *eb_traj_points);
   debug_eb_traj_pub_->publish(eb_traj);
 
   time_keeper_ptr_->toc(__func__, "      ");
@@ -390,7 +389,7 @@ void EBPathSmoother::updateConstraint(
 
   // publish fixed trajectory
   const auto eb_fixed_traj =
-    motion_utils::convertToTrajectory(debug_fixed_traj_points, createHeader(clock_.now()));
+    trajectory_utils::createTrajectory(createHeader(clock_.now()), debug_fixed_traj_points);
   debug_eb_fixed_traj_pub_->publish(eb_fixed_traj);
 
   time_keeper_ptr_->toc(__func__, "        ");

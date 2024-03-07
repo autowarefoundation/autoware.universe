@@ -23,22 +23,38 @@
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 
-#include <boost/geometry/algorithms/within.hpp>
+#include <optional>
+
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
+#endif
 
-#include <optional>
+#include <boost/geometry/algorithms/within.hpp>
+
 #include <utility>
 #include <vector>
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::PoseArray;
+using geometry_msgs::msg::Transform;
+using geometry_msgs::msg::TransformStamped;
 using lanelet::utils::getArcCoordinates;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
+using tier4_autoware_utils::deg2rad;
 using tier4_autoware_utils::inverseTransformPoint;
+using tier4_autoware_utils::inverseTransformPose;
 using tier4_autoware_utils::normalizeRadian;
+using tier4_autoware_utils::toMsg;
 using tier4_autoware_utils::transformPose;
 
 namespace behavior_path_planner
@@ -116,7 +132,7 @@ std::vector<PathWithLaneId> GeometricParallelParking::generatePullOverPaths(
                                               : parameters_.backward_parking_path_interval;
   auto arc_paths = planOneTrial(
     start_pose, goal_pose, R_E_far, road_lanes, shoulder_lanes, is_forward, left_side_parking,
-    end_pose_offset, lane_departure_margin, arc_path_interval, {});
+    end_pose_offset, lane_departure_margin, arc_path_interval);
   if (arc_paths.empty()) {
     return std::vector<PathWithLaneId>{};
   }
@@ -222,8 +238,7 @@ bool GeometricParallelParking::planPullOver(
 
 bool GeometricParallelParking::planPullOut(
   const Pose & start_pose, const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-  const lanelet::ConstLanelets & shoulder_lanes, const bool left_side_start,
-  const std::shared_ptr<lane_departure_checker::LaneDepartureChecker> lane_departure_checker)
+  const lanelet::ConstLanelets & shoulder_lanes, const bool left_side_start)
 {
   constexpr bool is_forward = false;         // parking backward means pull_out forward
   constexpr double start_pose_offset = 0.0;  // start_pose is current_pose
@@ -243,7 +258,7 @@ bool GeometricParallelParking::planPullOut(
     auto arc_paths = planOneTrial(
       *end_pose, start_pose, R_E_min_, road_lanes, shoulder_lanes, is_forward, left_side_start,
       start_pose_offset, parameters_.pull_out_lane_departure_margin,
-      parameters_.pull_out_path_interval, lane_departure_checker);
+      parameters_.pull_out_path_interval);
     if (arc_paths.empty()) {
       // not found path
       continue;
@@ -363,8 +378,7 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   const Pose & start_pose, const Pose & goal_pose, const double R_E_far,
   const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
   const bool is_forward, const bool left_side_parking, const double end_pose_offset,
-  const double lane_departure_margin, const double arc_path_interval,
-  const std::shared_ptr<lane_departure_checker::LaneDepartureChecker> lane_departure_checker)
+  const double lane_departure_margin, const double arc_path_interval)
 {
   clearPaths();
 
@@ -498,35 +512,21 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   setLaneIdsToPath(path_turn_first);
   setLaneIdsToPath(path_turn_second);
 
-  if (lane_departure_checker) {
-    const auto lanelet_map_ptr = planner_data_->route_handler->getLaneletMapPtr();
-
-    const bool is_path_turn_first_outside_lanes =
-      lane_departure_checker->checkPathWillLeaveLane(lanelet_map_ptr, path_turn_first);
-
-    if (is_path_turn_first_outside_lanes) {
-      return std::vector<PathWithLaneId>{};
-    }
-
-    const bool is_path_turn_second_outside_lanes =
-      lane_departure_checker->checkPathWillLeaveLane(lanelet_map_ptr, path_turn_second);
-
-    if (is_path_turn_second_outside_lanes) {
-      return std::vector<PathWithLaneId>{};
-    }
-  }
-
   // generate arc path vector
   paths_.push_back(path_turn_first);
   paths_.push_back(path_turn_second);
 
   // set terminal velocity and acceleration(temporary implementation)
   if (is_forward) {
-    pairs_terminal_velocity_and_accel_.emplace_back(parameters_.forward_parking_velocity, 0.0);
-    pairs_terminal_velocity_and_accel_.emplace_back(parameters_.forward_parking_velocity, 0.0);
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.forward_parking_velocity, 0.0));
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.forward_parking_velocity, 0.0));
   } else {
-    pairs_terminal_velocity_and_accel_.emplace_back(parameters_.backward_parking_velocity, 0.0);
-    pairs_terminal_velocity_and_accel_.emplace_back(parameters_.backward_parking_velocity, 0.0);
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.backward_parking_velocity, 0.0));
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.backward_parking_velocity, 0.0));
   }
 
   // set pull_over start and end pose

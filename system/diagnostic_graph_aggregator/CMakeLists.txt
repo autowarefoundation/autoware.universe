@@ -38,10 +38,4 @@ if(BUILD_TESTING)
   target_include_directories(gtest_${PROJECT_NAME} PRIVATE src/common)
 endif()
 
-install(PROGRAMS
-  script/dump.py
-  RENAME dump
-  DESTINATION lib/${PROJECT_NAME}
-)
-
 ament_auto_package(INSTALL_TO_SHARE config example launch)

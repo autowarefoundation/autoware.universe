@@ -20,19 +20,19 @@ VehicleModelInterface::VehicleModelInterface(int dim_x, int dim_u, int dim_y, do
 : m_dim_x(dim_x), m_dim_u(dim_u), m_dim_y(dim_y), m_wheelbase(wheelbase)
 {
 }
-int VehicleModelInterface::getDimX() const
+int VehicleModelInterface::getDimX()
 {
   return m_dim_x;
 }
-int VehicleModelInterface::getDimU() const
+int VehicleModelInterface::getDimU()
 {
   return m_dim_u;
 }
-int VehicleModelInterface::getDimY() const
+int VehicleModelInterface::getDimY()
 {
   return m_dim_y;
 }
-double VehicleModelInterface::getWheelbase() const
+double VehicleModelInterface::getWheelbase()
 {
   return m_wheelbase;
 }

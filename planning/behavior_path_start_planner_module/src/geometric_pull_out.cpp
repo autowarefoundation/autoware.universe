@@ -30,12 +30,9 @@ namespace behavior_path_planner
 {
 using start_planner_utils::getPullOutLanes;
 
-GeometricPullOut::GeometricPullOut(
-  rclcpp::Node & node, const StartPlannerParameters & parameters,
-  const std::shared_ptr<lane_departure_checker::LaneDepartureChecker> lane_departure_checker)
+GeometricPullOut::GeometricPullOut(rclcpp::Node & node, const StartPlannerParameters & parameters)
 : PullOutPlannerBase{node, parameters},
-  parallel_parking_parameters_{parameters.parallel_parking_parameters},
-  lane_departure_checker_(lane_departure_checker)
+  parallel_parking_parameters_{parameters.parallel_parking_parameters}
 {
   planner_.setParameters(parallel_parking_parameters_);
 }
@@ -58,15 +55,25 @@ std::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const
   planner_.setTurningRadius(
     planner_data_->parameters, parallel_parking_parameters_.pull_out_max_steer_angle);
   planner_.setPlannerData(planner_data_);
-  const bool found_valid_path = planner_.planPullOut(
-    start_pose, goal_pose, road_lanes, pull_out_lanes, left_side_start, lane_departure_checker_);
+  const bool found_valid_path =
+    planner_.planPullOut(start_pose, goal_pose, road_lanes, pull_out_lanes, left_side_start);
   if (!found_valid_path) {
     return {};
   }
 
   // collision check with stop objects in pull out lanes
   const auto arc_path = planner_.getArcPath();
+  const auto & stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    *(planner_data_->dynamic_object), parameters_.th_moving_object_velocity);
+  const auto [pull_out_lane_stop_objects, others] =
+    utils::path_safety_checker::separateObjectsByLanelets(
+      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
+  if (utils::checkCollisionBetweenPathFootprintsAndObjects(
+        vehicle_footprint_, arc_path, pull_out_lane_stop_objects,
+        parameters_.collision_check_margin)) {
+    return {};
+  }
   const double velocity = parallel_parking_parameters_.forward_parking_velocity;
 
   if (parameters_.divide_pull_out_path) {

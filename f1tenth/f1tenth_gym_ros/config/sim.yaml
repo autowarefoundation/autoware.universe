@@ -1,0 +1,62 @@
+# MIT License
+
+# Copyright (c) 2020 Hongrui Zheng
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+bridge:
+  ros__parameters:
+    # topics and namespaces
+    ego_namespace: 'ego_racecar'
+    ego_scan_topic: 'scan'
+    ego_odom_topic: 'odom'
+    ego_opp_odom_topic: 'opp_odom'
+    ego_drive_topic: 'drive'
+    opp_namespace: 'opp_racecar'
+    opp_scan_topic: 'opp_scan'
+    opp_odom_topic: 'odom'
+    opp_ego_odom_topic: 'opp_odom'
+    opp_drive_topic: 'opp_drive'
+
+    # transform related
+    scan_distance_to_base_link: 0.0
+    
+    # laserscan parameters
+    scan_fov: 4.7
+    scan_beams: 1080
+
+    # map parameters
+    map_path: '/home/autoware/autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/maps/pennovation'
+    map_img_ext: '.png'
+
+    # opponent parameters
+    num_agent: 1
+
+    # ego starting pose on map
+    sx: 0.0
+    sy: 0.0
+    stheta: 0.0
+
+    # opp starting pose on map
+    sx1: 2.0
+    sy1: 0.5
+    stheta1: 0.0
+
+    # teleop
+    kb_teleop: True

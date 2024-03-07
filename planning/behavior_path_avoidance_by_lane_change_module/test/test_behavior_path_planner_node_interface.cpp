@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
-
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#include <planning_test_utils/planning_interface_test_manager.hpp>
-#include <planning_test_utils/planning_interface_test_manager_utils.hpp>
+#include "planning_interface_test_manager/planning_interface_test_manager.hpp"
+#include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -70,7 +69,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
      ament_index_cpp::get_package_share_directory("behavior_path_avoidance_module") +
        "/config/avoidance.param.yaml",
      ament_index_cpp::get_package_share_directory("behavior_path_avoidance_by_lane_change_module") +
-       "/config/avoidance_by_lane_change.param.yaml"});
+       "/config/avoidance_by_lc.param.yaml"});
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }

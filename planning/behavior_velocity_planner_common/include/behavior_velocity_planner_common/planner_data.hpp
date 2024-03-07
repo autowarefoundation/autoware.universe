@@ -76,16 +76,9 @@ struct PlannerData
   double ego_nearest_yaw_threshold;
 
   // other internal data
-  // traffic_light_id_map_raw is the raw observation, while traffic_light_id_map_keep_last keeps the
-  // last observed infomation for UNKNOWN
-  std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_raw_;
-  std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_last_observed_;
+  std::map<int, TrafficSignalStamped> traffic_light_id_map;
   std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
-
-  // This variable is used when the Autoware's behavior has to depend on whether it's simulation or
-  // not.
-  bool is_simulation = false;
 
   // velocity smoother
   std::shared_ptr<motion_velocity_smoother::SmootherBase> velocity_smoother_;
@@ -132,20 +125,12 @@ struct PlannerData
     return true;
   }
 
-  /**
-   *@fn
-   *@brief queries the traffic signal information of given Id. if keep_last_observation = true,
-   *recent UNKNOWN observation is overwritten as the last non-UNKNOWN observation
-   */
-  std::optional<TrafficSignalStamped> getTrafficSignal(
-    const lanelet::Id id, const bool keep_last_observation = false) const
+  std::shared_ptr<TrafficSignalStamped> getTrafficSignal(const int id) const
   {
-    const auto & traffic_light_id_map =
-      keep_last_observation ? traffic_light_id_map_last_observed_ : traffic_light_id_map_raw_;
     if (traffic_light_id_map.count(id) == 0) {
-      return std::nullopt;
+      return {};
     }
-    return std::make_optional<TrafficSignalStamped>(traffic_light_id_map.at(id));
+    return std::make_shared<TrafficSignalStamped>(traffic_light_id_map.at(id));
   }
 };
 }  // namespace behavior_velocity_planner

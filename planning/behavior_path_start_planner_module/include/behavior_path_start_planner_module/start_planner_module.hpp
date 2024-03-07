@@ -21,11 +21,11 @@
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
-#include "behavior_path_start_planner_module/data_structs.hpp"
 #include "behavior_path_start_planner_module/freespace_pull_out.hpp"
 #include "behavior_path_start_planner_module/geometric_pull_out.hpp"
 #include "behavior_path_start_planner_module/pull_out_path.hpp"
 #include "behavior_path_start_planner_module/shift_pull_out.hpp"
+#include "behavior_path_start_planner_module/start_planner_parameters.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
@@ -35,7 +35,6 @@
 
 #include <tf2/utils.h>
 
-#include <atomic>
 #include <deque>
 #include <memory>
 #include <string>
@@ -69,9 +68,7 @@ struct PullOutStatus
   Pose pull_out_start_pose{};
   bool prev_is_safe_dynamic_objects{false};
   std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
-  std::optional<Pose> stop_pose{std::nullopt};
-  //! record the first time when the state changed from !isActivated() to isActivated()
-  std::optional<rclcpp::Time> first_engaged_time{std::nullopt};
+  bool has_stop_point{false};
 
   PullOutStatus() {}
 };
@@ -85,21 +82,6 @@ public:
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
       objects_of_interest_marker_interface_ptr_map);
-
-  ~StartPlannerModule()
-  {
-    if (freespace_planner_timer_) {
-      freespace_planner_timer_->cancel();
-    }
-
-    while (is_freespace_planner_cb_running_.load()) {
-      RCLCPP_INFO_THROTTLE(
-        getLogger(), *clock_, 1000, "Waiting for freespace planner callback to finish...");
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    RCLCPP_INFO_THROTTLE(getLogger(), *clock_, 1000, "freespace planner callback finished");
-  }
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -153,21 +135,11 @@ public:
   bool isFreespacePlanning() const { return status_.planner_type == PlannerType::FREESPACE; }
 
 private:
-  // Flag class for managing whether a certain callback is running in multi-threading
-  class ScopedFlag
-  {
-  public:
-    explicit ScopedFlag(std::atomic<bool> & flag) : flag_(flag) { flag_.store(true); }
-
-    ~ScopedFlag() { flag_.store(false); }
-
-  private:
-    std::atomic<bool> & flag_;
-  };
-
   bool canTransitSuccessState() override;
 
   bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override;
 
   /**
    * @brief init member variables.
@@ -177,21 +149,6 @@ private:
   void initializeSafetyCheckParameters();
 
   bool requiresDynamicObjectsCollisionDetection() const;
-
-  uint16_t getSteeringFactorDirection(
-    const behavior_path_planner::BehaviorModuleOutput & output) const
-  {
-    switch (output.turn_signal_info.turn_signal.command) {
-      case TurnIndicatorsCommand::ENABLE_LEFT:
-        return SteeringFactor::LEFT;
-
-      case TurnIndicatorsCommand::ENABLE_RIGHT:
-        return SteeringFactor::RIGHT;
-
-      default:
-        return SteeringFactor::STRAIGHT;
-    }
-  };
 
   /**
    * @brief Check if there are no moving objects around within a certain radius.
@@ -207,19 +164,16 @@ private:
 
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
-  bool isOverlapWithCenterLane() const;
   bool isCloseToOriginalStartPose() const;
   bool hasArrivedAtGoal() const;
   bool isMoving() const;
 
   PriorityOrder determinePriorityOrder(
-    const std::string & search_priority, const size_t start_pose_candidates_num);
+    const std::string & search_priority, const size_t candidates_size);
   bool findPullOutPath(
-    const Pose & start_pose_candidate, const std::shared_ptr<PullOutPlannerBase> & planner,
-    const Pose & refined_start_pose, const Pose & goal_pose, const double collision_check_margin);
-
-  PathWithLaneId extractCollisionCheckSection(
-    const PullOutPath & path, const behavior_path_planner::PlannerType & planner_type);
+    const std::vector<Pose> & start_pose_candidates, const size_t index,
+    const std::shared_ptr<PullOutPlannerBase> & planner, const Pose & refined_start_pose,
+    const Pose & goal_pose);
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
@@ -236,7 +190,7 @@ private:
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
-  mutable StartPlannerDebugData debug_data_;
+  mutable StartGoalPlannerData start_planner_data_;
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
@@ -247,8 +201,6 @@ private:
   std::unique_ptr<PullOutPlannerBase> freespace_planner_;
   rclcpp::TimerBase::SharedPtr freespace_planner_timer_;
   rclcpp::CallbackGroup::SharedPtr freespace_planner_timer_cb_group_;
-  std::atomic<bool> is_freespace_planner_cb_running_;
-
   // TODO(kosuke55)
   // Currently, we only do lock when updating a member of status_.
   // However, we need to ensure that the value does not change when referring to it.
@@ -275,10 +227,7 @@ private:
   void updatePullOutStatus();
   void updateStatusAfterBackwardDriving();
   PredictedObjects filterStopObjectsInPullOutLanes(
-    const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_pose,
-    const double velocity_threshold, const double object_check_backward_distance,
-    const double object_check_forward_distance) const;
-  bool needToPrepareBlinkerBeforeStart() const;
+    const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
   bool hasFinishedPullOut() const;
   bool hasFinishedBackwardDriving() const;
   bool hasCollisionWithDynamicObjects() const;
@@ -290,7 +239,6 @@ private:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
-  lanelet::ConstLanelets createDepartureCheckLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.
   bool isGoalBehindOfEgoInSameRouteSegment() const;
@@ -303,7 +251,7 @@ private:
   void onFreespacePlannerTimer();
   bool planFreespacePath();
 
-  void setDebugData();
+  void setDebugData() const;
   void logPullOutStatus(rclcpp::Logger::Level log_level = rclcpp::Logger::Level::Info) const;
 };
 }  // namespace behavior_path_planner

@@ -15,8 +15,8 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 #define OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 
-#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/interpolation.hpp"
+#include "motion_utils/trajectory/tmp_conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
@@ -55,8 +55,7 @@ struct Obstacle
 {
   Obstacle(
     const rclcpp::Time & arg_stamp, const PredictedObject & object,
-    const geometry_msgs::msg::Pose & arg_pose, const double ego_to_obstacle_distance,
-    const double lat_dist_from_obstacle_to_traj)
+    const geometry_msgs::msg::Pose & arg_pose)
   : stamp(arg_stamp),
     pose(arg_pose),
     orientation_reliable(true),
@@ -64,9 +63,7 @@ struct Obstacle
     twist_reliable(true),
     classification(object.classification.at(0)),
     uuid(tier4_autoware_utils::toHexString(object.object_id)),
-    shape(object.shape),
-    ego_to_obstacle_distance(ego_to_obstacle_distance),
-    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj)
+    shape(object.shape)
   {
     predicted_paths.clear();
     for (const auto & path : object.kinematics.predicted_paths) {
@@ -85,8 +82,6 @@ struct Obstacle
   std::string uuid;
   Shape shape;
   std::vector<PredictedPath> predicted_paths;
-  double ego_to_obstacle_distance;
-  double lat_dist_from_obstacle_to_traj;
 };
 
 struct TargetObstacleInterface

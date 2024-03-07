@@ -28,12 +28,13 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
+// cspell: ignore minx, maxx, miny, maxy, minz, maxz
+
 namespace image_projection_based_fusion
 {
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
-    "roi_cluster_fusion", options)
+: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>("roi_cluster_fusion", options)
 {
   trust_object_iou_mode_ = declare_parameter<std::string>("trust_object_iou_mode");
   non_trust_object_iou_mode_ = declare_parameter<std::string>("non_trust_object_iou_mode");
@@ -251,17 +252,17 @@ bool RoiClusterFusionNode::out_of_scope(const DetectedObjectWithFeature & obj)
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(cluster, "x"), iter_y(cluster, "y"),
        iter_z(cluster, "z");
        iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
-    if (!valid_point(*iter_x, filter_scope_min_x_, filter_scope_max_x_)) {
+    if (!valid_point(*iter_x, filter_scope_minx_, filter_scope_maxx_)) {
       is_out = true;
       break;
     }
 
-    if (!valid_point(*iter_y, filter_scope_min_y_, filter_scope_max_y_)) {
+    if (!valid_point(*iter_y, filter_scope_miny_, filter_scope_maxy_)) {
       is_out = true;
       break;
     }
 
-    if (!valid_point(*iter_z, filter_scope_min_z_, filter_scope_max_z_)) {
+    if (!valid_point(*iter_z, filter_scope_minz_, filter_scope_maxz_)) {
       is_out = true;
       break;
     }

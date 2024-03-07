@@ -89,9 +89,10 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::BoolStamped>::SharedPtr fixed_pub_;
 
   MapProjectorInfo::Message projector_info_;
-  const std::string base_frame_;
-  const std::string gnss_base_frame_;
-  const std::string map_frame_;
+  std::string base_frame_;
+  std::string gnss_frame_;
+  std::string gnss_base_frame_;
+  std::string map_frame_;
   bool received_map_projector_info_ = false;
   bool use_gnss_ins_orientation_;
 

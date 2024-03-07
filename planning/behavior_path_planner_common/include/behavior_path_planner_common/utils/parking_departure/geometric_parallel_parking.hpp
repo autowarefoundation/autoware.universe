@@ -18,12 +18,15 @@
 #include "behavior_path_planner_common/data_manager.hpp"
 #include "behavior_path_planner_common/parameters.hpp"
 
-#include <lane_departure_checker/lane_departure_checker.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
-#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/Forward.h>
 
@@ -37,6 +40,7 @@ using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::PoseArray;
 
 struct ParallelParkingParameters
 {
@@ -74,8 +78,7 @@ public:
     const bool left_side_parking);
   bool planPullOut(
     const Pose & start_pose, const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-    const lanelet::ConstLanelets & shoulder_lanes, const bool left_side_start,
-    const std::shared_ptr<lane_departure_checker::LaneDepartureChecker> lane_departure_checker);
+    const lanelet::ConstLanelets & shoulder_lanes, const bool left_side_start);
   void setParameters(const ParallelParkingParameters & parameters) { parameters_ = parameters; }
   void setPlannerData(const std::shared_ptr<const PlannerData> & planner_data)
   {
@@ -118,8 +121,7 @@ private:
     const Pose & start_pose, const Pose & goal_pose, const double R_E_far,
     const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
     const bool is_forward, const bool left_side_parking, const double end_pose_offset,
-    const double lane_departure_margin, const double arc_path_interval,
-    const std::shared_ptr<lane_departure_checker::LaneDepartureChecker> lane_departure_checker);
+    const double lane_departure_margin, const double arc_path_interval);
   PathWithLaneId generateArcPath(
     const Pose & center, const double radius, const double start_yaw, double end_yaw,
     const double arc_path_interval, const bool is_left_turn, const bool is_forward);

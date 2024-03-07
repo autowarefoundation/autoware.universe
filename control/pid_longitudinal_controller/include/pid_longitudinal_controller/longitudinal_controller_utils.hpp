@@ -16,8 +16,6 @@
 #define PID_LONGITUDINAL_CONTROLLER__LONGITUDINAL_CONTROLLER_UTILS_HPP_
 
 #include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spherical_linear_interpolation.hpp"
-#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tf2/utils.h"
 
@@ -30,7 +28,6 @@
 
 #include <cmath>
 #include <limits>
-#include <utility>
 
 namespace autoware::motion::control::pid_longitudinal_controller
 {
@@ -63,11 +60,11 @@ double getPitchByPose(const Quaternion & quaternion);
  * @brief calculate pitch angle from trajectory on map
  * NOTE: there is currently no z information so this always returns 0.0
  * @param [in] trajectory input trajectory
- * @param [in] start_idx nearest index to current vehicle position
+ * @param [in] closest_idx nearest index to current vehicle position
  * @param [in] wheel_base length of wheel base
  */
 double getPitchByTraj(
-  const Trajectory & trajectory, const size_t start_idx, const double wheel_base);
+  const Trajectory & trajectory, const size_t closest_idx, const double wheel_base);
 
 /**
  * @brief calculate vehicle pose after time delay by moving the vehicle at current velocity and
@@ -78,12 +75,20 @@ Pose calcPoseAfterTimeDelay(
   const double current_acc);
 
 /**
+ * @brief apply linear interpolation to orientation
+ * @param [in] o_from first orientation
+ * @param [in] o_to second orientation
+ * @param [in] ratio ratio between o_from and o_to for interpolation
+ */
+Quaternion lerpOrientation(const Quaternion & o_from, const Quaternion & o_to, const double ratio);
+
+/**
  * @brief apply linear interpolation to trajectory point that is nearest to a certain point
  * @param [in] points trajectory points
  * @param [in] point Interpolated point is nearest to this point.
  */
 template <class T>
-std::pair<TrajectoryPoint, size_t> lerpTrajectoryPoint(
+TrajectoryPoint lerpTrajectoryPoint(
   const T & points, const Pose & pose, const double max_dist, const double max_yaw)
 {
   TrajectoryPoint interpolated_point;
@@ -102,9 +107,7 @@ std::pair<TrajectoryPoint, size_t> lerpTrajectoryPoint(
       points.at(i).pose.position.x, points.at(i + 1).pose.position.x, interpolate_ratio);
     interpolated_point.pose.position.y = interpolation::lerp(
       points.at(i).pose.position.y, points.at(i + 1).pose.position.y, interpolate_ratio);
-    interpolated_point.pose.position.z = interpolation::lerp(
-      points.at(i).pose.position.z, points.at(i + 1).pose.position.z, interpolate_ratio);
-    interpolated_point.pose.orientation = interpolation::lerpOrientation(
+    interpolated_point.pose.orientation = lerpOrientation(
       points.at(i).pose.orientation, points.at(i + 1).pose.orientation, interpolate_ratio);
     interpolated_point.longitudinal_velocity_mps = interpolation::lerp(
       points.at(i).longitudinal_velocity_mps, points.at(i + 1).longitudinal_velocity_mps,
@@ -117,7 +120,7 @@ std::pair<TrajectoryPoint, size_t> lerpTrajectoryPoint(
       points.at(i).heading_rate_rps, points.at(i + 1).heading_rate_rps, interpolate_ratio);
   }
 
-  return std::make_pair(interpolated_point, seg_idx);
+  return interpolated_point;
 }
 
 /**
@@ -141,17 +144,6 @@ double applyDiffLimitFilter(
 double applyDiffLimitFilter(
   const double input_val, const double prev_val, const double dt, const double max_val,
   const double min_val);
-
-/**
- * @brief calculate the projected pose after distance from the current index
- * @param [in] src_idx current index
- * @param [in] distance distance to project
- * @param [in] trajectory reference trajectory
- */
-geometry_msgs::msg::Pose findTrajectoryPoseAfterDistance(
-  const size_t src_idx, const double distance,
-  const autoware_auto_planning_msgs::msg::Trajectory & trajectory);
-
 }  // namespace longitudinal_utils
 }  // namespace autoware::motion::control::pid_longitudinal_controller
 

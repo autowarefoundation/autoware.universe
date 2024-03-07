@@ -21,8 +21,7 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <lanelet2_extension/regulatory_elements/Forward.hpp>
-#include <rclcpp/rclcpp/clock.hpp>
-#include <rclcpp/rclcpp/time.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -39,11 +38,12 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
+#include <lanelet2_core/primitives/Lanelet.h>
+
 #include <limits>
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
@@ -100,13 +100,12 @@ struct DrivableAreaInfo
   {
     geometry_msgs::msg::Pose pose;
     tier4_autoware_utils::Polygon2d poly;
-    bool is_left{true};
+    bool is_left;
   };
   std::vector<DrivableLanes> drivable_lanes{};
   std::vector<Obstacle> obstacles{};  // obstacles to extract from the drivable area
   bool enable_expanding_hatched_road_markings{false};
   bool enable_expanding_intersection_areas{false};
-  bool enable_expanding_freespace_areas{false};
 
   // temporary only for pull over's freespace planning
   double drivable_margin{0.0};
@@ -137,7 +136,7 @@ struct BehaviorModuleOutput
 struct CandidateOutput
 {
   CandidateOutput() = default;
-  explicit CandidateOutput(PathWithLaneId path) : path_candidate{std::move(path)} {}
+  explicit CandidateOutput(const PathWithLaneId & path) : path_candidate{path} {}
   PathWithLaneId path_candidate{};
   double lateral_shift{0.0};
   double start_distance_to_path_change{std::numeric_limits<double>::lowest()};

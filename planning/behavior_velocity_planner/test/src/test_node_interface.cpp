@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "node.hpp"
-
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#include <planning_test_utils/planning_interface_test_manager.hpp>
-#include <planning_test_utils/planning_interface_test_manager_utils.hpp>
+#include "planning_interface_test_manager/planning_interface_test_manager.hpp"
+#include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -79,7 +78,6 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
 
   std::vector<rclcpp::Parameter> params;
   params.emplace_back("launch_modules", module_names);
-  params.emplace_back("is_simulation", false);
   node_options.parameter_overrides(params);
 
   test_utils::updateNodeOptions(

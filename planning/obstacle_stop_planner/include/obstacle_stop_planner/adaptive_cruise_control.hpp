@@ -26,7 +26,6 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2/utils.h>
 
-#include <optional>
 #include <vector>
 
 namespace motion_planning
@@ -191,12 +190,12 @@ private:
     const rclcpp::Time & nearest_collision_point_time, double * distance,
     const std_msgs::msg::Header & trajectory_header);
   double calcTrajYaw(const TrajectoryPoints & trajectory, const int collision_point_idx);
-  std::optional<double> estimatePointVelocityFromObject(
+  bool estimatePointVelocityFromObject(
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr object_ptr,
-    const double traj_yaw, const pcl::PointXYZ & nearest_collision_point);
-  std::optional<double> estimatePointVelocityFromPcl(
+    const double traj_yaw, const pcl::PointXYZ & nearest_collision_point, double * velocity);
+  bool estimatePointVelocityFromPcl(
     const double traj_yaw, const pcl::PointXYZ & nearest_collision_point,
-    const rclcpp::Time & nearest_collision_point_time);
+    const rclcpp::Time & nearest_collision_point_time, double * velocity);
   void calculateProjectedVelocityFromObject(
     const PredictedObject & object, const double traj_yaw, double * velocity);
   double estimateRoughPointVelocity(double current_vel);

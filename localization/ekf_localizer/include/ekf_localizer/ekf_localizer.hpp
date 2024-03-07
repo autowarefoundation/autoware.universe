@@ -199,7 +199,7 @@ private:
   /**
    * @brief update predict frequency
    */
-  void updatePredictFrequency(const rclcpp::Time & current_time);
+  void updatePredictFrequency();
 
   /**
    * @brief get transform from frame_id
@@ -219,7 +219,7 @@ private:
   /**
    * @brief publish diagnostics message
    */
-  void publishDiagnostics(const rclcpp::Time & current_time);
+  void publishDiagnostics();
 
   /**
    * @brief update simple1DFilter

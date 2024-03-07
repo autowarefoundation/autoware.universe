@@ -16,7 +16,6 @@
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
-#include "motion_utils/trajectory/conversion.hpp"
 #include "obstacle_avoidance_planner/debug_marker.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
@@ -206,7 +205,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
 
 void ObstacleAvoidancePlanner::initializePlanning()
 {
-  RCLCPP_DEBUG(get_logger(), "Initialize planning");
+  RCLCPP_INFO(get_logger(), "Initialize planning");
 
   mpt_optimizer_ptr_->initialize(enable_debug_info_, traj_param_);
 
@@ -237,7 +236,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
       "Backward path is NOT supported. Just converting path to trajectory");
 
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
-    const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
+    const auto output_traj_msg = trajectory_utils::createTrajectory(path_ptr->header, traj_points);
     traj_pub_->publish(output_traj_msg);
     return;
   }
@@ -269,7 +268,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
     createFloat64Stamped(now(), time_keeper_ptr_->getAccumulatedTime()));
 
   const auto output_traj_msg =
-    motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
+    trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
   traj_pub_->publish(output_traj_msg);
 }
 
@@ -364,7 +363,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data);
+  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data, p.traj_points);
 
   time_keeper_ptr_->toc(__func__, "    ");
   return mpt_traj;
@@ -657,7 +656,7 @@ void ObstacleAvoidancePlanner::publishDebugData(const Header & header) const
 
   // publish trajectories
   const auto debug_extended_traj =
-    motion_utils::convertToTrajectory(debug_data_ptr_->extended_traj_points, header);
+    trajectory_utils::createTrajectory(header, debug_data_ptr_->extended_traj_points);
   debug_extended_traj_pub_->publish(debug_extended_traj);
 
   time_keeper_ptr_->toc(__func__, "  ");

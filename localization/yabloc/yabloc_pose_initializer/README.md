@@ -59,7 +59,9 @@ Converted model URL
 
 ### Parameters
 
-{{ json_to_markdown("localization/yabloc/yabloc_pose_initializer/schema/camera_pose_initializer.schema.json") }}
+| Name               | Type | Description                               |
+| ------------------ | ---- | ----------------------------------------- |
+| `angle_resolution` | int  | how many divisions of 1 sigma angle range |
 
 ### Services
 

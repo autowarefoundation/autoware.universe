@@ -24,16 +24,10 @@
               contains: ["ndt_scan_matcher"]
               timeout: 1.0
 
-            localization_error_ellipse:
+            localization_accuracy:
               type: diagnostic_aggregator/GenericAnalyzer
-              path: localization_error_ellipse
+              path: localization_accuracy
               contains: ["localization: localization_error_monitor"]
-              timeout: 1.0
-
-            localization_stability:
-              type: diagnostic_aggregator/GenericAnalyzer
-              path: localization_stability
-              contains: ["localization: pose_instability_detector"]
               timeout: 1.0
 
             # This diagnostic should ideally be avoided in terms of Fault Tree Analysis (FTA) compatibility.

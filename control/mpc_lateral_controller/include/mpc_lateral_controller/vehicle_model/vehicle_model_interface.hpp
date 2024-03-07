@@ -15,8 +15,6 @@
 #ifndef MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
 #define MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
 
-#include "mpc_lateral_controller/mpc_trajectory.hpp"
-
 #include <Eigen/Core>
 
 #include <string>
@@ -57,25 +55,25 @@ public:
    * @brief get state x dimension
    * @return state dimension
    */
-  int getDimX() const;
+  int getDimX();
 
   /**
    * @brief get input u dimension
    * @return input dimension
    */
-  int getDimU() const;
+  int getDimU();
 
   /**
    * @brief get output y dimension
    * @return output dimension
    */
-  int getDimY() const;
+  int getDimY();
 
   /**
    * @brief get wheelbase of the vehicle
    * @return wheelbase value [m]
    */
-  double getWheelbase() const;
+  double getWheelbase();
 
   /**
    * @brief set velocity
@@ -111,42 +109,6 @@ public:
    * @brief returns model name e.g. kinematics, dynamics
    */
   virtual std::string modelName() = 0;
-
-  /**
-   * @brief Calculate the predicted trajectory for the ego vehicle based on the MPC result in world
-   * coordinate
-   * @param a_d The MPC A matrix used for optimization.
-   * @param b_d The MPC B matrix used for optimization.
-   * @param c_d The MPC C matrix used for optimization.
-   * @param w_d The MPC W matrix used for optimization.
-   * @param x0 initial state vector.
-   * @param Uex The optimized input vector.
-   * @param reference_trajectory The resampled reference trajectory.
-   * @param dt delta time used in the optimization
-   * @return The predicted trajectory.
-   */
-  virtual MPCTrajectory calculatePredictedTrajectoryInWorldCoordinate(
-    const Eigen::MatrixXd & a_d, const Eigen::MatrixXd & b_d, const Eigen::MatrixXd & c_d,
-    const Eigen::MatrixXd & w_d, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
-    const MPCTrajectory & reference_trajectory, const double dt) const = 0;
-
-  /**
-   * @brief Calculate the predicted trajectory for the ego vehicle based on the MPC result in Frenet
-   * Coordinate
-   * @param a_d The MPC A matrix used for optimization.
-   * @param b_d The MPC B matrix used for optimization.
-   * @param c_d The MPC C matrix used for optimization.
-   * @param w_d The MPC W matrix used for optimization.
-   * @param x0 initial state vector.
-   * @param Uex The optimized input vector.
-   * @param reference_trajectory The resampled reference trajectory.
-   * @param dt delta time used in the optimization
-   * @return The predicted trajectory.
-   */
-  virtual MPCTrajectory calculatePredictedTrajectoryInFrenetCoordinate(
-    const Eigen::MatrixXd & a_d, const Eigen::MatrixXd & b_d, const Eigen::MatrixXd & c_d,
-    const Eigen::MatrixXd & w_d, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
-    const MPCTrajectory & reference_trajectory, const double dt) const = 0;
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_

@@ -155,6 +155,19 @@ PathWithLaneId resamplePathWithSpline(
   return motion_utils::resamplePath(path, s_out);
 }
 
+Path toPath(const PathWithLaneId & input)
+{
+  Path output{};
+  output.header = input.header;
+  output.left_bound = input.left_bound;
+  output.right_bound = input.right_bound;
+  output.points.resize(input.points.size());
+  for (size_t i = 0; i < input.points.size(); ++i) {
+    output.points.at(i) = input.points.at(i).point;
+  }
+  return output;
+}
+
 size_t getIdxByArclength(
   const PathWithLaneId & path, const size_t target_idx, const double signed_arc)
 {
@@ -173,15 +186,16 @@ size_t getIdxByArclength(
       }
     }
     return path.points.size() - 1;
-  }
-  for (size_t i = target_idx; i > 0; --i) {
-    const auto next_i = i - 1;
-    sum_length -= calcDistance2d(path.points.at(i), path.points.at(next_i));
-    if (sum_length < signed_arc) {
-      return next_i;
+  } else {
+    for (size_t i = target_idx; i > 0; --i) {
+      const auto next_i = i - 1;
+      sum_length -= calcDistance2d(path.points.at(i), path.points.at(next_i));
+      if (sum_length < signed_arc) {
+        return next_i;
+      }
     }
+    return 0;
   }
-  return 0;
 }
 
 // TODO(murooka) This function should be replaced with motion_utils::cropPoints

@@ -113,6 +113,9 @@ size_t findEgoSegmentIndex(
     points, ego_pose, ego_nearest_param.dist_threshold, ego_nearest_param.yaw_threshold);
 }
 
+Trajectory createTrajectory(
+  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points);
+
 Path create_path(Path path_msg, const std::vector<TrajectoryPoint> & traj_points);
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
@@ -136,7 +139,7 @@ std::optional<size_t> updateFrontPointForFix(
   const double lon_offset_to_prev_front =
     motion_utils::calcSignedArcLength(points, 0, front_fix_point.pose.position);
   if (0 < lon_offset_to_prev_front) {
-    RCLCPP_DEBUG(
+    RCLCPP_WARN(
       rclcpp::get_logger("path_smoother.trajectory_utils"),
       "Fixed point will not be inserted due to the error during calculation.");
     return std::nullopt;
@@ -147,7 +150,7 @@ std::optional<size_t> updateFrontPointForFix(
   // check if deviation is not too large
   constexpr double max_lat_error = 3.0;
   if (max_lat_error < dist) {
-    RCLCPP_DEBUG(
+    RCLCPP_WARN(
       rclcpp::get_logger("path_smoother.trajectory_utils"),
       "New Fixed point is too far from points %f [m]", dist);
   }

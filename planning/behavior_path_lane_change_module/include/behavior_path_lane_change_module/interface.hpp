@@ -67,14 +67,10 @@ public:
 
   bool isExecutionReady() const override;
 
-  bool isRootLaneletToBeUpdated() const override
-  {
-    return getCurrentStatus() == ModuleStatus::SUCCESS;
-  }
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
 
   void updateData() override;
-
-  void postProcess() override;
 
   BehaviorModuleOutput plan() override;
 
@@ -120,15 +116,17 @@ protected:
 
   std::unique_ptr<LaneChangeBase> module_type_;
 
-  PathSafetyStatus post_process_safety_status_;
+  bool canTransitSuccessState() override { return false; }
 
-  bool canTransitSuccessState() override;
+  bool canTransitFailureState() override { return false; }
 
-  bool canTransitFailureState() override;
+  bool canTransitIdleToRunningState() override { return false; }
 
-  ModuleStatus setInitState() const override { return ModuleStatus::WAITING_APPROVAL; };
+  void resetPathIfAbort();
 
-  void updateDebugMarker() const;
+  void resetLaneChangeModule();
+
+  void setObjectDebugVisualization() const;
 
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
 

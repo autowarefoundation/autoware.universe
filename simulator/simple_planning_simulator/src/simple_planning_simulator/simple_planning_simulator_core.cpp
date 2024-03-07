@@ -102,6 +102,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   simulated_frame_id_ = declare_parameter("simulated_frame_id", "base_link");
   origin_frame_id_ = declare_parameter("origin_frame_id", "odom");
   add_measurement_noise_ = declare_parameter("add_measurement_noise", false);
+  measurement_steer_bias_ = declare_parameter("measurement_steer_bias", 0.0);
   simulate_motion_ = declare_parameter<bool>("initial_engage_state");
   enable_road_slope_simulation_ = declare_parameter("enable_road_slope_simulation", false);
 
@@ -182,7 +183,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
 
   // set initialize source
   const auto initialize_source = declare_parameter("initialize_source", "INITIAL_POSE_TOPIC");
-  RCLCPP_DEBUG(this->get_logger(), "initialize_source : %s", initialize_source.c_str());
+  RCLCPP_INFO(this->get_logger(), "initialize_source : %s", initialize_source.c_str());
   if (initialize_source == "ORIGIN") {
     Pose p;
     p.orientation.w = 1.0;          // yaw = 0
@@ -218,7 +219,7 @@ void SimplePlanningSimulator::initialize_vehicle_model()
 {
   const auto vehicle_model_type_str = declare_parameter("vehicle_model_type", "IDEAL_STEER_VEL");
 
-  RCLCPP_DEBUG(this->get_logger(), "vehicle_model_type = %s", vehicle_model_type_str.c_str());
+  RCLCPP_INFO(this->get_logger(), "vehicle_model_type = %s", vehicle_model_type_str.c_str());
 
   const double vel_lim = declare_parameter("vel_lim", 50.0);
   const double vel_rate_lim = declare_parameter("vel_rate_lim", 7.0);
@@ -231,8 +232,6 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const double steer_time_delay = declare_parameter("steer_time_delay", 0.24);
   const double steer_time_constant = declare_parameter("steer_time_constant", 0.27);
   const double steer_dead_band = declare_parameter("steer_dead_band", 0.0);
-  const double steer_bias = declare_parameter("steer_bias", 0.0);
-
   const double debug_acc_scaling_factor = declare_parameter("debug_acc_scaling_factor", 1.0);
   const double debug_steer_scaling_factor = declare_parameter("debug_steer_scaling_factor", 1.0);
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -251,20 +250,19 @@ void SimplePlanningSimulator::initialize_vehicle_model()
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_VEL;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant, steer_dead_band,
-      steer_bias);
+      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant, steer_dead_band);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band,
-      steer_bias, debug_acc_scaling_factor, debug_steer_scaling_factor);
+      debug_acc_scaling_factor, debug_steer_scaling_factor);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band,
-      steer_bias, debug_acc_scaling_factor, debug_steer_scaling_factor);
+      debug_acc_scaling_factor, debug_steer_scaling_factor);
   } else if (vehicle_model_type_str == "DELAY_STEER_MAP_ACC_GEARED") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_MAP_ACC_GEARED;
     const std::string acceleration_map_path =
@@ -279,7 +277,7 @@ void SimplePlanningSimulator::initialize_vehicle_model()
     }
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerMapAccGeared>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_bias,
+      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant,
       acceleration_map_path);
   } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
@@ -373,10 +371,9 @@ void SimplePlanningSimulator::on_timer()
   }
 
   // set current state
-  const auto prev_odometry = current_odometry_;
   current_odometry_ = to_odometry(vehicle_model_ptr_, ego_pitch_angle);
   current_odometry_.pose.pose.position.z = get_z_pose_from_trajectory(
-    current_odometry_.pose.pose.position.x, current_odometry_.pose.pose.position.y, prev_odometry);
+    current_odometry_.pose.pose.position.x, current_odometry_.pose.pose.position.y);
 
   current_velocity_ = to_velocity_report(vehicle_model_ptr_);
   current_steer_ = to_steering_report(vehicle_model_ptr_);
@@ -384,6 +381,9 @@ void SimplePlanningSimulator::on_timer()
   if (add_measurement_noise_) {
     add_measurement_noise(current_odometry_, current_velocity_, current_steer_);
   }
+
+  // add measurement bias
+  current_steer_.steering_tire_angle += measurement_steer_bias_;
 
   // add estimate covariance
   {
@@ -429,7 +429,6 @@ void SimplePlanningSimulator::on_initialpose(const PoseWithCovarianceStamped::Co
   set_initial_state_with_transform(initial_pose, initial_twist);
 
   initial_pose_ = msg;
-  current_odometry_.pose = msg->pose;
 }
 
 void SimplePlanningSimulator::on_initialtwist(const TwistStamped::ConstSharedPtr msg)
@@ -592,12 +591,11 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
   is_initialized_ = true;
 }
 
-double SimplePlanningSimulator::get_z_pose_from_trajectory(
-  const double x, const double y, const Odometry & prev_odometry)
+double SimplePlanningSimulator::get_z_pose_from_trajectory(const double x, const double y)
 {
   // calculate closest point on trajectory
   if (!current_trajectory_ptr_) {
-    return prev_odometry.pose.pose.position.z;
+    return 0.0;
   }
 
   const double max_sqrt_dist = std::numeric_limits<double>::max();
@@ -618,7 +616,7 @@ double SimplePlanningSimulator::get_z_pose_from_trajectory(
     return current_trajectory_ptr_->points.at(index).pose.position.z;
   }
 
-  return prev_odometry.pose.pose.position.z;
+  return 0.0;
 }
 
 TransformStamped SimplePlanningSimulator::get_transform_msg(

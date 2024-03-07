@@ -28,15 +28,6 @@ sample-map-rosbag
 projector_type: local
 ```
 
-#### Limitation
-
-The functionality that requires latitude and longitude will become unavailable.
-
-The currently identified unavailable functionalities are:
-
-- GNSS localization
-- Sending the self-position in latitude and longitude using ADAPI
-
 ### Using MGRS
 
 If you want to use MGRS, please specify the MGRS grid as well.
@@ -47,10 +38,6 @@ projector_type: MGRS
 vertical_datum: WGS84
 mgrs_grid: 54SUE
 ```
-
-#### Limitation
-
-It cannot be used with maps that span across two or more MGRS grids. Please use it only when it falls within the scope of a single MGRS grid.
 
 ### Using LocalCartesianUTM
 
@@ -82,10 +69,11 @@ map_origin:
 
 ## Published Topics
 
-- `~/map_projector_info` (tier4_map_msgs/MapProjectorInfo) : This topic shows the definition of map projector information
+- ~/map_projector_info (tier4_map_msgs/MapProjectorInfo) : Topic for defining map projector information
 
 ## Parameters
 
-Note that these parameters are assumed to be passed from launch arguments, and it is not recommended to directly write them in `map_projection_loader.param.yaml`.
-
-{{ json_to_markdown("map/map_projection_loader/schema/map_projection_loader.schema.json") }}
+| Name                    | Type        | Description                                                                      |
+| :---------------------- | :---------- | :------------------------------------------------------------------------------- |
+| map_projector_info_path | std::string | A path to map_projector_info.yaml (used by default)                              |
+| lanelet2_map_path       | std::string | A path to lanelet2 map (used only when `map_projector_info_path` does not exist) |

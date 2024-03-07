@@ -14,20 +14,13 @@ rclcpp_components_register_node(goal_pose_visualizer_component
 )
 
 ament_auto_add_library(${PROJECT_NAME}_component SHARED
-  src/mission_planner/arrival_checker.cpp
-  src/mission_planner/service_utils.cpp
   src/mission_planner/mission_planner.cpp
-  src/mission_planner/route_selector.cpp
+  src/mission_planner/arrival_checker.cpp
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_component
   PLUGIN "mission_planner::MissionPlanner"
-  EXECUTABLE mission_planner
-)
-
-rclcpp_components_register_node(${PROJECT_NAME}_component
-  PLUGIN "mission_planner::RouteSelector"
-  EXECUTABLE route_selector
+  EXECUTABLE ${PROJECT_NAME}
 )
 
 ament_auto_add_library(${PROJECT_NAME}_lanelet2_plugins SHARED
@@ -37,7 +30,7 @@ ament_auto_add_library(${PROJECT_NAME}_lanelet2_plugins SHARED
 pluginlib_export_plugin_description_file(mission_planner plugins/plugin_description.xml)
 
 ament_auto_package(
-  INSTALL_TO_SHARE
-  config
-  launch
+        INSTALL_TO_SHARE
+        config
+        launch
 )

@@ -91,7 +91,7 @@ public:
   PredictedPath generatePathForOffLaneVehicle(const TrackedObject & object);
 
   PredictedPath generatePathForOnLaneVehicle(
-    const TrackedObject & object, const PosePath & ref_paths, const double speed_limit = 0.0);
+    const TrackedObject & object, const PosePath & ref_paths);
 
   PredictedPath generatePathForCrosswalkUser(
     const TrackedObject & object, const CrosswalkEdgePoints & reachable_crosswalk) const;
@@ -99,30 +99,17 @@ public:
   PredictedPath generatePathToTargetPoint(
     const TrackedObject & object, const Eigen::Vector2d & point) const;
 
-  void setUseVehicleAcceleration(const bool use_vehicle_acceleration)
-  {
-    use_vehicle_acceleration_ = use_vehicle_acceleration;
-  }
-
-  void setAccelerationHalfLife(const double acceleration_exponential_half_life)
-  {
-    acceleration_exponential_half_life_ = acceleration_exponential_half_life;
-  }
-
 private:
   // Parameters
   double time_horizon_;
   double lateral_time_horizon_;
   double sampling_time_interval_;
   double min_crosswalk_user_velocity_;
-  bool use_vehicle_acceleration_;
-  double acceleration_exponential_half_life_;
 
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;
 
-  PredictedPath generatePolynomialPath(
-    const TrackedObject & object, const PosePath & ref_path, const double speed_limit = 0.0);
+  PredictedPath generatePolynomialPath(const TrackedObject & object, const PosePath & ref_path);
 
   FrenetPath generateFrenetPath(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length);
@@ -138,8 +125,7 @@ private:
     const TrackedObject & object, const FrenetPath & frenet_predicted_path,
     const PosePath & ref_path);
 
-  FrenetPoint getFrenetPoint(
-    const TrackedObject & object, const PosePath & ref_path, const double speed_limit = 0.0);
+  FrenetPoint getFrenetPoint(const TrackedObject & object, const PosePath & ref_path);
 };
 }  // namespace map_based_prediction
 

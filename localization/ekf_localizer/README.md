@@ -32,33 +32,71 @@ This package includes the following features:
   <img src="./media/calculation_delta_from_pitch.png" width="800">
 </p>
 
+## Launch
+
+The `ekf_localizer` starts with the default parameters with the following command.
+
+```sh
+roslaunch ekf_localizer ekf_localizer.launch
+```
+
+The parameters and input topic names can be set in the `ekf_localizer.launch` file.
+
 ## Node
 
 ### Subscribed Topics
 
-| Name                             | Type                                             | Description                                                                                                                              |
-| -------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `measured_pose_with_covariance`  | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Input pose source with the measurement covariance matrix.                                                                                |
-| `measured_twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | Input twist source with the measurement covariance matrix.                                                                               |
-| `initialpose`                    | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Initial pose for EKF. The estimated pose is initialized with zeros at the start. It is initialized with this message whenever published. |
+- measured_pose_with_covariance (geometry_msgs/PoseWithCovarianceStamped)
+
+  Input pose source with the measurement covariance matrix.
+
+- measured_twist_with_covariance (geometry_msgs/TwistWithCovarianceStamped)
+
+  Input twist source with the measurement covariance matrix.
+
+- initialpose (geometry_msgs/PoseWithCovarianceStamped)
+
+  Initial pose for EKF. The estimated pose is initialized with zeros at the start. It is initialized with this message whenever published.
 
 ### Published Topics
 
-| Name                              | Type                                             | Description                                           |
-| --------------------------------- | ------------------------------------------------ | ----------------------------------------------------- |
-| `ekf_odom`                        | `nav_msgs::msg::Odometry`                        | Estimated odometry.                                   |
-| `ekf_pose`                        | `geometry_msgs::msg::PoseStamped`                | Estimated pose.                                       |
-| `ekf_pose_with_covariance`        | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Estimated pose with covariance.                       |
-| `ekf_biased_pose`                 | `geometry_msgs::msg::PoseStamped`                | Estimated pose including the yaw bias                 |
-| `ekf_biased_pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Estimated pose with covariance including the yaw bias |
-| `ekf_twist`                       | `geometry_msgs::msg::TwistStamped`               | Estimated twist.                                      |
-| `ekf_twist_with_covariance`       | `geometry_msgs::msg::TwistWithCovarianceStamped` | The estimated twist with covariance.                  |
-| `diagnostics`                     | `diagnostics_msgs::msg::DiagnosticArray`         | The diagnostic information.                           |
+- ekf_odom (nav_msgs/Odometry)
+
+  Estimated odometry.
+
+- ekf_pose (geometry_msgs/PoseStamped)
+
+  Estimated pose.
+
+- ekf_pose_with_covariance (geometry_msgs/PoseWithCovarianceStamped)
+
+  Estimated pose with covariance.
+
+- ekf_biased_pose (geometry_msgs/PoseStamped)
+
+  Estimated pose including the yaw bias
+
+- ekf_biased_pose_with_covariance (geometry_msgs/PoseWithCovarianceStamped)
+
+  Estimated pose with covariance including the yaw bias
+
+- ekf_twist (geometry_msgs/TwistStamped)
+
+  Estimated twist.
+
+- ekf_twist_with_covariance (geometry_msgs/TwistWithCovarianceStamped)
+
+  The estimated twist with covariance.
+
+- diagnostics (diagnostic_msgs/DiagnosticArray)
+
+  The diagnostic information.
 
 ### Published TF
 
 - base_link
-  TF from `map` coordinate to estimated pose.
+
+  TF from "map" coordinate to estimated pose.
 
 ## Functions
 
@@ -78,33 +116,56 @@ The parameters are set in `launch/ekf_localizer.launch` .
 
 ### For Node
 
-{{ json_to_markdown("localization/ekf_localizer/schema/sub/node.sub_schema.json") }}
+| Name                       | Type   | Description                                                                               | Default value |
+| :------------------------- | :----- | :---------------------------------------------------------------------------------------- | :------------ |
+| show_debug_info            | bool   | Flag to display debug info                                                                | false         |
+| predict_frequency          | double | Frequency for filtering and publishing [Hz]                                               | 50.0          |
+| tf_rate                    | double | Frequency for tf broadcasting [Hz]                                                        | 10.0          |
+| extend_state_step          | int    | Max delay step which can be dealt with in EKF. Large number increases computational cost. | 50            |
+| enable_yaw_bias_estimation | bool   | Flag to enable yaw bias estimation                                                        | true          |
 
 ### For pose measurement
 
-{{ json_to_markdown("localization/ekf_localizer/schema/sub/pose_measurement.sub_schema.json") }}
+| Name                          | Type   | Description                                                   | Default value |
+| :---------------------------- | :----- | :------------------------------------------------------------ | :------------ |
+| pose_additional_delay         | double | Additional delay time for pose measurement [s]                | 0.0           |
+| pose_measure_uncertainty_time | double | Measured time uncertainty used for covariance calculation [s] | 0.01          |
+| pose_smoothing_steps          | int    | A value for smoothing steps                                   | 5             |
+| pose_gate_dist                | double | Limit of Mahalanobis distance used for outliers detection     | 10000.0       |
 
 ### For twist measurement
 
-{{ json_to_markdown("localization/ekf_localizer/schema/sub/twist_measurement.sub_schema.json") }}
+| Name                   | Type   | Description                                               | Default value |
+| :--------------------- | :----- | :-------------------------------------------------------- | :------------ |
+| twist_additional_delay | double | Additional delay time for twist [s]                       | 0.0           |
+| twist_smoothing_steps  | int    | A value for smoothing steps                               | 2             |
+| twist_gate_dist        | double | Limit of Mahalanobis distance used for outliers detection | 10000.0       |
 
 ### For process noise
 
-{{ json_to_markdown("localization/ekf_localizer/schema/sub/process_noise.sub_schema.json") }}
+| Name                   | Type   | Description                                                                                                      | Default value |
+| :--------------------- | :----- | :--------------------------------------------------------------------------------------------------------------- | :------------ |
+| proc_stddev_vx_c       | double | Standard deviation of process noise in time differentiation expression of linear velocity x, noise for d_vx = 0  | 2.0           |
+| proc_stddev_wz_c       | double | Standard deviation of process noise in time differentiation expression of angular velocity z, noise for d_wz = 0 | 0.2           |
+| proc_stddev_yaw_c      | double | Standard deviation of process noise in time differentiation expression of yaw, noise for d_yaw = omega           | 0.005         |
+| proc_stddev_yaw_bias_c | double | Standard deviation of process noise in time differentiation expression of yaw_bias, noise for d_yaw_bias = 0     | 0.001         |
 
 note: process noise for positions x & y are calculated automatically from nonlinear dynamics.
 
-### Simple 1D Filter Parameters
-
-{{ json_to_markdown("localization/ekf_localizer/schema/sub/simple_1d_filter_parameters.sub_schema.json") }}
-
 ### For diagnostics
 
-{{ json_to_markdown("localization/ekf_localizer/schema/sub/diagnostics.sub_schema.json") }}
+| Name                                  | Type   | Description                                                                                                                                | Default value |
+| :------------------------------------ | :----- | :----------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| pose_no_update_count_threshold_warn   | size_t | The threshold at which a WARN state is triggered due to the Pose Topic update not happening continuously for a certain number of times.    | 50            |
+| pose_no_update_count_threshold_error  | size_t | The threshold at which an ERROR state is triggered due to the Pose Topic update not happening continuously for a certain number of times.  | 250           |
+| twist_no_update_count_threshold_warn  | size_t | The threshold at which a WARN state is triggered due to the Twist Topic update not happening continuously for a certain number of times.   | 50            |
+| twist_no_update_count_threshold_error | size_t | The threshold at which an ERROR state is triggered due to the Twist Topic update not happening continuously for a certain number of times. | 250           |
 
 ### Misc
 
-{{ json_to_markdown("localization/ekf_localizer/schema/sub/misc.sub_schema.json") }}
+| Name                              | Type   | Description                                                                                        | Default value  |
+| :-------------------------------- | :----- | :------------------------------------------------------------------------------------------------- | :------------- |
+| threshold_observable_velocity_mps | double | Minimum value for velocity that will be used for EKF. Mainly used for dead zone in velocity sensor | 0.0 (disabled) |
 
 ## How to tune EKF parameters
 
@@ -136,9 +197,7 @@ Increasing the number will improve the smoothness of the estimation, but may hav
 
 <img src="./media/ekf_dynamics.png" width="320">
 
-where, $\theta_k$ represents the vehicle's heading angle, including the mounting angle bias.
-$b_k$ is a correction term for the yaw bias, and it is modeled so that $(\theta_k+b_k)$ becomes the heading angle of the base_link.
-The pose_estimator is expected to publish the base_link in the map coordinate system. However, the yaw angle may be offset due to calibration errors. This model compensates this error and improves estimation accuracy.
+where `b_k` is the yawbias.
 
 ### time delay model
 
@@ -173,7 +232,7 @@ Note that, although the dimension gets larger since the analytical expansion can
 
 ## Known issues
 
-- If multiple pose_estimators are used, the input to the EKF will include multiple yaw biases corresponding to each source. However, the current EKF assumes the existence of only one yaw bias. Therefore, yaw bias `b_k` in the current EKF state would not make any sense and cannot correctly handle these multiple yaw biases. Thus, future work includes introducing yaw bias for each sensor with yaw estimation.
+- In the presence of multiple inputs with yaw estimation, yaw bias `b_k` in the current EKF state would not make any sense, since it is intended to capture the extrinsic parameter's calibration error of a sensor. Thus, future work includes introducing yaw bias for each sensor with yaw estimation.
 
 ## reference
 

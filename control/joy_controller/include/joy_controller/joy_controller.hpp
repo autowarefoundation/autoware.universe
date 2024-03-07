@@ -59,7 +59,6 @@ private:
   double brake_sensitivity_;
 
   // ControlCommand Parameter
-  bool raw_control_;
   double velocity_gain_;
   double max_forward_velocity_;
   double max_backward_velocity_;

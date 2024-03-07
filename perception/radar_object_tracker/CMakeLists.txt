@@ -12,7 +12,6 @@ endif()
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(nlohmann_json REQUIRED) # for debug
-find_package(glog REQUIRED)
 
 include_directories(
   SYSTEM
@@ -33,7 +32,6 @@ target_link_libraries(radar_object_tracker_node
   Eigen3::Eigen
   yaml-cpp
   nlohmann_json::nlohmann_json # for debug
-  glog::glog
 )
 
 rclcpp_components_register_node(radar_object_tracker_node

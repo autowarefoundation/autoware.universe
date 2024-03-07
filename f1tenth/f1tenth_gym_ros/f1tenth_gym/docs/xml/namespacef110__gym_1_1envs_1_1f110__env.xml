@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1envs_1_1f110__env" kind="namespace" language="Python">
+    <compoundname>f110_gym::envs::f110_env</compoundname>
+    <innerclass refid="classf110__gym_1_1envs_1_1f110__env_1_1_f110_env" prot="public">f110_gym::envs::f110_env::F110Env</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="f110__env_8py_1a118efb91786ec1caaf67464c1d4d4962" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int f110_gym::envs::f110_env.VIDEO_W</definition>
+        <argsstring></argsstring>
+        <name>VIDEO_W</name>
+        <initializer>=  600</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" line="48" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" bodystart="48" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="f110__env_8py_1ac753c679a3d5a173c8ad99d14c5fc47b" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int f110_gym::envs::f110_env.VIDEO_H</definition>
+        <argsstring></argsstring>
+        <name>VIDEO_H</name>
+        <initializer>=  400</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" line="49" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" bodystart="49" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="f110__env_8py_1a72a6be22a508a795985d604b0add267d" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int f110_gym::envs::f110_env.WINDOW_W</definition>
+        <argsstring></argsstring>
+        <name>WINDOW_W</name>
+        <initializer>=  1000</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" line="50" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" bodystart="50" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="f110__env_8py_1a9a35e98c8a439e76515bdcd473fd9e2d" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int f110_gym::envs::f110_env.WINDOW_H</definition>
+        <argsstring></argsstring>
+        <name>WINDOW_H</name>
+        <initializer>=  800</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" line="51" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" bodystart="51" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/f110_env.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

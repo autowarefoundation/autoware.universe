@@ -115,10 +115,6 @@ ShiftLine getLaneChangingShiftLine(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
   const PathWithLaneId & reference_path, const double shift_length);
 
-ShiftLine getLaneChangingShiftLine(
-  const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
-  const PathWithLaneId & reference_path, const double shift_length);
-
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & lane_changing_start_pose, const double target_lane_length,
@@ -225,14 +221,4 @@ lanelet::ConstLanelets generateExpandedLanelets(
  */
 rclcpp::Logger getLogger(const std::string & type);
 }  // namespace behavior_path_planner::utils::lane_change
-
-namespace behavior_path_planner::utils::lane_change::debug
-{
-geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose);
-
-geometry_msgs::msg::Polygon createExecutionArea(
-  const vehicle_info_util::VehicleInfo & vehicle_info, const Pose & pose,
-  double additional_lon_offset, double additional_lat_offset);
-}  // namespace behavior_path_planner::utils::lane_change::debug
-
 #endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

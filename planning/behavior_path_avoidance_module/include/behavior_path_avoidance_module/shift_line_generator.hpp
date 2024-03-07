@@ -17,7 +17,10 @@
 
 #include "behavior_path_avoidance_module/data_structs.hpp"
 #include "behavior_path_avoidance_module/helper.hpp"
+#include "behavior_path_planner_common/data_manager.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <memory>
 
@@ -26,6 +29,8 @@ namespace behavior_path_planner::utils::avoidance
 
 using behavior_path_planner::PathShifter;
 using behavior_path_planner::helper::avoidance::AvoidanceHelper;
+using motion_utils::calcSignedArcLength;
+using motion_utils::findNearestIndex;
 
 class ShiftLineGenerator
 {

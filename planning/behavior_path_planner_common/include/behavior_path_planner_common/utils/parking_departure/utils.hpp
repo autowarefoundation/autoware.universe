@@ -19,6 +19,8 @@
 #include "behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
+#include <motion_utils/distance/distance.hpp>
+
 #include <memory>
 #include <utility>
 #include <vector>
@@ -70,7 +72,7 @@ std::pair<double, double> getPairsTerminalVelocityAndAccel(
 
 std::optional<PathWithLaneId> generateFeasibleStopPath(
   PathWithLaneId & current_path, std::shared_ptr<const PlannerData> planner_data,
-  std::optional<geometry_msgs::msg::Pose> & stop_pose, const double maximum_deceleration,
+  geometry_msgs::msg::Pose & stop_pose, const double maximum_deceleration,
   const double maximum_jerk);
 
 /**

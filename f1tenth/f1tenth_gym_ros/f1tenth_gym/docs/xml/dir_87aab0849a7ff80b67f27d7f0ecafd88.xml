@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="dir_87aab0849a7ff80b67f27d7f0ecafd88" kind="dir">
+    <compoundname>/home/billyzheng/f1tenth_gym/gym/f110_gym/envs</compoundname>
+    <innerfile refid="envs_2____init_____8py">__init__.py</innerfile>
+    <innerfile refid="base__classes_8py">base_classes.py</innerfile>
+    <innerfile refid="collision__models_8py">collision_models.py</innerfile>
+    <innerfile refid="dynamic__models_8py">dynamic_models.py</innerfile>
+    <innerfile refid="f110__env_8py">f110_env.py</innerfile>
+    <innerfile refid="f110__env__backup_8py">f110_env_backup.py</innerfile>
+    <innerfile refid="laser__models_8py">laser_models.py</innerfile>
+    <innerfile refid="rendering_8py">rendering.py</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/"/>
+  </compounddef>
+</doxygen>

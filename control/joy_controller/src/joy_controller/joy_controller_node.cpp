@@ -16,7 +16,6 @@
 #include "joy_controller/joy_converter/ds4_joy_converter.hpp"
 #include "joy_controller/joy_converter/g29_joy_converter.hpp"
 #include "joy_controller/joy_converter/p65_joy_converter.hpp"
-#include "joy_controller/joy_converter/xbox_joy_converter.hpp"
 
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
@@ -155,8 +154,6 @@ void AutowareJoyControllerNode::onJoy(const sensor_msgs::msg::Joy::ConstSharedPt
     joy_ = std::make_shared<const G29JoyConverter>(*msg);
   } else if (joy_type_ == "DS4") {
     joy_ = std::make_shared<const DS4JoyConverter>(*msg);
-  } else if (joy_type_ == "XBOX") {
-    joy_ = std::make_shared<const XBOXJoyConverter>(*msg);
   } else {
     joy_ = std::make_shared<const P65JoyConverter>(*msg);
   }
@@ -220,7 +217,7 @@ bool AutowareJoyControllerNode::isDataReady()
   }
 
   // Twist
-  if (!raw_control_) {
+  {
     if (!twist_) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), std::chrono::milliseconds(5000).count(),
@@ -461,7 +458,6 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   steering_angle_velocity_ = declare_parameter<double>("steering_angle_velocity");
   accel_sensitivity_ = declare_parameter<double>("accel_sensitivity");
   brake_sensitivity_ = declare_parameter<double>("brake_sensitivity");
-  raw_control_ = declare_parameter<bool>("control_command.raw_control");
   velocity_gain_ = declare_parameter<double>("control_command.velocity_gain");
   max_forward_velocity_ = declare_parameter<double>("control_command.max_forward_velocity");
   max_backward_velocity_ = declare_parameter<double>("control_command.max_backward_velocity");
@@ -481,14 +477,10 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   sub_joy_ = this->create_subscription<sensor_msgs::msg::Joy>(
     "input/joy", 1, std::bind(&AutowareJoyControllerNode::onJoy, this, std::placeholders::_1),
     subscriber_option);
-  if (!raw_control_) {
-    sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "input/odometry", 1,
-      std::bind(&AutowareJoyControllerNode::onOdometry, this, std::placeholders::_1),
-      subscriber_option);
-  } else {
-    twist_ = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  }
+  sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    "input/odometry", 1,
+    std::bind(&AutowareJoyControllerNode::onOdometry, this, std::placeholders::_1),
+    subscriber_option);
 
   // Publisher
   pub_control_command_ =

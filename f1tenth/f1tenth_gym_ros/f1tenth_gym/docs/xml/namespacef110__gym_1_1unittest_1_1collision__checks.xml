@@ -1,0 +1,266 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1unittest_1_1collision__checks" kind="namespace" language="Python">
+    <compoundname>f110_gym::unittest::collision_checks</compoundname>
+    <innerclass refid="classf110__gym_1_1unittest_1_1collision__checks_1_1_collision_tests" prot="public">f110_gym::unittest::collision_checks::CollisionTests</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="collision__checks_8py_1a01c6f10da145f4b9db113a17360e45ed" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::unittest::collision_checks.cache</definition>
+        <argsstring></argsstring>
+        <name>cache</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="34" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="collision__checks_8py_1a1718aedaf888fb6bcc90e1814732e56e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.collision_checks.perpendicular</definition>
+        <argsstring>(pt)</argsstring>
+        <name>perpendicular</name>
+        <param>
+          <type>pt</type>
+          <defname>pt</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Return a 2-vector&apos;s perpendicular vector
+
+Args:
+    pt (np.ndarray, (2,)): input vector
+
+Returns:
+    pt (np.ndarray, (2,)): perpendicular vector
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="35" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="35" bodyend="51"/>
+      </memberdef>
+      <memberdef kind="function" id="collision__checks_8py_1a662cb9cf2ce661a420f4aa6170856959" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.collision_checks.tripleProduct</definition>
+        <argsstring>(a, b, c)</argsstring>
+        <name>tripleProduct</name>
+        <param>
+          <type>a</type>
+          <defname>a</defname>
+        </param>
+        <param>
+          <type>b</type>
+          <defname>b</defname>
+        </param>
+        <param>
+          <type>c</type>
+          <defname>c</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Return triple product of three vectors
+
+Args:
+    a, b, c (np.ndarray, (2,)): input vectors
+
+Returns:
+    (np.ndarray, (2,)): triple product
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="52" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="52" bodyend="67"/>
+      </memberdef>
+      <memberdef kind="function" id="collision__checks_8py_1ace038ce6c1efa0f8884f63d84a1a8e9d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.collision_checks.avgPoint</definition>
+        <argsstring>(vertices)</argsstring>
+        <name>avgPoint</name>
+        <param>
+          <type>vertices</type>
+          <defname>vertices</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Return the average point of multiple vertices
+
+Args:
+    vertices (np.ndarray, (n, 2)): the vertices we want to find avg on
+
+Returns:
+    avg (np.ndarray, (2,)): average point of the vertices
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="68" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="68" bodyend="81"/>
+      </memberdef>
+      <memberdef kind="function" id="collision__checks_8py_1afed234ffedde9f63c687aabc78ecf191" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.collision_checks.indexOfFurthestPoint</definition>
+        <argsstring>(vertices, d)</argsstring>
+        <name>indexOfFurthestPoint</name>
+        <param>
+          <type>vertices</type>
+          <defname>vertices</defname>
+        </param>
+        <param>
+          <type>d</type>
+          <defname>d</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Return the index of the vertex furthest away along a direction in the list of vertices
+
+Args:
+    vertices (np.ndarray, (n, 2)): the vertices we want to find avg on
+
+Returns:
+    idx (int): index of the furthest point
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="82" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="82" bodyend="95"/>
+      </memberdef>
+      <memberdef kind="function" id="collision__checks_8py_1a2c384f130b286e7c1d1dc3dd7b04dcfc" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.collision_checks.support</definition>
+        <argsstring>(vertices1, vertices2, d)</argsstring>
+        <name>support</name>
+        <param>
+          <type>vertices1</type>
+          <defname>vertices1</defname>
+        </param>
+        <param>
+          <type>vertices2</type>
+          <defname>vertices2</defname>
+        </param>
+        <param>
+          <type>d</type>
+          <defname>d</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Minkowski sum support function for GJK
+
+Args:
+    vertices1 (np.ndarray, (n, 2)): vertices of the first body
+    vertices2 (np.ndarray, (n, 2)): vertices of the second body
+    d (np.ndarray, (2, )): direction to find the support along
+
+Returns:
+    support (np.ndarray, (n, 2)): Minkowski sum
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="96" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="96" bodyend="113"/>
+      </memberdef>
+      <memberdef kind="function" id="collision__checks_8py_1ae6955c70ffe9171e85ef49d48c0ffbfc" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.collision_checks.collision</definition>
+        <argsstring>(vertices1, vertices2)</argsstring>
+        <name>collision</name>
+        <param>
+          <type>vertices1</type>
+          <defname>vertices1</defname>
+        </param>
+        <param>
+          <type>vertices2</type>
+          <defname>vertices2</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>GJK test to see whether two bodies overlap
+
+Args:
+    vertices1 (np.ndarray, (n, 2)): vertices of the first body
+    vertices2 (np.ndarray, (n, 2)): vertices of the second body
+
+Returns:
+    overlap (boolean): True if two bodies collide
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="114" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="114" bodyend="188"/>
+      </memberdef>
+      <memberdef kind="function" id="collision__checks_8py_1a696ebc81dbf2bb5f08dd7a8bc9aca517" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.collision_checks.get_trmtx</definition>
+        <argsstring>(pose)</argsstring>
+        <name>get_trmtx</name>
+        <param>
+          <type>pose</type>
+          <defname>pose</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Get transformation matrix of vehicle frame -&gt; global frame
+
+Args:
+    pose (np.ndarray (3, )): current pose of the vehicle
+
+return:
+    H (np.ndarray (4, 4)): transformation matrix
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="189" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="189" bodyend="207"/>
+      </memberdef>
+      <memberdef kind="function" id="collision__checks_8py_1aafb53c9e57ec13d9b34ec1cc4a4e6197" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.unittest.collision_checks.get_vertices</definition>
+        <argsstring>(pose, length, width)</argsstring>
+        <name>get_vertices</name>
+        <param>
+          <type>pose</type>
+          <defname>pose</defname>
+        </param>
+        <param>
+          <type>length</type>
+          <defname>length</defname>
+        </param>
+        <param>
+          <type>width</type>
+          <defname>width</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Utility function to return vertices of the car body given pose and size
+
+Args:
+    pose (np.ndarray, (3, )): current world coordinate pose of the vehicle
+    length (float): car length
+    width (float): car width
+
+Returns:
+    vertices (np.ndarray, (4, 2)): corner vertices of the vehicle body
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="208" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" bodystart="208" bodyend="237"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/collision_checks.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

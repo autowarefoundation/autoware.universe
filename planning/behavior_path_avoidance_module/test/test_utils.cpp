@@ -25,7 +25,7 @@ using behavior_path_planner::utils::avoidance::isSameDirectionShift;
 TEST(BehaviorPathPlanningAvoidanceUtilsTest, shiftLengthDirectionTest)
 {
   ObjectData right_obj;
-  right_obj.direction = route_handler::Direction::RIGHT;
+  right_obj.lateral = -0.3;
   const double negative_shift_length = -1.0;
   const double positive_shift_length = 1.0;
 
@@ -33,7 +33,11 @@ TEST(BehaviorPathPlanningAvoidanceUtilsTest, shiftLengthDirectionTest)
   ASSERT_FALSE(isSameDirectionShift(isOnRight(right_obj), positive_shift_length));
 
   ObjectData left_obj;
-  left_obj.direction = route_handler::Direction::LEFT;
+  left_obj.lateral = 0.3;
   ASSERT_TRUE(isSameDirectionShift(isOnRight(left_obj), positive_shift_length));
   ASSERT_FALSE(isSameDirectionShift(isOnRight(left_obj), negative_shift_length));
+
+  const double zero_shift_length = 0.0;
+  ASSERT_TRUE(isSameDirectionShift(isOnRight(left_obj), zero_shift_length));
+  ASSERT_FALSE(isSameDirectionShift(isOnRight(right_obj), zero_shift_length));
 }

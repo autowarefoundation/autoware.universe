@@ -5,18 +5,18 @@ nav:
     - 'Concept':
         - 'Planner Manager': planning/behavior_path_planner/docs/behavior_path_planner_manager_design
         - 'Scene Module Interface': planning/behavior_path_planner/docs/behavior_path_planner_interface_design
-        - 'Path Generation': planning/behavior_path_planner_common/docs/behavior_path_planner_path_generation_design
-        - 'Collision Assessment/Safety Check': planning/behavior_path_planner_common/docs/behavior_path_planner_safety_check
-        - 'Dynamic Drivable Area': planning/behavior_path_planner_common/docs/behavior_path_planner_drivable_area_design
-        - 'Turn Signal': planning/behavior_path_planner_common/docs/behavior_path_planner_turn_signal_design
+        - 'Path Generation': planning/behavior_path_planner/docs/behavior_path_planner_path_generation_design
+        - 'Collision Assessment/Safety Check': planning/behavior_path_planner/docs/behavior_path_planner_safety_check
+        - 'Dynamic Drivable Area': planning/behavior_path_planner/docs/behavior_path_planner_drivable_area_design
+        - 'Turn Signal': planning/behavior_path_planner/docs/behavior_path_planner_turn_signal_design
     - 'Scene Module':
-        - 'Avoidance': planning/behavior_path_avoidance_module
-        - 'Avoidance by Lane Change': planning/behavior_path_avoidance_by_lane_change_module
-        - 'Dynamic Avoidance': planning/behavior_path_dynamic_avoidance_module
-        - 'Goal Planner': planning/behavior_path_goal_planner_module
+        - 'Avoidance': planning/behavior_path_planner/docs/behavior_path_planner_avoidance_design
+        - 'Avoidance by Lane Change': planning/behavior_path_planner/docs/behavior_path_planner_avoidance_by_lane_change_design
+        - 'Dynamic Avoidance': planning/behavior_path_planner/docs/behavior_path_planner_dynamic_avoidance_design
+        - 'Goal Planner': planning/behavior_path_planner/docs/behavior_path_planner_goal_planner_design
         - 'Lane Change': planning/behavior_path_lane_change_module
-        - 'Side Shift': planning/behavior_path_side_shift_module
-        - 'Start Planner': planning/behavior_path_start_planner_module
+        - 'Side Shift': planning/behavior_path_planner/docs/behavior_path_planner_side_shift_design
+        - 'Start Planner': planning/behavior_path_planner/docs/behavior_path_planner_start_planner_design
   - 'Behavior Velocity Planner':
     - 'About Behavior Velocity': planning/behavior_velocity_planner
     - 'Template for Custom Module': planning/behavior_velocity_template_module
@@ -24,7 +24,6 @@ nav:
         - 'Blind Spot': planning/behavior_velocity_blind_spot_module
         - 'Crosswalk': planning/behavior_velocity_crosswalk_module
         - 'Detection Area': planning/behavior_velocity_detection_area_module
-        - 'Dynamic Obstacle Stop': planning/behavior_velocity_dynamic_obstacle_stop_module
         - 'Intersection': planning/behavior_velocity_intersection_module
         - 'No Drivable Lane': planning/behavior_velocity_no_drivable_lane_module
         - 'No Stopping Area': planning/behavior_velocity_no_stopping_area_module
@@ -77,8 +76,8 @@ nav:
   - 'Additional Tools':
     - 'RTC Replayer': planning/rtc_replayer
     - 'Planning Debug Tools':
-      - 'About Planning Debug Tools': https://github.com/autowarefoundation/autoware_tools/tree/main/planning/planning_debug_tools
-      - 'Stop Reason Visualizer': https://github.com/autowarefoundation/autoware_tools/blob/main/planning/planning_debug_tools/doc-stop-reason-visualizer.md
+      - 'About Planning Debug Tools': planning/planning_debug_tools
+      - 'Stop Reason Visualizer': planning/planning_debug_tools/doc-stop-reason-visualizer
     - 'Planning Test Utils': planning/planning_test_utils
     - 'Planning Topic Converter': planning/planning_topic_converter
     - 'Planning Validator': planning/planning_validator

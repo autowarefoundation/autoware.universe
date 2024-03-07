@@ -57,7 +57,6 @@ private:
   // Parameter
   NodeParam node_param_{};
 
-public:
   // Core
   bool isNoise(const RadarTrack & radar_track);
 };

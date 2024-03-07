@@ -20,20 +20,16 @@
 #include <eigen3/Eigen/Core>
 #include <interpolation/linear_interpolation.hpp>
 
-#include <geometry_msgs/msg/pose.hpp>
-
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
-#include <boost/geometry/index/rtree.hpp>
 
 #include <algorithm>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace sampler_common
@@ -43,9 +39,6 @@ using tier4_autoware_utils::MultiPoint2d;
 using tier4_autoware_utils::MultiPolygon2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
-
-typedef std::pair<tier4_autoware_utils::Box2d, size_t> BoxIndexPair;
-typedef boost::geometry::index::rtree<BoxIndexPair, boost::geometry::index::rstar<16, 4>> Rtree;
 
 /// @brief data about constraint check results of a given path
 struct ConstraintResults
@@ -86,9 +79,6 @@ struct Path
   std::vector<double> curvatures{};
   std::vector<double> yaws{};
   std::vector<double> lengths{};
-  std::vector<geometry_msgs::msg::Pose> poses{};
-
-  bool constraints_satisfied;
   ConstraintResults constraint_results{};
   double cost{};
   std::string tag{};  // string tag used for debugging
@@ -102,7 +92,6 @@ struct Path
     curvatures.clear();
     yaws.clear();
     lengths.clear();
-    poses.clear();
     constraint_results.clear();
     tag = "";
     cost = 0.0;
@@ -114,7 +103,6 @@ struct Path
     curvatures.reserve(size);
     yaws.reserve(size);
     lengths.reserve(size);
-    poses.reserve(size);
   }
 
   [[nodiscard]] Path extend(const Path & path) const
@@ -138,7 +126,6 @@ struct Path
     ext(extended_path.points, points, path.points);
     ext(extended_path.curvatures, curvatures, path.curvatures);
     ext(extended_path.yaws, yaws, path.yaws);
-    ext(extended_path.poses, poses, path.poses);
     extended_path.lengths.insert(extended_path.lengths.end(), lengths.begin(), lengths.end());
     const auto last_base_length = lengths.empty() ? 0.0 : lengths.back() + length_offset;
     for (size_t i = offset; i < path.lengths.size(); ++i)
@@ -340,7 +327,6 @@ struct Constraints
     double lateral_deviation_weight;
     double length_weight;
     double curvature_weight;
-    std::vector<double> weights;
   } soft{};
   struct
   {
@@ -353,7 +339,6 @@ struct Constraints
   MultiPolygon2d obstacle_polygons;
   MultiPolygon2d drivable_polygons;
   std::vector<DynamicObstacle> dynamic_obstacles;
-  Rtree rtree;
 };
 
 struct ReusableTrajectory

@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "diagnostic_converter/converter_node.hpp"
+#include "converter_node.hpp"
+#include "gtest/gtest.h"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "tier4_simulation_msgs/msg/user_defined_value.hpp"
 #include "tier4_simulation_msgs/msg/user_defined_value_type.hpp"
-
-#include <gtest/gtest.h>
 
 #include <memory>
 #include <string>

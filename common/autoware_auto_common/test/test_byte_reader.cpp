@@ -14,10 +14,9 @@
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
-#include "autoware_auto_common/common/types.hpp"
-#include "autoware_auto_common/helper_functions/byte_reader.hpp"
-
-#include <gtest/gtest.h>
+#include "common/types.hpp"
+#include "gtest/gtest.h"
+#include "helper_functions/byte_reader.hpp"
 
 #include <vector>
 

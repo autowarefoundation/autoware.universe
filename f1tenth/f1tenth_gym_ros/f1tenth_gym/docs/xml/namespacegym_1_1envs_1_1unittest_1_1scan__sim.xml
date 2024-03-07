@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacegym_1_1envs_1_1unittest_1_1scan__sim" kind="namespace" language="Python">
+    <compoundname>gym::envs::unittest::scan_sim</compoundname>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/__init__.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

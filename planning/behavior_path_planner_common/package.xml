@@ -11,8 +11,6 @@
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
 
   <!-- drivable area generation-->
-  <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
-  <maintainer email="daniel.sanchez@tier4.jp">Daniel Sanchez</maintainer>
   <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
@@ -49,8 +47,9 @@
   <depend>freespace_planning_algorithms</depend>
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
-  <depend>lane_departure_checker</depend>
   <depend>lanelet2_extension</depend>
+  <depend>libboost-dev</depend>
+  <depend>libopencv-dev</depend>
   <depend>magic_enum</depend>
   <depend>motion_utils</depend>
   <depend>object_recognition_utils</depend>
@@ -58,10 +57,13 @@
   <depend>rclcpp</depend>
   <depend>route_handler</depend>
   <depend>rtc_interface</depend>
+  <depend>sensor_msgs</depend>
   <depend>tf2</depend>
+  <depend>tf2_eigen</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_planning_msgs</depend>
-  <depend>traffic_light_utils</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
   <test_depend>ament_cmake_ros</test_depend>

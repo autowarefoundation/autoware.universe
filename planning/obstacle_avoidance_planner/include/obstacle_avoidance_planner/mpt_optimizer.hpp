@@ -109,7 +109,8 @@ public:
     const std::shared_ptr<DebugData> debug_data_ptr,
     const std::shared_ptr<TimeKeeper> time_keeper_ptr);
 
-  std::vector<TrajectoryPoint> optimizeTrajectory(const PlannerData & planner_data);
+  std::vector<TrajectoryPoint> optimizeTrajectory(
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points);
   std::optional<std::vector<TrajectoryPoint>> getPrevOptimizedTrajectoryPoints() const;
 
   void initialize(const bool enable_debug_info, const TrajectoryParam & traj_param);

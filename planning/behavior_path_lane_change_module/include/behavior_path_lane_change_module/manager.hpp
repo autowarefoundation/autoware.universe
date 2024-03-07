@@ -45,8 +45,6 @@ public:
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
 protected:
-  void initParams(rclcpp::Node * node);
-
   std::shared_ptr<LaneChangeParameters> parameters_;
 
   Direction direction_;

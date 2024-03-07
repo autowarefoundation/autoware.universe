@@ -50,7 +50,7 @@ typedef Eigen::Matrix<float, 1, 128, Eigen::RowMajor> FEATURE;
 typedef Eigen::Matrix<float, Eigen::Dynamic, 128, Eigen::RowMajor> FEATURESS;
 // typedef std::vector<FEATURE> FEATURESS;
 
-// Kalman Filter
+// Kalmanfilter
 // typedef Eigen::Matrix<float, 8, 8, Eigen::RowMajor> KAL_FILTER;
 typedef Eigen::Matrix<float, 1, 8, Eigen::RowMajor> KAL_MEAN;
 typedef Eigen::Matrix<float, 8, 8, Eigen::RowMajor> KAL_COVA;

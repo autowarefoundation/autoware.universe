@@ -26,7 +26,6 @@
 
 #include <functional>
 #include <memory>
-#include <optional>
 
 namespace behavior_velocity_planner
 {
@@ -58,7 +57,7 @@ private:
   // Debug
   rclcpp::Publisher<autoware_perception_msgs::msg::TrafficSignal>::SharedPtr pub_tl_state_;
 
-  std::optional<int> first_ref_stop_path_point_index_;
+  boost::optional<int> first_ref_stop_path_point_index_;
 };
 
 class TrafficLightModulePlugin : public PluginWrapper<TrafficLightModuleManager>

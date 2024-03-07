@@ -1,0 +1,13 @@
+/**:
+  ros__parameters:
+    heading_weight: 0.1
+    min_record_distance: 0.1
+    enable_object_collision_estimator: False
+    goal_distance_threshold_m: 0.75
+    goal_angle_threshold_rad: 1.57
+    loop_trajectory: True
+    loop_max_gap_m: 5.0
+    skip_first_velocity: False
+
+    vehicle_state: '/ego_racecar/odom'
+    planned_trajectory: '/planning/trajectory'

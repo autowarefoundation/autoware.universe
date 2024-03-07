@@ -14,6 +14,8 @@
 
 #include "lidar_centerpoint/network/network_trt.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 namespace centerpoint
 {
 bool VoxelEncoderTRT::setProfile(
@@ -63,8 +65,9 @@ bool HeadTRT::setProfile(
     if (
       out_name == std::string("heatmap") &&
       network.getOutput(ci)->getDimensions().d[1] != static_cast<int32_t>(out_channel_sizes_[ci])) {
-      tensorrt_common::LOG_ERROR(logger_)
-        << "Expected and actual number of classes do not match" << std::endl;
+      RCLCPP_ERROR(
+        rclcpp::get_logger("lidar_centerpoint"),
+        "Expected and actual number of classes do not match");
       return false;
     }
     auto out_dims = nvinfer1::Dims4(

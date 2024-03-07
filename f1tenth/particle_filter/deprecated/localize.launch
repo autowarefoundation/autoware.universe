@@ -1,0 +1,79 @@
+<launch>
+	<!-- 
+
+	This launch file initializes particle filter localization.
+
+	arguments:
+		scan_topic - which ROS topic to listen for laser scan information
+		odom_topic - which ROS topic to listen for odometry information
+		max_particles - number of particles to maintain
+		angle_step    - laser scan ranges are downsampled by this factor
+		viz - whether or not to publish visualization topics.
+		      even if this is enabled, topics are not published unless there are subscribers
+		squash_factor - exponent used to "squash" the particle weights before normaliztation
+		                helps reduce problems associated with highly peaked prob. distributions
+
+	important parameters:
+		range_method: determines which RangeLibc algorithm to use. Options:
+			"bl": Bresenham's line. Slowest performance.
+			"rm": Ray Marching. Reasonably fast but suboptimal performance.
+			"rmgpu": GPU implementation of Ray Marching. Requires RangeLibc to be compiled WITH_CUDA=ON
+			"cddt": Compressed Directional Distance Transform. Compressed map representation. Fast query time.
+			"pcddt": Same as "cddt" but the data structure is pruned to remove unnecessary elements
+			"glt": Lookup table. Precomputes ray cast distances for a discretized state space. 
+			       Fast performance on the CPU but long initialization time.
+		max_range: maximum range of the laser scanner in meters. Measured ranges beyond max_range are clipped.
+		fine_timing: prints extra timing information, useful for profiling the particle filter
+		publish_odom: whether or not to publish inferred pose as an odometry message.
+		              publishes on /pf/pose/odom
+	 -->
+	<include file="$(find particle_filter)/launch/map_server.launch"/>
+
+	<arg name="scan_topic" default="/scan"/>
+	<arg name="odometry_topic" default="/vesc/odom"/>
+	<!-- <arg name="odometry_topic" default="/odom"/> -->
+	<arg name="angle_step" default="18"/>
+	<arg name="max_particles" default="4000"/>
+	<arg name="squash_factor" default="2.2"/>
+	<arg name="viz" default="1"/>
+	
+	<node pkg="particle_filter" type="particle_filter.py" name="Particle_filter" output="screen">
+		<param name="scan_topic" value="$(arg scan_topic)"/>
+		<param name="odometry_topic" value="$(arg odometry_topic)"/>
+		<!-- range data is downsampled by this factor -->
+		<param name="angle_step" value="$(arg angle_step)"/>
+		<param name="max_particles" value="$(arg max_particles)"/>
+		<param name="max_viz_particles" value="60"/>
+		<!-- <param name="range_method" value="pcddt"/> -->
+		<param name="range_method" value="rmgpu"/>
+		<param name="squash_factor" value="$(arg squash_factor)"/>
+		<param name="theta_discretization" value="112"/>
+		<!-- max sensor range in meters -->
+		<param name="max_range" value="10"/> 
+		<param name="viz" value="$(arg viz)"/> 
+		<param name="fine_timing" value="0"/> 
+		<param name="publish_odom" value="1"/> 
+
+		<!-- sensor model constants, see sensor model section in the Lab5 guide document -->
+		<param name="z_short" value="0.01"/> 
+		<param name="z_max" value="0.07"/> 
+		<param name="z_rand" value="0.12"/> 
+		<param name="z_hit" value="0.75"/> 
+		<param name="sigma_hit" value="8.0"/> 
+
+		<!-- motion model dispersion constant, this could be improved. Large values will spread out
+		     the particle distribution more. Too much and it is overly computational to represent the
+		     true prob. dist, too little and the particle filter can diverge at high speeds where the
+		     ackermann motion model is inaccurate
+		-->
+		<param name="motion_dispersion_x" value="0.05"/> 
+		<param name="motion_dispersion_y" value="0.025"/> 
+		<param name="motion_dispersion_theta" value="0.25"/> 
+
+		<!-- this option switches between different sensor model variants, high values are more
+		     optimized. range_variant 3 does not work for rmgpu, but variant 2 is very good. variant
+		     4 only works with cddt or pcddt range_method options
+		-->
+		<param name="rangelib_variant" value="2"/>
+	</node>
+</launch>

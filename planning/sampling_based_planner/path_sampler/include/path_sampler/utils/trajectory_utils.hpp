@@ -138,6 +138,9 @@ size_t findEgoSegmentIndex(
     points, ego_pose, ego_nearest_param.dist_threshold, ego_nearest_param.yaw_threshold);
 }
 
+Trajectory createTrajectory(
+  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points);
+
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval);
 

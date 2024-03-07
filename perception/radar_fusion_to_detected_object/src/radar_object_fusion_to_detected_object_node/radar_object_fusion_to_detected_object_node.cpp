@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "radar_fusion_to_detected_object/radar_fusion_to_detected_object_node.hpp"
+#include "radar_object_fusion_to_detected_object/radar_object_fusion_to_detected_object_node.hpp"
+
 #include "rclcpp/rclcpp.hpp"
 
 #include <memory>

@@ -309,6 +309,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   // step3. create ego path based on sensor data
   bool has_collision_ego = false;
   if (use_imu_path_) {
+    Path ego_path;
     std::vector<Polygon2d> ego_polys;
     const double current_w = angular_velocity_ptr_->z;
     constexpr double color_r = 0.0 / 256.0;
@@ -316,7 +317,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_b = 205.0 / 256.0;
     constexpr double color_a = 0.999;
     const auto current_time = get_clock()->now();
-    const auto ego_path = generateEgoPath(current_v, current_w, ego_polys);
+    generateEgoPath(current_v, current_w, ego_path, ego_polys);
+
     std::vector<ObjectData> objects;
     createObjectData(ego_path, ego_polys, current_time, objects);
     has_collision_ego = hasCollision(current_v, ego_path, objects);
@@ -330,6 +332,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   // step4. transform predicted trajectory from control module
   bool has_collision_predicted = false;
   if (use_predicted_trajectory_) {
+    Path predicted_path;
     std::vector<Polygon2d> predicted_polys;
     const auto predicted_traj_ptr = predicted_traj_ptr_;
     constexpr double color_r = 0.0;
@@ -337,18 +340,15 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_b = 0.0;
     constexpr double color_a = 0.999;
     const auto current_time = predicted_traj_ptr->header.stamp;
-    const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr, predicted_polys);
-    if (predicted_path_opt) {
-      const auto & predicted_path = predicted_path_opt.value();
-      std::vector<ObjectData> objects;
-      createObjectData(predicted_path, predicted_polys, current_time, objects);
-      has_collision_predicted = hasCollision(current_v, predicted_path, objects);
+    generateEgoPath(*predicted_traj_ptr, predicted_path, predicted_polys);
+    std::vector<ObjectData> objects;
+    createObjectData(predicted_path, predicted_polys, current_time, objects);
+    has_collision_predicted = hasCollision(current_v, predicted_path, objects);
 
-      std::string ns = "predicted";
-      addMarker(
-        current_time, predicted_path, predicted_polys, objects, color_r, color_g, color_b, color_a,
-        ns, debug_markers);
-    }
+    std::string ns = "predicted";
+    addMarker(
+      current_time, predicted_path, predicted_polys, objects, color_r, color_g, color_b, color_a,
+      ns, debug_markers);
   }
 
   return has_collision_ego || has_collision_predicted;
@@ -358,36 +358,31 @@ bool AEB::hasCollision(
   const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects)
 {
   // calculate RSS
-  const auto current_p = tier4_autoware_utils::createPoint(
-    ego_path[0].position.x, ego_path[0].position.y, ego_path[0].position.z);
+  const auto current_p = tier4_autoware_utils::createPoint(0.0, 0.0, 0.0);
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
     const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
                             obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
-
-    // check the object is front the ego or not
-    if ((obj.position.x - ego_path[0].position.x) > 0) {
-      const double dist_ego_to_object =
-        motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
-        vehicle_info_.max_longitudinal_offset_m;
-      if (dist_ego_to_object < rss_dist) {
-        // collision happens
-        ObjectData collision_data = obj;
-        collision_data.rss = rss_dist;
-        collision_data.distance_to_object = dist_ego_to_object;
-        collision_data_keeper_.update(collision_data);
-        return true;
-      }
+    const double dist_ego_to_object =
+      motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
+      vehicle_info_.max_longitudinal_offset_m;
+    if (dist_ego_to_object < rss_dist) {
+      // collision happens
+      ObjectData collision_data = obj;
+      collision_data.rss = rss_dist;
+      collision_data.distance_to_object = dist_ego_to_object;
+      collision_data_keeper_.update(collision_data);
+      return true;
     }
   }
+
   return false;
 }
 
-Path AEB::generateEgoPath(
-  const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons)
+void AEB::generateEgoPath(
+  const double curr_v, const double curr_w, Path & path, std::vector<Polygon2d> & polygons)
 {
-  Path path;
   double curr_x = 0.0;
   double curr_y = 0.0;
   double curr_yaw = 0.0;
@@ -398,7 +393,7 @@ Path AEB::generateEgoPath(
 
   if (curr_v < 0.1) {
     // if current velocity is too small, assume it stops at the same point
-    return path;
+    return;
   }
 
   constexpr double epsilon = 1e-6;
@@ -436,14 +431,14 @@ Path AEB::generateEgoPath(
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
   }
-  return path;
 }
 
-std::optional<Path> AEB::generateEgoPath(
-  const Trajectory & predicted_traj, std::vector<tier4_autoware_utils::Polygon2d> & polygons)
+void AEB::generateEgoPath(
+  const Trajectory & predicted_traj, Path & path,
+  std::vector<tier4_autoware_utils::Polygon2d> & polygons)
 {
   if (predicted_traj.points.empty()) {
-    return std::nullopt;
+    return;
   }
 
   geometry_msgs::msg::TransformStamped transform_stamped{};
@@ -453,11 +448,10 @@ std::optional<Path> AEB::generateEgoPath(
       rclcpp::Duration::from_seconds(0.5));
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
-    return std::nullopt;
+    return;
   }
 
   // create path
-  Path path;
   path.resize(predicted_traj.points.size());
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
     geometry_msgs::msg::Pose map_pose;
@@ -473,7 +467,6 @@ std::optional<Path> AEB::generateEgoPath(
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
   }
-  return path;
 }
 
 void AEB::createObjectData(

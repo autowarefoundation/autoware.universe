@@ -1,0 +1,603 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car" kind="class" language="Python" prot="public">
+    <compoundname>f110_gym::envs::base_classes::RaceCar</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">object</basecompoundref>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1af3ba3709a5dfd62c730a8896126a2539" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::params</definition>
+        <argsstring></argsstring>
+        <name>params</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="72" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="72" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5408c25f5507645e351b33c7b93d09e9" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::is_ego</definition>
+        <argsstring></argsstring>
+        <name>is_ego</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="73" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="73" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a507e48bfae2cd153ce988acfa915f4e3" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::time_step</definition>
+        <argsstring></argsstring>
+        <name>time_step</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="74" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="74" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a32283ca467927cb92fd4cebaf4572788" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::num_beams</definition>
+        <argsstring></argsstring>
+        <name>num_beams</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="75" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="75" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1ab17edc5d7143043b17160ce593da0e05" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::fov</definition>
+        <argsstring></argsstring>
+        <name>fov</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="76" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="76" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1aea2c21a52410444a2502ee4e7d370bad" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::state</definition>
+        <argsstring></argsstring>
+        <name>state</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="79" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="79" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a3dc163d182be2760a4f8322417fd2332" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::opp_poses</definition>
+        <argsstring></argsstring>
+        <name>opp_poses</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="82" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="82" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5f298f55e8dc14fb39e5145699e90bfa" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::accel</definition>
+        <argsstring></argsstring>
+        <name>accel</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="85" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="85" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5a1dbcba00b5c54afc700873df015eba" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::steer_angle_vel</definition>
+        <argsstring></argsstring>
+        <name>steer_angle_vel</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="86" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="86" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a462d1ce0e070187aba97a24d75961884" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::steer_buffer</definition>
+        <argsstring></argsstring>
+        <name>steer_buffer</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="89" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="89" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a51405046f30a27487241455cb51481ff" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::steer_buffer_size</definition>
+        <argsstring></argsstring>
+        <name>steer_buffer_size</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="90" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="90" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a04ac46193f2706b71aa6ccc616484a1b" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::in_collision</definition>
+        <argsstring></argsstring>
+        <name>in_collision</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="93" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="93" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5eb8a1fa8d27dfccd008573e2d720c44" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::ttc_thresh</definition>
+        <argsstring></argsstring>
+        <name>ttc_thresh</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="96" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="96" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a35674ca4c4a0eda359249216bee094b3" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::scan_simulator</definition>
+        <argsstring></argsstring>
+        <name>scan_simulator</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="99" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="99" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1aeaedd3e39c14a7904e8417ad264b3168" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::current_scan</definition>
+        <argsstring></argsstring>
+        <name>current_scan</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="103" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="103" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a47e2229884b30c3640f75cc46a4b1fe9" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::cosines</definition>
+        <argsstring></argsstring>
+        <name>cosines</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="106" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="106" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a7a416feebdc5bf3289495877a722ac5e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::scan_angles</definition>
+        <argsstring></argsstring>
+        <name>scan_angles</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="107" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="107" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a45934ce2c731e21cee3b3890d5713a1e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.envs.base_classes.RaceCar::side_distances</definition>
+        <argsstring></argsstring>
+        <name>side_distances</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="108" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="108" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1af342754a877c42b3828a03b6425801d4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.__init__</definition>
+        <argsstring>(self, params, is_ego=False, time_step=0.01, num_beams=1080, fov=4.7)</argsstring>
+        <name>__init__</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>params</type>
+          <defname>params</defname>
+        </param>
+        <param>
+          <type>is_ego</type>
+          <defname>is_ego</defname>
+          <defval>False</defval>
+        </param>
+        <param>
+          <type>time_step</type>
+          <defname>time_step</defname>
+          <defval>0.01</defval>
+        </param>
+        <param>
+          <type>num_beams</type>
+          <defname>num_beams</defname>
+          <defval>1080</defval>
+        </param>
+        <param>
+          <type>fov</type>
+          <defname>fov</defname>
+          <defval>4.7</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Init function
+
+Args:
+    params (dict): vehicle parameter dictionary, includes {&apos;mu&apos;, &apos;C_Sf&apos;, &apos;C_Sr&apos;, &apos;lf&apos;, &apos;lr&apos;, &apos;h&apos;, &apos;m&apos;, &apos;I&apos;, &apos;s_min&apos;, &apos;s_max&apos;, &apos;sv_min&apos;, &apos;sv_max&apos;, &apos;v_switch&apos;, &apos;a_max&apos;: 9.51, &apos;v_min&apos;, &apos;v_max&apos;, &apos;length&apos;, &apos;width&apos;}
+    is_ego (bool, default=False): ego identifier
+    time_step (float, default=0.01): physics sim time step
+    num_beams (int, default=1080): number of beams in the laser scan
+    fov (float, default=4.7): field of view of the laser
+
+Returns:
+    None
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="56" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="56" bodyend="140"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a6ab5b5dd420b182b5156ee9566c03411" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.update_params</definition>
+        <argsstring>(self, params)</argsstring>
+        <name>update_params</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>params</type>
+          <defname>params</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Updates the physical parameters of the vehicle
+Note that does not need to be called at initialization of class anymore
+
+Args:
+    params (dict): new parameters for the vehicle
+
+Returns:
+    None
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="141" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="141" bodyend="153"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a2a60c9ee34f2f09fb0a7e5cc7b287897" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.set_map</definition>
+        <argsstring>(self, map_path, map_ext)</argsstring>
+        <name>set_map</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>map_path</type>
+          <defname>map_path</defname>
+        </param>
+        <param>
+          <type>map_ext</type>
+          <defname>map_ext</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Sets the map for scan simulator
+
+Args:
+    map_path (str): absolute path to the map yaml file
+    map_ext (str): extension of the map image file
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="154" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="154" bodyend="163"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a0fa587dc3c1a12c9217f0bd093c1bc08" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.reset</definition>
+        <argsstring>(self, pose)</argsstring>
+        <name>reset</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>pose</type>
+          <defname>pose</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Resets the vehicle to a pose
+
+Args:
+    pose (np.ndarray (3, )): pose to reset the vehicle to
+
+Returns:
+    None
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="164" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="164" bodyend="183"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a7d15e74a1b82646675d60ce02cdce6b5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.ray_cast_agents</definition>
+        <argsstring>(self, scan)</argsstring>
+        <name>ray_cast_agents</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>scan</type>
+          <defname>scan</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Ray cast onto other agents in the env, modify original scan
+
+Args:
+    scan (np.ndarray, (n, )): original scan range array
+
+Returns:
+    new_scan (np.ndarray, (n, )): modified scan
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="184" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="184" bodyend="205"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a4577a30fd8879de7df1d0ace7702f450" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.check_ttc</definition>
+        <argsstring>(self)</argsstring>
+        <name>check_ttc</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Check iTTC against the environment, sets vehicle states accordingly if collision occurs.
+Note that this does NOT check collision with other agents.
+
+state is [x, y, steer_angle, vel, yaw_angle, yaw_rate, slip_angle]
+
+Args:
+    None
+
+Returns:
+    None
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="206" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="206" bodyend="232"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1ae12c14c1353e6aab2f72036593d85518" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.update_pose</definition>
+        <argsstring>(self, raw_steer, vel)</argsstring>
+        <name>update_pose</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>raw_steer</type>
+          <defname>raw_steer</defname>
+        </param>
+        <param>
+          <type>vel</type>
+          <defname>vel</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Steps the vehicle&apos;s physical simulation
+
+Args:
+    steer (float): desired steering angle
+    vel (float): desired longitudinal velocity
+
+Returns:
+    None
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="233" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="233" bodyend="287"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a4800c5ac90ba93b79a0338e5e34ead43" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.update_opp_poses</definition>
+        <argsstring>(self, opp_poses)</argsstring>
+        <name>update_opp_poses</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <param>
+          <type>opp_poses</type>
+          <defname>opp_poses</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Updates the vehicle&apos;s information on other vehicles
+
+Args:
+    opp_poses (np.ndarray(num_other_agents, 3)): updated poses of other agents
+
+Returns:
+    None
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="288" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="288" bodyend="300"/>
+      </memberdef>
+      <memberdef kind="function" id="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a356ec05a0a0c056f4d43f5fb0451c83d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.base_classes.RaceCar.update_scan</definition>
+        <argsstring>(self)</argsstring>
+        <name>update_scan</name>
+        <param>
+          <type>self</type>
+          <defname>self</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Steps the vehicle&apos;s laser scan simulation
+Separated from update_pose because needs to update scan based on NEW poses of agents in the environment
+
+Args:
+    None
+
+Returns:
+    None
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="301" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="301" bodyend="320"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para><verbatim>Base level race car class, handles the physics and laser scan of a single vehicle
+
+Data Members:
+    params (dict): vehicle parameters dictionary
+    is_ego (bool): ego identifier
+    time_step (float): physics timestep
+    num_beams (int): number of beams in laser
+    fov (float): field of view of laser
+    state (np.ndarray (7, )): state vector [x, y, theta, vel, steer_angle, ang_vel, slip_angle]
+    odom (np.ndarray(13, )): odometry vector [x, y, z, qx, qy, qz, qw, linear_x, linear_y, linear_z, angular_x, angular_y, angular_z]
+    accel (float): current acceleration input
+    steer_angle_vel (float): current steering velocity input
+    in_collision (bool): collision indicator</verbatim> </para>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="1">
+        <label>f110_gym.envs.base_classes.RaceCar</label>
+        <link refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>object</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="1">
+        <label>f110_gym.envs.base_classes.RaceCar</label>
+        <link refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>object</label>
+      </node>
+    </collaborationgraph>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" line="38" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/base_classes.py" bodystart="38" bodyend="321"/>
+    <listofallmembers>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1af342754a877c42b3828a03b6425801d4" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>__init__</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5f298f55e8dc14fb39e5145699e90bfa" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>accel</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a4577a30fd8879de7df1d0ace7702f450" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>check_ttc</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a47e2229884b30c3640f75cc46a4b1fe9" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>cosines</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1aeaedd3e39c14a7904e8417ad264b3168" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>current_scan</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1ab17edc5d7143043b17160ce593da0e05" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>fov</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a04ac46193f2706b71aa6ccc616484a1b" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>in_collision</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5408c25f5507645e351b33c7b93d09e9" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>is_ego</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a32283ca467927cb92fd4cebaf4572788" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>num_beams</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a3dc163d182be2760a4f8322417fd2332" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>opp_poses</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1af3ba3709a5dfd62c730a8896126a2539" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>params</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a7d15e74a1b82646675d60ce02cdce6b5" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>ray_cast_agents</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a0fa587dc3c1a12c9217f0bd093c1bc08" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>reset</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a7a416feebdc5bf3289495877a722ac5e" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>scan_angles</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a35674ca4c4a0eda359249216bee094b3" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>scan_simulator</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a2a60c9ee34f2f09fb0a7e5cc7b287897" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>set_map</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a45934ce2c731e21cee3b3890d5713a1e" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>side_distances</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1aea2c21a52410444a2502ee4e7d370bad" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>state</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5a1dbcba00b5c54afc700873df015eba" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>steer_angle_vel</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a462d1ce0e070187aba97a24d75961884" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>steer_buffer</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a51405046f30a27487241455cb51481ff" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>steer_buffer_size</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a507e48bfae2cd153ce988acfa915f4e3" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>time_step</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a5eb8a1fa8d27dfccd008573e2d720c44" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>ttc_thresh</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a4800c5ac90ba93b79a0338e5e34ead43" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>update_opp_poses</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a6ab5b5dd420b182b5156ee9566c03411" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>update_params</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1ae12c14c1353e6aab2f72036593d85518" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>update_pose</name></member>
+      <member refid="classf110__gym_1_1envs_1_1base__classes_1_1_race_car_1a356ec05a0a0c056f4d43f5fb0451c83d" prot="public" virt="non-virtual"><scope>f110_gym::envs::base_classes::RaceCar</scope><name>update_scan</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

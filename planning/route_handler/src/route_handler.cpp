@@ -377,7 +377,7 @@ Header RouteHandler::getRouteHeader() const
 UUID RouteHandler::getRouteUuid() const
 {
   if (!route_ptr_) {
-    RCLCPP_WARN_SKIPFIRST(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
+    RCLCPP_WARN(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
     return UUID();
   }
   return route_ptr_->uuid;
@@ -431,11 +431,6 @@ std::vector<lanelet::ConstLanelet> RouteHandler::getLanesAfterGoal(
 lanelet::ConstLanelets RouteHandler::getRouteLanelets() const
 {
   return route_lanelets_;
-}
-
-lanelet::ConstLanelets RouteHandler::getPreferredLanelets() const
-{
-  return preferred_lanelets_;
 }
 
 Pose RouteHandler::getStartPose() const
@@ -2133,17 +2128,24 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   lanelet::routing::LaneletPath shortest_path;
   bool is_route_found = false;
 
-  double smallest_angle_diff = std::numeric_limits<double>::max();
-  constexpr double yaw_threshold = M_PI / 2.0;
+  lanelet::routing::LaneletPath drivable_lane_path;
+  bool drivable_lane_path_found = false;
+  double shortest_path_length2d = std::numeric_limits<double>::max();
 
   for (const auto & st_llt : start_lanelets) {
     // check if the angle difference between start_checkpoint and start lanelet center line
     // orientation is in yaw_threshold range
-    double lanelet_angle = lanelet::utils::getLaneletAngle(st_llt, start_checkpoint.position);
-    double pose_yaw = tf2::getYaw(start_checkpoint.orientation);
-    double angle_diff = std::abs(autoware_utils::normalize_radian(lanelet_angle - pose_yaw));
+    double yaw_threshold = M_PI / 2.0;
+    bool is_proper_angle = false;
+    {
+      double lanelet_angle = lanelet::utils::getLaneletAngle(st_llt, start_checkpoint.position);
+      double pose_yaw = tf2::getYaw(start_checkpoint.orientation);
+      double angle_diff = std::abs(autoware_utils::normalize_radian(lanelet_angle - pose_yaw));
 
-    bool is_proper_angle = angle_diff <= std::abs(yaw_threshold);
+      if (angle_diff <= std::abs(yaw_threshold)) {
+        is_proper_angle = true;
+      }
+    }
 
     optional_route = routing_graph_ptr_->getRoute(st_llt, goal_lanelet, 0);
     if (!optional_route || !is_proper_angle) {
@@ -2154,28 +2156,34 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
                    << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl
                    << " - start lane id: " << st_llt.id() << std::endl
                    << " - goal lane id: " << goal_lanelet.id() << std::endl);
-      continue;
-    }
-    is_route_found = true;
-    if (angle_diff < smallest_angle_diff) {
-      smallest_angle_diff = angle_diff;
-      shortest_path = optional_route->shortestPath();
-      start_lanelet = st_llt;
+    } else {
+      is_route_found = true;
+
+      if (optional_route->length2d() < shortest_path_length2d) {
+        shortest_path_length2d = optional_route->length2d();
+        shortest_path = optional_route->shortestPath();
+        start_lanelet = st_llt;
+      }
     }
   }
 
   if (is_route_found) {
     lanelet::routing::LaneletPath path;
-    path = [&]() -> lanelet::routing::LaneletPath {
-      if (!consider_no_drivable_lanes) return shortest_path;
-      lanelet::routing::LaneletPath drivable_lane_path;
-      bool drivable_lane_path_found = false;
-      if (hasNoDrivableLaneInPath(shortest_path)) {
+    if (consider_no_drivable_lanes) {
+      bool shortest_path_has_no_drivable_lane = hasNoDrivableLaneInPath(shortest_path);
+      if (shortest_path_has_no_drivable_lane) {
         drivable_lane_path_found =
           findDrivableLanePath(start_lanelet, goal_lanelet, drivable_lane_path);
       }
-      return (drivable_lane_path_found) ? drivable_lane_path : shortest_path;
-    }();
+
+      if (drivable_lane_path_found) {
+        path = drivable_lane_path;
+      } else {
+        path = shortest_path;
+      }
+    } else {
+      path = shortest_path;
+    }
 
     path_lanelets->reserve(path.size());
     for (const auto & llt : path) {

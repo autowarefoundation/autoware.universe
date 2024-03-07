@@ -53,6 +53,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   bool enable_whole_load = declare_parameter<bool>("enable_whole_load");
   bool enable_downsample_whole_load = declare_parameter<bool>("enable_downsampled_whole_load");
   bool enable_partial_load = declare_parameter<bool>("enable_partial_load");
+  bool enable_differential_load = declare_parameter<bool>("enable_differential_load");
   bool enable_selected_load = declare_parameter<bool>("enable_selected_load");
 
   if (enable_whole_load) {
@@ -67,48 +68,56 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
       std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, true);
   }
 
-  std::map<std::string, PCDFileMetadata> pcd_metadata_dict;
-  try {
-    pcd_metadata_dict = getPCDMetadata(pcd_metadata_path, pcd_paths);
-  } catch (std::runtime_error & e) {
-    RCLCPP_ERROR_STREAM(get_logger(), e.what());
-  }
+  if (enable_partial_load || enable_differential_load || enable_selected_load) {
+    std::map<std::string, PCDFileMetadata> pcd_metadata_dict;
+    try {
+      pcd_metadata_dict = getPCDMetadata(pcd_metadata_path, pcd_paths);
+    } catch (std::runtime_error & e) {
+      RCLCPP_ERROR_STREAM(get_logger(), e.what());
+    }
 
-  if (enable_partial_load) {
-    partial_map_loader_ = std::make_unique<PartialMapLoaderModule>(this, pcd_metadata_dict);
-  }
+    if (enable_partial_load) {
+      partial_map_loader_ = std::make_unique<PartialMapLoaderModule>(this, pcd_metadata_dict);
+    }
 
-  differential_map_loader_ = std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict);
+    if (enable_differential_load) {
+      differential_map_loader_ =
+        std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict);
+    }
 
-  if (enable_selected_load) {
-    selected_map_loader_ = std::make_unique<SelectedMapLoaderModule>(this, pcd_metadata_dict);
+    if (enable_selected_load) {
+      selected_map_loader_ = std::make_unique<SelectedMapLoaderModule>(this, pcd_metadata_dict);
+    }
   }
 }
 
 std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
   const std::string & pcd_metadata_path, const std::vector<std::string> & pcd_paths) const
 {
-  if (fs::exists(pcd_metadata_path)) {
-    auto pcd_metadata_dict = loadPCDMetadata(pcd_metadata_path);
+  std::map<std::string, PCDFileMetadata> pcd_metadata_dict;
+  if (pcd_paths.size() != 1) {
+    if (!fs::exists(pcd_metadata_path)) {
+      throw std::runtime_error("PCD metadata file not found: " + pcd_metadata_path);
+    }
+
+    pcd_metadata_dict = loadPCDMetadata(pcd_metadata_path);
     pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict, pcd_paths);
-    return pcd_metadata_dict;
-  } else if (pcd_paths.size() == 1) {
+    RCLCPP_INFO_STREAM(get_logger(), "Loaded PCD metadata: " << pcd_metadata_path);
+  } else {
     // An exception when using a single file PCD map so that the users do not have to provide
     // a metadata file.
     // Note that this should ideally be avoided and thus eventually be removed by someone, until
     // Autoware users get used to handling the PCD file(s) with metadata.
-    RCLCPP_DEBUG_STREAM(get_logger(), "Create PCD metadata, as the pointcloud is a single file.");
+    RCLCPP_INFO_STREAM(get_logger(), "Create PCD metadata, as the pointcloud is a single file.");
     pcl::PointCloud<pcl::PointXYZ> single_pcd;
-    const auto & pcd_path = pcd_paths.front();
-    if (pcl::io::loadPCDFile(pcd_path, single_pcd) == -1) {
-      throw std::runtime_error("PCD load failed: " + pcd_path);
+    if (pcl::io::loadPCDFile(pcd_paths[0], single_pcd) == -1) {
+      throw std::runtime_error("PCD load failed: " + pcd_paths[0]);
     }
     PCDFileMetadata metadata = {};
     pcl::getMinMax3D(single_pcd, metadata.min, metadata.max);
-    return std::map<std::string, PCDFileMetadata>{{pcd_path, metadata}};
-  } else {
-    throw std::runtime_error("PCD metadata file not found: " + pcd_metadata_path);
+    pcd_metadata_dict[pcd_paths[0]] = metadata;
   }
+  return pcd_metadata_dict;
 }
 
 std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(

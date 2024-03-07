@@ -12,7 +12,6 @@ endif()
 ### Find Eigen Dependencies
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(glog REQUIRED)
 
 include_directories(
   SYSTEM
@@ -41,7 +40,6 @@ ament_auto_add_library(multi_object_tracker_node SHARED
 
 target_link_libraries(multi_object_tracker_node
   Eigen3::Eigen
-  glog::glog
 )
 
 rclcpp_components_register_node(multi_object_tracker_node

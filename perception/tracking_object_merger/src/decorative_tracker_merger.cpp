@@ -20,8 +20,6 @@
 
 #include <boost/optional.hpp>
 
-#include <glog/logging.h>
-
 #include <chrono>
 #include <unordered_map>
 
@@ -87,10 +85,6 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_)
 {
-  // glog for debug
-  google::InitGoogleLogging("decorative_object_merger_node");
-  google::InstallFailureSignalHandler();
-
   // Subscriber
   sub_main_objects_ = create_subscription<TrackedObjects>(
     "input/main_object", rclcpp::QoS{1},
@@ -250,6 +244,9 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
 {
   // get current time
   const auto current_time = rclcpp::Time(input_objects_msg->header.stamp);
+  if (input_objects_msg->objects.empty()) {
+    return false;
+  }
   if (inner_tracker_objects_.empty()) {
     for (const auto & object : input_objects_msg->objects) {
       inner_tracker_objects_.push_back(createNewTracker(input_sensor, current_time, object));
@@ -380,7 +377,7 @@ TrackerState DecorativeTrackerMergerNode::createNewTracker(
   const MEASUREMENT_STATE input_index, rclcpp::Time current_time,
   const autoware_auto_perception_msgs::msg::TrackedObject & input_object)
 {
-  // check if object id is not included in inner_tracker_objects_
+  // check if object id is not included in innner_tracker_objects_
   for (const auto & object : inner_tracker_objects_) {
     if (object.const_uuid_ == input_object.object_id) {
       // create new uuid

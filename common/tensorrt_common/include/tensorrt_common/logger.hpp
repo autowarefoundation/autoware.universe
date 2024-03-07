@@ -19,7 +19,6 @@
 
 #include "NvInferRuntimeCommon.h"
 
-#include <atomic>
 #include <cassert>
 #include <ctime>
 #include <iomanip>
@@ -27,7 +26,6 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <thread>
 
 namespace tensorrt_common
 {
@@ -202,15 +200,7 @@ class Logger : public nvinfer1::ILogger  // NOLINT
 public:
   //  Logger(Severity severity = Severity::kWARNING)
   //  Logger(Severity severity = Severity::kVERBOSE)
-  explicit Logger(Severity severity = Severity::kINFO)
-  : mReportableSeverity(severity), mVerbose(true), mThrottleStopFlag(false)
-  {
-  }
-
-  explicit Logger(const bool verbose, Severity severity = Severity::kINFO)
-  : mReportableSeverity(severity), mVerbose(verbose), mThrottleStopFlag(false)
-  {
-  }
+  explicit Logger(Severity severity = Severity::kINFO) : mReportableSeverity(severity) {}
 
   //!
   //! \enum TestResult
@@ -244,44 +234,7 @@ public:
   //!
   void log(Severity severity, const char * msg) noexcept override
   {
-    if (mVerbose) {
-      LogStreamConsumer(mReportableSeverity, severity) << "[TRT] " << std::string(msg) << std::endl;
-    }
-  }
-
-  /**
-   * @brief Logging with throttle.
-   *
-   * @example
-   * Logger logger();
-   * auto log_thread = logger.log_throttle(nvinfer1::ILogger::Severity::kINFO, "SOME MSG", 1);
-   * // some operation
-   * logger.stop_throttle(log_thread);
-   *
-   * @param severity
-   * @param msg
-   * @param duration
-   * @return std::thread
-   *
-   */
-  std::thread log_throttle(Severity severity, const char * msg, const int duration) noexcept
-  {
-    mThrottleStopFlag.store(false);
-    auto log_func = [this](Severity s, const char * m, const int d) {
-      while (!mThrottleStopFlag.load()) {
-        this->log(s, m);
-        std::this_thread::sleep_for(std::chrono::seconds(d));
-      }
-    };
-
-    std::thread log_thread(log_func, severity, msg, duration);
-    return log_thread;
-  }
-
-  void stop_throttle(std::thread & log_thread) noexcept
-  {
-    mThrottleStopFlag.store(true);
-    log_thread.join();
+    LogStreamConsumer(mReportableSeverity, severity) << "[TRT] " << std::string(msg) << std::endl;
   }
 
   //!
@@ -477,8 +430,6 @@ private:
   }
 
   Severity mReportableSeverity;
-  bool mVerbose;
-  std::atomic<bool> mThrottleStopFlag;
 };
 
 namespace

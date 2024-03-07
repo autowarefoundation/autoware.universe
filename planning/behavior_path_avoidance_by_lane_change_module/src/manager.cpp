@@ -37,7 +37,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   initInterface(node, {"left", "right"});
 
   // init lane change manager
-  LaneChangeModuleManager::initParams(node);
+  LaneChangeModuleManager::init(node);
 
   const auto avoidance_params = getParameter(node);
   AvoidanceByLCParameters p(avoidance_params);
@@ -72,12 +72,10 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
       param.max_expand_ratio = getOrDeclareParameter<double>(*node, ns + "max_expand_ratio");
       param.envelope_buffer_margin =
         getOrDeclareParameter<double>(*node, ns + "envelope_buffer_margin");
-      param.lateral_soft_margin =
-        getOrDeclareParameter<double>(*node, ns + "lateral_margin.soft_margin");
-      param.lateral_hard_margin =
-        getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin");
-      param.lateral_hard_margin_for_parked_vehicle =
-        getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
+      param.avoid_margin_lateral =
+        getOrDeclareParameter<double>(*node, ns + "avoid_margin_lateral");
+      param.safety_buffer_lateral =
+        getOrDeclareParameter<double>(*node, ns + "safety_buffer_lateral");
       return param;
     };
 

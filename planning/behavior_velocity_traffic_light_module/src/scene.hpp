@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -80,7 +81,7 @@ public:
 
   inline State getTrafficLightModuleState() const { return state_; }
 
-  inline std::optional<int> getFirstRefStopPathPointIndex() const
+  inline boost::optional<int> getFirstRefStopPathPointIndex() const
   {
     return first_ref_stop_path_point_index_;
   }
@@ -88,12 +89,18 @@ public:
 private:
   bool isStopSignal();
 
+  bool isTrafficSignalStop(const TrafficSignal & tl_state) const;
+
   autoware_auto_planning_msgs::msg::PathWithLaneId insertStopPose(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
     const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
     tier4_planning_msgs::msg::StopReason * stop_reason);
 
   bool isPassthrough(const double & signed_arc_length) const;
+
+  bool hasTrafficLightCircleColor(const TrafficSignal & tl_state, const uint8_t & lamp_color) const;
+
+  bool hasTrafficLightShape(const TrafficSignal & tl_state, const uint8_t & lamp_shape) const;
 
   bool findValidTrafficSignal(TrafficSignalStamped & valid_traffic_signal) const;
 
@@ -123,9 +130,9 @@ private:
   // prevent stop chattering
   std::unique_ptr<Time> stop_signal_received_time_ptr_{};
 
-  std::optional<int> first_ref_stop_path_point_index_;
+  boost::optional<int> first_ref_stop_path_point_index_;
 
-  std::optional<Time> traffic_signal_stamp_;
+  boost::optional<Time> traffic_signal_stamp_;
 
   // Traffic Light State
   TrafficSignal looking_tl_state_;

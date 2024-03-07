@@ -327,7 +327,6 @@ public:
   lanelet::ConstLanelets getShoulderLanelets() const;
   bool isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const;
   bool isRouteLanelet(const lanelet::ConstLanelet & lanelet) const;
-  lanelet::ConstLanelets getPreferredLanelets() const;
 
   // for path
   PathWithLaneId getCenterLinePath(

@@ -1,0 +1,11 @@
+build/
+gym/f110_gym.egg-info
+__pycache__
+*.pyc
+.DS_Store
+.vscode/
+gym/f110_gym/unittest/maps/
+gym/f110_gym/unittest/centerline/
+docs/_build/
+*.mypy_cache/
+flycheck_*

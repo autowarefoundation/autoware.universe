@@ -177,8 +177,6 @@ private:
   void timer_callback();
 
   void checkSyncStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  std::string replaceSyncTopicNamePostfix(
-    const std::string & original_topic_name, const std::string & postfix);
 
   /** \brief processing time publisher. **/
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;

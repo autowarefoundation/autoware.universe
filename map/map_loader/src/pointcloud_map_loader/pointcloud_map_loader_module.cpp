@@ -74,7 +74,7 @@ sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
   for (size_t i = 0; i < pcd_paths.size(); ++i) {
     auto & path = pcd_paths[i];
     if (i % 50 == 0) {
-      RCLCPP_DEBUG_STREAM(
+      RCLCPP_INFO_STREAM(
         logger_, fmt::format("Load {} ({} out of {})", path, i + 1, pcd_paths.size()));
     }
 

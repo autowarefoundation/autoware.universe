@@ -207,7 +207,8 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
 
   const double current_velocity = current_odometry_ptr->twist.twist.linear.x;
   double col_point_distance;
-  std::optional<double> point_velocity;
+  double point_velocity;
+  bool success_estimate_vel = false;
   /*
    * calc distance to collision point
    */
@@ -224,19 +225,25 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
    * estimate velocity of collision point
    */
   if (param_.use_pcl_to_est_vel) {
-    point_velocity =
-      estimatePointVelocityFromPcl(traj_yaw, nearest_collision_point, nearest_collision_point_time);
+    if (estimatePointVelocityFromPcl(
+          traj_yaw, nearest_collision_point, nearest_collision_point_time, &point_velocity)) {
+      success_estimate_vel = true;
+    }
   }
 
   if (param_.use_object_to_est_vel) {
-    point_velocity = estimatePointVelocityFromObject(object_ptr, traj_yaw, nearest_collision_point);
+    if (estimatePointVelocityFromObject(
+          object_ptr, traj_yaw, nearest_collision_point, &point_velocity)) {
+      success_estimate_vel = true;
+    }
   }
 
-  if (param_.use_rough_est_vel && !point_velocity) {
+  if (param_.use_rough_est_vel && !success_estimate_vel) {
     point_velocity = estimateRoughPointVelocity(current_velocity);
+    success_estimate_vel = true;
   }
 
-  if (!point_velocity) {
+  if (!success_estimate_vel) {
     // if failed to estimate velocity, need to stop
     RCLCPP_DEBUG_THROTTLE(
       node_->get_logger(), *node_->get_clock(), std::chrono::milliseconds(1000).count(),
@@ -250,7 +257,7 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
 
   // calculate max(target) velocity of self
   const double upper_velocity =
-    calcUpperVelocity(col_point_distance, point_velocity.value(), current_velocity);
+    calcUpperVelocity(col_point_distance, point_velocity, current_velocity);
   pub_debug_->publish(debug_values_);
 
   if (upper_velocity <= param_.thresh_vel_to_stop) {
@@ -398,9 +405,9 @@ double AdaptiveCruiseController::calcTrajYaw(
   return tf2::getYaw(trajectory.at(collision_point_idx).pose.orientation);
 }
 
-std::optional<double> AdaptiveCruiseController::estimatePointVelocityFromObject(
+bool AdaptiveCruiseController::estimatePointVelocityFromObject(
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr object_ptr,
-  const double traj_yaw, const pcl::PointXYZ & nearest_collision_point)
+  const double traj_yaw, const pcl::PointXYZ & nearest_collision_point, double * velocity)
 {
   geometry_msgs::msg::Point nearest_collision_p_ros;
   nearest_collision_p_ros.x = nearest_collision_point.x;
@@ -408,37 +415,35 @@ std::optional<double> AdaptiveCruiseController::estimatePointVelocityFromObject(
   nearest_collision_p_ros.z = nearest_collision_point.z;
 
   /* get object velocity, and current yaw */
-  std::optional<std::pair<double, double>> obj_vel_norm_yaw = std::nullopt;
+  bool get_obj = false;
+  double obj_vel_norm;
+  double obj_vel_yaw;
   const Point collision_point_2d = convertPointRosToBoost(nearest_collision_p_ros);
-  if (object_ptr) {
-    for (const auto & obj : object_ptr->objects) {
-      const Polygon obj_poly = getPolygon(
-        obj.kinematics.initial_pose_with_covariance.pose, obj.shape.dimensions, 0.0,
-        param_.object_polygon_length_margin, param_.object_polygon_width_margin);
-      if (boost::geometry::distance(obj_poly, collision_point_2d) <= 0) {
-        const double obj_vel_norm = std::hypot(
-          obj.kinematics.initial_twist_with_covariance.twist.linear.x,
-          obj.kinematics.initial_twist_with_covariance.twist.linear.y);
+  for (const auto & obj : object_ptr->objects) {
+    const Polygon obj_poly = getPolygon(
+      obj.kinematics.initial_pose_with_covariance.pose, obj.shape.dimensions, 0.0,
+      param_.object_polygon_length_margin, param_.object_polygon_width_margin);
+    if (boost::geometry::distance(obj_poly, collision_point_2d) <= 0) {
+      obj_vel_norm = std::hypot(
+        obj.kinematics.initial_twist_with_covariance.twist.linear.x,
+        obj.kinematics.initial_twist_with_covariance.twist.linear.y);
 
-        const double obj_yaw =
-          tf2::getYaw(obj.kinematics.initial_pose_with_covariance.pose.orientation);
-        const double obj_vel_yaw =
-          obj_yaw + std::atan2(
-                      obj.kinematics.initial_twist_with_covariance.twist.linear.y,
-                      obj.kinematics.initial_twist_with_covariance.twist.linear.x);
-        obj_vel_norm_yaw = std::make_pair(obj_vel_norm, obj_vel_yaw);
-        break;
-      }
+      const double obj_yaw =
+        tf2::getYaw(obj.kinematics.initial_pose_with_covariance.pose.orientation);
+      obj_vel_yaw = obj_yaw + std::atan2(
+                                obj.kinematics.initial_twist_with_covariance.twist.linear.y,
+                                obj.kinematics.initial_twist_with_covariance.twist.linear.x);
+      get_obj = true;
+      break;
     }
   }
 
-  if (obj_vel_norm_yaw) {
-    const auto [obj_vel_norm, obj_vel_yaw] = obj_vel_norm_yaw.value();
-    const double velocity = obj_vel_norm * std::cos(obj_vel_yaw - traj_yaw);
-    debug_values_.data.at(DBGVAL::ESTIMATED_VEL_OBJ) = velocity;
-    return velocity;
+  if (get_obj) {
+    *velocity = obj_vel_norm * std::cos(obj_vel_yaw - traj_yaw);
+    debug_values_.data.at(DBGVAL::ESTIMATED_VEL_OBJ) = *velocity;
+    return true;
   } else {
-    return std::nullopt;
+    return false;
   }
 }
 
@@ -462,9 +467,9 @@ void AdaptiveCruiseController::calculateProjectedVelocityFromObject(
   debug_values_.data.at(DBGVAL::ESTIMATED_VEL_OBJ) = *velocity;
 }
 
-std::optional<double> AdaptiveCruiseController::estimatePointVelocityFromPcl(
+bool AdaptiveCruiseController::estimatePointVelocityFromPcl(
   const double traj_yaw, const pcl::PointXYZ & nearest_collision_point,
-  const rclcpp::Time & nearest_collision_point_time)
+  const rclcpp::Time & nearest_collision_point_time, double * velocity)
 {
   geometry_msgs::msg::Point nearest_collision_p_ros;
   nearest_collision_p_ros.x = nearest_collision_point.x;
@@ -482,7 +487,7 @@ std::optional<double> AdaptiveCruiseController::estimatePointVelocityFromPcl(
       prev_collision_point_time_ = nearest_collision_point_time;
       prev_collision_point_ = nearest_collision_point;
       prev_collision_point_valid_ = true;
-      return std::nullopt;
+      return false;
     }
     const double p_dx = nearest_collision_point.x - prev_collision_point_.x;
     const double p_dy = nearest_collision_point.y - prev_collision_point_.y;
@@ -496,7 +501,7 @@ std::optional<double> AdaptiveCruiseController::estimatePointVelocityFromPcl(
       prev_collision_point_ = nearest_collision_point;
       prev_collision_point_valid_ = true;
       est_vel_que_.clear();
-      return std::nullopt;
+      return false;
     }
 
     // append new velocity and remove old velocity from que
@@ -504,14 +509,14 @@ std::optional<double> AdaptiveCruiseController::estimatePointVelocityFromPcl(
   }
 
   // calc average(median) velocity from que
-  const double velocity = getMedianVel(est_vel_que_);
-  debug_values_.data.at(DBGVAL::ESTIMATED_VEL_PCL) = velocity;
+  *velocity = getMedianVel(est_vel_que_);
+  debug_values_.data.at(DBGVAL::ESTIMATED_VEL_PCL) = *velocity;
 
   prev_collision_point_time_ = nearest_collision_point_time;
   prev_collision_point_ = nearest_collision_point;
-  prev_target_velocity_ = velocity;
+  prev_target_velocity_ = *velocity;
   prev_collision_point_valid_ = true;
-  return velocity;
+  return true;
 }
 
 double AdaptiveCruiseController::estimateRoughPointVelocity(double current_vel)

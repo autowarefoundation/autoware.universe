@@ -13,5 +13,4 @@ ament_target_dependencies(twist2accel)
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
-  config
 )

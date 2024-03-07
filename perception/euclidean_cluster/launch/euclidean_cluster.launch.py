@@ -76,13 +76,6 @@ def launch_setup(context, *args, **kwargs):
         executable="component_container",
         composable_node_descriptions=[],
         output="screen",
-        condition=UnlessCondition(LaunchConfiguration("use_pointcloud_container")),
-    )
-
-    target_container = (
-        LaunchConfiguration("pointcloud_container_name")
-        if IfCondition(LaunchConfiguration("use_pointcloud_container")).evaluate(context)
-        else container
     )
 
     use_low_height_pointcloud_loader = LoadComposableNodes(
@@ -90,13 +83,13 @@ def launch_setup(context, *args, **kwargs):
             low_height_cropbox_filter_component,
             use_low_height_euclidean_component,
         ],
-        target_container=target_container,
+        target_container=container,
         condition=IfCondition(LaunchConfiguration("use_low_height_cropbox")),
     )
 
     disuse_low_height_pointcloud_loader = LoadComposableNodes(
         composable_node_descriptions=[disuse_low_height_euclidean_component],
-        target_container=target_container,
+        target_container=container,
         condition=UnlessCondition(LaunchConfiguration("use_low_height_cropbox")),
     )
 
@@ -113,8 +106,6 @@ def generate_launch_description():
             add_launch_arg("input_map", "/map/pointcloud_map"),
             add_launch_arg("output_clusters", "clusters"),
             add_launch_arg("use_low_height_cropbox", "false"),
-            add_launch_arg("use_pointcloud_container", "false"),
-            add_launch_arg("pointcloud_container_name", "pointcloud_container"),
             add_launch_arg(
                 "euclidean_param_path",
                 [
