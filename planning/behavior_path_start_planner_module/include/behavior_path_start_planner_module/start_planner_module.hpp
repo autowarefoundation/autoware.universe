@@ -207,7 +207,6 @@ private:
 
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
-  bool isOverlapWithCenterLane() const;
   bool isPreventingRearVehicleFromPassingThrough() const;
 
   bool isCloseToOriginalStartPose() const;
