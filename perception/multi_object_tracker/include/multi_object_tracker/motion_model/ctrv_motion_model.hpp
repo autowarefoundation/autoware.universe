@@ -48,7 +48,6 @@ private:
     double q_cov_wz;
     double max_vel;
     double max_wz;
-    double dt_max;
   } motion_params_;
 
 public:
@@ -57,21 +56,10 @@ public:
   enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, WZ = 4 };
   const char DIM = 5;
 
-  // bool initialize(const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P);
   bool initialize(
     const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
     const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
     const double & wz, const double & wz_cov);
-
-  // bool checkInitialized() const
-  // {
-  //   // if the state is not initialized, return false
-  //   if (!is_initialized_) {
-  //     RCLCPP_WARN(logger_, "CTRVMotionModel is not initialized.");
-  //     return false;
-  //   }
-  //   return true;
-  // }
 
   void setDefaultParams();
 
@@ -104,11 +92,7 @@ public:
 
   bool limitStates();
 
-  bool predictState(const rclcpp::Time & time);
-
-  bool predictState(const double dt, KalmanFilter & ekf) const;
-
-  bool getPredictedState(const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P) const;
+  bool predictStateStep(const double dt, KalmanFilter & ekf) const override;
 
   bool getPredictedState(
     const rclcpp::Time & time, geometry_msgs::msg::Pose & pose, std::array<double, 36> & pose_cov,

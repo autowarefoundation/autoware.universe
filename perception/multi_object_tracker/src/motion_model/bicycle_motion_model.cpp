@@ -16,9 +16,9 @@
 // Author: v1.0 Taekjin Lee
 //
 
-#include "multi_object_tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/motion_model/bicycle_motion_model.hpp"
 
+#include "multi_object_tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
 
 #include <tier4_autoware_utils/math/normalization.hpp>
@@ -65,7 +65,7 @@ void BicycleMotionModel::setDefaultParams()
 
   // set prediction parameters
   constexpr double dt_max = 0.11;  // [s] maximum time interval for prediction
-  motion_params_.dt_max = dt_max;
+  setMaxDeltaTime(dt_max);
 }
 
 void BicycleMotionModel::setMotionParams(
@@ -104,22 +104,6 @@ void BicycleMotionModel::setMotionLimits(const double & max_vel, const double & 
   motion_params_.max_vel = max_vel;
   motion_params_.max_slip = tier4_autoware_utils::deg2rad(max_slip);
 }
-
-// bool BicycleMotionModel::initialize(
-//   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
-//   const double & length)
-// {
-//   // set last update time
-//   last_update_time_ = time;
-
-//   // initialize Kalman filter
-//   if (!ekf_.init(X, P)) return false;
-
-//   // set initialized flag
-//   is_initialized_ = true;
-
-//   return true;
-// }
 
 bool BicycleMotionModel::initialize(
   const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
@@ -303,32 +287,7 @@ bool BicycleMotionModel::adjustPosition(const double & x, const double & y)
   return true;
 }
 
-bool BicycleMotionModel::predictState(const rclcpp::Time & time)
-{
-  // check if the state is initialized
-  if (!checkInitialized()) return false;
-
-  const double dt = (time - last_update_time_).seconds();
-  if (dt < 0.0) {
-    RCLCPP_WARN(logger_, "BicycleMotionModel::predictState: dt is negative. (%f)", dt);
-    return false;
-  }
-  // if dt is too large, shorten dt and repeat prediction
-  const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
-  const double dt_ = dt / repeat;
-  for (uint32_t i = 0; i < repeat; ++i) {
-    if (!predictState(dt_, ekf_)) {
-      return false;
-    }
-    // add interval to last_update_time_
-    last_update_time_ += rclcpp::Duration::from_seconds(dt_);
-  }
-  // update last_update_time_ to the estimation time
-  last_update_time_ = time;
-  return true;
-}
-
-bool BicycleMotionModel::predictState(const double dt, KalmanFilter & ekf) const
+bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) const
 {
   /*  Motion model: static bicycle model (constant slip angle, constant velocity)
    *
@@ -446,44 +405,13 @@ bool BicycleMotionModel::predictState(const double dt, KalmanFilter & ekf) const
 }
 
 bool BicycleMotionModel::getPredictedState(
-  const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P) const
-{
-  // check if the state is initialized
-  if (!checkInitialized()) return false;
-
-  // copy the predicted state and covariance
-  KalmanFilter tmp_ekf_for_no_update = ekf_;
-
-  double dt = (time - last_update_time_).seconds();
-  if (dt < 0.0) {
-    RCLCPP_WARN(logger_, "BicycleMotionModel::getPredictedState: dt is negative. (%f)", dt);
-    dt = 0.0;
-  }
-
-  // predict only when dt is small enough
-  if (0.001 /*1msec*/ < dt) {
-    // if dt is too large, shorten dt and repeat prediction
-    const uint32_t repeat = std::ceil(dt / motion_params_.dt_max);
-    const double dt_ = dt / repeat;
-    for (uint32_t i = 0; i < repeat; ++i) {
-      if (!predictState(dt_, tmp_ekf_for_no_update)) {
-        return false;
-      }
-    }
-  }
-  tmp_ekf_for_no_update.getX(X);
-  tmp_ekf_for_no_update.getP(P);
-  return true;
-}
-
-bool BicycleMotionModel::getPredictedState(
   const rclcpp::Time & time, geometry_msgs::msg::Pose & pose, std::array<double, 36> & pose_cov,
   geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const
 {
   // get predicted state
   Eigen::MatrixXd X(DIM, 1);
   Eigen::MatrixXd P(DIM, DIM);
-  if (!getPredictedState(time, X, P)) {
+  if (!MotionModel::getPredictedState(time, X, P)) {
     return false;
   }
 

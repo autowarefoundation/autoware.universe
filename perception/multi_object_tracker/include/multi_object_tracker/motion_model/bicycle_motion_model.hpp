@@ -58,7 +58,6 @@ private:
     double lr_min;
     double max_vel;
     double max_slip;
-    double dt_max;
   } motion_params_;
 
 public:
@@ -67,23 +66,10 @@ public:
   enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, SLIP = 4 };
   const char DIM = 5;
 
-  // bool initialize(
-  //   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
-  //   const double & length);
   bool initialize(
     const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
     const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
     const double & slip, const double & slip_cov, const double & length);
-
-  // bool checkInitialized() const
-  // {
-  //   // if the state is not initialized, return false
-  //   if (!is_initialized_) {
-  //     RCLCPP_WARN(logger_, "BicycleMotionModel is not initialized.");
-  //     return false;
-  //   }
-  //   return true;
-  // }
 
   void setDefaultParams();
 
@@ -121,11 +107,7 @@ public:
 
   bool updateExtendedState(const double & length);
 
-  bool predictState(const rclcpp::Time & time);
-
-  bool predictState(const double dt, KalmanFilter & ekf) const;
-
-  bool getPredictedState(const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P) const;
+  bool predictStateStep(const double dt, KalmanFilter & ekf) const override;
 
   bool getPredictedState(
     const rclcpp::Time & time, geometry_msgs::msg::Pose & pose, std::array<double, 36> & pose_cov,

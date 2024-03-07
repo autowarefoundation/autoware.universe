@@ -33,9 +33,12 @@
 
 class MotionModel
 {
+private:
+  bool is_initialized_{false};
+  double dt_max_{0.11};  // [s] maximum time interval for prediction
+
 protected:
   rclcpp::Time last_update_time_;
-  bool is_initialized_{false};
   KalmanFilter ekf_;
 
 public:
@@ -43,13 +46,15 @@ public:
   virtual ~MotionModel() = default;
 
   bool checkInitialized() const { return is_initialized_; }
+  double getDeltaTime(rclcpp::Time time) const { return (time - last_update_time_).seconds(); }
+  void setMaxDeltaTime(const double dt_max) { dt_max_ = dt_max; }
 
   bool initialize(const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P);
 
-  // virtual void initialize(const rclcpp::Time & time,
-  //   const Eigen::VectorXd & state, const Eigen::MatrixXd & covariance) = 0;
+  bool predictState(const rclcpp::Time & time);
+  bool getPredictedState(const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P) const;
 
-  // virtual void predict(const rclcpp::Time & time) = 0;
+  virtual bool predictStateStep(const double dt, KalmanFilter & ekf) const = 0;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
