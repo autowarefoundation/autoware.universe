@@ -867,10 +867,12 @@ BehaviorModuleOutput StaticObstacleAvoidanceModule::plan()
 
   if (data.state == AvoidanceState::SUCCEEDED) {
     removeRegisteredShiftLines(State::SUCCEEDED);
+    return getPreviousModuleOutput();
   }
 
   if (data.state == AvoidanceState::CANCEL) {
     removeRegisteredShiftLines(State::FAILED);
+    return getPreviousModuleOutput();
   }
 
   if (data.yield_required) {
