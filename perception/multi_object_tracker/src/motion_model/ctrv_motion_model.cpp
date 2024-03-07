@@ -77,7 +77,7 @@ void CTRVMotionModel::setMotionLimits(const double & max_vel, const double & max
   motion_params_.max_wz = tier4_autoware_utils::deg2rad(max_wz);
 }
 
-bool CTRVMotionModel::init(
+bool CTRVMotionModel::initialize(
   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P)
 {
   // set last update time
@@ -92,7 +92,7 @@ bool CTRVMotionModel::init(
   return true;
 }
 
-bool CTRVMotionModel::init(
+bool CTRVMotionModel::initialize(
   const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
   const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
   const double & wz, const double & wz_cov)
@@ -109,7 +109,7 @@ bool CTRVMotionModel::init(
   P(IDX::VEL, IDX::VEL) = vel_cov;
   P(IDX::WZ, IDX::WZ) = wz_cov;
 
-  return init(time, X, P);
+  return initialize(time, X, P);
 }
 
 bool CTRVMotionModel::updateStatePose(

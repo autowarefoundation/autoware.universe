@@ -76,7 +76,7 @@ void CVMotionModel::setMotionLimits(const double & max_vx, const double & max_vy
   motion_params_.max_vy = max_vy;
 }
 
-bool CVMotionModel::init(
+bool CVMotionModel::initialize(
   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P)
 {
   // set last update time
@@ -91,7 +91,7 @@ bool CVMotionModel::init(
   return true;
 }
 
-bool CVMotionModel::init(
+bool CVMotionModel::initialize(
   const rclcpp::Time & time, const double & x, const double & y,
   const std::array<double, 36> & pose_cov, const double & vx, const double & vy,
   const std::array<double, 36> & twist_cov)
@@ -107,7 +107,7 @@ bool CVMotionModel::init(
   P(IDX::VX, IDX::VX) = twist_cov[utils::MSG_COV_IDX::X_X];
   P(IDX::VY, IDX::VY) = twist_cov[utils::MSG_COV_IDX::Y_Y];
 
-  return init(time, X, P);
+  return initialize(time, X, P);
 }
 
 bool CVMotionModel::updateStatePose(

@@ -128,7 +128,7 @@ UnknownTracker::UnknownTracker(
     twist_cov[utils::MSG_COV_IDX::Y_Y] = twist_cov_rotated(1, 1);
 
     // initialize motion model
-    motion_model_.init(time, x, y, pose_cov, vx, vy, twist_cov);
+    motion_model_.initialize(time, x, y, pose_cov, vx, vy, twist_cov);
   }
 }
 

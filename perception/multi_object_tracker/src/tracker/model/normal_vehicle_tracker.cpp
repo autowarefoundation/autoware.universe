@@ -161,7 +161,7 @@ NormalVehicleTracker::NormalVehicleTracker(
     const double slip_cov = std::pow(p0_stddev_slip, 2.0);
 
     // initialize motion model
-    motion_model_.init(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
+    motion_model_.initialize(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
   }
 }
 

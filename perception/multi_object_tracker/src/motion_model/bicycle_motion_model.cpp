@@ -104,7 +104,7 @@ void BicycleMotionModel::setMotionLimits(const double & max_vel, const double & 
   motion_params_.max_slip = tier4_autoware_utils::deg2rad(max_slip);
 }
 
-bool BicycleMotionModel::init(
+bool BicycleMotionModel::initialize(
   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
   const double & length)
 {
@@ -123,7 +123,7 @@ bool BicycleMotionModel::init(
   return true;
 }
 
-bool BicycleMotionModel::init(
+bool BicycleMotionModel::initialize(
   const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
   const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
   const double & slip, const double & slip_cov, const double & length)
@@ -140,7 +140,7 @@ bool BicycleMotionModel::init(
   P(IDX::VEL, IDX::VEL) = vel_cov;
   P(IDX::SLIP, IDX::SLIP) = slip_cov;
 
-  return init(time, X, P, length);
+  return initialize(time, X, P, length);
 }
 
 bool BicycleMotionModel::updateStatePose(

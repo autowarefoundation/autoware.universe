@@ -138,7 +138,7 @@ PedestrianTracker::PedestrianTracker(
     }
 
     // initialize motion model
-    motion_model_.init(time, x, y, yaw, pose_cov, vel, vel_cov, wz, wz_cov);
+    motion_model_.initialize(time, x, y, yaw, pose_cov, vel, vel_cov, wz, wz_cov);
   }
 }
 

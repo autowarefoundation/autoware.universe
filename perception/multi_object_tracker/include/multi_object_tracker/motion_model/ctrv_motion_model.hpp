@@ -62,8 +62,8 @@ public:
   enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, WZ = 4 };
   const char DIM = 5;
 
-  bool init(const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P);
-  bool init(
+  bool initialize(const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P);
+  bool initialize(
     const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
     const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
     const double & wz, const double & wz_cov);
