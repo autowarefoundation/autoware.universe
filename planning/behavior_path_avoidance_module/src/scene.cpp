@@ -888,7 +888,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
   updatePathShifter(data.safe_shift_line);
 
   if (data.success) {
-    removeRegisteredShiftLines();
+    return getPreviousModuleOutput();
   }
 
   if (data.yield_required) {
