@@ -271,7 +271,8 @@ bool CTRVMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) cons
    */
 
   // Current state vector X t
-  Eigen::MatrixXd X_t = getStateVector();
+  Eigen::MatrixXd X_t(DIM, 1);
+  getStateVector(X_t);
 
   const double cos_yaw = std::cos(X_t(IDX::YAW));
   const double sin_yaw = std::sin(X_t(IDX::YAW));

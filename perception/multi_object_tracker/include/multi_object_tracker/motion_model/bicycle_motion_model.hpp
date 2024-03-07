@@ -82,15 +82,6 @@ public:
 
   void setMotionLimits(const double & max_vel, const double & max_slip);
 
-  Eigen::MatrixXd getStateVector() const
-  {
-    Eigen::MatrixXd X_t(DIM, 1);
-    ekf_.getX(X_t);
-    return X_t;
-  }
-
-  double getStateElement(unsigned int idx) const { return ekf_.getXelement(idx); }
-
   bool updateStatePose(const double & x, const double & y, const std::array<double, 36> & pose_cov);
 
   bool updateStatePoseHead(
@@ -111,7 +102,7 @@ public:
 
   bool getPredictedState(
     const rclcpp::Time & time, geometry_msgs::msg::Pose & pose, std::array<double, 36> & pose_cov,
-    geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const;
+    geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const override;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_

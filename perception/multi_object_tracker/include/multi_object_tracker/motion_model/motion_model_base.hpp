@@ -48,6 +48,8 @@ public:
   bool checkInitialized() const { return is_initialized_; }
   double getDeltaTime(rclcpp::Time time) const { return (time - last_update_time_).seconds(); }
   void setMaxDeltaTime(const double dt_max) { dt_max_ = dt_max; }
+  double getStateElement(unsigned int idx) const { return ekf_.getXelement(idx); }
+  void getStateVector(Eigen::MatrixXd & X) const { ekf_.getX(X); }
 
   bool initialize(const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P);
 
@@ -55,6 +57,9 @@ public:
   bool getPredictedState(const rclcpp::Time & time, Eigen::MatrixXd & X, Eigen::MatrixXd & P) const;
 
   virtual bool predictStateStep(const double dt, KalmanFilter & ekf) const = 0;
+  virtual bool getPredictedState(
+    const rclcpp::Time & time, geometry_msgs::msg::Pose & pose, std::array<double, 36> & pose_cov,
+    geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const = 0;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_

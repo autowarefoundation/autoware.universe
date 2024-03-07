@@ -184,12 +184,10 @@ autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingOb
 bool BicycleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  // current (predicted) state
-  Eigen::MatrixXd X_t = motion_model_.getStateVector();
-
   // get measurement yaw angle to update
+  const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
   double measurement_yaw = 0.0;
-  bool is_yaw_available = utils::getMeasurementYaw(object, X_t(IDX::YAW), measurement_yaw);
+  bool is_yaw_available = utils::getMeasurementYaw(object, tracked_yaw, measurement_yaw);
 
   // update
   bool is_updated = false;

@@ -182,7 +182,9 @@ autoware_auto_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpda
   autoware_auto_perception_msgs::msg::DetectedObject updating_object = object;
 
   // current (predicted) state
-  Eigen::MatrixXd X_t = motion_model_.getStateVector();
+  const double tracked_x = motion_model_.getStateElement(IDX::X);
+  const double tracked_y = motion_model_.getStateElement(IDX::Y);
+  const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
@@ -195,11 +197,10 @@ autoware_auto_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpda
 
   // get offset measurement
   int nearest_corner_index = utils::getNearestCornerOrSurface(
-    X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
-    self_transform);
+    tracked_x, tracked_y, tracked_yaw, bounding_box_.width, bounding_box_.length, self_transform);
   utils::calcAnchorPointOffset(
     last_input_bounding_box_.width, last_input_bounding_box_.length, nearest_corner_index,
-    bbox_object, X_t(IDX::YAW), updating_object, tracking_offset_);
+    bbox_object, tracked_yaw, updating_object, tracking_offset_);
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
@@ -258,15 +259,14 @@ bool NormalVehicleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
   // current (predicted) state
-  Eigen::MatrixXd X_t = motion_model_.getStateVector();
+  const double tracked_vel = motion_model_.getStateElement(IDX::VEL);
 
   // velocity capability is checked only when the object has velocity measurement
   // and the predicted velocity is close to the observed velocity
   bool is_velocity_available = false;
   if (object.kinematics.has_twist) {
-    const double & predicted_vel = X_t(IDX::VEL);
     const double & observed_vel = object.kinematics.twist_with_covariance.twist.linear.x;
-    if (std::fabs(predicted_vel - observed_vel) < velocity_deviation_threshold_) {
+    if (std::fabs(tracked_vel - observed_vel) < velocity_deviation_threshold_) {
       // Velocity deviation is small
       is_velocity_available = true;
     }
