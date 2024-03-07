@@ -3,7 +3,7 @@
   "ignoreRegExpList": [],
   "overrides": [
     {
-      "filename": "perception/bytetrack/src//{*.cpp,*.hpp}",
+      "filename": "perception/bytetrack/src/{*.cpp,*.hpp}",
       "ignoreRegExpList": ["stracks", "tlwh"]
     }
   ],
