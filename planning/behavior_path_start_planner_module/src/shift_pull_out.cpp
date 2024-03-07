@@ -99,7 +99,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
       continue;
     }
 
-    if (isPullOutPathCollided(pull_out_path)) {
+    if (isPullOutPathCollided(pull_out_path, parameters_.shift_collision_check_distance_from_end)) {
       continue;
     }
 

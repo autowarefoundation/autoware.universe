@@ -64,7 +64,9 @@ public:
   virtual std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) = 0;
 
 protected:
-  bool isPullOutPathCollided(behavior_path_planner::PullOutPath & pull_out_path) const
+  bool isPullOutPathCollided(
+    behavior_path_planner::PullOutPath & pull_out_path,
+    double collision_check_distance_from_end) const
   {
     // check for collisions
     const auto & dynamic_objects = planner_data_->dynamic_object;
@@ -80,12 +82,6 @@ protected:
         stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
     utils::path_safety_checker::filterObjectsByClass(
       pull_out_lane_stop_objects, parameters_.object_types_to_check_for_path_generation);
-
-    const auto planner_type = getPlannerType();
-    const double collision_check_distance_from_end =
-      (planner_type == PlannerType::GEOMETRIC)
-        ? parameters_.geometric_collision_check_distance_from_end
-        : parameters_.shift_collision_check_distance_from_end;
 
     return utils::checkCollisionBetweenPathFootprintsAndObjects(
       vehicle_footprint_,
