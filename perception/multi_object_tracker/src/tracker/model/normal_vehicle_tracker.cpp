@@ -47,7 +47,6 @@ NormalVehicleTracker::NormalVehicleTracker(
   const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("NormalVehicleTracker")),
-  last_update_time_(time),
   z_(object.kinematics.pose_with_covariance.pose.position.z),
   tracking_offset_(Eigen::Vector2d::Zero())
 {
@@ -167,12 +166,7 @@ NormalVehicleTracker::NormalVehicleTracker(
 
 bool NormalVehicleTracker::predict(const rclcpp::Time & time)
 {
-  // predict state vector X t+1
-  bool is_predicted = motion_model_.predictState(time);
-  if (is_predicted) {
-    last_update_time_ = time;
-  }
-  return is_predicted;
+  return motion_model_.predictState(time);
 }
 
 autoware_auto_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpdatingObject(
@@ -336,10 +330,10 @@ bool NormalVehicleTracker::measure(
   }
 
   // check time gap
-  if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
+  const auto time_gap = motion_model_.getDeltaTime(time);
+  if (0.01 /*10msec*/ < std::fabs(time_gap)) {
     RCLCPP_WARN(
-      logger_, "There is a large gap between predicted time and measurement time. (%f)",
-      (time - last_update_time_).seconds());
+      logger_, "There is a large gap between predicted time and measurement time. (%f)", time_gap);
   }
 
   // update object
