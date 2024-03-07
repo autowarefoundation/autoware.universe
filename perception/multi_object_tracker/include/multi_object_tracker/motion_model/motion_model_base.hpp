@@ -34,11 +34,11 @@
 class MotionModel
 {
 private:
-  rclcpp::Time last_update_time_;
   bool is_initialized_{false};
   double dt_max_{0.11};  // [s] maximum time interval for prediction
 
 protected:
+  rclcpp::Time last_update_time_;
   KalmanFilter ekf_;
 
 public:
