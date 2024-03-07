@@ -16,6 +16,7 @@
 // Author: v1.0 Taekjin Lee
 //
 
+#include "multi_object_tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/motion_model/cv_motion_model.hpp"
 
 #include "multi_object_tracker/utils/utils.hpp"
@@ -32,8 +33,7 @@
 // cspell: ignore CV
 // Constant Velocity (CV) motion model
 
-CVMotionModel::CVMotionModel()
-: logger_(rclcpp::get_logger("CVMotionModel")), last_update_time_(rclcpp::Time(0, 0))
+CVMotionModel::CVMotionModel() : MotionModel(), logger_(rclcpp::get_logger("CVMotionModel"))
 {
   // Initialize motion parameters
   setDefaultParams();
@@ -76,20 +76,20 @@ void CVMotionModel::setMotionLimits(const double & max_vx, const double & max_vy
   motion_params_.max_vy = max_vy;
 }
 
-bool CVMotionModel::initialize(
-  const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P)
-{
-  // set last update time
-  last_update_time_ = time;
+// bool CVMotionModel::initialize(
+//   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P)
+// {
+//   // set last update time
+//   last_update_time_ = time;
 
-  // initialize Kalman filter
-  if (!ekf_.init(X, P)) return false;
+//   // initialize Kalman filter
+//   if (!ekf_.init(X, P)) return false;
 
-  // set initialized flag
-  is_initialized_ = true;
+//   // set initialized flag
+//   is_initialized_ = true;
 
-  return true;
-}
+//   return true;
+// }
 
 bool CVMotionModel::initialize(
   const rclcpp::Time & time, const double & x, const double & y,
@@ -107,7 +107,7 @@ bool CVMotionModel::initialize(
   P(IDX::VX, IDX::VX) = twist_cov[utils::MSG_COV_IDX::X_X];
   P(IDX::VY, IDX::VY) = twist_cov[utils::MSG_COV_IDX::Y_Y];
 
-  return initialize(time, X, P);
+  return MotionModel::initialize(time, X, P);
 }
 
 bool CVMotionModel::updateStatePose(

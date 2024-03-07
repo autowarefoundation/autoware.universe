@@ -19,6 +19,7 @@
 #ifndef MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
 #define MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
 
+#include "multi_object_tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
@@ -31,17 +32,11 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-class BicycleMotionModel
+class BicycleMotionModel : public MotionModel
 {
 private:
   // attributes
   rclcpp::Logger logger_;
-  rclcpp::Time last_update_time_;
-
-private:
-  // state
-  bool is_initialized_{false};
-  KalmanFilter ekf_;
 
   // extended state
   double lf_;
@@ -72,23 +67,23 @@ public:
   enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, SLIP = 4 };
   const char DIM = 5;
 
-  bool initialize(
-    const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
-    const double & length);
+  // bool initialize(
+  //   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
+  //   const double & length);
   bool initialize(
     const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
     const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
     const double & slip, const double & slip_cov, const double & length);
 
-  bool checkInitialized() const
-  {
-    // if the state is not initialized, return false
-    if (!is_initialized_) {
-      RCLCPP_WARN(logger_, "BicycleMotionModel is not initialized.");
-      return false;
-    }
-    return true;
-  }
+  // bool checkInitialized() const
+  // {
+  //   // if the state is not initialized, return false
+  //   if (!is_initialized_) {
+  //     RCLCPP_WARN(logger_, "BicycleMotionModel is not initialized.");
+  //     return false;
+  //   }
+  //   return true;
+  // }
 
   void setDefaultParams();
 

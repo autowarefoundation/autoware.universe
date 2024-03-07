@@ -33,6 +33,7 @@ set(MULTI_OBJECT_TRACKER_SRC
   src/tracker/model/pass_through_tracker.cpp
   src/data_association/data_association.cpp
   src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
+  src/motion_model/motion_model_base.cpp
   src/motion_model/bicycle_motion_model.cpp
   src/motion_model/ctrv_motion_model.cpp
   src/motion_model/cv_motion_model.cpp

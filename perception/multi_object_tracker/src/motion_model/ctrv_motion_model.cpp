@@ -16,6 +16,7 @@
 // Author: v1.0 Taekjin Lee
 //
 
+#include "multi_object_tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/motion_model/ctrv_motion_model.hpp"
 
 #include "multi_object_tracker/utils/utils.hpp"
@@ -30,8 +31,7 @@
 // cspell: ignore CTRV
 // Constant Turn Rate and constant Velocity (CTRV) motion model
 
-CTRVMotionModel::CTRVMotionModel()
-: logger_(rclcpp::get_logger("CTRVMotionModel")), last_update_time_(rclcpp::Time(0, 0))
+CTRVMotionModel::CTRVMotionModel() : MotionModel(), logger_(rclcpp::get_logger("CTRVMotionModel"))
 {
   // Initialize motion parameters
   setDefaultParams();
@@ -77,20 +77,20 @@ void CTRVMotionModel::setMotionLimits(const double & max_vel, const double & max
   motion_params_.max_wz = tier4_autoware_utils::deg2rad(max_wz);
 }
 
-bool CTRVMotionModel::initialize(
-  const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P)
-{
-  // set last update time
-  last_update_time_ = time;
+// bool CTRVMotionModel::initialize(
+//   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P)
+// {
+//   // set last update time
+//   last_update_time_ = time;
 
-  // initialize Kalman filter
-  if (!ekf_.init(X, P)) return false;
+//   // initialize Kalman filter
+//   if (!ekf_.init(X, P)) return false;
 
-  // set initialized flag
-  is_initialized_ = true;
+//   // set initialized flag
+//   is_initialized_ = true;
 
-  return true;
-}
+//   return true;
+// }
 
 bool CTRVMotionModel::initialize(
   const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
@@ -109,7 +109,7 @@ bool CTRVMotionModel::initialize(
   P(IDX::VEL, IDX::VEL) = vel_cov;
   P(IDX::WZ, IDX::WZ) = wz_cov;
 
-  return initialize(time, X, P);
+  return MotionModel::initialize(time, X, P);
 }
 
 bool CTRVMotionModel::updateStatePose(

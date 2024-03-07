@@ -16,6 +16,7 @@
 // Author: v1.0 Taekjin Lee
 //
 
+#include "multi_object_tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/motion_model/bicycle_motion_model.hpp"
 
 #include "multi_object_tracker/utils/utils.hpp"
@@ -31,7 +32,7 @@
 // CTRV : Constant Turn Rate and constant Velocity
 
 BicycleMotionModel::BicycleMotionModel()
-: logger_(rclcpp::get_logger("BicycleMotionModel")), last_update_time_(rclcpp::Time(0, 0))
+: MotionModel(), logger_(rclcpp::get_logger("BicycleMotionModel"))
 {
   // Initialize motion parameters
   setDefaultParams();
@@ -104,24 +105,21 @@ void BicycleMotionModel::setMotionLimits(const double & max_vel, const double & 
   motion_params_.max_slip = tier4_autoware_utils::deg2rad(max_slip);
 }
 
-bool BicycleMotionModel::initialize(
-  const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
-  const double & length)
-{
-  // set last update time
-  last_update_time_ = time;
+// bool BicycleMotionModel::initialize(
+//   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
+//   const double & length)
+// {
+//   // set last update time
+//   last_update_time_ = time;
 
-  // initialize Kalman filter
-  if (!ekf_.init(X, P)) return false;
+//   // initialize Kalman filter
+//   if (!ekf_.init(X, P)) return false;
 
-  // set initial extended state
-  if (!updateExtendedState(length)) return false;
+//   // set initialized flag
+//   is_initialized_ = true;
 
-  // set initialized flag
-  is_initialized_ = true;
-
-  return true;
-}
+//   return true;
+// }
 
 bool BicycleMotionModel::initialize(
   const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
@@ -140,7 +138,10 @@ bool BicycleMotionModel::initialize(
   P(IDX::VEL, IDX::VEL) = vel_cov;
   P(IDX::SLIP, IDX::SLIP) = slip_cov;
 
-  return initialize(time, X, P, length);
+  // set initial extended state
+  if (!updateExtendedState(length)) return false;
+
+  return MotionModel::initialize(time, X, P);
 }
 
 bool BicycleMotionModel::updateStatePose(
