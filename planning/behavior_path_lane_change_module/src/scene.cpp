@@ -889,23 +889,38 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
   target_objects.other_lane.reserve(target_obj_index.other_lane.size());
 
   // objects in current lane
+
+  lanelet::ConstLanelet current_lane;
+  if (getRouteHandler()->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
+  }
+  const auto ego_footprint =
+    utils::lane_change::getEgoCurrentFootprint(getEgoPose(), common_parameters.vehicle_info);
+  const auto is_ego_within_intersection =
+    utils::lane_change::isWithinIntersection(getRouteHandler(), current_lane, ego_footprint);
+
+  const auto check_prepare_phase =
+    is_ego_within_intersection || lane_change_parameters_->enable_prepare_segment_collision_check;
+
   for (const auto & obj_idx : target_obj_index.current_lane) {
     const auto extended_object = utils::lane_change::transform(
-      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
+      check_prepare_phase);
     target_objects.current_lane.push_back(extended_object);
   }
 
   // objects in target lane
   for (const auto & obj_idx : target_obj_index.target_lane) {
     const auto extended_object = utils::lane_change::transform(
-      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
+      check_prepare_phase);
     target_objects.target_lane.push_back(extended_object);
   }
 
   // objects in other lane
   for (const auto & obj_idx : target_obj_index.other_lane) {
     const auto extended_object = utils::lane_change::transform(
-      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
+      check_prepare_phase);
     target_objects.other_lane.push_back(extended_object);
   }
 
@@ -963,14 +978,25 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     target_backward_polygons.push_back(lane_polygon);
   }
 
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler.getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
+  }
+  const auto ego_footprint =
+    utils::lane_change::getEgoCurrentFootprint(getEgoPose(), common_parameters.vehicle_info);
+  const auto is_ego_within_intersection =
+    utils::lane_change::isWithinIntersection(getRouteHandler(), current_lane, ego_footprint);
+
+  const auto check_prepare_phase =
+    is_ego_within_intersection || lane_change_parameters_->enable_prepare_segment_collision_check;
+
   LaneChangeTargetObjectIndices filtered_obj_indices;
   for (size_t i = 0; i < objects.objects.size(); ++i) {
     const auto & object = objects.objects.at(i);
     const auto obj_velocity_norm = std::hypot(
       object.kinematics.initial_twist_with_covariance.twist.linear.x,
       object.kinematics.initial_twist_with_covariance.twist.linear.y);
-    const auto extended_object =
-      utils::lane_change::transform(object, common_parameters, *lane_change_parameters_);
+    const auto extended_object = utils::lane_change::transform(
+      object, common_parameters, *lane_change_parameters_, check_prepare_phase);
 
     const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
 
