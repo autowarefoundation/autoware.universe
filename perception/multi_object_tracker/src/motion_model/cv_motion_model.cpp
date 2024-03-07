@@ -39,6 +39,43 @@ CVMotionModel::CVMotionModel()
   setDefaultParams();
 }
 
+void CVMotionModel::setDefaultParams()
+{
+  // process noise covariance
+  constexpr double q_stddev_x = 0.5;         // [m/s] standard deviation of x
+  constexpr double q_stddev_y = 0.5;         // [m/s] standard deviation of y
+  constexpr double q_stddev_vx = 9.8 * 0.3;  // [m/(s*s)] standard deviation of vx
+  constexpr double q_stddev_vy = 9.8 * 0.3;  // [m/(s*s)] standard deviation of vy
+  setMotionParams(q_stddev_x, q_stddev_y, q_stddev_vx, q_stddev_vy);
+
+  // set motion limitations
+  constexpr double max_vx = tier4_autoware_utils::kmph2mps(60);  // [m/s] maximum x velocity
+  constexpr double max_vy = tier4_autoware_utils::kmph2mps(60);  // [m/s] maximum y velocity
+  setMotionLimits(max_vx, max_vy);
+
+  // set prediction parameters
+  constexpr double dt_max = 0.11;  // [s] maximum time interval for prediction
+  motion_params_.dt_max = dt_max;
+}
+
+void CVMotionModel::setMotionParams(
+  const double & q_stddev_x, const double & q_stddev_y, const double & q_stddev_vx,
+  const double & q_stddev_vy)
+{
+  // set process noise covariance parameters
+  motion_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
+  motion_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
+  motion_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
+  motion_params_.q_cov_vy = std::pow(q_stddev_vy, 2.0);
+}
+
+void CVMotionModel::setMotionLimits(const double & max_vx, const double & max_vy)
+{
+  // set motion limitations
+  motion_params_.max_vx = max_vx;
+  motion_params_.max_vy = max_vy;
+}
+
 bool CVMotionModel::init(
   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P)
 {
@@ -46,7 +83,7 @@ bool CVMotionModel::init(
   last_update_time_ = time;
 
   // initialize Kalman filter
-  ekf_.init(X, P);
+  if (!ekf_.init(X, P)) return false;
 
   // set initialized flag
   is_initialized_ = true;
@@ -71,43 +108,6 @@ bool CVMotionModel::init(
   P(IDX::VY, IDX::VY) = twist_cov[utils::MSG_COV_IDX::Y_Y];
 
   return init(time, X, P);
-}
-
-void CVMotionModel::setDefaultParams()
-{
-  // process noise covariance
-  constexpr double q_stddev_x = 0.5;         // [m/s]
-  constexpr double q_stddev_y = 0.5;         // [m/s]
-  constexpr double q_stddev_vx = 9.8 * 0.3;  // [m/(s*s)]
-  constexpr double q_stddev_vy = 9.8 * 0.3;  // [m/(s*s)]
-  setMotionParams(q_stddev_x, q_stddev_y, q_stddev_vx, q_stddev_vy);
-
-  // set motion limitations
-  constexpr double max_vx = tier4_autoware_utils::kmph2mps(60);  // [m/s]
-  constexpr double max_vy = tier4_autoware_utils::kmph2mps(60);  // [m/s]
-  setMotionLimits(max_vx, max_vy);
-
-  // set prediction parameters
-  constexpr double dt_max = 0.11;  // [s]
-  motion_params_.dt_max = dt_max;
-}
-
-void CVMotionModel::setMotionParams(
-  const double & q_stddev_x, const double & q_stddev_y, const double & q_stddev_vx,
-  const double & q_stddev_vy)
-{
-  // set process noise covariance parameters
-  motion_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
-  motion_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
-  motion_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
-  motion_params_.q_cov_vy = std::pow(q_stddev_vy, 2.0);
-}
-
-void CVMotionModel::setMotionLimits(const double & max_vx, const double & max_vy)
-{
-  // set motion limitations
-  motion_params_.max_vx = max_vx;
-  motion_params_.max_vy = max_vy;
 }
 
 bool CVMotionModel::updateStatePose(
@@ -246,8 +246,6 @@ bool CVMotionModel::predictState(const double dt, KalmanFilter & ekf) const
    *     [ 0, 0,  1,  0]
    *     [ 0, 0,  0,  1]
    */
-
-  // MOTION MODEL (predict)
 
   // Current state vector X t
   Eigen::MatrixXd X_t = getStateVector();

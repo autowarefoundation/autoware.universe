@@ -53,6 +53,21 @@ UnknownTracker::UnknownTracker(
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
 
+  // Set motion model parameters
+  {
+    constexpr double q_stddev_x = 0.5;         // [m/s]
+    constexpr double q_stddev_y = 0.5;         // [m/s]
+    constexpr double q_stddev_vx = 9.8 * 0.3;  // [m/(s*s)]
+    constexpr double q_stddev_vy = 9.8 * 0.3;  // [m/(s*s)]
+    motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_vx, q_stddev_vy);
+  }
+
+  // Set motion limits
+  motion_model_.setMotionLimits(
+    tier4_autoware_utils::kmph2mps(60), /* [m/s] maximum velocity, x */
+    tier4_autoware_utils::kmph2mps(60)  /* [m/s] maximum velocity, y */
+  );
+
   // Set initial state
   {
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
@@ -115,21 +130,6 @@ UnknownTracker::UnknownTracker(
     // initialize motion model
     motion_model_.init(time, x, y, pose_cov, vx, vy, twist_cov);
   }
-
-  // Set motion model parameters
-  {
-    constexpr double q_stddev_x = 0.5;         // [m/s]
-    constexpr double q_stddev_y = 0.5;         // [m/s]
-    constexpr double q_stddev_vx = 9.8 * 0.3;  // [m/(s*s)]
-    constexpr double q_stddev_vy = 9.8 * 0.3;  // [m/(s*s)]
-    motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_vx, q_stddev_vy);
-  }
-
-  // Set motion limits
-  motion_model_.setMotionLimits(
-    tier4_autoware_utils::kmph2mps(60), /* [m/s] maximum velocity, x */
-    tier4_autoware_utils::kmph2mps(60)  /* [m/s] maximum velocity, y */
-  );
 }
 
 bool UnknownTracker::predict(const rclcpp::Time & time)

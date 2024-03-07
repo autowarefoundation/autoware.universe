@@ -83,6 +83,35 @@ BigVehicleTracker::BigVehicleTracker(
     last_input_bounding_box_ = bounding_box_;
   }
 
+  // Set motion model parameters
+  {
+    constexpr double q_stddev_acc_long =
+      9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
+    constexpr double q_stddev_acc_lat = 9.8 * 0.15;  // [m/(s*s)] uncertain lateral acceleration
+    constexpr double q_stddev_yaw_rate_min = 1.5;    // [deg/s] uncertain yaw change rate, minimum
+    constexpr double q_stddev_yaw_rate_max = 15.0;   // [deg/s] uncertain yaw change rate, maximum
+    constexpr double q_stddev_slip_rate_min =
+      0.3;  // [deg/s] uncertain slip angle change rate, minimum
+    constexpr double q_stddev_slip_rate_max =
+      10.0;                                  // [deg/s] uncertain slip angle change rate, maximum
+    constexpr double q_max_slip_angle = 30;  // [deg] max slip angle
+    constexpr double lf_ratio = 0.3;         // [-] ratio of front wheel position
+    constexpr double lf_min = 1.5;           // [m] minimum front wheel position
+    constexpr double lr_ratio = 0.25;        // [-] ratio of rear wheel position
+    constexpr double lr_min = 1.5;           // [m] minimum rear wheel position
+    motion_model_.setMotionParams(
+      q_stddev_acc_long, q_stddev_acc_lat, q_stddev_yaw_rate_min, q_stddev_yaw_rate_max,
+      q_stddev_slip_rate_min, q_stddev_slip_rate_max, q_max_slip_angle, lf_ratio, lf_min, lr_ratio,
+      lr_min);
+  }
+
+  // Set motion limits
+  {
+    constexpr double max_vel = tier4_autoware_utils::kmph2mps(100);  // [m/s] maximum velocity
+    constexpr double max_slip = 30;                                  // [deg] maximum slip angle
+    motion_model_.setMotionLimits(max_vel, max_slip);  // maximum velocity and slip angle
+  }
+
   // Set initial state
   {
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
@@ -133,35 +162,6 @@ BigVehicleTracker::BigVehicleTracker(
 
     // initialize motion model
     motion_model_.init(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
-  }
-
-  // Set motion model parameters
-  {
-    constexpr double q_stddev_acc_long =
-      9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
-    constexpr double q_stddev_acc_lat = 9.8 * 0.15;  // [m/(s*s)] uncertain lateral acceleration
-    constexpr double q_stddev_yaw_rate_min = 1.5;    // [deg/s] uncertain yaw change rate, minimum
-    constexpr double q_stddev_yaw_rate_max = 15.0;   // [deg/s] uncertain yaw change rate, maximum
-    constexpr double q_stddev_slip_rate_min =
-      0.3;  // [deg/s] uncertain slip angle change rate, minimum
-    constexpr double q_stddev_slip_rate_max =
-      10.0;                                  // [deg/s] uncertain slip angle change rate, maximum
-    constexpr double q_max_slip_angle = 30;  // [deg] max slip angle
-    constexpr double lf_ratio = 0.3;         // [-] ratio of front wheel position
-    constexpr double lf_min = 1.5;           // [m] minimum front wheel position
-    constexpr double lr_ratio = 0.25;        // [-] ratio of rear wheel position
-    constexpr double lr_min = 1.5;           // [m] minimum rear wheel position
-    motion_model_.setMotionParams(
-      q_stddev_acc_long, q_stddev_acc_lat, q_stddev_yaw_rate_min, q_stddev_yaw_rate_max,
-      q_stddev_slip_rate_min, q_stddev_slip_rate_max, q_max_slip_angle, lf_ratio, lf_min, lr_ratio,
-      lr_min);
-  }
-
-  // Set motion limits
-  {
-    constexpr double max_vel = tier4_autoware_utils::kmph2mps(100);  // [m/s] maximum velocity
-    constexpr double max_slip = 30;                                  // [deg] maximum slip angle
-    motion_model_.setMotionLimits(max_vel, max_slip);  // maximum velocity and slip angle
   }
 }
 
@@ -259,8 +259,6 @@ bool BigVehicleTracker::measureWithPose(
 {
   // current (predicted) state
   Eigen::MatrixXd X_t = motion_model_.getStateVector();
-
-  // MOTION MODEL (update)
 
   // velocity capability is checked only when the object has velocity measurement
   // and the predicted velocity is close to the observed velocity

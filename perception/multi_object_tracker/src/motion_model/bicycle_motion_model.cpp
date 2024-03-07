@@ -37,6 +37,73 @@ BicycleMotionModel::BicycleMotionModel()
   setDefaultParams();
 }
 
+void BicycleMotionModel::setDefaultParams()
+{
+  // set default motion parameters
+  constexpr double q_stddev_acc_long = 9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
+  constexpr double q_stddev_acc_lat = 9.8 * 0.15;   // [m/(s*s)] uncertain lateral acceleration
+  constexpr double q_stddev_yaw_rate_min = 1.5;     // [deg/s] uncertain yaw change rate
+  constexpr double q_stddev_yaw_rate_max = 15.0;    // [deg/s] uncertain yaw change rate
+  constexpr double q_stddev_slip_rate_min = 0.3;    // [deg/s] uncertain slip angle change rate
+  constexpr double q_stddev_slip_rate_max = 10.0;   // [deg/s] uncertain slip angle change rate
+  constexpr double q_max_slip_angle = 30.0;         // [deg] max slip angle
+  // extended state parameters
+  constexpr double lf_ratio = 0.3;   // 30% front from the center
+  constexpr double lf_min = 1.0;     // minimum of 1.0m
+  constexpr double lr_ratio = 0.25;  // 25% rear from the center
+  constexpr double lr_min = 1.0;     // minimum of 1.0m
+  setMotionParams(
+    q_stddev_acc_long, q_stddev_acc_lat, q_stddev_yaw_rate_min, q_stddev_yaw_rate_max,
+    q_stddev_slip_rate_min, q_stddev_slip_rate_max, q_max_slip_angle, lf_ratio, lf_min, lr_ratio,
+    lr_min);
+
+  // set motion limitations
+  constexpr double max_vel = tier4_autoware_utils::kmph2mps(100);  // [m/s] maximum velocity
+  constexpr double max_slip = 30.0;                                // [deg] maximum slip angle
+  setMotionLimits(max_vel, max_slip);
+
+  // set prediction parameters
+  constexpr double dt_max = 0.11;  // [s] maximum time interval for prediction
+  motion_params_.dt_max = dt_max;
+}
+
+void BicycleMotionModel::setMotionParams(
+  const double & q_stddev_acc_long, const double & q_stddev_acc_lat,
+  const double & q_stddev_yaw_rate_min, const double & q_stddev_yaw_rate_max,
+  const double & q_stddev_slip_rate_min, const double & q_stddev_slip_rate_max,
+  const double & q_max_slip_angle, const double & lf_ratio, const double & lf_min,
+  const double & lr_ratio, const double & lr_min)
+{
+  // set process noise covariance parameters
+  motion_params_.q_stddev_acc_long = q_stddev_acc_long;
+  motion_params_.q_stddev_acc_lat = q_stddev_acc_lat;
+  motion_params_.q_stddev_yaw_rate_min = tier4_autoware_utils::deg2rad(q_stddev_yaw_rate_min);
+  motion_params_.q_stddev_yaw_rate_max = tier4_autoware_utils::deg2rad(q_stddev_yaw_rate_max);
+  motion_params_.q_cov_slip_rate_min =
+    std::pow(tier4_autoware_utils::deg2rad(q_stddev_slip_rate_min), 2.0);
+  motion_params_.q_cov_slip_rate_max =
+    std::pow(tier4_autoware_utils::deg2rad(q_stddev_slip_rate_max), 2.0);
+  motion_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(q_max_slip_angle);
+
+  constexpr double minimum_wheel_pos = 0.01;  // minimum of 0.01m
+  if (lf_min < minimum_wheel_pos || lr_min < minimum_wheel_pos) {
+    RCLCPP_WARN(
+      logger_,
+      "BicycleMotionModel::setMotionParams: minimum wheel position should be greater than 0.01m.");
+  }
+  motion_params_.lf_min = (lf_min < minimum_wheel_pos) ? minimum_wheel_pos : lf_min;
+  motion_params_.lr_min = (lr_min < minimum_wheel_pos) ? minimum_wheel_pos : lr_min;
+  motion_params_.lf_ratio = lf_ratio;
+  motion_params_.lr_ratio = lr_ratio;
+}
+
+void BicycleMotionModel::setMotionLimits(const double & max_vel, const double & max_slip)
+{
+  // set motion limitations
+  motion_params_.max_vel = max_vel;
+  motion_params_.max_slip = tier4_autoware_utils::deg2rad(max_slip);
+}
+
 bool BicycleMotionModel::init(
   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P,
   const double & length)
@@ -45,10 +112,10 @@ bool BicycleMotionModel::init(
   last_update_time_ = time;
 
   // initialize Kalman filter
-  ekf_.init(X, P);
+  if (!ekf_.init(X, P)) return false;
 
   // set initial extended state
-  updateExtendedState(length);
+  if (!updateExtendedState(length)) return false;
 
   // set initialized flag
   is_initialized_ = true;
@@ -74,68 +141,6 @@ bool BicycleMotionModel::init(
   P(IDX::SLIP, IDX::SLIP) = slip_cov;
 
   return init(time, X, P, length);
-}
-
-void BicycleMotionModel::setDefaultParams()
-{
-  // set default motion parameters
-  constexpr double q_stddev_acc_long = 9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
-  constexpr double q_stddev_acc_lat = 9.8 * 0.15;   // [m/(s*s)] uncertain lateral acceleration
-  constexpr double q_stddev_yaw_rate_min = 1.5;     // [deg/s] uncertain yaw change rate
-  constexpr double q_stddev_yaw_rate_max = 15.0;    // [deg/s] uncertain yaw change rate
-  constexpr double q_stddev_slip_rate_min = 0.3;    // [deg/s] uncertain slip angle change rate
-  constexpr double q_stddev_slip_rate_max = 10.0;   // [deg/s] uncertain slip angle change rate
-  constexpr double q_max_slip_angle = 30.0;         // [deg] max slip angle
-  // extended state parameters
-  constexpr double lf_ratio = 0.3;   // 30% front from the center
-  constexpr double lf_min = 1.0;     // minimum of 1.0m
-  constexpr double lr_ratio = 0.25;  // 25% rear from the center
-  constexpr double lr_min = 1.0;     // minimum of 1.0m
-  setMotionParams(
-    q_stddev_acc_long, q_stddev_acc_lat, q_stddev_yaw_rate_min, q_stddev_yaw_rate_max,
-    q_stddev_slip_rate_min, q_stddev_slip_rate_max, q_max_slip_angle, lf_ratio, lf_min, lr_ratio,
-    lr_min);
-
-  // set motion limitations
-  constexpr double max_vel = tier4_autoware_utils::kmph2mps(100);  // [m/s]
-  constexpr double max_slip = 30.0;                                // [deg]
-  setMotionLimits(max_vel, max_slip);
-
-  // set prediction parameters
-  constexpr double dt_max = 0.11;  // [s]
-  motion_params_.dt_max = dt_max;
-}
-
-void BicycleMotionModel::setMotionParams(
-  const double & q_stddev_acc_long, const double & q_stddev_acc_lat,
-  const double & q_stddev_yaw_rate_min, const double & q_stddev_yaw_rate_max,
-  const double & q_stddev_slip_rate_min, const double & q_stddev_slip_rate_max,
-  const double & q_max_slip_angle, const double & lf_ratio, const double & lf_min,
-  const double & lr_ratio, const double & lr_min)
-{
-  // set process noise covariance parameters
-  motion_params_.q_stddev_acc_long = q_stddev_acc_long;
-  motion_params_.q_stddev_acc_lat = q_stddev_acc_lat;
-  motion_params_.q_stddev_yaw_rate_min = tier4_autoware_utils::deg2rad(q_stddev_yaw_rate_min);
-  motion_params_.q_stddev_yaw_rate_max = tier4_autoware_utils::deg2rad(q_stddev_yaw_rate_max);
-  motion_params_.q_cov_slip_rate_min =
-    std::pow(tier4_autoware_utils::deg2rad(q_stddev_slip_rate_min), 2.0);
-  motion_params_.q_cov_slip_rate_max =
-    std::pow(tier4_autoware_utils::deg2rad(q_stddev_slip_rate_max), 2.0);
-  motion_params_.q_max_slip_angle = tier4_autoware_utils::deg2rad(q_max_slip_angle);
-
-  // set extended state parameters
-  motion_params_.lf_ratio = lf_ratio;
-  motion_params_.lf_min = lf_min;
-  motion_params_.lr_ratio = lr_ratio;
-  motion_params_.lr_min = lr_min;
-}
-
-void BicycleMotionModel::setMotionLimits(const double & max_vel, const double & max_slip)
-{
-  // set motion limitations
-  motion_params_.max_vel = max_vel;
-  motion_params_.max_slip = tier4_autoware_utils::deg2rad(max_slip);
 }
 
 bool BicycleMotionModel::updateStatePose(

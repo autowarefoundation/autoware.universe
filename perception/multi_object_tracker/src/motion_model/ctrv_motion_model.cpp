@@ -37,6 +37,46 @@ CTRVMotionModel::CTRVMotionModel()
   setDefaultParams();
 }
 
+void CTRVMotionModel::setDefaultParams()
+{
+  // process noise covariance
+  constexpr double q_stddev_x = 0.5;                                  // [m/s]
+  constexpr double q_stddev_y = 0.5;                                  // [m/s]
+  constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
+  constexpr double q_stddev_vel = 9.8 * 0.3;                          // [m/(s*s)]
+  constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
+
+  setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vel, q_stddev_wz);
+
+  // set motion limitations
+  constexpr double max_vel = tier4_autoware_utils::kmph2mps(10);  // [m/s] maximum velocity
+  constexpr double max_wz = 30.0;                                 // [deg] maximum yaw rate
+  setMotionLimits(max_vel, max_wz);
+
+  // set prediction parameters
+  constexpr double dt_max = 0.11;  // [s] maximum time interval for prediction
+  motion_params_.dt_max = dt_max;
+}
+
+void CTRVMotionModel::setMotionParams(
+  const double & q_stddev_x, const double & q_stddev_y, const double & q_stddev_yaw,
+  const double & q_stddev_vel, const double & q_stddev_wz)
+{
+  // set process noise covariance parameters
+  motion_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
+  motion_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
+  motion_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
+  motion_params_.q_cov_vel = std::pow(q_stddev_vel, 2.0);
+  motion_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
+}
+
+void CTRVMotionModel::setMotionLimits(const double & max_vel, const double & max_wz)
+{
+  // set motion limitations
+  motion_params_.max_vel = max_vel;
+  motion_params_.max_wz = tier4_autoware_utils::deg2rad(max_wz);
+}
+
 bool CTRVMotionModel::init(
   const rclcpp::Time & time, const Eigen::MatrixXd & X, const Eigen::MatrixXd & P)
 {
@@ -44,7 +84,7 @@ bool CTRVMotionModel::init(
   last_update_time_ = time;
 
   // initialize Kalman filter
-  ekf_.init(X, P);
+  if (!ekf_.init(X, P)) return false;
 
   // set initialized flag
   is_initialized_ = true;
@@ -70,46 +110,6 @@ bool CTRVMotionModel::init(
   P(IDX::WZ, IDX::WZ) = wz_cov;
 
   return init(time, X, P);
-}
-
-void CTRVMotionModel::setDefaultParams()
-{
-  // process noise covariance
-  constexpr double q_stddev_x = 0.5;                                  // [m/s]
-  constexpr double q_stddev_y = 0.5;                                  // [m/s]
-  constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
-  constexpr double q_stddev_vel = 9.8 * 0.3;                          // [m/(s*s)]
-  constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
-
-  setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vel, q_stddev_wz);
-
-  // set motion limitations
-  constexpr double max_vel = tier4_autoware_utils::kmph2mps(10);  // [m/s]
-  constexpr double max_wz = 30.0;                                 // [deg]
-  setMotionLimits(max_vel, max_wz);
-
-  // set prediction parameters
-  constexpr double dt_max = 0.11;  // [s]
-  motion_params_.dt_max = dt_max;
-}
-
-void CTRVMotionModel::setMotionParams(
-  const double & q_stddev_x, const double & q_stddev_y, const double & q_stddev_yaw,
-  const double & q_stddev_vel, const double & q_stddev_wz)
-{
-  // set process noise covariance parameters
-  motion_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
-  motion_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
-  motion_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
-  motion_params_.q_cov_vel = std::pow(q_stddev_vel, 2.0);
-  motion_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
-}
-
-void CTRVMotionModel::setMotionLimits(const double & max_vel, const double & max_wz)
-{
-  // set motion limitations
-  motion_params_.max_vel = max_vel;
-  motion_params_.max_wz = tier4_autoware_utils::deg2rad(max_wz);
 }
 
 bool CTRVMotionModel::updateStatePose(

@@ -61,6 +61,35 @@ BicycleTracker::BicycleTracker(
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
 
+  // Set motion model parameters
+  {
+    constexpr double q_stddev_acc_long =
+      9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
+    constexpr double q_stddev_acc_lat = 9.8 * 0.15;  // [m/(s*s)] uncertain lateral acceleration
+    constexpr double q_stddev_yaw_rate_min = 5.0;    // [deg/s] uncertain yaw change rate, minimum
+    constexpr double q_stddev_yaw_rate_max = 15.0;   // [deg/s] uncertain yaw change rate, maximum
+    constexpr double q_stddev_slip_rate_min =
+      1.0;  // [deg/s] uncertain slip angle change rate, minimum
+    constexpr double q_stddev_slip_rate_max =
+      10.0;                                  // [deg/s] uncertain slip angle change rate, maximum
+    constexpr double q_max_slip_angle = 30;  // [deg] max slip angle
+    constexpr double lf_ratio = 0.3;         // [-] ratio of front wheel position
+    constexpr double lf_min = 0.3;           // [m] minimum front wheel position
+    constexpr double lr_ratio = 0.3;         // [-] ratio of rear wheel position
+    constexpr double lr_min = 0.3;           // [m] minimum rear wheel position
+    motion_model_.setMotionParams(
+      q_stddev_acc_long, q_stddev_acc_lat, q_stddev_yaw_rate_min, q_stddev_yaw_rate_max,
+      q_stddev_slip_rate_min, q_stddev_slip_rate_max, q_max_slip_angle, lf_ratio, lf_min, lr_ratio,
+      lr_min);
+  }
+
+  // Set motion limits
+  {
+    constexpr double max_vel = tier4_autoware_utils::kmph2mps(80);  // [m/s] maximum velocity
+    constexpr double max_slip = 30;                                 // [deg] maximum slip angle
+    motion_model_.setMotionLimits(max_vel, max_slip);  // maximum velocity and slip angle
+  }
+
   // Set initial state
   {
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
@@ -112,35 +141,6 @@ BicycleTracker::BicycleTracker(
     // initialize motion model
     motion_model_.init(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
   }
-
-  // Set motion model parameters
-  {
-    constexpr double q_stddev_acc_long =
-      9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
-    constexpr double q_stddev_acc_lat = 9.8 * 0.15;  // [m/(s*s)] uncertain lateral acceleration
-    constexpr double q_stddev_yaw_rate_min = 5.0;    // [deg/s] uncertain yaw change rate, minimum
-    constexpr double q_stddev_yaw_rate_max = 15.0;   // [deg/s] uncertain yaw change rate, maximum
-    constexpr double q_stddev_slip_rate_min =
-      1.0;  // [deg/s] uncertain slip angle change rate, minimum
-    constexpr double q_stddev_slip_rate_max =
-      10.0;                                  // [deg/s] uncertain slip angle change rate, maximum
-    constexpr double q_max_slip_angle = 30;  // [deg] max slip angle
-    constexpr double lf_ratio = 0.3;         // [-] ratio of front wheel position
-    constexpr double lf_min = 0.3;           // [m] minimum front wheel position
-    constexpr double lr_ratio = 0.3;         // [-] ratio of rear wheel position
-    constexpr double lr_min = 0.3;           // [m] minimum rear wheel position
-    motion_model_.setMotionParams(
-      q_stddev_acc_long, q_stddev_acc_lat, q_stddev_yaw_rate_min, q_stddev_yaw_rate_max,
-      q_stddev_slip_rate_min, q_stddev_slip_rate_max, q_max_slip_angle, lf_ratio, lf_min, lr_ratio,
-      lr_min);
-  }
-
-  // Set motion limits
-  {
-    constexpr double max_vel = tier4_autoware_utils::kmph2mps(80);  // [m/s] maximum velocity
-    constexpr double max_slip = 30;                                 // [deg] maximum slip angle
-    motion_model_.setMotionLimits(max_vel, max_slip);  // maximum velocity and slip angle
-  }
 }
 
 bool BicycleTracker::predict(const rclcpp::Time & time)
@@ -169,6 +169,7 @@ autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingOb
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
+    // fill covariance matrix
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
     pose_cov[utils::MSG_COV_IDX::X_X] = ekf_params_.r_cov_x;        // x - x
     pose_cov[utils::MSG_COV_IDX::X_Y] = 0;                          // x - y
@@ -185,8 +186,6 @@ bool BicycleTracker::measureWithPose(
 {
   // current (predicted) state
   Eigen::MatrixXd X_t = motion_model_.getStateVector();
-
-  // MOTION MODEL (update)
 
   // get measurement yaw angle to update
   double measurement_yaw = 0.0;

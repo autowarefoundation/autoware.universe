@@ -71,6 +71,22 @@ PedestrianTracker::PedestrianTracker(
     cylinder_ = {object.shape.dimensions.x, object.shape.dimensions.z};
   }
 
+  // Set motion model parameters
+  {
+    constexpr double q_stddev_x = 0.5;                                  // [m/s]
+    constexpr double q_stddev_y = 0.5;                                  // [m/s]
+    constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
+    constexpr double q_stddev_vx = 9.8 * 0.3;                           // [m/(s*s)]
+    constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
+    motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vx, q_stddev_wz);
+  }
+
+  // Set motion limits
+  motion_model_.setMotionLimits(
+    tier4_autoware_utils::kmph2mps(100), /* [m/s] maximum velocity */
+    30.0                                 /* [deg/s] maximum turn rate */
+  );
+
   // Set initial state
   {
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
@@ -124,22 +140,6 @@ PedestrianTracker::PedestrianTracker(
     // initialize motion model
     motion_model_.init(time, x, y, yaw, pose_cov, vel, vel_cov, wz, wz_cov);
   }
-
-  // Set motion model parameters
-  {
-    constexpr double q_stddev_x = 0.5;                                  // [m/s]
-    constexpr double q_stddev_y = 0.5;                                  // [m/s]
-    constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
-    constexpr double q_stddev_vx = 9.8 * 0.3;                           // [m/(s*s)]
-    constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
-    motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vx, q_stddev_wz);
-  }
-
-  // Set motion limits
-  motion_model_.setMotionLimits(
-    tier4_autoware_utils::kmph2mps(100), /* [m/s] maximum velocity */
-    30.0                                 /* [deg/s] maximum turn rate */
-  );
 }
 
 bool PedestrianTracker::predict(const rclcpp::Time & time)
