@@ -4,10 +4,7 @@
   "overrides": [
     {
       "filename": "perception/bytetrack/src//{*.cpp,*.hpp}",
-      "ignoreRegExpList": [
-        "stracks",
-        "tlwh"
-      ]
+      "ignoreRegExpList": ["stracks", "tlwh"]
     }
   ],
   "words": ["dltype", "tvmgen"]
