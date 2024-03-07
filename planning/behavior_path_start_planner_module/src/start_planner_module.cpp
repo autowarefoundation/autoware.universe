@@ -326,6 +326,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
     centerline_path.points, start_pose_point_msg, start_pose_nearest_segment_index.value());
   if (std::isnan(starting_pose_lateral_offset)) return false;
 
+  RCLCPP_DEBUG(getLogger(), "starting pose lateral offset: %f", starting_pose_lateral_offset);
   const bool ego_is_merging_from_the_left = (starting_pose_lateral_offset > 0.0);
 
   // Get the ego's overhang point closest to the centerline path and the gap between said point and
