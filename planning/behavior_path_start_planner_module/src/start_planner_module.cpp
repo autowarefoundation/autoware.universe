@@ -221,7 +221,7 @@ bool StartPlannerModule::receivedNewRoute() const
 bool StartPlannerModule::requiresDynamicObjectsCollisionDetection() const
 {
   return parameters_->safety_check_params.enable_safety_check && status_.driving_forward &&
-         !isPreventingRearVehicleFromCrossing();
+         !isPreventingRearVehicleFromPassingThrough();
 }
 
 bool StartPlannerModule::noMovingObjectsAround() const
@@ -288,18 +288,20 @@ bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
   return std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road;
 }
 
-bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
+bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
 {
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & dynamic_object = planner_data_->dynamic_object;
   const auto & route_handler = planner_data_->route_handler;
+  const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
+
   const auto target_lanes = utils::getCurrentLanes(planner_data_);
   if (target_lanes.empty()) return false;
 
   // Define functions to get distance between a point and a lane's boundaries.
-  auto calc_right_lateral_offset = [&](
-                                     const lanelet::ConstLineString2d & boundary_line,
-                                     const geometry_msgs::msg::Pose & search_pose) {
+  auto calc_absolute_lateral_offset = [&](
+                                        const lanelet::ConstLineString2d & boundary_line,
+                                        const geometry_msgs::msg::Pose & search_pose) {
     std::vector<geometry_msgs::msg::Point> boundary_path;
     std::for_each(
       boundary_line.begin(), boundary_line.end(), [&boundary_path](const auto & boundary_point) {
@@ -311,60 +313,63 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
     return std::fabs(calcLateralOffset(boundary_path, search_pose.position));
   };
 
-  auto calc_left_lateral_offset = [&](
-                                    const lanelet::ConstLineString2d & boundary_line,
-                                    const geometry_msgs::msg::Pose & search_pose) {
-    return -calc_right_lateral_offset(boundary_line, search_pose);
-  };
+  // Check from what side of the road the ego is merging
+  const auto centerline_path =
+    route_handler->getCenterLinePath(target_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto start_pose_nearest_segment_index =
+    motion_utils::findNearestSegmentIndex(centerline_path.points, start_pose);
+  if (!start_pose_nearest_segment_index) return false;
+
+  const auto start_pose_point_msg = tier4_autoware_utils::createPoint(
+    start_pose.position.x, start_pose.position.y, start_pose.position.z);
+  const auto starting_pose_lateral_offset = motion_utils::calcLateralOffset(
+    centerline_path.points, start_pose_point_msg, start_pose_nearest_segment_index.value());
+  if (std::isnan(starting_pose_lateral_offset)) return false;
+
+  const bool ego_is_merging_from_the_left = (starting_pose_lateral_offset > 0.0);
 
   // Get the ego's overhang point closest to the centerline path and the gap between said point and
   // the lane's border.
-  const auto local_vehicle_footprint = vehicle_info_.createFootprint();
-  const auto vehicle_footprint =
-    transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
-  const auto centerline_path =
-    route_handler->getCenterLinePath(target_lanes, 0.0, std::numeric_limits<double>::max());
-  double smallest_lateral_offset = std::numeric_limits<double>::max();
-  double left_dist_to_lane_border = 0.0;
-  double right_dist_to_lane_border = 0.0;
-  geometry_msgs::msg::Pose ego_overhang_point_as_pose;
-  for (const auto & point : vehicle_footprint) {
-    geometry_msgs::msg::Pose point_pose;
-    point_pose.position.x = point.x();
-    point_pose.position.y = point.y();
-    point_pose.position.z = 0.0;
-
-    const auto nearest_segment_index =
-      motion_utils::findNearestSegmentIndex(centerline_path.points, point_pose);
-    if (!nearest_segment_index) continue;
-
-    const auto point_msg = tier4_autoware_utils::createPoint(point.x(), point.y(), 0.0);
-    const auto lateral_offset = std::abs(motion_utils::calcLateralOffset(
-      centerline_path.points, point_msg, nearest_segment_index.value()));
-    if (std::isnan(lateral_offset)) continue;
-
-    if (lateral_offset < smallest_lateral_offset) {
-      smallest_lateral_offset = lateral_offset;
-      ego_overhang_point_as_pose.position.x = point.x();
-      ego_overhang_point_as_pose.position.y = point.y();
-      ego_overhang_point_as_pose.position.z = 0.0;
+  auto get_gap_between_ego_and_lane_border =
+    [&](
+      geometry_msgs::msg::Pose & ego_overhang_point_as_pose,
+      const bool ego_is_merging_from_the_left) -> std::optional<double> {
+    const auto local_vehicle_footprint = vehicle_info_.createFootprint();
+    const auto vehicle_footprint =
+      transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
+    double smallest_lateral_gap_between_ego_and_border = std::numeric_limits<double>::max();
+    for (const auto & point : vehicle_footprint) {
+      geometry_msgs::msg::Pose point_pose;
+      point_pose.position.x = point.x();
+      point_pose.position.y = point.y();
+      point_pose.position.z = 0.0;
 
       lanelet::Lanelet closest_lanelet;
       lanelet::utils::query::getClosestLanelet(target_lanes, point_pose, &closest_lanelet);
       lanelet::ConstLanelet closest_lanelet_const(closest_lanelet.constData());
 
-      const lanelet::ConstLineString2d current_left_bound = closest_lanelet_const.leftBound2d();
-      const lanelet::ConstLineString2d current_right_bound = closest_lanelet_const.rightBound2d();
-      left_dist_to_lane_border = calc_left_lateral_offset(current_left_bound, point_pose);
-      right_dist_to_lane_border = calc_right_lateral_offset(current_right_bound, point_pose);
+      const lanelet::ConstLineString2d current_lane_bound = (ego_is_merging_from_the_left)
+                                                              ? closest_lanelet_const.rightBound2d()
+                                                              : closest_lanelet_const.leftBound2d();
+      const double current_point_lateral_gap =
+        calc_absolute_lateral_offset(current_lane_bound, point_pose);
+      if (current_point_lateral_gap < smallest_lateral_gap_between_ego_and_border) {
+        smallest_lateral_gap_between_ego_and_border = current_point_lateral_gap;
+        ego_overhang_point_as_pose.position.x = point.x();
+        ego_overhang_point_as_pose.position.y = point.y();
+        ego_overhang_point_as_pose.position.z = 0.0;
+      }
     }
-  }
-  if (smallest_lateral_offset == std::numeric_limits<double>::max()) return false;
+    if (smallest_lateral_gap_between_ego_and_border == std::numeric_limits<double>::max()) {
+      return std::nullopt;
+    }
+    return smallest_lateral_gap_between_ego_and_border;
+  };
 
-  const double gap_between_ego_and_lane_border =
-    (std::abs(left_dist_to_lane_border) > std::abs(right_dist_to_lane_border))
-      ? std::abs(left_dist_to_lane_border)
-      : std::abs(right_dist_to_lane_border);
+  geometry_msgs::msg::Pose ego_overhang_point_as_pose;
+  const auto gap_between_ego_and_lane_border =
+    get_gap_between_ego_and_lane_border(ego_overhang_point_as_pose, ego_is_merging_from_the_left);
+  if (!gap_between_ego_and_lane_border) return false;
 
   // Get the lanelets that will be queried for target objects
   const auto relevant_lanelets = std::invoke([&]() -> std::optional<lanelet::ConstLanelets> {
@@ -395,7 +400,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
     relevant_lanelets.value(), route_handler, filtered_objects, objects_filtering_params_);
   if (target_objects_on_lane.on_current_lane.empty()) return false;
 
-  // Get the closest target obj in the relevant lanes
+  // Get the closest target obj width in the relevant lanes
   const auto closest_object_width = std::invoke([&]() -> std::optional<double> {
     double arc_length_to_closet_object = std::numeric_limits<double>::max();
     double closest_object_width = -1.0;
@@ -415,7 +420,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromCrossing() const
   if (!closest_object_width) return false;
   // Decide if the closest object does not fit in the gap left by the ego vehicle.
   return closest_object_width.value() + parameters_->extra_width_margin_for_rear_obstacle >
-         gap_between_ego_and_lane_border;
+         gap_between_ego_and_lane_border.value();
 }
 
 bool StartPlannerModule::isOverlapWithCenterLane() const
