@@ -19,8 +19,10 @@
 #include <behavior_velocity_planner_common/velocity_factor_interface.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rtc_interface/rtc_interface.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/ros/parameter.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
@@ -47,13 +49,29 @@ namespace behavior_velocity_planner
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using builtin_interfaces::msg::Time;
+using objects_of_interest_marker_interface::ColorName;
+using objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
 using rtc_interface::RTCInterface;
 using tier4_autoware_utils::DebugPublisher;
+using tier4_autoware_utils::getOrDeclareParameter;
 using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_rtc_msgs::msg::Module;
 using unique_identifier_msgs::msg::UUID;
+
+struct ObjectOfInterest
+{
+  geometry_msgs::msg::Pose pose;
+  autoware_auto_perception_msgs::msg::Shape shape;
+  ColorName color;
+  ObjectOfInterest(
+    const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape,
+    const ColorName & color_name)
+  : pose(pose), shape(shape), color(color_name)
+  {
+  }
+};
 
 class SceneModuleInterface
 {
@@ -73,18 +91,18 @@ public:
     planner_data_ = planner_data;
   }
 
-  boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> getInfrastructureCommand()
+  std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> getInfrastructureCommand()
   {
     return infrastructure_command_;
   }
 
   void setInfrastructureCommand(
-    const boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> & command)
+    const std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> & command)
   {
     infrastructure_command_ = command;
   }
 
-  boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
+  std::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
   void setActivation(const bool activated) { activated_ = activated; }
   void setRTCEnabled(const bool enable_rtc) { rtc_enabled_ = enable_rtc; }
@@ -94,6 +112,8 @@ public:
 
   void resetVelocityFactor() { velocity_factor_.reset(); }
   VelocityFactor getVelocityFactor() const { return velocity_factor_.get(); }
+  std::vector<ObjectOfInterest> getObjectsOfInterestData() const { return objects_of_interest_; }
+  void clearObjectsOfInterestData() { objects_of_interest_.clear(); }
 
 protected:
   const int64_t module_id_;
@@ -104,9 +124,10 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
-  boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
-  boost::optional<int> first_stop_path_point_index_;
+  std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
+  std::optional<int> first_stop_path_point_index_;
   VelocityFactorInterface velocity_factor_;
+  std::vector<ObjectOfInterest> objects_of_interest_;
 
   void setSafe(const bool safe)
   {
@@ -117,6 +138,13 @@ protected:
   }
   void setDistance(const double distance) { distance_ = distance; }
   void syncActivation() { setActivation(isSafe()); }
+
+  void setObjectsOfInterestData(
+    const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape,
+    const ColorName & color_name)
+  {
+    objects_of_interest_.emplace_back(pose, shape, color_name);
+  }
 
   size_t findEgoSegmentIndex(
     const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points) const;
@@ -131,7 +159,7 @@ public:
 
   virtual const char * getModuleName() = 0;
 
-  boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
+  std::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
   void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & planner_data,
@@ -170,7 +198,7 @@ protected:
   std::shared_ptr<const PlannerData> planner_data_;
   motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator_;
 
-  boost::optional<int> first_stop_path_point_index_;
+  std::optional<int> first_stop_path_point_index_;
   rclcpp::Node & node_;
   rclcpp::Clock::SharedPtr clock_;
   // Debug
@@ -200,6 +228,8 @@ protected:
   RTCInterface rtc_interface_;
   std::unordered_map<int64_t, UUID> map_uuid_;
 
+  ObjectsOfInterestMarkerInterface objects_of_interest_marker_interface_;
+
   virtual void sendRTC(const Time & stamp);
 
   virtual void setActivation();
@@ -220,7 +250,24 @@ protected:
 
   void removeUUID(const int64_t & module_id);
 
+  void publishObjectsOfInterestMarker();
+
   void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+
+  bool getEnableRTC(rclcpp::Node & node, const std::string & param_name)
+  {
+    bool enable_rtc = true;
+
+    try {
+      enable_rtc = getOrDeclareParameter<bool>(node, "enable_all_modules_auto_mode")
+                     ? false
+                     : getOrDeclareParameter<bool>(node, param_name);
+    } catch (const std::exception & e) {
+      enable_rtc = getOrDeclareParameter<bool>(node, param_name);
+    }
+
+    return enable_rtc;
+  }
 };
 
 }  // namespace behavior_velocity_planner

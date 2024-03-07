@@ -37,6 +37,11 @@ class ObstacleAvoidancePlanner : public rclcpp::Node
 public:
   explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
 
+  // NOTE: This is for the static_centerline_optimizer package which utilizes the following
+  // instance.
+  std::shared_ptr<MPTOptimizer> getMPTOptimizer() const { return mpt_optimizer_ptr_; }
+
+  // private:
 protected:  // for the static_centerline_optimizer package
   // TODO(murooka) move this node to common
   class DrivingDirectionChecker
@@ -45,7 +50,7 @@ protected:  // for the static_centerline_optimizer package
     bool isDrivingForward(const std::vector<PathPoint> & path_points)
     {
       const auto is_driving_forward = motion_utils::isDrivingForward(path_points);
-      is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+      is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
       return is_driving_forward_;
     }
 

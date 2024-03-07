@@ -230,6 +230,8 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
     }
     const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
     if (obj_v > planner_param_.stuck_vehicle_vel_thr) {
+      setObjectsOfInterestData(
+        object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::GREEN);
       continue;  // not stop vehicle
     }
     // check if the footprint is in the stuck detect area
@@ -237,6 +239,8 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, poly);
     if (is_in_stuck_area) {
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
+      setObjectsOfInterestData(
+        object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::RED);
       for (const auto & p : obj_footprint.outer()) {
         geometry_msgs::msg::Point point;
         point.x = p.x();
@@ -298,7 +302,7 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
       logger_, *clock_, 1000 /* ms */, "motion_utils::findNearestIndex fail");
     return ego_area;
   }
-  const size_t closest_idx = closest_idx_opt.get();
+  const size_t closest_idx = closest_idx_opt.value();
 
   const int num_ignore_nearest = 1;  // Do not consider nearest lane polygon
   size_t ego_area_start_idx = closest_idx + num_ignore_nearest;
@@ -320,9 +324,7 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
     }
     ++ego_area_start_idx;
   }
-  if (ego_area_start_idx > num_ignore_nearest) {
-    ego_area_start_idx--;
-  }
+
   if (!is_in_area) {
     return ego_area;
   }
@@ -334,6 +336,11 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
     const auto & p = pp.at(i).point.pose.position;
     if (!bg::within(Point2d{p.x, p.y}, lanelet::utils::to2D(no_stopping_area).basicPolygon())) {
       dist_from_area_sum += tier4_autoware_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
+
+      // do not take extra distance and exit as soon as p is outside no stopping area
+      // just a temporary fix
+      ego_area_end_idx = i - 1;
+      break;
     }
     if (dist_from_start_sum > extra_dist || dist_from_area_sum > margin) {
       break;

@@ -18,8 +18,7 @@
 #define FMT_HEADER_ONLY
 
 #include "localization_util/smart_pose_buffer.hpp"
-#include "localization_util/tf2_listener_module.hpp"
-#include "ndt_scan_matcher/map_module.hpp"
+#include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -41,6 +40,8 @@
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl/point_types.h>
 #include <tf2/transform_datatypes.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -65,11 +66,6 @@
 #include <thread>
 #include <vector>
 
-enum class ConvergedParamType {
-  TRANSFORM_PROBABILITY = 0,
-  NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
-};
-
 class NDTScanMatcher : public rclcpp::Node
 {
   using PointSource = pcl::PointXYZ;
@@ -88,6 +84,7 @@ private:
     const std_srvs::srv::SetBool::Request::SharedPtr req,
     std_srvs::srv::SetBool::Response::SharedPtr res);
 
+  void callback_timer();
   void callback_sensor_points(
     sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
   void callback_initial_pose(
@@ -124,7 +121,10 @@ private:
     const double score, const double score_threshold, const std::string & score_name);
   bool validate_converged_param(
     const double & transform_probability, const double & nearest_voxel_transformation_likelihood);
+  static int count_oscillation(const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array);
 
+  std::array<double, 36> rotate_covariance(
+    const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const;
   std::array<double, 36> estimate_covariance(
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
@@ -133,6 +133,7 @@ private:
 
   void publish_diagnostic();
 
+  rclcpp::TimerBase::SharedPtr map_update_timer_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
@@ -173,51 +174,30 @@ private:
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
 
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
+  tf2_ros::Buffer tf2_buffer_;
+  tf2_ros::TransformListener tf2_listener_;
+
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
 
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
   std::shared_ptr<std::map<std::string, std::string>> state_ptr_;
 
   Eigen::Matrix4f base_to_sensor_matrix_;
-  std::string base_frame_;
-  std::string ndt_base_frame_;
-  std::string map_frame_;
-
-  ConvergedParamType converged_param_type_;
-  double converged_param_transform_probability_;
-  double converged_param_nearest_voxel_transformation_likelihood_;
-
-  int initial_estimate_particles_num_;
-  int n_startup_trials_;
-  double lidar_topic_timeout_sec_;
-  double initial_pose_timeout_sec_;
-  double initial_pose_distance_tolerance_m_;
-  float inversion_vector_threshold_;
-  float oscillation_threshold_;
-  bool use_cov_estimation_;
-  std::vector<Eigen::Vector2d> initial_pose_offset_model_;
-  std::array<double, 36> output_pose_covariance_;
 
   std::mutex ndt_ptr_mtx_;
   std::unique_ptr<SmartPoseBuffer> initial_pose_buffer_;
 
-  // variables for regularization
-  const bool regularization_enabled_;  // whether to use longitudinal regularization
+  // Keep latest position for dynamic map loading
+  std::mutex latest_ekf_position_mtx_;
+  std::optional<geometry_msgs::msg::Point> latest_ekf_position_ = std::nullopt;
+
   std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
 
-  bool is_activated_;
-  std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
-  std::unique_ptr<MapModule> map_module_;
+  std::atomic<bool> is_activated_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
-  // cspell: ignore degrounded
-  bool estimate_scores_for_degrounded_scan_;
-  double z_margin_for_ground_removal_;
-
-  bool use_dynamic_map_loading_;
-
-  // The execution time which means probably NDT cannot matches scans properly
-  int critical_upper_bound_exe_time_ms_;
+  HyperParameters param_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

@@ -45,6 +45,7 @@ using tier4_debug_msgs::msg::Float64Stamped;
 
 struct ValidationParams
 {
+  // thresholds
   double interval_threshold;
   double relative_angle_threshold;
   double curvature_threshold;
@@ -55,6 +56,11 @@ struct ValidationParams
   double steering_rate_threshold;
   double velocity_deviation_threshold;
   double distance_deviation_threshold;
+  double longitudinal_distance_deviation_threshold;
+
+  // parameters
+  double forward_trajectory_length_acceleration;
+  double forward_trajectory_length_margin;
 };
 
 class PlanningValidator : public rclcpp::Node
@@ -64,6 +70,7 @@ public:
 
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
 
+  bool checkValidSize(const Trajectory & trajectory);
   bool checkValidFiniteValue(const Trajectory & trajectory);
   bool checkValidInterval(const Trajectory & trajectory);
   bool checkValidRelativeAngle(const Trajectory & trajectory);
@@ -75,6 +82,8 @@ public:
   bool checkValidSteeringRate(const Trajectory & trajectory);
   bool checkValidVelocityDeviation(const Trajectory & trajectory);
   bool checkValidDistanceDeviation(const Trajectory & trajectory);
+  bool checkValidLongitudinalDistanceDeviation(const Trajectory & trajectory);
+  bool checkValidForwardTrajectoryLength(const Trajectory & trajectory);
 
 private:
   void setupDiag();
@@ -116,7 +125,7 @@ private:
 
   vehicle_info_util::VehicleInfo vehicle_info_;
 
-  bool isAllValid(const PlanningValidatorStatus & status);
+  bool isAllValid(const PlanningValidatorStatus & status) const;
 
   Trajectory::ConstSharedPtr current_trajectory_;
   Trajectory::ConstSharedPtr previous_published_trajectory_;
