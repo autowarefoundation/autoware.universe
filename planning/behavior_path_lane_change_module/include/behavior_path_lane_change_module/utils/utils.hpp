@@ -23,6 +23,7 @@
 #include "rclcpp/logger.hpp"
 
 #include <route_handler/route_handler.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -31,6 +32,7 @@
 
 #include <lanelet2_core/Forward.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -185,7 +187,7 @@ std::optional<lanelet::BasicPolygon2d> createPolygon(
 
 ExtendedPredictedObject transform(
   const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters);
+  const LaneChangeParameters & lane_change_parameters, const bool check_at_prepare_phase);
 
 bool isCollidedPolygonsInLanelet(
   const std::vector<Polygon2d> & collided_polygons, const lanelet::ConstLanelets & lanes);
@@ -220,6 +222,13 @@ lanelet::ConstLanelets generateExpandedLanelets(
  * @return rclcpp::Logger The logger instance configured for the specified lane change type.
  */
 rclcpp::Logger getLogger(const std::string & type);
+
+Polygon2d getEgoCurrentFootprint(
+  const Pose & ego_pose, const vehicle_info_util::VehicleInfo & ego_info);
+
+bool isWithinIntersection(
+  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lanelet,
+  const Polygon2d & polygon);
 }  // namespace behavior_path_planner::utils::lane_change
 
 namespace behavior_path_planner::utils::lane_change::debug
