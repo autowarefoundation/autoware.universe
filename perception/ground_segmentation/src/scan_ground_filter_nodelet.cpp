@@ -19,6 +19,8 @@
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <omp.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -283,10 +285,13 @@ void ScanGroundFilterComponent::recheckGroundCluster(
 }
 void ScanGroundFilterComponent::classifyPointCloudGridScan(
   std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
-  pcl::PointIndices & out_no_ground_indices)
+  std::vector<pcl::PointIndices> & out_no_ground_indices)
 {
-  out_no_ground_indices.indices.clear();
+  out_no_ground_indices.resize(in_radial_ordered_clouds.size());
+#pragma omp parallel for
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
+    auto & radial_no_ground_indices = out_no_ground_indices[i];
+    radial_no_ground_indices.indices.clear();
     PointsCentroid ground_cluster;
     ground_cluster.initialize();
     std::vector<GridCenter> gnd_grids;
@@ -297,10 +302,9 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       continue;
     }
 
-    // check the first point in ray
-    auto * p = &in_radial_ordered_clouds[i][0];
-    PointRef * prev_p;
-    prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
+    // // check the first point in ray
+    auto p = &in_radial_ordered_clouds[i][0];
+    auto prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
 
     bool initialized_first_gnd_grid = false;
     bool prev_list_init = false;
@@ -317,7 +321,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       if (
         !initialized_first_gnd_grid && global_slope_p >= global_slope_max_angle_rad_ &&
         p->orig_point->z > non_ground_height_threshold_local) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        radial_no_ground_indices.indices.push_back(p->orig_index);
         p->point_state = PointLabel::NON_GROUND;
         prev_p = p;
         continue;
@@ -356,7 +360,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       if (p->grid_id > prev_p->grid_id && ground_cluster.getAverageRadius() > 0.0) {
         // check if the prev grid have ground point cloud
         if (use_recheck_ground_cluster_) {
-          recheckGroundCluster(ground_cluster, non_ground_height_threshold_, out_no_ground_indices);
+          recheckGroundCluster(
+            ground_cluster, non_ground_height_threshold_, radial_no_ground_indices);
         }
         curr_gnd_grid.radius = ground_cluster.getAverageRadius();
         curr_gnd_grid.avg_height = ground_cluster.getAverageHeight();
@@ -378,13 +383,13 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         points_xy_distance < split_points_distance_tolerance_ &&
         p->orig_point->z > prev_p->orig_point->z) {
         p->point_state = PointLabel::NON_GROUND;
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        radial_no_ground_indices.indices.push_back(p->orig_index);
         prev_p = p;
         continue;
       }
 
       if (global_slope_p > global_slope_max_angle_rad_) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        radial_no_ground_indices.indices.push_back(p->orig_index);
         prev_p = p;
         continue;
       }
@@ -402,7 +407,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         checkBreakGndGrid(*p, gnd_grids);
       }
       if (p->point_state == PointLabel::NON_GROUND) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        radial_no_ground_indices.indices.push_back(p->orig_index);
       } else if (p->point_state == PointLabel::GROUND) {
         ground_cluster.addPoint(p->radius, p->orig_point->z, p->orig_index);
       }
@@ -413,17 +418,20 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
 void ScanGroundFilterComponent::classifyPointCloud(
   std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
-  pcl::PointIndices & out_no_ground_indices)
+  std::vector<pcl::PointIndices> & out_no_ground_indices)
 {
-  out_no_ground_indices.indices.clear();
+  out_no_ground_indices.resize(in_radial_ordered_clouds.size());
 
   const pcl::PointXYZ init_ground_point(0, 0, 0);
   pcl::PointXYZ virtual_ground_point(0, 0, 0);
   calcVirtualGroundOrigin(virtual_ground_point);
 
-  // point classification algorithm
-  // sweep through each radial division
+// point classification algorithm
+// sweep through each radial division
+#pragma omp parallel for
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
+    auto & radial_no_ground_indices = out_no_ground_indices[i];
+    radial_no_ground_indices.indices.clear();
     float prev_gnd_radius = 0.0f;
     float prev_gnd_slope = 0.0f;
     float points_distance = 0.0f;
@@ -498,12 +506,12 @@ void ScanGroundFilterComponent::classifyPointCloud(
         non_ground_cluster.initialize();
       }
       if (p->point_state == PointLabel::NON_GROUND) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        radial_no_ground_indices.indices.push_back(p->orig_index);
       } else if (  // NOLINT
         (prev_point_label == PointLabel::NON_GROUND) &&
         (p->point_state == PointLabel::POINT_FOLLOW)) {
         p->point_state = PointLabel::NON_GROUND;
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        radial_no_ground_indices.indices.push_back(p->orig_index);
       } else if (  // NOLINT
         (prev_point_label == PointLabel::GROUND) && (p->point_state == PointLabel::POINT_FOLLOW)) {
         p->point_state = PointLabel::GROUND;
@@ -527,11 +535,14 @@ void ScanGroundFilterComponent::classifyPointCloud(
 }
 
 void ScanGroundFilterComponent::extractObjectPoints(
-  const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr, const pcl::PointIndices & in_indices,
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
+  const std::vector<pcl::PointIndices> & in_indices,
   pcl::PointCloud<pcl::PointXYZ>::Ptr out_object_cloud_ptr)
 {
-  for (const auto & i : in_indices.indices) {
-    out_object_cloud_ptr->points.emplace_back(in_cloud_ptr->points[i]);
+  for (const auto & indices : in_indices) {
+    for (const auto & i : indices.indices) {
+      out_object_cloud_ptr->points.emplace_back(in_cloud_ptr->points[i]);
+    }
   }
 }
 
@@ -546,7 +557,7 @@ void ScanGroundFilterComponent::filter(
 
   std::vector<PointCloudRefVector> radial_ordered_points;
 
-  pcl::PointIndices no_ground_indices;
+  std::vector<pcl::PointIndices> no_ground_indices;
   pcl::PointCloud<pcl::PointXYZ>::Ptr no_ground_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   no_ground_cloud_ptr->points.reserve(current_sensor_cloud_ptr->points.size());
 
