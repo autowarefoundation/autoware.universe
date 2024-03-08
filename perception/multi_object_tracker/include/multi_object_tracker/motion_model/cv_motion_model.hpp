@@ -20,7 +20,6 @@
 #define MULTI_OBJECT_TRACKER__MOTION_MODEL__CV_MOTION_MODEL_HPP_
 
 #include "multi_object_tracker/motion_model/motion_model_base.hpp"
-#include "multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
 #include <kalman_filter/kalman_filter.hpp>
@@ -31,6 +30,7 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
+#include <geometry_msgs/msg/twist.hpp>
 
 class CVMotionModel : public MotionModel
 {

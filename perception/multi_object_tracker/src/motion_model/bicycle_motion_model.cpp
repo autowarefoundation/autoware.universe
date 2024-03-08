@@ -357,9 +357,10 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
   if (vel <= 0.01) {
     q_stddev_yaw_rate = motion_params_.q_stddev_yaw_rate_min;
   } else {
-    // uncertainty of the yaw rate is limited by
-    // centripetal acceleration a_lat : d(yaw)/dt = w = a_lat/v
-    // or maximum slip angle slip_max : w = v*sin(slip_max)/l_r
+    /* uncertainty of the yaw rate is limited by the following:
+     *  - centripetal acceleration a_lat : d(yaw)/dt = w = a_lat/v
+     *  - or maximum slip angle slip_max : w = v*sin(slip_max)/l_r
+     */
     q_stddev_yaw_rate = std::min(
       motion_params_.q_stddev_acc_lat / vel,
       vel * std::sin(motion_params_.q_max_slip_angle) / lr_);  // [rad/s]
@@ -370,11 +371,13 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
   if (vel <= 0.01) {
     q_cov_slip_rate = motion_params_.q_cov_slip_rate_min;
   } else {
-    // The slip angle rate uncertainty is modeled as follows:
-    // d(slip)/dt ~ - sin(slip)/v * d(v)/dt + l_r/v * d(w)/dt
-    // where sin(slip) = w * l_r / v
-    // d(w)/dt is assumed to be proportional to w (more uncertain when slip is large)
-    // d(v)/dt and d(w)/t are considered to be uncorrelated
+    /* The slip angle rate uncertainty is modeled as follows:
+     * d(slip)/dt ~ - sin(slip)/v * d(v)/dt + l_r/v * d(w)/dt
+     * where sin(slip) = w * l_r / v
+     *
+     * d(w)/dt is assumed to be proportional to w (more uncertain when slip is large)
+     * d(v)/dt and d(w)/t are considered to be uncorrelated
+     */
     q_cov_slip_rate =
       std::pow(motion_params_.q_stddev_acc_lat * sin_slip / vel, 2) + std::pow(sin_slip * 1.5, 2);
     q_cov_slip_rate = std::min(q_cov_slip_rate, motion_params_.q_cov_slip_rate_max);

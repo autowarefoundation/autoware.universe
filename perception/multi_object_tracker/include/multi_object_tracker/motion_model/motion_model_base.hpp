@@ -19,8 +19,6 @@
 #ifndef MULTI_OBJECT_TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
 #define MULTI_OBJECT_TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
 
-#include "multi_object_tracker/utils/utils.hpp"
-
 #include <Eigen/Core>
 #include <kalman_filter/kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -30,6 +28,7 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
+#include <geometry_msgs/msg/twist.hpp>
 
 class MotionModel
 {

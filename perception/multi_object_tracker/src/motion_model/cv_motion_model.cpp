@@ -253,10 +253,6 @@ bool CVMotionModel::getPredictedState(
 
   // get yaw from pose
   const double yaw = tf2::getYaw(pose.orientation);
-  // const double yaw = std::atan2(
-  //   2.0 * (pose.orientation.w * pose.orientation.z + pose.orientation.x * pose.orientation.y),
-  //   1.0 - 2.0 * (pose.orientation.y * pose.orientation.y + pose.orientation.z *
-  //   pose.orientation.z));
 
   // set position
   pose.position.x = X(IDX::X);
