@@ -25,7 +25,7 @@ using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 void box3DToDetectedObject(
   const Box3D & box3d, const std::vector<std::string> & class_names, const bool has_twist,
-  autoware_auto_perception_msgs::msg::DetectedObject & obj)
+  const bool has_variance, autoware_auto_perception_msgs::msg::DetectedObject & obj)
 {
   // TODO(yukke42): the value of classification confidence of DNN, not probability.
   obj.existence_probability = box3d.score;
@@ -55,10 +55,13 @@ void box3DToDetectedObject(
     tier4_autoware_utils::createPoint(box3d.x, box3d.y, box3d.z);
   obj.kinematics.pose_with_covariance.pose.orientation =
     tier4_autoware_utils::createQuaternionFromYaw(yaw);
-  obj.kinematics.pose_with_covariance.covariance = convertPoseCovarianceMatrix(box3d);
   obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
   obj.shape.dimensions =
     tier4_autoware_utils::createTranslation(box3d.length, box3d.width, box3d.height);
+  if (has_variance) {
+    obj.kinematics.has_position_covariance = has_variance;
+    obj.kinematics.pose_with_covariance.covariance = convertPoseCovarianceMatrix(box3d);
+  }
 
   // twist
   if (has_twist) {
@@ -69,7 +72,10 @@ void box3DToDetectedObject(
     twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
     obj.kinematics.twist_with_covariance.twist = twist;
     obj.kinematics.has_twist = has_twist;
-    obj.kinematics.twist_with_covariance.covariance = convertTwistCovarianceMatrix(box3d);
+    if (has_variance) {
+      obj.kinematics.has_twist_covariance = has_variance;
+      obj.kinematics.twist_with_covariance.covariance = convertTwistCovarianceMatrix(box3d);
+    }
   }
 }
 
