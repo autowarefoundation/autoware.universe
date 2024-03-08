@@ -75,6 +75,8 @@ None
 | --------------------------- | ------ | ------------------------------------------------------- |
 | `only_behind_solutions`     | bool   | whether restricting the solutions to be behind the goal |
 | `use_back`                  | bool   | whether using backward trajectory                       |
+| `use_curve_weight`          | bool   | whether to penalise turning during search               |
+| `use_complete_astar`        | bool   | whether to re-explore already open nodes not            |
 | `distance_heuristic_weight` | double | heuristic weight for estimating node's cost             |
 
 #### RRT\* search parameters

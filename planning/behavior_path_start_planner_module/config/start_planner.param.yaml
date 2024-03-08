@@ -71,6 +71,8 @@
         astar:
           only_behind_solutions: false
           use_back: false
+          use_curve_weight: true
+          use_complete_astar: true
           distance_heuristic_weight: 1.0
         # -- RRT* search Configurations --
         rrtstar:
