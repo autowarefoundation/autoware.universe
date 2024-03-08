@@ -218,7 +218,7 @@ void MrmHandler::operateMrm()
     if (requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
       mrm_state_.behavior = current_mrm_behavior;
     } else {
-      handleFailureRequest();
+      handleFailedRequest();
     }
     return;
   }
@@ -228,11 +228,11 @@ void MrmHandler::operateMrm()
       return;
     }
     if (!requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
-      handleFailureRequest();
+      handleFailedRequest();
     } else if (requestMrmBehavior(current_mrm_behavior, RequestType::CALL)) {
       mrm_state_.behavior = current_mrm_behavior;
     } else {
-      handleFailureRequest();
+      handleFailedRequest();
     }
     return;
   }
