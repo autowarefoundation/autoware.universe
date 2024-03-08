@@ -1,8 +1,12 @@
 <launch>
+  <arg name="enable_all_modules_auto_mode"/>
+  <arg name="enable_differential_map_loading"/>
+
   <arg name="input_route_topic_name" default="/planning/mission_planning/route"/>
   <arg name="input_traffic_light_topic_name" default="/perception/traffic_light_recognition/traffic_signals"/>
   <arg name="input_virtual_traffic_light_topic_name" default="/awapi/tmp/virtual_traffic_light_states"/>
-  <arg name="input_vector_map_topic_name" default="/map/vector_map"/>
+  <arg name="input_vector_map_topic_name" default="/map/vector_map" unless="$(var enable_differential_map_loading)"/>
+  <arg name="input_vector_map_topic_name" default="/map/dynamic_vector_map" if="$(var enable_differential_map_loading)"/>
   <arg name="input_pointcloud_map_topic_name" default="/map/pointcloud_map"/>
   <arg name="enable_all_modules_auto_mode"/>
   <arg name="is_simulation"/>
@@ -192,6 +196,7 @@
       <param from="$(var nearest_search_param_path)"/>
       <param name="launch_modules" value="$(var behavior_path_planner_launch_modules)"/>
       <param name="enable_all_modules_auto_mode" value="$(var enable_all_modules_auto_mode)"/>
+      <param name="enable_differential_map_loading" value="$(var enable_differential_map_loading)"/>
       <param name="is_simulation" value="$(var is_simulation)"/>
       <param from="$(var behavior_path_planner_side_shift_module_param_path)"/>
       <param from="$(var behavior_path_planner_static_obstacle_avoidance_module_param_path)"/>
