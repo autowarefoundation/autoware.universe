@@ -55,7 +55,6 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   const std::string head_onnx_path = this->declare_parameter<std::string>("head_onnx_path");
   const std::string head_engine_path = this->declare_parameter<std::string>("head_engine_path");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
-  has_variance_ = this->declare_parameter("has_variance", false);
   has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
@@ -103,7 +102,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   CenterPointConfig config(
     class_names_.size(), point_feature_size, max_voxel_size, point_cloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
-    yaw_norm_thresholds, has_variance_);
+    yaw_norm_thresholds);
   detector_ptr_ =
     std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
 
@@ -127,7 +126,6 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
     RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
     rclcpp::shutdown();
   }
-  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void LidarCenterPointNode::pointCloudCallback(
@@ -144,17 +142,28 @@ void LidarCenterPointNode::pointCloudCallback(
   }
 
   std::vector<Box3D> det_boxes3d;
-  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d);
+  std::vector<Variance> det_variance;
+  bool is_success =
+    detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d, det_variance);
   if (!is_success) {
     return;
   }
 
+  std::cout << "-------------------------det_variance:" << det_variance.size() << std::endl;
+  // << det_variance[0] << std::endl;
+
   std::vector<autoware_auto_perception_msgs::msg::DetectedObject> raw_objects;
   raw_objects.reserve(det_boxes3d.size());
-  for (const auto & box3d : det_boxes3d) {
+  // for (const auto & box3d : det_boxes3d) {
+  //   autoware_auto_perception_msgs::msg::DetectedObject obj;
+  //   box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
+  //   raw_objects.emplace_back(obj);
+  // }
+  for (size_t i = 0; i < det_boxes3d.size(); ++i) {
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    box3DToDetectedObject(box3d, class_names_, has_twist_, has_variance_, obj);
+    box3DToDetectedObject(det_boxes3d[i], class_names_, has_twist_, obj);
     raw_objects.emplace_back(obj);
+    std::cout << i << " /// x_variance:" << det_variance[i].x_variance << std::endl;
   }
 
   autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
@@ -165,7 +174,6 @@ void LidarCenterPointNode::pointCloudCallback(
 
   if (objects_sub_count > 0) {
     objects_pub_->publish(output_msg);
-    published_time_publisher_->publish_if_subscribed(objects_pub_, output_msg.header.stamp);
   }
 
   // add processing time for debug
