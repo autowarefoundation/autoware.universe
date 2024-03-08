@@ -205,6 +205,7 @@ def launch_setup(context, *args, **kwargs):
             common_param,
             motion_velocity_smoother_param,
             behavior_velocity_smoother_type_param,
+            {"is_simulation": LaunchConfiguration("is_simulation")},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -300,6 +301,9 @@ def generate_launch_description():
     # for points filter of run out module
     add_launch_arg("use_pointcloud_container", "true")
     add_launch_arg("container_name", "pointcloud_container")
+
+    # whether this is a simulation or not
+    add_launch_arg("is_simulation", "false", "whether this is a simulation or not")
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
