@@ -256,7 +256,7 @@ void MultiObjectTracker::onMeasurement(
     return;
   }
   /* tracker prediction */
-  rclcpp::Time measurement_time = input_objects_msg->header.stamp;
+  const rclcpp::Time measurement_time = input_objects_msg->header.stamp;
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     (*itr)->predict(measurement_time);
   }
@@ -330,7 +330,7 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
 
 void MultiObjectTracker::onTimer()
 {
-  rclcpp::Time current_time = this->now();
+  const rclcpp::Time current_time = this->now();
   const auto self_transform =
     getTransformAnonymous(tf_buffer_, world_frame_id_, "base_link", current_time);
   if (!self_transform) {

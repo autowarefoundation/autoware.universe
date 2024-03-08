@@ -45,7 +45,10 @@ public:
   virtual ~MotionModel() = default;
 
   bool checkInitialized() const { return is_initialized_; }
-  double getDeltaTime(rclcpp::Time time) const { return (time - last_update_time_).seconds(); }
+  double getDeltaTime(const rclcpp::Time & time) const
+  {
+    return (time - last_update_time_).seconds();
+  }
   void setMaxDeltaTime(const double dt_max) { dt_max_ = dt_max; }
   double getStateElement(unsigned int idx) const { return ekf_.getXelement(idx); }
   void getStateVector(Eigen::MatrixXd & X) const { ekf_.getX(X); }
