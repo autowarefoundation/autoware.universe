@@ -32,6 +32,8 @@
 #include <lanelet2_routing/Route.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
+#include <autoware_adapi_v1_msgs/msg/route_segment.hpp>
+
 
 #include <vector>
 
@@ -40,7 +42,7 @@ namespace mission_planner
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 class ReroutingStaticObstacle : public rclcpp::Node
 {
-  using ChangeRoute = planning_interface::ChangeRoute;
+  using SetLaneletRoute = planning_interface::SetLaneletRoute;
 
 public:
   explicit ReroutingStaticObstacle(const rclcpp::NodeOptions & node_options);
@@ -50,7 +52,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr sub_trigger_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<HADMapBin>::SharedPtr map_subscriber_;
-  component_interface_utils::Client<ChangeRoute>::SharedPtr cli_change_route_;
+  component_interface_utils::Client<SetLaneletRoute>::SharedPtr cli_set_lanelet_route_;
 
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
@@ -76,11 +78,11 @@ private:
     const lanelet::ConstLanelet & selected_point_lanelet,
     lanelet::routing::LaneletPath & alternative_route_lanelets) const;
 
-  void change_route(const lanelet::routing::LaneletPath & lanelet_path);
+  void set_lanelet_route(const lanelet::routing::LaneletPath & lanelet_path);
 
   void convert_lanelet_path_to_route_segments(
     const lanelet::routing::LaneletPath & lanelet_path,
-    std::vector<autoware_adapi_v1_msgs::msg::RouteSegment> & route_segments) const;
+    std::vector<autoware_planning_msgs::msg::LaneletSegment> & route_segments) const;
 };
 
 }  // namespace mission_planner

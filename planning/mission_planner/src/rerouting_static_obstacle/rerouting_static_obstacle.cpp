@@ -44,7 +44,7 @@ ReroutingStaticObstacle::ReroutingStaticObstacle(const rclcpp::NodeOptions & nod
     std::bind(&ReroutingStaticObstacle::on_trigger, this, _1));
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
-  adaptor.init_cli(cli_change_route_);
+  adaptor.init_cli(cli_set_lanelet_route_);
 }
 
 void ReroutingStaticObstacle::on_odom(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -95,7 +95,7 @@ void ReroutingStaticObstacle::on_trigger(const geometry_msgs::msg::PointStamped:
       search_alternative_route(selected_point_lanelet, alternative_route_lanelets);
 
     if (alternative_route_found) {
-      change_route(alternative_route_lanelets);
+      set_lanelet_route(alternative_route_lanelets);
     }
   }
 }
@@ -175,24 +175,26 @@ bool ReroutingStaticObstacle::search_alternative_route(
   return alternative_route_found;
 }
 
-void ReroutingStaticObstacle::change_route(const lanelet::routing::LaneletPath & lanelet_path)
+void ReroutingStaticObstacle::set_lanelet_route(const lanelet::routing::LaneletPath & lanelet_path)
 {
-  const auto req = std::make_shared<ChangeRoute::Service::Request>();
+  const auto req = std::make_shared<SetLaneletRoute::Service::Request>();
   req->header.frame_id = "map";
   req->header.stamp = this->get_clock()->now();
-  req->goal = goal_pose_;
+  req->goal_pose = goal_pose_;
   convert_lanelet_path_to_route_segments(lanelet_path, req->segments);
-  cli_change_route_->async_send_request(req);
+  cli_set_lanelet_route_->async_send_request(req);
 }
 
 void ReroutingStaticObstacle::convert_lanelet_path_to_route_segments(
   const lanelet::routing::LaneletPath & lanelet_path,
-  std::vector<autoware_adapi_v1_msgs::msg::RouteSegment> & route_segments) const
+  std::vector<autoware_planning_msgs::msg::LaneletSegment> & route_segments) const
 {
   for (const auto & ll : lanelet_path) {
-    autoware_adapi_v1_msgs::msg::RouteSegment route_segment;
-    route_segment.preferred.id = ll.id();
-    route_segment.preferred.type = "lane";
+    autoware_planning_msgs::msg::LaneletSegment route_segment;
+    autoware_planning_msgs::msg::LaneletPrimitive lanelet_primitive;
+    lanelet_primitive.id = ll.id();
+    lanelet_primitive.primitive_type = "lane";
+    route_segment.primitives.push_back(lanelet_primitive);
     route_segments.push_back(route_segment);
   }
 }
