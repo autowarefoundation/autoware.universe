@@ -118,23 +118,23 @@ AstarSearch::AstarSearch(
   goal_node_(nullptr),
   use_reeds_shepp_(true)
 {
-    transition_table_ = createTransitionTable(
+  transition_table_ = createTransitionTable(
     planner_common_param_.minimum_turning_radius, planner_common_param_.maximum_turning_radius,
     planner_common_param_.turning_radius_size, planner_common_param_.theta_size,
     astar_param_.use_back);
-  
+
   y_scale_ = planner_common_param.theta_size;
 }
 
 void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 {
-    AbstractPlanningAlgorithm::setMap(costmap);
+  AbstractPlanningAlgorithm::setMap(costmap);
 
   clearNodes();
 
   x_scale_ = costmap_.info.height;
   graph_.reserve(100000);
-  }
+}
 
 bool AstarSearch::makePlan(
   const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose)
@@ -218,7 +218,7 @@ double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose) const
 bool AstarSearch::search()
 {
   const rclcpp::Time begin = rclcpp::Clock(RCL_ROS_TIME).now();
-  
+
   // Start A* search
   while (!openlist_.empty()) {
     // Check time and terminate if the search reaches the time limit
@@ -233,7 +233,7 @@ bool AstarSearch::search()
     openlist_.pop();
 
     // Skip duplicates inserted in place of a node update
-    if (current_node->status == NodeStatus::Closed){ 
+    if (current_node->status == NodeStatus::Closed) {
       continue;
     }
 
@@ -252,21 +252,18 @@ bool AstarSearch::search()
     for (const auto & transition : transition_table_[index_theta]) {
       const bool is_turning_point = transition.is_back != current_node->is_back;
       double move_cost{};
-      if(astar_param_.use_curve_weight){
-      // Cost for turning
-        const double move_cost_is_turn = transition.is_curve
-                                 ? planner_common_param_.curve_weight * transition.distance
-                                 : transition.distance;
-      // Cost for reversing
-        move_cost = is_turning_point
-                                 ? planner_common_param_.reverse_weight * move_cost_is_turn
-                                 : move_cost_is_turn;
-      }
-      else {
-      // Only cost for reversing
-        move_cost = is_turning_point
-                                 ? planner_common_param_.reverse_weight * transition.distance
-                                 : transition.distance;
+      if (astar_param_.use_curve_weight) {
+        // Cost for turning
+        const double move_cost_is_turn =
+          transition.is_curve ? planner_common_param_.curve_weight * transition.distance
+                              : transition.distance;
+        // Cost for reversing
+        move_cost = is_turning_point ? planner_common_param_.reverse_weight * move_cost_is_turn
+                                     : move_cost_is_turn;
+      } else {
+        // Only cost for reversing
+        move_cost = is_turning_point ? planner_common_param_.reverse_weight * transition.distance
+                                     : transition.distance;
       }
 
       // Calculate index of the next state
@@ -275,7 +272,7 @@ bool AstarSearch::search()
       next_pose.position.y = current_node->y + transition.shift_y;
       setYaw(&next_pose.orientation, current_node->theta + transition.shift_theta);
       const auto next_index = pose2index(costmap_, next_pose, planner_common_param_.theta_size);
-      
+
       // Skip next state if collision
       if (detectCollision(next_index)) {
         continue;
@@ -283,10 +280,11 @@ bool AstarSearch::search()
 
       // Compare cost
       AstarNode * next_node = getNodeRef(next_index);
-      if (astar_param_.use_complete_astar ? next_node->status != NodeStatus::Closed:
-                                            next_node->status == NodeStatus::None) {
+      if (
+        astar_param_.use_complete_astar ? next_node->status != NodeStatus::Closed
+                                        : next_node->status == NodeStatus::None) {
         const double net_move_cost = current_node->gc + move_cost;
-        if (next_node->status == NodeStatus::None || net_move_cost < next_node->gc){
+        if (next_node->status == NodeStatus::None || net_move_cost < next_node->gc) {
           next_node->x = next_pose.position.x;
           next_node->y = next_pose.position.y;
           next_node->theta = tf2::getYaw(next_pose.orientation);
@@ -295,7 +293,8 @@ bool AstarSearch::search()
           next_node->is_back = transition.is_back;
           next_node->parent = current_node;
           next_node->status = NodeStatus::Open;
-          openlist_.push(next_node); // will push for a new node as well as to update a node(complete astar).
+          openlist_.push(
+            next_node);  // will push for a new node as well as to update a node(complete astar).
           continue;
         }
       }
@@ -318,7 +317,7 @@ void AstarSearch::setPath(const AstarNode & goal_node)
   // From the goal node to the start node
   const AstarNode * node = &goal_node;
 
-    while (node != nullptr) {
+  while (node != nullptr) {
     geometry_msgs::msg::PoseStamped pose;
     pose.header = header;
     pose.pose = local2global(costmap_, node2pose(*node));

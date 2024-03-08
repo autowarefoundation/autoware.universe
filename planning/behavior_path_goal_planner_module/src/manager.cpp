@@ -244,7 +244,8 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
       node->declare_parameter<bool>(ns + "only_behind_solutions");
     p.astar_parameters.use_back = node->declare_parameter<bool>(ns + "use_back");
     p.astar_parameters.use_curve_weight = node->declare_parameter<bool>(ns + "use_curve_weight");
-    p.astar_parameters.use_complete_astar = node->declare_parameter<bool>(ns + "use_complete_astar");
+    p.astar_parameters.use_complete_astar =
+      node->declare_parameter<bool>(ns + "use_complete_astar");
     p.astar_parameters.distance_heuristic_weight =
       node->declare_parameter<double>(ns + "distance_heuristic_weight");
   }
