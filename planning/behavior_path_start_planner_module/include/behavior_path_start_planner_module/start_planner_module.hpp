@@ -70,8 +70,9 @@ struct PullOutStatus
   bool prev_is_safe_dynamic_objects{false};
   std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
   std::optional<Pose> stop_pose{std::nullopt};
-  //! record the first time when the state changed from !isActivated() to isActivated()
-  std::optional<rclcpp::Time> first_approved_time{std::nullopt};
+  //! record the first time when ego started forward-driving (maybe after backward driving
+  //! completion) in AUTONOMOUS operation mode
+  std::optional<rclcpp::Time> first_engaged_and_driving_forward_time{std::nullopt};
 
   PullOutStatus() {}
 };
@@ -178,6 +179,21 @@ private:
 
   bool requiresDynamicObjectsCollisionDetection() const;
 
+  uint16_t getSteeringFactorDirection(
+    const behavior_path_planner::BehaviorModuleOutput & output) const
+  {
+    switch (output.turn_signal_info.turn_signal.command) {
+      case TurnIndicatorsCommand::ENABLE_LEFT:
+        return SteeringFactor::LEFT;
+
+      case TurnIndicatorsCommand::ENABLE_RIGHT:
+        return SteeringFactor::RIGHT;
+
+      default:
+        return SteeringFactor::STRAIGHT;
+    }
+  };
+
   /**
    * @brief Check if there are no moving objects around within a certain radius.
    *
@@ -263,7 +279,7 @@ private:
     const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_pose,
     const double velocity_threshold, const double object_check_backward_distance,
     const double object_check_forward_distance) const;
-  bool needToPrepareBlinkerBeforeStart() const;
+  bool needToPrepareBlinkerBeforeStartDrivingForward() const;
   bool hasFinishedPullOut() const;
   bool hasFinishedBackwardDriving() const;
   bool hasCollisionWithDynamicObjects() const;
@@ -275,7 +291,6 @@ private:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
-  void updateDepartureCheckLanes();
   lanelet::ConstLanelets createDepartureCheckLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.
