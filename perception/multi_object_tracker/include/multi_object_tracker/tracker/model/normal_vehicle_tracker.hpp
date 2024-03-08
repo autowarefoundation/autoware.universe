@@ -19,8 +19,8 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
 
-#include "multi_object_tracker/motion_model/bicycle_motion_model.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
+#include "multi_object_tracker/tracker/motion_model/bicycle_motion_model.hpp"
 
 #include <kalman_filter/kalman_filter.hpp>
 

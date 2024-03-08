@@ -16,8 +16,8 @@
 // Author: v1.0 Taekjin Lee
 //
 
-#ifndef MULTI_OBJECT_TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
-#define MULTI_OBJECT_TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
+#ifndef MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
+#define MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
 
 #include <Eigen/Core>
 #include <kalman_filter/kalman_filter.hpp>
@@ -61,4 +61,4 @@ public:
     geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const = 0;
 };
 
-#endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
+#endif  // MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_

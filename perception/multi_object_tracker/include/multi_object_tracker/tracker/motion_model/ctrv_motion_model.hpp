@@ -16,10 +16,10 @@
 // Author: v1.0 Taekjin Lee
 //
 
-#ifndef MULTI_OBJECT_TRACKER__MOTION_MODEL__CV_MOTION_MODEL_HPP_
-#define MULTI_OBJECT_TRACKER__MOTION_MODEL__CV_MOTION_MODEL_HPP_
+#ifndef MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__CTRV_MOTION_MODEL_HPP_
+#define MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__CTRV_MOTION_MODEL_HPP_
 
-#include "multi_object_tracker/motion_model/motion_model_base.hpp"
+#include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 
 #include <Eigen/Core>
 #include <kalman_filter/kalman_filter.hpp>
@@ -32,7 +32,7 @@
 #endif
 #include <geometry_msgs/msg/twist.hpp>
 
-class CVMotionModel : public MotionModel
+class CTRVMotionModel : public MotionModel
 {
 private:
   // attributes
@@ -43,36 +43,41 @@ private:
   {
     double q_cov_x;
     double q_cov_y;
-    double q_cov_vx;
-    double q_cov_vy;
-    double max_vx;
-    double max_vy;
+    double q_cov_yaw;
+    double q_cov_vel;
+    double q_cov_wz;
+    double max_vel;
+    double max_wz;
   } motion_params_;
 
 public:
-  CVMotionModel();
+  CTRVMotionModel();
 
-  enum IDX { X = 0, Y = 1, VX = 2, VY = 3 };
-  const char DIM = 4;
+  enum IDX { X = 0, Y = 1, YAW = 2, VEL = 3, WZ = 4 };
+  const char DIM = 5;
 
   bool initialize(
-    const rclcpp::Time & time, const double & x, const double & y,
-    const std::array<double, 36> & pose_cov, const double & vx, const double & vy,
-    const std::array<double, 36> & twist_cov);
+    const rclcpp::Time & time, const double & x, const double & y, const double & yaw,
+    const std::array<double, 36> & pose_cov, const double & vel, const double & vel_cov,
+    const double & wz, const double & wz_cov);
 
   void setDefaultParams();
 
   void setMotionParams(
-    const double & q_stddev_x, const double & q_stddev_y, const double & q_stddev_vx,
-    const double & q_stddev_vy);
+    const double & q_stddev_x, const double & q_stddev_y, const double & q_stddev_yaw,
+    const double & q_stddev_vx, const double & q_stddev_wz);
 
-  void setMotionLimits(const double & max_vx, const double & max_vy);
+  void setMotionLimits(const double & max_vel, const double & max_wz);
 
   bool updateStatePose(const double & x, const double & y, const std::array<double, 36> & pose_cov);
 
-  bool updateStatePoseVel(
-    const double & x, const double & y, const std::array<double, 36> & pose_cov, const double & vx,
-    const double & vy, const std::array<double, 36> & twist_cov);
+  bool updateStatePoseHead(
+    const double & x, const double & y, const double & yaw,
+    const std::array<double, 36> & pose_cov);
+
+  bool updateStatePoseHeadVel(
+    const double & x, const double & y, const double & yaw, const std::array<double, 36> & pose_cov,
+    const double & vel, const std::array<double, 36> & twist_cov);
 
   bool adjustPosition(const double & x, const double & y);
 
@@ -85,4 +90,4 @@ public:
     geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const override;
 };
 
-#endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__CV_MOTION_MODEL_HPP_
+#endif  // MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__CTRV_MOTION_MODEL_HPP_

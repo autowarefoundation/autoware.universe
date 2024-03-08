@@ -16,7 +16,7 @@
 // Author: v1.0 Taekjin Lee
 //
 
-#include "multi_object_tracker/motion_model/motion_model_base.hpp"
+#include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 
 MotionModel::MotionModel() : last_update_time_(rclcpp::Time(0, 0))
 {

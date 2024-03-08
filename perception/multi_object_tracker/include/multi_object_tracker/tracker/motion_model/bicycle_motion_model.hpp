@@ -16,10 +16,10 @@
 // Author: v1.0 Taekjin Lee
 //
 
-#ifndef MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
-#define MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
+#ifndef MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
+#define MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
 
-#include "multi_object_tracker/motion_model/motion_model_base.hpp"
+#include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 
 #include <Eigen/Core>
 #include <kalman_filter/kalman_filter.hpp>
@@ -105,4 +105,4 @@ public:
     geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const override;
 };
 
-#endif  // MULTI_OBJECT_TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
+#endif  // MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_

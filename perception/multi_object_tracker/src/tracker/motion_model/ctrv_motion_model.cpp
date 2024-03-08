@@ -16,9 +16,9 @@
 // Author: v1.0 Taekjin Lee
 //
 
-#include "multi_object_tracker/motion_model/ctrv_motion_model.hpp"
+#include "multi_object_tracker/tracker/motion_model/ctrv_motion_model.hpp"
 
-#include "multi_object_tracker/motion_model/motion_model_base.hpp"
+#include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
 
 #include <tier4_autoware_utils/math/normalization.hpp>
