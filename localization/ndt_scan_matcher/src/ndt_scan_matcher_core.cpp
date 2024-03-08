@@ -355,9 +355,9 @@ void NDTScanMatcher::callback_sensor_points(
   }
   if (max_distance < param_.sensor_points.required_distance) {
     RCLCPP_WARN_STREAM(
-      this->get_logger(),
-      "Max distance of sensor points = " << std::fixed << std::setprecision(3) << max_distance
-                                         << " < " << param_.sensor_points.required_distance);
+      this->get_logger(), "Max distance of sensor points = "
+                            << std::fixed << std::setprecision(3) << max_distance << " [m] < "
+                            << param_.sensor_points.required_distance << " [m]");
     return;
   }
 
