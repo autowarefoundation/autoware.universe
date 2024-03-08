@@ -92,6 +92,17 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
       seg_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, prop);
     traj_p.acceleration_mps2 =
       interpolation::lerp(seg_pt.acceleration_mps2, next_pt.acceleration_mps2, prop);
+    traj_p.heading_rate_rps =
+      interpolation::lerp(seg_pt.heading_rate_rps, next_pt.heading_rate_rps, prop);
+    traj_p.lateral_velocity_mps =
+      interpolation::lerp(seg_pt.lateral_velocity_mps, next_pt.lateral_velocity_mps, prop);
+    traj_p.front_wheel_angle_rad =
+      interpolation::lerp(seg_pt.front_wheel_angle_rad, next_pt.front_wheel_angle_rad, prop);
+    traj_p.rear_wheel_angle_rad =
+      interpolation::lerp(seg_pt.rear_wheel_angle_rad, next_pt.rear_wheel_angle_rad, prop);
+    traj_p.time_from_start =
+      rclcpp::Duration(seg_pt.time_from_start) +
+      (rclcpp::Duration(next_pt.time_from_start) - rclcpp::Duration(seg_pt.time_from_start)) * prop;
   }
 
   return traj_p;
