@@ -10,7 +10,7 @@
   <!-- Auto mode setting-->
   <arg name="enable_all_modules_auto_mode"/>
   <!-- Differential lanelet map loading setting -->
-  <arg name="enable_differential_map_loading" default="true"/>
+  <arg name="enable_differential_map_loading" default="false"/>
   <arg name="is_simulation"/>
 
   <group>
