@@ -111,7 +111,7 @@ __global__ void generateBoxes3D_kernel(
   if (has_variance) {
     const float offset_x_variance = out_offset[down_grid_size * 2 + idx];
     const float offset_y_variance = out_offset[down_grid_size * 3 + idx];
-    const float z_variance = out_z[down_grid_size * 1  + idx];
+    const float z_variance = out_z[down_grid_size * 1 + idx];
     const float w_variance = out_dim[down_grid_size * 3 + idx];
     const float l_variance = out_dim[down_grid_size * 4 + idx];
     const float h_variance = out_dim[down_grid_size * 5 + idx];
@@ -126,8 +126,9 @@ __global__ void generateBoxes3D_kernel(
     det_boxes3d[idx].length_variance = expf(l_variance);
     det_boxes3d[idx].width_variance = expf(w_variance);
     det_boxes3d[idx].height_variance = expf(h_variance);
-    det_boxes3d[idx].yaw_variance = (powf(yaw_cos,2) * expf(yaw_sin_log_variance) + powf(yaw_sin,2) * expf(yaw_cos_log_variance)) /
-                                    (powf((powf(yaw_sin,2) + powf(yaw_cos,2)),2));
+    det_boxes3d[idx].yaw_variance = (powf(yaw_cos, 2) * expf(yaw_sin_log_variance) +
+                                     powf(yaw_sin, 2) * expf(yaw_cos_log_variance)) /
+                                    (powf((powf(yaw_sin, 2) + powf(yaw_cos, 2)), 2));
     det_boxes3d[idx].vel_x_variance = expf(vel_x_variance);
     det_boxes3d[idx].vel_y_variance = expf(vel_y_variance);
   }
@@ -154,8 +155,8 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   generateBoxes3D_kernel<<<blocks, threads, 0, stream>>>(
     out_heatmap, out_offset, out_z, out_dim, out_rot, out_vel, config_.voxel_size_x_,
     config_.voxel_size_y_, config_.range_min_x_, config_.range_min_y_, config_.down_grid_size_x_,
-    config_.down_grid_size_y_, config_.downsample_factor_, config_.class_size_, config_.has_variance_,
-    thrust::raw_pointer_cast(yaw_norm_thresholds_d_.data()),
+    config_.down_grid_size_y_, config_.downsample_factor_, config_.class_size_,
+    config_.has_variance_, thrust::raw_pointer_cast(yaw_norm_thresholds_d_.data()),
     thrust::raw_pointer_cast(boxes3d_d_.data()));
 
   // suppress by score
