@@ -61,6 +61,18 @@ BicycleTracker::BicycleTracker(
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
 
+  // OBJECT SHAPE MODEL
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    bounding_box_ = {
+      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
+  } else {
+    bounding_box_ = {1.0, 0.5, 1.7};
+  }
+  // set minimum size
+  bounding_box_.length = std::max(bounding_box_.length, 0.5);
+  bounding_box_.width = std::max(bounding_box_.width, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.8);
+
   // Set motion model parameters
   {
     constexpr double q_stddev_acc_long =
@@ -211,6 +223,11 @@ bool BicycleTracker::measureWithPose(
 bool BicycleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
+  if (!object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    // do not update shape if the input is not a bounding box
+    return true;
+  }
+
   constexpr double gain = 0.1;
   constexpr double gain_inv = 1.0 - gain;
 
@@ -218,6 +235,10 @@ bool BicycleTracker::measureWithShape(
   bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
   bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
   bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
+  // set minimum size
+  bounding_box_.length = std::max(bounding_box_.length, 0.5);
+  bounding_box_.width = std::max(bounding_box_.width, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.8);
 
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);
