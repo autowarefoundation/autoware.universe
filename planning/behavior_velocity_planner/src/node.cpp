@@ -344,6 +344,11 @@ void BehaviorVelocityPlannerNode::onTrafficSignalsRawV2I(
   std::lock_guard<std::mutex> lock(mutex_);
 
   for (const auto & car_light : msg->car_lights) {
+    // If the time to red is not available, skip it
+    if (!car_light.has_max_rest_time || !car_light.has_min_rest_time) {
+      continue;
+    }
+
     for (const auto & state : car_light.states) {
       TrafficSignalTimeToRedStamped time_to_red;
       time_to_red.stamp = msg->header.stamp;
