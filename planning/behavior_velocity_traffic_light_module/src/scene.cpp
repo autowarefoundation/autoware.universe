@@ -228,33 +228,31 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
-    // Check if stop is coming.
-    const bool is_stop_signal = isStopSignal();
+    // Update traffic signal information
+    updateTrafficSignal();
+
+    const bool is_unknown_signal = isUnknownSignal(looking_tl_state_);
+    const bool is_signal_timed_out = isTrafficSignalTimedOut();
 
     // Decide if stop or proceed using the remaining time to red signal
+    // If the upcoming traffic signal color is unknown or timed out, do not use the time to red and
+    // stop for the traffic signal
     const auto rest_time_to_red_signal =
       planner_data_->getRestTimeToRedSignal(traffic_light_reg_elem_.id());
-    if (
-      planner_param_.v2i_use_rest_time && rest_time_to_red_signal &&
-      !isDataTimeout(rest_time_to_red_signal->stamp)) {
-      const double rest_time_allowed_to_go_ahead =
-        rest_time_to_red_signal->time_to_red - planner_param_.v2i_last_time_allowed_to_pass;
+    const bool is_stop_required = is_unknown_signal || is_signal_timed_out;
 
-      const double ego_v = planner_data_->current_velocity->twist.linear.x;
-      if (ego_v >= planner_param_.v2i_velocity_threshold) {
-        if (ego_v * rest_time_allowed_to_go_ahead <= signed_arc_length_to_stop_point) {
-          *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
-        }
-      } else {
-        if (rest_time_allowed_to_go_ahead < planner_param_.v2i_required_time_to_departure) {
-          *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
-        }
+    if (planner_param_.v2i_use_rest_time && rest_time_to_red_signal && !is_stop_required) {
+      if (!canPassStopLineBeforeRed(*rest_time_to_red_signal, signed_arc_length_to_stop_point)) {
+        *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
       }
       return true;
     }
 
+    // Check if stop is coming.
+    const bool is_stop_signal = isStopSignal();
+
     // Update stop signal received time
-    if (is_stop_signal) {
+    if (is_stop_signal || is_unknown_signal || is_signal_timed_out) {
       if (!stop_signal_received_time_ptr_) {
         stop_signal_received_time_ptr_ = std::make_unique<Time>(clock_->now());
       }
@@ -301,8 +299,6 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
 bool TrafficLightModule::isStopSignal()
 {
-  updateTrafficSignal();
-
   // If there is no upcoming traffic signal information,
   //   SIMULATION: it will PASS to prevent stopping on the planning simulator
   //   or scenario simulator.
@@ -312,11 +308,6 @@ bool TrafficLightModule::isStopSignal()
     if (planner_data_->is_simulation) {
       return false;
     }
-    return true;
-  }
-
-  // Stop if the traffic signal information has timed out
-  if (isTrafficSignalTimedOut()) {
     return true;
   }
 
@@ -520,6 +511,41 @@ bool TrafficLightModule::isDataTimeout(const rclcpp::Time & data_time) const
   }
 
   return is_data_timeout;
+}
+
+bool TrafficLightModule::canPassStopLineBeforeRed(
+  const TrafficSignalTimeToRedStamped & time_to_red_signal,
+  const double distance_to_stop_line) const
+{
+  if (isDataTimeout(time_to_red_signal.stamp)) {
+    return false;
+  }
+
+  const double rest_time_allowed_to_go_ahead =
+    time_to_red_signal.time_to_red - planner_param_.v2i_last_time_allowed_to_pass;
+
+  const double ego_v = planner_data_->current_velocity->twist.linear.x;
+  if (ego_v >= planner_param_.v2i_velocity_threshold) {
+    if (ego_v * rest_time_allowed_to_go_ahead <= distance_to_stop_line) {
+      return false;
+    }
+  } else {
+    if (rest_time_allowed_to_go_ahead < planner_param_.v2i_required_time_to_departure) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool TrafficLightModule::isUnknownSignal(const TrafficSignal & tl_state) const
+{
+  if (tl_state.elements.empty()) {
+    return false;
+  }
+
+  const bool has_unknown = hasTrafficLightCircleColor(tl_state, TrafficSignalElement::UNKNOWN);
+  return has_unknown;
 }
 
 }  // namespace behavior_velocity_planner

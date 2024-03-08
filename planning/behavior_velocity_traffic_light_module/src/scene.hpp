@@ -110,9 +110,15 @@ private:
 
   bool isTrafficSignalTimedOut() const;
 
+  bool isUnknownSignal(const TrafficSignal & tl_state) const;
+
   void updateTrafficSignal();
 
   bool isDataTimeout(const rclcpp::Time & data_time) const;
+
+  bool canPassStopLineBeforeRed(
+    const TrafficSignalTimeToRedStamped & time_to_red_signal,
+    const double distance_to_stop_line) const;
 
   // Lane id
   const int64_t lane_id_;
