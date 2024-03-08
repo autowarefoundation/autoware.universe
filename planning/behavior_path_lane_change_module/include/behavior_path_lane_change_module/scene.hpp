@@ -15,6 +15,7 @@
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
 
 #include "behavior_path_lane_change_module/utils/base_class.hpp"
+#include "behavior_path_lane_change_module/utils/data_structs.hpp"
 
 #include <memory>
 #include <utility>
@@ -53,6 +54,8 @@ public:
 
   LaneChangePath getLaneChangePath() const override;
 
+  BehaviorModuleOutput getTerminalLaneChangePath() const override;
+
   BehaviorModuleOutput generateOutput() override;
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;
@@ -70,6 +73,9 @@ public:
   bool calcAbortPath() override;
 
   PathSafetyStatus isApprovedPathSafe() const override;
+
+  PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
+    PathSafetyStatus approved_path_safety_status) override;
 
   bool isRequiredStop(const bool is_object_coming_from_rear) override;
 
@@ -140,6 +146,10 @@ protected:
     Direction direction, LaneChangePaths * candidate_paths,
     const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
     const bool check_safety = true) const override;
+
+  std::optional<LaneChangePath> calcTerminalLaneChangePath(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
 
   TurnSignalInfo calcTurnSignalInfo() const override;
 

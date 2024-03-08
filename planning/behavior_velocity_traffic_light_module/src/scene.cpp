@@ -199,7 +199,9 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
         input_path, lanelet_stop_lines,
         planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
         planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx)) {
-    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "Failed to calculate stop point and insert index");
+    RCLCPP_WARN_STREAM_ONCE(
+      logger_, "Failed to calculate stop point and insert index for regulatory element id "
+                 << traffic_light_reg_elem_.id());
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
     return false;
@@ -279,15 +281,24 @@ bool TrafficLightModule::isStopSignal()
 {
   updateTrafficSignal();
 
-  // If it never receives traffic signal, it will PASS.
+  // If there is no upcoming traffic signal information,
+  //   SIMULATION: it will PASS to prevent stopping on the planning simulator
+  //   or scenario simulator.
+  //   REAL ENVIRONMENT: it will STOP for safety in cases such that traffic light
+  //   recognition is not working properly or the map is incorrect.
   if (!traffic_signal_stamp_) {
-    return false;
+    if (planner_data_->is_simulation) {
+      return false;
+    }
+    return true;
   }
 
+  // Stop if the traffic signal information has timed out
   if (isTrafficSignalTimedOut()) {
     return true;
   }
 
+  // Check if the current traffic signal state requires stopping
   return traffic_light_utils::isTrafficSignalStop(lane_, looking_tl_state_);
 }
 
@@ -356,9 +367,9 @@ bool TrafficLightModule::findValidTrafficSignal(TrafficSignalStamped & valid_tra
   const auto traffic_signal_stamped_opt = planner_data_->getTrafficSignal(
     traffic_light_reg_elem_.id(), true /* traffic light module keeps last observation */);
   if (!traffic_signal_stamped_opt) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 5000 /* ms */,
-      "the traffic signal data associated with regulatory element id is not received");
+    RCLCPP_WARN_STREAM_ONCE(
+      logger_, "the traffic signal data associated with regulatory element id "
+                 << traffic_light_reg_elem_.id() << " is not received");
     return false;
   }
   valid_traffic_signal = traffic_signal_stamped_opt.value();

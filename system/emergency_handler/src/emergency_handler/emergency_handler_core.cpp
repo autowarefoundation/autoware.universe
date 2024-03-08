@@ -23,8 +23,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // Parameter
   param_.update_rate = declare_parameter<int>("update_rate");
   param_.timeout_hazard_status = declare_parameter<double>("timeout_hazard_status");
-  param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request");
-  param_.use_takeover_request = declare_parameter<bool>("use_takeover_request");
   param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped");
   param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop");
   param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency");
@@ -85,6 +83,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   mrm_state_.stamp = this->now();
   mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::NORMAL;
   mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MrmState::NONE;
+  is_hazard_status_timeout_ = false;
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -137,7 +136,7 @@ autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHaz
   HazardLightsCommand msg;
 
   // Check emergency
-  const bool is_emergency = isEmergency(hazard_status_stamped_->status);
+  const bool is_emergency = isEmergency();
 
   if (hazard_status_stamped_->status.emergency_holding) {
     // turn hazard on during emergency holding
@@ -311,21 +310,26 @@ bool EmergencyHandler::isDataReady()
   return true;
 }
 
+void EmergencyHandler::checkHazardStatusTimeout()
+{
+  if ((this->now() - stamp_hazard_status_).seconds() > param_.timeout_hazard_status) {
+    is_hazard_status_timeout_ = true;
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "heartbeat_hazard_status is timeout");
+  } else {
+    is_hazard_status_timeout_ = false;
+  }
+}
+
 void EmergencyHandler::onTimer()
 {
   if (!isDataReady()) {
     return;
   }
-  const bool is_hazard_status_timeout =
-    (this->now() - stamp_hazard_status_).seconds() > param_.timeout_hazard_status;
-  if (is_hazard_status_timeout) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "heartbeat_hazard_status is timeout");
-    mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::MRM_OPERATING;
-    publishControlCommands();
-    return;
-  }
+
+  // Check whether heartbeat hazard_status is timeout
+  checkHazardStatusTimeout();
 
   // Update Emergency State
   updateMrmState();
@@ -358,7 +362,7 @@ void EmergencyHandler::transitionTo(const int new_state)
     throw std::runtime_error(msg);
   };
 
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "MRM State changed: %s -> %s", state2string(mrm_state_.state),
     state2string(new_state));
 
@@ -371,45 +375,27 @@ void EmergencyHandler::updateMrmState()
   using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
   // Check emergency
-  const bool is_emergency = isEmergency(hazard_status_stamped_->status);
+  const bool is_emergency = isEmergency();
 
   // Get mode
   const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
-  const bool is_takeover_done = control_mode_->mode == ControlModeReport::MANUAL;
 
   // State Machine
   if (mrm_state_.state == MrmState::NORMAL) {
     // NORMAL
     if (is_auto_mode && is_emergency) {
-      if (param_.use_takeover_request) {
-        takeover_requested_time_ = this->get_clock()->now();
-        is_takeover_request_ = true;
-        return;
-      } else {
-        transitionTo(MrmState::MRM_OPERATING);
-        return;
-      }
+      transitionTo(MrmState::MRM_OPERATING);
+      return;
     }
   } else {
     // Emergency
-    // Send recovery events if "not emergency" or "takeover done"
+    // Send recovery events if "not emergency"
     if (!is_emergency) {
       transitionTo(MrmState::NORMAL);
       return;
     }
-    // TODO(Kenji Miyake): Check if human can safely override, for example using DSM
-    if (is_takeover_done) {
-      transitionTo(MrmState::NORMAL);
-      return;
-    }
 
-    if (is_takeover_request_) {
-      const auto time_from_takeover_request = this->get_clock()->now() - takeover_requested_time_;
-      if (time_from_takeover_request.seconds() > param_.timeout_takeover_request) {
-        transitionTo(MrmState::MRM_OPERATING);
-        return;
-      }
-    } else if (mrm_state_.state == MrmState::MRM_OPERATING) {
+    if (mrm_state_.state == MrmState::MRM_OPERATING) {
       // TODO(Kenji Miyake): Check MRC is accomplished
       if (isStopped()) {
         transitionTo(MrmState::MRM_SUCCEEDED);
@@ -432,7 +418,10 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurre
   using autoware_auto_system_msgs::msg::HazardStatus;
 
   // Get hazard level
-  const auto level = hazard_status_stamped_->status.level;
+  auto level = hazard_status_stamped_->status.level;
+  if (is_hazard_status_timeout_) {
+    level = HazardStatus::SINGLE_POINT_FAULT;
+  }
 
   // State machine
   if (mrm_state_.behavior == MrmState::NONE) {
@@ -455,10 +444,10 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurre
   return mrm_state_.behavior;
 }
 
-bool EmergencyHandler::isEmergency(
-  const autoware_auto_system_msgs::msg::HazardStatus & hazard_status)
+bool EmergencyHandler::isEmergency()
 {
-  return hazard_status.emergency || hazard_status.emergency_holding;
+  return hazard_status_stamped_->status.emergency ||
+         hazard_status_stamped_->status.emergency_holding || is_hazard_status_timeout_;
 }
 
 bool EmergencyHandler::isStopped()

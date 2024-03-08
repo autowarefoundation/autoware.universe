@@ -56,6 +56,7 @@ void LaneChangeInterface::processOnExit()
 {
   module_type_->resetParameters();
   debug_marker_.markers.clear();
+  post_process_safety_status_ = {};
   resetPathCandidate();
 }
 
@@ -70,7 +71,7 @@ bool LaneChangeInterface::isExecutionRequested() const
 
 bool LaneChangeInterface::isExecutionReady() const
 {
-  return module_type_->isSafe();
+  return module_type_->isSafe() && !module_type_->isAbortState();
 }
 
 void LaneChangeInterface::updateData()
@@ -83,7 +84,7 @@ void LaneChangeInterface::updateData()
   if (isWaitingApproval()) {
     module_type_->updateLaneChangeStatus();
   }
-  setObjectDebugVisualization();
+  updateDebugMarker();
 
   module_type_->updateSpecialData();
   module_type_->resetStopPose();
@@ -91,7 +92,11 @@ void LaneChangeInterface::updateData()
 
 void LaneChangeInterface::postProcess()
 {
-  post_process_safety_status_ = module_type_->isApprovedPathSafe();
+  if (getCurrentStatus() == ModuleStatus::RUNNING) {
+    const auto safety_status = module_type_->isApprovedPathSafe();
+    post_process_safety_status_ =
+      module_type_->evaluateApprovedPathWithUnsafeHysteresis(safety_status);
+  }
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
@@ -109,13 +114,23 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
   stop_pose_ = module_type_->getStopPose();
 
-  for (const auto & [uuid, data] : module_type_->getAfterApprovalDebugData()) {
+  const auto & lane_change_debug = module_type_->getDebugData();
+  for (const auto & [uuid, data] : lane_change_debug.collision_check_objects_after_approval) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
     setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
   }
 
   updateSteeringFactorPtr(output);
-  clearWaitingApproval();
+  if (module_type_->isAbortState()) {
+    waitApproval();
+    removeRTCStatus();
+    const auto candidate = planCandidate();
+    path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+    updateRTCStatus(
+      candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change);
+  } else {
+    clearWaitingApproval();
+  }
 
   return output;
 }
@@ -123,17 +138,15 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
   *prev_approved_path_ = getPreviousModuleOutput().path;
-  module_type_->insertStopPoint(
-    module_type_->getLaneChangeStatus().current_lanes, *prev_approved_path_);
 
   BehaviorModuleOutput out;
-  out.path = *prev_approved_path_;
-  out.reference_path = getPreviousModuleOutput().reference_path;
-  out.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
-  out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
-  out.turn_signal_info = getCurrentTurnSignalInfo(out.path, out.turn_signal_info);
+  out = module_type_->getTerminalLaneChangePath();
+  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, out.path);
+  out.turn_signal_info =
+    getCurrentTurnSignalInfo(out.path, getPreviousModuleOutput().turn_signal_info);
 
-  for (const auto & [uuid, data] : module_type_->getDebugData()) {
+  const auto & lane_change_debug = module_type_->getDebugData();
+  for (const auto & [uuid, data] : lane_change_debug.collision_check_objects) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
     setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
   }
@@ -193,11 +206,6 @@ bool LaneChangeInterface::canTransitSuccessState()
     if (isWaitingApproval()) {
       return true;
     }
-  }
-
-  if (!module_type_->isValidPath()) {
-    log_debug_throttled("Has no valid path.");
-    return true;
   }
 
   if (module_type_->isAbortState() && module_type_->hasFinishedAbort()) {
@@ -289,66 +297,14 @@ bool LaneChangeInterface::canTransitFailureState()
   return false;
 }
 
-bool LaneChangeInterface::canTransitIdleToRunningState()
-{
-  setObjectDebugVisualization();
-
-  auto log_debug_throttled = [&](std::string_view message) -> void {
-    RCLCPP_DEBUG(getLogger(), "%s", message.data());
-  };
-
-  log_debug_throttled(__func__);
-
-  if (!isActivated() || isWaitingApproval()) {
-    if (module_type_->specialRequiredCheck()) {
-      return true;
-    }
-    log_debug_throttled("Module is idling.");
-    return false;
-  }
-
-  log_debug_throttled("Can lane change safely. Executing lane change.");
-  module_type_->toNormalState();
-  return true;
-}
-
-void LaneChangeInterface::setObjectDebugVisualization() const
+void LaneChangeInterface::updateDebugMarker() const
 {
   debug_marker_.markers.clear();
   if (!parameters_->publish_debug_marker) {
     return;
   }
-  using marker_utils::showPolygon;
-  using marker_utils::showPredictedPath;
-  using marker_utils::showSafetyCheckInfo;
-  using marker_utils::lane_change_markers::showAllValidLaneChangePath;
-  using marker_utils::lane_change_markers::showFilteredObjects;
-
-  const auto debug_data = module_type_->getDebugData();
-  const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
-  const auto debug_valid_path = module_type_->getDebugValidPath();
-  const auto debug_filtered_objects = module_type_->getDebugFilteredObjects();
-
-  debug_marker_.markers.clear();
-  const auto add = [this](const MarkerArray & added) {
-    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
-  };
-
-  add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
-  add(showFilteredObjects(
-    debug_filtered_objects.current_lane, debug_filtered_objects.target_lane,
-    debug_filtered_objects.other_lane, "object_filtered"));
-  if (!debug_data.empty()) {
-    add(showSafetyCheckInfo(debug_data, "object_debug_info"));
-    add(showPredictedPath(debug_data, "ego_predicted_path"));
-    add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
-  }
-
-  if (!debug_after_approval.empty()) {
-    add(showSafetyCheckInfo(debug_after_approval, "object_debug_info_after_approval"));
-    add(showPredictedPath(debug_after_approval, "ego_predicted_path_after_approval"));
-    add(showPolygon(debug_after_approval, "ego_and_target_polygon_relation_after_approval"));
-  }
+  using marker_utils::lane_change_markers::createDebugMarkerArray;
+  debug_marker_ = createDebugMarkerArray(module_type_->getDebugData());
 }
 
 MarkerArray LaneChangeInterface::getModuleVirtualWall()
@@ -464,16 +420,13 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   const double buffer =
     next_lane_change_buffer + min_length_for_turn_signal_activation + base_to_front;
   const double path_length = motion_utils::calcArcLength(path.points);
-  const auto & front_point = path.points.front().point.pose.position;
   const size_t & current_nearest_seg_idx =
     motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
-  const double length_front_to_ego = motion_utils::calcSignedArcLength(
-    path.points, front_point, static_cast<size_t>(0), current_pose.position,
-    current_nearest_seg_idx);
+  const double dist_to_terminal = utils::getDistanceToEndOfLane(current_pose, current_lanes);
   const auto start_pose =
     motion_utils::calcLongitudinalOffsetPose(path.points, 0, std::max(path_length - buffer, 0.0));
-  if (path_length - length_front_to_ego < buffer && start_pose) {
+  if (dist_to_terminal - base_to_front < buffer && start_pose) {
     // modify turn signal
     current_turn_signal_info.desired_start_point = *start_pose;
     current_turn_signal_info.desired_end_point = lane_change_path.info.lane_changing_end;

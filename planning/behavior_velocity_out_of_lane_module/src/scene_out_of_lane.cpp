@@ -66,7 +66,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   ego_data.pose = planner_data_->current_odometry->pose;
   ego_data.path.points = path->points;
   ego_data.first_path_idx =
-    motion_utils::findNearestSegmentIndex(ego_data.path.points, ego_data.pose.position);
+    motion_utils::findNearestSegmentIndex(path->points, ego_data.pose.position);
   motion_utils::removeOverlapPoints(ego_data.path.points);
   ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
   ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;
@@ -75,13 +75,13 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const auto path_footprints = calculate_path_footprints(ego_data, params_);
   const auto calculate_path_footprints_us = stopwatch.toc("calculate_path_footprints");
   // Calculate lanelets to ignore and consider
-  const auto path_lanelets = planning_utils::getLaneletsOnPath(
-    ego_data.path, planner_data_->route_handler_->getLaneletMapPtr(),
-    planner_data_->current_odometry->pose);
+  stopwatch.tic("calculate_lanelets");
+  const auto path_lanelets = calculate_path_lanelets(ego_data, *planner_data_->route_handler_);
   const auto ignored_lanelets =
     calculate_ignored_lanelets(ego_data, path_lanelets, *planner_data_->route_handler_, params_);
   const auto other_lanelets = calculate_other_lanelets(
     ego_data, path_lanelets, ignored_lanelets, *planner_data_->route_handler_, params_);
+  const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
 
   debug_data_.footprints = path_footprints;
   debug_data_.path_lanelets = path_lanelets;
@@ -98,6 +98,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
       });
     if (overlapped_lanelet_it != other_lanelets.end()) {
       debug_data_.current_overlapped_lanelets.push_back(*overlapped_lanelet_it);
+      // TODO(Maxime): we may want to just add the overlapped lane to the ignored lanelets
       RCLCPP_DEBUG(logger_, "Ego is already overlapping a lane, skipping the module ()\n");
       return true;
     }
@@ -108,13 +109,15 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     calculate_overlapping_ranges(path_footprints, path_lanelets, other_lanelets, params_);
   const auto calculate_overlapping_ranges_us = stopwatch.toc("calculate_overlapping_ranges");
   // Calculate stop and slowdown points
-  stopwatch.tic("calculate_decisions");
   DecisionInputs inputs;
   inputs.ranges = ranges;
   inputs.ego_data = ego_data;
-  inputs.objects = filter_predicted_objects(*planner_data_->predicted_objects, ego_data, params_);
+  stopwatch.tic("filter_predicted_objects");
+  inputs.objects = filter_predicted_objects(*planner_data_, ego_data, params_);
+  const auto filter_predicted_objects_ms = stopwatch.toc("filter_predicted_objects");
   inputs.route_handler = planner_data_->route_handler_;
   inputs.lanelets = other_lanelets;
+  stopwatch.tic("calculate_decisions");
   const auto decisions = calculate_decisions(inputs, params_, logger_);
   const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
   stopwatch.tic("calc_slowdown_points");
@@ -156,7 +159,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   }
   if (point_to_insert) {
     prev_inserted_point_ = point_to_insert;
-    RCLCPP_INFO(logger_, "Avoiding lane %lu", point_to_insert->slowdown.lane_to_avoid.id());
+    RCLCPP_DEBUG(logger_, "Avoiding lane %lu", point_to_insert->slowdown.lane_to_avoid.id());
     debug_data_.slowdowns = {*point_to_insert};
     auto path_idx = motion_utils::findNearestSegmentIndex(
                       path->points, point_to_insert->point.point.pose.position) +
@@ -183,13 +186,16 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   RCLCPP_DEBUG(
     logger_,
     "Total time = %2.2fus\n"
+    "\tcalculate_lanelets = %2.0fus\n"
     "\tcalculate_path_footprints = %2.0fus\n"
     "\tcalculate_overlapping_ranges = %2.0fus\n"
+    "\tfilter_pred_objects = %2.0fus\n"
     "\tcalculate_decisions = %2.0fus\n"
     "\tcalc_slowdown_points = %2.0fus\n"
     "\tinsert_slowdown_points = %2.0fus\n",
-    total_time_us, calculate_path_footprints_us, calculate_overlapping_ranges_us,
-    calculate_decisions_us, calc_slowdown_points_us, insert_slowdown_points_us);
+    total_time_us, calculate_lanelets_us, calculate_path_footprints_us,
+    calculate_overlapping_ranges_us, filter_predicted_objects_ms, calculate_decisions_us,
+    calc_slowdown_points_us, insert_slowdown_points_us);
   return true;
 }
 
