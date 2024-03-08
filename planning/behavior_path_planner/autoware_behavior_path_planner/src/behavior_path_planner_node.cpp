@@ -211,6 +211,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
+  p.enable_differential_map_loading = declare_parameter<bool>("enable_differential_map_loading");
+
   return p;
 }
 
@@ -394,7 +396,8 @@ void BehaviorPathPlannerNode::run()
 
   // update map
   if (map_ptr) {
-    planner_data_->route_handler->setMap(*map_ptr);
+    planner_data_->route_handler->setMap(
+      *map_ptr, planner_data_->parameters.enable_differential_map_loading);
     planner_manager_->resetRootLanelet(planner_data_);
   }
 
@@ -403,7 +406,9 @@ void BehaviorPathPlannerNode::run()
   // update route
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
   if (route_ptr) {
-    planner_data_->route_handler->setRoute(*route_ptr);
+    planner_data_->route_handler->setRoute(
+      *route_ptr, planner_data_->parameters.enable_differential_map_loading);
+    planner_manager_->resetRootLanelet(planner_data_);
     // uuid is not changed when rerouting with modified goal,
     // in this case do not need to reset modules.
     const bool has_same_route_id =
