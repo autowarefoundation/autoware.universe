@@ -339,7 +339,7 @@ std::optional<lanelet::BasicPolygon2d> LaneDepartureChecker::getFusedLaneletPoly
 
       std::vector<lanelet::BasicPolygon2d> lanelet_union_temp;
       boost::geometry::union_(poly, merged_polygon, lanelet_union_temp);
-
+      if (lanelet_union_temp.empty()) continue;
       // Update merged_polygon by accumulating all merged results
       merged_polygon.clear();
       for (const auto & temp_poly : lanelet_union_temp) {
