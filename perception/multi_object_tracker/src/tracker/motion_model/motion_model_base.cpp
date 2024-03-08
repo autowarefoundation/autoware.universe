@@ -28,7 +28,7 @@ bool MotionModel::initialize(
   // initialize Kalman filter
   if (!ekf_.init(X, P)) return false;
 
-  // set last_updated_time_
+  // set last_update_time_
   last_update_time_ = time;
 
   // set initialized flag

@@ -47,7 +47,7 @@ PedestrianTracker::PedestrianTracker(
   const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("PedestrianTracker")),
-  last_update_time_(time),
+  // last_update_time_(time),
   z_(object.kinematics.pose_with_covariance.pose.position.z)
 {
   object_ = object;
@@ -144,12 +144,7 @@ PedestrianTracker::PedestrianTracker(
 
 bool PedestrianTracker::predict(const rclcpp::Time & time)
 {
-  // predict state vector X t+1
-  bool is_predicted = motion_model_.predictState(time);
-  if (is_predicted) {
-    last_update_time_ = time;
-  }
-  return is_predicted;
+  return motion_model_.predictState(time);
 }
 
 autoware_auto_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObject(
@@ -238,11 +233,13 @@ bool PedestrianTracker::measure(
   }
 
   // check time gap
-  if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
+  const double dt = motion_model_.getDeltaTime(time);
+  if (0.01 /*10msec*/ < dt) {
     RCLCPP_WARN(
       logger_,
-      "PedestrianTracker: There is a large gap between predicted time and measurement time. (%f)",
-      (time - last_update_time_).seconds());
+      "PedestrianTracker::measure There is a large gap between predicted time and measurement "
+      "time. (%f)",
+      dt);
   }
 
   // update object
