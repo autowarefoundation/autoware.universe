@@ -491,7 +491,8 @@ bool isInLaneletWithYawThreshold(
 
 bool isEgoOutOfRoute(
   const Pose & self_pose, const std::optional<PoseWithUuidStamped> & modified_goal,
-  const std::shared_ptr<RouteHandler> & route_handler)
+  const std::shared_ptr<RouteHandler> & route_handler,
+  const BehaviorPathPlannerParameters & common_param)
 {
   const Pose & goal_pose = (modified_goal && modified_goal->uuid == route_handler->getRouteUuid())
                              ? modified_goal->pose
@@ -503,17 +504,27 @@ bool isEgoOutOfRoute(
     if (utils::isInLanelets(goal_pose, shoulder_lanes)) {
       return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
     }
-    lanelet::LaneletMapPtr map = route_handler->getLaneletMapPtr();
-    lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(map);
-    lanelet::ConstLanelets route_lanelets = route_handler->getRouteLanelets();
-    for (auto it = route_lanelets.rbegin(); it != route_lanelets.rend(); ++it) {
-      for (auto it2 = all_lanelets.rbegin(); it2 != all_lanelets.rend(); ++it2) {
-        if ((*it).id() == (*it2).id()) {
-          //          std::cout << "Route lanelet id: " << (*it).id() << std::endl;
-          // select the lanelet goal lanelet
-          goal_lane = *it2;
-          return false;
-        }
+    if (common_param.enable_differential_map_loading) {
+      // If dynamic map is enabled, get the goal lanelet from the current lanelet map
+      //
+      // Check the route lanelets and last route element in the current lanelet map
+      // will be the goal lanelet
+
+      lanelet::LaneletMapPtr map = route_handler->getLaneletMapPtr();
+      lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(map);
+      lanelet::ConstLanelets route_lanelets = route_handler->getRouteLanelets();
+
+      auto goalLaneletIt =
+        std::find_if(all_lanelets.rbegin(), all_lanelets.rend(), [&](const auto & currentLanelet) {
+          return currentLanelet.id() == route_lanelets.back().id();
+        });
+
+      if (goalLaneletIt != all_lanelets.rend()) {
+        RCLCPP_DEBUG(
+          rclcpp::get_logger("behavior_path_planner").get_child("util"),
+          "Found goal lanelet in current lanelet map");
+        goal_lane = *goalLaneletIt;
+        return false;
       }
     }
     return !route_handler->getGoalLanelet(&goal_lane);

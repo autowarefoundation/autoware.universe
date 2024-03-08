@@ -76,6 +76,9 @@ struct BehaviorPathPlannerParameters
   double right_over_hang;
   double base_link2front;
   double base_link2rear;
+
+  // enable/disable differential map loading
+  bool enable_differential_map_loading;
 };
 
 #endif  // BEHAVIOR_PATH_PLANNER_COMMON__PARAMETERS_HPP_
