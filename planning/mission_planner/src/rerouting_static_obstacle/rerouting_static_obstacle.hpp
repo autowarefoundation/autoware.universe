@@ -20,6 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/route_segment.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/point_stamped.hpp>
@@ -32,8 +33,6 @@
 #include <lanelet2_routing/Route.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
-#include <autoware_adapi_v1_msgs/msg/route_segment.hpp>
-
 
 #include <vector>
 
