@@ -8,7 +8,7 @@
   <arg name="gnss_enabled" default="true" description="gnss availability for initial position estimation"/>
 
   <!-- split string with underscores -->
-  <let name="available_args" value="[\'ndt\',\'yabloc\',\'eagleye\',\'artag\']"/>
+  <let name="available_args" value="[\'ndt\',\'yabloc\',\'eagleye\',\'artag\',\'nerf\']"/>
   <let name="split_function" value="list(set('$(var pose_source)'.split('_')).intersection($(var available_args)))"/>
   <let name="pose_sources" value="$(eval $(var split_function))"/>
   <let name="multi_localizer_mode" value="$(eval &quot;len($(var pose_sources))> 1&quot;)"/>
@@ -17,6 +17,7 @@
   <let name="use_ndt_pose" value="$(eval &quot;'ndt' in $(var pose_sources)&quot;)"/>
   <let name="use_yabloc_pose" value="$(eval &quot;'yabloc' in $(var pose_sources)&quot;)"/>
   <let name="use_artag_pose" value="$(eval &quot;'artag' in $(var pose_sources)&quot;)"/>
+  <let name="use_nerf_pose" value="$(eval &quot;'nerf' in $(var pose_sources)&quot;)"/>
   <let name="use_eagleye_pose" value="$(eval &quot;'eagleye' in $(var pose_sources)&quot;)"/>
   <let name="use_eagleye_twist" value="$(eval &quot;'eagleye' == '$(var twist_source)'&quot;)"/>
   <let name="use_gyro_odom_twist" value="$(eval &quot;'gyro_odom' == '$(var twist_source)'&quot;)"/>
@@ -72,6 +73,12 @@
     </include>
   </group>
 
+  <!-- NeRF Based Localizer (as pose estimator) -->
+  <group if="$(var use_nerf_pose)">
+    <push-ros-namespace namespace="pose_estimator"/>
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/nerf_based_localizer.launch.xml"/>
+  </group>
+
   <!-- Pose Estimator Arbiter Launch -->
   <group if="$(var multi_localizer_mode)">
     <include file="$(find-pkg-share pose_estimator_arbiter)/launch/pose_estimator_arbiter.launch.xml">
@@ -112,27 +119,5 @@
       <arg name="localization_pointcloud_container_name" value="$(var localization_pointcloud_container_name)"/>
       <arg name="input_pointcloud" value="$(var override_input_pointcloud)"/>
     </include>
-  </group>
-
-  <!-- NeRF Based Localizer (as pose estimator) -->
-  <group if="$(eval &quot;'$(var pose_source)'=='nerf'&quot;)">
-    <group>
-      <push-ros-namespace namespace="pose_estimator"/>
-      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/nerf_based_localizer.launch.xml"/>
-    </group>
-
-    <group>
-      <push-ros-namespace namespace="util"/>
-      <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
-        <arg name="ndt_enabled" value="false"/>
-        <arg name="gnss_enabled" value="false"/>
-        <arg name="ekf_enabled" value="true"/>
-        <arg name="yabloc_enabled" value="false"/>
-        <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
-        <arg name="config_file" value="$(var pose_initializer_param_path)"/>
-        <arg name="sub_gnss_pose_cov" value="/sensing/gnss/pose_with_covariance"/>
-      </include>
-      <include file="$(find-pkg-share tier4_localization_launch)/launch/util/util.launch.xml"/>
-    </group>
   </group>
 </launch>
