@@ -28,52 +28,34 @@ namespace tier4_autoware_utils
 {
 using autoware_internal_msgs::msg::PublishedTime;
 
-struct GidHash
+// Custom comparison struct for rmw_gid_t
+struct GidCompare
 {
-  size_t operator()(const rmw_gid_t & gid) const noexcept
+  bool operator()(const rmw_gid_t & lhs, const rmw_gid_t & rhs) const
   {
-    // Hashing function that computes a hash value for the GID
-    std::hash<std::string> hasher;
-    return hasher(std::string(reinterpret_cast<const char *>(gid.data), RMW_GID_STORAGE_SIZE));
-  }
-};
-
-struct GidEqual
-{
-  bool operator()(const rmw_gid_t & lhs, const rmw_gid_t & rhs) const noexcept
-  {
-    return std::memcmp(lhs.data, rhs.data, RMW_GID_STORAGE_SIZE) == 0;
+    return std::memcmp(lhs.data, rhs.data, RMW_GID_STORAGE_SIZE) < 0;
   }
 };
 
 class PublishedTimePublisher
 {
 public:
-  static std::unique_ptr<PublishedTimePublisher> create(
+  explicit PublishedTimePublisher(
     rclcpp::Node * node, const std::string & end_name = "/debug/published_time",
     const rclcpp::QoS & qos = rclcpp::QoS(1))
+  : node_(node), end_name_(end_name), qos_(qos)
   {
-    const bool use_published_time = node->declare_parameter<bool>("use_published_time", false);
-    if (use_published_time) {
-      return std::unique_ptr<PublishedTimePublisher>(
-        new PublishedTimePublisher(node, end_name, qos));
-    } else {
-      return nullptr;
-    }
   }
 
   void publish(const rclcpp::PublisherBase::ConstSharedPtr & publisher, const rclcpp::Time & stamp)
   {
-    const auto & gid = publisher->get_gid();
+    const auto & gid_key = publisher->get_gid();
     const auto & topic_name = publisher->get_topic_name();
 
     // if the publisher is not in the map, create a new publisher for published time
-    if (publishers_.find(gid) == publishers_.end()) {
-      publishers_[gid] = node_->create_publisher<PublishedTime>(
-        static_cast<std::string>(topic_name) + end_name_, qos_);
-    }
+    ensure_publisher_exists(gid_key, topic_name);
 
-    const auto & pub_published_time_ = publishers_[gid];
+    const auto & pub_published_time_ = publishers_[gid_key];
 
     // Check if there are any subscribers, otherwise don't do anything
     if (pub_published_time_->get_subscription_count() > 0) {
@@ -89,16 +71,13 @@ public:
   void publish(
     const rclcpp::PublisherBase::ConstSharedPtr & publisher, const std_msgs::msg::Header & header)
   {
-    const auto & gid = publisher->get_gid();
+    const auto & gid_key = publisher->get_gid();
     const auto & topic_name = publisher->get_topic_name();
 
     // if the publisher is not in the map, create a new publisher for published time
-    if (publishers_.find(gid) == publishers_.end()) {
-      publishers_[gid] = node_->create_publisher<PublishedTime>(
-        static_cast<std::string>(topic_name) + end_name_, qos_);
-    }
+    ensure_publisher_exists(gid_key, topic_name);
 
-    const auto & pub_published_time_ = publishers_[gid];
+    const auto & pub_published_time_ = publishers_[gid_key];
 
     // Check if there are any subscribers, otherwise don't do anything
     if (pub_published_time_->get_subscription_count() > 0) {
@@ -112,19 +91,20 @@ public:
   }
 
 private:
-  explicit PublishedTimePublisher(
-    rclcpp::Node * node, const std::string & end_name, const rclcpp::QoS & qos)
-  : node_(node), end_name_(end_name), qos_(qos)
-  {
-  }
-
   rclcpp::Node * node_;
   std::string end_name_;
   rclcpp::QoS qos_;
 
+  // ensure that the publisher exists in publisher_ map, if not, create a new one
+  void ensure_publisher_exists(const rmw_gid_t & gid_key, const std::string & topic_name)
+  {
+    if (publishers_.find(gid_key) == publishers_.end()) {
+      publishers_[gid_key] = node_->create_publisher<PublishedTime>(topic_name + end_name_, qos_);
+    }
+  }
+
   // store them for each different publisher of the node
-  std::unordered_map<rmw_gid_t, rclcpp::Publisher<PublishedTime>::SharedPtr, GidHash, GidEqual>
-    publishers_;
+  std::map<rmw_gid_t, rclcpp::Publisher<PublishedTime>::SharedPtr, GidCompare> publishers_;
 };
 }  // namespace tier4_autoware_utils
 
