@@ -704,7 +704,6 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     if (emergency_condition) {
       return changeState(ControlState::EMERGENCY);
     }
-
     if (stopped_condition) {
       return changeState(ControlState::STOPPED);
     }
