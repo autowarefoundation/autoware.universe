@@ -52,6 +52,12 @@ Autoware objects label is defined in [ObjectClassification](https://github.com/a
 
 ### Parameters
 
+#### Parameter Summary
+
+{{ json_to_markdown("perception/radar_tracks_msgs_converter/schema/radar_tracks_msgs_converter.schema.json") }}
+
+#### Parameter Description
+
 - `update_rate_hz` (double) [hz]
   - Default parameter is 20.0
 

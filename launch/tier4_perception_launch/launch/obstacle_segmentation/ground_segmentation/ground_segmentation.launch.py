@@ -40,7 +40,7 @@ class GroundSegmentationPipeline:
             self.ground_segmentation_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
         self.single_frame_obstacle_seg_output = (
-            "/perception/obstacle_segmentation/single_frame/pointcloud_raw"
+            "/perception/obstacle_segmentation/single_frame/pointcloud"
         )
         self.output_topic = "/perception/obstacle_segmentation/pointcloud"
         self.use_single_frame_filter = self.ground_segmentation_param["use_single_frame_filter"]
@@ -70,6 +70,18 @@ class GroundSegmentationPipeline:
         return p
 
     def create_additional_pipeline(self, lidar_name):
+        max_z = (
+            self.vehicle_info["max_height_offset"]
+            + self.ground_segmentation_param[f"{lidar_name}_crop_box_filter"]["parameters"][
+                "margin_max_z"
+            ]
+        )
+        min_z = (
+            self.vehicle_info["min_height_offset"]
+            + self.ground_segmentation_param[f"{lidar_name}_crop_box_filter"]["parameters"][
+                "margin_min_z"
+            ]
+        )
         components = []
         components.append(
             ComposableNode(
@@ -84,6 +96,8 @@ class GroundSegmentationPipeline:
                     {
                         "input_frame": LaunchConfiguration("base_frame"),
                         "output_frame": LaunchConfiguration("base_frame"),
+                        "max_z": max_z,
+                        "min_z": min_z,
                     },
                     self.ground_segmentation_param[f"{lidar_name}_crop_box_filter"]["parameters"],
                 ],
@@ -206,6 +220,14 @@ class GroundSegmentationPipeline:
         return components
 
     def create_common_pipeline(self, input_topic, output_topic):
+        max_z = (
+            self.vehicle_info["max_height_offset"]
+            + self.ground_segmentation_param["common_crop_box_filter"]["parameters"]["margin_max_z"]
+        )
+        min_z = (
+            self.vehicle_info["min_height_offset"]
+            + self.ground_segmentation_param["common_crop_box_filter"]["parameters"]["margin_min_z"]
+        )
         components = []
         components.append(
             ComposableNode(
@@ -220,6 +242,8 @@ class GroundSegmentationPipeline:
                     {
                         "input_frame": LaunchConfiguration("base_frame"),
                         "output_frame": LaunchConfiguration("base_frame"),
+                        "max_z": max_z,
+                        "min_z": min_z,
                     },
                     self.ground_segmentation_param["common_crop_box_filter"]["parameters"],
                 ],
@@ -297,7 +321,7 @@ class GroundSegmentationPipeline:
             ComposableNode(
                 package="occupancy_grid_map_outlier_filter",
                 plugin="occupancy_grid_map_outlier_filter::OccupancyGridMapOutlierFilterComponent",
-                name="occupancy_grid_map_outlier_filter",
+                name="occupancy_grid_based_outlier_filter",
                 remappings=[
                     ("~/input/occupancy_grid_map", "/perception/occupancy_grid_map/map"),
                     ("~/input/pointcloud", input_topic),

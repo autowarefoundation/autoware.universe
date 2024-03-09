@@ -233,7 +233,7 @@ To inflate the masking behind objects, their footprint can be made bigger using 
 | `ignore_with_red_traffic_light`                | [-]   | bool        | if true, occlusions at crosswalks with traffic lights are ignored                                                                               |
 | `ignore_behind_predicted_objects`              | [-]   | bool        | if true, occlusions behind predicted objects are ignored                                                                                        |
 | `ignore_velocity_thresholds.default`           | [m/s] | double      | occlusions are only ignored behind objects with a higher or equal velocity                                                                      |
-| `ignore_velocity_thresholds.custom_labels`     | [-]   | string list | labels for which to define a non-default velocity threshold (see `autoware_auto_perception_msgs::msg::ObjectClassification` for all the labels) |
+| `ignore_velocity_thresholds.custom_labels`     | [-]   | string list | labels for which to define a non-default velocity threshold (see `autoware_perception_msgs::msg::ObjectClassification` for all the labels) |
 | `ignore_velocity_thresholds.custom_thresholds` | [-]   | double list | velocities of the custom labels                                                                                                                 |
 | `extra_predicted_objects_size`                 | [m]   | double      | extra size added to the objects for masking the occlusions                                                                                      |
 

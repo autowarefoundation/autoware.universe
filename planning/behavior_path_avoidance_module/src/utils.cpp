@@ -250,16 +250,37 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
   base_vector.insert(base_vector.end(), additional_vector.begin(), additional_vector.end());
 }
 
+bool isAvoidShift(
+  const double start_shift_length, const double end_shift_length, const double threshold)
+{
+  return std::abs(start_shift_length) < threshold && std::abs(end_shift_length) > threshold;
+}
+
+bool isReturnShift(
+  const double start_shift_length, const double end_shift_length, const double threshold)
+{
+  return std::abs(start_shift_length) > threshold && std::abs(end_shift_length) < threshold;
+}
+
+bool isLeftMiddleShift(
+  const double start_shift_length, const double end_shift_length, const double threshold)
+{
+  return start_shift_length > threshold && end_shift_length > threshold;
+}
+
+bool isRightMiddleShift(
+  const double start_shift_length, const double end_shift_length, const double threshold)
+{
+  return start_shift_length < threshold && end_shift_length < threshold;
+}
+
 bool existShiftSideLane(
   const double start_shift_length, const double end_shift_length, const bool no_left_lanes,
-  const bool no_right_lanes)
+  const bool no_right_lanes, const double threshold)
 {
-  constexpr double THRESHOLD = 0.1;
   const auto relative_shift_length = end_shift_length - start_shift_length;
 
-  const auto avoid_shift =
-    std::abs(start_shift_length) < THRESHOLD && std::abs(end_shift_length) > THRESHOLD;
-  if (avoid_shift) {
+  if (isAvoidShift(start_shift_length, end_shift_length, threshold)) {
     // Left avoid. But there is no adjacent lane. No need blinker.
     if (relative_shift_length > 0.0 && no_left_lanes) {
       return false;
@@ -271,9 +292,7 @@ bool existShiftSideLane(
     }
   }
 
-  const auto return_shift =
-    std::abs(start_shift_length) > THRESHOLD && std::abs(end_shift_length) < THRESHOLD;
-  if (return_shift) {
+  if (isReturnShift(start_shift_length, end_shift_length, threshold)) {
     // Right return. But there is no adjacent lane. No need blinker.
     if (relative_shift_length > 0.0 && no_right_lanes) {
       return false;
@@ -285,8 +304,7 @@ bool existShiftSideLane(
     }
   }
 
-  const auto left_middle_shift = start_shift_length > THRESHOLD && end_shift_length > THRESHOLD;
-  if (left_middle_shift) {
+  if (isLeftMiddleShift(start_shift_length, end_shift_length, threshold)) {
     // Left avoid. But there is no adjacent lane. No need blinker.
     if (relative_shift_length > 0.0 && no_left_lanes) {
       return false;
@@ -298,8 +316,7 @@ bool existShiftSideLane(
     }
   }
 
-  const auto right_middle_shift = start_shift_length < THRESHOLD && end_shift_length < THRESHOLD;
-  if (right_middle_shift) {
+  if (isRightMiddleShift(start_shift_length, end_shift_length, threshold)) {
     // Right avoid. But there is no adjacent lane. No need blinker.
     if (relative_shift_length < 0.0 && no_right_lanes) {
       return false;
@@ -312,6 +329,23 @@ bool existShiftSideLane(
   }
 
   return true;
+}
+
+bool isNearEndOfShift(
+  const double start_shift_length, const double end_shift_length, const Point & ego_pos,
+  const lanelet::ConstLanelets & original_lanes, const double threshold)
+{
+  using boost::geometry::within;
+  using lanelet::utils::to2D;
+  using lanelet::utils::conversion::toLaneletPoint;
+
+  if (!isReturnShift(start_shift_length, end_shift_length, threshold)) {
+    return false;
+  }
+
+  return std::any_of(original_lanes.begin(), original_lanes.end(), [&ego_pos](const auto & lane) {
+    return within(to2D(toLaneletPoint(ego_pos)), lane.polygon2d().basicPolygon());
+  });
 }
 
 bool straddleRoadBound(
@@ -482,35 +516,18 @@ bool isMergingToEgoLane(const ObjectData & object)
   return true;
 }
 
-bool isObjectOnRoadShoulder(
+bool isParkedVehicle(
   ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  using boost::geometry::within;
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
   using lanelet::utils::to2D;
   using lanelet::utils::conversion::toLaneletPoint;
 
-  // assume that there are no parked vehicles in intersection.
-  std::string turn_direction = object.overhang_lanelet.attributeOr("turn_direction", "else");
-  if (turn_direction == "right" || turn_direction == "left" || turn_direction == "straight") {
-    return false;
-  }
-
-  // ============================================ <- most_left_lanelet.leftBound()
-  // y              road shoulder
-  // ^ ------------------------------------------
-  // |   x                                +
-  // +---> --- object closest lanelet --- o ----- <- object_closest_lanelet.centerline()
-  //
-  // --------------------------------------------
-  // +: object position
-  // o: nearest point on centerline
-
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
+  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
   const auto centerline_pos =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position).position;
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pos).position;
 
   bool is_left_side_parked_vehicle = false;
   if (!isOnRight(object)) {
@@ -546,7 +563,7 @@ bool isObjectOnRoadShoulder(
 
     const auto arc_coordinates = toArcCoordinates(
       to2D(object.overhang_lanelet.centerline().basicLineString()),
-      to2D(toLaneletPoint(object_pose.position)).basicPoint());
+      to2D(toLaneletPoint(object_pos)).basicPoint());
     object.shiftable_ratio = arc_coordinates.distance / object_shiftable_distance;
 
     is_left_side_parked_vehicle = object.shiftable_ratio > parameters->object_check_shiftable_ratio;
@@ -586,7 +603,7 @@ bool isObjectOnRoadShoulder(
 
     const auto arc_coordinates = toArcCoordinates(
       to2D(object.overhang_lanelet.centerline().basicLineString()),
-      to2D(toLaneletPoint(object_pose.position)).basicPoint());
+      to2D(toLaneletPoint(object_pos)).basicPoint());
     object.shiftable_ratio = -1.0 * arc_coordinates.distance / object_shiftable_distance;
 
     is_right_side_parked_vehicle =
@@ -779,7 +796,7 @@ bool isSatisfiedWithVehicleCondition(
     to2D(toLaneletPoint(object_pos)).basicPoint(),
     object.overhang_lanelet.polygon2d().basicPolygon());
   if (on_ego_driving_lane) {
-    if (isObjectOnRoadShoulder(object, planner_data->route_handler, parameters)) {
+    if (object.is_parked) {
       return true;
     } else {
       object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
@@ -845,10 +862,13 @@ std::optional<double> getAvoidMargin(
   const auto & vehicle_width = planner_data->parameters.vehicle_width;
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters->object_parameters.at(object_type);
+  const auto lateral_hard_margin = object.is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
 
-  const auto max_avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
-                                object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
-  const auto min_avoid_margin = object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
+  const auto max_avoid_margin = lateral_hard_margin * object.distance_factor +
+                                object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
+  const auto min_avoid_margin = lateral_hard_margin + 0.5 * vehicle_width;
   const auto soft_lateral_distance_limit =
     object.to_road_shoulder_distance - parameters->soft_road_shoulder_margin - 0.5 * vehicle_width;
   const auto hard_lateral_distance_limit =
@@ -1488,8 +1508,11 @@ void fillAvoidanceNecessity(
 {
   const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
   const auto object_parameter = parameters->object_parameters.at(object_type);
+  const auto lateral_hard_margin = object_data.is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
   const auto safety_margin =
-    0.5 * vehicle_width + object_parameter.safety_buffer_lateral * object_data.distance_factor;
+    0.5 * vehicle_width + lateral_hard_margin * object_data.distance_factor;
 
   const auto check_necessity = [&](const auto hysteresis_factor) {
     return (isOnRight(object_data) && std::abs(object_data.overhang_points.front().first) <
@@ -1672,8 +1695,11 @@ void updateRoadShoulderDistance(
     const auto & vehicle_width = planner_data->parameters.vehicle_width;
     const auto object_type = utils::getHighestProbLabel(o.object.classification);
     const auto object_parameter = parameters->object_parameters.at(object_type);
+    const auto lateral_hard_margin = o.is_parked
+                                       ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                       : object_parameter.lateral_hard_margin;
 
-    o.avoid_margin = object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
+    o.avoid_margin = lateral_hard_margin + 0.5 * vehicle_width;
   }
   const auto extract_obstacles = generateObstaclePolygonsForDrivableArea(
     clip_objects, parameters, planner_data->parameters.vehicle_width / 2.0);
@@ -1717,7 +1743,6 @@ void filterTargetObjects(
     // Find the footprint point closest to the path, set to object_data.overhang_distance.
     o.overhang_points = utils::avoidance::calcEnvelopeOverhangDistance(o, data.reference_path);
     o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
-    o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 
     // TODO(Satoshi Ota) parametrize stop time threshold if need.
     constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
@@ -1729,17 +1754,28 @@ void filterTargetObjects(
       }
     }
 
-    if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
-      data.other_objects.push_back(o);
-      continue;
-    }
-
     if (filtering_utils::isVehicleTypeObject(o)) {
+      o.is_parked = filtering_utils::isParkedVehicle(o, planner_data->route_handler, parameters);
+      o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
+
+      if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
+        data.other_objects.push_back(o);
+        continue;
+      }
+
       if (!filtering_utils::isSatisfiedWithVehicleCondition(o, data, planner_data, parameters)) {
         data.other_objects.push_back(o);
         continue;
       }
     } else {
+      o.is_parked = false;
+      o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
+
+      if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
+        data.other_objects.push_back(o);
+        continue;
+      }
+
       if (!filtering_utils::isSatisfiedWithNonVehicleCondition(o, data, planner_data, parameters)) {
         data.other_objects.push_back(o);
         continue;
@@ -2047,8 +2083,10 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   double max_offset = 0.0;
   for (const auto & object_parameter : parameters->object_parameters) {
     const auto p = object_parameter.second;
+    const auto lateral_hard_margin =
+      std::max(p.lateral_hard_margin, p.lateral_hard_margin_for_parked_vehicle);
     const auto offset =
-      2.0 * p.envelope_buffer_margin + p.safety_buffer_lateral + p.avoid_margin_lateral;
+      2.0 * p.envelope_buffer_margin + lateral_hard_margin + p.lateral_soft_margin;
     max_offset = std::max(max_offset, offset);
   }
 
@@ -2323,7 +2361,7 @@ double calcDistanceToReturnDeadLine(
   return distance_to_return_dead_line;
 }
 
-TurnSignalInfo calcTurnSignalInfo(
+std::pair<TurnSignalInfo, bool> calcTurnSignalInfo(
   const ShiftedPath & path, const ShiftLine & shift_line, const double current_shift_length,
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data)
 {
@@ -2335,22 +2373,22 @@ TurnSignalInfo calcTurnSignalInfo(
 
   if (shift_line.start_idx + 1 > path.shift_length.size()) {
     RCLCPP_WARN(rclcpp::get_logger(__func__), "index inconsistency.");
-    return {};
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
   if (shift_line.start_idx + 1 > path.path.points.size()) {
     RCLCPP_WARN(rclcpp::get_logger(__func__), "index inconsistency.");
-    return {};
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
   if (shift_line.end_idx + 1 > path.shift_length.size()) {
     RCLCPP_WARN(rclcpp::get_logger(__func__), "index inconsistency.");
-    return {};
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
   if (shift_line.end_idx + 1 > path.path.points.size()) {
     RCLCPP_WARN(rclcpp::get_logger(__func__), "index inconsistency.");
-    return {};
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
   const auto start_shift_length = path.shift_length.at(shift_line.start_idx);
@@ -2359,12 +2397,12 @@ TurnSignalInfo calcTurnSignalInfo(
 
   // If shift length is shorter than the threshold, it does not need to turn on blinkers
   if (std::fabs(relative_shift_length) < p.turn_signal_shift_length_threshold) {
-    return {};
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
   // If the vehicle does not shift anymore, we turn off the blinker
   if (std::fabs(path.shift_length.at(shift_line.end_idx) - current_shift_length) < THRESHOLD) {
-    return {};
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
   const auto get_command = [](const auto & shift_length) {
@@ -2379,7 +2417,7 @@ TurnSignalInfo calcTurnSignalInfo(
     p.vehicle_info.max_longitudinal_offset_m;
 
   if (signal_prepare_distance < ego_front_to_shift_start) {
-    return {};
+    return std::make_pair(TurnSignalInfo{}, false);
   }
 
   const auto blinker_start_pose = path.path.points.at(shift_line.start_idx).point.pose;
@@ -2396,12 +2434,12 @@ TurnSignalInfo calcTurnSignalInfo(
   turn_signal_info.turn_signal.command = get_command(relative_shift_length);
 
   if (!p.turn_signal_on_swerving) {
-    return turn_signal_info;
+    return std::make_pair(turn_signal_info, false);
   }
 
   lanelet::ConstLanelet lanelet;
   if (!rh->getClosestLaneletWithinRoute(shift_line.end, &lanelet)) {
-    return {};
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
   const auto left_same_direction_lane = rh->getLeftLanelet(lanelet, true, true);
@@ -2412,14 +2450,25 @@ TurnSignalInfo calcTurnSignalInfo(
   const auto has_right_lane =
     right_same_direction_lane.has_value() || !right_opposite_lanes.empty();
 
-  if (!existShiftSideLane(start_shift_length, end_shift_length, !has_left_lane, !has_right_lane)) {
-    return {};
+  if (!existShiftSideLane(
+        start_shift_length, end_shift_length, !has_left_lane, !has_right_lane,
+        p.turn_signal_shift_length_threshold)) {
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
   if (!straddleRoadBound(path, shift_line, data.current_lanelets, p.vehicle_info)) {
-    return {};
+    return std::make_pair(TurnSignalInfo{}, true);
   }
 
-  return turn_signal_info;
+  constexpr double STOPPED_THRESHOLD = 0.1;  // [m/s]
+  if (ego_speed < STOPPED_THRESHOLD) {
+    if (isNearEndOfShift(
+          start_shift_length, end_shift_length, ego_pose.position, data.current_lanelets,
+          p.turn_signal_shift_length_threshold)) {
+      return std::make_pair(TurnSignalInfo{}, true);
+    }
+  }
+
+  return std::make_pair(turn_signal_info, false);
 }
 }  // namespace behavior_path_planner::utils::avoidance
