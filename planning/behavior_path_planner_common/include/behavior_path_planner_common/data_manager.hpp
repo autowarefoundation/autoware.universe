@@ -21,8 +21,8 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <lanelet2_extension/regulatory_elements/Forward.hpp>
-#include <rclcpp/rclcpp/clock.hpp>
-#include <rclcpp/rclcpp/time.hpp>
+#include <rclcpp/clock.hpp>
+#include <rclcpp/time.hpp>
 #include <route_handler/route_handler.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
