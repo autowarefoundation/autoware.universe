@@ -99,10 +99,6 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
       continue;
     }
 
-    if (isPullOutPathCollided(pull_out_path, parameters_.shift_collision_check_distance_from_end)) {
-      continue;
-    }
-
     // crop backward path
     // removes points which are out of lanes up to the start pose.
     // this ensures that the backward_path stays within the drivable area when starting from a
@@ -117,6 +113,10 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     if (cropped_path.points.empty()) continue;
     shift_path.points = cropped_path.points;
     shift_path.header = planner_data_->route_handler->getRouteHeader();
+
+    if (isPullOutPathCollided(pull_out_path, parameters_.shift_collision_check_distance_from_end)) {
+      continue;
+    }
 
     return pull_out_path;
   }
