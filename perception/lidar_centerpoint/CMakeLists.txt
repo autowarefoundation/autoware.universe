@@ -136,18 +136,18 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   ## single inference node ##
-  ament_auto_add_library(single_inference_lidar_centerpoint_component SHARED
-    src/single_inference_node.cpp
-  )
+  # ament_auto_add_library(single_inference_lidar_centerpoint_component SHARED
+  #   src/single_inference_node.cpp
+  # )
 
-  target_link_libraries(single_inference_lidar_centerpoint_component
-    centerpoint_lib
-  )
+  # target_link_libraries(single_inference_lidar_centerpoint_component
+  #   centerpoint_lib
+  # )
 
-  rclcpp_components_register_node(single_inference_lidar_centerpoint_component
-    PLUGIN "centerpoint::SingleInferenceLidarCenterPointNode"
-    EXECUTABLE single_inference_lidar_centerpoint_node
-  )
+  # rclcpp_components_register_node(single_inference_lidar_centerpoint_component
+  #   PLUGIN "centerpoint::SingleInferenceLidarCenterPointNode"
+  #   EXECUTABLE single_inference_lidar_centerpoint_node
+  # )
 
   install(PROGRAMS
     scripts/lidar_centerpoint_visualizer.py
