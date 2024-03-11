@@ -35,14 +35,15 @@ ComfortableStopOperator::ComfortableStopOperator(rclcpp::Node * node) : node_(no
       "~/output/velocity_limit/clear", rclcpp::QoS{1}.transient_local());
 }
 
-void ComfortableStopOperator::onTimer() {
+void ComfortableStopOperator::onTimer()
+{
   // do nothing
 }
 
 bool ComfortableStopOperator::operate()
 {
   publishVelocityLimit();
-  
+
   // Currently, ComfortableStopOperator does not return false
   return true;
 }
@@ -50,7 +51,7 @@ bool ComfortableStopOperator::operate()
 bool ComfortableStopOperator::cancel()
 {
   publishVelocityLimitClearCommand();
-  
+
   // Currently, ComfortableStopOperator does not return false
   return true;
 }
@@ -79,6 +80,6 @@ void ComfortableStopOperator::publishVelocityLimitClearCommand()
   pub_velocity_limit_clear_command_->publish(velocity_limit_clear_command);
 }
 
-} // namespace comfortable_stop_operator
+}  // namespace comfortable_stop_operator
 
-} // namespace emergency_handler
+}  // namespace emergency_handler

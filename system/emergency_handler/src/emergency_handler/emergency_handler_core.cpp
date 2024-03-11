@@ -61,7 +61,8 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 
   // Opertors
   emergency_stop_operator_ = std::make_unique<emergency_stop_operator::EmergencyStopOperator>(this);
-  comfortable_stop_operator_ = std::make_unique<comfortable_stop_operator::ComfortableStopOperator>(this);
+  comfortable_stop_operator_ =
+    std::make_unique<comfortable_stop_operator::ComfortableStopOperator>(this);
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -400,4 +401,4 @@ bool EmergencyHandler::isStopped()
   return false;
 }
 
-} // namespace emergency_handler
+}  // namespace emergency_handler

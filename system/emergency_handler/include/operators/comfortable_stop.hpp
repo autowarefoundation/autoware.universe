@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMFORTABLE_STOP_HPP_
-#define COMFORTABLE_STOP_HPP_
+#ifndef OPERATORS__COMFORTABLE_STOP_HPP_
+#define OPERATORS__COMFORTABLE_STOP_HPP_
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
-
-#include <rclcpp/rclcpp.hpp>
 
 namespace emergency_handler
 {
@@ -57,8 +57,8 @@ private:
   rclcpp::Node * node_;
 };
 
-} // namespace comfortable_stop_operator
+}  // namespace comfortable_stop_operator
 
-} // namespace emergency_handler
+}  // namespace emergency_handler
 
-#endif // COMFORTABLE_STOP_HPP_
+#endif  // OPERATORS__COMFORTABLE_STOP_HPP_

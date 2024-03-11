@@ -51,10 +51,7 @@
               "default": -1.5
             }
           },
-          "required": [
-            "target_acceleration",
-            "target_jerk"
-          ]
+          "required": ["target_acceleration", "target_jerk"]
         },
         "comfortable_stop": {
           "type": "object",
@@ -75,11 +72,7 @@
               "default": -0.3
             }
           },
-          "required": [
-            "min_acceleration",
-            "max_jerk",
-            "min_jerk"
-          ]
+          "required": ["min_acceleration", "max_jerk", "min_jerk"]
         }
       },
       "required": [

@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EMERGENCY_STOP_HPP_
-#define EMERGENCY_STOP_HPP_
-
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#ifndef OPERATORS__EMERGENCY_STOP_HPP_
+#define OPERATORS__EMERGENCY_STOP_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
 namespace emergency_handler
 {
@@ -61,8 +60,8 @@ private:
   rclcpp::Node * node_;
 };
 
-} // namespace emergency_stop_operator
+}  // namespace emergency_stop_operator
 
-} // namespace emergency_handler
+}  // namespace emergency_handler
 
-#endif // EMERGENCY_STOP_HPP_
+#endif  // OPERATORS__EMERGENCY_STOP_HPP_

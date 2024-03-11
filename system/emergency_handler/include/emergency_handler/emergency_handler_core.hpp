@@ -37,8 +37,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 
 // Operators
-#include "operators/emergency_stop.hpp"
 #include "operators/comfortable_stop.hpp"
+#include "operators/emergency_stop.hpp"
 
 namespace emergency_handler
 {
@@ -134,6 +134,6 @@ private:
   bool isEmergency();
 };
 
-} // namespace emergency_handler
+}  // namespace emergency_handler
 
 #endif  // EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_

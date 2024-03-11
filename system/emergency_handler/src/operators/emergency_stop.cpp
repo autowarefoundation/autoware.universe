@@ -23,7 +23,8 @@ namespace emergency_stop_operator
 EmergencyStopOperator::EmergencyStopOperator(rclcpp::Node * node) : node_(node)
 {
   // Parameter
-  params_.target_acceleration = node_->declare_parameter<double>("emergency_stop.target_acceleration");
+  params_.target_acceleration =
+    node_->declare_parameter<double>("emergency_stop.target_acceleration");
   params_.target_jerk = node_->declare_parameter<double>("emergency_stop.target_jerk");
 
   // Subscriber
@@ -45,14 +46,15 @@ void EmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstShare
   is_prev_control_cmd_subscribed_ = true;
 }
 
-void EmergencyStopOperator::onTimer() {
+void EmergencyStopOperator::onTimer()
+{
   pub_control_cmd_->publish(calcNextControlCmd());
 }
 
 bool EmergencyStopOperator::operate()
 {
   pub_control_cmd_->publish(calcNextControlCmd());
-  
+
   // Currently, EmergencyStopOperator does not return false
   return true;
 }
@@ -92,7 +94,8 @@ AckermannControlCommand EmergencyStopOperator::calcNextControlCmd()
     const auto dt = (now - prev_control_cmd_.stamp).seconds();
     control_cmd.longitudinal.stamp = now;
     control_cmd.longitudinal.speed = static_cast<float>(std::max(
-      prev_control_cmd_.longitudinal.speed + prev_control_cmd_.longitudinal.acceleration * dt, 0.0));
+      prev_control_cmd_.longitudinal.speed + prev_control_cmd_.longitudinal.acceleration * dt,
+      0.0));
     control_cmd.longitudinal.acceleration = static_cast<float>(std::max(
       prev_control_cmd_.longitudinal.acceleration + params_.target_jerk * dt,
       params_.target_acceleration));
@@ -104,10 +107,10 @@ AckermannControlCommand EmergencyStopOperator::calcNextControlCmd()
 
     // lateral: keep previous lateral command
   }
-  
+
   return control_cmd;
 }
 
-} // namespace emergency_stop_operator
+}  // namespace emergency_stop_operator
 
-} // namespace emergency_handler
+}  // namespace emergency_handler

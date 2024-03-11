@@ -9,14 +9,14 @@ Emergency Handler is a node to select proper MRM from system failure state conta
 Emergency Handler has MRM operators inside.
 Currently, there are two types of MRM:
 
- - Emergency Stop Operator: publishes `/system/emergency/control_cmd` to make an emergency stop
- - Comfortable Stop Operator: publishes `/planning/scenario_planning/max_velocity_candidates` to make a comfortable stop
+- Emergency Stop Operator: publishes `/system/emergency/control_cmd` to make an emergency stop
+- Comfortable Stop Operator: publishes `/planning/scenario_planning/max_velocity_candidates` to make a comfortable stop
 
 These operators have `operate()`, `cancel()` and `onTimer` public functions.
 
- - `operate()`: executes the MRM operation
- - `cancel()`: cancels the MRM operation
- - `onTimer()`: executes each operator's timer callback
+- `operate()`: executes the MRM operation
+- `cancel()`: cancels the MRM operation
+- `onTimer()`: executes each operator's timer callback
 
 ### State Transitions
 
@@ -26,12 +26,12 @@ These operators have `operate()`, `cancel()` and `onTimer` public functions.
 
 ### Input
 
-| Name                                      | Type                                                       | Description                                                                   |
-| ----------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `/system/emergency/hazard_status`         | `autoware_auto_system_msgs::msg::HazardStatusStamped`      | Used to select proper MRM from system failure state contained in HazardStatus |
-| `/localization/kinematic_state`           | `nav_msgs::msg::Odometry`                                  | Used to decide whether vehicle is stopped or not                              |
-| `/vehicle/status/control_mode`            | `autoware_auto_vehicle_msgs::msg::ControlModeReport`       | Used to check vehicle mode: autonomous or manual                              |
-| `/control/command/control_cmd`            | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Used to calculate emergency control commands in emergency_stop_operator       |
+| Name                              | Type                                                       | Description                                                                   |
+| --------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `/system/emergency/hazard_status` | `autoware_auto_system_msgs::msg::HazardStatusStamped`      | Used to select proper MRM from system failure state contained in HazardStatus |
+| `/localization/kinematic_state`   | `nav_msgs::msg::Odometry`                                  | Used to decide whether vehicle is stopped or not                              |
+| `/vehicle/status/control_mode`    | `autoware_auto_vehicle_msgs::msg::ControlModeReport`       | Used to check vehicle mode: autonomous or manual                              |
+| `/control/command/control_cmd`    | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Used to calculate emergency control commands in emergency_stop_operator       |
 
 ### Output
 
