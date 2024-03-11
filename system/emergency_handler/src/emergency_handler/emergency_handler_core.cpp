@@ -178,9 +178,6 @@ void EmergencyHandler::callMrmBehavior(
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
-  auto request = std::make_shared<tier4_system_msgs::srv::OperateMrm::Request>();
-  request->operate = true;
-
   if (mrm_behavior == MrmState::NONE) {
     RCLCPP_WARN(this->get_logger(), "MRM behavior is None. Do nothing.");
     return;
@@ -208,9 +205,6 @@ void EmergencyHandler::cancelMrmBehavior(
   const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
-
-  auto request = std::make_shared<tier4_system_msgs::srv::OperateMrm::Request>();
-  request->operate = false;
 
   if (mrm_behavior == MrmState::NONE) {
     // Do nothing

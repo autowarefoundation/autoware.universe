@@ -21,16 +21,12 @@
 
 // Autoware
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
-#include <tier4_system_msgs/srv/operate_mrm.hpp>
 
 // ROS 2 core
-#include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
@@ -80,11 +76,6 @@ private:
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
 
   // Publisher
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
-    pub_control_command_;
-
-  // rclcpp::Publisher<tier4_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
-  // rclcpp::Publisher<tier4_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
     pub_hazard_cmd_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_gear_cmd_;
@@ -102,9 +93,6 @@ private:
     const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
   void cancelMrmBehavior(
     const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
-  void logMrmCallingResult(
-    const tier4_system_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
-    bool is_call) const;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
