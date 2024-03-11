@@ -24,10 +24,11 @@ MrmHandler::MrmHandler() : Node("mrm_handler")
   param_.update_rate = declare_parameter<int>("update_rate", 10);
   param_.timeout_operation_mode_availability =
     declare_parameter<double>("timeout_operation_mode_availability", 0.5);
+  param_.timeout_call_mrm_behavior = declare_parameter<double>("timeout_call_mrm_behavior", 0.01);
+  param_.timeout_cancel_mrm_behavior =
+    declare_parameter<double>("timeout_cancel_mrm_behavior", 0.01);
   param_.use_emergency_holding = declare_parameter<bool>("use_emergency_holding", false);
   param_.timeout_emergency_recovery = declare_parameter<double>("timeout_emergency_recovery", 5.0);
-  param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request", 10.0);
-  param_.use_takeover_request = declare_parameter<bool>("use_takeover_request", false);
   param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped", false);
   param_.use_pull_over = declare_parameter<bool>("use_pull_over", false);
   param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop", false);
@@ -163,48 +164,39 @@ void MrmHandler::onOperationModeState(
   operation_mode_state_ = msg;
 }
 
-autoware_auto_vehicle_msgs::msg::HazardLightsCommand MrmHandler::createHazardCmdMsg()
+void MrmHandler::publishHazardCmd()
 {
   using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
   HazardLightsCommand msg;
 
-  // Check emergency
-  const bool is_emergency = isEmergency();
-
+  msg.stamp = this->now();
   if (is_emergency_holding_) {
     // turn hazard on during emergency holding
     msg.command = HazardLightsCommand::ENABLE;
-  } else if (is_emergency && param_.turning_hazard_on.emergency) {
+  } else if (isEmergency() && param_.turning_hazard_on.emergency) {
     // turn hazard on if vehicle is in emergency state and
     // turning hazard on if emergency flag is true
     msg.command = HazardLightsCommand::ENABLE;
   } else {
     msg.command = HazardLightsCommand::NO_COMMAND;
   }
-  return msg;
+
+  pub_hazard_cmd_->publish(msg);
 }
 
-void MrmHandler::publishControlCommands()
+void MrmHandler::publishGearCmd()
 {
   using autoware_auto_vehicle_msgs::msg::GearCommand;
+  GearCommand msg;
 
-  // Create timestamp
-  const auto stamp = this->now();
-
-  // Publish hazard command
-  pub_hazard_cmd_->publish(createHazardCmdMsg());
-
-  // Publish gear
-  {
-    GearCommand msg;
-    msg.stamp = stamp;
-    if (param_.use_parking_after_stopped && isStopped()) {
-      msg.command = GearCommand::PARK;
-    } else {
-      msg.command = GearCommand::DRIVE;
-    }
-    pub_gear_cmd_->publish(msg);
+  msg.stamp = this->now();
+  if (param_.use_parking_after_stopped && isStopped()) {
+    msg.command = GearCommand::PARK;
+  } else {
+    msg.command = GearCommand::DRIVE;
   }
+
+  pub_gear_cmd_->publish(msg);
 }
 
 void MrmHandler::publishMrmState()
@@ -220,18 +212,27 @@ void MrmHandler::operateMrm()
   if (mrm_state_.state == MrmState::NORMAL) {
     // Cancel MRM behavior when returning to NORMAL state
     const auto current_mrm_behavior = MrmState::NONE;
-    if (current_mrm_behavior != mrm_state_.behavior) {
-      cancelMrmBehavior(mrm_state_.behavior);
+    if (current_mrm_behavior == mrm_state_.behavior) {
+      return;
+    }
+    if (requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
       mrm_state_.behavior = current_mrm_behavior;
+    } else {
+      handleFailedRequest();
     }
     return;
   }
   if (mrm_state_.state == MrmState::MRM_OPERATING) {
     const auto current_mrm_behavior = getCurrentMrmBehavior();
-    if (current_mrm_behavior != mrm_state_.behavior) {
-      cancelMrmBehavior(mrm_state_.behavior);
-      callMrmBehavior(current_mrm_behavior);
+    if (current_mrm_behavior == mrm_state_.behavior) {
+      return;
+    }
+    if (!requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
+      handleFailedRequest();
+    } else if (requestMrmBehavior(current_mrm_behavior, RequestType::CALL)) {
       mrm_state_.behavior = current_mrm_behavior;
+    } else {
+      handleFailedRequest();
     }
     return;
   }
@@ -247,88 +248,94 @@ void MrmHandler::operateMrm()
   RCLCPP_WARN(this->get_logger(), "invalid MRM state: %d", mrm_state_.state);
 }
 
-void MrmHandler::callMrmBehavior(
-  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const
+void MrmHandler::handleFailedRequest()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
-  auto request = std::make_shared<tier4_system_msgs::srv::OperateMrm::Request>();
-  request->operate = true;
-
-  if (mrm_behavior == MrmState::NONE) {
-    RCLCPP_WARN(this->get_logger(), "MRM behavior is None. Do nothing.");
-    return;
+  if (requestMrmBehavior(MrmState::EMERGENCY_STOP, CALL)) {
+    if (mrm_state_.state != MrmState::MRM_OPERATING) transitionTo(MrmState::MRM_OPERATING);
+  } else {
+    transitionTo(MrmState::MRM_FAILED);
   }
-  if (mrm_behavior == MrmState::PULL_OVER) {
-    auto result = client_mrm_pull_over_->async_send_request(request).get();
-    if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), "Pull over is operated");
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Pull over failed to operate");
-    }
-    return;
-  }
-  if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
-    auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
-    if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), "Comfortable stop is operated");
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Comfortable stop failed to operate");
-    }
-    return;
-  }
-  if (mrm_behavior == MrmState::EMERGENCY_STOP) {
-    auto result = client_mrm_emergency_stop_->async_send_request(request).get();
-    if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), "Emergency stop is operated");
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Emergency stop failed to operate");
-    }
-    return;
-  }
-  RCLCPP_WARN(this->get_logger(), "invalid MRM behavior: %d", mrm_behavior);
+  mrm_state_.behavior = MrmState::EMERGENCY_STOP;
 }
 
-void MrmHandler::cancelMrmBehavior(
-  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const
+bool MrmHandler::requestMrmBehavior(
+  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior,
+  RequestType request_type) const
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
   auto request = std::make_shared<tier4_system_msgs::srv::OperateMrm::Request>();
-  request->operate = false;
+  if (request_type == RequestType::CALL) {
+    request->operate = true;
+  } else if (request_type == RequestType::CANCEL) {
+    request->operate = false;
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "invalid request type: %d", request_type);
+    return false;
+  }
+  const auto duration = std::chrono::duration<double, std::ratio<1>>(
+    request->operate ? param_.timeout_call_mrm_behavior : param_.timeout_cancel_mrm_behavior);
+  std::shared_future<std::shared_ptr<tier4_system_msgs::srv::OperateMrm::Response>> future;
 
-  if (mrm_behavior == MrmState::NONE) {
-    // Do nothing
-    return;
-  }
-  if (mrm_behavior == MrmState::PULL_OVER) {
-    auto result = client_mrm_pull_over_->async_send_request(request).get();
-    if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), "Pull over is canceled");
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Pull over failed to cancel");
+  const auto behavior2string = [](const int behavior) {
+    if (behavior == MrmState::NONE) {
+      return "NONE";
     }
-    return;
-  }
-  if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
-    auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
-    if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), "Comfortable stop is canceled");
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Comfortable stop failed to cancel");
+    if (behavior == MrmState::PULL_OVER) {
+      return "PULL_OVER";
     }
-    return;
-  }
-  if (mrm_behavior == MrmState::EMERGENCY_STOP) {
-    auto result = client_mrm_emergency_stop_->async_send_request(request).get();
-    if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), "Emergency stop is canceled");
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Emergency stop failed to cancel");
+    if (behavior == MrmState::COMFORTABLE_STOP) {
+      return "COMFORTABLE_STOP";
     }
-    return;
+    if (behavior == MrmState::EMERGENCY_STOP) {
+      return "EMERGENCY_STOP";
+    }
+    const auto msg = "invalid behavior: " + std::to_string(behavior);
+    throw std::runtime_error(msg);
+  };
+
+  switch (mrm_behavior) {
+    case MrmState::NONE:
+      RCLCPP_WARN(this->get_logger(), "MRM behavior is None. Do nothing.");
+      return true;
+    case MrmState::PULL_OVER: {
+      future = client_mrm_pull_over_->async_send_request(request).future.share();
+      break;
+    }
+    case MrmState::COMFORTABLE_STOP: {
+      future = client_mrm_comfortable_stop_->async_send_request(request).future.share();
+      break;
+    }
+    case MrmState::EMERGENCY_STOP: {
+      future = client_mrm_emergency_stop_->async_send_request(request).future.share();
+      break;
+    }
+    default:
+      RCLCPP_ERROR(this->get_logger(), "invalid behavior: %d", mrm_behavior);
+      return false;
   }
-  RCLCPP_WARN(this->get_logger(), "invalid MRM behavior: %d", mrm_behavior);
+
+  if (future.wait_for(duration) == std::future_status::ready) {
+    const auto result = future.get();
+    if (result->response.success == true) {
+      RCLCPP_WARN(
+        this->get_logger(), request->operate ? "%s is operated." : "%s is canceled.",
+        behavior2string(mrm_behavior));
+      return true;
+    } else {
+      RCLCPP_ERROR(
+        this->get_logger(), request->operate ? "%s failed to operate." : "%s failed to cancel.",
+        behavior2string(mrm_behavior));
+      return false;
+    }
+  } else {
+    RCLCPP_ERROR(
+      this->get_logger(), request->operate ? "%s call timed out." : "%s cancel timed out.",
+      behavior2string(mrm_behavior));
+    return false;
+  }
 }
 
 bool MrmHandler::isDataReady()
@@ -382,17 +389,21 @@ void MrmHandler::onTimer()
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "heartbeat operation_mode_availability is timeout");
     mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::MRM_OPERATING;
-    publishControlCommands();
+    publishHazardCmd();
+    publishGearCmd();
     return;
   }
 
   // Update Emergency State
   updateMrmState();
 
-  // Publish control commands
-  publishControlCommands();
+  // Operate MRM
   operateMrm();
+
+  // Publish
   publishMrmState();
+  publishHazardCmd();
+  publishGearCmd();
 }
 
 void MrmHandler::transitionTo(const int new_state)
@@ -434,41 +445,23 @@ void MrmHandler::updateMrmState()
 
   // Get mode
   const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
-  const bool is_takeover_done = control_mode_->mode == ControlModeReport::MANUAL;
 
   // State Machine
   if (mrm_state_.state == MrmState::NORMAL) {
     // NORMAL
     if (is_auto_mode && is_emergency) {
-      if (param_.use_takeover_request) {
-        takeover_requested_time_ = this->get_clock()->now();
-        is_takeover_request_ = true;
-        return;
-      } else {
-        transitionTo(MrmState::MRM_OPERATING);
-        return;
-      }
+      transitionTo(MrmState::MRM_OPERATING);
+      return;
     }
   } else {
     // Emergency
-    // Send recovery events if "not emergency" or "takeover done"
+    // Send recovery events if "not emergency"
     if (!is_emergency) {
       transitionTo(MrmState::NORMAL);
       return;
     }
-    // TODO(TetsuKawa): Check if human can safely override, for example using DSM
-    if (is_takeover_done) {
-      transitionTo(MrmState::NORMAL);
-      return;
-    }
 
-    if (is_takeover_request_) {
-      const auto time_from_takeover_request = this->get_clock()->now() - takeover_requested_time_;
-      if (time_from_takeover_request.seconds() > param_.timeout_takeover_request) {
-        transitionTo(MrmState::MRM_OPERATING);
-        return;
-      }
-    } else if (mrm_state_.state == MrmState::MRM_OPERATING) {
+    if (mrm_state_.state == MrmState::MRM_OPERATING) {
       // TODO(TetsuKawa): Check MRC is accomplished
       if (mrm_state_.behavior == MrmState::PULL_OVER) {
         if (isStopped() && isArrivedAtGoal()) {
