@@ -21,19 +21,14 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
+            container: ghcr.io/autowarefoundation/autoware-openadk:latest-prebuilt
             build-depends-repos: build_depends.repos
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Free disk space (Ubuntu)
-        uses: jlumbroso/free-disk-space@v1.2.0
-        with:
-          tool-cache: false
-          dotnet: false
-          swap-storage: false
-          large-packages: false
+      - name: Show disk space before the tasks
+        run: df -h
 
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
@@ -67,3 +62,6 @@ jobs:
           fail_ci_if_error: false
           verbose: true
           flags: total
+
+      - name: Show disk space after the tasks
+        run: df -h

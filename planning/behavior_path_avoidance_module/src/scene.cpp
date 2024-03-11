@@ -133,7 +133,7 @@ bool AvoidanceModule::isExecutionRequested() const
 bool AvoidanceModule::isExecutionReady() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionReady");
-  return avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid;
+  return avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid && avoid_data_.ready;
 }
 
 bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const
@@ -513,6 +513,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    */
   data.comfortable = helper_->isComfortable(data.new_shift_line);
   data.safe = isSafePath(data.candidate_path, debug);
+  data.ready = helper_->isReady(data.new_shift_line, path_shifter_.getLastShiftLength());
 }
 
 void AvoidanceModule::fillEgoStatus(
@@ -634,8 +635,8 @@ void AvoidanceModule::fillDebugData(
       : 0.0;
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
-  const auto max_avoid_margin = object_parameter.safety_buffer_lateral * o_front.distance_factor +
-                                object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
+  const auto max_avoid_margin = object_parameter.lateral_hard_margin * o_front.distance_factor +
+                                object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
 
   const auto variable = helper_->getSharpAvoidanceDistance(
     helper_->getShiftLength(o_front, utils::avoidance::isOnRight(o_front), max_avoid_margin));
@@ -918,12 +919,26 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   BehaviorModuleOutput output;
 
+  const auto is_ignore_signal = [this](const UUID & uuid) {
+    if (!ignore_signal_.has_value()) {
+      return false;
+    }
+
+    return ignore_signal_.value() == uuid;
+  };
+
+  const auto update_ignore_signal = [this](const UUID & uuid, const bool is_ignore) {
+    ignore_signal_ = is_ignore ? std::make_optional(uuid) : std::nullopt;
+  };
+
   // turn signal info
   if (path_shifter_.getShiftLines().empty()) {
     output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  } else if (is_ignore_signal(path_shifter_.getShiftLines().front().id)) {
+    output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   } else {
     const auto original_signal = getPreviousModuleOutput().turn_signal_info;
-    const auto new_signal = utils::avoidance::calcTurnSignalInfo(
+    const auto [new_signal, is_ignore] = utils::avoidance::calcTurnSignalInfo(
       linear_shift_path, path_shifter_.getShiftLines().front(), helper_->getEgoShift(), avoid_data_,
       planner_data_);
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
@@ -931,6 +946,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
       spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
       planner_data_->parameters.ego_nearest_dist_threshold,
       planner_data_->parameters.ego_nearest_yaw_threshold);
+    update_ignore_signal(path_shifter_.getShiftLines().front().id, is_ignore);
   }
 
   // sparse resampling for computational cost
@@ -1407,8 +1423,8 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
 
-  const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
-                            object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
+  const auto avoid_margin = object_parameter.lateral_hard_margin * object.distance_factor +
+                            object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
   const auto variable = helper_->getMinAvoidanceDistance(
     helper_->getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
   const auto & additional_buffer_longitudinal =
@@ -1637,8 +1653,8 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
-  const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
-                            object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
+  const auto avoid_margin = object_parameter.lateral_hard_margin * object.distance_factor +
+                            object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
   const auto shift_length =
     helper_->getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin);
 

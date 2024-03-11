@@ -15,7 +15,6 @@
 #include "behavior_path_lane_change_module/scene.hpp"
 
 #include "behavior_path_lane_change_module/utils/utils.hpp"
-#include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
@@ -33,7 +32,6 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -474,6 +472,7 @@ void NormalLaneChange::resetParameters()
   current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_ = nullptr;
   status_ = {};
+  unsafe_hysteresis_count_ = 0;
   lane_change_debug_.reset();
 
   RCLCPP_DEBUG(logger_, "reset all flags and debug information.");
@@ -844,7 +843,7 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
 
   // get backward lanes
   const auto backward_length = lane_change_parameters_->backward_lane_length;
-  const auto target_backward_lanes = utils::lane_change::getBackwardLanelets(
+  const auto target_backward_lanes = behavior_path_planner::utils::getBackwardLanelets(
     route_handler, target_lanes, current_pose, backward_length);
 
   // filter objects to get target object index
@@ -1663,6 +1662,28 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   }
 
   return safety_status;
+}
+
+PathSafetyStatus NormalLaneChange::evaluateApprovedPathWithUnsafeHysteresis(
+  PathSafetyStatus approved_path_safety_status)
+{
+  if (!approved_path_safety_status.is_safe) {
+    ++unsafe_hysteresis_count_;
+    RCLCPP_DEBUG(
+      logger_, "%s: Increasing hysteresis count to %d.", __func__, unsafe_hysteresis_count_);
+  } else {
+    if (unsafe_hysteresis_count_ > 0) {
+      RCLCPP_DEBUG(logger_, "%s: Lane change is now SAFE. Resetting hysteresis count.", __func__);
+    }
+    unsafe_hysteresis_count_ = 0;
+  }
+  if (unsafe_hysteresis_count_ > lane_change_parameters_->cancel.unsafe_hysteresis_threshold) {
+    RCLCPP_DEBUG(
+      logger_, "%s: hysteresis count exceed threshold. lane change is now %s", __func__,
+      (approved_path_safety_status.is_safe ? "safe" : "UNSAFE"));
+    return approved_path_safety_status;
+  }
+  return {};
 }
 
 TurnSignalInfo NormalLaneChange::calcTurnSignalInfo() const
