@@ -108,7 +108,8 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   // subscribers
   std::function<void(const typename TargetMsg3D::ConstSharedPtr msg)> sub_callback =
     std::bind(&FusionNode::subCallback, this, std::placeholders::_1);
-  sub_ = this->create_subscription<TargetMsg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
+  sub_ =
+    this->create_subscription<TargetMsg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
 
   // publisher
   pub_ptr_ = this->create_publisher<TargetMsg3D>("output", rclcpp::QoS{1});
@@ -154,13 +155,15 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::cameraInfoCallback(
 }
 
 template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::preprocess(TargetMsg3D & ouput_msg __attribute__((unused)))
+void FusionNode<TargetMsg3D, Obj, Msg2D>::preprocess(TargetMsg3D & ouput_msg
+                                                     __attribute__((unused)))
 {
   // do nothing by default
 }
 
 template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(const typename TargetMsg3D::ConstSharedPtr input_msg)
+void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
+  const typename TargetMsg3D::ConstSharedPtr input_msg)
 {
   if (cached_msg_.second != nullptr) {
     stop_watch_ptr_->toc("processing_time", true);
@@ -357,7 +360,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
 }
 
 template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::postprocess(TargetMsg3D & output_msg __attribute__((unused)))
+void FusionNode<TargetMsg3D, Obj, Msg2D>::postprocess(TargetMsg3D & output_msg
+                                                      __attribute__((unused)))
 {
   // do nothing by default
 }
