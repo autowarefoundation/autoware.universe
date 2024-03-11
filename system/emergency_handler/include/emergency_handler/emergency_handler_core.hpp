@@ -55,7 +55,6 @@ struct Param
   bool use_parking_after_stopped;
   bool use_comfortable_stop;
   HazardLampPolicy turning_hazard_on{};
-  comfortable_stop_operator::Param comfortable_stop{};
 };
 
 class EmergencyHandler : public rclcpp::Node
