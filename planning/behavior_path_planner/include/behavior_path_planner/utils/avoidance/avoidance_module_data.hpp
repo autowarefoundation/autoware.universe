@@ -281,9 +281,6 @@ struct AvoidanceParameters
   bool use_shorten_margin_immediately{false};
 
   // policy
-  std::string policy_approval{"shift_line"};
-
-  // policy
   std::string policy_deceleration{"best_effort"};
 
   // policy
