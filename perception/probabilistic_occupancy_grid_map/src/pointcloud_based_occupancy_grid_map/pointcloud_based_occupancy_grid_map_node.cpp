@@ -157,8 +157,8 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   // Filter obstacle pointcloud by raw pointcloud
   PointCloud2 filtered_obstacle_pc_common{};
   if (filter_obstacle_pointcloud_by_raw_pointcloud_) {
-    if (!utils::extractCommonPointCloud(
-          filtered_obstacle_pc, filtered_raw_pc, filtered_obstacle_pc_common)) {
+    if (!utils::extractApproximateCommonPointCloud(
+          filtered_obstacle_pc, filtered_raw_pc, 0.1f, filtered_obstacle_pc_common)) {
       filtered_obstacle_pc_common = filtered_obstacle_pc;
     }
   } else {
