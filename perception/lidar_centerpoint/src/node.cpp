@@ -39,23 +39,23 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
 : Node("lidar_center_point", node_options), tf_buffer_(this->get_clock())
 {
   const float score_threshold =
-    static_cast<float>(this->declare_parameter<double>("score_threshold", 0.35));
+    static_cast<float>(this->declare_parameter<double>("score_threshold"));
   const float circle_nms_dist_threshold =
     static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold"));
   const auto yaw_norm_thresholds =
     this->declare_parameter<std::vector<double>>("yaw_norm_thresholds");
   const std::string densification_world_frame_id =
-    this->declare_parameter("densification_world_frame_id", "map");
+    this->declare_parameter<std::string>("densification_world_frame_id");
   const int densification_num_past_frames =
-    this->declare_parameter("densification_num_past_frames", 1);
-  const std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
+    this->declare_parameter<int>("densification_num_past_frames");
+  const std::string trt_precision = this->declare_parameter<std::string>("trt_precision");
   const std::string encoder_onnx_path = this->declare_parameter<std::string>("encoder_onnx_path");
   const std::string encoder_engine_path =
     this->declare_parameter<std::string>("encoder_engine_path");
   const std::string head_onnx_path = this->declare_parameter<std::string>("head_onnx_path");
   const std::string head_engine_path = this->declare_parameter<std::string>("head_engine_path");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
-  has_twist_ = this->declare_parameter("has_twist", false);
+  has_twist_ = this->declare_parameter<bool>("has_twist");
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
   const std::size_t max_voxel_size =
