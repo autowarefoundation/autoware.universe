@@ -39,6 +39,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/mrm/comfortable_stop/status", "/system/mrm/comfortable_stop/status"),
             ("~/output/velocity_limit", "/planning/scenario_planning/max_velocity_candidates"),
             ("~/output/velocity_limit/clear", "/planning/scenario_planning/clear_velocity_limit"),
+            ("~/output/hazard_lights_cmd", "~/hazard_lights_cmd"),
         ],
     )
 

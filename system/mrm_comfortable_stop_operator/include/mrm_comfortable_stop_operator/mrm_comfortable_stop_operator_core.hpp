@@ -19,6 +19,7 @@
 #include <memory>
 
 // Autoware
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_constraints.hpp>
@@ -30,6 +31,7 @@
 
 namespace mrm_comfortable_stop_operator
 {
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 
 struct Parameters
 {
@@ -60,10 +62,12 @@ private:
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>::SharedPtr
     pub_velocity_limit_clear_command_;
+  rclcpp::Publisher<HazardLightsCommand>::SharedPtr pub_hazard_lights_cmd_;
 
   void publishStatus() const;
   void publishVelocityLimit() const;
   void publishVelocityLimitClearCommand() const;
+  void publishHazardLightsCommand() const;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;

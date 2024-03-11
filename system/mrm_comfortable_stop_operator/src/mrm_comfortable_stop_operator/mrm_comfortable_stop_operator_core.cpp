@@ -40,6 +40,7 @@ MrmComfortableStopOperator::MrmComfortableStopOperator(const rclcpp::NodeOptions
   pub_velocity_limit_clear_command_ =
     create_publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>(
       "~/output/velocity_limit/clear", rclcpp::QoS{1}.transient_local());
+  pub_hazard_lights_cmd_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
@@ -96,9 +97,23 @@ void MrmComfortableStopOperator::publishVelocityLimitClearCommand() const
   pub_velocity_limit_clear_command_->publish(velocity_limit_clear_command);
 }
 
+void MrmComfortableStopOperator::publishHazardLightsCommand() const
+{
+  auto hazard_lights_cmd = HazardLightsCommand();
+  hazard_lights_cmd.stamp = this->now();
+  hazard_lights_cmd.command = HazardLightsCommand::DISABLE;
+
+  if (status_.state == tier4_system_msgs::msg::MrmBehaviorStatus::OPERATING) {
+    hazard_lights_cmd.command = HazardLightsCommand::ENABLE;
+  }
+
+  pub_hazard_lights_cmd_->publish(hazard_lights_cmd);
+}
+
 void MrmComfortableStopOperator::onTimer() const
 {
   publishStatus();
+  publishHazardLightsCommand();
 }
 
 }  // namespace mrm_comfortable_stop_operator
