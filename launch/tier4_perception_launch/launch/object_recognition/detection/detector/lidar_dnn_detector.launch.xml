@@ -6,7 +6,6 @@
 
   <!-- Lidar detector centerpoint parameters -->
   <arg name="centerpoint_model_name" default="centerpoint_tiny"/>
-  <arg name="centerpoint_model_path" default="$(var data_path)/lidar_centerpoint"/>
 
   <!-- CenterPoint -->
   <group if="$(eval &quot;'$(var lidar_detection_model)'=='centerpoint'&quot;)">
@@ -17,7 +16,7 @@
         <arg name="output/objects" value="objects"/>
         <arg name="model_name" value="$(var centerpoint_model_name)"/>
         <arg name="model_path" value="$(var centerpoint_model_path)"/>
-        <arg name="model_param_path" value="$(var centerpoint_model_path)/$(var centerpoint_model_name).param.yaml"/>
+        <arg name="model_param_path" value="$(var model_path)/$(var centerpoint_model_name).param.yaml"/>
         <arg name="ml_package_param_path" value="$(var ml_package_param_path)/lidar_centerpoint_ml_package.param.yaml"/>
         <arg name="class_remapper_param_path" value="$(var centerpoint_model_path)/detection_class_remapper.param.yaml"/>
 
