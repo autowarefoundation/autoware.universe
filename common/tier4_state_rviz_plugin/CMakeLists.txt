@@ -13,6 +13,7 @@ add_definitions(-DQT_NO_KEYWORDS)
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/autoware_state_panel.cpp
   src/velocity_steering_factors_panel.cpp
+  src/custom_toggle_switch.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
