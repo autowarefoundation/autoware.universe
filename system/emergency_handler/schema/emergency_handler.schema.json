@@ -36,6 +36,50 @@
             }
           },
           "required": ["emergency"]
+        },
+        "emergency_stop": {
+          "type": "object",
+          "properties": {
+            "target_acceleration": {
+              "type": "number",
+              "description": "Target acceleration for emergency stop [m/s^2]",
+              "default": -2.5
+            },
+            "target_jerk": {
+              "type": "number",
+              "description": "Target jerk for emergency stop [m/s^3] ",
+              "default": -1.5
+            }
+          },
+          "required": [
+            "target_acceleration",
+            "target_jerk"
+          ]
+        },
+        "comfortable_stop": {
+          "type": "object",
+          "properties": {
+            "min_acceleration": {
+              "type": "number",
+              "description": "Minimum acceleration for comfortable stop [m/s^2]",
+              "default": -1.0
+            },
+            "max_jerk": {
+              "type": "number",
+              "description": "Maximum jerk for comfortable stop [m/s^3]",
+              "default": 0.3
+            },
+            "min_jerk": {
+              "type": "number",
+              "description": "Minimum jerk for comfortable stop [m/s^3]",
+              "default": -0.3
+            }
+          },
+          "required": [
+            "min_acceleration",
+            "max_jerk",
+            "min_jerk"
+          ]
         }
       },
       "required": [
@@ -43,7 +87,9 @@
         "timeout_hazard_status",
         "use_parking_after_stopped",
         "use_comfortable_stop",
-        "turning_hazard_on"
+        "turning_hazard_on",
+        "emergency_stop",
+        "comfortable_stop"
       ],
       "additionalProperties": false
     }

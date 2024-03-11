@@ -10,3 +10,14 @@
     # setting whether to turn hazard lamp on for each situation
     turning_hazard_on:
       emergency: true
+
+    # emergency stop operator class
+    emergency_stop:
+      target_acceleration: -2.5
+      target_jerk: -1.5
+
+    # comfortable stop operator class
+    comfortable_stop:
+      min_acceleration: -1.0
+      max_jerk: 0.3
+      min_jerk: -0.3
