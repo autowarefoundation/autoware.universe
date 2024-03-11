@@ -76,7 +76,7 @@ private:
     double margin_time_to_goal;
   };
 
-  // Subscribtoers
+  // Subscribers
   rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<LaneletRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
