@@ -44,7 +44,9 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), params_(std::move(planner_param))
 {
-  prev_stop_decision_time_ = rclcpp::Time(int64_t{0}, clock->get_clock_type());
+  prev_stop_decision_time_ =
+    clock->now() -
+    rclcpp::Duration(std::chrono::duration<double>(params_.decision_duration_buffer));
   velocity_factor_.init(PlanningBehavior::UNKNOWN);
 }
 
@@ -76,8 +78,9 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     ego_data.path.points, ego_data.pose.position, min_stop_distance);
 
   make_ego_footprint_rtree(ego_data, params_);
+  const auto start_time = clock_->now();
   const auto has_decided_to_stop =
-    (clock_->now() - prev_stop_decision_time_).seconds() < params_.decision_duration_buffer;
+    (start_time - prev_stop_decision_time_).seconds() < params_.decision_duration_buffer;
   if (!has_decided_to_stop) current_stop_pose_.reset();
   double hysteresis = has_decided_to_stop ? params_.hysteresis : 0.0;
   const auto dynamic_obstacles =
@@ -109,7 +112,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
                                                                path->points, stop_pose->position,
                                                                current_stop_pose_->position) > 0.0;
       if (use_new_stop_pose) current_stop_pose_ = *stop_pose;
-      prev_stop_decision_time_ = clock_->now();
+      prev_stop_decision_time_ = start_time;
     }
   }
 
