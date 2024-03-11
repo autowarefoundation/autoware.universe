@@ -17,10 +17,13 @@
 #ifndef AUTOWARE_STATE_PANEL_HPP_
 #define AUTOWARE_STATE_PANEL_HPP_
 
+#include "custom_toggle_switch.hpp"
+
 #include <QGroupBox>
 #include <QLabel>
 #include <QLayout>
 #include <QPushButton>
+#include <QSlider>
 #include <QSpinBox>
 #include <QTableWidget>
 #include <rclcpp/rclcpp.hpp>
@@ -75,17 +78,18 @@ public Q_SLOTS:  // NOLINT for Qt
   void onClickAcceptStart();
   void onClickVelocityLimit();
   void onClickEmergencyButton();
+  void onSwitchStateChanged(int state);
 
 protected:
   // Layout
   QGroupBox * makeOperationModeGroup();
-  QGroupBox * makeControlModeGroup();
-  QGroupBox * makeRoutingGroup();
-  QGroupBox * makeLocalizationGroup();
-  QGroupBox * makeMotionGroup();
-  QGroupBox * makeFailSafeGroup();
+  QGroupBox * makeVelocityLimitGroup();
+  QVBoxLayout * makeRoutingGroup();
+  QVBoxLayout * makeLocalizationGroup();
+  QVBoxLayout * makeMotionGroup();
+  QVBoxLayout * makeFailSafeGroup();
 
-  void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
+  // void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
   void onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg);
 
   rclcpp::Node::SharedPtr raw_node_;
@@ -97,8 +101,10 @@ protected:
 
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
 
+  QLabel * velocity_limit_value_label_{nullptr};
+  bool sliderIsDragging = false;
+
   // Operation Mode
-  //// Gate Mode
   QLabel * operation_mode_label_ptr_{nullptr};
   QPushButton * stop_button_ptr_{nullptr};
   QPushButton * auto_button_ptr_{nullptr};
@@ -112,6 +118,7 @@ protected:
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_change_to_remote_;
 
   //// Control Mode
+  CustomToggleSwitch * control_mode_switch_ptr_{nullptr};
   QLabel * control_mode_label_ptr_{nullptr};
   QPushButton * enable_button_ptr_{nullptr};
   QPushButton * disable_button_ptr_{nullptr};
@@ -158,7 +165,7 @@ protected:
   void onMRMState(const MRMState::ConstSharedPtr msg);
 
   // Others
-  QPushButton * velocity_limit_button_ptr_;
+  QLabel * velocity_limit_setter_ptr_;
   QLabel * gear_label_ptr_;
 
   QSpinBox * pub_velocity_limit_input_;
