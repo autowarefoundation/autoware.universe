@@ -218,6 +218,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
   // policy
   {
     std::string ns = "avoidance.policy.";
+    p.policy_approval = getOrDeclareParameter<std::string>(*node, ns + "approval");
     p.policy_deceleration = getOrDeclareParameter<std::string>(*node, ns + "deceleration");
     p.policy_lateral_margin = getOrDeclareParameter<std::string>(*node, ns + "lateral_margin");
     p.use_shorten_margin_immediately =
