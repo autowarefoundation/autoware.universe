@@ -47,10 +47,10 @@ struct Param
 {
   int update_rate;
   double timeout_operation_mode_availability;
+  double timeout_call_mrm_behavior;
+  double timeout_cancel_mrm_behavior;
   bool use_emergency_holding;
   double timeout_emergency_recovery;
-  double timeout_takeover_request;
-  bool use_takeover_request;
   bool use_parking_after_stopped;
   bool use_pull_over;
   bool use_comfortable_stop;
@@ -63,6 +63,9 @@ public:
   MrmHandler();
 
 private:
+  // type
+  enum RequestType { CALL, CANCEL };
+
   // Subscribers
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
@@ -106,9 +109,8 @@ private:
     pub_hazard_cmd_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_gear_cmd_;
 
-  autoware_auto_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();
-  autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
-  void publishControlCommands();
+  void publishHazardCmd();
+  void publishGearCmd();
 
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::MrmState>::SharedPtr pub_mrm_state_;
 
@@ -123,10 +125,9 @@ private:
   rclcpp::CallbackGroup::SharedPtr client_mrm_emergency_stop_group_;
   rclcpp::Client<tier4_system_msgs::srv::OperateMrm>::SharedPtr client_mrm_emergency_stop_;
 
-  void callMrmBehavior(
-    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
-  void cancelMrmBehavior(
-    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
+  bool requestMrmBehavior(
+    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior,
+    RequestType request_type) const;
   void logMrmCallingResult(
     const tier4_system_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
     bool is_call) const;
@@ -145,12 +146,11 @@ private:
   std::optional<rclcpp::Time> stamp_autonomous_become_unavailable_ = std::nullopt;
 
   // Algorithm
-  rclcpp::Time takeover_requested_time_;
-  bool is_takeover_request_ = false;
   bool is_emergency_holding_ = false;
   void transitionTo(const int new_state);
   void updateMrmState();
   void operateMrm();
+  void handleFailedRequest();
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
   bool isEmergency() const;

@@ -78,7 +78,16 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 
     ndt_ptr_->setParams(param);
 
-    update_ndt(position, *ndt_ptr_);
+    const bool updated = update_ndt(position, *ndt_ptr_);
+    if (!updated) {
+      RCLCPP_ERROR_STREAM_THROTTLE(
+        logger_, *clock_, 1000,
+        "update_ndt failed. If this happens with initial position estimation, make sure that"
+        "(1) the initial position matches the pcd map and (2) the map_loader is working properly.");
+      last_update_position_ = position;
+      ndt_ptr_mutex_->unlock();
+      return;
+    }
     ndt_ptr_->setInputSource(input_source);
     ndt_ptr_mutex_->unlock();
     need_rebuild_ = false;
@@ -152,18 +161,14 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   }
 
   const auto exe_start_time = std::chrono::system_clock::now();
-  const size_t add_size = maps_to_add.size();
   // Perform heavy processing outside of the lock scope
-  std::vector<pcl::shared_ptr<pcl::PointCloud<PointTarget>>> points_pcl(add_size);
-
-  for (size_t i = 0; i < add_size; i++) {
-    points_pcl[i] = pcl::make_shared<pcl::PointCloud<PointTarget>>();
-    pcl::fromROSMsg(maps_to_add[i].pointcloud, *points_pcl[i]);
-  }
 
   // Add pcd
-  for (size_t i = 0; i < add_size; i++) {
-    ndt.addTarget(points_pcl[i], maps_to_add[i].cell_id);
+  for (auto & map : maps_to_add) {
+    auto cloud = pcl::make_shared<pcl::PointCloud<PointTarget>>();
+
+    pcl::fromROSMsg(map.pointcloud, *cloud);
+    ndt.addTarget(cloud, map.cell_id);
   }
 
   // Remove pcd
