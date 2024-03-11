@@ -26,34 +26,23 @@
 
 namespace tier4_autoware_utils
 {
-using autoware_internal_msgs::msg::PublishedTime;
-
-// Custom comparison struct for rmw_gid_t
-struct GidCompare
-{
-  bool operator()(const rmw_gid_t & lhs, const rmw_gid_t & rhs) const
-  {
-    return std::memcmp(lhs.data, rhs.data, RMW_GID_STORAGE_SIZE) < 0;
-  }
-};
 
 class PublishedTimePublisher
 {
 public:
   explicit PublishedTimePublisher(
-    rclcpp::Node * node, const std::string & end_name = "/debug/published_time",
+    rclcpp::Node * node, const std::string & publisher_topic_suffix = "/debug/published_time",
     const rclcpp::QoS & qos = rclcpp::QoS(1))
-  : node_(node), end_name_(end_name), qos_(qos)
+  : node_(node), publisher_topic_suffix_(publisher_topic_suffix), qos_(qos)
   {
   }
 
   void publish(const rclcpp::PublisherBase::ConstSharedPtr & publisher, const rclcpp::Time & stamp)
   {
     const auto & gid_key = publisher->get_gid();
-    const auto & topic_name = publisher->get_topic_name();
 
     // if the publisher is not in the map, create a new publisher for published time
-    ensure_publisher_exists(gid_key, topic_name);
+    ensure_publisher_exists(gid_key, publisher->get_topic_name());
 
     const auto & pub_published_time_ = publishers_[gid_key];
 
@@ -72,10 +61,9 @@ public:
     const rclcpp::PublisherBase::ConstSharedPtr & publisher, const std_msgs::msg::Header & header)
   {
     const auto & gid_key = publisher->get_gid();
-    const auto & topic_name = publisher->get_topic_name();
 
     // if the publisher is not in the map, create a new publisher for published time
-    ensure_publisher_exists(gid_key, topic_name);
+    ensure_publisher_exists(gid_key, publisher->get_topic_name());
 
     const auto & pub_published_time_ = publishers_[gid_key];
 
@@ -92,14 +80,26 @@ public:
 
 private:
   rclcpp::Node * node_;
-  std::string end_name_;
+  std::string publisher_topic_suffix_;
   rclcpp::QoS qos_;
+
+  using PublishedTime = autoware_internal_msgs::msg::PublishedTime;
+
+  // Custom comparison struct for rmw_gid_t
+  struct GidCompare
+  {
+    bool operator()(const rmw_gid_t & lhs, const rmw_gid_t & rhs) const
+    {
+      return std::memcmp(lhs.data, rhs.data, RMW_GID_STORAGE_SIZE) < 0;
+    }
+  };
 
   // ensure that the publisher exists in publisher_ map, if not, create a new one
   void ensure_publisher_exists(const rmw_gid_t & gid_key, const std::string & topic_name)
   {
     if (publishers_.find(gid_key) == publishers_.end()) {
-      publishers_[gid_key] = node_->create_publisher<PublishedTime>(topic_name + end_name_, qos_);
+      publishers_[gid_key] =
+        node_->create_publisher<PublishedTime>(topic_name + publisher_topic_suffix_, qos_);
     }
   }
 
