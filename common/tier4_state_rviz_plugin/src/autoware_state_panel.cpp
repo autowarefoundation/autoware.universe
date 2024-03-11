@@ -35,181 +35,298 @@ namespace rviz_plugins
 {
 AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(parent)
 {
-  // Gear
-  auto * gear_prefix_label_ptr = new QLabel("GEAR: ");
-  gear_prefix_label_ptr->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-  gear_label_ptr_ = new QLabel("INIT");
-  gear_label_ptr_->setAlignment(Qt::AlignCenter);
-  auto * gear_layout = new QHBoxLayout;
-  gear_layout->addWidget(gear_prefix_label_ptr);
-  gear_layout->addWidget(gear_label_ptr_);
-
-  // Velocity Limit
-  velocity_limit_button_ptr_ = new QPushButton("Send Velocity Limit");
-  pub_velocity_limit_input_ = new QSpinBox();
-  pub_velocity_limit_input_->setRange(-100.0, 100.0);
-  pub_velocity_limit_input_->setValue(0.0);
-  pub_velocity_limit_input_->setSingleStep(5.0);
-  connect(velocity_limit_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickVelocityLimit()));
-
-  // Emergency Button
-  emergency_button_ptr_ = new QPushButton("Set Emergency");
-  connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
+  // Panel Configuration
+  this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  this->setMinimumWidth(512);
+  this->setMaximumWidth(512);
 
   // Layout
-  auto * v_layout = new QVBoxLayout;
-  auto * velocity_limit_layout = new QHBoxLayout();
-  v_layout->addWidget(makeOperationModeGroup());
-  v_layout->addWidget(makeControlModeGroup());
-  {
-    auto * h_layout = new QHBoxLayout();
-    h_layout->addWidget(makeRoutingGroup());
-    h_layout->addWidget(makeLocalizationGroup());
-    h_layout->addWidget(makeMotionGroup());
-    h_layout->addWidget(makeFailSafeGroup());
-    v_layout->addLayout(h_layout);
-  }
+  auto * main_v_layout = new QVBoxLayout;
+  main_v_layout->setAlignment(Qt::AlignTop);
 
-  v_layout->addLayout(gear_layout);
-  velocity_limit_layout->addWidget(velocity_limit_button_ptr_);
-  velocity_limit_layout->addWidget(pub_velocity_limit_input_);
-  velocity_limit_layout->addWidget(new QLabel("  [km/h]"));
-  velocity_limit_layout->addWidget(emergency_button_ptr_);
-  v_layout->addLayout(velocity_limit_layout);
-  setLayout(v_layout);
+  // Operation Mode
+  auto * operation_mode_group = makeOperationModeGroup();
+
+  main_v_layout->addWidget(operation_mode_group);
+
+  // Diagnostic
+  auto * diagnostic_group = new QGroupBox("Diagnostic");
+  auto * diagnostic_v_layout = new QVBoxLayout;
+
+  auto * localization_group = makeLocalizationGroup();
+  auto * motion_group = makeMotionGroup();
+  auto * fail_safe_group = makeFailSafeGroup();
+  auto * routing_group = makeRoutingGroup();
+
+  diagnostic_v_layout->addLayout(routing_group);
+  // add space between routing and localization
+  diagnostic_v_layout->addSpacing(10);
+  diagnostic_v_layout->addLayout(localization_group);
+  diagnostic_v_layout->addSpacing(10);
+  diagnostic_v_layout->addLayout(motion_group);
+  diagnostic_v_layout->addSpacing(10);
+  diagnostic_v_layout->addLayout(fail_safe_group);
+  diagnostic_group->setLayout(diagnostic_v_layout);
+  main_v_layout->addWidget(diagnostic_group);
+
+  // Velocity Limit
+  auto * velocity_limit_group = makeVelocityLimitGroup();
+
+  main_v_layout->addWidget(velocity_limit_group);
+  main_v_layout->addStretch();
+
+  // Settting the layout
+  setLayout(main_v_layout);
 }
 
 QGroupBox * AutowareStatePanel::makeOperationModeGroup()
 {
-  auto * group = new QGroupBox("OperationMode");
-  auto * grid = new QGridLayout;
-
-  operation_mode_label_ptr_ = new QLabel("INIT");
-  operation_mode_label_ptr_->setAlignment(Qt::AlignCenter);
-  operation_mode_label_ptr_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(operation_mode_label_ptr_, 0, 0, 0, 1);
-
+  control_mode_switch_ptr_ = new CustomToggleSwitch(this);
+  connect(
+    control_mode_switch_ptr_, &QCheckBox::stateChanged, this,
+    &AutowareStatePanel::onSwitchStateChanged);
   auto_button_ptr_ = new QPushButton("AUTO");
   auto_button_ptr_->setCheckable(true);
+  auto_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(auto_button_ptr_, SIGNAL(clicked()), SLOT(onClickAutonomous()));
-  grid->addWidget(auto_button_ptr_, 0, 1);
-
   stop_button_ptr_ = new QPushButton("STOP");
   stop_button_ptr_->setCheckable(true);
+  stop_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(stop_button_ptr_, SIGNAL(clicked()), SLOT(onClickStop()));
-  grid->addWidget(stop_button_ptr_, 0, 2);
-
   local_button_ptr_ = new QPushButton("LOCAL");
   local_button_ptr_->setCheckable(true);
+  local_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(local_button_ptr_, SIGNAL(clicked()), SLOT(onClickLocal()));
-  grid->addWidget(local_button_ptr_, 1, 1);
-
   remote_button_ptr_ = new QPushButton("REMOTE");
   remote_button_ptr_->setCheckable(true);
+  remote_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(remote_button_ptr_, SIGNAL(clicked()), SLOT(onClickRemote()));
-  grid->addWidget(remote_button_ptr_, 1, 2);
 
-  group->setLayout(grid);
+  control_mode_label_ptr_ = new QLabel("Autoware Control Mode:  ");
+  // set its width to fit the text
+  control_mode_label_ptr_->setFixedWidth(
+    control_mode_label_ptr_->fontMetrics().horizontalAdvance("Autoware Control Mode:  "));
+
+  auto * group = new QGroupBox("OperationMode");
+
+  auto * hLayoutTop = new QHBoxLayout;
+  auto * vLayout = new QVBoxLayout;
+  hLayoutTop->addWidget(control_mode_label_ptr_);
+  hLayoutTop->addWidget(control_mode_switch_ptr_);
+  hLayoutTop->addStretch();
+
+  vLayout->addLayout(hLayoutTop);
+
+  // create a small space between the hlayouttop and the hlayoutbottom
+  vLayout->addSpacing(10);
+
+  // auto * hLayoutMid = new QHBoxLayout;
+  // hLayoutMid->addWidget(auto_button_ptr_);
+  // hLayoutMid->addWidget(stop_button_ptr_);
+  // hLayoutMid->addStretch();
+
+  // vLayout->addLayout(hLayoutMid);
+
+  auto * hLayoutBottom = new QHBoxLayout;
+  hLayoutBottom->addWidget(auto_button_ptr_);
+  hLayoutBottom->addWidget(local_button_ptr_);
+  hLayoutBottom->addWidget(remote_button_ptr_);
+  hLayoutBottom->addWidget(stop_button_ptr_);
+
+  vLayout->addLayout(hLayoutBottom);
+
+  group->setLayout(vLayout);
   return group;
 }
 
-QGroupBox * AutowareStatePanel::makeControlModeGroup()
+QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
 {
-  auto * group = new QGroupBox("AutowareControl");
-  auto * grid = new QGridLayout;
+  auto * group = new QVBoxLayout;
+  auto * h_layout = new QHBoxLayout;
 
-  control_mode_label_ptr_ = new QLabel("INIT");
-  control_mode_label_ptr_->setAlignment(Qt::AlignCenter);
-  control_mode_label_ptr_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(control_mode_label_ptr_, 0, 0);
-
-  enable_button_ptr_ = new QPushButton("Enable");
-  enable_button_ptr_->setCheckable(true);
-  connect(enable_button_ptr_, SIGNAL(clicked()), SLOT(onClickAutowareControl()));
-  grid->addWidget(enable_button_ptr_, 0, 1);
-
-  disable_button_ptr_ = new QPushButton("Disable");
-  disable_button_ptr_->setCheckable(true);
-  connect(disable_button_ptr_, SIGNAL(clicked()), SLOT(onClickDirectControl()));
-  grid->addWidget(disable_button_ptr_, 0, 2);
-
-  group->setLayout(grid);
-  return group;
-}
-
-QGroupBox * AutowareStatePanel::makeRoutingGroup()
-{
-  auto * group = new QGroupBox("Routing");
-  auto * grid = new QGridLayout;
-
-  routing_label_ptr_ = new QLabel("INIT");
-  routing_label_ptr_->setAlignment(Qt::AlignCenter);
-  routing_label_ptr_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(routing_label_ptr_, 0, 0);
+  routing_label_ptr_ = new QLabel;
+  routing_label_ptr_->setFixedSize(40, 40);
+  routing_label_ptr_->setStyleSheet(
+    "border-radius: 20;border: 2px solid #00e678;background-color: #00e678");
 
   clear_route_button_ptr_ = new QPushButton("Clear Route");
   clear_route_button_ptr_->setCheckable(true);
+  clear_route_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(clear_route_button_ptr_, SIGNAL(clicked()), SLOT(onClickClearRoute()));
-  grid->addWidget(clear_route_button_ptr_, 1, 0);
 
-  group->setLayout(grid);
+  auto * routing_label_title_ptr_ = new QLabel("Routing State: ");
+
+  h_layout->addWidget(routing_label_title_ptr_);
+  h_layout->addStretch();
+  h_layout->addWidget(clear_route_button_ptr_);
+  h_layout->addWidget(routing_label_ptr_);
+
+  h_layout->setAlignment(Qt::AlignTop);
+
+  group->addLayout(h_layout);
   return group;
 }
 
-QGroupBox * AutowareStatePanel::makeLocalizationGroup()
+QVBoxLayout * AutowareStatePanel::makeLocalizationGroup()
 {
-  auto * group = new QGroupBox("Localization");
-  auto * grid = new QGridLayout;
-
-  localization_label_ptr_ = new QLabel("INIT");
-  localization_label_ptr_->setAlignment(Qt::AlignCenter);
-  localization_label_ptr_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(localization_label_ptr_, 0, 0);
+  auto * group = new QVBoxLayout;
+  auto * h_layout = new QHBoxLayout;
 
   init_by_gnss_button_ptr_ = new QPushButton("Init by GNSS");
+  init_by_gnss_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(init_by_gnss_button_ptr_, SIGNAL(clicked()), SLOT(onClickInitByGnss()));
-  grid->addWidget(init_by_gnss_button_ptr_, 1, 0);
 
-  group->setLayout(grid);
+  localization_label_ptr_ = new QLabel;
+  localization_label_ptr_->setFixedSize(40, 40);
+  localization_label_ptr_->setStyleSheet(
+    "border-radius: 20;border: 2px solid #00e678;background-color: #00e678");
+
+  auto * localization_label_title_ptr_ = new QLabel("Localization State: ");
+
+  h_layout->addWidget(localization_label_title_ptr_);
+  h_layout->addStretch();
+  h_layout->addWidget(init_by_gnss_button_ptr_);
+  h_layout->addWidget(localization_label_ptr_);
+
+  group->addLayout(h_layout);
   return group;
 }
 
-QGroupBox * AutowareStatePanel::makeMotionGroup()
+QVBoxLayout * AutowareStatePanel::makeMotionGroup()
 {
-  auto * group = new QGroupBox("Motion");
-  auto * grid = new QGridLayout;
-
-  motion_label_ptr_ = new QLabel("INIT");
-  motion_label_ptr_->setAlignment(Qt::AlignCenter);
-  motion_label_ptr_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(motion_label_ptr_, 0, 0);
+  auto * group = new QVBoxLayout;
+  auto * h_layout = new QHBoxLayout;
 
   accept_start_button_ptr_ = new QPushButton("Accept Start");
   accept_start_button_ptr_->setCheckable(true);
+  accept_start_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(accept_start_button_ptr_, SIGNAL(clicked()), SLOT(onClickAcceptStart()));
-  grid->addWidget(accept_start_button_ptr_, 1, 0);
 
-  group->setLayout(grid);
+  motion_label_ptr_ = new QLabel;
+  motion_label_ptr_->setFixedSize(40, 40);
+  motion_label_ptr_->setStyleSheet(
+    "border-radius: 20;border: 2px solid #00e678;background-color: #00e678");
+
+  auto * motion_label_title_ptr_ = new QLabel("Motion State: ");
+
+  h_layout->addWidget(motion_label_title_ptr_);
+  h_layout->addStretch();
+  h_layout->addWidget(accept_start_button_ptr_);
+  h_layout->addWidget(motion_label_ptr_);
+
+  group->addLayout(h_layout);
   return group;
 }
 
-QGroupBox * AutowareStatePanel::makeFailSafeGroup()
+QVBoxLayout * AutowareStatePanel::makeFailSafeGroup()
 {
-  auto * group = new QGroupBox("FailSafe");
-  auto * grid = new QGridLayout;
+  auto * group = new QVBoxLayout;
+  auto * v_layout = new QVBoxLayout;
+  auto * mrm_state_layout = new QHBoxLayout;
+  auto * mrm_behavior_layout = new QHBoxLayout;
 
   mrm_state_label_ptr_ = new QLabel("INIT");
   mrm_state_label_ptr_->setAlignment(Qt::AlignCenter);
-  mrm_state_label_ptr_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(mrm_state_label_ptr_, 0, 0);
+  mrm_state_label_ptr_->setStyleSheet("border:2px solid red;");
+  // make this label to be a fixed size of a specfic word
+  mrm_state_label_ptr_->setFixedWidth(
+    mrm_state_label_ptr_->fontMetrics().horizontalAdvance("COMFORTABLE_STOP") + 8);
+  // same with height
+  mrm_state_label_ptr_->setFixedHeight(mrm_state_label_ptr_->fontMetrics().height() + 16);
 
   mrm_behavior_label_ptr_ = new QLabel("INIT");
   mrm_behavior_label_ptr_->setAlignment(Qt::AlignCenter);
   mrm_behavior_label_ptr_->setStyleSheet("border:1px solid black;");
-  grid->addWidget(mrm_behavior_label_ptr_, 1, 0);
+  // make this label to be a fixed size of a specfic word
+  mrm_behavior_label_ptr_->setFixedWidth(
+    mrm_behavior_label_ptr_->fontMetrics().horizontalAdvance("COMFORTABLE_STOP") + 8);
+  // same with height
+  mrm_behavior_label_ptr_->setFixedHeight(mrm_behavior_label_ptr_->fontMetrics().height() + 16);
 
-  group->setLayout(grid);
+  auto * mrm_state_label_title_ptr_ = new QLabel("MRM State: ");
+  auto * mrm_behavior_label_title_ptr_ = new QLabel("MRM Behavior: ");
+
+  mrm_state_layout->addWidget(mrm_state_label_title_ptr_);
+  mrm_state_layout->addStretch();
+  mrm_state_layout->addWidget(mrm_state_label_ptr_);
+
+  mrm_behavior_layout->addWidget(mrm_behavior_label_title_ptr_);
+  mrm_behavior_layout->addStretch();
+  mrm_behavior_layout->addWidget(mrm_behavior_label_ptr_);
+
+  v_layout->addLayout(mrm_state_layout);
+  v_layout->addSpacing(10);
+  v_layout->addLayout(mrm_behavior_layout);
+
+  group->addLayout(v_layout);
   return group;
+}
+
+QGroupBox * AutowareStatePanel::makeVelocityLimitGroup()
+{
+  // Velocity Limit
+  velocity_limit_setter_ptr_ = new QLabel("Set Velocity Limit");
+  // set its width to fit the text
+  velocity_limit_setter_ptr_->setFixedWidth(
+    velocity_limit_setter_ptr_->fontMetrics().horizontalAdvance("Set Velocity Limit"));
+
+  velocity_limit_value_label_ = new QLabel("0");
+  // max width is set to fit the text
+  velocity_limit_value_label_->setMaximumWidth(
+    velocity_limit_value_label_->fontMetrics().horizontalAdvance("999"));
+
+  QSlider * pub_velocity_limit_slider_ = new QSlider(Qt::Horizontal);
+  pub_velocity_limit_slider_->setRange(0, 100);
+  pub_velocity_limit_slider_->setValue(0);
+  pub_velocity_limit_slider_->setMaximumWidth(100);
+
+  connect(pub_velocity_limit_slider_, &QSlider::sliderPressed, this, [this]() {
+    sliderIsDragging = true;  // User starts dragging the handle
+  });
+
+  connect(pub_velocity_limit_slider_, &QSlider::sliderReleased, this, [this]() {
+    sliderIsDragging = false;  // User finished dragging
+    onClickVelocityLimit();    // Call when handle is released after dragging
+  });
+
+  connect(pub_velocity_limit_slider_, &QSlider::valueChanged, this, [this](int value) {
+    this->velocity_limit_value_label_->setText(QString::number(value));
+    if (!sliderIsDragging) {   // If the value changed without dragging, it's a click on the track
+      onClickVelocityLimit();  // Call the function immediately since it's not a drag operation
+    }
+  });
+
+  QLabel * velocity_limit_label = new QLabel("km/h");
+
+  // Emergency Button
+  emergency_button_ptr_ = new QPushButton("Set Emergency");
+  emergency_button_ptr_->setCursor(Qt::PointingHandCursor);
+  // set fixed width to fit the text
+  emergency_button_ptr_->setFixedWidth(
+    emergency_button_ptr_->fontMetrics().horizontalAdvance("CLEAR EMERGENCY") + 40);
+  connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
+  auto * utility_layout = new QVBoxLayout;
+  auto * velocity_limit_layout = new QHBoxLayout;
+  auto * emergency_layout = new QHBoxLayout;
+
+  // Velocity Limit layout
+  velocity_limit_layout->addWidget(velocity_limit_setter_ptr_);
+  velocity_limit_layout->addWidget(pub_velocity_limit_slider_);
+  velocity_limit_layout->addWidget(velocity_limit_value_label_);
+  velocity_limit_layout->addWidget(velocity_limit_label);
+  velocity_limit_layout->addStretch();
+
+  // Emergency layout
+  emergency_layout->addStretch();
+  emergency_layout->addWidget(emergency_button_ptr_);
+
+  utility_layout->addLayout(velocity_limit_layout);
+  utility_layout->addLayout(emergency_layout);
+
+  auto * velocity_limit_group = new QGroupBox("Utility");
+  velocity_limit_group->setLayout(utility_layout);
+
+  return velocity_limit_group;
 }
 
 void AutowareStatePanel::onInitialize()
@@ -268,10 +385,6 @@ void AutowareStatePanel::onInitialize()
     "/api/fail_safe/mrm_state", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStatePanel::onMRMState, this, _1));
 
-  // Others
-  sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
-    "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
-
   sub_emergency_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::Emergency>(
     "/api/autoware/get/emergency", 10, std::bind(&AutowareStatePanel::onEmergencyStatus, this, _1));
 
@@ -290,53 +403,38 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
                              const uint8_t desired_mode = OperationModeState::STOP) {
     if (is_desired_mode_available && current_mode != desired_mode) {
       activateButton(button);
+      button->setStyleSheet(
+        "QPushButton {"
+        "background-color: #303030;color: #ffffff;"
+        "border: 2px solid #00E678;"
+        "font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "background-color: rgba(0, 230, 120, 0.2);"
+        "color: #ffffff;"
+        "border: 2px solid #00E678;"
+        "}");
     } else {
+      button->setStyleSheet(
+        "QPushButton {"
+        "background-color: #00E678;color: black;"
+        "border: 2px solid #303030;"
+        "font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "background-color: rgba(0, 230, 120, 0.2);"
+        "color: #ffffff;"
+        "border: 2px solid #303030;"
+        "}");
       deactivateButton(button);
     }
   };
 
-  QString text = "";
-  QString style_sheet = "";
-  // Operation Mode
-  switch (msg->mode) {
-    case OperationModeState::AUTONOMOUS:
-      text = "AUTONOMOUS";
-      style_sheet = "background-color: #00FF00;";  // green
-      break;
-
-    case OperationModeState::LOCAL:
-      text = "LOCAL";
-      style_sheet = "background-color: #FFFF00;";  // yellow
-      break;
-
-    case OperationModeState::REMOTE:
-      text = "REMOTE";
-      style_sheet = "background-color: #FFFF00;";  // yellow
-      break;
-
-    case OperationModeState::STOP:
-      text = "STOP";
-      style_sheet = "background-color: #FFA500;";  // orange
-      break;
-
-    default:
-      text = "UNKNOWN";
-      style_sheet = "background-color: #FF0000;";  // red
-      break;
-  }
-
-  if (msg->is_in_transition) {
-    text += "\n(TRANSITION)";
-  }
-
-  updateLabel(operation_mode_label_ptr_, text, style_sheet);
-
-  // Control Mode
-  if (msg->is_autoware_control_enabled) {
-    updateLabel(control_mode_label_ptr_, "Enable", "background-color: #00FF00;");  // green
-  } else {
-    updateLabel(control_mode_label_ptr_, "Disable", "background-color: #FFFF00;");  // yellow
-  }
+  auto changeToggleSwitchState = [this](CustomToggleSwitch * toggle_switch, const bool is_enabled) {
+    bool oldState = toggle_switch->blockSignals(true);  // Block signals
+    toggle_switch->setChecked(!is_enabled);
+    toggle_switch->blockSignals(oldState);  // Restore original signal blocking state
+  };
 
   // Button
   changeButtonState(
@@ -348,8 +446,8 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
   changeButtonState(
     remote_button_ptr_, msg->is_remote_mode_available, msg->mode, OperationModeState::REMOTE);
 
-  changeButtonState(enable_button_ptr_, !msg->is_autoware_control_enabled);
-  changeButtonState(disable_button_ptr_, msg->is_autoware_control_enabled);
+  // toggle switch for control mode
+  changeToggleSwitchState(control_mode_switch_ptr_, !msg->is_autoware_control_enabled);
 }
 
 void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
@@ -359,31 +457,34 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
   switch (msg->state) {
     case RouteState::UNSET:
       text = "UNSET";
-      style_sheet = "background-color: #FFFF00;";  // yellow
+      style_sheet =
+        "border-radius: 20;border: 2px solid #f0e130;background-color: #f0e130";  // yellow
       break;
 
     case RouteState::SET:
       text = "SET";
-      style_sheet = "background-color: #00FF00;";  // green
+      style_sheet =
+        "border-radius: 20;border: 2px solid #00e678;background-color: #00e678";  // green
       break;
 
     case RouteState::ARRIVED:
       text = "ARRIVED";
-      style_sheet = "background-color: #FFA500;";  // orange
+      style_sheet =
+        "border-radius: 20;border: 2px solid #ffae42;background-color: #ffae42";  // orange
       break;
 
     case RouteState::CHANGING:
       text = "CHANGING";
-      style_sheet = "background-color: #FFFF00;";  // yellow
+      style_sheet = "border-radius: 20;border: 2px solid #f0e130;background-color: #f0e130";
       break;
 
     default:
       text = "UNKNOWN";
-      style_sheet = "background-color: #FF0000;";  // red
+      style_sheet = "border-radius: 20;border: 2px solid #dc3545;background-color: #dc3545";  // red
       break;
   }
 
-  updateLabel(routing_label_ptr_, text, style_sheet);
+  updateLabel(routing_label_ptr_, "", style_sheet);
 
   if (msg->state == RouteState::SET) {
     activateButton(clear_route_button_ptr_);
@@ -399,26 +500,29 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
   switch (msg->state) {
     case LocalizationInitializationState::UNINITIALIZED:
       text = "UNINITIALIZED";
-      style_sheet = "background-color: #FFFF00;";  // yellow
+      style_sheet =
+        "border-radius: 20;border: 2px solid #f0e130;background-color: #f0e130";  // yellow
       break;
 
     case LocalizationInitializationState::INITIALIZING:
       text = "INITIALIZING";
-      style_sheet = "background-color: #FFA500;";  // orange
+      style_sheet =
+        "border-radius: 20;border: 2px solid #ffae42;background-color: #ffae42";  // orange
       break;
 
     case LocalizationInitializationState::INITIALIZED:
       text = "INITIALIZED";
-      style_sheet = "background-color: #00FF00;";  // green
+      style_sheet =
+        "border-radius: 20;border: 2px solid #00e678;background-color: #00e678";  // green
       break;
 
     default:
       text = "UNKNOWN";
-      style_sheet = "background-color: #FF0000;";  // red
+      style_sheet = "border-radius: 20;border: 2px solid #dc3545;background-color: #dc3545";  // red
       break;
   }
 
-  updateLabel(localization_label_ptr_, text, style_sheet);
+  updateLabel(localization_label_ptr_, "", style_sheet);
 }
 
 void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
@@ -428,26 +532,30 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
   switch (msg->state) {
     case MotionState::STARTING:
       text = "STARTING";
-      style_sheet = "background-color: #FFFF00;";  // yellow
+      style_sheet =
+        "border-radius: 20;border: 2px solid #f0e130;background-color: #f0e130";  // yellow
       break;
 
     case MotionState::STOPPED:
       text = "STOPPED";
-      style_sheet = "background-color: #FFA500;";  // orange
+      style_sheet =
+        "border-radius: 20;border: 2px solid #dc3545;background-color: #dc3545";  // red color
       break;
 
     case MotionState::MOVING:
       text = "MOVING";
-      style_sheet = "background-color: #00FF00;";  // green
+      style_sheet =
+        "border-radius: 20;border: 2px solid #00e678;background-color: #00e678";  // green
       break;
 
     default:
       text = "UNKNOWN";
-      style_sheet = "background-color: #FF0000;";  // red
+      style_sheet =
+        "border-radius: 20;border: 2px solid #ffae42;background-color: #ffae42";  // orange
       break;
   }
 
-  updateLabel(motion_label_ptr_, text, style_sheet);
+  updateLabel(motion_label_ptr_, "", style_sheet);
 
   if (msg->state == MotionState::STARTING) {
     activateButton(accept_start_button_ptr_);
@@ -465,27 +573,27 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     switch (msg->state) {
       case MRMState::NONE:
         text = "NONE";
-        style_sheet = "background-color: #00FF00;";  // green
+        style_sheet = "background-color: #00E678;color: black;font-weight: bold";  // green
         break;
 
       case MRMState::MRM_OPERATING:
         text = "MRM_OPERATING";
-        style_sheet = "background-color: #FFA500;";  // orange
+        style_sheet = "background-color: #FFAE42;color: black;font-weight: bold";  // orange
         break;
 
       case MRMState::MRM_SUCCEEDED:
         text = "MRM_SUCCEEDED";
-        style_sheet = "background-color: #FFFF00;";  // yellow
+        style_sheet = "background-color: #F0E130;color: black;font-weight: bold";  // yellow
         break;
 
       case MRMState::MRM_FAILED:
         text = "MRM_FAILED";
-        style_sheet = "background-color: #FF0000;";  // red
+        style_sheet = "background-color: #dc3545;color: black;font-weight: bold";  // red
         break;
 
       default:
         text = "UNKNOWN";
-        style_sheet = "background-color: #FF0000;";  // red
+        style_sheet = "background-color: #dc3545;color: black;font-weight: bold";  // red
         break;
     }
 
@@ -499,53 +607,31 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     switch (msg->behavior) {
       case MRMState::NONE:
         text = "NONE";
-        style_sheet = "background-color: #00FF00;";  // green
+        style_sheet = "background-color: #00E678;color: black;font-weight: bold";  // green
         break;
 
       case MRMState::PULL_OVER:
         text = "PULL_OVER";
-        style_sheet = "background-color: #FFFF00;";  // yellow
+        style_sheet = "background-color: #F0E130;color: black;font-weight: bold";  // yellow
         break;
 
       case MRMState::COMFORTABLE_STOP:
         text = "COMFORTABLE_STOP";
-        style_sheet = "background-color: #FFFF00;";  // yellow
+        style_sheet = "background-color: #F0E130;color: black;font-weight: bold";  // yellow
         break;
 
       case MRMState::EMERGENCY_STOP:
         text = "EMERGENCY_STOP";
-        style_sheet = "background-color: #FFA500;";  // orange
+        style_sheet = "background-color: #FFAE42;color: black;font-weight: bold";  // orange
         break;
 
       default:
         text = "UNKNOWN";
-        style_sheet = "background-color: #FF0000;";  // red
+        style_sheet = "background-color: #dc3545;color: black;font-weight: bold";  // red
         break;
     }
 
     updateLabel(mrm_behavior_label_ptr_, text, style_sheet);
-  }
-}
-
-void AutowareStatePanel::onShift(
-  const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg)
-{
-  switch (msg->report) {
-    case autoware_auto_vehicle_msgs::msg::GearReport::PARK:
-      gear_label_ptr_->setText("PARKING");
-      break;
-    case autoware_auto_vehicle_msgs::msg::GearReport::REVERSE:
-      gear_label_ptr_->setText("REVERSE");
-      break;
-    case autoware_auto_vehicle_msgs::msg::GearReport::DRIVE:
-      gear_label_ptr_->setText("DRIVE");
-      break;
-    case autoware_auto_vehicle_msgs::msg::GearReport::NEUTRAL:
-      gear_label_ptr_->setText("NEUTRAL");
-      break;
-    case autoware_auto_vehicle_msgs::msg::GearReport::LOW:
-      gear_label_ptr_->setText("LOW");
-      break;
   }
 }
 
@@ -555,17 +641,29 @@ void AutowareStatePanel::onEmergencyStatus(
   current_emergency_ = msg->emergency;
   if (msg->emergency) {
     emergency_button_ptr_->setText(QString::fromStdString("Clear Emergency"));
-    emergency_button_ptr_->setStyleSheet("background-color: #FF0000;");
+    emergency_button_ptr_->setStyleSheet(
+      "background-color: #dc3545;color: black;font-weight: bold;border: 2px solid #dc3545");
   } else {
     emergency_button_ptr_->setText(QString::fromStdString("Set Emergency"));
-    emergency_button_ptr_->setStyleSheet("background-color: #00FF00;");
+    emergency_button_ptr_->setStyleSheet(
+      "background-color: #00E678;color: black;font-weight: bold");
+  }
+}
+
+void AutowareStatePanel::onSwitchStateChanged(int state)
+{
+  if (state == 0) {
+    // call the control mode function
+    onClickDirectControl();
+  } else if (state == 2) {
+    onClickAutowareControl();
   }
 }
 
 void AutowareStatePanel::onClickVelocityLimit()
 {
   auto velocity_limit = std::make_shared<tier4_planning_msgs::msg::VelocityLimit>();
-  velocity_limit->max_velocity = pub_velocity_limit_input_->value() / 3.6;
+  velocity_limit->max_velocity = velocity_limit_value_label_->text().toDouble() / 3.6;
   pub_velocity_limit_->publish(*velocity_limit);
 }
 
