@@ -43,17 +43,17 @@ lanelet::ConstLanelet get_current_lanelet(
 lanelet::ConstLanelets get_all_left_lanelets(
   const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelet & base_lanelet)
 {
-  lanelet::ConstLanelets left_lanalets;
+  lanelet::ConstLanelets left_lanelets;
   auto left_lanelet = route_handler.getLeftLanelet(base_lanelet, false, true);
   while (left_lanelet) {
-    left_lanalets.emplace_back(left_lanelet.value());
+    left_lanelets.emplace_back(left_lanelet.value());
     RCLCPP_DEBUG(rclcpp::get_logger(__func__), "left lanelet id: %ld", left_lanelet->id());
 
     // get next left lanelet
     left_lanelet = route_handler.getLeftLanelet(left_lanelet.value(), false, true);
   }
 
-  return left_lanalets;
+  return left_lanelets;
 }
 
 /**
