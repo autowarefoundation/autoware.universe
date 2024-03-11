@@ -417,11 +417,18 @@ void ReactionAnalyzerNode::initPredictedObjects()
   obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
   obj.existence_probability = 1.0;
   obj.kinematics.initial_pose_with_covariance.pose = entity_pose_;
+
+  autoware_auto_perception_msgs::msg::PredictedPath path;
+  path.confidence = 1.0;
+  path.path.emplace_back(entity_pose_);
+  obj.kinematics.predicted_paths.emplace_back(path);
+
   autoware_auto_perception_msgs::msg::ObjectClassification classification;
   classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
   classification.probability = 1.0;
   obj.classification.emplace_back(classification);
   obj.set__object_id(generateUUIDMsg("test_obstacle"));
+
   PredictedObjects pred_objects;
   pred_objects.objects.emplace_back(obj);
   predicted_objects_ptr_ = std::make_shared<PredictedObjects>(pred_objects);

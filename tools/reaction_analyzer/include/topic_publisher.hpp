@@ -70,10 +70,12 @@ enum class PublisherMessageType {
 
 struct TopicPublisherParams
 {
-  std::string path_bag_without_object;    // Path to the bag file without object
-  std::string path_bag_with_object;       // Path to the bag file with object
-  std::string pointcloud_publisher_type;  // Type of the pointcloud publisher
-  double pointcloud_publisher_period;     // Period of the pointcloud publisher
+  std::string path_bag_without_object;       // Path to the bag file without object
+  std::string path_bag_with_object;          // Path to the bag file with object
+  std::string pointcloud_publisher_type;     // Type of the pointcloud publisher
+  double pointcloud_publisher_period;        // Period of the pointcloud publisher
+  bool publish_only_pointcloud_with_object;  // Publish only pointcloud with object for only
+                                             // perception pipeline debug purpose make it true.
 };
 
 enum class PointcloudPublisherType {

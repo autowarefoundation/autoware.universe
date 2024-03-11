@@ -37,6 +37,9 @@ TopicPublisher::TopicPublisher(
   topic_publisher_params_.pointcloud_publisher_period =
     node_->get_parameter("topic_publisher.pointcloud_publisher.pointcloud_publisher_period")
       .as_double();
+  topic_publisher_params_.publish_only_pointcloud_with_object =
+    node_->get_parameter("topic_publisher.pointcloud_publisher.publish_only_pointcloud_with_object")
+      .as_bool();
 
   // set pointcloud publisher type
   if (topic_publisher_params_.pointcloud_publisher_type == "sync_header_sync_publish") {
@@ -64,9 +67,11 @@ void TopicPublisher::pointcloudMessagesSyncPublisher(const PointcloudPublisherTy
       PublisherVarAccessor accessor;
       for (const auto & publisher_var_pair : lidar_pub_variable_pair_map_) {
         accessor.publishWithCurrentTime(
-          *publisher_var_pair.second.first, current_time, is_object_spawned);
+          *publisher_var_pair.second.first, current_time,
+          topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
         accessor.publishWithCurrentTime(
-          *publisher_var_pair.second.second, current_time, is_object_spawned);
+          *publisher_var_pair.second.second, current_time,
+          topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
       }
       if (is_object_spawned && !is_object_spawned_message_published) {
         is_object_spawned_message_published = true;
@@ -87,9 +92,11 @@ void TopicPublisher::pointcloudMessagesSyncPublisher(const PointcloudPublisherTy
         const auto header_time =
           current_time - std::chrono::nanoseconds(counter * phase_dif.count());
         accessor.publishWithCurrentTime(
-          *publisher_var_pair.second.first, header_time, is_object_spawned);
+          *publisher_var_pair.second.first, header_time,
+          topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
         accessor.publishWithCurrentTime(
-          *publisher_var_pair.second.second, header_time, is_object_spawned);
+          *publisher_var_pair.second.second, header_time,
+          topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
         counter++;
       }
       if (is_object_spawned && !is_object_spawned_message_published) {
@@ -113,8 +120,12 @@ void TopicPublisher::pointcloudMessagesAsyncPublisher(
   PublisherVarAccessor accessor;
   const auto current_time = node_->now();
   const bool is_object_spawned = spawn_object_cmd_;
-  accessor.publishWithCurrentTime(*lidar_output_pair_.first, current_time, is_object_spawned);
-  accessor.publishWithCurrentTime(*lidar_output_pair_.second, current_time, is_object_spawned);
+  accessor.publishWithCurrentTime(
+    *lidar_output_pair_.first, current_time,
+    topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
+  accessor.publishWithCurrentTime(
+    *lidar_output_pair_.second, current_time,
+    topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
 
   if (is_object_spawned && !is_object_spawned_message_published) {
     is_object_spawned_message_published = true;
@@ -207,9 +218,6 @@ void TopicPublisher::initRosbagPublishers()
 
       const auto message_type = getMessageTypeForTopic(current_topic);
       if (message_type == PublisherMessageType::UNKNOWN) {
-        RCLCPP_WARN(
-          node_->get_logger(), "Unknown message type for topic name: %s, skipping..",
-          current_topic.c_str());
         continue;
       }
 
@@ -427,9 +435,6 @@ void TopicPublisher::initRosbagPublishers()
             break;
           }
           default:
-            RCLCPP_WARN(
-              node_->get_logger(), "Unknown message type for topic name: %s, skipping..",
-              current_topic.c_str());
             break;
         }
       }
@@ -498,9 +503,6 @@ void TopicPublisher::initRosbagPublishers()
 
       const auto message_type = getMessageTypeForTopic(current_topic);
       if (message_type == PublisherMessageType::UNKNOWN) {
-        RCLCPP_WARN(
-          node_->get_logger(), "Unknown message type for topic name: %s, skipping..",
-          current_topic.c_str());
         continue;
       }
       switch (message_type) {
@@ -740,9 +742,6 @@ void TopicPublisher::initRosbagPublishers()
           break;
         }
         default:
-          RCLCPP_WARN(
-            node_->get_logger(), "Unknown message type for topic name: %s, skipping..",
-            current_topic.c_str());
           break;
       }
     }
