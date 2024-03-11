@@ -20,8 +20,6 @@
 class SubModelInterface
 {
 public:
-  // virtual ~PymodelInterface() = 0;
-
   /**
    * @brief set time step of the model
    * @param [in] dt time step

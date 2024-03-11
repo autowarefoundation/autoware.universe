@@ -25,9 +25,6 @@
 #include <iostream>
 #include <queue>
 
-// #include <pybind11/embed.h>
-// namespace py = pybind11;
-
 /**
  * @class SimModelLearnedSteerVel
  * @brief calculate delay steering dynamics
