@@ -57,6 +57,7 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
   const std::string head_onnx_path = this->declare_parameter<std::string>("head_onnx_path");
   const std::string head_engine_path = this->declare_parameter<std::string>("head_engine_path");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
+  has_variance_ = this->declare_parameter("has_variance", false);
   has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
@@ -96,7 +97,7 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
   CenterPointConfig config(
     class_names_.size(), point_feature_size, max_voxel_size, point_cloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
-    yaw_norm_thresholds);
+    yaw_norm_thresholds, has_variance_);
   detector_ptr_ =
     std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
 
@@ -173,7 +174,7 @@ void SingleInferenceLidarCenterPointNode::detect(
   output_msg.header = msg.header;
   for (const auto & box3d : det_boxes3d) {
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
+    box3DToDetectedObject(box3d, class_names_, has_twist_, has_variance_, obj);
     output_msg.objects.emplace_back(obj);
   }
 

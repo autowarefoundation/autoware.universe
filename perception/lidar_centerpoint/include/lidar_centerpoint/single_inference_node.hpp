@@ -51,6 +51,7 @@ private:
   float score_threshold_{0.0};
   std::vector<std::string> class_names_;
   bool rename_car_to_truck_and_bus_{false};
+  bool has_variance_{false};
   bool has_twist_{false};
 
   DetectionClassRemapper detection_class_remapper_;
