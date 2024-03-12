@@ -26,8 +26,8 @@ namespace emergency_handler::emergency_stop_operator
 {
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 
 struct Param
 {

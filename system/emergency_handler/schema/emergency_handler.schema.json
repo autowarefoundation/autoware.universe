@@ -71,11 +71,7 @@
               "default": -0.3
             }
           },
-          "required": [
-            "min_acceleration",
-            "max_jerk",
-            "min_jerk"
-          ]
+          "required": ["min_acceleration", "max_jerk", "min_jerk"]
         }
       },
       "required": [

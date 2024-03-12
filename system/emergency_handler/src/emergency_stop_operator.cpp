@@ -23,20 +23,24 @@ EmergencyStopOperator::EmergencyStopOperator(rclcpp::Node * node) : node_(node)
   params_.target_acceleration =
     node_->declare_parameter<double>("emergency_stop_operator.target_acceleration");
   params_.target_jerk = node_->declare_parameter<double>("emergency_stop_operator.target_jerk");
-  params_.turning_hazard_on = node_->declare_parameter<bool>("emergency_stop_operator.turning_hazard_on");
-  params_.use_parking_after_stopped = node_->declare_parameter<bool>("emergency_stop_operator.use_parking_after_stopped");
+  params_.turning_hazard_on =
+    node_->declare_parameter<bool>("emergency_stop_operator.turning_hazard_on");
+  params_.use_parking_after_stopped =
+    node_->declare_parameter<bool>("emergency_stop_operator.use_parking_after_stopped");
 
   // Subscriber
   sub_control_cmd_ = node_->create_subscription<AckermannControlCommand>(
     "~/input/control/control_cmd", 1,
     std::bind(&EmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
   sub_odom_ = node_->create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyStopOperator::onOdometry, this, std::placeholders::_1));
+    "~/input/odometry", rclcpp::QoS{1},
+    std::bind(&EmergencyStopOperator::onOdometry, this, std::placeholders::_1));
 
   // Publisher
-  pub_control_cmd_ =
-    node_->create_publisher<AckermannControlCommand>("~/output/mrm/emergency_stop/control_cmd", rclcpp::QoS{1});
-  pub_hazard_light_cmd_ = node_->create_publisher<HazardLightsCommand>("~/output/hazard", rclcpp::QoS{1});
+  pub_control_cmd_ = node_->create_publisher<AckermannControlCommand>(
+    "~/output/mrm/emergency_stop/control_cmd", rclcpp::QoS{1});
+  pub_hazard_light_cmd_ =
+    node_->create_publisher<HazardLightsCommand>("~/output/hazard", rclcpp::QoS{1});
   pub_gear_cmd_ = node_->create_publisher<GearCommand>("~/output/gear", rclcpp::QoS{1});
 
   // Initialize
