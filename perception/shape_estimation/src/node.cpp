@@ -103,12 +103,12 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
     const bool estimated_success = estimator_->estimateShapeAndPose(
       label, *cluster, ref_yaw_info, ref_shape_size_info, shape, pose);
 
-    // If the shape estimation fails, ignore it.
+    // If the shape estimation fails, change to Unknown object.
+    output_msg.feature_objects.push_back(feature_object);
     if (!estimated_success) {
-      continue;
+      output_msg.feature_objects.back().object.classification.front().label = Label::UNKNOWN;
     }
 
-    output_msg.feature_objects.push_back(feature_object);
     output_msg.feature_objects.back().object.shape = shape;
     output_msg.feature_objects.back().object.kinematics.pose_with_covariance.pose = pose;
   }
