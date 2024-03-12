@@ -37,7 +37,7 @@
           },
           "required": ["emergency"]
         },
-        "emergency_stop": {
+        "emergency_stop_operator": {
           "type": "object",
           "properties": {
             "target_acceleration": {
@@ -53,7 +53,7 @@
           },
           "required": ["target_acceleration", "target_jerk"]
         },
-        "comfortable_stop": {
+        "comfortable_stop_operator": {
           "type": "object",
           "properties": {
             "min_acceleration": {

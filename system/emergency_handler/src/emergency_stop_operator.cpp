@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "operators/emergency_stop.hpp"
+#include "emergency_stop_operator.hpp"
 
 namespace emergency_handler
 {
@@ -24,8 +24,8 @@ EmergencyStopOperator::EmergencyStopOperator(rclcpp::Node * node) : node_(node)
 {
   // Parameter
   params_.target_acceleration =
-    node_->declare_parameter<double>("emergency_stop.target_acceleration");
-  params_.target_jerk = node_->declare_parameter<double>("emergency_stop.target_jerk");
+    node_->declare_parameter<double>("emergency_stop_operator.target_acceleration");
+  params_.target_jerk = node_->declare_parameter<double>("emergency_stop_operator.target_jerk");
 
   // Subscriber
   sub_control_cmd_ = node_->create_subscription<AckermannControlCommand>(

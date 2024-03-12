@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPERATORS__COMFORTABLE_STOP_HPP_
-#define OPERATORS__COMFORTABLE_STOP_HPP_
+#ifndef COMFORTABLE_STOP_OPERATOR_HPP_
+#define COMFORTABLE_STOP_OPERATOR_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -61,4 +61,4 @@ private:
 
 }  // namespace emergency_handler
 
-#endif  // OPERATORS__COMFORTABLE_STOP_HPP_
+#endif  // COMFORTABLE_STOP_OPERATOR_HPP_
