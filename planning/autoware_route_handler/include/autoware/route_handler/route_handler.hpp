@@ -73,7 +73,8 @@ public:
 
   // non-const methods
   void setMap(const HADMapBin & map_msg, const bool & is_enable_differantial_lanelet = false);
-  void setRoute(const LaneletRoute & route_msg, const bool & is_enable_differantial_lanelet = false);
+  void setRoute(
+    const LaneletRoute & route_msg, const bool & is_enable_differantial_lanelet = false);
   void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
   void clearRoute();
 
