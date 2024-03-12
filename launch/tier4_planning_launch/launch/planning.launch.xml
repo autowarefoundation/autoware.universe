@@ -13,7 +13,6 @@
   <!-- Differential lanelet map loading setting -->
   <arg name="enable_differential_map_loading" default="false"/>
 
-
   <group>
     <push-ros-namespace namespace="planning"/>
     <!-- mission planning module -->
