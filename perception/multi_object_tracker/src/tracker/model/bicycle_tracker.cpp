@@ -405,10 +405,15 @@ bool BicycleTracker::measureWithShape(
 {
   // if the input shape is convex type, convert it to bbox type
   autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    utils::convertConvexHullToBoundingBox(object, bbox_object);
-  } else {
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bbox_object = object;
+  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+    // convert cylinder to bbox
+    bbox_object.shape.dimensions.x = object.shape.dimensions.x;
+    bbox_object.shape.dimensions.y = object.shape.dimensions.x;
+    bbox_object.shape.dimensions.z = object.shape.dimensions.z;
+  } else {
+    utils::convertConvexHullToBoundingBox(object, bbox_object);
   }
 
   constexpr float gain = 0.9;
