@@ -42,17 +42,21 @@ lanelet::ConstLanelets get_missing_lane_change_lanelets(
   lanelet::ConstLanelets adjacents;
   lanelet::ConstLanelets consecutives;
   for (const auto & ll : path_lanelets) {
-    for (const auto & consecutive : consecutive_lanelets(route_handler, ll))
-      if (!contains_lanelet(consecutives, consecutive.id())) consecutives.push_back(consecutive);
-    for (const auto & adjacent : routing_graph.besides(ll))
-      if (!contains_lanelet(adjacents, adjacent.id())) adjacents.push_back(adjacent);
+    const auto consecutives_of_ll = consecutive_lanelets(route_handler, ll);
+    std::copy_if(
+      consecutives_of_ll.begin(), consecutives_of_ll.end(), std::back_inserter(consecutives),
+      [&](const auto & l) { return !contains_lanelet(consecutives, l.id()); });
+    const auto adjacents_of_ll = routing_graph.besides(ll);
+    std::copy_if(
+      adjacents_of_ll.begin(), adjacents_of_ll.end(), std::back_inserter(adjacents),
+      [&](const auto & l) { return !contains_lanelet(adjacents, l.id()); });
   }
-  for (const auto & ll : adjacents) {
-    if (
-      !contains_lanelet(missing_lane_change_lanelets, ll.id()) &&
-      !contains_lanelet(path_lanelets, ll.id()) && contains_lanelet(consecutives, ll.id()))
-      missing_lane_change_lanelets.push_back(ll);
-  }
+  std::copy_if(
+    adjacents.begin(), adjacents.end(), std::back_inserter(missing_lane_change_lanelets),
+    [&](const auto & l) {
+      return !contains_lanelet(missing_lane_change_lanelets, l.id()) &&
+             !contains_lanelet(path_lanelets, l.id()) && contains_lanelet(consecutives, l.id());
+    });
   return missing_lane_change_lanelets;
 }
 
