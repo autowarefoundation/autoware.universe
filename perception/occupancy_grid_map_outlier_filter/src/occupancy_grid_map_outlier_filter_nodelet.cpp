@@ -234,6 +234,8 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   if (enable_debugger) {
     debugger_ptr_ = std::make_shared<Debugger>(*this);
   }
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
@@ -328,6 +330,9 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
       return;
     }
     pointcloud_pub_->publish(std::move(base_link_frame_filtered_pc_ptr));
+
+    // Publish published time only if there are subscribers more than 1
+    published_time_publisher_->publish(pointcloud_pub_, ogm_frame_filtered_pc.header.stamp);
   }
   if (debugger_ptr_) {
     debugger_ptr_->publishHighConfidence(high_confidence_pc, ogm_frame_pc.header);

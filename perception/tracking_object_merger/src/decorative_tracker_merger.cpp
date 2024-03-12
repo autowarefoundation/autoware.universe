@@ -158,6 +158,8 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void DecorativeTrackerMergerNode::set3dDataAssociation(
@@ -220,8 +222,12 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
 
   // try to merge main object
   this->decorativeMerger(main_sensor_type_, main_objects);
+  const auto & tracked_objects = getTrackedObjects(main_objects->header);
+  merged_object_pub_->publish(tracked_objects);
 
   merged_object_pub_->publish(getTrackedObjects(main_objects->header));
+  // Publish published time only if there are subscribers more than 1
+  published_time_publisher_->publish(merged_object_pub_, tracked_objects.header.stamp);
   processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
     "debug/cyclic_time_ms", stop_watch_ptr_->toc("cyclic_time", true));
   processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(

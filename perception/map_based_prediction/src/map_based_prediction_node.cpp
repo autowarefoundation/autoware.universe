@@ -811,6 +811,8 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   processing_time_publisher_ =
     std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "map_based_prediction");
 
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&MapBasedPredictionNode::onParam, this, std::placeholders::_1));
 
@@ -1112,6 +1114,10 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // Publish Results
   pub_objects_->publish(output);
+
+  // Publish published time only if there are subscribers more than 1
+  published_time_publisher_->publish(pub_objects_, output.header.stamp);
+
   pub_debug_markers_->publish(debug_markers);
   const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
   const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);

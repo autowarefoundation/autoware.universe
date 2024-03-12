@@ -159,6 +159,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void BehaviorVelocityPlannerNode::onLoadPlugin(
@@ -399,6 +401,8 @@ void BehaviorVelocityPlannerNode::onTrigger(
   lk.unlock();
 
   path_pub_->publish(output_path_msg);
+  // Publish published time only if there are subscribers more than 1
+  published_time_publisher_->publish(path_pub_, output_path_msg.header.stamp);
   stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
 
   if (debug_viz_pub_->get_subscription_count() > 0) {

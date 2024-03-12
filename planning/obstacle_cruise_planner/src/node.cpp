@@ -442,6 +442,8 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     std::bind(&ObstacleCruisePlannerNode::onParam, this, std::placeholders::_1));
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 ObstacleCruisePlannerNode::PlanningAlgorithm ObstacleCruisePlannerNode::getPlanningAlgorithmType(
@@ -538,6 +540,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   trajectory_pub_->publish(output_traj);
 
   // 8. Publish debug data
+  published_time_publisher_->publish(trajectory_pub_, output_traj.header.stamp);
   publishDebugMarker();
   publishDebugInfo();
 

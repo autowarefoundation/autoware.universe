@@ -102,6 +102,8 @@ pointcloud_preprocessor::Filter::Filter(
   set_param_res_filter_ = this->add_on_set_parameters_callback(
     std::bind(&Filter::filterParamCallback, this, std::placeholders::_1));
 
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+
   RCLCPP_DEBUG(this->get_logger(), "[Filter Constructor] successfully created.");
 }
 
@@ -192,6 +194,9 @@ void pointcloud_preprocessor::Filter::computePublish(
 
   // Publish a boost shared ptr
   pub_output_->publish(std::move(output));
+
+  // Publish published time only if there are subscribers more than 1
+  published_time_publisher_->publish(pub_output_, input->header.stamp);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -456,6 +461,9 @@ void pointcloud_preprocessor::Filter::faster_input_indices_callback(
 
   output->header.stamp = cloud->header.stamp;
   pub_output_->publish(std::move(output));
+
+  // Publish published time only if there are subscribers more than 1
+  published_time_publisher_->publish(pub_output_, cloud->header.stamp);
 }
 
 // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform

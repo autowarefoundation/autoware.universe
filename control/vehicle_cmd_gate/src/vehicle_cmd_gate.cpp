@@ -242,6 +242,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     this, get_clock(), period_ns, std::bind(&VehicleCmdGate::publishStatus, this));
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 bool VehicleCmdGate::isHeartbeatTimeout(
@@ -456,7 +458,14 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   // Publish commands
   vehicle_cmd_emergency_pub_->publish(vehicle_cmd_emergency);
   control_cmd_pub_->publish(filtered_commands.control);
+
+  // Publish published time only if there are subscribers more than 1
+  published_time_publisher_->publish(control_cmd_pub_, filtered_commands.control.stamp);
+
+  // Publish pause state to api
   adapi_pause_->publish();
+
+  // Publish moderate stop state which is used for stop request
   moderate_stop_interface_->publish();
 
   // Save ControlCmd to steering angle when disengaged

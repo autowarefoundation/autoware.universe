@@ -236,6 +236,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   data_association_ = std::make_unique<DataAssociation>(
     can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix, max_rad_matrix,
     min_iou_matrix);
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void MultiObjectTracker::onMeasurement(
@@ -468,6 +470,9 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
 
   // Publish
   tracked_objects_pub_->publish(output_msg);
+
+  // Publish published time only if there are subscribers more than 1
+  published_time_publisher_->publish(tracked_objects_pub_, output_msg.header.stamp);
 
   // Debugger Publish if enabled
   debugger_->publishProcessingTime();

@@ -52,6 +52,8 @@ OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptio
 
   mean_threshold_ = declare_parameter<float>("mean_threshold", 0.6);
   enable_debug_ = declare_parameter<bool>("enable_debug", false);
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void OccupancyGridBasedValidator::onObjectsAndOccGrid(
@@ -85,6 +87,9 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
   }
 
   objects_pub_->publish(output);
+
+  // Publish published time only if there are subscribers more than 1
+  published_time_publisher_->publish(objects_pub_, output.header.stamp);
 
   if (enable_debug_) showDebugImage(*input_occ_grid, transformed_objects, occ_grid);
 }
