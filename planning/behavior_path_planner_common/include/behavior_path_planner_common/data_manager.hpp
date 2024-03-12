@@ -165,6 +165,15 @@ struct PlannerData
   mutable std::vector<double> drivable_area_expansion_prev_curvatures{};
   mutable TurnSignalDecider turn_signal_decider;
 
+  std::pair<TurnSignalInfo, bool> getBehaviorTurnSignalInfo(
+    const ShiftedPath & path, const ShiftLine & shift_line,
+    const lanelet::ConstLanelets & current_lanelets, const double current_shift_length) const
+  {
+    return turn_signal_decider.getBehaviorTurnSignalInfo(
+      path, shift_line, current_lanelets, route_handler, parameters, self_odometry,
+      current_shift_length);
+  }
+
   TurnIndicatorsCommand getTurnSignal(
     const PathWithLaneId & path, const TurnSignalInfo & turn_signal_info,
     TurnSignalDebugData & debug_data)
