@@ -14,10 +14,7 @@
 
 #include "emergency_stop_operator.hpp"
 
-namespace emergency_handler
-{
-
-namespace emergency_stop_operator
+namespace emergency_handler::emergency_stop_operator
 {
 
 EmergencyStopOperator::EmergencyStopOperator(rclcpp::Node * node) : node_(node)
@@ -111,6 +108,4 @@ AckermannControlCommand EmergencyStopOperator::calcNextControlCmd()
   return control_cmd;
 }
 
-}  // namespace emergency_stop_operator
-
-}  // namespace emergency_handler
+}  // namespace emergency_handler::emergency_stop_operator

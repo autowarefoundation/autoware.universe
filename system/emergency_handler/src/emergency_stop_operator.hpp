@@ -19,10 +19,7 @@
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
-namespace emergency_handler
-{
-
-namespace emergency_stop_operator
+namespace emergency_handler::emergency_stop_operator
 {
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
@@ -60,8 +57,6 @@ private:
   rclcpp::Node * node_;
 };
 
-}  // namespace emergency_stop_operator
-
-}  // namespace emergency_handler
+}  // namespace emergency_handler::emergency_stop_operator
 
 #endif  // EMERGENCY_STOP_OPERATOR_HPP_

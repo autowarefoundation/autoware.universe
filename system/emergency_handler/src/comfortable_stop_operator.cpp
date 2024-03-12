@@ -14,10 +14,7 @@
 
 #include "comfortable_stop_operator.hpp"
 
-namespace emergency_handler
-{
-
-namespace comfortable_stop_operator
+namespace emergency_handler::comfortable_stop_operator
 {
 
 ComfortableStopOperator::ComfortableStopOperator(rclcpp::Node * node) : node_(node)
@@ -81,6 +78,4 @@ void ComfortableStopOperator::publishVelocityLimitClearCommand()
   pub_velocity_limit_clear_command_->publish(velocity_limit_clear_command);
 }
 
-}  // namespace comfortable_stop_operator
-
-}  // namespace emergency_handler
+}  // namespace emergency_handler::comfortable_stop_operator

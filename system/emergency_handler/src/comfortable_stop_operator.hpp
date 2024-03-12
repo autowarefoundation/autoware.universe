@@ -20,10 +20,7 @@
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 
-namespace emergency_handler
-{
-
-namespace comfortable_stop_operator
+namespace emergency_handler::comfortable_stop_operator
 {
 
 struct Param
@@ -57,8 +54,6 @@ private:
   rclcpp::Node * node_;
 };
 
-}  // namespace comfortable_stop_operator
-
-}  // namespace emergency_handler
+}  // namespace emergency_handler::comfortable_stop_operator
 
 #endif  // COMFORTABLE_STOP_OPERATOR_HPP_
