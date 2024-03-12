@@ -35,7 +35,7 @@ void ReactionAnalyzerNode::routeStateCallback(RouteState::ConstSharedPtr msg_ptr
 void ReactionAnalyzerNode::vehiclePoseCallback(Odometry::ConstSharedPtr msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  odometry_ = msg_ptr;
+  odometry_ptr_ = msg_ptr;
 }
 
 void ReactionAnalyzerNode::initializationStateCallback(
@@ -43,6 +43,12 @@ void ReactionAnalyzerNode::initializationStateCallback(
 {
   std::lock_guard<std::mutex> lock(mutex_);
   initialization_state_ptr_ = std::move(msg_ptr);
+}
+
+void ReactionAnalyzerNode::groundTruthPoseCallback(PoseStamped::ConstSharedPtr msg_ptr)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  ground_truth_pose_ptr_ = std::move(msg_ptr);
 }
 
 ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
@@ -130,6 +136,7 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
     // init dummy perception publisher
     const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::duration<double>(node_params_.dummy_perception_publisher_period));
+
     dummy_perception_timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns,
       std::bind(&ReactionAnalyzerNode::dummyPerceptionPublisher, this));
@@ -138,12 +145,19 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
     // Create topic publishers
     topic_publisher_ptr_ =
       std::make_shared<topic_publisher::TopicPublisher>(this, spawn_object_cmd_, spawn_cmd_time_);
+
+    // Subscribe to the ground truth position
+    sub_ground_truth_pose_ = create_subscription<PoseStamped>(
+      "input/ground_truth_pose", rclcpp::QoS{1},
+      std::bind(&ReactionAnalyzerNode::groundTruthPoseCallback, this, _1),
+      createSubscriptionOptions(this));
   }
 
   // Load the subscriber to listen the topics for reactions
-  odometry_ = std::make_shared<Odometry>();  // initialize the odometry before init the subscriber
-  subscriber_ptr_ =
-    std::make_unique<subscriber::SubscriberBase>(this, odometry_, entity_pose_, spawn_object_cmd_);
+  odometry_ptr_ =
+    std::make_shared<Odometry>();  // initialize the odometry before init the subscriber
+  subscriber_ptr_ = std::make_unique<subscriber::SubscriberBase>(
+    this, odometry_ptr_, entity_pose_, spawn_object_cmd_);
 
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(node_params_.timer_period));
@@ -154,16 +168,19 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
 void ReactionAnalyzerNode::onTimer()
 {
   mutex_.lock();
-  const auto current_odometry_ptr = odometry_;
+  const auto current_odometry_ptr = odometry_ptr_;
   const auto initialization_state_ptr = initialization_state_ptr_;
   const auto route_state_ptr = current_route_state_ptr_;
   const auto operation_mode_ptr = operation_mode_ptr_;
+  const auto ground_truth_pose_ptr = ground_truth_pose_ptr_;
   const auto spawn_cmd_time = spawn_cmd_time_;
   mutex_.unlock();
 
   // Init the test environment
   if (!test_environment_init_time_) {
-    initEgoForTest(initialization_state_ptr, route_state_ptr, operation_mode_ptr);
+    initEgoForTest(
+      initialization_state_ptr, route_state_ptr, operation_mode_ptr, ground_truth_pose_ptr,
+      current_odometry_ptr);
     return;
   }
 
@@ -437,11 +454,13 @@ void ReactionAnalyzerNode::initPredictedObjects()
 void ReactionAnalyzerNode::initEgoForTest(
   const LocalizationInitializationState::ConstSharedPtr & initialization_state_ptr,
   const RouteState::ConstSharedPtr & route_state_ptr,
-  const OperationModeState::ConstSharedPtr & operation_mode_ptr)
+  const OperationModeState::ConstSharedPtr & operation_mode_ptr,
+  const PoseStamped::ConstSharedPtr & ground_truth_pose_ptr,
+  const Odometry::ConstSharedPtr & odometry_ptr)
 {
   const auto current_time = this->now();
 
-  // Initialize the vehicle
+  // Initialize the test environment
   constexpr double initialize_call_period = 1.0;  // sec
 
   if (
@@ -450,6 +469,7 @@ void ReactionAnalyzerNode::initEgoForTest(
       initialize_call_period) {
     last_test_environment_init_request_time_ = current_time;
 
+    // Pose initialization of the ego
     if (
       initialization_state_ptr &&
       (initialization_state_ptr->state != LocalizationInitializationState::INITIALIZED ||
@@ -466,6 +486,35 @@ void ReactionAnalyzerNode::initEgoForTest(
       return;
     }
 
+    // Wait until odometry_ptr is initialized
+    if (!odometry_ptr) {
+      RCLCPP_WARN_ONCE(get_logger(), "Odometry is not received. Waiting for odometry...");
+      return;
+    }
+
+    // Check is position initialized accurately, if node is running PerceptionPlanning mode
+    if (node_running_mode_ == RunningMode::PerceptionPlanning) {
+      if (!ground_truth_pose_ptr) {
+        RCLCPP_WARN(
+          get_logger(), "Ground truth pose is not received. Waiting for Ground truth pose...");
+        return;
+      } else {
+        constexpr double deviation_threshold = 0.1;
+        const auto deviation = tier4_autoware_utils::calcPoseDeviation(
+          ground_truth_pose_ptr->pose, odometry_ptr->pose.pose);
+        if (
+          deviation.longitudinal > deviation_threshold || deviation.lateral > deviation_threshold ||
+          deviation.yaw > deviation_threshold) {
+          RCLCPP_ERROR(
+            get_logger(),
+            "Deviation between ground truth position and ego position is high. Node is shutting "
+            "down. Longitudinal deviation: %f, Lateral deviation: %f, Yaw deviation: %f",
+            deviation.longitudinal, deviation.lateral, deviation.yaw);
+          rclcpp::shutdown();
+        }
+      }
+    }
+
     if (route_state_ptr && (route_state_ptr->state != RouteState::SET || !is_route_set_)) {
       if (route_state_ptr->state == RouteState::SET) {
         is_route_set_ = true;
@@ -477,6 +526,7 @@ void ReactionAnalyzerNode::initEgoForTest(
       return;
     }
 
+    // if node is running PlanningControl mode, change ego to Autonomous mode.
     if (node_running_mode_ == RunningMode::PlanningControl) {
       // change to autonomous
       if (operation_mode_ptr && operation_mode_ptr->mode != OperationModeState::AUTONOMOUS) {

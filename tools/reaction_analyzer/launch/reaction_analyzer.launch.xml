@@ -37,6 +37,7 @@
       <remap from="input/localization_initialization_state" to="/api/localization/initialization_state"/>
       <remap from="input/routing_state" to="/api/routing/state"/>
       <remap from="input/operation_mode_state" to="/api/operation_mode/state"/>
+      <remap from="input/ground_truth_pose" to="/awsim/ground_truth/vehicle/pose"/>
       <param name="running_mode" value="$(var running_mode)"/>
       <extra_arg name="use_intra_process_comms" value="false"/>
     </composable_node>

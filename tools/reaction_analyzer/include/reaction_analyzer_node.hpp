@@ -59,6 +59,7 @@ using autoware_adapi_v1_msgs::srv::ChangeOperationMode;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 
@@ -112,7 +113,7 @@ public:
   explicit ReactionAnalyzerNode(rclcpp::NodeOptions options);
   ~ReactionAnalyzerNode() = default;
 
-  Odometry::ConstSharedPtr odometry_;
+  Odometry::ConstSharedPtr odometry_ptr_;
 
 private:
   std::mutex mutex_;
@@ -131,6 +132,7 @@ private:
   rclcpp::Subscription<RouteState>::SharedPtr sub_route_state_;
   rclcpp::Subscription<LocalizationInitializationState>::SharedPtr sub_localization_init_state_;
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
+  rclcpp::Subscription<PoseStamped>::SharedPtr sub_ground_truth_pose_;
 
   // Publishers
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_;
@@ -163,7 +165,9 @@ private:
   void initEgoForTest(
     const LocalizationInitializationState::ConstSharedPtr & initialization_state_ptr,
     const RouteState::ConstSharedPtr & route_state_ptr,
-    const OperationModeState::ConstSharedPtr & operation_mode_ptr);
+    const OperationModeState::ConstSharedPtr & operation_mode_ptr,
+    const PoseStamped::ConstSharedPtr & ground_truth_pose_ptr,
+    const Odometry::ConstSharedPtr & odometry_ptr);
 
   void callOperationModeServiceWithoutResponse();
 
@@ -186,10 +190,11 @@ private:
 
   void initializationStateCallback(LocalizationInitializationState::ConstSharedPtr msg_ptr);
 
-  void routeStateCallback(RouteState::ConstSharedPtr msg);
+  void routeStateCallback(RouteState::ConstSharedPtr msg_ptr);
 
   void operationModeCallback(OperationModeState::ConstSharedPtr msg_ptr);
 
+  void groundTruthPoseCallback(PoseStamped::ConstSharedPtr msg_ptr);
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr dummy_perception_timer_;
@@ -205,6 +210,7 @@ private:
   LocalizationInitializationState::ConstSharedPtr initialization_state_ptr_;
   RouteState::ConstSharedPtr current_route_state_ptr_;
   OperationModeState::ConstSharedPtr operation_mode_ptr_;
+  PoseStamped::ConstSharedPtr ground_truth_pose_ptr_;
 };
 }  // namespace reaction_analyzer
 

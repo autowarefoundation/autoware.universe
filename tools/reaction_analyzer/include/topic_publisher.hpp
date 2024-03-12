@@ -59,13 +59,15 @@ enum class PublisherMessageType {
   IMAGE = 2,
   POINTCLOUD2 = 3,
   POSE_WITH_COVARIANCE_STAMPED = 4,
-  IMU = 5,
-  CONTROL_MODE_REPORT = 6,
-  GEAR_REPORT = 7,
-  HAZARD_LIGHTS_REPORT = 8,
-  STEERING_REPORT = 9,
-  TURN_INDICATORS_REPORT = 10,
-  VELOCITY_REPORT = 11,
+  POSE_STAMPED = 5,
+  ODOMETRY = 6,
+  IMU = 7,
+  CONTROL_MODE_REPORT = 8,
+  GEAR_REPORT = 9,
+  HAZARD_LIGHTS_REPORT = 10,
+  STEERING_REPORT = 11,
+  TURN_INDICATORS_REPORT = 12,
+  VELOCITY_REPORT = 13,
 };
 
 struct TopicPublisherParams
@@ -173,6 +175,7 @@ using PublisherVariablesVariant = std::variant<
   PublisherVariables<PointCloud2>, PublisherVariables<sensor_msgs::msg::CameraInfo>,
   PublisherVariables<sensor_msgs::msg::Image>,
   PublisherVariables<geometry_msgs::msg::PoseWithCovarianceStamped>,
+  PublisherVariables<geometry_msgs::msg::PoseStamped>, PublisherVariables<nav_msgs::msg::Odometry>,
   PublisherVariables<sensor_msgs::msg::Imu>,
   PublisherVariables<autoware_auto_vehicle_msgs::msg::ControlModeReport>,
   PublisherVariables<autoware_auto_vehicle_msgs::msg::GearReport>,
@@ -207,6 +210,13 @@ private:
   TopicPublisherParams topic_publisher_params_;
 
   // Functions
+  void setMessageToVariableMap(
+    const PublisherMessageType & message_type, const std::string & topic_name,
+    rosbag2_storage::SerializedBagMessage & bag_message, const bool is_empty_area_message);
+  void setPeriodToVariableMap(
+    const std::unordered_map<std::string, std::vector<rclcpp::Time>> & time_map);
+  bool setPublishersAndTimersToVariableMap();
+  bool checkPublishersInitializedCorrectly();
   void initRosbagPublishers();
   void pointcloudMessagesSyncPublisher(const PointcloudPublisherType type);
   void genericMessagePublisher(const std::string & topic_name);
