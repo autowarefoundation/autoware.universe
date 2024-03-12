@@ -12,11 +12,10 @@ Currently, there are two types of MRM:
 - Emergency Stop Operator: publishes `/system/emergency/control_cmd` to make an emergency stop
 - Comfortable Stop Operator: publishes `/planning/scenario_planning/max_velocity_candidates` to make a comfortable stop
 
-These operators have `operate()`, `cancel()` and `onTimer` public functions.
+These operators have `operate()` and `cancel()` public functions.
 
 - `operate()`: executes the MRM operation
 - `cancel()`: cancels the MRM operation
-- `onTimer()`: executes each operator's timer callback
 
 ### State Transitions
 

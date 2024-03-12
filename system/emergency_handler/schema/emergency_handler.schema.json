@@ -23,6 +23,11 @@
         },
         "emergency_stop_operator": {
           "type": "object",
+          "update_rate": {
+            "type": "integer",
+            "description": "Timer callback period.",
+            "default": 30
+          },
           "properties": {
             "target_acceleration": {
               "type": "number",
@@ -46,6 +51,7 @@
             }
           },
           "required": [
+            "update_rate",
             "target_acceleration",
             "target_jerk",
             "turning_hazard_on",

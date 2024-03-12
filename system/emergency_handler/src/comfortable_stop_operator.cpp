@@ -33,11 +33,6 @@ ComfortableStopOperator::ComfortableStopOperator(rclcpp::Node * node) : node_(no
       "~/output/velocity_limit/clear", rclcpp::QoS{1}.transient_local());
 }
 
-void ComfortableStopOperator::onTimer()
-{
-  // do nothing
-}
-
 bool ComfortableStopOperator::operate()
 {
   publishVelocityLimit();

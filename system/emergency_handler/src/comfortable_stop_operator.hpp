@@ -36,7 +36,6 @@ public:
   explicit ComfortableStopOperator(rclcpp::Node * node);
   bool operate();
   bool cancel();
-  void onTimer();
 
 private:
   // Parameters

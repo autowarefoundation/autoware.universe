@@ -8,6 +8,7 @@
 
     # emergency stop operator class
     emergency_stop_operator:
+      update_rate: 30
       target_acceleration: -2.5
       target_jerk: -1.5
       turning_hazard_on: true

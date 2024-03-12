@@ -20,6 +20,7 @@ namespace emergency_handler::emergency_stop_operator
 EmergencyStopOperator::EmergencyStopOperator(rclcpp::Node * node) : node_(node)
 {
   // Parameter
+  params_.update_rate = node_->declare_parameter<int>("emergency_stop_operator.update_rate");
   params_.target_acceleration =
     node_->declare_parameter<double>("emergency_stop_operator.target_acceleration");
   params_.target_jerk = node_->declare_parameter<double>("emergency_stop_operator.target_jerk");
@@ -45,6 +46,11 @@ EmergencyStopOperator::EmergencyStopOperator(rclcpp::Node * node) : node_(node)
 
   // Initialize
   is_prev_control_cmd_subscribed_ = false;
+
+  // Timer
+  const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
+  timer_ = rclcpp::create_timer(
+    node_, node_->get_clock(), update_period_ns, std::bind(&EmergencyStopOperator::onTimer, this));
 }
 
 void EmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSharedPtr msg)

@@ -31,6 +31,7 @@ using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 
 struct Param
 {
+  int update_rate;
   double target_acceleration;
   double target_jerk;
   bool turning_hazard_on;
@@ -43,7 +44,6 @@ public:
   explicit EmergencyStopOperator(rclcpp::Node * node);
   bool operate();
   bool cancel();
-  void onTimer();
 
 private:
   // Parameters
@@ -65,6 +65,10 @@ private:
 
   rclcpp::Publisher<GearCommand>::SharedPtr pub_gear_cmd_;
   void publishGearCmd();
+
+  // Timer
+  rclcpp::TimerBase::SharedPtr timer_;
+  void onTimer();
 
   // Alrogithm
   bool is_prev_control_cmd_subscribed_;

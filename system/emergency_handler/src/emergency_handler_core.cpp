@@ -203,10 +203,6 @@ void EmergencyHandler::checkHazardStatusTimeout()
 
 void EmergencyHandler::onTimer()
 {
-  // execute onTimer callback of each operator
-  emergency_stop_operator_->onTimer();
-  comfortable_stop_operator_->onTimer();
-
   if (!isDataReady()) {
     return;
   }
