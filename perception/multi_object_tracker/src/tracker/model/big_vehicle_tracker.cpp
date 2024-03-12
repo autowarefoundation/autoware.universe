@@ -158,9 +158,9 @@ BigVehicleTracker::BigVehicleTracker(
   setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 
   // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 2.5);
-  bounding_box_.width = std::max(bounding_box_.width, 1.0);
-  bounding_box_.height = std::max(bounding_box_.height, 1.0);
+  bounding_box_.length = std::max(bounding_box_.length, 0.3);
+  bounding_box_.width = std::max(bounding_box_.width, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.3);
 
   // Set lf, lr
   lf_ = std::max(bounding_box_.length * 0.3, 1.5);   // 30% front from the center, minimum of 1.5m
@@ -461,9 +461,9 @@ bool BigVehicleTracker::measureWithShape(
     bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y, bbox_object.shape.dimensions.z};
 
   // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 2.5);
-  bounding_box_.width = std::max(bounding_box_.width, 1.0);
-  bounding_box_.height = std::max(bounding_box_.height, 1.0);
+  bounding_box_.length = std::max(bounding_box_.length, 0.3);
+  bounding_box_.width = std::max(bounding_box_.width, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.3);
 
   // update lf, lr
   lf_ = std::max(bounding_box_.length * 0.3, 1.5);   // 30% front from the center, minimum of 1.5m
