@@ -197,38 +197,47 @@ bool ObjectInfo::before_stopline_by(const double margin) const
 }
 
 std::shared_ptr<ObjectInfo> ObjectInfoManager::registerObject(
-  const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
-  const bool belong_intersection_area, const bool is_parked_vehicle)
+  const unique_identifier_msgs::msg::UUID & uuid, const bool belong_violating_area,
+  const bool belong_attention_area, const bool belong_intersection_area,
+  const bool is_parked_vehicle)
 {
   if (objects_info_.count(uuid) == 0) {
     auto object = std::make_shared<intersection::ObjectInfo>(uuid);
     objects_info_[uuid] = object;
   }
   auto object = objects_info_[uuid];
-  if (belong_attention_area) {
-    attention_area_objects_.push_back(object);
-  } else if (belong_intersection_area) {
-    intersection_area_objects_.push_back(object);
-  }
-  if (is_parked_vehicle) {
-    parked_objects_.push_back(object);
+  if (belong_violating_area) {
+    violating_objects_.push_back(object);
+  } else {
+    if (belong_attention_area) {
+      attention_area_objects_.push_back(object);
+    } else if (belong_intersection_area) {
+      intersection_area_objects_.push_back(object);
+    }
+    if (is_parked_vehicle) {
+      parked_objects_.push_back(object);
+    }
   }
   return object;
 }
 
 void ObjectInfoManager::registerExistingObject(
-  const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
-  const bool belong_intersection_area, const bool is_parked_vehicle,
-  std::shared_ptr<intersection::ObjectInfo> object)
+  const unique_identifier_msgs::msg::UUID & uuid, const bool belong_violating_area,
+  const bool belong_attention_area, const bool belong_intersection_area,
+  const bool is_parked_vehicle, std::shared_ptr<intersection::ObjectInfo> object)
 {
   objects_info_[uuid] = object;
-  if (belong_attention_area) {
-    attention_area_objects_.push_back(object);
-  } else if (belong_intersection_area) {
-    intersection_area_objects_.push_back(object);
-  }
-  if (is_parked_vehicle) {
-    parked_objects_.push_back(object);
+  if (belong_violating_area) {
+    violating_objects_.push_back(object);
+  } else {
+    if (belong_attention_area) {
+      attention_area_objects_.push_back(object);
+    } else if (belong_intersection_area) {
+      intersection_area_objects_.push_back(object);
+    }
+    if (is_parked_vehicle) {
+      parked_objects_.push_back(object);
+    }
   }
 }
 
@@ -240,7 +249,7 @@ void ObjectInfoManager::clearObjects()
   parked_objects_.clear();
 };
 
-std::vector<std::shared_ptr<ObjectInfo>> ObjectInfoManager::allObjects() const
+std::vector<std::shared_ptr<ObjectInfo>> ObjectInfoManager::allAttentionObjects() const
 {
   std::vector<std::shared_ptr<ObjectInfo>> all_objects = attention_area_objects_;
   all_objects.insert(

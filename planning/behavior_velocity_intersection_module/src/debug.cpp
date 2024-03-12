@@ -291,6 +291,13 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       &debug_marker_array);
   }
 
+  if (debug_data_.yield_area) {
+    appendMarkerArray(
+      ::createLaneletPolygonsMarkerArray(
+        debug_data_.yield_area.value(), "yield_area", lane_id_, 0.6588235, 0.34509, 0.6588235),
+      &debug_marker_array);
+  }
+
   if (debug_data_.ego_lane) {
     appendMarkerArray(
       ::createLaneletPolygonsMarkerArray(
