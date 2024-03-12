@@ -24,12 +24,43 @@
 
 namespace behavior_velocity_planner::out_of_lane
 {
+
+lanelet::ConstLanelets consecutive_lanelets(
+  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelet & lanelet)
+{
+  lanelet::ConstLanelets consecutives = route_handler.getRoutingGraphPtr()->following(lanelet);
+  const auto previous = route_handler.getRoutingGraphPtr()->previous(lanelet);
+  consecutives.insert(consecutives.end(), previous.begin(), previous.end());
+  return consecutives;
+}
+
+lanelet::ConstLanelets get_missing_lane_change_lanelets(
+  lanelet::ConstLanelets & path_lanelets, const route_handler::RouteHandler & route_handler)
+{
+  lanelet::ConstLanelets missing_lane_change_lanelets;
+  const auto & routing_graph = *route_handler.getRoutingGraphPtr();
+  lanelet::ConstLanelets adjacents;
+  lanelet::ConstLanelets consecutives;
+  for (const auto & ll : path_lanelets) {
+    for (const auto & consecutive : consecutive_lanelets(route_handler, ll))
+      if (!contains_lanelet(consecutives, consecutive.id())) consecutives.push_back(consecutive);
+    for (const auto & adjacent : routing_graph.besides(ll))
+      if (!contains_lanelet(adjacents, adjacent.id())) adjacents.push_back(adjacent);
+  }
+  for (const auto & ll : adjacents) {
+    if (
+      !contains_lanelet(missing_lane_change_lanelets, ll.id()) &&
+      !contains_lanelet(path_lanelets, ll.id()) && contains_lanelet(consecutives, ll.id()))
+      missing_lane_change_lanelets.push_back(ll);
+  }
+  return missing_lane_change_lanelets;
+}
+
 lanelet::ConstLanelets calculate_path_lanelets(
   const EgoData & ego_data, const route_handler::RouteHandler & route_handler)
 {
   const auto lanelet_map_ptr = route_handler.getLaneletMapPtr();
-  lanelet::ConstLanelets path_lanelets =
-    planning_utils::getLaneletsOnPath(ego_data.path, lanelet_map_ptr, ego_data.pose);
+  lanelet::ConstLanelets path_lanelets;
   lanelet::BasicLineString2d path_ls;
   for (const auto & p : ego_data.path.points)
     path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
@@ -38,6 +69,8 @@ lanelet::ConstLanelets calculate_path_lanelets(
     if (!contains_lanelet(path_lanelets, dist_lanelet.second.id()))
       path_lanelets.push_back(dist_lanelet.second);
   }
+  const auto missing_lanelets = get_missing_lane_change_lanelets(path_lanelets, route_handler);
+  path_lanelets.insert(path_lanelets.end(), missing_lanelets.begin(), missing_lanelets.end());
   return path_lanelets;
 }
 
