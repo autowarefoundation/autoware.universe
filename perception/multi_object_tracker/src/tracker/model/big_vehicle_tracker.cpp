@@ -83,9 +83,9 @@ BigVehicleTracker::BigVehicleTracker(
     last_input_bounding_box_ = bounding_box_;
   }
   // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 2.5);
-  bounding_box_.width = std::max(bounding_box_.width, 1.0);
-  bounding_box_.height = std::max(bounding_box_.height, 1.0);
+  bounding_box_.length = std::max(bounding_box_.length, 0.3);
+  bounding_box_.width = std::max(bounding_box_.width, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.3);
 
   // Set motion model parameters
   {
@@ -313,9 +313,9 @@ bool BigVehicleTracker::measureWithShape(
   last_input_bounding_box_ = {
     object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 2.5);
-  bounding_box_.width = std::max(bounding_box_.width, 1.0);
-  bounding_box_.height = std::max(bounding_box_.height, 1.0);
+  bounding_box_.length = std::max(bounding_box_.length, 0.3);
+  bounding_box_.width = std::max(bounding_box_.width, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.3);
 
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);

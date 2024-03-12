@@ -69,9 +69,9 @@ BicycleTracker::BicycleTracker(
     bounding_box_ = {1.0, 0.5, 1.7};
   }
   // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.5);
+  bounding_box_.length = std::max(bounding_box_.length, 0.3);
   bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.8);
+  bounding_box_.height = std::max(bounding_box_.height, 0.3);
 
   // Set motion model parameters
   {
@@ -236,9 +236,9 @@ bool BicycleTracker::measureWithShape(
   bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
   bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
   // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.5);
+  bounding_box_.length = std::max(bounding_box_.length, 0.3);
   bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.8);
+  bounding_box_.height = std::max(bounding_box_.height, 0.3);
 
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);
