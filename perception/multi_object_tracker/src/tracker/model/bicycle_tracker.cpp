@@ -140,6 +140,11 @@ BicycleTracker::BicycleTracker(
   } else {
     bounding_box_ = {1.0, 0.5, 1.7};
   }
+  // set minimum size
+  bounding_box_.length = std::max(bounding_box_.length, 0.5);
+  bounding_box_.width = std::max(bounding_box_.width, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.8);
+
   ekf_.init(X, P);
 
   // Set lf, lr
@@ -414,6 +419,11 @@ bool BicycleTracker::measureWithShape(
     gain * bounding_box_.height + (1.0 - gain) * bbox_object.shape.dimensions.z;
   last_input_bounding_box_ = {
     bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y, bbox_object.shape.dimensions.z};
+
+  // set minimum size
+  bounding_box_.length = std::max(bounding_box_.length, 0.5);
+  bounding_box_.width = std::max(bounding_box_.width, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.8);
 
   // update lf, lr
   lf_ = std::max(bounding_box_.length * 0.3, 0.3);  // 30% front from the center, minimum of 0.3m
