@@ -14,6 +14,7 @@
   <depend>sample_vehicle_description</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
+  <test_depend>vehicle_info_util</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 
