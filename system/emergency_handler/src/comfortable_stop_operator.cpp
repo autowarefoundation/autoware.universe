@@ -23,7 +23,8 @@ namespace comfortable_stop_operator
 ComfortableStopOperator::ComfortableStopOperator(rclcpp::Node * node) : node_(node)
 {
   // Parameter
-  params_.min_acceleration = node_->declare_parameter<double>("comfortable_stop_operator.min_acceleration");
+  params_.min_acceleration =
+    node_->declare_parameter<double>("comfortable_stop_operator.min_acceleration");
   params_.max_jerk = node_->declare_parameter<double>("comfortable_stop_operator.max_jerk");
   params_.min_jerk = node_->declare_parameter<double>("comfortable_stop_operator.min_jerk");
 

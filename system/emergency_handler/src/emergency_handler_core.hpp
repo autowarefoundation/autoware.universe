@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_
-#define EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_
+#ifndef EMERGENCY_HANDLER_CORE_HPP_
+#define EMERGENCY_HANDLER_CORE_HPP_
 
 // Core
 #include <memory>
@@ -123,4 +123,4 @@ private:
 
 }  // namespace emergency_handler
 
-#endif  // EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_
+#endif  // EMERGENCY_HANDLER_CORE_HPP_
