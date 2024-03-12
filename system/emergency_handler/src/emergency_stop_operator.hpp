@@ -18,16 +18,23 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 namespace emergency_handler::emergency_stop_operator
 {
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_auto_vehicle_msgs::msg::GearCommand;
 
 struct Param
 {
   double target_acceleration;
   double target_jerk;
+  bool turning_hazard_on;
+  bool use_parking_after_stopped;
 };
 
 class EmergencyStopOperator
@@ -46,13 +53,23 @@ private:
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_control_cmd_;
   void onControlCommand(AckermannControlCommand::ConstSharedPtr msg);
 
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
+  void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
+
   // Publisher
   rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_control_cmd_;
+  void publishControlCmd();
+
+  rclcpp::Publisher<HazardLightsCommand>::SharedPtr pub_hazard_light_cmd_;
+  void publishHazardLightCmd();
+
+  rclcpp::Publisher<GearCommand>::SharedPtr pub_gear_cmd_;
+  void publishGearCmd();
 
   // Alrogithm
   bool is_prev_control_cmd_subscribed_;
   AckermannControlCommand prev_control_cmd_;
-  AckermannControlCommand calcNextControlCmd();
+  bool is_stopped_;
 
   rclcpp::Node * node_;
 };

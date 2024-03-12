@@ -26,9 +26,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // Parameter
   param_.update_rate = declare_parameter<int>("update_rate");
   param_.timeout_hazard_status = declare_parameter<double>("timeout_hazard_status");
-  param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped");
   param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop");
-  param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency");
 
   using std::placeholders::_1;
 
@@ -39,15 +37,10 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
       std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onOdometry, this, _1));
-  // subscribe control mode
   sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
 
   // Publisher
-  pub_hazard_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
-    "~/output/hazard", rclcpp::QoS{1});
-  pub_gear_cmd_ =
-    create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_mrm_state_ =
     create_publisher<autoware_adapi_v1_msgs::msg::MrmState>("~/output/mrm/state", rclcpp::QoS{1});
 
@@ -86,51 +79,6 @@ void EmergencyHandler::onControlMode(
   const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
   control_mode_ = msg;
-}
-
-autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
-{
-  using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
-  HazardLightsCommand msg;
-
-  // Check emergency
-  const bool is_emergency = isEmergency();
-
-  if (hazard_status_stamped_->status.emergency_holding) {
-    // turn hazard on during emergency holding
-    msg.command = HazardLightsCommand::ENABLE;
-  } else if (is_emergency && param_.turning_hazard_on.emergency) {
-    // turn hazard on if vehicle is in emergency state and
-    // turning hazard on if emergency flag is true
-    msg.command = HazardLightsCommand::ENABLE;
-
-  } else {
-    msg.command = HazardLightsCommand::NO_COMMAND;
-  }
-  return msg;
-}
-
-void EmergencyHandler::publishControlCommands()
-{
-  using autoware_auto_vehicle_msgs::msg::GearCommand;
-
-  // Create timestamp
-  const auto stamp = this->now();
-
-  // Publish hazard command
-  pub_hazard_cmd_->publish(createHazardCmdMsg());
-
-  // Publish gear
-  {
-    GearCommand msg;
-    msg.stamp = stamp;
-    if (param_.use_parking_after_stopped && isStopped()) {
-      msg.command = GearCommand::PARK;
-    } else {
-      msg.command = GearCommand::DRIVE;
-    }
-    pub_gear_cmd_->publish(msg);
-  }
 }
 
 void EmergencyHandler::publishMrmState()
@@ -269,8 +217,6 @@ void EmergencyHandler::onTimer()
   // Update Emergency State
   updateMrmState();
 
-  // Publish control commands
-  publishControlCommands();
   operateMrm();
   publishMrmState();
 }

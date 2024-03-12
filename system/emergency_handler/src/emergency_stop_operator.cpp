@@ -23,15 +23,21 @@ EmergencyStopOperator::EmergencyStopOperator(rclcpp::Node * node) : node_(node)
   params_.target_acceleration =
     node_->declare_parameter<double>("emergency_stop_operator.target_acceleration");
   params_.target_jerk = node_->declare_parameter<double>("emergency_stop_operator.target_jerk");
+  params_.turning_hazard_on = node_->declare_parameter<bool>("emergency_stop_operator.turning_hazard_on");
+  params_.use_parking_after_stopped = node_->declare_parameter<bool>("emergency_stop_operator.use_parking_after_stopped");
 
   // Subscriber
   sub_control_cmd_ = node_->create_subscription<AckermannControlCommand>(
     "~/input/control/control_cmd", 1,
     std::bind(&EmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
+  sub_odom_ = node_->create_subscription<nav_msgs::msg::Odometry>(
+    "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyStopOperator::onOdometry, this, std::placeholders::_1));
 
   // Publisher
   pub_control_cmd_ =
-    node_->create_publisher<AckermannControlCommand>("~/output/mrm/emergency_stop/control_cmd", 1);
+    node_->create_publisher<AckermannControlCommand>("~/output/mrm/emergency_stop/control_cmd", rclcpp::QoS{1});
+  pub_hazard_light_cmd_ = node_->create_publisher<HazardLightsCommand>("~/output/hazard", rclcpp::QoS{1});
+  pub_gear_cmd_ = node_->create_publisher<GearCommand>("~/output/gear", rclcpp::QoS{1});
 
   // Initialize
   is_prev_control_cmd_subscribed_ = false;
@@ -43,14 +49,24 @@ void EmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstShare
   is_prev_control_cmd_subscribed_ = true;
 }
 
+void EmergencyStopOperator::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+{
+  constexpr auto th_stopped_velocity = 0.001;
+  is_stopped_ = msg->twist.twist.linear.x < th_stopped_velocity;
+}
+
 void EmergencyStopOperator::onTimer()
 {
-  pub_control_cmd_->publish(calcNextControlCmd());
+  publishControlCmd();
+  publishHazardLightCmd();
+  publishGearCmd();
 }
 
 bool EmergencyStopOperator::operate()
 {
-  pub_control_cmd_->publish(calcNextControlCmd());
+  publishControlCmd();
+  publishHazardLightCmd();
+  publishGearCmd();
 
   // Currently, EmergencyStopOperator does not return false
   return true;
@@ -64,7 +80,7 @@ bool EmergencyStopOperator::cancel()
   return true;
 }
 
-AckermannControlCommand EmergencyStopOperator::calcNextControlCmd()
+void EmergencyStopOperator::publishControlCmd()
 {
   AckermannControlCommand control_cmd;
   auto now = node_->now();
@@ -105,7 +121,31 @@ AckermannControlCommand EmergencyStopOperator::calcNextControlCmd()
     // lateral: keep previous lateral command
   }
 
-  return control_cmd;
+  pub_control_cmd_->publish(control_cmd);
+}
+
+void EmergencyStopOperator::publishHazardLightCmd()
+{
+  HazardLightsCommand hazard_light_cmd;
+  hazard_light_cmd.stamp = node_->now();
+  if (params_.turning_hazard_on) {
+    hazard_light_cmd.command = HazardLightsCommand::ENABLE;
+  } else {
+    hazard_light_cmd.command = HazardLightsCommand::NO_COMMAND;
+  }
+  pub_hazard_light_cmd_->publish(hazard_light_cmd);
+}
+
+void EmergencyStopOperator::publishGearCmd()
+{
+  GearCommand gear_cmd;
+  gear_cmd.stamp = node_->now();
+  if (params_.use_parking_after_stopped && is_stopped_) {
+    gear_cmd.command = GearCommand::PARK;
+  } else {
+    gear_cmd.command = GearCommand::DRIVE;
+  }
+  pub_gear_cmd_->publish(gear_cmd);
 }
 
 }  // namespace emergency_handler::emergency_stop_operator

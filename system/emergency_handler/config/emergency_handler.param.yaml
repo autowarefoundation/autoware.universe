@@ -4,17 +4,14 @@
   ros__parameters:
     update_rate: 10
     timeout_hazard_status: 0.5
-    use_parking_after_stopped: false
     use_comfortable_stop: false
-
-    # setting whether to turn hazard lamp on for each situation
-    turning_hazard_on:
-      emergency: true
 
     # emergency stop operator class
     emergency_stop_operator:
       target_acceleration: -2.5
       target_jerk: -1.5
+      turning_hazard_on: true
+      use_parking_after_stopped: false
 
     # comfortable stop operator class
     comfortable_stop_operator:

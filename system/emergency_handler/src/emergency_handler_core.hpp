@@ -23,8 +23,6 @@
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 
 // ROS 2 core
 #include <rclcpp/rclcpp.hpp>
@@ -39,18 +37,12 @@
 namespace emergency_handler
 {
 
-struct HazardLampPolicy
-{
-  bool emergency;
-};
-
 struct Param
 {
   int update_rate;
   double timeout_hazard_status;
   bool use_parking_after_stopped;
   bool use_comfortable_stop;
-  HazardLampPolicy turning_hazard_on{};
 };
 
 class EmergencyHandler : public rclcpp::Node
@@ -76,16 +68,7 @@ private:
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
 
   // Publisher
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
-    pub_hazard_cmd_;
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_gear_cmd_;
-
-  autoware_auto_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();
-  autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
-  void publishControlCommands();
-
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::MrmState>::SharedPtr pub_mrm_state_;
-
   autoware_adapi_v1_msgs::msg::MrmState mrm_state_;
   void publishMrmState();
 
