@@ -219,9 +219,9 @@ bool PedestrianTracker::measureWithShape(
   // set minimum size
   bounding_box_.length = std::max(bounding_box_.length, 0.3);
   bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
+  bounding_box_.height = std::max(bounding_box_.height, 0.8);
   cylinder_.width = std::max(cylinder_.width, 0.3);
-  cylinder_.height = std::max(cylinder_.height, 0.3);
+  cylinder_.height = std::max(cylinder_.height, 0.8);
 
   return true;
 }
