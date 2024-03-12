@@ -619,13 +619,27 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   const lanelet::ConstLanelets & current_lanelets,
   const std::shared_ptr<RouteHandler> route_handler,
   const BehaviorPathPlannerParameters & parameters, const Odometry::ConstSharedPtr self_odometry,
-  const double current_shift_length) const
+  const double current_shift_length, const bool is_driving_forward) const
 {
   constexpr double THRESHOLD = 0.1;
   const auto & p = parameters;
   const auto & rh = route_handler;
   const auto & ego_pose = self_odometry->pose.pose;
   const auto & ego_speed = self_odometry->twist.twist.linear.x;
+
+  if (!is_driving_forward) {
+    TurnSignalInfo turn_signal_info{};
+    turn_signal_info.hazard_signal.command = HazardLightsCommand::ENABLE;
+    const auto back_start_pose = rh->getOriginalStartPose();
+    const Pose & start_pose = self_odometry->pose.pose;
+
+    turn_signal_info.desired_start_point = back_start_pose;
+    turn_signal_info.required_start_point = back_start_pose;
+    // pull_out start_pose is same to backward driving end_pose
+    turn_signal_info.required_end_point = start_pose;
+    turn_signal_info.desired_end_point = start_pose;
+    return std::make_pair(turn_signal_info, false);
+  }
 
   if (shift_line.start_idx + 1 > path.shift_length.size()) {
     RCLCPP_WARN(rclcpp::get_logger(__func__), "index inconsistency.");

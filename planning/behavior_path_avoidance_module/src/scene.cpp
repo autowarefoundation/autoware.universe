@@ -950,7 +950,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
     const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
       linear_shift_path, path_shifter_.getShiftLines().front(), avoid_data_.current_lanelets,
-      helper_->getEgoShift());
+      helper_->getEgoShift(), true);
 
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
     output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
