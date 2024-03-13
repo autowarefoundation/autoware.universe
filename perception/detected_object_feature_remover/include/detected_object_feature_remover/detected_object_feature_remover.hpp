@@ -21,6 +21,8 @@
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
+#include <memory>
+
 namespace detected_object_feature_remover
 {
 using autoware_auto_perception_msgs::msg::DetectedObjects;
