@@ -400,7 +400,8 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
           *concat_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concat_cloud_ptr);
       }
       // convert to original sensor frame if necessary
-      if (keep_input_frame_in_synchronized_pointcloud_) {
+      bool need_transform_to_sensor_frame = (e.second->header.frame_id != output_frame_);
+      if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
         sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr_in_sensor_frame(
           new sensor_msgs::msg::PointCloud2());
         pcl_ros::transformPointCloud(

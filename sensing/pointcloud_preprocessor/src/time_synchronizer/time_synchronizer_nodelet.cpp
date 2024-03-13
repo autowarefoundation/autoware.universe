@@ -353,8 +353,9 @@ PointCloudDataSynchronizerComponent::synchronizeClouds()
       pcl_ros::transformPointCloud(
         adjust_to_old_data_transform, *transformed_cloud_ptr,
         *transformed_delay_compensated_cloud_ptr);
-
-      if (keep_input_frame_in_synchronized_pointcloud_) {
+      // transform to sensor frame if needed
+      bool need_transform_to_sensor_frame = (e.second->header.frame_id != output_frame_);
+      if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
         sensor_msgs::msg::PointCloud2::SharedPtr
           transformed_delay_compensated_cloud_ptr_in_input_frame(
             new sensor_msgs::msg::PointCloud2());
