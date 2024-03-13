@@ -30,7 +30,7 @@ This module operates across three states, planning the route differently in each
 
 ##### Conditions for Transitioning to This State
 
-This module enters the Approach state if there is a rival vehicle that can be overtaken within the  `overtaking_start_time` ~ `approach_start_time` seconds. Here, a rival vehicle refers to the closest vehicle ahead on the same course as the ego. Additionally, the possibility of overtaking within the `overtaking_start_time` ~ `approach_start_time` seconds is determined based on the following conditions:
+This module enters the Approach state if there is a rival vehicle that can be overtaken within the `overtaking_start_time` ~ `approach_start_time` seconds. Here, a rival vehicle refers to the closest vehicle ahead on the same course as the ego. Additionally, the possibility of overtaking within the `overtaking_start_time` ~ `approach_start_time` seconds is determined based on the following conditions:
 
 1. `overtaking_start_time < longitudinal distance / (ego_speed - rival_speed) < approach_start_time`
 2. There is sufficient width to the right or left of the rival vehicle for overtaking.
@@ -39,11 +39,11 @@ This module enters the Approach state if there is a rival vehicle that can be ov
 
 - Transition to the Overtaking State
 
-	When the `longitudinal distance / (ego_speed - rival_speed)` becomes less than `overtaking_start_time`, the state transitions to the Overtaking State to begin the overtaking maneuver.
+When the `longitudinal distance / (ego_speed - rival_speed)` becomes less than `overtaking_start_time`, the state transitions to the Overtaking State to begin the overtaking maneuver.
 
 - Turn off the RacingOvertakingModule
 
-	If there are no rivals left to overtake, this module is turned off.
+If there are no rivals left to overtake, this module is turned off.
 
 ##### Path Planning in This State
 
@@ -58,7 +58,7 @@ The path is updated every time step.
 
 ##### Conditions for Transitioning to This State
 
-This module enters the Overtaking state if there is a rival vehicle that can be overtaken within the  `min_overtaking_start_time` ~ `overtaking_start_time` seconds. 
+This module enters the Overtaking state if there is a rival vehicle that can be overtaken within the `min_overtaking_start_time` ~ `overtaking_start_time` seconds.
 Whether overtaking is possible in this state is determined by the same conditions as in the Approach State:
 
 1. `min_overtaking_start_time < longitudinal distance / (ego_speed - rival_speed) < overtaking_start_time`
@@ -84,11 +84,11 @@ The module transitions to the AfterOvertaking state after the Overtaking state.
 
 - Transition to the Approach or Overtaking State
 
-	If there is a rival vehicle to overtake on the course of the ego, this module transitions to either the Approach or Overtaking state, depending on the distance and speed of the rival vehicle.
-	
+If there is a rival vehicle to overtake on the course of the ego, this module transitions to either the Approach or Overtaking state, depending on the distance and speed of the rival vehicle.
+
 - Turn off the RacingOvertakingModule
 
-	If the ego has returned to the center line, this module is turned off.
+If the ego has returned to the center line, this module is turned off.
 
 ##### Path Planning in This State
 
