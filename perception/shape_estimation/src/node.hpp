@@ -44,6 +44,7 @@ private:
   std::unique_ptr<ShapeEstimator> estimator_;
   bool use_vehicle_reference_yaw_;
   bool use_vehicle_reference_shape_size_;
+  bool keep_supper_large_vehicle_;
 
 public:
   explicit ShapeEstimationNode(const rclcpp::NodeOptions & node_options);
