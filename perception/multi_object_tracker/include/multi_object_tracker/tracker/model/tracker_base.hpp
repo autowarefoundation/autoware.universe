@@ -42,6 +42,8 @@ protected:
   {
     classification_ = classification;
   }
+  void updateClassification(
+    const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification);
 
 private:
   unique_identifier_msgs::msg::UUID uuid_;
@@ -50,6 +52,9 @@ private:
   int total_no_measurement_count_;
   int total_measurement_count_;
   rclcpp::Time last_update_with_measurement_time_;
+
+public:
+  autoware_auto_perception_msgs::msg::ObjectClassification last_filtered_class_;
 
 public:
   Tracker(
@@ -68,6 +73,7 @@ public:
   {
     return object_recognition_utils::getHighestProbLabel(classification_);
   }
+  std::uint8_t getFilteredLabel() const { return last_filtered_class_.label; }
   int getNoMeasurementCount() const { return no_measurement_count_; }
   int getTotalNoMeasurementCount() const { return total_no_measurement_count_; }
   int getTotalMeasurementCount() const { return total_measurement_count_; }

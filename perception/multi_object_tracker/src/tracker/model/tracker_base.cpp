@@ -34,6 +34,9 @@ Tracker::Tracker(
   std::mt19937 gen(std::random_device{}());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
   std::generate(uuid_.uuid.begin(), uuid_.uuid.end(), bit_eng);
+
+  // initialize last_filtered_class_
+  last_filtered_class_ = object_recognition_utils::getHighestProbClassification(classification_);
 }
 
 bool Tracker::updateWithMeasurement(
@@ -52,6 +55,83 @@ bool Tracker::updateWithoutMeasurement()
   ++no_measurement_count_;
   ++total_no_measurement_count_;
   return true;
+}
+
+void Tracker::updateClassification(
+  const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification)
+{
+  // Update classification
+  // 1. Match classification label
+  // 2. Update the matched classification probability with a gain
+  // 3. If the label is not found, add it to the classification list
+  // 4. If the old class probability is not found, decay the probability
+  // 5. Normalize the probability
+
+  const double gain = 0.05;
+  const double gain_inv = 1.0 - gain;
+  const double decay = gain_inv;
+
+  for (const auto & new_class : classification) {
+    bool found = false;
+    for (auto & old_class : classification_) {
+      // Update the matched classification probability with a gain
+      if (new_class.label == old_class.label) {
+        old_class.probability = old_class.probability * gain_inv + new_class.probability * gain;
+        found = true;
+        break;
+      }
+    }
+    // If the label is not found, add it to the classification list
+    if (!found) {
+      classification_.push_back(new_class);
+    }
+  }
+  // If the old class probability is not found, decay the probability
+  for (auto & old_class : classification_) {
+    bool found = false;
+    for (const auto & new_class : classification) {
+      if (new_class.label == old_class.label) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      old_class.probability *= decay;
+    }
+  }
+
+  // Normalize
+  double sum = 0.0;
+  for (const auto & class_ : classification_) {
+    sum += class_.probability;
+  }
+  for (auto & class_ : classification_) {
+    class_.probability /= sum;
+  }
+
+  // If the probability is too small, remove the class
+  classification_.erase(
+    std::remove_if(
+      classification_.begin(), classification_.end(),
+      [](const auto & class_) { return class_.probability < 0.001; }),
+    classification_.end());
+
+  // Set the last filtered class
+  // if the highest probability class is not overcome a certain hysteresis, the last
+  // filtered class stays the same
+
+  for (const auto & class_ : classification_) {
+    if (class_.label == last_filtered_class_.label) {
+      last_filtered_class_.probability = class_.probability;
+      break;
+    }
+  }
+  const double hysteresis = 0.1;
+  autoware_auto_perception_msgs::msg::ObjectClassification const new_classification =
+    object_recognition_utils::getHighestProbClassification(classification_);
+  if (new_classification.probability > last_filtered_class_.probability + hysteresis) {
+    last_filtered_class_ = new_classification;
+  }
 }
 
 geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
