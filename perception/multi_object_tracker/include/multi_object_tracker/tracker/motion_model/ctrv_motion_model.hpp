@@ -32,7 +32,7 @@
 #endif
 #include <geometry_msgs/msg/twist.hpp>
 
-// cspell:ignore CTRV
+// cspell: ignore CTRV
 
 class CTRVMotionModel : public MotionModel
 {
