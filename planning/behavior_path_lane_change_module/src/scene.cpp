@@ -480,14 +480,24 @@ void NormalLaneChange::resetParameters()
 
 TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
 {
-  TurnSignalInfo turn_signal_info = calcTurnSignalInfo();
-  const auto [turn_signal_command, distance_to_vehicle_front] = utils::getPathTurnSignal(
-    status_.current_lanes, status_.lane_change_path.shifted_path,
-    status_.lane_change_path.info.shift_line, getEgoPose(), getEgoTwist().linear.x,
-    planner_data_->parameters);
-  turn_signal_info.turn_signal.command = turn_signal_command.command;
+  const auto & pose = getEgoPose();
+  const auto & current_lanes = status_.current_lanes;
+  const auto & shift_line = status_.lane_change_path.info.shift_line;
+  const auto & shift_path = status_.lane_change_path.shifted_path;
+  const auto arc_position_current_pose = lanelet::utils::getArcCoordinates(current_lanes, pose);
 
-  return turn_signal_info;
+  const double distance_to_shift_start =
+    std::invoke([&current_lanes, &shift_line, &arc_position_current_pose]() {
+      const auto arc_position_shift_start =
+        lanelet::utils::getArcCoordinates(current_lanes, shift_line.start);
+      return arc_position_shift_start.length - arc_position_current_pose.length;
+    });
+
+  // return turn_signal_info;
+
+  const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
+    shift_path, shift_line, current_lanes, distance_to_shift_start, true);
+  return new_signal;
 }
 
 lanelet::ConstLanelets NormalLaneChange::getCurrentLanes() const
