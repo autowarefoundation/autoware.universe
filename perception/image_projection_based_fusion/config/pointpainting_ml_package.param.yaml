@@ -5,6 +5,7 @@
     head_onnx_path: "$(var model_path)/pts_backbone_neck_head_$(var model_name).onnx"
     head_engine_path: "$(var model_path)/pts_backbone_neck_head_$(var model_name).engine"
     build_only: false
+    trt_precision: fp16
     post_process_params:
       # post-process params
       circle_nms_dist_threshold: 0.3
@@ -12,6 +13,5 @@
       iou_nms_search_distance_2d: 10.0
       iou_nms_threshold: 0.1
       score_threshold: 0.35
-    omp_params:
-      # omp params
-      num_threads: 1
+      yaw_norm_thresholds: [0.3, 0.3, 0.3, 0.3, 0.0]
+      has_twist: false
