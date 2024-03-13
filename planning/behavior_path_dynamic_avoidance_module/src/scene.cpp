@@ -353,8 +353,8 @@ void DynamicAvoidanceModule::updateData()
   target_objects_manager_.finalize(ego_lat_feasible_paths);
 
   // 2. Precise filtering of target objects and check if they should be avoided
-  determineWheterToAvoidAgainstLaneDriveObjects(prev_objects);
-  determineWheterToAvoidAgainstFreeRunObjects(prev_objects);
+  determineWhetherToAvoidAgainstLaneDriveObjects(prev_objects);
+  determineWhetherToAvoidAgainstFreeRunObjects(prev_objects);
 
   const auto target_objects_candidate = target_objects_manager_.getValidObjects();
   target_objects_.clear();
@@ -640,7 +640,7 @@ void DynamicAvoidanceModule::registerFreeRunObjects(
   }
 }
 
-void DynamicAvoidanceModule::determineWheterToAvoidAgainstLaneDriveObjects(
+void DynamicAvoidanceModule::determineWhetherToAvoidAgainstLaneDriveObjects(
   const std::vector<DynamicAvoidanceObject> & prev_objects)
 {
   const auto & input_path = getPreviousModuleOutput().path;
@@ -799,7 +799,7 @@ void DynamicAvoidanceModule::determineWheterToAvoidAgainstLaneDriveObjects(
   // prev_input_ref_path_points_ = input_ref_path_points;
 }
 
-void DynamicAvoidanceModule::determineWheterToAvoidAgainstFreeRunObjects(
+void DynamicAvoidanceModule::determineWhetherToAvoidAgainstFreeRunObjects(
   const std::vector<DynamicAvoidanceObject> & prev_objects)
 {
   const auto & input_path = getPreviousModuleOutput().path;

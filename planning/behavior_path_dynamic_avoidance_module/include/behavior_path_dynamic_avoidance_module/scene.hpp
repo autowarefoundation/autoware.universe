@@ -357,9 +357,9 @@ private:
   ObjectBehaviorType getLabelAsTargetObstacle(const uint8_t label) const;
   void registerLaneDriveObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
   void registerFreeRunObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
-  void determineWheterToAvoidAgainstLaneDriveObjects(
+  void determineWhetherToAvoidAgainstLaneDriveObjects(
     const std::vector<DynamicAvoidanceObject> & prev_objects);
-  void determineWheterToAvoidAgainstFreeRunObjects(
+  void determineWhetherToAvoidAgainstFreeRunObjects(
     const std::vector<DynamicAvoidanceObject> & prev_objects);
   LatFeasiblePaths generateLateralFeasiblePaths(
     const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const;
