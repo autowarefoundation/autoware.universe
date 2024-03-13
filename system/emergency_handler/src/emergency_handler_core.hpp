@@ -20,13 +20,14 @@
 #include <string>
 
 // Autoware
+#include <mrm_comfortable_stop_operator/mrm_comfortable_stop_operator.hpp>
+#include <mrm_emergency_stop_operator/mrm_emergency_stop_operator.hpp>
+
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <mrm_emergency_stop_operator/mrm_emergency_stop_operator.hpp>
-#include <mrm_comfortable_stop_operator/mrm_comfortable_stop_operator.hpp>
 
 // ROS 2 core
 #include <rclcpp/rclcpp.hpp>
@@ -88,8 +89,10 @@ private:
   void checkHazardStatusTimeout();
 
   // Operators
-  std::unique_ptr<mrm_emergency_stop_operator::MrmEmergencyStopOperator> mrm_emergency_stop_operator_;
-  std::unique_ptr<mrm_comfortable_stop_operator::MrmComfortableStopOperator> mrm_comfortable_stop_operator_;
+  std::unique_ptr<mrm_emergency_stop_operator::MrmEmergencyStopOperator>
+    mrm_emergency_stop_operator_;
+  std::unique_ptr<mrm_comfortable_stop_operator::MrmComfortableStopOperator>
+    mrm_comfortable_stop_operator_;
 
   // Algorithm
   void transitionTo(const int new_state);

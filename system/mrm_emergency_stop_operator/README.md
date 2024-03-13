@@ -10,10 +10,10 @@ MRM emergency stop operator is a node that generates emergency stop commands acc
 
 ### Input
 
-| Name                                 | Type                                                       | Description                                                                                                                   |
-| ------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `~/input/control/control_cmd`        | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Control command output from the last node of the control component. Used for the initial value of the emergency stop command. |
-|                                      |                                                            |                                                                                                                               |
+| Name                          | Type                                                       | Description                                                                                                                   |
+| ----------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `~/input/control/control_cmd` | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Control command output from the last node of the control component. Used for the initial value of the emergency stop command. |
+|                               |                                                            |                                                                                                                               |
 
 ### Output
 

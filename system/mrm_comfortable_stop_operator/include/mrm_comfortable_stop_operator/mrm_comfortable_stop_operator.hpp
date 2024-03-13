@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MRM_COMFORTABLE_STOP_OPERATOR_HPP_
-#define MRM_COMFORTABLE_STOP_OPERATOR_HPP_
+#ifndef MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_HPP_
+#define MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_HPP_
 
 // Core
 #include <memory>
@@ -57,4 +57,4 @@ private:
 
 }  // namespace mrm_comfortable_stop_operator
 
-#endif  // MRM_COMFORTABLE_STOP_OPERATOR_HPP_
+#endif  // MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_HPP_

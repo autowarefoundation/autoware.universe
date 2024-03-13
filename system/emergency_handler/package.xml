@@ -16,11 +16,11 @@
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>mrm_comfortable_stop_operator</depend>
+  <depend>mrm_emergency_stop_operator</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>mrm_comfortable_stop_operator</depend>
-  <depend>mrm_emergency_stop_operator</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

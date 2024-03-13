@@ -12,10 +12,10 @@ MRM comfortable stop operator is a node that generates comfortable stop commands
 
 ### Output
 
-| Name                                   | Type                                                  | Description                  |
-| -------------------------------------- | ----------------------------------------------------- | ---------------------------- |
-| `~/output/velocity_limit`              | `tier4_planning_msgs::msg::VelocityLimit`             | Velocity limit command       |
-| `~/output/velocity_limit/clear`        | `tier4_planning_msgs::msg::VelocityLimitClearCommand` | Velocity limit clear command |
+| Name                            | Type                                                  | Description                  |
+| ------------------------------- | ----------------------------------------------------- | ---------------------------- |
+| `~/output/velocity_limit`       | `tier4_planning_msgs::msg::VelocityLimit`             | Velocity limit command       |
+| `~/output/velocity_limit/clear` | `tier4_planning_msgs::msg::VelocityLimitClearCommand` | Velocity limit clear command |
 
 ## Parameters
 

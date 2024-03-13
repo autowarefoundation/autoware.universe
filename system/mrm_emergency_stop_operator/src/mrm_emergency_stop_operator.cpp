@@ -27,11 +27,16 @@ MrmEmergencyStopOperator::MrmEmergencyStopOperator() : Node("mrm_emergency_stop_
   params_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped");
 
   // Subscriber
-  sub_control_cmd_ = create_subscription<AckermannControlCommand>("~/input/control/control_cmd", rclcpp::QoS{1}, std::bind(&MrmEmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
-  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>("~/input/odometry", rclcpp::QoS{1}, std::bind(&MrmEmergencyStopOperator::onOdometry, this, std::placeholders::_1));
+  sub_control_cmd_ = create_subscription<AckermannControlCommand>(
+    "~/input/control/control_cmd", rclcpp::QoS{1},
+    std::bind(&MrmEmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
+  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
+    "~/input/odometry", rclcpp::QoS{1},
+    std::bind(&MrmEmergencyStopOperator::onOdometry, this, std::placeholders::_1));
 
   // Publisher
-  pub_control_cmd_ = create_publisher<AckermannControlCommand>("~/output/mrm/emergency_stop/control_cmd", rclcpp::QoS{1});
+  pub_control_cmd_ = create_publisher<AckermannControlCommand>(
+    "~/output/mrm/emergency_stop/control_cmd", rclcpp::QoS{1});
   pub_hazard_light_cmd_ = create_publisher<HazardLightsCommand>("~/output/hazard", rclcpp::QoS{1});
   pub_gear_cmd_ = create_publisher<GearCommand>("~/output/gear", rclcpp::QoS{1});
 
@@ -40,7 +45,8 @@ MrmEmergencyStopOperator::MrmEmergencyStopOperator() : Node("mrm_emergency_stop_
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), update_period_ns, std::bind(&MrmEmergencyStopOperator::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), update_period_ns, std::bind(&MrmEmergencyStopOperator::onTimer, this));
 }
 
 void MrmEmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSharedPtr msg)

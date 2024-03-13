@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MRM_EMERGENCY_STOP_OPERATOR_HPP_
-#define MRM_EMERGENCY_STOP_OPERATOR_HPP_
+#ifndef MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_HPP_
+#define MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_HPP_
 
 // Autoware
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
@@ -42,7 +42,6 @@ struct Parameters
 
 class MrmEmergencyStopOperator : public rclcpp::Node
 {
-
 public:
   explicit MrmEmergencyStopOperator();
   bool operate();
@@ -81,4 +80,4 @@ private:
 
 }  // namespace mrm_emergency_stop_operator
 
-#endif  // MRM_EMERGENCY_STOP_OPERATOR_HPP_
+#endif  // MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_HPP_

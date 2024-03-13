@@ -22,11 +22,7 @@
           "default": "false"
         }
       },
-      "required": [
-        "update_rate",
-        "timeout_hazard_status",
-        "use_comfortable_stop"
-      ],
+      "required": ["update_rate", "timeout_hazard_status", "use_comfortable_stop"],
       "additionalProperties": false
     }
   },
