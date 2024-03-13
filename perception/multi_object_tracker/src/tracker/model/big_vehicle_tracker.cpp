@@ -43,8 +43,8 @@
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 BigVehicleTracker::BigVehicleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("BigVehicleTracker")),
@@ -178,9 +178,6 @@ BigVehicleTracker::BigVehicleTracker(
     // initialize motion model
     motion_model_.initialize(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
   }
-
-  /* calc nearest corner index*/
-  setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 }
 
 bool BigVehicleTracker::predict(const rclcpp::Time & time)
@@ -352,11 +349,19 @@ bool BigVehicleTracker::measureWithShape(
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);
 
-  // // update offset into object position
-  // motion_model_.adjustPosition(gain * tracking_offset_.x(), gain * tracking_offset_.y());
-  // // update offset
-  // tracking_offset_.x() = gain_inv * tracking_offset_.x();
-  // tracking_offset_.y() = gain_inv * tracking_offset_.y();
+  // update offset into object position
+  {
+    // rotate back the offset vector from object coordinate to global coordinate
+    const double yaw = motion_model_.getStateElement(IDX::YAW);
+    const double offset_x_global =
+      tracking_offset_.x() * std::cos(yaw) - tracking_offset_.y() * std::sin(yaw);
+    const double offset_y_global =
+      tracking_offset_.x() * std::sin(yaw) + tracking_offset_.y() * std::cos(yaw);
+    motion_model_.adjustPosition(-gain * offset_x_global, -gain * offset_y_global);
+    // update offset (object coordinate)
+    tracking_offset_.x() = gain_inv * tracking_offset_.x();
+    tracking_offset_.y() = gain_inv * tracking_offset_.y();
+  }
 
   return true;
 }
@@ -390,9 +395,6 @@ bool BigVehicleTracker::measure(
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
-  /* calc nearest corner index*/
-  setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
-
   return true;
 }
 
@@ -413,15 +415,6 @@ bool BigVehicleTracker::getTrackedObject(
     RCLCPP_WARN(logger_, "BigVehicleTracker::getTrackedObject: Failed to get predicted state.");
     return false;
   }
-
-  // recover bounding box from tracking point
-  const double dl = bounding_box_.length - last_input_bounding_box_.length;
-  const double dw = bounding_box_.width - last_input_bounding_box_.width;
-  const Eigen::Vector2d recovered_pose = utils::recoverFromTrackingPoint(
-    pose_with_cov.pose.position.x, pose_with_cov.pose.position.y,
-    motion_model_.getStateElement(IDX::YAW), dw, dl, last_nearest_corner_index_, tracking_offset_);
-  pose_with_cov.pose.position.x = recovered_pose.x();
-  pose_with_cov.pose.position.y = recovered_pose.y();
 
   // position
   pose_with_cov.pose.position.z = z_;
