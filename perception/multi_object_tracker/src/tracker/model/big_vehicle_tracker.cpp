@@ -76,7 +76,6 @@ BigVehicleTracker::BigVehicleTracker(
   if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
-    last_input_bounding_box_ = bounding_box_;
   } else {
     autoware_perception_msgs::msg::DetectedObject bbox_object;
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
@@ -89,7 +88,6 @@ BigVehicleTracker::BigVehicleTracker(
         bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
         bbox_object.shape.dimensions.z};
     }
-    last_input_bounding_box_ = bounding_box_;
   }
   // set maximum and minimum size
   constexpr double max_size = 30.0;
@@ -211,11 +209,11 @@ autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObje
   }
 
   // get offset measurement
-  int nearest_corner_index = utils::getNearestCornerOrSurface(
+  const int nearest_corner_index = utils::getNearestCornerOrSurface(
     tracked_x, tracked_y, tracked_yaw, bounding_box_.width, bounding_box_.length, self_transform);
   utils::calcAnchorPointOffset(
-    last_input_bounding_box_.width, last_input_bounding_box_.length, nearest_corner_index,
-    bbox_object, tracked_yaw, updating_object, tracking_offset_);
+    bounding_box_.width, bounding_box_.length, nearest_corner_index, bbox_object, tracked_yaw,
+    updating_object, tracking_offset_);
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
@@ -329,15 +327,13 @@ bool BigVehicleTracker::measureWithShape(
     return false;
   }
 
-  constexpr double gain = 0.1;
+  constexpr double gain = 0.5;
   constexpr double gain_inv = 1.0 - gain;
 
   // update object size
   bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
   bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
   bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
-  last_input_bounding_box_ = {
-    object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
 
   // set maximum and minimum size
   constexpr double max_size = 30.0;

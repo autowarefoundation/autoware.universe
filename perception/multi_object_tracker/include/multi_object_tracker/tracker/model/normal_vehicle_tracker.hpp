@@ -49,7 +49,6 @@ private:
     double height;
   };
   BoundingBox bounding_box_;
-  BoundingBox last_input_bounding_box_;
   Eigen::Vector2d tracking_offset_;
 
 private:
