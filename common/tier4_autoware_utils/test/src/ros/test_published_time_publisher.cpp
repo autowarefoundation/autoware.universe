@@ -62,6 +62,7 @@ TEST_F(PublishedTimePublisherTest, PublishMsgWithHeader)
   // Use Published Time Publisher with a timestamp
   published_time_publisher_->publish(test_publisher_, header);
   rclcpp::spin_some(node_);
+  ASSERT_TRUE(published_time_ != nullptr);
 
   // Check if the published time is the same as the header
   EXPECT_EQ(published_time_->header.stamp, header.stamp);
@@ -75,6 +76,7 @@ TEST_F(PublishedTimePublisherTest, PublishMsgWithTimestamp)
   // Use Published Time Publisher with a timestamp
   published_time_publisher_->publish(test_publisher_, header.stamp);
   rclcpp::spin_some(node_);
+  ASSERT_TRUE(published_time_ != nullptr);
 
   // Check if the published time is the same as the header
   EXPECT_EQ(published_time_->header.stamp, header.stamp);
