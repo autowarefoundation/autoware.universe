@@ -1,10 +1,10 @@
 # Path
 
-Path is an object that indicates the path of the file to include.
+The path object specifies the file path of the subgraph to be imported.
+The structure of the subgraph file should be [graph object](./graph.md).
 
 ## Format
 
-| Name    | Type   | Required | Description                   |
-| ------- | ------ | -------- | ----------------------------- |
-| package | string | yes      | Package name.                 |
-| path    | string | yes      | Relative path in the package. |
+| Name   | Type     | Required | Description                    |
+| ------ | -------- | -------- | ------------------------------ |
+| `path` | `string` | yes      | The file path of the subgraph. |
