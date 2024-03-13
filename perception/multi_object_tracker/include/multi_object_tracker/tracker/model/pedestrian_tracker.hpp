@@ -24,7 +24,7 @@
 
 #include <kalman_filter/kalman_filter.hpp>
 
-// cspell:ignore CTRV
+// cspell: ignore CTRV
 
 class PedestrianTracker : public Tracker
 {
