@@ -14,11 +14,13 @@ import numpy as np
 import pandas as pd
 from pyquaternion import Quaternion
 import time
+import pickle
 
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
 from param.astar_params import vehicle_shape, planner_param, astar_param
+from common.common_classes import resultBag
 
 
 def createTrajectory(waypoints):
@@ -92,14 +94,14 @@ if __name__ == "__main__":
     start_time = time.monotonic()
 
     # for i, yaw in enumerate(yaws):
-    # for i, yaw in enumerate([0]):
-    #     # print("yaw = ", yaw)
-    #     for j, x in enumerate(xs):
-    #         for k, y in enumerate(ys):
     for i, yaw in enumerate([0]):
-        print("yaw = ", yaw)
-        for j, x in enumerate([15]):
-            for k, y in enumerate([20]):
+        # print("yaw = ", yaw)
+        for j, x in enumerate(xs):
+            for k, y in enumerate(ys):
+    # for i, yaw in enumerate([0]):
+    #     print("yaw = ", yaw)
+    #     for j, x in enumerate([15]):
+    #         for k, y in enumerate([20]):
                 
                 # initialize astar instance every time.
                 astar = fp.AstarSearch(planner_param, vehicle_shape, astar_param)
@@ -126,21 +128,35 @@ if __name__ == "__main__":
     end_time = time.monotonic()
     print('search_time : ', end_time-start_time)
 
-    main()
+    result_bag = resultBag(xs, ys, yaws, results, trajectories)
+    filename = os.path.dirname(__file__)+"/result/searched_trajectories.txt"
+    file1 = open(filename, "wb")
+    pickle.dump(result_bag, file1)
+    file1.close
 
-    # plot result
-    fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(20,8), tight_layout=True)
+    # with open(filename, "rb") as f:
+    #     result_bag2 = pickle.load(f)
 
-    for i, yaw in enumerate(yaws):
-        ax=axes[i//5, i%5]
-        sns.heatmap(results[i], ax=ax, vmin=0, vmax=1, linewidths=1, cbar = False,\
-                    xticklabels=ys, yticklabels=xs)
-        for j in range(len(xs)):
-            for k in range(len(ys)):
-                ax.plot([point.pose.position.x for point in trajectories[i][j][k].points], \
-                        [point.pose.position.y for point in trajectories[i][j][k].points])
-        ax.set_title('yaw = '+str(yaw))
-        ax.set_ylabel('x')
-        ax.set_xlabel('y')
+    # xs = result_bag2.xs
+    # ys = result_bag2.ys
+    # yaws = result_bag2.yaws
+    # results = result_bag2.results
+    # trajectories = result_bag2.trajectories
+    # # main()
 
-    plt.show()
+    # ## plot result
+    # fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(20,8), tight_layout=True)
+
+    # for i, yaw in enumerate(yaws):
+    #     ax=axes[i//5, i%5]
+    #     sns.heatmap(results[i], ax=ax, vmin=0, vmax=1, linewidths=1, cbar = False,\
+    #                 xticklabels=ys, yticklabels=xs)
+    #     for j in range(len(xs)):
+    #         for k in range(len(ys)):
+    #             ax.plot([point.pose.position.x for point in trajectories[i][j][k].points], \
+    #                     [point.pose.position.y for point in trajectories[i][j][k].points])
+    #     ax.set_title('yaw = '+str(yaw))
+    #     ax.set_ylabel('x')
+    #     ax.set_xlabel('y')
+
+    # plt.show()
