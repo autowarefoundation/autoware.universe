@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 //
-// v1.0 Yukihiro Saito
+// Author: v1.0 Yukihiro Saito
 //
 
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__UNKNOWN_TRACKER_HPP_
@@ -31,7 +31,6 @@ private:
   rclcpp::Logger logger_;
 
 private:
-  // rclcpp::Time last_update_time_;
   struct EkfParams
   {
     double r_cov_x;
@@ -39,6 +38,7 @@ private:
     double r_cov_vx;
     double r_cov_vy;
   } ekf_params_;
+
   double z_;
 
 private:

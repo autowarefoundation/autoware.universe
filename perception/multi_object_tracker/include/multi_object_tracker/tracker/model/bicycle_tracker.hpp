@@ -31,17 +31,15 @@ private:
   rclcpp::Logger logger_;
 
 private:
-  // rclcpp::Time last_update_time_;
-
   struct EkfParams
   {
     double r_cov_x;
     double r_cov_y;
     double r_cov_yaw;
   } ekf_params_;
+
   double z_;
 
-private:
   struct BoundingBox
   {
     double length;
@@ -61,7 +59,6 @@ public:
     const geometry_msgs::msg::Transform & self_transform);
 
   bool predict(const rclcpp::Time & time) override;
-  bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(
     const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;

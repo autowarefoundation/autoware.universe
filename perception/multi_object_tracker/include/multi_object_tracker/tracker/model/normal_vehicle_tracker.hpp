@@ -31,8 +31,6 @@ private:
   rclcpp::Logger logger_;
 
 private:
-  // rclcpp::Time last_update_time_;
-
   struct EkfParams
   {
     double r_cov_x;
@@ -40,10 +38,10 @@ private:
     double r_cov_yaw;
     double r_cov_vel;
   } ekf_params_;
-  double z_;
   double velocity_deviation_threshold_;
 
-private:
+  double z_;
+
   struct BoundingBox
   {
     double length;

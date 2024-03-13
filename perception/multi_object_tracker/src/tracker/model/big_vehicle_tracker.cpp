@@ -47,7 +47,6 @@ BigVehicleTracker::BigVehicleTracker(
   const geometry_msgs::msg::Transform & self_transform)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("BigVehicleTracker")),
-  // last_update_time_(time),
   z_(object.kinematics.pose_with_covariance.pose.position.z),
   tracking_offset_(Eigen::Vector2d::Zero())
 {

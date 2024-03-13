@@ -47,7 +47,6 @@ PedestrianTracker::PedestrianTracker(
   const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("PedestrianTracker")),
-  // last_update_time_(time),
   z_(object.kinematics.pose_with_covariance.pose.position.z)
 {
   object_ = object;

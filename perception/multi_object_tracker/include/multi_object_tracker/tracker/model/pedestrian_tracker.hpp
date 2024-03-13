@@ -31,16 +31,15 @@ private:
   rclcpp::Logger logger_;
 
 private:
-  // rclcpp::Time last_update_time_;
   struct EkfParams
   {
     double r_cov_x;
     double r_cov_y;
     double r_cov_yaw;
   } ekf_params_;
+
   double z_;
 
-private:
   struct BoundingBox
   {
     double length;
