@@ -49,20 +49,60 @@
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
+#include <filesystem>
 #include <string>
+
+namespace
+{
+bool isOsmFile(const std::string & f)
+{
+  if (std::filesystem::is_directory(f)) {
+    return false;
+  }
+
+  const std::string ext = std::filesystem::path(f).extension();
+
+  if (ext != ".osm" && ext != ".OSM") {
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
 
 Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("lanelet2_map_loader", options)
 {
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
-
-  // subscription
-  adaptor.init_sub(
-    sub_map_projector_info_,
-    [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
-
   declare_parameter<std::string>("lanelet2_map_path");
   declare_parameter<double>("center_line_resolution");
+
+  if (isOsmFile(get_parameter("lanelet2_map_path").as_string())) {
+    RCLCPP_INFO(get_logger(), "Single osm file provided. Dynamic loading is disabled.");
+
+    const auto adaptor = component_interface_utils::NodeAdaptor(this);
+    adaptor.init_sub(
+      sub_map_projector_info_,
+      [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
+  } else {
+    RCLCPP_INFO(get_logger(), "Multiple osm file provided. Dynamic loading is enabled.");
+
+    std::vector<std::string> lanelet2_paths_or_directory = {
+      get_parameter("lanelet2_map_path").as_string()};
+    std::string lanelet2_map_metadata_path =
+      declare_parameter<std::string>("lanelet2_map_metadata_path");
+    double x_resolution, y_resolution;
+
+    std::map<std::string, Lanelet2FileMetaData> lanelet2_metadata_dict;
+    try {
+      lanelet2_metadata_dict = getLanelet2Metadata(
+        lanelet2_map_metadata_path, getLanelet2Paths(lanelet2_paths_or_directory), x_resolution,
+        y_resolution);
+    } catch (std::runtime_error & e) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to load lanelet2 metadata");
+    }
+    differential_loader_module_ = std::make_unique<Lanelet2DifferentialLoaderModule>(
+      this, lanelet2_metadata_dict, x_resolution, y_resolution);
+  }
 }
 
 void Lanelet2MapLoaderNode::on_map_projector_info(
@@ -156,6 +196,65 @@ HADMapBin Lanelet2MapLoaderNode::create_map_bin_msg(
   lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
 
   return map_bin_msg;
+}
+
+LaneletMapBin Lanelet2MapLoaderNode::create_lanelet_map_bin_msg(
+  const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
+{
+  std::string format_version{}, map_version{};
+  lanelet::io_handlers::AutowareOsmParser::parseVersions(
+    lanelet2_filename, &format_version, &map_version);
+
+  LaneletMapBin map_bin_msg;
+  map_bin_msg.header.stamp = now;
+  map_bin_msg.header.frame_id = "map";
+  map_bin_msg.version_map_format = format_version;
+  map_bin_msg.version_map = map_version;
+  lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
+
+  return map_bin_msg;
+}
+
+std::vector<std::string> Lanelet2MapLoaderNode::getLanelet2Paths(
+  const std::vector<std::string> & lanelet2_paths_or_directory) const
+{
+  std::vector<std::string> lanelet2_paths;
+  for (const auto & path : lanelet2_paths_or_directory) {
+    if (!std::filesystem::exists(path)) {
+      RCLCPP_ERROR_STREAM(get_logger(), "No such file or directory: " << path);
+      continue;
+    }
+
+    if (isOsmFile(path)) {
+      lanelet2_paths.push_back(path);
+    }
+
+    if (std::filesystem::is_directory(path)) {
+      for (const auto & file : std::filesystem::directory_iterator(path)) {
+        const auto filename = file.path().string();
+        if (isOsmFile(filename)) {
+          lanelet2_paths.push_back(filename);
+        }
+      }
+    }
+  }
+  return lanelet2_paths;
+}
+
+std::map<std::string, Lanelet2FileMetaData> Lanelet2MapLoaderNode::getLanelet2Metadata(
+  const std::string & lanelet2_metadata_path, const std::vector<std::string> & lanelet2_paths,
+  double & x_resolution, double & y_resolution) const
+{
+  std::map<std::string, Lanelet2FileMetaData> lanelet2_metadata_dict;
+  if (!std::filesystem::exists(lanelet2_metadata_path)) {
+    throw std::runtime_error("Lanelet2 metadata file not found: " + lanelet2_metadata_path);
+  }
+
+  lanelet2_metadata_dict = loadLanelet2Metadata(lanelet2_metadata_path, x_resolution, y_resolution);
+  lanelet2_metadata_dict = replaceWithAbsolutePath(lanelet2_metadata_dict, lanelet2_paths);
+  RCLCPP_INFO_STREAM(get_logger(), "Loaded Lanelet2 metadata: " << lanelet2_metadata_path);
+
+  return lanelet2_metadata_dict;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
