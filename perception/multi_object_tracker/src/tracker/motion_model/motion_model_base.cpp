@@ -46,16 +46,28 @@ bool MotionModel::predictState(const rclcpp::Time & time)
   if (dt < 0.0) {
     return false;
   }
-  // if dt is too large, shorten dt and repeat prediction
-  const uint32_t repeat = std::ceil(dt / dt_max_);
-  const double dt_ = dt / repeat;
-  for (uint32_t i = 0; i < repeat; ++i) {
-    if (!predictStateStep(dt_, ekf_)) {
-      return false;
-    }
-    // add interval to last_update_time_
-    last_update_time_ += rclcpp::Duration::from_seconds(dt_);
+  if (dt < 1e-6 /*1usec*/) {
+    return true;
   }
+
+  // // if dt is too large, shorten dt and repeat prediction
+  // {
+  //   const uint32_t repeat = std::floor(dt / dt_max_) + 1;
+  //   const double dt_ = dt / repeat;
+  //   for (uint32_t i = 0; i < repeat; ++i) {
+  //     if (!predictStateStep(dt_, ekf_)) {
+  //       return false;
+  //     }
+  //     // add interval to last_update_time_
+  //     last_update_time_ += rclcpp::Duration::from_seconds(dt_);
+  //   }
+  //   std::cout << "MotionModel::predictState predict  dt: " << dt << ", dt_: " << dt_  << ",
+  //   repeat:
+  //   "<< repeat<< std::endl;
+  // }
+
+  if (!predictStateStep(dt, ekf_)) return false;
+
   // update last_update_time_ to the estimation time
   last_update_time_ = time;
   return true;
@@ -76,17 +88,22 @@ bool MotionModel::getPredictedState(
     dt = 0.0;
   }
 
-  // predict only when dt is small enough
-  if (0.001 /*1msec*/ < dt) {
-    // if dt is too large, shorten dt and repeat prediction
-    const uint32_t repeat = std::ceil(dt / dt_max_);
-    const double dt_ = dt / repeat;
-    for (uint32_t i = 0; i < repeat; ++i) {
-      if (!predictStateStep(dt_, tmp_ekf_for_no_update)) {
-        return false;
-      }
-    }
-  }
+  // // predict only when dt is small enough
+  // if (1e-6 /*1usec*/ < dt) {
+  //   // if dt is too large, shorten dt and repeat prediction
+  //   const uint32_t repeat = std::floor(dt / dt_max_) + 1;
+  //   const double dt_ = dt / repeat;
+  //   for (uint32_t i = 0; i < repeat; ++i) {
+  //     if (!predictStateStep(dt_, tmp_ekf_for_no_update)) {
+  //       return false;
+  //     }
+  //   }
+  //   std::cout << "MotionModel::getPredictedStateMatrix predict dt: " << dt << ", dt_: " << dt_ <<
+  //   ", repeat: "<< repeat<< std::endl;
+  // }
+
+  if (!predictStateStep(dt, tmp_ekf_for_no_update)) return false;
+
   tmp_ekf_for_no_update.getX(X);
   tmp_ekf_for_no_update.getP(P);
   return true;
