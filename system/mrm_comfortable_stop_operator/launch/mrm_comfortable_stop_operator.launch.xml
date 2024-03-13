@@ -1,0 +1,11 @@
+<launch>
+  <arg name="output_velocity_limit" default="/planning/scenario_planning/max_velocity_candidates"/>
+  <arg name="output_velocity_limit_clear" default="/planning/scenario_planning/clear_velocity_limit"/>
+  <arg name="config_file" default="$(find-pkg-share mrm_comfortable_stop_operator)/config/mrm_comfortable_stop_operator.param.yaml"/>
+
+  <node pkg="mrm_comfortable_stop_operator" exec="mrm_comfortable_stop_operator" name="mrm_comfortable_stop_operator" output="screen">
+    <remap from="~/output/velocity_limit" to="$(var output_velocity_limit)"/>
+    <remap from="~/output/velocity_limit/clear" to="$(var output_velocity_limit_clear)"/>
+    <param from="$(var config_file)"/>
+  </node>
+</launch>

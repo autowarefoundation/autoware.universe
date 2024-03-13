@@ -23,16 +23,13 @@
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <mrm_emergency_stop_operator/mrm_emergency_stop_operator.hpp>
+#include <mrm_comfortable_stop_operator/mrm_comfortable_stop_operator.hpp>
 
 // ROS 2 core
 #include <rclcpp/rclcpp.hpp>
-
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-
-// Operators
-#include "comfortable_stop_operator.hpp"
-#include "emergency_stop_operator.hpp"
 
 namespace emergency_handler
 {
@@ -41,7 +38,6 @@ struct Param
 {
   int update_rate;
   double timeout_hazard_status;
-  bool use_parking_after_stopped;
   bool use_comfortable_stop;
 };
 
@@ -92,8 +88,8 @@ private:
   void checkHazardStatusTimeout();
 
   // Operators
-  std::unique_ptr<emergency_stop_operator::EmergencyStopOperator> emergency_stop_operator_;
-  std::unique_ptr<comfortable_stop_operator::ComfortableStopOperator> comfortable_stop_operator_;
+  std::unique_ptr<mrm_emergency_stop_operator::MrmEmergencyStopOperator> mrm_emergency_stop_operator_;
+  std::unique_ptr<mrm_comfortable_stop_operator::MrmComfortableStopOperator> mrm_comfortable_stop_operator_;
 
   // Algorithm
   void transitionTo(const int new_state);

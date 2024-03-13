@@ -83,6 +83,12 @@
       <include file="$(find-pkg-share emergency_handler)/launch/emergency_handler.launch.xml">
         <arg name="config_file" value="$(var emergency_handler_param_path)"/>
       </include>
+      <include file="$(find-pkg-share mrm_comfortable_stop_operator)/launch/mrm_comfortable_stop_operator.launch.xml">
+        <arg name="config_file" value="$(var mrm_comfortable_stop_operator_param_path)"/>
+      </include>
+      <include file="$(find-pkg-share mrm_emergency_stop_operator)/launch/mrm_emergency_stop_operator.launch.xml">
+        <arg name="config_file" value="$(var mrm_emergency_stop_operator_param_path)"/>
+      </include>
     </group>
 
     <group>

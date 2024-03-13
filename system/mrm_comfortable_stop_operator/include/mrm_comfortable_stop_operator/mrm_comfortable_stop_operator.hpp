@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,47 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMFORTABLE_STOP_OPERATOR_HPP_
-#define COMFORTABLE_STOP_OPERATOR_HPP_
+#ifndef MRM_COMFORTABLE_STOP_OPERATOR_HPP_
+#define MRM_COMFORTABLE_STOP_OPERATOR_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+// Core
+#include <memory>
 
+// Autoware
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 
-namespace emergency_handler::comfortable_stop_operator
+// ROS 2 core
+#include <rclcpp/rclcpp.hpp>
+
+namespace mrm_comfortable_stop_operator
 {
 
-struct Param
+struct Parameters
 {
-  double min_acceleration;
-  double max_jerk;
-  double min_jerk;
+  double min_acceleration;  // [m/s^2]
+  double max_jerk;          // [m/s^3]
+  double min_jerk;          // [m/s^3]
 };
 
-class ComfortableStopOperator
+class MrmComfortableStopOperator : public rclcpp::Node
 {
 public:
-  explicit ComfortableStopOperator(rclcpp::Node * node);
+  explicit MrmComfortableStopOperator();
   bool operate();
   bool cancel();
 
 private:
   // Parameters
-  Param params_;
+  Parameters params_;
 
   // Publisher
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>::SharedPtr
     pub_velocity_limit_clear_command_;
 
-  // Algorithm
-  void publishVelocityLimit();
-  void publishVelocityLimitClearCommand();
-
-  rclcpp::Node * node_;
+  void publishVelocityLimit() const;
+  void publishVelocityLimitClearCommand() const;
 };
 
-}  // namespace emergency_handler::comfortable_stop_operator
+}  // namespace mrm_comfortable_stop_operator
 
-#endif  // COMFORTABLE_STOP_OPERATOR_HPP_
+#endif  // MRM_COMFORTABLE_STOP_OPERATOR_HPP_

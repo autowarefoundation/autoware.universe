@@ -19,7 +19,8 @@
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>tier4_planning_msgs</depend>
+  <depend>mrm_comfortable_stop_operator</depend>
+  <depend>mrm_emergency_stop_operator</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

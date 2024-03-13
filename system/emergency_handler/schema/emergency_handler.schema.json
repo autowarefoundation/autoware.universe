@@ -20,72 +20,12 @@
           "type": "boolean",
           "description": "If this parameter is true, operate comfortable stop when latent faults occur.",
           "default": "false"
-        },
-        "emergency_stop_operator": {
-          "type": "object",
-          "update_rate": {
-            "type": "integer",
-            "description": "Timer callback period.",
-            "default": 30
-          },
-          "properties": {
-            "target_acceleration": {
-              "type": "number",
-              "description": "Target acceleration for emergency stop [m/s^2]",
-              "default": -2.5
-            },
-            "target_jerk": {
-              "type": "number",
-              "description": "Target jerk for emergency stop [m/s^3]",
-              "default": -1.5
-            },
-            "turning_hazard_on": {
-              "type": "boolean",
-              "description": "Whether to turn on hazard lamps when emergency_stop is being operated",
-              "default": "true"
-            },
-            "use_parking_after_stopped": {
-              "type": "boolean",
-              "description": "Whether to enable GearCommand::PARK after emergency_stop succeeded",
-              "default": "false"
-            }
-          },
-          "required": [
-            "update_rate",
-            "target_acceleration",
-            "target_jerk",
-            "turning_hazard_on",
-            "use_parking_after_stopped"
-          ]
-        },
-        "comfortable_stop_operator": {
-          "type": "object",
-          "properties": {
-            "min_acceleration": {
-              "type": "number",
-              "description": "Minimum acceleration for comfortable stop [m/s^2]",
-              "default": -1.0
-            },
-            "max_jerk": {
-              "type": "number",
-              "description": "Maximum jerk for comfortable stop [m/s^3]",
-              "default": 0.3
-            },
-            "min_jerk": {
-              "type": "number",
-              "description": "Minimum jerk for comfortable stop [m/s^3]",
-              "default": -0.3
-            }
-          },
-          "required": ["min_acceleration", "max_jerk", "min_jerk"]
         }
       },
       "required": [
         "update_rate",
         "timeout_hazard_status",
-        "use_comfortable_stop",
-        "emergency_stop",
-        "comfortable_stop"
+        "use_comfortable_stop"
       ],
       "additionalProperties": false
     }

@@ -52,10 +52,11 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MrmState::NONE;
   is_hazard_status_timeout_ = false;
 
-  // Opertors
-  emergency_stop_operator_ = std::make_unique<emergency_stop_operator::EmergencyStopOperator>(this);
-  comfortable_stop_operator_ =
-    std::make_unique<comfortable_stop_operator::ComfortableStopOperator>(this);
+  // MRM opertors
+  mrm_emergency_stop_operator_ =
+    std::make_unique<mrm_emergency_stop_operator::MrmEmergencyStopOperator>();
+  mrm_comfortable_stop_operator_ =
+    std::make_unique<mrm_comfortable_stop_operator::MrmComfortableStopOperator>();
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -131,7 +132,7 @@ void EmergencyHandler::callMrmBehavior(
     return;
   }
   if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
-    if (comfortable_stop_operator_->operate()) {
+    if (mrm_comfortable_stop_operator_->operate()) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is operated");
     } else {
       RCLCPP_ERROR(this->get_logger(), "Comfortable stop is failed to operate");
@@ -139,7 +140,7 @@ void EmergencyHandler::callMrmBehavior(
     return;
   }
   if (mrm_behavior == MrmState::EMERGENCY_STOP) {
-    if (emergency_stop_operator_->operate()) {
+    if (mrm_emergency_stop_operator_->operate()) {
       RCLCPP_WARN(this->get_logger(), "Emergency stop is operated");
     } else {
       RCLCPP_ERROR(this->get_logger(), "Emergency stop is failed to operate");
@@ -159,7 +160,7 @@ void EmergencyHandler::cancelMrmBehavior(
     return;
   }
   if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
-    if (comfortable_stop_operator_->cancel()) {
+    if (mrm_comfortable_stop_operator_->cancel()) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is canceled");
     } else {
       RCLCPP_ERROR(this->get_logger(), "Comfortable stop is failed to cancel");
@@ -167,7 +168,7 @@ void EmergencyHandler::cancelMrmBehavior(
     return;
   }
   if (mrm_behavior == MrmState::EMERGENCY_STOP) {
-    if (emergency_stop_operator_->cancel()) {
+    if (mrm_emergency_stop_operator_->cancel()) {
       RCLCPP_WARN(this->get_logger(), "Emergency stop is canceled");
     } else {
       RCLCPP_ERROR(this->get_logger(), "Emergency stop is failed to cancel");

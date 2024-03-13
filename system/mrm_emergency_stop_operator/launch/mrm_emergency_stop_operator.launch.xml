@@ -1,0 +1,17 @@
+<launch>
+  <arg name="input_control_command" default="/control/command/control_cmd"/>
+  <arg name="input_odometry" default="/localization/kinematic_state"/>
+  <arg name="output_emergency_command" default="/system/emergency/control_cmd"/>
+  <arg name="output_hazard" default="/system/emergency/hazard_lights_cmd"/>
+  <arg name="output_gear" default="/system/emergency/gear_cmd"/>
+  <arg name="config_file" default="$(find-pkg-share mrm_emergency_stop_operator)/config/mrm_emergency_stop_operator.param.yaml"/>
+
+  <node pkg="mrm_emergency_stop_operator" exec="mrm_emergency_stop_operator" name="mrm_emergency_stop_operator" output="screen">
+    <remap from="~/input/control/control_cmd" to="$(var input_control_command)"/>
+    <remap from="~/input/odometry" to="$(var input_odometry)"/>
+    <remap from="~/output/mrm/emergency_stop/control_cmd" to="$(var output_emergency_command)"/>
+    <remap from="~/output/gear" to="$(var output_gear)"/>
+    <remap from="~/output/hazard" to="$(var output_hazard)"/>
+    <param from="$(var config_file)"/>
+  </node>
+</launch>

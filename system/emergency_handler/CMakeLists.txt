@@ -7,8 +7,6 @@ autoware_package()
 ament_auto_add_executable(emergency_handler
   src/emergency_handler_node.cpp
   src/emergency_handler_core.cpp
-  src/emergency_stop_operator.cpp
-  src/comfortable_stop_operator.cpp
 )
 
 ament_auto_package(INSTALL_TO_SHARE

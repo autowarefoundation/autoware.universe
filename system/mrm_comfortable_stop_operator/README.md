@@ -10,25 +10,14 @@ MRM comfortable stop operator is a node that generates comfortable stop commands
 
 ### Input
 
-| Name                                   | Type                                 | Description         |
-| -------------------------------------- | ------------------------------------ | ------------------- |
-| `~/input/mrm/comfortable_stop/operate` | `tier4_system_msgs::srv::OperateMrm` | MRM execution order |
-
 ### Output
 
 | Name                                   | Type                                                  | Description                  |
 | -------------------------------------- | ----------------------------------------------------- | ---------------------------- |
-| `~/output/mrm/comfortable_stop/status` | `tier4_system_msgs::msg::MrmBehaviorStatus`           | MRM execution status         |
 | `~/output/velocity_limit`              | `tier4_planning_msgs::msg::VelocityLimit`             | Velocity limit command       |
 | `~/output/velocity_limit/clear`        | `tier4_planning_msgs::msg::VelocityLimitClearCommand` | Velocity limit clear command |
 
 ## Parameters
-
-### Node Parameters
-
-| Name        | Type | Default value | Explanation                   |
-| ----------- | ---- | ------------- | ----------------------------- |
-| update_rate | int  | `10`          | Timer callback frequency [Hz] |
 
 ### Core Parameters
 

@@ -5,17 +5,3 @@
     update_rate: 10
     timeout_hazard_status: 0.5
     use_comfortable_stop: false
-
-    # emergency stop operator class
-    emergency_stop_operator:
-      update_rate: 30
-      target_acceleration: -2.5
-      target_jerk: -1.5
-      turning_hazard_on: true
-      use_parking_after_stopped: false
-
-    # comfortable stop operator class
-    comfortable_stop_operator:
-      min_acceleration: -1.0
-      max_jerk: 0.3
-      min_jerk: -0.3

@@ -12,38 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
-#define MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
-
-// Core
-#include <functional>
-#include <memory>
+#ifndef MRM_EMERGENCY_STOP_OPERATOR_HPP_
+#define MRM_EMERGENCY_STOP_OPERATOR_HPP_
 
 // Autoware
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
-#include <tier4_system_msgs/srv/operate_mrm.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 // ROS 2 core
 #include <rclcpp/rclcpp.hpp>
 
 namespace mrm_emergency_stop_operator
 {
+
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using tier4_system_msgs::msg::MrmBehaviorStatus;
-using tier4_system_msgs::srv::OperateMrm;
+using autoware_auto_vehicle_msgs::msg::GearCommand;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 
 struct Parameters
 {
   int update_rate;             // [Hz]
   double target_acceleration;  // [m/s^2]
   double target_jerk;          // [m/s^3]
+  bool turning_hazard_on;
+  bool use_parking_after_stopped;
 };
 
 class MrmEmergencyStopOperator : public rclcpp::Node
 {
+
 public:
-  explicit MrmEmergencyStopOperator(const rclcpp::NodeOptions & node_options);
+  explicit MrmEmergencyStopOperator();
+  bool operate();
+  bool cancel();
 
 private:
   // Parameters
@@ -51,37 +54,31 @@ private:
 
   // Subscriber
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_control_cmd_;
-
   void onControlCommand(AckermannControlCommand::ConstSharedPtr msg);
 
-  // Server
-  rclcpp::Service<OperateMrm>::SharedPtr service_operation_;
-
-  void operateEmergencyStop(
-    const OperateMrm::Request::SharedPtr request, const OperateMrm::Response::SharedPtr response);
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
+  void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   // Publisher
-  rclcpp::Publisher<MrmBehaviorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_control_cmd_;
+  void publishControlCmd();
 
-  void publishStatus() const;
-  void publishControlCommand(const AckermannControlCommand & command) const;
+  rclcpp::Publisher<HazardLightsCommand>::SharedPtr pub_hazard_light_cmd_;
+  void publishHazardLightCmd();
+
+  rclcpp::Publisher<GearCommand>::SharedPtr pub_gear_cmd_;
+  void publishGearCmd();
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
-
   void onTimer();
 
-  // States
-  MrmBehaviorStatus status_;
-  AckermannControlCommand prev_control_cmd_;
+  // Alrogithm
   bool is_prev_control_cmd_subscribed_;
-
-  // Algorithm
-  AckermannControlCommand calcTargetAcceleration(
-    const AckermannControlCommand & prev_control_cmd) const;
+  AckermannControlCommand prev_control_cmd_;
+  bool is_stopped_;
 };
 
 }  // namespace mrm_emergency_stop_operator
 
-#endif  // MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
+#endif  // MRM_EMERGENCY_STOP_OPERATOR_HPP_
