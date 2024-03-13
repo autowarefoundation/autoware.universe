@@ -30,7 +30,7 @@ public:
   ~SteeringOffsetEstimator() = default;
 
   double getOffset() const;
-  void updateOffset(const geometry_msgs::msg::Twist & twist, const double steering);
+  void updateOffset(const geometry_msgs::msg::Twist & twist, const double measured_steering_angle);
 
 private:
   // parameters
