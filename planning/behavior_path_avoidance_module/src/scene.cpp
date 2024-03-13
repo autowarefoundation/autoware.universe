@@ -321,10 +321,19 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   using utils::avoidance::getTargetLanelets;
   using utils::avoidance::separateObjectsByPath;
   using utils::avoidance::updateRoadShoulderDistance;
+  using utils::traffic_light::calcDistanceToRedTrafficLight;
 
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
   constexpr double MARGIN = 10.0;
-  const auto forward_detection_range = helper_->getForwardDetectionRange();
+  const auto forward_detection_range = [&]() {
+    const auto to_traffic_light = calcDistanceToRedTrafficLight(
+      data.current_lanelets, helper_->getPreviousReferencePath(), planner_data_);
+    if (!to_traffic_light.has_value()) {
+      return helper_->getForwardDetectionRange();
+    }
+    return std::min(helper_->getForwardDetectionRange(), to_traffic_light.value());
+  }();
+
   const auto [object_within_target_lane, object_outside_target_lane] = separateObjectsByPath(
     helper_->getPreviousReferencePath(), helper_->getPreviousSplineShiftPath().path, planner_data_,
     data, parameters_, forward_detection_range + MARGIN, debug);
@@ -635,8 +644,8 @@ void AvoidanceModule::fillDebugData(
       : 0.0;
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
-  const auto max_avoid_margin = object_parameter.safety_buffer_lateral * o_front.distance_factor +
-                                object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
+  const auto max_avoid_margin = object_parameter.lateral_hard_margin * o_front.distance_factor +
+                                object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
 
   const auto variable = helper_->getSharpAvoidanceDistance(
     helper_->getShiftLength(o_front, utils::avoidance::isOnRight(o_front), max_avoid_margin));
@@ -1423,8 +1432,8 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
 
-  const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
-                            object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
+  const auto avoid_margin = object_parameter.lateral_hard_margin * object.distance_factor +
+                            object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
   const auto variable = helper_->getMinAvoidanceDistance(
     helper_->getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
   const auto & additional_buffer_longitudinal =
@@ -1653,8 +1662,8 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
-  const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
-                            object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
+  const auto avoid_margin = object_parameter.lateral_hard_margin * object.distance_factor +
+                            object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
   const auto shift_length =
     helper_->getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin);
 

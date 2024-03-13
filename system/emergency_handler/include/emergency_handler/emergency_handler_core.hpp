@@ -45,8 +45,6 @@ struct Param
 {
   int update_rate;
   double timeout_hazard_status;
-  double timeout_takeover_request;
-  bool use_takeover_request;
   bool use_parking_after_stopped;
   bool use_comfortable_stop;
   HazardLampPolicy turning_hazard_on{};
@@ -133,16 +131,16 @@ private:
 
   // Heartbeat
   rclcpp::Time stamp_hazard_status_;
+  bool is_hazard_status_timeout_;
+  void checkHazardStatusTimeout();
 
   // Algorithm
-  rclcpp::Time takeover_requested_time_;
-  bool is_takeover_request_ = false;
   void transitionTo(const int new_state);
   void updateMrmState();
   void operateMrm();
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
-  bool isEmergency(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
+  bool isEmergency();
 };
 
 #endif  // EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_

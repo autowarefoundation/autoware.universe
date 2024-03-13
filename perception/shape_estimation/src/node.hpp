@@ -18,6 +18,8 @@
 #include "shape_estimation/shape_estimator.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
@@ -33,11 +35,16 @@ private:
   rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr pub_;
   rclcpp::Subscription<DetectedObjectsWithFeature>::SharedPtr sub_;
 
+  // debug publisher
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
+
   void callback(const DetectedObjectsWithFeature::ConstSharedPtr input_msg);
 
   std::unique_ptr<ShapeEstimator> estimator_;
   bool use_vehicle_reference_yaw_;
   bool use_vehicle_reference_shape_size_;
+  bool fix_filtered_objects_label_to_unknown_;
 
 public:
   explicit ShapeEstimationNode(const rclcpp::NodeOptions & node_options);
