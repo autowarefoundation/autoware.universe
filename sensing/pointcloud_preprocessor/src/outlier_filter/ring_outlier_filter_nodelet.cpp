@@ -34,7 +34,7 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "ring_outlier_filter");
     outlier_pointcloud_publisher_ =
-      this->create_publisher<PointCloud2>("noise/ring_outlier_filter", 1);
+      this->create_publisher<PointCloud2>("debug/ring_outlier_filter", 1);
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
