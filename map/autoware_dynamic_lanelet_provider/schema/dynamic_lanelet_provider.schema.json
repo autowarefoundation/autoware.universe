@@ -22,7 +22,11 @@
           "default": "200.0"
         }
       },
-      "required": ["dynamic_map_loading_grid_size", "dynamic_map_loading_update_distance", "dynamic_map_loading_map_radius"],
+      "required": [
+        "dynamic_map_loading_grid_size",
+        "dynamic_map_loading_update_distance",
+        "dynamic_map_loading_map_radius"
+      ],
       "additionalProperties": false
     }
   },
