@@ -18,6 +18,7 @@
   <arg name="launch_start_planner_module" default="true"/>
   <arg name="launch_sampling_planner_module" default="true"/>
   <arg name="launch_side_shift_module" default="true"/>
+  <arg name="launch_racing_overtake_module" default="true"/>
 
   <arg name="launch_crosswalk_module" default="true"/>
   <arg name="launch_walkway_module" default="true"/>
@@ -95,6 +96,11 @@
     value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::AvoidanceByLaneChangeModuleManager, '&quot;)"
     if="$(var launch_avoidance_by_lane_change_module)"
   />
+  <let name="behavior_path_planner_launch_modules"
+    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::RacingOvertakeModuleManager, '&quot;)"
+    if="$(var launch_racing_overtake_module)"
+  />
+
   <let name="behavior_path_planner_launch_modules" value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + '$(var launch_module_list_end)'&quot;)"/>
 
   <!-- assemble launch config for behavior velocity planner -->
@@ -216,6 +222,7 @@
       <param from="$(var behavior_path_planner_drivable_area_expansion_param_path)"/>
       <param from="$(var behavior_path_planner_scene_module_manager_param_path)"/>
       <param from="$(var behavior_path_planner_common_param_path)"/>
+      <param from="$(var behavior_path_planner_racing_overtake_param_path)"/>
       <!-- composable node config -->
       <extra_arg name="use_intra_process_comms" value="false"/>
     </composable_node>
