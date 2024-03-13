@@ -33,7 +33,8 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     using tier4_autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "ring_outlier_filter");
-    noise_points_publisher_ = this->create_publisher<PointCloud2>("noise/ring_outlier_filter", 1);
+    outlier_pointcloud_publisher_ =
+      this->create_publisher<PointCloud2>("noise/ring_outlier_filter", 1);
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
@@ -47,7 +48,8 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     max_rings_num_ = static_cast<uint16_t>(declare_parameter("max_rings_num", 128));
     max_points_num_per_ring_ =
       static_cast<size_t>(declare_parameter("max_points_num_per_ring", 4000));
-    publish_noise_points_ = static_cast<bool>(declare_parameter("publish_noise_points", false));
+    publish_outlier_pointcloud_ =
+      static_cast<bool>(declare_parameter("publish_outlier_pointcloud", false));
   }
 
   using std::placeholders::_1;
@@ -72,11 +74,11 @@ void RingOutlierFilterComponent::faster_filter(
   size_t output_size = 0;
 
   // Set up the noise points cloud, if noise points are to be published.
-  PointCloud2 noise_points;
-  size_t noise_points_size = 0;
-  if (publish_noise_points_) {
-    noise_points.point_step = sizeof(PointXYZI);
-    noise_points.data.resize(noise_points.point_step * input->width);
+  PointCloud2 outlier_points;
+  size_t outlier_points_size = 0;
+  if (publish_outlier_pointcloud_) {
+    outlier_points.point_step = sizeof(PointXYZI);
+    outlier_points.data.resize(outlier_points.point_step * input->width);
   }
 
   const auto ring_offset =
@@ -159,25 +161,26 @@ void RingOutlierFilterComponent::faster_filter(
 
           output_size += output.point_step;
         }
-      } else if (publish_noise_points_) {
+      } else if (publish_outlier_pointcloud_) {
         for (int i = walk_first_idx; i <= walk_last_idx; i++) {
-          auto noise_ptr = reinterpret_cast<PointXYZI *>(&noise_points.data[noise_points_size]);
+          auto outlier_ptr =
+            reinterpret_cast<PointXYZI *>(&outlier_points.data[outlier_points_size]);
           auto input_ptr =
             reinterpret_cast<const PointXYZI *>(&input->data[indices[walk_first_idx]]);
           if (transform_info.need_transform) {
             Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
             p = transform_info.eigen_transform * p;
-            noise_ptr->x = p[0];
-            noise_ptr->y = p[1];
-            noise_ptr->z = p[2];
+            outlier_ptr->x = p[0];
+            outlier_ptr->y = p[1];
+            outlier_ptr->z = p[2];
           } else {
-            *noise_ptr = *input_ptr;
+            *outlier_ptr = *input_ptr;
           }
           const float & intensity = *reinterpret_cast<const float *>(
             &input->data[indices[walk_first_idx] + intensity_offset]);
-          noise_ptr->intensity = intensity;
+          outlier_ptr->intensity = intensity;
 
-          noise_points_size += noise_points.point_step;
+          outlier_points_size += outlier_points.point_step;
         }
       }
 
@@ -208,32 +211,32 @@ void RingOutlierFilterComponent::faster_filter(
 
         output_size += output.point_step;
       }
-    } else if (publish_noise_points_) {
+    } else if (publish_outlier_pointcloud_) {
       for (int i = walk_first_idx; i < walk_last_idx; i++) {
-        auto noise_ptr = reinterpret_cast<PointXYZI *>(&noise_points.data[noise_points_size]);
+        auto outlier_ptr = reinterpret_cast<PointXYZI *>(&outlier_points.data[outlier_points_size]);
         auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
         if (transform_info.need_transform) {
           Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
           p = transform_info.eigen_transform * p;
-          noise_ptr->x = p[0];
-          noise_ptr->y = p[1];
-          noise_ptr->z = p[2];
+          outlier_ptr->x = p[0];
+          outlier_ptr->y = p[1];
+          outlier_ptr->z = p[2];
         } else {
-          *noise_ptr = *input_ptr;
+          *outlier_ptr = *input_ptr;
         }
         const float & intensity =
           *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
-        noise_ptr->intensity = intensity;
-        noise_points_size += noise_points.point_step;
+        outlier_ptr->intensity = intensity;
+        outlier_points_size += outlier_points.point_step;
       }
     }
   }
 
   setUpPointCloudFormat(input, output, output_size, /*num_fields=*/4);
 
-  if (publish_noise_points_) {
-    setUpPointCloudFormat(input, noise_points, noise_points_size, /*num_fields=*/4);
-    noise_points_publisher_->publish(noise_points);
+  if (publish_outlier_pointcloud_) {
+    setUpPointCloudFormat(input, outlier_points, outlier_points_size, /*num_fields=*/4);
+    outlier_pointcloud_publisher_->publish(outlier_points);
   }
 
   // add processing time for debug
@@ -281,8 +284,9 @@ rcl_interfaces::msg::SetParametersResult RingOutlierFilterComponent::paramCallba
   if (get_param(p, "num_points_threshold", num_points_threshold_)) {
     RCLCPP_DEBUG(get_logger(), "Setting new num_points_threshold to: %d.", num_points_threshold_);
   }
-  if (get_param(p, "publish_noise_points", publish_noise_points_)) {
-    RCLCPP_DEBUG(get_logger(), "Setting new publish_noise_points to: %d.", publish_noise_points_);
+  if (get_param(p, "publish_outlier_pointcloud", publish_outlier_pointcloud_)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting new publish_outlier_pointcloud to: %d.", publish_outlier_pointcloud_);
   }
 
   rcl_interfaces::msg::SetParametersResult result;
