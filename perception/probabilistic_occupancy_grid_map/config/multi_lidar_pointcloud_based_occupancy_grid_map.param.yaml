@@ -34,7 +34,6 @@
       fusion_config:
         # following parameters are shared: map_frame, base_link_frame, gridmap_origin_frame, map_resolution, map_length
         # Setting1: tune ogm creation parameters
-        obstacle_pointcloud_topic: "/perception/obstacle_segmentation/single_frame/pointcloud_raw"
         raw_pointcloud_topics: # put each sensor's pointcloud topic
           - "/sensing/lidar/top/pointcloud"
           - "/sensing/lidar/left/pointcloud"

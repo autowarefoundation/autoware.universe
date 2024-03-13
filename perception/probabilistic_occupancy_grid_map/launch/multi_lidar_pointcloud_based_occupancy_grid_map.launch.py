@@ -126,7 +126,7 @@ def launch_setup(context, *args, **kwargs):
             plugin="occupancy_grid_map::PointcloudBasedOccupancyGridMapNode",
             name="occupancy_grid_map_node_in_" + str(i),
             remappings=[
-                ("~/input/obstacle_pointcloud", fusion_config["obstacle_pointcloud_topic"]),
+                ("~/input/obstacle_pointcloud", LaunchConfiguration("input/obstacle_pointcloud")),
                 ("~/input/raw_pointcloud", fusion_config["raw_pointcloud_topics"][i]),
                 ("~/output/occupancy_grid_map", fusion_config["fusion_input_ogm_topics"][i]),
             ],
@@ -191,6 +191,7 @@ def generate_launch_description():
             add_launch_arg("use_intra_process", "true"),
             add_launch_arg("use_pointcloud_container", "false"),
             add_launch_arg("container_name", "occupancy_grid_map_container"),
+            add_launch_arg("input/obstacle_pointcloud", "no_ground/oneshot/pointcloud"),
             add_launch_arg("output", "occupancy_grid"),
             add_launch_arg(
                 "multi_lidar_fusion_config_file",
