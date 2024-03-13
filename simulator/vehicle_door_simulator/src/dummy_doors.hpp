@@ -23,7 +23,7 @@
 
 #include <array>
 
-namespace vehicle_device_simulator
+namespace vehicle_door_simulator
 {
 
 class DummyDoors : public rclcpp::Node
@@ -57,6 +57,6 @@ private:
   std::array<LocalStatus, 4> statuses_;
 };
 
-}  // namespace vehicle_device_simulator
+}  // namespace vehicle_door_simulator
 
 #endif  // DUMMY_DOORS_HPP_

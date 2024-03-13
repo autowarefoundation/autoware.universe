@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(vehicle_device_simulator)
+project(vehicle_door_simulator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
