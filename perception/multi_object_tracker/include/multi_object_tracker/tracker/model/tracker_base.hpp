@@ -52,8 +52,6 @@ private:
   int total_no_measurement_count_;
   int total_measurement_count_;
   rclcpp::Time last_update_with_measurement_time_;
-
-public:
   autoware_auto_perception_msgs::msg::ObjectClassification last_filtered_class_;
 
 public:
