@@ -484,19 +484,10 @@ TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
   const auto & current_lanes = status_.current_lanes;
   const auto & shift_line = status_.lane_change_path.info.shift_line;
   const auto & shift_path = status_.lane_change_path.shifted_path;
-  const auto arc_position_current_pose = lanelet::utils::getArcCoordinates(current_lanes, pose);
-
-  const double distance_to_shift_start =
-    std::invoke([&current_lanes, &shift_line, &arc_position_current_pose]() {
-      const auto arc_position_shift_start =
-        lanelet::utils::getArcCoordinates(current_lanes, shift_line.start);
-      return arc_position_shift_start.length - arc_position_current_pose.length;
-    });
-
-  // return turn_signal_info;
+  const auto current_shift_length = lanelet::utils::getArcCoordinates(current_lanes, pose).distance;
 
   const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
-    shift_path, shift_line, current_lanes, distance_to_shift_start, true);
+    shift_path, shift_line, current_lanes, current_shift_length, true);
   return new_signal;
 }
 

@@ -165,8 +165,9 @@ private:
     const bool no_right_lanes, const double threshold) const
   {
     const auto relative_shift_length = end_shift_length - start_shift_length;
-
+    std::cout << "relative_shift_length " << relative_shift_length << "\n";
     if (isAvoidShift(start_shift_length, end_shift_length, threshold)) {
+      std::cerr << "Enters here 0 ? \n";
       // Left avoid. But there is no adjacent lane. No need blinker.
       if (relative_shift_length > 0.0 && no_left_lanes) {
         return false;
@@ -179,6 +180,7 @@ private:
     }
 
     if (isReturnShift(start_shift_length, end_shift_length, threshold)) {
+      std::cerr << "Enters here 1 ? \n";
       // Right return. But there is no adjacent lane. No need blinker.
       if (relative_shift_length > 0.0 && no_right_lanes) {
         return false;
@@ -192,6 +194,8 @@ private:
 
     if (isLeftMiddleShift(start_shift_length, end_shift_length, threshold)) {
       // Left avoid. But there is no adjacent lane. No need blinker.
+      std::cerr << "Enters here 2 ? \n";
+
       if (relative_shift_length > 0.0 && no_left_lanes) {
         return false;
       }
@@ -204,6 +208,8 @@ private:
 
     if (isRightMiddleShift(start_shift_length, end_shift_length, threshold)) {
       // Right avoid. But there is no adjacent lane. No need blinker.
+      std::cerr << "Enters here 3 ? \n";
+
       if (relative_shift_length < 0.0 && no_right_lanes) {
         return false;
       }
