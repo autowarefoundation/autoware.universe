@@ -383,6 +383,13 @@ std::optional<std::pair<size_t, size_t>> BlindSpotModule::generateStopLine(
       geometry_msgs::build<geometry_msgs::msg::Point>().x(mid_pt.x()).y(mid_pt.y()).z(mid_pt.z());
     stop_idx_default_ip = stop_idx_critical_ip =
       motion_utils::findNearestSegmentIndex(path_ip.points, mid_point);
+    /*
+    // NOTE: it is not ambiguous when the curve starts on the left/right lanelet, so this module
+    inserts stopline at the beginning of the lanelet for baselink
+    stop_idx_default_ip = stop_idx_critical_ip = static_cast<size_t>(std::max<int>(0,
+    static_cast<int>(motion_utils::findNearestSegmentIndex(path_ip.points, mid_point)) -
+    baselink2front_dist));
+    */
   }
 
   /* insert stop_point to use interpolated path*/
