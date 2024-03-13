@@ -16,20 +16,20 @@ for more information about the divided lanelet map and the metadata file.
 ### Input
 
 | Name                         | Type                                       | Description                     |
-|------------------------------|--------------------------------------------|---------------------------------|
+| ---------------------------- | ------------------------------------------ | ------------------------------- |
 | `~/input/odometry`           | `nav_msgs::msg::Odometry`                  | ego vehicle odometry            |
 | `/map/lanelet_map_meta_data` | autoware_map_msgs::msg::LaneletMapMetaData | metadata info for lanelet2 maps |
 
 ### Output
 
 | Name                  | Type                                         | Description                |
-|-----------------------|----------------------------------------------|----------------------------|
+| --------------------- | -------------------------------------------- | -------------------------- |
 | `output/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | dynamic Lanelet2 map topic |
 
 ### Service
 
 | Name                                   | Type                                                 | Description                               |
-|----------------------------------------|------------------------------------------------------|-------------------------------------------|
+| -------------------------------------- | ---------------------------------------------------- | ----------------------------------------- |
 | `service/get_differential_lanelet_map` | `autoware_map_msgs::srv::GetDifferentialLanelet2Map` | service to load diferantial Lanelet2 maps |
 
 ## Parameters
