@@ -11,7 +11,7 @@
       encoder_in_feature_size: 12
     densification_params:
       world_frame_id: "map"
-      num_past_frames: 0
+      num_past_frames: 1
     omp_params:
       # omp params
       num_threads: 1
