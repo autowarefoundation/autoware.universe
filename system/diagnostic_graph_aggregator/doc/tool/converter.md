@@ -10,7 +10,7 @@ ros2 launch diagnostic_graph_aggregator converter.launch.xml complement:=false
 
 The `complement` argument specifies whether to add an intermediate path that does not exist.
 This means that if the graph contains paths `/A/B` and `/A/B/C/D/E`, the intermediate paths `/A`, `/A/B/C` and `/A/B/C/D` will be added.
-This is useful for tree view in `rqt_robot_monitor`. The completed node has an error level of `SATLE`.
+This is useful for tree view in `rqt_robot_monitor`. The completed node has an error level of `STALE`.
 
 ## Examples
 
