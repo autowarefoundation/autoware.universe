@@ -34,9 +34,6 @@ Tracker::Tracker(
   std::mt19937 gen(std::random_device{}());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
   std::generate(uuid_.uuid.begin(), uuid_.uuid.end(), bit_eng);
-
-  // initialize last_filtered_class_
-  last_filtered_class_ = object_recognition_utils::getHighestProbClassification(classification_);
 }
 
 bool Tracker::updateWithMeasurement(
@@ -116,22 +113,6 @@ void Tracker::updateClassification(
       [](const auto & class_) { return class_.probability < 0.001; }),
     classification_.end());
 
-  // Set the last filtered class
-  // if the highest probability class is not overcome a certain hysteresis, the last
-  // filtered class stays the same
-
-  for (const auto & class_ : classification_) {
-    if (class_.label == last_filtered_class_.label) {
-      last_filtered_class_.probability = class_.probability;
-      break;
-    }
-  }
-  const double hysteresis = 0.1;
-  autoware_auto_perception_msgs::msg::ObjectClassification const new_classification =
-    object_recognition_utils::getHighestProbClassification(classification_);
-  if (new_classification.probability > last_filtered_class_.probability + hysteresis) {
-    last_filtered_class_ = new_classification;
-  }
 }
 
 geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
