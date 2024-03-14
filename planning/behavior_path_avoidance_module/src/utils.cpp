@@ -647,6 +647,11 @@ bool isAmbiguousStoppedVehicle(
   }
 
   if (object.is_within_intersection) {
+    std::string turn_direction = object.overhang_lanelet.attributeOr("turn_direction", "else");
+    if (turn_direction == "straight") {
+      return true;
+    }
+
     RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is in the intersection area.");
     return false;
   }
@@ -819,11 +824,6 @@ bool isSatisfiedWithVehicleCondition(
   }
 
   if (object.is_within_intersection) {
-    std::string turn_direction = object.overhang_lanelet.attributeOr("turn_direction", "else");
-    if (turn_direction == "straight") {
-      return true;
-    }
-
     if (object.behavior == ObjectData::Behavior::NONE) {
       object.reason = "ParallelToEgoLane";
       return false;
