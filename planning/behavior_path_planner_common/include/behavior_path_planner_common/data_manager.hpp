@@ -168,11 +168,11 @@ struct PlannerData
   std::pair<TurnSignalInfo, bool> getBehaviorTurnSignalInfo(
     const ShiftedPath & path, const ShiftLine & shift_line,
     const lanelet::ConstLanelets & current_lanelets, const double current_shift_length,
-    const bool is_driving_forward) const
+    const bool is_driving_forward, const bool egos_lane_is_shifted) const
   {
     return turn_signal_decider.getBehaviorTurnSignalInfo(
       path, shift_line, current_lanelets, route_handler, parameters, self_odometry,
-      current_shift_length, is_driving_forward);
+      current_shift_length, is_driving_forward, egos_lane_is_shifted);
   }
 
   TurnIndicatorsCommand getTurnSignal(

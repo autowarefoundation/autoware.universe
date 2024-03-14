@@ -948,9 +948,11 @@ BehaviorModuleOutput AvoidanceModule::plan()
   } else {
     const auto original_signal = getPreviousModuleOutput().turn_signal_info;
 
+    constexpr bool is_driving_forward = true;
+    constexpr bool egos_lane_is_shifted = true;
     const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
       linear_shift_path, path_shifter_.getShiftLines().front(), avoid_data_.current_lanelets,
-      helper_->getEgoShift(), true);
+      helper_->getEgoShift(), is_driving_forward, egos_lane_is_shifted);
 
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
     output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(

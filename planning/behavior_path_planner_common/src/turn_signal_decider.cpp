@@ -619,7 +619,8 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   const lanelet::ConstLanelets & current_lanelets,
   const std::shared_ptr<RouteHandler> route_handler,
   const BehaviorPathPlannerParameters & parameters, const Odometry::ConstSharedPtr self_odometry,
-  const double current_shift_length, const bool is_driving_forward) const
+  const double current_shift_length, const bool is_driving_forward,
+  const bool egos_lane_is_shifted) const
 {
   std::cerr << "-------------TurnSignalDecider::getBehaviorTurnSignalInfo-----------\n";
   constexpr double THRESHOLD = 0.1;
@@ -663,11 +664,11 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   }
 
   const auto [start_shift_length, end_shift_length] =
-    std::invoke([&path, &shift_line]() -> std::pair<double, double> {
+    std::invoke([&path, &shift_line, &egos_lane_is_shifted]() -> std::pair<double, double> {
       const auto temp_start_shift_length = path.shift_length.at(shift_line.start_idx);
       const auto temp_end_shift_length = path.shift_length.at(shift_line.end_idx);
       // Shift is done using the target lane and not current lane
-      if (std::fabs(temp_start_shift_length) > std::fabs(temp_end_shift_length)) {
+      if (!egos_lane_is_shifted) {
         return std::make_pair(temp_end_shift_length, -temp_start_shift_length);
       }
       return std::make_pair(temp_start_shift_length, temp_end_shift_length);
@@ -727,7 +728,8 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   }
 
   lanelet::ConstLanelet lanelet;
-  if (!rh->getClosestLaneletWithinRoute(shift_line.end, &lanelet)) {
+  const auto query_pose = (egos_lane_is_shifted) ? shift_line.end : shift_line.start;
+  if (!rh->getClosestLaneletWithinRoute(query_pose, &lanelet)) {
     std::cerr << "No signal 4\n";
     return std::make_pair(TurnSignalInfo{}, true);
   }

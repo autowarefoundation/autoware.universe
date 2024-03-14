@@ -485,9 +485,12 @@ TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
   const auto & shift_line = status_.lane_change_path.info.shift_line;
   const auto & shift_path = status_.lane_change_path.shifted_path;
   const auto current_shift_length = lanelet::utils::getArcCoordinates(current_lanes, pose).distance;
+  constexpr bool is_driving_forward = true;
+  constexpr bool egos_lane_is_shifted = false;
 
   const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
-    shift_path, shift_line, current_lanes, current_shift_length, true);
+    shift_path, shift_line, current_lanes, current_shift_length, is_driving_forward,
+    egos_lane_is_shifted);
   return new_signal;
 }
 
