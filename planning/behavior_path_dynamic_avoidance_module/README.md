@@ -1,13 +1,23 @@
 # Dynamic avoidance design
 
+This module is under development.
+
 ## Purpose / Role
 
-This is a module designed for avoiding obstacles which are running.
-Static obstacles such as parked vehicles are dealt with by the avoidance module.
+This module provides avoidance functions for vehicles, pedestrians, and obstacles in the vicinity of the ego's path in combination with the obstacle_avoidance module.
+Each module performs the following roles.
+Dynamic Avoidance module: This module cuts off the drivable area according to the position and velocity of the target to be avoided.
+Obstacle Avoidance module: This module modifies the path to be followed so that it fits within the drivable area received.
 
-This module is under development.
-In the current implementation, the dynamic obstacles to avoid is extracted from the drivable area.
-Then the motion planner, in detail obstacle_avoidance_planner, will generate an avoiding trajectory.
+Avoidance functions are also provided by the Avoidance module, which allows avoidance through the outside of own lanes but not against moving objects.
+On the other hand, this module can avoid moving objects.
+For this reason, the word "dynamic" is used in its name.
+The table below lists the avoidance modules that can be used for each situation.
+
+|                          |                         avoid within the own lane                          | avoid through the outside of own lanes |
+| :----------------------- | :------------------------------------------------------------------------: | :------------------------------------: |
+| avoid not-moving objects | Avoidance Module <br> Dynamic Avoidance Module + Obstacle Avoidance Module |            Avoidance Module            |
+| avoid moving objects     |            Dynamic Avoidance Module + Obstacle Avoidance Module            |     No Module (Under Development)      |
 
 ## Overview of drivable area modification
 
