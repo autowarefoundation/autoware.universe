@@ -91,8 +91,8 @@ TEST_F(PublishedTimePublisherTest, PublishMsgWithHeader)
   std_msgs::msg::Header header;
   header.stamp = rclcpp::Time(1234);
 
-  // Use Published Time Publisher .publish() with a header
-  published_time_publisher_->publish(first_test_publisher_, header);
+  // Use Published Time Publisher .publish_if_subscribed() with a header
+  published_time_publisher_->publish_if_subscribed(first_test_publisher_, header);
   rclcpp::spin_some(node_);
 
   // Check if the published_time_ is created
@@ -110,8 +110,8 @@ TEST_F(PublishedTimePublisherTest, PublishMsgWithTimestamp)
   std_msgs::msg::Header header;
   header.stamp = rclcpp::Time(4321);
 
-  // Use Published Time Publisher .publish() with a timestamp
-  published_time_publisher_->publish(first_test_publisher_, header.stamp);
+  // Use Published Time Publisher .publish_if_subscribed() with a timestamp
+  published_time_publisher_->publish_if_subscribed(first_test_publisher_, header.stamp);
   rclcpp::spin_some(node_);
 
   // Check if the published_time_ is created
@@ -129,9 +129,9 @@ TEST_F(PublishedTimePublisherTest, MultiplePublishMsgWithHeader)
   std_msgs::msg::Header header;
   header.stamp = rclcpp::Time(12345);
 
-  // Use Published Time Publisher .publish() with a header for multiple publishers
-  published_time_publisher_->publish(first_test_publisher_, header);
-  published_time_publisher_->publish(second_test_publisher_, header);
+  // Use Published Time Publisher .publish_if_subscribed() with a header for multiple publishers
+  published_time_publisher_->publish_if_subscribed(first_test_publisher_, header);
+  published_time_publisher_->publish_if_subscribed(second_test_publisher_, header);
   rclcpp::spin_some(node_);
 
   // Check if the published_time_ is created
@@ -151,9 +151,9 @@ TEST_F(PublishedTimePublisherTest, MultiplePublishMsgWithTimestamp)
   std_msgs::msg::Header header;
   header.stamp = rclcpp::Time(12345);
 
-  // Use Published Time Publisher .publish() with a timestamp for multiple publishers
-  published_time_publisher_->publish(first_test_publisher_, header.stamp);
-  published_time_publisher_->publish(second_test_publisher_, header.stamp);
+  // Use Published Time Publisher .publish_if_subscribed() with a timestamp for multiple publishers
+  published_time_publisher_->publish_if_subscribed(first_test_publisher_, header.stamp);
+  published_time_publisher_->publish_if_subscribed(second_test_publisher_, header.stamp);
   rclcpp::spin_some(node_);
 
   // Check if the published_time_ is created
