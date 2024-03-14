@@ -19,7 +19,7 @@ The table below lists the avoidance modules that can be used for each situation.
 | avoid not-moving objects | Avoidance Module <br> Dynamic Avoidance Module + Obstacle Avoidance Module |            Avoidance Module            |
 | avoid moving objects     |            Dynamic Avoidance Module + Obstacle Avoidance Module            |     No Module (Under Development)      |
 
-## Overview of drivable area modification
+## Algorithms
 
 ### Filtering obstacles to avoid
 
@@ -52,6 +52,10 @@ Same directional obstacles
 
 Opposite directional obstacles
 ![opposite_directional_object](./image/opposite_directional_object.svg)
+
+## Example
+
+## Future works
 
 ## Parameters
 
