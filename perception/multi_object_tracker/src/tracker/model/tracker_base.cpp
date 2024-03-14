@@ -112,7 +112,6 @@ void Tracker::updateClassification(
       classification_.begin(), classification_.end(),
       [](const auto & class_) { return class_.probability < 0.001; }),
     classification_.end());
-
 }
 
 geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
