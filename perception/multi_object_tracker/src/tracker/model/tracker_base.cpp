@@ -65,35 +65,26 @@ void Tracker::updateClassification(
   // 5. Normalize the probability
 
   const double gain = 0.05;
-  const double gain_inv = 1.0 - gain;
-  const double decay = gain_inv;
-
+  const double decay = 1.0 - gain;
+  // decal all existing probability
+  for (auto & class_ : classification_) {
+    class_.probability *= decay;
+  }
   for (const auto & new_class : classification) {
     bool found = false;
     for (auto & old_class : classification_) {
       // Update the matched classification probability with a gain
       if (new_class.label == old_class.label) {
-        old_class.probability = old_class.probability * gain_inv + new_class.probability * gain;
+        old_class.probability += new_class.probability * gain;
         found = true;
         break;
       }
     }
     // If the label is not found, add it to the classification list
     if (!found) {
-      classification_.push_back(new_class);
-    }
-  }
-  // If the old class probability is not found, decay the probability
-  for (auto & old_class : classification_) {
-    bool found = false;
-    for (const auto & new_class : classification) {
-      if (new_class.label == old_class.label) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      old_class.probability *= decay;
+      auto adding_class = new_class;
+      adding_class.probability *= gain; 
+      classification_.push_back(adding_class);
     }
   }
 
