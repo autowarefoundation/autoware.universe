@@ -25,10 +25,10 @@
 namespace diagnostic_graph_aggregator
 {
 
-class ToolNode : public rclcpp::Node
+class ConverterNode : public rclcpp::Node
 {
 public:
-  ToolNode();
+  ConverterNode();
 
 private:
   bool complement_inner_nodes_;

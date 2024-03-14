@@ -60,19 +60,19 @@ std::vector<std::string> complement_paths(const DiagnosticGraph & graph)
   return result;
 }
 
-ToolNode::ToolNode() : Node("diagnostic_graph_aggregator_converter")
+ConverterNode::ConverterNode() : Node("converter")
 {
   using std::placeholders::_1;
   const auto qos_graph = rclcpp::QoS(1);
   const auto qos_array = rclcpp::QoS(1);
 
-  const auto callback = std::bind(&ToolNode::on_graph, this, _1);
+  const auto callback = std::bind(&ConverterNode::on_graph, this, _1);
   sub_graph_ = create_subscription<DiagnosticGraph>("/diagnostics_graph", qos_graph, callback);
   pub_array_ = create_publisher<DiagnosticArray>("/diagnostics_agg", qos_array);
   complement_inner_nodes_ = declare_parameter<bool>("complement_inner_nodes");
 }
 
-void ToolNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
+void ConverterNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
 {
   DiagnosticArray message;
   message.header.stamp = msg->stamp;
@@ -108,10 +108,10 @@ void ToolNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
 
 int main(int argc, char ** argv)
 {
-  using diagnostic_graph_aggregator::ToolNode;
+  using diagnostic_graph_aggregator::ConverterNode;
   rclcpp::init(argc, argv);
   rclcpp::executors::SingleThreadedExecutor executor;
-  auto node = std::make_shared<ToolNode>();
+  auto node = std::make_shared<ConverterNode>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);
