@@ -16,6 +16,8 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace diagnostic_graph_aggregator
 {
@@ -35,6 +37,29 @@ std::string level_to_string(DiagnosticLevel level)
   return "UNKNOWN";
 }
 
+std::string parent_path(const std::string & path)
+{
+  return path.substr(0, path.rfind('/'));
+}
+
+std::vector<std::string> complement_paths(const DiagnosticGraph & graph)
+{
+  std::unordered_map<std::string, bool> paths;
+  for (const auto & node : graph.nodes) {
+    std::string path = node.status.name;
+    paths[path] = false;
+    while (path = parent_path(path), !path.empty()) {
+      if (paths.count(path)) break;
+      paths[path] = true;
+    }
+  }
+  std::vector<std::string> result;
+  for (const auto & [path, flag] : paths) {
+    if (flag) result.push_back(path);
+  }
+  return result;
+}
+
 ToolNode::ToolNode() : Node("diagnostic_graph_aggregator_converter")
 {
   using std::placeholders::_1;
@@ -43,7 +68,8 @@ ToolNode::ToolNode() : Node("diagnostic_graph_aggregator_converter")
 
   const auto callback = std::bind(&ToolNode::on_graph, this, _1);
   sub_graph_ = create_subscription<DiagnosticGraph>("/diagnostics_graph", qos_graph, callback);
-  pub_array_ = create_publisher<DiagnosticArray>("/diagnostics_array", qos_array);
+  pub_array_ = create_publisher<DiagnosticArray>("/diagnostics_agg", qos_array);
+  complement_inner_nodes_ = declare_parameter<bool>("complement_inner_nodes");
 }
 
 void ToolNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
@@ -63,6 +89,18 @@ void ToolNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
       }
     }
   }
+
+  if (complement_inner_nodes_) {
+    if (!inner_node_names_) {
+      inner_node_names_ = complement_paths(*msg);
+    }
+    for (const auto & name : inner_node_names_.value()) {
+      message.status.emplace_back();
+      message.status.back().name = name;
+      message.status.back().level = DiagnosticStatus::STALE;
+    }
+  }
+
   pub_array_->publish(message);
 }
 

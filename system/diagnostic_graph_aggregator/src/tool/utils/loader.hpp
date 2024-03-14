@@ -12,32 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE__CONVERTER_HPP_
-#define NODE__CONVERTER_HPP_
+#ifndef TOOL__UTILS__LOADER_HPP_
+#define TOOL__UTILS__LOADER_HPP_
 
+#include "graph/graph.hpp"
 #include "graph/types.hpp"
+#include "graph/units.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace diagnostic_graph_aggregator
 {
 
-class ToolNode : public rclcpp::Node
+struct GraphNode
 {
-public:
-  ToolNode();
-
-private:
-  bool complement_inner_nodes_;
-  std::optional<std::vector<std::string>> inner_node_names_;
-  rclcpp::Subscription<DiagnosticGraph>::SharedPtr sub_graph_;
-  rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_array_;
-  void on_graph(const DiagnosticGraph::ConstSharedPtr msg);
+  using UniquePtr = std::unique_ptr<GraphNode>;
+  std::string type;
+  std::string path;
+  std::vector<GraphNode *> children;
+  std::vector<GraphNode *> parents;
 };
+
+struct GraphRoot
+{
+  std::vector<GraphNode::UniquePtr> owner;
+  std::vector<GraphNode *> nodes;
+};
+
+GraphRoot load_graph_nodes(const std::string & path);
 
 }  // namespace diagnostic_graph_aggregator
 
-#endif  // NODE__CONVERTER_HPP_
+#endif  // TOOL__UTILS__LOADER_HPP_
