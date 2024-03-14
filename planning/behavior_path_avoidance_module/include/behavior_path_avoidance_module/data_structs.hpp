@@ -423,6 +423,9 @@ struct ObjectData  // avoidance target
   // is driving on ego current lane
   bool is_on_ego_lane{false};
 
+  // is ambiguous stopped vehicle.
+  bool is_ambiguous{false};
+
   // object direction.
   Direction direction{Direction::NONE};
 

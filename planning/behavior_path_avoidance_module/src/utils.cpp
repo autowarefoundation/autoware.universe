@@ -625,15 +625,11 @@ bool isParkedVehicle(
   return is_left_side_parked_vehicle || is_right_side_parked_vehicle;
 }
 
-bool isForceAvoidanceTarget(
+bool isAmbiguousStoppedVehicle(
   ObjectData & object, const AvoidancePlanningData & data,
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  if (!parameters->enable_force_avoidance_for_stopped_vehicle) {
-    return false;
-  }
-
   const auto stop_time_longer_than_threshold =
     object.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
 
@@ -796,9 +792,10 @@ bool isSatisfiedWithVehicleCondition(
 {
   object.behavior = getObjectBehavior(object, parameters);
   object.is_on_ego_lane = isOnEgoLane(object);
+  object.is_ambiguous = isAmbiguousStoppedVehicle(object, data, planner_data, parameters);
 
   // from here condition check for vehicle type objects.
-  if (isForceAvoidanceTarget(object, data, planner_data, parameters)) {
+  if (object.is_ambiguous && parameters->enable_force_avoidance_for_stopped_vehicle) {
     return true;
   }
 
