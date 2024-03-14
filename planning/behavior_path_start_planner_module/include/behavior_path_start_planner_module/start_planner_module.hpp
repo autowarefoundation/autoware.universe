@@ -33,6 +33,7 @@
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <tf2/utils.h>
 
 #include <atomic>
@@ -239,6 +240,7 @@ private:
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
   mutable StartPlannerDebugData debug_data_;
+  std::optional<lanelet::Id> ignore_signal_{std::nullopt};
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
@@ -264,7 +266,7 @@ private:
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
   // turn signal
-  TurnSignalInfo calcTurnSignalInfo() const;
+  TurnSignalInfo calcTurnSignalInfo();
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
