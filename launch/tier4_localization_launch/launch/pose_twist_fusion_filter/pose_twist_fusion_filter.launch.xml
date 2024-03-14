@@ -1,16 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-  <let
-    name="ekf_input_pose_with_cov_name"
-    if="$(eval &quot;'$(var use_autoware_pose_covariance_modifier)'=='true'&quot;)"
-    value="/localization/autoware_pose_covariance_modifier/pose_with_covariance"
-  />
-  <let name="ekf_input_pose_with_cov_name" if="$(eval &quot;'$(var use_autoware_pose_covariance_modifier)'=='false'&quot;)" value="/localization/pose_estimator/pose_with_covariance"/>
-
   <group>
     <include file="$(find-pkg-share ekf_localizer)/launch/ekf_localizer.launch.xml">
       <arg name="input_initial_pose_name" value="/initialpose3d"/>
-      <arg name="input_pose_with_cov_name" value="$(var ekf_input_pose_with_cov_name)"/>
+      <arg name="input_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance"/>
       <arg name="input_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
       <arg name="output_odom_name" value="kinematic_state"/>
       <arg name="output_pose_name" value="pose"/>
