@@ -14,10 +14,7 @@
 
 #include "converter.hpp"
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <algorithm>
 
 namespace diagnostic_graph_aggregator
 {
@@ -42,22 +39,24 @@ std::string parent_path(const std::string & path)
   return path.substr(0, path.rfind('/'));
 }
 
-std::vector<std::string> complement_paths(const DiagnosticGraph & graph)
+auto create_tree(const DiagnosticGraph & graph)
 {
-  std::unordered_map<std::string, bool> paths;
+  std::map<std::string, std::unique_ptr<TreeNode>, std::greater<std::string>> tree;
+  for (const auto & node : graph.nodes) {
+    tree.emplace(node.status.name, std::make_unique<TreeNode>(true));
+  }
   for (const auto & node : graph.nodes) {
     std::string path = node.status.name;
-    paths[path] = false;
     while (path = parent_path(path), !path.empty()) {
-      if (paths.count(path)) break;
-      paths[path] = true;
+      if (tree.count(path)) break;
+      tree.emplace(path, std::make_unique<TreeNode>(false));
     }
   }
-  std::vector<std::string> result;
-  for (const auto & [path, flag] : paths) {
-    if (flag) result.push_back(path);
+  for (const auto & [path, node] : tree) {
+    const auto parent = parent_path(path);
+    node->parent = parent.empty() ? nullptr : tree[parent].get();
   }
-  return result;
+  return tree;
 }
 
 ConverterNode::ConverterNode() : Node("converter")
@@ -69,7 +68,9 @@ ConverterNode::ConverterNode() : Node("converter")
   const auto callback = std::bind(&ConverterNode::on_graph, this, _1);
   sub_graph_ = create_subscription<DiagnosticGraph>("/diagnostics_graph", qos_graph, callback);
   pub_array_ = create_publisher<DiagnosticArray>("/diagnostics_agg", qos_array);
-  complement_inner_nodes_ = declare_parameter<bool>("complement_inner_nodes");
+
+  initialize_tree_ = false;
+  complement_tree_ = declare_parameter<bool>("complement_tree");
 }
 
 void ConverterNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
@@ -90,14 +91,27 @@ void ConverterNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
     }
   }
 
-  if (complement_inner_nodes_) {
-    if (!inner_node_names_) {
-      inner_node_names_ = complement_paths(*msg);
+  if (complement_tree_ && !initialize_tree_) {
+    initialize_tree_ = true;
+    tree_ = create_tree(*msg);
+  }
+
+  if (complement_tree_) {
+    for (const auto & [path, node] : tree_) {
+      node->level = DiagnosticStatus::OK;
     }
-    for (const auto & name : inner_node_names_.value()) {
+    for (const auto & node : msg->nodes) {
+      tree_[node.status.name]->level = node.status.level;
+    }
+    for (const auto & [path, node] : tree_) {
+      if (!node->parent) continue;
+      node->parent->level = std::max(node->parent->level, node->level);
+    }
+    for (const auto & [path, node] : tree_) {
+      if (node->leaf) continue;
       message.status.emplace_back();
-      message.status.back().name = name;
-      message.status.back().level = DiagnosticStatus::STALE;
+      message.status.back().name = path;
+      message.status.back().level = node->level;
     }
   }
 
