@@ -83,7 +83,7 @@ void Tracker::updateClassification(
     // If the label is not found, add it to the classification list
     if (!found) {
       auto adding_class = new_class;
-      adding_class.probability *= gain; 
+      adding_class.probability *= gain;
       classification_.push_back(adding_class);
     }
   }
