@@ -1217,101 +1217,136 @@ bool StartPlannerModule::hasFinishedCurrentPath()
 
 TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
 {
-  TurnSignalInfo turn_signal{};  // output
+  const auto path = getFullPath();
 
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
-  const Pose & start_pose = status_.pull_out_path.start_pose;
-  const Pose & end_pose = status_.pull_out_path.end_pose;
+  const auto shift_start_idx =
+    motion_utils::findNearestIndex(path.points, status_.pull_out_path.start_pose.position);
+  const auto shift_end_idx =
+    motion_utils::findNearestIndex(path.points, status_.pull_out_path.end_pose.position);
 
-  // turn on hazard light when backward driving
-  if (!status_.driving_forward) {
-    turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
-    const auto back_start_pose = planner_data_->route_handler->getOriginalStartPose();
-    turn_signal.desired_start_point = back_start_pose;
-    turn_signal.required_start_point = back_start_pose;
-    // pull_out start_pose is same to backward driving end_pose
-    turn_signal.required_end_point = start_pose;
-    turn_signal.desired_end_point = start_pose;
-    return turn_signal;
-  }
+  const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
+  const double current_shift_length =
+    lanelet::utils::getArcCoordinates(current_lanes, current_pose).distance;
 
-  // turn on right signal until passing pull_out end point
-  const auto path = getFullPath();
-  // pull out path does not overlap
-  const double distance_from_end =
-    motion_utils::calcSignedArcLength(path.points, end_pose.position, current_pose.position);
-
-  if (path.points.empty()) {
-    return {};
-  }
-
-  // calculate lateral offset from pull out target lane center line
-  lanelet::ConstLanelet closest_road_lane;
-  const double backward_path_length =
-    planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
-  const auto road_lanes = utils::getExtendedCurrentLanes(
-    planner_data_, backward_path_length, std::numeric_limits<double>::max(),
-    /*forward_only_in_route*/ true);
-  lanelet::utils::query::getClosestLanelet(road_lanes, start_pose, &closest_road_lane);
-  const double lateral_offset =
-    lanelet::utils::getLateralDistanceToCenterline(closest_road_lane, start_pose);
-
-  turn_signal.turn_signal.command = std::invoke([&]() {
-    if (distance_from_end >= 0.0) return TurnIndicatorsCommand::DISABLE;
-    if (lateral_offset > parameters_->th_turn_signal_on_lateral_offset)
-      return TurnIndicatorsCommand::ENABLE_RIGHT;
-    if (lateral_offset < -parameters_->th_turn_signal_on_lateral_offset)
-      return TurnIndicatorsCommand::ENABLE_LEFT;
-    return TurnIndicatorsCommand::DISABLE;
-  });
-
-  turn_signal.desired_start_point = start_pose;
-  turn_signal.required_start_point = start_pose;
-  turn_signal.desired_end_point = end_pose;
-
-  // check if intersection exists within search length
-  const bool is_near_intersection = std::invoke([&]() {
-    const double check_length = parameters_->intersection_search_length;
-    double accumulated_length = 0.0;
-    const size_t current_idx = motion_utils::findNearestIndex(path.points, current_pose.position);
-    for (size_t i = current_idx; i < path.points.size() - 1; ++i) {
-      const auto & p = path.points.at(i);
-      for (const auto & lane : planner_data_->route_handler->getLaneletsFromIds(p.lane_ids)) {
-        const std::string turn_direction = lane.attributeOr("turn_direction", "else");
-        if (turn_direction == "right" || turn_direction == "left" || turn_direction == "straight") {
-          return true;
-        }
-      }
-      accumulated_length += tier4_autoware_utils::calcDistance2d(p, path.points.at(i + 1));
-      if (accumulated_length > check_length) {
-        return false;
-      }
+  constexpr bool egos_lane_is_shifted = true;
+  constexpr bool is_pull_out = true;
+  const bool override_ego_stopped_check = std::invoke([&]() {
+    if (status_.planner_type != PlannerType::GEOMETRIC) {
+      return false;
     }
-    return false;
+    constexpr double distance_threshold = 1.0;
+    const auto stop_point = status_.pull_out_path.partial_paths.front().points.back();
+    const double distance_from_ego_to_stop_point = std::abs(motion_utils::calcSignedArcLength(
+      path.points, stop_point.point.pose.position, current_pose.position));
+    return distance_from_ego_to_stop_point < distance_threshold;
   });
 
-  turn_signal.required_end_point = std::invoke([&]() {
-    if (is_near_intersection) return end_pose;
-    const double length_start_to_end =
-      motion_utils::calcSignedArcLength(path.points, start_pose.position, end_pose.position);
-    const auto ratio = std::clamp(
-      parameters_->length_ratio_for_turn_signal_deactivation_near_intersection, 0.0, 1.0);
+  //  std::map<PlannerType, double> collision_check_distances = {
+  //     {PlannerType::SHIFT, parameters_->shift_collision_check_distance_from_end},
+  //     {PlannerType::GEOMETRIC, parameters_->geometric_collision_check_distance_from_end}};
 
-    const double required_end_length = length_start_to_end * ratio;
-    double accumulated_length = 0.0;
-    const size_t start_idx = motion_utils::findNearestIndex(path.points, start_pose.position);
-    for (size_t i = start_idx; i < path.points.size() - 1; ++i) {
-      accumulated_length +=
-        tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
-      if (accumulated_length > required_end_length) {
-        return path.points.at(i).point.pose;
-      }
-    }
-    // not found required end point
-    return end_pose;
-  });
+  //   double collision_check_distance_from_end = collision_check_distances[status_.planner_type];
+  //   const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
+  //     getFullPath().points, status_.pull_out_path.end_pose.position,
+  //     collision_check_distance_from_end);
 
-  return turn_signal;
+  const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
+    path, shift_start_idx, shift_end_idx, current_lanes, current_shift_length,
+    status_.driving_forward, egos_lane_is_shifted, override_ego_stopped_check, is_pull_out);
+
+  // const Pose & start_pose = status_.pull_out_path.start_pose;
+  // const Pose & end_pose = status_.pull_out_path.end_pose;
+
+  // // turn on hazard light when backward driving
+  // if (!status_.driving_forward) {
+  //   turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
+  //   const auto back_start_pose = planner_data_->route_handler->getOriginalStartPose();
+  //   turn_signal.desired_start_point = back_start_pose;
+  //   turn_signal.required_start_point = back_start_pose;
+  //   // pull_out start_pose is same to backward driving end_pose
+  //   turn_signal.required_end_point = start_pose;
+  //   turn_signal.desired_end_point = start_pose;
+  //   return turn_signal;
+  // }
+
+  // // turn on right signal until passing pull_out end point
+  // // pull out path does not overlap
+  // const double distance_from_end =
+  //   motion_utils::calcSignedArcLength(path.points, end_pose.position, current_pose.position);
+
+  // if (path.points.empty()) {
+  //   return {};
+  // }
+
+  // // calculate lateral offset from pull out target lane center line
+  // lanelet::ConstLanelet closest_road_lane;
+  // const double backward_path_length =
+  //   planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
+  // const auto road_lanes = utils::getExtendedCurrentLanes(
+  //   planner_data_, backward_path_length, std::numeric_limits<double>::max(),
+  //   /*forward_only_in_route*/ true);
+  // lanelet::utils::query::getClosestLanelet(road_lanes, start_pose, &closest_road_lane);
+  // const double lateral_offset =
+  //   lanelet::utils::getLateralDistanceToCenterline(closest_road_lane, start_pose);
+
+  // turn_signal.turn_signal.command = std::invoke([&]() {
+  //   if (distance_from_end >= 0.0) return TurnIndicatorsCommand::DISABLE;
+  //   if (lateral_offset > parameters_->th_turn_signal_on_lateral_offset)
+  //     return TurnIndicatorsCommand::ENABLE_RIGHT;
+  //   if (lateral_offset < -parameters_->th_turn_signal_on_lateral_offset)
+  //     return TurnIndicatorsCommand::ENABLE_LEFT;
+  //   return TurnIndicatorsCommand::DISABLE;
+  // });
+
+  // turn_signal.desired_start_point = start_pose;
+  // turn_signal.required_start_point = start_pose;
+  // turn_signal.desired_end_point = end_pose;
+
+  // // check if intersection exists within search length
+  // const bool is_near_intersection = std::invoke([&]() {
+  //   const double check_length = parameters_->intersection_search_length;
+  //   double accumulated_length = 0.0;
+  //   const size_t current_idx = motion_utils::findNearestIndex(path.points,
+  //   current_pose.position); for (size_t i = current_idx; i < path.points.size() - 1; ++i) {
+  //     const auto & p = path.points.at(i);
+  //     for (const auto & lane : planner_data_->route_handler->getLaneletsFromIds(p.lane_ids)) {
+  //       const std::string turn_direction = lane.attributeOr("turn_direction", "else");
+  //       if (turn_direction == "right" || turn_direction == "left" || turn_direction ==
+  //       "straight") {
+  //         return true;
+  //       }
+  //     }
+  //     accumulated_length += tier4_autoware_utils::calcDistance2d(p, path.points.at(i + 1));
+  //     if (accumulated_length > check_length) {
+  //       return false;
+  //     }
+  //   }
+  //   return false;
+  // });
+
+  // turn_signal.required_end_point = std::invoke([&]() {
+  //   if (is_near_intersection) return end_pose;
+  //   const double length_start_to_end =
+  //     motion_utils::calcSignedArcLength(path.points, start_pose.position, end_pose.position);
+  //   const auto ratio = std::clamp(
+  //     parameters_->length_ratio_for_turn_signal_deactivation_near_intersection, 0.0, 1.0);
+
+  //   const double required_end_length = length_start_to_end * ratio;
+  //   double accumulated_length = 0.0;
+  //   const size_t start_idx = motion_utils::findNearestIndex(path.points, start_pose.position);
+  //   for (size_t i = start_idx; i < path.points.size() - 1; ++i) {
+  //     accumulated_length +=
+  //       tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
+  //     if (accumulated_length > required_end_length) {
+  //       return path.points.at(i).point.pose;
+  //     }
+  //   }
+  //   // not found required end point
+  //   return end_pose;
+  // });
+
+  return new_signal;
 }
 
 bool StartPlannerModule::isSafePath() const

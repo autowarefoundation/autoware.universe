@@ -619,8 +619,8 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   const lanelet::ConstLanelets & current_lanelets,
   const std::shared_ptr<RouteHandler> route_handler,
   const BehaviorPathPlannerParameters & parameters, const Odometry::ConstSharedPtr self_odometry,
-  const double current_shift_length, const bool is_driving_forward,
-  const bool egos_lane_is_shifted) const
+  const double current_shift_length, const bool is_driving_forward, const bool egos_lane_is_shifted,
+  const bool override_ego_stopped_check, const bool is_pull_out) const
 {
   std::cerr << "-------------TurnSignalDecider::getBehaviorTurnSignalInfo-----------\n";
   constexpr double THRESHOLD = 0.1;
@@ -667,7 +667,7 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
     std::invoke([&path, &shift_line, &egos_lane_is_shifted]() -> std::pair<double, double> {
       const auto temp_start_shift_length = path.shift_length.at(shift_line.start_idx);
       const auto temp_end_shift_length = path.shift_length.at(shift_line.end_idx);
-      // Shift is done using the target lane and not current lane
+      // Shift is done using the target lane and not current ego's lane
       if (!egos_lane_is_shifted) {
         return std::make_pair(temp_end_shift_length, -temp_start_shift_length);
       }
@@ -742,9 +742,12 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   const auto has_right_lane =
     right_same_direction_lane.has_value() || !right_opposite_lanes.empty();
 
-  if (!existShiftSideLane(
-        start_shift_length, end_shift_length, !has_left_lane, !has_right_lane,
-        p.turn_signal_shift_length_threshold)) {
+  std::cerr << "has_right_lane " << has_right_lane << "\n";
+  std::cerr << "has_left_lane " << has_left_lane << "\n";
+  if (
+    !is_pull_out && !existShiftSideLane(
+                      start_shift_length, end_shift_length, !has_left_lane, !has_right_lane,
+                      p.turn_signal_shift_length_threshold)) {
     std::cerr << "No signal 5\n";
 
     return std::make_pair(TurnSignalInfo{}, true);
@@ -757,12 +760,11 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   }
 
   constexpr double STOPPED_THRESHOLD = 0.1;  // [m/s]
-  if (ego_speed < STOPPED_THRESHOLD) {
+  if (ego_speed < STOPPED_THRESHOLD && !override_ego_stopped_check) {
     if (isNearEndOfShift(
           start_shift_length, end_shift_length, ego_pose.position, current_lanelets,
           p.turn_signal_shift_length_threshold)) {
       std::cerr << "No signal 7\n";
-
       return std::make_pair(TurnSignalInfo{}, true);
     }
   }

@@ -117,7 +117,8 @@ public:
     const std::shared_ptr<RouteHandler> route_handler,
     const BehaviorPathPlannerParameters & parameters, const Odometry::ConstSharedPtr self_odometry,
     const double current_shift_length, const bool is_driving_forward,
-    const bool egos_lane_is_shifted) const;
+    const bool egos_lane_is_shifted, const bool override_ego_stopped_check = false,
+    const bool is_pull_out = false) const;
 
 private:
   std::optional<TurnSignalInfo> getIntersectionTurnSignalInfo(
@@ -169,6 +170,9 @@ private:
     std::cout << "relative_shift_length " << relative_shift_length << "\n";
     if (isAvoidShift(start_shift_length, end_shift_length, threshold)) {
       std::cerr << "Enters here 0 ? \n";
+      std::cerr << "no_left_lanes " << no_left_lanes << "\n";
+      std::cerr << "no_right_lanes " << no_right_lanes << "\n";
+
       // Left avoid. But there is no adjacent lane. No need blinker.
       if (relative_shift_length > 0.0 && no_left_lanes) {
         return false;
@@ -220,7 +224,7 @@ private:
         return false;
       }
     }
-
+    std::cerr << "Returns True\n";
     return true;
   };
 
