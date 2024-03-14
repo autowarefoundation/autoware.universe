@@ -25,10 +25,17 @@ class PublishedTimePublisherTest : public ::testing::Test
 protected:
   std::shared_ptr<rclcpp::Node> node_{nullptr};
   std::shared_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_{nullptr};
-  std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Header>> test_publisher_{nullptr};
+
+  std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Header>> first_test_publisher_{nullptr};
+  std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Header>> second_test_publisher_{nullptr};
+
   std::shared_ptr<rclcpp::Subscription<autoware_internal_msgs::msg::PublishedTime>>
-    test_subscriber_{nullptr};
-  autoware_internal_msgs::msg::PublishedTime::ConstSharedPtr published_time_{nullptr};
+    first_test_subscriber_{nullptr};
+  std::shared_ptr<rclcpp::Subscription<autoware_internal_msgs::msg::PublishedTime>>
+    second_test_subscriber_{nullptr};
+
+  autoware_internal_msgs::msg::PublishedTime::ConstSharedPtr first_published_time_{nullptr};
+  autoware_internal_msgs::msg::PublishedTime::ConstSharedPtr second_published_time_{nullptr};
 
   void SetUp() override
   {
@@ -37,25 +44,39 @@ protected:
     // Simplify node and topic names for brevity and uniqueness
     const std::string test_name = ::testing::UnitTest::GetInstance()->current_test_info()->name();
     const std::string base_name =
-      "published_time_publisher_" + test_name;  // Base name for node and topics
-    const std::string suffix = "/debug/published_time";
+      "published_time_publisher_" + test_name;           // Base name for node and topics
+    const std::string suffix = "/debug/published_time";  // Suffix for published time topics
 
     // Create a node
     node_ = std::make_shared<rclcpp::Node>(base_name + "_node");
 
-    // Create a publisher
-    test_publisher_ = node_->create_publisher<std_msgs::msg::Header>(base_name, 1);
+    // Create the first publisher
+    first_test_publisher_ =
+      node_->create_publisher<std_msgs::msg::Header>(base_name + "_topic1", 1);
+
+    // Create the second publisher
+    second_test_publisher_ =
+      node_->create_publisher<std_msgs::msg::Header>(base_name + "_topic2", 1);
 
     // Create a PublishedTimePublisher
     published_time_publisher_ =
       std::make_shared<tier4_autoware_utils::PublishedTimePublisher>(node_.get());
 
-    // Create a subscriber
-    test_subscriber_ = node_->create_subscription<autoware_internal_msgs::msg::PublishedTime>(
-      base_name + suffix, 1,
+    // Create the first subscriber
+    first_test_subscriber_ = node_->create_subscription<autoware_internal_msgs::msg::PublishedTime>(
+      base_name + "_topic1" + suffix, 1,
       [this](autoware_internal_msgs::msg::PublishedTime::ConstSharedPtr msg) {
-        this->published_time_ = std::move(msg);
+        this->first_published_time_ = std::move(msg);
       });
+
+    // Create the second subscriber
+    second_test_subscriber_ =
+      node_->create_subscription<autoware_internal_msgs::msg::PublishedTime>(
+        base_name + "_topic2" + suffix, 1,
+        [this](autoware_internal_msgs::msg::PublishedTime::ConstSharedPtr msg) {
+          this->second_published_time_ = std::move(msg);
+        });
+
     rclcpp::spin_some(node_);
   }
 
@@ -70,15 +91,15 @@ TEST_F(PublishedTimePublisherTest, PublishMsgWithHeader)
   std_msgs::msg::Header header;
   header.stamp = rclcpp::Time(1234);
 
-  // Use Published Time Publisher with a timestamp
-  published_time_publisher_->publish(test_publisher_, header);
+  // Use Published Time Publisher .publish() with a header
+  published_time_publisher_->publish(first_test_publisher_, header);
   rclcpp::spin_some(node_);
 
   // Check if the published_time_ is created
-  ASSERT_TRUE(published_time_ != nullptr);
+  ASSERT_TRUE(first_published_time_ != nullptr);
 
   // Check if the published time is the same as the header
-  EXPECT_EQ(published_time_->header.stamp, header.stamp);
+  EXPECT_EQ(first_published_time_->header.stamp, header.stamp);
 }
 
 TEST_F(PublishedTimePublisherTest, PublishMsgWithTimestamp)
@@ -89,13 +110,57 @@ TEST_F(PublishedTimePublisherTest, PublishMsgWithTimestamp)
   std_msgs::msg::Header header;
   header.stamp = rclcpp::Time(4321);
 
-  // Use Published Time Publisher with a timestamp
-  published_time_publisher_->publish(test_publisher_, header.stamp);
+  // Use Published Time Publisher .publish() with a timestamp
+  published_time_publisher_->publish(first_test_publisher_, header.stamp);
   rclcpp::spin_some(node_);
 
   // Check if the published_time_ is created
-  ASSERT_TRUE(published_time_ != nullptr);
+  ASSERT_TRUE(first_published_time_ != nullptr);
 
   // Check if the published time is the same as the header
-  EXPECT_EQ(published_time_->header.stamp, header.stamp);
+  EXPECT_EQ(first_published_time_->header.stamp, header.stamp);
+}
+
+TEST_F(PublishedTimePublisherTest, MultiplePublishMsgWithHeader)
+{
+  // Check if the PublishedTimePublisher is created
+  ASSERT_TRUE(published_time_publisher_ != nullptr);
+
+  std_msgs::msg::Header header;
+  header.stamp = rclcpp::Time(12345);
+
+  // Use Published Time Publisher .publish() with a header for multiple publishers
+  published_time_publisher_->publish(first_test_publisher_, header);
+  published_time_publisher_->publish(second_test_publisher_, header);
+  rclcpp::spin_some(node_);
+
+  // Check if the published_time_ is created
+  ASSERT_TRUE(first_published_time_ != nullptr);
+  ASSERT_TRUE(second_published_time_ != nullptr);
+
+  // Check if the published time is the same as the header
+  EXPECT_EQ(first_published_time_->header.stamp, header.stamp);
+  EXPECT_EQ(second_published_time_->header.stamp, header.stamp);
+}
+
+TEST_F(PublishedTimePublisherTest, MultiplePublishMsgWithTimestamp)
+{
+  // Check if the PublishedTimePublisher is created
+  ASSERT_TRUE(published_time_publisher_ != nullptr);
+
+  std_msgs::msg::Header header;
+  header.stamp = rclcpp::Time(12345);
+
+  // Use Published Time Publisher .publish() with a timestamp for multiple publishers
+  published_time_publisher_->publish(first_test_publisher_, header.stamp);
+  published_time_publisher_->publish(second_test_publisher_, header.stamp);
+  rclcpp::spin_some(node_);
+
+  // Check if the published_time_ is created
+  ASSERT_TRUE(first_published_time_ != nullptr);
+  ASSERT_TRUE(second_published_time_ != nullptr);
+
+  // Check if the published time is the same as the header
+  EXPECT_EQ(first_published_time_->header.stamp, header.stamp);
+  EXPECT_EQ(second_published_time_->header.stamp, header.stamp);
 }
