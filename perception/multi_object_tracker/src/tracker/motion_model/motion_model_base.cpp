@@ -50,9 +50,15 @@ bool MotionModel::predictState(const rclcpp::Time & time)
     return true;
   }
 
-  if (!predictStateStep(dt, ekf_)) return false;
-
-  // update last_update_time_
+  // multi-step prediction
+  // if dt is too large, shorten dt and repeat prediction
+  const uint32_t repeat = std::floor(dt / dt_max_) + 1;
+  const double dt_ = dt / repeat;
+  for (uint32_t i = 0; i < repeat; ++i) {
+    if (!predictStateStep(dt_, ekf_)) return false;
+    last_update_time_ += rclcpp::Duration::from_seconds(dt_);
+  }
+  // reset the last_update_time_ to the prediction time
   last_update_time_ = time;
   return true;
 }
@@ -63,17 +69,23 @@ bool MotionModel::getPredictedState(
   // check if the state is initialized
   if (!checkInitialized()) return false;
 
-  // copy the predicted state and covariance
-  KalmanFilter tmp_ekf_for_no_update = ekf_;
-
-  double dt = getDeltaTime(time);
-  if (dt < 0.0) {
-    // a naive way to handle the case when the required prediction time is in the past
-    dt = 0.0;
+  const double dt = getDeltaTime(time);
+  if (dt < 1e-6 /*1usec*/) {
+    // no prediction, return the current state
+    ekf_.getX(X);
+    ekf_.getP(P);
+    return true;
   }
 
-  if (!predictStateStep(dt, tmp_ekf_for_no_update)) return false;
-
+  // copy the predicted state and covariance
+  KalmanFilter tmp_ekf_for_no_update = ekf_;
+  // multi-step prediction
+  // if dt is too large, shorten dt and repeat prediction
+  const uint32_t repeat = std::floor(dt / dt_max_) + 1;
+  const double dt_ = dt / repeat;
+  for (uint32_t i = 0; i < repeat; ++i) {
+    if (!predictStateStep(dt_, tmp_ekf_for_no_update)) return false;
+  }
   tmp_ekf_for_no_update.getX(X);
   tmp_ekf_for_no_update.getP(P);
   return true;
