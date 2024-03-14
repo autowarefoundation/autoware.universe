@@ -57,23 +57,33 @@ bool Tracker::updateWithoutMeasurement()
 void Tracker::updateClassification(
   const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification)
 {
-  // Update classification
-  // 1. Match classification label
+  // classification algorithm:
+  // 0. Remove the class with probability < 0.005
+  // 1. Decay all existing probability
   // 2. Update the matched classification probability with a gain
   // 3. If the label is not found, add it to the classification list
-  // 4. If the old class probability is not found, decay the probability
-  // 5. Normalize the probability
+  // 4. Normalize
 
+  // Gain and decay
   const double gain = 0.05;
   const double decay = 1.0 - gain;
-  // decal all existing probability
+
+  // If the probability is less than 0.005, remove the class
+  classification_.erase(
+    std::remove_if(
+      classification_.begin(), classification_.end(),
+      [](const auto & class_) { return class_.probability < 0.005; }),
+    classification_.end());
+
+  // Decay all existing probability
   for (auto & class_ : classification_) {
     class_.probability *= decay;
   }
+
+  // Update the matched classification probability with a gain
   for (const auto & new_class : classification) {
     bool found = false;
     for (auto & old_class : classification_) {
-      // Update the matched classification probability with a gain
       if (new_class.label == old_class.label) {
         old_class.probability += new_class.probability * gain;
         found = true;
@@ -96,13 +106,6 @@ void Tracker::updateClassification(
   for (auto & class_ : classification_) {
     class_.probability /= sum;
   }
-
-  // If the probability is too small, remove the class
-  classification_.erase(
-    std::remove_if(
-      classification_.begin(), classification_.end(),
-      [](const auto & class_) { return class_.probability < 0.001; }),
-    classification_.end());
 }
 
 geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
