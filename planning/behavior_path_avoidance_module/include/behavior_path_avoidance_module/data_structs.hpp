@@ -420,6 +420,9 @@ struct ObjectData  // avoidance target
   // is parked vehicle on road shoulder
   bool is_parked{false};
 
+  // is driving on ego current lane
+  bool is_on_ego_lane{false};
+
   // object direction.
   Direction direction{Direction::NONE};
 
