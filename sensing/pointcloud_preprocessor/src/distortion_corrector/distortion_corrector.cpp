@@ -315,9 +315,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     *it_y = static_cast<float>(undistorted_point.getY());
     *it_z = static_cast<float>(undistorted_point.getZ());
 
-    if (update_azimuth_and_distance_) {
+    if (update_azimuth_and_distance_ && need_transform) {
       *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
-      *it_azimuth = cv::fastAtan2(*it_y, *it_x) * 100;
+      *it_azimuth = cv::fastAtan2(*it_y, *it_x) * azimuth_factor_;
     }
     prev_time_stamp_sec = *it_time_stamp;
   }

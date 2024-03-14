@@ -116,8 +116,8 @@ void RingOutlierFilterComponent::faster_filter(
         *reinterpret_cast<const float *>(&input->data[current_data_idx + azimuth_offset]);
       const float & next_azimuth =
         *reinterpret_cast<const float *>(&input->data[next_data_idx + azimuth_offset]);
-      float azimuth_diff = next_azimuth - current_azimuth;
-      azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
+      float azimuth_diff = std::abs(next_azimuth - current_azimuth);
+      azimuth_diff = azimuth_diff > 18000.f ? 36000.f - azimuth_diff : azimuth_diff;
 
       const float & current_distance =
         *reinterpret_cast<const float *>(&input->data[current_data_idx + distance_offset]);
