@@ -153,7 +153,6 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     std::bind(&ObstacleAvoidancePlanner::onParam, this, std::placeholders::_1));
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
-
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
@@ -241,9 +240,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
     const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
-
-    // Publish published time only if there are subscribers more than 1
-    published_time_publisher_->publish(traj_pub_, output_traj_msg.header.stamp);
+    published_time_publisher_->publish_if_subscribed(traj_pub_, output_traj_msg.header.stamp);
     return;
   }
 
@@ -276,9 +273,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
   const auto output_traj_msg =
     motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
   traj_pub_->publish(output_traj_msg);
-
-  // Publish published time only if there are subscribers more than 1
-  published_time_publisher_->publish(traj_pub_, output_traj_msg.header.stamp);
+  published_time_publisher_->publish_if_subscribed(traj_pub_, output_traj_msg.header.stamp);
 }
 
 bool ObstacleAvoidancePlanner::isDataReady(const Path & path, rclcpp::Clock clock) const

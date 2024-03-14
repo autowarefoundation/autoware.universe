@@ -55,7 +55,6 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
 
   debug_publisher_ =
     std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "object_lanelet_filter");
-
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
@@ -121,9 +120,7 @@ void ObjectLaneletFilterNode::objectCallback(
     ++index;
   }
   object_pub_->publish(output_object_msg);
-
-  // Publish published time only if there are subscribers more than 1
-  published_time_publisher_->publish(object_pub_, output_object_msg.header.stamp);
+  published_time_publisher_->publish_if_subscribed(object_pub_, output_object_msg.header.stamp);
 
   // Publish debug info
   const double pipeline_latency =

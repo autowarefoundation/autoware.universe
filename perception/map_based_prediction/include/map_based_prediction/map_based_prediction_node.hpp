@@ -200,10 +200,6 @@ private:
   std::vector<double> distance_set_for_no_intention_to_walk_;
   std::vector<double> timeout_set_for_no_intention_to_walk_;
 
-  // Stop watch
-  StopWatch<std::chrono::milliseconds> stop_watch_;
-
-  // PublishedTime Publisher
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // Member Functions

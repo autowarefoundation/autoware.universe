@@ -233,10 +233,8 @@ void Controller::callbackTimerControl()
   out.longitudinal = lon_out.control_cmd;
   control_cmd_pub_->publish(out);
 
-  // 6. publish published time only if there are subscribers more than 1
-  published_time_publisher_->publish(control_cmd_pub_, out.stamp);
-
-  // 7. publish debug marker
+  // 6. publish debug
+  published_time_publisher_->publish_if_subscribed(control_cmd_pub_, out.stamp);
   publishDebugMarker(*input_data, lat_out);
 }
 

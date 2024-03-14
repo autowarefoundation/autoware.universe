@@ -309,7 +309,6 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
 
   const bool enable_debugger = declare_parameter<bool>("enable_debugger", false);
   if (enable_debugger) debugger_ = std::make_shared<Debugger>(this);
-
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
@@ -349,10 +348,7 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
   }
 
   objects_pub_->publish(output);
-
-  // Publish published time only if there are subscribers more than 1
-  published_time_publisher_->publish(objects_pub_, output.header.stamp);
-
+  published_time_publisher_->publish_if_subscribed(objects_pub_, output.header.stamp);
   if (debugger_) {
     debugger_->publishRemovedObjects(removed_objects);
     debugger_->publishNeighborPointcloud(input_obstacle_pointcloud->header);

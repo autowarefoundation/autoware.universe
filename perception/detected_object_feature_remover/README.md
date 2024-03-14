@@ -22,4 +22,6 @@ The `detected_object_feature_remover` is a package to convert topic-type from `D
 
 ## Parameters
 
+None
+
 ## Assumptions / Known limits

@@ -48,7 +48,6 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
   setupParameters();
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
-
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
@@ -221,10 +220,7 @@ void PlanningValidator::publishTrajectory()
   // Validation check is all green. Publish the trajectory.
   if (isAllValid(validation_status_)) {
     pub_traj_->publish(*current_trajectory_);
-
-    // Publish published time only if there are subscribers more than 1
-    published_time_publisher_->publish(pub_traj_, current_trajectory_->header.stamp);
-
+    published_time_publisher_->publish_if_subscribed(pub_traj_, current_trajectory_->header.stamp);
     previous_published_trajectory_ = current_trajectory_;
     return;
   }
@@ -233,10 +229,7 @@ void PlanningValidator::publishTrajectory()
 
   if (invalid_trajectory_handling_type_ == InvalidTrajectoryHandlingType::PUBLISH_AS_IT_IS) {
     pub_traj_->publish(*current_trajectory_);
-
-    // Publish published time only if there are subscribers more than 1
-    published_time_publisher_->publish(pub_traj_, current_trajectory_->header.stamp);
-
+    published_time_publisher_->publish_if_subscribed(pub_traj_, current_trajectory_->header.stamp);
     RCLCPP_ERROR(get_logger(), "Caution! Invalid Trajectory published.");
     return;
   }
@@ -249,10 +242,8 @@ void PlanningValidator::publishTrajectory()
   if (invalid_trajectory_handling_type_ == InvalidTrajectoryHandlingType::USE_PREVIOUS_RESULT) {
     if (previous_published_trajectory_) {
       pub_traj_->publish(*previous_published_trajectory_);
-
-      // Publish published time only if there are subscribers more than 1
-      published_time_publisher_->publish(pub_traj_, previous_published_trajectory_->header.stamp);
-
+      published_time_publisher_->publish_if_subscribed(
+        pub_traj_, previous_published_trajectory_->header.stamp);
       RCLCPP_ERROR(get_logger(), "Invalid Trajectory detected. Use previous trajectory.");
       return;
     }

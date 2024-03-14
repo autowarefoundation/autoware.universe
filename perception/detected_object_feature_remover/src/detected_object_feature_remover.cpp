@@ -23,7 +23,6 @@ DetectedObjectFeatureRemover::DetectedObjectFeatureRemover(const rclcpp::NodeOpt
   pub_ = this->create_publisher<DetectedObjects>("~/output", rclcpp::QoS(1));
   sub_ = this->create_subscription<DetectedObjectsWithFeature>(
     "~/input", 1, std::bind(&DetectedObjectFeatureRemover::objectCallback, this, _1));
-
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
@@ -33,9 +32,7 @@ void DetectedObjectFeatureRemover::objectCallback(
   DetectedObjects output;
   convert(*input, output);
   pub_->publish(output);
-
-  // Publish published time only if there are subscribers more than 1
-  published_time_publisher_->publish(pub_, output.header.stamp);
+  published_time_publisher_->publish_if_subscribed(pub_, output.header.stamp);
 }
 
 void DetectedObjectFeatureRemover::convert(
