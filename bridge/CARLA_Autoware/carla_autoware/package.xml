@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>carla_autoware</name>
+  <version>0.0.0</version>
+  <description>The carla_manual_control package</description>
+  <maintainer email="mradityagio@gmail.com">CARLA Simulator Team</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>ros_compatibility</exec_depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>sensor_msgs</depend>
+  <depend>sensor_msgs_py</depend>
+
+  <depend>nav_msgs</depend>
+  <depend>carla_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>rclpy</depend>
+  <depend>numpy</depend>
+  <depend>datetime</depend>
+  <depend>carla_data_provider</depend>
+  <depend>astuff_sensor_msgs</depend>
+
+
+  <depend>math</depend>
+  <depend>transform3d</depend>
+
+
+
+
+  <exec_depend>ros2launch</exec_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+
+
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

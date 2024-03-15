@@ -1,0 +1,33 @@
+<launch>
+  <!-- Launch driver argument is not used since the CARLA Simulator doesn't need any hardware drivers. -->
+  <!-- <arg name="launch_driver" default="true" description="do launch driver"/> -->
+  <arg name="vehicle_mirror_param_file" description="path to the file of vehicle mirror position yaml"/>
+  <arg name="use_pointcloud_container" default="false" description="launch pointcloud container"/>
+  <arg name="pointcloud_container_name" default="pointcloud_container"/>
+  <arg name="use_distortion_corrector" default="false" description="compensate the point cloud distortion caused by vehicle movement"/>
+
+  <group>
+    <!-- LiDAR Driver -->
+    <include file="$(find-pkg-share carla_sensor_kit_launch)/launch/lidar.launch.xml">
+      <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)"/>
+      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+      <arg name="use_distortion_corrector" value="$(var use_distortion_corrector)"/>
+    </include>
+
+    <!-- Camera Driver -->
+    <!-- Camera Driver is not needed because the CARLA Simulator already publishes camera_info and image_raw. No relays are needed from hardware drivers. -->
+
+    <!-- IMU Driver -->
+    <include file="$(find-pkg-share carla_sensor_kit_launch)/launch/imu.launch.xml"/>
+
+    <!-- GNSS Driver -->
+    <!-- GNSS Drives in not needed because the CARLA Simulator already publishes both gnss pose and pose with covariance topics -->
+
+    <!-- Vehicle Velocity Converter  -->
+    <include file="$(find-pkg-share vehicle_velocity_converter)/launch/vehicle_velocity_converter.launch.xml">
+      <arg name="input_vehicle_velocity_topic" value="/vehicle/status/velocity_status"/>
+      <arg name="output_twist_with_covariance" value="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
+    </include>
+  </group>
+</launch>

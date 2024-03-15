@@ -1,0 +1,14 @@
+<launch>
+  <group>
+    <push-ros-namespace namespace="imu"/>
+    <include file="$(find-pkg-share imu_corrector)/launch/imu_corrector.launch.xml">
+      <arg name="input_topic" value="tamagawa/imu_raw"/>
+      <arg name="output_topic" value="imu_data"/>   
+    </include>
+
+    <include file="$(find-pkg-share imu_corrector)/launch/gyro_bias_estimator.launch.xml">
+      <arg name="input_imu_raw" value="tamagawa/imu_raw"/>
+      <arg name="input_odom" value="/localization/kinematic_state"/>      
+    </include>
+  </group>
+</launch>

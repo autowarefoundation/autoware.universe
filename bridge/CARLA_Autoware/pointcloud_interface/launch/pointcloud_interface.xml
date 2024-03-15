@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="pointcloud_interface" exec="pointcloud_interface_node" name="pointcloud_interface" output="screen"/>
+</launch>

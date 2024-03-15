@@ -1,0 +1,12 @@
+<launch>
+  <!-- Params -->
+  <arg name="vehicle_mirror_param_file"/>
+  <arg name="use_distortion_corrector" default="true"/>
+
+  <include file="$(find-pkg-share common_carla_sensor_launch)/launch/velodyne_node_container.launch.py">
+    <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)"/>
+    <arg name="use_intra_process" value="true"/>
+    <arg name="use_multithread" value="false"/>
+    <arg name="use_distortion_corrector" value="$(var use_distortion_corrector)"/>
+  </include>
+</launch>
