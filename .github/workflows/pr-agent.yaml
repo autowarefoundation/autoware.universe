@@ -14,7 +14,7 @@ jobs:
       label: tag:pr-agent
   pr_agent_job:
     needs: prevent-no-label-execution-pr-agent
-    if: ${{ needs.prevent-no-label-execution.outputs.run == 'true' }}
+    if: ${{ needs.prevent-no-label-execution-pr-agent.outputs.run == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
