@@ -1,6 +1,0 @@
-repos:
-  - repo: https://github.com/tcort/markdown-link-check
-    rev: v3.10.0
-    hooks:
-      - id: markdown-link-check
-        args: [--config=.markdown-link-check.json]
