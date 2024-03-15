@@ -26,11 +26,13 @@
 #include <string>
 #include <vector>
 
+namespace autoware
+{
 namespace static_centerline_optimizer
 {
-using static_centerline_optimizer::srv::LoadMap;
-using static_centerline_optimizer::srv::PlanPath;
-using static_centerline_optimizer::srv::PlanRoute;
+using autoware::static_centerline_optimizer::srv::LoadMap;
+using autoware::static_centerline_optimizer::srv::PlanPath;
+using autoware::static_centerline_optimizer::srv::PlanRoute;
 
 class StaticCenterlineOptimizerNode : public rclcpp::Node
 {
@@ -86,4 +88,5 @@ private:
   vehicle_info_util::VehicleInfo vehicle_info_;
 };
 }  // namespace static_centerline_optimizer
+}  // namespace autoware
 #endif  // STATIC_CENTERLINE_OPTIMIZER__STATIC_CENTERLINE_OPTIMIZER_NODE_HPP_

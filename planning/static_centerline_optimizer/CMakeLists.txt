@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(static_centerline_optimizer)
+project(autoware_static_centerline_optimizer)
 
 find_package(autoware_cmake REQUIRED)
 
@@ -11,7 +11,7 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
 rosidl_generate_interfaces(
-  static_centerline_optimizer
+  autoware_static_centerline_optimizer
   "srv/LoadMap.srv"
   "srv/PlanRoute.srv"
   "srv/PlanPath.srv"

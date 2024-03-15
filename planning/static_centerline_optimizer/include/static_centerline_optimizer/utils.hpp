@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+namespace autoware
+{
 namespace static_centerline_optimizer
 {
 namespace utils
@@ -49,5 +51,6 @@ MarkerArray create_distance_text_marker(
   const std::array<double, 3> & marker_color, const rclcpp::Time & now, const size_t idx);
 }  // namespace utils
 }  // namespace static_centerline_optimizer
+}  // namespace autoware
 
 #endif  // STATIC_CENTERLINE_OPTIMIZER__UTILS_HPP_

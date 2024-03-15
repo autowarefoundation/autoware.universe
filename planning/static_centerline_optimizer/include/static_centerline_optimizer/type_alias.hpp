@@ -26,6 +26,8 @@
 #include "autoware_planning_msgs/msg/lanelet_route.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
+namespace autoware
+{
 namespace static_centerline_optimizer
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
@@ -42,5 +44,6 @@ using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using visualization_msgs::msg::MarkerArray;
 }  // namespace static_centerline_optimizer
+}  // namespace autoware
 
 #endif  // STATIC_CENTERLINE_OPTIMIZER__TYPE_ALIAS_HPP_
