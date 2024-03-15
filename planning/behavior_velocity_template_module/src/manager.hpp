@@ -27,6 +27,8 @@
 #include <functional>
 #include <memory>
 
+namespace autoware
+{
 namespace behavior_velocity_planner
 {
 /**
@@ -89,5 +91,6 @@ class TemplateModulePlugin : public PluginWrapper<TemplateModuleManager>
 };
 
 }  // namespace behavior_velocity_planner
+}  // namespace autoware
 
 #endif  // MANAGER_HPP_
