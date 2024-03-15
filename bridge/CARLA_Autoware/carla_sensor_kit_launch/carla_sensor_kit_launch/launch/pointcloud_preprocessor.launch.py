@@ -26,7 +26,6 @@ from launch_ros.descriptions import ComposableNode
 
 
 def launch_setup(context, *args, **kwargs):
-
     # set concat filter as a component
     concat_component = ComposableNode(
         package="pointcloud_preprocessor",
@@ -79,7 +78,6 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
-
     launch_arguments = []
 
     def add_launch_arg(name: str, default_value=None):

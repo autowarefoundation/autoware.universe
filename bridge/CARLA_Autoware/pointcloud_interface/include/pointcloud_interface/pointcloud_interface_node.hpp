@@ -1,21 +1,24 @@
 
-#ifndef MODEL_LOG_NODE_HPP_
-#define MODEL_LOG_NODE_HPP_
+#ifndef POINTCLOUD_INTERFACE__POINTCLOUD_INTERFACE_NODE_HPP_
+#define POINTCLOUD_INTERFACE__POINTCLOUD_INTERFACE_NODE_HPP_
+
+#include "rclcpp/rclcpp.hpp"
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <tf2/convert.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <string>
 #include <vector>
-#include "rclcpp/rclcpp.hpp"
-#include <tf2/convert.h>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 class PointCloudInterface : public rclcpp::Node
 {
 public:
-   explicit PointCloudInterface(const rclcpp::NodeOptions & node_options);
-   virtual ~PointCloudInterface();
-  
+  explicit PointCloudInterface(const rclcpp::NodeOptions & node_options);
+  virtual ~PointCloudInterface();
+
 private:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr velodyne_points_raw;
@@ -28,4 +31,4 @@ private:
   void setupTF();
 };
 
-#endif 
+#endif  // POINTCLOUD_INTERFACE__POINTCLOUD_INTERFACE_NODE_HPP_

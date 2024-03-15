@@ -9,6 +9,4 @@
     <node pkg="gnss_interface" exec="gnss_interface_node" name="gnss_interface" output="screen"/>
     <node pkg="pointcloud_interface" exec="pointcloud_interface" name="carla_pointcloud_interface" output="screen"/>
   </group>
-  
 </launch>
-

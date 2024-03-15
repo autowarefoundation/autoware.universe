@@ -26,7 +26,7 @@ ament_auto_add_library(gnss_interface SHARED
 
 target_link_libraries(gnss_interface ${PROJ_LIBRARIES})
 
-rclcpp_components_register_node(gnss_interface 
+rclcpp_components_register_node(gnss_interface
   PLUGIN "GnssInterface"
   EXECUTABLE gnss_interface_node
 )
@@ -35,4 +35,3 @@ ament_auto_package(
   INSTALL_TO_SHARE
     launch
 )
-
