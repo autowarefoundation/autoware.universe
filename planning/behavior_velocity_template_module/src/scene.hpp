@@ -21,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+namespace autoware
+{
 namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -65,5 +67,6 @@ public:
 };
 
 }  // namespace behavior_velocity_planner
+}  // namespace autoware
 
 #endif  // SCENE_HPP_
