@@ -32,9 +32,11 @@
 #include <optional>
 #include <utility>
 
+namespace autoware
+{
 namespace behavior_path_planner
 {
-using behavior_path_planner::utils::lane_change::debug::createExecutionArea;
+using autoware::behavior_path_planner::utils::lane_change::debug::createExecutionArea;
 
 AvoidanceByLaneChange::AvoidanceByLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters,
@@ -294,3 +296,4 @@ double AvoidanceByLaneChange::calcLateralOffset() const
   return additional_lat_offset;
 }
 }  // namespace behavior_path_planner
+}  // namespace autoware

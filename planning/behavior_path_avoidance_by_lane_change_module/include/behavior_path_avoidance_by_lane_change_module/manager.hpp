@@ -26,6 +26,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware
+{
 namespace behavior_path_planner
 {
 using route_handler::Direction;
@@ -48,5 +50,6 @@ private:
   std::shared_ptr<AvoidanceByLCParameters> avoidance_parameters_;
 };
 }  // namespace behavior_path_planner
+}  // namespace autoware
 
 #endif  // BEHAVIOR_PATH_AVOIDANCE_BY_LANE_CHANGE_MODULE__MANAGER_HPP_
