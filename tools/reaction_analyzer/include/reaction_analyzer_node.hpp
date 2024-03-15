@@ -47,8 +47,11 @@
 
 #include <memory>
 #include <mutex>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <variant>
+#include <vector>
 
 namespace reaction_analyzer
 {
