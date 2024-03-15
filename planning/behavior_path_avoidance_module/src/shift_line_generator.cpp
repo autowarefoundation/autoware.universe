@@ -276,22 +276,6 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     // calculate feasible shift length based on behavior policy
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
-
-    if (o.is_ambiguous) {
-      const auto prepare_distance = helper_->getMinimumPrepareDistance();
-      const auto constant_distance = helper_->getFrontConstantDistance(o);
-      const auto avoidance_distance = helper_->getMinAvoidanceDistance(desire_shift_length);
-      const auto decelaration_distance =
-        std::max(10.0, helper_->getFeasibleDecelDistance(0.0, false));
-      if (
-        o.longitudinal >
-        prepare_distance + constant_distance + avoidance_distance + decelaration_distance) {
-        o.reason = "AmbiguousStoppedVehicle(wait-and-see)";
-        o.is_avoidable = feasible_shift_profile.has_value();
-        continue;
-      }
-    }
-
     if (!feasible_shift_profile.has_value()) {
       if (o.avoid_required && is_forward_object(o)) {
         break;

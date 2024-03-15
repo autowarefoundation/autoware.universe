@@ -874,16 +874,19 @@ bool isSatisfiedWithVehicleCondition(
 
   if (object.is_within_intersection) {
     if (object.behavior == ObjectData::Behavior::DEVIATING) {
+      object.reason = "AmbiguousStoppedVehicle(wait-and-see)";
       object.is_ambiguous = true;
       return true;
     }
   } else {
     if (object.behavior == ObjectData::Behavior::MERGING) {
+      object.reason = "AmbiguousStoppedVehicle(wait-and-see)";
       object.is_ambiguous = true;
       return true;
     }
 
     if (object.behavior == ObjectData::Behavior::DEVIATING) {
+      object.reason = "AmbiguousStoppedVehicle(wait-and-see)";
       object.is_ambiguous = true;
       return true;
     }
