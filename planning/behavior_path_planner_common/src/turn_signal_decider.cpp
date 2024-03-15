@@ -622,7 +622,6 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   const double current_shift_length, const bool is_driving_forward, const bool egos_lane_is_shifted,
   const bool override_ego_stopped_check, const bool is_pull_out) const
 {
-  std::cerr << "-------------TurnSignalDecider::getBehaviorTurnSignalInfo-----------\n";
   constexpr double THRESHOLD = 0.1;
   const auto & p = parameters;
   const auto & rh = route_handler;
@@ -678,14 +677,11 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
 
   // If shift length is shorter than the threshold, it does not need to turn on blinkers
   if (std::fabs(relative_shift_length) < p.turn_signal_shift_length_threshold) {
-    std::cerr << "No signal 0\n";
     return std::make_pair(TurnSignalInfo{}, true);
   }
 
   // If the vehicle does not shift anymore, we turn off the blinker
   if (std::fabs(end_shift_length - current_shift_length) < THRESHOLD) {
-    std::cerr << "No signal 1\n";
-
     return std::make_pair(TurnSignalInfo{}, true);
   }
 
@@ -700,12 +696,7 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
     calcSignedArcLength(path.path.points, ego_pose.position, shift_line.start_idx) -
     p.vehicle_info.max_longitudinal_offset_m;
 
-  std::cerr << "ego_front_to_shift_start " << ego_front_to_shift_start << "\n";
-  std::cerr << "signal_prepare_distance " << signal_prepare_distance << "\n";
-
   if (signal_prepare_distance < ego_front_to_shift_start) {
-    std::cerr << "No signal 2\n";
-
     return std::make_pair(TurnSignalInfo{}, false);
   }
 
@@ -723,14 +714,12 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   turn_signal_info.turn_signal.command = get_command(relative_shift_length);
 
   if (!p.turn_signal_on_swerving) {
-    std::cerr << "No signal 3\n";
     return std::make_pair(turn_signal_info, false);
   }
 
   lanelet::ConstLanelet lanelet;
   const auto query_pose = (egos_lane_is_shifted) ? shift_line.end : shift_line.start;
   if (!rh->getClosestLaneletWithinRoute(query_pose, &lanelet)) {
-    std::cerr << "No signal 4\n";
     return std::make_pair(TurnSignalInfo{}, true);
   }
 
@@ -742,20 +731,14 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   const auto has_right_lane =
     right_same_direction_lane.has_value() || !right_opposite_lanes.empty();
 
-  std::cerr << "has_right_lane " << has_right_lane << "\n";
-  std::cerr << "has_left_lane " << has_left_lane << "\n";
   if (
     !is_pull_out && !existShiftSideLane(
                       start_shift_length, end_shift_length, !has_left_lane, !has_right_lane,
                       p.turn_signal_shift_length_threshold)) {
-    std::cerr << "No signal 5\n";
-
     return std::make_pair(TurnSignalInfo{}, true);
   }
 
   if (!straddleRoadBound(path, shift_line, current_lanelets, p.vehicle_info)) {
-    std::cerr << "No signal 6\n";
-
     return std::make_pair(TurnSignalInfo{}, true);
   }
 
@@ -764,11 +747,9 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
     if (isNearEndOfShift(
           start_shift_length, end_shift_length, ego_pose.position, current_lanelets,
           p.turn_signal_shift_length_threshold)) {
-      std::cerr << "No signal 7\n";
       return std::make_pair(TurnSignalInfo{}, true);
     }
   }
-  std::cerr << "No signal 8\n";
 
   return std::make_pair(turn_signal_info, false);
 }
