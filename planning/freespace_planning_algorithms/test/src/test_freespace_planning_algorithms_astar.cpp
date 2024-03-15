@@ -1,0 +1,359 @@
+// Copyright 2021 Tier IV, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "freespace_planning_algorithms/abstract_algorithm.hpp"
+#include "freespace_planning_algorithms/astar_search.hpp"
+#include "freespace_planning_algorithms/rrtstar.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+#include <rcpputils/filesystem_helper.hpp>
+#include <rosbag2_cpp/writer.hpp>
+
+#include <std_msgs/msg/float64.hpp>
+
+#include <gtest/gtest.h>
+#include <rcutils/time.h>
+#include <tf2/utils.h>
+
+#include <algorithm>
+#include <array>
+#include <fstream>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+namespace fpa = freespace_planning_algorithms;
+
+const double length_lexus = 5.5;
+const double width_lexus = 2.75;
+const fpa::VehicleShape vehicle_shape = fpa::VehicleShape(length_lexus, width_lexus, 1.5);
+const double pi = 3.1415926;
+const std::array<double, 3> start_pose1{8., 7., pi * 0.5};
+const std::array<double, 3> start_pose2{9., 12., pi * 0.25};
+const std::array<double, 3> start_pose3{13.3, 9., pi * 0.5};
+const std::array<double, 3> start_pose4{25.0, 16., - pi * 0.25};
+const std::array<double, 3> start_pose5{20.5, 8.5, 0.0};
+const std::array<double, 3> goal_pose{18.0, 10.5, pi * 0.5}; 
+const std::array<std::array<double, 3>, 5> start_poses{
+  start_pose1, start_pose2, start_pose3, start_pose4, start_pose5};
+
+geometry_msgs::msg::Pose create_pose_msg(std::array<double, 3> pose3d)
+{
+  geometry_msgs::msg::Pose pose{};
+  tf2::Quaternion quat{};
+  quat.setRPY(0, 0, pose3d[2]);
+  tf2::convert(quat, pose.orientation);
+  pose.position.x = pose3d[0];
+  pose.position.y = pose3d[1];
+  pose.position.z = 0.0;
+  return pose;
+}
+
+std_msgs::msg::Float64 create_float_msg(double val)
+{
+  std_msgs::msg::Float64 msg;
+  msg.data = val;
+  return msg;
+}
+
+nav_msgs::msg::OccupancyGrid construct_cost_map(
+  size_t width, size_t height, double resolution, size_t n_padding)
+{
+  nav_msgs::msg::OccupancyGrid costmap_msg{};
+
+  // create info
+  costmap_msg.info.width = width;
+  costmap_msg.info.height = height;
+  costmap_msg.info.resolution = resolution;
+
+  // create data
+  const size_t n_elem = width * height;
+  for (size_t i = 0; i < n_elem; ++i) {
+    costmap_msg.data.push_back(0.0);
+  }
+
+  for (size_t i = 0; i < height; ++i) {
+    for (size_t j = 0; j < width; ++j) {
+      const double x = j * resolution;
+      const double y = i * resolution;
+
+      //road
+      if (5.4 < x && x < 5.4 + 4.5 && 0.0 < y && y < 0.0 + 19.4) {
+        costmap_msg.data[i * width + j] = 40.0;
+      }
+
+      if (9.0 < x && x < 40.0 && 15.4 < y && y < 15.4 + 4.0) {
+        costmap_msg.data[i * width + j] = 40.0;
+      }
+
+      double width_p = 3.0;
+      double height_p = 6.0;
+
+      //parking 1 (16,9)
+      if (16.0 < x && x < 16.0 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+
+      //parking 2 
+      if (19.3 < x && x < 19.3 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+
+      //parking 3 
+      if (22.6 < x && x < 22.6 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+
+      //parking 4 
+      if (25.9 < x && x < 25.9 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+
+      //parking 5
+      if (29.2 < x && x < 29.2 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < n_padding; ++i) {
+    // fill left
+    for (size_t j = width * i; j <= width * (i + 1); ++j) {
+      costmap_msg.data[j] = 100.0;
+    }
+    // fill right
+    for (size_t j = width * (height - n_padding + i); j <= width * (height - n_padding + i + 1);
+         ++j) {
+      costmap_msg.data[j] = 100.0;
+    }
+  }
+
+  for (size_t i = 0; i < height; ++i) {
+    // fill bottom
+    for (size_t j = i * width; j <= i * width + n_padding; ++j) {
+      costmap_msg.data[j] = 100.0;
+    }
+    for (size_t j = (i + 1) * width - n_padding; j <= (i + 1) * width; ++j) {
+      costmap_msg.data[j] = 100.0;
+    }
+  }
+  
+  return costmap_msg;
+}
+
+template <typename MessageT>
+void add_message_to_rosbag(
+  rosbag2_cpp::Writer & writer, const MessageT & message, const std::string & name,
+  const std::string & type)
+{
+  rclcpp::SerializedMessage serialized_msg;
+  rclcpp::Serialization<MessageT> serialization;
+  serialization.serialize_message(&message, &serialized_msg);
+
+  rosbag2_storage::TopicMetadata tm;
+  tm.name = name;
+  tm.type = type;
+  tm.serialization_format = "cdr";
+  writer.create_topic(tm);
+
+  auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+  auto ret = rcutils_system_time_now(&bag_message->time_stamp);
+  if (ret != RCL_RET_OK) {
+    RCLCPP_ERROR(rclcpp::get_logger("saveToBag"), "couldn't assign time rosbag message");
+  }
+
+  bag_message->topic_name = tm.name;
+  bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+    &serialized_msg.get_rcl_serialized_message(), [](rcutils_uint8_array_t * /* data */) {});
+  writer.write(bag_message);
+}
+
+fpa::PlannerCommonParam get_default_planner_params()
+{
+  // set problem configuration
+  const double time_limit = 10 * 1000.0;
+  const double minimum_turning_radius = 9.0;
+  const double maximum_turning_radius = 9.0;
+  const int turning_radius_size = 1;
+
+  // Transitions every 2.5 deg 
+  const int theta_size = 144;
+
+  const double curve_weight = 1.5;
+  const double reverse_weight = 2.0;
+
+  const double lateral_goal_range = 0.5;
+  const double longitudinal_goal_range = 2.0;
+  const double angle_goal_range = 6.0;
+  const int obstacle_threshold = 100;
+
+  return fpa::PlannerCommonParam{
+    time_limit,
+    minimum_turning_radius,
+    maximum_turning_radius,
+    turning_radius_size,
+    theta_size,
+    curve_weight,
+    reverse_weight,
+    lateral_goal_range,
+    longitudinal_goal_range,
+    angle_goal_range,
+    obstacle_threshold};
+}
+
+std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi, bool cw)
+{
+  auto planner_common_param = get_default_planner_params();
+
+  // configure astar param
+  const bool only_behind_solutions = false;
+  const bool use_back = true;
+  const bool use_curve_weight = false;
+  const bool use_complete_astar = false;
+  const double distance_heuristic_weight = 1.0;
+  auto astar_param =
+    fpa::AstarParam{only_behind_solutions, use_back, use_curve_weight, use_complete_astar, distance_heuristic_weight};
+  
+  if (use_multi) {
+    planner_common_param.minimum_turning_radius = 5.0;
+    planner_common_param.maximum_turning_radius = 9.0;
+    planner_common_param.turning_radius_size = 3;
+    // if multi-curvature and using curve weight
+    if (cw){
+    astar_param.use_curve_weight = true;
+    }
+    astar_param.use_complete_astar = true;
+  }
+
+  auto algo = std::make_unique<fpa::AstarSearch>(planner_common_param, vehicle_shape, astar_param);
+  return algo;
+}
+
+enum AlgorithmType {
+  ASTAR_SINGLE,
+  ASTAR_MULTI,
+  ASTAR_MULTI_NOCW,
+};
+// cspell: ignore fpalgos
+std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
+  {{ASTAR_SINGLE, "fpalgos-astar_single"},
+   {ASTAR_MULTI, "fpalgos-astar_multi"},
+   {ASTAR_MULTI_NOCW, "fpalgos-astar_multi_nocw"},
+   });
+
+bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
+{
+  std::unique_ptr<fpa::AbstractPlanningAlgorithm> algo;
+  if (algo_type == AlgorithmType::ASTAR_SINGLE) {
+    algo = configure_astar(false, false);
+  } else if (algo_type == AlgorithmType::ASTAR_MULTI) {
+    algo = configure_astar(true, true);
+  } else if (algo_type == AlgorithmType::ASTAR_MULTI_NOCW) {
+    algo = configure_astar(true, false);
+  } else {
+    throw std::runtime_error("invalid algorithm time");
+  }
+
+  // All algorithms have the same interface.
+  const auto costmap_msg = construct_cost_map(200, 120, 0.2, 10);
+  bool success_all = true;  // if any local test below fails, overwrite this function
+
+  rclcpp::Clock clock{RCL_SYSTEM_TIME};
+  for (size_t i = 0; i < start_poses.size(); ++i) {
+    const auto start_pose = start_poses.at(i);
+
+    algo->setMap(costmap_msg);
+    double msec;
+    double cost;
+
+    {
+      const rclcpp::Time begin = clock.now();
+      if (!algo->makePlan(create_pose_msg(start_pose), create_pose_msg(goal_pose))) {
+        success_all = false;
+        std::cout << "plan fail" << std::endl;
+        continue;
+      }
+      const rclcpp::Time now = clock.now();
+      msec = (now - begin).seconds() * 1000.0;
+      cost = algo->getWaypoints().compute_length();
+    }
+
+    std::cout << "plan success : " << msec << "[msec]"
+              << ", solution cost : " << cost << std::endl;
+    const auto result = algo->getWaypoints();
+    geometry_msgs::msg::PoseArray trajectory;
+    for (const auto & pose : result.waypoints) {
+      trajectory.poses.push_back(pose.pose.pose);
+    }
+    if (algo->hasObstacleOnTrajectory(trajectory)) {
+      std::cout << "not feasible trajectory" << std::endl;
+      success_all = false;
+    }
+
+    if (dump_rosbag) {
+      // dump rosbag for visualization using python script
+      const std::string dir_name =
+        "/tmp/" + rosbag_dir_prefix_table[algo_type] + "-case" + std::to_string(i);
+
+      rcpputils::fs::remove_all(dir_name);
+
+      rosbag2_storage::StorageOptions storage_options;
+      storage_options.uri = dir_name;
+      storage_options.storage_id = "sqlite3";
+
+      rosbag2_cpp::ConverterOptions converter_options;
+      converter_options.input_serialization_format = "cdr";
+      converter_options.output_serialization_format = "cdr";
+
+      rosbag2_cpp::Writer writer(std::make_unique<rosbag2_cpp::writers::SequentialWriter>());
+      writer.open(storage_options, converter_options);
+
+      add_message_to_rosbag(
+        writer, create_float_msg(vehicle_shape.length), "vehicle_length", "std_msgs/msg/Float64");
+      add_message_to_rosbag(
+        writer, create_float_msg(vehicle_shape.width), "vehicle_width", "std_msgs/msg/Float64");
+      add_message_to_rosbag(
+        writer, create_float_msg(vehicle_shape.base2back), "vehicle_base2back",
+        "std_msgs/msg/Float64");
+
+      add_message_to_rosbag(writer, costmap_msg, "costmap", "nav_msgs/msg/OccupancyGrid");
+      add_message_to_rosbag(writer, create_pose_msg(start_pose), "start", "geometry_msgs/msg/Pose");
+      add_message_to_rosbag(writer, create_pose_msg(goal_pose), "goal", "geometry_msgs/msg/Pose");
+      add_message_to_rosbag(writer, trajectory, "trajectory", "geometry_msgs/msg/PoseArray");
+      add_message_to_rosbag(writer, create_float_msg(msec), "elapsed_time", "std_msgs/msg/Float64");
+    }
+  }
+  return success_all;
+}
+
+TEST(AstarSearchTestSuite, SingleCurvature)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_SINGLE));
+}
+
+TEST(AstarSearchTestSuite, MultiCurvature)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_MULTI));
+}
+
+TEST(AstarSearchTestSuite, MultiCurvaturenocw)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_MULTI_NOCW));
+}
+
+int main(int argc, char ** argv)
+{
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
