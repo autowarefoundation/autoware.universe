@@ -42,9 +42,9 @@ const double pi = 3.1415926;
 const std::array<double, 3> start_pose1{8., 7., pi * 0.5};
 const std::array<double, 3> start_pose2{9., 12., pi * 0.25};
 const std::array<double, 3> start_pose3{13.3, 9., pi * 0.5};
-const std::array<double, 3> start_pose4{25.0, 16., - pi * 0.25};
+const std::array<double, 3> start_pose4{25.0, 16., -pi * 0.25};
 const std::array<double, 3> start_pose5{20.5, 8.5, 0.0};
-const std::array<double, 3> goal_pose{18.0, 10.5, pi * 0.5}; 
+const std::array<double, 3> goal_pose{18.0, 10.5, pi * 0.5};
 const std::array<std::array<double, 3>, 5> start_poses{
   start_pose1, start_pose2, start_pose3, start_pose4, start_pose5};
 
@@ -88,7 +88,7 @@ nav_msgs::msg::OccupancyGrid construct_cost_map(
       const double x = j * resolution;
       const double y = i * resolution;
 
-      //road
+      // road
       if (5.4 < x && x < 5.4 + 4.5 && 0.0 < y && y < 0.0 + 19.4) {
         costmap_msg.data[i * width + j] = 40.0;
       }
@@ -100,27 +100,27 @@ nav_msgs::msg::OccupancyGrid construct_cost_map(
       double width_p = 3.0;
       double height_p = 6.0;
 
-      //parking 1 (16,9)
+      // parking 1 (16,9)
       if (16.0 < x && x < 16.0 + width_p && 9.0 < y && y < 9.0 + height_p) {
         costmap_msg.data[i * width + j] = 50.0;
       }
 
-      //parking 2 
+      // parking 2
       if (19.3 < x && x < 19.3 + width_p && 9.0 < y && y < 9.0 + height_p) {
         costmap_msg.data[i * width + j] = 50.0;
       }
 
-      //parking 3 
+      // parking 3
       if (22.6 < x && x < 22.6 + width_p && 9.0 < y && y < 9.0 + height_p) {
         costmap_msg.data[i * width + j] = 50.0;
       }
 
-      //parking 4 
+      // parking 4
       if (25.9 < x && x < 25.9 + width_p && 9.0 < y && y < 9.0 + height_p) {
         costmap_msg.data[i * width + j] = 50.0;
       }
 
-      //parking 5
+      // parking 5
       if (29.2 < x && x < 29.2 + width_p && 9.0 < y && y < 9.0 + height_p) {
         costmap_msg.data[i * width + j] = 50.0;
       }
@@ -148,7 +148,7 @@ nav_msgs::msg::OccupancyGrid construct_cost_map(
       costmap_msg.data[j] = 100.0;
     }
   }
-  
+
   return costmap_msg;
 }
 
@@ -187,7 +187,7 @@ fpa::PlannerCommonParam get_default_planner_params()
   const double maximum_turning_radius = 9.0;
   const int turning_radius_size = 1;
 
-  // Transitions every 2.5 deg 
+  // Transitions every 2.5 deg
   const int theta_size = 144;
 
   const double curve_weight = 1.5;
@@ -222,16 +222,17 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi, 
   const bool use_curve_weight = false;
   const bool use_complete_astar = false;
   const double distance_heuristic_weight = 1.0;
-  auto astar_param =
-    fpa::AstarParam{only_behind_solutions, use_back, use_curve_weight, use_complete_astar, distance_heuristic_weight};
-  
+  auto astar_param = fpa::AstarParam{
+    only_behind_solutions, use_back, use_curve_weight, use_complete_astar,
+    distance_heuristic_weight};
+
   if (use_multi) {
     planner_common_param.minimum_turning_radius = 5.0;
     planner_common_param.maximum_turning_radius = 9.0;
     planner_common_param.turning_radius_size = 3;
     // if multi-curvature and using curve weight
-    if (cw){
-    astar_param.use_curve_weight = true;
+    if (cw) {
+      astar_param.use_curve_weight = true;
     }
     astar_param.use_complete_astar = true;
   }
@@ -268,8 +269,7 @@ std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
    {ASTAR_MULTI_NOCW, "fpalgos-astar_multi_nocw"},
    {RRTSTAR_FASTEST, "fpalgos-rrtstar_fastest"},
    {RRTSTAR_UPDATE, "fpalgos-rrtstar_update"},
-   {RRTSTAR_INFORMED_UPDATE, "fpalgos-rrtstar_informed_update"}
-   });
+   {RRTSTAR_INFORMED_UPDATE, "fpalgos-rrtstar_informed_update"}});
 
 bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
 {
