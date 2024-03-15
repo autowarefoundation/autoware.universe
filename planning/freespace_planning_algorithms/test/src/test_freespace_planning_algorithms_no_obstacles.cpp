@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc. All rights reserved.
+// Copyright 2024 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -240,16 +240,35 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi, 
   return algo;
 }
 
+std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_rrtstar(bool informed, bool update)
+{
+  auto planner_common_param = get_default_planner_params();
+
+  // configure rrtstar param
+  const double mu = 12.0;
+  const double margin = 0.2;
+  const double max_planning_time = 200;
+  const auto rrtstar_param = fpa::RRTStarParam{update, informed, max_planning_time, mu, margin};
+  auto algo = std::make_unique<fpa::RRTStar>(planner_common_param, vehicle_shape, rrtstar_param);
+  return algo;
+}
+
 enum AlgorithmType {
   ASTAR_SINGLE,
   ASTAR_MULTI,
   ASTAR_MULTI_NOCW,
+  RRTSTAR_FASTEST,
+  RRTSTAR_UPDATE,
+  RRTSTAR_INFORMED_UPDATE,
 };
 // cspell: ignore fpalgos
 std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
   {{ASTAR_SINGLE, "fpalgos-astar_single"},
    {ASTAR_MULTI, "fpalgos-astar_multi"},
    {ASTAR_MULTI_NOCW, "fpalgos-astar_multi_nocw"},
+   {RRTSTAR_FASTEST, "fpalgos-rrtstar_fastest"},
+   {RRTSTAR_UPDATE, "fpalgos-rrtstar_update"},
+   {RRTSTAR_INFORMED_UPDATE, "fpalgos-rrtstar_informed_update"}
    });
 
 bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
@@ -261,6 +280,12 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
     algo = configure_astar(true, true);
   } else if (algo_type == AlgorithmType::ASTAR_MULTI_NOCW) {
     algo = configure_astar(true, false);
+  } else if (algo_type == AlgorithmType::RRTSTAR_FASTEST) {
+    algo = configure_rrtstar(false, false);
+  } else if (algo_type == AlgorithmType::RRTSTAR_UPDATE) {
+    algo = configure_rrtstar(false, true);
+  } else if (algo_type == AlgorithmType::RRTSTAR_INFORMED_UPDATE) {
+    algo = configure_rrtstar(true, true);
   } else {
     throw std::runtime_error("invalid algorithm time");
   }
@@ -277,7 +302,26 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
     double msec;
     double cost;
 
-    {
+    if (algo_type == RRTSTAR_FASTEST || algo_type == RRTSTAR_UPDATE) {
+      std::cout << "measuring average performance ..." << std::endl;
+      const size_t N_mc = (algo_type == RRTSTAR_UPDATE ? 5 : 100);
+      double time_sum = 0.0;
+      double cost_sum = 0.0;
+      for (size_t j = 0; j < N_mc; j++) {
+        const rclcpp::Time begin = clock.now();
+        if (!algo->makePlan(create_pose_msg(start_pose), create_pose_msg(goal_pose))) {
+          success_all = false;
+          std::cout << "plan fail" << std::endl;
+          continue;
+        }
+        const rclcpp::Time now = clock.now();
+        time_sum += (now - begin).seconds() * 1000.0;
+        cost_sum += algo->getWaypoints().compute_length();
+      }
+      msec = time_sum / N_mc;  // average performance
+      cost = cost_sum / N_mc;
+
+    } else {
       const rclcpp::Time begin = clock.now();
       if (!algo->makePlan(create_pose_msg(start_pose), create_pose_msg(goal_pose))) {
         success_all = false;
@@ -350,6 +394,21 @@ TEST(AstarSearchTestSuite, MultiCurvature)
 TEST(AstarSearchTestSuite, MultiCurvaturenocw)
 {
   EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_MULTI_NOCW));
+}
+
+TEST(RRTStarTestSuite, Fastest)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_FASTEST));
+}
+
+TEST(RRTStarTestSuite, Update)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_UPDATE));
+}
+
+TEST(RRTStarTestSuite, InformedUpdate)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_INFORMED_UPDATE));
 }
 
 int main(int argc, char ** argv)
