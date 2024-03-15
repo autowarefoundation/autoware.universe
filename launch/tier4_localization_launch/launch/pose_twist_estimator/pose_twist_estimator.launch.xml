@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="use_autoware_pose_covariance_modifier" default="true"/>
+  <arg name="use_autoware_pose_covariance_modifier" default="false"/>
   <!-- only when running with a real vehicle, the pose_initializer judges the stop -->
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='online'&quot;)" value="true"/>
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='logging_simulation'&quot;)" value="false"/>
