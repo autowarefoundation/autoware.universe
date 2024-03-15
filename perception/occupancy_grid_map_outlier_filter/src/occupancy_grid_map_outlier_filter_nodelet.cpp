@@ -234,24 +234,48 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   if (enable_debugger) {
     debugger_ptr_ = std::make_shared<Debugger>(*this);
   }
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
   const PointCloud2::ConstSharedPtr & input_pc, PointCloud2 & front_pc, PointCloud2 & behind_pc)
 {
-  PclPointCloud tmp_behind_pc;
-  PclPointCloud tmp_front_pc;
-  for (sensor_msgs::PointCloud2ConstIterator<float> x(*input_pc, "x"), y(*input_pc, "y"),
-       z(*input_pc, "z");
-       x != x.end(); ++x, ++y, ++z) {
+  size_t front_count = 0;
+  size_t behind_count = 0;
+
+  for (sensor_msgs::PointCloud2ConstIterator<float> x(*input_pc, "x"); x != x.end(); ++x) {
     if (*x < 0.0) {
-      tmp_behind_pc.push_back(pcl::PointXYZ(*x, *y, *z));
+      behind_count++;
     } else {
-      tmp_front_pc.push_back(pcl::PointXYZ(*x, *y, *z));
+      front_count++;
     }
   }
-  pcl::toROSMsg(tmp_front_pc, front_pc);
-  pcl::toROSMsg(tmp_behind_pc, behind_pc);
+
+  sensor_msgs::PointCloud2Modifier front_pc_modifier(front_pc);
+  sensor_msgs::PointCloud2Modifier behind_pc_modifier(behind_pc);
+  front_pc_modifier.setPointCloud2FieldsByString(1, "xyz");
+  behind_pc_modifier.setPointCloud2FieldsByString(1, "xyz");
+  front_pc_modifier.resize(front_count);
+  behind_pc_modifier.resize(behind_count);
+
+  sensor_msgs::PointCloud2Iterator<float> fr_iter(front_pc, "x");
+  sensor_msgs::PointCloud2Iterator<float> be_iter(behind_pc, "x");
+
+  for (sensor_msgs::PointCloud2ConstIterator<float> in_iter(*input_pc, "x");
+       in_iter != in_iter.end(); ++in_iter) {
+    if (*in_iter < 0.0) {
+      *be_iter = in_iter[0];
+      be_iter[1] = in_iter[1];
+      be_iter[2] = in_iter[2];
+      ++be_iter;
+    } else {
+      *fr_iter = in_iter[0];
+      fr_iter[1] = in_iter[1];
+      fr_iter[2] = in_iter[2];
+      ++fr_iter;
+    }
+  }
+
   front_pc.header = input_pc->header;
   behind_pc.header = input_pc->header;
 }
@@ -305,6 +329,8 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
       return;
     }
     pointcloud_pub_->publish(std::move(base_link_frame_filtered_pc_ptr));
+    published_time_publisher_->publish_if_subscribed(
+      pointcloud_pub_, ogm_frame_filtered_pc.header.stamp);
   }
   if (debugger_ptr_) {
     debugger_ptr_->publishHighConfidence(high_confidence_pc, ogm_frame_pc.header);

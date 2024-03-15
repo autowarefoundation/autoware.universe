@@ -24,6 +24,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
@@ -107,6 +108,8 @@ private:
 
   std::map<std::uint8_t, std::string> tracker_map_;
 
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
+
   void onMeasurement(
     const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
@@ -124,7 +127,7 @@ private:
     const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) const;
 
-  void publish(const rclcpp::Time & time);
+  void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
 };
 
