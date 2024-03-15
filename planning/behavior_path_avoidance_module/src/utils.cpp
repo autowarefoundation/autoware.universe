@@ -702,8 +702,8 @@ bool isNeverAvoidanceTarget(
 
   if (object.is_on_ego_lane) {
     if (
-      !!planner_data->route_handler->getRoutingGraphPtr()->right(object.overhang_lanelet) &&
-      !!planner_data->route_handler->getRoutingGraphPtr()->left(object.overhang_lanelet)) {
+      planner_data->route_handler->getRightLanelet(object.overhang_lanelet).has_value() &&
+      planner_data->route_handler->getLeftLanelet(object.overhang_lanelet).has_value()) {
       object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
       RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object isn't on the edge lane. never avoid it.");
       return true;
