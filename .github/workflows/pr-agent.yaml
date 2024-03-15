@@ -1,10 +1,8 @@
 name: PR-Agent
 
 on:
-  pull_request_target:
-    types:
-      - labeled
   pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
   issue_comment:
 
 jobs:
