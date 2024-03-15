@@ -23,6 +23,8 @@
 #include <memory>
 #include <string>
 
+namespace autoware
+{
 namespace behavior_path_planner
 {
 class ExternalRequestLaneChangeRightModuleManager : public LaneChangeModuleManager
@@ -50,5 +52,6 @@ public:
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
 };
 }  // namespace behavior_path_planner
+}  // namespace autoware
 
 #endif  // BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__MANAGER_HPP_

@@ -42,8 +42,8 @@ ExternalRequestLaneChangeLeftModuleManager::createNewSceneModuleInstance()
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_path_planner::ExternalRequestLaneChangeRightModuleManager,
-  behavior_path_planner::SceneModuleManagerInterface)
+  autoware::behavior_path_planner::ExternalRequestLaneChangeRightModuleManager,
+  autoware::behavior_path_planner::SceneModuleManagerInterface)
 PLUGINLIB_EXPORT_CLASS(
-  behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager,
-  behavior_path_planner::SceneModuleManagerInterface)
+  autoware::behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager,
+  autoware::behavior_path_planner::SceneModuleManagerInterface)
