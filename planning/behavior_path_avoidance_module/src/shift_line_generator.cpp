@@ -277,7 +277,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     // calculate feasible shift length based on behavior policy
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
 
-    if (o.is_ambiguous && o.behavior == ObjectData::Behavior::MERGING) {
+    if (o.is_ambiguous) {
       const auto prepare_distance = helper_->getMinimumPrepareDistance();
       const auto constant_distance = helper_->getFrontConstantDistance(o);
       const auto avoidance_distance = helper_->getMinAvoidanceDistance(desire_shift_length);
