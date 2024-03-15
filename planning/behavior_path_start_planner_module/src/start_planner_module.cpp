@@ -1250,6 +1250,11 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
 
   constexpr bool egos_lane_is_shifted = true;
   constexpr bool is_pull_out = true;
+
+  // In Geometric pull out, the ego stops once and then steers the wheels to the opposite direction.
+  // This sometimes causes the getBehaviorTurnSignalInfo method to detect the ego as stopped and
+  // close to complete its shift, so it wrongly turns off the blinkers, this override helps avoid
+  // this issue.
   const bool override_ego_stopped_check = std::invoke([&]() {
     if (status_.planner_type != PlannerType::GEOMETRIC) {
       return false;
