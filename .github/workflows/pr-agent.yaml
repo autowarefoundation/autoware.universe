@@ -8,12 +8,12 @@ on:
   issue_comment:
 
 jobs:
-  prevent-no-label-execution:
+  prevent-no-label-execution-pr-agent:
     uses: autowarefoundation/autoware-github-actions/.github/workflows/prevent-no-label-execution.yaml@v1
     with:
       label: tag:pr-agent
   pr_agent_job:
-    needs: prevent-no-label-execution
+    needs: prevent-no-label-execution-pr-agent
     if: ${{ needs.prevent-no-label-execution.outputs.run == 'true' }}
     runs-on: ubuntu-latest
     permissions:
