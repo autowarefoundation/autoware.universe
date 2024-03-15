@@ -1,11 +1,20 @@
-// Copyright 2024 Raditya.
+// Copyright 2024 Autoware Foundation. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "carla_pointcloud_interface/carla_pointcloud_interface_node.hpp"
 
 #include <pcl_ros/transforms.hpp>
-
-#include <pcl_conversions/pcl_conversions.h>
-#include <yaml-cpp/yaml.h>
 
 #include <memory>
 
@@ -15,8 +24,6 @@ void PointCloudInterface::processScan(const sensor_msgs::msg::PointCloud2::Share
     sensor_msgs::msg::PointCloud2 transformed_cloud;
     if (pcl_ros::transformPointCloud(tf_output, *scanMsg, transformed_cloud, *tf_buffer_)) {
       transformed_cloud.header.stamp = scanMsg->header.stamp;
-      velodyne_points_top->publish(transformed_cloud);
-      velodyne_points_con->publish(transformed_cloud);
       velodyne_points_raw->publish(transformed_cloud);
     }
   }
@@ -42,10 +49,6 @@ PointCloudInterface::PointCloudInterface(const rclcpp::NodeOptions & node_option
     setupTF();
     velodyne_points_raw =
       this->create_publisher<sensor_msgs::msg::PointCloud2>("/points_raw", rclcpp::SensorDataQoS());
-    velodyne_points_top = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-      "/sensing/lidar/top/outlier_filtered/pointcloud", rclcpp::SensorDataQoS());
-    velodyne_points_con = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-      "/sensing/lidar/concatenated/pointcloud", rclcpp::SensorDataQoS());
   }
 }
 

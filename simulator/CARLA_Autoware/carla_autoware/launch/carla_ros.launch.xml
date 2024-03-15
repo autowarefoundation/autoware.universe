@@ -1,7 +1,7 @@
 <launch>
   <arg name="host" default="localhost"/>
   <arg name="port" default="2000"/>
-  <arg name="timeout" default="10"/>
+  <arg name="timeout" default="30"/>
   <arg name="role_name" default="ego_vehicle"/>
   <arg name="vehicle_filter" default="vehicle.*"/>
   <arg name="spawn_point" default="None"/>
