@@ -149,7 +149,7 @@ def launch_setup(context, *args, **kwargs):
         namespace="",
         parameters=[
             {"input_topic": "mirror_cropped/pointcloud_ex"},
-            {"output_topic": "rectified/pointcloud_ex"}
+            {"output_topic": "rectified/pointcloud_ex"},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -164,7 +164,9 @@ def launch_setup(context, *args, **kwargs):
     distortion_relay_loader = LoadComposableNodes(
         composable_node_descriptions=[distortion_relay_component],
         target_container=container,
-        condition=launch.conditions.UnlessCondition(LaunchConfiguration("use_distortion_corrector")),
+        condition=launch.conditions.UnlessCondition(
+            LaunchConfiguration("use_distortion_corrector")
+        ),
     )
 
     return [container, distortion_loader, distortion_relay_loader]

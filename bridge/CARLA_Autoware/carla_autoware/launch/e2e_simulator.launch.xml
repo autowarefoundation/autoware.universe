@@ -32,21 +32,17 @@
   <!-- System -->
   <arg name="launch_system_monitor" default="false" description="launch system monitor"/>
   <arg name="launch_dummy_diag_publisher" default="false" description="launch dummy diag publisher"/>
-  
+
   <!-- Tools -->
   <arg name="rviz" default="true" description="launch rviz"/>
   <arg name="rviz_config" default="$(find-pkg-share autoware_launch)/rviz/autoware.rviz" description="rviz config"/>
 
-
   <arg name="rviz_config" default="$(find-pkg-share autoware_launch)/rviz/autoware.rviz" description="rviz config"/>
 
   <group if="$(var carla)">
-    <include file="$(find-pkg-share carla_autoware)/carla_ros.launch.xml">
-    </include>
-    <include file="$(find-pkg-share carla_autoware)/carla_autoware.launch.xml">
-    </include>
+    <include file="$(find-pkg-share carla_autoware)/carla_ros.launch.xml"/>
+    <include file="$(find-pkg-share carla_autoware)/carla_autoware.launch.xml"/>
   </group>
-
 
   <group scoped="false">
     <include file="$(find-pkg-share autoware_launch)/launch/autoware.launch.xml">

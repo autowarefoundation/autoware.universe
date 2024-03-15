@@ -56,7 +56,7 @@ if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
   )
 endif()
 
-rclcpp_components_register_node(pointcloud_interface 
+rclcpp_components_register_node(pointcloud_interface
   PLUGIN "PointCloudInterface"
   EXECUTABLE pointcloud_interface_node
 )
@@ -66,4 +66,3 @@ ament_auto_package(
   INSTALL_TO_SHARE
     launch
 )
-

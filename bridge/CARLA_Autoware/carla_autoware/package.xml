@@ -6,39 +6,32 @@
   <maintainer email="mradityagio@gmail.com">CARLA Simulator Team</maintainer>
   <license>MIT</license>
 
-  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
   <exec_depend>ros_compatibility</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <depend>astuff_sensor_msgs</depend>
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>carla_data_provider</depend>
+  <depend>carla_msgs</depend>
+  <depend>datetime</depend>
   <depend>geometry_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
+  <depend>math</depend>
+  <depend>nav_msgs</depend>
+  <depend>numpy</depend>
+  <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>sensor_msgs_py</depend>
-
-  <depend>nav_msgs</depend>
-  <depend>carla_msgs</depend>
-  <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>autoware_auto_control_msgs</depend>
-  <depend>rclpy</depend>
-  <depend>numpy</depend>
-  <depend>datetime</depend>
-  <depend>carla_data_provider</depend>
-  <depend>astuff_sensor_msgs</depend>
-
-
-  <depend>math</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
   <depend>transform3d</depend>
 
 
 
-
-  <exec_depend>ros2launch</exec_depend>
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-
-
-
 
   <export>
     <build_type>ament_python</build_type>
