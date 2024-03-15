@@ -16,7 +16,7 @@
 
 namespace reaction_analyzer
 {
-rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node)
+rclcpp::SubscriptionOptions create_subscription_options(rclcpp::Node * node)
 {
   rclcpp::CallbackGroup::SharedPtr callback_group =
     node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -27,7 +27,7 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node)
   return sub_opt;
 }
 
-std::vector<std::tuple<std::string, std::vector<double>, double>> sortResultsByMedian(
+std::vector<std::tuple<std::string, std::vector<double>, double>> sort_results_by_median(
   const std::unordered_map<std::string, std::vector<double>> test_results)
 {
   std::vector<std::tuple<std::string, std::vector<double>, double>> sorted_data;
@@ -66,7 +66,8 @@ std::vector<std::string> split(const std::string & str, char delimiter)
   return elements;
 }
 
-size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, const double distance)
+size_t get_index_after_distance(
+  const Trajectory & traj, const size_t curr_id, const double distance)
 {
   // Get Current Trajectory Point
   const TrajectoryPoint & curr_p = traj.points.at(curr_id);

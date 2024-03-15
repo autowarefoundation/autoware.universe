@@ -130,7 +130,7 @@ struct PublisherVarAccessor
   };
 
   template <typename MessageType>
-  void publishWithCurrentTime(
+  void publish_with_current_time(
     const PublisherVariables<MessageType> & publisherVar, const rclcpp::Time & current_time,
     const bool is_object_spawned) const
   {
@@ -150,25 +150,25 @@ struct PublisherVarAccessor
   }
 
   template <typename T>
-  void setPeriod(T & publisherVar, double newPeriod)
+  void set_period(T & publisherVar, double newPeriod)
   {
     publisherVar.period_ns = newPeriod;
   }
 
   template <typename T>
-  double getPeriod(const T & publisherVar) const
+  double get_period(const T & publisherVar) const
   {
     return publisherVar.period_ns;
   }
 
   template <typename T>
-  std::shared_ptr<void> getEmptyAreaMessage(const T & publisherVar) const
+  std::shared_ptr<void> get_empty_area_message(const T & publisherVar) const
   {
     return std::static_pointer_cast<void>(publisherVar.empty_area_message);
   }
 
   template <typename T>
-  std::shared_ptr<void> getObjectSpawnedMessage(const T & publisherVar) const
+  std::shared_ptr<void> get_object_spawned_message(const T & publisherVar) const
   {
     return std::static_pointer_cast<void>(publisherVar.object_spawned_message);
   }
@@ -213,20 +213,20 @@ private:
   TopicPublisherParams topic_publisher_params_;
 
   // Functions
-  void setMessageToVariableMap(
+  void set_message_to_variable_map(
     const PublisherMessageType & message_type, const std::string & topic_name,
     rosbag2_storage::SerializedBagMessage & bag_message, const bool is_empty_area_message);
-  void setPeriodToVariableMap(
+  void set_period_to_variable_map(
     const std::unordered_map<std::string, std::vector<rclcpp::Time>> & time_map);
-  bool setPublishersAndTimersToVariableMap();
-  bool checkPublishersInitializedCorrectly();
-  void initRosbagPublishers();
-  void pointcloudMessagesSyncPublisher(const PointcloudPublisherType type);
-  void genericMessagePublisher(const std::string & topic_name);
-  void pointcloudMessagesAsyncPublisher(
+  bool set_publishers_and_timers_to_variable_map();
+  bool check_publishers_initialized_correctly();
+  void init_rosbag_publishers();
+  void pointcloud_messages_sync_publisher(const PointcloudPublisherType type);
+  void pointcloud_messages_async_publisher(
     const std::pair<
       std::shared_ptr<PublisherVariables<PointCloud2>>,
       std::shared_ptr<PublisherVariables<PointCloud2>>> & lidar_output_pair_);
+  void generic_message_publisher(const std::string & topic_name);
 
   // Variables
   PointcloudPublisherType pointcloud_publisher_type_;

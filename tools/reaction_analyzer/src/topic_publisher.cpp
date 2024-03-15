@@ -55,10 +55,10 @@ TopicPublisher::TopicPublisher(
   }
 
   // Init the publishers which will read the messages from the rosbag
-  initRosbagPublishers();
+  init_rosbag_publishers();
 }
 
-void TopicPublisher::pointcloudMessagesSyncPublisher(const PointcloudPublisherType type)
+void TopicPublisher::pointcloud_messages_sync_publisher(const PointcloudPublisherType type)
 {
   const auto current_time = node_->now();
   const bool is_object_spawned = spawn_object_cmd_;
@@ -67,10 +67,10 @@ void TopicPublisher::pointcloudMessagesSyncPublisher(const PointcloudPublisherTy
     case PointcloudPublisherType::SYNC_HEADER_SYNC_PUBLISHER: {
       PublisherVarAccessor accessor;
       for (const auto & publisher_var_pair : lidar_pub_variable_pair_map_) {
-        accessor.publishWithCurrentTime(
+        accessor.publish_with_current_time(
           *publisher_var_pair.second.first, current_time,
           topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
-        accessor.publishWithCurrentTime(
+        accessor.publish_with_current_time(
           *publisher_var_pair.second.second, current_time,
           topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
       }
@@ -92,10 +92,10 @@ void TopicPublisher::pointcloudMessagesSyncPublisher(const PointcloudPublisherTy
       for (const auto & publisher_var_pair : lidar_pub_variable_pair_map_) {
         const auto header_time =
           current_time - std::chrono::nanoseconds(counter * phase_dif.count());
-        accessor.publishWithCurrentTime(
+        accessor.publish_with_current_time(
           *publisher_var_pair.second.first, header_time,
           topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
-        accessor.publishWithCurrentTime(
+        accessor.publish_with_current_time(
           *publisher_var_pair.second.second, header_time,
           topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
         counter++;
@@ -113,7 +113,7 @@ void TopicPublisher::pointcloudMessagesSyncPublisher(const PointcloudPublisherTy
   }
 }
 
-void TopicPublisher::pointcloudMessagesAsyncPublisher(
+void TopicPublisher::pointcloud_messages_async_publisher(
   const std::pair<
     std::shared_ptr<PublisherVariables<PointCloud2>>,
     std::shared_ptr<PublisherVariables<PointCloud2>>> & lidar_output_pair_)
@@ -121,10 +121,10 @@ void TopicPublisher::pointcloudMessagesAsyncPublisher(
   PublisherVarAccessor accessor;
   const auto current_time = node_->now();
   const bool is_object_spawned = spawn_object_cmd_;
-  accessor.publishWithCurrentTime(
+  accessor.publish_with_current_time(
     *lidar_output_pair_.first, current_time,
     topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
-  accessor.publishWithCurrentTime(
+  accessor.publish_with_current_time(
     *lidar_output_pair_.second, current_time,
     topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
 
@@ -136,7 +136,7 @@ void TopicPublisher::pointcloudMessagesAsyncPublisher(
   }
 }
 
-void TopicPublisher::genericMessagePublisher(const std::string & topic_name)
+void TopicPublisher::generic_message_publisher(const std::string & topic_name)
 {
   PublisherVarAccessor accessor;
   const bool is_object_spawned = spawn_object_cmd_;
@@ -145,7 +145,7 @@ void TopicPublisher::genericMessagePublisher(const std::string & topic_name)
 
   std::visit(
     [&](const auto & var) {
-      accessor.publishWithCurrentTime(var, current_time, is_object_spawned);
+      accessor.publish_with_current_time(var, current_time, is_object_spawned);
     },
     publisher_variant);
 }
@@ -155,7 +155,7 @@ void TopicPublisher::reset()
   is_object_spawned_message_published = false;
 }
 
-void TopicPublisher::initRosbagPublishers()
+void TopicPublisher::init_rosbag_publishers()
 {
   auto string_to_publisher_message_type = [](const std::string & input) {
     if (input == "sensor_msgs/msg/PointCloud2") {
@@ -234,12 +234,12 @@ void TopicPublisher::initRosbagPublishers()
 
       // Deserialize and store the first message as a sample
       if (timestamps_per_topic[current_topic].size() == 1) {
-        setMessageToVariableMap(message_type, current_topic, *bag_message, true);
+        set_message_to_variable_map(message_type, current_topic, *bag_message, true);
       }
     }
 
     // After collecting all timestamps for each topic, set frequencies of the publishers
-    setPeriodToVariableMap(timestamps_per_topic);
+    set_period_to_variable_map(timestamps_per_topic);
 
     reader.close();
   }
@@ -279,12 +279,12 @@ void TopicPublisher::initRosbagPublishers()
       if (message_type == PublisherMessageType::UNKNOWN) {
         continue;
       }
-      setMessageToVariableMap(message_type, current_topic, *bag_message, false);
+      set_message_to_variable_map(message_type, current_topic, *bag_message, false);
     }
     reader.close();
   }
 
-  if (setPublishersAndTimersToVariableMap()) {
+  if (set_publishers_and_timers_to_variable_map()) {
     RCLCPP_INFO(node_->get_logger(), "Publishers and timers are set correctly");
   } else {
     RCLCPP_ERROR(node_->get_logger(), "Publishers and timers are not set correctly");
@@ -292,7 +292,7 @@ void TopicPublisher::initRosbagPublishers()
   }
 }
 
-void TopicPublisher::setMessageToVariableMap(
+void TopicPublisher::set_message_to_variable_map(
   const PublisherMessageType & message_type, const std::string & topic_name,
   rosbag2_storage::SerializedBagMessage & bag_message, const bool is_empty_area_message)
 {
@@ -752,7 +752,7 @@ void TopicPublisher::setMessageToVariableMap(
   }
 }
 
-void TopicPublisher::setPeriodToVariableMap(
+void TopicPublisher::set_period_to_variable_map(
   const std::unordered_map<std::string, std::vector<rclcpp::Time>> & time_map)
 {
   for (auto & topic_pair : time_map) {
@@ -778,16 +778,16 @@ void TopicPublisher::setPeriodToVariableMap(
       PublisherVariablesVariant & publisherVar = topic_publisher_map_[topic_name];
       PublisherVarAccessor accessor;
 
-      std::visit([&](auto & var) { accessor.setPeriod(var, period_ns); }, publisherVar);
+      std::visit([&](auto & var) { accessor.set_period(var, period_ns); }, publisherVar);
     }
   }
 }
 
-bool TopicPublisher::setPublishersAndTimersToVariableMap()
+bool TopicPublisher::set_publishers_and_timers_to_variable_map()
 {
   // before create publishers and timers, check all the messages are correctly initialized with
   // their conjugate messages.
-  if (checkPublishersInitializedCorrectly()) {
+  if (check_publishers_initialized_correctly()) {
     RCLCPP_INFO(node_->get_logger(), "Messages are initialized correctly");
   } else {
     RCLCPP_ERROR(node_->get_logger(), "Messages are not initialized correctly");
@@ -802,7 +802,7 @@ bool TopicPublisher::setPublishersAndTimersToVariableMap()
     PublisherVarAccessor accessor;
     const auto & topic_ref = topic_name;
     const auto period_ns = std::chrono::duration<double, std::nano>(
-      std::visit([&](const auto & var) { return accessor.getPeriod(var); }, variant));
+      std::visit([&](const auto & var) { return accessor.get_period(var); }, variant));
 
     // Dynamically create the correct publisher type based on the topic
     std::visit(
@@ -829,7 +829,7 @@ bool TopicPublisher::setPublishersAndTimersToVariableMap()
 
         if constexpr (!std::is_same_v<MessageType, sensor_msgs::msg::PointCloud2>) {
           var.timer = node_->create_wall_timer(
-            period_ns, [this, topic_ref]() { this->genericMessagePublisher(topic_ref); });
+            period_ns, [this, topic_ref]() { this->generic_message_publisher(topic_ref); });
         } else {
           // For PointCloud2, Store the variables in a temporary map
           pointcloud_variables_map[topic_ref] = var;
@@ -870,7 +870,7 @@ bool TopicPublisher::setPublishersAndTimersToVariableMap()
   if (pointcloud_publisher_type_ != PointcloudPublisherType::ASYNC_PUBLISHER) {
     // Create 1 timer to publish all PointCloud2 messages
     pointcloud_sync_publish_timer_ = node_->create_wall_timer(period_pointcloud_ns, [this]() {
-      this->pointcloudMessagesSyncPublisher(this->pointcloud_publisher_type_);
+      this->pointcloud_messages_sync_publisher(this->pointcloud_publisher_type_);
     });
   } else {
     // Create multiple timers which will run with a phase difference
@@ -885,7 +885,7 @@ bool TopicPublisher::setPublishersAndTimersToVariableMap()
           // Create the periodic timer
           auto periodic_timer =
             node_->create_wall_timer(period_pointcloud_ns, [this, publisher_var_pair]() {
-              this->pointcloudMessagesAsyncPublisher(publisher_var_pair);
+              this->pointcloud_messages_async_publisher(publisher_var_pair);
             });
           // Store the periodic timer to keep it alive
           pointcloud_publish_timers_map_[lidar_name] = periodic_timer;
@@ -901,15 +901,15 @@ bool TopicPublisher::setPublishersAndTimersToVariableMap()
   return true;
 }
 
-bool TopicPublisher::checkPublishersInitializedCorrectly()
+bool TopicPublisher::check_publishers_initialized_correctly()
 {
   // check messages are correctly initialized or not from rosbags
   for (const auto & [topic_name, variant] : topic_publisher_map_) {
     PublisherVarAccessor accessor;
     auto empty_area_message =
-      std::visit([&](const auto & var) { return accessor.getEmptyAreaMessage(var); }, variant);
-    auto object_spawned_message =
-      std::visit([&](const auto & var) { return accessor.getObjectSpawnedMessage(var); }, variant);
+      std::visit([&](const auto & var) { return accessor.get_empty_area_message(var); }, variant);
+    auto object_spawned_message = std::visit(
+      [&](const auto & var) { return accessor.get_object_spawned_message(var); }, variant);
 
     if (!empty_area_message) {
       RCLCPP_ERROR_STREAM(
