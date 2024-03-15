@@ -175,6 +175,7 @@ public:
   bool publish_debug_pointcloud_;
   bool use_predicted_trajectory_;
   bool use_imu_path_;
+  double detection_range_min_height_;
   double voxel_grid_x_;
   double voxel_grid_y_;
   double voxel_grid_z_;
