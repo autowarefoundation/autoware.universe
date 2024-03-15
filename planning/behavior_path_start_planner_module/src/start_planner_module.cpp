@@ -1218,6 +1218,7 @@ bool StartPlannerModule::hasFinishedCurrentPath()
 TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
 {
   const auto path = getFullPath();
+  if (path.points.empty()) return getPreviousModuleOutput().turn_signal_info;
 
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
   const auto shift_start_idx =
@@ -1264,9 +1265,16 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
   const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
     path, shift_start_idx, shift_end_idx, current_lanes, current_shift_length,
     status_.driving_forward, egos_lane_is_shifted, override_ego_stopped_check, is_pull_out);
-
   ignore_signal_ = update_ignore_signal(closest_lanelet.id(), is_ignore);
-  return new_signal;
+
+  const auto original_signal = getPreviousModuleOutput().turn_signal_info;
+  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(path.points);
+  const auto output_turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+    path, current_pose, current_seg_idx, original_signal, new_signal,
+    planner_data_->parameters.ego_nearest_dist_threshold,
+    planner_data_->parameters.ego_nearest_yaw_threshold);
+
+  return output_turn_signal_info;
 }
 
 bool StartPlannerModule::isSafePath() const
