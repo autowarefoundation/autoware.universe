@@ -1,0 +1,14 @@
+<launch>
+  <group>
+    <node pkg="topic_tools" exec="relay" name="carla_to_lidar_concatenated" args="/carla/ego_vehicle/lidar /carla_pointcloud"/>
+    <node pkg="topic_tools" exec="relay" name="gnss" args="/carla/ego_vehicle/gnss /carla_nav_sat_fix"/>
+    <node pkg="topic_tools" exec="relay" name="initialpose" args="/initialpose /initialpose3d"/>
+    <node pkg="topic_tools" exec="relay" name="camera_info" args="/carla/ego_vehicle/rgb_front/camera_info /sensing/camera/traffic_light/camera_info"/>
+    <node pkg="topic_tools" exec="relay" name="camera" args="/carla/ego_vehicle/rgb_front/image /sensing/camera/camera5/image_rect_color"/>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="ego_vehicle2base_link" args=" 0 0 0 0 0 0 /ego_vehicle /base_link "/>
+    <node pkg="gnss_interface" exec="gnss_interface_node" name="gnss_interface" output="screen"/>
+    <node pkg="pointcloud_interface" exec="pointcloud_interface" name="carla_pointcloud_interface" output="screen"/>
+  </group>
+  
+</launch>
+

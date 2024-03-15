@@ -1,0 +1,15 @@
+base_link:
+  sensor_kit_base_link:
+    x: 0.0
+    y: 0.0
+    z: 1.6
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
+  velodyne_rear_base_link:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    roll: 0.0
+    pitch: 0.0
+    yaw: 0.0
