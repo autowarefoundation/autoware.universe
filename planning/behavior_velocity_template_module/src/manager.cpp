@@ -63,4 +63,5 @@ TemplateModuleManager::getModuleExpiredFunction(
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  autoware::behavior_velocity_planner::TemplateModulePlugin, behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::TemplateModulePlugin,
+  behavior_velocity_planner::PluginInterface)
