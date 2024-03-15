@@ -21,6 +21,9 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 
 #include <string>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
 // The reaction_analyzer namespace contains utility functions for the Reaction Analyzer tool.
 namespace reaction_analyzer

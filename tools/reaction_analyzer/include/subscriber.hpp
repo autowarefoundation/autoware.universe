@@ -45,8 +45,11 @@
 
 #include <memory>
 #include <mutex>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <variant>
+#include <vector>
 
 namespace reaction_analyzer::subscriber
 {
@@ -107,7 +110,6 @@ enum class SubscriberMessageType {
 };
 
 // Reaction Types
-// TODO: For the future work, we can add more reaction types e.g. first shifted trajectory.
 enum class ReactionType {
   UNKNOWN = 0,
   FIRST_BRAKE = 1,
