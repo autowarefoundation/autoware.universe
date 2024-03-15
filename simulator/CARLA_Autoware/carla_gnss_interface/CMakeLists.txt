@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(carla_gnss_interface)
+
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
