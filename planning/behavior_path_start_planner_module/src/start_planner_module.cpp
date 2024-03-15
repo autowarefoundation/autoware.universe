@@ -1225,7 +1225,6 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
     motion_utils::findNearestIndex(path.points, status_.pull_out_path.start_pose.position);
   const auto shift_end_idx =
     motion_utils::findNearestIndex(path.points, status_.pull_out_path.end_pose.position);
-
   const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
 
   const auto is_ignore_signal = [this](const lanelet::Id & id) {
