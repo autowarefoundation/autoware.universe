@@ -27,9 +27,7 @@ namespace behavior_path_planner
 {
 using tier4_planning_msgs::msg::LateralOffset;
 
-enum class RacingOvertakeStatus
-{
-};
+enum class RacingOvertakeStatus {};
 
 struct RacingOvertakeParameters
 {
@@ -51,7 +49,7 @@ struct RacingOvertakeDebugData
 {
   std::shared_ptr<PathShifter> path_shifter{};
   ShiftLineArray shift_lines{};
-  double current_request{ 0.0 };
+  double current_request{0.0};
 };
 
 }  // namespace behavior_path_planner

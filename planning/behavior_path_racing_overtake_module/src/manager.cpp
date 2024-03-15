@@ -43,26 +43,27 @@
 namespace behavior_path_planner
 {
 
-void RacingOvertakeModuleManager::init(rclcpp::Node* node)
+void RacingOvertakeModuleManager::init(rclcpp::Node * node)
 {
   // init manager interface
   initInterface(node, {});
   RacingOvertakeParameters p{};
 
   // const std::string ns = "racing_overtake.";
-  // p.min_distance_to_start_shifting = node->declare_parameter<double>(ns + "min_distance_to_start_shifting");
-  // p.time_to_start_shifting = node->declare_parameter<double>(ns + "time_to_start_shifting");
-  // p.shifting_lateral_jerk = node->declare_parameter<double>(ns + "shifting_lateral_jerk");
-  // p.min_shifting_distance = node->declare_parameter<double>(ns + "min_shifting_distance");
-  // p.min_shifting_speed = node->declare_parameter<double>(ns + "min_shifting_speed");
-  // p.shift_request_time_limit = node->declare_parameter<double>(ns + "shift_request_time_limit");
-  // p.publish_debug_marker = node->declare_parameter<bool>(ns + "publish_debug_marker");
+  // p.min_distance_to_start_shifting = node->declare_parameter<double>(ns +
+  // "min_distance_to_start_shifting"); p.time_to_start_shifting =
+  // node->declare_parameter<double>(ns + "time_to_start_shifting"); p.shifting_lateral_jerk =
+  // node->declare_parameter<double>(ns + "shifting_lateral_jerk"); p.min_shifting_distance =
+  // node->declare_parameter<double>(ns + "min_shifting_distance"); p.min_shifting_speed =
+  // node->declare_parameter<double>(ns + "min_shifting_speed"); p.shift_request_time_limit =
+  // node->declare_parameter<double>(ns + "shift_request_time_limit"); p.publish_debug_marker =
+  // node->declare_parameter<bool>(ns + "publish_debug_marker");
 
   parameters_ = std::make_shared<RacingOvertakeParameters>(p);
 }
 
 void RacingOvertakeModuleManager::updateModuleParams(
-    [[maybe_unused]] const std::vector<rclcpp::Parameter>& /*parameters*/)
+  [[maybe_unused]] const std::vector<rclcpp::Parameter> & /*parameters*/)
 {
   // using tier4_autoware_utils::updateParam;
 
@@ -80,5 +81,6 @@ void RacingOvertakeModuleManager::updateModuleParams(
 }  // namespace behavior_path_planner
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(behavior_path_planner::RacingOvertakeModuleManager,
-                       behavior_path_planner::SceneModuleManagerInterface)
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::RacingOvertakeModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)

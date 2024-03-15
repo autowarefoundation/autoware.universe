@@ -44,11 +44,10 @@ using tier4_autoware_utils::getPoint;
  * @param lateral_offset lateral offset to be added
  * @return PathWithLaneId path with lateral offset
  */
-PathWithLaneId addLateralOffset(const PathWithLaneId& path, const double& lateral_offset)
+PathWithLaneId addLateralOffset(const PathWithLaneId & path, const double & lateral_offset)
 {
   PathWithLaneId path_with_lateral_offset = path;
-  for (auto& point : path_with_lateral_offset.points)
-  {
+  for (auto & point : path_with_lateral_offset.points) {
     double yaw = tf2::getYaw(point.point.pose.orientation);
     point.point.pose.position.x -= lateral_offset * std::sin(yaw);
     point.point.pose.position.y += lateral_offset * std::cos(yaw);
@@ -70,8 +69,8 @@ struct RivalVehicle
  * @param objects predicted objects
  * @return std::optional<RivalVehicle> rival vehicle
  */
-std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(const Pose& ego_pose, const PathWithLaneId& path,
-                                                          const std::vector<PredictedObject>& objects)
+std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(
+  const Pose & ego_pose, const PathWithLaneId & path, const std::vector<PredictedObject> & objects)
 {
   auto self_odom_frenet = utils::convertToFrenetPoint(path.points, ego_pose.position, 0);
 
@@ -79,22 +78,20 @@ std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(const Pose& ego_pose, 
   double closest_front_object_length = std::numeric_limits<double>::max();
   double closest_front_object_distance;
 
-  for (const auto& object : objects)
-  {
-    auto obj_frenet =
-        utils::convertToFrenetPoint(path.points, object.kinematics.initial_pose_with_covariance.pose.position, 0);
+  for (const auto & object : objects) {
+    auto obj_frenet = utils::convertToFrenetPoint(
+      path.points, object.kinematics.initial_pose_with_covariance.pose.position, 0);
 
-    if (obj_frenet.length - self_odom_frenet.length > 0.0 &&
-        obj_frenet.length - self_odom_frenet.length < closest_front_object_length)
-    {
+    if (
+      obj_frenet.length - self_odom_frenet.length > 0.0 &&
+      obj_frenet.length - self_odom_frenet.length < closest_front_object_length) {
       closest_front_object_ = object;
       closest_front_object_length = obj_frenet.length - self_odom_frenet.length;
       closest_front_object_distance = obj_frenet.distance - self_odom_frenet.distance;
     }
   }
 
-  if (!closest_front_object_.has_value())
-  {
+  if (!closest_front_object_.has_value()) {
     return std::nullopt;
   }
 
@@ -108,7 +105,7 @@ std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(const Pose& ego_pose, 
 namespace racing_overtake_state
 {
 
-void RacingOverTakeState::setContext(Context* context)
+void RacingOverTakeState::setContext(Context * context)
 {
   context_ = context;
 }
@@ -116,23 +113,19 @@ void RacingOverTakeState::setContext(Context* context)
 void ModuleNotLaunched::update(PlannerDataPtr planner_data)
 {
   auto center_path = *utils::generateCenterLinePath(planner_data);
-  auto rival_vehicle = detectRivalVehicleInEgoCourse(planner_data->self_odometry->pose.pose, center_path,
-                                                     planner_data->dynamic_object->objects);
-  if (!rival_vehicle.has_value())
-  {
+  auto rival_vehicle = detectRivalVehicleInEgoCourse(
+    planner_data->self_odometry->pose.pose, center_path, planner_data->dynamic_object->objects);
+  if (!rival_vehicle.has_value()) {
     return;
   }
-  if (rival_vehicle->longitudinal_from_ego < 5.0)
-  {
+  if (rival_vehicle->longitudinal_from_ego < 5.0) {
     return;
   }
-  if (rival_vehicle->longitudinal_from_ego < 20.0)
-  {
+  if (rival_vehicle->longitudinal_from_ego < 20.0) {
     context_->transitionTo(std::make_unique<Approach>());
     return;
   }
-  if (rival_vehicle->longitudinal_from_ego < 50.0)
-  {
+  if (rival_vehicle->longitudinal_from_ego < 50.0) {
     context_->transitionTo(std::make_unique<Overtaking>());
     return;
   }
@@ -141,24 +134,20 @@ void ModuleNotLaunched::update(PlannerDataPtr planner_data)
 void Approach::update(PlannerDataPtr planner_data)
 {
   auto center_path = *utils::generateCenterLinePath(planner_data);
-  auto rival_vehicle = detectRivalVehicleInEgoCourse(planner_data->self_odometry->pose.pose, center_path,
-                                                     planner_data->dynamic_object->objects);
-  if (!rival_vehicle.has_value())
-  {
+  auto rival_vehicle = detectRivalVehicleInEgoCourse(
+    planner_data->self_odometry->pose.pose, center_path, planner_data->dynamic_object->objects);
+  if (!rival_vehicle.has_value()) {
     context_->transitionTo(std::make_unique<ModuleNotLaunched>());
     return;
   }
-  if (rival_vehicle->longitudinal_from_ego < 5.0)
-  {
+  if (rival_vehicle->longitudinal_from_ego < 5.0) {
     context_->transitionTo(std::make_unique<ModuleNotLaunched>());
     return;
   }
-  if (rival_vehicle->longitudinal_from_ego < 20.0)
-  {
+  if (rival_vehicle->longitudinal_from_ego < 20.0) {
     return;
   }
-  if (rival_vehicle->longitudinal_from_ego < 50.0)
-  {
+  if (rival_vehicle->longitudinal_from_ego < 50.0) {
     context_->transitionTo(std::make_unique<Overtaking>());
     return;
   }
@@ -194,12 +183,13 @@ std::unique_ptr<RacingOverTakeState> Context::getState()
 }  // namespace racing_overtake_state
 
 RacingOvertakeModule::RacingOvertakeModule(
-    const std::string& name, rclcpp::Node& node, const std::shared_ptr<RacingOvertakeParameters>& parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>>& rtc_interface_ptr_map,
-    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>&
-        objects_of_interest_marker_interface_ptr_map)
-  : SceneModuleInterface{ name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map }
-  , parameters_{ parameters }
+  const std::string & name, rclcpp::Node & node,
+  const std::shared_ptr<RacingOvertakeParameters> & parameters,
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},
+  parameters_{parameters}
 {
 }
 
@@ -222,14 +212,13 @@ bool RacingOvertakeModule::isExecutionReady() const
   return true;
 }
 
-bool RacingOvertakeModule::isReadyForNextRequest(const double& min_request_time_sec,
-                                                 bool override_requests) const noexcept
+bool RacingOvertakeModule::isReadyForNextRequest(
+  const double & min_request_time_sec, bool override_requests) const noexcept
 {
   rclcpp::Time current_time = clock_->now();
   const auto interval_from_last_request_sec = current_time - last_requested_shift_change_time_;
 
-  if (interval_from_last_request_sec.seconds() >= min_request_time_sec && !override_requests)
-  {
+  if (interval_from_last_request_sec.seconds() >= min_request_time_sec && !override_requests) {
     last_requested_shift_change_time_ = current_time;
     return true;
   }
@@ -259,17 +248,18 @@ BehaviorModuleOutput RacingOvertakeModule::plan()
   return output;
 }
 
-ShiftLine RacingOvertakeModule::getOverTakeShiftLine(const PathWithLaneId& path, const PredictedObject& object) const
+ShiftLine RacingOvertakeModule::getOverTakeShiftLine(
+  const PathWithLaneId & path, const PredictedObject & object) const
 {
-  auto obj_frenet =
-      utils::convertToFrenetPoint(path.points, object.kinematics.initial_pose_with_covariance.pose.position, 0);
+  auto obj_frenet = utils::convertToFrenetPoint(
+    path.points, object.kinematics.initial_pose_with_covariance.pose.position, 0);
   auto front_of_object = calcInterpolatedPose(path.points, obj_frenet.length);
   auto backward_of_object = calcInterpolatedPose(path.points, obj_frenet.length - 20.0);
   double shift_length_candidate1 = obj_frenet.distance + 4.0;
   double shift_length_candidate2 = obj_frenet.distance - 4.0;
-  double shift_length = std::abs(shift_length_candidate1) < std::abs(shift_length_candidate2) ?
-                            shift_length_candidate1 :
-                            shift_length_candidate2;
+  double shift_length = std::abs(shift_length_candidate1) < std::abs(shift_length_candidate2)
+                          ? shift_length_candidate1
+                          : shift_length_candidate2;
   ShiftLine shift_line;
   shift_line.start = backward_of_object;
   shift_line.end = front_of_object;
