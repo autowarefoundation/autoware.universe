@@ -31,11 +31,11 @@ SubscriberBase::SubscriberBase(
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   // init reaction parameters and chain configuration
-  initReactionChainsAndParams();
-  initSubscribers();
+  init_reaction_chains_and_params();
+  init_subscribers();
 }
 
-void SubscriberBase::initReactionChainsAndParams()
+void SubscriberBase::init_reaction_chains_and_params()
 {
   auto stringToMessageType = [](const std::string & input) {
     if (input == "autoware_auto_control_msgs/msg/AckermannControlCommand") {
@@ -144,7 +144,7 @@ void SubscriberBase::initReactionChainsAndParams()
   }
 }
 
-bool SubscriberBase::initSubscribers()
+bool SubscriberBase::init_subscribers()
 {
   if (chain_modules_.empty()) {
     RCLCPP_ERROR(node_->get_logger(), "No module to initialize subscribers, failed.");
@@ -165,18 +165,18 @@ bool SubscriberBase::initSubscribers()
 
           std::function<void(const AckermannControlCommand::ConstSharedPtr &)> callback =
             [this, module](const AckermannControlCommand::ConstSharedPtr & ptr) {
-              this->controlCommandOutputCallback(module.node_name, ptr);
+              this->on_control_command(module.node_name, ptr);
             };
           subscriber_variable.sub1_ =
             std::make_unique<message_filters::Subscriber<AckermannControlCommand>>(
               node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              createSubscriptionOptions(node_));
+              create_subscription_options(node_));
 
           subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
 
           subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
             node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
           constexpr int cache_size = 5;
           subscriber_variable.cache_ = std::make_unique<message_filters::Cache<PublishedTime>>(
             *subscriber_variable.sub2_, cache_size);
@@ -184,13 +184,13 @@ bool SubscriberBase::initSubscribers()
         } else {
           std::function<void(const AckermannControlCommand::ConstSharedPtr &)> callback =
             [this, module](const AckermannControlCommand::ConstSharedPtr & ptr) {
-              this->controlCommandOutputCallback(module.node_name, ptr);
+              this->on_control_command(module.node_name, ptr);
             };
 
           subscriber_variable.sub1_ =
             std::make_unique<message_filters::Subscriber<AckermannControlCommand>>(
               node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              createSubscriptionOptions(node_));
+              create_subscription_options(node_));
 
           subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
           RCLCPP_WARN(
@@ -212,15 +212,15 @@ bool SubscriberBase::initSubscribers()
             callback = [this, module](
                          const Trajectory::ConstSharedPtr & ptr,
                          const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->trajectoryOutputCallback(module.node_name, ptr, published_time_ptr);
+              this->on_trajectory(module.node_name, ptr, published_time_ptr);
             };
 
           subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<Trajectory>>(
             node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
           subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
             node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
 
           subscriber_variable.synchronizer_ = std::make_unique<
             message_filters::Synchronizer<SubscriberVariables<Trajectory>::ExactTimePolicy>>(
@@ -233,11 +233,11 @@ bool SubscriberBase::initSubscribers()
         } else {
           std::function<void(const Trajectory::ConstSharedPtr &)> callback =
             [this, module](const Trajectory::ConstSharedPtr & msg) {
-              this->trajectoryOutputCallback(module.node_name, msg);
+              this->on_trajectory(module.node_name, msg);
             };
           subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<Trajectory>>(
             node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
 
           subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
           RCLCPP_WARN(
@@ -258,15 +258,15 @@ bool SubscriberBase::initSubscribers()
             callback = [this, module](
                          const PointCloud2::ConstSharedPtr & ptr,
                          const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->pointcloud2OutputCallback(module.node_name, ptr, published_time_ptr);
+              this->on_pointcloud(module.node_name, ptr, published_time_ptr);
             };
 
           subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PointCloud2>>(
             node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
           subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
             node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
 
           subscriber_variable.synchronizer_ = std::make_unique<
             message_filters::Synchronizer<SubscriberVariables<PointCloud2>::ExactTimePolicy>>(
@@ -279,11 +279,11 @@ bool SubscriberBase::initSubscribers()
         } else {
           std::function<void(const PointCloud2::ConstSharedPtr &)> callback =
             [this, module](const PointCloud2::ConstSharedPtr & msg) {
-              this->pointcloud2OutputCallback(module.node_name, msg);
+              this->on_pointcloud(module.node_name, msg);
             };
           subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PointCloud2>>(
             node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
 
           subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
           RCLCPP_WARN(
@@ -304,15 +304,15 @@ bool SubscriberBase::initSubscribers()
             callback = [this, module](
                          const PredictedObjects::ConstSharedPtr & ptr,
                          const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->predictedObjectsOutputCallback(module.node_name, ptr, published_time_ptr);
+              this->on_predicted_objects(module.node_name, ptr, published_time_ptr);
             };
           subscriber_variable.sub1_ =
             std::make_unique<message_filters::Subscriber<PredictedObjects>>(
               node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              createSubscriptionOptions(node_));
+              create_subscription_options(node_));
           subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
             node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
 
           subscriber_variable.synchronizer_ = std::make_unique<
             message_filters::Synchronizer<SubscriberVariables<PredictedObjects>::ExactTimePolicy>>(
@@ -325,12 +325,12 @@ bool SubscriberBase::initSubscribers()
         } else {
           std::function<void(const PredictedObjects::ConstSharedPtr &)> callback =
             [this, module](const PredictedObjects::ConstSharedPtr & msg) {
-              this->predictedObjectsOutputCallback(module.node_name, msg);
+              this->on_predicted_objects(module.node_name, msg);
             };
           subscriber_variable.sub1_ =
             std::make_unique<message_filters::Subscriber<PredictedObjects>>(
               node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              createSubscriptionOptions(node_));
+              create_subscription_options(node_));
 
           subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
           RCLCPP_WARN(
@@ -351,16 +351,16 @@ bool SubscriberBase::initSubscribers()
             callback = [this, module](
                          const DetectedObjects::ConstSharedPtr & ptr,
                          const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->detectedObjectsOutputCallback(module.node_name, ptr, published_time_ptr);
+              this->on_detected_objects(module.node_name, ptr, published_time_ptr);
             };
 
           subscriber_variable.sub1_ =
             std::make_unique<message_filters::Subscriber<DetectedObjects>>(
               node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              createSubscriptionOptions(node_));
+              create_subscription_options(node_));
           subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
             node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
 
           subscriber_variable.synchronizer_ = std::make_unique<
             message_filters::Synchronizer<SubscriberVariables<DetectedObjects>::ExactTimePolicy>>(
@@ -373,12 +373,12 @@ bool SubscriberBase::initSubscribers()
         } else {
           std::function<void(const DetectedObjects::ConstSharedPtr &)> callback =
             [this, module](const DetectedObjects::ConstSharedPtr & msg) {
-              this->detectedObjectsOutputCallback(module.node_name, msg);
+              this->on_detected_objects(module.node_name, msg);
             };
           subscriber_variable.sub1_ =
             std::make_unique<message_filters::Subscriber<DetectedObjects>>(
               node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              createSubscriptionOptions(node_));
+              create_subscription_options(node_));
 
           subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
           RCLCPP_WARN(
@@ -399,15 +399,15 @@ bool SubscriberBase::initSubscribers()
             callback = [this, module](
                          const TrackedObjects::ConstSharedPtr & ptr,
                          const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->trackedObjectsOutputCallback(module.node_name, ptr, published_time_ptr);
+              this->on_tracked_objects(module.node_name, ptr, published_time_ptr);
             };
 
           subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<TrackedObjects>>(
             node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
           subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
             node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
 
           subscriber_variable.synchronizer_ = std::make_unique<
             message_filters::Synchronizer<SubscriberVariables<TrackedObjects>::ExactTimePolicy>>(
@@ -420,11 +420,11 @@ bool SubscriberBase::initSubscribers()
         } else {
           std::function<void(const TrackedObjects::ConstSharedPtr &)> callback =
             [this, module](const TrackedObjects::ConstSharedPtr & msg) {
-              this->trackedObjectsOutputCallback(module.node_name, msg);
+              this->on_tracked_objects(module.node_name, msg);
             };
           subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<TrackedObjects>>(
             node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            createSubscriptionOptions(node_));
+            create_subscription_options(node_));
 
           subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
           RCLCPP_WARN(
@@ -502,7 +502,7 @@ void SubscriberBase::reset()
 
 // Callbacks
 
-void SubscriberBase::controlCommandOutputCallback(
+void SubscriberBase::on_control_command(
   const std::string & node_name, const AckermannControlCommand::ConstSharedPtr & msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -516,10 +516,10 @@ void SubscriberBase::controlCommandOutputCallback(
     // reacted
     return;
   }
-  setControlCommandToBuffer(cmd_buffer.first, *msg_ptr);
+  set_control_command_to_buffer(cmd_buffer.first, *msg_ptr);
   if (!spawn_object_cmd_) return;
 
-  const auto brake_idx = findFirstBrakeIdx(cmd_buffer.first);
+  const auto brake_idx = find_first_brake_idx(cmd_buffer.first);
   if (brake_idx) {
     const auto brake_cmd = cmd_buffer.first.at(brake_idx.value());
 
@@ -557,7 +557,7 @@ void SubscriberBase::controlCommandOutputCallback(
   }
 }
 
-void SubscriberBase::trajectoryOutputCallback(
+void SubscriberBase::on_trajectory(
   const std::string & node_name, const Trajectory::ConstSharedPtr & msg_ptr)
 {
   mutex_.lock();
@@ -594,7 +594,7 @@ void SubscriberBase::trajectoryOutputCallback(
   }
 }
 
-void SubscriberBase::trajectoryOutputCallback(
+void SubscriberBase::on_trajectory(
   const std::string & node_name, const Trajectory::ConstSharedPtr & msg_ptr,
   const PublishedTime::ConstSharedPtr & published_time_ptr)
 {
@@ -618,7 +618,7 @@ void SubscriberBase::trajectoryOutputCallback(
     msg_ptr->points, current_odometry_ptr->pose.pose.position);
 
   // find the target index which we will search for zero velocity
-  auto tmp_target_idx = getIndexAfterDistance(
+  auto tmp_target_idx = get_index_after_distance(
     *msg_ptr, nearest_seg_idx, reaction_params_.search_zero_vel_params.max_looking_distance);
   if (tmp_target_idx == msg_ptr->points.size() - 1) {
     tmp_target_idx = msg_ptr->points.size() - 2;  // Last trajectory points might be zero velocity
@@ -639,7 +639,7 @@ void SubscriberBase::trajectoryOutputCallback(
   }
 }
 
-void SubscriberBase::pointcloud2OutputCallback(
+void SubscriberBase::on_pointcloud(
   const std::string & node_name, const PointCloud2::ConstSharedPtr & msg_ptr)
 {
   mutex_.lock();
@@ -676,7 +676,7 @@ void SubscriberBase::pointcloud2OutputCallback(
   pcl::PointCloud<pcl::PointXYZ> pcl_pointcloud;
   pcl::fromROSMsg(transformed_points, pcl_pointcloud);
 
-  if (searchPointcloudNearEntity(pcl_pointcloud)) {
+  if (search_pointcloud_near_entity(pcl_pointcloud)) {
     std::get<PointCloud2Buffer>(variant) = *msg_ptr;
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     mutex_.lock();
@@ -684,7 +684,7 @@ void SubscriberBase::pointcloud2OutputCallback(
     mutex_.unlock();
   }
 }
-void SubscriberBase::pointcloud2OutputCallback(
+void SubscriberBase::on_pointcloud(
   const std::string & node_name, const PointCloud2::ConstSharedPtr & msg_ptr,
   const PublishedTime::ConstSharedPtr & published_time_ptr)
 {
@@ -722,7 +722,7 @@ void SubscriberBase::pointcloud2OutputCallback(
   pcl::PointCloud<pcl::PointXYZ> pcl_pointcloud;
   pcl::fromROSMsg(transformed_points, pcl_pointcloud);
 
-  if (searchPointcloudNearEntity(pcl_pointcloud)) {
+  if (search_pointcloud_near_entity(pcl_pointcloud)) {
     std::get<PointCloud2Buffer>(variant) = *msg_ptr;
     // set published time
     std::get<PointCloud2Buffer>(variant)->header.stamp = published_time_ptr->published_stamp;
@@ -732,7 +732,7 @@ void SubscriberBase::pointcloud2OutputCallback(
     mutex_.unlock();
   }
 }
-void SubscriberBase::predictedObjectsOutputCallback(
+void SubscriberBase::on_predicted_objects(
   const std::string & node_name, const PredictedObjects::ConstSharedPtr & msg_ptr)
 {
   mutex_.lock();
@@ -750,7 +750,7 @@ void SubscriberBase::predictedObjectsOutputCallback(
     return;
   }
 
-  if (searchPredictedObjectsNearEntity(*msg_ptr)) {
+  if (search_predicted_objects_near_entity(*msg_ptr)) {
     std::get<PredictedObjectsBuffer>(variant) = *msg_ptr;
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
 
@@ -760,7 +760,7 @@ void SubscriberBase::predictedObjectsOutputCallback(
   }
 }
 
-void SubscriberBase::predictedObjectsOutputCallback(
+void SubscriberBase::on_predicted_objects(
   const std::string & node_name, const PredictedObjects::ConstSharedPtr & msg_ptr,
   const PublishedTime::ConstSharedPtr & published_time_ptr)
 {
@@ -779,7 +779,7 @@ void SubscriberBase::predictedObjectsOutputCallback(
     return;
   }
 
-  if (searchPredictedObjectsNearEntity(*msg_ptr)) {
+  if (search_predicted_objects_near_entity(*msg_ptr)) {
     std::get<PredictedObjectsBuffer>(variant) = *msg_ptr;
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
 
@@ -791,7 +791,7 @@ void SubscriberBase::predictedObjectsOutputCallback(
   }
 }
 
-void SubscriberBase::detectedObjectsOutputCallback(
+void SubscriberBase::on_detected_objects(
   const std::string & node_name, const DetectedObjects::ConstSharedPtr & msg_ptr)
 {
   mutex_.lock();
@@ -828,7 +828,7 @@ void SubscriberBase::detectedObjectsOutputCallback(
     tf2::doTransform(input_stamped, output_stamped, transform_stamped);
     obj.kinematics.pose_with_covariance.pose = output_stamped.pose;
   }
-  if (searchDetectedObjectsNearEntity(output_objs)) {
+  if (search_detected_objects_near_entity(output_objs)) {
     std::get<DetectedObjectsBuffer>(variant) = *msg_ptr;
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     mutex_.lock();
@@ -837,7 +837,7 @@ void SubscriberBase::detectedObjectsOutputCallback(
   }
 }
 
-void SubscriberBase::detectedObjectsOutputCallback(
+void SubscriberBase::on_detected_objects(
   const std::string & node_name, const DetectedObjects::ConstSharedPtr & msg_ptr,
   const PublishedTime::ConstSharedPtr & published_time_ptr)
 {
@@ -875,7 +875,7 @@ void SubscriberBase::detectedObjectsOutputCallback(
     tf2::doTransform(input_stamped, output_stamped, transform_stamped);
     obj.kinematics.pose_with_covariance.pose = output_stamped.pose;
   }
-  if (searchDetectedObjectsNearEntity(output_objs)) {
+  if (search_detected_objects_near_entity(output_objs)) {
     std::get<DetectedObjectsBuffer>(variant) = *msg_ptr;
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
 
@@ -887,7 +887,7 @@ void SubscriberBase::detectedObjectsOutputCallback(
   }
 }
 
-void SubscriberBase::trackedObjectsOutputCallback(
+void SubscriberBase::on_tracked_objects(
   const std::string & node_name, const TrackedObjects::ConstSharedPtr & msg_ptr)
 {
   mutex_.lock();
@@ -904,7 +904,7 @@ void SubscriberBase::trackedObjectsOutputCallback(
     return;
   }
 
-  if (searchTrackedObjectsNearEntity(*msg_ptr)) {
+  if (search_tracked_objects_near_entity(*msg_ptr)) {
     std::get<TrackedObjectsBuffer>(variant) = *msg_ptr;
     RCLCPP_INFO(node_->get_logger(), "Reacted %s", node_name.c_str());
     mutex_.lock();
@@ -913,7 +913,7 @@ void SubscriberBase::trackedObjectsOutputCallback(
   }
 }
 
-void SubscriberBase::trackedObjectsOutputCallback(
+void SubscriberBase::on_tracked_objects(
   const std::string & node_name, const TrackedObjects::ConstSharedPtr & msg_ptr,
   const PublishedTime::ConstSharedPtr & published_time_ptr)
 {
@@ -931,7 +931,7 @@ void SubscriberBase::trackedObjectsOutputCallback(
     return;
   }
 
-  if (searchTrackedObjectsNearEntity(*msg_ptr)) {
+  if (search_tracked_objects_near_entity(*msg_ptr)) {
     std::get<TrackedObjectsBuffer>(variant) = *msg_ptr;
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
     // set published time
@@ -942,7 +942,7 @@ void SubscriberBase::trackedObjectsOutputCallback(
   }
 }
 
-bool SubscriberBase::searchPointcloudNearEntity(
+bool SubscriberBase::search_pointcloud_near_entity(
   const pcl::PointCloud<pcl::PointXYZ> & pcl_pointcloud)
 {
   bool isAnyPointWithinRadius = std::any_of(
@@ -957,7 +957,8 @@ bool SubscriberBase::searchPointcloudNearEntity(
   return false;
 }
 
-bool SubscriberBase::searchPredictedObjectsNearEntity(const PredictedObjects & predicted_objects)
+bool SubscriberBase::search_predicted_objects_near_entity(
+  const PredictedObjects & predicted_objects)
 {
   bool isAnyObjectWithinRadius = std::any_of(
     predicted_objects.objects.begin(), predicted_objects.objects.end(),
@@ -974,7 +975,7 @@ bool SubscriberBase::searchPredictedObjectsNearEntity(const PredictedObjects & p
   return false;
 }
 
-bool SubscriberBase::searchDetectedObjectsNearEntity(const DetectedObjects & detected_objects)
+bool SubscriberBase::search_detected_objects_near_entity(const DetectedObjects & detected_objects)
 {
   bool isAnyObjectWithinRadius = std::any_of(
     detected_objects.objects.begin(), detected_objects.objects.end(),
@@ -990,7 +991,7 @@ bool SubscriberBase::searchDetectedObjectsNearEntity(const DetectedObjects & det
   return false;
 }
 
-bool SubscriberBase::searchTrackedObjectsNearEntity(const TrackedObjects & tracked_objects)
+bool SubscriberBase::search_tracked_objects_near_entity(const TrackedObjects & tracked_objects)
 {
   bool isAnyObjectWithinRadius = std::any_of(
     tracked_objects.objects.begin(), tracked_objects.objects.end(),
@@ -1006,7 +1007,7 @@ bool SubscriberBase::searchTrackedObjectsNearEntity(const TrackedObjects & track
   return false;
 }
 
-std::optional<size_t> SubscriberBase::findFirstBrakeIdx(
+std::optional<size_t> SubscriberBase::find_first_brake_idx(
   const std::vector<AckermannControlCommand> & cmd_array)
 {
   if (
@@ -1065,7 +1066,7 @@ std::optional<size_t> SubscriberBase::findFirstBrakeIdx(
   return {};
 }
 
-void SubscriberBase::setControlCommandToBuffer(
+void SubscriberBase::set_control_command_to_buffer(
   std::vector<AckermannControlCommand> & buffer, const AckermannControlCommand & cmd)
 {
   const auto last_cmd_time = cmd.stamp;

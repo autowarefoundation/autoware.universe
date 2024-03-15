@@ -159,45 +159,33 @@ private:
   size_t test_iteration_count_{0};
 
   // Functions
-  void initAnalyzerVariables();
-
-  void initPointcloud();
-
-  void initPredictedObjects();
-
-  void initEgoForTest(
+  void init_analyzer_variables();
+  void init_pointcloud();
+  void init_predicted_objects();
+  void init_ego(
     const LocalizationInitializationState::ConstSharedPtr & initialization_state_ptr,
     const RouteState::ConstSharedPtr & route_state_ptr,
     const OperationModeState::ConstSharedPtr & operation_mode_ptr,
     const PoseStamped::ConstSharedPtr & ground_truth_pose_ptr,
     const Odometry::ConstSharedPtr & odometry_ptr);
-
-  void callOperationModeServiceWithoutResponse();
-
-  void spawnObstacle(const geometry_msgs::msg::Point & ego_pose);
-
-  void calculateResults(
+  void call_operation_mode_service_without_response();
+  void spawn_obstacle(const geometry_msgs::msg::Point & ego_pose);
+  void calculate_results(
     const std::unordered_map<std::string, subscriber::BufferVariant> & message_buffers,
     const rclcpp::Time & spawn_cmd_time);
-
-  void onTimer();
-
-  void dummyPerceptionPublisher();
-
+  void on_timer();
+  void dummy_perception_publisher();
   void reset();
-
-  void writeResultsToFile();
+  void write_results();
 
   // Callbacks
-  void vehiclePoseCallback(Odometry::ConstSharedPtr msg_ptr);
+  void on_vehicle_pose(Odometry::ConstSharedPtr msg_ptr);
+  void on_localization_initialization_state(
+    LocalizationInitializationState::ConstSharedPtr msg_ptr);
+  void on_route_state(RouteState::ConstSharedPtr msg_ptr);
+  void on_operation_mode_state(OperationModeState::ConstSharedPtr msg_ptr);
+  void on_ground_truth_pose(PoseStamped::ConstSharedPtr msg_ptr);
 
-  void initializationStateCallback(LocalizationInitializationState::ConstSharedPtr msg_ptr);
-
-  void routeStateCallback(RouteState::ConstSharedPtr msg_ptr);
-
-  void operationModeCallback(OperationModeState::ConstSharedPtr msg_ptr);
-
-  void groundTruthPoseCallback(PoseStamped::ConstSharedPtr msg_ptr);
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr dummy_perception_timer_;

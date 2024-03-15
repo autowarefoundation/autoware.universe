@@ -20,32 +20,32 @@
 namespace reaction_analyzer
 {
 
-void ReactionAnalyzerNode::operationModeCallback(OperationModeState::ConstSharedPtr msg_ptr)
+void ReactionAnalyzerNode::on_operation_mode_state(OperationModeState::ConstSharedPtr msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   operation_mode_ptr_ = std::move(msg_ptr);
 }
 
-void ReactionAnalyzerNode::routeStateCallback(RouteState::ConstSharedPtr msg_ptr)
+void ReactionAnalyzerNode::on_route_state(RouteState::ConstSharedPtr msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   current_route_state_ptr_ = std::move(msg_ptr);
 }
 
-void ReactionAnalyzerNode::vehiclePoseCallback(Odometry::ConstSharedPtr msg_ptr)
+void ReactionAnalyzerNode::on_vehicle_pose(Odometry::ConstSharedPtr msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   odometry_ptr_ = msg_ptr;
 }
 
-void ReactionAnalyzerNode::initializationStateCallback(
+void ReactionAnalyzerNode::on_localization_initialization_state(
   LocalizationInitializationState::ConstSharedPtr msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   initialization_state_ptr_ = std::move(msg_ptr);
 }
 
-void ReactionAnalyzerNode::groundTruthPoseCallback(PoseStamped::ConstSharedPtr msg_ptr)
+void ReactionAnalyzerNode::on_ground_truth_pose(PoseStamped::ConstSharedPtr msg_ptr)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   ground_truth_pose_ptr_ = std::move(msg_ptr);
@@ -105,24 +105,23 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
   node_params_.entity_params.z_l = get_parameter("entity_params.z_dimension").as_double();
 
   sub_kinematics_ = create_subscription<Odometry>(
-    "input/kinematics", 1, std::bind(&ReactionAnalyzerNode::vehiclePoseCallback, this, _1),
-    createSubscriptionOptions(this));
+    "input/kinematics", 1, std::bind(&ReactionAnalyzerNode::on_vehicle_pose, this, _1),
+    create_subscription_options(this));
   sub_localization_init_state_ = create_subscription<LocalizationInitializationState>(
     "input/localization_initialization_state", rclcpp::QoS(1).transient_local(),
-    std::bind(&ReactionAnalyzerNode::initializationStateCallback, this, _1),
-    createSubscriptionOptions(this));
+    std::bind(&ReactionAnalyzerNode::on_localization_initialization_state, this, _1),
+    create_subscription_options(this));
   sub_route_state_ = create_subscription<RouteState>(
     "input/routing_state", rclcpp::QoS{1}.transient_local(),
-    std::bind(&ReactionAnalyzerNode::routeStateCallback, this, _1),
-    createSubscriptionOptions(this));
+    std::bind(&ReactionAnalyzerNode::on_route_state, this, _1), create_subscription_options(this));
   sub_operation_mode_ = create_subscription<OperationModeState>(
     "input/operation_mode_state", rclcpp::QoS{1}.transient_local(),
-    std::bind(&ReactionAnalyzerNode::operationModeCallback, this, _1),
-    createSubscriptionOptions(this));
+    std::bind(&ReactionAnalyzerNode::on_operation_mode_state, this, _1),
+    create_subscription_options(this));
 
   pub_goal_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("output/goal", rclcpp::QoS(1));
 
-  initAnalyzerVariables();
+  init_analyzer_variables();
 
   if (node_running_mode_ == RunningMode::PlanningControl) {
     pub_initial_pose_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -139,7 +138,7 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
 
     dummy_perception_timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns,
-      std::bind(&ReactionAnalyzerNode::dummyPerceptionPublisher, this));
+      std::bind(&ReactionAnalyzerNode::dummy_perception_publisher, this));
 
   } else if (node_running_mode_ == RunningMode::PerceptionPlanning) {
     // Create topic publishers
@@ -149,8 +148,8 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
     // Subscribe to the ground truth position
     sub_ground_truth_pose_ = create_subscription<PoseStamped>(
       "input/ground_truth_pose", rclcpp::QoS{1},
-      std::bind(&ReactionAnalyzerNode::groundTruthPoseCallback, this, _1),
-      createSubscriptionOptions(this));
+      std::bind(&ReactionAnalyzerNode::on_ground_truth_pose, this, _1),
+      create_subscription_options(this));
   }
 
   // Load the subscriber to listen the topics for reactions
@@ -162,10 +161,10 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(node_params_.timer_period));
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&ReactionAnalyzerNode::onTimer, this));
+    this, get_clock(), period_ns, std::bind(&ReactionAnalyzerNode::on_timer, this));
 }
 
-void ReactionAnalyzerNode::onTimer()
+void ReactionAnalyzerNode::on_timer()
 {
   mutex_.lock();
   const auto current_odometry_ptr = odometry_ptr_;
@@ -178,13 +177,13 @@ void ReactionAnalyzerNode::onTimer()
 
   // Init the test environment
   if (!test_environment_init_time_) {
-    initEgoForTest(
+    init_ego(
       initialization_state_ptr, route_state_ptr, operation_mode_ptr, ground_truth_pose_ptr,
       current_odometry_ptr);
     return;
   }
 
-  spawnObstacle(current_odometry_ptr->pose.pose.position);
+  spawn_obstacle(current_odometry_ptr->pose.pose.position);
 
   if (!spawn_cmd_time) return;
 
@@ -192,12 +191,12 @@ void ReactionAnalyzerNode::onTimer()
 
   if (message_buffers) {
     // if reacted, calculate the results
-    calculateResults(message_buffers.value(), spawn_cmd_time.value());
+    calculate_results(message_buffers.value(), spawn_cmd_time.value());
     reset();
   }
 }
 
-void ReactionAnalyzerNode::dummyPerceptionPublisher()
+void ReactionAnalyzerNode::dummy_perception_publisher()
 {
   if (!spawn_object_cmd_) {
     // do not spawn it, send empty pointcloud
@@ -250,7 +249,7 @@ void ReactionAnalyzerNode::dummyPerceptionPublisher()
   }
 }
 
-void ReactionAnalyzerNode::spawnObstacle(const geometry_msgs::msg::Point & ego_pose)
+void ReactionAnalyzerNode::spawn_obstacle(const geometry_msgs::msg::Point & ego_pose)
 {
   if (node_running_mode_ == RunningMode::PerceptionPlanning) {
     rclcpp::Duration time_diff = this->now() - test_environment_init_time_.value();
@@ -272,7 +271,7 @@ void ReactionAnalyzerNode::spawnObstacle(const geometry_msgs::msg::Point & ego_p
   }
 }
 
-void ReactionAnalyzerNode::calculateResults(
+void ReactionAnalyzerNode::calculate_results(
   const std::unordered_map<std::string, subscriber::BufferVariant> & message_buffers,
   const rclcpp::Time & spawn_cmd_time)
 {
@@ -321,7 +320,7 @@ void ReactionAnalyzerNode::calculateResults(
   test_iteration_count_++;
 }
 
-void ReactionAnalyzerNode::initAnalyzerVariables()
+void ReactionAnalyzerNode::init_analyzer_variables()
 {
   tf2::Quaternion entity_q_orientation;
   entity_q_orientation.setRPY(
@@ -365,12 +364,12 @@ void ReactionAnalyzerNode::initAnalyzerVariables()
     init_pose_.pose.pose.orientation.set__z(initial_pose_q_orientation.z());
     init_pose_.pose.pose.orientation.set__w(initial_pose_q_orientation.w());
 
-    initPointcloud();
-    initPredictedObjects();
+    init_pointcloud();
+    init_predicted_objects();
   }
 }
 
-void ReactionAnalyzerNode::initPointcloud()
+void ReactionAnalyzerNode::init_pointcloud()
 {
   pcl::PointCloud<pcl::PointXYZ> point_cloud;
   // prepare transform matrix
@@ -412,7 +411,7 @@ void ReactionAnalyzerNode::initPointcloud()
   pcl::toROSMsg(point_cloud, *entity_pointcloud_ptr_);
 }
 
-void ReactionAnalyzerNode::initPredictedObjects()
+void ReactionAnalyzerNode::init_predicted_objects()
 {
   auto generateUUIDMsg = [](const std::string & input) {
     static auto generate_uuid = boost::uuids::name_generator(boost::uuids::random_generator()());
@@ -451,7 +450,7 @@ void ReactionAnalyzerNode::initPredictedObjects()
   predicted_objects_ptr_ = std::make_shared<PredictedObjects>(pred_objects);
 }
 
-void ReactionAnalyzerNode::initEgoForTest(
+void ReactionAnalyzerNode::init_ego(
   const LocalizationInitializationState::ConstSharedPtr & initialization_state_ptr,
   const RouteState::ConstSharedPtr & route_state_ptr,
   const OperationModeState::ConstSharedPtr & operation_mode_ptr,
@@ -530,7 +529,7 @@ void ReactionAnalyzerNode::initEgoForTest(
     if (node_running_mode_ == RunningMode::PlanningControl) {
       // change to autonomous
       if (operation_mode_ptr && operation_mode_ptr->mode != OperationModeState::AUTONOMOUS) {
-        callOperationModeServiceWithoutResponse();
+        call_operation_mode_service_without_response();
         return;
       }
     }
@@ -544,7 +543,7 @@ void ReactionAnalyzerNode::initEgoForTest(
   }
 }
 
-void ReactionAnalyzerNode::callOperationModeServiceWithoutResponse()
+void ReactionAnalyzerNode::call_operation_mode_service_without_response()
 {
   auto req = std::make_shared<ChangeOperationMode::Request>();
 
@@ -566,7 +565,7 @@ void ReactionAnalyzerNode::callOperationModeServiceWithoutResponse()
 void ReactionAnalyzerNode::reset()
 {
   if (test_iteration_count_ >= node_params_.test_iteration) {
-    writeResultsToFile();
+    write_results();
     RCLCPP_INFO(get_logger(), "%zu Tests are finished. Node shutting down.", test_iteration_count_);
     rclcpp::shutdown();
     return;
@@ -586,10 +585,10 @@ void ReactionAnalyzerNode::reset()
   RCLCPP_INFO(this->get_logger(), "Test - %zu is done, resetting..", test_iteration_count_);
 }
 
-void ReactionAnalyzerNode::writeResultsToFile()
+void ReactionAnalyzerNode::write_results()
 {
   // sort the results w.r.t the median value
-  const auto sorted_data_by_median = sortResultsByMedian(test_results_);
+  const auto sorted_data_by_median = sort_results_by_median(test_results_);
 
   // create csv file
   auto now = std::chrono::system_clock::now();

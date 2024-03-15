@@ -38,7 +38,7 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
  * @return A vector of tuples. Each tuple contains a string (the test name), a vector of doubles
  * (the test results), and a double (the median value).
  */
-std::vector<std::tuple<std::string, std::vector<double>, double>> sortResultsByMedian(
+std::vector<std::tuple<std::string, std::vector<double>, double>> sort_results_by_median(
   const std::unordered_map<std::string, std::vector<double>> test_results);
 
 /**
@@ -47,7 +47,7 @@ std::vector<std::tuple<std::string, std::vector<double>, double>> sortResultsByM
  * @param node A pointer to the node for which the subscription options are being created.
  * @return The created SubscriptionOptions.
  */
-rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node);
+rclcpp::SubscriptionOptions create_subscription_options(rclcpp::Node * node);
 
 /**
  * @brief Splits a string by a given delimiter.
@@ -72,7 +72,8 @@ std::vector<std::string> split(const std::string & str, char delimiter);
  * @return The index of the point in the trajectory that is at least the specified distance away
  * from the current point.
  */
-size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, const double distance);
+size_t get_index_after_distance(
+  const Trajectory & traj, const size_t curr_id, const double distance);
 }  // namespace reaction_analyzer
 
 #endif  // UTILS_HPP_

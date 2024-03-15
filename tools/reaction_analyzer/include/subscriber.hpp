@@ -188,59 +188,41 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   // Functions
-  void initReactionChainsAndParams();
-
-  bool initSubscribers();
-
-  bool searchPointcloudNearEntity(const pcl::PointCloud<pcl::PointXYZ> & pcl_pointcloud);
-
-  bool searchPredictedObjectsNearEntity(const PredictedObjects & predicted_objects);
-
-  bool searchDetectedObjectsNearEntity(const DetectedObjects & detected_objects);
-
-  bool searchTrackedObjectsNearEntity(const TrackedObjects & tracked_objects);
-
-  void setControlCommandToBuffer(
+  void init_reaction_chains_and_params();
+  bool init_subscribers();
+  bool search_pointcloud_near_entity(const pcl::PointCloud<pcl::PointXYZ> & pcl_pointcloud);
+  bool search_predicted_objects_near_entity(const PredictedObjects & predicted_objects);
+  bool search_detected_objects_near_entity(const DetectedObjects & detected_objects);
+  bool search_tracked_objects_near_entity(const TrackedObjects & tracked_objects);
+  void set_control_command_to_buffer(
     std::vector<AckermannControlCommand> & buffer, const AckermannControlCommand & cmd);
-
-  std::optional<size_t> findFirstBrakeIdx(const std::vector<AckermannControlCommand> & cmd_array);
+  std::optional<size_t> find_first_brake_idx(
+    const std::vector<AckermannControlCommand> & cmd_array);
 
   // Callbacks for modules are subscribed
-  void controlCommandOutputCallback(
+  void on_control_command(
     const std::string & node_name, const AckermannControlCommand::ConstSharedPtr & msg_ptr);
-
-  void trajectoryOutputCallback(
-    const std::string & node_name, const Trajectory::ConstSharedPtr & msg_ptr);
-
-  void trajectoryOutputCallback(
+  void on_trajectory(const std::string & node_name, const Trajectory::ConstSharedPtr & msg_ptr);
+  void on_trajectory(
     const std::string & node_name, const Trajectory::ConstSharedPtr & msg_ptr,
     const PublishedTime::ConstSharedPtr & published_time_ptr);
-
-  void pointcloud2OutputCallback(
-    const std::string & node_name, const PointCloud2::ConstSharedPtr & msg_ptr);
-
-  void pointcloud2OutputCallback(
+  void on_pointcloud(const std::string & node_name, const PointCloud2::ConstSharedPtr & msg_ptr);
+  void on_pointcloud(
     const std::string & node_name, const PointCloud2::ConstSharedPtr & msg_ptr,
     const PublishedTime::ConstSharedPtr & published_time_ptr);
-
-  void predictedObjectsOutputCallback(
+  void on_predicted_objects(
     const std::string & node_name, const PredictedObjects::ConstSharedPtr & msg_ptr);
-
-  void predictedObjectsOutputCallback(
+  void on_predicted_objects(
     const std::string & node_name, const PredictedObjects::ConstSharedPtr & msg_ptr,
     const PublishedTime::ConstSharedPtr & published_time_ptr);
-
-  void detectedObjectsOutputCallback(
+  void on_detected_objects(
     const std::string & node_name, const DetectedObjects::ConstSharedPtr & msg_ptr);
-
-  void detectedObjectsOutputCallback(
+  void on_detected_objects(
     const std::string & node_name, const DetectedObjects::ConstSharedPtr & msg_ptr,
     const PublishedTime::ConstSharedPtr & published_time_ptr);
-
-  void trackedObjectsOutputCallback(
+  void on_tracked_objects(
     const std::string & node_name, const TrackedObjects::ConstSharedPtr & msg_ptr);
-
-  void trackedObjectsOutputCallback(
+  void on_tracked_objects(
     const std::string & node_name, const TrackedObjects::ConstSharedPtr & msg_ptr,
     const PublishedTime::ConstSharedPtr & published_time_ptr);
 };
