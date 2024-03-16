@@ -32,6 +32,32 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 /**
+ * @brief A struct containing the parameters of a pose.
+ */
+struct PoseParams
+{
+  double x;
+  double y;
+  double z;
+  double roll;
+  double pitch;
+  double yaw;
+};
+
+struct EntityParams
+{
+  double x;
+  double y;
+  double z;
+  double roll;
+  double pitch;
+  double yaw;
+  double x_l;
+  double y_l;
+  double z_l;
+};
+
+/**
  * @brief Sorts the test results by their median value.
  *
  * @param test_results An unordered map containing the test results.

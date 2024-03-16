@@ -72,29 +72,6 @@ enum class RunningMode {
   PlanningControl = 1,
 };
 
-struct PoseParams
-{
-  double x;
-  double y;
-  double z;
-  double roll;
-  double pitch;
-  double yaw;
-};
-
-struct EntityParams
-{
-  double x;
-  double y;
-  double z;
-  double roll;
-  double pitch;
-  double yaw;
-  double x_l;
-  double y_l;
-  double z_l;
-};
-
 struct NodeParams
 {
   std::string running_mode;
@@ -194,7 +171,7 @@ private:
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_change_to_autonomous_;
 
   // Pointers
-  std::shared_ptr<topic_publisher::TopicPublisher> topic_publisher_ptr_;
+  std::unique_ptr<topic_publisher::TopicPublisher> topic_publisher_ptr_;
   std::unique_ptr<subscriber::SubscriberBase> subscriber_ptr_;
   PointCloud2::SharedPtr entity_pointcloud_ptr_;
   PredictedObjects::SharedPtr predicted_objects_ptr_;
