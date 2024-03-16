@@ -56,8 +56,6 @@ rclcpp::NodeOptions makeNodeOptions(const bool enable_keep_stopped_until_steer_c
   const auto lateral_share_dir =
     ament_index_cpp::get_package_share_directory("mpc_lateral_controller");
   rclcpp::NodeOptions node_options;
-  node_options.append_parameter_override("ctrl_period", 0.03);
-  node_options.append_parameter_override("timeout_thr_sec", 0.5);
   node_options.append_parameter_override("lateral_controller_mode", "mpc");
   node_options.append_parameter_override("longitudinal_controller_mode", "pid");
   node_options.append_parameter_override(
