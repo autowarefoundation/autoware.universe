@@ -130,6 +130,8 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
   use_imu_path_ = declare_parameter<bool>("use_imu_path");
   detection_range_min_height_ = declare_parameter<double>("detection_range_min_height");
+  detection_range_max_height_margin_ =
+    declare_parameter<double>("detection_range_max_height_margin");
   voxel_grid_x_ = declare_parameter<double>("voxel_grid_x");
   voxel_grid_y_ = declare_parameter<double>("voxel_grid_y");
   voxel_grid_z_ = declare_parameter<double>("voxel_grid_z");
@@ -228,7 +230,9 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
   pcl::PassThrough<pcl::PointXYZ> height_filter;
   height_filter.setInputCloud(pointcloud_ptr);
   height_filter.setFilterFieldName("z");
-  height_filter.setFilterLimits(detection_range_min_height_, 5.0);
+  height_filter.setFilterLimits(
+    detection_range_min_height_,
+    vehicle_info_.vehicle_height_m + detection_range_max_height_margin_);
   height_filter.filter(*height_filtered_pointcloud_ptr);
 
   pcl::VoxelGrid<pcl::PointXYZ> filter;
