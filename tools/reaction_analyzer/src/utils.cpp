@@ -35,14 +35,9 @@ std::vector<std::tuple<std::string, std::vector<double>, double>> sort_results_b
     auto vec = pair.second;
 
     // Calculate the median
-    std::sort(vec.begin(), vec.end());
-    double median = 0.0;
-    size_t size = vec.size();
-    if (size % 2 == 0) {
-      median = (vec[size / 2 - 1] + vec[size / 2]) / 2.0;
-    } else {
-      median = vec[size / 2];
-    }
+    const size_t mid_index = vec.size() / 2;
+    std::nth_element(vec.begin(), vec.begin() + mid_index, vec.end());
+    const double median = vec[mid_index];
 
     sorted_data.emplace_back(pair.first, pair.second, median);
   }

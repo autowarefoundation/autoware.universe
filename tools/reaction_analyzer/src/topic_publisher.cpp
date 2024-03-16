@@ -771,14 +771,15 @@ void TopicPublisher::set_period_to_variable_map(
         total_time_diff_ns += (timestamps_tmp[i] - timestamps_tmp[i - 1]).nanoseconds();
       }
 
-      // Convert to double for the division to get the average period in nanoseconds
-      double period_ns =
-        static_cast<double>(total_time_diff_ns) / static_cast<double>(timestamps_tmp.size() - 1);
+      // Conversion to std::chrono::milliseconds
+      auto total_duration_ns = std::chrono::nanoseconds(total_time_diff_ns);
+      auto period_ms = std::chrono::duration_cast<std::chrono::milliseconds>(total_duration_ns) /
+                       (timestamps_tmp.size() - 1);
 
       PublisherVariablesVariant & publisherVar = topic_publisher_map_[topic_name];
       PublisherVarAccessor accessor;
 
-      std::visit([&](auto & var) { accessor.set_period(var, period_ns); }, publisherVar);
+      std::visit([&](auto & var) { accessor.set_period(var, period_ms); }, publisherVar);
     }
   }
 }

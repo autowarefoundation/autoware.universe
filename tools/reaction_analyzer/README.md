@@ -2,10 +2,11 @@
 
 ## Description
 
-The main purpose of the reaction analyzer package is measuring reaction times of the nodes by listening the
-pre-determined topics. It can be used for measuring the reaction time of the perception pipeline, planning pipeline, and
-control pipeline. To be able to measure both control outputs and perception outputs, it was necessary to divide the node
-into two running_mode: `planning_control` and `perception_planning`.
+The main purpose of the reaction analyzer package is to measure the reaction times of various nodes within a ROS-based
+autonomous driving simulation environment by subscribing to pre-determined topics. This tool is particularly useful for
+evaluating the performance of perception, planning, and control pipelines in response to dynamic changes in the
+environment, such as sudden obstacles. To be able to measure both control outputs and perception outputs, it was
+necessary to divide the node into two running_mode: `planning_control` and `perception_planning`.
 
 ![ReactionAnalyzerDesign.png](media%2FReactionAnalyzerDesign.png)
 
@@ -94,21 +95,26 @@ to test. After the test is completed, the results will be stored in the `output_
 
 ### Custom Test Environment
 
-**If you want to run the reaction analyzer with your custom test environment, you need to redefine some of the parameters.
+**If you want to run the reaction analyzer with your custom test environment, you need to redefine some of the
+parameters.
 The parameters you need to redefine are `initialization_pose`, `entity_params`, `goal_pose`, and `topic_publisher` (
 for `perception_planning` mode) parameters.**
 
 - To set `initialization_pose`, `entity_params`, `goal_pose`:
-- Upload your `.osm` map file into the [scenario editor](https://scenario.ci.tier4.jp/scenario_editor/) to define the position of the position parameters.
+- Upload your `.osm` map file into the [scenario editor](https://scenario.ci.tier4.jp/scenario_editor/) to define the
+  position of the position parameters.
 - Add EGO vehicle from edit/add entity/Ego to map.
 - Set destination to EGO vehicle and add another dummy object in same way. The dummy object represents the object spawn
   suddenly in the reaction analyzer test.
 
-**After you set up the positions in the map, we should get the positions of these entities in the map frame. To achieve this:**
+**After you set up the positions in the map, we should get the positions of these entities in the map frame. To achieve
+this:**
 
-- Convert the positions to map frame by changing Map/Coordinate to World and Map/Orientation to Euler in Scenario Editor.
+- Convert the positions to map frame by changing Map/Coordinate to World and Map/Orientation to Euler in Scenario
+  Editor.
 
-- After these steps, you can see the positions in map frame and euler angles. You can change the `initialization_pose`, `entity_params`, `goal_pose` parameters with the values you get from the website.
+- After these steps, you can see the positions in map frame and euler angles. You can change
+  the `initialization_pose`, `entity_params`, `goal_pose` parameters with the values you get from the website.
 
 **For the `topic_publisher` parameters, you need to record the rosbags from the AWSIM. After opened your AWSIM
 environment, you should record two different rosbags. However, the environment should be static and the position of the
@@ -117,7 +123,8 @@ vehicle should be same.**
 - Record a rosbag in empty environment (without an obstacle in front of the vehicle).
 - After that, record another rosbag in the same environment except add an object in front of the vehicle.
 
-**After you record the rosbags, you can set the `path_bag_without_object` and `path_bag_with_object` parameters with the paths of the recorded rosbags.**
+**After you record the rosbags, you can set the `path_bag_without_object` and `path_bag_with_object` parameters with the
+paths of the recorded rosbags.**
 
 ## Parameters
 
@@ -131,9 +138,9 @@ vehicle should be same.**
 | `spawn_distance_threshold`                                                   | double | [m] Distance threshold for spawning objects. Only valid `planning_control` mode.                                                              |
 | `spawned_pointcloud_sampling_distance`                                       | double | [m] Sampling distance for point clouds of spawned objects. Only valid `planning_control` mode.                                                |
 | `dummy_perception_publisher_period`                                          | double | [s] Publishing period for the dummy perception data. Only valid `planning_control` mode.                                                      |
-| `initialization_pose`                                                        | struct | Initial pose of the vehicle, containing `x`, `y`, `z`, `roll`, `pitch`, and `yaw` fields. Only valid `planning_control` mode.                 |
-| `entity_params`                                                              | struct | Parameters for entities (e.g., obstacles), containing `x`, `y`, `z`, `roll`, `pitch`, `yaw`, `x_dimension`, `y_dimension`, and `z_dimension`. |
-| `goal_pose`                                                                  | struct | Goal pose of the vehicle, containing `x`, `y`, `z`, `roll`, `pitch`, and `yaw` fields.                                                        |
+| `poses.initialization_pose`                                                  | struct | Initial pose of the vehicle, containing `x`, `y`, `z`, `roll`, `pitch`, and `yaw` fields. Only valid `planning_control` mode.                 |
+| `poses.entity_params`                                                        | struct | Parameters for entities (e.g., obstacles), containing `x`, `y`, `z`, `roll`, `pitch`, `yaw`, `x_dimension`, `y_dimension`, and `z_dimension`. |
+| `poses.goal_pose`                                                            | struct | Goal pose of the vehicle, containing `x`, `y`, `z`, `roll`, `pitch`, and `yaw` fields.                                                        |
 | `topic_publisher.path_bag_without_object`                                    | string | Path to the ROS bag file without objects. Only valid `perception_planning` mode.                                                              |
 | `topic_publisher.path_bag_with_object`                                       | string | Path to the ROS bag file with objects. Only valid `perception_planning` mode.                                                                 |
 | `topic_publisher.pointcloud_publisher.pointcloud_publisher_type`             | string | Defines how the PointCloud2 messages are going to be published. Modes explained above.                                                        |

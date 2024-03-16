@@ -8,30 +8,31 @@
     spawn_distance_threshold: 15.0 # m # for planning_control mode
     spawned_pointcloud_sampling_distance: 0.1
     dummy_perception_publisher_period: 0.1 # s
-    initialization_pose:
-      x: 81247.9609375
-      y: 49828.87890625
-      z: 0.0
-      roll: 0.0
-      pitch: 0.0
-      yaw: 35.5
-    entity_params:
-      x: 81392.97671487389
-      y: 49927.361443601316
-      z: 42.13605499267578
-      roll: 0.2731273
-      pitch: -0.6873504
-      yaw: 33.7664809
-      x_dimension: 4.118675972722859
-      y_dimension: 1.7809072588403219
-      z_dimension: 0.8328610206872963
-    goal_pose:
-      x: 81824.90625
-      y: 50069.34375
-      z: 0.0
-      roll: 0.0
-      pitch: 0.0
-      yaw: 8.9305903
+    poses:
+      initialization_pose:
+        x: 81247.9609375
+        y: 49828.87890625
+        z: 0.0
+        roll: 0.0
+        pitch: 0.0
+        yaw: 35.5
+      entity_params:
+        x: 81392.97671487389
+        y: 49927.361443601316
+        z: 42.13605499267578
+        roll: 0.2731273
+        pitch: -0.6873504
+        yaw: 33.7664809
+        x_dimension: 4.118675972722859
+        y_dimension: 1.7809072588403219
+        z_dimension: 0.8328610206872963
+      goal_pose:
+        x: 81824.90625
+        y: 50069.34375
+        z: 0.0
+        roll: 0.0
+        pitch: 0.0
+        yaw: 8.9305903
     topic_publisher:
       path_bag_without_object: <PATH_TO_YOUR_BAGS>/lexus_bag_without_car/rosbag2_2024_01_30-13_50_45_0.db3
       path_bag_with_object: <PATH_TO_YOUR_BAGS>/lexus_bag_with_car/rosbag2_2024_01_30-13_50_17_0.db3

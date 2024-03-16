@@ -80,29 +80,29 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
     get_parameter("dummy_perception_publisher_period").as_double();
 
   // Position parameters
-  node_params_.initial_pose.x = get_parameter("initialization_pose.x").as_double();
-  node_params_.initial_pose.y = get_parameter("initialization_pose.y").as_double();
-  node_params_.initial_pose.z = get_parameter("initialization_pose.z").as_double();
-  node_params_.initial_pose.roll = get_parameter("initialization_pose.roll").as_double();
-  node_params_.initial_pose.pitch = get_parameter("initialization_pose.pitch").as_double();
-  node_params_.initial_pose.yaw = get_parameter("initialization_pose.yaw").as_double();
+  node_params_.initial_pose.x = get_parameter("poses.initialization_pose.x").as_double();
+  node_params_.initial_pose.y = get_parameter("poses.initialization_pose.y").as_double();
+  node_params_.initial_pose.z = get_parameter("poses.initialization_pose.z").as_double();
+  node_params_.initial_pose.roll = get_parameter("poses.initialization_pose.roll").as_double();
+  node_params_.initial_pose.pitch = get_parameter("poses.initialization_pose.pitch").as_double();
+  node_params_.initial_pose.yaw = get_parameter("poses.initialization_pose.yaw").as_double();
 
-  node_params_.goal_pose.x = get_parameter("goal_pose.x").as_double();
-  node_params_.goal_pose.y = get_parameter("goal_pose.y").as_double();
-  node_params_.goal_pose.z = get_parameter("goal_pose.z").as_double();
-  node_params_.goal_pose.roll = get_parameter("goal_pose.roll").as_double();
-  node_params_.goal_pose.pitch = get_parameter("goal_pose.pitch").as_double();
-  node_params_.goal_pose.yaw = get_parameter("goal_pose.yaw").as_double();
+  node_params_.goal_pose.x = get_parameter("poses.goal_pose.x").as_double();
+  node_params_.goal_pose.y = get_parameter("poses.goal_pose.y").as_double();
+  node_params_.goal_pose.z = get_parameter("poses.goal_pose.z").as_double();
+  node_params_.goal_pose.roll = get_parameter("poses.goal_pose.roll").as_double();
+  node_params_.goal_pose.pitch = get_parameter("poses.goal_pose.pitch").as_double();
+  node_params_.goal_pose.yaw = get_parameter("poses.goal_pose.yaw").as_double();
 
-  node_params_.entity_params.x = get_parameter("entity_params.x").as_double();
-  node_params_.entity_params.y = get_parameter("entity_params.y").as_double();
-  node_params_.entity_params.z = get_parameter("entity_params.z").as_double();
-  node_params_.entity_params.roll = get_parameter("entity_params.roll").as_double();
-  node_params_.entity_params.pitch = get_parameter("entity_params.pitch").as_double();
-  node_params_.entity_params.yaw = get_parameter("entity_params.yaw").as_double();
-  node_params_.entity_params.x_l = get_parameter("entity_params.x_dimension").as_double();
-  node_params_.entity_params.y_l = get_parameter("entity_params.y_dimension").as_double();
-  node_params_.entity_params.z_l = get_parameter("entity_params.z_dimension").as_double();
+  node_params_.entity_params.x = get_parameter("poses.entity_params.x").as_double();
+  node_params_.entity_params.y = get_parameter("poses.entity_params.y").as_double();
+  node_params_.entity_params.z = get_parameter("poses.entity_params.z").as_double();
+  node_params_.entity_params.roll = get_parameter("poses.entity_params.roll").as_double();
+  node_params_.entity_params.pitch = get_parameter("poses.entity_params.pitch").as_double();
+  node_params_.entity_params.yaw = get_parameter("poses.entity_params.yaw").as_double();
+  node_params_.entity_params.x_l = get_parameter("poses.entity_params.x_dimension").as_double();
+  node_params_.entity_params.y_l = get_parameter("poses.entity_params.y_dimension").as_double();
+  node_params_.entity_params.z_l = get_parameter("poses.entity_params.z_dimension").as_double();
 
   sub_kinematics_ = create_subscription<Odometry>(
     "input/kinematics", 1, std::bind(&ReactionAnalyzerNode::on_vehicle_pose, this, _1),
@@ -143,7 +143,7 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
   } else if (node_running_mode_ == RunningMode::PerceptionPlanning) {
     // Create topic publishers
     topic_publisher_ptr_ =
-      std::make_shared<topic_publisher::TopicPublisher>(this, spawn_object_cmd_, spawn_cmd_time_);
+      std::make_unique<topic_publisher::TopicPublisher>(this, spawn_object_cmd_, spawn_cmd_time_);
 
     // Subscribe to the ground truth position
     sub_ground_truth_pose_ = create_subscription<PoseStamped>(
@@ -183,15 +183,19 @@ void ReactionAnalyzerNode::on_timer()
     return;
   }
 
+  // Spawn the obstacle if the conditions are met
   spawn_obstacle(current_odometry_ptr->pose.pose.position);
 
+  // If the spawn_cmd_time is not set by pointcloud publishers, don't do anything
   if (!spawn_cmd_time) return;
 
+  // Get the reacted messages, if all of the modules reacted
   const auto message_buffers = subscriber_ptr_->getMessageBuffersMap();
 
   if (message_buffers) {
     // if reacted, calculate the results
     calculate_results(message_buffers.value(), spawn_cmd_time.value());
+    // reset the variables if the iteration is not finished, otherwise write the results
     reset();
   }
 }

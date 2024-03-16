@@ -95,7 +95,7 @@ enum class PointcloudPublisherType {
 template <typename MessageType>
 struct PublisherVariables
 {
-  double period_ns{0.0};
+  std::chrono::milliseconds period_ms{0};
   typename MessageType::SharedPtr empty_area_message;
   typename MessageType::SharedPtr object_spawned_message;
   typename rclcpp::Publisher<MessageType>::SharedPtr publisher;
@@ -150,15 +150,15 @@ struct PublisherVarAccessor
   }
 
   template <typename T>
-  void set_period(T & publisherVar, double newPeriod)
+  void set_period(T & publisherVar, std::chrono::milliseconds new_period)
   {
-    publisherVar.period_ns = newPeriod;
+    publisherVar.period_ms = new_period;
   }
 
   template <typename T>
-  double get_period(const T & publisherVar) const
+  std::chrono::milliseconds get_period(const T & publisherVar) const
   {
-    return publisherVar.period_ns;
+    return publisherVar.period_ms;
   }
 
   template <typename T>
@@ -207,7 +207,8 @@ private:
   // Initialized variables
   rclcpp::Node * node_;
   std::atomic<bool> & spawn_object_cmd_;
-  std::optional<rclcpp::Time> & spawn_cmd_time_;
+  std::optional<rclcpp::Time> & spawn_cmd_time_;  // Set by a publisher function when the
+                                                  // spawn_object_cmd_ is true
 
   // Parameters
   TopicPublisherParams topic_publisher_params_;

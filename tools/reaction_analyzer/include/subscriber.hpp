@@ -162,6 +162,10 @@ public:
     rclcpp::Node * node, Odometry::ConstSharedPtr & odometry, geometry_msgs::msg::Pose entity_pose,
     std::atomic<bool> & spawn_object_cmd);
 
+  // Instances of SubscriberBase cannot be copied
+  SubscriberBase(const SubscriberBase &) = delete;
+  SubscriberBase & operator=(const SubscriberBase &) = delete;
+
   ~SubscriberBase() = default;
 
   std::optional<std::unordered_map<std::string, BufferVariant>> getMessageBuffersMap();
