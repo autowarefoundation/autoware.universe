@@ -252,8 +252,10 @@ TEST_F(FakeNodeFixture, straight_trajectory)
 
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
   ASSERT_TRUE(tester.received_control_command);
+  // following conditions will pass even if the MPC solution does not converge
   EXPECT_EQ(tester.cmd_msg->lateral.steering_tire_angle, 0.0f);
   EXPECT_EQ(tester.cmd_msg->lateral.steering_tire_rotation_rate, 0.0f);
+  EXPECT_GT(tester.cmd_msg->longitudinal.speed, 0.0f);
   EXPECT_GT(rclcpp::Time(tester.cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
 }
 
