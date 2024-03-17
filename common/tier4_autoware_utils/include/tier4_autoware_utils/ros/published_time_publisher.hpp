@@ -91,7 +91,7 @@ private:
   {
     bool operator()(const rmw_gid_t & lhs, const rmw_gid_t & rhs) const
     {
-      return std::memcmp(lhs.data, rhs.data, RMW_GID_STORAGE_SIZE) < 0;
+      return memcmp(lhs.data, rhs.data, RMW_GID_STORAGE_SIZE) < 0;
     }
   };
 
