@@ -309,12 +309,13 @@ public:
     const auto desire_shift_length =
       getShiftLength(object, is_object_on_right, object.avoid_margin.value());
 
-    constexpr double BUFFER = 10.0;
     const auto prepare_distance = getMinimumPrepareDistance();
     const auto constant_distance = getFrontConstantDistance(object);
     const auto avoidance_distance = getMinAvoidanceDistance(desire_shift_length);
 
-    return object.longitudinal < prepare_distance + constant_distance + avoidance_distance + BUFFER;
+    return object.longitudinal <
+           prepare_distance + constant_distance + avoidance_distance +
+             parameters_->closest_distance_to_wait_and_see_for_ambiguous_vehicle;
   }
 
   bool isReady(const AvoidLineArray & new_shift_lines, const double current_shift_length) const

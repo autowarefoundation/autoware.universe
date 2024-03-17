@@ -680,7 +680,7 @@ bool isNeverAvoidanceTarget(
   const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto is_moving_distance_longer_than_threshold =
     tier4_autoware_utils::calcDistance2d(object.init_pose, object_pose) >
-    parameters->force_avoidance_distance_threshold;
+    parameters->distance_threshold_for_ambiguous_vehicle;
   if (is_moving_distance_longer_than_threshold) {
     object.reason = AvoidanceDebugFactor::MOVING_OBJECT;
     return true;
@@ -860,13 +860,13 @@ bool isSatisfiedWithVehicleCondition(
 
   // from here, filtering for ambiguous vehicle.
 
-  if (!parameters->enable_force_avoidance_for_stopped_vehicle) {
+  if (!parameters->enable_avoidance_for_ambiguous_vehicle) {
     object.reason = "AmbiguousStoppedVehicle";
     return false;
   }
 
   const auto stop_time_longer_than_threshold =
-    object.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
+    object.stop_time > parameters->time_threshold_for_ambiguous_vehicle;
   if (!stop_time_longer_than_threshold) {
     object.reason = "AmbiguousStoppedVehicle(wait-and-see)";
     return false;
