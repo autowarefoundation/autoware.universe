@@ -19,9 +19,32 @@ The table below lists the avoidance modules that can be used for each situation.
 | avoid not-moving objects | Avoidance Module <br> Dynamic Avoidance Module + Obstacle Avoidance Module |            Avoidance Module            |
 | avoid moving objects     |            Dynamic Avoidance Module + Obstacle Avoidance Module            |     No Module (Under Development)      |
 
-## Algorithms
+## Policy of Algorithms
+Here, we describe the policy of inner algorithms.
+The inner algorithms can be separated into two parts: The first decide whether to avoid the obstacles and the second cuts off the drivable area against the corresponding obstacle.
+If you are interested in more details, please see the code itself.
 
-### Filtering obstacles to avoid
+### Select obstacles to avoid
+
+To decide whether to avoid an object, both the predicted path and the state (poes and twist) of each object are used.
+The type of objects the user wants this module to avoid is also required.
+Using this information, the module makes a decision to "avoid" objects that "obstruct own passage" and "can be avoided".
+
+As logics for determining whether an object is an obstacle or not, the followings are implemented.
+- longtitudinal speed
+- 経路に近い 干渉する
+- 干渉する時刻が遠すぎると決断を先延ばしにする
+- カットアウト
+   
+
+避けられるか否か
+    交差 lateral speed
+    干渉する時刻が近すぎると回避は諦める
+    横G横ジャークの制約をみたして避けられるか
+    カットイン
+
+どうよけるか 右 左？
+
 
 The dynamics obstacles meeting the following condition will be avoided.
 
@@ -30,6 +53,9 @@ The dynamics obstacles meeting the following condition will be avoided.
 - The obstacle is in the next lane to the ego's lane, which will not cut-into the ego's lane according to the highest-prioritized predicted path.
 
 ### Drivable area modification
+
+交差物体を右か左どちらによけるか
+
 
 To realize dynamic obstacles for avoidance, the time dimension should be take into an account considering the dynamics.
 However, it will make the planning problem much harder to solve.
@@ -55,7 +81,12 @@ Opposite directional obstacles
 
 ## Example
 
+
 ## Future works
+
+歩行者の回避
+より大きな回避幅での回避
+
 
 ## Parameters
 
