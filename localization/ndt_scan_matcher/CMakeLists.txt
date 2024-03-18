@@ -41,6 +41,18 @@ if(BUILD_TESTING)
     test/test_ndt_scan_matcher_launch.py
     TIMEOUT "30"
   )
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_auto_add_gtest(test_ndt_scan_matcher
+    test/test.cpp
+    src/particle.cpp
+    src/ndt_scan_matcher_core.cpp
+    src/map_update_module.cpp
+  )
+  target_include_directories(test_ndt_scan_matcher
+    SYSTEM PUBLIC
+  )
+  target_link_libraries(test_ndt_scan_matcher)
 endif()
 
 ament_auto_package(
