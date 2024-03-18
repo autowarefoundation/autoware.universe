@@ -18,7 +18,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-pcl::PointCloud<pcl::PointXYZ> make_sample_pcd(
+inline pcl::PointCloud<pcl::PointXYZ> make_sample_pcd(
   const float min_xy, const float max_xy, const float interval)
 {
   const float range_width = max_xy - min_xy;

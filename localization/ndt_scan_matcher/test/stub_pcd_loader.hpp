@@ -21,6 +21,8 @@
 
 #include "autoware_map_msgs/srv/get_differential_point_cloud_map.hpp"
 
+#include <pcl_conversions/pcl_conversions.h>
+
 class StubPcdLoader : public rclcpp::Node
 {
   using GetDifferentialPointCloudMap = autoware_map_msgs::srv::GetDifferentialPointCloudMap;
