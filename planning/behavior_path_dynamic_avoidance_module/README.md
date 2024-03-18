@@ -68,7 +68,7 @@ Opposite directional obstacles (Parameter names may differ from implementation)
 
 <figure>
     <img src="./image/image-20230807-151945.png" width="800">
-    <figcaption>Avoidance for the bus depature</figcaption>
+    <figcaption>Avoidance for the bus departure</figcaption>
 </figure>
 
 <figure>  
