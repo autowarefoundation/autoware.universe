@@ -456,18 +456,6 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "ignore_distance_from_lane_start", p->ignore_distance_from_lane_start);
     updateParam<double>(parameters, ns + "margin_from_boundary", p->margin_from_boundary);
-
-    std::string parking_policy_name;
-    updateParam<std::string>(parameters, ns + "parking_policy", parking_policy_name);
-    if (parking_policy_name == "left_side") {
-      p->parking_policy = ParkingPolicy::LEFT_SIDE;
-    } else if (parking_policy_name == "right_side") {
-      p->parking_policy = ParkingPolicy::RIGHT_SIDE;
-    } else {
-      RCLCPP_WARN_STREAM(
-        node_->get_logger().get_child(name()),
-        "[goal_planner] invalid parking_policy: " << parking_policy_name << std::endl);
-    }
   }
 
   // occupancy grid map
@@ -500,30 +488,6 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam(parameters, ns + "detection_bound_offset", p->detection_bound_offset);
     updateParam(parameters, ns + "outer_road_detection_offset", p->outer_road_detection_offset);
     updateParam(parameters, ns + "inner_road_detection_offset", p->inner_road_detection_offset);
-
-    std::vector<double> temp_object_recognition_collision_check_soft_margins;
-    std::vector<double> temp_object_recognition_collision_check_hard_margins;
-    updateParam<std::vector<double>>(
-      parameters, ns + "collision_check_soft_margins",
-      temp_object_recognition_collision_check_soft_margins);
-    updateParam<std::vector<double>>(
-      parameters, ns + "collision_check_hard_margins",
-      temp_object_recognition_collision_check_hard_margins);
-
-    // validate object recognition collision check margins
-    if (
-      temp_object_recognition_collision_check_soft_margins.empty() ||
-      temp_object_recognition_collision_check_hard_margins.empty()) {
-      RCLCPP_WARN_STREAM(
-        node_->get_logger().get_child(name()),
-        "object_recognition.collision_check_soft_margins and "
-          << "object_recognition.collision_check_hard_margins must not be empty. " << std::endl);
-    } else {
-      p->object_recognition_collision_check_soft_margins =
-        temp_object_recognition_collision_check_soft_margins;
-      p->object_recognition_collision_check_hard_margins =
-        temp_object_recognition_collision_check_hard_margins;
-    }
   }
 
   // pull over general params
@@ -536,18 +500,6 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "pull_over_minimum_velocity", p->pull_over_minimum_velocity);
     updateParam<double>(parameters, ns + "decide_path_distance", p->decide_path_distance);
-
-    double temp_maximum_deceleration;
-    updateParam<double>(parameters, ns + "maximum_deceleration", temp_maximum_deceleration);
-    if (temp_maximum_deceleration < 0.0) {
-      RCLCPP_WARN_STREAM(
-        node_->get_logger().get_child(name()),
-        "maximum_deceleration cannot be negative value. Given parameter: "
-          << temp_maximum_deceleration << std::endl);
-    } else {
-      p->maximum_deceleration = temp_maximum_deceleration;
-    }
-
     updateParam<double>(parameters, ns + "maximum_jerk", p->maximum_jerk);
   }
 
@@ -555,18 +507,6 @@ void GoalPlannerModuleManager::updateModuleParams(
   {
     const std::string ns = base_ns + "pull_over.shift_parking.";
     updateParam<bool>(parameters, ns + "enable_shift_parking", p->enable_shift_parking);
-    int temp_shift_sampling_num;
-    updateParam<int>(parameters, ns + "shift_sampling_num", temp_shift_sampling_num);
-    // validation of parameters
-    if (temp_shift_sampling_num < 1) {
-      RCLCPP_WARN_STREAM(
-        node_->get_logger().get_child(name()),
-        "shift_sampling_num must be positive integer. Given parameter: " << temp_shift_sampling_num
-                                                                         << std::endl);
-    } else {
-      p->shift_sampling_num = temp_shift_sampling_num;
-    }
-
     updateParam<double>(parameters, ns + "maximum_lateral_jerk", p->maximum_lateral_jerk);
     updateParam<double>(parameters, ns + "minimum_lateral_jerk", p->minimum_lateral_jerk);
     updateParam<double>(parameters, ns + "deceleration_interval", p->deceleration_interval);
