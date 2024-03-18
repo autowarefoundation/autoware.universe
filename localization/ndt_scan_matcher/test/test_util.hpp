@@ -15,6 +15,7 @@
 #ifndef TEST_UTIL_HPP_
 #define TEST_UTIL_HPP_
 
+#include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
 pcl::PointCloud<pcl::PointXYZ> make_sample_pcd(
@@ -29,8 +30,8 @@ pcl::PointCloud<pcl::PointXYZ> make_sample_pcd(
   cloud.points.resize(cloud.width * cloud.height);
   for (int i = 0; i < num_points_per_line; ++i) {
     for (int j = 0; j < num_points_per_line; ++j) {
-      const float x = min_xy + interval * j;
-      const float y = min_xy + interval * i;
+      const float x = min_xy + interval * static_cast<float>(j);
+      const float y = min_xy + interval * static_cast<float>(i);
       const float z = std::hypot(x - center, y - center) / (range_width / 16);
       cloud.points[i * num_points_per_line + j].x = x;
       cloud.points[i * num_points_per_line + j].y = y;
