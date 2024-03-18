@@ -23,7 +23,7 @@ The inner algorithms can be separated into two parts: The first decide whether t
 If you are interested in more details, please see the code itself.
 
 ### Select obstacles to avoid
-To decide whether to avoid an object, both the predicted path and the state (poes and twist) of each object are used.
+To decide whether to avoid an object, both the predicted path and the state (pose and twist) of each object are used.
 The type of objects the user wants this module to avoid is also required.
 Using this information, the module decides to *avoid* objects that *obstruct the ego's passage* and *can be avoided*.
 
@@ -31,7 +31,7 @@ The definition of *obstruct own passage* is implemented as the object that colli
 This process wastes computational cost by doing it for all objects; thus, filtering by the relative position and speed of the object with respect to the ego's path is also done as an auxiliary process.
 The other, *can be avoided* denotes whether it can be avoided without risk to passengers or other vehicles.
 For this purpose, it is judged whether the obstacle can be avoided by satisfying the constraints of lateral acceleration and lateral jerk.
-For example, the modeule decides not to avoid an object that is too close or fast in the lateral direction because it cannot be avoided.
+For example, the module decides not to avoid an object that is too close or fast in the lateral direction because it cannot be avoided.
 
 ### Cuts off the drivable area against the selected obstacles
 For the selected obstacles to be avoided, the module cuts off the drivable area.
@@ -47,7 +47,7 @@ We can limit the lateral shift length by `drivable_area_generation.max_lat_offse
 ![drivable_area_extraction_width](./image/drivable_area_extraction_width.drawio.svg)
 
 
-#### Determination of longtitudinal dimension
+#### Determination of longitudinal dimension
 Then, extracting the same directional and opposite directional obstacles from the drivable area will work as follows considering TTC (time to collision).
 
 Regarding the same directional obstacles, obstacles whose TTC is negative will be ignored (e.g. The obstacle is in front of the ego, and the obstacle's velocity is larger than the ego's velocity.).
@@ -61,7 +61,7 @@ Opposite directional obstacles (Parameter names may differ from implementation)
 ## Example
 <figure>
     <img src="./image/image-20230807-151945.png" width="800">
-    <figcaption>Avoidance for the depaturing bus</figcaption>
+    <figcaption>Avoidance for the bus depature</figcaption>
 </figure>
 
 
