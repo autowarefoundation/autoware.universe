@@ -97,6 +97,34 @@ lanelet::BasicLineString3d toLineString3d(const std::vector<Point> & bound)
     bound.begin(), bound.end(), [&](const auto & p) { ret.emplace_back(p.x, p.y, p.z); });
   return ret;
 }
+
+bool straddleRoadBound(
+  const ShiftedPath & path, const lanelet::ConstLanelets & lanes,
+  const vehicle_info_util::VehicleInfo & vehicle_info)
+{
+  using boost::geometry::intersects;
+  using tier4_autoware_utils::pose2transform;
+  using tier4_autoware_utils::transformVector;
+
+  const auto footprint = vehicle_info.createFootprint();
+
+  for (const auto & lane : lanes) {
+    for (const auto & p : path.path.points) {
+      const auto transform = pose2transform(p.point.pose);
+      const auto shifted_vehicle_footprint = transformVector(footprint, transform);
+
+      if (intersects(lane.leftBound2d().basicLineString(), shifted_vehicle_footprint)) {
+        return true;
+      }
+
+      if (intersects(lane.rightBound2d().basicLineString(), shifted_vehicle_footprint)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
 }  // namespace
 
 AvoidanceModule::AvoidanceModule(
@@ -892,6 +920,12 @@ BehaviorModuleOutput AvoidanceModule::plan()
       spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
       planner_data_->parameters.ego_nearest_dist_threshold,
       planner_data_->parameters.ego_nearest_yaw_threshold);
+  }
+
+  // check if the ego straddles lane border
+  if (!is_recording_) {
+    is_record_necessary_ = straddleRoadBound(
+      spline_shift_path, data.current_lanelets, planner_data_->parameters.vehicle_info);
   }
 
   // sparse resampling for computational cost
