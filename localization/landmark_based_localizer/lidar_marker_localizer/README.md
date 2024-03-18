@@ -40,14 +40,20 @@ ros2 launch autoware_launch ... \
 
 ### Detection Algorithm
 
-![detection_algorithm](./doc_image/detection_algrorithm.png)
+![detection_algorithm](./doc_image/detection_algorithm.png)
 
 1. Split the LiDAR point cloud into rings along the x-axis of the base_link coordinate system at intervals of the `resolution` size.
 2. Find the portion of intensity that matches the `intensity_pattern`.
 3. Perform steps 1 and 2 for each ring, accumulate the matching indices, and detect portions where the count exceeds the `vote_threshold_for_detect_marker` as markers.
 
-### Rosbag
+## Sample Dataset
 
-#### [Sample rosbag and map (AWSIM data)](TODO write URL)
+ - [Sample rosbag and map](https://drive.google.com/file/d/1XqDYPOdziA4GWPjxoFooNPjTO1E1EUFY/view?usp=sharing)
 
-#### [Sample rosbag and map (Real world data)](TODO write URL)
+ This dataset was acquired in National Institute for Land and Infrastructure Management, Full-scale tunnel experiment facility.
+ The reflectors were installed by [Taisei Corporation](https://www.taisei.co.jp/english/).
+
+## Collaborators
+ - [TIER IV ](https://tier4.jp/en/)
+ - [Taisei Corporation](https://www.taisei.co.jp/english/)
+ - [Yuri Shimizu](https://github.com/YuriShimizu824)
