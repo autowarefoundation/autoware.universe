@@ -65,6 +65,12 @@ inline double getUnionArea(const Polygon2d & source_polygon, const Polygon2d & t
 template <class T1, class T2>
 double get2dIoU(const T1 source_object, const T2 target_object, const double min_union_area = 0.01)
 {
+  if (
+    source_object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON &&
+    source_object.shape.footprint.points.size() < 3) {
+    return 0.0;
+  }
+
   const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_object);
   const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
