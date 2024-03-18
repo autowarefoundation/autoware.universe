@@ -423,6 +423,11 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
 void GoalPlannerModuleManager::updateModuleParams(
   [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
 {
+  // TODO(someone): This function does not check OR update
+  // object_recognition_collision_check_soft_margins.empty(),
+  // object_recognition_collision_check_hard_margins, maximum_deceleration, shift_sampling_num or
+  // parking_policy, there seems to be a problem when we use a temp value to check these values.
+
   using tier4_autoware_utils::updateParam;
 
   auto & p = parameters_;
