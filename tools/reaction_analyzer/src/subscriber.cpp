@@ -22,9 +22,12 @@ namespace reaction_analyzer::subscriber
 {
 
 SubscriberBase::SubscriberBase(
-  rclcpp::Node * node, Odometry::ConstSharedPtr & odometry,
-  const geometry_msgs::msg::Pose entity_pose, std::atomic<bool> & spawn_object_cmd)
-: node_(node), odometry_(odometry), entity_pose_(entity_pose), spawn_object_cmd_(spawn_object_cmd)
+  rclcpp::Node * node, Odometry::ConstSharedPtr & odometry, std::atomic<bool> & spawn_object_cmd,
+  const EntityParams & entity_params)
+: node_(node),
+  odometry_(odometry),
+  spawn_object_cmd_(spawn_object_cmd),
+  entity_params_(entity_params)
 {
   // init tf
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
@@ -127,11 +130,11 @@ void SubscriberBase::init_reaction_chains_and_params()
           break;
         }
         case ReactionType::SEARCH_ENTITY: {
-          reaction_params_.search_entity_params.search_radius =
-            node_->get_parameter(module_name + ".search_radius").as_double();
+          reaction_params_.search_entity_params.search_radius_offset =
+            node_->get_parameter(module_name + ".search_radius_offset").as_double();
           RCLCPP_INFO_ONCE(
-            node_->get_logger(), "Search Entity parameters are set: search_radius %f",
-            reaction_params_.search_entity_params.search_radius);
+            node_->get_logger(), "Search Entity parameters are set: search_radius_offset %f",
+            reaction_params_.search_entity_params.search_radius_offset);
           break;
         }
         default:
@@ -142,6 +145,11 @@ void SubscriberBase::init_reaction_chains_and_params()
       }
     }
   }
+  // init variables
+
+  entity_pose_ = create_entity_pose(entity_params_);
+  entity_search_radius_ = calculate_entity_search_radius(entity_params_) +
+                          reaction_params_.search_entity_params.search_radius_offset;
 }
 
 bool SubscriberBase::init_subscribers()
@@ -262,7 +270,7 @@ bool SubscriberBase::init_subscribers()
             };
 
           subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PointCloud2>>(
-            node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+            node_, module.topic_address, rclcpp::SensorDataQoS().get_rmw_qos_profile(),
             create_subscription_options(node_));
           subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
             node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
@@ -451,7 +459,8 @@ bool SubscriberBase::init_subscribers()
   return true;
 }
 
-std::optional<std::unordered_map<std::string, BufferVariant>> SubscriberBase::getMessageBuffersMap()
+std::optional<std::unordered_map<std::string, MessageBufferVariant>>
+SubscriberBase::getMessageBuffersMap()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   if (message_buffers_.empty()) {
@@ -466,24 +475,8 @@ std::optional<std::unordered_map<std::string, BufferVariant>> SubscriberBase::ge
       if (!control_message->second) {
         all_reacted = false;
       }
-    } else if (auto * planning_message = std::get_if<TrajectoryBuffer>(&variant)) {
-      if (!planning_message->has_value()) {
-        all_reacted = false;
-      }
-    } else if (auto * pointcloud_message = std::get_if<PointCloud2Buffer>(&variant)) {
-      if (!pointcloud_message->has_value()) {
-        all_reacted = false;
-      }
-    } else if (auto * predicted_objects_message = std::get_if<PredictedObjectsBuffer>(&variant)) {
-      if (!predicted_objects_message->has_value()) {
-        all_reacted = false;
-      }
-    } else if (auto * detected_objects_message = std::get_if<DetectedObjectsBuffer>(&variant)) {
-      if (!detected_objects_message->has_value()) {
-        all_reacted = false;
-      }
-    } else if (auto * tracked_objects_message = std::get_if<TrackedObjectsBuffer>(&variant)) {
-      if (!tracked_objects_message->has_value()) {
+    } else if (auto * general_message = std::get_if<MessageBuffer>(&variant)) {
+      if (!general_message->has_value()) {
         all_reacted = false;
       }
     }
@@ -523,7 +516,7 @@ void SubscriberBase::on_control_command(
   if (brake_idx) {
     const auto brake_cmd = cmd_buffer.first.at(brake_idx.value());
 
-    // TODO(brkay54): update here if message_filters package add the support for the messages which
+    // TODO(brkay54): update here if message_filters package add support for the messages which
     // does not have header
     const auto & subscriber_variant =
       std::get<SubscriberVariables<AckermannControlCommand>>(subscriber_variables_map_[node_name]);
@@ -536,8 +529,7 @@ void SubscriberBase::on_control_command(
       if (!published_time_vec.empty()) {
         for (const auto & published_time : published_time_vec) {
           if (published_time->header.stamp == brake_cmd.stamp) {
-            cmd_buffer.second = brake_cmd;
-            cmd_buffer.second->stamp = published_time->published_stamp;
+            cmd_buffer.second = *published_time;
             RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
             return;
           }
@@ -551,7 +543,8 @@ void SubscriberBase::on_control_command(
           node_name.c_str());
       }
     } else {
-      cmd_buffer.second = brake_cmd;
+      cmd_buffer.second->header.stamp = brake_cmd.stamp;
+      cmd_buffer.second->published_stamp = brake_cmd.stamp;
       RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     }
   }
@@ -563,16 +556,14 @@ void SubscriberBase::on_trajectory(
   mutex_.lock();
   auto variant = message_buffers_[node_name];
   const auto current_odometry_ptr = odometry_;
-  if (!std::holds_alternative<TrajectoryBuffer>(variant)) {
-    TrajectoryBuffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
   mutex_.unlock();
 
-  if (
-    !current_odometry_ptr || !spawn_object_cmd_ ||
-    std::get<TrajectoryBuffer>(variant).has_value()) {
+  if (!current_odometry_ptr || !spawn_object_cmd_ || std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
@@ -586,8 +577,11 @@ void SubscriberBase::on_trajectory(
     msg_ptr->points, nearest_seg_idx, nearest_objects_seg_idx);
 
   if (zero_vel_idx) {
-    std::get<TrajectoryBuffer>(variant) = *msg_ptr;
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
+    // set header time
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer->header.stamp = msg_ptr->header.stamp;
+    buffer->published_stamp = msg_ptr->header.stamp;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -601,16 +595,14 @@ void SubscriberBase::on_trajectory(
   mutex_.lock();
   auto variant = message_buffers_[node_name];
   const auto current_odometry_ptr = odometry_;
-  if (!std::holds_alternative<TrajectoryBuffer>(variant)) {
-    TrajectoryBuffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
   mutex_.unlock();
 
-  if (
-    !current_odometry_ptr || !spawn_object_cmd_ ||
-    std::get<TrajectoryBuffer>(variant).has_value()) {
+  if (!current_odometry_ptr || !spawn_object_cmd_ || std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
@@ -628,11 +620,10 @@ void SubscriberBase::on_trajectory(
     motion_utils::searchZeroVelocityIndex(msg_ptr->points, nearest_seg_idx, target_idx);
 
   if (zero_vel_idx) {
-    std::get<TrajectoryBuffer>(variant) = *msg_ptr;
-
-    // set published time
-    std::get<TrajectoryBuffer>(variant)->header.stamp = published_time_ptr->published_stamp;
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
+    // set published time
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer = *published_time_ptr;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -644,14 +635,14 @@ void SubscriberBase::on_pointcloud(
 {
   mutex_.lock();
   auto variant = message_buffers_[node_name];
-  if (!std::holds_alternative<PointCloud2Buffer>(variant)) {
-    PointCloud2Buffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
   mutex_.unlock();
 
-  if (!spawn_object_cmd_ || std::get<PointCloud2Buffer>(variant).has_value()) {
+  if (!spawn_object_cmd_ || std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
@@ -676,9 +667,12 @@ void SubscriberBase::on_pointcloud(
   pcl::PointCloud<pcl::PointXYZ> pcl_pointcloud;
   pcl::fromROSMsg(transformed_points, pcl_pointcloud);
 
-  if (search_pointcloud_near_entity(pcl_pointcloud)) {
-    std::get<PointCloud2Buffer>(variant) = *msg_ptr;
+  if (search_pointcloud_near_pose(pcl_pointcloud, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
+    // set header time
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer->header.stamp = msg_ptr->header.stamp;
+    buffer->published_stamp = msg_ptr->header.stamp;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -690,14 +684,14 @@ void SubscriberBase::on_pointcloud(
 {
   mutex_.lock();
   auto variant = message_buffers_[node_name];
-  if (!std::holds_alternative<PointCloud2Buffer>(variant)) {
-    PointCloud2Buffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
   mutex_.unlock();
 
-  if (!spawn_object_cmd_ || std::get<PointCloud2Buffer>(variant).has_value()) {
+  if (!spawn_object_cmd_ || std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
@@ -722,11 +716,11 @@ void SubscriberBase::on_pointcloud(
   pcl::PointCloud<pcl::PointXYZ> pcl_pointcloud;
   pcl::fromROSMsg(transformed_points, pcl_pointcloud);
 
-  if (search_pointcloud_near_entity(pcl_pointcloud)) {
-    std::get<PointCloud2Buffer>(variant) = *msg_ptr;
-    // set published time
-    std::get<PointCloud2Buffer>(variant)->header.stamp = published_time_ptr->published_stamp;
+  if (search_pointcloud_near_pose(pcl_pointcloud, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
+    // set published time
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer = *published_time_ptr;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -737,8 +731,8 @@ void SubscriberBase::on_predicted_objects(
 {
   mutex_.lock();
   auto variant = message_buffers_[node_name];
-  if (!std::holds_alternative<PredictedObjectsBuffer>(variant)) {
-    PredictedObjectsBuffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
@@ -746,14 +740,16 @@ void SubscriberBase::on_predicted_objects(
 
   if (
     !spawn_object_cmd_ || msg_ptr->objects.empty() ||
-    std::get<PredictedObjectsBuffer>(variant).has_value()) {
+    std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
-  if (search_predicted_objects_near_entity(*msg_ptr)) {
-    std::get<PredictedObjectsBuffer>(variant) = *msg_ptr;
+  if (search_predicted_objects_near_pose(*msg_ptr, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
-
+    // set header time
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer->header.stamp = msg_ptr->header.stamp;
+    buffer->published_stamp = msg_ptr->header.stamp;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -766,8 +762,8 @@ void SubscriberBase::on_predicted_objects(
 {
   mutex_.lock();
   auto variant = message_buffers_[node_name];
-  if (!std::holds_alternative<PredictedObjectsBuffer>(variant)) {
-    PredictedObjectsBuffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
@@ -775,16 +771,15 @@ void SubscriberBase::on_predicted_objects(
 
   if (
     !spawn_object_cmd_ || msg_ptr->objects.empty() ||
-    std::get<PredictedObjectsBuffer>(variant).has_value()) {
+    std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
-  if (search_predicted_objects_near_entity(*msg_ptr)) {
-    std::get<PredictedObjectsBuffer>(variant) = *msg_ptr;
+  if (search_predicted_objects_near_pose(*msg_ptr, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
-
     // set published time
-    std::get<PredictedObjectsBuffer>(variant)->header.stamp = published_time_ptr->published_stamp;
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer = *published_time_ptr;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -796,15 +791,15 @@ void SubscriberBase::on_detected_objects(
 {
   mutex_.lock();
   auto variant = message_buffers_[node_name];
-  if (!std::holds_alternative<DetectedObjectsBuffer>(variant)) {
-    DetectedObjectsBuffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
   mutex_.unlock();
   if (
     !spawn_object_cmd_ || msg_ptr->objects.empty() ||
-    std::get<DetectedObjectsBuffer>(variant).has_value()) {
+    std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
@@ -828,9 +823,12 @@ void SubscriberBase::on_detected_objects(
     tf2::doTransform(input_stamped, output_stamped, transform_stamped);
     obj.kinematics.pose_with_covariance.pose = output_stamped.pose;
   }
-  if (search_detected_objects_near_entity(output_objs)) {
-    std::get<DetectedObjectsBuffer>(variant) = *msg_ptr;
+  if (search_detected_objects_near_pose(output_objs, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
+    // set header time
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer->header.stamp = msg_ptr->header.stamp;
+    buffer->published_stamp = msg_ptr->header.stamp;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -843,15 +841,15 @@ void SubscriberBase::on_detected_objects(
 {
   mutex_.lock();
   auto variant = message_buffers_[node_name];
-  if (!std::holds_alternative<DetectedObjectsBuffer>(variant)) {
-    DetectedObjectsBuffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
   mutex_.unlock();
   if (
     !spawn_object_cmd_ || msg_ptr->objects.empty() ||
-    std::get<DetectedObjectsBuffer>(variant).has_value()) {
+    std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
@@ -875,12 +873,11 @@ void SubscriberBase::on_detected_objects(
     tf2::doTransform(input_stamped, output_stamped, transform_stamped);
     obj.kinematics.pose_with_covariance.pose = output_stamped.pose;
   }
-  if (search_detected_objects_near_entity(output_objs)) {
-    std::get<DetectedObjectsBuffer>(variant) = *msg_ptr;
+  if (search_detected_objects_near_pose(output_objs, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
-
     // set published time
-    std::get<DetectedObjectsBuffer>(variant)->header.stamp = published_time_ptr->published_stamp;
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer = *published_time_ptr;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -892,21 +889,19 @@ void SubscriberBase::on_tracked_objects(
 {
   mutex_.lock();
   auto variant = message_buffers_[node_name];
-  if (!std::holds_alternative<TrackedObjectsBuffer>(variant)) {
-    TrackedObjectsBuffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
   mutex_.unlock();
   if (
     !spawn_object_cmd_ || msg_ptr->objects.empty() ||
-    std::get<TrackedObjectsBuffer>(variant).has_value()) {
+    std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
-  if (search_tracked_objects_near_entity(*msg_ptr)) {
-    std::get<TrackedObjectsBuffer>(variant) = *msg_ptr;
-    RCLCPP_INFO(node_->get_logger(), "Reacted %s", node_name.c_str());
+  if (search_tracked_objects_near_pose(*msg_ptr, entity_pose_, entity_search_radius_)) {
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
@@ -919,92 +914,27 @@ void SubscriberBase::on_tracked_objects(
 {
   mutex_.lock();
   auto variant = message_buffers_[node_name];
-  if (!std::holds_alternative<TrackedObjectsBuffer>(variant)) {
-    TrackedObjectsBuffer buffer(std::nullopt);
+  if (!std::holds_alternative<MessageBuffer>(variant)) {
+    MessageBuffer buffer(std::nullopt);
     variant = buffer;
     message_buffers_[node_name] = variant;
   }
   mutex_.unlock();
   if (
     !spawn_object_cmd_ || msg_ptr->objects.empty() ||
-    std::get<TrackedObjectsBuffer>(variant).has_value()) {
+    std::get<MessageBuffer>(variant).has_value()) {
     return;
   }
 
-  if (search_tracked_objects_near_entity(*msg_ptr)) {
-    std::get<TrackedObjectsBuffer>(variant) = *msg_ptr;
+  if (search_tracked_objects_near_pose(*msg_ptr, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
     // set published time
-    std::get<TrackedObjectsBuffer>(variant)->header.stamp = published_time_ptr->published_stamp;
+    auto & buffer = std::get<MessageBuffer>(variant);
+    buffer = *published_time_ptr;
     mutex_.lock();
     message_buffers_[node_name] = variant;
     mutex_.unlock();
   }
-}
-
-bool SubscriberBase::search_pointcloud_near_entity(
-  const pcl::PointCloud<pcl::PointXYZ> & pcl_pointcloud)
-{
-  bool isAnyPointWithinRadius = std::any_of(
-    pcl_pointcloud.points.begin(), pcl_pointcloud.points.end(), [this](const auto & point) {
-      return tier4_autoware_utils::calcDistance3d(entity_pose_.position, point) <=
-             reaction_params_.search_entity_params.search_radius;
-    });
-
-  if (isAnyPointWithinRadius) {
-    return true;
-  }
-  return false;
-}
-
-bool SubscriberBase::search_predicted_objects_near_entity(
-  const PredictedObjects & predicted_objects)
-{
-  bool isAnyObjectWithinRadius = std::any_of(
-    predicted_objects.objects.begin(), predicted_objects.objects.end(),
-    [this](const PredictedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
-               entity_pose_.position,
-               object.kinematics.initial_pose_with_covariance.pose.position) <=
-             reaction_params_.search_entity_params.search_radius;
-    });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
-}
-
-bool SubscriberBase::search_detected_objects_near_entity(const DetectedObjects & detected_objects)
-{
-  bool isAnyObjectWithinRadius = std::any_of(
-    detected_objects.objects.begin(), detected_objects.objects.end(),
-    [this](const DetectedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
-               entity_pose_.position, object.kinematics.pose_with_covariance.pose.position) <=
-             reaction_params_.search_entity_params.search_radius;
-    });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
-}
-
-bool SubscriberBase::search_tracked_objects_near_entity(const TrackedObjects & tracked_objects)
-{
-  bool isAnyObjectWithinRadius = std::any_of(
-    tracked_objects.objects.begin(), tracked_objects.objects.end(),
-    [this](const TrackedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
-               entity_pose_.position, object.kinematics.pose_with_covariance.pose.position) <=
-             reaction_params_.search_entity_params.search_radius;
-    });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
 }
 
 std::optional<size_t> SubscriberBase::find_first_brake_idx(

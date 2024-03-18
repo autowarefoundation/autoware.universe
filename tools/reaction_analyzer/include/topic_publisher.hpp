@@ -17,12 +17,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rosbag2_cpp/reader.hpp>
+#include <tf2_eigen/tf2_eigen/tf2_eigen.hpp>
 #include <utils.hpp>
 
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp>
@@ -34,7 +31,9 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/imu.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <memory>
 #include <mutex>
@@ -75,6 +74,8 @@ enum class PublisherMessageType {
 
 struct TopicPublisherParams
 {
+  double dummy_perception_publisher_period;  // Only for planning_control mode
+  double spawned_pointcloud_sampling_distance;
   std::string path_bag_without_object;       // Path to the bag file without object
   std::string path_bag_with_object;          // Path to the bag file with object
   std::string pointcloud_publisher_type;     // Type of the pointcloud publisher
@@ -196,7 +197,8 @@ class TopicPublisher
 public:
   explicit TopicPublisher(
     rclcpp::Node * node, std::atomic<bool> & spawn_object_cmd,
-    std::optional<rclcpp::Time> & spawn_cmd_time);
+    std::optional<rclcpp::Time> & spawn_cmd_time, const RunningMode & node_running_mode,
+    const EntityParams & entity_params);
 
   ~TopicPublisher() = default;
   void reset();
@@ -206,12 +208,32 @@ private:
 
   // Initialized variables
   rclcpp::Node * node_;
+  RunningMode node_running_mode_;
   std::atomic<bool> & spawn_object_cmd_;
+  EntityParams entity_params_;
   std::optional<rclcpp::Time> & spawn_cmd_time_;  // Set by a publisher function when the
                                                   // spawn_object_cmd_ is true
 
+  // tf
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
   // Parameters
   TopicPublisherParams topic_publisher_params_;
+
+  // Variables planning_control mode
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_;
+  rclcpp::Publisher<PredictedObjects>::SharedPtr pub_predicted_objects_;
+  PointCloud2::SharedPtr entity_pointcloud_ptr_;
+  PredictedObjects::SharedPtr predicted_objects_ptr_;
+
+  // Variables perception_planning mode
+  PointcloudPublisherType pointcloud_publisher_type_;
+  std::unordered_map<std::string, PublisherVariablesVariant> topic_publisher_map_;
+  std::unordered_map<std::string, LidarOutputPair>
+    lidar_pub_variable_pair_map_;  // used to publish pointcloud_raw and pointcloud_raw_ex
+  bool is_object_spawned_message_published_{false};
+  std::shared_ptr<rclcpp::TimerBase> one_shot_timer_shared_ptr_;
 
   // Functions
   void set_message_to_variable_map(
@@ -228,18 +250,12 @@ private:
       std::shared_ptr<PublisherVariables<PointCloud2>>,
       std::shared_ptr<PublisherVariables<PointCloud2>>> & lidar_output_pair_);
   void generic_message_publisher(const std::string & topic_name);
-
-  // Variables
-  PointcloudPublisherType pointcloud_publisher_type_;
-  std::unordered_map<std::string, PublisherVariablesVariant> topic_publisher_map_;
-  std::unordered_map<std::string, LidarOutputPair>
-    lidar_pub_variable_pair_map_;  // used to publish pointcloud_raw and pointcloud_raw_ex
-  bool is_object_spawned_message_published{false};
-  std::shared_ptr<rclcpp::TimerBase> one_shot_timer_shared_ptr_;
+  void dummy_perception_publisher();  // Only for planning_control mode
 
   // Timers
   std::unordered_map<std::string, rclcpp::TimerBase::SharedPtr> pointcloud_publish_timers_map_;
   rclcpp::TimerBase::SharedPtr pointcloud_sync_publish_timer_;
+  rclcpp::TimerBase::SharedPtr dummy_perception_timer_;
 };
 }  // namespace reaction_analyzer::topic_publisher
 
