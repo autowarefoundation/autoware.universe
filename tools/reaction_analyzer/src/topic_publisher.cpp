@@ -22,40 +22,80 @@ namespace reaction_analyzer::topic_publisher
 
 TopicPublisher::TopicPublisher(
   rclcpp::Node * node, std::atomic<bool> & spawn_object_cmd,
-  std::optional<rclcpp::Time> & spawn_cmd_time)
-: node_(node), spawn_object_cmd_(spawn_object_cmd), spawn_cmd_time_(spawn_cmd_time)
-
+  std::optional<rclcpp::Time> & spawn_cmd_time, const RunningMode & node_running_mode,
+  const EntityParams & entity_params)
+: node_(node),
+  node_running_mode_(node_running_mode),
+  spawn_object_cmd_(spawn_object_cmd),
+  entity_params_(entity_params),
+  spawn_cmd_time_(spawn_cmd_time)
 {
-  // get perception_planning mode parameters
-  topic_publisher_params_.path_bag_with_object =
-    node_->get_parameter("topic_publisher.path_bag_with_object").as_string();
-  topic_publisher_params_.path_bag_without_object =
-    node_->get_parameter("topic_publisher.path_bag_without_object").as_string();
-  topic_publisher_params_.pointcloud_publisher_type =
-    node_->get_parameter("topic_publisher.pointcloud_publisher.pointcloud_publisher_type")
-      .as_string();
-  topic_publisher_params_.pointcloud_publisher_period =
-    node_->get_parameter("topic_publisher.pointcloud_publisher.pointcloud_publisher_period")
-      .as_double();
-  topic_publisher_params_.publish_only_pointcloud_with_object =
-    node_->get_parameter("topic_publisher.pointcloud_publisher.publish_only_pointcloud_with_object")
-      .as_bool();
+  if (node_running_mode_ == RunningMode::PerceptionPlanning) {
+    // get perception_planning mode parameters
+    topic_publisher_params_.path_bag_with_object =
+      node_->get_parameter("topic_publisher.path_bag_with_object").as_string();
+    topic_publisher_params_.path_bag_without_object =
+      node_->get_parameter("topic_publisher.path_bag_without_object").as_string();
+    topic_publisher_params_.pointcloud_publisher_type =
+      node_->get_parameter("topic_publisher.pointcloud_publisher.pointcloud_publisher_type")
+        .as_string();
+    topic_publisher_params_.pointcloud_publisher_period =
+      node_->get_parameter("topic_publisher.pointcloud_publisher.pointcloud_publisher_period")
+        .as_double();
+    topic_publisher_params_.publish_only_pointcloud_with_object =
+      node_
+        ->get_parameter("topic_publisher.pointcloud_publisher.publish_only_pointcloud_with_object")
+        .as_bool();
 
-  // set pointcloud publisher type
-  if (topic_publisher_params_.pointcloud_publisher_type == "sync_header_sync_publish") {
-    pointcloud_publisher_type_ = PointcloudPublisherType::SYNC_HEADER_SYNC_PUBLISHER;
-  } else if (topic_publisher_params_.pointcloud_publisher_type == "async_header_sync_publish") {
-    pointcloud_publisher_type_ = PointcloudPublisherType::ASYNC_HEADER_SYNC_PUBLISHER;
-  } else if (topic_publisher_params_.pointcloud_publisher_type == "async_publish") {
-    pointcloud_publisher_type_ = PointcloudPublisherType::ASYNC_PUBLISHER;
+    // set pointcloud publisher type
+    if (topic_publisher_params_.pointcloud_publisher_type == "sync_header_sync_publish") {
+      pointcloud_publisher_type_ = PointcloudPublisherType::SYNC_HEADER_SYNC_PUBLISHER;
+    } else if (topic_publisher_params_.pointcloud_publisher_type == "async_header_sync_publish") {
+      pointcloud_publisher_type_ = PointcloudPublisherType::ASYNC_HEADER_SYNC_PUBLISHER;
+    } else if (topic_publisher_params_.pointcloud_publisher_type == "async_publish") {
+      pointcloud_publisher_type_ = PointcloudPublisherType::ASYNC_PUBLISHER;
+    } else {
+      RCLCPP_ERROR(node_->get_logger(), "Invalid pointcloud_publisher_type");
+      rclcpp::shutdown();
+      return;
+    }
+
+    // Init the publishers which will read the messages from the rosbag
+    init_rosbag_publishers();
+  } else if (node_running_mode_ == RunningMode::PlanningControl) {
+    // init tf
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
+    // get parameters
+    topic_publisher_params_.dummy_perception_publisher_period =
+      node_->get_parameter("topic_publisher.dummy_perception_publisher_period").as_double();
+    topic_publisher_params_.spawned_pointcloud_sampling_distance =
+      node_->get_parameter("topic_publisher.spawned_pointcloud_sampling_distance").as_double();
+
+    // init the messages that will be published to spawn the object
+    entity_pointcloud_ptr_ = create_entity_pointcloud_ptr(
+      entity_params_, topic_publisher_params_.spawned_pointcloud_sampling_distance);
+    predicted_objects_ptr_ = create_entity_predicted_objects_ptr(entity_params_);
+
+    // init the publishers
+    pub_pointcloud_ =
+      node_->create_publisher<PointCloud2>("output/pointcloud", rclcpp::SensorDataQoS());
+    pub_predicted_objects_ =
+      node_->create_publisher<PredictedObjects>("output/objects", rclcpp::QoS(1));
+
+    // init dummy perception publisher
+    const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::duration<double>(topic_publisher_params_.dummy_perception_publisher_period));
+
+    dummy_perception_timer_ = rclcpp::create_timer(
+      node_, node_->get_clock(), period_ns,
+      std::bind(&TopicPublisher::dummy_perception_publisher, this));
   } else {
-    RCLCPP_ERROR(node_->get_logger(), "Invalid pointcloud_publisher_type");
+    RCLCPP_ERROR(node_->get_logger(), "Invalid running mode");
     rclcpp::shutdown();
     return;
   }
-
-  // Init the publishers which will read the messages from the rosbag
-  init_rosbag_publishers();
 }
 
 void TopicPublisher::pointcloud_messages_sync_publisher(const PointcloudPublisherType type)
@@ -74,10 +114,10 @@ void TopicPublisher::pointcloud_messages_sync_publisher(const PointcloudPublishe
           *publisher_var_pair.second.second, current_time,
           topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
       }
-      if (is_object_spawned && !is_object_spawned_message_published) {
-        is_object_spawned_message_published = true;
+      if (is_object_spawned && !is_object_spawned_message_published_) {
+        is_object_spawned_message_published_ = true;
         mutex_.lock();
-        spawn_cmd_time_ = node_->now();
+        spawn_cmd_time_ = current_time;
         mutex_.unlock();
       }
       break;
@@ -100,10 +140,10 @@ void TopicPublisher::pointcloud_messages_sync_publisher(const PointcloudPublishe
           topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
         counter++;
       }
-      if (is_object_spawned && !is_object_spawned_message_published) {
-        is_object_spawned_message_published = true;
+      if (is_object_spawned && !is_object_spawned_message_published_) {
+        is_object_spawned_message_published_ = true;
         mutex_.lock();
-        spawn_cmd_time_ = node_->now();
+        spawn_cmd_time_ = current_time;
         mutex_.unlock();
       }
       break;
@@ -128,10 +168,10 @@ void TopicPublisher::pointcloud_messages_async_publisher(
     *lidar_output_pair_.second, current_time,
     topic_publisher_params_.publish_only_pointcloud_with_object || is_object_spawned);
 
-  if (is_object_spawned && !is_object_spawned_message_published) {
-    is_object_spawned_message_published = true;
+  if (is_object_spawned && !is_object_spawned_message_published_) {
+    is_object_spawned_message_published_ = true;
     mutex_.lock();
-    spawn_cmd_time_ = node_->now();
+    spawn_cmd_time_ = current_time;
     mutex_.unlock();
   }
 }
@@ -150,9 +190,62 @@ void TopicPublisher::generic_message_publisher(const std::string & topic_name)
     publisher_variant);
 }
 
+void TopicPublisher::dummy_perception_publisher()
+{
+  if (!spawn_object_cmd_) {
+    // do not spawn it, send empty pointcloud
+    pcl::PointCloud<pcl::PointXYZ> pcl_empty;
+    PointCloud2 empty_pointcloud;
+    PredictedObjects empty_predicted_objects;
+    pcl::toROSMsg(pcl_empty, empty_pointcloud);
+
+    const auto current_time = node_->now();
+    empty_pointcloud.header.frame_id = "base_link";
+    empty_pointcloud.header.stamp = current_time;
+
+    empty_predicted_objects.header.frame_id = "map";
+    empty_predicted_objects.header.stamp = current_time;
+
+    pub_pointcloud_->publish(empty_pointcloud);
+    pub_predicted_objects_->publish(empty_predicted_objects);
+  } else {
+    // transform pointcloud
+    geometry_msgs::msg::TransformStamped transform_stamped{};
+    try {
+      transform_stamped = tf_buffer_->lookupTransform(
+        "base_link", "map", node_->now(), rclcpp::Duration::from_seconds(0.1));
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to look up transform from map to base_link");
+      return;
+    }
+
+    // transform by using eigen matrix
+    PointCloud2 transformed_points{};
+    const Eigen::Matrix4f affine_matrix =
+      tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
+    pcl_ros::transformPointCloud(affine_matrix, *entity_pointcloud_ptr_, transformed_points);
+    const auto current_time = node_->now();
+
+    transformed_points.header.frame_id = "base_link";
+    transformed_points.header.stamp = current_time;
+
+    predicted_objects_ptr_->header.frame_id = "map";
+    predicted_objects_ptr_->header.stamp = current_time;
+
+    pub_pointcloud_->publish(transformed_points);
+    pub_predicted_objects_->publish(*predicted_objects_ptr_);
+    if (!is_object_spawned_message_published_) {
+      mutex_.lock();
+      spawn_cmd_time_ = current_time;
+      mutex_.unlock();
+      is_object_spawned_message_published_ = true;
+    }
+  }
+}
+
 void TopicPublisher::reset()
 {
-  is_object_spawned_message_published = false;
+  is_object_spawned_message_published_ = false;
 }
 
 void TopicPublisher::init_rosbag_publishers()

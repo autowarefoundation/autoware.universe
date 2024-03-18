@@ -126,6 +126,15 @@ vehicle should be same.**
 **After you record the rosbags, you can set the `path_bag_without_object` and `path_bag_with_object` parameters with the
 paths of the recorded rosbags.**
 
+## Results
+
+The results will be stored in the `csv` file format and written to the `output_file_path` you defined. It shows each
+pipeline of the Autoware by using header timestamp of the messages, and it reports `Node Latency`, and `Total Latency`
+for each of the nodes.
+
+- `Node Latency`: The time difference between previous and current node's reaction timestamps.
+- `Total Latency`: The time difference between the message's published timestamp and the spawn obstacle command sent timestamp.
+
 ## Parameters
 
 | Name                                                                         | Type   | Description                                                                                                                                   |
@@ -133,16 +142,15 @@ paths of the recorded rosbags.**
 | `timer_period`                                                               | double | [s] Period for the main processing timer.                                                                                                     |
 | `test_iteration`                                                             | int    | Number of iterations for the test.                                                                                                            |
 | `output_file_path`                                                           | string | Directory path where test results and statistics will be stored.                                                                              |
-| `object_search_radius_offset`                                                | double | [m] Additional radius added to the search area when looking for objects.                                                                      |
 | `spawn_time_after_init`                                                      | double | [s] Time delay after initialization before spawning objects. Only valid `perception_planning` mode.                                           |
 | `spawn_distance_threshold`                                                   | double | [m] Distance threshold for spawning objects. Only valid `planning_control` mode.                                                              |
-| `spawned_pointcloud_sampling_distance`                                       | double | [m] Sampling distance for point clouds of spawned objects. Only valid `planning_control` mode.                                                |
-| `dummy_perception_publisher_period`                                          | double | [s] Publishing period for the dummy perception data. Only valid `planning_control` mode.                                                      |
 | `poses.initialization_pose`                                                  | struct | Initial pose of the vehicle, containing `x`, `y`, `z`, `roll`, `pitch`, and `yaw` fields. Only valid `planning_control` mode.                 |
 | `poses.entity_params`                                                        | struct | Parameters for entities (e.g., obstacles), containing `x`, `y`, `z`, `roll`, `pitch`, `yaw`, `x_dimension`, `y_dimension`, and `z_dimension`. |
 | `poses.goal_pose`                                                            | struct | Goal pose of the vehicle, containing `x`, `y`, `z`, `roll`, `pitch`, and `yaw` fields.                                                        |
 | `topic_publisher.path_bag_without_object`                                    | string | Path to the ROS bag file without objects. Only valid `perception_planning` mode.                                                              |
 | `topic_publisher.path_bag_with_object`                                       | string | Path to the ROS bag file with objects. Only valid `perception_planning` mode.                                                                 |
+| `topic_publisher.spawned_pointcloud_sampling_distance`                       | double | [m] Sampling distance for point clouds of spawned objects. Only valid `planning_control` mode.                                                |
+| `topic_publisher.dummy_perception_publisher_period`                          | double | [s] Publishing period for the dummy perception data. Only valid `planning_control` mode.                                                      |
 | `topic_publisher.pointcloud_publisher.pointcloud_publisher_type`             | string | Defines how the PointCloud2 messages are going to be published. Modes explained above.                                                        |
 | `topic_publisher.pointcloud_publisher.pointcloud_publisher_period`           | double | [s] Publishing period of the PointCloud2 messages.                                                                                            |
 | `topic_publisher.pointcloud_publisher.publish_only_pointcloud_with_object`   | bool   | Default false. Publish only the point cloud messages with the object.                                                                         |
@@ -191,5 +199,4 @@ paths of the recorded rosbags.**
 
 - The reaction analyzer can be improved by adding more reaction types. Currently, it is supporting only `FIRST_BRAKE`,
   `SEARCH_ZERO_VEL`, and `SEARCH_ENTITY` reaction types. It can be extended by adding more reaction types for each of
-  the
-  message types.
+  the message types.
