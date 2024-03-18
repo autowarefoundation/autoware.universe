@@ -1,0 +1,9 @@
+nodes:
+  #rslidar driver   node
+  - id: rslidar_driver
+    custom:
+      source: build/rs_driver_dora_ros_pcap
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - pointcloud

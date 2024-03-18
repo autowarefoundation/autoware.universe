@@ -1,0 +1,52 @@
+map_save_path: "./saved_map/saved_map7.pcd"
+ros_visualize: true
+
+lidar_frame: "velodyne"
+lidar_topic: "/velodyne_points"
+odom_topic: "/leg_odom"
+imu_topic: "/imu/data"
+
+# output things ================ >
+odom_lidar_topic: "/odom_lidar" # sensor_msgs::PointCloud2
+output_odom_topic: "/auto_odom" # nav_msgs::Odometry
+
+# will republish point with now timestamp
+debug_print: false
+use_odom: false
+use_imu: false
+
+# whether inverse the imu axis
+imu_upside_down: false
+odom_inverse: true
+incremental_voxel_update: true
+
+# setting -1 mean it will output the whole ndt map ===> FOR THE WHOLE MAP
+# setting 10 mean 10*frame_point_num will be saved ===> FOR FAST LOC
+save_frame_point: -1
+
+baselink2LiDAR: [0, 0, 0, 0, 0, 0] # x,y,z, roll, pitch, yaw
+
+# parameter's for ndt =========================== >
+# Cell Size while mapping using ND (meters) (default 1.0)
+resolution: 5.0
+
+# Increment value between iterations while matching (default 0.1)
+step_size: 0.5
+
+# Value to decide convergence between iterations (meters) (default 0.01)
+trans_epsilon: 0.01
+
+# Maximum number of iterations before stopping matching (default 30)
+max_iterations: 30
+
+# Voxel Grid Size of the input scan (downsampling) (default 1.0)
+leaf_size: 1.0
+
+# Ignore points closer than this value (meters) (default 5.0)
+min_scan_range: 5.0
+
+# Ignore points far than this value (meters) (default 200.0)
+max_scan_range: 200.0
+
+# Minimum distance between points to be added to the final map (default 1.0)
+min_add_scan_shift: 1.0

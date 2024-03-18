@@ -1,0 +1,9 @@
+nodes:
+  - id: cxx-Robosense-api
+    custom:
+      source: build/rs_driver_dora
+      inputs:
+        tick: dora/timer/millis/300
+      outputs:
+        - pointCloud
+

@@ -1,0 +1,15 @@
+nodes:
+  - id: test
+    operator:
+      python: op_2/op_3.py
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - Imu100D4
+
+#   - id: custom_node_1
+#     operator:
+#       python: node_1/node_1.py
+#       inputs:
+# #        tick: dora/timer/secs/1
+#         Imu100D4: op_1/Imu100D4

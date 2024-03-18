@@ -1,0 +1,22 @@
+nodes:
+  - id: webcam_color
+    operator:
+      python: ../webcam_D435i.py
+      inputs:
+        tick: dora/timer/millis/50
+      outputs:
+        - color_image
+        - depth_image
+        - infra1_image
+        - infra2_image
+        - imu_data
+        - depth_to_color_extrinsics
+
+    env:
+      DEVICE_INDEX: 0
+
+  - id: plot_color
+    operator:
+      python: ./plot_color.py
+      inputs:
+        color_image: webcam_color/color_image

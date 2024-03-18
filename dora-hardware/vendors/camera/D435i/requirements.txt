@@ -1,0 +1,9 @@
+matplotlib==3.5.3
+numpy==1.21.5
+numpy==1.21.6
+open3d==0.17.0
+opencv_python==4.8.0.74
+pyarrow==12.0.1
+pyrealsense2==2.54.1.5216
+scikit_learn==1.0.2
+scipy==1.7.3

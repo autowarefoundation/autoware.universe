@@ -1,6 +1,0 @@
-/**:
-  ros__parameters:
-    event_diag_list:
-      cpu_temperature: "CPU Temperature"
-      cpu_usage: "CPU Usage"
-      cpu_load_average: "CPU Load Average"
