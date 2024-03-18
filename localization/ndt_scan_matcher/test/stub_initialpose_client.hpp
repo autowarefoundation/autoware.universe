@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NDT_SCAN_MATCHER__TEST__STUB_INITIALPOSE_CLIENT_HPP_
-#define NDT_SCAN_MATCHER__TEST__STUB_INITIALPOSE_CLIENT_HPP_
+#ifndef STUB_INITIALPOSE_CLIENT_HPP_
+#define STUB_INITIALPOSE_CLIENT_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -62,4 +62,4 @@ private:
   rclcpp::Client<AlignSrv>::SharedPtr align_service_client_;
 };
 
-#endif  // NDT_SCAN_MATCHER__TEST__STUB_INITIALPOSE_CLIENT_HPP_
+#endif  // STUB_INITIALPOSE_CLIENT_HPP_

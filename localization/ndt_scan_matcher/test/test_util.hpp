@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NDT_SCAN_MATCHER__TEST__TEST_UTIL_HPP_
-#define NDT_SCAN_MATCHER__TEST__TEST_UTIL_HPP_
+#ifndef TEST_UTIL_HPP_
+#define TEST_UTIL_HPP_
 
 #include <pcl/point_types.h>
 
@@ -40,4 +40,4 @@ pcl::PointCloud<pcl::PointXYZ> make_sample_pcd(
   return cloud;
 }
 
-#endif  // NDT_SCAN_MATCHER__TEST__TEST_UTIL_HPP_
+#endif  // TEST_UTIL_HPP_

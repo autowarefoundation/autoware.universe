@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NDT_SCAN_MATCHER__TEST__STUB_PCD_LOADER_HPP_
-#define NDT_SCAN_MATCHER__TEST__STUB_PCD_LOADER_HPP_
+#ifndef STUB_PCD_LOADER_HPP_
+#define STUB_PCD_LOADER_HPP_
 
 #include "test_util.hpp"
 
@@ -59,4 +59,4 @@ private:
   }
 };
 
-#endif  // NDT_SCAN_MATCHER__TEST__STUB_PCD_LOADER_HPP_
+#endif  // STUB_PCD_LOADER_HPP_

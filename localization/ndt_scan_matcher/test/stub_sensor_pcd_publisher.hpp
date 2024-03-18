@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NDT_SCAN_MATCHER__TEST__STUB_SENSOR_PCD_PUBLISHER_HPP_
-#define NDT_SCAN_MATCHER__TEST__STUB_SENSOR_PCD_PUBLISHER_HPP_
+#ifndef STUB_SENSOR_PCD_PUBLISHER_HPP_
+#define STUB_SENSOR_PCD_PUBLISHER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -24,8 +24,7 @@ class StubSensorPcdPublisher : public rclcpp::Node
 public:
   StubSensorPcdPublisher() : Node("stub_sensor_pcd_publisher")
   {
-    pcd_publisher_ =
-      this->create_publisher<sensor_msgs::msg::PointCloud2>("/points_raw", 10);
+    pcd_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/points_raw", 10);
   }
 
   void publish_pcd(const sensor_msgs::msg::PointCloud2 & pcd) { pcd_publisher_->publish(pcd); }
@@ -34,4 +33,4 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pcd_publisher_;
 };
 
-#endif  // NDT_SCAN_MATCHER__TEST__STUB_SENSOR_PCD_PUBLISHER_HPP_
+#endif  // STUB_SENSOR_PCD_PUBLISHER_HPP_
