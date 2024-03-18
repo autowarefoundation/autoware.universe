@@ -20,6 +20,7 @@
 #include <autoware_internal_msgs/msg/published_time.hpp>
 #include <std_msgs/msg/header.hpp>
 
+#include <cstring>
 #include <functional>
 #include <map>
 #include <string>
@@ -91,7 +92,7 @@ private:
   {
     bool operator()(const rmw_gid_t & lhs, const rmw_gid_t & rhs) const
     {
-      return memcmp(lhs.data, rhs.data, RMW_GID_STORAGE_SIZE) < 0;
+      return std::memcmp(lhs.data, rhs.data, RMW_GID_STORAGE_SIZE) < 0;
     }
   };
 
