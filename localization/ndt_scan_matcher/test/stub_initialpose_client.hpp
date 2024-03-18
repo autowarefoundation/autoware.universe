@@ -19,6 +19,8 @@
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
+#include <memory>
+
 class StubInitialposeClient : public rclcpp::Node
 {
   using AlignSrv = tier4_localization_msgs::srv::PoseWithCovarianceStamped;

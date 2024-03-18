@@ -19,6 +19,8 @@
 
 #include <std_srvs/srv/set_bool.hpp>
 
+#include <memory>
+
 class StubTriggerNodeClient : public rclcpp::Node
 {
   using SetBool = std_srvs::srv::SetBool;
