@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef STUB_TEST_FIXTURE_HPP_
-#define STUB_TEST_FIXTURE_HPP_
+#ifndef TEST_FIXTURE_HPP_
+#define TEST_FIXTURE_HPP_
 
 #include "../include/ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 #include "stub_initialpose_client.hpp"
@@ -86,4 +86,4 @@ protected:
   std::shared_ptr<StubSensorPcdPublisher> sensor_pcd_publisher_;
 };
 
-#endif  // STUB_TEST_FIXTURE_HPP_
+#endif  // TEST_FIXTURE_HPP_
