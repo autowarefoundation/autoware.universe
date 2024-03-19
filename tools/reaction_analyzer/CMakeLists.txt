@@ -33,9 +33,6 @@ rclcpp_components_register_node(reaction_analyzer
   EXECUTABLE reaction_analyzer_exe
 )
 
-if (BUILD_TESTING)
-endif ()
-
 ament_auto_package(
   INSTALL_TO_SHARE
   param

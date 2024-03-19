@@ -29,10 +29,10 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -76,25 +76,6 @@ using SubscriberVariablesVariant = std::variant<
   SubscriberVariables<PointCloud2>, SubscriberVariables<DetectedObjects>,
   SubscriberVariables<TrackedObjects>, SubscriberVariables<PredictedObjects>,
   SubscriberVariables<Trajectory>, SubscriberVariables<AckermannControlCommand>>;
-
-// The supported message types
-enum class SubscriberMessageType {
-  UNKNOWN = 0,
-  ACKERMANN_CONTROL_COMMAND = 1,
-  TRAJECTORY = 2,
-  POINTCLOUD2 = 3,
-  DETECTED_OBJECTS = 4,
-  PREDICTED_OBJECTS = 5,
-  TRACKED_OBJECTS = 6,
-};
-
-// Reaction Types
-enum class ReactionType {
-  UNKNOWN = 0,
-  FIRST_BRAKE = 1,
-  SEARCH_ZERO_VEL = 2,
-  SEARCH_ENTITY = 3,
-};
 
 // The configuration of the topic to be subscribed which are defined in reaction_chain
 struct TopicConfig
@@ -141,13 +122,7 @@ public:
     rclcpp::Node * node, Odometry::ConstSharedPtr & odometry, std::atomic<bool> & spawn_object_cmd,
     const EntityParams & entity_params);
 
-  // Instances of SubscriberBase cannot be copied
-  SubscriberBase(const SubscriberBase &) = delete;
-  SubscriberBase & operator=(const SubscriberBase &) = delete;
-
-  ~SubscriberBase() = default;
-
-  std::optional<std::unordered_map<std::string, MessageBufferVariant>> getMessageBuffersMap();
+  std::optional<std::map<std::string, MessageBufferVariant>> get_message_buffers_map();
   void reset();
 
 private:
@@ -160,14 +135,14 @@ private:
   EntityParams entity_params_;
 
   // Variables to be initialized in constructor
-  ChainModules chain_modules_;
+  ChainModules chain_modules_{};
   ReactionParams reaction_params_{};
-  geometry_msgs::msg::Pose entity_pose_;
-  double entity_search_radius_;
+  geometry_msgs::msg::Pose entity_pose_{};
+  double entity_search_radius_{0.0};
 
   // Variants
-  std::unordered_map<std::string, SubscriberVariablesVariant> subscriber_variables_map_;
-  std::unordered_map<std::string, MessageBufferVariant> message_buffers_;
+  std::map<std::string, SubscriberVariablesVariant> subscriber_variables_map_;
+  std::map<std::string, MessageBufferVariant> message_buffers_;
 
   // tf
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -176,10 +151,12 @@ private:
   // Functions
   void init_reaction_chains_and_params();
   bool init_subscribers();
+  std::optional<SubscriberVariablesVariant> get_subscriber_variable(
+    const TopicConfig & topic_config);
   std::optional<size_t> find_first_brake_idx(
     const std::vector<AckermannControlCommand> & cmd_array);
   void set_control_command_to_buffer(
-    std::vector<AckermannControlCommand> & buffer, const AckermannControlCommand & cmd);
+    std::vector<AckermannControlCommand> & buffer, const AckermannControlCommand & cmd) const;
 
   // Callbacks for modules are subscribed
   void on_control_command(

@@ -28,10 +28,10 @@
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -66,8 +66,7 @@ struct NodeParams
 class ReactionAnalyzerNode : public rclcpp::Node
 {
 public:
-  explicit ReactionAnalyzerNode(rclcpp::NodeOptions options);
-  ~ReactionAnalyzerNode() = default;
+  explicit ReactionAnalyzerNode(rclcpp::NodeOptions node_options);
 
   Odometry::ConstSharedPtr odometry_ptr_;
 
@@ -107,16 +106,24 @@ private:
 
   // Functions
   void init_analyzer_variables();
-  void init_ego(
+  void init_test_env(
     const LocalizationInitializationState::ConstSharedPtr & initialization_state_ptr,
     const RouteState::ConstSharedPtr & route_state_ptr,
     const OperationModeState::ConstSharedPtr & operation_mode_ptr,
     const PoseStamped::ConstSharedPtr & ground_truth_pose_ptr,
     const Odometry::ConstSharedPtr & odometry_ptr);
+  bool init_ego(
+    const LocalizationInitializationState::ConstSharedPtr & initialization_state_ptr,
+    const Odometry::ConstSharedPtr & odometry_ptr, const rclcpp::Time & current_time);
+  bool set_route(
+    const RouteState::ConstSharedPtr & route_state_ptr, const rclcpp::Time & current_time);
+  bool check_ego_init_correctly(
+    const PoseStamped::ConstSharedPtr & ground_truth_pose_ptr,
+    const Odometry::ConstSharedPtr & odometry_ptr);
   void call_operation_mode_service_without_response();
   void spawn_obstacle(const geometry_msgs::msg::Point & ego_pose);
   void calculate_results(
-    const std::unordered_map<std::string, subscriber::MessageBufferVariant> & message_buffers,
+    const std::map<std::string, subscriber::MessageBufferVariant> & message_buffers,
     const rclcpp::Time & spawn_cmd_time);
   void on_timer();
   void reset();

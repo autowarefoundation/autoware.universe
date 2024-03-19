@@ -16,6 +16,99 @@
 
 namespace reaction_analyzer
 {
+SubscriberMessageType get_subscriber_message_type(const std::string & message_type)
+{
+  if (message_type == "autoware_auto_control_msgs/msg/AckermannControlCommand") {
+    return SubscriberMessageType::ACKERMANN_CONTROL_COMMAND;
+  }
+  if (message_type == "autoware_auto_planning_msgs/msg/Trajectory") {
+    return SubscriberMessageType::TRAJECTORY;
+  }
+  if (message_type == "sensor_msgs/msg/PointCloud2") {
+    return SubscriberMessageType::POINTCLOUD2;
+  }
+  if (message_type == "autoware_auto_perception_msgs/msg/PredictedObjects") {
+    return SubscriberMessageType::PREDICTED_OBJECTS;
+  }
+  if (message_type == "autoware_auto_perception_msgs/msg/DetectedObjects") {
+    return SubscriberMessageType::DETECTED_OBJECTS;
+  }
+  if (message_type == "autoware_auto_perception_msgs/msg/TrackedObjects") {
+    return SubscriberMessageType::TRACKED_OBJECTS;
+  }
+  return SubscriberMessageType::UNKNOWN;
+}
+
+PublisherMessageType get_publisher_message_type(const std::string & message_type)
+{
+  if (message_type == "sensor_msgs/msg/PointCloud2") {
+    return PublisherMessageType::POINTCLOUD2;
+  }
+  if (message_type == "sensor_msgs/msg/CameraInfo") {
+    return PublisherMessageType::CAMERA_INFO;
+  }
+  if (message_type == "sensor_msgs/msg/Image") {
+    return PublisherMessageType::IMAGE;
+  }
+  if (message_type == "geometry_msgs/msg/PoseWithCovarianceStamped") {
+    return PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED;
+  }
+  if (message_type == "geometry_msgs/msg/PoseStamped") {
+    return PublisherMessageType::POSE_STAMPED;
+  }
+  if (message_type == "nav_msgs/msg/Odometry") {
+    return PublisherMessageType::ODOMETRY;
+  }
+  if (message_type == "sensor_msgs/msg/Imu") {
+    return PublisherMessageType::IMU;
+  }
+  if (message_type == "autoware_auto_vehicle_msgs/msg/ControlModeReport") {
+    return PublisherMessageType::CONTROL_MODE_REPORT;
+  }
+  if (message_type == "autoware_auto_vehicle_msgs/msg/GearReport") {
+    return PublisherMessageType::GEAR_REPORT;
+  }
+  if (message_type == "autoware_auto_vehicle_msgs/msg/HazardLightsReport") {
+    return PublisherMessageType::HAZARD_LIGHTS_REPORT;
+  }
+  if (message_type == "autoware_auto_vehicle_msgs/msg/SteeringReport") {
+    return PublisherMessageType::STEERING_REPORT;
+  }
+  if (message_type == "autoware_auto_vehicle_msgs/msg/TurnIndicatorsReport") {
+    return PublisherMessageType::TURN_INDICATORS_REPORT;
+  }
+  if (message_type == "autoware_auto_vehicle_msgs/msg/VelocityReport") {
+    return PublisherMessageType::VELOCITY_REPORT;
+  }
+  return PublisherMessageType::UNKNOWN;
+}
+
+PublisherMessageType get_publisher_message_type_for_topic(
+  const std::vector<rosbag2_storage::TopicInformation> & topics, const std::string & topic_name)
+{
+  auto it = std::find_if(topics.begin(), topics.end(), [&topic_name](const auto & topic) {
+    return topic.topic_metadata.name == topic_name;
+  });
+  if (it != topics.end()) {
+    return get_publisher_message_type(it->topic_metadata.type);  // Return the message type if found
+  }
+  return PublisherMessageType::UNKNOWN;
+}
+
+ReactionType get_reaction_type(const std::string & reaction_type)
+{
+  if (reaction_type == "first_brake_params") {
+    return ReactionType::FIRST_BRAKE;
+  }
+  if (reaction_type == "search_zero_vel_params") {
+    return ReactionType::SEARCH_ZERO_VEL;
+  }
+  if (reaction_type == "search_entity_params") {
+    return ReactionType::SEARCH_ENTITY;
+  }
+  return ReactionType::UNKNOWN;
+}
+
 rclcpp::SubscriptionOptions create_subscription_options(rclcpp::Node * node)
 {
   rclcpp::CallbackGroup::SharedPtr callback_group =
@@ -66,27 +159,27 @@ double calculate_time_diff_ms(const rclcpp::Time & start, const rclcpp::Time & e
 TimestampedReactionPairsVector convert_pipeline_map_to_sorted_vector(
   const PipelineMap & pipelineMap)
 {
-  std::vector<std::tuple<rclcpp::Time, std::vector<ReactionPair>>> sortedVector;
+  std::vector<std::tuple<rclcpp::Time, std::vector<ReactionPair>>> sorted_vector;
 
   for (const auto & entry : pipelineMap) {
-    auto sortedReactions = entry.second;
+    auto sorted_reactions = entry.second;
     // Sort the vector of ReactionPair based on the published stamp
     std::sort(
-      sortedReactions.begin(), sortedReactions.end(),
+      sorted_reactions.begin(), sorted_reactions.end(),
       [](const ReactionPair & a, const ReactionPair & b) {
         return rclcpp::Time(a.second.published_stamp) < rclcpp::Time(b.second.published_stamp);
       });
 
     // Add to the vector as a tuple
-    sortedVector.push_back(std::make_tuple(entry.first, sortedReactions));
+    sorted_vector.emplace_back(std::make_tuple(entry.first, sorted_reactions));
   }
 
   // Sort the vector of tuples by rclcpp::Time
-  std::sort(sortedVector.begin(), sortedVector.end(), [](const auto & a, const auto & b) {
+  std::sort(sorted_vector.begin(), sorted_vector.end(), [](const auto & a, const auto & b) {
     return std::get<0>(a) < std::get<0>(b);
   });
 
-  return sortedVector;
+  return sorted_vector;
 }
 
 unique_identifier_msgs::msg::UUID generate_uuid_msg(const std::string & input)
@@ -158,7 +251,9 @@ PointCloud2::SharedPtr create_entity_pointcloud_ptr(
         const double p_z = -entity_params.z_l / 2 + i * pointcloud_sampling_distance;
         const auto tmp = tf2::Vector3(p_x, p_y, p_z);
         tf2::Vector3 data_out = tf * tmp;
-        point_cloud.emplace_back(pcl::PointXYZ(data_out.x(), data_out.y(), data_out.z()));
+        point_cloud.emplace_back(pcl::PointXYZ(
+          static_cast<float>(data_out.x()), static_cast<float>(data_out.y()),
+          static_cast<float>(data_out.z())));
       }
     }
   }
@@ -212,80 +307,61 @@ bool search_pointcloud_near_pose(
   const pcl::PointCloud<pcl::PointXYZ> & pcl_pointcloud, const geometry_msgs::msg::Pose & pose,
   const double search_radius)
 {
-  bool isAnyPointWithinRadius = std::any_of(
+  return std::any_of(
     pcl_pointcloud.points.begin(), pcl_pointcloud.points.end(),
     [pose, search_radius](const auto & point) {
       return tier4_autoware_utils::calcDistance3d(pose.position, point) <= search_radius;
     });
-
-  if (isAnyPointWithinRadius) {
-    return true;
-  }
-  return false;
 }
 
 bool search_predicted_objects_near_pose(
   const PredictedObjects & predicted_objects, const geometry_msgs::msg::Pose & pose,
   const double search_radius)
 {
-  bool isAnyObjectWithinRadius = std::any_of(
+  return std::any_of(
     predicted_objects.objects.begin(), predicted_objects.objects.end(),
     [pose, search_radius](const PredictedObject & object) {
       return tier4_autoware_utils::calcDistance3d(
                pose.position, object.kinematics.initial_pose_with_covariance.pose.position) <=
              search_radius;
     });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
+  ;
 }
 
 bool search_detected_objects_near_pose(
   const DetectedObjects & detected_objects, const geometry_msgs::msg::Pose & pose,
   const double search_radius)
 {
-  bool isAnyObjectWithinRadius = std::any_of(
+  return std::any_of(
     detected_objects.objects.begin(), detected_objects.objects.end(),
     [pose, search_radius](const DetectedObject & object) {
       return tier4_autoware_utils::calcDistance3d(
                pose.position, object.kinematics.pose_with_covariance.pose.position) <=
              search_radius;
     });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
 }
 
 bool search_tracked_objects_near_pose(
   const TrackedObjects & tracked_objects, const geometry_msgs::msg::Pose & pose,
   const double search_radius)
 {
-  bool isAnyObjectWithinRadius = std::any_of(
+  return std::any_of(
     tracked_objects.objects.begin(), tracked_objects.objects.end(),
     [pose, search_radius](const TrackedObject & object) {
       return tier4_autoware_utils::calcDistance3d(
                pose.position, object.kinematics.pose_with_covariance.pose.position) <=
              search_radius;
     });
-
-  if (isAnyObjectWithinRadius) {
-    return true;
-  }
-  return false;
 }
 
 LatencyStats calculate_statistics(const std::vector<double> & latency_vec)
 {
-  LatencyStats stats;
+  LatencyStats stats{0.0, 0.0, 0.0, 0.0, 0.0};
   stats.max = *max_element(latency_vec.begin(), latency_vec.end());
   stats.min = *min_element(latency_vec.begin(), latency_vec.end());
 
   const double sum = std::accumulate(latency_vec.begin(), latency_vec.end(), 0.0);
-  stats.mean = sum / latency_vec.size();
+  stats.mean = sum / static_cast<double>(latency_vec.size());
 
   std::vector<double> sorted_latencies = latency_vec;
   std::sort(sorted_latencies.begin(), sorted_latencies.end());
@@ -297,7 +373,8 @@ LatencyStats calculate_statistics(const std::vector<double> & latency_vec)
 
   const double sq_sum =
     std::inner_product(latency_vec.begin(), latency_vec.end(), latency_vec.begin(), 0.0);
-  stats.std_dev = std::sqrt(sq_sum / latency_vec.size() - stats.mean * stats.mean);
+  stats.std_dev =
+    std::sqrt(sq_sum / static_cast<double>(latency_vec.size()) - stats.mean * stats.mean);
   return stats;
 }
 

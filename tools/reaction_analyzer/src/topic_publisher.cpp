@@ -250,603 +250,57 @@ void TopicPublisher::reset()
 
 void TopicPublisher::init_rosbag_publishers()
 {
-  auto string_to_publisher_message_type = [](const std::string & input) {
-    if (input == "sensor_msgs/msg/PointCloud2") {
-      return PublisherMessageType::POINTCLOUD2;
-    } else if (input == "sensor_msgs/msg/CameraInfo") {
-      return PublisherMessageType::CAMERA_INFO;
-    } else if (input == "sensor_msgs/msg/Image") {
-      return PublisherMessageType::IMAGE;
-    } else if (input == "geometry_msgs/msg/PoseWithCovarianceStamped") {
-      return PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED;
-    } else if (input == "geometry_msgs/msg/PoseStamped") {
-      return PublisherMessageType::POSE_STAMPED;
-    } else if (input == "nav_msgs/msg/Odometry") {
-      return PublisherMessageType::ODOMETRY;
-    } else if (input == "sensor_msgs/msg/Imu") {
-      return PublisherMessageType::IMU;
-    } else if (input == "autoware_auto_vehicle_msgs/msg/ControlModeReport") {
-      return PublisherMessageType::CONTROL_MODE_REPORT;
-    } else if (input == "autoware_auto_vehicle_msgs/msg/GearReport") {
-      return PublisherMessageType::GEAR_REPORT;
-    } else if (input == "autoware_auto_vehicle_msgs/msg/HazardLightsReport") {
-      return PublisherMessageType::HAZARD_LIGHTS_REPORT;
-    } else if (input == "autoware_auto_vehicle_msgs/msg/SteeringReport") {
-      return PublisherMessageType::STEERING_REPORT;
-    } else if (input == "autoware_auto_vehicle_msgs/msg/TurnIndicatorsReport") {
-      return PublisherMessageType::TURN_INDICATORS_REPORT;
-    } else if (input == "autoware_auto_vehicle_msgs/msg/VelocityReport") {
-      return PublisherMessageType::VELOCITY_REPORT;
-    } else {
-      return PublisherMessageType::UNKNOWN;
-    }
-  };
-
-  rosbag2_cpp::Reader reader;
-
-  // read the messages without object
-  {
-    try {
-      reader.open(topic_publisher_params_.path_bag_without_object);
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(node_->get_logger(), "Error opening bag file: " << e.what());
-      rclcpp::shutdown();
-      return;
-    }
-
-    const auto & topics = reader.get_metadata().topics_with_message_count;
-
-    auto getMessageTypeForTopic = [&topics, &string_to_publisher_message_type](
-                                    const std::string & topicName) -> PublisherMessageType {
-      auto it = std::find_if(topics.begin(), topics.end(), [&topicName](const auto & topic) {
-        return topic.topic_metadata.name == topicName;
-      });
-      if (it != topics.end()) {
-        return string_to_publisher_message_type(
-          it->topic_metadata.type);  // Return the message type if found
-      } else {
-        return PublisherMessageType::UNKNOWN;  //
-      }
-    };
-
-    // Collect timestamps for each topic to set the frequency of the publishers
-    std::unordered_map<std::string, std::vector<rclcpp::Time>> timestamps_per_topic;
-
-    while (reader.has_next()) {
-      const auto bag_message = reader.read_next();
-
-      const auto current_topic = bag_message->topic_name;
-
-      const auto message_type = getMessageTypeForTopic(current_topic);
-      if (message_type == PublisherMessageType::UNKNOWN) {
-        continue;
-      }
-
-      // Record timestamp
-      timestamps_per_topic[current_topic].emplace_back(bag_message->time_stamp);
-
-      // Deserialize and store the first message as a sample
-      if (timestamps_per_topic[current_topic].size() == 1) {
-        set_message_to_variable_map(message_type, current_topic, *bag_message, true);
-      }
-    }
-
-    // After collecting all timestamps for each topic, set frequencies of the publishers
-    set_period_to_variable_map(timestamps_per_topic);
-
-    reader.close();
-  }
+  // read messages without object
+  init_rosbag_publishers_without_object(topic_publisher_params_.path_bag_without_object);
 
   // read messages with object
-  {
-    try {
-      reader.open(topic_publisher_params_.path_bag_with_object);
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR_STREAM(node_->get_logger(), "Error opening bag file: " << e.what());
-      rclcpp::shutdown();
-      return;
-    }
+  init_rosbag_publishers_with_object(topic_publisher_params_.path_bag_with_object);
 
-    const auto & topics = reader.get_metadata().topics_with_message_count;
-
-    auto getMessageTypeForTopic = [&topics, &string_to_publisher_message_type](
-                                    const std::string & topicName) -> PublisherMessageType {
-      auto it = std::find_if(topics.begin(), topics.end(), [&topicName](const auto & topic) {
-        return topic.topic_metadata.name == topicName;
-      });
-
-      if (it != topics.end()) {
-        return string_to_publisher_message_type(
-          it->topic_metadata.type);  // Return the message type if found
-      } else {
-        return PublisherMessageType::UNKNOWN;
-      }
-    };
-
-    while (reader.has_next()) {
-      auto bag_message = reader.read_next();
-      const auto current_topic = bag_message->topic_name;
-
-      const auto message_type = getMessageTypeForTopic(current_topic);
-
-      if (message_type == PublisherMessageType::UNKNOWN) {
-        continue;
-      }
-      set_message_to_variable_map(message_type, current_topic, *bag_message, false);
-    }
-    reader.close();
-  }
-
-  if (set_publishers_and_timers_to_variable_map()) {
-    RCLCPP_INFO(node_->get_logger(), "Publishers and timers are set correctly");
+  // before create publishers and timers, check all the messages are correctly initialized with
+  // their conjugate messages.
+  if (check_publishers_initialized_correctly()) {
+    RCLCPP_INFO(node_->get_logger(), "Messages are initialized correctly");
   } else {
-    RCLCPP_ERROR(node_->get_logger(), "Publishers and timers are not set correctly");
+    RCLCPP_ERROR(node_->get_logger(), "Messages are not initialized correctly");
     rclcpp::shutdown();
   }
+
+  // set publishers and timers except for the pointcloud message
+  const auto pointcloud_variables_map = set_general_publishers_and_timers();  // except pointcloud
+  set_pointcloud_publishers_and_timers(pointcloud_variables_map);
 }
 
-void TopicPublisher::set_message_to_variable_map(
-  const PublisherMessageType & message_type, const std::string & topic_name,
-  rosbag2_storage::SerializedBagMessage & bag_message, const bool is_empty_area_message)
+template <typename MessageType>
+void TopicPublisher::set_message(
+  const std::string & topic_name, const rosbag2_storage::SerializedBagMessage & bag_message,
+  const bool is_empty_area_message)
 {
-  // is_empty_area_message true for empty area messages, false for object spawned messages
-  switch (message_type) {
-    case PublisherMessageType::POINTCLOUD2: {
-      rclcpp::Serialization<PointCloud2> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
+  rclcpp::Serialization<MessageType> serialization;
+  rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
 
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<PublisherVariables<PointCloud2>>(publisher_var)) {
-          publisher_var = PublisherVariables<PointCloud2>();
-        }
-        std::get<PublisherVariables<PointCloud2>>(publisher_var).empty_area_message =
-          std::make_shared<PointCloud2>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<PointCloud2>>(publisher_var).empty_area_message));
-      } else {
-        if (!std::holds_alternative<PublisherVariables<PointCloud2>>(publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<PointCloud2>>(publisher_var).object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message = std::make_shared<PointCloud2>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::CAMERA_INFO: {
-      rclcpp::Serialization<sensor_msgs::msg::CameraInfo> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
+  // Deserialize the message
+  auto deserialized_message = std::make_shared<MessageType>();
+  serialization.deserialize_message(&extracted_serialized_msg, &*deserialized_message);
+  auto & publisher_variant = topic_publisher_map_[topic_name];
 
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::CameraInfo>>(
-              publisher_var)) {
-          publisher_var = PublisherVariables<sensor_msgs::msg::CameraInfo>();
-        }
-        std::get<PublisherVariables<sensor_msgs::msg::CameraInfo>>(publisher_var)
-          .empty_area_message = std::make_shared<sensor_msgs::msg::CameraInfo>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<sensor_msgs::msg::CameraInfo>>(publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::CameraInfo>>(
-              publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<sensor_msgs::msg::CameraInfo>>(publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message = std::make_shared<sensor_msgs::msg::CameraInfo>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::IMAGE: {
-      rclcpp::Serialization<sensor_msgs::msg::Image> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
+  if (!std::holds_alternative<PublisherVariables<MessageType>>(publisher_variant)) {
+    publisher_variant = PublisherVariables<MessageType>{};
+  }
 
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::Image>>(publisher_var)) {
-          publisher_var = PublisherVariables<sensor_msgs::msg::Image>();
-        }
-        std::get<PublisherVariables<sensor_msgs::msg::Image>>(publisher_var).empty_area_message =
-          std::make_shared<sensor_msgs::msg::Image>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<sensor_msgs::msg::Image>>(publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::Image>>(publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<sensor_msgs::msg::Image>>(publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message = std::make_shared<sensor_msgs::msg::Image>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED: {
-      rclcpp::Serialization<geometry_msgs::msg::PoseWithCovarianceStamped> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
+  auto & publisher_variable = std::get<PublisherVariables<MessageType>>(publisher_variant);
 
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<
-              PublisherVariables<geometry_msgs::msg::PoseWithCovarianceStamped>>(publisher_var)) {
-          publisher_var = PublisherVariables<geometry_msgs::msg::PoseWithCovarianceStamped>();
-        }
-        std::get<PublisherVariables<geometry_msgs::msg::PoseWithCovarianceStamped>>(publisher_var)
-          .empty_area_message = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<geometry_msgs::msg::PoseWithCovarianceStamped>>(
-               publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<
-              PublisherVariables<geometry_msgs::msg::PoseWithCovarianceStamped>>(publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<geometry_msgs::msg::PoseWithCovarianceStamped>>(publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message =
-            std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
+  if (is_empty_area_message) {
+    if (!publisher_variable.empty_area_message) {
+      publisher_variable.empty_area_message = deserialized_message;
     }
-    case PublisherMessageType::POSE_STAMPED: {
-      rclcpp::Serialization<geometry_msgs::msg::PoseStamped> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<PublisherVariables<geometry_msgs::msg::PoseStamped>>(
-              publisher_var)) {
-          publisher_var = PublisherVariables<geometry_msgs::msg::PoseStamped>();
-        }
-        std::get<PublisherVariables<geometry_msgs::msg::PoseStamped>>(publisher_var)
-          .empty_area_message = std::make_shared<geometry_msgs::msg::PoseStamped>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<geometry_msgs::msg::PoseStamped>>(publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<PublisherVariables<geometry_msgs::msg::PoseStamped>>(
-              publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<geometry_msgs::msg::PoseStamped>>(publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message = std::make_shared<geometry_msgs::msg::PoseStamped>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
+  } else {
+    if (!publisher_variable.object_spawned_message) {
+      publisher_variable.object_spawned_message = deserialized_message;
     }
-    case PublisherMessageType::ODOMETRY: {
-      rclcpp::Serialization<nav_msgs::msg::Odometry> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<PublisherVariables<nav_msgs::msg::Odometry>>(publisher_var)) {
-          publisher_var = PublisherVariables<nav_msgs::msg::Odometry>();
-        }
-        std::get<PublisherVariables<nav_msgs::msg::Odometry>>(publisher_var).empty_area_message =
-          std::make_shared<nav_msgs::msg::Odometry>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<nav_msgs::msg::Odometry>>(publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<PublisherVariables<nav_msgs::msg::Odometry>>(publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<nav_msgs::msg::Odometry>>(publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message = std::make_shared<nav_msgs::msg::Odometry>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::IMU: {
-      rclcpp::Serialization<sensor_msgs::msg::Imu> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::Imu>>(publisher_var)) {
-          publisher_var = PublisherVariables<sensor_msgs::msg::Imu>();
-        }
-        std::get<PublisherVariables<sensor_msgs::msg::Imu>>(publisher_var).empty_area_message =
-          std::make_shared<sensor_msgs::msg::Imu>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<sensor_msgs::msg::Imu>>(publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<PublisherVariables<sensor_msgs::msg::Imu>>(publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<sensor_msgs::msg::Imu>>(publisher_var).object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message = std::make_shared<sensor_msgs::msg::Imu>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::CONTROL_MODE_REPORT: {
-      rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::ControlModeReport> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::ControlModeReport>>(
-              publisher_var)) {
-          publisher_var = PublisherVariables<autoware_auto_vehicle_msgs::msg::ControlModeReport>();
-        }
-        std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::ControlModeReport>>(
-          publisher_var)
-          .empty_area_message =
-          std::make_shared<autoware_auto_vehicle_msgs::msg::ControlModeReport>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::ControlModeReport>>(
-               publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::ControlModeReport>>(
-              publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::ControlModeReport>>(
-            publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message =
-            std::make_shared<autoware_auto_vehicle_msgs::msg::ControlModeReport>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::GEAR_REPORT: {
-      rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::GearReport> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::GearReport>>(publisher_var)) {
-          publisher_var = PublisherVariables<autoware_auto_vehicle_msgs::msg::GearReport>();
-        }
-        std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::GearReport>>(publisher_var)
-          .empty_area_message = std::make_shared<autoware_auto_vehicle_msgs::msg::GearReport>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::GearReport>>(
-               publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::GearReport>>(publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::GearReport>>(publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message = std::make_shared<autoware_auto_vehicle_msgs::msg::GearReport>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::HAZARD_LIGHTS_REPORT: {
-      rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::HazardLightsReport> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::HazardLightsReport>>(
-              publisher_var)) {
-          publisher_var = PublisherVariables<autoware_auto_vehicle_msgs::msg::HazardLightsReport>();
-        }
-        std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::HazardLightsReport>>(
-          publisher_var)
-          .empty_area_message =
-          std::make_shared<autoware_auto_vehicle_msgs::msg::HazardLightsReport>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::HazardLightsReport>>(
-               publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::HazardLightsReport>>(
-              publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::HazardLightsReport>>(
-            publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message =
-            std::make_shared<autoware_auto_vehicle_msgs::msg::HazardLightsReport>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::STEERING_REPORT: {
-      rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::SteeringReport> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::SteeringReport>>(publisher_var)) {
-          publisher_var = PublisherVariables<autoware_auto_vehicle_msgs::msg::SteeringReport>();
-        }
-        std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::SteeringReport>>(publisher_var)
-          .empty_area_message = std::make_shared<autoware_auto_vehicle_msgs::msg::SteeringReport>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::SteeringReport>>(
-               publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::SteeringReport>>(publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::SteeringReport>>(
-            publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message =
-            std::make_shared<autoware_auto_vehicle_msgs::msg::SteeringReport>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::TURN_INDICATORS_REPORT: {
-      rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>>(
-              publisher_var)) {
-          publisher_var =
-            PublisherVariables<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>();
-        }
-        std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>>(
-          publisher_var)
-          .empty_area_message =
-          std::make_shared<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>>(
-               publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>>(
-              publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>>(
-            publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message =
-            std::make_shared<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    case PublisherMessageType::VELOCITY_REPORT: {
-      rclcpp::Serialization<autoware_auto_vehicle_msgs::msg::VelocityReport> serialization;
-      rclcpp::SerializedMessage extracted_serialized_msg(*bag_message.serialized_data);
-
-      auto & publisher_var = topic_publisher_map_[topic_name];
-      if (is_empty_area_message) {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::VelocityReport>>(publisher_var)) {
-          publisher_var = PublisherVariables<autoware_auto_vehicle_msgs::msg::VelocityReport>();
-        }
-        std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::VelocityReport>>(publisher_var)
-          .empty_area_message = std::make_shared<autoware_auto_vehicle_msgs::msg::VelocityReport>();
-        serialization.deserialize_message(
-          &extracted_serialized_msg,
-          &(*std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::VelocityReport>>(
-               publisher_var)
-               .empty_area_message));
-      } else {
-        if (!std::holds_alternative<
-              PublisherVariables<autoware_auto_vehicle_msgs::msg::VelocityReport>>(publisher_var)) {
-          RCLCPP_ERROR_STREAM(
-            node_->get_logger(), "Variant couldn't found in the topic named: " << topic_name);
-          rclcpp::shutdown();
-        }
-        auto & object_spawned_message =
-          std::get<PublisherVariables<autoware_auto_vehicle_msgs::msg::VelocityReport>>(
-            publisher_var)
-            .object_spawned_message;
-        if (!object_spawned_message) {
-          object_spawned_message =
-            std::make_shared<autoware_auto_vehicle_msgs::msg::VelocityReport>();
-          serialization.deserialize_message(&extracted_serialized_msg, &(*object_spawned_message));
-        }
-      }
-      break;
-    }
-    default:
-      break;
   }
 }
 
-void TopicPublisher::set_period_to_variable_map(
-  const std::unordered_map<std::string, std::vector<rclcpp::Time>> & time_map)
+void TopicPublisher::set_period(const std::map<std::string, std::vector<rclcpp::Time>> & time_map)
 {
   for (auto & topic_pair : time_map) {
     auto timestamps_tmp = topic_pair.second;
@@ -869,26 +323,18 @@ void TopicPublisher::set_period_to_variable_map(
       auto period_ms = std::chrono::duration_cast<std::chrono::milliseconds>(total_duration_ns) /
                        (timestamps_tmp.size() - 1);
 
-      PublisherVariablesVariant & publisherVar = topic_publisher_map_[topic_name];
+      PublisherVariablesVariant & publisher_variant = topic_publisher_map_[topic_name];
       PublisherVarAccessor accessor;
 
-      std::visit([&](auto & var) { accessor.set_period(var, period_ms); }, publisherVar);
+      std::visit([&](auto & var) { accessor.set_period(var, period_ms); }, publisher_variant);
     }
   }
 }
 
-bool TopicPublisher::set_publishers_and_timers_to_variable_map()
+std::map<std::string, PublisherVariables<PointCloud2>>
+TopicPublisher::set_general_publishers_and_timers()
 {
-  // before create publishers and timers, check all the messages are correctly initialized with
-  // their conjugate messages.
-  if (check_publishers_initialized_correctly()) {
-    RCLCPP_INFO(node_->get_logger(), "Messages are initialized correctly");
-  } else {
-    RCLCPP_ERROR(node_->get_logger(), "Messages are not initialized correctly");
-    return false;
-  }
-
-  std::unordered_map<std::string, PublisherVariables<PointCloud2>>
+  std::map<std::string, PublisherVariables<PointCloud2>>
     pointcloud_variables_map;  // temp map for pointcloud publishers
 
   // initialize timers and message publishers except pointcloud messages
@@ -916,7 +362,8 @@ bool TopicPublisher::set_publishers_and_timers_to_variable_map()
       },
       variant);
 
-    // Conditionally create the timer based on the message type, if message type is not PointCloud2
+    // Conditionally create the timer based on the message type, if message type is not
+    // PointCloud2
     std::visit(
       [&](auto & var) {
         using MessageType = typename decltype(var.empty_area_message)::element_type;
@@ -932,10 +379,16 @@ bool TopicPublisher::set_publishers_and_timers_to_variable_map()
       variant);
   }
 
+  return pointcloud_variables_map;
+}
+
+void TopicPublisher::set_pointcloud_publishers_and_timers(
+  const std::map<std::string, PublisherVariables<PointCloud2>> & pointcloud_variables_map)
+{
   // Set the point cloud publisher timers
   if (pointcloud_variables_map.empty()) {
     RCLCPP_ERROR(node_->get_logger(), "No pointcloud publishers found!");
-    return false;
+    rclcpp::shutdown();
   }
 
   // Arrange the PointCloud2 variables w.r.t. the lidars' name
@@ -950,7 +403,7 @@ bool TopicPublisher::set_publishers_and_timers_to_variable_map()
         RCLCPP_ERROR_STREAM(
           node_->get_logger(),
           "Lidar name: " << lidar_name << " is already used by another pointcloud publisher");
-        return false;
+        rclcpp::shutdown();
       }
       lidar_pub_variable_pair_map_[lidar_name].second =
         std::make_shared<PublisherVariables<PointCloud2>>(pointcloud_variant);
@@ -973,26 +426,22 @@ bool TopicPublisher::set_publishers_and_timers_to_variable_map()
     // Create a timer to create phase difference bw timers which will be created for each lidar
     // topics
     auto one_shot_timer = node_->create_wall_timer(phase_dif, [this, period_pointcloud_ns]() {
-      for (const auto & [lidar_name, publisher_var_pair] : lidar_pub_variable_pair_map_) {
+      for (const auto & publisher_var_pair : lidar_pub_variable_pair_map_) {
+        const auto & lidar_name = publisher_var_pair.first;
+        const auto & publisher_var = publisher_var_pair.second;
         if (
           pointcloud_publish_timers_map_.find(lidar_name) == pointcloud_publish_timers_map_.end()) {
-          // Create the periodic timer
-          auto periodic_timer =
-            node_->create_wall_timer(period_pointcloud_ns, [this, publisher_var_pair]() {
-              this->pointcloud_messages_async_publisher(publisher_var_pair);
-            });
-          // Store the periodic timer to keep it alive
+          auto periodic_timer = node_->create_wall_timer(
+            period_pointcloud_ns,
+            [this, publisher_var]() { this->pointcloud_messages_async_publisher(publisher_var); });
           pointcloud_publish_timers_map_[lidar_name] = periodic_timer;
           return;
         }
       }
-      // close the timer
       one_shot_timer_shared_ptr_->cancel();
     });
-
-    one_shot_timer_shared_ptr_ = one_shot_timer;  // Store a weak pointer to the timer
+    one_shot_timer_shared_ptr_ = one_shot_timer;
   }
-  return true;
 }
 
 bool TopicPublisher::check_publishers_initialized_correctly()
@@ -1010,7 +459,8 @@ bool TopicPublisher::check_publishers_initialized_correctly()
         node_->get_logger(),
         "Empty area message couldn't found in the topic named: " << topic_name);
       return false;
-    } else if (!object_spawned_message) {
+    }
+    if (!object_spawned_message) {
       RCLCPP_ERROR_STREAM(
         node_->get_logger(),
         "Object spawned message couldn't found in the topic named: " << topic_name);
@@ -1018,5 +468,144 @@ bool TopicPublisher::check_publishers_initialized_correctly()
     }
   }
   return true;
+}
+
+void TopicPublisher::init_rosbag_publishers_with_object(const std::string & path_bag_with_object)
+{
+  rosbag2_cpp::Reader reader;
+
+  try {
+    reader.open(path_bag_with_object);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Error opening bag file: " << e.what());
+    rclcpp::shutdown();
+    return;
+  }
+
+  const auto & topics = reader.get_metadata().topics_with_message_count;
+  const bool is_empty_area_message = false;
+
+  while (reader.has_next()) {
+    auto bag_message = reader.read_next();
+    const auto current_topic = bag_message->topic_name;
+
+    const auto message_type = get_publisher_message_type_for_topic(topics, current_topic);
+
+    if (message_type == PublisherMessageType::UNKNOWN) {
+      continue;
+    }
+    if (message_type == PublisherMessageType::CAMERA_INFO) {
+      set_message<sensor_msgs::msg::CameraInfo>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::IMAGE) {
+      set_message<sensor_msgs::msg::Image>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::POINTCLOUD2) {
+      set_message<PointCloud2>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED) {
+      set_message<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::POSE_STAMPED) {
+      set_message<geometry_msgs::msg::PoseStamped>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::ODOMETRY) {
+      set_message<nav_msgs::msg::Odometry>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::IMU) {
+      set_message<sensor_msgs::msg::Imu>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::CONTROL_MODE_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::GEAR_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::GearReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::HAZARD_LIGHTS_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::HazardLightsReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::STEERING_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::SteeringReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::TURN_INDICATORS_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::VELOCITY_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::VelocityReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    }
+  }
+  reader.close();
+}
+
+void TopicPublisher::init_rosbag_publishers_without_object(
+  const std::string & path_bag_without_object)
+{
+  rosbag2_cpp::Reader reader;
+
+  try {
+    reader.open(path_bag_without_object);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Error opening bag file: " << e.what());
+    rclcpp::shutdown();
+    return;
+  }
+
+  const auto & topics = reader.get_metadata().topics_with_message_count;
+  const bool is_empty_area_message = true;
+
+  // Collect timestamps for each topic to set the frequency of the publishers
+  std::map<std::string, std::vector<rclcpp::Time>> timestamps_per_topic;
+
+  while (reader.has_next()) {
+    const auto bag_message = reader.read_next();
+
+    const auto current_topic = bag_message->topic_name;
+
+    const auto message_type = get_publisher_message_type_for_topic(topics, current_topic);
+    if (message_type == PublisherMessageType::UNKNOWN) {
+      continue;
+    }
+
+    // Record timestamp
+    timestamps_per_topic[current_topic].emplace_back(bag_message->time_stamp);
+
+    // Deserialize and store the first message as a sample
+    if (message_type == PublisherMessageType::CAMERA_INFO) {
+      set_message<sensor_msgs::msg::CameraInfo>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::IMAGE) {
+      set_message<sensor_msgs::msg::Image>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::POINTCLOUD2) {
+      set_message<PointCloud2>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED) {
+      set_message<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::POSE_STAMPED) {
+      set_message<geometry_msgs::msg::PoseStamped>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::ODOMETRY) {
+      set_message<nav_msgs::msg::Odometry>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::IMU) {
+      set_message<sensor_msgs::msg::Imu>(current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::CONTROL_MODE_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::GEAR_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::GearReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::HAZARD_LIGHTS_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::HazardLightsReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::STEERING_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::SteeringReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::TURN_INDICATORS_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    } else if (message_type == PublisherMessageType::VELOCITY_REPORT) {
+      set_message<autoware_auto_vehicle_msgs::msg::VelocityReport>(
+        current_topic, *bag_message, is_empty_area_message);
+    }
+  }
+
+  // After collecting all timestamps for each topic, set frequencies of the publishers
+  set_period(timestamps_per_topic);
+
+  reader.close();
 }
 }  // namespace reaction_analyzer::topic_publisher
