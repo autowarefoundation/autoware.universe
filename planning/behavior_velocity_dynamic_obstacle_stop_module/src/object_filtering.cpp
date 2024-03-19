@@ -69,8 +69,8 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
       params.ego_lateral_offset + o.shape.dimensions.y / 2.0 + params.hysteresis;
     // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_point_and_angle
     const auto lat_distance = std::abs(
-                           (o_pose.position.y - ego_data.pose.position.y) * std::cos(o_yaw) -
-                           (o_pose.position.x - ego_data.pose.position.x) * std::sin(o_yaw));
+      (o_pose.position.y - ego_data.pose.position.y) * std::cos(o_yaw) -
+      (o_pose.position.x - ego_data.pose.position.x) * std::sin(o_yaw));
     auto has_collision = lat_distance <= collision_distance_threshold;
     if (ego_data.earliest_stop_pose) {
       const auto collision_at_earliest_stop_pose =
