@@ -324,6 +324,15 @@ std::vector<geometry_msgs::msg::Pose> createPathToPredictionTime(
   // Calculate the number of poses to include based on the prediction time and the time step between
   // poses
   const double time_step_seconds = convertDurationToDouble(predicted_path.time_step);
+  if (time_step_seconds < std::numeric_limits<double>::epsilon()) {
+    // Handle the case where time_step_seconds is zero or too close to zero
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("run_out: createPathToPredictionTime"),
+      "time_step of the path is too close to zero. Use the input path");
+    const std::vector<geometry_msgs::msg::Pose> input_path(
+      predicted_path.path.begin(), predicted_path.path.end());
+    return input_path;
+  }
   const size_t poses_to_include =
     std::min(static_cast<size_t>(prediction_time / time_step_seconds), predicted_path.path.size());
 
