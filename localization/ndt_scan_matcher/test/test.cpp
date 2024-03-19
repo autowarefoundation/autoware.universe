@@ -91,7 +91,7 @@ TEST_F(TestNDTScanMatcher,
   //---------//
 
   // prepare input source PointCloud
-  pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_pcd(-10.0, 30.0, 1.0);
+  pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_pcd(-10.0, 10.0, 1.0);
   sensor_msgs::msg::PointCloud2 input_cloud;
   pcl::toROSMsg(cloud, input_cloud);
   input_cloud.header.frame_id = "sensor_frame";
