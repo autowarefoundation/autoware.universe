@@ -607,21 +607,12 @@ double calcLateralOffset(
     return std::nan("");
   }
 
-  if (overlap_removed_points.size() >= seg_idx) {
-    const std::string error_message(
-      "[motion_utils] " + std::string(__func__) + ": Overlap points removed exceeded seg_idx.");
-    tier4_autoware_utils::print_backtrace();
-    if (throw_exception) {
-      throw std::runtime_error(error_message);
-    }
-    log_error(
-      error_message +
-      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
-    return std::nan("");
-  }
+  const auto p_indices = overlap_removed_points.size() - 2;
+  const auto p_front_idx = (p_indices < seg_idx) ? seg_idx : p_indices;
+  const auto p_back_idx = p_front_idx + 1;
 
-  const auto p_front = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx));
-  const auto p_back = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx + 1));
+  const auto p_front = tier4_autoware_utils::getPoint(overlap_removed_points.at(p_front_idx));
+  const auto p_back = tier4_autoware_utils::getPoint(overlap_removed_points.at(p_back_idx));
 
   const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
   const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
