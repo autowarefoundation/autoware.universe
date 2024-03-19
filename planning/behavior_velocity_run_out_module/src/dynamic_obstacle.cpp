@@ -26,6 +26,7 @@
 #include <pcl/filters/voxel_grid.h>
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 namespace behavior_velocity_planner
