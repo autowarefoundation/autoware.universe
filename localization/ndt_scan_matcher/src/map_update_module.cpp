@@ -88,7 +88,9 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
       ndt_ptr_mutex_->unlock();
       return;
     }
-    ndt_ptr_->setInputSource(input_source);
+    if (input_source != nullptr) {
+      ndt_ptr_->setInputSource(input_source);
+    }
     ndt_ptr_mutex_->unlock();
     need_rebuild_ = false;
   } else {
@@ -107,7 +109,9 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
     auto dummy_ptr = ndt_ptr_;
     auto input_source = ndt_ptr_->getInputSource();
     ndt_ptr_ = secondary_ndt_ptr_;
-    ndt_ptr_->setInputSource(input_source);
+    if (input_source != nullptr) {
+      ndt_ptr_->setInputSource(input_source);
+    }
     ndt_ptr_mutex_->unlock();
 
     dummy_ptr.reset();
@@ -182,7 +186,7 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
-  RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
+  RCLCPP_DEBUG(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
   return true;  // Updated
 }
 

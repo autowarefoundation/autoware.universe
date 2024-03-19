@@ -100,7 +100,7 @@ struct AvoidanceParameters
   bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
-  bool enable_force_avoidance_for_stopped_vehicle{false};
+  bool enable_avoidance_for_ambiguous_vehicle{false};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
@@ -184,8 +184,9 @@ struct AvoidanceParameters
   double object_check_min_road_shoulder_width{0.0};
 
   // force avoidance
-  double threshold_time_force_avoidance_for_stopped_vehicle{0.0};
-  double force_avoidance_distance_threshold{0.0};
+  double closest_distance_to_wait_and_see_for_ambiguous_vehicle{0.0};
+  double time_threshold_for_ambiguous_vehicle{0.0};
+  double distance_threshold_for_ambiguous_vehicle{0.0};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -384,7 +385,8 @@ struct ObjectData  // avoidance target
   rclcpp::Time last_move;
   double stop_time{0.0};
 
-  // store the information of the lanelet which the object's overhang is currently occupying
+  // It is one of the ego driving lanelets (closest lanelet to the object) and used in the logic to
+  // check whether the object is on the ego lane.
   lanelet::ConstLanelet overhang_lanelet;
 
   // the position at the detected moment
@@ -419,6 +421,12 @@ struct ObjectData  // avoidance target
 
   // is parked vehicle on road shoulder
   bool is_parked{false};
+
+  // is driving on ego current lane
+  bool is_on_ego_lane{false};
+
+  // is ambiguous stopped vehicle.
+  bool is_ambiguous{false};
 
   // object direction.
   Direction direction{Direction::NONE};
