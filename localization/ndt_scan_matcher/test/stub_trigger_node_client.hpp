@@ -46,16 +46,12 @@ public:
     std::shared_ptr<SetBool::Request> request = std::make_shared<SetBool::Request>();
     request->data = trigger;
     auto result = align_service_client_->async_send_request(request);
-
-    // wait for the response
-    std::future_status status = result.wait_for(std::chrono::seconds(0));
-    while (status != std::future_status::ready) {
-      if (!rclcpp::ok()) {
-        EXIT_FAILURE;
-      }
-      status = result.wait_for(std::chrono::seconds(1));
+    if (
+      rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) !=
+      rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(), "Service call failed");
+      throw std::runtime_error("Service call failed.");
     }
-
     return result.get()->success;
   }
 

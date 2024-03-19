@@ -118,8 +118,6 @@ TEST_F(TestNDTScanMatcher,
     exec.spin();
   });
   std::thread t2([&]() { rclcpp::spin(pcd_loader_); });
-  std::thread t3([&]() { rclcpp::spin(initialpose_client_); });
-  std::thread t4([&]() { rclcpp::spin(trigger_node_client_); });
 
   //-----//
   // Act //
@@ -144,8 +142,6 @@ TEST_F(TestNDTScanMatcher,
   rclcpp::shutdown();
   t1.join();
   t2.join();
-  t3.join();
-  t4.join();
 }
 
 int main(int argc, char ** argv)
