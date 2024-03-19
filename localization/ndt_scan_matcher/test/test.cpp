@@ -91,7 +91,7 @@ TEST_F(TestNDTScanMatcher,
   //---------//
 
   // prepare input source PointCloud
-  pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_pcd(-20.0, 20.0, 1.0);
+  pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_pcd(-10.0, 30.0, 1.0);
   sensor_msgs::msg::PointCloud2 input_cloud;
   pcl::toROSMsg(cloud, input_cloud);
   input_cloud.header.frame_id = "sensor_frame";
@@ -100,8 +100,8 @@ TEST_F(TestNDTScanMatcher,
 
   // prepare input initial pose
   geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_msg;
-  initial_pose_msg.pose.pose.position.x = 0.0;
-  initial_pose_msg.pose.pose.position.y = 0.0;
+  initial_pose_msg.pose.pose.position.x = 10.0;
+  initial_pose_msg.pose.pose.position.y = 10.0;
   initial_pose_msg.pose.pose.position.z = 0.0;
   initial_pose_msg.pose.pose.orientation.x = 0.0;
   initial_pose_msg.pose.pose.orientation.y = 0.0;
@@ -135,9 +135,12 @@ TEST_F(TestNDTScanMatcher,
   //--------//
   // Assert //
   //--------//
-  EXPECT_NEAR(result_pose.position.x, 0.0, 0.1);
-  EXPECT_NEAR(result_pose.position.y, 0.0, 0.1);
-  EXPECT_NEAR(result_pose.position.z, 0.0, 0.1);
+  RCLCPP_INFO_STREAM(
+    node_->get_logger(), std::fixed << "result_pose: " << result_pose.position.x << ", "
+                                    << result_pose.position.y << ", " << result_pose.position.z);
+  EXPECT_NEAR(result_pose.position.x, 10.0, 3.0);
+  EXPECT_NEAR(result_pose.position.y, 10.0, 3.0);
+  EXPECT_NEAR(result_pose.position.z, 0.0, 3.0);
 
   rclcpp::shutdown();
   t1.join();

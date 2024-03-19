@@ -45,14 +45,13 @@ private:
   {
     (void)req;
     autoware_map_msgs::msg::PointCloudMapCellWithID pcd_map_cell_with_id;
-    constexpr float max_position = 20.0f;
     constexpr float interval = 0.2f;
-    pcd_map_cell_with_id.metadata.min_x = -max_position;
-    pcd_map_cell_with_id.metadata.min_y = -max_position;
-    pcd_map_cell_with_id.metadata.max_x = max_position;
-    pcd_map_cell_with_id.metadata.max_y = max_position;
+    pcd_map_cell_with_id.metadata.min_x = -10;
+    pcd_map_cell_with_id.metadata.min_y = -10;
+    pcd_map_cell_with_id.metadata.max_x = 30;
+    pcd_map_cell_with_id.metadata.max_y = 30;
     pcd_map_cell_with_id.cell_id = "0";
-    pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_pcd(-max_position, max_position, interval);
+    pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_pcd(-10, 30, interval);
     pcl::toROSMsg(cloud, pcd_map_cell_with_id.pointcloud);
     res->new_pointcloud_with_ids.push_back(pcd_map_cell_with_id);
     res->header.frame_id = "map";
