@@ -508,47 +508,45 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return output;
   }
 
-  PathWithLaneId path;
+  const auto path = std::invoke([&]() {
+    if (!status_.driving_forward && !status_.backward_driving_complete) {
+      return status_.backward_path;
+    }
 
-  // Check if backward motion is finished
-  if (status_.driving_forward || status_.backward_driving_complete) {
     // Increment path index if the current path is finished
     if (hasFinishedCurrentPath()) {
       RCLCPP_INFO(getLogger(), "Increment path index");
       incrementPathIndex();
     }
 
-    if (!status_.is_safe_dynamic_objects && !isWaitingApproval() && !status_.stop_pose) {
+    if (isWaitingApproval()) return getCurrentPath();
+
+    if (status_.stop_pose) {
+      // Delete stop point if conditions are met
+      if (status_.is_safe_dynamic_objects && isStopped()) {
+        status_.stop_pose = std::nullopt;
+      }
+      stop_pose_ = status_.stop_pose;
+      return *status_.prev_stop_path_after_approval;
+    }
+
+    if (!status_.is_safe_dynamic_objects) {
       auto current_path = getCurrentPath();
       const auto stop_path =
         behavior_path_planner::utils::parking_departure::generateFeasibleStopPath(
           current_path, planner_data_, stop_pose_, parameters_->maximum_deceleration_for_stop,
           parameters_->maximum_jerk_for_stop);
 
+      if (!stop_path.has_value()) return current_path;
       // Insert stop point in the path if needed
-      if (stop_path) {
-        RCLCPP_ERROR_THROTTLE(
-          getLogger(), *clock_, 5000, "Insert stop point in the path because of dynamic objects");
-        path = *stop_path;
-        status_.prev_stop_path_after_approval = std::make_shared<PathWithLaneId>(path);
-        status_.stop_pose = stop_pose_;
-      } else {
-        path = current_path;
-      }
-    } else if (!isWaitingApproval() && status_.stop_pose) {
-      // Delete stop point if conditions are met
-      if (status_.is_safe_dynamic_objects && isStopped()) {
-        status_.stop_pose = std::nullopt;
-        path = getCurrentPath();
-      }
-      path = *status_.prev_stop_path_after_approval;
-      stop_pose_ = status_.stop_pose;
-    } else {
-      path = getCurrentPath();
+      RCLCPP_ERROR_THROTTLE(
+        getLogger(), *clock_, 5000, "Insert stop point in the path because of dynamic objects");
+      status_.prev_stop_path_after_approval = std::make_shared<PathWithLaneId>(stop_path.value());
+      status_.stop_pose = stop_pose_;
+      return stop_path.value();
     }
-  } else {
-    path = status_.backward_path;
-  }
+    return getCurrentPath();
+  });
 
   output.path = path;
   output.reference_path = getPreviousModuleOutput().reference_path;
@@ -768,8 +766,9 @@ bool StartPlannerModule::findPullOutPath(
   const Pose & refined_start_pose, const Pose & goal_pose, const double collision_check_margin)
 {
   // if start_pose_candidate is far from refined_start_pose, backward driving is necessary
+  constexpr double epsilon = 0.01;
   const bool backward_is_unnecessary =
-    tier4_autoware_utils::calcDistance2d(start_pose_candidate, refined_start_pose) < 0.01;
+    tier4_autoware_utils::calcDistance2d(start_pose_candidate, refined_start_pose) < epsilon;
 
   planner->setCollisionCheckMargin(collision_check_margin);
   planner->setPlannerData(planner_data_);
