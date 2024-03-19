@@ -52,4 +52,26 @@ inline pcl::PointCloud<pcl::PointXYZ> make_sample_half_cubic_pcd()
   return cloud;
 }
 
+inline geometry_msgs::msg::PoseWithCovarianceStamped make_pose(const float x, const float y)
+{
+  geometry_msgs::msg::PoseWithCovarianceStamped pose{};
+  pose.pose.pose.position.x = x;
+  pose.pose.pose.position.y = y;
+  pose.pose.pose.position.z = 0.0;
+  pose.pose.pose.orientation.x = 0.0;
+  pose.pose.pose.orientation.y = 0.0;
+  pose.pose.pose.orientation.z = 0.0;
+  pose.pose.pose.orientation.w = 1.0;
+  pose.header.frame_id = "map";
+  pose.header.stamp.sec = 0;
+  pose.header.stamp.nanosec = 0;
+  pose.pose.covariance[0] = 0.25;
+  pose.pose.covariance[7] = 0.25;
+  pose.pose.covariance[14] = 0.25;
+  pose.pose.covariance[21] = 0.06853891909122467;
+  pose.pose.covariance[28] = 0.06853891909122467;
+  pose.pose.covariance[35] = 0.06853891909122467;
+  return pose;
+}
+
 #endif  // TEST_UTIL_HPP_

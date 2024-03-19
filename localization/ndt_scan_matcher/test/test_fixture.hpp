@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef STUB_TEST_FIXTURE_HPP_
+#define STUB_TEST_FIXTURE_HPP_
+
 #include "../include/ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 #include "stub_initialpose_client.hpp"
 #include "stub_pcd_loader.hpp"
@@ -83,80 +86,4 @@ protected:
   std::shared_ptr<StubSensorPcdPublisher> sensor_pcd_publisher_;
 };
 
-TEST_F(TestNDTScanMatcher,
-       standard_sequence_for_initial_pose_estimation)  // NOLINT
-{
-  //---------//
-  // Arrange //
-  //---------//
-
-  // prepare input source PointCloud
-  pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
-  pcl::VoxelGrid<pcl::PointXYZ> vg;
-  vg.setInputCloud(cloud.makeShared());
-  vg.setLeafSize(0.5, 0.5, 0.5);
-  vg.filter(cloud);
-  RCLCPP_INFO_STREAM(node_->get_logger(), "sensor cloud size: " << cloud.size());
-  sensor_msgs::msg::PointCloud2 input_cloud;
-  pcl::toROSMsg(cloud, input_cloud);
-  input_cloud.header.frame_id = "sensor_frame";
-  input_cloud.header.stamp.sec = 1;
-  input_cloud.header.stamp.nanosec = 0;
-
-  // prepare input initial pose
-  geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_msg;
-  initial_pose_msg.pose.pose.position.x = 100.0;
-  initial_pose_msg.pose.pose.position.y = 100.0;
-  initial_pose_msg.pose.pose.position.z = 0.0;
-  initial_pose_msg.pose.pose.orientation.x = 0.0;
-  initial_pose_msg.pose.pose.orientation.y = 0.0;
-  initial_pose_msg.pose.pose.orientation.z = 0.0;
-  initial_pose_msg.pose.pose.orientation.w = 1.0;
-  initial_pose_msg.header.frame_id = "map";
-  initial_pose_msg.header.stamp.sec = 0;
-  initial_pose_msg.header.stamp.nanosec = 0;
-
-  // start threads
-  std::thread t1([&]() {
-    rclcpp::executors::MultiThreadedExecutor exec;
-    exec.add_node(node_);
-    exec.spin();
-  });
-  std::thread t2([&]() { rclcpp::spin(pcd_loader_); });
-
-  //-----//
-  // Act //
-  //-----//
-  // (1) trigger initial pose estimation
-  EXPECT_TRUE(trigger_node_client_->send_trigger_node(true));
-
-  // (2) publish LiDAR point cloud
-  sensor_pcd_publisher_->publish_pcd(input_cloud);
-
-  // (3) send initial pose
-  const geometry_msgs::msg::Pose result_pose =
-    initialpose_client_->send_initialpose(initial_pose_msg).pose.pose;
-
-  //--------//
-  // Assert //
-  //--------//
-  RCLCPP_INFO_STREAM(
-    node_->get_logger(), std::fixed << "result_pose: " << result_pose.position.x << ", "
-                                    << result_pose.position.y << ", " << result_pose.position.z);
-  EXPECT_NEAR(result_pose.position.x, 100.0, 1.0);
-  EXPECT_NEAR(result_pose.position.y, 100.0, 1.0);
-  EXPECT_NEAR(result_pose.position.z, 0.0, 1.0);
-
-  rclcpp::shutdown();
-  t1.join();
-  t2.join();
-}
-
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  ::testing::InitGoogleTest(&argc, argv);
-  int result = RUN_ALL_TESTS();
-  rclcpp::shutdown();
-  return result;
-}
+#endif  // STUB_TEST_FIXTURE_HPP_

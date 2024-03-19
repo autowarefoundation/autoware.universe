@@ -43,20 +43,22 @@ if(BUILD_TESTING)
   )
 
   find_package(ament_cmake_gtest REQUIRED)
-  ament_auto_add_gtest(test_ndt_scan_matcher
-    test/test.cpp
+  ament_auto_add_gtest(standard_sequence_for_initial_pose_estimation
+    test/test_cases/standard_sequence_for_initial_pose_estimation.cpp
     src/particle.cpp
     src/ndt_scan_matcher_core.cpp
     src/map_update_module.cpp
   )
-  target_include_directories(test_ndt_scan_matcher
-    SYSTEM PUBLIC
+  ament_auto_add_gtest(once_initialize_at_out_of_map_then_initialize_correctly
+    test/test_cases/once_initialize_at_out_of_map_then_initialize_correctly.cpp
+    src/particle.cpp
+    src/ndt_scan_matcher_core.cpp
+    src/map_update_module.cpp
   )
-  target_link_libraries(test_ndt_scan_matcher)
 endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
-    launch
-    config
+  launch
+  config
 )
