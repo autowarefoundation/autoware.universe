@@ -608,7 +608,7 @@ double calcLateralOffset(
   }
 
   const auto p_indices = overlap_removed_points.size() - 2;
-  const auto p_front_idx = (p_indices < seg_idx) ? seg_idx : p_indices;
+  const auto p_front_idx = (p_indices > seg_idx) ? seg_idx : p_indices;
   const auto p_back_idx = p_front_idx + 1;
 
   const auto p_front = tier4_autoware_utils::getPoint(overlap_removed_points.at(p_front_idx));
