@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
+
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+
 project(carla_pointcloud_interface)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)

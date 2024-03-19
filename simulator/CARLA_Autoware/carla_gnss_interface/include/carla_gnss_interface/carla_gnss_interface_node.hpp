@@ -88,30 +88,37 @@ public:
 class WayPoint
 {
 public:
-  GPSPoint pos;
-  WayPoint() {}
+    GPSPoint pos;
+    WayPoint() {}
 
-  WayPoint(const double & x, const double & y, const double & z, const double & a)
-  {
-    pos.x = x;
-    pos.y = y;
-    pos.z = z;
-    pos.a = a;
-  }
+    WayPoint(const double & x, const double & y, const double & z, const double & a)
+    {
+        pos.x = x;
+        pos.y = y;
+        pos.z = z;
+        pos.a = a;
+    }
+};
+
+struct MappingParameters {
+    std::string proj_str;
+    WayPoint org;
+    double lat;
+    double lon;
+    double alt;
 };
 
 class MappingUtils
 {
 public:
-  MappingUtils();
-  virtual ~MappingUtils();
+    MappingUtils();
+    virtual ~MappingUtils();
 
-  static void llaToxyz(
-    const std::string & proj_str, const WayPoint & origin, const double & lat, const double & lon,
-    const double & alt, double & x_out, double & y_out, double & z_out);
+    static void llaToxyz(const MappingParameters &params, double &x_out, double &y_out, double &z_out);
 };
 
 }  // namespace gnss
 }  // namespace interface
+
 
 #endif  // CARLA_GNSS_INTERFACE__CARLA_GNSS_INTERFACE_NODE_HPP_

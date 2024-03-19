@@ -21,33 +21,29 @@ namespace interface
 namespace gnss
 {
 
-MappingUtils::MappingUtils()
-{
-}
+MappingUtils::MappingUtils() {}
 
-MappingUtils::~MappingUtils()
-{
-}
+MappingUtils::~MappingUtils() {}
 
-void MappingUtils::llaToxyz(
-  const std::string & proj_str, const WayPoint & origin, const double & lat, const double & lon,
-  const double & alt, double & x_out, double & y_out, double & z_out)
-{
-  if (proj_str.size() < 8) return;
+void MappingUtils::llaToxyz(const MappingParameters &params, double &x_out, double &y_out, double &z_out) {
+    if (params.proj_str.size() < 8) return;
 
-  PJ_CONTEXT * C = proj_context_create();
-  PJ * P = proj_create_crs_to_crs(C, "EPSG:4326", proj_str.c_str(), NULL);
+    PJ_CONTEXT *C = proj_context_create();
+    PJ *P = proj_create_crs_to_crs(C, "EPSG:4326", params.proj_str.c_str(), NULL);
 
-  if (P == 0) return;
+    if (P == nullptr) {
+        proj_context_destroy(C);
+        return;
+    }
 
-  PJ_COORD gps_degrees = proj_coord(lat, lon, alt, 0);
-  PJ_COORD xyz_out = proj_trans(P, PJ_FWD, gps_degrees);
-  x_out = xyz_out.enu.e + origin.pos.x;
-  y_out = xyz_out.enu.n + origin.pos.y;
-  z_out = xyz_out.enu.u + origin.pos.z;
+    PJ_COORD gps_degrees = proj_coord(params.lat, params.lon, params.alt, 0);
+    PJ_COORD xyz_out = proj_trans(P, PJ_FWD, gps_degrees);
+    x_out = xyz_out.enu.e + params.org.pos.x;
+    y_out = xyz_out.enu.n + params.org.pos.y;
+    z_out = xyz_out.enu.u + params.org.pos.z;
 
-  proj_destroy(P);
-  proj_context_destroy(C);
+    proj_destroy(P);
+    proj_context_destroy(C);
 }
 }  // namespace gnss
 }  // namespace interface
@@ -57,9 +53,19 @@ void GnssInterface::GnssCallBack(const sensor_msgs::msg::NavSatFix::SharedPtr ms
   geometry_msgs::msg::PoseStamped pose_;
   geometry_msgs::msg::PoseWithCovarianceStamped pose_cov_;
   interface::gnss::WayPoint origin, p;
-  interface::gnss::MappingUtils::llaToxyz(
-    "+proj=tmerc +lat_0=0 +lon_0=0 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs", origin,
-    msg->latitude, msg->longitude, msg->altitude, p.pos.x, p.pos.y, p.pos.z);
+  // Create an instance of MappingUtils
+  interface::gnss::MappingUtils mappingUtils;
+
+  // Create MappingParameters struct to hold the parameters
+  interface::gnss::MappingParameters params;
+  params.proj_str = "+proj=tmerc +lat_0=0 +lon_0=0 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs";
+  params.lat = msg->latitude;
+  params.lon = msg->longitude;
+  params.alt = msg->altitude;
+
+  // Call llaToxyz function
+  mappingUtils.llaToxyz(params, p.pos.x, p.pos.y, p.pos.z);
+
   pose_.header = msg->header;
   pose_.header.frame_id = "map";
   pose_.pose.position.x = p.pos.x;
