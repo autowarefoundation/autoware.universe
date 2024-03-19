@@ -24,6 +24,10 @@
 #include <pybind11/stl.h>
 
 #include <algorithm>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
 
 namespace py = pybind11;
 

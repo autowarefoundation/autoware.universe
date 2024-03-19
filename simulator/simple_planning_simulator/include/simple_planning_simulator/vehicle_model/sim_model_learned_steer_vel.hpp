@@ -24,6 +24,8 @@
 #include <deque>
 #include <iostream>
 #include <queue>
+#include <string>
+#include <vector>
 
 /**
  * @class SimModelLearnedSteerVel
@@ -51,11 +53,12 @@ private:
   inputs of this model to states and inputs of the python model.
   */
 
-  std::vector<char *> state_names = {(char *)"POS_X",    (char *)"POS_Y", (char *)"YAW",
-                                     (char *)"YAW_RATE", (char *)"VX",    (char *)"VY",
-                                     (char *)"STEER"};
+  std::vector<char *> state_names = {const_cast<char *>("POS_X"), const_cast<char *>("POS_Y"),
+                                     const_cast<char *>("YAW"),   const_cast<char *>("YAW_RATE"),
+                                     const_cast<char *>("VX"),    const_cast<char *>("VY"),
+                                     const_cast<char *>("STEER")};
 
-  std::vector<char *> input_names = {(char *)"VX_DES", (char *)"STEER_DES"};
+  std::vector<char *> input_names = {const_cast<char *>("VX_DES"), const_cast<char *>("STEER_DES")};
 
   enum IDX {
     X = 0,

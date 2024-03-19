@@ -32,7 +32,6 @@ SimplePymodel::SimplePymodel(
     // Initialize model class from imported module
     py_model_class = imported_module.attr(py_class_name.c_str())();
   } else {
-    // TODO throw exception/error
     return;
   }
 
@@ -40,8 +39,6 @@ SimplePymodel::SimplePymodel(
   if (!param_file_path.empty()) {
     py::object load_params_succ = py_model_class.attr("load_params")(param_file_path.c_str());
     py_model_class.attr("reset")();
-  } else {
-    // TODO warning that using default model params
   }
 
   // Get string names of states of python model, convert them to C++ string and store them in

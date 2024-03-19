@@ -21,6 +21,9 @@
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 
+#include <string>
+#include <vector>
+
 namespace py = pybind11;
 
 /**
