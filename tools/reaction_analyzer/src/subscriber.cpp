@@ -40,36 +40,6 @@ SubscriberBase::SubscriberBase(
 
 void SubscriberBase::init_reaction_chains_and_params()
 {
-  auto stringToMessageType = [](const std::string & input) {
-    if (input == "autoware_auto_control_msgs/msg/AckermannControlCommand") {
-      return SubscriberMessageType::ACKERMANN_CONTROL_COMMAND;
-    } else if (input == "autoware_auto_planning_msgs/msg/Trajectory") {
-      return SubscriberMessageType::TRAJECTORY;
-    } else if (input == "sensor_msgs/msg/PointCloud2") {
-      return SubscriberMessageType::POINTCLOUD2;
-    } else if (input == "autoware_auto_perception_msgs/msg/PredictedObjects") {
-      return SubscriberMessageType::PREDICTED_OBJECTS;
-    } else if (input == "autoware_auto_perception_msgs/msg/DetectedObjects") {
-      return SubscriberMessageType::DETECTED_OBJECTS;
-    } else if (input == "autoware_auto_perception_msgs/msg/TrackedObjects") {
-      return SubscriberMessageType::TRACKED_OBJECTS;
-    } else {
-      return SubscriberMessageType::UNKNOWN;
-    }
-  };
-
-  auto stringToReactionType = [](const std::string & input) {
-    if (input == "first_brake_params") {
-      return ReactionType::FIRST_BRAKE;
-    } else if (input == "search_zero_vel_params") {
-      return ReactionType::SEARCH_ZERO_VEL;
-    } else if (input == "search_entity_params") {
-      return ReactionType::SEARCH_ENTITY;
-    } else {
-      return ReactionType::UNKNOWN;
-    }
-  };
-
   // Init Chains: get the topic addresses and message types of the modules in chain
   {
     const auto param_key = std::string("subscriber.reaction_chain");
@@ -81,8 +51,8 @@ void SubscriberBase::init_reaction_chains_and_params()
       tmp.topic_address = node_->get_parameter(module_name + ".topic_name").as_string();
       tmp.time_debug_topic_address =
         node_->get_parameter_or(module_name + ".time_debug_topic_name", std::string(""));
-      tmp.message_type =
-        stringToMessageType(node_->get_parameter(module_name + ".message_type").as_string());
+      tmp.message_type = get_subscriber_message_type(
+        node_->get_parameter(module_name + ".message_type").as_string());
       if (tmp.message_type != SubscriberMessageType::UNKNOWN) {
         chain_modules_.emplace_back(tmp);
       } else {
@@ -99,7 +69,7 @@ void SubscriberBase::init_reaction_chains_and_params()
     const auto module_names = node_->list_parameters({param_key}, 3).prefixes;
     for (const auto & module_name : module_names) {
       const auto splitted_name = split(module_name, '.');
-      const auto type = stringToReactionType(splitted_name.back());
+      const auto type = get_reaction_type(splitted_name.back());
       switch (type) {
         case ReactionType::FIRST_BRAKE: {
           reaction_params_.first_brake_params.debug_control_commands =
@@ -145,11 +115,13 @@ void SubscriberBase::init_reaction_chains_and_params()
       }
     }
   }
-  // init variables
 
-  entity_pose_ = create_entity_pose(entity_params_);
-  entity_search_radius_ = calculate_entity_search_radius(entity_params_) +
-                          reaction_params_.search_entity_params.search_radius_offset;
+  // Init variables
+  {
+    entity_pose_ = create_entity_pose(entity_params_);
+    entity_search_radius_ = calculate_entity_search_radius(entity_params_) +
+                            reaction_params_.search_entity_params.search_radius_offset;
+  }
 }
 
 bool SubscriberBase::init_subscribers()
@@ -160,307 +132,24 @@ bool SubscriberBase::init_subscribers()
   }
 
   for (const auto & module : chain_modules_) {
-    switch (module.message_type) {
-      case SubscriberMessageType::ACKERMANN_CONTROL_COMMAND: {
-        SubscriberVariables<AckermannControlCommand> subscriber_variable;
-
-        if (!module.time_debug_topic_address.empty()) {
-          // If not empty, user should define a time debug topic
-          // NOTE: Because message_filters package does not support the messages without headers, we
-          // can not use the synchronizer. After we reacted, we are going to use the cache
-          // of the both PublishedTime and AckermannControlCommand subscribers to find the messages
-          // which have same header time.
-
-          std::function<void(const AckermannControlCommand::ConstSharedPtr &)> callback =
-            [this, module](const AckermannControlCommand::ConstSharedPtr & ptr) {
-              this->on_control_command(module.node_name, ptr);
-            };
-          subscriber_variable.sub1_ =
-            std::make_unique<message_filters::Subscriber<AckermannControlCommand>>(
-              node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              create_subscription_options(node_));
-
-          subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
-
-          subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
-            node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-          constexpr int cache_size = 5;
-          subscriber_variable.cache_ = std::make_unique<message_filters::Cache<PublishedTime>>(
-            *subscriber_variable.sub2_, cache_size);
-
-        } else {
-          std::function<void(const AckermannControlCommand::ConstSharedPtr &)> callback =
-            [this, module](const AckermannControlCommand::ConstSharedPtr & ptr) {
-              this->on_control_command(module.node_name, ptr);
-            };
-
-          subscriber_variable.sub1_ =
-            std::make_unique<message_filters::Subscriber<AckermannControlCommand>>(
-              node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              create_subscription_options(node_));
-
-          subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
-          RCLCPP_WARN(
-            node_->get_logger(),
-            "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
-            "calculations",
-            module.node_name.c_str());
-        }
-        // set the variable to map with the topic address
-        subscriber_variables_map_[module.node_name] = std::move(subscriber_variable);
-        break;
-      }
-      case SubscriberMessageType::TRAJECTORY: {
-        SubscriberVariables<Trajectory> subscriber_variable;
-
-        if (!module.time_debug_topic_address.empty()) {
-          std::function<void(
-            const Trajectory::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
-            callback = [this, module](
-                         const Trajectory::ConstSharedPtr & ptr,
-                         const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->on_trajectory(module.node_name, ptr, published_time_ptr);
-            };
-
-          subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<Trajectory>>(
-            node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-          subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
-            node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-
-          subscriber_variable.synchronizer_ = std::make_unique<
-            message_filters::Synchronizer<SubscriberVariables<Trajectory>::ExactTimePolicy>>(
-            SubscriberVariables<Trajectory>::ExactTimePolicy(10), *subscriber_variable.sub1_,
-            *subscriber_variable.sub2_);
-
-          subscriber_variable.synchronizer_->registerCallback(
-            std::bind(callback, std::placeholders::_1, std::placeholders::_2));
-
-        } else {
-          std::function<void(const Trajectory::ConstSharedPtr &)> callback =
-            [this, module](const Trajectory::ConstSharedPtr & msg) {
-              this->on_trajectory(module.node_name, msg);
-            };
-          subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<Trajectory>>(
-            node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-
-          subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
-          RCLCPP_WARN(
-            node_->get_logger(),
-            "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
-            "calculations",
-            module.node_name.c_str());
-        }
-        subscriber_variables_map_[module.node_name] = std::move(subscriber_variable);
-        break;
-      }
-      case SubscriberMessageType::POINTCLOUD2: {
-        SubscriberVariables<PointCloud2> subscriber_variable;
-
-        if (!module.time_debug_topic_address.empty()) {
-          std::function<void(
-            const PointCloud2::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
-            callback = [this, module](
-                         const PointCloud2::ConstSharedPtr & ptr,
-                         const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->on_pointcloud(module.node_name, ptr, published_time_ptr);
-            };
-
-          subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PointCloud2>>(
-            node_, module.topic_address, rclcpp::SensorDataQoS().get_rmw_qos_profile(),
-            create_subscription_options(node_));
-          subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
-            node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-
-          subscriber_variable.synchronizer_ = std::make_unique<
-            message_filters::Synchronizer<SubscriberVariables<PointCloud2>::ExactTimePolicy>>(
-            SubscriberVariables<PointCloud2>::ExactTimePolicy(10), *subscriber_variable.sub1_,
-            *subscriber_variable.sub2_);
-
-          subscriber_variable.synchronizer_->registerCallback(
-            std::bind(callback, std::placeholders::_1, std::placeholders::_2));
-
-        } else {
-          std::function<void(const PointCloud2::ConstSharedPtr &)> callback =
-            [this, module](const PointCloud2::ConstSharedPtr & msg) {
-              this->on_pointcloud(module.node_name, msg);
-            };
-          subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PointCloud2>>(
-            node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-
-          subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
-          RCLCPP_WARN(
-            node_->get_logger(),
-            "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
-            "calculations",
-            module.node_name.c_str());
-        }
-        subscriber_variables_map_[module.node_name] = std::move(subscriber_variable);
-        break;
-      }
-      case SubscriberMessageType::PREDICTED_OBJECTS: {
-        SubscriberVariables<PredictedObjects> subscriber_variable;
-
-        if (!module.time_debug_topic_address.empty()) {
-          std::function<void(
-            const PredictedObjects::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
-            callback = [this, module](
-                         const PredictedObjects::ConstSharedPtr & ptr,
-                         const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->on_predicted_objects(module.node_name, ptr, published_time_ptr);
-            };
-          subscriber_variable.sub1_ =
-            std::make_unique<message_filters::Subscriber<PredictedObjects>>(
-              node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              create_subscription_options(node_));
-          subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
-            node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-
-          subscriber_variable.synchronizer_ = std::make_unique<
-            message_filters::Synchronizer<SubscriberVariables<PredictedObjects>::ExactTimePolicy>>(
-            SubscriberVariables<PredictedObjects>::ExactTimePolicy(10), *subscriber_variable.sub1_,
-            *subscriber_variable.sub2_);
-
-          subscriber_variable.synchronizer_->registerCallback(
-            std::bind(callback, std::placeholders::_1, std::placeholders::_2));
-
-        } else {
-          std::function<void(const PredictedObjects::ConstSharedPtr &)> callback =
-            [this, module](const PredictedObjects::ConstSharedPtr & msg) {
-              this->on_predicted_objects(module.node_name, msg);
-            };
-          subscriber_variable.sub1_ =
-            std::make_unique<message_filters::Subscriber<PredictedObjects>>(
-              node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              create_subscription_options(node_));
-
-          subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
-          RCLCPP_WARN(
-            node_->get_logger(),
-            "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
-            "calculations",
-            module.node_name.c_str());
-        }
-        subscriber_variables_map_[module.node_name] = std::move(subscriber_variable);
-        break;
-      }
-      case SubscriberMessageType::DETECTED_OBJECTS: {
-        SubscriberVariables<DetectedObjects> subscriber_variable;
-
-        if (!module.time_debug_topic_address.empty()) {
-          std::function<void(
-            const DetectedObjects::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
-            callback = [this, module](
-                         const DetectedObjects::ConstSharedPtr & ptr,
-                         const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->on_detected_objects(module.node_name, ptr, published_time_ptr);
-            };
-
-          subscriber_variable.sub1_ =
-            std::make_unique<message_filters::Subscriber<DetectedObjects>>(
-              node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              create_subscription_options(node_));
-          subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
-            node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-
-          subscriber_variable.synchronizer_ = std::make_unique<
-            message_filters::Synchronizer<SubscriberVariables<DetectedObjects>::ExactTimePolicy>>(
-            SubscriberVariables<DetectedObjects>::ExactTimePolicy(10), *subscriber_variable.sub1_,
-            *subscriber_variable.sub2_);
-
-          subscriber_variable.synchronizer_->registerCallback(
-            std::bind(callback, std::placeholders::_1, std::placeholders::_2));
-
-        } else {
-          std::function<void(const DetectedObjects::ConstSharedPtr &)> callback =
-            [this, module](const DetectedObjects::ConstSharedPtr & msg) {
-              this->on_detected_objects(module.node_name, msg);
-            };
-          subscriber_variable.sub1_ =
-            std::make_unique<message_filters::Subscriber<DetectedObjects>>(
-              node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-              create_subscription_options(node_));
-
-          subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
-          RCLCPP_WARN(
-            node_->get_logger(),
-            "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
-            "calculations",
-            module.node_name.c_str());
-        }
-        subscriber_variables_map_[module.node_name] = std::move(subscriber_variable);
-
-        break;
-      }
-      case SubscriberMessageType::TRACKED_OBJECTS: {
-        SubscriberVariables<TrackedObjects> subscriber_variable;
-        if (!module.time_debug_topic_address.empty()) {
-          std::function<void(
-            const TrackedObjects::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
-            callback = [this, module](
-                         const TrackedObjects::ConstSharedPtr & ptr,
-                         const PublishedTime::ConstSharedPtr & published_time_ptr) {
-              this->on_tracked_objects(module.node_name, ptr, published_time_ptr);
-            };
-
-          subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<TrackedObjects>>(
-            node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-          subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
-            node_, module.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-
-          subscriber_variable.synchronizer_ = std::make_unique<
-            message_filters::Synchronizer<SubscriberVariables<TrackedObjects>::ExactTimePolicy>>(
-            SubscriberVariables<TrackedObjects>::ExactTimePolicy(10), *subscriber_variable.sub1_,
-            *subscriber_variable.sub2_);
-
-          subscriber_variable.synchronizer_->registerCallback(
-            std::bind(callback, std::placeholders::_1, std::placeholders::_2));
-
-        } else {
-          std::function<void(const TrackedObjects::ConstSharedPtr &)> callback =
-            [this, module](const TrackedObjects::ConstSharedPtr & msg) {
-              this->on_tracked_objects(module.node_name, msg);
-            };
-          subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<TrackedObjects>>(
-            node_, module.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
-
-          subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
-          RCLCPP_WARN(
-            node_->get_logger(),
-            "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
-            "calculations",
-            module.node_name.c_str());
-        }
-        subscriber_variables_map_[module.node_name] = std::move(subscriber_variable);
-        break;
-      }
-      case SubscriberMessageType::UNKNOWN:
-        RCLCPP_WARN(
-          node_->get_logger(), "Unknown message type for module name: %s, skipping..",
-          module.node_name.c_str());
-        break;
-      default:
-        RCLCPP_WARN(
-          node_->get_logger(), "Unknown message type for module name: %s, skipping..",
-          module.node_name.c_str());
-        break;
+    if (module.message_type == SubscriberMessageType::UNKNOWN) {
+      RCLCPP_WARN(
+        node_->get_logger(), "Unknown message type for topic_config name: %s, skipping..",
+        module.node_name.c_str());
     }
+    auto subscriber_var = get_subscriber_variable(module);
+    if (!subscriber_var) {
+      RCLCPP_ERROR(
+        node_->get_logger(), "Failed to initialize subscriber for module name: %s",
+        module.node_name.c_str());
+      return false;
+    }
+    subscriber_variables_map_[module.node_name] = std::move(subscriber_var.value());
   }
   return true;
 }
 
-std::optional<std::unordered_map<std::string, MessageBufferVariant>>
-SubscriberBase::getMessageBuffersMap()
+std::optional<std::map<std::string, MessageBufferVariant>> SubscriberBase::get_message_buffers_map()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   if (message_buffers_.empty()) {
@@ -818,7 +507,8 @@ void SubscriberBase::on_detected_objects(
   DetectedObjects output_objs;
   output_objs = *msg_ptr;
   for (auto & obj : output_objs.objects) {
-    geometry_msgs::msg::PoseStamped output_stamped, input_stamped;
+    geometry_msgs::msg::PoseStamped output_stamped;
+    geometry_msgs::msg::PoseStamped input_stamped;
     input_stamped.pose = obj.kinematics.pose_with_covariance.pose;
     tf2::doTransform(input_stamped, output_stamped, transform_stamped);
     obj.kinematics.pose_with_covariance.pose = output_stamped.pose;
@@ -868,7 +558,8 @@ void SubscriberBase::on_detected_objects(
   DetectedObjects output_objs;
   output_objs = *msg_ptr;
   for (auto & obj : output_objs.objects) {
-    geometry_msgs::msg::PoseStamped output_stamped, input_stamped;
+    geometry_msgs::msg::PoseStamped output_stamped;
+    geometry_msgs::msg::PoseStamped input_stamped;
     input_stamped.pose = obj.kinematics.pose_with_covariance.pose;
     tf2::doTransform(input_stamped, output_stamped, transform_stamped);
     obj.kinematics.pose_with_covariance.pose = output_stamped.pose;
@@ -937,6 +628,289 @@ void SubscriberBase::on_tracked_objects(
   }
 }
 
+std::optional<SubscriberVariablesVariant> SubscriberBase::get_subscriber_variable(
+  const TopicConfig & topic_config)
+{
+  switch (topic_config.message_type) {
+    case SubscriberMessageType::ACKERMANN_CONTROL_COMMAND: {
+      SubscriberVariables<AckermannControlCommand> subscriber_variable;
+
+      if (!topic_config.time_debug_topic_address.empty()) {
+        // If not empty, user should define a time debug topic
+        // NOTE: Because message_filters package does not support the messages without headers, we
+        // can not use the synchronizer. After we reacted, we are going to use the cache
+        // of the both PublishedTime and AckermannControlCommand subscribers to find the messages
+        // which have same header time.
+
+        std::function<void(const AckermannControlCommand::ConstSharedPtr &)> callback =
+          [this, topic_config](const AckermannControlCommand::ConstSharedPtr & ptr) {
+            this->on_control_command(topic_config.node_name, ptr);
+          };
+        subscriber_variable.sub1_ =
+          std::make_unique<message_filters::Subscriber<AckermannControlCommand>>(
+            node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+            create_subscription_options(node_));
+
+        subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
+
+        subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
+          node_, topic_config.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+        constexpr int cache_size = 5;
+        subscriber_variable.cache_ = std::make_unique<message_filters::Cache<PublishedTime>>(
+          *subscriber_variable.sub2_, cache_size);
+
+      } else {
+        std::function<void(const AckermannControlCommand::ConstSharedPtr &)> callback =
+          [this, topic_config](const AckermannControlCommand::ConstSharedPtr & ptr) {
+            this->on_control_command(topic_config.node_name, ptr);
+          };
+
+        subscriber_variable.sub1_ =
+          std::make_unique<message_filters::Subscriber<AckermannControlCommand>>(
+            node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+            create_subscription_options(node_));
+
+        subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
+        RCLCPP_WARN(
+          node_->get_logger(),
+          "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
+          "calculations",
+          topic_config.node_name.c_str());
+      }
+      return subscriber_variable;
+    }
+    case SubscriberMessageType::TRAJECTORY: {
+      SubscriberVariables<Trajectory> subscriber_variable;
+
+      if (!topic_config.time_debug_topic_address.empty()) {
+        std::function<void(
+          const Trajectory::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
+          callback = [this, topic_config](
+                       const Trajectory::ConstSharedPtr & ptr,
+                       const PublishedTime::ConstSharedPtr & published_time_ptr) {
+            this->on_trajectory(topic_config.node_name, ptr, published_time_ptr);
+          };
+
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<Trajectory>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+        subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
+          node_, topic_config.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.synchronizer_ = std::make_unique<
+          message_filters::Synchronizer<SubscriberVariables<Trajectory>::ExactTimePolicy>>(
+          SubscriberVariables<Trajectory>::ExactTimePolicy(10), *subscriber_variable.sub1_,
+          *subscriber_variable.sub2_);
+
+        subscriber_variable.synchronizer_->registerCallback(
+          std::bind(callback, std::placeholders::_1, std::placeholders::_2));
+
+      } else {
+        std::function<void(const Trajectory::ConstSharedPtr &)> callback =
+          [this, topic_config](const Trajectory::ConstSharedPtr & msg) {
+            this->on_trajectory(topic_config.node_name, msg);
+          };
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<Trajectory>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
+        RCLCPP_WARN(
+          node_->get_logger(),
+          "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
+          "calculations",
+          topic_config.node_name.c_str());
+      }
+      return subscriber_variable;
+    }
+    case SubscriberMessageType::POINTCLOUD2: {
+      SubscriberVariables<PointCloud2> subscriber_variable;
+
+      if (!topic_config.time_debug_topic_address.empty()) {
+        std::function<void(
+          const PointCloud2::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
+          callback = [this, topic_config](
+                       const PointCloud2::ConstSharedPtr & ptr,
+                       const PublishedTime::ConstSharedPtr & published_time_ptr) {
+            this->on_pointcloud(topic_config.node_name, ptr, published_time_ptr);
+          };
+
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PointCloud2>>(
+          node_, topic_config.topic_address, rclcpp::SensorDataQoS().get_rmw_qos_profile(),
+          create_subscription_options(node_));
+        subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
+          node_, topic_config.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.synchronizer_ = std::make_unique<
+          message_filters::Synchronizer<SubscriberVariables<PointCloud2>::ExactTimePolicy>>(
+          SubscriberVariables<PointCloud2>::ExactTimePolicy(10), *subscriber_variable.sub1_,
+          *subscriber_variable.sub2_);
+
+        subscriber_variable.synchronizer_->registerCallback(
+          std::bind(callback, std::placeholders::_1, std::placeholders::_2));
+
+      } else {
+        std::function<void(const PointCloud2::ConstSharedPtr &)> callback =
+          [this, topic_config](const PointCloud2::ConstSharedPtr & msg) {
+            this->on_pointcloud(topic_config.node_name, msg);
+          };
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PointCloud2>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
+        RCLCPP_WARN(
+          node_->get_logger(),
+          "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
+          "calculations",
+          topic_config.node_name.c_str());
+      }
+      return subscriber_variable;
+    }
+    case SubscriberMessageType::PREDICTED_OBJECTS: {
+      SubscriberVariables<PredictedObjects> subscriber_variable;
+
+      if (!topic_config.time_debug_topic_address.empty()) {
+        std::function<void(
+          const PredictedObjects::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
+          callback = [this, topic_config](
+                       const PredictedObjects::ConstSharedPtr & ptr,
+                       const PublishedTime::ConstSharedPtr & published_time_ptr) {
+            this->on_predicted_objects(topic_config.node_name, ptr, published_time_ptr);
+          };
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PredictedObjects>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+        subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
+          node_, topic_config.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.synchronizer_ = std::make_unique<
+          message_filters::Synchronizer<SubscriberVariables<PredictedObjects>::ExactTimePolicy>>(
+          SubscriberVariables<PredictedObjects>::ExactTimePolicy(10), *subscriber_variable.sub1_,
+          *subscriber_variable.sub2_);
+
+        subscriber_variable.synchronizer_->registerCallback(
+          std::bind(callback, std::placeholders::_1, std::placeholders::_2));
+
+      } else {
+        std::function<void(const PredictedObjects::ConstSharedPtr &)> callback =
+          [this, topic_config](const PredictedObjects::ConstSharedPtr & msg) {
+            this->on_predicted_objects(topic_config.node_name, msg);
+          };
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<PredictedObjects>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
+        RCLCPP_WARN(
+          node_->get_logger(),
+          "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
+          "calculations",
+          topic_config.node_name.c_str());
+      }
+      return subscriber_variable;
+    }
+    case SubscriberMessageType::DETECTED_OBJECTS: {
+      SubscriberVariables<DetectedObjects> subscriber_variable;
+
+      if (!topic_config.time_debug_topic_address.empty()) {
+        std::function<void(
+          const DetectedObjects::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
+          callback = [this, topic_config](
+                       const DetectedObjects::ConstSharedPtr & ptr,
+                       const PublishedTime::ConstSharedPtr & published_time_ptr) {
+            this->on_detected_objects(topic_config.node_name, ptr, published_time_ptr);
+          };
+
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<DetectedObjects>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+        subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
+          node_, topic_config.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.synchronizer_ = std::make_unique<
+          message_filters::Synchronizer<SubscriberVariables<DetectedObjects>::ExactTimePolicy>>(
+          SubscriberVariables<DetectedObjects>::ExactTimePolicy(10), *subscriber_variable.sub1_,
+          *subscriber_variable.sub2_);
+
+        subscriber_variable.synchronizer_->registerCallback(
+          std::bind(callback, std::placeholders::_1, std::placeholders::_2));
+
+      } else {
+        std::function<void(const DetectedObjects::ConstSharedPtr &)> callback =
+          [this, topic_config](const DetectedObjects::ConstSharedPtr & msg) {
+            this->on_detected_objects(topic_config.node_name, msg);
+          };
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<DetectedObjects>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
+        RCLCPP_WARN(
+          node_->get_logger(),
+          "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
+          "calculations",
+          topic_config.node_name.c_str());
+      }
+      return subscriber_variable;
+    }
+    case SubscriberMessageType::TRACKED_OBJECTS: {
+      SubscriberVariables<TrackedObjects> subscriber_variable;
+      if (!topic_config.time_debug_topic_address.empty()) {
+        std::function<void(
+          const TrackedObjects::ConstSharedPtr &, const PublishedTime::ConstSharedPtr &)>
+          callback = [this, topic_config](
+                       const TrackedObjects::ConstSharedPtr & ptr,
+                       const PublishedTime::ConstSharedPtr & published_time_ptr) {
+            this->on_tracked_objects(topic_config.node_name, ptr, published_time_ptr);
+          };
+
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<TrackedObjects>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+        subscriber_variable.sub2_ = std::make_unique<message_filters::Subscriber<PublishedTime>>(
+          node_, topic_config.time_debug_topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.synchronizer_ = std::make_unique<
+          message_filters::Synchronizer<SubscriberVariables<TrackedObjects>::ExactTimePolicy>>(
+          SubscriberVariables<TrackedObjects>::ExactTimePolicy(10), *subscriber_variable.sub1_,
+          *subscriber_variable.sub2_);
+
+        subscriber_variable.synchronizer_->registerCallback(
+          std::bind(callback, std::placeholders::_1, std::placeholders::_2));
+
+      } else {
+        std::function<void(const TrackedObjects::ConstSharedPtr &)> callback =
+          [this, topic_config](const TrackedObjects::ConstSharedPtr & msg) {
+            this->on_tracked_objects(topic_config.node_name, msg);
+          };
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<TrackedObjects>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
+
+        subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
+        RCLCPP_WARN(
+          node_->get_logger(),
+          "PublishedTime will not be used for node name: %s. Header timestamp will be used for "
+          "calculations",
+          topic_config.node_name.c_str());
+      }
+      return subscriber_variable;
+    }
+    default:
+      RCLCPP_WARN(
+        node_->get_logger(), "Unknown message type for topic_config name: %s, skipping..",
+        topic_config.node_name.c_str());
+      return std::nullopt;
+  }
+}
+
 std::optional<size_t> SubscriberBase::find_first_brake_idx(
   const std::vector<AckermannControlCommand> & cmd_array)
 {
@@ -997,7 +971,7 @@ std::optional<size_t> SubscriberBase::find_first_brake_idx(
 }
 
 void SubscriberBase::set_control_command_to_buffer(
-  std::vector<AckermannControlCommand> & buffer, const AckermannControlCommand & cmd)
+  std::vector<AckermannControlCommand> & buffer, const AckermannControlCommand & cmd) const
 {
   const auto last_cmd_time = cmd.stamp;
   if (!buffer.empty()) {

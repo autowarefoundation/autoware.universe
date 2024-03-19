@@ -18,6 +18,7 @@
 #include <pcl/impl/point_types.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rosbag2_storage/bag_metadata.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
@@ -40,9 +41,10 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <fstream>
+#include <map>
 #include <string>
 #include <tuple>
-#include <unordered_map>
+#include <utility>
 #include <vector>
 
 // The reaction_analyzer namespace contains utility functions for the Reaction Analyzer tool.
@@ -81,6 +83,49 @@ using PipelineMap = std::map<rclcpp::Time, std::vector<ReactionPair>>;
  */
 using TimestampedReactionPairsVector =
   std::vector<std::tuple<rclcpp::Time, std::vector<ReactionPair>>>;
+
+/**
+ * @brief Enum for the different types of messages that can be published.
+ */
+enum class PublisherMessageType {
+  UNKNOWN = 0,
+  CAMERA_INFO = 1,
+  IMAGE = 2,
+  POINTCLOUD2 = 3,
+  POSE_WITH_COVARIANCE_STAMPED = 4,
+  POSE_STAMPED = 5,
+  ODOMETRY = 6,
+  IMU = 7,
+  CONTROL_MODE_REPORT = 8,
+  GEAR_REPORT = 9,
+  HAZARD_LIGHTS_REPORT = 10,
+  STEERING_REPORT = 11,
+  TURN_INDICATORS_REPORT = 12,
+  VELOCITY_REPORT = 13,
+};
+
+/**
+ * @brief Enum for the different types of messages that can be subscribed to.
+ */
+enum class SubscriberMessageType {
+  UNKNOWN = 0,
+  ACKERMANN_CONTROL_COMMAND = 1,
+  TRAJECTORY = 2,
+  POINTCLOUD2 = 3,
+  DETECTED_OBJECTS = 4,
+  PREDICTED_OBJECTS = 5,
+  TRACKED_OBJECTS = 6,
+};
+
+/**
+ * @brief Enum for the different types of reactions that can be analyzed.
+ */
+enum class ReactionType {
+  UNKNOWN = 0,
+  FIRST_BRAKE = 1,
+  SEARCH_ZERO_VEL = 2,
+  SEARCH_ENTITY = 3,
+};
 
 /**
  * @brief Enum for the different running modes of the Reaction Analyzer.
@@ -127,6 +172,27 @@ struct LatencyStats
   double median;
   double std_dev;
 };
+
+/**
+ * @brief Convert string to SubscriberMessageType.
+ */
+SubscriberMessageType get_subscriber_message_type(const std::string & message_type);
+
+/**
+ * @brief Convert string to PublisherMessageType.
+ */
+PublisherMessageType get_publisher_message_type(const std::string & message_type);
+
+/**
+ * @brief Get the PublisherMessageType for a given topic.
+ */
+PublisherMessageType get_publisher_message_type_for_topic(
+  const std::vector<rosbag2_storage::TopicInformation> & topics, const std::string & topic_name);
+
+/**
+ * @brief Convert string to ReactionType.
+ */
+ReactionType get_reaction_type(const std::string & reaction_type);
 
 /**
  * @brief Calculates the statistics of a vector of latencies.

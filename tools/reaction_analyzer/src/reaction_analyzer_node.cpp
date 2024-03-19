@@ -51,8 +51,8 @@ void ReactionAnalyzerNode::on_ground_truth_pose(PoseStamped::ConstSharedPtr msg_
   ground_truth_pose_ptr_ = std::move(msg_ptr);
 }
 
-ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions options)
-: Node("reaction_analyzer_node", options.automatically_declare_parameters_from_overrides(true))
+ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions node_options)
+: Node("reaction_analyzer_node", node_options.automatically_declare_parameters_from_overrides(true))
 {
   using std::placeholders::_1;
 
@@ -160,7 +160,7 @@ void ReactionAnalyzerNode::on_timer()
 
   // Init the test environment
   if (!test_environment_init_time_) {
-    init_ego(
+    init_test_env(
       initialization_state_ptr, route_state_ptr, operation_mode_ptr, ground_truth_pose_ptr,
       current_odometry_ptr);
     return;
@@ -173,7 +173,7 @@ void ReactionAnalyzerNode::on_timer()
   if (!spawn_cmd_time) return;
 
   // Get the reacted messages, if all modules reacted
-  const auto message_buffers = subscriber_ptr_->getMessageBuffersMap();
+  const auto message_buffers = subscriber_ptr_->get_message_buffers_map();
 
   if (message_buffers) {
     // if reacted, calculate the results
@@ -206,7 +206,7 @@ void ReactionAnalyzerNode::spawn_obstacle(const geometry_msgs::msg::Point & ego_
 }
 
 void ReactionAnalyzerNode::calculate_results(
-  const std::unordered_map<std::string, subscriber::MessageBufferVariant> & message_buffers,
+  const std::map<std::string, subscriber::MessageBufferVariant> & message_buffers,
   const rclcpp::Time & spawn_cmd_time)
 {
   // Map the reaction times w.r.t its header time to categorize it
@@ -251,7 +251,7 @@ void ReactionAnalyzerNode::init_analyzer_variables()
   }
 }
 
-void ReactionAnalyzerNode::init_ego(
+void ReactionAnalyzerNode::init_test_env(
   const LocalizationInitializationState::ConstSharedPtr & initialization_state_ptr,
   const RouteState::ConstSharedPtr & route_state_ptr,
   const OperationModeState::ConstSharedPtr & operation_mode_ptr,
@@ -262,7 +262,6 @@ void ReactionAnalyzerNode::init_ego(
 
   // Initialize the test environment
   constexpr double initialize_call_period = 1.0;  // sec
-
   if (
     !last_test_environment_init_request_time_ ||
     (current_time - last_test_environment_init_request_time_.value()).seconds() >=
@@ -270,59 +269,23 @@ void ReactionAnalyzerNode::init_ego(
     last_test_environment_init_request_time_ = current_time;
 
     // Pose initialization of the ego
-    if (
-      initialization_state_ptr &&
-      (initialization_state_ptr->state != LocalizationInitializationState::INITIALIZED ||
-       !is_vehicle_initialized_)) {
-      if (initialization_state_ptr->state == LocalizationInitializationState::INITIALIZED) {
-        is_vehicle_initialized_ = true;
-      }
-      if (node_running_mode_ == RunningMode::PlanningControl) {
-        // publish initial pose
-        init_pose_.header.stamp = current_time;
-        init_pose_.header.frame_id = "map";
-        pub_initial_pose_->publish(init_pose_);
-      }
-      return;
-    }
+    is_vehicle_initialized_ = !is_vehicle_initialized_
+                                ? init_ego(initialization_state_ptr, odometry_ptr, current_time)
+                                : is_vehicle_initialized_;
 
-    // Wait until odometry_ptr is initialized
-    if (!odometry_ptr) {
-      RCLCPP_WARN_ONCE(get_logger(), "Odometry is not received. Waiting for odometry...");
+    if (!is_vehicle_initialized_) {
       return;
     }
 
     // Check is position initialized accurately, if node is running in perception_planning mode
     if (node_running_mode_ == RunningMode::PerceptionPlanning) {
-      if (!ground_truth_pose_ptr) {
-        RCLCPP_WARN(
-          get_logger(), "Ground truth pose is not received. Waiting for Ground truth pose...");
-        return;
-      } else {
-        constexpr double deviation_threshold = 0.1;
-        const auto deviation = tier4_autoware_utils::calcPoseDeviation(
-          ground_truth_pose_ptr->pose, odometry_ptr->pose.pose);
-        if (
-          deviation.longitudinal > deviation_threshold || deviation.lateral > deviation_threshold ||
-          deviation.yaw > deviation_threshold) {
-          RCLCPP_ERROR(
-            get_logger(),
-            "Deviation between ground truth position and ego position is high. Node is shutting "
-            "down. Longitudinal deviation: %f, Lateral deviation: %f, Yaw deviation: %f",
-            deviation.longitudinal, deviation.lateral, deviation.yaw);
-          rclcpp::shutdown();
-        }
-      }
+      if (!check_ego_init_correctly(ground_truth_pose_ptr, odometry_ptr)) return;
     }
 
-    if (route_state_ptr && (route_state_ptr->state != RouteState::SET || !is_route_set_)) {
-      if (route_state_ptr->state == RouteState::SET) {
-        is_route_set_ = true;
-      }
-      // publish goal pose
-      goal_pose_.header.stamp = current_time;
-      goal_pose_.header.frame_id = "map";
-      pub_goal_pose_->publish(goal_pose_);
+    // Set route
+    is_route_set_ = !is_route_set_ ? set_route(route_state_ptr, current_time) : is_route_set_;
+
+    if (!is_route_set_) {
       return;
     }
 
@@ -331,9 +294,9 @@ void ReactionAnalyzerNode::init_ego(
       // change to autonomous
       if (operation_mode_ptr && operation_mode_ptr->mode != OperationModeState::AUTONOMOUS) {
         call_operation_mode_service_without_response();
-        return;
       }
     }
+
     const bool is_ready =
       (is_vehicle_initialized_ && is_route_set_ &&
        (operation_mode_ptr->mode == OperationModeState::AUTONOMOUS ||
@@ -361,6 +324,78 @@ void ReactionAnalyzerNode::call_operation_mode_service_without_response()
         this->get_logger(), "Status: %d, %s", result.get()->status.code,
         result.get()->status.message.c_str());
     });
+}
+
+bool ReactionAnalyzerNode::init_ego(
+  const LocalizationInitializationState::ConstSharedPtr & initialization_state_ptr,
+  const Odometry::ConstSharedPtr & odometry_ptr, const rclcpp::Time & current_time)
+{
+  // Pose initialization of the ego
+  if (initialization_state_ptr) {
+    if (initialization_state_ptr->state != LocalizationInitializationState::INITIALIZED) {
+      if (node_running_mode_ == RunningMode::PlanningControl) {
+        // publish initial pose
+        init_pose_.header.stamp = current_time;
+        init_pose_.header.frame_id = "map";
+        pub_initial_pose_->publish(init_pose_);
+      }
+      return false;
+    }
+    // Wait until odometry_ptr is initialized
+    if (!odometry_ptr) {
+      RCLCPP_WARN_ONCE(get_logger(), "Odometry is not received. Waiting for odometry...");
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool ReactionAnalyzerNode::set_route(
+  const RouteState::ConstSharedPtr & route_state_ptr, const rclcpp::Time & current_time)
+{
+  if (route_state_ptr) {
+    if (route_state_ptr->state != RouteState::SET) {
+      // publish goal pose
+      goal_pose_.header.stamp = current_time;
+      goal_pose_.header.frame_id = "map";
+      pub_goal_pose_->publish(goal_pose_);
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool ReactionAnalyzerNode::check_ego_init_correctly(
+  const PoseStamped::ConstSharedPtr & ground_truth_pose_ptr,
+  const Odometry::ConstSharedPtr & odometry_ptr)
+{
+  if (!ground_truth_pose_ptr) {
+    RCLCPP_WARN(
+      get_logger(), "Ground truth pose is not received. Waiting for Ground truth pose...");
+    return false;
+  }
+  if (!odometry_ptr) {
+    RCLCPP_WARN(get_logger(), "Odometry is not received. Waiting for odometry...");
+    return false;
+  }
+
+  constexpr double deviation_threshold = 0.1;
+  const auto deviation =
+    tier4_autoware_utils::calcPoseDeviation(ground_truth_pose_ptr->pose, odometry_ptr->pose.pose);
+  const bool is_position_initialized_correctly = deviation.longitudinal < deviation_threshold &&
+                                                 deviation.lateral < deviation_threshold &&
+                                                 deviation.yaw < deviation_threshold;
+  if (!is_position_initialized_correctly) {
+    RCLCPP_ERROR(
+      get_logger(),
+      "Deviation between ground truth position and ego position is high. Node is shutting "
+      "down. Longitudinal deviation: %f, Lateral deviation: %f, Yaw deviation: %f",
+      deviation.longitudinal, deviation.lateral, deviation.yaw);
+    rclcpp::shutdown();
+  }
+  return true;
 }
 
 void ReactionAnalyzerNode::reset()

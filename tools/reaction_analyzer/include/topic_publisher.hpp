@@ -35,10 +35,10 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -54,23 +54,6 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
-
-enum class PublisherMessageType {
-  UNKNOWN = 0,
-  CAMERA_INFO = 1,
-  IMAGE = 2,
-  POINTCLOUD2 = 3,
-  POSE_WITH_COVARIANCE_STAMPED = 4,
-  POSE_STAMPED = 5,
-  ODOMETRY = 6,
-  IMU = 7,
-  CONTROL_MODE_REPORT = 8,
-  GEAR_REPORT = 9,
-  HAZARD_LIGHTS_REPORT = 10,
-  STEERING_REPORT = 11,
-  TURN_INDICATORS_REPORT = 12,
-  VELOCITY_REPORT = 13,
-};
 
 struct TopicPublisherParams
 {
@@ -110,68 +93,68 @@ struct PublisherVarAccessor
 {
   // Template struct to check if a type has a header member.
   template <typename T, typename = std::void_t<>>
-  struct has_header : std::false_type
+  struct HasHeader : std::false_type
   {
   };
 
   template <typename T>
-  struct has_header<T, std::void_t<decltype(T::header)>> : std::true_type
+  struct HasHeader<T, std::void_t<decltype(T::header)>> : std::true_type
   {
   };
 
   // Template struct to check if a type has a stamp member.
   template <typename T, typename = std::void_t<>>
-  struct has_stamp : std::false_type
+  struct HasStamp : std::false_type
   {
   };
 
   template <typename T>
-  struct has_stamp<T, std::void_t<decltype(T::stamp)>> : std::true_type
+  struct HasStamp<T, std::void_t<decltype(T::stamp)>> : std::true_type
   {
   };
 
-  template <typename MessageType>
+  template <typename T>
   void publish_with_current_time(
-    const PublisherVariables<MessageType> & publisherVar, const rclcpp::Time & current_time,
+    const PublisherVariables<T> & publisher_var, const rclcpp::Time & current_time,
     const bool is_object_spawned) const
   {
-    std::unique_ptr<MessageType> msg_to_be_published = std::make_unique<MessageType>();
+    std::unique_ptr<T> msg_to_be_published = std::make_unique<T>();
 
     if (is_object_spawned) {
-      *msg_to_be_published = *publisherVar.object_spawned_message;
+      *msg_to_be_published = *publisher_var.object_spawned_message;
     } else {
-      *msg_to_be_published = *publisherVar.empty_area_message;
+      *msg_to_be_published = *publisher_var.empty_area_message;
     }
-    if constexpr (has_header<MessageType>::value) {
+    if constexpr (HasHeader<T>::value) {
       msg_to_be_published->header.stamp = current_time;
-    } else if constexpr (has_stamp<MessageType>::value) {
+    } else if constexpr (HasStamp<T>::value) {
       msg_to_be_published->stamp = current_time;
     }
-    publisherVar.publisher->publish(std::move(msg_to_be_published));
+    publisher_var.publisher->publish(std::move(msg_to_be_published));
   }
 
   template <typename T>
-  void set_period(T & publisherVar, std::chrono::milliseconds new_period)
+  void set_period(T & publisher_var, std::chrono::milliseconds new_period)
   {
-    publisherVar.period_ms = new_period;
+    publisher_var.period_ms = new_period;
   }
 
   template <typename T>
-  std::chrono::milliseconds get_period(const T & publisherVar) const
+  std::chrono::milliseconds get_period(const T & publisher_var) const
   {
-    return publisherVar.period_ms;
+    return publisher_var.period_ms;
   }
 
   template <typename T>
-  std::shared_ptr<void> get_empty_area_message(const T & publisherVar) const
+  std::shared_ptr<void> get_empty_area_message(const T & publisher_var) const
   {
-    return std::static_pointer_cast<void>(publisherVar.empty_area_message);
+    return std::static_pointer_cast<void>(publisher_var.empty_area_message);
   }
 
   template <typename T>
-  std::shared_ptr<void> get_object_spawned_message(const T & publisherVar) const
+  std::shared_ptr<void> get_object_spawned_message(const T & publisher_var) const
   {
-    return std::static_pointer_cast<void>(publisherVar.object_spawned_message);
+    return std::static_pointer_cast<void>(publisher_var.object_spawned_message);
   }
 };
 
@@ -200,7 +183,6 @@ public:
     std::optional<rclcpp::Time> & spawn_cmd_time, const RunningMode & node_running_mode,
     const EntityParams & entity_params);
 
-  ~TopicPublisher() = default;
   void reset();
 
 private:
@@ -229,21 +211,25 @@ private:
 
   // Variables perception_planning mode
   PointcloudPublisherType pointcloud_publisher_type_;
-  std::unordered_map<std::string, PublisherVariablesVariant> topic_publisher_map_;
-  std::unordered_map<std::string, LidarOutputPair>
+  std::map<std::string, PublisherVariablesVariant> topic_publisher_map_;
+  std::map<std::string, LidarOutputPair>
     lidar_pub_variable_pair_map_;  // used to publish pointcloud_raw and pointcloud_raw_ex
   bool is_object_spawned_message_published_{false};
   std::shared_ptr<rclcpp::TimerBase> one_shot_timer_shared_ptr_;
 
   // Functions
-  void set_message_to_variable_map(
-    const PublisherMessageType & message_type, const std::string & topic_name,
-    rosbag2_storage::SerializedBagMessage & bag_message, const bool is_empty_area_message);
-  void set_period_to_variable_map(
-    const std::unordered_map<std::string, std::vector<rclcpp::Time>> & time_map);
-  bool set_publishers_and_timers_to_variable_map();
+  template <typename MessageType>
+  void set_message(
+    const std::string & topic_name, const rosbag2_storage::SerializedBagMessage & bag_message,
+    const bool is_empty_area_message);
+  void set_period(const std::map<std::string, std::vector<rclcpp::Time>> & time_map);
+  std::map<std::string, PublisherVariables<PointCloud2>> set_general_publishers_and_timers();
+  void set_pointcloud_publishers_and_timers(
+    const std::map<std::string, PublisherVariables<PointCloud2>> & pointcloud_variables_map);
   bool check_publishers_initialized_correctly();
   void init_rosbag_publishers();
+  void init_rosbag_publishers_with_object(const std::string & path_bag_with_object);
+  void init_rosbag_publishers_without_object(const std::string & path_bag_without_object);
   void pointcloud_messages_sync_publisher(const PointcloudPublisherType type);
   void pointcloud_messages_async_publisher(
     const std::pair<
@@ -253,7 +239,7 @@ private:
   void dummy_perception_publisher();  // Only for planning_control mode
 
   // Timers
-  std::unordered_map<std::string, rclcpp::TimerBase::SharedPtr> pointcloud_publish_timers_map_;
+  std::map<std::string, rclcpp::TimerBase::SharedPtr> pointcloud_publish_timers_map_;
   rclcpp::TimerBase::SharedPtr pointcloud_sync_publish_timer_;
   rclcpp::TimerBase::SharedPtr dummy_perception_timer_;
 };
