@@ -122,31 +122,6 @@ private:
         calcSignedArcLength(path.points, ego_position, left_shift.finish_pose.position);
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         left_shift.uuid, true, start_distance, finish_distance, clock_->now());
-
-      const auto record_start_time = !is_recording_ && is_record_necessary_ && helper_->isShifted();
-      const auto record_end_time = is_recording_ && !helper_->isShifted();
-      const auto steering_factor = [&]() {
-        if (record_start_time) {
-          is_recording_ = true;
-          RCLCPP_DEBUG(getLogger(), "start left avoidance maneuver. get time stamp.");
-          return uint16_t(100);
-        }
-
-        if (record_end_time) {
-          is_recording_ = false;
-          is_record_necessary_ = false;
-          RCLCPP_DEBUG(getLogger(), "end avoidance maneuver. get time stamp.");
-          return uint16_t(200);
-        }
-
-        return SteeringFactor::LEFT;
-      }();
-
-      if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
-          {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, steering_factor, SteeringFactor::TURNING, "");
-      }
     }
 
     for (const auto & right_shift : right_shift_array_) {
@@ -156,31 +131,6 @@ private:
         calcSignedArcLength(path.points, ego_position, right_shift.finish_pose.position);
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         right_shift.uuid, true, start_distance, finish_distance, clock_->now());
-
-      const auto record_start_time = !is_recording_ && is_record_necessary_ && helper_->isShifted();
-      const auto record_end_time = is_recording_ && !helper_->isShifted();
-      const auto steering_factor = [&]() {
-        if (record_start_time) {
-          is_recording_ = true;
-          RCLCPP_DEBUG(getLogger(), "start right avoidance maneuver. get time stamp.");
-          return uint16_t(100);
-        }
-
-        if (record_end_time) {
-          is_recording_ = false;
-          is_record_necessary_ = false;
-          RCLCPP_DEBUG(getLogger(), "end avoidance maneuver. get time stamp.");
-          return uint16_t(200);
-        }
-
-        return SteeringFactor::RIGHT;
-      }();
-
-      if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
-          {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, steering_factor, SteeringFactor::TURNING, "");
-      }
     }
   }
 

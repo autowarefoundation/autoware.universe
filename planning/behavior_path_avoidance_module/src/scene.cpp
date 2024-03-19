@@ -928,6 +928,42 @@ BehaviorModuleOutput AvoidanceModule::plan()
       spline_shift_path, data.current_lanelets, planner_data_->parameters.vehicle_info);
   }
 
+  if (!path_shifter_.getShiftLines().empty()) {
+    const auto front_shift_line = path_shifter_.getShiftLines().front();
+    const double start_distance = calcSignedArcLength(
+      data.reference_path.points, getEgoPosition(), front_shift_line.start.position);
+    const double finish_distance = calcSignedArcLength(
+      data.reference_path.points, getEgoPosition(), front_shift_line.end.position);
+
+    const auto record_start_time = !is_recording_ && is_record_necessary_ && helper_->isShifted();
+    const auto record_end_time = is_recording_ && !helper_->isShifted();
+    const auto relative_shift_length = front_shift_line.end_shift_length - helper_->getEgoShift();
+    const auto steering_direction =
+      relative_shift_length > 0.0 ? SteeringFactor::LEFT : SteeringFactor::RIGHT;
+    const auto steering_status = [&]() {
+      if (record_start_time) {
+        is_recording_ = true;
+        RCLCPP_ERROR(getLogger(), "start right avoidance maneuver. get time stamp.");
+        return uint16_t(100);
+      }
+
+      if (record_end_time) {
+        is_recording_ = false;
+        is_record_necessary_ = false;
+        RCLCPP_ERROR(getLogger(), "end avoidance maneuver. get time stamp.");
+        return uint16_t(200);
+      }
+
+      return helper_->isShifted() ? SteeringFactor::TURNING : SteeringFactor::APPROACHING;
+    }();
+
+    if (finish_distance > -1.0e-03) {
+      steering_factor_interface_ptr_->updateSteeringFactor(
+        {front_shift_line.start, front_shift_line.end}, {start_distance, finish_distance},
+        PlanningBehavior::AVOIDANCE, steering_direction, steering_status, "");
+    }
+  }
+
   // sparse resampling for computational cost
   {
     spline_shift_path.path = utils::resamplePathWithSpline(
@@ -1007,14 +1043,6 @@ CandidateOutput AvoidanceModule::planCandidate() const
   output.lateral_shift = helper_->getRelativeShiftToPath(sl);
   output.start_distance_to_path_change = sl_front.start_longitudinal;
   output.finish_distance_to_path_change = sl_back.end_longitudinal;
-
-  const uint16_t steering_factor_direction = std::invoke([&output]() {
-    return output.lateral_shift > 0.0 ? SteeringFactor::LEFT : SteeringFactor::RIGHT;
-  });
-  steering_factor_interface_ptr_->updateSteeringFactor(
-    {sl_front.start, sl_back.end},
-    {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-    PlanningBehavior::AVOIDANCE, steering_factor_direction, SteeringFactor::APPROACHING, "");
 
   output.path_candidate = shifted_path.path;
   return output;
