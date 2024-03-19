@@ -48,7 +48,7 @@ public:
 
 private:
   void selectPositionSource(
-    double trusted_pose_average_rmse_xy, double trusted_pose_yaw_rmse_in_degrees);
+    double trusted_pose_average_rmse_xy, double trusted_pose_yaw_rmse_in_degrees, double trusted_pose_average_rmse_z);
 
   enum class PoseSource {
     GNSS = 0,

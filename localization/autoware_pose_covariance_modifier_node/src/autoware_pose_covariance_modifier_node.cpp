@@ -125,16 +125,17 @@ void AutowarePoseCovarianceModifierNode::trusted_pose_with_cov_callback(
   trustedPoseCallbackTime = this->now();
   trusted_source_pose_with_cov = *msg;
 
-  double trusted_pose_average_rmse_xy;
-  double trusted_pose_yaw_rmse_in_degrees;
-  trusted_pose_average_rmse_xy = (std::sqrt(trusted_source_pose_with_cov.pose.covariance[0]) +
+//  double trusted_pose_average_rmse_xy;
+//  double trusted_pose_yaw_rmse_in_degrees;
+    double trusted_pose_average_rmse_xy = (std::sqrt(trusted_source_pose_with_cov.pose.covariance[0]) +
                                   std::sqrt(trusted_source_pose_with_cov.pose.covariance[7])) /
                                  2;
 
-  trusted_pose_yaw_rmse_in_degrees =
+    double trusted_pose_rmse_z = std::sqrt(trusted_source_pose_with_cov.pose.covariance[0]);
+    double trusted_pose_yaw_rmse_in_degrees =
     std::sqrt(trusted_source_pose_with_cov.pose.covariance[35]) * 180 / M_PI;
 
-  selectPositionSource(trusted_pose_average_rmse_xy, trusted_pose_yaw_rmse_in_degrees);
+  selectPositionSource(trusted_pose_average_rmse_xy, trusted_pose_yaw_rmse_in_degrees,trusted_pose_rmse_z);
 
   if (pose_source_ != 2) {
     new_pose_estimator_pub_->publish(trusted_source_pose_with_cov);
@@ -147,15 +148,15 @@ void AutowarePoseCovarianceModifierNode::trusted_pose_with_cov_callback(
 }
 
 void AutowarePoseCovarianceModifierNode::selectPositionSource(
-  double trusted_pose_average_rmse_xy, double trusted_pose_yaw_rmse_in_degrees)
+  double trusted_pose_average_rmse_xy, double trusted_pose_yaw_rmse_in_degrees, double trusted_pose_rmse_z)
 {
   std_msgs::msg::String selected_pose_type;
   if (
     trusted_pose_average_rmse_xy <= gnss_error_reliable_max_ &&
-    trusted_pose_yaw_rmse_in_degrees < yaw_error_deg_threshold_) {
+    trusted_pose_yaw_rmse_in_degrees < yaw_error_deg_threshold_ && trusted_pose_rmse_z < gnss_error_reliable_max_) {
     pose_source_ = static_cast<int>(AutowarePoseCovarianceModifierNode::PoseSource::GNSS);
     selected_pose_type.data = "GNSS";
-  } else if (trusted_pose_average_rmse_xy <= gnss_error_unreliable_min_) {
+  } else if (trusted_pose_average_rmse_xy <= gnss_error_unreliable_min_ && trusted_pose_rmse_z < gnss_error_unreliable_min_) {
     pose_source_ = static_cast<int>(AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT);
     selected_pose_type.data = "GNSS + NDT";
   } else {
