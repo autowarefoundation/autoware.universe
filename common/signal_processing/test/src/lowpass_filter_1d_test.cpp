@@ -15,6 +15,7 @@
 #include "signal_processing/lowpass_filter_1d.hpp"
 
 #include <boost/optional/optional_io.hpp>
+
 #include <gtest/gtest.h>
 
 constexpr double epsilon = 1e-6;

@@ -17,6 +17,7 @@
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <boost/optional/optional_io.hpp>
+
 #include <gtest/gtest.h>
 
 using tier4_autoware_utils::Point2d;
