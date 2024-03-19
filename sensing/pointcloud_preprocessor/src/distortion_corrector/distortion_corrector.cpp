@@ -39,6 +39,7 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   // Parameter
   time_stamp_field_name_ = declare_parameter("time_stamp_field_name", "time_stamp");
   use_imu_ = declare_parameter("use_imu", true);
+  update_azimuth_and_distance_ = declare_parameter<bool>("update_azimuth_and_distance");
 
   // Publisher
   undistorted_points_pub_ =
@@ -202,6 +203,8 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   sensor_msgs::PointCloud2Iterator<float> it_x(points, "x");
   sensor_msgs::PointCloud2Iterator<float> it_y(points, "y");
   sensor_msgs::PointCloud2Iterator<float> it_z(points, "z");
+  sensor_msgs::PointCloud2Iterator<float> it_azimuth(points, "azimuth");
+  sensor_msgs::PointCloud2Iterator<float> it_distance(points, "distance");
   sensor_msgs::PointCloud2ConstIterator<double> it_time_stamp(points, time_stamp_field_name_);
 
   float theta{0.0f};
@@ -242,7 +245,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   // For performance, avoid transform computation if unnecessary
   bool need_transform = points.header.frame_id != base_link_frame_;
 
-  for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
+  for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_azimuth, ++it_distance, ++it_time_stamp) {
     while (twist_it != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
       ++twist_it;
       twist_stamp = rclcpp::Time(twist_it->header.stamp).seconds();
@@ -312,6 +315,10 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     *it_y = static_cast<float>(undistorted_point.getY());
     *it_z = static_cast<float>(undistorted_point.getZ());
 
+    if (update_azimuth_and_distance_ && need_transform) {
+      *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
+      *it_azimuth = cv::fastAtan2(*it_y, *it_x) * azimuth_factor_;
+    }
     prev_time_stamp_sec = *it_time_stamp;
   }
   return true;

@@ -36,6 +36,7 @@
 #include <tf2_ros/transform_listener.h>
 
 // Include tier4 autoware utils
+#include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
@@ -81,6 +82,8 @@ private:
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;
   bool use_imu_;
+  bool update_azimuth_and_distance_;
+  float azimuth_factor_ = 100.0;
 };
 
 }  // namespace pointcloud_preprocessor
