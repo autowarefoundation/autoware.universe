@@ -607,6 +607,19 @@ double calcLateralOffset(
     return std::nan("");
   }
 
+  if (overlap_removed_points.size() >= seg_idx) {
+    const std::string error_message(
+      "[motion_utils] " + std::string(__func__) + ": Overlap points removed exceeded seg_idx.");
+    tier4_autoware_utils::print_backtrace();
+    if (throw_exception) {
+      throw std::runtime_error(error_message);
+    }
+    log_error(
+      error_message +
+      " Return NaN since no_throw option is enabled. The maintainer must check the code.");
+    return std::nan("");
+  }
+
   const auto p_front = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx));
   const auto p_back = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx + 1));
 
