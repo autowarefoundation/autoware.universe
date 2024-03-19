@@ -40,6 +40,7 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>behavior_velocity_planner_common</depend>
   <depend>diagnostic_msgs</depend>
+  <depend>grid_map_ros</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
