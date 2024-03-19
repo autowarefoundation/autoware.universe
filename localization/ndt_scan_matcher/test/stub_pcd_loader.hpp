@@ -56,7 +56,6 @@ private:
     pcl::toROSMsg(cloud, pcd_map_cell_with_id.pointcloud);
     res->new_pointcloud_with_ids.push_back(pcd_map_cell_with_id);
     res->header.frame_id = "map";
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     return true;
   }
 };
