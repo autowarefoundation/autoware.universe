@@ -30,8 +30,18 @@ namespace object_recognition_utils
 {
 using tier4_autoware_utils::Polygon2d;
 
+inline bool validatePolygons(const Polygon2d & source_polygon, const Polygon2d & target_polygon)
+{
+  static constexpr double min_area = 1e-9;
+  if (boost::geometry::area(source_polygon) < min_area) return false;
+  if (boost::geometry::area(target_polygon) < min_area) return false;
+  return true;
+}
+
 inline double getConvexShapeArea(const Polygon2d & source_polygon, const Polygon2d & target_polygon)
 {
+  if (!validatePolygons(source_polygon, target_polygon)) return 0.0;
+
   boost::geometry::model::multi_polygon<Polygon2d> union_polygons;
   boost::geometry::union_(source_polygon, target_polygon, union_polygons);
 
@@ -50,6 +60,8 @@ inline double getSumArea(const std::vector<Polygon2d> & polygons)
 inline double getIntersectionArea(
   const Polygon2d & source_polygon, const Polygon2d & target_polygon)
 {
+  if (!validatePolygons(source_polygon, target_polygon)) return 0.0;
+
   std::vector<Polygon2d> intersection_polygons;
   boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
   return getSumArea(intersection_polygons);
@@ -57,6 +69,8 @@ inline double getIntersectionArea(
 
 inline double getUnionArea(const Polygon2d & source_polygon, const Polygon2d & target_polygon)
 {
+  if (!validatePolygons(source_polygon, target_polygon)) return 0.0;
+
   std::vector<Polygon2d> union_polygons;
   boost::geometry::union_(source_polygon, target_polygon, union_polygons);
   return getSumArea(union_polygons);
@@ -65,12 +79,6 @@ inline double getUnionArea(const Polygon2d & source_polygon, const Polygon2d & t
 template <class T1, class T2>
 double get2dIoU(const T1 source_object, const T2 target_object, const double min_union_area = 0.01)
 {
-  if (
-    source_object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON &&
-    source_object.shape.footprint.points.size() < 3) {
-    return 0.0;
-  }
-
   const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_object);
   const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
@@ -90,8 +98,11 @@ double get2dGeneralizedIoU(const T1 & source_object, const T2 & target_object)
   const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
   const double intersection_area = getIntersectionArea(source_polygon, target_polygon);
+  if (intersection_area == 0.0) return 0.0;
   const double union_area = getUnionArea(source_polygon, target_polygon);
+  if (union_area == 0.0) return 0.0;
   const double convex_shape_area = getConvexShapeArea(source_polygon, target_polygon);
+  if (convex_shape_area == 0.0) return 0.0;
 
   const double iou = union_area < 0.01 ? 0.0 : std::min(1.0, intersection_area / union_area);
   return iou - (convex_shape_area - union_area) / convex_shape_area;
