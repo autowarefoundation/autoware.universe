@@ -855,24 +855,22 @@ lanelet::ConstLanelets StartPlannerModule::getPathRoadLanes(const PathWithLaneId
   const auto & lanelet_layer = route_handler->getLaneletMapPtr()->laneletLayer;
 
   std::vector<lanelet::Id> lane_ids;
+  lanelet::ConstLanelets path_lanes;
+
   for (const auto & p : path.points) {
     for (const auto & id : p.lane_ids) {
       if (id == lanelet::InvalId) {
         continue;
       }
-      if (route_handler->isShoulderLanelet(lanelet_layer.get(id))) {
+      const auto lanelet = lanelet_layer.get(id);
+      if (route_handler->isShoulderLanelet(lanelet)) {
         continue;
       }
       if (std::find(lane_ids.begin(), lane_ids.end(), id) == lane_ids.end()) {
         lane_ids.push_back(id);
+        path_lanes.push_back(lanelet);
       }
     }
-  }
-
-  lanelet::ConstLanelets path_lanes;
-  path_lanes.reserve(lane_ids.size());
-  for (const auto & id : lane_ids) {
-    path_lanes.push_back(lanelet_layer.get(id));
   }
 
   return path_lanes;
@@ -953,11 +951,12 @@ void StartPlannerModule::updatePullOutStatus()
 
   if (hasFinishedBackwardDriving()) {
     updateStatusAfterBackwardDriving();
-  } else {
-    status_.backward_path = start_planner_utils::getBackwardPath(
-      *route_handler, pull_out_lanes, current_pose, status_.pull_out_start_pose,
-      parameters_->backward_velocity);
+    return;
   }
+  status_.backward_path = start_planner_utils::getBackwardPath(
+    *route_handler, pull_out_lanes, current_pose, status_.pull_out_start_pose,
+    parameters_->backward_velocity);
+  return;
 }
 
 void StartPlannerModule::updateStatusAfterBackwardDriving()
@@ -1046,7 +1045,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
     if (distance_from_lane_end < parameters_->ignore_distance_from_lane_end) {
       RCLCPP_WARN_THROTTLE(
         getLogger(), *clock_, 5000,
-        "the ego is too close to the lane end, so needs backward driving");
+        "the ego vehicle is too close to the lane end, so backwards driving is necessary");
       continue;
     }
 
