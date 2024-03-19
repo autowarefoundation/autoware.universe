@@ -14,6 +14,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <depend>ament_index_cpp</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_planning_test_manager</depend>
   <depend>geometry_msgs</depend>
@@ -28,7 +29,6 @@
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
 
-  <test_depend>ament_index_cpp</test_depend>
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_index_python</test_depend>
   <test_depend>ament_lint_auto</test_depend>

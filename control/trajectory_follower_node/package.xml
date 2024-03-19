@@ -19,6 +19,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <depend>ament_index_cpp</depend>
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
@@ -37,7 +38,6 @@
 
   <exec_depend>ros2launch</exec_depend>
 
-  <test_depend>ament_index_cpp</test_depend>
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_index_python</test_depend>
   <test_depend>ament_lint_auto</test_depend>

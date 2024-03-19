@@ -17,6 +17,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <depend>ament_index_cpp</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
@@ -34,7 +35,6 @@
   <depend>tier4_autoware_utils</depend>
   <depend>vehicle_info_util</depend>
 
-  <test_depend>ament_index_cpp</test_depend>
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
