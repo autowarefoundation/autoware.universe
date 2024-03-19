@@ -38,7 +38,7 @@ An object is considered by the module only if it meets all of the following cond
 - it is a vehicle (pedestrians are ignored);
 - it is moving at a velocity higher than defined by the `minimum_object_velocity` parameter;
 - it is not too close to the current position of the ego vehicle;
-- it is not unavoidable (only if parameter `ignore_unavoidance_collisions` is set to `true`);
+- it is not unavoidable (only if parameter `ignore_unavoidable_collisions` is set to `true`);
 - it is close to the ego path.
 
 An object is considered unavoidable if it is heading towards the ego vehicle such that even if ego stops, a collision would still occur (assuming the object keeps driving in a straight line).
