@@ -46,13 +46,25 @@ private:
   {
     (void)req;
     autoware_map_msgs::msg::PointCloudMapCellWithID pcd_map_cell_with_id;
-    constexpr float interval = 0.2f;
-    pcd_map_cell_with_id.metadata.min_x = -10;
-    pcd_map_cell_with_id.metadata.min_y = -10;
-    pcd_map_cell_with_id.metadata.max_x = 30;
-    pcd_map_cell_with_id.metadata.max_y = 30;
     pcd_map_cell_with_id.cell_id = "0";
-    pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_pcd(-10, 30, interval);
+    pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
+    const float offset_x = 100.0f;
+    const float offset_y = 100.0f;
+    for (auto & point : cloud.points) {
+      point.x += offset_x;
+      point.y += offset_y;
+    }
+    pcd_map_cell_with_id.metadata.min_x = std::numeric_limits<float>::max();
+    pcd_map_cell_with_id.metadata.min_y = std::numeric_limits<float>::max();
+    pcd_map_cell_with_id.metadata.max_x = std::numeric_limits<float>::lowest();
+    pcd_map_cell_with_id.metadata.max_y = std::numeric_limits<float>::lowest();
+    for (const auto & point : cloud.points) {
+      pcd_map_cell_with_id.metadata.min_x = std::min(pcd_map_cell_with_id.metadata.min_x, point.x);
+      pcd_map_cell_with_id.metadata.min_y = std::min(pcd_map_cell_with_id.metadata.min_y, point.y);
+      pcd_map_cell_with_id.metadata.max_x = std::max(pcd_map_cell_with_id.metadata.max_x, point.x);
+      pcd_map_cell_with_id.metadata.max_y = std::max(pcd_map_cell_with_id.metadata.max_y, point.y);
+    }
+    RCLCPP_INFO_STREAM(get_logger(), "cloud size: " << cloud.size());
     pcl::toROSMsg(cloud, pcd_map_cell_with_id.pointcloud);
     res->new_pointcloud_with_ids.push_back(pcd_map_cell_with_id);
     res->header.frame_id = "map";

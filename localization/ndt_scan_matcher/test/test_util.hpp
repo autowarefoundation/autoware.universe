@@ -18,24 +18,35 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-inline pcl::PointCloud<pcl::PointXYZ> make_sample_pcd(
-  const float min_xy, const float max_xy, const float interval)
+inline pcl::PointCloud<pcl::PointXYZ> make_sample_half_cubic_pcd()
 {
-  const float range_width = max_xy - min_xy;
-  const float center = (max_xy + min_xy) / 2.0f;
-  const int num_points_per_line = static_cast<int>(range_width / interval) + 1;
+  constexpr float length = 10;
+  constexpr float interval = 0.1;
+  constexpr int num_points_per_line = static_cast<int>(length / interval) + 1;
+  constexpr int num_points_per_plane = num_points_per_line * num_points_per_line;
   pcl::PointCloud<pcl::PointXYZ> cloud;
-  cloud.width = num_points_per_line * num_points_per_line;
+  cloud.width = 3 * num_points_per_plane;
   cloud.height = 1;
   cloud.points.resize(cloud.width * cloud.height);
   for (int i = 0; i < num_points_per_line; ++i) {
     for (int j = 0; j < num_points_per_line; ++j) {
-      const float x = min_xy + interval * static_cast<float>(j);
-      const float y = min_xy + interval * static_cast<float>(i);
-      const float z = std::hypot(x - center, y - center) / (range_width / 16);
-      cloud.points[i * num_points_per_line + j].x = x;  // NOLINT
-      cloud.points[i * num_points_per_line + j].y = y;  // NOLINT
-      cloud.points[i * num_points_per_line + j].z = z;  // NOLINT
+      const float u = interval * static_cast<float>(j);
+      const float v = interval * static_cast<float>(i);
+
+      // xy
+      cloud.points[num_points_per_plane * 0 + i * num_points_per_line + j].x = u;  // NOLINT
+      cloud.points[num_points_per_plane * 0 + i * num_points_per_line + j].y = v;  // NOLINT
+      cloud.points[num_points_per_plane * 0 + i * num_points_per_line + j].z = 0;  // NOLINT
+
+      // yz
+      cloud.points[num_points_per_plane * 1 + i * num_points_per_line + j].x = 0;  // NOLINT
+      cloud.points[num_points_per_plane * 1 + i * num_points_per_line + j].y = u;  // NOLINT
+      cloud.points[num_points_per_plane * 1 + i * num_points_per_line + j].z = v;  // NOLINT
+
+      // zx
+      cloud.points[num_points_per_plane * 2 + i * num_points_per_line + j].x = u;  // NOLINT
+      cloud.points[num_points_per_plane * 2 + i * num_points_per_line + j].y = 0;  // NOLINT
+      cloud.points[num_points_per_plane * 2 + i * num_points_per_line + j].z = v;  // NOLINT
     }
   }
   return cloud;
