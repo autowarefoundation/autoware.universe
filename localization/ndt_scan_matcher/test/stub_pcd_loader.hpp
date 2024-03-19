@@ -39,6 +39,7 @@ public:
 private:
   rclcpp::Service<GetDifferentialPointCloudMap>::SharedPtr get_differential_pcd_maps_service_;
 
+  // NOLINTNEXTLINE
   bool on_service_get_differential_point_cloud_map(
     GetDifferentialPointCloudMap::Request::SharedPtr req,
     GetDifferentialPointCloudMap::Response::SharedPtr res)

@@ -33,9 +33,9 @@ inline pcl::PointCloud<pcl::PointXYZ> make_sample_pcd(
       const float x = min_xy + interval * static_cast<float>(j);
       const float y = min_xy + interval * static_cast<float>(i);
       const float z = std::hypot(x - center, y - center) / (range_width / 16);
-      cloud.points[i * num_points_per_line + j].x = x;
-      cloud.points[i * num_points_per_line + j].y = y;
-      cloud.points[i * num_points_per_line + j].z = z;
+      cloud.points[i * num_points_per_line + j].x = x;  // NOLINT
+      cloud.points[i * num_points_per_line + j].y = y;  // NOLINT
+      cloud.points[i * num_points_per_line + j].z = z;  // NOLINT
     }
   }
   return cloud;
