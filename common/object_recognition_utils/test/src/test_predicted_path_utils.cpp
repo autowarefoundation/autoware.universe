@@ -16,6 +16,7 @@
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
+#include <boost/optional/optional_io.hpp>
 #include <gtest/gtest.h>
 
 using autoware::universe_utils::Point2d;
