@@ -38,8 +38,7 @@ public:
     // wait for the service to be available
     while (!align_service_client_->wait_for_service(std::chrono::seconds(1))) {
       if (!rclcpp::ok()) {
-        RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service.");
-        EXIT_FAILURE;
+        throw std::runtime_error("Interrupted while waiting for the service.");
       }
       RCLCPP_INFO(this->get_logger(), "Waiting for service...");
     }
@@ -51,7 +50,6 @@ public:
     if (
       rclcpp::spin_until_future_complete(this->get_node_base_interface(), result) !=
       rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_ERROR(this->get_logger(), "Service call failed");
       throw std::runtime_error("Service call failed.");
     }
     return result.get()->pose_with_covariance;
