@@ -889,22 +889,10 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
   target_objects.other_lane.reserve(target_obj_index.other_lane.size());
 
   // objects in current lane
-
-  lanelet::ConstLanelet current_lane;
-  if (getRouteHandler()->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
-  }
-  const auto ego_footprint =
-    utils::lane_change::getEgoCurrentFootprint(getEgoPose(), common_parameters.vehicle_info);
-  const auto is_ego_within_intersection =
-    utils::lane_change::isWithinIntersection(getRouteHandler(), current_lane, ego_footprint);
-
-  const auto check_prepare_phase =
-    is_ego_within_intersection || lane_change_parameters_->enable_prepare_segment_collision_check;
-
   for (const auto & obj_idx : target_obj_index.current_lane) {
     const auto extended_object = utils::lane_change::transform(
       objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
-      check_prepare_phase);
+      check_prepare_phase());
     target_objects.current_lane.push_back(extended_object);
   }
 
@@ -912,7 +900,7 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
   for (const auto & obj_idx : target_obj_index.target_lane) {
     const auto extended_object = utils::lane_change::transform(
       objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
-      check_prepare_phase);
+      check_prepare_phase());
     target_objects.target_lane.push_back(extended_object);
   }
 
@@ -920,7 +908,7 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
   for (const auto & obj_idx : target_obj_index.other_lane) {
     const auto extended_object = utils::lane_change::transform(
       objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
-      check_prepare_phase);
+      check_prepare_phase());
     target_objects.other_lane.push_back(extended_object);
   }
 
@@ -978,17 +966,6 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     target_backward_polygons.push_back(lane_polygon);
   }
 
-  lanelet::ConstLanelet current_lane;
-  if (!route_handler.getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
-  }
-  const auto ego_footprint =
-    utils::lane_change::getEgoCurrentFootprint(getEgoPose(), common_parameters.vehicle_info);
-  const auto is_ego_within_intersection =
-    utils::lane_change::isWithinIntersection(getRouteHandler(), current_lane, ego_footprint);
-
-  const auto check_prepare_phase =
-    is_ego_within_intersection || lane_change_parameters_->enable_prepare_segment_collision_check;
-
   LaneChangeTargetObjectIndices filtered_obj_indices;
   for (size_t i = 0; i < objects.objects.size(); ++i) {
     const auto & object = objects.objects.at(i);
@@ -996,7 +973,7 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       object.kinematics.initial_twist_with_covariance.twist.linear.x,
       object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto extended_object = utils::lane_change::transform(
-      object, common_parameters, *lane_change_parameters_, check_prepare_phase);
+      object, common_parameters, *lane_change_parameters_, check_prepare_phase());
 
     const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
 
@@ -2137,6 +2114,31 @@ void NormalLaneChange::updateStopTime()
   }
 
   stop_watch_.tic("stop_time");
+}
+
+bool NormalLaneChange::check_prepare_phase() const
+{
+  const auto & route_handler = getRouteHandler();
+  const auto & vehicle_info = getCommonParam().vehicle_info;
+
+  const auto check_prepare_phase_in_intersection = std::invoke([&]() {
+    if (!lane_change_parameters_->enable_prepare_segment_collision_check_in_intersection) {
+      return false;
+    }
+
+    lanelet::ConstLanelet current_lane;
+    if (!route_handler->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
+      RCLCPP_DEBUG(logger_, "unable to retreive current lane");
+      return false;
+    }
+
+    const auto ego_footprint =
+      utils::lane_change::getEgoCurrentFootprint(getEgoPose(), vehicle_info);
+    return utils::lane_change::isWithinIntersection(getRouteHandler(), current_lane, ego_footprint);
+  });
+
+  return check_prepare_phase_in_intersection ||
+         lane_change_parameters_->enable_prepare_segment_collision_check_in_general_areas;
 }
 
 }  // namespace behavior_path_planner
