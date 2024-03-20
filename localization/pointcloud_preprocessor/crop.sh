@@ -1,0 +1,1 @@
+clang++ crop_box_point.cc -std=c++14 -o build/cc -I/usr/include/eigen3 -I/usr/include/pcl-1.10  -lpcap -ldora_node_api_c -L /home/zxd/dora-rs/dora/target/release -lpthread -ldl -lrt -I /home/zxd/rs_driver/src -I /home/zxd/dora-rs/dora/apis/c -l dora_operator_api_c -L /home/zxd/dora-rs/dora/target/debug

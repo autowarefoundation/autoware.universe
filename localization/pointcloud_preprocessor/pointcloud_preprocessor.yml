@@ -1,0 +1,43 @@
+nodes:
+  # rslidar driver node
+  - id: rslidar_driver
+    custom:
+      source: ../../dora-hardware/dora_to_ros2/lidar/build/rslidar_driver_pcap
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - pointcloud
+
+  # crop_box_point node
+  - id: crop_box_point
+    custom:
+      source: build/crop_box_point
+      inputs:
+        pointcloud: rslidar_driver/pointcloud
+      outputs: 
+       - pointcloud
+
+  # ring_outlier_fliter node
+  - id: ring_outlier_fliter
+    custom:
+      source: build/ring_outlier_fliter
+      inputs:
+        pointcloud: crop_box_point/pointcloud
+      outputs: 
+       - pointcloud
+  # voxel_grid_downsample_filtre node
+  - id: voxel_grid_downsample_filtre
+    custom:
+      source: build/voxel_grid_downsample_filtre
+      inputs:
+       pointcloud: ring_outlier_fliter/pointcloud
+      outputs: 
+       - pointcloud
+
+  - id: lidar_to_ros2
+    operator:
+        python: ../../dora-hardware/dora_to_ros2/lidar/lidar_to_ros2.py
+        inputs:
+          pointcloud: ring_outlier_fliter/pointcloud
+
+
