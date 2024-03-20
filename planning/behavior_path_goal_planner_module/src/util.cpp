@@ -14,9 +14,14 @@
 
 #include "behavior_path_goal_planner_module/util.hpp"
 
+#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/utils.hpp"
+
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <boost/geometry/algorithms/dispatch/distance.hpp>
 
@@ -30,16 +35,14 @@
 #include <string>
 #include <vector>
 
+namespace behavior_path_planner::goal_planner_utils
+{
+
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
-
-namespace behavior_path_planner
-{
-namespace goal_planner_utils
-{
 
 lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
@@ -72,6 +75,90 @@ lanelet::ConstLanelets getPullOverLanes(
   constexpr bool only_route_lanes = false;
   return route_handler.getLaneletSequence(
     outermost_lane, backward_distance_with_buffer, forward_distance, only_route_lanes);
+}
+
+lanelet::ConstLanelets generateExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, const double bound_offset)
+{
+  const auto pull_over_lanes =
+    getPullOverLanes(route_handler, left_side, backward_distance, forward_distance);
+
+  return left_side ? lanelet::utils::getExpandedLanelets(pull_over_lanes, bound_offset, 0.0)
+                   : lanelet::utils::getExpandedLanelets(pull_over_lanes, 0.0, -bound_offset);
+}
+
+static double getOffsetToLanesBoundary(
+  const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::msg::Pose target_pose,
+  const bool left_side)
+{
+  lanelet::ConstLanelet closest_lanelet;
+  lanelet::utils::query::getClosestLanelet(lanelet_sequence, target_pose, &closest_lanelet);
+
+  // the boundary closer to ego. if left_side, take right boundary
+  const auto & boundary3d = left_side ? closest_lanelet.rightBound() : closest_lanelet.leftBound();
+  const auto boundary = lanelet::utils::to2D(boundary3d);
+  using lanelet::utils::conversion::toLaneletPoint;
+  const auto arc_coords = lanelet::geometry::toArcCoordinates(
+    boundary, lanelet::utils::to2D(toLaneletPoint(target_pose.position)).basicPoint());
+  return arc_coords.distance;
+}
+
+lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
+  const lanelet::ConstLanelets & pull_over_lanes, const bool left_side,
+  const geometry_msgs::msg::Pose ego_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const double outer_road_offset, const double inner_road_offset)
+{
+  const double front_overhang = vehicle_info.front_overhang_m,
+               wheel_base = vehicle_info.wheel_base_m, wheel_tread = vehicle_info.wheel_tread_m;
+  const double side_overhang =
+    left_side ? vehicle_info.left_overhang_m : vehicle_info.right_overhang_m;
+  const double ego_length_to_front = wheel_base + front_overhang;
+  const double ego_width_to_front =
+    !left_side ? (-wheel_tread / 2.0 - side_overhang) : (wheel_tread / 2.0 + side_overhang);
+  tier4_autoware_utils::Point2d front_edge_local{ego_length_to_front, ego_width_to_front};
+  const auto front_edge_glob = tier4_autoware_utils::transformPoint(
+    front_edge_local, tier4_autoware_utils::pose2transform(ego_pose));
+  geometry_msgs::msg::Pose ego_front_pose;
+  ego_front_pose.position =
+    createPoint(front_edge_glob.x(), front_edge_glob.y(), ego_pose.position.z);
+
+  // ==========================================================================================
+  // NOTE: the point which is on the right side of a directed line has negative distance
+  // getExpandedLanelet(1.0, -2.0) expands a lanelet by 1.0 to the left and by 2.0 to the right
+  // ==========================================================================================
+  const double ego_offset_to_closer_boundary =
+    getOffsetToLanesBoundary(pull_over_lanes, ego_front_pose, left_side);
+  return left_side ? lanelet::utils::getExpandedLanelets(
+                       pull_over_lanes, outer_road_offset,
+                       ego_offset_to_closer_boundary - inner_road_offset)
+                   : lanelet::utils::getExpandedLanelets(
+                       pull_over_lanes, ego_offset_to_closer_boundary + inner_road_offset,
+                       -outer_road_offset);
+}
+
+PredictedObjects extractObjectsInExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, double bound_offset, const PredictedObjects & objects)
+{
+  const auto lanes = generateExpandedPullOverLanes(
+    route_handler, left_side, backward_distance, forward_distance, bound_offset);
+
+  const auto [objects_in_lanes, others] = utils::path_safety_checker::separateObjectsByLanelets(
+    objects, lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
+
+  return objects_in_lanes;
+}
+
+PredictedObjects extractStaticObjectsInExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, double bound_offset, const PredictedObjects & objects,
+  const double velocity_thresh)
+{
+  const auto objects_in_lanes = extractObjectsInExpandedPullOverLanes(
+    route_handler, left_side, backward_distance, forward_distance, bound_offset, objects);
+
+  return utils::path_safety_checker::filterObjectsByVelocity(objects_in_lanes, velocity_thresh);
 }
 
 PredictedObjects filterObjectsByLateralDistance(
@@ -196,23 +283,153 @@ MarkerArray createGoalCandidatesMarkerArray(
   return marker_array;
 }
 
-bool isAllowedGoalModification(const std::shared_ptr<RouteHandler> & route_handler)
+MarkerArray createLaneletPolygonMarkerArray(
+  const lanelet::CompoundPolygon3d & polygon, const std_msgs::msg::Header & header,
+  const std::string & ns, const std_msgs::msg::ColorRGBA & color)
 {
-  return route_handler->isAllowedGoalModification() || checkOriginalGoalIsInShoulder(route_handler);
+  visualization_msgs::msg::MarkerArray marker_array{};
+  auto marker = createDefaultMarker(
+    header.frame_id, header.stamp, ns, 0, visualization_msgs::msg::Marker::LINE_STRIP,
+    createMarkerScale(0.1, 0.0, 0.0), color);
+  for (const auto & p : polygon) {
+    marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+  }
+  marker_array.markers.push_back(marker);
+  return marker_array;
 }
 
-bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_handler)
+double calcLateralDeviationBetweenPaths(
+  const PathWithLaneId & reference_path, const PathWithLaneId & target_path)
 {
-  const Pose & goal_pose = route_handler->getOriginalGoalPose();
-  const auto shoulder_lanes = route_handler->getShoulderLanelets();
+  double lateral_deviation = 0.0;
+  for (const auto & target_point : target_path.points) {
+    const size_t nearest_index =
+      motion_utils::findNearestIndex(reference_path.points, target_point.point.pose.position);
+    lateral_deviation = std::max(
+      lateral_deviation,
+      std::abs(tier4_autoware_utils::calcLateralDeviation(
+        reference_path.points[nearest_index].point.pose, target_point.point.pose.position)));
+  }
+  return lateral_deviation;
+}
 
-  lanelet::ConstLanelet closest_shoulder_lane{};
-  if (lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &closest_shoulder_lane)) {
-    return lanelet::utils::isInLanelet(goal_pose, closest_shoulder_lane, 0.1);
+bool isReferencePath(
+  const PathWithLaneId & reference_path, const PathWithLaneId & target_path,
+  const double lateral_deviation_threshold)
+{
+  return calcLateralDeviationBetweenPaths(reference_path, target_path) <
+         lateral_deviation_threshold;
+}
+
+std::optional<PathWithLaneId> cropPath(const PathWithLaneId & path, const Pose & end_pose)
+{
+  const size_t end_idx = motion_utils::findNearestSegmentIndex(path.points, end_pose.position);
+  std::vector<PathPointWithLaneId> clipped_points{
+    path.points.begin(), path.points.begin() + end_idx};
+  if (clipped_points.empty()) {
+    return std::nullopt;
   }
 
-  return false;
+  // add projected end pose to clipped points
+  PathPointWithLaneId projected_point = clipped_points.back();
+  const double offset = motion_utils::calcSignedArcLength(path.points, end_idx, end_pose.position);
+  projected_point.point.pose =
+    tier4_autoware_utils::calcOffsetPose(clipped_points.back().point.pose, offset, 0, 0);
+  clipped_points.push_back(projected_point);
+  auto clipped_path = path;
+  clipped_path.points = clipped_points;
+
+  return clipped_path;
 }
 
-}  // namespace goal_planner_utils
-}  // namespace behavior_path_planner
+PathWithLaneId cropForwardPoints(
+  const PathWithLaneId & path, const size_t target_seg_idx, const double forward_length)
+{
+  const auto & points = path.points;
+
+  double sum_length = 0;
+  for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
+    const double seg_length = tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    if (forward_length < sum_length + seg_length) {
+      const auto cropped_points =
+        std::vector<PathPointWithLaneId>{points.begin() + target_seg_idx, points.begin() + i};
+      PathWithLaneId cropped_path = path;
+      cropped_path.points = cropped_points;
+
+      // add precise end pose to cropped points
+      const double remaining_length = forward_length - sum_length;
+      const Pose precise_end_pose =
+        calcOffsetPose(cropped_path.points.back().point.pose, remaining_length, 0, 0);
+      if (remaining_length < 0.1) {
+        // if precise_end_pose is too close, replace the last point
+        cropped_path.points.back().point.pose = precise_end_pose;
+      } else {
+        auto precise_end_point = cropped_path.points.back();
+        precise_end_point.point.pose = precise_end_pose;
+        cropped_path.points.push_back(precise_end_point);
+      }
+      return cropped_path;
+    }
+    sum_length += seg_length;
+  }
+
+  // if forward_length is too long, return points after target_seg_idx
+  const auto cropped_points =
+    std::vector<PathPointWithLaneId>{points.begin() + target_seg_idx, points.end()};
+  PathWithLaneId cropped_path = path;
+  cropped_path.points = cropped_points;
+  return cropped_path;
+}
+
+PathWithLaneId extendPath(
+  const PathWithLaneId & target_path, const PathWithLaneId & reference_path,
+  const double extend_length)
+{
+  const auto & target_terminal_pose = target_path.points.back().point.pose;
+
+  // generate clipped road lane reference path from previous module path terminal pose to shift end
+  const size_t target_path_terminal_idx =
+    motion_utils::findNearestSegmentIndex(reference_path.points, target_terminal_pose.position);
+
+  PathWithLaneId clipped_path =
+    cropForwardPoints(reference_path, target_path_terminal_idx, extend_length);
+
+  // shift clipped path to previous module path terminal pose
+  const double lateral_shift_from_reference_path =
+    motion_utils::calcLateralOffset(reference_path.points, target_terminal_pose.position);
+  for (auto & p : clipped_path.points) {
+    p.point.pose =
+      tier4_autoware_utils::calcOffsetPose(p.point.pose, 0, lateral_shift_from_reference_path, 0);
+  }
+
+  auto extended_path = target_path;
+  const auto start_point =
+    std::find_if(clipped_path.points.begin(), clipped_path.points.end(), [&](const auto & p) {
+      const bool is_forward =
+        tier4_autoware_utils::inverseTransformPoint(p.point.pose.position, target_terminal_pose).x >
+        0.0;
+      const bool is_close = tier4_autoware_utils::calcDistance2d(
+                              p.point.pose.position, target_terminal_pose.position) < 0.1;
+      return is_forward && !is_close;
+    });
+  std::copy(start_point, clipped_path.points.end(), std::back_inserter(extended_path.points));
+
+  extended_path.points = motion_utils::removeOverlapPoints(extended_path.points);
+
+  return extended_path;
+}
+
+PathWithLaneId extendPath(
+  const PathWithLaneId & target_path, const PathWithLaneId & reference_path,
+  const Pose & extend_pose)
+{
+  const auto & target_terminal_pose = target_path.points.back().point.pose;
+  const size_t target_path_terminal_idx =
+    motion_utils::findNearestSegmentIndex(reference_path.points, target_terminal_pose.position);
+  const double extend_distance = motion_utils::calcSignedArcLength(
+    reference_path.points, target_path_terminal_idx, extend_pose.position);
+
+  return extendPath(target_path, reference_path, extend_distance);
+}
+
+}  // namespace behavior_path_planner::goal_planner_utils

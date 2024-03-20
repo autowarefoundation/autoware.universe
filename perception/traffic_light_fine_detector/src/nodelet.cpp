@@ -73,7 +73,7 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
   float nms_threshold = declare_parameter("fine_detector_nms_thresh", 0.65);
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
 
-  if (!readLabelFile(label_path, tlr_id_, num_class)) {
+  if (!readLabelFile(label_path, tlr_label_id_, num_class)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find tlr id");
   }
 
@@ -157,6 +157,7 @@ void TrafficLightFineDetectorNodelet::callback(
   tensorrt_yolox::ObjectArrays inference_results;
   std::vector<cv::Point> lts;
   std::vector<size_t> roi_ids;
+
   for (size_t roi_i = 0; roi_i < rough_roi_msg->rois.size(); roi_i++) {
     const auto & rough_roi = rough_roi_msg->rois[roi_i];
     cv::Point lt(rough_roi.roi.x_offset, rough_roi.roi.y_offset);
@@ -178,7 +179,7 @@ void TrafficLightFineDetectorNodelet::callback(
       trt_yolox_->doMultiScaleInference(original_image, inference_results, rois);
       for (size_t batch_i = 0; batch_i < true_batch_size; batch_i++) {
         for (const tensorrt_yolox::Object & detection : inference_results[batch_i]) {
-          if (detection.score < score_thresh_ || detection.type != tlr_id_) {
+          if (detection.score < score_thresh_) {
             continue;
           }
           cv::Point lt_roi(
@@ -190,6 +191,7 @@ void TrafficLightFineDetectorNodelet::callback(
           det.y_offset = lt_roi.y;
           det.width = rb_roi.x - lt_roi.x;
           det.height = rb_roi.y - lt_roi.y;
+          det.type = detection.type;
           id2detections[roi_ids[batch_i]].push_back(det);
         }
       }
@@ -270,13 +272,28 @@ void TrafficLightFineDetectorNodelet::detectionMatch(
   }
 
   out_rois.rois.clear();
-  for (const auto & p : bestDetections) {
+  std::vector<size_t> invalid_roi_id;
+  for (const auto & [tlr_id, roi] : id2expectRoi) {
+    // if matches, update the roi info
+    if (!bestDetections.count(tlr_id)) {
+      invalid_roi_id.emplace_back(tlr_id);
+      continue;
+    }
     TrafficLightRoi tlr;
-    tlr.traffic_light_id = p.first;
-    tlr.roi.x_offset = p.second.x_offset;
-    tlr.roi.y_offset = p.second.y_offset;
-    tlr.roi.width = p.second.width;
-    tlr.roi.height = p.second.height;
+    tlr.traffic_light_id = tlr_id;
+    const auto & object = bestDetections.at(tlr_id);
+    tlr.traffic_light_type = roi.traffic_light_type;
+    tlr.roi.x_offset = object.x_offset;
+    tlr.roi.y_offset = object.y_offset;
+    tlr.roi.width = object.width;
+    tlr.roi.height = object.height;
+    out_rois.rois.push_back(tlr);
+  }
+  // append undetected rois at the end
+  for (const auto & id : invalid_roi_id) {
+    TrafficLightRoi tlr;
+    tlr.traffic_light_id = id;
+    tlr.traffic_light_type = id2expectRoi[id].traffic_light_type;
     out_rois.rois.push_back(tlr);
   }
 }
@@ -318,9 +335,8 @@ bool TrafficLightFineDetectorNodelet::fitInFrame(
 }
 
 bool TrafficLightFineDetectorNodelet::readLabelFile(
-  const std::string & filepath, int & tlr_id, int & num_class)
+  const std::string & filepath, std::vector<int> & tlr_label_id_, int & num_class)
 {
-  tlr_id = -1;
   std::ifstream labelsFile(filepath);
   if (!labelsFile.is_open()) {
     RCLCPP_ERROR(this->get_logger(), "Could not open label file. [%s]", filepath.c_str());
@@ -329,13 +345,13 @@ bool TrafficLightFineDetectorNodelet::readLabelFile(
   std::string label;
   int idx = 0;
   while (getline(labelsFile, label)) {
-    if (label == "traffic_light") {
-      tlr_id = idx;
+    if (label == "traffic_light" || label == "pedestrian_traffic_light") {
+      tlr_label_id_.push_back(idx);
     }
     idx++;
   }
   num_class = idx;
-  return tlr_id != -1;
+  return tlr_label_id_.size() != 0;
 }
 
 }  // namespace traffic_light

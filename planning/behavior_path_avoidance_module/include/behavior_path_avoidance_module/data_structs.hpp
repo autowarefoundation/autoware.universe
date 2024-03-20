@@ -19,12 +19,11 @@
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/time.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -34,6 +33,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
@@ -48,9 +48,10 @@ using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::TransformStamped;
 
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+
+using route_handler::Direction;
 
 struct ObjectParameter
 {
@@ -68,9 +69,11 @@ struct ObjectParameter
 
   double envelope_buffer_margin{0.0};
 
-  double avoid_margin_lateral{1.0};
+  double lateral_soft_margin{1.0};
 
-  double safety_buffer_lateral{1.0};
+  double lateral_hard_margin{1.0};
+
+  double lateral_hard_margin_for_parked_vehicle{1.0};
 
   double safety_buffer_longitudinal{0.0};
 
@@ -113,6 +116,9 @@ struct AvoidanceParameters
 
   // use intersection area for avoidance
   bool use_intersection_areas{false};
+
+  // use freespace area for avoidance
+  bool use_freespace_areas{false};
 
   // consider avoidance return dead line
   bool enable_dead_line_for_goal{false};
@@ -163,9 +169,13 @@ struct AvoidanceParameters
   double object_check_backward_distance{0.0};
   double object_check_yaw_deviation{0.0};
 
-  // if the distance between object and goal position is less than this parameter, the module ignore
-  // the object.
+  // if the distance between object and goal position is less than this parameter, the module do not
+  // return center line.
   double object_check_goal_distance{0.0};
+
+  // if the distance between object and return position is less than this parameter, the module do
+  // not return center line.
+  double object_check_return_pose_distance{0.0};
 
   // use in judge whether the vehicle is parking object on road shoulder
   double object_check_shiftable_ratio{0.0};
@@ -175,6 +185,7 @@ struct AvoidanceParameters
 
   // force avoidance
   double threshold_time_force_avoidance_for_stopped_vehicle{0.0};
+  double force_avoidance_distance_threshold{0.0};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -267,6 +278,9 @@ struct AvoidanceParameters
   // use for judge if the ego is shifting or not.
   double lateral_avoid_check_threshold{0.0};
 
+  // use for return shift approval.
+  double ratio_for_return_shift_approval{0.0};
+
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold{0.0};
 
@@ -326,24 +340,31 @@ struct AvoidanceParameters
 struct ObjectData  // avoidance target
 {
   ObjectData() = default;
-  ObjectData(const PredictedObject & obj, double lat, double lon, double len, double overhang)
-  : object(obj), lateral(lat), longitudinal(lon), length(len), overhang_dist(overhang)
+
+  ObjectData(PredictedObject obj, double lat, double lon, double len)
+  : object(std::move(obj)), to_centerline(lat), longitudinal(lon), length(len)
   {
   }
 
   PredictedObject object;
 
+  // object behavior.
+  enum class Behavior {
+    NONE = 0,
+    MERGING,
+    DEVIATING,
+  };
+  Behavior behavior{Behavior::NONE};
+
   // lateral position of the CoM, in Frenet coordinate from ego-pose
-  double lateral;
+
+  double to_centerline{0.0};
 
   // longitudinal position of the CoM, in Frenet coordinate from ego-pose
-  double longitudinal;
+  double longitudinal{0.0};
 
   // longitudinal length of vehicle, in Frenet coordinate
-  double length;
-
-  // lateral distance to the closest footprint, in Frenet coordinate
-  double overhang_dist;
+  double length{0.0};
 
   // lateral shiftable ratio
   double shiftable_ratio{0.0};
@@ -366,8 +387,8 @@ struct ObjectData  // avoidance target
   // store the information of the lanelet which the object's overhang is currently occupying
   lanelet::ConstLanelet overhang_lanelet;
 
-  // the position of the overhang
-  Pose overhang_pose;
+  // the position at the detected moment
+  Pose init_pose;
 
   // envelope polygon
   Polygon2d envelope_poly{};
@@ -396,14 +417,23 @@ struct ObjectData  // avoidance target
   // is within intersection area
   bool is_within_intersection{false};
 
+  // is parked vehicle on road shoulder
+  bool is_parked{false};
+
+  // object direction.
+  Direction direction{Direction::NONE};
+
+  // overhang points (sort by distance)
+  std::vector<std::pair<double, Point>> overhang_points{};
+
   // unavoidable reason
-  std::string reason{""};
+  std::string reason{};
 
   // lateral avoid margin
   std::optional<double> avoid_margin{std::nullopt};
 
   // the nearest bound point (use in road shoulder distance calculation)
-  std::optional<Point> nearest_bound_point{std::nullopt};
+  std::optional<std::pair<Point, Point>> narrowest_place{std::nullopt};
 };
 using ObjectDataArray = std::vector<ObjectData>;
 
@@ -421,9 +451,6 @@ struct AvoidLine : public ShiftLine
   // Distance from ego to end point in Frenet
   double end_longitudinal = 0.0;
 
-  // for unique_id
-  UUID id{};
-
   // for the case the point is created by merge other points
   std::vector<UUID> parent_ids{};
 
@@ -440,14 +467,14 @@ using AvoidLineArray = std::vector<AvoidLine>;
 
 struct AvoidOutline
 {
-  AvoidOutline(const AvoidLine & avoid_line, const AvoidLine & return_line)
-  : avoid_line{avoid_line}, return_line{return_line}
+  AvoidOutline(AvoidLine avoid_line, const std::optional<AvoidLine> return_line)
+  : avoid_line{std::move(avoid_line)}, return_line{std::move(return_line)}
   {
   }
 
   AvoidLine avoid_line{};
 
-  AvoidLine return_line{};
+  std::optional<AvoidLine> return_line{};
 
   AvoidLineArray middle_lines{};
 };
@@ -512,13 +539,15 @@ struct AvoidancePlanningData
 
   std::vector<DrivableLanes> drivable_lanes{};
 
-  lanelet::BasicLineString3d right_bound{};
+  std::vector<Point> right_bound{};
 
-  lanelet::BasicLineString3d left_bound{};
+  std::vector<Point> left_bound{};
 
   bool safe{false};
 
   bool valid{false};
+
+  bool ready{false};
 
   bool success{false};
 
@@ -566,9 +595,7 @@ struct ShiftLineData
  */
 struct DebugData
 {
-  std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
-
-  geometry_msgs::msg::Polygon detection_area;
+  std::vector<geometry_msgs::msg::Polygon> detection_areas;
 
   lanelet::ConstLineStrings3d bounds;
 
@@ -617,6 +644,9 @@ struct DebugData
 
   // tmp for plot
   PathWithLaneId center_line;
+
+  // safety check area
+  lanelet::ConstLanelets safety_check_lanes;
 
   // collision check debug map
   utils::path_safety_checker::CollisionCheckDebugMap collision_check;

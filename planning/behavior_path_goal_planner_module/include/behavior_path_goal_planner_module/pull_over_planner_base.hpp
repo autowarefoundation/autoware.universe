@@ -17,7 +17,6 @@
 
 #include "behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "behavior_path_planner_common/data_manager.hpp"
-#include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -114,10 +113,15 @@ public:
   PullOverPlannerBase(rclcpp::Node & node, const GoalPlannerParameters & parameters)
   {
     vehicle_info_ = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
-    vehicle_footprint_ = createVehicleFootprint(vehicle_info_);
+    vehicle_footprint_ = vehicle_info_.createFootprint();
     parameters_ = parameters;
   }
   virtual ~PullOverPlannerBase() = default;
+
+  void setPreviousModuleOutput(const BehaviorModuleOutput & previous_module_output)
+  {
+    previous_module_output_ = previous_module_output;
+  }
 
   void setPlannerData(const std::shared_ptr<const PlannerData> planner_data)
   {
@@ -132,6 +136,8 @@ protected:
   vehicle_info_util::VehicleInfo vehicle_info_;
   LinearRing2d vehicle_footprint_;
   GoalPlannerParameters parameters_;
+
+  BehaviorModuleOutput previous_module_output_;
 };
 }  // namespace behavior_path_planner
 

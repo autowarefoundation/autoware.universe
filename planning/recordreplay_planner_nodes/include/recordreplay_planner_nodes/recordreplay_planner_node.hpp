@@ -14,7 +14,7 @@
 #ifndef RECORDREPLAY_PLANNER_NODES__RECORDREPLAY_PLANNER_NODE_HPP_
 #define RECORDREPLAY_PLANNER_NODES__RECORDREPLAY_PLANNER_NODE_HPP_
 
-#include <common/types.hpp>
+#include <autoware_auto_common/common/types.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <recordreplay_planner/recordreplay_planner.hpp>

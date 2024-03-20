@@ -15,11 +15,15 @@
 #ifndef BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SHIFTER__PATH_SHIFTER_HPP_
 #define BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SHIFTER__PATH_SHIFTER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/clock.hpp>
+#include <rclcpp/logging.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -29,9 +33,13 @@ using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using tier4_autoware_utils::generateUUID;
+using unique_identifier_msgs::msg::UUID;
 
 struct ShiftLine
 {
+  ShiftLine() : id(generateUUID()) {}
+
   Pose start{};  // shift start point in absolute coordinate
   Pose end{};    // shift start point in absolute coordinate
 
@@ -43,6 +51,9 @@ struct ShiftLine
 
   size_t start_idx{};  // associated start-point index for the reference path
   size_t end_idx{};    // associated end-point index for the reference path
+
+  // for unique_id
+  UUID id{};
 };
 using ShiftLineArray = std::vector<ShiftLine>;
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
-#include <common/types.hpp>
+#include <autoware_auto_common/common/types.hpp>
 #include <recordreplay_planner_nodes/recordreplay_planner_node.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>

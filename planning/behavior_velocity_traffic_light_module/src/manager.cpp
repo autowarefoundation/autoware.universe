@@ -23,7 +23,6 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <utility>
 namespace behavior_velocity_planner
 {
@@ -32,8 +31,7 @@ using tier4_autoware_utils::getOrDeclareParameter;
 
 TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc"))
+    node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
 {
   const std::string ns(getModuleName());
   planner_param_.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");

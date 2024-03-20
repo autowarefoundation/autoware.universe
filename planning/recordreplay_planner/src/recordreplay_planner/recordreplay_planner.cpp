@@ -14,7 +14,7 @@
 
 #include "recordreplay_planner/recordreplay_planner.hpp"
 
-#include <common/types.hpp>
+#include <autoware_auto_common/common/types.hpp>
 #include <time_utils/time_utils.hpp>
 
 #include <geometry_msgs/msg/point32.hpp>

@@ -1,13 +1,13 @@
-# Autoware Installation on Jetson Xavier NX and F1tenth Record-Replay Demo
+# Autoware Installation on Jetson Orin Nano and F1tenth Record-Replay Demo
 
-This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Xavier NX hardware and software systems. One major difference of this Autoware environment is that it runs on `ROS2 galactic` instead of `ROS2 humble` due to the fact that the NVIDIA Jetson currently only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic is used to increase system compatibility. The original [Autoware installation documentation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/) from main branch, and the [F1tenth build documentation](https://f1tenth.readthedocs.io/en/foxy_test/index.html)(running ROS2 foxy) are here for your reference.
+This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Orin Nano hardware and software systems. This F1tenth branch supports `JetPack 6` on `Ubuntu 22.04`. It runs `ROS2 humble` on an slightly modified version of Autoware's main branch from early March, 2024 (f1tenth_humble branch). The original [Autoware installation documentation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/) from main branch, and the [F1tenth build documentation](https://f1tenth.readthedocs.io/en/foxy_test/index.html)(running ROS2 foxy) are here for your reference.
 
-This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Xavier NX on `20W 6core` power mode.
+This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Orin Nano on the default`15W` power mode.
 
-## Flash JetPack 5.1.1 (rev. 1) to Jetson Xavier NX
+## Flash JetPack6 to Jetson Xavier NX
 (Approximate time investment: 1-1.5 hours)
 
-There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1 (rev. 1). Other JetPack versions may also work but have not yet been tested.
+There are multiple ways to install JetPack on a Jetson as described in [Jetpack 6 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 6. Other JetPack versions may also work but have not yet been tested.
 
 ### NVIDIA SDK Manager Method:
 This method requires a Linux host computer running Ubuntu Linux x64 version `18.04` or `20.04` with `~40GB` of disk space
@@ -16,7 +16,7 @@ This method you will first install `NVIDIA SDK Manager` on your host machine, co
 
 1. Download and install [SDK Manager](https://developer.nvidia.com/sdk-manager) on your host machine.
 
-2. Follow the steps at [Install Jetson Software with SDK Manager](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html). Select JetPack version 5.1.1 (rev. 1). The target hardware will be the Jetson Xavier NX.
+2. Follow the steps at [Install Jetson Software with SDK Manager](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html). Select JetPack version 6. The target hardware will be the Jetson Xavier NX.
 
 3. If you have trouble flashing the JetPack, you can put the Jetson into `Force Recovery Mode` by using a jumper to connect `PINs #9 and #10` of the connector J50 before powering up the Jetson.
 
@@ -24,9 +24,9 @@ This method you will first install `NVIDIA SDK Manager` on your host machine, co
 ### SD Card Image Method:
 This method requires a computer with Internet connection and the ability to read and write SD cards
 
-1. Download [JetPack 5.1.1](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-xnx-sd-card-image.zip/)
+1. Download [JetPack 6](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-xnx-sd-card-image.zip/)
 
-2. If you have not previously run a JetPack 5.x release on your Jetson Xavier NX Developer kit, you must first update its QSPI before using this JetPack 5.x SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more information.
+2. If you have not previously run a JetPack 6 release on your Jetson Xavier NX Developer kit, you must first update its QSPI before using this JetPack 6 SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more information.
 
 2. Follow the steps at [Jetson Xavier NX Developer Kit - Get Started](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare) to write the Jetpack to the microSD card.
 
@@ -35,19 +35,19 @@ This method requires a computer with Internet connection and the ability to read
 Once the JetPack is successfully flashed to the Jetson NX, boot the system and the Ubuntu desktop environment should launch
 
 
-## Install ROS2 galactic 
+## Install ROS2 humble 
 (Approximate time investment: 0.5 hour)
 
-1. Follow the [ROS2 instructions](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) to install ROS2 galactic
+1. Follow the [ROS2 instructions](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html#) to install ROS2 humble
 
 
 ## Set up Autoware development environment 
 (Approximate time investment: 0.5 hour)
 
-1. Clone the `galactic` branch of `autowarefoundation/autoware` and move to the directory.
+1. Clone the `f1tenth_humble` branch of `autowarefoundation/autoware` and move to the directory.
 
    ```bash
-   git clone -b galactic https://github.com/autowarefoundation/autoware.git
+   git clone -b f1tenth_humble https://github.com/autowarefoundation/autoware.git
    cd autoware
    ```
 
@@ -59,11 +59,9 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 
    The NVIDIA library and cuda driver installation are disabled as they are already installed with the JetPack. If you force the cuda driver installation here, it can mess up the kernel and cause errors at bootup. You will need to reflash the JetPack if this happens.
 
-3. Under the `autoware` folder, go to the `autoware.repos` file and change the version of `universe/autoware.universe` from `galactic` to `f1tenth_galactic` and save.
-
 
 ## Set up Autoware workspace 
-(Approximate time investment: 6-7 hours)
+(Approximate time investment: 3-4 hours)
 
 1. Create the `src` directory and clone repositories into it.
 
@@ -78,7 +76,7 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 2. Install dependent ROS packages.
 
    ```bash
-   source /opt/ros/galactic/setup.bash
+   source /opt/ros/humble/setup.bash
    rosdep update --include-eol-distros
    rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO -r
    ```
@@ -150,14 +148,14 @@ This part assumes that you have a fully built and properly tuned F1tenth car. Fo
 Install `slam_toolbox`
 
    ```bash
-   sudo apt install ros-galactic-slam-toolbox
+   sudo apt install ros-humble-slam-toolbox
    ```
 
 1. Start the f1tenth system
 
 ```(bash)
 # Terminal 1
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch f1tenth_stack bringup_launch.py
 ```
@@ -166,7 +164,7 @@ ros2 launch f1tenth_stack bringup_launch.py
 
 ```(bash)
 # Terminal 2
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/<username>/autoware/src/universe/autoware.universe/f1tenth/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
 ```

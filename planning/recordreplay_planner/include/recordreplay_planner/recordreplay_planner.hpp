@@ -15,7 +15,7 @@
 #ifndef RECORDREPLAY_PLANNER__RECORDREPLAY_PLANNER_HPP_
 #define RECORDREPLAY_PLANNER__RECORDREPLAY_PLANNER_HPP_
 
-#include <common/types.hpp>
+#include <autoware_auto_common/common/types.hpp>
 #include <recordreplay_planner/visibility_control.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>

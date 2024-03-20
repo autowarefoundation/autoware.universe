@@ -57,6 +57,7 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.use_intersection_areas = getOrDeclareParameter<bool>(*node, ns + "use_intersection_areas");
     p.use_hatched_road_markings =
       getOrDeclareParameter<bool>(*node, ns + "use_hatched_road_markings");
+    p.use_freespace_areas = getOrDeclareParameter<bool>(*node, ns + "use_freespace_areas");
   }
 
   // target object
@@ -71,10 +72,12 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       param.max_expand_ratio = getOrDeclareParameter<double>(*node, ns + "max_expand_ratio");
       param.envelope_buffer_margin =
         getOrDeclareParameter<double>(*node, ns + "envelope_buffer_margin");
-      param.avoid_margin_lateral =
-        getOrDeclareParameter<double>(*node, ns + "avoid_margin_lateral");
-      param.safety_buffer_lateral =
-        getOrDeclareParameter<double>(*node, ns + "safety_buffer_lateral");
+      param.lateral_soft_margin =
+        getOrDeclareParameter<double>(*node, ns + "lateral_margin.soft_margin");
+      param.lateral_hard_margin =
+        getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin");
+      param.lateral_hard_margin_for_parked_vehicle =
+        getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
       param.safety_buffer_longitudinal =
         getOrDeclareParameter<double>(*node, ns + "safety_buffer_longitudinal");
       param.use_conservative_buffer_longitudinal =
@@ -122,6 +125,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
 
     p.object_check_goal_distance =
       getOrDeclareParameter<double>(*node, ns + "object_check_goal_distance");
+    p.object_check_return_pose_distance =
+      getOrDeclareParameter<double>(*node, ns + "object_check_return_pose_distance");
     p.threshold_distance_object_is_on_center =
       getOrDeclareParameter<double>(*node, ns + "threshold_distance_object_is_on_center");
     p.object_check_shiftable_ratio =
@@ -140,6 +145,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<bool>(*node, ns + "enable");
     p.threshold_time_force_avoidance_for_stopped_vehicle =
       getOrDeclareParameter<double>(*node, ns + "time_threshold");
+    p.force_avoidance_distance_threshold =
+      getOrDeclareParameter<double>(*node, ns + "distance_threshold");
     p.object_ignore_section_traffic_light_in_front_distance =
       getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
     p.object_ignore_section_crosswalk_in_front_distance =
@@ -205,6 +212,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "max_velocity");
     p.ego_predicted_path_params.acceleration =
       getOrDeclareParameter<double>(*node, "avoidance.constraints.longitudinal.max_acceleration");
+    p.ego_predicted_path_params.time_horizon_for_front_object =
+      getOrDeclareParameter<double>(*node, ns + "time_horizon_for_front_object");
     p.ego_predicted_path_params.time_horizon_for_rear_object =
       getOrDeclareParameter<double>(*node, ns + "time_horizon_for_rear_object");
     p.ego_predicted_path_params.time_resolution =
@@ -216,6 +225,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // safety check rss params
   {
     const std::string ns = "avoidance.safety_check.";
+    p.rss_params.extended_polygon_policy =
+      getOrDeclareParameter<std::string>(*node, ns + "extended_polygon_policy");
     p.rss_params.longitudinal_distance_min_threshold =
       getOrDeclareParameter<double>(*node, ns + "longitudinal_distance_min_threshold");
     p.rss_params.longitudinal_velocity_delta_time =
@@ -249,6 +260,12 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.max_left_shift_length = getOrDeclareParameter<double>(*node, ns + "max_left_shift_length");
     p.max_deviation_from_lane =
       getOrDeclareParameter<double>(*node, ns + "max_deviation_from_lane");
+    p.ratio_for_return_shift_approval =
+      getOrDeclareParameter<double>(*node, ns + "ratio_for_return_shift_approval");
+    if (p.ratio_for_return_shift_approval < 0.0 || p.ratio_for_return_shift_approval > 1.0) {
+      throw std::domain_error(
+        "ratio_for_return_shift_approval should be within range of 0.0 to 1.0");
+    }
   }
 
   // avoidance maneuver (longitudinal)
