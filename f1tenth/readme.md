@@ -4,19 +4,19 @@ This tutorial provides step-by-step instructions for installing and setting up t
 
 This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Orin Nano on the default`15W` power mode.
 
-## Flash JetPack6 to Jetson Xavier NX
+## Flash JetPack6 to Jetson Orin Nano
 (Approximate time investment: 1-1.5 hours)
 
-There are multiple ways to install JetPack on a Jetson as described in [Jetpack 6 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 6. Other JetPack versions may also work but have not yet been tested.
+There are multiple ways to install JetPack on a Jetson as described in [Jetpack 6 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-60dp). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 6. Other JetPack versions may also work but have not yet been tested.
 
 ### NVIDIA SDK Manager Method:
-This method requires a Linux host computer running Ubuntu Linux x64 version `18.04` or `20.04` with `~40GB` of disk space
+This method requires a Linux host computer running Ubuntu Linux x64 version `22.04` with `~40GB` of disk space
 
-This method you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson Xavier NX via a `micro-USB` cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Xavier NX. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the F1tenth car's Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
+This method you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson Orin Nano via a `USB-C cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Orin Nano. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the F1tenth car's Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
 
 1. Download and install [SDK Manager](https://developer.nvidia.com/sdk-manager) on your host machine.
 
-2. Follow the steps at [Install Jetson Software with SDK Manager](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html). Select JetPack version 6. The target hardware will be the Jetson Xavier NX.
+2. Follow the steps at [Install Jetson Software with SDK Manager](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html). Select JetPack version 6. The target hardware will be the Jetson Orin Nano.
 
 3. If you have trouble flashing the JetPack, you can put the Jetson into `Force Recovery Mode` by using a jumper to connect `PINs #9 and #10` of the connector J50 before powering up the Jetson.
 
@@ -24,11 +24,11 @@ This method you will first install `NVIDIA SDK Manager` on your host machine, co
 ### SD Card Image Method:
 This method requires a computer with Internet connection and the ability to read and write SD cards
 
-1. Download [JetPack 6](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-xnx-sd-card-image.zip/)
+1. Download [JetPack 6](https://developer.nvidia.com/downloads/embedded/l4t/r36_release_v2.0/jp60dp-orin-nano-sd-card-image.zip)
 
-2. If you have not previously run a JetPack 6 release on your Jetson Xavier NX Developer kit, you must first update its QSPI before using this JetPack 6 SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more information.
+2. If you have not previously run a JetPack 6 release on your Jetson Orin Nano Developer kit, you must first update its QSPI before using this JetPack 6 SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more information.
 
-2. Follow the steps at [Jetson Xavier NX Developer Kit - Get Started](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare) to write the Jetpack to the microSD card.
+2. Follow the steps at [Jetson Orin Nano Developer Kit - Get Started](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare) to write the Jetpack to the microSD card.
 
 3. Insert your microSD card to the Jetson.
 
