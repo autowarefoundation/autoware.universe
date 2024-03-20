@@ -1524,6 +1524,11 @@ void AvoidanceModule::insertWaitPoint(
 {
   const auto & data = avoid_data_;
 
+  // If avoidance path is NOT valid, don't insert any stop points.
+  if (!data.valid) {
+    return;
+  }
+
   if (!data.stop_target_object) {
     return;
   }
@@ -1613,6 +1618,16 @@ void AvoidanceModule::insertStopPoint(
 void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
 {
   const auto & data = avoid_data_;
+
+  // If avoidance path is NOT safe, don't insert any slow down sections.
+  if (!data.safe && !data.stop_target_object) {
+    return;
+  }
+
+  // If avoidance path is NOT safe, don't insert any slow down sections.
+  if (!data.valid) {
+    return;
+  }
 
   // do nothing if there is no avoidance target.
   if (data.target_objects.empty()) {
