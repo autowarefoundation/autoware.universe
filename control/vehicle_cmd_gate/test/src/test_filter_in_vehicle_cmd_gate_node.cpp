@@ -388,15 +388,25 @@ TEST_P(TestFixture, CheckFilterForSinCmd)
   //           << ")" << std::endl;
 
   for (size_t i = 0; i < 100; ++i) {
+    auto start_time = std::chrono::steady_clock::now();
+
     const bool reset_clock = (i == 0);
     const auto cmd = cmd_generator_.calcSinWaveCommand(reset_clock);
     pub_sub_node_.publishControlCommand(cmd);
     pub_sub_node_.publishDefaultTopicsNoSpin();
-    for (int i = 0; i < 20; ++i) {
+    for (int j = 0; j < 20; ++j) {
       rclcpp::spin_some(pub_sub_node_.get_node_base_interface());
       rclcpp::spin_some(vehicle_cmd_gate_node_->get_node_base_interface());
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds{10LL});
+
+    auto end_time = std::chrono::steady_clock::now();
+    std::chrono::milliseconds elapsed =
+      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+    std::chrono::milliseconds sleep_duration = std::chrono::milliseconds{10} - elapsed;
+    if (sleep_duration.count() > 0) {
+      std::this_thread::sleep_for(sleep_duration);
+    }
   }
 
   std::cerr << "received cmd num = " << pub_sub_node_.cmd_received_times_.size() << std::endl;
