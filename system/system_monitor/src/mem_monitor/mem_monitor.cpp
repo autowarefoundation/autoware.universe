@@ -100,7 +100,7 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     memInfo = readMemInfo();
   } catch (const std::exception& e) {
     stat.summary(DiagStatus::ERROR, e.what());
-    stat.add("ifstream", strerror(errno));
+    stat.add("read file error", "Error opening /proc/meminfo or parsing line in it.");
     return;
   }
 
@@ -116,7 +116,7 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     swap_free = memInfo.at("SwapFree");
   } catch (const std::out_of_range& e) {
     stat.summary(DiagStatus::ERROR, e.what());
-    stat.add("unordered_map::at", strerror(errno));
+    stat.add("unordered_map::at", "Error reading a key of memory info");
     return;
   } 
 
