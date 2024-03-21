@@ -235,6 +235,7 @@ public:
     double lon_vel = 0.0;
     double prev_lon_acc = 0.0;
     double prev_lat_acc = 0.0;
+    // TODO(Horibe): Remove this variable when the filtering logic is fixed.
     double prev_tire_angle = 0.0;
 
     auto calculate_lateral_acceleration =
@@ -248,10 +249,10 @@ public:
       prev_lon_acc = cmd_start->longitudinal.acceleration;
       // TODO(Horibe): prev_lat_acc should use the previous velocity, but use the current velocity
       // since the current filtering logic uses the current velocity.
+      // when it's fixed, should be like this:
+      // prev_lat_acc = calculate_lateral_acceleration(cmd_start->longitudinal.speed,
+      // cmd_start->lateral.steering_tire_angle, wheelbase);
       prev_tire_angle = cmd_start->lateral.steering_tire_angle;
-      lon_vel = cmd_start->longitudinal.speed;
-      prev_lat_acc =
-        calculate_lateral_acceleration(lon_vel, cmd_start->lateral.steering_tire_angle, wheelbase);
     }
 
     for (size_t i = ind_start; i < history_size; ++i) {
@@ -269,6 +270,7 @@ public:
         calculate_lateral_acceleration(lon_vel, cmd->lateral.steering_tire_angle, wheelbase);
       // TODO(Horibe): prev_lat_acc should use the previous velocity, but use the current velocity
       // since the current filtering logic uses the current velocity.
+      // when it's fixed, it should be moved to the bottom of this loop.
       prev_lat_acc = calculate_lateral_acceleration(lon_vel, prev_tire_angle, wheelbase);
       const auto lat_jerk = (lat_acc - prev_lat_acc) / dt;
 
@@ -278,8 +280,7 @@ public:
       avg_lat_jerk += lat_jerk;
 
       prev_lon_acc = lon_acc;
-      // TODO(Horibe): prev_lat_acc should use the previous velocity, but use the current velocity
-      // since the current filtering logic uses the current velocity.
+      // TODO(Horibe): when the filtering logic is fixed, this line should be removed.
       prev_tire_angle = cmd->lateral.steering_tire_angle;
     }
 
