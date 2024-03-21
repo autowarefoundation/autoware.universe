@@ -20,9 +20,11 @@
 #include <autoware_internal_msgs/msg/published_time.hpp>
 #include <std_msgs/msg/header.hpp>
 
+#include <cstring>
 #include <functional>
 #include <map>
 #include <string>
+#include <utility>
 
 namespace tier4_autoware_utils
 {
@@ -31,33 +33,34 @@ class PublishedTimePublisher
 {
 public:
   explicit PublishedTimePublisher(
-    rclcpp::Node * node, const std::string & publisher_topic_suffix = "/debug/published_time",
+    rclcpp::Node * node, std::string publisher_topic_suffix = "/debug/published_time",
     const rclcpp::QoS & qos = rclcpp::QoS(1))
-  : node_(node), publisher_topic_suffix_(publisher_topic_suffix), qos_(qos)
+  : node_(node), publisher_topic_suffix_(std::move(publisher_topic_suffix)), qos_(qos)
   {
   }
 
-  void publish(const rclcpp::PublisherBase::ConstSharedPtr & publisher, const rclcpp::Time & stamp)
+  void publish_if_subscribed(
+    const rclcpp::PublisherBase::ConstSharedPtr & publisher, const rclcpp::Time & stamp)
   {
     const auto & gid_key = publisher->get_gid();
 
     // if the publisher is not in the map, create a new publisher for published time
     ensure_publisher_exists(gid_key, publisher->get_topic_name());
 
-    const auto & pub_published_time_ = publishers_[gid_key];
+    const auto & pub_published_time = publishers_[gid_key];
 
     // Check if there are any subscribers, otherwise don't do anything
-    if (pub_published_time_->get_subscription_count() > 0) {
+    if (pub_published_time->get_subscription_count() > 0) {
       PublishedTime published_time;
 
       published_time.header.stamp = stamp;
       published_time.published_stamp = rclcpp::Clock().now();
 
-      pub_published_time_->publish(published_time);
+      pub_published_time->publish(published_time);
     }
   }
 
-  void publish(
+  void publish_if_subscribed(
     const rclcpp::PublisherBase::ConstSharedPtr & publisher, const std_msgs::msg::Header & header)
   {
     const auto & gid_key = publisher->get_gid();
@@ -65,16 +68,16 @@ public:
     // if the publisher is not in the map, create a new publisher for published time
     ensure_publisher_exists(gid_key, publisher->get_topic_name());
 
-    const auto & pub_published_time_ = publishers_[gid_key];
+    const auto & pub_published_time = publishers_[gid_key];
 
     // Check if there are any subscribers, otherwise don't do anything
-    if (pub_published_time_->get_subscription_count() > 0) {
+    if (pub_published_time->get_subscription_count() > 0) {
       PublishedTime published_time;
 
       published_time.header = header;
       published_time.published_stamp = rclcpp::Clock().now();
 
-      pub_published_time_->publish(published_time);
+      pub_published_time->publish(published_time);
     }
   }
 
