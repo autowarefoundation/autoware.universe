@@ -27,24 +27,24 @@ ColorClassifier::ColorClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   image_pub_ = image_transport::create_publisher(
     node_ptr_, "~/debug/image", rclcpp::QoS{1}.get_rmw_qos_profile());
 
-  hsv_config_.green_min_h = node_ptr_->declare_parameter("green_min_h", 50);
-  hsv_config_.green_min_s = node_ptr_->declare_parameter("green_min_s", 100);
-  hsv_config_.green_min_v = node_ptr_->declare_parameter("green_min_v", 150);
-  hsv_config_.green_max_h = node_ptr_->declare_parameter("green_max_h", 120);
-  hsv_config_.green_max_s = node_ptr_->declare_parameter("green_max_s", 200);
-  hsv_config_.green_max_v = node_ptr_->declare_parameter("green_max_v", 255);
-  hsv_config_.yellow_min_h = node_ptr_->declare_parameter("yellow_min_h", 0);
-  hsv_config_.yellow_min_s = node_ptr_->declare_parameter("yellow_min_s", 80);
-  hsv_config_.yellow_min_v = node_ptr_->declare_parameter("yellow_min_v", 150);
-  hsv_config_.yellow_max_h = node_ptr_->declare_parameter("yellow_max_h", 50);
-  hsv_config_.yellow_max_s = node_ptr_->declare_parameter("yellow_max_s", 200);
-  hsv_config_.yellow_max_v = node_ptr_->declare_parameter("yellow_max_v", 255);
-  hsv_config_.red_min_h = node_ptr_->declare_parameter("red_min_h", 160);
-  hsv_config_.red_min_s = node_ptr_->declare_parameter("red_min_s", 100);
-  hsv_config_.red_min_v = node_ptr_->declare_parameter("red_min_v", 150);
-  hsv_config_.red_max_h = node_ptr_->declare_parameter("red_max_h", 180);
-  hsv_config_.red_max_s = node_ptr_->declare_parameter("red_max_s", 255);
-  hsv_config_.red_max_v = node_ptr_->declare_parameter("red_max_v", 255);
+  hsv_config_.green_min_h = node_ptr_->declare_parameter<int>("green_min_h");
+  hsv_config_.green_min_s = node_ptr_->declare_parameter<int>("green_min_s");
+  hsv_config_.green_min_v = node_ptr_->declare_parameter<int>("green_min_v");
+  hsv_config_.green_max_h = node_ptr_->declare_parameter<int>("green_max_h");
+  hsv_config_.green_max_s = node_ptr_->declare_parameter<int>("green_max_s");
+  hsv_config_.green_max_v = node_ptr_->declare_parameter<int>("green_max_v");
+  hsv_config_.yellow_min_h = node_ptr_->declare_parameter<int>("yellow_min_h");
+  hsv_config_.yellow_min_s = node_ptr_->declare_parameter<int>("yellow_min_s");
+  hsv_config_.yellow_min_v = node_ptr_->declare_parameter<int>("yellow_min_v");
+  hsv_config_.yellow_max_h = node_ptr_->declare_parameter<int>("yellow_max_h");
+  hsv_config_.yellow_max_s = node_ptr_->declare_parameter<int>("yellow_max_s");
+  hsv_config_.yellow_max_v = node_ptr_->declare_parameter<int>("yellow_max_v");
+  hsv_config_.red_min_h = node_ptr_->declare_parameter<int>("red_min_h");
+  hsv_config_.red_min_s = node_ptr_->declare_parameter<int>("red_min_s");
+  hsv_config_.red_min_v = node_ptr_->declare_parameter<int>("red_min_v");
+  hsv_config_.red_max_h = node_ptr_->declare_parameter<int>("red_max_h");
+  hsv_config_.red_max_s = node_ptr_->declare_parameter<int>("red_max_s");
+  hsv_config_.red_max_v = node_ptr_->declare_parameter<int>("red_max_v");
 
   // set parameter callback
   set_param_res_ = node_ptr_->add_on_set_parameters_callback(
