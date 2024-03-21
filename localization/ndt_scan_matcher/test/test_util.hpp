@@ -20,8 +20,8 @@
 
 inline pcl::PointCloud<pcl::PointXYZ> make_sample_half_cubic_pcd()
 {
-  constexpr float length = 10;
-  constexpr float interval = 0.1;
+  constexpr float length = 20;     // [m]
+  constexpr float interval = 0.1;  // [m]
   constexpr int num_points_per_line = static_cast<int>(length / interval) + 1;
   constexpr int num_points_per_plane = num_points_per_line * num_points_per_line;
   pcl::PointCloud<pcl::PointXYZ> cloud;
@@ -79,7 +79,7 @@ inline sensor_msgs::msg::PointCloud2 make_default_sensor_pcd()
   pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
   pcl::VoxelGrid<pcl::PointXYZ> vg;
   vg.setInputCloud(cloud.makeShared());
-  vg.setLeafSize(0.5, 0.5, 0.5);
+  vg.setLeafSize(1.0, 1.0, 1.0);
   vg.filter(cloud);
   sensor_msgs::msg::PointCloud2 input_cloud;
   pcl::toROSMsg(cloud, input_cloud);
