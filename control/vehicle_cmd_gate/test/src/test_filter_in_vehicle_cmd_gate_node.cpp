@@ -301,10 +301,14 @@ public:
     // TODO(Horibe): check for each velocity range.
     if (std::abs(lon_vel) > 0.01) {
       // Assert over averaged values against limits
-      ASSERT_LT_NEAR(std::abs(avg_lon_acc), max_lon_acc_lim, threshold_scale) << "last_x was = " << last_x;
-      ASSERT_LT_NEAR(std::abs(avg_lon_jerk), max_lon_jerk_lim, threshold_scale) << "last_x was = " << last_x;
-      ASSERT_LT_NEAR(std::abs(avg_lat_acc), max_lat_acc_lim, threshold_scale) << "last_x was = " << last_x;
-      ASSERT_LT_NEAR(std::abs(avg_lat_jerk), max_lat_jerk_lim, threshold_scale) << "last_x was = " << last_x;
+      ASSERT_LT_NEAR(std::abs(avg_lon_acc), max_lon_acc_lim, threshold_scale)
+        << "last_x was = " << last_x;
+      ASSERT_LT_NEAR(std::abs(avg_lon_jerk), max_lon_jerk_lim, threshold_scale)
+        << "last_x was = " << last_x;
+      ASSERT_LT_NEAR(std::abs(avg_lat_acc), max_lat_acc_lim, threshold_scale)
+        << "last_x was = " << last_x;
+      ASSERT_LT_NEAR(std::abs(avg_lat_jerk), max_lat_jerk_lim, threshold_scale)
+        << "last_x was = " << last_x;
     }
   }
 };
