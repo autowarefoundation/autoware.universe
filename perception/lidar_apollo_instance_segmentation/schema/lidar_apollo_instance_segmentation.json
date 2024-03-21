@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for lidar_apollo_instance_segmentation",
+  "type": "object",
+  "definitions": {
+    "lidar_apollo_instance_segmentation": {
+      "type": "object",
+      "properties": {
+        "score_threshold": {
+          "type": "number",
+          "default": 0.8,
+          "description": "If the score of a detected object is lower than this value, the object is ignored."
+        },
+        "range": {
+          "type": "number",
+          "default": 60,
+          "description": "Half of the length of feature map sides. [m]."
+        },
+        "width": {
+          "type": "number",
+          "default": 640,
+          "description": "The grid width of feature map."
+        },
+        "height": {
+          "type": "number",
+          "default": 640,
+          "description": "The grid height of feature map."
+        },
+        "precision": {
+          "type": "string",
+          "default": "fp32"
+        },
+        "use_intensity_feature": {
+          "type": "boolean",
+          "default": "true",
+          "description": "The flag to use intensity feature of pointcloud."
+        },
+        "use_constant_feature": {
+          "type": "boolean",
+          "default": "false",
+          "description": "The flag to use direction and distance feature of pointcloud."
+        },
+        "target_frame": {
+          "type": "string",
+          "default": "base_link",
+          "description": "Pointcloud data is transformed into this frame."
+        },
+        "z_offset": {
+          "type": "number",
+          "default": -2.0,
+          "description": "z offset from target frame. [m]."
+        }
+      },
+      "required": [
+        "score_threshold",
+        "range",
+        "width",
+        "height",
+        "precision",
+        "use_intensity_feature",
+        "use_constant_feature",
+        "target_frame",
+        "z_offset"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/lidar_apollo_instance_segmentation"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
