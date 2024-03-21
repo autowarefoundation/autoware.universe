@@ -146,6 +146,47 @@ void DataAssociation::assign(
   }
 }
 
+/**
+ * @brief filter measurements by its size, large/small objects are converted to UNKNOWN
+ *
+ * @param measurements
+ * @param filtered_measurements
+ * @param unexpected_measurements
+ */
+void DataAssociation::filterMeasurementsBySize(
+  const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
+  autoware_auto_perception_msgs::msg::DetectedObjects & filtered_measurements,
+  autoware_auto_perception_msgs::msg::DetectedObjects & unexpected_measurements)
+{
+  // copy header
+  filtered_measurements.header = measurements.header;
+  unexpected_measurements.header = measurements.header;
+  filtered_measurements.objects.clear();
+  unexpected_measurements.objects.clear();
+
+  // filter objects by its size
+  const double max_unknown_area = max_area_matrix_(0, 0);
+  const double min_unknown_area = min_area_matrix_(0, 0);
+  const auto unknown_classifications =
+    object_recognition_utils::toObjectClassifications("UNKNOWN", 1.0);  // for label replace
+  for (const auto & measurement : measurements.objects) {
+    const std::uint8_t measurement_label =
+      object_recognition_utils::getHighestProbLabel(measurement.classification);
+    const double area = tier4_autoware_utils::getArea(measurement.shape);
+    const double max_area = max_area_matrix_(measurement_label, measurement_label);
+    const double min_area = min_area_matrix_(measurement_label, measurement_label);
+    if (area > min_area && max_area > area) {
+      filtered_measurements.objects.push_back(measurement);
+    } else if (area > min_unknown_area && max_unknown_area > area) {
+      auto label_fixed_measurement = measurement;
+      label_fixed_measurement.classification = unknown_classifications;
+      filtered_measurements.objects.push_back(label_fixed_measurement);
+    } else {
+      unexpected_measurements.objects.push_back(measurement);
+    }
+  }
+}
+
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
   const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
   const std::list<std::shared_ptr<Tracker>> & trackers)
