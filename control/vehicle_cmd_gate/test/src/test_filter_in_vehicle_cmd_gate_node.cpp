@@ -297,6 +297,8 @@ public:
     const auto max_lat_jerk_lim = *std::max_element(lat_jerk_lim.begin(), lat_jerk_lim.end());
 
     constexpr auto threshold_scale = 1.1;
+    // Output command must be smaller than maximum limit.
+    // TODO(Horibe): check for each velocity range.
     if (std::abs(lon_vel) > 0.01) {
       // Assert over averaged values against limits
       ASSERT_LT_NEAR(std::abs(avg_lon_acc), max_lon_acc_lim, threshold_scale) << "last_x was = " << last_x;
