@@ -9,8 +9,6 @@
 
       # avoidance module common setting
       enable_bound_clipping: false
-      enable_yield_maneuver: true
-      enable_yield_maneuver_during_shifting: false
       enable_cancel_maneuver: true
       disable_path_update: false
 
@@ -248,7 +246,8 @@
 
       # For yield maneuver
       yield:
-        yield_velocity: 2.78                            # [m/s]
+        enable: true                                    # [-]
+        enable_during_shifting: false                   # [-]
 
       # For stop maneuver
       stop:
