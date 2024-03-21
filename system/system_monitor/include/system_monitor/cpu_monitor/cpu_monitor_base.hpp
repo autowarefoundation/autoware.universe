@@ -54,6 +54,32 @@ typedef struct cpu_freq_info
   cpu_freq_info(int index, const std::string & path) : index_(index), path_(path) {}
 } cpu_freq_info;
 
+/**
+ * @brief CPU usage information
+ */
+typedef struct cpu_usage_info
+{
+  std::string cpu_name_; //!< @brief cpu name
+  int usr_;         //!< @brief usr usage [jiffies]
+  int nice_;        //!< @brief nice usage [jiffies]
+  int sys_;         //!< @brief sys usage [jiffies]
+  int idle_;        //!< @brief idle usage [jiffies]
+  int iowait_;      //!< @brief iowait usage [jiffies]
+  int irq_;         //!< @brief irq usage [jiffies]
+  int soft_;        //!< @brief soft usage [jiffies]
+  int steal_;       //!< @brief steal usage [jiffies]
+
+  cpu_usage_info() : usr_(-1), nice_(-1), sys_(-1), idle_(-1), iowait_(-1), irq_(-1), soft_(-1), steal_(-1) {}
+  
+  int totalTime() const {
+    return usr_ + nice_ + sys_ + idle_ + iowait_ + irq_ + soft_ + steal_;
+  }
+
+  int totalActiveTime() const {
+    return usr_ + nice_ + sys_ + irq_ + soft_ + steal_;
+  }
+} cpu_usage_info;
+
 class CPUMonitorBase : public rclcpp::Node
 {
 public:
@@ -139,6 +165,7 @@ protected:
   int num_cores_;                           //!< @brief number of cores
   std::vector<cpu_temp_info> temps_;        //!< @brief CPU list for temperature
   std::vector<cpu_freq_info> freqs_;        //!< @brief CPU list for frequency
+  std::vector<cpu_usage_info> prev_usages_;;        //!< @brief CPU list for usage
   std::vector<int> usage_warn_check_cnt_;   //!< @brief CPU list for usage over warn check counter
   std::vector<int> usage_error_check_cnt_;  //!< @brief CPU list for usage over error check counter
   bool mpstat_exists_;                      //!< @brief flag if mpstat exists

@@ -127,146 +127,96 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   tier4_external_api_msgs::msg::CpuUsage cpu_usage;
   using CpuStatus = tier4_external_api_msgs::msg::CpuStatus;
 
-  if (!mpstat_exists_) {
-    stat.summary(DiagStatus::ERROR, "mpstat error");
-    stat.add(
-      "mpstat", "Command 'mpstat' not found, but can be installed with: sudo apt install sysstat");
-    cpu_usage.all.status = CpuStatus::STALE;
-    publishCpuUsage(cpu_usage);
-    return;
-  }
-
-  // Get CPU Usage
-
-  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
-  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
-  int out_fd[2];
-  if (pipe2(out_fd, O_CLOEXEC) != 0) {
-    stat.summary(DiagStatus::ERROR, "pipe2 error");
-    stat.add("pipe2", strerror(errno));
-    cpu_usage.all.status = CpuStatus::STALE;
-    publishCpuUsage(cpu_usage);
-    return;
-  }
-  bp::pipe out_pipe{out_fd[0], out_fd[1]};
-  bp::ipstream is_out{std::move(out_pipe)};
-
-  int err_fd[2];
-  if (pipe2(err_fd, O_CLOEXEC) != 0) {
-    stat.summary(DiagStatus::ERROR, "pipe2 error");
-    stat.add("pipe2", strerror(errno));
-    cpu_usage.all.status = CpuStatus::STALE;
-    publishCpuUsage(cpu_usage);
-    return;
-  }
-  bp::pipe err_pipe{err_fd[0], err_fd[1]};
-  bp::ipstream is_err{std::move(err_pipe)};
-
-  bp::child c("mpstat -P ALL 1 1 -o JSON", bp::std_out > is_out, bp::std_err > is_err);
-  c.wait();
-
-  if (c.exit_code() != 0) {
-    std::ostringstream os;
-    is_err >> os.rdbuf();
-    stat.summary(DiagStatus::ERROR, "mpstat error");
-    stat.add("mpstat", os.str().c_str());
-    cpu_usage.all.status = CpuStatus::STALE;
-    publishCpuUsage(cpu_usage);
-    return;
-  }
-
-  std::string cpu_name;
-  float usr{0.0};
-  float nice{0.0};
-  float sys{0.0};
-  float iowait{0.0};
-  float idle{0.0};
-  float usage{0.0};
-  float total{0.0};
+  std::ifstream ifs("/proc/stat");
+  std::vector<cpu_usage_info> curr_usages;
+  std::string line;
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
 
-  pt::ptree pt;
-  try {
-    // Analyze JSON output
-    read_json(is_out, pt);
-
-    for (const pt::ptree::value_type & child1 : pt.get_child("sysstat.hosts")) {
-      const pt::ptree & hosts = child1.second;
-
-      for (const pt::ptree::value_type & child2 : hosts.get_child("statistics")) {
-        const pt::ptree & statistics = child2.second;
-
-        for (const pt::ptree::value_type & child3 : statistics.get_child("cpu-load")) {
-          const pt::ptree & cpu_load = child3.second;
-          bool get_cpu_name = false;
-
-          CpuStatus cpu_status;
-
-          if (boost::optional<std::string> v = cpu_load.get_optional<std::string>("cpu")) {
-            cpu_name = v.get();
-            get_cpu_name = true;
-          }
-          if (boost::optional<float> v = cpu_load.get_optional<float>("usr")) {
-            usr = v.get();
-            cpu_status.usr = usr;
-          }
-          if (boost::optional<float> v = cpu_load.get_optional<float>("nice")) {
-            nice = v.get();
-            cpu_status.nice = nice;
-          }
-          if (boost::optional<float> v = cpu_load.get_optional<float>("sys")) {
-            sys = v.get();
-            cpu_status.sys = sys;
-          }
-          if (boost::optional<float> v = cpu_load.get_optional<float>("idle")) {
-            idle = v.get();
-            cpu_status.idle = idle;
-          }
-
-          total = 100.0 - iowait - idle;
-          usage = total * 1e-2;
-          if (get_cpu_name) {
-            level = CpuUsageToLevel(cpu_name, usage);
-          } else {
-            level = CpuUsageToLevel(std::string("err"), usage);
-          }
-
-          cpu_status.total = total;
-          cpu_status.status = level;
-
-          stat.add(fmt::format("CPU {}: status", cpu_name), load_dict_.at(level));
-          stat.addf(fmt::format("CPU {}: total", cpu_name), "%.2f%%", total);
-          stat.addf(fmt::format("CPU {}: usr", cpu_name), "%.2f%%", usr);
-          stat.addf(fmt::format("CPU {}: nice", cpu_name), "%.2f%%", nice);
-          stat.addf(fmt::format("CPU {}: sys", cpu_name), "%.2f%%", sys);
-          stat.addf(fmt::format("CPU {}: idle", cpu_name), "%.2f%%", idle);
-
-          if (usage_avg_ == true) {
-            if (cpu_name == "all") {
-              whole_level = level;
-            }
-          } else {
-            whole_level = std::max(whole_level, level);
-          }
-
-          if (cpu_name == "all") {
-            cpu_usage.all = cpu_status;
-          } else {
-            cpu_usage.cpus.push_back(cpu_status);
-          }
-        }
-      }
-    }
-  } catch (const std::exception & e) {
-    stat.summary(DiagStatus::ERROR, "mpstat exception");
-    stat.add("mpstat", e.what());
-    std::fill(usage_warn_check_cnt_.begin(), usage_warn_check_cnt_.end(), 0);
-    std::fill(usage_error_check_cnt_.begin(), usage_error_check_cnt_.end(), 0);
+  if (!ifs) {
+    stat.summary(DiagStatus::ERROR, "ifstream error");
+    stat.add("ifstream", strerror(errno));
     cpu_usage.all.status = CpuStatus::STALE;
-    cpu_usage.cpus.clear();
     publishCpuUsage(cpu_usage);
     return;
+  }
+
+  while (std::getline(ifs, line)) {
+    if (line.compare(0, 3, "cpu") == 0) {
+        std::istringstream ss(line);
+        cpu_usage_info tmp_usage;
+        if (!(ss >> tmp_usage.cpu_name_ >> tmp_usage.usr_ >> tmp_usage.nice_ >> tmp_usage.sys_ >> tmp_usage.idle_ >> tmp_usage.iowait_ >> tmp_usage.irq_ >> tmp_usage.soft_>> tmp_usage.steal_)) {
+          stat.summary(DiagStatus::ERROR, "parsing error");
+          stat.add(
+            "istringstream", "Error parsing line in /proc/stat: " + line);
+          cpu_usage.all.status = CpuStatus::STALE;
+          publishCpuUsage(cpu_usage);
+          return;
+        }
+        curr_usages.push_back(tmp_usage);
+    } else {
+        break;
+    }
+  }
+
+  if(prev_usages_.empty()){
+    prev_usages_ = curr_usages;
+    stat.summary(DiagStatus::ERROR, "cpu usages update error");
+    stat.add("update error", "Error update cpu usage info from /proc/stat");
+    cpu_usage.all.status = CpuStatus::STALE;
+    publishCpuUsage(cpu_usage);
+    return;    
+  }
+
+  if(prev_usages_[0].usr_ < 0){
+    stat.summary(DiagStatus::ERROR, "cpu usages overflow error");
+    stat.add("overflow error", "A value of /proc/stat is greater than INT_MAX. Restart ECU");
+    cpu_usage.all.status = CpuStatus::STALE;
+    publishCpuUsage(cpu_usage);
+    return;    
+  }
+
+  if(prev_usages_.size() != curr_usages.size()){
+    stat.summary(DiagStatus::ERROR, "cpu usages update error");
+    stat.add("update error", "Error update cpu usage info from /proc/stat");
+    cpu_usage.all.status = CpuStatus::STALE;
+    publishCpuUsage(cpu_usage);
+    return;    
+  }
+
+  for (int i = 0; i < prev_usages_.size(); i++){
+    CpuStatus cpu_status;
+    int total_diff = curr_usages[i].totalTime() - prev_usages_[i].totalTime();
+
+    cpu_status.usr = 100.0 * (curr_usages[i].usr_ - prev_usages_[i].usr_) / total_diff;
+    cpu_status.nice = 100.0 * (curr_usages[i].nice_ - prev_usages_[i].nice_) / total_diff;
+    cpu_status.sys = 100.0 * (curr_usages[i].sys_ - prev_usages_[i].sys_) / total_diff;
+    cpu_status.idle = 100.0 * (curr_usages[i].idle_ - prev_usages_[i].idle_) / total_diff;
+    cpu_status.total = 100.0 * (curr_usages[i].totalActiveTime() - prev_usages_[i].totalActiveTime()) / total_diff;
+    level = CpuUsageToLevel(curr_usages[i].cpu_name_, cpu_status.total * 1e-2);
+    cpu_status.status = level;
+
+    if (curr_usages[i].cpu_name_ == "cpu") curr_usages[i].cpu_name_ = "cpu all";
+    stat.add(fmt::format("{}: status", curr_usages[i].cpu_name_), load_dict_.at(level));
+    stat.addf(fmt::format("{}: total", curr_usages[i].cpu_name_), "%.2f%%", cpu_status.total);
+    stat.addf(fmt::format("{}: usr", curr_usages[i].cpu_name_), "%.2f%%", cpu_status.usr);
+    stat.addf(fmt::format("{}: nice", curr_usages[i].cpu_name_), "%.2f%%", cpu_status.nice);
+    stat.addf(fmt::format("{}: sys", curr_usages[i].cpu_name_), "%.2f%%", cpu_status.sys);
+    stat.addf(fmt::format("{}: idle", curr_usages[i].cpu_name_), "%.2f%%", cpu_status.idle);
+
+    if (usage_avg_ == true) {
+      if (curr_usages[i].cpu_name_ == "cpu all") {
+        whole_level = level;
+      }
+    } else {
+      whole_level = std::max(whole_level, level);
+    }
+
+    if (curr_usages[i].cpu_name_ == "cpu all") {
+      cpu_usage.all = cpu_status;
+    } else {
+      cpu_usage.cpus.push_back(cpu_status);
+    }
   }
 
   stat.summary(whole_level, load_dict_.at(whole_level));
@@ -278,18 +228,177 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
+// void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
+// {
+//   // Remember start time to measure elapsed time
+//   const auto t_start = SystemMonitorUtility::startMeasurement();
+
+//   tier4_external_api_msgs::msg::CpuUsage cpu_usage;
+//   using CpuStatus = tier4_external_api_msgs::msg::CpuStatus;
+
+//   if (!mpstat_exists_) {
+//     stat.summary(DiagStatus::ERROR, "mpstat error");
+//     stat.add(
+//       "mpstat", "Command 'mpstat' not found, but can be installed with: sudo apt install sysstat");
+//     cpu_usage.all.status = CpuStatus::STALE;
+//     publishCpuUsage(cpu_usage);
+//     return;
+//   }
+
+//   // Get CPU Usage
+
+//   // boost::process create file descriptor without O_CLOEXEC required for multithreading.
+//   // So create file descriptor with O_CLOEXEC and pass it to boost::process.
+//   int out_fd[2];
+//   if (pipe2(out_fd, O_CLOEXEC) != 0) {
+//     stat.summary(DiagStatus::ERROR, "pipe2 error");
+//     stat.add("pipe2", strerror(errno));
+//     cpu_usage.all.status = CpuStatus::STALE;
+//     publishCpuUsage(cpu_usage);
+//     return;
+//   }
+//   bp::pipe out_pipe{out_fd[0], out_fd[1]};
+//   bp::ipstream is_out{std::move(out_pipe)};
+
+//   int err_fd[2];
+//   if (pipe2(err_fd, O_CLOEXEC) != 0) {
+//     stat.summary(DiagStatus::ERROR, "pipe2 error");
+//     stat.add("pipe2", strerror(errno));
+//     cpu_usage.all.status = CpuStatus::STALE;
+//     publishCpuUsage(cpu_usage);
+//     return;
+//   }
+//   bp::pipe err_pipe{err_fd[0], err_fd[1]};
+//   bp::ipstream is_err{std::move(err_pipe)};
+
+//   bp::child c("mpstat -P ALL 1 1 -o JSON", bp::std_out > is_out, bp::std_err > is_err);
+//   c.wait();
+
+//   if (c.exit_code() != 0) {
+//     std::ostringstream os;
+//     is_err >> os.rdbuf();
+//     stat.summary(DiagStatus::ERROR, "mpstat error");
+//     stat.add("mpstat", os.str().c_str());
+//     cpu_usage.all.status = CpuStatus::STALE;
+//     publishCpuUsage(cpu_usage);
+//     return;
+//   }
+
+//   std::string cpu_name;
+//   float usr{0.0};
+//   float nice{0.0};
+//   float sys{0.0};
+//   float iowait{0.0};
+//   float idle{0.0};
+//   float usage{0.0};
+//   float total{0.0};
+//   int level = DiagStatus::OK;
+//   int whole_level = DiagStatus::OK;
+
+//   pt::ptree pt;
+//   try {
+//     // Analyze JSON output
+//     read_json(is_out, pt);
+
+//     for (const pt::ptree::value_type & child1 : pt.get_child("sysstat.hosts")) {
+//       const pt::ptree & hosts = child1.second;
+
+//       for (const pt::ptree::value_type & child2 : hosts.get_child("statistics")) {
+//         const pt::ptree & statistics = child2.second;
+
+//         for (const pt::ptree::value_type & child3 : statistics.get_child("cpu-load")) {
+//           const pt::ptree & cpu_load = child3.second;
+//           bool get_cpu_name = false;
+
+//           CpuStatus cpu_status;
+
+//           if (boost::optional<std::string> v = cpu_load.get_optional<std::string>("cpu")) {
+//             cpu_name = v.get();
+//             get_cpu_name = true;
+//           }
+//           if (boost::optional<float> v = cpu_load.get_optional<float>("usr")) {
+//             usr = v.get();
+//             cpu_status.usr = usr;
+//           }
+//           if (boost::optional<float> v = cpu_load.get_optional<float>("nice")) {
+//             nice = v.get();
+//             cpu_status.nice = nice;
+//           }
+//           if (boost::optional<float> v = cpu_load.get_optional<float>("sys")) {
+//             sys = v.get();
+//             cpu_status.sys = sys;
+//           }
+//           if (boost::optional<float> v = cpu_load.get_optional<float>("idle")) {
+//             idle = v.get();
+//             cpu_status.idle = idle;
+//           }
+
+//           total = 100.0 - iowait - idle;
+//           usage = total * 1e-2;
+//           if (get_cpu_name) {
+//             level = CpuUsageToLevel(cpu_name, usage);
+//           } else {
+//             level = CpuUsageToLevel(std::string("err"), usage);
+//           }
+
+//           cpu_status.total = total;
+//           cpu_status.status = level;
+
+//           stat.add(fmt::format("CPU {}: status", cpu_name), load_dict_.at(level));
+//           stat.addf(fmt::format("CPU {}: total", cpu_name), "%.2f%%", total);
+//           stat.addf(fmt::format("CPU {}: usr", cpu_name), "%.2f%%", usr);
+//           stat.addf(fmt::format("CPU {}: nice", cpu_name), "%.2f%%", nice);
+//           stat.addf(fmt::format("CPU {}: sys", cpu_name), "%.2f%%", sys);
+//           stat.addf(fmt::format("CPU {}: idle", cpu_name), "%.2f%%", idle);
+
+//           if (usage_avg_ == true) {
+//             if (cpu_name == "all") {
+//               whole_level = level;
+//             }
+//           } else {
+//             whole_level = std::max(whole_level, level);
+//           }
+
+//           if (cpu_name == "all") {
+//             cpu_usage.all = cpu_status;
+//           } else {
+//             cpu_usage.cpus.push_back(cpu_status);
+//           }
+//         }
+//       }
+//     }
+//   } catch (const std::exception & e) {
+//     stat.summary(DiagStatus::ERROR, "mpstat exception");
+//     stat.add("mpstat", e.what());
+//     std::fill(usage_warn_check_cnt_.begin(), usage_warn_check_cnt_.end(), 0);
+//     std::fill(usage_error_check_cnt_.begin(), usage_error_check_cnt_.end(), 0);
+//     cpu_usage.all.status = CpuStatus::STALE;
+//     cpu_usage.cpus.clear();
+//     publishCpuUsage(cpu_usage);
+//     return;
+//   }
+
+//   stat.summary(whole_level, load_dict_.at(whole_level));
+
+//   // Publish msg
+//   publishCpuUsage(cpu_usage);
+
+//   // Measure elapsed time since start time and report
+//   SystemMonitorUtility::stopMeasurement(t_start, stat);
+// }
+
 int CPUMonitorBase::CpuUsageToLevel(const std::string & cpu_name, float usage)
 {
   // cpu name to counter index
   int idx;
   try {
-    int num = std::stoi(cpu_name);
+    int num = std::stoi(cpu_name.substr(3));
     if (num > num_cores_ || num < 0) {
       num = num_cores_;
     }
     idx = num + 1;
   } catch (std::exception &) {
-    if (cpu_name == std::string("all")) {  // mpstat output "all"
+    if (cpu_name == std::string("cpu")) {  // mpstat output "all"
       idx = 0;
     } else {
       idx = num_cores_ + 1;
