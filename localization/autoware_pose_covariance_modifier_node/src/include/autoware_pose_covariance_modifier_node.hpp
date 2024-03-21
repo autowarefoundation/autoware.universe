@@ -57,7 +57,9 @@ private:
     NDT = 2,
   };
   void publishPoseSource();
-  int pose_source_;
+
+  PoseSource pose_source_;
+
   rclcpp::Time trustedPoseCallbackTime;
 
   double gnss_error_reliable_max_, gnss_error_unreliable_min_, yaw_error_deg_threshold_;
