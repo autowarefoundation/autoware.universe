@@ -65,6 +65,9 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     updater_.add(
       std::string(this->get_namespace()) + ": dust_validation", this,
       &BlockageDiagComponent::dustChecker);
+
+    ground_dust_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
+      "blockage_diag/debug/ground_dust_ratio", rclcpp::SensorDataQoS());
     if (publish_debug_image_) {
       single_frame_dust_mask_pub =
         image_transport::create_publisher(this, "blockage_diag/debug/single_frame_dust_mask_image");
@@ -72,8 +75,6 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
         image_transport::create_publisher(this, "blockage_diag/debug/multi_frame_dust_mask_image");
       blockage_dust_merged_pub =
         image_transport::create_publisher(this, "blockage_diag/debug/blockage_dust_merged_image");
-      ground_dust_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-        "blockage_diag/debug/ground_dust_ratio", rclcpp::SensorDataQoS());
     }
   }
   updater_.setPeriod(0.1);
