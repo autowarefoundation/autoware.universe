@@ -123,7 +123,6 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 {
   // To be consistent with changes in the ego position, the current shift length is considered.
   const auto current_ego_shift = helper_->getEgoShift();
-  const auto & base_link2rear = data_->parameters.base_link2rear;
 
   // Calculate feasible shift length
   const auto get_shift_profile =
@@ -140,13 +139,10 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     // calculate remaining distance.
     const auto prepare_distance = helper_->getNominalPrepareDistance();
-    const auto & additional_buffer_longitudinal =
-      object_parameter.use_conservative_buffer_longitudinal ? data_->parameters.base_link2front
-                                                            : 0.0;
-    const auto constant = object_parameter.safety_buffer_longitudinal +
-                          additional_buffer_longitudinal + prepare_distance;
-    const auto has_enough_distance = object.longitudinal > constant + nominal_avoid_distance;
-    const auto remaining_distance = object.longitudinal - constant;
+    const auto constant_distance = helper_->getFrontConstantDistance(object);
+    const auto has_enough_distance =
+      object.longitudinal > constant_distance + prepare_distance + nominal_avoid_distance;
+    const auto remaining_distance = object.longitudinal - constant_distance - prepare_distance;
     const auto avoidance_distance =
       has_enough_distance ? nominal_avoid_distance : remaining_distance;
 
@@ -234,9 +230,12 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     const double LAT_DIST_BUFFER = desire_shift_length > 0.0 ? 1e-3 : -1e-3;
 
+    const auto lateral_hard_margin = object.is_parked
+                                       ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                       : object_parameter.lateral_hard_margin;
     const auto infeasible =
       std::abs(feasible_shift_length - object.overhang_points.front().first) - LAT_DIST_BUFFER <
-      0.5 * data_->parameters.vehicle_width + object_parameter.safety_buffer_lateral;
+      0.5 * data_->parameters.vehicle_width + lateral_hard_margin;
     if (infeasible) {
       RCLCPP_DEBUG(rclcpp::get_logger(""), "feasible shift length is not enough to avoid. ");
       object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
@@ -275,11 +274,8 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       }
     }
 
-    // use each object param
-    const auto object_type = utils::getHighestProbLabel(o.object.classification);
-    const auto object_parameter = parameters_->object_parameters.at(object_type);
+    // calculate feasible shift length based on behavior policy
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
-
     if (!feasible_shift_profile.has_value()) {
       if (o.avoid_required && is_forward_object(o)) {
         break;
@@ -294,12 +290,8 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     AvoidLine al_avoid;
     {
-      const auto & additional_buffer_longitudinal =
-        object_parameter.use_conservative_buffer_longitudinal ? data_->parameters.base_link2front
-                                                              : 0.0;
-      const auto offset =
-        object_parameter.safety_buffer_longitudinal + additional_buffer_longitudinal;
-      const auto to_shift_end = o.longitudinal - offset;
+      const auto constant_distance = helper_->getFrontConstantDistance(o);
+      const auto to_shift_end = o.longitudinal - constant_distance;
       const auto path_front_to_ego = data.arclength_from_ego.at(data.ego_closest_path_index);
 
       // start point (use previous linear shift length as start shift length.)
@@ -335,8 +327,8 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     AvoidLine al_return;
     {
-      const auto offset = object_parameter.safety_buffer_longitudinal + base_link2rear + o.length;
-      const auto to_shift_start = o.longitudinal + offset;
+      const auto constant_distance = helper_->getRearConstantDistance(o);
+      const auto to_shift_start = o.longitudinal + constant_distance;
 
       // start point
       al_return.start_shift_length = feasible_shift_profile.value().first;

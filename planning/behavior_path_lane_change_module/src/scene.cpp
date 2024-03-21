@@ -480,14 +480,20 @@ void NormalLaneChange::resetParameters()
 
 TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
 {
-  TurnSignalInfo turn_signal_info = calcTurnSignalInfo();
-  const auto [turn_signal_command, distance_to_vehicle_front] = utils::getPathTurnSignal(
-    status_.current_lanes, status_.lane_change_path.shifted_path,
-    status_.lane_change_path.info.shift_line, getEgoPose(), getEgoTwist().linear.x,
-    planner_data_->parameters);
-  turn_signal_info.turn_signal.command = turn_signal_command.command;
+  const auto & pose = getEgoPose();
+  const auto & current_lanes = status_.current_lanes;
+  const auto & shift_line = status_.lane_change_path.info.shift_line;
+  const auto & shift_path = status_.lane_change_path.shifted_path;
+  const auto current_shift_length = lanelet::utils::getArcCoordinates(current_lanes, pose).distance;
+  constexpr bool is_driving_forward = true;
+  // The getBehaviorTurnSignalInfo method expects the shifted line to be generated off of the ego's
+  // current lane, lane change is different, so we set this flag to false.
+  constexpr bool egos_lane_is_shifted = false;
 
-  return turn_signal_info;
+  const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
+    shift_path, shift_line, current_lanes, current_shift_length, is_driving_forward,
+    egos_lane_is_shifted);
+  return new_signal;
 }
 
 lanelet::ConstLanelets NormalLaneChange::getCurrentLanes() const
@@ -843,7 +849,7 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
 
   // get backward lanes
   const auto backward_length = lane_change_parameters_->backward_lane_length;
-  const auto target_backward_lanes = utils::lane_change::getBackwardLanelets(
+  const auto target_backward_lanes = behavior_path_planner::utils::getBackwardLanelets(
     route_handler, target_lanes, current_pose, backward_length);
 
   // filter objects to get target object index
@@ -1247,9 +1253,9 @@ bool NormalLaneChange::getLaneChangePaths(
       };
 
       // get path on original lanes
-      const auto prepare_velocity = std::max(
+      const auto prepare_velocity = std::clamp(
         current_velocity + sampled_longitudinal_acc * prepare_duration,
-        minimum_lane_changing_velocity);
+        minimum_lane_changing_velocity, getCommonParam().max_vel);
 
       // compute actual longitudinal acceleration
       const double longitudinal_acc_on_prepare =
@@ -1313,8 +1319,9 @@ bool NormalLaneChange::getLaneChangePaths(
         const auto lane_changing_length =
           initial_lane_changing_velocity * lane_changing_time +
           0.5 * longitudinal_acc_on_lane_changing * lane_changing_time * lane_changing_time;
-        const auto terminal_lane_changing_velocity =
-          initial_lane_changing_velocity + longitudinal_acc_on_lane_changing * lane_changing_time;
+        const auto terminal_lane_changing_velocity = std::min(
+          initial_lane_changing_velocity + longitudinal_acc_on_lane_changing * lane_changing_time,
+          getCommonParam().max_vel);
         utils::lane_change::setPrepareVelocity(
           prepare_segment, current_velocity, terminal_lane_changing_velocity);
 
@@ -1684,59 +1691,6 @@ PathSafetyStatus NormalLaneChange::evaluateApprovedPathWithUnsafeHysteresis(
     return approved_path_safety_status;
   }
   return {};
-}
-
-TurnSignalInfo NormalLaneChange::calcTurnSignalInfo() const
-{
-  const auto get_blinker_pose = [](const PathWithLaneId & path, const double length) {
-    double accumulated_length = 0.0;
-    for (size_t i = 0; i < path.points.size() - 1; ++i) {
-      accumulated_length +=
-        tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
-      if (accumulated_length > length) {
-        return path.points.at(i).point.pose;
-      }
-    }
-
-    return path.points.front().point.pose;
-  };
-
-  const auto & path = status_.lane_change_path;
-  const auto & shifted_path = path.shifted_path.path;
-
-  TurnSignalInfo turn_signal_info{};
-
-  if (path.path.points.empty()) {
-    return turn_signal_info;
-  }
-
-  // desired start pose = prepare start pose
-  turn_signal_info.desired_start_point = std::invoke([&]() {
-    const auto blinker_start_duration = planner_data_->parameters.turn_signal_search_time;
-    const auto diff_time = path.info.duration.prepare - blinker_start_duration;
-    if (diff_time < 1e-5) {
-      return path.path.points.front().point.pose;
-    }
-
-    const auto current_twist = getEgoTwist();
-    const auto diff_length = std::abs(current_twist.linear.x) * diff_time;
-    return get_blinker_pose(path.path, diff_length);
-  });
-
-  // desired end pose
-  const auto length_ratio =
-    std::clamp(lane_change_parameters_->length_ratio_for_turn_signal_deactivation, 0.0, 1.0);
-  const auto desired_end_length = path.info.length.lane_changing * length_ratio;
-  turn_signal_info.desired_end_point = get_blinker_pose(shifted_path, desired_end_length);
-
-  // required start pose = lane changing start pose
-  turn_signal_info.required_start_point = path.info.shift_line.start;
-
-  // required end pose = in the middle of the lane change
-  const auto mid_lane_change_length = path.info.length.lane_changing / 2;
-  turn_signal_info.required_end_point = get_blinker_pose(shifted_path, mid_lane_change_length);
-
-  return turn_signal_info;
 }
 
 bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
