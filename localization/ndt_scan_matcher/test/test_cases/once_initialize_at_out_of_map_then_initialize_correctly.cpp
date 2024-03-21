@@ -32,30 +32,8 @@ TEST_F(TestNDTScanMatcher, once_initialize_at_out_of_map_then_initialize_correct
   //---------//
   // Arrange //
   //---------//
-
-  // prepare input source PointCloud
-  pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
-  pcl::VoxelGrid<pcl::PointXYZ> vg;
-  vg.setInputCloud(cloud.makeShared());
-  vg.setLeafSize(0.5, 0.5, 0.5);
-  vg.filter(cloud);
-  RCLCPP_INFO_STREAM(node_->get_logger(), "sensor cloud size: " << cloud.size());
-  sensor_msgs::msg::PointCloud2 input_cloud;
-  pcl::toROSMsg(cloud, input_cloud);
-  input_cloud.header.frame_id = "sensor_frame";
-  input_cloud.header.stamp.sec = 1;
-  input_cloud.header.stamp.nanosec = 0;
-
-  // prepare input initial pose
-  const geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_msg_out =
-    make_pose(-100.0, -100.0);
-
-  const geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_msg_correct =
-    make_pose(100.0, 100.0);
-
-  // start threads
-  rclcpp::executors::MultiThreadedExecutor exec;
   std::thread t1([&]() {
+    rclcpp::executors::MultiThreadedExecutor exec;
     exec.add_node(node_);
     exec.spin();
   });
@@ -68,12 +46,18 @@ TEST_F(TestNDTScanMatcher, once_initialize_at_out_of_map_then_initialize_correct
   EXPECT_TRUE(trigger_node_client_->send_trigger_node(true));
 
   // (2) publish LiDAR point cloud
+  const sensor_msgs::msg::PointCloud2 input_cloud = make_default_sensor_pcd();
+  RCLCPP_INFO_STREAM(node_->get_logger(), "sensor cloud size: " << input_cloud.width);
   sensor_pcd_publisher_->publish_pcd(input_cloud);
 
   // (3) send initial pose at out of map. Must not crash.
+  const geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_msg_out =
+    make_pose(/* x = */ -100.0, /* y = */ -100.0);
   initialpose_client_->send_initialpose(initial_pose_msg_out);
 
   // (4) send initial pose at correct position
+  const geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_msg_correct =
+    make_pose(/* x = */ 100.0, /* y = */ 100.0);
   const geometry_msgs::msg::Pose result_pose =
     initialpose_client_->send_initialpose(initial_pose_msg_correct).pose.pose;
 

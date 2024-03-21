@@ -74,4 +74,19 @@ inline geometry_msgs::msg::PoseWithCovarianceStamped make_pose(const float x, co
   return pose;
 }
 
+inline sensor_msgs::msg::PointCloud2 make_default_sensor_pcd()
+{
+  pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
+  pcl::VoxelGrid<pcl::PointXYZ> vg;
+  vg.setInputCloud(cloud.makeShared());
+  vg.setLeafSize(0.5, 0.5, 0.5);
+  vg.filter(cloud);
+  sensor_msgs::msg::PointCloud2 input_cloud;
+  pcl::toROSMsg(cloud, input_cloud);
+  input_cloud.header.frame_id = "sensor_frame";
+  input_cloud.header.stamp.sec = 1;
+  input_cloud.header.stamp.nanosec = 0;
+  return input_cloud;
+}
+
 #endif  // TEST_UTIL_HPP_

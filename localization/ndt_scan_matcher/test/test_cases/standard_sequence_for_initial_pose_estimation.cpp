@@ -32,26 +32,8 @@ TEST_F(TestNDTScanMatcher, standard_sequence_for_initial_pose_estimation)  // NO
   //---------//
   // Arrange //
   //---------//
-
-  // prepare input source PointCloud
-  pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
-  pcl::VoxelGrid<pcl::PointXYZ> vg;
-  vg.setInputCloud(cloud.makeShared());
-  vg.setLeafSize(0.5, 0.5, 0.5);
-  vg.filter(cloud);
-  RCLCPP_INFO_STREAM(node_->get_logger(), "sensor cloud size: " << cloud.size());
-  sensor_msgs::msg::PointCloud2 input_cloud;
-  pcl::toROSMsg(cloud, input_cloud);
-  input_cloud.header.frame_id = "sensor_frame";
-  input_cloud.header.stamp.sec = 1;
-  input_cloud.header.stamp.nanosec = 0;
-
-  // prepare input initial pose
-  const geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_msg = make_pose(100.0, 100.0);
-
-  // start threads
-  rclcpp::executors::MultiThreadedExecutor exec;
   std::thread t1([&]() {
+    rclcpp::executors::MultiThreadedExecutor exec;
     exec.add_node(node_);
     exec.spin();
   });
@@ -64,9 +46,13 @@ TEST_F(TestNDTScanMatcher, standard_sequence_for_initial_pose_estimation)  // NO
   EXPECT_TRUE(trigger_node_client_->send_trigger_node(true));
 
   // (2) publish LiDAR point cloud
+  const sensor_msgs::msg::PointCloud2 input_cloud = make_default_sensor_pcd();
+  RCLCPP_INFO_STREAM(node_->get_logger(), "sensor cloud size: " << input_cloud.width);
   sensor_pcd_publisher_->publish_pcd(input_cloud);
 
   // (3) send initial pose
+  const geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_msg =
+    make_pose(/* x = */ 100.0, /* y = */ 100.0);
   const geometry_msgs::msg::Pose result_pose =
     initialpose_client_->send_initialpose(initial_pose_msg).pose.pose;
 
