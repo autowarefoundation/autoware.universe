@@ -81,6 +81,9 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
     getCommonParam().vehicle_info, getEgoPose(),
     std::max(minimum_lane_change_length, minimum_avoid_length), calcLateralOffset());
 
+  RCLCPP_DEBUG(
+    logger_, "Conditions ? %f, %f, %f", nearest_object.longitudinal, minimum_lane_change_length,
+    minimum_avoid_length);
   return nearest_object.longitudinal > std::max(minimum_lane_change_length, minimum_avoid_length);
 }
 
@@ -128,23 +131,6 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
 
   data.current_lanelets = getCurrentLanes();
 
-  // expand drivable lanes
-  std::for_each(
-    data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
-      data.drivable_lanes.push_back(utils::avoidance::generateExpandedDrivableLanes(
-        lanelet, planner_data_, avoidance_parameters_));
-    });
-
-  // calc drivable bound
-  const auto shorten_lanes =
-    utils::cutOverlappedLanes(data.reference_path_rough, data.drivable_lanes);
-  data.left_bound = utils::calcBound(
-    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, true);
-  data.right_bound = utils::calcBound(
-    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, false);
-
-  // get related objects from dynamic_objects, and then separates them as target objects and non
-  // target objects
   fillAvoidanceTargetObjects(data, debug);
 
   return data;
@@ -191,9 +177,7 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
       [&](const auto & object) { return createObjectData(data, object); });
   }
 
-  utils::avoidance::filterTargetObjects(
-    target_lane_objects, data, avoidance_parameters_->object_check_max_forward_distance,
-    planner_data_, p);
+  data.target_objects = target_lane_objects;
 }
 
 ObjectData AvoidanceByLaneChange::createObjectData(
@@ -248,6 +232,8 @@ ObjectData AvoidanceByLaneChange::createObjectData(
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   utils::avoidance::fillAvoidanceNecessity(object_data, registered_objects_, vehicle_width, p);
 
+  utils::avoidance::fillLongitudinalAndLengthByClosestEnvelopeFootprint(
+    data.reference_path_rough, getEgoPosition(), object_data);
   return object_data;
 }
 
