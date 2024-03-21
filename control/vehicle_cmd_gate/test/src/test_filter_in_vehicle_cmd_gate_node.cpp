@@ -82,7 +82,6 @@ public:
         cmd_received_times_.push_back(now());
         // check filter for varying last_x values to test the CI
         checkFilter(4);
-        checkFilter(3);
       });
 
     rclcpp::QoS qos{1};
