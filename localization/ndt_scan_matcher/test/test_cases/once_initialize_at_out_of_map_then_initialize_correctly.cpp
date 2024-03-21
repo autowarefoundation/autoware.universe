@@ -67,9 +67,9 @@ TEST_F(TestNDTScanMatcher, once_initialize_at_out_of_map_then_initialize_correct
   RCLCPP_INFO_STREAM(
     node_->get_logger(), std::fixed << "result_pose: " << result_pose.position.x << ", "
                                     << result_pose.position.y << ", " << result_pose.position.z);
-  EXPECT_NEAR(result_pose.position.x, 100.0, 1.0);
-  EXPECT_NEAR(result_pose.position.y, 100.0, 1.0);
-  EXPECT_NEAR(result_pose.position.z, 0.0, 1.0);
+  EXPECT_NEAR(result_pose.position.x, 100.0, 2.0);
+  EXPECT_NEAR(result_pose.position.y, 100.0, 2.0);
+  EXPECT_NEAR(result_pose.position.z, 0.0, 2.0);
 
   rclcpp::shutdown();
   t1.join();

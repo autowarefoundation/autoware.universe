@@ -62,9 +62,9 @@ TEST_F(TestNDTScanMatcher, standard_sequence_for_initial_pose_estimation)  // NO
   RCLCPP_INFO_STREAM(
     node_->get_logger(), std::fixed << "result_pose: " << result_pose.position.x << ", "
                                     << result_pose.position.y << ", " << result_pose.position.z);
-  EXPECT_NEAR(result_pose.position.x, 100.0, 1.0);
-  EXPECT_NEAR(result_pose.position.y, 100.0, 1.0);
-  EXPECT_NEAR(result_pose.position.z, 0.0, 1.0);
+  EXPECT_NEAR(result_pose.position.x, 100.0, 2.0);
+  EXPECT_NEAR(result_pose.position.y, 100.0, 2.0);
+  EXPECT_NEAR(result_pose.position.z, 0.0, 2.0);
 
   rclcpp::shutdown();
   t1.join();

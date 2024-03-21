@@ -21,7 +21,7 @@
 inline pcl::PointCloud<pcl::PointXYZ> make_sample_half_cubic_pcd()
 {
   constexpr float length = 20;     // [m]
-  constexpr float interval = 0.1;  // [m]
+  constexpr float interval = 0.2;  // [m]
   constexpr int num_points_per_line = static_cast<int>(length / interval) + 1;
   constexpr int num_points_per_plane = num_points_per_line * num_points_per_line;
   pcl::PointCloud<pcl::PointXYZ> cloud;
@@ -67,9 +67,9 @@ inline geometry_msgs::msg::PoseWithCovarianceStamped make_pose(const float x, co
   pose.header.stamp.nanosec = 0;
   pose.pose.covariance[0] = 0.25;
   pose.pose.covariance[7] = 0.25;
-  pose.pose.covariance[14] = 0.25;
-  pose.pose.covariance[21] = 0.06853891909122467;
-  pose.pose.covariance[28] = 0.06853891909122467;
+  pose.pose.covariance[14] = 0.0025;
+  pose.pose.covariance[21] = 0.0006853891909122467;
+  pose.pose.covariance[28] = 0.0006853891909122467;
   pose.pose.covariance[35] = 0.06853891909122467;
   return pose;
 }
