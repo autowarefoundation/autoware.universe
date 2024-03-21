@@ -207,6 +207,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&MultiObjectTracker::onTimer, this));
   }
+  last_published_time_ = this->now();
 
   const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
   const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
@@ -297,7 +298,26 @@ void MultiObjectTracker::onMeasurement(
   }
 
   if (publish_timer_ == nullptr) {
+    // publish immediately if delay compensation is disabled
     publish(measurement_time);
+  } else {
+    // check the timer and publish if the next period is too far
+    const auto time_until_next_period = publish_timer_->time_until_trigger();
+    const double time_until_next_period_ms = time_until_next_period.count() / 1e6;
+    constexpr double max_time_until_next_period_ms = 20.0;
+    std::cout << "time_until_next_period_ms: " << time_until_next_period_ms << std::endl;
+    if (max_time_until_next_period_ms < time_until_next_period_ms) {
+      const auto current_time = this->now();
+      publish(current_time);
+      publish_timer_->cancel();
+      publish_timer_->execute_callback();
+      // wait for the 10ms to avoid the next period is too close
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      publish_timer_->reset();
+      const double time_until_next_period_ms = publish_timer_->time_until_trigger().count() / 1e6;
+      std::cout << "time_until_next_period_ms after reset: " << time_until_next_period_ms
+                << std::endl;
+    }
   }
 }
 
@@ -446,8 +466,17 @@ void MultiObjectTracker::publish(const rclcpp::Time & time)
   const auto subscriber_count = tracked_objects_pub_->get_subscription_count() +
                                 tracked_objects_pub_->get_intra_process_subscription_count();
   if (subscriber_count < 1) {
+    last_published_time_ = time;
     return;
   }
+
+  // check last published time
+  const double elapsed_time = (time - last_published_time_).seconds();
+  std::cout << "publishing elapsed_time: " << elapsed_time * 1000 << "millisec" << std::endl;
+  if (elapsed_time < 0.02) {
+    return;  // do not publish so fast
+  }
+
   // Create output msg
   autoware_auto_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
@@ -472,6 +501,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time)
   // Debugger Publish if enabled
   debugger_->publishProcessingTime();
   debugger_->publishTentativeObjects(tentative_objects_msg);
+  last_published_time_ = time;
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)

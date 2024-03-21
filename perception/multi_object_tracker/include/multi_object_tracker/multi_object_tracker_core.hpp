@@ -98,6 +98,7 @@ private:
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
   rclcpp::TimerBase::SharedPtr publish_timer_;  // publish timer
+  rclcpp::Time last_published_time_;
 
   // debugger class
   std::unique_ptr<TrackerDebugger> debugger_;
