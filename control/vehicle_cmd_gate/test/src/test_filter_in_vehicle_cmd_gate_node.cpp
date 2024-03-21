@@ -80,7 +80,10 @@ public:
       [this](const AckermannControlCommand::ConstSharedPtr msg) {
         cmd_history_.push_back(msg);
         cmd_received_times_.push_back(now());
+        // check filter for varying last_x values to test the CI
+        checkFilter(2);
         checkFilter(3);
+        checkFilter(4);
       });
 
     rclcpp::QoS qos{1};
@@ -296,6 +299,7 @@ public:
     constexpr auto threshold_scale = 1.1;
     if (std::abs(lon_vel) > 0.01) {
       // Assert over averaged values against limits
+      PRINT_VALUES(last_x);
       ASSERT_LT_NEAR(std::abs(avg_lon_acc), max_lon_acc_lim, threshold_scale);
       ASSERT_LT_NEAR(std::abs(avg_lon_jerk), max_lon_jerk_lim, threshold_scale);
       ASSERT_LT_NEAR(std::abs(avg_lat_acc), max_lat_acc_lim, threshold_scale);
