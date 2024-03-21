@@ -47,12 +47,22 @@ private:
     GetDifferentialPointCloudMap::Request::SharedPtr req,
     GetDifferentialPointCloudMap::Response::SharedPtr res)
   {
-    (void)req;
+    const float offset_x = 100.0f;
+    const float offset_y = 100.0f;
+
+    // If the requested area is outside of the offset, return an empty response.
+    if (
+      req->area.center_x - req->area.radius > offset_x ||
+      req->area.center_x + req->area.radius < offset_x ||
+      req->area.center_y - req->area.radius > offset_y ||
+      req->area.center_y + req->area.radius < offset_y) {
+      res->header.frame_id = "map";
+      return true;
+    }
+
     autoware_map_msgs::msg::PointCloudMapCellWithID pcd_map_cell_with_id;
     pcd_map_cell_with_id.cell_id = "0";
     pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
-    const float offset_x = 100.0f;
-    const float offset_y = 100.0f;
     for (auto & point : cloud.points) {
       point.x += offset_x;
       point.y += offset_y;
