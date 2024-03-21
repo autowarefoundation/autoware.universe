@@ -2128,7 +2128,7 @@ bool NormalLaneChange::check_prepare_phase() const
 
     lanelet::ConstLanelet current_lane;
     if (!route_handler->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
-      RCLCPP_DEBUG(logger_, "unable to retreive current lane");
+      RCLCPP_DEBUG(logger_, "unable to get current lane");
       return false;
     }
 
