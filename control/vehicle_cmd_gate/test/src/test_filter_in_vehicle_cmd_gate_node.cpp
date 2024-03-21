@@ -249,6 +249,7 @@ public:
       // TODO(Horibe): prev_lat_acc should use the previous velocity, but use the current velocity
       // since the current filtering logic uses the current velocity.
       prev_tire_angle = cmd_start->lateral.steering_tire_angle;
+      lon_vel = cmd_start->longitudinal.speed;
       prev_lat_acc =
         calculate_lateral_acceleration(lon_vel, cmd_start->lateral.steering_tire_angle, wheelbase);
     }
