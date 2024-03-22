@@ -41,9 +41,6 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
     p.enable_bound_clipping = getOrDeclareParameter<bool>(*node, ns + "enable_bound_clipping");
     p.enable_cancel_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_cancel_maneuver");
-    p.enable_yield_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_yield_maneuver");
-    p.enable_yield_maneuver_during_shifting =
-      getOrDeclareParameter<bool>(*node, ns + "enable_yield_maneuver_during_shifting");
     p.disable_path_update = getOrDeclareParameter<bool>(*node, ns + "disable_path_update");
     p.publish_debug_marker = getOrDeclareParameter<bool>(*node, ns + "publish_debug_marker");
     p.print_debug_info = getOrDeclareParameter<bool>(*node, ns + "print_debug_info");
@@ -141,12 +138,13 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
 
   {
     const std::string ns = "avoidance.target_filtering.avoidance_for_ambiguous_vehicle.";
-    p.enable_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<bool>(*node, ns + "enable");
-    p.threshold_time_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<double>(*node, ns + "time_threshold");
-    p.force_avoidance_distance_threshold =
-      getOrDeclareParameter<double>(*node, ns + "distance_threshold");
+    p.enable_avoidance_for_ambiguous_vehicle = getOrDeclareParameter<bool>(*node, ns + "enable");
+    p.closest_distance_to_wait_and_see_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "closest_distance_to_wait_and_see");
+    p.time_threshold_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "condition.time_threshold");
+    p.distance_threshold_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "condition.distance_threshold");
     p.object_ignore_section_traffic_light_in_front_distance =
       getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
     p.object_ignore_section_crosswalk_in_front_distance =
@@ -294,7 +292,9 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // yield
   {
     const std::string ns = "avoidance.yield.";
-    p.yield_velocity = getOrDeclareParameter<double>(*node, ns + "yield_velocity");
+    p.enable_yield_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable");
+    p.enable_yield_maneuver_during_shifting =
+      getOrDeclareParameter<bool>(*node, ns + "enable_during_shifting");
   }
 
   // stop
