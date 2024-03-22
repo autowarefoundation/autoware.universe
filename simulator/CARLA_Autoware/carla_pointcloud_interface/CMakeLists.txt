@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
+project(carla_pointcloud_interface)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-project(carla_pointcloud_interface)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -27,12 +27,6 @@ find_package(PCL REQUIRED COMPONENTS common)
 
 
 find_package(PkgConfig REQUIRED)
-
-link_directories(${YAML_CPP_LIBRARY_DIRS})
-
-if(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
-  add_definitions(-DHAVE_NEW_YAMLCPP)
-endif(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
 
 include_directories(
   ${PCL_COMMON_INCLUDE_DIRS}

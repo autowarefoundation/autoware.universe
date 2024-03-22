@@ -21,12 +21,9 @@ namespace interface
 namespace gnss
 {
 
-MappingUtils::MappingUtils()
+void llaToxyz(const MappingParameters & params, double & x_out, double & y_out, double & z_out)
 {
-}
-
-void MappingUtils::llaToxyz(const MappingParameters &params, double &x_out, double &y_out, double &z_out) {
-    if (params.proj_str.size() < 8) return;
+  if (params.proj_str.size() < 8) return;
 
   PJ_CONTEXT * C = proj_context_create();
   PJ * P = proj_create_crs_to_crs(C, "EPSG:4326", params.proj_str.c_str(), NULL);
@@ -45,6 +42,7 @@ void MappingUtils::llaToxyz(const MappingParameters &params, double &x_out, doub
   proj_destroy(P);
   proj_context_destroy(C);
 }
+
 }  // namespace gnss
 }  // namespace interface
 
@@ -53,11 +51,9 @@ void GnssInterface::GnssCallBack(const sensor_msgs::msg::NavSatFix::SharedPtr ms
   geometry_msgs::msg::PoseStamped pose_;
   geometry_msgs::msg::PoseWithCovarianceStamped pose_cov_;
   interface::gnss::WayPoint origin, p;
-  // Create an instance of MappingUtils
-  interface::gnss::MappingUtils mappingUtils;
+  interface::gnss::MappingParameters params;
 
   // Create MappingParameters struct to hold the parameters
-  interface::gnss::MappingParameters params;
   params.proj_str =
     "+proj=tmerc +lat_0=0 +lon_0=0 +k=0.9999 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs";
   params.lat = msg->latitude;
@@ -65,7 +61,7 @@ void GnssInterface::GnssCallBack(const sensor_msgs::msg::NavSatFix::SharedPtr ms
   params.alt = msg->altitude;
 
   // Call llaToxyz function
-  mappingUtils.llaToxyz(params, p.pos.x, p.pos.y, p.pos.z);
+  interface::gnss::llaToxyz(params, p.pos.x, p.pos.y, p.pos.z);
 
   pose_.header = msg->header;
   pose_.header.frame_id = "map";
@@ -79,7 +75,6 @@ void GnssInterface::GnssCallBack(const sensor_msgs::msg::NavSatFix::SharedPtr ms
   pup_pose->publish(pose_);
   pup_pose_with_cov->publish(pose_cov_);
 }
-
 
 GnssInterface::GnssInterface(const rclcpp::NodeOptions & node_options)
 : Node("gnss_interface_node", node_options), tf_output_frame_("base_link")
