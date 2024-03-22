@@ -122,6 +122,11 @@
         <arg name="graph_file" value="$(var diagnostic_graph_aggregator_graph_path)"/>
       </include>
     </group>
+
+    <!-- Hazard Status Converter -->
+    <group if="$(var use_diagnostic_graph)">
+      <include file="$(find-pkg-share hazard_status_converter)/launch/hazard_status_converter.launch.xml"/>
+    </group>
   </group>
 
   <!-- Dummy Diag Publisher -->
