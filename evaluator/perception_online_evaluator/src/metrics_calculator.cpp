@@ -40,9 +40,8 @@ std::optional<MetricStatMap> MetricsCalculator::calculate(const Metric & metric)
   const auto class_objects_map = separateObjectsByClass(target_stamp_objects);
 
   // filter stopped objects
-  constexpr double stopped_velocity_threshold = 0.1;
   const auto stopped_objects =
-    filterObjectsByVelocity(target_stamp_objects, stopped_velocity_threshold);
+    filterObjectsByVelocity(target_stamp_objects, parameters_->stopped_velocity_threshold);
   const auto class_stopped_objects_map = separateObjectsByClass(stopped_objects);
 
   switch (metric) {
@@ -374,7 +373,7 @@ MetricStatMap MetricsCalculator::calcYawRateMetrics(const ClassObjectsMap & clas
       const auto [previous_stamp, previous_object] = previous_object_with_stamp_opt.value();
 
       const auto time_diff = (stamp - previous_stamp).seconds();
-      if (time_diff == 0) {
+      if (time_diff < 0.01) {
         continue;
       }
       const auto current_yaw =
@@ -392,7 +391,6 @@ MetricStatMap MetricsCalculator::calcYawRateMetrics(const ClassObjectsMap & clas
 
 void MetricsCalculator::setPredictedObjects(const PredictedObjects & objects)
 {
-  // using TimeStamp = builtin_interfaces::msg::Time;
   current_stamp_ = objects.header.stamp;
 
   // store objects to check deviation

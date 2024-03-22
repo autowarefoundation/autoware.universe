@@ -11,6 +11,8 @@
 
     prediction_time_horizons: [1.0, 2.0, 3.0, 5.0]
 
+    stopped_velocity_threshold: 0.3
+
     target_object:
       car:
         check_deviation: true
