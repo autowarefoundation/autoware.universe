@@ -106,6 +106,9 @@ bool RunOutModule::modifyPathVelocity(
   const auto partition_excluded_obstacles =
     excludeObstaclesOutSideOfPartition(dynamic_obstacles, extended_smoothed_path, current_pose);
 
+  const auto ego_back_line_excluded_obstacles =
+    excludeObstaclesCrossingEgoBackLine(partition_excluded_obstacles, current_pose);
+
   // record time for obstacle creation
   const auto t_obstacle_creation = std::chrono::system_clock::now();
   const auto elapsed_obstacle_creation =
@@ -122,7 +125,7 @@ bool RunOutModule::modifyPathVelocity(
                                         planner_data_->route_handler_->getOverallGraphPtr())
                                     : std::vector<std::pair<int64_t, lanelet::ConstLanelet>>();
   const auto dynamic_obstacle =
-    detectCollision(partition_excluded_obstacles, extended_smoothed_path, crosswalk_lanelets);
+    detectCollision(ego_back_line_excluded_obstacles, extended_smoothed_path, crosswalk_lanelets);
 
   // record time for collision check
   const auto t_collision_check = std::chrono::system_clock::now();
@@ -148,7 +151,7 @@ bool RunOutModule::modifyPathVelocity(
   }
 
   publishDebugValue(
-    extended_smoothed_path, partition_excluded_obstacles, dynamic_obstacle, current_pose);
+    extended_smoothed_path, ego_back_line_excluded_obstacles, dynamic_obstacle, current_pose);
 
   // record time for collision check
   const auto t_path_planning = std::chrono::system_clock::now();
@@ -808,6 +811,22 @@ void RunOutModule::applyMaxJerkLimit(
 
   // overwrite velocity with limited velocity
   run_out_utils::insertPathVelocityFromIndex(stop_point_idx.value(), jerk_limited_vel, path.points);
+}
+
+std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoBackLine(
+  const std::vector<DynamicObstacle> & dynamic_obstacles,
+  const geometry_msgs::msg::Pose & current_pose) const
+{
+  std::vector<DynamicObstacle> extracted_obstacles;
+  std::for_each(
+    dynamic_obstacles.begin(), dynamic_obstacles.end(),
+    [&extracted_obstacles, &current_pose](const auto & o) {
+      const auto predicted_path = run_out_utils::getHighestConfidencePath(o.predicted_paths);
+      if (!run_out_utils::pathIntersectsEgoCutLine(predicted_path, current_pose, 4.0)) {
+        extracted_obstacles.push_back(o);
+      }
+    });
+  return extracted_obstacles;
 }
 
 std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOutSideOfPartition(

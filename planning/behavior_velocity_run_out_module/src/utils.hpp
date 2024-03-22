@@ -19,6 +19,14 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
@@ -97,6 +105,8 @@ struct ApproachingParam
 {
   bool enable;
   float margin;
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+
   float limit_vel_kmph;
   StateParam state;
 };
@@ -193,6 +203,27 @@ struct DynamicObstacleData
 };
 
 Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & input_poly);
+
+inline geometry_msgs::msg::Vector3 rpyFromQuat(const geometry_msgs::msg::Quaternion & q)
+{
+  tf2::Quaternion quat(q.x, q.y, q.z, q.w);
+  tf2::Matrix3x3 mat(quat);
+  double roll, pitch, yaw;
+  mat.getRPY(roll, pitch, yaw);
+  geometry_msgs::msg::Vector3 rpy;
+  rpy.x = roll;
+  rpy.y = pitch;
+  rpy.z = yaw;
+  return rpy;
+}
+
+bool pathIntersectsEgoCutLine(
+  const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
+  const double half_line_length);
+
+// LineString2d createLineStringFromPath(const PredictedPath & path);
+
+// LineString2d createEgoCutLine(const geometry_msgs::msg::Pose & ego_pose, const double offset);
 
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
