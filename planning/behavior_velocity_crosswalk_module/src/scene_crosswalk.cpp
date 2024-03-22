@@ -837,7 +837,7 @@ void CrosswalkModule::applySafetySlowDownSpeed(
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   const auto ego_path = output;
-  std::optional<Pose> slowdown_pose;
+  std::optional<Pose> slowdown_pose{std::nullopt};
 
   if (!passed_safety_slow_point_) {
     // Safety slow down distance [m]
