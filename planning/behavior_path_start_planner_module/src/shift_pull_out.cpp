@@ -49,11 +49,6 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
 
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_.max_back_distance;
-  const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
-  if (pull_out_lanes.empty()) {
-    return std::nullopt;
-  }
-
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
@@ -65,77 +60,63 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
 
   // get safe path
   for (auto & pull_out_path : pull_out_paths) {
-    auto & shift_path =
-      pull_out_path.partial_paths.front();  // shift path is not separate but only one.
-
+    // shift path is not separate but only one.
+    auto & shift_path = pull_out_path.partial_paths.front();
     // check lane_departure with path between pull_out_start to pull_out_end
-    PathWithLaneId path_start_to_end{};
+    PathWithLaneId path_shift_start_to_end{};
     {
       const size_t pull_out_start_idx = findNearestIndex(shift_path.points, start_pose.position);
+      const size_t pull_out_end_idx =
+        findNearestIndex(shift_path.points, pull_out_path.end_pose.position);
 
-      // calculate collision check end idx
-      const size_t collision_check_end_idx = std::invoke([&]() {
-        const auto collision_check_end_pose = motion_utils::calcLongitudinalOffsetPose(
-          shift_path.points, pull_out_path.end_pose.position,
-          parameters_.collision_check_distance_from_end);
-
-        if (collision_check_end_pose) {
-          return findNearestIndex(shift_path.points, collision_check_end_pose->position);
-        } else {
-          return shift_path.points.size() - 1;
-        }
-      });
-      path_start_to_end.points.insert(
-        path_start_to_end.points.begin(), shift_path.points.begin() + pull_out_start_idx,
-        shift_path.points.begin() + collision_check_end_idx + 1);
+      path_shift_start_to_end.points.insert(
+        path_shift_start_to_end.points.begin(), shift_path.points.begin() + pull_out_start_idx,
+        shift_path.points.begin() + pull_out_end_idx + 1);
     }
 
-    // extract shoulder lanes from pull out lanes
-    lanelet::ConstLanelets shoulder_lanes;
-    std::copy_if(
-      pull_out_lanes.begin(), pull_out_lanes.end(), std::back_inserter(shoulder_lanes),
-      [&route_handler](const auto & pull_out_lane) {
-        return route_handler->isShoulderLanelet(pull_out_lane);
-      });
-    const auto drivable_lanes =
-      utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
-    const auto & dp = planner_data_->drivable_area_expansion_parameters;
-    const auto expanded_lanes = utils::transformToLanelets(utils::expandLanelets(
-      drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-      dp.drivable_area_types_to_skip));
+    const auto lanelet_map_ptr = planner_data_->route_handler->getLaneletMapPtr();
+
+    // if lane departure check override is true, and if the initial pose is not fully within a lane,
+    // cancel lane departure check
+    const bool is_lane_departure_check_required = std::invoke([&]() -> bool {
+      if (!parameters_.allow_check_shift_path_lane_departure_override)
+        return parameters_.check_shift_path_lane_departure;
+
+      PathWithLaneId path_with_only_first_pose{};
+      path_with_only_first_pose.points.push_back(path_shift_start_to_end.points.at(0));
+      return !lane_departure_checker_->checkPathWillLeaveLane(
+        lanelet_map_ptr, path_with_only_first_pose);
+    });
+
+    // check lane departure
+    // The method for lane departure checking verifies if the footprint of each point on the path
+    // is contained within a lanelet using `boost::geometry::within`, which incurs a high
+    // computational cost.
+
+    if (
+      is_lane_departure_check_required &&
+      lane_departure_checker_->checkPathWillLeaveLane(lanelet_map_ptr, path_shift_start_to_end)) {
+      continue;
+    }
 
     // crop backward path
     // removes points which are out of lanes up to the start pose.
     // this ensures that the backward_path stays within the drivable area when starting from a
     // narrow place.
+
     const size_t start_segment_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
       shift_path.points, start_pose, common_parameters.ego_nearest_dist_threshold,
       common_parameters.ego_nearest_yaw_threshold);
-    PathWithLaneId cropped_path{};
-    for (size_t i = 0; i < shift_path.points.size(); ++i) {
-      const Pose pose = shift_path.points.at(i).point.pose;
-      const auto transformed_vehicle_footprint =
-        transformVector(vehicle_footprint_, tier4_autoware_utils::pose2transform(pose));
-      const bool is_out_of_lane =
-        LaneDepartureChecker::isOutOfLane(expanded_lanes, transformed_vehicle_footprint);
-      if (i <= start_segment_idx) {
-        if (!is_out_of_lane) {
-          cropped_path.points.push_back(shift_path.points.at(i));
-        }
-      } else {
-        cropped_path.points.push_back(shift_path.points.at(i));
-      }
-    }
-    shift_path.points = cropped_path.points;
 
-    // check lane departure
-    if (
-      parameters_.check_shift_path_lane_departure &&
-      lane_departure_checker_->checkPathWillLeaveLane(expanded_lanes, path_start_to_end)) {
+    const auto cropped_path = lane_departure_checker_->cropPointsOutsideOfLanes(
+      lanelet_map_ptr, shift_path, start_segment_idx);
+    if (cropped_path.points.empty()) continue;
+    shift_path.points = cropped_path.points;
+    shift_path.header = planner_data_->route_handler->getRouteHeader();
+
+    if (isPullOutPathCollided(pull_out_path, parameters_.shift_collision_check_distance_from_end)) {
       continue;
     }
-
-    shift_path.header = planner_data_->route_handler->getRouteHeader();
 
     return pull_out_path;
   }

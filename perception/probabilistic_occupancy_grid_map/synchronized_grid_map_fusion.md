@@ -97,7 +97,7 @@ You need to generate OGMs in each sensor frame before achieving grid map fusion.
 
 ```xml
 <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/probabilistic_occupancy_grid_map.launch.xml">
-    <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud_raw"/>
+    <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud"/>
     <arg name="input/raw_pointcloud" value="/sensing/lidar/right/outlier_filtered/pointcloud_synchronized"/>
     <arg name="output" value="/perception/occupancy_grid_map/right_lidar/map"/>
     <arg name="map_frame" value="base_link"/>
@@ -105,7 +105,7 @@ You need to generate OGMs in each sensor frame before achieving grid map fusion.
     <arg name="use_intra_process" value="true"/>
     <arg name="use_multithread" value="true"/>
     <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
-    <arg name="container_name" value="$(var pointcloud_container_name)"/>
+    <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
     <arg name="method" value="pointcloud_based_occupancy_grid_map"/>
     <arg name="param_file" value="$(find-pkg-share probabilistic_occupancy_grid_map)/config/pointcloud_based_occupancy_grid_map_fusion.param.yaml"/>
 </include>
@@ -146,7 +146,7 @@ You can include this launch file like the following.
   <arg name="use_intra_process" value="true"/>
   <arg name="use_multithread" value="true"/>
   <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
-  <arg name="container_name" value="$(var pointcloud_container_name)"/>
+  <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
   <arg name="method" value="pointcloud_based_occupancy_grid_map"/>
   <arg name="fusion_config_file" value="$(var fusion_config_file)"/>
   <arg name="ogm_config_file" value="$(var ogm_config_file)"/>

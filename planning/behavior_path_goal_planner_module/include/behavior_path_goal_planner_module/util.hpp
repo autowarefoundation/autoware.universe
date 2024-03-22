@@ -45,12 +45,45 @@ using visualization_msgs::msg::MarkerArray;
 lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
   const double forward_distance);
+
+/*
+ * @brief expand pull_over_lanes to the opposite side of drivable roads by bound_offset.
+ * bound_offset must be positive regardless of left_side is true/false
+ */
+lanelet::ConstLanelets generateExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, const double bound_offset);
+
+lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
+  const lanelet::ConstLanelets & pull_over_lanes, const bool left_side,
+  const geometry_msgs::msg::Pose ego_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const double outer_road_offset, const double inner_road_offset);
+PredictedObjects extractObjectsInExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, double bound_offset, const PredictedObjects & objects);
 PredictedObjects filterObjectsByLateralDistance(
   const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
   const double distance_thresh, const bool filter_inside);
+PredictedObjects extractStaticObjectsInExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, double bound_offset, const PredictedObjects & objects,
+  const double velocity_thresh);
 
-bool isAllowedGoalModification(const std::shared_ptr<RouteHandler> & route_handler);
-bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_handler);
+double calcLateralDeviationBetweenPaths(
+  const PathWithLaneId & reference_path, const PathWithLaneId & target_path);
+bool isReferencePath(
+  const PathWithLaneId & reference_path, const PathWithLaneId & target_path,
+  const double lateral_deviation_thresh);
+
+std::optional<PathWithLaneId> cropPath(const PathWithLaneId & path, const Pose & end_pose);
+PathWithLaneId cropForwardPoints(
+  const PathWithLaneId & path, const size_t target_seg_idx, const double forward_length);
+PathWithLaneId extendPath(
+  const PathWithLaneId & prev_module_path, const PathWithLaneId & reference_path,
+  const double extend_length);
+PathWithLaneId extendPath(
+  const PathWithLaneId & prev_module_path, const PathWithLaneId & reference_path,
+  const Pose & extend_pose);
 
 // debug
 MarkerArray createPullOverAreaMarkerArray(
@@ -62,6 +95,9 @@ MarkerArray createTextsMarkerArray(
   const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
 MarkerArray createGoalCandidatesMarkerArray(
   const GoalCandidates & goal_candidates, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createLaneletPolygonMarkerArray(
+  const lanelet::CompoundPolygon3d & polygon, const std_msgs::msg::Header & header,
+  const std::string & ns, const std_msgs::msg::ColorRGBA & color);
 MarkerArray createNumObjectsToAvoidTextsMarkerArray(
   const GoalCandidates & goal_candidates, std::string && ns,
   const std_msgs::msg::ColorRGBA & color);

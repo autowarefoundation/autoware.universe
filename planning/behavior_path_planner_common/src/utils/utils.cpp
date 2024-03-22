@@ -1450,6 +1450,107 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   return extendLanes(planner_data->route_handler, getCurrentLanes(planner_data));
 }
 
+lanelet::ConstLanelets getExtendedCurrentLanesFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const double backward_length, const double forward_length, const bool forward_only_in_route)
+{
+  auto lanes = getCurrentLanesFromPath(path, planner_data);
+
+  if (lanes.empty()) return lanes;
+  const auto start_lane = lanes.front();
+  double forward_length_sum = 0.0;
+  double backward_length_sum = 0.0;
+
+  while (backward_length_sum < backward_length) {
+    auto extended_lanes = extendPrevLane(planner_data->route_handler, lanes);
+    if (extended_lanes.empty()) {
+      return lanes;
+    }
+    // loop check
+    // if current map lanes is looping and has a very large value for backward_length,
+    // the extending process will not finish.
+    if (extended_lanes.front().id() == start_lane.id()) {
+      return lanes;
+    }
+
+    if (extended_lanes.size() > lanes.size()) {
+      backward_length_sum += lanelet::utils::getLaneletLength2d(extended_lanes.front());
+    } else {
+      break;  // no more previous lanes to add
+    }
+    lanes = extended_lanes;
+  }
+
+  while (forward_length_sum < forward_length) {
+    auto extended_lanes = extendNextLane(planner_data->route_handler, lanes);
+    if (extended_lanes.empty()) {
+      return lanes;
+    }
+    // loop check
+    // if current map lanes is looping and has a very large value for forward_length,
+    // the extending process will not finish.
+    if (extended_lanes.back().id() == start_lane.id()) {
+      return lanes;
+    }
+
+    if (extended_lanes.size() > lanes.size()) {
+      forward_length_sum += lanelet::utils::getLaneletLength2d(extended_lanes.back());
+    } else {
+      break;  // no more next lanes to add
+    }
+
+    // stop extending when the lane outside of the route is reached
+    // if forward_length is a very large value, set it to true,
+    // as it may continue to extend forever.
+    if (forward_only_in_route) {
+      if (!planner_data->route_handler->isRouteLanelet(extended_lanes.back())) {
+        return lanes;
+      }
+    }
+
+    lanes = extended_lanes;
+  }
+
+  return lanes;
+}
+
+// TODO(Azu): In the future, get back lanelet within `to_back_dist` [m] from queried lane
+lanelet::ConstLanelets getBackwardLanelets(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
+  const Pose & current_pose, const double backward_length)
+{
+  if (target_lanes.empty()) {
+    return {};
+  }
+
+  const auto arc_length = lanelet::utils::getArcCoordinates(target_lanes, current_pose);
+
+  if (arc_length.length >= backward_length) {
+    return {};
+  }
+
+  const auto & front_lane = target_lanes.front();
+  const auto preceding_lanes = route_handler.getPrecedingLaneletSequence(
+    front_lane, std::abs(backward_length - arc_length.length), {front_lane});
+
+  lanelet::ConstLanelets backward_lanes{};
+  const auto num_of_lanes = std::invoke([&preceding_lanes]() {
+    size_t sum{0};
+    for (const auto & lanes : preceding_lanes) {
+      sum += lanes.size();
+    }
+    return sum;
+  });
+
+  backward_lanes.reserve(num_of_lanes);
+
+  for (const auto & lanes : preceding_lanes) {
+    backward_lanes.insert(backward_lanes.end(), lanes.begin(), lanes.end());
+  }
+
+  return backward_lanes;
+}
+
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const Pose & pose, const double forward_length,
   const double backward_length, const double dist_threshold, const double yaw_threshold)
@@ -1550,5 +1651,23 @@ std::string convertToSnakeCase(const std::string & input_str)
     }
   }
   return output_str;
+}
+
+bool isAllowedGoalModification(const std::shared_ptr<RouteHandler> & route_handler)
+{
+  return route_handler->isAllowedGoalModification() || checkOriginalGoalIsInShoulder(route_handler);
+}
+
+bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_handler)
+{
+  const Pose & goal_pose = route_handler->getOriginalGoalPose();
+  const auto shoulder_lanes = route_handler->getShoulderLanelets();
+
+  lanelet::ConstLanelet closest_shoulder_lane{};
+  if (lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &closest_shoulder_lane)) {
+    return lanelet::utils::isInLanelet(goal_pose, closest_shoulder_lane, 0.1);
+  }
+
+  return false;
 }
 }  // namespace behavior_path_planner::utils

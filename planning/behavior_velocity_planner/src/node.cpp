@@ -146,6 +146,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     declare_parameter<double>("ego_nearest_dist_threshold");
   planner_data_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
+  // is simulation or not
+  planner_data_.is_simulation = declare_parameter<bool>("is_simulation");
+
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
     // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
@@ -156,6 +159,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void BehaviorVelocityPlannerNode::onLoadPlugin(
@@ -323,6 +327,11 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  // clear previous observation
+  planner_data_.traffic_light_id_map_raw_.clear();
+  const auto traffic_light_id_map_last_observed_old =
+    planner_data_.traffic_light_id_map_last_observed_;
+  planner_data_.traffic_light_id_map_last_observed_.clear();
   for (const auto & signal : msg->signals) {
     TrafficSignalStamped traffic_signal;
     traffic_signal.stamp = msg->stamp;
@@ -334,9 +343,12 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
       });
     // if the observation is UNKNOWN and past observation is available, only update the timestamp
     // and keep the body of the info
-    if (
-      is_unknown_observation &&
-      planner_data_.traffic_light_id_map_last_observed_.count(signal.traffic_signal_id) == 1) {
+    const auto old_data = traffic_light_id_map_last_observed_old.find(signal.traffic_signal_id);
+    if (is_unknown_observation && old_data != traffic_light_id_map_last_observed_old.end()) {
+      // copy last observation
+      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id] =
+        old_data->second;
+      // update timestamp
       planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id].stamp =
         msg->stamp;
     } else {
@@ -388,6 +400,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
   lk.unlock();
 
   path_pub_->publish(output_path_msg);
+  published_time_publisher_->publish_if_subscribed(path_pub_, output_path_msg.header.stamp);
   stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
 
   if (debug_viz_pub_->get_subscription_count() > 0) {

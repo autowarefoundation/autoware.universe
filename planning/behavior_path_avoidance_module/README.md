@@ -6,7 +6,7 @@ This is a rule-based path planning module designed for obstacle avoidance.
 
 This module is designed for rule-based avoidance that is easy for developers to design its behavior. It generates avoidance path parameterized by intuitive parameters such as lateral jerk and avoidance distance margin. This makes it possible to pre-define avoidance behavior.
 
-In addition, the approval interface of behavior_path_planner allows external users / modules (e.g. remote operation) to intervene the decision of the vehicle behavior.　 This function is expected to be used, for example, for remote intervention in emergency situations or gathering information on operator decisions during development.
+In addition, the approval interface of behavior_path_planner allows external users / modules (e.g. remote operation) to intervene the decision of the vehicle behavior. This function is expected to be used, for example, for remote intervention in emergency situations or gathering information on operator decisions during development.
 
 ### Limitations
 
@@ -833,7 +833,8 @@ namespace: `avoidance.target_filtering.`
 | object_ignore_section_crosswalk_behind_distance       | [m]  | double | If the back distance between crosswalk and vehicle is less than this parameter, this module will ignore it.                                                                                                                            | 30.0          |
 | object_check_forward_distance                         | [m]  | double | Forward distance to search the avoidance target.                                                                                                                                                                                       | 150.0         |
 | object_check_backward_distance                        | [m]  | double | Backward distance to search the avoidance target.                                                                                                                                                                                      | 2.0           |
-| object_check_goal_distance                            | [m]  | double | Backward distance to search the avoidance target.                                                                                                                                                                                      | 20.0          |
+| object_check_goal_distance                            | [m]  | double | If the distance between object and goal position is less than this parameter, the module do not return center line.                                                                                                                    | 20.0          |
+| object_check_return_pose_distance                     | [m]  | double | If the distance between object and return position is less than this parameter, the module do not return center line.                                                                                                                  | 20.0          |
 | object_check_shiftable_ratio                          | [m]  | double | Vehicles around the center line within this distance will be excluded from avoidance target.                                                                                                                                           | 0.6           |
 | object_check_min_road_shoulder_width                  | [m]  | double | Width considered as a road shoulder if the lane does not have a road shoulder target.                                                                                                                                                  | 0.5           |
 | object_last_seen_threshold                            | [s]  | double | For the compensation of the detection lost. The object is registered once it is observed as an avoidance target. When the detection loses, the timer will start and the object will be un-registered when the time exceeds this limit. | 2.0           |
@@ -933,7 +934,7 @@ namespace: `avoidance.constraints.longitudinal.`
 ## Future extensions / Unimplemented parts
 
 - **Planning on the intersection**
-  - If it is known that the ego vehicle is going to stop in the middle of avoidance execution (for example, at a red traffic light), sometimes the avoidance should not be executed until the vehicle is ready to move. This is because it is impossible to predict how the environment will change during the stop.　 This is especially important at intersections.
+  - If it is known that the ego vehicle is going to stop in the middle of avoidance execution (for example, at a red traffic light), sometimes the avoidance should not be executed until the vehicle is ready to move. This is because it is impossible to predict how the environment will change during the stop. This is especially important at intersections.
 
 ![fig1](./images/intersection_problem.drawio.svg)
 
@@ -955,7 +956,7 @@ namespace: `avoidance.constraints.longitudinal.`
   - Essentially, avoidance targets are judged based on whether they are static objects or not. For example, a vehicle waiting at a traffic light should not be avoided because we know that it will start moving in the future. However this decision cannot be made in the current Autoware due to the lack of the perception functions. Therefore, the current avoidance module limits the avoidance target to vehicles parked on the shoulder of the road, and executes avoidance only for vehicles that are stopped away from the center of the lane. However, this logic cannot avoid a vehicle that has broken down and is stopped in the center of the lane, which should be recognized as a static object by the perception module. There is room for improvement in the performance of this decision.
 
 - **Resampling path**
-  - Now the rough resolution resampling is processed to the output path in order to reduce the computational cost for the later modules. This resolution is set to a uniformly large value 　(e.g. `5m`), but small resolution should be applied for complex paths.
+  - Now the rough resolution resampling is processed to the output path in order to reduce the computational cost for the later modules. This resolution is set to a uniformly large value (e.g. `5m`), but small resolution should be applied for complex paths.
 
 ## How to debug
 

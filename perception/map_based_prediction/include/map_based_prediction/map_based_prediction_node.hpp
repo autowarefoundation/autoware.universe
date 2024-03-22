@@ -21,17 +21,20 @@
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <tier4_debug_msgs/msg/string_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -40,7 +43,9 @@
 
 #include <algorithm>
 #include <deque>
+#include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -89,6 +94,7 @@ struct LaneletData
 struct PredictedRefPath
 {
   float probability;
+  double speed_limit;
   PosePath path;
   Maneuver maneuver;
 };
@@ -105,6 +111,9 @@ using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_perception_msgs::msg::TrafficSignal;
+using autoware_perception_msgs::msg::TrafficSignalArray;
+using autoware_perception_msgs::msg::TrafficSignalElement;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::StringStamped;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
@@ -117,17 +126,24 @@ private:
   // ROS Publisher and Subscriber
   rclcpp::Publisher<PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_markers_;
-  rclcpp::Publisher<StringStamped>::SharedPtr pub_calculation_time_;
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<TrafficSignalArray>::SharedPtr sub_traffic_signals_;
+
+  // debug publisher
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
 
   // Object History
   std::unordered_map<std::string, std::deque<ObjectData>> objects_history_;
+  std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
 
   // Lanelet Map Pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
   std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
   std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
+
+  std::unordered_map<lanelet::Id, TrafficSignal> traffic_signal_id_map_;
 
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -175,11 +191,20 @@ private:
   double max_lateral_accel_;
   double min_acceleration_before_curve_;
 
-  // Stop watch
-  StopWatch<std::chrono::milliseconds> stop_watch_;
+  bool use_vehicle_acceleration_;
+  double speed_limit_multiplier_;
+  double acceleration_exponential_half_life_;
+
+  bool use_crosswalk_signal_;
+  double threshold_velocity_assumed_as_stopping_;
+  std::vector<double> distance_set_for_no_intention_to_walk_;
+  std::vector<double> timeout_set_for_no_intention_to_walk_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // Member Functions
   void mapCallback(const HADMapBin::ConstSharedPtr msg);
+  void trafficSignalsCallback(const TrafficSignalArray::ConstSharedPtr msg);
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
   bool doesPathCrossAnyFence(const PredictedPath & predicted_path);
@@ -197,7 +222,8 @@ private:
 
   PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
 
-  void removeOldObjectsHistory(const double current_time);
+  void removeOldObjectsHistory(
+    const double current_time, const TrackedObjects::ConstSharedPtr in_objects);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
@@ -231,7 +257,8 @@ private:
   void addReferencePaths(
     const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
     const float path_probability, const ManeuverProbability & maneuver_probability,
-    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths);
+    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
+    const double speed_limit = 0.0);
   std::vector<PosePath> convertPathType(const lanelet::routing::LaneletPaths & paths);
 
   void updateFuturePossibleLanelets(
@@ -242,6 +269,11 @@ private:
     const LaneletsData & lanelets_data);
   bool isDuplicated(
     const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
+  std::optional<lanelet::Id> getTrafficSignalId(const lanelet::ConstLanelet & way_lanelet);
+  std::optional<TrafficSignalElement> getTrafficSignalElement(const lanelet::Id & id);
+  bool calcIntentionToCrossWithTrafficSignal(
+    const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
+    const lanelet::Id & signal_id);
 
   visualization_msgs::msg::Marker getDebugMarker(
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
@@ -316,8 +348,11 @@ private:
   };
 
   inline bool isLateralAccelerationConstraintSatisfied(
-    const TrajectoryPoints & trajectory [[maybe_unused]], const double delta_time)
+    const TrajectoryPoints & trajectory, const double delta_time)
   {
+    constexpr double epsilon = 1E-6;
+    if (delta_time < epsilon) throw std::invalid_argument("delta_time must be a positive value");
+
     if (trajectory.size() < 3) return true;
     const double max_lateral_accel_abs = std::fabs(max_lateral_accel_);
 
@@ -343,19 +378,17 @@ private:
         delta_theta += 2.0 * M_PI;
       }
 
-      const double yaw_rate = std::max(delta_theta / delta_time, 1.0E-5);
+      const double yaw_rate = std::max(std::abs(delta_theta / delta_time), 1.0E-5);
 
       const double current_speed = std::abs(trajectory.at(i).longitudinal_velocity_mps);
       // Compute lateral acceleration
       const double lateral_acceleration = std::abs(current_speed * yaw_rate);
       if (lateral_acceleration < max_lateral_accel_abs) continue;
-
       const double v_curvature_max = std::sqrt(max_lateral_accel_abs / yaw_rate);
       const double t =
         (v_curvature_max - current_speed) / min_acceleration_before_curve_;  // acc is negative
       const double distance_to_slow_down =
         current_speed * t + 0.5 * min_acceleration_before_curve_ * std::pow(t, 2);
-
       if (distance_to_slow_down > arc_length) return false;
     }
     return true;
