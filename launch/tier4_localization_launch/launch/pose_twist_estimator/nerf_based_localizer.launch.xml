@@ -9,6 +9,7 @@
         <arg name="output_image" value="/localization/pose_estimator/nerf_image"/>
         <arg name="output_pose_with_covariance" value="/localization/pose_estimator/pose_with_covariance"/>
         <arg name="param_file" value="$(find-pkg-share nerf_based_localizer)/config/nerf_based_localizer.param.yaml"/>
+        <arg name="service_optimize_pose" value="/localization/pose_estimator/nerf_align_srv"/>
       </include>
     </group>
   </group>

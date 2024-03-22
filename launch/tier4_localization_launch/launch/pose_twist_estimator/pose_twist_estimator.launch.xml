@@ -102,6 +102,7 @@
       <arg name="yabloc_enabled" value="$(var use_yabloc_pose)"/>
       <arg name="gnss_enabled" value="$(var gnss_enabled)"/>
       <arg name="ekf_enabled" value="true"/>
+      <arg name="nerf_enabled" value="$(var use_nerf_pose)"/>
       <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
       <arg name="config_file" value="$(var pose_initializer_param_path)"/>
       <arg name="sub_gnss_pose_cov" value="$(var sub_gnss_pose_cov)"/>

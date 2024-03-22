@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    train_result_dir: "/path/to/train_result_dir"
+    train_result_dir: "/home/ryomasakata/20231009_train_result"
     optimization_mode: 1  # 0: random_search, 1: differential
 
     # if optimization_mode is 0, the following parameters are used
