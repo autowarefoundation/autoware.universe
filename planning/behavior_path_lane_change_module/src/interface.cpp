@@ -441,7 +441,7 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
     }
 
     // check the priority of turn signals
-    return module_type_->getTurnSignalDecider().use_prior_turn_signal(
+    return module_type_->getTurnSignalDecider().overwrite_turn_signal(
       path, current_pose, current_nearest_seg_idx, original_turn_signal_info,
       current_turn_signal_info, nearest_dist_threshold, nearest_yaw_threshold);
   }

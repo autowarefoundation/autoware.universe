@@ -148,7 +148,7 @@ BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
     output.turn_signal_info = prev_turn_signal_info_;
     extendOutputDrivableArea(output);
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
-    output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+    output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
       output.path, getEgoPose(), current_seg_idx, prev_turn_signal_info_, output.turn_signal_info,
       planner_data_->parameters.ego_nearest_dist_threshold,
       planner_data_->parameters.ego_nearest_yaw_threshold);
@@ -183,7 +183,7 @@ BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
   extendOutputDrivableArea(output);
 
   const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
-  output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+  output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, prev_turn_signal_info_, output.turn_signal_info,
     planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
@@ -226,7 +226,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   extendOutputDrivableArea(output);
 
   const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
-  output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+  output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, prev_turn_signal_info_, output.turn_signal_info,
     planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
