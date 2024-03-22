@@ -3,7 +3,7 @@
     map_layer_name: "elevation"
     param_file_path: "path_default"
     map_frame: "map"
-    use_sequential_load: true 
+    use_sequential_load: true
     sequential_map_load_num: 1
     use_inpaint: true
     inpaint_radius: 0.3
