@@ -50,33 +50,34 @@ void MemMonitor::update()
   updater_.force_update();
 }
 
-std::unordered_map<std::string, size_t> readMemInfo() {
-    std::unordered_map<std::string, size_t> memInfo;
-    std::ifstream file("/proc/meminfo");
+std::unordered_map<std::string, size_t> readMemInfo()
+{
+  std::unordered_map<std::string, size_t> memInfo;
+  std::ifstream file("/proc/meminfo");
 
-    if (!file.is_open()) {
-        throw std::runtime_error("Could not open /proc/meminfo");
+  if (!file.is_open()) {
+    throw std::runtime_error("Could not open /proc/meminfo");
+  }
+
+  std::string line;
+  while (std::getline(file, line)) {
+    std::size_t pos = line.find(':');
+    if (pos != std::string::npos) {
+      std::string key = line.substr(0, pos);
+      try {
+        size_t value = std::stoll(line.substr(pos + 1)) * 1024;
+        memInfo[key] = value;
+      } catch (const std::invalid_argument & e) {
+        throw std::runtime_error("Invalid value in /proc/meminfo: " + line);
+      } catch (const std::out_of_range & e) {
+        throw std::runtime_error("Value out of range in /proc/meminfo: " + line);
+      }
+    } else {
+      throw std::runtime_error("Invalid line in /proc/meminfo: " + line);
     }
+  }
 
-    std::string line;
-    while (std::getline(file, line)) {
-        std::size_t pos = line.find(':');
-        if (pos != std::string::npos) {
-            std::string key = line.substr(0, pos);
-            try {
-                size_t value = std::stoll(line.substr(pos + 1)) * 1024;
-                memInfo[key] = value;
-            } catch (const std::invalid_argument& e) {
-                throw std::runtime_error("Invalid value in /proc/meminfo: " + line);
-            } catch (const std::out_of_range& e) {
-                throw std::runtime_error("Value out of range in /proc/meminfo: " + line);
-            }
-        } else {
-            throw std::runtime_error("Invalid line in /proc/meminfo: " + line);
-        }
-    }
-
-    return memInfo;
+  return memInfo;
 }
 
 void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -96,9 +97,9 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   size_t swap_total = 0;
   size_t swap_free = 0;
 
-  try{
+  try {
     memInfo = readMemInfo();
-  } catch (const std::exception& e) {
+  } catch (const std::exception & e) {
     stat.summary(DiagStatus::ERROR, e.what());
     stat.add("read file error", "Error opening /proc/meminfo or parsing line in it.");
     return;
@@ -114,11 +115,11 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     cached = memInfo.at("Cached");
     swap_total = memInfo.at("SwapTotal");
     swap_free = memInfo.at("SwapFree");
-  } catch (const std::out_of_range& e) {
+  } catch (const std::out_of_range & e) {
     stat.summary(DiagStatus::ERROR, e.what());
     stat.add("unordered_map::at", "Error reading a key of memory info");
     return;
-  } 
+  }
 
   float usage = 1.0f - static_cast<double>(mem_available) / mem_total;
   size_t mem_buff_and_cache = buffers + cached + slab_reclaimable;
