@@ -35,7 +35,7 @@ using geometry_msgs::msg::Pose;
  * @param path input path
  * @param lateral_offset lateral offset to be added
  */
-void addLateralOffset(PathWithLaneId* path, double lateral_offset);
+void addLateralOffset(PathWithLaneId * path, double lateral_offset);
 
 struct RivalVehicle
 {
@@ -52,20 +52,22 @@ struct RivalVehicle
  * @param ego_course_width ego course width
  * @return std::optional<RivalVehicle> return rival vehicle if exists
  */
-std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(const Pose& ego_pose, const PathWithLaneId& centerline_path,
-                                                          const std::vector<PredictedObject>& objects,
-                                                          double ego_course_width = std::numeric_limits<double>::max());
+std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(
+  const Pose & ego_pose, const PathWithLaneId & centerline_path,
+  const std::vector<PredictedObject> & objects,
+  double ego_course_width = std::numeric_limits<double>::max());
 
 /**
  * @brief Calculate overtake path
  * @param reference_path reference path
  * @param object predicted object
  * @param base_shift_length base shift length
- * @return std::tuple<PathWithLaneId, Pose, double> return overtake path, overtake end pose and course after overtake
+ * @return std::tuple<PathWithLaneId, Pose, double> return overtake path, overtake end pose and
+ * course after overtake
  */
-std::tuple<PathWithLaneId, Pose, double> calcOvertakePath(const PathWithLaneId& reference_path,
-                                                          const PredictedObject& object,
-                                                          double current_course_shift_length = 0.0);
+std::tuple<PathWithLaneId, Pose, double> calcOvertakePath(
+  const PathWithLaneId & reference_path, const PredictedObject & object,
+  double current_course_shift_length = 0.0);
 
 /**
  * @brief Calculate back to center path
@@ -76,9 +78,9 @@ std::tuple<PathWithLaneId, Pose, double> calcOvertakePath(const PathWithLaneId& 
  * @param shift_end_length shift end length
  * @return std::pair<PathWithLaneId, Pose> return back to center path and back to center end pose
  */
-std::pair<PathWithLaneId, Pose> calcBackToCenterPath(const PathWithLaneId& reference_path, const Pose& ego_pose,
-                                                     double shift_length, double shift_start_length,
-                                                     double shift_end_length);
+std::pair<PathWithLaneId, Pose> calcBackToCenterPath(
+  const PathWithLaneId & reference_path, const Pose & ego_pose, double shift_length,
+  double shift_start_length, double shift_end_length);
 
 }  // namespace behavior_path_planner::racing_overtake::util
 
