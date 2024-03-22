@@ -54,12 +54,21 @@ std::vector<T> getAllKeys(const std::unordered_map<T, S> & map)
 namespace behavior_path_planner
 {
 using autoware_auto_perception_msgs::msg::PredictedPath;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::Polygon2d;
 
 struct MinMaxValue
 {
   double min_value{0.0};
   double max_value{0.0};
+  MinMaxValue operator+(const double & scalar) const
+  {
+    MinMaxValue ret;
+    ret.min_value = min_value + scalar;
+    ret.max_value = max_value + scalar;
+    return ret;
+  }
+  void swap() { std::swap(min_value, max_value); }
 };
 
 enum class PolygonGenerationMethod {
@@ -69,8 +78,8 @@ enum class PolygonGenerationMethod {
 
 enum class ObjectBehaviorType {
   NOT_TO_AVOID = 0,
-  LaneDriveObject,
-  FreeRunObject,
+  RegulatedObject,
+  NonRegulatedObject,
 };
 
 struct DynamicAvoidanceParameters
@@ -165,14 +174,21 @@ public:
       for (const auto & path : predicted_object.kinematics.predicted_paths) {
         predicted_paths.push_back(path);
       }
+      for (size_t i = 0;
+           i < predicted_object.kinematics.initial_pose_with_covariance.covariance.size(); ++i) {
+        pose_covariance_sqrt[i] =
+          std::sqrt(predicted_object.kinematics.initial_pose_with_covariance.covariance[i]);
+      }
     }
 
     std::string uuid{};
     uint8_t label{};
     geometry_msgs::msg::Pose pose{};
+    double pose_covariance_sqrt[36];  // for experimantal
     autoware_auto_perception_msgs::msg::Shape shape;
     double vel{0.0};
     double lat_vel{0.0};
+
     bool is_object_on_ego_path{false};
     std::optional<rclcpp::Time> latest_time_inside_ego_path{std::nullopt};
     std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
@@ -186,6 +202,7 @@ public:
     std::vector<PathPointWithLaneId> ref_path_points_for_obj_poly;
     LatFeasiblePaths ego_lat_feasible_paths;
 
+    // add additional information (not update to latest data)
     void update(
       const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
       const bool arg_is_collision_left, const bool arg_should_be_avoided,
@@ -397,13 +414,18 @@ private:
     const Polygon2d & obj_points, const geometry_msgs::msg::Point & obj_pos, const double obj_vel,
     const bool is_collision_left, const double obj_normal_vel,
     const std::optional<DynamicAvoidanceObject> & prev_object) const;
-
+  std::optional<MinMaxValue> calcLateralAvoidanceDistanceRange(
+    const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
+    const std::optional<DynamicAvoidanceObject> & prev_object,
+    const DynamicAvoidanceObject & object) const;
   std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;
   std::optional<tier4_autoware_utils::Polygon2d> calcEgoPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
   std::optional<tier4_autoware_utils::Polygon2d> calcObjectPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
+  std::optional<tier4_autoware_utils::Polygon2d> calcFreeRunObstaclePolygon(
+    const DynamicAvoidanceObject & object, const PathWithLaneId & ego_path) const;
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)
   {
