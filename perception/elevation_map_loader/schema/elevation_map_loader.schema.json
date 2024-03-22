@@ -1,0 +1,83 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Elevation Map Loader Params",
+    "type": "object",
+    "definitions": {
+      "elevation_map_loader": {
+        "type": "object",
+        "properties": {
+          "map_layer_name": {
+            "type": "string",
+            "description": "elevation_map layer name",
+            "default": "elevation"
+          },
+          "param_file_path": {
+            "type": "string",
+            "description": "GridMap parameters config",
+            "default": "path_default"
+          },
+          "map_frame": {
+            "type": "string",
+            "description": "map_frame when loading elevation_map file",
+            "default": "map"
+          },
+          "use_sequential_load": {
+            "type": "boolean",
+            "description": "Whether to get point cloud map by service",
+            "default": true
+          },
+          "sequential_map_load_num": {
+            "type": "integer",
+            "description": "The number of point cloud maps to load at once (only used when use_sequential_load is set true). This should not be larger than number of all point cloud map cells",
+            "default": 1
+          },
+          "use_inpaint": {
+            "type": "boolean",
+            "description": "Whether to inpaint empty cells",
+            "default": true
+          },
+          "inpaint_radius": {
+            "type": "number",
+            "description": "Radius of a circular neighborhood of each point inpainted that is considered by the algorithm [m]",
+            "default": 0.3
+          },
+          "use_elevation_map_cloud_publisher": {
+            "type": "boolean",
+            "description": "Whether to publish `output/elevation_map_cloud`",
+            "default": false
+          },
+          "elevation_map_directory": {
+            "type": "string",
+            "description": "elevation_map file (bag2)",
+            "default": "path_default"
+          },
+          "use_lane_filter": {
+            "type": "boolean",
+            "description": "Whether to filter elevation_map with vector_map",
+            "default": false
+          },
+          "lane_margin": {
+            "type": "number",
+            "description": "Margin distance from the lane polygon of the area to be included in the inpainting mask [m]. Used only when use_lane_filter=True",
+            "default": 0.0
+          }
+        },
+        "required": ["elevation_map_loader", "map_layer_name", "param_file_path", "map_frame", "use_sequential_load", "sequential_map_load_num", "use_inpaint", "inpaint_radius", "use_elevation_map_cloud_publisher", "elevation_map_directory", "use_lane_filter", "lane_margin"],
+        "additionalProperties": false
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "$ref": "#/definitions/elevation_map_loader"
+          }
+        },
+        "required": ["ros__parameters"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["/**"],
+    "additionalProperties": false
+  }
