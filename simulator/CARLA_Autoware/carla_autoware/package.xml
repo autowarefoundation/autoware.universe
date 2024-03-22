@@ -13,7 +13,6 @@
   <depend>astuff_sensor_msgs</depend>
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>carla_data_provider</depend>
   <depend>carla_msgs</depend>
   <depend>datetime</depend>
   <depend>geometry_msgs</depend>
@@ -25,7 +24,6 @@
   <depend>sensor_msgs_py</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>transform3d</depend>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

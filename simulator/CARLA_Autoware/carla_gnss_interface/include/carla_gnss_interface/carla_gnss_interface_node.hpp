@@ -99,8 +99,7 @@ struct MappingParameters
   double alt;
 };
 
-
-void llaToxyz(const MappingParameters &params, double &x_out, double &y_out, double &z_out);
+void llaToxyz(const MappingParameters & params, double & x_out, double & y_out, double & z_out);
 
 }  // namespace gnss
 }  // namespace interface
