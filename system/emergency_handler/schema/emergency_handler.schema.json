@@ -16,35 +16,13 @@
           "description": "If the input `hazard_status` topic cannot be received for more than `timeout_hazard_status`, vehicle will make an emergency stop.",
           "default": 0.5
         },
-        "use_parking_after_stopped": {
-          "type": "boolean",
-          "description": "If this parameter is true, it will publish PARKING shift command.",
-          "default": "false"
-        },
         "use_comfortable_stop": {
           "type": "boolean",
           "description": "If this parameter is true, operate comfortable stop when latent faults occur.",
           "default": "false"
-        },
-        "turning_hazard_on": {
-          "type": "object",
-          "properties": {
-            "emergency": {
-              "type": "boolean",
-              "description": "If this parameter is true, hazard lamps will be turned on during emergency state.",
-              "default": "true"
-            }
-          },
-          "required": ["emergency"]
         }
       },
-      "required": [
-        "update_rate",
-        "timeout_hazard_status",
-        "use_parking_after_stopped",
-        "use_comfortable_stop",
-        "turning_hazard_on"
-      ],
+      "required": ["update_rate", "timeout_hazard_status", "use_comfortable_stop"],
       "additionalProperties": false
     }
   },
