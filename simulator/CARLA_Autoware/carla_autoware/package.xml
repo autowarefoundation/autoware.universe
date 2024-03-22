@@ -2,9 +2,10 @@
 <package format="3">
   <name>carla_autoware</name>
   <version>0.0.0</version>
-  <description>The carla_manual_control package</description>
-  <maintainer email="mradityagio@gmail.com">CARLA Simulator Team</maintainer>
-  <license>MIT</license>
+  <description>The carla autoware bridge package</description>
+  <maintainer email="mradityagio@gmail.com">Muhammad Raditya Giovanni</maintainer>
+  <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
+  <license>Apache License 2.0</license>
 
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>ros_compatibility</exec_depend>

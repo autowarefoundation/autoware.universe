@@ -31,7 +31,6 @@ class PointCloudInterface : public rclcpp::Node
 {
 public:
   explicit PointCloudInterface(const rclcpp::NodeOptions & node_options);
-  virtual ~PointCloudInterface();
 
 private:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
