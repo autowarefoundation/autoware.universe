@@ -17,8 +17,6 @@ from sensor_msgs.msg import PointCloud2
 
 class CarlaVehicleInterface(Node):
     def __init__(self):
-        rclpy.init(args=None)
-
         super().__init__("carla_vehicle_interface_node")
 
         client = carla.Client("localhost", 2000)
@@ -29,11 +27,7 @@ class CarlaVehicleInterface(Node):
         self.target_vel = 0.0
         self.vel_diff = 0.0
         self.current_control = carla.VehicleControl()
-        self.ros2_node = rclpy.create_node("carla_autoware")
-
-        self.spin_thread = threading.Thread(target=rclpy.spin, args=(self.ros2_node,))
-        self.spin_thread.start()
-
+        
         # Publishes Topics used for AUTOWARE
         self.pub_vel_state = self.ros2_node.create_publisher(
             VelocityReport, "/vehicle/status/velocity_status", 1
@@ -142,8 +136,9 @@ class CarlaVehicleInterface(Node):
 
 
 def main(args=None):
-    CarlaVehicleInterface()
-
+    rclpy.init()
+    node = CarlaVehicleInterface()
+    rclpy.spin(node)
 
 if __name__ == "__main__":
     main()

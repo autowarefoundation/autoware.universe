@@ -35,10 +35,6 @@ void PointCloudInterface::setupTF()
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 }
 
-PointCloudInterface::~PointCloudInterface()
-{
-}
-
 PointCloudInterface::PointCloudInterface(const rclcpp::NodeOptions & node_options)
 : Node("carla_pointcloud_interface_node", node_options), tf_output("base_link")
 {

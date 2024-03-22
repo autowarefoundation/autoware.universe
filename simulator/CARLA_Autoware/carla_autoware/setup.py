@@ -32,7 +32,7 @@ elif ROS_VERSION == 2:
         maintainer="mradityagio",
         maintainer_email="mradityagio@gmail.com",
         description="CARLA ROS2 bridge for AUTOWARE",
-        license="MIT",
+        license="Apache License 2.0",
         tests_require=["pytest"],
         entry_points={
             "console_scripts": ["carla_autoware = carla_autoware.carla_autoware:main"],

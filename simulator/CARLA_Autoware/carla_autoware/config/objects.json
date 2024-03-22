@@ -17,10 +17,6 @@
       "id": "markers"
     },
     {
-      "type": "sensor.pseudo.opendrive_map",
-      "id": "map"
-    },
-    {
       "type": "vehicle.toyota.prius",
       "id": "ego_vehicle",
       "sensors": [
@@ -58,12 +54,6 @@
           "rotation_frequency": 20,
           "noise_stddev": 0.0
         },
-        {
-          "type": "sensor.opendrive_map",
-          "id": "OpenDRIVE",
-          "spawn_point": { "x": 0.0, "y": 0.0, "z": 1.6, "roll": 0.0, "pitch": 0.0 }
-        },
-
         {
           "type": "sensor.other.gnss",
           "id": "gnss",

@@ -32,7 +32,6 @@ class GnssInterface : public rclcpp::Node
 {
 public:
   explicit GnssInterface(const rclcpp::NodeOptions & node_options);
-  virtual ~GnssInterface();
   std::string tf_output_frame_;
 
 private:
@@ -74,15 +73,6 @@ public:
     alt = 0;
     dir = 0;
   }
-
-  std::string ToString()
-  {
-    std::stringstream str;
-    str.precision(12);
-    str << "X:" << x << ", Y:" << y << ", Z:" << z << ", A:" << a << std::endl;
-    str << "Lon:" << lon << ", Lat:" << lat << ", Alt:" << alt << ", Dir:" << dir << std::endl;
-    return str.str();
-  }
 };
 
 class WayPoint
@@ -109,15 +99,8 @@ struct MappingParameters
   double alt;
 };
 
-class MappingUtils
-{
-public:
-  MappingUtils();
-  virtual ~MappingUtils();
 
-  static void llaToxyz(
-    const MappingParameters & params, double & x_out, double & y_out, double & z_out);
-};
+void llaToxyz(const MappingParameters &params, double &x_out, double &y_out, double &z_out);
 
 }  // namespace gnss
 }  // namespace interface

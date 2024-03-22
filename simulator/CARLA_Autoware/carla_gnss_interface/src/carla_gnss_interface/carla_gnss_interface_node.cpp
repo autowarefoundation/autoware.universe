@@ -25,14 +25,8 @@ MappingUtils::MappingUtils()
 {
 }
 
-MappingUtils::~MappingUtils()
-{
-}
-
-void MappingUtils::llaToxyz(
-  const MappingParameters & params, double & x_out, double & y_out, double & z_out)
-{
-  if (params.proj_str.size() < 8) return;
+void MappingUtils::llaToxyz(const MappingParameters &params, double &x_out, double &y_out, double &z_out) {
+    if (params.proj_str.size() < 8) return;
 
   PJ_CONTEXT * C = proj_context_create();
   PJ * P = proj_create_crs_to_crs(C, "EPSG:4326", params.proj_str.c_str(), NULL);
@@ -86,9 +80,6 @@ void GnssInterface::GnssCallBack(const sensor_msgs::msg::NavSatFix::SharedPtr ms
   pup_pose_with_cov->publish(pose_cov_);
 }
 
-GnssInterface::~GnssInterface()
-{
-}
 
 GnssInterface::GnssInterface(const rclcpp::NodeOptions & node_options)
 : Node("gnss_interface_node", node_options), tf_output_frame_("base_link")
