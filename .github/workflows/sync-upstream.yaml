@@ -1,0 +1,49 @@
+name: sync-upstream
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: Target branch
+        required: true
+        type: string
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - run: npm install @holiday-jp/holiday_jp
+
+      - uses: actions/github-script@v6
+        id: is-holiday
+        with:
+          script: |
+            const holiday_jp = require(`${process.env.GITHUB_WORKSPACE}/node_modules/@holiday-jp/holiday_jp`)
+            core.setOutput('holiday', holiday_jp.isHoliday(new Date()));
+      - name: Print warning for invalid branch name
+        if: ${{ inputs.target_branch  == 'tier4/main' }}
+        run: |
+          echo This action cannot be performed on 'tier4/main' branch
+
+      - name: Run sync-branches
+        if: ${{ inputs.target_branch  != 'tier4/main' }}
+        uses: autowarefoundation/autoware-github-actions/sync-branches@v1
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          base-branch: ${{ inputs.target_branch }}
+          sync-pr-branch: sync-upstream
+          sync-target-repository: https://github.com/tier4/autoware.universe.git
+          sync-target-branch: awf-latest
+          pr-title: "chore: sync tier4/autoware.universe:awf-latest"
+          auto-merge-method: merge
