@@ -178,7 +178,6 @@ void MrmPullOverManager::publish_emergency_goals_clear_command() const
 {
   EmergencyGoalsClearCommand goals_clear_command;
   goals_clear_command.stamp = this->now();
-  goals_clear_command.command = true;
   goals_clear_command.sender = get_module_name();
 
   pub_emergency_goals_clear_command_->publish(goals_clear_command);

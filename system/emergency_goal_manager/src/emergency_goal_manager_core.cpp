@@ -69,14 +69,12 @@ void EmergencyGoalManager::onEmergencyGoalsClearCommand(
     RCLCPP_WARN(get_logger(), "Emergency goals from %s is empty.", msg->sender.c_str());
   }
 
-  if (msg->command) {
-    emergency_goals_map_.erase(msg->sender);
+  emergency_goals_map_.erase(msg->sender);
 
-    if (emergency_goals_map_.empty()) {
-      callClearMrmRoute();
-    } else {
-      callSetMrmRoutePoints();
-    }
+  if (emergency_goals_map_.empty()) {
+    callClearMrmRoute();
+  } else {
+    callSetMrmRoutePoints();
   }
 }
 
