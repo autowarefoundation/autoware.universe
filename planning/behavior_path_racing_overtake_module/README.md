@@ -38,11 +38,11 @@ This module enters the ModuleNotLaunched state when the ego drives on a centerli
 
 - Transition to the Approach State
 
-    If there is a rival vehicle ahead on the same course as the ego (`start_overtake_distance < longitudinal distance < prepare_overtake_distance`), this module transitions to the Approach state.
+  If there is a rival vehicle ahead on the same course as the ego (`start_overtake_distance < longitudinal distance < prepare_overtake_distance`), this module transitions to the Approach state.
 
 - Transition to the Overtaking State
 
-    If there is a rival vehicle ahead on the same course as the ego (`longitudinal distance < start_overtake_distance`), this module transitions to the Overtaking state.
+  If there is a rival vehicle ahead on the same course as the ego (`longitudinal distance < start_overtake_distance`), this module transitions to the Overtaking state.
 
 ##### Path Planning in This State
 
@@ -54,17 +54,17 @@ No path planning is executed in this state.
 
 ##### Conditions for Transitioning to This State
 
-This module enters the Approach state if `longitudinal distance` becomes less than `prepare_overtake_distance`. 
+This module enters the Approach state if `longitudinal distance` becomes less than `prepare_overtake_distance`.
 
 ##### Transition to Other States
 
 - Transition to the Overtaking State
 
-	When the `longitudinal distance` becomes less than `start_overtake_distance`, the state transitions to the Overtaking State to begin the overtaking maneuver.
+When the `longitudinal distance` becomes less than `start_overtake_distance`, the state transitions to the Overtaking State to begin the overtaking maneuver.
 
 - Turn off the RacingOvertakingModule
 
-	If there are no rivals left to overtake, this module is turned off.
+If there are no rivals left to overtake, this module is turned off.
 
 ##### Path Planning in This State
 
@@ -77,7 +77,7 @@ The path is updated every step.
 
 ##### Conditions for Transitioning to This State
 
-This module enters the Approach state if `longitudinal distance` becomes less than `start_overtake_distance`. 
+This module enters the Approach state if `longitudinal distance` becomes less than `start_overtake_distance`.
 
 ##### Transition to Other States
 
@@ -101,11 +101,11 @@ The module transitions to the AfterOvertaking state after the Overtaking state.
 
 - Transition to the Approach or Overtaking State
 
-	If there is a rival vehicle to overtake on the course of the ego, this module transitions to either the Approach or Overtaking state, depending on the distance of the rival vehicle.
-	
+If there is a rival vehicle to overtake on the course of the ego, this module transitions to either the Approach or Overtaking state, depending on the distance of the rival vehicle.
+
 - Transition to the BackToCenter State
 
-	If there are no vehicles in front of the ego, this module transitions to the BackToCenter state.
+If there are no vehicles in front of the ego, this module transitions to the BackToCenter state.
 
 ##### Path Planning in This State
 

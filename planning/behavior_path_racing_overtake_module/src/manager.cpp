@@ -25,38 +25,44 @@
 namespace behavior_path_planner
 {
 
-RacingOvertakeModuleManager::RacingOvertakeModuleManager() : SceneModuleManagerInterface{ "racing_overtake" }
+RacingOvertakeModuleManager::RacingOvertakeModuleManager()
+: SceneModuleManagerInterface{"racing_overtake"}
 {
 }
 
 std::unique_ptr<SceneModuleInterface> RacingOvertakeModuleManager::createNewSceneModuleInstance()
 {
-  return std::make_unique<RacingOvertakeModule>(name_, *node_, parameters_, rtc_interface_ptr_map_,
-                                                objects_of_interest_marker_interface_ptr_map_);
+  return std::make_unique<RacingOvertakeModule>(
+    name_, *node_, parameters_, rtc_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_);
 }
 
-void RacingOvertakeModuleManager::init(rclcpp::Node* node)
+void RacingOvertakeModuleManager::init(rclcpp::Node * node)
 {
   // init manager interface
   initInterface(node, {});
   RacingOvertakeParameters p{};
 
   const std::string ns = "racing_overtake.";
-  p.too_close_to_overtake_distance = node->declare_parameter<double>(ns + "too_close_to_overtake_distance");
+  p.too_close_to_overtake_distance =
+    node->declare_parameter<double>(ns + "too_close_to_overtake_distance");
   p.start_overtake_distance = node->declare_parameter<double>(ns + "start_overtake_distance");
   p.prepare_overtake_distance = node->declare_parameter<double>(ns + "prepare_overtake_distance");
-  p.back_to_center_start_distance = node->declare_parameter<double>(ns + "back_to_center_start_distance");
-  p.back_to_center_end_distance = node->declare_parameter<double>(ns + "back_to_center_end_distance");
+  p.back_to_center_start_distance =
+    node->declare_parameter<double>(ns + "back_to_center_start_distance");
+  p.back_to_center_end_distance =
+    node->declare_parameter<double>(ns + "back_to_center_end_distance");
   p.ego_course_width = node->declare_parameter<double>(ns + "ego_course_width");
 
   parameters_ = std::make_shared<RacingOvertakeParameters>(p);
 }
 
-void RacingOvertakeModuleManager::updateModuleParams([[maybe_unused]] const std::vector<rclcpp::Parameter>& parameters)
+void RacingOvertakeModuleManager::updateModuleParams(
+  [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
 
-  auto& p = parameters_;
+  auto & p = parameters_;
 
   const std::string ns = "racing_overtake.";
 
@@ -71,5 +77,6 @@ void RacingOvertakeModuleManager::updateModuleParams([[maybe_unused]] const std:
 }  // namespace behavior_path_planner
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(behavior_path_planner::RacingOvertakeModuleManager,
-                       behavior_path_planner::SceneModuleManagerInterface)
+PLUGINLIB_EXPORT_CLASS(
+  behavior_path_planner::RacingOvertakeModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)

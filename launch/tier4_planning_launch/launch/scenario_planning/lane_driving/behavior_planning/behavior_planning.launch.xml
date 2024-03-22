@@ -96,7 +96,8 @@
     value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::AvoidanceByLaneChangeModuleManager, '&quot;)"
     if="$(var launch_avoidance_by_lane_change_module)"
   />
-  <let name="behavior_path_planner_launch_modules"
+  <let
+    name="behavior_path_planner_launch_modules"
     value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::RacingOvertakeModuleManager, '&quot;)"
     if="$(var launch_racing_overtake_module)"
   />

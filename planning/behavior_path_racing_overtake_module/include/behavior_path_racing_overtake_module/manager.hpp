@@ -16,8 +16,8 @@
 #define BEHAVIOR_PATH_RACING_OVERTAKE_MODULE__MANAGER_HPP_
 
 #include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
-#include "behavior_path_racing_overtake_module/scene.hpp"
 #include "behavior_path_racing_overtake_module/data_structs.hpp"
+#include "behavior_path_racing_overtake_module/scene.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -34,11 +34,11 @@ class RacingOvertakeModuleManager : public SceneModuleManagerInterface
 public:
   RacingOvertakeModuleManager();
 
-  void init(rclcpp::Node* node) override;
+  void init(rclcpp::Node * node) override;
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
 
-  void updateModuleParams(const std::vector<rclcpp::Parameter>& parameters) override;
+  void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
 private:
   std::shared_ptr<RacingOvertakeParameters> parameters_;

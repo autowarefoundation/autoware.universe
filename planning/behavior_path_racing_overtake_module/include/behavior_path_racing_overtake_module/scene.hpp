@@ -21,23 +21,24 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <any>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <any>
 
 namespace behavior_path_planner
 {
 class RacingOvertakeModule : public SceneModuleInterface
 {
 public:
-  RacingOvertakeModule(const std::string& name, rclcpp::Node& node,
-                       const std::shared_ptr<RacingOvertakeParameters>& parameters,
-                       const std::unordered_map<std::string, std::shared_ptr<RTCInterface>>& rtc_interface_ptr_map,
-                       std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>&
-                           objects_of_interest_marker_interface_ptr_map);
+  RacingOvertakeModule(
+    const std::string & name, rclcpp::Node & node,
+    const std::shared_ptr<RacingOvertakeParameters> & parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -45,12 +46,14 @@ public:
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
 
-  void updateModuleParams(const std::any& parameters) override
+  void updateModuleParams(const std::any & parameters) override
   {
-    context_.updateParameters(*std::any_cast<std::shared_ptr<RacingOvertakeParameters>>(parameters));
+    context_.updateParameters(
+      *std::any_cast<std::shared_ptr<RacingOvertakeParameters>>(parameters));
   }
 
-  void acceptVisitor([[maybe_unused]] const std::shared_ptr<SceneModuleVisitor>& visitor) const override
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
   {
   }
 
@@ -59,10 +62,7 @@ private:
 
   bool canTransitSuccessState() override;
 
-  bool canTransitFailureState() override
-  {
-    return false;
-  }
+  bool canTransitFailureState() override { return false; }
 };
 
 }  // namespace behavior_path_planner

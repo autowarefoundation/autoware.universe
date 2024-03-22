@@ -27,19 +27,18 @@ namespace behavior_path_planner::racing_overtake::util
 
 using motion_utils::calcInterpolatedPose;
 
-void addLateralOffset(PathWithLaneId* path, double lateral_offset)
+void addLateralOffset(PathWithLaneId * path, double lateral_offset)
 {
-  for (auto& point : path->points)
-  {
+  for (auto & point : path->points) {
     double yaw = tf2::getYaw(point.point.pose.orientation);
     point.point.pose.position.x -= lateral_offset * std::sin(yaw);
     point.point.pose.position.y += lateral_offset * std::cos(yaw);
   }
 }
 
-std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(const Pose& ego_pose, const PathWithLaneId& centerline_path,
-                                                          const std::vector<PredictedObject>& objects,
-                                                          double ego_course_width)
+std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(
+  const Pose & ego_pose, const PathWithLaneId & centerline_path,
+  const std::vector<PredictedObject> & objects, double ego_course_width)
 {
   auto self_odom_frenet = utils::convertToFrenetPoint(centerline_path.points, ego_pose.position, 0);
 
@@ -47,23 +46,21 @@ std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(const Pose& ego_pose, 
   double closest_front_object_length = std::numeric_limits<double>::max();
   double closest_front_object_distance;
 
-  for (const auto& object : objects)
-  {
-    auto obj_frenet = utils::convertToFrenetPoint(centerline_path.points,
-                                                  object.kinematics.initial_pose_with_covariance.pose.position, 0);
+  for (const auto & object : objects) {
+    auto obj_frenet = utils::convertToFrenetPoint(
+      centerline_path.points, object.kinematics.initial_pose_with_covariance.pose.position, 0);
 
-    if (obj_frenet.length - self_odom_frenet.length > 0.0 &&
-        obj_frenet.length - self_odom_frenet.length < closest_front_object_length &&
-        std::abs(obj_frenet.distance - self_odom_frenet.distance) < ego_course_width)
-    {
+    if (
+      obj_frenet.length - self_odom_frenet.length > 0.0 &&
+      obj_frenet.length - self_odom_frenet.length < closest_front_object_length &&
+      std::abs(obj_frenet.distance - self_odom_frenet.distance) < ego_course_width) {
       closest_front_object_ = object;
       closest_front_object_length = obj_frenet.length - self_odom_frenet.length;
       closest_front_object_distance = obj_frenet.distance - self_odom_frenet.distance;
     }
   }
 
-  if (!closest_front_object_.has_value())
-  {
+  if (!closest_front_object_.has_value()) {
     return std::nullopt;
   }
 
@@ -74,25 +71,27 @@ std::optional<RivalVehicle> detectRivalVehicleInEgoCourse(const Pose& ego_pose, 
   return rival_vehicle;
 }
 
-std::tuple<PathWithLaneId, Pose, double> calcOvertakePath(const PathWithLaneId& reference_path,
-                                                          const PredictedObject& object,
-                                                          double current_course_shift_length)
+std::tuple<PathWithLaneId, Pose, double> calcOvertakePath(
+  const PathWithLaneId & reference_path, const PredictedObject & object,
+  double current_course_shift_length)
 {
   auto current_coure_path = reference_path;
 
   addLateralOffset(&current_coure_path, current_course_shift_length);
 
   utils::FrenetPoint object_frenet_point = utils::convertToFrenetPoint(
-      current_coure_path.points, object.kinematics.initial_pose_with_covariance.pose.position, 0);
-  Pose object_front_pose = calcInterpolatedPose(current_coure_path.points, object_frenet_point.length);
-  Pose object_backward_pose = calcInterpolatedPose(current_coure_path.points, object_frenet_point.length - 20.0);
+    current_coure_path.points, object.kinematics.initial_pose_with_covariance.pose.position, 0);
+  Pose object_front_pose =
+    calcInterpolatedPose(current_coure_path.points, object_frenet_point.length);
+  Pose object_backward_pose =
+    calcInterpolatedPose(current_coure_path.points, object_frenet_point.length - 20.0);
 
   double shift_length_candidate1 = object_frenet_point.distance + 4.0;
   double shift_length_candidate2 = object_frenet_point.distance - 4.0;
   double shift_length = std::abs(shift_length_candidate1 + current_course_shift_length) <
-                                std::abs(shift_length_candidate2 + current_course_shift_length) ?
-                            shift_length_candidate1 :
-                            shift_length_candidate2;
+                            std::abs(shift_length_candidate2 + current_course_shift_length)
+                          ? shift_length_candidate1
+                          : shift_length_candidate2;
   ShiftLine shift_line;
   shift_line.start = object_backward_pose;
   shift_line.end = object_front_pose;
@@ -100,31 +99,33 @@ std::tuple<PathWithLaneId, Pose, double> calcOvertakePath(const PathWithLaneId& 
 
   PathShifter path_shifter;
   path_shifter.setPath(current_coure_path);
-  path_shifter.setShiftLines({ shift_line });
+  path_shifter.setShiftLines({shift_line});
   ShiftedPath shifted_path;
   path_shifter.generate(&shifted_path);
-  return { shifted_path.path, object_front_pose, shift_length + current_course_shift_length };
+  return {shifted_path.path, object_front_pose, shift_length + current_course_shift_length};
 }
 
-std::pair<PathWithLaneId, Pose> calcBackToCenterPath(const PathWithLaneId& reference_path, const Pose& ego_pose,
-                                                     double shift_length, double shift_start_length,
-                                                     double shift_end_length)
+std::pair<PathWithLaneId, Pose> calcBackToCenterPath(
+  const PathWithLaneId & reference_path, const Pose & ego_pose, double shift_length,
+  double shift_start_length, double shift_end_length)
 {
   auto ego_frenet_point = utils::convertToFrenetPoint(reference_path.points, ego_pose.position, 0);
 
   ShiftLine shift_line;
-  shift_line.start = calcInterpolatedPose(reference_path.points, shift_start_length + ego_frenet_point.length);
-  shift_line.end = calcInterpolatedPose(reference_path.points, shift_end_length + ego_frenet_point.length);
+  shift_line.start =
+    calcInterpolatedPose(reference_path.points, shift_start_length + ego_frenet_point.length);
+  shift_line.end =
+    calcInterpolatedPose(reference_path.points, shift_end_length + ego_frenet_point.length);
   shift_line.end_shift_length = -shift_length;
 
   PathShifter path_shifter;
   path_shifter.setPath(reference_path);
-  path_shifter.setShiftLines({ shift_line });
+  path_shifter.setShiftLines({shift_line});
   ShiftedPath shifted_path;
   path_shifter.generate(&shifted_path);
 
   addLateralOffset(&shifted_path.path, shift_length);
-  return { shifted_path.path, shift_line.end };
+  return {shifted_path.path, shift_line.end};
 }
 
 }  // namespace behavior_path_planner::racing_overtake::util
