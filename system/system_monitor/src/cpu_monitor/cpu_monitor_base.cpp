@@ -143,48 +143,49 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
 
   while (std::getline(ifs, line)) {
     if (line.compare(0, 3, "cpu") == 0) {
-        std::istringstream ss(line);
-        cpu_usage_info tmp_usage;
-        if (!(ss >> tmp_usage.cpu_name_ >> tmp_usage.usr_ >> tmp_usage.nice_ >> tmp_usage.sys_ >> tmp_usage.idle_ >> tmp_usage.iowait_ >> tmp_usage.irq_ >> tmp_usage.soft_>> tmp_usage.steal_)) {
-          stat.summary(DiagStatus::ERROR, "parsing error");
-          stat.add(
-            "istringstream", "Error parsing line in /proc/stat: " + line);
-          cpu_usage.all.status = CpuStatus::STALE;
-          publishCpuUsage(cpu_usage);
-          return;
-        }
-        curr_usages.push_back(tmp_usage);
+      std::istringstream ss(line);
+      cpu_usage_info tmp_usage;
+      if (!(ss >> tmp_usage.cpu_name_ >> tmp_usage.usr_ >> tmp_usage.nice_ >> tmp_usage.sys_ >>
+            tmp_usage.idle_ >> tmp_usage.iowait_ >> tmp_usage.irq_ >> tmp_usage.soft_ >>
+            tmp_usage.steal_)) {
+        stat.summary(DiagStatus::ERROR, "parsing error");
+        stat.add("istringstream", "Error parsing line in /proc/stat: " + line);
+        cpu_usage.all.status = CpuStatus::STALE;
+        publishCpuUsage(cpu_usage);
+        return;
+      }
+      curr_usages.push_back(tmp_usage);
     } else {
-        break;
+      break;
     }
   }
 
-  if(prev_usages_.empty()){
+  if (prev_usages_.empty()) {
     prev_usages_ = curr_usages;
     stat.summary(DiagStatus::ERROR, "cpu usages update error");
     stat.add("update error", "Error update cpu usage info from /proc/stat");
     cpu_usage.all.status = CpuStatus::STALE;
     publishCpuUsage(cpu_usage);
-    return;    
+    return;
   }
 
-  if(prev_usages_[0].usr_ < 0){
+  if (prev_usages_[0].usr_ < 0) {
     stat.summary(DiagStatus::ERROR, "cpu usages overflow error");
     stat.add("overflow error", "A value of /proc/stat is greater than INT_MAX. Restart ECU");
     cpu_usage.all.status = CpuStatus::STALE;
     publishCpuUsage(cpu_usage);
-    return;    
+    return;
   }
 
-  if(prev_usages_.size() != curr_usages.size()){
+  if (prev_usages_.size() != curr_usages.size()) {
     stat.summary(DiagStatus::ERROR, "cpu usages update error");
     stat.add("update error", "Error update cpu usage info from /proc/stat");
     cpu_usage.all.status = CpuStatus::STALE;
     publishCpuUsage(cpu_usage);
-    return;    
+    return;
   }
 
-  for (int i = 0; i < prev_usages_.size(); i++){
+  for (int i = 0; i < prev_usages_.size(); i++) {
     CpuStatus cpu_status;
     int total_diff = curr_usages[i].totalTime() - prev_usages_[i].totalTime();
 
@@ -192,7 +193,8 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     cpu_status.nice = 100.0 * (curr_usages[i].nice_ - prev_usages_[i].nice_) / total_diff;
     cpu_status.sys = 100.0 * (curr_usages[i].sys_ - prev_usages_[i].sys_) / total_diff;
     cpu_status.idle = 100.0 * (curr_usages[i].idle_ - prev_usages_[i].idle_) / total_diff;
-    cpu_status.total = 100.0 * (curr_usages[i].totalActiveTime() - prev_usages_[i].totalActiveTime()) / total_diff;
+    cpu_status.total =
+      100.0 * (curr_usages[i].totalActiveTime() - prev_usages_[i].totalActiveTime()) / total_diff;
     level = CpuUsageToLevel(curr_usages[i].cpu_name_, cpu_status.total * 1e-2);
     cpu_status.status = level;
 
