@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,8 +48,7 @@ public:
 
 private:
   PlannerParam params_;
-  rclcpp::Time prev_stop_decision_time_;
-  std::optional<geometry_msgs::msg::Pose> current_stop_pose_;
+  ObjectStopDecisionMap object_map_;
 
 protected:
   int64_t module_id_{};

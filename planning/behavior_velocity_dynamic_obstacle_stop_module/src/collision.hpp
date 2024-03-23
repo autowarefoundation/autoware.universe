@@ -22,17 +22,24 @@
 
 namespace behavior_velocity_planner::dynamic_obstacle_stop
 {
+/// @brief find the first collision along an object footprint and the ego path
+/// @param [in] ego_data ego data including its path and footprint
+/// @param [in] object_pose pose of the dynamic object
+/// @param [in] object_footprint footprint of the object used for finding a collision
+/// @return the first collision point along the object footprint (if any)
+std::optional<geometry_msgs::msg::Point> find_first_collision_point(
+  const EgoData & ego_data, const geometry_msgs::msg::Pose & object_pose,
+  const tier4_autoware_utils::Polygon2d & object_footprint);
 
 /// @brief find the earliest collision along the ego path and an obstacle footprint
 /// @param [in] ego_data ego data including its path and footprint
 /// @param [in] objects obstacles
 /// @param [in] obstacle_forward_footprints obstacle footprints
-/// @param [in] debug_data debug data
 /// @return the point of earliest collision along the ego path
-std::optional<geometry_msgs::msg::Point> find_earliest_collision(
+std::vector<Collision> find_collisions(
   const EgoData & ego_data,
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
-  const tier4_autoware_utils::MultiPolygon2d & obstacle_forward_footprints, DebugData & debug_data);
+  const tier4_autoware_utils::MultiPolygon2d & obstacle_forward_footprints);
 
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop
 
