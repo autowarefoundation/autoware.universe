@@ -64,9 +64,11 @@ struct RunOutParam
   bool use_partition_lanelet;
   bool suppress_on_crosswalk;
   bool specify_decel_jerk;
+  bool use_ego_cut_lane;
   double stop_margin;
   double passing_margin;
   double deceleration_jerk;
+  double egos_cut_lane_length;
   float detection_distance;
   float detection_span;
   float min_vel_ego_kmph;
@@ -217,8 +219,7 @@ inline geometry_msgs::msg::Vector3 rpyFromQuat(const geometry_msgs::msg::Quatern
 
 bool pathIntersectsEgoCutLine(
   const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
-  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_lane,
-  std::optional<geometry_msgs::msg::Point> & intersection_point);
+  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_lane);
 
 // LineString2d createLineStringFromPath(const PredictedPath & path);
 

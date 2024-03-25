@@ -86,6 +86,14 @@ void RunOutDebug::pushCollisionPoints(const geometry_msgs::msg::Point & point)
   collision_points_.push_back(point_with_height);
 }
 
+void RunOutDebug::pushEgoCutLane(const std::vector<geometry_msgs::msg::Point> & lane)
+{
+  for (const auto & point : lane) {
+    const auto point_with_height = createPoint(point.x, point.y, height_);
+    ego_back_lane_.push_back(point_with_height);
+  }
+}
+
 void RunOutDebug::pushCollisionPoints(const std::vector<geometry_msgs::msg::Point> & points)
 {
   for (const auto & p : points) {
@@ -160,6 +168,7 @@ void RunOutDebug::clearDebugMarker()
   predicted_obstacle_polygons_.clear();
   collision_obstacle_polygons_.clear();
   travel_time_texts_.clear();
+  ego_back_lane_.clear();
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
@@ -263,6 +272,16 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
         mandatory_detection_area_polygons_, current_time, "mandatory_detection_area_polygons",
         createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999), height_),
       &msg);
+  }
+
+  if (!ego_back_lane_.empty()) {
+    auto marker = createDefaultMarker(
+      "map", current_time, "ego_back_lane", 0, visualization_msgs::msg::Marker::LINE_LIST,
+      createMarkerScale(0.2, 0.2, 0.2), createMarkerColor(0.7, 0.0, 0.7, 0.999));
+    for (const auto & p : ego_back_lane_) {
+      marker.points.push_back(p);
+    }
+    msg.markers.push_back(marker);
   }
 
   if (!travel_time_texts_.empty()) {

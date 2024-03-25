@@ -102,12 +102,18 @@ bool RunOutModule::modifyPathVelocity(
   const auto dynamic_obstacles = dynamic_obstacle_creator_->createDynamicObstacles();
   debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles.size());
 
-  // extract obstacles using lanelet information
-  const auto partition_excluded_obstacles =
-    excludeObstaclesOutSideOfPartition(dynamic_obstacles, extended_smoothed_path, current_pose);
+  const auto filtered_obstacles = std::invoke([&]() {
+    // extract obstacles using lanelet information
+    const auto partition_excluded_obstacles =
+      excludeObstaclesOutSideOfPartition(dynamic_obstacles, extended_smoothed_path, current_pose);
 
-  const auto ego_back_line_excluded_obstacles =
-    excludeObstaclesCrossingEgoBackLine(partition_excluded_obstacles, current_pose);
+    // extract obstacles that cross the ego's back lane
+    if (!planner_param_.run_out.use_ego_cut_lane) return partition_excluded_obstacles;
+
+    const auto ego_back_line_excluded_obstacles =
+      excludeObstaclesCrossingEgoBackLine(partition_excluded_obstacles, current_pose);
+    return ego_back_line_excluded_obstacles;
+  });
 
   // record time for obstacle creation
   const auto t_obstacle_creation = std::chrono::system_clock::now();
@@ -125,7 +131,7 @@ bool RunOutModule::modifyPathVelocity(
                                         planner_data_->route_handler_->getOverallGraphPtr())
                                     : std::vector<std::pair<int64_t, lanelet::ConstLanelet>>();
   const auto dynamic_obstacle =
-    detectCollision(ego_back_line_excluded_obstacles, extended_smoothed_path, crosswalk_lanelets);
+    detectCollision(filtered_obstacles, extended_smoothed_path, crosswalk_lanelets);
 
   // record time for collision check
   const auto t_collision_check = std::chrono::system_clock::now();
@@ -150,8 +156,7 @@ bool RunOutModule::modifyPathVelocity(
     applyMaxJerkLimit(current_pose, current_vel, current_acc, *path);
   }
 
-  publishDebugValue(
-    extended_smoothed_path, ego_back_line_excluded_obstacles, dynamic_obstacle, current_pose);
+  publishDebugValue(extended_smoothed_path, filtered_obstacles, dynamic_obstacle, current_pose);
 
   // record time for collision check
   const auto t_path_planning = std::chrono::system_clock::now();
@@ -819,16 +824,15 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoBackLine(
 {
   std::vector<DynamicObstacle> extracted_obstacles;
   std::vector<geometry_msgs::msg::Point> ego_cut_lane;
-  std::optional<geometry_msgs::msg::Point> intersection_point;
-  std::for_each(
-    dynamic_obstacles.begin(), dynamic_obstacles.end(),
-    [&extracted_obstacles, &current_pose](const auto & o) {
-      const auto predicted_path = run_out_utils::getHighestConfidencePath(o.predicted_paths);
-      if (!run_out_utils::pathIntersectsEgoCutLine(
-            predicted_path, current_pose, 4.0, ego_cut_lane, intersection_point)) {
-        extracted_obstacles.push_back(o);
-      }
-    });
+  const double ego_cut_lane_half_width = planner_param_.run_out.egos_cut_lane_length / 2.0;
+  std::for_each(dynamic_obstacles.begin(), dynamic_obstacles.end(), [&](const auto & o) {
+    const auto predicted_path = run_out_utils::getHighestConfidencePath(o.predicted_paths);
+    if (!run_out_utils::pathIntersectsEgoCutLine(
+          predicted_path, current_pose, ego_cut_lane_half_width, ego_cut_lane)) {
+      extracted_obstacles.push_back(o);
+    }
+  });
+  debug_ptr_->pushEgoCutLane(ego_cut_lane);
   return extracted_obstacles;
 }
 
