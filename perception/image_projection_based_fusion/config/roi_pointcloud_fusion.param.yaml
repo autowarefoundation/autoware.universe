@@ -3,3 +3,13 @@
     fuse_unknown_only: true
     min_cluster_size: 2
     cluster_2d_tolerance: 0.5
+
+    # fusion interface common params
+    debug_mode: false
+    image_buffer_size: 15
+    filter_scope_min_x: -100.0
+    filter_scope_min_y: -100.0
+    filter_scope_min_z: -100.0
+    filter_scope_max_x: 100.0
+    filter_scope_max_y: 100.0
+    filter_scope_max_z: 100.0

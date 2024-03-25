@@ -29,6 +29,7 @@
     # calibration accuracy and unknown reaction distance
     filter_distance_threshold: 60.0
 
+    # fusion interface common params
     # debug
     debug_mode: false
     filter_scope_min_x: -100

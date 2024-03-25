@@ -10,3 +10,13 @@
     iou_threshold: 0.65
     unknown_iou_threshold: 0.1
     remove_unknown: true
+
+    # fusion interface common params
+    debug_mode: false
+    image_buffer_size: 15
+    filter_scope_min_x: -100.0
+    filter_scope_min_y: -100.0
+    filter_scope_min_z: -100.0
+    filter_scope_max_x: 100.0
+    filter_scope_max_y: 100.0
+    filter_scope_max_z: 100.0
