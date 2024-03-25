@@ -64,11 +64,11 @@ struct RunOutParam
   bool use_partition_lanelet;
   bool suppress_on_crosswalk;
   bool specify_decel_jerk;
-  bool use_ego_cut_lane;
+  bool use_ego_cut_line;
   double stop_margin;
   double passing_margin;
   double deceleration_jerk;
-  double egos_cut_lane_length;
+  double egos_cut_line_length;
   float detection_distance;
   float detection_span;
   float min_vel_ego_kmph;

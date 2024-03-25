@@ -108,7 +108,7 @@ bool RunOutModule::modifyPathVelocity(
       excludeObstaclesOutSideOfPartition(dynamic_obstacles, extended_smoothed_path, current_pose);
 
     // extract obstacles that cross the ego's back lane
-    if (!planner_param_.run_out.use_ego_cut_lane) return partition_excluded_obstacles;
+    if (!planner_param_.run_out.use_ego_cut_line) return partition_excluded_obstacles;
 
     const auto ego_back_line_excluded_obstacles =
       excludeObstaclesCrossingEgoBackLine(partition_excluded_obstacles, current_pose);
@@ -824,7 +824,7 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoBackLine(
 {
   std::vector<DynamicObstacle> extracted_obstacles;
   std::vector<geometry_msgs::msg::Point> ego_cut_lane;
-  const double ego_cut_lane_half_width = planner_param_.run_out.egos_cut_lane_length / 2.0;
+  const double ego_cut_lane_half_width = planner_param_.run_out.egos_cut_line_length / 2.0;
   std::for_each(dynamic_obstacles.begin(), dynamic_obstacles.end(), [&](const auto & o) {
     const auto predicted_path = run_out_utils::getHighestConfidencePath(o.predicted_paths);
     if (!run_out_utils::pathIntersectsEgoCutLine(
