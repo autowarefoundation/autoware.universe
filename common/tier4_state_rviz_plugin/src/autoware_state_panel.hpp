@@ -17,6 +17,7 @@
 #ifndef AUTOWARE_STATE_PANEL_HPP_
 #define AUTOWARE_STATE_PANEL_HPP_
 
+#include "custom_slider.hpp"
 #include "custom_toggle_switch.hpp"
 
 #include <QGroupBox>
@@ -157,8 +158,8 @@ protected:
   void onMotion(const MotionState::ConstSharedPtr msg);
 
   // FailSafe
-  QLabel * mrm_state_label_ptr_{nullptr};
-  QLabel * mrm_behavior_label_ptr_{nullptr};
+  QPushButton * mrm_state_label_ptr_{nullptr};
+  QPushButton * mrm_behavior_label_ptr_{nullptr};
 
   rclcpp::Subscription<MRMState>::SharedPtr sub_mrm_;
 
@@ -196,6 +197,12 @@ protected:
   {
     label->setText(text);
     label->setStyleSheet(style_sheet);
+  }
+
+  static void updateButton(QPushButton * button, QString text, QString style_sheet)
+  {
+    button->setText(text);
+    button->setStyleSheet(style_sheet);
   }
 
   static void activateButton(QAbstractButton * button)
