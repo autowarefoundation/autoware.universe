@@ -66,8 +66,6 @@ void NDTMapper::points_callback(
   // 3. Pub all result message
   Eigen::Matrix3f mat_l, mat_b; //source_code: tf2::Matrix3x3 mat_l, mat_b;
   t_base_link = t_localizer * tf_ltob; // from lidar to base_link fix matrix
-  
-
   mat_l = setValue(t_localizer);
   mat_b = setValue(t_base_link);
 

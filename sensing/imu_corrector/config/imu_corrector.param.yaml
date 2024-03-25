@@ -1,0 +1,6 @@
+angular_velocity_offset_x: 0.0389031982421875    # [rad/s]
+angular_velocity_offset_y: -0.40160070800781245    # [rad/s]
+angular_velocity_offset_z: 9.874230224609374    # [rad/s]
+angular_velocity_stddev_xx: 0.03  # [rad/s]
+angular_velocity_stddev_yy: 0.03  # [rad/s]
+angular_velocity_stddev_zz: 0.03  # [rad/s]

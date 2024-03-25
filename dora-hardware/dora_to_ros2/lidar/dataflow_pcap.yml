@@ -2,7 +2,7 @@ nodes:
   #rslidar driver   node
   - id: rslidar_driver
     custom:
-      source: build/rs_driver_dora_pcap
+      source: build/rslidar_driver_pcap
       inputs:
         tick: dora/timer/millis/100
       outputs:

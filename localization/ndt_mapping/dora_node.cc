@@ -12,7 +12,7 @@ extern "C"
 #include <pcl/point_cloud.h>
 #include <pcl/impl/point_types.hpp>
 
-int max_save = 100;
+int max_save = 1000;
 
 int mapping(void *dora_context, ndt_mapping::NDTMapper &mapper){
     if (dora_context == NULL)

@@ -12,6 +12,8 @@ import pyarrow as pa
 import numpy as np
 import dora
 import random
+import json
+from json import *
 serial_port = "/dev/ttyUSB0"
 serial_baud = 115200
 class Operator:
@@ -62,7 +64,7 @@ class Operator:
             # if self.IMU and self.IMU.is_open:
             #     self.IMU.close()
             # self.IMU.open()
-            self.tmp = self.IMU.write(('\xA5\x5A\x04\x01\x05\xAA' + chr(13)).encode())
+            self.tmp = self.IMU.write(('\xA5\x5A\x04\x01\x05\xAA\X' + chr(13)).encode())
 
         except serial.SerialException as ex:
             print(
@@ -133,7 +135,7 @@ class Operator:
             if len(self.data) > 0:
                 if 0xa5 == self.data[0] and 0x5a == self.data[1] and 0xaa == self.data[len(self.data)-1]:
                     yaw_deg = ( self.H_(self.data[3]) + self.L_(self.data[4]) )/10.0
-                    yaw_deg = self.imu_yaw_calibration
+                    # yaw_deg = self.imu_yaw_calibration
                     if yaw_deg > 180.0:
                         yaw_deg = yaw_deg - 360.0
                     if yaw_deg < -180.0:
@@ -178,12 +180,18 @@ class Operator:
                             "z": self.accel_data['z'],
                         },
                     }
+                    # 假设 json_string 是收到的 JSON 数据字符串
+                    # json_dict = json.loads(imu_dict)
+                    # 将 imu_dict 转换为 JSON 格式的字符串
+                    # json_string = json.dumps(imu_dict)
+                    json_string = json.dumps(imu_dict, indent=4)  # 使用indent参数设置缩进宽度为4
+                    print(json_string)
+                    # 将 JSON 字符串转换为字节串
+                    json_bytes = json_string.encode('utf-8')
                     print(pa.array([imu_dict]))
                     self.imu_writer.publish(pa.array([imu_dict]))
-                    # serialized_data = pickle.dumps(imu_dict)
-                    # send_output("Imu100D4",
-                    #             serialized_data,
-                    #             dora_event["metadata"])
+                    serialized_data = pickle.dumps(imu_dict)
+                    send_output("Imu100D4",json_bytes,dora_event["metadata"])
 
 
         

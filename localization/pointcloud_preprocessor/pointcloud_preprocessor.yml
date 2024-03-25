@@ -40,4 +40,3 @@ nodes:
         inputs:
           pointcloud: ring_outlier_fliter/pointcloud
 
-

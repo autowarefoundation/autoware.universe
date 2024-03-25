@@ -1,0 +1,26 @@
+nodes:
+  - id: imu
+    operator:
+      python: ../../dora-hardware/dora_to_ros2/imu/imu.py
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - Imu100D4
+
+    env:
+      DEVICE_INDEX: 0
+
+  - id: imu_corrector
+    custom:
+      source: build/imu_corrector_core
+      inputs:
+        Imu100D4: imu/Imu100D4 
+      outputs:
+        - Imu100D4
+
+
+  # - id: test
+  #   operator:
+  #     python: test.py
+  #     inputs:
+  #       Imu100D4: imu_corrector/Imu100D4

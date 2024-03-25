@@ -1,8 +1,8 @@
 extern "C"
 {
-#include "/home/crp/dora_project/dora-rs/dora/apis/c/node/node_api.h"   
-#include "/home/crp/dora_project/dora-rs/dora/apis/c/operator/operator_api.h"
-#include "/home/crp/dora_project/dora-rs/dora/apis/c/operator/operator_types.h"
+#include "node_api.h"   
+#include "operator_api.h"
+#include "operator_types.h"
 }
 
 #include <iostream>
