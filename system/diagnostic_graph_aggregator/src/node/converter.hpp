@@ -19,15 +19,32 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <functional>
+#include <map>  // Use map for sorting keys.
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace diagnostic_graph_aggregator
 {
 
-class ToolNode : public rclcpp::Node
+struct TreeNode
+{
+  explicit TreeNode(bool leaf) : leaf(leaf) {}
+  bool leaf;
+  TreeNode * parent;
+  uint8_t level;
+};
+
+class ConverterNode : public rclcpp::Node
 {
 public:
-  ToolNode();
+  ConverterNode();
 
 private:
+  bool initialize_tree_;
+  bool complement_tree_;
+  std::map<std::string, std::unique_ptr<TreeNode>, std::greater<std::string>> tree_;
   rclcpp::Subscription<DiagnosticGraph>::SharedPtr sub_graph_;
   rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_array_;
   void on_graph(const DiagnosticGraph::ConstSharedPtr msg);
