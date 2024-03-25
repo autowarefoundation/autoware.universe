@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>learned_model</name>
+  <name>learning_based_vehicle_model</name>
   <version>1.0.0</version>
-  <description>learned_model for simple_planning_simulator</description>
+  <description>learning_based_vehicle_model for simple_planning_simulator</description>
   <maintainer email="maxime.clement@tier4.jp">Maxime Clement</maintainer>
   <maintainer email="nagy.tomas@tier4.jp">Tomas Nagy</maintainer>
   <license>Apache License 2.0</license>

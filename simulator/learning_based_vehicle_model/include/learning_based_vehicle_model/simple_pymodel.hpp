@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LEARNED_MODEL__SIMPLE_PYMODEL_HPP_
-#define LEARNED_MODEL__SIMPLE_PYMODEL_HPP_
+#ifndef LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
+#define LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
 
-#include "learned_model/model_connections_helpers.hpp"
-#include "learned_model/submodel_interface.hpp"
+#include "learning_based_vehicle_model/model_connections_helpers.hpp"
+#include "learning_based_vehicle_model/submodel_interface.hpp"
 
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
@@ -96,4 +96,4 @@ public:
   void mapOutputs(std::vector<char *> signals_vec_names) override;
 };
 
-#endif  // LEARNED_MODEL__SIMPLE_PYMODEL_HPP_
+#endif  // LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_

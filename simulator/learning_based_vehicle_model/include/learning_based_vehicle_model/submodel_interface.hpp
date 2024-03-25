@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LEARNED_MODEL__SUBMODEL_INTERFACE_HPP_
-#define LEARNED_MODEL__SUBMODEL_INTERFACE_HPP_
+#ifndef LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
+#define LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
 
 #include <vector>
 
@@ -57,4 +57,4 @@ public:
     std::vector<double> model_signals_vec, std::vector<double> model_signals_vec_next) = 0;
 };
 
-#endif  // LEARNED_MODEL__SUBMODEL_INTERFACE_HPP_
+#endif  // LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_

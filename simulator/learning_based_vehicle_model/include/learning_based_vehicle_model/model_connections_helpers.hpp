@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LEARNED_MODEL__MODEL_CONNECTIONS_HELPERS_HPP_
-#define LEARNED_MODEL__MODEL_CONNECTIONS_HELPERS_HPP_
+#ifndef LEARNING_BASED_VEHICLE_MODEL__MODEL_CONNECTIONS_HELPERS_HPP_
+#define LEARNING_BASED_VEHICLE_MODEL__MODEL_CONNECTIONS_HELPERS_HPP_
 
 #include <cstring>
 #include <vector>
@@ -24,4 +24,4 @@ std::vector<double> fillVectorUsingMap(
 std::vector<int> createConnectionsMap(
   std::vector<char *> connection_names_1, std::vector<char *> connection_names_2);
 
-#endif  // LEARNED_MODEL__MODEL_CONNECTIONS_HELPERS_HPP_
+#endif  // LEARNING_BASED_VEHICLE_MODEL__MODEL_CONNECTIONS_HELPERS_HPP_

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "learned_model/interconnected_model.hpp"
+#include "learning_based_vehicle_model/interconnected_model.hpp"
 
 void InterconnectedModel::mapInputs(std::vector<char *> in_names)
 {

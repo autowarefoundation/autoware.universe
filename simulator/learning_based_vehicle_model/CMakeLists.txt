@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14.4)
-project(learned_model)
+project(learning_based_vehicle_model)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

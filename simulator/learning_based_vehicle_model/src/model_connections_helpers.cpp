@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "learned_model/model_connections_helpers.hpp"
+#include "learning_based_vehicle_model/model_connections_helpers.hpp"
 
 std::vector<double> fillVectorUsingMap(
   std::vector<double> vector1, std::vector<double> vector2, std::vector<int> map, bool inverse)

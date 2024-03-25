@@ -15,7 +15,7 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_LEARNED_STEER_VEL_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_LEARNED_STEER_VEL_HPP_
 
-#include "learned_model/interconnected_model.hpp"
+#include "learning_based_vehicle_model/interconnected_model.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 #include <Eigen/Core>
