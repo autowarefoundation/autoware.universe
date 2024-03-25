@@ -30,6 +30,9 @@
 
 #include <fmt/format.h>
 #include <stdio.h>
+#include <sys/statvfs.h>
+#include <fstream>
+#include <sstream>
 
 #include <algorithm>
 #include <filesystem>
@@ -242,105 +245,53 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   int hdd_index = 0;
+  int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   std::string error_str = "";
+  struct statvfs buffer;
+  unsigned long total;
+  unsigned long available;
+  unsigned long used;
+  unsigned long capacity;
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
     if (!hdd_connected_flags_[itr->first]) {
       continue;
     }
 
-    // Get summary of disk space usage of ext4
+    if (statvfs(itr->second.part_device_.c_str(), &buffer) == 0) {
+      unsigned long total_blocks = buffer.f_blocks;
+      unsigned long free_blocks = buffer.f_bfree;
+      unsigned long available_blocks = buffer.f_bavail;
+      unsigned long block_size = buffer.f_bsize;
 
-    // boost::process create file descriptor without O_CLOEXEC required for multithreading.
-    // So create file descriptor with O_CLOEXEC and pass it to boost::process.
-    int out_fd[2];
-    if (pipe2(out_fd, O_CLOEXEC) != 0) {
-      error_str = "pipe2 error";
-      stat.add(fmt::format("HDD {}: status", hdd_index), "pipe2 error");
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->first.c_str());
-      stat.add(fmt::format("HDD {}: pipe2", hdd_index), strerror(errno));
-      continue;
-    }
-    bp::pipe out_pipe{out_fd[0], out_fd[1]};
-    bp::ipstream is_out{std::move(out_pipe)};
-
-    int err_fd[2];
-    if (pipe2(err_fd, O_CLOEXEC) != 0) {
-      error_str = "pipe2 error";
-      stat.add(fmt::format("HDD {}: status", hdd_index), "pipe2 error");
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->first.c_str());
-      stat.add(fmt::format("HDD {}: pipe2", hdd_index), strerror(errno));
-      continue;
-    }
-    bp::pipe err_pipe{err_fd[0], err_fd[1]};
-    bp::ipstream is_err{std::move(err_pipe)};
-
-    // Invoke shell to use shell wildcard expansion
-    bp::child c(
-      "/bin/sh", "-c", fmt::format("df -Pm {}*", itr->second.part_device_.c_str()),
-      bp::std_out > is_out, bp::std_err > is_err);
-    c.wait();
-
-    if (c.exit_code() != 0) {
-      std::ostringstream os;
-      is_err >> os.rdbuf();
-      error_str = "df error";
-      stat.add(fmt::format("HDD {}: status", hdd_index), "df error");
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.part_device_.c_str());
-      stat.add(fmt::format("HDD {}: df", hdd_index), os.str().c_str());
-      continue;
+      // 単位をメガバイト(MiB)に変換
+      total = (total_blocks * block_size) / (1024 * 1024);
+      unsigned long free = (free_blocks * block_size) / (1024 * 1024);
+      available = (available_blocks * block_size) / (1024 * 1024);
+      used = total - free;
+      capacity = (used * 100) / total;
+    } else {
+      stat.add(fmt::format("HDD {}: status", hdd_index), "getting filesystem statistics error");
     }
 
-    int level = DiagStatus::OK;
-    std::string line;
-    int index = 0;
-    std::vector<std::string> list;
-    int avail;
-
-    while (std::getline(is_out, line) && !line.empty()) {
-      // Skip header
-      if (index <= 0) {
-        ++index;
-        continue;
-      }
-
-      boost::split(list, line, boost::is_space(), boost::token_compress_on);
-
-      try {
-        avail = std::stoi(list[3].c_str());
-      } catch (std::exception & e) {
-        avail = -1;
-        error_str = e.what();
-        stat.add(fmt::format("HDD {}: status", hdd_index), "avail string error");
-      }
-
-      if (avail <= itr->second.free_error_) {
-        level = DiagStatus::ERROR;
-      } else if (avail <= itr->second.free_warn_) {
-        level = DiagStatus::WARN;
-      } else {
-        level = DiagStatus::OK;
-      }
-
-      stat.add(fmt::format("HDD {}: status", hdd_index), usage_dict_.at(level));
-      stat.add(fmt::format("HDD {}: filesystem", hdd_index), list[0].c_str());
-      stat.add(fmt::format("HDD {}: size", hdd_index), (list[1] + " MiB").c_str());
-      stat.add(fmt::format("HDD {}: used", hdd_index), (list[2] + " MiB").c_str());
-      stat.add(fmt::format("HDD {}: avail", hdd_index), (list[3] + " MiB").c_str());
-      stat.add(fmt::format("HDD {}: use", hdd_index), list[4].c_str());
-      std::string mounted_ = list[5];
-      if (list.size() > 6) {
-        std::string::size_type pos = line.find("% /");
-        if (pos != std::string::npos) {
-          mounted_ = line.substr(pos + 2);  // 2 is "% " length
-        }
-      }
-      stat.add(fmt::format("HDD {}: mounted on", hdd_index), mounted_.c_str());
-
-      whole_level = std::max(whole_level, level);
-      ++index;
+    if (available <= itr->second.free_error_) {
+      level = DiagStatus::ERROR;
+    } else if (available <= itr->second.free_warn_) {
+      level = DiagStatus::WARN;
+    } else {
+      level = DiagStatus::OK;
     }
+
+    stat.add(fmt::format("HDD {}: status", hdd_index), usage_dict_.at(level));
+    stat.add(fmt::format("HDD {}: filesystem", hdd_index), itr->second.part_device_.c_str());
+    stat.add(fmt::format("HDD {}: size", hdd_index), (std::to_string(total) + " MiB").c_str());
+    stat.add(fmt::format("HDD {}: used", hdd_index), (std::to_string(used) + " MiB").c_str());
+    stat.add(fmt::format("HDD {}: avail", hdd_index), (std::to_string(available) + " MiB").c_str());
+    stat.add(fmt::format("HDD {}: use", hdd_index), (std::to_string(capacity) + " %").c_str());
+    stat.add(fmt::format("HDD {}: mounted on", hdd_index), itr->first.c_str());
+
+    whole_level = std::max(whole_level, level);
   }
 
   if (!error_str.empty()) {
@@ -538,42 +489,31 @@ void HddMonitor::getHddParams()
 
 std::string HddMonitor::getDeviceFromMountPoint(const std::string & mount_point)
 {
-  std::string ret;
+  std::string line;
 
-  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
-  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
-  int out_fd[2];
-  if (pipe2(out_fd, O_CLOEXEC) != 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to execute pipe2. %s", strerror(errno));
-    return "";
-  }
-  bp::pipe out_pipe{out_fd[0], out_fd[1]};
-  bp::ipstream is_out{std::move(out_pipe)};
+  std::ifstream ifs("/proc/mounts");
 
-  int err_fd[2];
-  if (pipe2(err_fd, O_CLOEXEC) != 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to execute pipe2. %s", strerror(errno));
-    return "";
-  }
-  bp::pipe err_pipe{err_fd[0], err_fd[1]};
-  bp::ipstream is_err{std::move(err_pipe)};
-
-  bp::child c(
-    "/bin/sh", "-c", fmt::format("findmnt -n -o SOURCE {}", mount_point.c_str()),
-    bp::std_out > is_out, bp::std_err > is_err);
-  c.wait();
-
-  if (c.exit_code() != 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to execute findmnt. %s", mount_point.c_str());
+  if (!ifs) {
+    RCLCPP_ERROR(get_logger(), "Failed to open /proc/mounts with ifstream.");
     return "";
   }
 
-  if (!std::getline(is_out, ret)) {
-    RCLCPP_ERROR(get_logger(), "Failed to find device name. %s", mount_point.c_str());
-    return "";
+  while (std::getline(ifs, line)) {
+    std::istringstream iss(line);
+    std::string source, target, fstype, options, dump, pass;
+
+    if (!(iss >> source >> target >> fstype >> options >> dump >> pass)) {
+      RCLCPP_ERROR(get_logger(), "Failed to reading a line /proc/mounts.");
+      continue;
+    }
+
+    if (target == mount_point) {
+        return source;
+    }
   }
 
-  return ret;
+  RCLCPP_ERROR(get_logger(), "Failed to find device name %s in /proc/mounts" , mount_point.c_str());
+  return "";
 }
 
 void HddMonitor::onTimer()
