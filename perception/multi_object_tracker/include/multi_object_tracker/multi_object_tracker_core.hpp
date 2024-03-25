@@ -97,8 +97,14 @@ private:
     tracked_objects_pub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
+  bool enable_delay_compensation_;
+  // timer control
   rclcpp::TimerBase::SharedPtr publish_timer_;  // publish timer
   rclcpp::Time last_published_time_;
+  constexpr static double min_publish_interval_ =
+    0.02;  // minimum interval to prevent too many publish[sec]
+  constexpr static double max_publish_delay_ =
+    0.02;  // maximum delay allowed for publisher from input[sec]
 
   // debugger class
   std::unique_ptr<TrackerDebugger> debugger_;
@@ -121,6 +127,7 @@ private:
     const geometry_msgs::msg::Transform & self_transform);
   void sanitizeTracker(
     std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time);
+  void fixTimerPhase();
   std::shared_ptr<Tracker> createNewTracker(
     const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) const;
