@@ -141,8 +141,7 @@ struct Trajectory : sampler_common::Trajectory
 inline std::ostream & operator<<(std::ostream & os, const SamplingParameter & sp)
 {
   const auto & s = sp.target_state;
-  return os << "["
-            << "T=" << sp.target_duration << ", s=" << s.position.s << ", d=" << s.position.d
+  return os << "[" << "T=" << sp.target_duration << ", s=" << s.position.s << ", d=" << s.position.d
             << ", s'=" << s.longitudinal_velocity << ", d'=" << s.lateral_velocity
             << ", s\"=" << s.longitudinal_acceleration << ", d\"=" << s.lateral_acceleration << "]";
 }

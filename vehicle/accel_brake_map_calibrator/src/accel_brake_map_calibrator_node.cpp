@@ -286,15 +286,14 @@ void AccelBrakeMapCalibrator::timerCallback()
     "map updating... count: " << update_success_count_ << " / " << update_count_ << "\n\t"
                               << "lack_of_data_count: " << lack_of_data_count_ << "\n\t"
                               << " failed_to_get_pitch_count: " << failed_to_get_pitch_count_
+                              << "\n\t" << "too_large_pitch_count: " << too_large_pitch_count_
+                              << "\n\t" << " too_low_speed_count: " << too_low_speed_count_
+                              << "\n\t" << "too_large_steer_count: " << too_large_steer_count_
+                              << "\n\t" << "too_large_jerk_count: " << too_large_jerk_count_
+                              << "\n\t" << "invalid_acc_brake_count: " << invalid_acc_brake_count_
                               << "\n\t"
-                              << "too_large_pitch_count: " << too_large_pitch_count_ << "\n\t"
-                              << " too_low_speed_count: " << too_low_speed_count_ << "\n\t"
-                              << "too_large_steer_count: " << too_large_steer_count_ << "\n\t"
-                              << "too_large_jerk_count: " << too_large_jerk_count_ << "\n\t"
-                              << "invalid_acc_brake_count: " << invalid_acc_brake_count_ << "\n\t"
                               << "too_large_pedal_spd_count: " << too_large_pedal_spd_count_
-                              << "\n\t"
-                              << "update_fail_count_: " << update_fail_count_ << "\n");
+                              << "\n\t" << "update_fail_count_: " << update_fail_count_ << "\n");
 
   /* valid check */
 
@@ -1031,8 +1030,7 @@ bool AccelBrakeMapCalibrator::updateEachValOffset(
   RCLCPP_DEBUG_STREAM(
     get_logger(), "index: " << ped_idx << ", " << vel_idx
                             << ": map_offset_ = " << map_offset_vec_.at(ped_idx).at(vel_idx)
-                            << " -> " << map_offset << "\t"
-                            << " covariance = " << covariance);
+                            << " -> " << map_offset << "\t" << " covariance = " << covariance);
 
   /* input calculated result and update map */
   map_offset_vec_.at(ped_idx).at(vel_idx) = map_offset;
@@ -1060,8 +1058,7 @@ void AccelBrakeMapCalibrator::updateTotalMapOffset(const double measured_acc, co
   map_offset_ = map_offset_ + coef * error_map_offset;
 
   RCLCPP_DEBUG_STREAM(
-    get_logger(), "map_offset_ = " << map_offset_ << "\t"
-                                   << "covariance = " << covariance_);
+    get_logger(), "map_offset_ = " << map_offset_ << "\t" << "covariance = " << covariance_);
 
   /* update map */
   for (std::size_t ped_idx = 0; ped_idx < update_accel_map_value_.size() - 1; ped_idx++) {

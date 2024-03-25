@@ -421,8 +421,7 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
         size_t reuse_idx = 0;
         for (reuse_idx = 0; reuse_idx + 1 < prev_path_->lengths.size() &&
                             prev_path_->lengths[reuse_idx] < reuse_length;
-             ++reuse_idx)
-          ;
+             ++reuse_idx);
         if (reuse_idx == 0UL) continue;
         const auto reused_path = *prev_path_->subset(0UL, reuse_idx);
         reuse_state.curvature = reused_path.curvatures.back();

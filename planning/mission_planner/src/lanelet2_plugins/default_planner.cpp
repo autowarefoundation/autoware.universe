@@ -391,8 +391,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
 
   std::stringstream log_ss;
   for (const auto & point : points) {
-    log_ss << "x: " << point.position.x << " "
-           << "y: " << point.position.y << std::endl;
+    log_ss << "x: " << point.position.x << " " << "y: " << point.position.y << std::endl;
   }
   RCLCPP_DEBUG_STREAM(
     logger, "start planning route with check points: " << std::endl
