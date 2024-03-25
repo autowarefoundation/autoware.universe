@@ -60,11 +60,11 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
 
   diagnostic_v_layout->addLayout(routing_group);
   // add space between routing and localization
-  diagnostic_v_layout->addSpacing(10);
+  diagnostic_v_layout->addSpacing(5);
   diagnostic_v_layout->addLayout(localization_group);
-  diagnostic_v_layout->addSpacing(10);
+  diagnostic_v_layout->addSpacing(5);
   diagnostic_v_layout->addLayout(motion_group);
-  diagnostic_v_layout->addSpacing(10);
+  diagnostic_v_layout->addSpacing(5);
   diagnostic_v_layout->addLayout(fail_safe_group);
   diagnostic_group->setLayout(diagnostic_v_layout);
   main_v_layout->addWidget(diagnostic_group);
@@ -118,7 +118,7 @@ QGroupBox * AutowareStatePanel::makeOperationModeGroup()
   vLayout->addLayout(hLayoutTop);
 
   // create a small space between the hlayouttop and the hlayoutbottom
-  vLayout->addSpacing(10);
+  vLayout->addSpacing(5);
 
   // auto * hLayoutMid = new QHBoxLayout;
   // hLayoutMid->addWidget(auto_button_ptr_);
@@ -150,6 +150,8 @@ QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
     "border-radius: 20;border: 2px solid #00e678;background-color: #00e678");
 
   clear_route_button_ptr_ = new QPushButton("Clear Route");
+  clear_route_button_ptr_->setFixedWidth(
+    clear_route_button_ptr_->fontMetrics().horizontalAdvance("CLEAR EMERGENCY") + 20);
   clear_route_button_ptr_->setCheckable(true);
   clear_route_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(clear_route_button_ptr_, SIGNAL(clicked()), SLOT(onClickClearRoute()));
@@ -173,6 +175,8 @@ QVBoxLayout * AutowareStatePanel::makeLocalizationGroup()
   auto * h_layout = new QHBoxLayout;
 
   init_by_gnss_button_ptr_ = new QPushButton("Init by GNSS");
+  init_by_gnss_button_ptr_->setFixedWidth(
+    init_by_gnss_button_ptr_->fontMetrics().horizontalAdvance("CLEAR EMERGENCY") + 20);
   init_by_gnss_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(init_by_gnss_button_ptr_, SIGNAL(clicked()), SLOT(onClickInitByGnss()));
 
@@ -198,6 +202,8 @@ QVBoxLayout * AutowareStatePanel::makeMotionGroup()
   auto * h_layout = new QHBoxLayout;
 
   accept_start_button_ptr_ = new QPushButton("Accept Start");
+  accept_start_button_ptr_->setFixedWidth(
+    accept_start_button_ptr_->fontMetrics().horizontalAdvance("CLEAR EMERGENCY") + 20);
   accept_start_button_ptr_->setCheckable(true);
   accept_start_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(accept_start_button_ptr_, SIGNAL(clicked()), SLOT(onClickAcceptStart()));
@@ -225,23 +231,15 @@ QVBoxLayout * AutowareStatePanel::makeFailSafeGroup()
   auto * mrm_state_layout = new QHBoxLayout;
   auto * mrm_behavior_layout = new QHBoxLayout;
 
-  mrm_state_label_ptr_ = new QLabel("INIT");
-  mrm_state_label_ptr_->setAlignment(Qt::AlignCenter);
-  mrm_state_label_ptr_->setStyleSheet("border:2px solid red;");
-  // make this label to be a fixed size of a specfic word
+  mrm_state_label_ptr_ = new QPushButton("INIT");
+  mrm_state_label_ptr_->setDisabled(true);
   mrm_state_label_ptr_->setFixedWidth(
-    mrm_state_label_ptr_->fontMetrics().horizontalAdvance("COMFORTABLE_STOP") + 8);
-  // same with height
-  mrm_state_label_ptr_->setFixedHeight(mrm_state_label_ptr_->fontMetrics().height() + 16);
+    mrm_state_label_ptr_->fontMetrics().horizontalAdvance("CLEAR EMERGENCY") + 65);
 
-  mrm_behavior_label_ptr_ = new QLabel("INIT");
-  mrm_behavior_label_ptr_->setAlignment(Qt::AlignCenter);
-  mrm_behavior_label_ptr_->setStyleSheet("border:1px solid black;");
-  // make this label to be a fixed size of a specfic word
+  mrm_behavior_label_ptr_ = new QPushButton("INIT");
+  mrm_behavior_label_ptr_->setDisabled(true);
   mrm_behavior_label_ptr_->setFixedWidth(
-    mrm_behavior_label_ptr_->fontMetrics().horizontalAdvance("COMFORTABLE_STOP") + 8);
-  // same with height
-  mrm_behavior_label_ptr_->setFixedHeight(mrm_behavior_label_ptr_->fontMetrics().height() + 16);
+    mrm_behavior_label_ptr_->fontMetrics().horizontalAdvance("CLEAR EMERGENCY") + 65);
 
   auto * mrm_state_label_title_ptr_ = new QLabel("MRM State: ");
   auto * mrm_behavior_label_title_ptr_ = new QLabel("MRM Behavior: ");
@@ -255,7 +253,7 @@ QVBoxLayout * AutowareStatePanel::makeFailSafeGroup()
   mrm_behavior_layout->addWidget(mrm_behavior_label_ptr_);
 
   v_layout->addLayout(mrm_state_layout);
-  v_layout->addSpacing(10);
+  v_layout->addSpacing(5);
   v_layout->addLayout(mrm_behavior_layout);
 
   group->addLayout(v_layout);
@@ -275,7 +273,7 @@ QGroupBox * AutowareStatePanel::makeVelocityLimitGroup()
   velocity_limit_value_label_->setMaximumWidth(
     velocity_limit_value_label_->fontMetrics().horizontalAdvance("999"));
 
-  QSlider * pub_velocity_limit_slider_ = new QSlider(Qt::Horizontal);
+  CustomSlider * pub_velocity_limit_slider_ = new CustomSlider(Qt::Horizontal);
   pub_velocity_limit_slider_->setRange(0, 100);
   pub_velocity_limit_slider_->setValue(0);
   pub_velocity_limit_slider_->setMaximumWidth(100);
@@ -573,31 +571,36 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     switch (msg->state) {
       case MRMState::NONE:
         text = "NONE";
-        style_sheet = "background-color: #00E678;color: black;font-weight: bold";  // green
+        style_sheet =
+          "background-color: #00E678;color: black;font-weight: bold;font-size: 12px;";  // green
         break;
 
       case MRMState::MRM_OPERATING:
         text = "MRM_OPERATING";
-        style_sheet = "background-color: #FFAE42;color: black;font-weight: bold";  // orange
+        style_sheet =
+          "background-color: #FFAE42;color: black;font-weight: bold;font-size: 12px;";  // orange
         break;
 
       case MRMState::MRM_SUCCEEDED:
         text = "MRM_SUCCEEDED";
-        style_sheet = "background-color: #F0E130;color: black;font-weight: bold";  // yellow
+        style_sheet =
+          "background-color: #F0E130;color: black;font-weight: bold;font-size: 12px;";  // yellow
         break;
 
       case MRMState::MRM_FAILED:
         text = "MRM_FAILED";
-        style_sheet = "background-color: #dc3545;color: black;font-weight: bold";  // red
+        style_sheet =
+          "background-color: #dc3545;color: black;font-weight: bold;font-size: 12px;";  // red
         break;
 
       default:
         text = "UNKNOWN";
-        style_sheet = "background-color: #dc3545;color: black;font-weight: bold";  // red
+        style_sheet =
+          "background-color: #dc3545;color: black;font-weight: bold;font-size: 12px;";  // red
         break;
     }
 
-    updateLabel(mrm_state_label_ptr_, text, style_sheet);
+    updateButton(mrm_state_label_ptr_, text, style_sheet);
   }
 
   // behavior
@@ -607,31 +610,36 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     switch (msg->behavior) {
       case MRMState::NONE:
         text = "NONE";
-        style_sheet = "background-color: #00E678;color: black;font-weight: bold";  // green
+        style_sheet =
+          "background-color: #00E678;color: black;font-weight: bold;font-size: 12px;";  // green
         break;
 
       case MRMState::PULL_OVER:
         text = "PULL_OVER";
-        style_sheet = "background-color: #F0E130;color: black;font-weight: bold";  // yellow
+        style_sheet =
+          "background-color: #F0E130;color: black;font-weight: bold;font-size: 12px;";  // yellow
         break;
 
       case MRMState::COMFORTABLE_STOP:
         text = "COMFORTABLE_STOP";
-        style_sheet = "background-color: #F0E130;color: black;font-weight: bold";  // yellow
+        style_sheet =
+          "background-color: #F0E130;color: black;font-weight: bold;font-size: 12px;";  // yellow
         break;
 
       case MRMState::EMERGENCY_STOP:
         text = "EMERGENCY_STOP";
-        style_sheet = "background-color: #FFAE42;color: black;font-weight: bold";  // orange
+        style_sheet =
+          "background-color: #FFAE42;color: black;font-weight: bold;font-size: 12px;";  // orange
         break;
 
       default:
         text = "UNKNOWN";
-        style_sheet = "background-color: #dc3545;color: black;font-weight: bold";  // red
+        style_sheet =
+          "background-color: #dc3545;color: black;font-weight: bold;font-size: 12px;";  // red
         break;
     }
 
-    updateLabel(mrm_behavior_label_ptr_, text, style_sheet);
+    updateButton(mrm_behavior_label_ptr_, text, style_sheet);
   }
 }
 
