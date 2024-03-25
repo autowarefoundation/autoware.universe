@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_INITIALIZER__NDT_MODULE_HPP_
-#define POSE_INITIALIZER__NDT_MODULE_HPP_
+#ifndef POSE_INITIALIZER__NERF_MODULE_HPP_
+#define POSE_INITIALIZER__NERF_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -35,4 +35,4 @@ private:
   rclcpp::Client<RequestPoseAlignment>::SharedPtr cli_align_;
 };
 
-#endif  // POSE_INITIALIZER__NDT_MODULE_HPP_
+#endif  // POSE_INITIALIZER__NERF_MODULE_HPP_
