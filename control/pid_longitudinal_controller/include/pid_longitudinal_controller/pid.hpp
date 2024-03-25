@@ -29,6 +29,7 @@ public:
   /**
    * @brief calculate the output of this PID
    * @param [in] error previous error
+   * @param [in] error_filtered filtered error
    * @param [in] dt time step [s]
    * @param [in] is_integrated if true, will use the integral component for calculation
    * @param [out] pid_contributions values of the proportional, integral, and derivative components
@@ -36,7 +37,7 @@ public:
    * @throw std::runtime_error if gains or limits have not been set
    */
   double calculate(
-    const double error, const double dt, const bool is_integrated,
+    const double error, const double error_filtered, const double dt, const bool is_integrated,
     std::vector<double> & pid_contributions);
   /**
    * @brief set the coefficients for the P (proportional) I (integral) D (derivative) terms

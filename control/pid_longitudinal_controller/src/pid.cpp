@@ -32,7 +32,7 @@ PIDController::PIDController()
 }
 
 double PIDController::calculate(
-  const double error, const double dt, const bool enable_integration,
+  const double error, const double filtered_error, const double dt, const bool enable_integration,
   std::vector<double> & pid_contributions)
 {
   if (!m_is_gains_set || !m_is_limits_set) {
@@ -55,12 +55,12 @@ double PIDController::calculate(
     error_differential = 0;
     m_is_first_time = false;
   } else {
-    error_differential = (error - m_prev_error) / dt;
+    error_differential = (filtered_error - m_prev_error) / dt;
   }
   double ret_d = p.kd * error_differential;
   ret_d = std::min(std::max(ret_d, p.min_ret_d), p.max_ret_d);
 
-  m_prev_error = error;
+  m_prev_error = filtered_error;
 
   pid_contributions.resize(3);
   pid_contributions.at(0) = ret_p;
