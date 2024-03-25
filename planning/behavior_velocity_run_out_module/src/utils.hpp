@@ -105,8 +105,6 @@ struct ApproachingParam
 {
   bool enable;
   float margin;
-#include "tier4_autoware_utils/geometry/geometry.hpp"
-
   float limit_vel_kmph;
   StateParam state;
 };
@@ -219,7 +217,8 @@ inline geometry_msgs::msg::Vector3 rpyFromQuat(const geometry_msgs::msg::Quatern
 
 bool pathIntersectsEgoCutLine(
   const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
-  const double half_line_length);
+  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_lane,
+  std::optional<geometry_msgs::msg::Point> & intersection_point);
 
 // LineString2d createLineStringFromPath(const PredictedPath & path);
 

@@ -109,6 +109,8 @@ public:
   void pushPredictedVehiclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushPredictedObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
+  void pushEgoCutLane(const std::vector<geometry_msgs::msg::Point> & lane);
+  void pushCutLanePredictedPathIntersections(const std::vector<geometry_msgs::msg::Point> & points);
   void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushMandatoryDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushTravelTimeTexts(
@@ -140,6 +142,9 @@ private:
   std::vector<std::vector<geometry_msgs::msg::Point>> collision_obstacle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> detection_area_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> mandatory_detection_area_polygons_;
+  std::vector<std::vector<geometry_msgs::msg::Point>> ego_back_lane_;
+  std::vector<std::vector<geometry_msgs::msg::Point>> collision_with_back_lane_;
+
   std::vector<TextWithPosition> travel_time_texts_;
   DebugValues debug_values_;
   AccelReason accel_reason_;

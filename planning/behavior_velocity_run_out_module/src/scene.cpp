@@ -818,11 +818,14 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoBackLine(
   const geometry_msgs::msg::Pose & current_pose) const
 {
   std::vector<DynamicObstacle> extracted_obstacles;
+  std::vector<geometry_msgs::msg::Point> ego_cut_lane;
+  std::optional<geometry_msgs::msg::Point> intersection_point;
   std::for_each(
     dynamic_obstacles.begin(), dynamic_obstacles.end(),
     [&extracted_obstacles, &current_pose](const auto & o) {
       const auto predicted_path = run_out_utils::getHighestConfidencePath(o.predicted_paths);
-      if (!run_out_utils::pathIntersectsEgoCutLine(predicted_path, current_pose, 4.0)) {
+      if (!run_out_utils::pathIntersectsEgoCutLine(
+            predicted_path, current_pose, 4.0, ego_cut_lane, intersection_point)) {
         extracted_obstacles.push_back(o);
       }
     });
