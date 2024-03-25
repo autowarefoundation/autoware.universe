@@ -26,6 +26,7 @@
 
 #include <gtest/gtest.h>
 #include <rcl_yaml_param_parser/parser.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 
 #include <memory>
 #include <string>
@@ -56,7 +57,7 @@ protected:
     rcl_yaml_node_struct_fini(params_st);
 
     // prepare tf_static "base_link -> sensor_frame"
-    tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
+    tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
     geometry_msgs::msg::TransformStamped tf_static;
     tf_static.header.stamp.sec = 0;
     tf_static.header.stamp.nanosec = 0;
@@ -79,7 +80,7 @@ protected:
   }
 
   std::shared_ptr<NDTScanMatcher> node_;
-  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
   std::shared_ptr<StubPcdLoader> pcd_loader_;
   std::shared_ptr<StubInitialposeClient> initialpose_client_;
   std::shared_ptr<StubTriggerNodeClient> trigger_node_client_;
