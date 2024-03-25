@@ -306,8 +306,7 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
       cost = algo->getWaypoints().compute_length();
     }
 
-    std::cout << "plan success : " << msec << "[msec]"
-              << ", solution cost : " << cost << std::endl;
+    std::cout << "plan success : " << msec << "[msec]" << ", solution cost : " << cost << std::endl;
     const auto result = algo->getWaypoints();
     geometry_msgs::msg::PoseArray trajectory;
     for (const auto & pose : result.waypoints) {

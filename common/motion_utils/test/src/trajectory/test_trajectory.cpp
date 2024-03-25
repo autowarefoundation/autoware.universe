@@ -5379,8 +5379,7 @@ TEST(Trajectory, removeInvalidOrientationPoints)
   auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
 
   // no invalid points
-  testRemoveInvalidOrientationPoints(
-    traj, [](Trajectory &) {}, traj.points.size());
+  testRemoveInvalidOrientationPoints(traj, [](Trajectory &) {}, traj.points.size());
 
   // invalid point at the end
   testRemoveInvalidOrientationPoints(

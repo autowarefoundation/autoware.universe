@@ -96,15 +96,10 @@ std::ostream & operator<<(std::ostream & out, SimpleProfiler & value)
   {
     out << "index, " << std::setw(12);
     out << std::setw(maxLayerNameLength) << layerNameStr << " ";
-    out << std::setw(12) << "Runtime"
-        << "%,"
-        << " ";
-    out << std::setw(12) << "Invocations"
-        << " , ";
-    out << std::setw(12) << "Runtime[ms]"
-        << " , ";
-    out << std::setw(12) << "Avg Runtime[ms]"
-        << " ,";
+    out << std::setw(12) << "Runtime" << "%," << " ";
+    out << std::setw(12) << "Invocations" << " , ";
+    out << std::setw(12) << "Runtime[ms]" << " , ";
+    out << std::setw(12) << "Avg Runtime[ms]" << " ,";
     out << std::setw(12) << "Min Runtime[ms]" << std::endl;
   }
   int index = value.m_index;
@@ -114,8 +109,7 @@ std::ostream & operator<<(std::ostream & out, SimpleProfiler & value)
         out << i << ",   ";
         out << std::setw(maxLayerNameLength) << elem.first << ",";
         out << std::setw(12) << std::fixed << std::setprecision(1)
-            << (elem.second.time * 100.0F / totalTime) << "%"
-            << ",";
+            << (elem.second.time * 100.0F / totalTime) << "%" << ",";
         out << std::setw(12) << elem.second.count << ",";
         out << std::setw(12) << std::fixed << std::setprecision(2) << elem.second.time << ", ";
         out << std::setw(12) << std::fixed << std::setprecision(2)

@@ -302,8 +302,7 @@ void TrtCommon::printNetworkInfo(const std::string & onnx_file_path)
       total_gflops += gflops;
       total_params += num_weights;
       std::cout << "L" << i << " [conv " << k_dims.d[0] << "x" << k_dims.d[1] << " (" << groups
-                << ") "
-                << "/" << s_dims.d[0] << "] " << dim_in.d[3] << "x" << dim_in.d[2] << "x"
+                << ") " << "/" << s_dims.d[0] << "] " << dim_in.d[3] << "x" << dim_in.d[2] << "x"
                 << dim_in.d[1] << " -> " << dim_out.d[3] << "x" << dim_out.d[2] << "x"
                 << dim_out.d[1];
       std::cout << " weights:" << num_weights;
@@ -368,8 +367,7 @@ bool TrtCommon::buildEngineFromOnnx(
     if (num_available_dla > 0) {
       std::cout << "###" << num_available_dla << " DLAs are supported! ###" << std::endl;
     } else {
-      std::cout << "###Warning : "
-                << "No DLA is supported! ###" << std::endl;
+      std::cout << "###Warning : " << "No DLA is supported! ###" << std::endl;
     }
     config->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
     config->setDLACore(build_config_->dla_core_id);

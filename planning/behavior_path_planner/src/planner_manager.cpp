@@ -953,15 +953,13 @@ void PlannerManager::print() const
   string_stream << "\n";
   string_stream << "approved modules  : ";
   for (const auto & m : approved_module_ptrs_) {
-    string_stream << "[" << m->name() << "(" << get_status(m) << ")"
-                  << "]->";
+    string_stream << "[" << m->name() << "(" << get_status(m) << ")" << "]->";
   }
 
   string_stream << "\n";
   string_stream << "candidate module  : ";
   for (const auto & m : candidate_module_ptrs_) {
-    string_stream << "[" << m->name() << "(" << get_status(m) << ")"
-                  << "]->";
+    string_stream << "[" << m->name() << "(" << get_status(m) << ")" << "]->";
   }
 
   string_stream << "\n";
