@@ -36,18 +36,19 @@ from std_msgs.msg import Header
 logger = get_logger(__name__)
 
 INPUT_LIDAR_TOPICS = [
-                        "/test/sensing/lidar/front_upper/pointcloud",
-                        "/test/sensing/lidar/front_lower/pointcloud",
-                        "/test/sensing/lidar/left_upper/pointcloud",
-                        "/test/sensing/lidar/left_lower/pointcloud",
-                        "/test/sensing/lidar/right_upper/pointcloud",
-                        "/test/sensing/lidar/right_lower/pointcloud",
-                        "/test/sensing/lidar/rear_upper/pointcloud",
-                        "/test/sensing/lidar/rear_lower/pointcloud",
-                    ]
+    "/test/sensing/lidar/front_upper/pointcloud",
+    "/test/sensing/lidar/front_lower/pointcloud",
+    "/test/sensing/lidar/left_upper/pointcloud",
+    "/test/sensing/lidar/left_lower/pointcloud",
+    "/test/sensing/lidar/right_upper/pointcloud",
+    "/test/sensing/lidar/right_lower/pointcloud",
+    "/test/sensing/lidar/rear_upper/pointcloud",
+    "/test/sensing/lidar/rear_lower/pointcloud",
+]
 INPUT_LIDAR_TOPICS_OFFSET = [0.025, 0.025, 0.01, 0.0, 0.05, 0.05, 0.05, 0.05]
 TIMEOUT_SEC = 0.075
 INPUT_LIDAR_NUM_POINTS = [10, 10, 10, 10, 10, 10, 10, 10]
+
 
 @pytest.mark.launch_test
 def generate_test_description():
@@ -212,7 +213,7 @@ class TestConcatenateData(unittest.TestCase):
         header = Header()
         header.stamp = self.test_node.get_clock().now().to_msg()
         header.frame_id = "base_link"
-        
+
         # Publish velocity data
         for i in range(50):
             header_tmp = Header()
