@@ -24,7 +24,12 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
+#if __has_include(<image_geometry/pinhole_camera_model.hpp>)
+#include <image_geometry/pinhole_camera_model.hpp>
+#else
 #include <image_geometry/pinhole_camera_model.h>
+#endif
+
 #include <lanelet2_core/Forward.h>
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>

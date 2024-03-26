@@ -51,7 +51,11 @@
 #include <opencv4/opencv2/calib3d.hpp>
 #include <opencv4/opencv2/core/quaternion.hpp>
 
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 #include <tf2/LinearMath/Transform.h>
 
 #include <algorithm>
