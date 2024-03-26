@@ -204,19 +204,6 @@ struct DynamicObstacleData
 
 Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & input_poly);
 
-inline geometry_msgs::msg::Vector3 rpyFromQuat(const geometry_msgs::msg::Quaternion & q)
-{
-  tf2::Quaternion quat(q.x, q.y, q.z, q.w);
-  tf2::Matrix3x3 mat(quat);
-  double roll, pitch, yaw;
-  mat.getRPY(roll, pitch, yaw);
-  geometry_msgs::msg::Vector3 rpy;
-  rpy.x = roll;
-  rpy.y = pitch;
-  rpy.z = yaw;
-  return rpy;
-}
-
 bool pathIntersectsEgoCutLine(
   const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
   const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_lane);
