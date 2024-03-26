@@ -6,8 +6,6 @@
       resample_interval_for_output: 4.0                 # [m]
       # avoidance module common setting
       enable_bound_clipping: false
-      enable_yield_maneuver: true
-      enable_yield_maneuver_during_shifting: false
       enable_cancel_maneuver: true
       disable_path_update: false
 
@@ -155,8 +153,10 @@
         # params for avoidance of vehicle type objects that are ambiguous as to whether they are parked.
         avoidance_for_ambiguous_vehicle:
           enable: false                                  # [-]
-          time_threshold: 1.0                            # [s]
-          distance_threshold: 1.0                        # [m]
+          closest_distance_to_wait_and_see: 10.0         # [m]
+          condition:
+            time_threshold: 1.0                          # [s]
+            distance_threshold: 1.0                      # [m]
           ignore_area:
             traffic_light:
               front_distance: 100.0                      # [m]
@@ -245,7 +245,8 @@
 
       # For yield maneuver
       yield:
-        yield_velocity: 2.78                            # [m/s]
+        enable: true                                    # [-]
+        enable_during_shifting: false                   # [-]
 
       # For stop maneuver
       stop:
