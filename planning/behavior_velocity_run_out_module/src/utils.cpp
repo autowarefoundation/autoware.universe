@@ -181,20 +181,15 @@ bool pathIntersectsEgoCutLine(
   const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_lane)
 {
   if (path.size() < 2) return false;
-  const auto ego_rpy = rpyFromQuat(ego_pose.orientation);
-  const double ego_yaw = ego_rpy.z;
+  auto getOffsetPoint =
+    [](const geometry_msgs::msg::Pose & ego_pose, const double half_line_length) {
+      const auto p = tier4_autoware_utils::calcOffsetPose(ego_pose, 0.0, half_line_length, 0.0);
+      return tier4_autoware_utils::createPoint(p.position.x, p.position.y, p.position.z);
+    };
 
-  auto getOffsetPoint = [](
-                          const geometry_msgs::msg::Pose & ego_pose, const double half_line_length,
-                          const double angle) {
-    geometry_msgs::msg::Point p;
-    p.x = ego_pose.position.x + half_line_length * std::cos(angle);
-    p.y = ego_pose.position.y + half_line_length * std::sin(angle);
-    return p;
-  };
+  const auto p1 = getOffsetPoint(ego_pose, half_line_length);
+  const auto p2 = getOffsetPoint(ego_pose, -half_line_length);
 
-  const geometry_msgs::msg::Point p1 = getOffsetPoint(ego_pose, half_line_length, ego_yaw + M_PI_2);
-  const geometry_msgs::msg::Point p2 = getOffsetPoint(ego_pose, half_line_length, ego_yaw - M_PI_2);
   ego_cut_lane = {p1, p2};
   for (size_t i = 1; i < path.size(); ++i) {
     const geometry_msgs::msg::Point & p3 = path.at(i).position;
@@ -206,30 +201,6 @@ bool pathIntersectsEgoCutLine(
   }
   return false;
 }
-
-// LineString2d createLineStringFromPath(const PredictedPath & path)
-// {
-//   LineString2d line_string;
-
-//   for (const auto & p : path.path) {
-//     line_string.emplace_back(Point2d{p.position.x, p.position.y});
-//   }
-//   return line_string;
-// }
-
-// LineString2d createEgoCutLine(const geometry_msgs::msg::Pose & ego_pose, const double offset)
-// {
-//   Point2d ego_point{ego_pose.position.x, ego_pose.position.y};
-//   const auto ego_rpy = rpyFromQuat(ego_pose.orientation);
-//   const double ego_yaw = ego_rpy.z;
-//   const Point2d p1{
-//     ego_pose.position.x + offset * std::cos(ego_yaw + M_PI_2),
-//     ego_pose.position.y + offset * std::sin(ego_yaw + M_PI_2)};
-//   const Point2d p2{
-//     ego_pose.position.x + offset * std::cos(ego_yaw - M_PI_2),
-//     ego_pose.position.y + offset * std::sin(ego_yaw - M_PI_2)};
-//   return {p1, p2};
-// }
 
 LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly)
 {
