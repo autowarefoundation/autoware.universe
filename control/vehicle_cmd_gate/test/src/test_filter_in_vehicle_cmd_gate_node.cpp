@@ -80,7 +80,7 @@ public:
       [this](const AckermannControlCommand::ConstSharedPtr msg) {
         cmd_history_.push_back(msg);
         cmd_received_times_.push_back(now());
-        // check filter for varying last_x values to test the CI
+        // check the effectiveness of the filter for last x elements in the queue
         checkFilter(4);
       });
 
