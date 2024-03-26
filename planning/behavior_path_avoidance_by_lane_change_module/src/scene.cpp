@@ -29,6 +29,7 @@
 #include <boost/geometry/strategies/cartesian/centroid_bashein_detmer.hpp>
 
 #include <limits>
+#include <optional>
 #include <utility>
 
 namespace behavior_path_planner
@@ -170,17 +171,19 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
 
   ObjectDataArray target_lane_objects;
   target_lane_objects.reserve(object_within_target_lane.objects.size());
-  {
-    const auto & objects = object_within_target_lane.objects;
-    std::transform(
-      objects.cbegin(), objects.cend(), std::back_inserter(target_lane_objects),
-      [&](const auto & object) { return createObjectData(data, object); });
+  for (const auto & obj : object_within_target_lane.objects) {
+    const auto target_lane_object = createObjectData(data, obj);
+    if (!target_lane_object) {
+      continue;
+    }
+
+    target_lane_objects.push_back(*target_lane_object);
   }
 
   data.target_objects = target_lane_objects;
 }
 
-ObjectData AvoidanceByLaneChange::createObjectData(
+std::optional<ObjectData> AvoidanceByLaneChange::createObjectData(
   const AvoidancePlanningData & data, const PredictedObject & object) const
 {
   using boost::geometry::return_centroid;
@@ -198,6 +201,13 @@ ObjectData AvoidanceByLaneChange::createObjectData(
   const auto & object_parameter = avoidance_parameters_->object_parameters.at(t);
 
   ObjectData object_data{};
+  // Calc lateral deviation from path to target object.
+  object_data.to_centerline =
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+
+  if( std::abs(object_data.to_centerline) < avoidance_parameters_->threshold_distance_object_is_on_center){
+    return std::nullopt;
+  }
 
   object_data.object = object;
 
@@ -217,9 +227,6 @@ ObjectData AvoidanceByLaneChange::createObjectData(
   // Calc moving time.
   utils::avoidance::fillObjectMovingTime(object_data, stopped_objects_, p);
 
-  // Calc lateral deviation from path to target object.
-  object_data.to_centerline =
-    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
   object_data.direction = calcLateralDeviation(object_closest_pose, object_pose.position) > 0.0
                             ? Direction::LEFT
                             : Direction::RIGHT;
