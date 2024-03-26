@@ -221,10 +221,6 @@ bool pathIntersectsEgoCutLine(
   const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
   const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_lane);
 
-// LineString2d createLineStringFromPath(const PredictedPath & path);
-
-// LineString2d createEgoCutLine(const geometry_msgs::msg::Pose & ego_pose, const double offset);
-
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
 std::vector<geometry_msgs::msg::Pose> getHighestConfidencePath(

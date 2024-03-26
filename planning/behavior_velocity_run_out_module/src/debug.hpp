@@ -142,7 +142,6 @@ private:
   std::vector<std::vector<geometry_msgs::msg::Point>> collision_obstacle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> detection_area_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> mandatory_detection_area_polygons_;
-
   std::vector<TextWithPosition> travel_time_texts_;
   DebugValues debug_values_;
   AccelReason accel_reason_;
