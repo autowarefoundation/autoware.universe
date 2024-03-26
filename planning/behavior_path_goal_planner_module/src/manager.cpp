@@ -424,7 +424,7 @@ void GoalPlannerModuleManager::updateModuleParams(
   [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
 {
   // TODO(someone): This function does not check OR update
-  // object_recognition_collision_check_soft_margins.empty(),
+  // object_recognition_collision_check_soft_margins,
   // object_recognition_collision_check_hard_margins, maximum_deceleration, shift_sampling_num or
   // parking_policy, there seems to be a problem when we use a temp value to check these values.
 
@@ -438,6 +438,8 @@ void GoalPlannerModuleManager::updateModuleParams(
   {
     updateParam<double>(parameters, base_ns + "th_stopped_velocity", p->th_stopped_velocity);
     updateParam<double>(parameters, base_ns + "th_arrived_distance", p->th_arrived_distance);
+    updateParam<double>(parameters, base_ns + "th_stopped_time", p->th_stopped_time);
+
     updateParam<double>(
       parameters, base_ns + "center_line_path_interval", p->center_line_path_interval);
   }
@@ -445,6 +447,7 @@ void GoalPlannerModuleManager::updateModuleParams(
 
   {
     const std::string ns = base_ns + "goal_search.";
+    updateParam<std::string>(parameters, ns + "goal_priority", p->goal_priority);
     updateParam<double>(
       parameters, ns + "minimum_weighted_distance.lateral_weight",
       p->minimum_weighted_distance_lateral_weight);
@@ -506,6 +509,9 @@ void GoalPlannerModuleManager::updateModuleParams(
       parameters, ns + "pull_over_minimum_velocity", p->pull_over_minimum_velocity);
     updateParam<double>(parameters, ns + "decide_path_distance", p->decide_path_distance);
     updateParam<double>(parameters, ns + "maximum_jerk", p->maximum_jerk);
+    updateParam<std::string>(parameters, ns + "path_priority", p->path_priority);
+    updateParam<std::vector<std::string>>(
+      parameters, ns + "efficient_path_order", p->efficient_path_order);
   }
 
   // shift parking
@@ -573,6 +579,8 @@ void GoalPlannerModuleManager::updateModuleParams(
   {
     const std::string ns = base_ns + "pull_over.freespace_parking.";
     updateParam<bool>(parameters, ns + "enable_freespace_parking", p->enable_freespace_parking);
+    updateParam<std::string>(
+      parameters, ns + "freespace_parking_algorithm", p->freespace_parking_algorithm);
     updateParam<double>(parameters, ns + "velocity", p->freespace_parking_velocity);
 
     updateParam<double>(parameters, ns + "vehicle_shape_margin", p->vehicle_shape_margin);
@@ -622,9 +630,19 @@ void GoalPlannerModuleManager::updateModuleParams(
   }
 
   //  freespace parking astar
-
   {
     const std::string ns = base_ns + "pull_over.freespace_parking.astar.";
+    updateParam<bool>(
+      parameters, ns + "only_behind_solutions", p->astar_parameters.only_behind_solutions);
+    updateParam<bool>(parameters, ns + "use_back", p->astar_parameters.use_back);
+    updateParam<double>(
+      parameters, ns + "distance_heuristic_weight", p->astar_parameters.distance_heuristic_weight);
+  }
+
+  //  freespace parking rrtstar
+
+  {
+    const std::string ns = base_ns + "pull_over.freespace_parking.rrtstar.";
     updateParam<bool>(parameters, ns + "enable_update", p->rrt_star_parameters.enable_update);
     updateParam<bool>(
       parameters, ns + "use_informed_sampling", p->rrt_star_parameters.use_informed_sampling);
