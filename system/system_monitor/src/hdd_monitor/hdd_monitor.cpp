@@ -30,12 +30,10 @@
 
 #include <fmt/format.h>
 #include <stdio.h>
-#include <sys/statvfs.h>
-#include <fstream>
-#include <sstream>
 
 #include <algorithm>
 #include <filesystem>
+#include <system_error>
 #include <string>
 #include <vector>
 
@@ -248,36 +246,36 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   std::string error_str = "";
-  struct statvfs buffer;
-  unsigned long total;
-  unsigned long available;
-  unsigned long used;
-  unsigned long capacity;
+  std::filesystem::space_info si;
+  std::error_code ec;
+  unsigned int size;
+  unsigned int used;
+  unsigned int avail;
+  unsigned int use;
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
     if (!hdd_connected_flags_[itr->first]) {
       continue;
     }
 
-    if (statvfs(itr->second.part_device_.c_str(), &buffer) == 0) {
-      unsigned long total_blocks = buffer.f_blocks;
-      unsigned long free_blocks = buffer.f_bfree;
-      unsigned long available_blocks = buffer.f_bavail;
-      unsigned long block_size = buffer.f_bsize;
-
-      // 単位をメガバイト(MiB)に変換
-      total = (total_blocks * block_size) / (1024 * 1024);
-      unsigned long free = (free_blocks * block_size) / (1024 * 1024);
-      available = (available_blocks * block_size) / (1024 * 1024);
-      used = total - free;
-      capacity = (used * 100) / total;
-    } else {
-      stat.add(fmt::format("HDD {}: status", hdd_index), "getting filesystem statistics error");
+    try {
+      si = std::filesystem::space(itr->first, ec);
+      if (ec) {
+        error_str = "std::filesystem::space error";
+        stat.add(fmt::format("HDD {}: status", hdd_index), "getting filesystem usage information error");
+      }
+        size = si.capacity / (1024 * 1024);
+        used = (si.capacity - si.available) / (1024 * 1024);
+        avail = si.available / (1024 * 1024);
+        use = 100 * used / size;
+    } catch (std::filesystem::filesystem_error& e) {
+      error_str = e.what();
+      stat.add(fmt::format("HDD {}: status", hdd_index), "getting filesystem usage information error");
     }
 
-    if (available <= itr->second.free_error_) {
+    if (avail <= itr->second.free_error_) {
       level = DiagStatus::ERROR;
-    } else if (available <= itr->second.free_warn_) {
+    } else if (avail <= itr->second.free_warn_) {
       level = DiagStatus::WARN;
     } else {
       level = DiagStatus::OK;
@@ -285,10 +283,10 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     stat.add(fmt::format("HDD {}: status", hdd_index), usage_dict_.at(level));
     stat.add(fmt::format("HDD {}: filesystem", hdd_index), itr->second.part_device_.c_str());
-    stat.add(fmt::format("HDD {}: size", hdd_index), (std::to_string(total) + " MiB").c_str());
+    stat.add(fmt::format("HDD {}: size", hdd_index), (std::to_string(size) + " MiB").c_str());
     stat.add(fmt::format("HDD {}: used", hdd_index), (std::to_string(used) + " MiB").c_str());
-    stat.add(fmt::format("HDD {}: avail", hdd_index), (std::to_string(available) + " MiB").c_str());
-    stat.add(fmt::format("HDD {}: use", hdd_index), (std::to_string(capacity) + " %").c_str());
+    stat.add(fmt::format("HDD {}: avail", hdd_index), (std::to_string(avail) + " MiB").c_str());
+    stat.add(fmt::format("HDD {}: use", hdd_index), (std::to_string(use) + " %").c_str());
     stat.add(fmt::format("HDD {}: mounted on", hdd_index), itr->first.c_str());
 
     whole_level = std::max(whole_level, level);
