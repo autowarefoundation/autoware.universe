@@ -146,6 +146,8 @@ docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdete
 
 **Step 1.** Download the NuScenes dataset from the [official website](https://www.nuscenes.org/download) and extract the dataset to a folder of your choice.
 
+**Note:** The NuScenes dataset is large and requires significant disk space. Ensure you have enough storage available before proceeding.
+
 **Step 2.** Create a symbolic link to the dataset folder
 
 ```bash
@@ -165,7 +167,7 @@ python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./dat
 
 The configuration file that illustrates how to train the CenterPoint model with the NuScenes dataset is
 located at mmdetection3d/projects/AutowareCenterPoint/configs. This configuration file is a derived version of the
-centerpoint_pillar02_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py configuration file from mmdetection3D.
+`centerpoint_pillar02_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py` configuration file from mmdetection3D.
 In this custom configuration, the **use_voxel_center_z parameter** is set to **False** to deactivate the z coordinate of the voxel center,
 aligning with the original paper's specifications and making the model compatible with Autoware. Additionally, the filter size is set as **[32, 32]**.
 
