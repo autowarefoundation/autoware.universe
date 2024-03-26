@@ -62,7 +62,7 @@ ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml model_name:=centerpoi
 
 You can download the onnx format of trained models by clicking on the links below.
 
-- Centerpoint : [pts_voxel_encoder_centerpoint.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_voxel_encoder_centerpoint.onnx), [pts_backbone_neck_head_centerpoint.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_backbone_neck_head_centerpoint.onnx)
+- Centerpoint: [pts_voxel_encoder_centerpoint.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_voxel_encoder_centerpoint.onnx), [pts_backbone_neck_head_centerpoint.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_backbone_neck_head_centerpoint.onnx)
 - Centerpoint tiny: [pts_voxel_encoder_centerpoint_tiny.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_voxel_encoder_centerpoint_tiny.onnx), [pts_backbone_neck_head_centerpoint_tiny.onnx](https://awf.ml.dev.web.auto/perception/models/centerpoint/v2/pts_backbone_neck_head_centerpoint_tiny.onnx)
 
 `Centerpoint` was trained in `nuScenes` (~28k lidar frames) [8] and TIER IV's internal database (~11k lidar frames) for 60 epochs.
@@ -121,7 +121,7 @@ pip install -v -e .
 
 #### Use Training Repository with Docker
 
-Alternatively, you can use Docker to run the mmdetection3d repository.We provide a Dockerfile to build a Docker image with the mmdetection3d repository and its dependencies.
+Alternatively, you can use Docker to run the mmdetection3d repository. We provide a Dockerfile to build a Docker image with the mmdetection3d repository and its dependencies.
 
 Clone fork of the mmdetection3d repository
 
@@ -129,14 +129,14 @@ Clone fork of the mmdetection3d repository
 git clone https://github.com/autowarefoundation/mmdetection3d.git
 ```
 
-Build the Docker image by running the following command
+Build the Docker image by running the following command:
 
 ```bash
 cd mmdetection3d
 docker build -t mmdetection3d -f docker/Dockerfile .
 ```
 
-Run the Docker container
+Run the Docker container:
 
 ```bash
 docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmdetection3d/data mmdetection3d
@@ -166,9 +166,10 @@ python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./dat
 #### Prepare the config file
 
 The configuration file that illustrates how to train the CenterPoint model with the NuScenes dataset is
-located at mmdetection3d/projects/AutowareCenterPoint/configs. This configuration file is a derived version of the
-`centerpoint_pillar02_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py` configuration file from mmdetection3D.
-In this custom configuration, the **use_voxel_center_z parameter** is set to **False** to deactivate the z coordinate of the voxel center,
+located at `mmdetection3d/projects/AutowareCenterPoint/configs`. This configuration file is a derived version of
+[this centerpoint configuration file](https://github.com/autowarefoundation/mmdetection3d/blob/5c0613be29bd2e51771ec5e046d89ba3089887c7/configs/centerpoint/centerpoint_pillar02_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py)
+from mmdetection3D.
+In this custom configuration, the **use_voxel_center_z parameter** is set as **False** to deactivate the z coordinate of the voxel center,
 aligning with the original paper's specifications and making the model compatible with Autoware. Additionally, the filter size is set as **[32, 32]**.
 
 The CenterPoint model can be tailored to your specific requirements by modifying various parameters within the configuration file.
@@ -190,7 +191,6 @@ including training, evaluation, and fine-tuning of models. It is organized in th
 ##### Download the sample dataset
 
 ```bash
-
 wget https://autoware-files.s3.us-west-2.amazonaws.com/dataset/lidar_detection_sample_dataset.tar.gz
 #Extract the dataset to a folder of your choice
 tar -xvf lidar_detection_sample_dataset.tar.gz
@@ -200,10 +200,9 @@ ln -s /PATH/TO/DATASET/ /PATH/TO/mmdetection3d/data/tier4_dataset/
 
 ##### Prepare dataset and evaluate trained model
 
-Create .pkl files for training, evaluation, and testing.
+Create `.pkl` files for training, evaluation, and testing.
 
 ```bash
-
 python tools/create_data.py T4Dataset --root-path data/sample_dataset/ --out-dir data/sample_dataset/ --extra-tag T4Dataset --version sample_dataset --annotation-hz 2
 ```
 
