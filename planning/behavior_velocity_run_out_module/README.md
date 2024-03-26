@@ -110,9 +110,9 @@ You can choose whether to use this feature by parameter of `use_partition_lanele
 
 ##### Exclude obstacles that cross the ego vehicle's "cut line"
 
-This module can exclude obstacles that have predicted paths that will cross the back side of the ego vehicle. It excludes obstacles if the their predicted path crosses the ego's "cut line". The "cut line" is a virtual line segment that is perpendicular to the ego vehicle and that passes through the ego's base link.
+This module can exclude obstacles that have predicted paths that will cross the back side of the ego vehicle. It excludes obstacles if their predicted path crosses the ego's "cut line". The "cut line" is a virtual line segment that is perpendicular to the ego vehicle and that passes through the ego's base link.
 
-You can choose whether to use this feature or not by setting the parameter `use_ego_cut_line` to `true` or `false`. The width of the line can be tuned with the parameter `egos_cut_line_length`.
+You can choose whether to use this feature by setting the parameter `use_ego_cut_line` to `true` or `false`. The width of the line can be tuned with the parameter `egos_cut_line_length`.
 
 ![brief](./docs/ego_cut_line.svg)
 
