@@ -774,6 +774,7 @@ void GoalPlannerModuleManager::updateModuleParams(
       p->safety_check_params.enable_safety_check);
     updateParam<double>(
       parameters, safety_check_ns + "keep_unsafe_time", p->safety_check_params.keep_unsafe_time);
+    updateParam<std::string>(parameters, safety_check_ns + "method", p->safety_check_params.method);
     updateParam<double>(
       parameters, safety_check_ns + "hysteresis_factor_expand_rate",
       p->safety_check_params.hysteresis_factor_expand_rate);
