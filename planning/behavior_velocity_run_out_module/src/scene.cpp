@@ -107,9 +107,9 @@ bool RunOutModule::modifyPathVelocity(
     const auto partition_excluded_obstacles =
       excludeObstaclesOutSideOfPartition(dynamic_obstacles, extended_smoothed_path, current_pose);
 
-    // extract obstacles that cross the ego's back lane
     if (!planner_param_.run_out.use_ego_cut_line) return partition_excluded_obstacles;
 
+    // extract obstacles that cross the ego's back lane
     const auto ego_back_line_excluded_obstacles =
       excludeObstaclesCrossingEgoBackLine(partition_excluded_obstacles, current_pose);
     return ego_back_line_excluded_obstacles;
