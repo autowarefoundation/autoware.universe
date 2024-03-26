@@ -13,6 +13,15 @@ rclcpp_components_register_node(goal_pose_visualizer_component
   EXECUTABLE goal_pose_visualizer
 )
 
+ament_auto_add_library(rerouting_static_obstacle_component SHARED
+  src/rerouting_static_obstacle/rerouting_static_obstacle.cpp
+)
+
+rclcpp_components_register_node(rerouting_static_obstacle_component
+  PLUGIN "mission_planner::ReroutingStaticObstacle"
+  EXECUTABLE rerouting_static_obstacle
+)
+
 ament_auto_add_library(${PROJECT_NAME}_component SHARED
   src/mission_planner/arrival_checker.cpp
   src/mission_planner/service_utils.cpp

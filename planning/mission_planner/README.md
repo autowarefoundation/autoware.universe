@@ -191,6 +191,30 @@ This interface for the MRM that pulls over the road shoulder. It has to be stopp
 This is a goal change to pull over, avoid parked vehicles, and so on by a planning component. If the modified goal is outside the calculated route, a reroute is required. This goal modification is executed by checking the local environment and path safety as the vehicle actually approaches the destination. And this modification is allowed for both normal_route and mrm_route.
 The new route generated here is sent to the AD API so that it can also be referenced by the application. Note, however, that the specifications here are subject to change in the future.
 
+#### Rerouting Static Obstacle
+
+`Rerouting Static Obstacle` is a node under `Mission Planner` that aims to change the planned route of the current already set route by finding an alternative route to the shortest planned one.
+The `Rerouting Static Obstacle` use-cases can be rerouting for a vehicle that is blocking the road, road construction that blocks some lanes, or any other similar scenarios of dynamic map information.
+
+The way that `Rerouting Static Obstacle` node is working currently is that, when the human driver/operator notices a blockage during the planned route of the mission, s/he points in the map (using a dedicated plugin in rviz) where the blockage is. Then `Rerouting Static Obstacle` searches for alternative routes and if successfully found it calls `change_route` API.
+
+The following diagram shows how `Rerouting Static Obstacle` node works in high level :
+
+<p align="center">
+  <img src=./media/rerouting-static-obstacle_flowchart.svg />
+</p>
+
+Reference implementation for `Rerouting Static Obstacle` node is under `src/rerouting_static_obstacle`
+
+##### How to enable rerouting static obstacle plugin ?
+
+1. In rviz using the add plugin sign, then under `tier4_planning_rviz_plugin`, add the `RerouteStaticObstaclePointPublish` plugin
+2. Make the plugin visible for ease of use
+3. Select a point through the route of the vehicle (where you see a blockage for example)
+4. If an alternative route can be found, the vehicle will to change route and will not go through the selected point.
+
+> Make sure that you select the point for rerouting with enough distance ahead the vehicle, otherwise the rerouting will be considered unsafe. For more information, please check the Rerouting Limitations section below and `mission_planner.param.yaml` config file.
+
 #### Rerouting Limitations
 
 - The safety judgment of rerouting is not guaranteed to the level of trajectory or control. Therefore, the distance to the reroute change must be large for the safety.
