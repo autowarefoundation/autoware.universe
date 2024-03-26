@@ -15,17 +15,11 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+
 #include <behavior_velocity_planner_common/planner_data.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
-
-#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
