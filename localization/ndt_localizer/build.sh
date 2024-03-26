@@ -1,0 +1,1 @@
+clang++  rs_driver_dora_pcap.cc -lm -lrt -ldl -pthread -std=c++14 -lpcap -ldora_node_api_c -L /home/char/dora_/dora-rs/dora/target/release --output rs_driver_dora_pcap -I /home/char/dora_/dora-autoware/dora-hardware/dora_to_ros2/lidar/rs_driver/src

@@ -1,0 +1,18 @@
+pcd_path: "../map_pcd/lidar2_pcap.pcd"
+pcd_save_path: "../transformed_map/transformed_map.pcd"
+pitch: 1.0
+roll: 0.0
+x: 0.0
+y: 0.0
+yaw: 0.0
+z: 0.0
+base_frame: base_link
+# converged_param_transform_probability默认值
+converged_param_transform_probability: 3
+max_iterations: 30.0
+resolution: 2.0
+step_size: 0.4
+trans_epsilon: 0.01
+voxel_leaf_size: 1.00
+
+
