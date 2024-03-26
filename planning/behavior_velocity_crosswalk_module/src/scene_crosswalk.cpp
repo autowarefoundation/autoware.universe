@@ -241,7 +241,8 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     return t && cmp_fn((now - *t).seconds(), planner_param_.occlusion_time_buffer);
   };
   const auto is_crosswalk_ignored =
-    (planner_param_.occlusion_ignore_with_red_traffic_light && isRedSignalForPedestrians()) ||
+    (planner_param_.occlusion_ignore_with_traffic_light &&
+     !road_.regulatoryElementsAs<const lanelet::TrafficLight>().empty()) ||
     crosswalk_.hasAttribute("skip_occluded_slowdown");
   if (planner_param_.occlusion_enable && !path_intersects.empty() && !is_crosswalk_ignored) {
     const auto dist_ego_to_crosswalk =
@@ -269,6 +270,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
         applySafetySlowDownSpeed(
           *path, path_intersects,
           std::max(target_velocity, planner_param_.occlusion_slow_down_velocity));
+        debug_data_.virtual_wall_suffix = " (occluded)";
       } else {
         most_recent_occlusion_time_.reset();
       }
