@@ -139,6 +139,7 @@ void NerfBasedLocalizer::callback_initial_pose(
 
 void NerfBasedLocalizer::callback_image(const sensor_msgs::msg::Image::ConstSharedPtr image_msg_ptr)
 {
+  target_frame_ = image_msg_ptr->header.frame_id;
   image_msg_ptr_array_.push_back(image_msg_ptr);
   if (image_msg_ptr_array_.size() > 1) {
     image_msg_ptr_array_.pop_front();
@@ -158,7 +159,7 @@ void NerfBasedLocalizer::callback_image(const sensor_msgs::msg::Image::ConstShar
     initial_pose_msg_ptr_array_.back();
   initial_pose_msg_ptr_array_.pop_back();
 
-  target_frame_ = image_msg_ptr->header.frame_id;
+  
 
   // Process
   const auto [pose_msg, image_msg, score_msg] = localize(pose_base_link->pose.pose, *image_msg_ptr);
