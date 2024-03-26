@@ -62,7 +62,7 @@ struct RunOutParam
   double stop_margin;
   double passing_margin;
   double deceleration_jerk;
-  double egos_cut_line_length;
+  double ego_cut_line_length;
   float detection_distance;
   float detection_span;
   float min_vel_ego_kmph;
