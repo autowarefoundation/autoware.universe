@@ -145,38 +145,16 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
   // Get status of RTC
-  int out_fd[2];
-  if (RCUTILS_UNLIKELY(pipe2(out_fd, O_CLOEXEC) != 0)) {
-    stat.summary(DiagStatus::ERROR, "pipe2 error");
-    stat.add("pipe2", strerror(errno));
-    return;
-  }
-  bp::pipe out_pipe{out_fd[0], out_fd[1]};
-  bp::ipstream is_out{std::move(out_pipe)};
-
-  int err_fd[2];
-  if (RCUTILS_UNLIKELY(pipe2(err_fd, O_CLOEXEC) != 0)) {
-    stat.summary(DiagStatus::ERROR, "pipe2 error");
-    stat.add("pipe2", strerror(errno));
-    return;
-  }
-  bp::pipe err_pipe{err_fd[0], err_fd[1]};
-  bp::ipstream is_err{std::move(err_pipe)};
-
-  bp::child c("cat /proc/driver/rtc", bp::std_out > is_out, bp::std_err > is_err);
-  c.wait();
-
-  if (RCUTILS_UNLIKELY(c.exit_code() != 0)) {
-    std::ostringstream os;
-    is_err >> os.rdbuf();
-    stat.summary(DiagStatus::ERROR, "rtc error");
-    stat.add("rtc", os.str().c_str());
+  std::ifstream ifs("/proc/driver/rtc");
+  if (!ifs) {
+    stat.summary(DiagStatus::ERROR, "Failed to open /proc/driver/rtc");
+    stat.add("std::ifstream", "Error opening /proc/driver/rtc");
     return;
   }
 
   std::string line;
   bool status = false;
-  while (std::getline(is_out, line)) {
+  while (std::getline(ifs, line)) {
     auto batStatusLine = line.find("batt_status");
     if (batStatusLine != std::string::npos) {
       auto batStatus = line.find("okay");
