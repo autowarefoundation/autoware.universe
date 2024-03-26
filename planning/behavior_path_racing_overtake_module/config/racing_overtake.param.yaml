@@ -1,0 +1,9 @@
+/**:
+  ros__parameters:
+    racing_overtake:
+      too_close_to_overtake_distance: 5.0
+      start_overtake_distance: 30.0
+      prepare_overtake_distance: 60.0
+      back_to_center_start_distance: 20.0
+      back_to_center_end_distance: 60.0
+      ego_course_width: 2.8

@@ -21,6 +21,7 @@
   <arg name="behavior_path_planner_start_planner_module_param_path"/>
   <arg name="behavior_path_planner_sampling_planner_module_param_path"/>
   <arg name="behavior_path_planner_drivable_area_expansion_param_path"/>
+  <arg name="behavior_path_planner_racing_overtake_param_path"/>
 
   <node pkg="behavior_path_planner" exec="behavior_path_planner" name="behavior_path_planner" output="screen">
     <!-- topic remap -->
@@ -55,5 +56,6 @@
     <param from="$(var behavior_path_planner_goal_planner_module_param_path)"/>
     <param from="$(var behavior_path_planner_start_planner_module_param_path)"/>
     <param from="$(var behavior_path_planner_drivable_area_expansion_param_path)"/>
+    <param from="$(var behavior_path_planner_racing_overtake_param_path)"/>
   </node>
 </launch>
