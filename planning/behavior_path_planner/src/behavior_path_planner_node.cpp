@@ -172,6 +172,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
@@ -238,6 +239,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.min_acc = declare_parameter<double>("normal.min_acc");
   p.max_acc = declare_parameter<double>("normal.max_acc");
 
+  p.max_vel = declare_parameter<double>("max_vel");
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
@@ -413,6 +415,7 @@ void BehaviorPathPlannerNode::run()
 
     if (!path->points.empty()) {
       path_publisher_->publish(*path);
+      published_time_publisher_->publish_if_subscribed(path_publisher_, path->header.stamp);
     } else {
       RCLCPP_ERROR_THROTTLE(
         get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
@@ -505,7 +508,7 @@ void BehaviorPathPlannerNode::publish_reroute_availability() const
 {
   // In the current behavior path planner, we might encounter unexpected behavior when rerouting
   // while modules other than lane following are active. If non-lane-following module except
-  // always-executable module is approved and running, rerouting will not be　possible.
+  // always-executable module is approved and running, rerouting will not be possible.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
   if (planner_manager_->hasNonAlwaysExecutableApprovedModules()) {

@@ -50,10 +50,14 @@ private:
   mutable ObjectDataArray stopped_objects_;
   std::shared_ptr<AvoidanceHelper> avoidance_helper_;
 
-  ObjectData createObjectData(
+  std::optional<ObjectData> createObjectData(
     const AvoidancePlanningData & data, const PredictedObject & object) const;
 
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, AvoidanceDebugData & debug) const;
+
+  double calcMinAvoidanceLength(const ObjectData & nearest_object) const;
+  double calcMinimumLaneChangeLength() const;
+  double calcLateralOffset() const;
 };
 }  // namespace behavior_path_planner
 

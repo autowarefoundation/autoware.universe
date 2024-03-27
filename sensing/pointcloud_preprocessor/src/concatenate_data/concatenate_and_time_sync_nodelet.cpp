@@ -61,7 +61,8 @@
 #include <utility>
 #include <vector>
 
-#define POSTFIX_NAME "_synchronized"
+#define DEFAULT_SYNC_TOPIC_POSTFIX \
+  "_synchronized"  // default postfix name for synchronized pointcloud
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -111,7 +112,11 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
 
     // Check if publish synchronized pointcloud
-    publish_synchronized_pointcloud_ = declare_parameter("publish_synchronized_pointcloud", false);
+    publish_synchronized_pointcloud_ = declare_parameter("publish_synchronized_pointcloud", true);
+    keep_input_frame_in_synchronized_pointcloud_ =
+      declare_parameter("keep_input_frame_in_synchronized_pointcloud", true);
+    synchronized_pointcloud_postfix_ =
+      declare_parameter("synchronized_pointcloud_postfix", "pointcloud");
   }
 
   // Initialize not_subscribed_topic_names_
@@ -142,10 +147,10 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Subscribers
   {
-    RCLCPP_INFO_STREAM(
+    RCLCPP_DEBUG_STREAM(
       get_logger(), "Subscribing to " << input_topics_.size() << " user given topics as inputs:");
     for (auto & input_topic : input_topics_) {
-      RCLCPP_INFO_STREAM(get_logger(), " - " << input_topic);
+      RCLCPP_DEBUG_STREAM(get_logger(), " - " << input_topic);
     }
 
     // Subscribe to the filters
@@ -185,10 +190,10 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
   }
 
-  // Transformed Raw PointCloud2 Publisher
-  {
+  // Transformed Raw PointCloud2 Publisher to publish the transformed pointcloud
+  if (publish_synchronized_pointcloud_) {
     for (auto & topic : input_topics_) {
-      std::string new_topic = topic + POSTFIX_NAME;
+      std::string new_topic = replaceSyncTopicNamePostfix(topic, synchronized_pointcloud_postfix_);
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
       transformed_raw_pc_publisher_map_.insert({topic, publisher});
@@ -229,6 +234,35 @@ void PointCloudConcatenateDataSynchronizerComponent::transformPointCloud(
   } else {
     out = std::make_shared<PointCloud2>(*in);
   }
+}
+
+std::string PointCloudConcatenateDataSynchronizerComponent::replaceSyncTopicNamePostfix(
+  const std::string & original_topic_name, const std::string & postfix)
+{
+  std::string replaced_topic_name;
+  // separate the topic name by '/' and replace the last element with the new postfix
+  size_t pos = original_topic_name.find_last_of("/");
+  if (pos == std::string::npos) {
+    // not found '/': this is not a namespaced topic
+    RCLCPP_WARN_STREAM(
+      get_logger(),
+      "The topic name is not namespaced. The postfix will be added to the end of the topic name.");
+    return original_topic_name + postfix;
+  } else {
+    // replace the last element with the new postfix
+    replaced_topic_name = original_topic_name.substr(0, pos) + "/" + postfix;
+  }
+
+  // if topic name is the same with original topic name, add postfix to the end of the topic name
+  if (replaced_topic_name == original_topic_name) {
+    RCLCPP_WARN_STREAM(
+      get_logger(), "The topic name "
+                      << original_topic_name
+                      << " have the same postfix with synchronized pointcloud. We use the postfix "
+                         "to the end of the topic name.");
+    replaced_topic_name = original_topic_name + DEFAULT_SYNC_TOPIC_POSTFIX;
+  }
+  return replaced_topic_name;
 }
 
 /**
@@ -365,10 +399,23 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
         pcl::concatenatePointCloud(
           *concat_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concat_cloud_ptr);
       }
-      // gather transformed clouds
-      transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
-      transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
-      transformed_clouds[e.first] = transformed_delay_compensated_cloud_ptr;
+      // convert to original sensor frame if necessary
+      bool need_transform_to_sensor_frame = (e.second->header.frame_id != output_frame_);
+      if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
+        sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr_in_sensor_frame(
+          new sensor_msgs::msg::PointCloud2());
+        pcl_ros::transformPointCloud(
+          (std::string)e.second->header.frame_id, *transformed_delay_compensated_cloud_ptr,
+          *transformed_cloud_ptr_in_sensor_frame, *tf2_buffer_);
+        transformed_cloud_ptr_in_sensor_frame->header.stamp = oldest_stamp;
+        transformed_cloud_ptr_in_sensor_frame->header.frame_id = e.second->header.frame_id;
+        transformed_clouds[e.first] = transformed_cloud_ptr_in_sensor_frame;
+      } else {
+        transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
+        transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
+        transformed_clouds[e.first] = transformed_delay_compensated_cloud_ptr;
+      }
+
     } else {
       not_subscribed_topic_names_.insert(e.first);
     }
@@ -385,20 +432,6 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
 
   const auto & transformed_raw_points =
     PointCloudConcatenateDataSynchronizerComponent::combineClouds(concat_cloud_ptr);
-
-  for (const auto & e : cloud_stdmap_) {
-    if (e.second != nullptr) {
-      if (debug_publisher_) {
-        const auto pipeline_latency_ms =
-          std::chrono::duration<double, std::milli>(
-            std::chrono::nanoseconds(
-              (this->get_clock()->now() - e.second->header.stamp).nanoseconds()))
-            .count();
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-          "debug" + e.first + "/pipeline_latency_ms", pipeline_latency_ms);
-      }
-    }
-  }
 
   // publish concatenated pointcloud
   if (concat_cloud_ptr) {
@@ -436,6 +469,19 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
       "debug/cyclic_time_ms", cyclic_time_ms);
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
+  }
+  for (const auto & e : cloud_stdmap_) {
+    if (e.second != nullptr) {
+      if (debug_publisher_) {
+        const auto pipeline_latency_ms =
+          std::chrono::duration<double, std::milli>(
+            std::chrono::nanoseconds(
+              (this->get_clock()->now() - e.second->header.stamp).nanoseconds()))
+            .count();
+        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+          "debug" + e.first + "/pipeline_latency_ms", pipeline_latency_ms);
+      }
+    }
   }
 }
 

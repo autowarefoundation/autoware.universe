@@ -81,6 +81,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/lateral_diagnostic", "lateral/diagnostic"),
             ("~/output/slope_angle", "longitudinal/slope_angle"),
             ("~/output/longitudinal_diagnostic", "longitudinal/diagnostic"),
+            ("~/output/stop_reason", "longitudinal/stop_reason"),
             ("~/output/control_cmd", "control_cmd"),
         ],
         parameters=[
@@ -428,7 +429,7 @@ def generate_launch_description():
 
     # component
     add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
-    add_launch_arg("use_multithread", "false", "use multithread")
+    add_launch_arg("use_multithread", "true", "use multithread")
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
         "component_container",

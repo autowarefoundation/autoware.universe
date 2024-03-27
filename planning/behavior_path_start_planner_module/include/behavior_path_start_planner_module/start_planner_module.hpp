@@ -33,6 +33,7 @@
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <tf2/utils.h>
 
 #include <atomic>
@@ -70,6 +71,9 @@ struct PullOutStatus
   bool prev_is_safe_dynamic_objects{false};
   std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
   std::optional<Pose> stop_pose{std::nullopt};
+  //! record the first time when ego started forward-driving (maybe after backward driving
+  //! completion) in AUTONOMOUS operation mode
+  std::optional<rclcpp::Time> first_engaged_and_driving_forward_time{std::nullopt};
 
   PullOutStatus() {}
 };
@@ -176,6 +180,21 @@ private:
 
   bool requiresDynamicObjectsCollisionDetection() const;
 
+  uint16_t getSteeringFactorDirection(
+    const behavior_path_planner::BehaviorModuleOutput & output) const
+  {
+    switch (output.turn_signal_info.turn_signal.command) {
+      case TurnIndicatorsCommand::ENABLE_LEFT:
+        return SteeringFactor::LEFT;
+
+      case TurnIndicatorsCommand::ENABLE_RIGHT:
+        return SteeringFactor::RIGHT;
+
+      default:
+        return SteeringFactor::STRAIGHT;
+    }
+  };
+
   /**
    * @brief Check if there are no moving objects around within a certain radius.
    *
@@ -190,7 +209,8 @@ private:
 
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
-  bool isOverlapWithCenterLane() const;
+  bool isPreventingRearVehicleFromPassingThrough() const;
+
   bool isCloseToOriginalStartPose() const;
   bool hasArrivedAtGoal() const;
   bool isMoving() const;
@@ -221,6 +241,10 @@ private:
   PullOutStatus status_;
   mutable StartPlannerDebugData debug_data_;
 
+  // Keeps track of lanelets that should be ignored when calculating the turnSignalInfo for this
+  // module's output. If the ego vehicle is in this lanelet, the calculation is skipped.
+  std::optional<lanelet::Id> ignore_signal_{std::nullopt};
+
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
@@ -245,7 +269,7 @@ private:
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
   // turn signal
-  TurnSignalInfo calcTurnSignalInfo() const;
+  TurnSignalInfo calcTurnSignalInfo();
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
@@ -261,6 +285,7 @@ private:
     const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_pose,
     const double velocity_threshold, const double object_check_backward_distance,
     const double object_check_forward_distance) const;
+  bool needToPrepareBlinkerBeforeStartDrivingForward() const;
   bool hasFinishedPullOut() const;
   bool hasFinishedBackwardDriving() const;
   bool hasCollisionWithDynamicObjects() const;
@@ -272,7 +297,6 @@ private:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
-  void updateDepartureCheckLanes();
   lanelet::ConstLanelets createDepartureCheckLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.

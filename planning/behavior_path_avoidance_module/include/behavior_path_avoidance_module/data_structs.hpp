@@ -69,9 +69,11 @@ struct ObjectParameter
 
   double envelope_buffer_margin{0.0};
 
-  double avoid_margin_lateral{1.0};
+  double lateral_soft_margin{1.0};
 
-  double safety_buffer_lateral{1.0};
+  double lateral_hard_margin{1.0};
+
+  double lateral_hard_margin_for_parked_vehicle{1.0};
 
   double safety_buffer_longitudinal{0.0};
 
@@ -98,7 +100,7 @@ struct AvoidanceParameters
   bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
-  bool enable_force_avoidance_for_stopped_vehicle{false};
+  bool enable_avoidance_for_ambiguous_vehicle{false};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
@@ -182,8 +184,9 @@ struct AvoidanceParameters
   double object_check_min_road_shoulder_width{0.0};
 
   // force avoidance
-  double threshold_time_force_avoidance_for_stopped_vehicle{0.0};
-  double force_avoidance_distance_threshold{0.0};
+  double closest_distance_to_wait_and_see_for_ambiguous_vehicle{0.0};
+  double time_threshold_for_ambiguous_vehicle{0.0};
+  double distance_threshold_for_ambiguous_vehicle{0.0};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -212,9 +215,6 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
-
-  // keep target velocity in yield maneuver
-  double yield_velocity{0.0};
 
   // maximum stop distance
   double stop_max_distance{0.0};
@@ -275,6 +275,9 @@ struct AvoidanceParameters
 
   // use for judge if the ego is shifting or not.
   double lateral_avoid_check_threshold{0.0};
+
+  // use for return shift approval.
+  double ratio_for_return_shift_approval{0.0};
 
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold{0.0};
@@ -368,7 +371,7 @@ struct ObjectData  // avoidance target
   double distance_factor{0.0};
 
   // count up when object disappeared. Removed when it exceeds threshold.
-  rclcpp::Time last_seen;
+  rclcpp::Time last_seen{rclcpp::Clock(RCL_ROS_TIME).now()};
   double lost_time{0.0};
 
   // count up when object moved. Removed when it exceeds threshold.
@@ -379,7 +382,8 @@ struct ObjectData  // avoidance target
   rclcpp::Time last_move;
   double stop_time{0.0};
 
-  // store the information of the lanelet which the object's overhang is currently occupying
+  // It is one of the ego driving lanelets (closest lanelet to the object) and used in the logic to
+  // check whether the object is on the ego lane.
   lanelet::ConstLanelet overhang_lanelet;
 
   // the position at the detected moment
@@ -412,6 +416,15 @@ struct ObjectData  // avoidance target
   // is within intersection area
   bool is_within_intersection{false};
 
+  // is parked vehicle on road shoulder
+  bool is_parked{false};
+
+  // is driving on ego current lane
+  bool is_on_ego_lane{false};
+
+  // is ambiguous stopped vehicle.
+  bool is_ambiguous{false};
+
   // object direction.
   Direction direction{Direction::NONE};
 
@@ -442,9 +455,6 @@ struct AvoidLine : public ShiftLine
 
   // Distance from ego to end point in Frenet
   double end_longitudinal = 0.0;
-
-  // for unique_id
-  UUID id{};
 
   // for the case the point is created by merge other points
   std::vector<UUID> parent_ids{};
@@ -541,6 +551,8 @@ struct AvoidancePlanningData
   bool safe{false};
 
   bool valid{false};
+
+  bool ready{false};
 
   bool success{false};
 

@@ -28,7 +28,6 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <std_msgs/msg/string.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -236,10 +235,21 @@ public:
     std::vector<geometry_msgs::msg::Polygon> occlusion_polygons;
     std::optional<std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
       nearest_occlusion_projection{std::nullopt};
+    std::optional<
+      std::tuple<geometry_msgs::msg::Point, geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
+      nearest_occlusion_triangle{std::nullopt};
+    bool static_occlusion{false};
     std::optional<double> static_occlusion_with_traffic_light_timeout{std::nullopt};
 
     std::optional<std::tuple<geometry_msgs::msg::Pose, lanelet::ConstPoint3d, lanelet::Id, uint8_t>>
       traffic_light_observation{std::nullopt};
+  };
+
+  struct InternalDebugData
+  {
+    double distance{0.0};
+    std::string decision_type{};
+    std::optional<TrafficSignalStamped> tl_observation{std::nullopt};
   };
 
   using TimeDistanceArray = std::vector<std::pair<double /* time*/, double /* distance*/>>;
@@ -326,6 +336,7 @@ public:
   double getOcclusionDistance() const { return occlusion_stop_distance_; }
   void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
   bool isOcclusionFirstStopRequired() const { return occlusion_first_stop_required_; }
+  InternalDebugData & getInternalDebugData() const { return internal_debug_data_; }
 
 private:
   /**
@@ -336,6 +347,9 @@ private:
    * following variables are unique to this intersection lanelet or to this module
    * @{
    */
+
+  const PlannerParam planner_param_;
+
   //! lanelet of this intersection
   const lanelet::Id lane_id_;
 
@@ -361,7 +375,6 @@ private:
    * following variables are immutable once initialized
    * @{
    */
-  PlannerParam planner_param_;
 
   //! cache IntersectionLanelets struct
   std::optional<intersection::IntersectionLanelets> intersection_lanelets_{std::nullopt};
@@ -429,6 +442,9 @@ private:
   //! unavailable)
   std::optional<std::pair<lanelet::Id, lanelet::ConstPoint3d>> tl_id_and_point_;
   std::optional<TrafficSignalStamped> last_tl_valid_observation_{std::nullopt};
+
+  //! save previous priority level to detect change from NotPrioritized to Prioritized
+  TrafficPrioritizedLevel previous_prioritized_level_{TrafficPrioritizedLevel::NOT_PRIORITIZED};
   /** @} */
 
 private:
@@ -535,7 +551,7 @@ private:
    * To simplify modifyPathVelocityDetail(), this function is used at first
    */
   intersection::Result<BasicData, intersection::InternalError> prepareIntersectionData(
-    const bool is_prioritized, PathWithLaneId * path);
+    PathWithLaneId * path);
 
   /**
    * @brief find the associated stopline road marking of assigned lanelet
@@ -807,7 +823,7 @@ private:
   /** @} */
 
   mutable DebugData debug_data_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decision_state_pub_;
+  mutable InternalDebugData internal_debug_data_{};
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr ego_ttc_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr object_ttc_pub_;
 };
