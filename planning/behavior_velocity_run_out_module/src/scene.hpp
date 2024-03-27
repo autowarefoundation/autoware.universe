@@ -136,7 +136,7 @@ private:
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
     PathWithLaneId & path) const;
 
-  std::vector<DynamicObstacle> excludeObstaclesCrossingEgoBackLine(
+  std::vector<DynamicObstacle> excludeObstaclesCrossingEgoCutLine(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
     const geometry_msgs::msg::Pose & current_pose) const;
 

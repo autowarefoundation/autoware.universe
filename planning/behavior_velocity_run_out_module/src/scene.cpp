@@ -109,10 +109,10 @@ bool RunOutModule::modifyPathVelocity(
 
     if (!planner_param_.run_out.use_ego_cut_line) return partition_excluded_obstacles;
 
-    // extract obstacles that cross the ego's back lane
-    const auto ego_back_line_excluded_obstacles =
-      excludeObstaclesCrossingEgoBackLine(partition_excluded_obstacles, current_pose);
-    return ego_back_line_excluded_obstacles;
+    // extract obstacles that cross the ego's back line
+    const auto ego_cut_line_excluded_obstacles =
+      excludeObstaclesCrossingEgoCutLine(partition_excluded_obstacles, current_pose);
+    return ego_cut_line_excluded_obstacles;
   });
 
   // record time for obstacle creation
@@ -818,21 +818,21 @@ void RunOutModule::applyMaxJerkLimit(
   run_out_utils::insertPathVelocityFromIndex(stop_point_idx.value(), jerk_limited_vel, path.points);
 }
 
-std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoBackLine(
+std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoCutLine(
   const std::vector<DynamicObstacle> & dynamic_obstacles,
   const geometry_msgs::msg::Pose & current_pose) const
 {
   std::vector<DynamicObstacle> extracted_obstacles;
-  std::vector<geometry_msgs::msg::Point> ego_cut_lane;
-  const double ego_cut_lane_half_width = planner_param_.run_out.ego_cut_line_length / 2.0;
+  std::vector<geometry_msgs::msg::Point> ego_cut_line;
+  const double ego_cut_line_half_width = planner_param_.run_out.ego_cut_line_length / 2.0;
   std::for_each(dynamic_obstacles.begin(), dynamic_obstacles.end(), [&](const auto & o) {
     const auto predicted_path = run_out_utils::getHighestConfidencePath(o.predicted_paths);
     if (!run_out_utils::pathIntersectsEgoCutLine(
-          predicted_path, current_pose, ego_cut_lane_half_width, ego_cut_lane)) {
+          predicted_path, current_pose, ego_cut_line_half_width, ego_cut_line)) {
       extracted_obstacles.push_back(o);
     }
   });
-  debug_ptr_->pushEgoCutLane(ego_cut_lane);
+  debug_ptr_->pushEgoCutLine(ego_cut_line);
   return extracted_obstacles;
 }
 
