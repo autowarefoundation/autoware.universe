@@ -20,10 +20,11 @@
 Lanelet2DifferentialLoaderModule::Lanelet2DifferentialLoaderModule(
   rclcpp::Node * node,
   const std::map<std::string, Lanelet2FileMetaData> & lanelet2_file_metadata_dict, double & x_res,
-  double & y_res)
+  double & y_res, const double & center_line_resolution)
 : logger_(node->get_logger()),
   clock_(node->get_clock()),
-  lanelet2_file_metadata_dict_(lanelet2_file_metadata_dict)
+  lanelet2_file_metadata_dict_(lanelet2_file_metadata_dict),
+  center_line_resolution_(center_line_resolution)
 {
   pub_whole_map_bin_ =
     node->create_publisher<HADMapBin>("output/lanelet2_map", rclcpp::QoS{1}.transient_local());
@@ -94,7 +95,7 @@ autoware_auto_mapping_msgs::msg::HADMapBin Lanelet2DifferentialLoaderModule::loa
       }
     }
 
-    lanelet::utils::overwriteLaneletsCenterline(map, 5.0, false);
+    lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution_, false);
 
     const auto map_bin_msg =
       Lanelet2MapLoaderNode::create_map_bin_msg(map, lanelet2_paths[0], rclcpp::Clock().now());
@@ -112,7 +113,7 @@ autoware_auto_mapping_msgs::msg::HADMapBin Lanelet2DifferentialLoaderModule::loa
       }
     }
 
-    lanelet::utils::overwriteLaneletsCenterline(map, 5.0, false);
+    lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution_, false);
 
     const auto map_bin_msg =
       Lanelet2MapLoaderNode::create_map_bin_msg(map, lanelet2_paths[0], rclcpp::Clock().now());
@@ -157,7 +158,7 @@ bool Lanelet2DifferentialLoaderModule::differentialLanelet2Load(
       }
     }
 
-    lanelet::utils::overwriteLaneletsCenterline(map, 5.0, false);
+    lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution_, false);
 
     const auto map_bin_msg = Lanelet2MapLoaderNode::create_lanelet_map_bin_msg(
       map, lanelet2_paths[0], rclcpp::Clock().now());
@@ -175,7 +176,7 @@ bool Lanelet2DifferentialLoaderModule::differentialLanelet2Load(
       }
     }
 
-    lanelet::utils::overwriteLaneletsCenterline(map, 5.0, false);
+    lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution_, false);
 
     const auto map_bin_msg = Lanelet2MapLoaderNode::create_lanelet_map_bin_msg(
       map, lanelet2_paths[0], rclcpp::Clock().now());
