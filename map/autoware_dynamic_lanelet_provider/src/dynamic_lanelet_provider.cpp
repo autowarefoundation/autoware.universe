@@ -37,7 +37,7 @@ double norm_xy(const T & p1, const U & p2)
 {
   double dx = getX(p1) - getX(p2);
   double dy = getY(p1) - getY(p2);
-  return std::sqrt(dx * dx + dy * dy);
+  return std::hypot(dx, dy);
 }
 
 DynamicLaneletProviderNode::DynamicLaneletProviderNode(const rclcpp::NodeOptions & options)
