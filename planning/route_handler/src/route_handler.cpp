@@ -139,7 +139,7 @@ RouteHandler::RouteHandler(const HADMapBin & map_msg)
   route_ptr_ = nullptr;
 }
 
-void RouteHandler::setMap(const HADMapBin & map_msg, const bool & is_enable_differantial_lanelet)
+void RouteHandler::setMap(const HADMapBin & map_msg, const bool & is_enable_differential_lanelet)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
@@ -163,7 +163,7 @@ void RouteHandler::setMap(const HADMapBin & map_msg, const bool & is_enable_diff
   is_map_msg_ready_ = true;
   is_handler_ready_ = false;
 
-  setLaneletsFromRouteMsg(is_enable_differantial_lanelet);
+  setLaneletsFromRouteMsg(is_enable_differential_lanelet);
 }
 
 bool RouteHandler::isRouteLooped(const RouteSections & route_sections)
@@ -181,7 +181,7 @@ bool RouteHandler::isRouteLooped(const RouteSections & route_sections)
 }
 
 void RouteHandler::setRoute(
-  const LaneletRoute & route_msg, const bool & is_enable_differantial_lanelet)
+  const LaneletRoute & route_msg, const bool & is_enable_differential_lanelet)
 {
   if (!isRouteLooped(route_msg.segments)) {
     // if get not modified route but new route, reset original start pose
@@ -191,7 +191,7 @@ void RouteHandler::setRoute(
     }
     route_ptr_ = std::make_shared<LaneletRoute>(route_msg);
     is_handler_ready_ = false;
-    setLaneletsFromRouteMsg(is_enable_differantial_lanelet);
+    setLaneletsFromRouteMsg(is_enable_differential_lanelet);
   } else {
     RCLCPP_ERROR(
       logger_,
@@ -314,14 +314,14 @@ void RouteHandler::clearRoute()
   is_handler_ready_ = false;
 }
 
-void RouteHandler::setLaneletsFromRouteMsg(const bool & is_enable_differantial_lanelet)
+void RouteHandler::setLaneletsFromRouteMsg(const bool & is_enable_differential_lanelet)
 {
   if (!route_ptr_ || !is_map_msg_ready_) {
     return;
   }
   route_lanelets_.clear();
   preferred_lanelets_.clear();
-  if (!is_enable_differantial_lanelet) {
+  if (!is_enable_differential_lanelet) {
     const bool is_route_valid = lanelet::utils::route::isRouteValid(*route_ptr_, lanelet_map_ptr_);
     if (!is_route_valid) {
       return;
@@ -344,7 +344,7 @@ void RouteHandler::setLaneletsFromRouteMsg(const bool & is_enable_differantial_l
           preferred_lanelets_.push_back(llt);
         }
       } catch (const std::exception & e) {
-        if (!is_enable_differantial_lanelet) {
+        if (!is_enable_differential_lanelet) {
           std::cerr
             << e.what()
             << ". Maybe the loaded route was created on a different Map from the current one. "
@@ -369,7 +369,7 @@ void RouteHandler::setLaneletsFromRouteMsg(const bool & is_enable_differantial_l
         const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
         goal_lanelets_.push_back(llt);
       } catch (const std::exception & e) {
-        if (!is_enable_differantial_lanelet) {
+        if (!is_enable_differential_lanelet) {
           std::cerr
             << e.what()
             << ". Maybe the loaded route was created on a different Map from the current one. "
@@ -390,7 +390,7 @@ void RouteHandler::setLaneletsFromRouteMsg(const bool & is_enable_differantial_l
         const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
         start_lanelets_.push_back(llt);
       } catch (const std::exception & e) {
-        if (!is_enable_differantial_lanelet) {
+        if (!is_enable_differential_lanelet) {
           std::cerr
             << e.what()
             << ". Maybe the loaded route was created on a different Map from the current one. "
