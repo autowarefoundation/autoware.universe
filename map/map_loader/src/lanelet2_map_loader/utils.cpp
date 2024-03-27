@@ -14,6 +14,8 @@
 
 #include "map_loader/utils.hpp"
 
+#include <yaml-cpp/yaml.h>
+
 std::map<std::string, Lanelet2FileMetaData> loadLanelet2Metadata(
   const std::string & lanelet2_metadata_path, double & x_resolution, double & y_resolution)
 {
