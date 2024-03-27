@@ -333,7 +333,8 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
   if (path.points.empty()) return dynamic_obstacles;
   std::vector<DynamicObstacle> obstacles_outside_of_path;
   const auto footprints = createVehicleFootprints(path);
-
+  // TODO(Daniel): use the path center line string and the lateral deviation to check for pedestrian
+  // inside footprint, dont make the footprint
   std::for_each(
     dynamic_obstacles.begin(), dynamic_obstacles.end(),
     [&obstacles_outside_of_path, &footprints](const auto & o) {

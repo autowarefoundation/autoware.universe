@@ -60,14 +60,11 @@ struct RunOutParam
   bool suppress_on_crosswalk;
   bool specify_decel_jerk;
   bool use_ego_cut_line;
-  double stop_margin;
-  double passing_margin;
-  double deceleration_jerk;
-  double ego_cut_line_length;
   bool exclude_obstacles_already_in_path;
   double stop_margin;
   double passing_margin;
   double deceleration_jerk;
+  double ego_cut_line_length;
   double ego_footprint_extra_margin;
   float detection_distance;
   float detection_span;
