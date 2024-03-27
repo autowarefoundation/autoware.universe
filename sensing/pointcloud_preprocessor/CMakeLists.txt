@@ -224,4 +224,8 @@ if(BUILD_TESTING)
     test/test_distortion_corrector_use_imu_false.py
     TIMEOUT "30"
   )
+  add_ros_test(
+    test/test_concatenate_data.py
+    TIMEOUT "30"
+  )
 endif()
