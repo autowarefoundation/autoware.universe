@@ -49,7 +49,7 @@ public:
   explicit Lanelet2DifferentialLoaderModule(
     rclcpp::Node * node,
     const std::map<std::string, Lanelet2FileMetaData> & lanelet2_file_metadata_dict, double & x_res,
-    double & y_res);
+    double & y_res, const double & center_line_resolution);
 
 private:
   rclcpp::Logger logger_;
@@ -68,6 +68,8 @@ private:
     sub_map_projector_info_;
 
   std::optional<tier4_map_msgs::msg::MapProjectorInfo> projector_info_;
+
+  double center_line_resolution_;
 
   bool onServiceGetDifferentialLanelet2Map(
     GetDifferentialLanelet2Map::Request::SharedPtr req,

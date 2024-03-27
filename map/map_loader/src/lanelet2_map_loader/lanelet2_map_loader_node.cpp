@@ -101,7 +101,8 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
       RCLCPP_ERROR_STREAM(get_logger(), "Failed to load lanelet2 metadata");
     }
     differential_loader_module_ = std::make_unique<Lanelet2DifferentialLoaderModule>(
-      this, lanelet2_metadata_dict, x_resolution, y_resolution);
+      this, lanelet2_metadata_dict, x_resolution, y_resolution,
+      get_parameter("center_line_resolution").as_double());
   }
 }
 
