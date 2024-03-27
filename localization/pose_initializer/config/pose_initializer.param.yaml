@@ -1,5 +1,9 @@
 /**:
   ros__parameters:
+    initial_pose_directly:
+      enable: $(var initial_pose_directly/enable)
+      pose: $(var initial_pose_directly/pose)
+
     gnss_pose_timeout: 3.0 # [sec]
     stop_check_duration: 3.0 # [sec]
     ekf_enabled: $(var ekf_enabled)

@@ -26,10 +26,10 @@ private:
 
 public:
   explicit NdtLocalizationTriggerModule(rclcpp::Node * node);
-  void send_request(bool flag) const;
+  void send_request(bool flag, bool need_spin = false) const;
 
 private:
-  rclcpp::Logger logger_;
+  rclcpp::Node * node_;
   rclcpp::Client<SetBool>::SharedPtr client_ndt_trigger_;
 };
 
