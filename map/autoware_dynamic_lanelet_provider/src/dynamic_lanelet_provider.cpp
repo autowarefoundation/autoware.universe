@@ -60,7 +60,7 @@ DynamicLaneletProviderNode::DynamicLaneletProviderNode(const rclcpp::NodeOptions
     client_callback_group_);
 
   odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "input/odometry", 100,
+    "input/odometry", 1,
     std::bind(&DynamicLaneletProviderNode::onOdometry, this, std::placeholders::_1));
 
   const auto metadata_adaptor = component_interface_utils::NodeAdaptor(this);
