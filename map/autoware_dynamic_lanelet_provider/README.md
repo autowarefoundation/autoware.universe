@@ -28,8 +28,8 @@ for more information about the divided lanelet map and the metadata file.
 
 ### Service
 
-| Name                                   | Type                                                 | Description                               |
-| -------------------------------------- | ---------------------------------------------------- | ----------------------------------------- |
+| Name                                   | Type                                                 | Description                                |
+| -------------------------------------- | ---------------------------------------------------- | ------------------------------------------ |
 | `service/get_differential_lanelet_map` | `autoware_map_msgs::srv::GetDifferentialLanelet2Map` | service to load differential Lanelet2 maps |
 
 ## Parameters
