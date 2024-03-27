@@ -23,7 +23,7 @@
 #include <cmath>
 #include <vector>
 
-using behavior_velocity_planner::BehaviorVelocityPlannerNode;
+using autoware::behavior_velocity_planner::BehaviorVelocityPlannerNode;
 using planning_test_utils::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
