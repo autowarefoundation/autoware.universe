@@ -59,11 +59,13 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   change_state(State::Message::UNINITIALIZED);
 
   if (declare_parameter<bool>("initial_pose_directly.enable")) {
-    const auto initial_pose_array = declare_parameter<std::vector<double>>("initial_pose_directly.pose");
+    const auto initial_pose_array =
+      declare_parameter<std::vector<double>>("initial_pose_directly.pose");
     if (initial_pose_array.size() != 7) {
-      throw std::invalid_argument("Could not set initial pose directly. The size of initial_pose is " + std::to_string(initial_pose_array.size()) + ". It must be 7.");
-    }
-    else {
+      throw std::invalid_argument(
+        "Could not set initial pose directly. The size of initial_pose is " +
+        std::to_string(initial_pose_array.size()) + ". It must be 7.");
+    } else {
       geometry_msgs::msg::Pose initial_pose;
       initial_pose.position.x = initial_pose_array[0];
       initial_pose.position.y = initial_pose_array[1];
@@ -128,9 +130,7 @@ void PoseInitializer::set_initial_pose_directly(const geometry_msgs::msg::Pose i
     change_state(State::Message::UNINITIALIZED);
     RCLCPP_WARN(get_logger(), "Could not set initial pose directly");
   }
-
 }
-
 
 void PoseInitializer::on_initialize(
   const Initialize::Service::Request::SharedPtr req,

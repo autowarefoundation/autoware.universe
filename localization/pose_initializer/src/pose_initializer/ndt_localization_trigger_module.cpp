@@ -23,8 +23,7 @@
 using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::Initialize;
 
-NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node)
-: node_(node)
+NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node) : node_(node)
 {
   client_ndt_trigger_ = node_->create_client<SetBool>("ndt_trigger_node");
 }

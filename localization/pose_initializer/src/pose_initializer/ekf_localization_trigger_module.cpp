@@ -23,8 +23,7 @@
 using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::Initialize;
 
-EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node)
-: node_(node)
+EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node) : node_(node)
 {
   client_ekf_trigger_ = node_->create_client<SetBool>("ekf_trigger_node");
 }
