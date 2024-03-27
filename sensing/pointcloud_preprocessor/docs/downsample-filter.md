@@ -18,6 +18,10 @@ The `downsample_filter` is a node that reduces the number of points.
 
 `pcl::VoxelGrid` is used, which points in each voxel are approximated with their centroid.
 
+### Pickup Based Voxel Grid Downsample Filter
+
+This algorithm samples a single actual point existing within the voxel, not the centroid. The computation cost is low compared to Centroid Based Voxel Grid Filter.
+
 ## Inputs / Outputs
 
 These implementations inherit `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
@@ -51,6 +55,14 @@ These implementations inherit `pointcloud_preprocessor::Filter` class, please re
 | `voxel_size_x` | double | 0.3           | voxel size x [m] |
 | `voxel_size_y` | double | 0.3           | voxel size y [m] |
 | `voxel_size_z` | double | 0.1           | voxel size z [m] |
+
+### Pickup Based Voxel Grid Downsample Filter
+
+| Name           | Type   | Default Value | Description      |
+| -------------- | ------ | ------------- | ---------------- |
+| `voxel_size_x` | double | 1.0           | voxel size x [m] |
+| `voxel_size_y` | double | 1.0           | voxel size y [m] |
+| `voxel_size_z` | double | 1.0           | voxel size z [m] |
 
 ## Assumptions / Known limits
 
