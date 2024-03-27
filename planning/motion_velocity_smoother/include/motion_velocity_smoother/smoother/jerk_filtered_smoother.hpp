@@ -17,7 +17,7 @@
 
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/smoother/smoother_base.hpp"
-#include "osqp_interface/osqp_interface.hpp"
+#include "qp_interface/qp_interface.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
@@ -56,7 +56,7 @@ public:
 
 private:
   Param smoother_param_;
-  autoware::common::osqp::OSQPInterface qp_solver_;
+  std::shared_ptr<qp::QPInterface> qp_interface_ptr_;
   rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother")};
 
   TrajectoryPoints forwardJerkFilter(
