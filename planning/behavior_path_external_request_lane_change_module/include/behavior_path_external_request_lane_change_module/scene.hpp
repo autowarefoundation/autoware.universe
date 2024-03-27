@@ -19,8 +19,12 @@
 
 #include <memory>
 
+namespace autoware
+{
 namespace behavior_path_planner
 {
+using ::behavior_path_planner::LaneChangeParameters;
+
 class ExternalRequestLaneChange : public NormalLaneChange
 {
 public:
@@ -34,5 +38,6 @@ public:
   ~ExternalRequestLaneChange() override = default;
 };
 }  // namespace behavior_path_planner
+}  // namespace autoware
 
 #endif  // BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__SCENE_HPP_
