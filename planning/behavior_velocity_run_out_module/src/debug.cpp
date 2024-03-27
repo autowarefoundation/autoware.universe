@@ -276,7 +276,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
 
   if (!ego_cut_line_.empty()) {
     auto marker = createDefaultMarker(
-      "map", current_time, "ego_back_lane", 0, visualization_msgs::msg::Marker::LINE_LIST,
+      "map", current_time, "ego_cut_line", 0, visualization_msgs::msg::Marker::LINE_LIST,
       createMarkerScale(0.2, 0.2, 0.2), createMarkerColor(0.7, 0.0, 0.7, 0.999));
     for (const auto & p : ego_cut_line_) {
       marker.points.push_back(p);
