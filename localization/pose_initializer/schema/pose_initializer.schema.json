@@ -20,7 +20,10 @@
               "default": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
             }
           },
-          "required": ["enable", "pose"],
+          "required": [
+            "enable",
+            "pose"
+          ],
           "additionalProperties": false
         },
         "gnss_pose_timeout": {
