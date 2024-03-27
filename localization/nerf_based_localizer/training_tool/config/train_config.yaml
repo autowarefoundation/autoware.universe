@@ -1,0 +1,15 @@
+%YAML 1.2
+---
+train:
+  pts_batch_size: 262144
+  end_iter: 20000
+  report_freq: 200
+  vis_freq: 2500
+  save_freq: 20000
+  validate_freq: 100000
+  learning_rate: 1e-2
+  learning_rate_alpha: 1e-1
+  learning_rate_warm_up_end_iter: 1000
+  var_loss_weight: 1e-2
+  var_loss_start: 5000
+  var_loss_end: 10000

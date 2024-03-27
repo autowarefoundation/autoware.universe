@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+  <group>
+    <push-ros-namespace namespace="nerf_based_localizer"/>
+    <group>
+      <include file="$(find-pkg-share nerf_based_localizer)/launch/nerf_based_localizer.launch.xml">
+        <arg name="input_image" value="/sensing/camera/traffic_light/image_raw"/>
+        <arg name="input_pose" value="/localization/pose_twist_fusion_filter/biased_pose_with_covariance"/>
+        <arg name="output_image" value="/localization/pose_estimator/nerf_image"/>
+        <arg name="output_pose_with_covariance" value="/localization/pose_estimator/pose_with_covariance"/>
+        <arg name="param_file" value="$(find-pkg-share nerf_based_localizer)/config/nerf_based_localizer.param.yaml"/>
+      </include>
+    </group>
+  </group>
+</launch>
