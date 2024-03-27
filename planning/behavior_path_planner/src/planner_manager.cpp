@@ -116,7 +116,8 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       is_any_approved_module_running || is_any_candidate_module_running_or_idle;
 
     const bool is_out_of_route = utils::isEgoOutOfRoute(
-      data->self_odometry->pose.pose, data->prev_modified_goal, data->route_handler);
+      data->self_odometry->pose.pose, data->prev_modified_goal, data->route_handler,
+      data->parameters);
 
     if (!is_any_module_running && is_out_of_route) {
       BehaviorModuleOutput output = utils::createGoalAroundPath(data);

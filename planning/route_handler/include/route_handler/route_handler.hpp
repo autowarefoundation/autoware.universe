@@ -57,8 +57,9 @@ public:
   explicit RouteHandler(const HADMapBin & map_msg);
 
   // non-const methods
-  void setMap(const HADMapBin & map_msg);
-  void setRoute(const LaneletRoute & route_msg);
+  void setMap(const HADMapBin & map_msg, const bool & is_enable_differential_lanelet = false);
+  void setRoute(
+    const LaneletRoute & route_msg, const bool & is_enable_differential_lanelet = false);
   void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
   void clearRoute();
 
@@ -354,6 +355,7 @@ public:
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
+  lanelet::ConstLanelets getRouteLanelets() const;
 
 private:
   // MUST
@@ -379,7 +381,7 @@ private:
   Pose original_goal_pose_;
 
   // non-const methods
-  void setLaneletsFromRouteMsg();
+  void setLaneletsFromRouteMsg(const bool & is_enable_differential_lanelet = false);
 
   // const methods
   // for routing
@@ -399,7 +401,6 @@ private:
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
   bool getLeftLaneletWithinRoute(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet) const;
-  lanelet::ConstLanelets getRouteLanelets() const;
   lanelet::ConstLanelets getLaneletSequenceUpTo(
     const lanelet::ConstLanelet & lanelet,
     const double min_length = std::numeric_limits<double>::max(),
