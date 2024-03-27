@@ -1,15 +1,13 @@
-name: build-and-test
+name: build-and-test-self-hosted
 
 on:
-  push:
   schedule:
     - cron: 0 0 * * *
   workflow_dispatch:
 
 jobs:
-  build-and-test:
-    if: ${{ github.event_name != 'push' || github.ref_name == github.event.repository.default_branch }}
-    runs-on: ubuntu-latest
+  build-and-test-self-hosted:
+    runs-on: [self-hosted, linux, ARM64]
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
@@ -26,14 +24,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-
-      - name: Free disk space (Ubuntu)
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: false
-          dotnet: false
-          swap-storage: false
-          large-packages: false
 
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
@@ -52,18 +42,8 @@ jobs:
 
       - name: Test
         if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
-        id: test
         uses: autowarefoundation/autoware-github-actions/colcon-test@v1
         with:
           rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
           build-depends-repos: ${{ matrix.build-depends-repos }}
-
-      - name: Upload coverage to CodeCov
-        if: ${{ steps.test.outputs.coverage-report-files != '' }}
-        uses: codecov/codecov-action@v3
-        with:
-          files: ${{ steps.test.outputs.coverage-report-files }}
-          fail_ci_if_error: false
-          verbose: true
-          flags: total
