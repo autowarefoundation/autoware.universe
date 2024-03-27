@@ -72,9 +72,9 @@ public:
   explicit RouteHandler(const LaneletMapBin & map_msg);
 
   // non-const methods
-  void setMap(const HADMapBin & map_msg, const bool & is_enable_differantial_lanelet = false);
+  void setMap(const HADMapBin & map_msg, const bool & is_enable_differential_lanelet = false);
   void setRoute(
-    const LaneletRoute & route_msg, const bool & is_enable_differantial_lanelet = false);
+    const LaneletRoute & route_msg, const bool & is_enable_differential_lanelet = false);
   void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
   void clearRoute();
 
@@ -350,7 +350,7 @@ private:
   Pose original_goal_pose_;
 
   // non-const methods
-  void setLaneletsFromRouteMsg(const bool & is_enable_differantial_lanelet = false);
+  void setLaneletsFromRouteMsg(const bool & is_enable_differential_lanelet = false);
 
   // const methods
   // for routing
