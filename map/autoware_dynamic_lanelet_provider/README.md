@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This package aim to provide dynamic Lanelet2 map to the other Autoware nodes.
+This package aims to provide a dynamic Lanelet2 map to the other Autoware nodes.
 The dynamic Lanelet2 map is a Lanelet2 map that is updated in real-time based
 on the current odometry position of the vehicle.
 
