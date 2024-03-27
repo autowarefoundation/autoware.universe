@@ -52,6 +52,8 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
 }
 }  // namespace
 
+namespace autoware
+{
 namespace behavior_velocity_planner
 {
 namespace
@@ -476,6 +478,7 @@ void BehaviorVelocityPlannerNode::publishDebugMarker(
   debug_viz_pub_->publish(output_msg);
 }
 }  // namespace behavior_velocity_planner
+}  // namespace autoware
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(behavior_velocity_planner::BehaviorVelocityPlannerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::behavior_velocity_planner::BehaviorVelocityPlannerNode)
