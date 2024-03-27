@@ -340,7 +340,6 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
     const auto & object = input_objects->objects.at(i);
     const auto validated =
       validation_is_ready ? validator_->validate_object(transformed_object) : false;
-    validator_->validate_object(transformed_object);
     if (debugger_) {
       debugger_->addNeighborPointcloud(validator_->getDebugNeighborPointCloud());
       debugger_->addPointcloudWithinPolygon(validator_->getDebugPointCloudWithinObject());
