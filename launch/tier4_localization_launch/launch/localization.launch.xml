@@ -3,6 +3,7 @@
   <arg name="pose_source" description="A string consisting of ndt, yabloc, artag and eagleye joined by underscores no matter the order. e.g. ndt_yabloc"/>
   <arg name="twist_source"/>
   <arg name="system_run_mode"/>
+  <arg name="initial_pose"/>
 
   <!-- parameter paths for ndt -->
   <arg name="ndt_scan_matcher/pointcloud_preprocessor/crop_box_filter_measurement_range_param_path"/>

@@ -24,12 +24,12 @@ using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::Initialize;
 
 NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node)
-: logger_(node->get_logger())
+: node_(node)
 {
-  client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
+  client_ndt_trigger_ = node_->create_client<SetBool>("ndt_trigger_node");
 }
 
-void NdtLocalizationTriggerModule::send_request(bool flag) const
+void NdtLocalizationTriggerModule::send_request(bool flag, bool need_spin) const
 {
   const auto req = std::make_shared<SetBool::Request>();
   std::string command_name;
@@ -46,10 +46,14 @@ void NdtLocalizationTriggerModule::send_request(bool flag) const
 
   auto future_ndt = client_ndt_trigger_->async_send_request(req);
 
+  if (need_spin) {
+    rclcpp::spin_until_future_complete(node_->get_node_base_interface(), future_ndt);
+  }
+
   if (future_ndt.get()->success) {
-    RCLCPP_INFO(logger_, "NDT %s succeeded", command_name.c_str());
+    RCLCPP_INFO(node_->get_logger(), "NDT %s succeeded", command_name.c_str());
   } else {
-    RCLCPP_INFO(logger_, "NDT %s failed", command_name.c_str());
+    RCLCPP_INFO(node_->get_logger(), "NDT %s failed", command_name.c_str());
     throw ServiceException(
       Initialize::Service::Response::ERROR_ESTIMATION, "NDT " + command_name + " failed");
   }

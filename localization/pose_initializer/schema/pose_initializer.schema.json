@@ -6,6 +6,26 @@
     "pose_initializer": {
       "type": "object",
       "properties": {
+        "initial_pose_directly": {
+          "type": "object",
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "description": "If true, initial_pose_directly.pose is set as the initial position.",
+              "default": "false"
+            },
+            "pose": {
+              "type": "array",
+              "description": "initial pose (x, y, z, quat_x, quat_y, quat_z, quat_w)",
+              "default": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+            }
+          },
+          "required": [
+            "enable",
+            "pose"
+          ],
+          "additionalProperties": false
+        },
         "gnss_pose_timeout": {
           "type": "number",
           "description": "The duration that the GNSS pose is valid. [sec]",
@@ -55,6 +75,7 @@
         }
       },
       "required": [
+        "initial_pose_directly",
         "gnss_pose_timeout",
         "stop_check_duration",
         "ekf_enabled",
