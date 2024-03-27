@@ -192,7 +192,9 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // Parameters
   double publish_rate = declare_parameter<double>("publish_rate");
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
-  bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
+  enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
+  bool timer_based_constant_publish_rate{
+    declare_parameter<bool>("timer_based_constant_publish_rate")};
 
   // Debug publishers
   debugger_ = std::make_unique<TrackerDebugger>(*this);
@@ -202,11 +204,12 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tf_buffer_.setCreateTimerInterface(cti);
 
   // Create ROS time based timer
-  if (enable_delay_compensation) {
+  if (timer_based_constant_publish_rate) {
     const auto period_ns = rclcpp::Rate(publish_rate).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&MultiObjectTracker::onTimer, this));
   }
+  last_published_time_ = this->now();
 
   const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
   const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
@@ -298,7 +301,34 @@ void MultiObjectTracker::onMeasurement(
   }
 
   if (publish_timer_ == nullptr) {
-    publish(measurement_time);
+    // publish immediately if the timer is not used
+    if (enable_delay_compensation_) {
+      // publish in the current time
+      onTimer();
+    } else {
+      // normal publish
+      publish(measurement_time);
+    }
+  } else {
+    // if timer is used, need not to publish immediately
+    fixTimerPhase();
+  }
+}
+
+void MultiObjectTracker::fixTimerPhase()
+{
+  // check next timer trigger time to published
+  const auto time_until_next_period = publish_timer_->time_until_trigger();
+  const double time_until_next_period_ms = time_until_next_period.count() / 1e6;
+  // if the next period is too far, publish immediately and reset the timer
+  const double max_time_until_next_period_ms = max_publish_delay_ * 1e3;
+  if (max_time_until_next_period_ms < time_until_next_period_ms) {
+    const auto current_time = this->now();
+    publish_timer_->cancel();
+    publish_timer_->execute_callback();
+    // wait for the 5ms for phase adjustment
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    publish_timer_->reset();
   }
 }
 
@@ -337,7 +367,6 @@ void MultiObjectTracker::onTimer()
   if (!self_transform) {
     return;
   }
-
   /* life cycle check */
   checkTrackerLifeCycle(list_tracker_, current_time, *self_transform);
   /* sanitize trackers */
@@ -447,8 +476,16 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   const auto subscriber_count = tracked_objects_pub_->get_subscription_count() +
                                 tracked_objects_pub_->get_intra_process_subscription_count();
   if (subscriber_count < 1) {
+    last_published_time_ = time;
     return;
   }
+
+  // check last published time and prevent from publishing too fast
+  const double elapsed_time = (time - last_published_time_).seconds();
+  if (elapsed_time < min_publish_interval_) {
+    return;  // do not publish so fast
+  }
+
   // Create output msg
   autoware_auto_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
@@ -474,6 +511,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   // Debugger Publish if enabled
   debugger_->publishProcessingTime();
   debugger_->publishTentativeObjects(tentative_objects_msg);
+  last_published_time_ = time;
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)
