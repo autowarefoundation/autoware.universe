@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>carla_autoware</name>
+  <version>0.0.0</version>
+  <description>The carla autoware bridge package</description>
+  <maintainer email="mradityagio@gmail.com">Muhammad Raditya Giovanni</maintainer>
+  <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
+  <license>Apache License 2.0</license>
+
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>ros_compatibility</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <depend>astuff_sensor_msgs</depend>
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>carla_msgs</depend>
+  <depend>datetime</depend>
+  <depend>geometry_msgs</depend>
+  <depend>math</depend>
+  <depend>nav_msgs</depend>
+  <depend>numpy</depend>
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>sensor_msgs_py</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
