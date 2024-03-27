@@ -10,13 +10,13 @@
           "type": "object",
           "properties": {
             "enable": {
-              "type": "boolean",
-              "description": "If true, initial_pose_directly.pose is set as the initial position.",
+              "type": "string",
+              "description": "If true, initial_pose_directly.pose is set as the initial position. [boolean]",
               "default": "false"
             },
             "pose": {
-              "type": "array",
-              "description": "initial pose (x, y, z, quat_x, quat_y, quat_z, quat_w)",
+              "type": "string",
+              "description": "initial pose (x, y, z, quat_x, quat_y, quat_z, quat_w). [array]",
               "default": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
             }
           },
