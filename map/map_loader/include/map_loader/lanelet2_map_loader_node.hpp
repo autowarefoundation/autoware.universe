@@ -27,8 +27,10 @@
 
 #include <lanelet2_projection/UTM.h>
 
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 using autoware_map_msgs::msg::LaneletMapBin;
 using tier4_map_msgs::msg::MapProjectorInfo;
