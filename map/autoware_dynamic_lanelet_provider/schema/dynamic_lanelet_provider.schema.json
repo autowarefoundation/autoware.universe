@@ -8,17 +8,17 @@
       "properties": {
         "dynamic_map_loading_grid_size": {
           "type": "number",
-          "description": "The grid size for divided lanelet2 map",
+          "description": "The grid size for divided lanelet2 map [m]",
           "default": "50.0"
         },
         "dynamic_map_loading_update_distance": {
           "type": "number",
-          "description": "The distance to update the map",
+          "description": "The distance to update the map [m]",
           "default": "100.0"
         },
         "dynamic_map_loading_map_radius": {
           "type": "number",
-          "description": "The radius for the map to be loaded",
+          "description": "The radius for the map to be loaded [m]",
           "default": "200.0"
         }
       },
