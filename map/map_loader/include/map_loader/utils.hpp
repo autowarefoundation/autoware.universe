@@ -15,8 +15,6 @@
 #ifndef MAP_LOADER__UTILS_HPP_
 #define MAP_LOADER__UTILS_HPP_
 
-#include <yaml-cpp/yaml.h>
-
 #include <map>
 #include <string>
 #include <vector>
