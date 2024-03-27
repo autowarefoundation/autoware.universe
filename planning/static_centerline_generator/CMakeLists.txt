@@ -29,10 +29,10 @@ ament_auto_add_executable(main
 
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
     rosidl_target_interfaces(main
-    static_centerline_generator "rosidl_typesupport_cpp")
+    autoware_static_centerline_generator "rosidl_typesupport_cpp")
 else()
     rosidl_get_typesupport_target(
-            cpp_typesupport_target static_centerline_generator "rosidl_typesupport_cpp")
+            cpp_typesupport_target autoware_static_centerline_generator "rosidl_typesupport_cpp")
     target_link_libraries(main "${cpp_typesupport_target}")
 endif()
 
