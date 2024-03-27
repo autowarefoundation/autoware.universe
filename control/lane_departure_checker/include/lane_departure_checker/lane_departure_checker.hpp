@@ -91,6 +91,7 @@ struct Output
   bool is_out_of_lane{};
   bool will_cross_boundary{};
   PoseDeviation trajectory_deviation{};
+  double deviation_longitudinal_vel{0.0};
   lanelet::ConstLanelets candidate_lanelets{};
   TrajectoryPoints resampled_trajectory{};
   std::vector<LinearRing2d> vehicle_footprints{};
@@ -137,6 +138,10 @@ public:
 private:
   Param param_;
   std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
+
+  static double calcLongitudinalDeviationDerivatives(
+    const Trajectory & trajectory, const double dist_threshold, const double yaw_threshold,
+    const Input & input);
 
   static PoseDeviation calcTrajectoryDeviation(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,

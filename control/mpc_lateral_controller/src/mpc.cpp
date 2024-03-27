@@ -73,6 +73,10 @@ bool MPC::calculateMPC(
     return fail_warn_throttle("trajectory resampling failed. Stop MPC.");
   }
 
+  // get the diagnostic data w.r.t. the original trajectory
+  const auto [success_data_traj_raw, mpc_data_traj_raw] =
+    getData(m_mpc_traj_raw, current_steer, current_kinematics);
+
   // generate mpc matrix : predict equation Xec = Aex * x0 + Bex * Uex + Wex
   const auto mpc_matrix = generateMPCMatrix(mpc_resampled_ref_trajectory, prediction_dt);
 
@@ -109,16 +113,17 @@ bool MPC::calculateMPC(
     calculatePredictedTrajectory(mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt);
 
   // prepare diagnostic message
-  diagnostic =
-    generateDiagData(reference_trajectory, mpc_data, mpc_matrix, ctrl_cmd, Uex, current_kinematics);
+  diagnostic = generateDiagData(
+    reference_trajectory, mpc_data_traj_raw, mpc_data, mpc_matrix, ctrl_cmd, Uex,
+    current_kinematics, success_data_traj_raw);
 
   return true;
 }
 
 Float32MultiArrayStamped MPC::generateDiagData(
-  const MPCTrajectory & reference_trajectory, const MPCData & mpc_data,
-  const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
-  const Odometry & current_kinematics) const
+  const MPCTrajectory & reference_trajectory, const MPCData & mpc_data_traj_raw,
+  const MPCData & mpc_data, const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd,
+  const VectorXd & Uex, const Odometry & current_kinematics, bool success_data_traj_raw) const
 {
   Float32MultiArrayStamped diagnostic;
 
@@ -143,7 +148,7 @@ Float32MultiArrayStamped MPC::generateDiagData(
   append_diag(mpc_matrix.Uref_ex(0));             // [2] feed-forward steering value
   append_diag(std::atan(nearest_smooth_k * wb));  // [3] feed-forward steering value raw
   append_diag(mpc_data.steer);                    // [4] current steering angle
-  append_diag(mpc_data.lateral_err);              // [5] lateral error
+  append_diag(mpc_data.lateral_err);  // [5] lateral error (the actual error used for MPC)
   append_diag(tf2::getYaw(current_kinematics.pose.pose.orientation));  // [6] current_pose yaw
   append_diag(tf2::getYaw(mpc_data.nearest_pose.orientation));         // [7] nearest_pose yaw
   append_diag(mpc_data.yaw_err);                                       // [8] yaw error
@@ -159,6 +164,12 @@ Float32MultiArrayStamped MPC::generateDiagData(
   append_diag(iteration_num);             // [18] iteration number
   append_diag(runtime);                   // [19] runtime of the latest problem solved
   append_diag(objective_value);           // [20] objective value of the latest problem solved
+  append_diag(std::clamp(
+    Uex(0), -m_steer_lim,
+    m_steer_lim));  // [21] control signal after the saturation constraint (clamp)
+  append_diag(
+    success_data_traj_raw ? mpc_data_traj_raw.lateral_err
+                          : -1.0);  // [22] lateral error from raw trajectory
 
   return diagnostic;
 }
@@ -173,11 +184,11 @@ void MPC::setReferenceTrajectory(
   const double ego_offset_to_segment = motion_utils::calcLongitudinalOffsetToSegment(
     trajectory_msg.points, nearest_seg_idx, current_kinematics.pose.pose.position);
 
-  const auto mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
+  m_mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
 
   // resampling
   const auto [success_resample, mpc_traj_resampled] = MPCUtils::resampleMPCTrajectoryByDistance(
-    mpc_traj_raw, param.traj_resample_dist, nearest_seg_idx, ego_offset_to_segment);
+    m_mpc_traj_raw, param.traj_resample_dist, nearest_seg_idx, ego_offset_to_segment);
   if (!success_resample) {
     warn_throttle("[setReferenceTrajectory] spline error when resampling by distance");
     return;
@@ -214,7 +225,7 @@ void MPC::setReferenceTrajectory(
    */
   if (param.extend_trajectory_for_end_yaw_control) {
     MPCUtils::extendTrajectoryInYawDirection(
-      mpc_traj_raw.yaw.back(), param.traj_resample_dist, m_is_forward_shift, mpc_traj_smoothed);
+      m_mpc_traj_raw.yaw.back(), param.traj_resample_dist, m_is_forward_shift, mpc_traj_smoothed);
   }
 
   // calculate yaw angle
