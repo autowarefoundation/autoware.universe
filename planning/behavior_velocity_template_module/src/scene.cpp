@@ -21,8 +21,12 @@
 
 #include <string>
 
+namespace autoware
+{
 namespace behavior_velocity_planner
 {
+
+using ::behavior_path_planner::StopReason;
 
 TemplateModule::TemplateModule(
   const int64_t module_id, const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
@@ -50,3 +54,4 @@ bool TemplateModule::modifyPathVelocity(
 }
 
 }  // namespace behavior_velocity_planner
+}  // namespace autoware
