@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+namespace autoware
+{
 namespace behavior_path_planner
 {
 
@@ -190,8 +192,9 @@ AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 }
 
 }  // namespace behavior_path_planner
+}  // namespace autoware
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_path_planner::AvoidanceByLaneChangeModuleManager,
-  behavior_path_planner::SceneModuleManagerInterface)
+  autoware::behavior_path_planner::AvoidanceByLaneChangeModuleManager,
+  autoware::behavior_path_planner::SceneModuleManagerInterface)

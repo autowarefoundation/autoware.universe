@@ -16,6 +16,8 @@
 
 #include "behavior_path_avoidance_module/data_structs.hpp"
 
+namespace autoware
+{
 namespace behavior_path_planner
 {
 struct AvoidanceByLCParameters : public AvoidanceParameters
@@ -31,5 +33,6 @@ struct AvoidanceByLCParameters : public AvoidanceParameters
   }
 };
 }  // namespace behavior_path_planner
+}  // namespace autoware
 
 #endif  // BEHAVIOR_PATH_AVOIDANCE_BY_LANE_CHANGE_MODULE__DATA_STRUCTS_HPP_

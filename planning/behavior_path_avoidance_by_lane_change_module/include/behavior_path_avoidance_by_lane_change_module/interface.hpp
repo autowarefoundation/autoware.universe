@@ -25,6 +25,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace autoware
+{
 namespace behavior_path_planner
 {
 class AvoidanceByLaneChangeInterface : public LaneChangeInterface
@@ -46,5 +48,6 @@ protected:
   void updateRTCStatus(const double start_distance, const double finish_distance) override;
 };
 }  // namespace behavior_path_planner
+}  // namespace autoware
 
 #endif  // BEHAVIOR_PATH_AVOIDANCE_BY_LANE_CHANGE_MODULE__INTERFACE_HPP_
