@@ -125,7 +125,6 @@ void PoseInitializer::set_initial_pose_directly(const geometry_msgs::msg::Pose i
     change_state(State::Message::INITIALIZED);
 
     RCLCPP_INFO(get_logger(), "Set initial pose directly");
-
   } catch (const ServiceException & error) {
     change_state(State::Message::UNINITIALIZED);
     RCLCPP_WARN(get_logger(), "Could not set initial pose directly");
@@ -159,7 +158,6 @@ void PoseInitializer::on_initialize(
     change_node_trigger(true, false);
     res->status.success = true;
     change_state(State::Message::INITIALIZED);
-
   } catch (const ServiceException & error) {
     res->status = error.status();
     change_state(State::Message::UNINITIALIZED);
