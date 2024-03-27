@@ -90,7 +90,7 @@ void RunOutDebug::pushEgoCutLine(const std::vector<geometry_msgs::msg::Point> & 
 {
   for (const auto & point : line) {
     const auto point_with_height = createPoint(point.x, point.y, height_);
-    ego_back_line_.push_back(point_with_height);
+    ego_cut_line_.push_back(point_with_height);
   }
 }
 
@@ -168,7 +168,7 @@ void RunOutDebug::clearDebugMarker()
   predicted_obstacle_polygons_.clear();
   collision_obstacle_polygons_.clear();
   travel_time_texts_.clear();
-  ego_back_line_.clear();
+  ego_cut_line_.clear();
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
@@ -274,11 +274,11 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
       &msg);
   }
 
-  if (!ego_back_line_.empty()) {
+  if (!ego_cut_line_.empty()) {
     auto marker = createDefaultMarker(
       "map", current_time, "ego_back_lane", 0, visualization_msgs::msg::Marker::LINE_LIST,
       createMarkerScale(0.2, 0.2, 0.2), createMarkerColor(0.7, 0.0, 0.7, 0.999));
-    for (const auto & p : ego_back_line_) {
+    for (const auto & p : ego_cut_line_) {
       marker.points.push_back(p);
     }
     msg.markers.push_back(marker);

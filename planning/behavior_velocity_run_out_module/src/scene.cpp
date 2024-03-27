@@ -109,7 +109,7 @@ bool RunOutModule::modifyPathVelocity(
 
     if (!planner_param_.run_out.use_ego_cut_line) return partition_excluded_obstacles;
 
-    // extract obstacles that cross the ego's back line
+    // extract obstacles that cross the ego's cut line
     const auto ego_cut_line_excluded_obstacles =
       excludeObstaclesCrossingEgoCutLine(partition_excluded_obstacles, current_pose);
     return ego_cut_line_excluded_obstacles;
