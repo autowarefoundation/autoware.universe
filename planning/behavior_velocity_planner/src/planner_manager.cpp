@@ -19,6 +19,8 @@
 #include <memory>
 #include <string>
 
+namespace autoware
+{
 namespace behavior_velocity_planner
 {
 namespace
@@ -50,7 +52,7 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
 }  // namespace
 
 BehaviorVelocityPlannerManager::BehaviorVelocityPlannerManager()
-: plugin_loader_("behavior_velocity_planner", "behavior_velocity_planner::PluginInterface")
+: plugin_loader_("behavior_velocity_planner", "autoware::behavior_velocity_planner::PluginInterface")
 {
 }
 
@@ -82,7 +84,7 @@ void BehaviorVelocityPlannerManager::removeScenePlugin(
 {
   auto it = std::remove_if(
     scene_manager_plugins_.begin(), scene_manager_plugins_.end(),
-    [&](const std::shared_ptr<behavior_velocity_planner::PluginInterface> plugin) {
+    [&](const std::shared_ptr<autoware::behavior_velocity_planner::PluginInterface> plugin) {
       return plugin->getModuleName() == name;
     });
 
@@ -129,3 +131,4 @@ diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::getStopRe
   return stop_reason_diag_;
 }
 }  // namespace behavior_velocity_planner
+}  // namespace autoware

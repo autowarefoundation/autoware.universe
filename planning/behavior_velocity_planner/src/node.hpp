@@ -44,11 +44,13 @@
 #include <string>
 #include <vector>
 
+namespace autoware
+{
 namespace behavior_velocity_planner
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
-using behavior_velocity_planner::srv::LoadPlugin;
-using behavior_velocity_planner::srv::UnloadPlugin;
+using autoware::behavior_velocity_planner::srv::LoadPlugin;
+using autoware::behavior_velocity_planner::srv::UnloadPlugin;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class BehaviorVelocityPlannerNode : public rclcpp::Node
@@ -135,5 +137,6 @@ private:
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace behavior_velocity_planner
+}  // namespace autoware
 
 #endif  // NODE_HPP_
