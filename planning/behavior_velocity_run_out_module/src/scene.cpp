@@ -335,7 +335,8 @@ std::vector<DynamicObstacle> RunOutModule::checkCollisionWithObstacles(
     // detect only pedestrian and bicycle
     if (
       classification != ObjectClassification::PEDESTRIAN &&
-      classification != ObjectClassification::BICYCLE) {
+      classification != ObjectClassification::BICYCLE &&
+      classification != ObjectClassification::MOTORCYCLE) {
       continue;
     }
 
