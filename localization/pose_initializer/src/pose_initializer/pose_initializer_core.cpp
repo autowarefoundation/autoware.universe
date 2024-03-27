@@ -19,9 +19,9 @@
 #include "gnss_module.hpp"
 #include "ndt_localization_trigger_module.hpp"
 #include "ndt_module.hpp"
+#include "nerf_module.hpp"
 #include "stop_check_module.hpp"
 #include "yabloc_module.hpp"
-#include "nerf_module.hpp"
 
 #include <memory>
 #include <vector>
@@ -99,7 +99,7 @@ void PoseInitializer::on_initialize(
       // If both the NDT and YabLoc initializer are enabled, prioritize NDT as it offers more
       // accuracy pose.
       pose = yabloc_->align_pose(pose);
-    }else if (nerf_) {
+    } else if (nerf_) {
       pose = nerf_->align_pose(pose);
     }
     pose.pose.covariance = output_pose_covariance_;

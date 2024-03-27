@@ -159,8 +159,6 @@ void NerfBasedLocalizer::callback_image(const sensor_msgs::msg::Image::ConstShar
     initial_pose_msg_ptr_array_.back();
   initial_pose_msg_ptr_array_.pop_back();
 
-  
-
   // Process
   const auto [pose_msg, image_msg, score_msg] = localize(pose_base_link->pose.pose, *image_msg_ptr);
 
