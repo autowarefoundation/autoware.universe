@@ -187,8 +187,7 @@ void DynamicLaneletProviderNode::convertLaneletMapBinToHADMapBin(
   had_map_bin.header = lanelet_map_bin.header;
   had_map_bin.data = lanelet_map_bin.data;
   had_map_bin.map_version = lanelet_map_bin.version_map;
-  //  had_map_bin.map_format =
-  //    static_cast<unsigned char>(std::stoi(lanelet_map_bin.version_map_format));
+  had_map_bin.format_version = lanelet_map_bin.version_map_format;
 }
 
 }  // namespace dynamic_lanelet_provider
