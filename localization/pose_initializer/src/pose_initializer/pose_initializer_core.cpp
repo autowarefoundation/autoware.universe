@@ -50,7 +50,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
     ndt_ = std::make_unique<NdtModule>(this);
     ndt_localization_trigger_ = std::make_unique<NdtLocalizationTriggerModule>(this);
   }
-  if (declare_parameter<bool>("nerf_enabled")) {
+  if (declare_parameter<bool>("nerf_enabled", false)) {
     nerf_ = std::make_unique<NeRFModule>(this);
   }
   if (declare_parameter<bool>("stop_check_enabled")) {
