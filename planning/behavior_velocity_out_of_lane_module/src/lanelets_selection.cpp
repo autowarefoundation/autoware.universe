@@ -24,15 +24,65 @@
 
 namespace behavior_velocity_planner::out_of_lane
 {
+
+lanelet::ConstLanelets consecutive_lanelets(
+  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelet & lanelet)
+{
+  lanelet::ConstLanelets consecutives = route_handler.getRoutingGraphPtr()->following(lanelet);
+  const auto previous = route_handler.getRoutingGraphPtr()->previous(lanelet);
+  consecutives.insert(consecutives.end(), previous.begin(), previous.end());
+  return consecutives;
+}
+
+lanelet::ConstLanelets get_missing_lane_change_lanelets(
+  lanelet::ConstLanelets & path_lanelets, const route_handler::RouteHandler & route_handler)
+{
+  lanelet::ConstLanelets missing_lane_change_lanelets;
+  const auto & routing_graph = *route_handler.getRoutingGraphPtr();
+  lanelet::ConstLanelets adjacents;
+  lanelet::ConstLanelets consecutives;
+  for (const auto & ll : path_lanelets) {
+    const auto consecutives_of_ll = consecutive_lanelets(route_handler, ll);
+    std::copy_if(
+      consecutives_of_ll.begin(), consecutives_of_ll.end(), std::back_inserter(consecutives),
+      [&](const auto & l) { return !contains_lanelet(consecutives, l.id()); });
+    const auto adjacents_of_ll = routing_graph.besides(ll);
+    std::copy_if(
+      adjacents_of_ll.begin(), adjacents_of_ll.end(), std::back_inserter(adjacents),
+      [&](const auto & l) { return !contains_lanelet(adjacents, l.id()); });
+  }
+  std::copy_if(
+    adjacents.begin(), adjacents.end(), std::back_inserter(missing_lane_change_lanelets),
+    [&](const auto & l) {
+      return !contains_lanelet(missing_lane_change_lanelets, l.id()) &&
+             !contains_lanelet(path_lanelets, l.id()) && contains_lanelet(consecutives, l.id());
+    });
+  return missing_lane_change_lanelets;
+}
+
+lanelet::ConstLanelets calculate_path_lanelets(
+  const EgoData & ego_data, const route_handler::RouteHandler & route_handler)
+{
+  const auto lanelet_map_ptr = route_handler.getLaneletMapPtr();
+  lanelet::ConstLanelets path_lanelets;
+  lanelet::BasicLineString2d path_ls;
+  for (const auto & p : ego_data.path.points)
+    path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
+  for (const auto & dist_lanelet :
+       lanelet::geometry::findWithin2d(lanelet_map_ptr->laneletLayer, path_ls)) {
+    if (!contains_lanelet(path_lanelets, dist_lanelet.second.id()))
+      path_lanelets.push_back(dist_lanelet.second);
+  }
+  const auto missing_lanelets = get_missing_lane_change_lanelets(path_lanelets, route_handler);
+  path_lanelets.insert(path_lanelets.end(), missing_lanelets.begin(), missing_lanelets.end());
+  return path_lanelets;
+}
+
 lanelet::ConstLanelets calculate_ignored_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & path_lanelets,
   const route_handler::RouteHandler & route_handler, const PlannerParam & params)
 {
   lanelet::ConstLanelets ignored_lanelets;
-  // ignore lanelets that follows path lanelets
-  for (const auto & path_lanelet : path_lanelets)
-    for (const auto & following : route_handler.getRoutingGraphPtr()->following(path_lanelet))
-      if (!contains_lanelet(path_lanelets, following.id())) ignored_lanelets.push_back(following);
   // ignore lanelets directly behind ego
   const auto behind =
     planning_utils::calculateOffsetPoint2d(ego_data.pose, params.rear_offset, 0.0);
@@ -55,26 +105,14 @@ lanelet::ConstLanelets calculate_other_lanelets(
   const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
   const auto lanelets_within_range = lanelet::geometry::findWithin2d(
     route_handler.getLaneletMapPtr()->laneletLayer, ego_point,
-    std::max(params.slow_dist_threshold, params.stop_dist_threshold));
-  const auto is_overlapped_by_path_lanelets = [&](const auto & l) {
-    for (const auto & path_ll : path_lanelets) {
-      if (
-        boost::geometry::overlaps(
-          path_ll.polygon2d().basicPolygon(), l.polygon2d().basicPolygon()) ||
-        boost::geometry::within(path_ll.polygon2d().basicPolygon(), l.polygon2d().basicPolygon()) ||
-        boost::geometry::within(l.polygon2d().basicPolygon(), path_ll.polygon2d().basicPolygon())) {
-        return true;
-      }
-    }
-    return false;
-  };
+    std::max(params.slow_dist_threshold, params.stop_dist_threshold) + params.front_offset +
+      params.extra_front_offset);
   for (const auto & ll : lanelets_within_range) {
     if (std::string(ll.second.attributeOr(lanelet::AttributeName::Subtype, "none")) != "road")
       continue;
     const auto is_path_lanelet = contains_lanelet(path_lanelets, ll.second.id());
     const auto is_ignored_lanelet = contains_lanelet(ignored_lanelets, ll.second.id());
-    if (!is_path_lanelet && !is_ignored_lanelet && !is_overlapped_by_path_lanelets(ll.second))
-      other_lanelets.push_back(ll.second);
+    if (!is_path_lanelet && !is_ignored_lanelet) other_lanelets.push_back(ll.second);
   }
   return other_lanelets;
 }
