@@ -39,6 +39,8 @@
 #include <lanelet2_projection/UTM.h>
 
 #include <filesystem>
+#include <map>
+#include <string>
 
 class Lanelet2DifferentialLoaderModule
 {

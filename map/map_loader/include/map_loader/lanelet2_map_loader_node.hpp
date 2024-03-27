@@ -28,8 +28,10 @@
 
 #include <lanelet2_projection/UTM.h>
 
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 class Lanelet2MapLoaderNode : public rclcpp::Node
 {
