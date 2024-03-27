@@ -178,14 +178,14 @@ std::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points)
 
 bool pathIntersectsEgoCutLine(
   const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
-  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_lane)
+  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_line)
 {
   if (path.size() < 2) return false;
   const auto p1 =
     tier4_autoware_utils::calcOffsetPose(ego_pose, 0.0, half_line_length, 0.0).position;
   const auto p2 =
     tier4_autoware_utils::calcOffsetPose(ego_pose, 0.0, -half_line_length, 0.0).position;
-  ego_cut_lane = {p1, p2};
+  ego_cut_line = {p1, p2};
 
   for (size_t i = 1; i < path.size(); ++i) {
     const auto & p3 = path.at(i).position;

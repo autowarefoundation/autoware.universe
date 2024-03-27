@@ -200,7 +200,7 @@ Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & 
 
 bool pathIntersectsEgoCutLine(
   const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
-  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_lane);
+  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_line);
 
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
