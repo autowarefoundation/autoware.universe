@@ -48,9 +48,9 @@ namespace autoware
 {
 namespace behavior_velocity_planner
 {
-using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware::behavior_velocity_planner::srv::LoadPlugin;
 using autoware::behavior_velocity_planner::srv::UnloadPlugin;
+using autoware_auto_mapping_msgs::msg::HADMapBin;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class BehaviorVelocityPlannerNode : public rclcpp::Node
