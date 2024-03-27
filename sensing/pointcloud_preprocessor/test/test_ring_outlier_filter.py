@@ -14,9 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
+import random
 import unittest
 
-import copy
 from geometry_msgs.msg import TwistWithCovarianceStamped
 import launch
 from launch.logging import get_logger
@@ -25,7 +26,6 @@ from launch_ros.descriptions import ComposableNode
 import launch_testing
 import numpy as np
 import pytest
-import random
 import rclpy
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSHistoryPolicy
@@ -109,56 +109,63 @@ class TestRingOutlierFilter(unittest.TestCase):
         print("-----------------cloud_arr-----------------")
         print(cloud_arr)
         print("-----------------cloud_arr-----------------")
-        
+
         cloud_arr = np.reshape(cloud_arr, (cloud_msg.width, int(cloud_msg.point_step / 4)))
         return cloud_arr[:, :3]
 
     @staticmethod
     def generate_pointcloud(header, timestamp_offset_per_point=0.01):
-         
         def generate_points_on_circle(N, r, Z, diffusion_N):
-            theta = np.linspace(0, 2*np.pi, N, endpoint=False)
+            theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
             distance = np.full(N, r)
 
             x = r * np.cos(theta).astype(np.float32)
             y = r * np.sin(theta).astype(np.float32)
             z = np.full_like(x, Z).astype(np.float32)
-            
+
             idx_list = sorted(random.sample(range(0, N), k=diffusion_N), reverse=True)
-            
+
             for idx in idx_list:
-                diffusion_r = random.uniform(0.1, r-0.1)
+                diffusion_r = random.uniform(0.1, r - 0.1)
                 x[idx] = diffusion_r * np.cos(theta[idx]).astype(np.float32)
                 y[idx] = diffusion_r * np.sin(theta[idx]).astype(np.float32)
                 distance[idx] = np.float32(diffusion_r)
-                    
+
             points = np.column_stack((x, y, z))
-            
+
             # eliminate outlier points
             gt_points = np.delete(points, idx_list, 0)
-            gt_theta = np.delete(theta, idx_list, 0) # for azimuth
-            gt_distance = np.delete(distance, idx_list, 0) # for distance
-
+            gt_theta = np.delete(theta, idx_list, 0)  # for azimuth
+            gt_distance = np.delete(distance, idx_list, 0)  # for distance
 
             print("------------points------------")
             print("points: ", points)
             print("gt_points: ", gt_points)
             print("------------points------------")
-            
+
             return points, theta, distance, gt_points, gt_theta, gt_distance
 
-        num_points = 10 # the number of division in a circle line
+        num_points = 10  # the number of division in a circle line
         num_points_diffusion = 5
-        points_xyz, theta, distance, gt_points_xyz, gt_theta, gt_distance = generate_points_on_circle(num_points, 3.0, 2.0, num_points_diffusion)
-        
+        (
+            points_xyz,
+            theta,
+            distance,
+            gt_points_xyz,
+            gt_theta,
+            gt_distance,
+        ) = generate_points_on_circle(num_points, 3.0, 2.0, num_points_diffusion)
+
         distance = np.asarray([np.float32(d) for d in distance])
         gt_distance = np.asarray([np.float32(d) for d in gt_distance])
-        
+
         # print("x--------------------------------x")
         # print("points_xyz: ", len(points_xyz))
         # print("x--------------------------------x")
-        azimuth = [450-(th/np.pi)*180 for th in theta]
-        azimuth = np.array([np.float32(az-360) if az>=360 else np.float32(az) for az in azimuth])
+        azimuth = [450 - (th / np.pi) * 180 for th in theta]
+        azimuth = np.array(
+            [np.float32(az - 360) if az >= 360 else np.float32(az) for az in azimuth]
+        )
         timestamps = np.array(
             [
                 header.stamp.sec + header.stamp.nanosec * 1e-9 + timestamp_offset_per_point * i
@@ -169,12 +176,12 @@ class TestRingOutlierFilter(unittest.TestCase):
         timestamp_data = timestamps.tobytes()
         distance_data = distance.tobytes()
         azimuth_data = azimuth.tobytes()
-        
-        intensity = np.full(num_points, np.float32('10.0'))
-        ring = np.full(num_points, np.int16('42'))
+
+        intensity = np.full(num_points, np.float32("10.0"))
+        ring = np.full(num_points, np.int16("42"))
         intensity_data = intensity.tobytes()
         ring_data = ring.tobytes()
-        
+
         # print("x--------------------------------x")
         # print("xyz_data: ", len(xyz_data))
         # print("x--------------------------------x")
@@ -183,8 +190,15 @@ class TestRingOutlierFilter(unittest.TestCase):
         #     for i in range(len(xyz_data))
         # )
 
-        tmp = [xyz_data[i * 12 : i * 12 + 12] + intensity_data[i * 4 : i * 4 + 4] + ring_data[i * 2 : i * 2 + 2] + azimuth_data[i * 4 : i * 4 + 4] + distance_data[i * 4 : i * 4 + 4] +  timestamp_data[i * 8 : i * 8 + 8]
-            for i in range(len(xyz_data))]
+        tmp = [
+            xyz_data[i * 12 : i * 12 + 12]
+            + intensity_data[i * 4 : i * 4 + 4]
+            + ring_data[i * 2 : i * 2 + 2]
+            + azimuth_data[i * 4 : i * 4 + 4]
+            + distance_data[i * 4 : i * 4 + 4]
+            + timestamp_data[i * 8 : i * 8 + 8]
+            for i in range(len(xyz_data))
+        ]
         # print("------------------------aa------------------------")
         # print("tmp: ", tmp[0])
         # print("len(tmp): ", len(tmp[0])) # 34
@@ -196,10 +210,14 @@ class TestRingOutlierFilter(unittest.TestCase):
         # print("len(distance_data): ", len(distance_data)) # 40
         # print("len(azimuth_data): ", len(azimuth_data)) # 40
 
-
         # print("------------------------aa------------------------")
         pointcloud_data = b"".join(
-            xyz_data[i * 12 : i * 12 + 12] + intensity_data[i * 4 : i * 4 + 4] + ring_data[i * 2 : i * 2 + 2] + azimuth_data[i * 4 : i * 4 + 4] + distance_data[i * 4 : i * 4 + 4] +  timestamp_data[i * 8 : i * 8 + 8]
+            xyz_data[i * 12 : i * 12 + 12]
+            + intensity_data[i * 4 : i * 4 + 4]
+            + ring_data[i * 2 : i * 2 + 2]
+            + azimuth_data[i * 4 : i * 4 + 4]
+            + distance_data[i * 4 : i * 4 + 4]
+            + timestamp_data[i * 8 : i * 8 + 8]
             for i in range(len(xyz_data))
         )
         # print("pointcloud_data: ", len(pointcloud_data))
@@ -231,8 +249,10 @@ class TestRingOutlierFilter(unittest.TestCase):
 
         # ground_truth_pointcloud
         gt_num_points = num_points - num_points_diffusion
-        gt_azimuth = [450-(th/np.pi)*180 for th in gt_theta]
-        gt_azimuth = np.array([np.float32(az-360) if az>=360 else np.float32(az) for az in gt_azimuth])
+        gt_azimuth = [450 - (th / np.pi) * 180 for th in gt_theta]
+        gt_azimuth = np.array(
+            [np.float32(az - 360) if az >= 360 else np.float32(az) for az in gt_azimuth]
+        )
         gt_timestamps = np.array(
             [
                 header.stamp.sec + header.stamp.nanosec * 1e-9 + timestamp_offset_per_point * i
@@ -243,7 +263,7 @@ class TestRingOutlierFilter(unittest.TestCase):
         gt_timestamp_data = gt_timestamps.tobytes()
         gt_distance_data = gt_distance.tobytes()
         gt_azimuth_data = gt_azimuth.tobytes()
-        
+
         # gt_pointcloud_data = b"".join(
         #     gt_xyz_data[i * 12 : i * 12 + 12] + gt_timestamp_data[i * 8 : i * 8 + 8]
         #     for i in range(len(gt_xyz_data))
@@ -254,15 +274,27 @@ class TestRingOutlierFilter(unittest.TestCase):
         #     PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
         #     PointField(name="time_stamp", offset=12, datatype=PointField.FLOAT64, count=1),
         # ]
-        gt_tmp = [gt_xyz_data[i * 12 : i * 12 + 12] + intensity_data[i * 4 : i * 4 + 4] + ring_data[i * 2 : i * 2 + 2] + gt_azimuth_data[i * 4 : i * 4 + 4] + gt_distance_data[i * 4 : i * 4 + 4] + gt_timestamp_data[i * 8 : i * 8 + 8]
-            for i in range(len(gt_xyz_data))]
+        gt_tmp = [
+            gt_xyz_data[i * 12 : i * 12 + 12]
+            + intensity_data[i * 4 : i * 4 + 4]
+            + ring_data[i * 2 : i * 2 + 2]
+            + gt_azimuth_data[i * 4 : i * 4 + 4]
+            + gt_distance_data[i * 4 : i * 4 + 4]
+            + gt_timestamp_data[i * 8 : i * 8 + 8]
+            for i in range(len(gt_xyz_data))
+        ]
         # print("------------------------aa------------------------")
         # print("gt_tmp: ", gt_tmp[0])
         # print("gt_len(tmp): ", len(gt_tmp[0]))
         # print("------------------------aa------------------------")
-        
+
         gt_pointcloud_data = b"".join(
-            gt_xyz_data[i * 12 : i * 12 + 12] + intensity_data[i * 4 : i * 4 + 4] + ring_data[i * 2 : i * 2 + 2] + gt_azimuth_data[i * 4 : i * 4 + 4] + gt_distance_data[i * 4 : i * 4 + 4] + gt_timestamp_data[i * 8 : i * 8 + 8]
+            gt_xyz_data[i * 12 : i * 12 + 12]
+            + intensity_data[i * 4 : i * 4 + 4]
+            + ring_data[i * 2 : i * 2 + 2]
+            + gt_azimuth_data[i * 4 : i * 4 + 4]
+            + gt_distance_data[i * 4 : i * 4 + 4]
+            + gt_timestamp_data[i * 8 : i * 8 + 8]
             for i in range(len(gt_xyz_data))
         )
         # print("gt_pointcloud_data: ", len(gt_pointcloud_data))
@@ -280,7 +312,7 @@ class TestRingOutlierFilter(unittest.TestCase):
         gt_pointcloud_msg = PointCloud2(
             header=header,
             height=1,
-            width=num_points-num_points_diffusion,
+            width=num_points - num_points_diffusion,
             is_dense=True,
             is_bigendian=False,
             point_step=34,
