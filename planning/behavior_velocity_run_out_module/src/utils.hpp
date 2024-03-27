@@ -25,9 +25,9 @@
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
+#include <memory>
 #include <string>
 #include <vector>
-
 namespace behavior_velocity_planner
 {
 namespace run_out_utils
@@ -64,6 +64,11 @@ struct RunOutParam
   double passing_margin;
   double deceleration_jerk;
   double ego_cut_line_length;
+  bool exclude_obstacles_already_in_path;
+  double stop_margin;
+  double passing_margin;
+  double deceleration_jerk;
+  double ego_footprint_extra_margin;
   float detection_distance;
   float detection_span;
   float min_vel_ego_kmph;
@@ -77,6 +82,7 @@ struct VehicleParam
   float wheel_tread;
   double right_overhang;
   double left_overhang;
+  std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
 };
 
 struct DetectionArea

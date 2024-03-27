@@ -327,6 +327,42 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createVehiclePolygon(
   return vehicle_poly;
 }
 
+std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path) const
+{
+  if (path.points.empty()) return dynamic_obstacles;
+  std::vector<DynamicObstacle> obstacles_outside_of_path;
+  const auto footprints = createVehicleFootprints(path);
+
+  std::for_each(
+    dynamic_obstacles.begin(), dynamic_obstacles.end(),
+    [&obstacles_outside_of_path, &footprints](const auto & o) {
+      const auto x = o.pose.position.x;
+      const auto y = o.pose.position.y;
+      if (!boost::geometry::within(Point2d(x, y), footprints)) {
+        obstacles_outside_of_path.push_back(o);
+      }
+    });
+  return obstacles_outside_of_path;
+}
+
+std::vector<LinearRing2d> RunOutModule::createVehicleFootprints(const PathWithLaneId & path) const
+{
+  using tier4_autoware_utils::transformVector;
+  const auto footprint_extra_margin = planner_param_.run_out.ego_footprint_extra_margin;
+  const auto local_vehicle_footprint =
+    planner_param_.vehicle_param.vehicle_info_ptr_->createFootprint(footprint_extra_margin);
+
+  // Create vehicle footprint on each Path point
+  std::vector<LinearRing2d> vehicle_footprints;
+  for (const auto & p : path.points) {
+    const auto transformed_footprint =
+      transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(p.point.pose));
+    vehicle_footprints.push_back(transformed_footprint);
+  }
+  return vehicle_footprints;
+}
+
 std::vector<DynamicObstacle> RunOutModule::checkCollisionWithObstacles(
   const std::vector<DynamicObstacle> & dynamic_obstacles,
   std::vector<geometry_msgs::msg::Point> poly, const float travel_time,
