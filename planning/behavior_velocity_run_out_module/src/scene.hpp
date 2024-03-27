@@ -17,6 +17,7 @@
 
 #include "debug.hpp"
 #include "dynamic_obstacle.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 #include "state_machine.hpp"
 #include "utils.hpp"
 
@@ -135,6 +136,17 @@ private:
   void applyMaxJerkLimit(
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
     PathWithLaneId & path) const;
+
+  /**
+   * @brief Creates a virtual line segment that is perpendicular to the ego vehicle and that passes
+   * through the ego's base link and excludes objects with paths that intersect that line segment.
+   * @param [in] dynamic_obstacles obstacles to be filtered.
+   * @param [in] current_pose ego vehicle's current pose.
+   * @return a vector of dynamic obstacles that don't intersect the line segment.
+   */
+  std::vector<DynamicObstacle> excludeObstaclesCrossingEgoCutLine(
+    const std::vector<DynamicObstacle> & dynamic_obstacles,
+    const geometry_msgs::msg::Pose & current_pose) const;
 
   std::vector<DynamicObstacle> excludeObstaclesOutSideOfPartition(
     const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
