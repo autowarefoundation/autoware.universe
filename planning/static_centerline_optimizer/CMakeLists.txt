@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(static_centerline_optimizer)
+project(autoware_static_centerline_optimizer)
 
 find_package(autoware_cmake REQUIRED)
 
@@ -11,7 +11,7 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
 rosidl_generate_interfaces(
-  static_centerline_optimizer
+  autoware_static_centerline_optimizer
   "srv/LoadMap.srv"
   "srv/PlanRoute.srv"
   "srv/PlanPath.srv"
@@ -39,10 +39,10 @@ target_link_libraries(main
 
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
     rosidl_target_interfaces(main
-    static_centerline_optimizer "rosidl_typesupport_cpp")
+    autoware_static_centerline_optimizer "rosidl_typesupport_cpp")
 else()
     rosidl_get_typesupport_target(
-            cpp_typesupport_target static_centerline_optimizer "rosidl_typesupport_cpp")
+            cpp_typesupport_target autoware_static_centerline_optimizer "rosidl_typesupport_cpp")
     target_link_libraries(main "${cpp_typesupport_target}")
 endif()
 
