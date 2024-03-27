@@ -2,7 +2,7 @@
 
 ### Role
 
-`run_out` is the module that decelerates and stops for dynamic obstacles such as pedestrians and bicycles.
+`run_out` is the module that decelerates and stops for dynamic obstacles such as pedestrians, bicycles and motorcycles.
 
 ![brief](./docs/run_out_overview.svg)
 
@@ -174,6 +174,7 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | Parameter               | Type   | Description                                                                                                              |
 | ----------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
 | `detection_method`      | string | [-] candidate: Object, ObjectWithoutPath, Points                                                                         |
+| `target_obstacle_types`      | vector of string | [-] specifies which obstacle types will be considered by the module, if the obstacles classification type is not written here, it will be ignored. candidate: ["PEDESTRIAN", "BICYCLE","MOTORCYCLE"]                                                                     |
 | `use_partition_lanelet` | bool   | [-] whether to use partition lanelet map data                                                                            |
 | `specify_decel_jerk`    | bool   | [-] whether to specify jerk when ego decelerates                                                                         |
 | `stop_margin`           | double | [m] the vehicle decelerates to be able to stop with this margin                                                          |
