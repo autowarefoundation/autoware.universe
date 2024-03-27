@@ -28,8 +28,10 @@
 
 #include <lanelet2_projection/UTM.h>
 
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_map_msgs::msg::LaneletMapBin;
