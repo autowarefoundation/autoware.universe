@@ -48,12 +48,13 @@ ros2 launch autoware_launch ... \
 
 ## Sample Dataset
 
- - [Sample rosbag and map](https://drive.google.com/file/d/1XqDYPOdziA4GWPjxoFooNPjTO1E1EUFY/view?usp=sharing)
+- [Sample rosbag and map](https://drive.google.com/file/d/1XqDYPOdziA4GWPjxoFooNPjTO1E1EUFY/view?usp=sharing)
 
- This dataset was acquired in National Institute for Land and Infrastructure Management, Full-scale tunnel experiment facility.
- The reflectors were installed by [Taisei Corporation](https://www.taisei.co.jp/english/).
+This dataset was acquired in National Institute for Land and Infrastructure Management, Full-scale tunnel experiment facility.
+The reflectors were installed by [Taisei Corporation](https://www.taisei.co.jp/english/).
 
 ## Collaborators
- - [TIER IV ](https://tier4.jp/en/)
- - [Taisei Corporation](https://www.taisei.co.jp/english/)
- - [Yuri Shimizu](https://github.com/YuriShimizu824)
+
+- [TIER IV](https://tier4.jp/en/)
+- [Taisei Corporation](https://www.taisei.co.jp/english/)
+- [Yuri Shimizu](https://github.com/YuriShimizu824)

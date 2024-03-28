@@ -47,8 +47,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     this->declare_parameter<int64_t>("negative_match_num_threshold");
   param_.vote_threshold_for_detect_marker =
     this->declare_parameter<int64_t>("vote_threshold_for_detect_marker");
-  param_.marker_height_from_ground =
-    this->declare_parameter<double>("marker_height_from_ground");
+  param_.marker_height_from_ground = this->declare_parameter<double>("marker_height_from_ground");
   param_.self_pose_timeout_sec = this->declare_parameter<double>("self_pose_timeout_sec");
   param_.self_pose_distance_tolerance_m =
     this->declare_parameter<double>("self_pose_distance_tolerance_m");
