@@ -112,7 +112,8 @@ int run(void *dora_context)
     //for (int i = 0; i < 20; i++)
     to_exit_process = false;
     while(!to_exit_process)
-    {
+    {   
+        usleep(100*1000);
         void *event = dora_next_event(dora_context);
         if (event == NULL)
         {
