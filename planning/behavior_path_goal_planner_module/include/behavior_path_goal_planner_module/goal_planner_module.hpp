@@ -37,6 +37,9 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 
+#include <lanelet2_core/Forward.h>
+
+#include <atomic>
 #include <deque>
 #include <limits>
 #include <memory>
@@ -220,6 +223,7 @@ struct GoalPlannerDebugData
 {
   FreespacePlannerDebugData freespace_planner{};
   std::vector<Polygon2d> ego_polygons_expanded{};
+  lanelet::ConstLanelet expanded_pull_over_lane_between_ego{};
 };
 
 struct LastApprovalData
@@ -290,6 +294,35 @@ public:
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
       objects_of_interest_marker_interface_ptr_map);
 
+  ~GoalPlannerModule()
+  {
+    if (lane_parking_timer_) {
+      lane_parking_timer_->cancel();
+    }
+    if (freespace_parking_timer_) {
+      freespace_parking_timer_->cancel();
+    }
+
+    while (is_lane_parking_cb_running_.load() || is_freespace_parking_cb_running_.load()) {
+      const std::string running_callbacks = std::invoke([&]() {
+        if (is_lane_parking_cb_running_ && is_freespace_parking_cb_running_) {
+          return "lane parking and freespace parking";
+        }
+        if (is_lane_parking_cb_running_) {
+          return "lane parking";
+        }
+        return "freespace parking";
+      });
+      RCLCPP_INFO_THROTTLE(
+        getLogger(), *clock_, 1000, "Waiting for %s callback to finish...",
+        running_callbacks.c_str());
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    RCLCPP_INFO_THROTTLE(
+      getLogger(), *clock_, 1000, "lane parking and freespace parking callbacks finished");
+  }
+
   void updateModuleParams(const std::any & parameters) override
   {
     parameters_ = std::any_cast<std::shared_ptr<GoalPlannerParameters>>(parameters);
@@ -330,6 +363,18 @@ public:
   CandidateOutput planCandidate() const override { return CandidateOutput{}; }
 
 private:
+  // Flag class for managing whether a certain callback is running in multi-threading
+  class ScopedFlag
+  {
+  public:
+    explicit ScopedFlag(std::atomic<bool> & flag) : flag_(flag) { flag_.store(true); }
+
+    ~ScopedFlag() { flag_.store(false); }
+
+  private:
+    std::atomic<bool> & flag_;
+  };
+
   /*
    * state transitions and plan function used in each state
    *
@@ -403,10 +448,12 @@ private:
   // pre-generate lane parking paths in a separate thread
   rclcpp::TimerBase::SharedPtr lane_parking_timer_;
   rclcpp::CallbackGroup::SharedPtr lane_parking_timer_cb_group_;
+  std::atomic<bool> is_lane_parking_cb_running_;
 
   // generate freespace parking paths in a separate thread
   rclcpp::TimerBase::SharedPtr freespace_parking_timer_;
   rclcpp::CallbackGroup::SharedPtr freespace_parking_timer_cb_group_;
+  std::atomic<bool> is_freespace_parking_cb_running_;
 
   // debug
   mutable GoalPlannerDebugData debug_data_;
@@ -480,14 +527,15 @@ private:
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
 
   // output setter
-  void setOutput(BehaviorModuleOutput & output) const;
+  void setOutput(BehaviorModuleOutput & output);
   void updatePreviousData();
 
   void setModifiedGoal(BehaviorModuleOutput & output) const;
-  void setTurnSignalInfo(BehaviorModuleOutput & output) const;
+  void setTurnSignalInfo(BehaviorModuleOutput & output);
 
   // new turn signal
-  TurnSignalInfo calcTurnSignalInfo() const;
+  TurnSignalInfo calcTurnSignalInfo();
+  std::optional<lanelet::Id> ignore_signal_{std::nullopt};
 
   std::optional<BehaviorModuleOutput> last_previous_module_output_{};
   bool hasPreviousModulePathShapeChanged() const;

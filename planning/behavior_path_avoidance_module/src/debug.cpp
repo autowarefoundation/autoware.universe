@@ -47,7 +47,7 @@ int32_t uuidToInt32(const unique_identifier_msgs::msg::UUID & uuid)
   int32_t ret = 0;
 
   for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
-    ret <<= sizeof(int8_t);
+    ret <<= sizeof(int8_t) * 8;
     ret |= uuid.uuid.at(i);
   }
 
@@ -113,7 +113,7 @@ MarkerArray createToDrivableBoundDistance(const ObjectDataArray & objects, std::
   MarkerArray msg;
 
   for (const auto & object : objects) {
-    if (!object.nearest_bound_point.has_value()) {
+    if (!object.narrowest_place.has_value()) {
       continue;
     }
 
@@ -122,8 +122,8 @@ MarkerArray createToDrivableBoundDistance(const ObjectDataArray & objects, std::
         "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::LINE_STRIP,
         createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 0.0, 0.42, 0.999));
 
-      marker.points.push_back(object.overhang_pose.position);
-      marker.points.push_back(object.nearest_bound_point.value());
+      marker.points.push_back(object.narrowest_place.value().first);
+      marker.points.push_back(object.narrowest_place.value().second);
       marker.id = uuidToInt32(object.object.object_id);
       msg.markers.push_back(marker);
     }
@@ -133,7 +133,7 @@ MarkerArray createToDrivableBoundDistance(const ObjectDataArray & objects, std::
         "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::TEXT_VIEW_FACING,
         createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 0.0, 1.0));
 
-      marker.pose.position = object.nearest_bound_point.value();
+      marker.pose.position = object.narrowest_place.value().second;
       std::ostringstream string_stream;
       string_stream << object.to_road_shoulder_distance << "[m]";
       marker.text = string_stream.str();
@@ -176,7 +176,7 @@ MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::st
       marker.id = uuidToInt32(object.object.object_id);
       marker.pose.position.z += 2.0;
       std::ostringstream string_stream;
-      string_stream << object.reason;
+      string_stream << object.reason << (object.is_parked ? "(PARKED)" : "");
       marker.text = string_stream.str();
       marker.color = createMarkerColor(1.0, 1.0, 1.0, 0.999);
       marker.scale = createMarkerScale(0.6, 0.6, 0.6);
@@ -188,10 +188,25 @@ MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::st
   return msg;
 }
 
+MarkerArray createOverhangLaneletMarkerArray(const ObjectDataArray & objects, std::string && ns)
+{
+  MarkerArray msg;
+  msg.markers.reserve(objects.size());
+
+  for (const auto & object : objects) {
+    appendMarkerArray(
+      marker_utils::createLaneletsAreaMarkerArray(
+        {object.overhang_lanelet}, std::string(ns), 0.0, 0.0, 1.0),
+      &msg);
+  }
+
+  return msg;
+}
+
 MarkerArray avoidableObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns)
 {
   MarkerArray msg;
-  msg.markers.reserve(objects.size() * 4);
+  msg.markers.reserve(objects.size() * 5);
 
   appendMarkerArray(
     createObjectsCubeMarkerArray(
@@ -202,6 +217,7 @@ MarkerArray avoidableObjectsMarkerArray(const ObjectDataArray & objects, std::st
   appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
   appendMarkerArray(createObjectPolygonMarkerArray(objects, ns + "_envelope_polygon"), &msg);
   appendMarkerArray(createToDrivableBoundDistance(objects, ns + "_to_drivable_bound"), &msg);
+  appendMarkerArray(createOverhangLaneletMarkerArray(objects, ns + "_overhang_lanelet"), &msg);
 
   return msg;
 }
@@ -209,7 +225,7 @@ MarkerArray avoidableObjectsMarkerArray(const ObjectDataArray & objects, std::st
 MarkerArray unAvoidableObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns)
 {
   MarkerArray msg;
-  msg.markers.reserve(objects.size() * 4);
+  msg.markers.reserve(objects.size() * 5);
 
   appendMarkerArray(
     createObjectsCubeMarkerArray(
@@ -220,6 +236,7 @@ MarkerArray unAvoidableObjectsMarkerArray(const ObjectDataArray & objects, std::
   appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
   appendMarkerArray(createObjectPolygonMarkerArray(objects, ns + "_envelope_polygon"), &msg);
   appendMarkerArray(createToDrivableBoundDistance(objects, ns + "_to_drivable_bound"), &msg);
+  appendMarkerArray(createOverhangLaneletMarkerArray(objects, ns + "_overhang_lanelet"), &msg);
 
   return msg;
 }
@@ -451,6 +468,10 @@ MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, const
   appendMarkerArray(
     createObjectInfoMarkerArray(filtered_objects, "others_" + convertToSnakeCase(ns) + "_info"),
     &msg);
+  appendMarkerArray(
+    createOverhangLaneletMarkerArray(
+      filtered_objects, "others_" + convertToSnakeCase(ns) + "_overhang_lanelet"),
+    &msg);
 
   return msg;
 }
@@ -469,7 +490,7 @@ MarkerArray createDrivableBounds(
       createMarkerColor(r, g, b, 0.999));
 
     for (const auto & p : data.right_bound) {
-      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      marker.points.push_back(p);
     }
 
     msg.markers.push_back(marker);
@@ -482,7 +503,7 @@ MarkerArray createDrivableBounds(
       createMarkerColor(r, g, b, 0.999));
 
     for (const auto & p : data.left_bound) {
-      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      marker.points.push_back(p);
     }
 
     msg.markers.push_back(marker);
@@ -558,6 +579,8 @@ MarkerArray createDebugMarkerArray(
     addObjects(data.other_objects, std::string("ParallelToEgoLane"));
     addObjects(data.other_objects, std::string("MergingToEgoLane"));
     addObjects(data.other_objects, std::string("UnstableObject"));
+    addObjects(data.other_objects, std::string("AmbiguousStoppedVehicle"));
+    addObjects(data.other_objects, std::string("AmbiguousStoppedVehicle(wait-and-see)"));
   }
 
   // shift line pre-process

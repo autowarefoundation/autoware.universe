@@ -14,7 +14,11 @@
 
 #include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
 
+#include "autoware_auto_geometry/common_3d.hpp"
+
 #include <sensor_msgs/point_cloud2_iterator.hpp>
+
+#include <pcl/search/pcl_search.h>
 
 #include <algorithm>
 #include <vector>
@@ -29,6 +33,8 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     using tier4_autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "ring_outlier_filter");
+    outlier_pointcloud_publisher_ =
+      this->create_publisher<PointCloud2>("debug/ring_outlier_filter", 1);
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
@@ -42,6 +48,8 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     max_rings_num_ = static_cast<uint16_t>(declare_parameter("max_rings_num", 128));
     max_points_num_per_ring_ =
       static_cast<size_t>(declare_parameter("max_points_num_per_ring", 4000));
+    publish_outlier_pointcloud_ =
+      static_cast<bool>(declare_parameter("publish_outlier_pointcloud", false));
   }
 
   using std::placeholders::_1;
@@ -64,6 +72,14 @@ void RingOutlierFilterComponent::faster_filter(
   output.point_step = sizeof(PointXYZI);
   output.data.resize(output.point_step * input->width);
   size_t output_size = 0;
+
+  // Set up the noise points cloud, if noise points are to be published.
+  PointCloud2 outlier_points;
+  size_t outlier_points_size = 0;
+  if (publish_outlier_pointcloud_) {
+    outlier_points.point_step = sizeof(PointXYZI);
+    outlier_points.data.resize(outlier_points.point_step * input->width);
+  }
 
   const auto ring_offset =
     input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Ring)).offset;
@@ -145,6 +161,27 @@ void RingOutlierFilterComponent::faster_filter(
 
           output_size += output.point_step;
         }
+      } else if (publish_outlier_pointcloud_) {
+        for (int i = walk_first_idx; i <= walk_last_idx; i++) {
+          auto outlier_ptr =
+            reinterpret_cast<PointXYZI *>(&outlier_points.data[outlier_points_size]);
+          auto input_ptr =
+            reinterpret_cast<const PointXYZI *>(&input->data[indices[walk_first_idx]]);
+          if (transform_info.need_transform) {
+            Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
+            p = transform_info.eigen_transform * p;
+            outlier_ptr->x = p[0];
+            outlier_ptr->y = p[1];
+            outlier_ptr->z = p[2];
+          } else {
+            *outlier_ptr = *input_ptr;
+          }
+          const float & intensity = *reinterpret_cast<const float *>(
+            &input->data[indices[walk_first_idx] + intensity_offset]);
+          outlier_ptr->intensity = intensity;
+
+          outlier_points_size += outlier_points.point_step;
+        }
       }
 
       walk_first_idx = idx + 1;
@@ -174,27 +211,33 @@ void RingOutlierFilterComponent::faster_filter(
 
         output_size += output.point_step;
       }
+    } else if (publish_outlier_pointcloud_) {
+      for (int i = walk_first_idx; i < walk_last_idx; i++) {
+        auto outlier_ptr = reinterpret_cast<PointXYZI *>(&outlier_points.data[outlier_points_size]);
+        auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
+        if (transform_info.need_transform) {
+          Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
+          p = transform_info.eigen_transform * p;
+          outlier_ptr->x = p[0];
+          outlier_ptr->y = p[1];
+          outlier_ptr->z = p[2];
+        } else {
+          *outlier_ptr = *input_ptr;
+        }
+        const float & intensity =
+          *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
+        outlier_ptr->intensity = intensity;
+        outlier_points_size += outlier_points.point_step;
+      }
     }
   }
 
-  output.data.resize(output_size);
+  setUpPointCloudFormat(input, output, output_size, /*num_fields=*/4);
 
-  // Note that `input->header.frame_id` is data before converted when `transform_info.need_transform
-  // == true`
-  output.header.frame_id = !tf_input_frame_.empty() ? tf_input_frame_ : tf_input_orig_frame_;
-
-  output.height = 1;
-  output.width = static_cast<uint32_t>(output.data.size() / output.height / output.point_step);
-  output.is_bigendian = input->is_bigendian;
-  output.is_dense = input->is_dense;
-
-  // set fields
-  sensor_msgs::PointCloud2Modifier pcd_modifier(output);
-  constexpr int num_fields = 4;
-  pcd_modifier.setPointCloud2Fields(
-    num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
-    sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32);
+  if (publish_outlier_pointcloud_) {
+    setUpPointCloudFormat(input, outlier_points, outlier_points_size, /*num_fields=*/4);
+    outlier_pointcloud_publisher_->publish(outlier_points);
+  }
 
   // add processing time for debug
   if (debug_publisher_) {
@@ -241,6 +284,10 @@ rcl_interfaces::msg::SetParametersResult RingOutlierFilterComponent::paramCallba
   if (get_param(p, "num_points_threshold", num_points_threshold_)) {
     RCLCPP_DEBUG(get_logger(), "Setting new num_points_threshold to: %d.", num_points_threshold_);
   }
+  if (get_param(p, "publish_outlier_pointcloud", publish_outlier_pointcloud_)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting new publish_outlier_pointcloud to: %d.", publish_outlier_pointcloud_);
+  }
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -248,6 +295,30 @@ rcl_interfaces::msg::SetParametersResult RingOutlierFilterComponent::paramCallba
 
   return result;
 }
+
+void RingOutlierFilterComponent::setUpPointCloudFormat(
+  const PointCloud2ConstPtr & input, PointCloud2 & formatted_points, size_t points_size,
+  size_t num_fields)
+{
+  formatted_points.data.resize(points_size);
+  // Note that `input->header.frame_id` is data before converted when `transform_info.need_transform
+  // == true`
+  formatted_points.header.frame_id =
+    !tf_input_frame_.empty() ? tf_input_frame_ : tf_input_orig_frame_;
+  formatted_points.data.resize(formatted_points.point_step * input->width);
+  formatted_points.height = 1;
+  formatted_points.width =
+    static_cast<uint32_t>(formatted_points.data.size() / formatted_points.point_step);
+  formatted_points.is_bigendian = input->is_bigendian;
+  formatted_points.is_dense = input->is_dense;
+
+  sensor_msgs::PointCloud2Modifier pcd_modifier(formatted_points);
+  pcd_modifier.setPointCloud2Fields(
+    num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
+    sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
+    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32);
+}
+
 }  // namespace pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>

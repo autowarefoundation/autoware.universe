@@ -23,6 +23,7 @@
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
@@ -45,6 +46,7 @@ using tier4_debug_msgs::msg::Float64Stamped;
 
 struct ValidationParams
 {
+  // thresholds
   double interval_threshold;
   double relative_angle_threshold;
   double curvature_threshold;
@@ -55,6 +57,11 @@ struct ValidationParams
   double steering_rate_threshold;
   double velocity_deviation_threshold;
   double distance_deviation_threshold;
+  double longitudinal_distance_deviation_threshold;
+
+  // parameters
+  double forward_trajectory_length_acceleration;
+  double forward_trajectory_length_margin;
 };
 
 class PlanningValidator : public rclcpp::Node
@@ -64,7 +71,7 @@ public:
 
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
 
-  bool checkValidSize(const Trajectory & trajectory) const;
+  bool checkValidSize(const Trajectory & trajectory);
   bool checkValidFiniteValue(const Trajectory & trajectory);
   bool checkValidInterval(const Trajectory & trajectory);
   bool checkValidRelativeAngle(const Trajectory & trajectory);
@@ -76,6 +83,8 @@ public:
   bool checkValidSteeringRate(const Trajectory & trajectory);
   bool checkValidVelocityDeviation(const Trajectory & trajectory);
   bool checkValidDistanceDeviation(const Trajectory & trajectory);
+  bool checkValidLongitudinalDistanceDeviation(const Trajectory & trajectory);
+  bool checkValidForwardTrajectoryLength(const Trajectory & trajectory);
 
 private:
   void setupDiag();
@@ -127,6 +136,8 @@ private:
   std::shared_ptr<PlanningValidatorDebugMarkerPublisher> debug_pose_publisher_;
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   StopWatch<std::chrono::milliseconds> stop_watch_;
 };

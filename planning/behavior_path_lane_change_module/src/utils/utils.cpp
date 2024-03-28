@@ -23,6 +23,7 @@
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -40,7 +41,9 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
+#include <iterator>
 #include <limits>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -385,6 +388,19 @@ std::optional<LaneChangePath> constructCandidatePath(
     return std::nullopt;
   }
 
+  if (prepare_segment.points.size() > 1 && shifted_path.path.points.size() > 1) {
+    const auto & prepare_segment_second_last_point =
+      std::prev(prepare_segment.points.end() - 1)->point.pose;
+    const auto & lane_change_start_from_shifted =
+      std::next(shifted_path.path.points.begin())->point.pose;
+    const auto yaw_diff2 = std::abs(tier4_autoware_utils::normalizeRadian(
+      tf2::getYaw(prepare_segment_second_last_point.orientation) -
+      tf2::getYaw(lane_change_start_from_shifted.orientation)));
+    if (yaw_diff2 > tier4_autoware_utils::deg2rad(5.0)) {
+      return std::nullopt;
+    }
+  }
+
   candidate_path.path = utils::combinePath(prepare_segment, shifted_path.path);
   candidate_path.shifted_path = shifted_path;
 
@@ -656,43 +672,6 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   }
 
   return true;
-}
-
-// TODO(Azu): In the future, get back lanelet within `to_back_dist` [m] from queried lane
-lanelet::ConstLanelets getBackwardLanelets(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & current_pose, const double backward_length)
-{
-  if (target_lanes.empty()) {
-    return {};
-  }
-
-  const auto arc_length = lanelet::utils::getArcCoordinates(target_lanes, current_pose);
-
-  if (arc_length.length >= backward_length) {
-    return {};
-  }
-
-  const auto & front_lane = target_lanes.front();
-  const auto preceding_lanes = route_handler.getPrecedingLaneletSequence(
-    front_lane, std::abs(backward_length - arc_length.length), {front_lane});
-
-  lanelet::ConstLanelets backward_lanes{};
-  const auto num_of_lanes = std::invoke([&preceding_lanes]() {
-    size_t sum{0};
-    for (const auto & lanes : preceding_lanes) {
-      sum += lanes.size();
-    }
-    return sum;
-  });
-
-  backward_lanes.reserve(num_of_lanes);
-
-  for (const auto & lanes : preceding_lanes) {
-    backward_lanes.insert(backward_lanes.end(), lanes.begin(), lanes.end());
-  }
-
-  return backward_lanes;
 }
 
 double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer)
@@ -1177,3 +1156,42 @@ rclcpp::Logger getLogger(const std::string & type)
   return rclcpp::get_logger("lane_change").get_child(type);
 }
 }  // namespace behavior_path_planner::utils::lane_change
+
+namespace behavior_path_planner::utils::lane_change::debug
+{
+geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose)
+{
+  geometry_msgs::msg::Point32 p;
+  p.x = static_cast<float>(pose.position.x);
+  p.y = static_cast<float>(pose.position.y);
+  p.z = static_cast<float>(pose.position.z);
+  return p;
+};
+
+geometry_msgs::msg::Polygon createExecutionArea(
+  const vehicle_info_util::VehicleInfo & vehicle_info, const Pose & pose,
+  double additional_lon_offset, double additional_lat_offset)
+{
+  const double & base_to_front = vehicle_info.max_longitudinal_offset_m;
+  const double & width = vehicle_info.vehicle_width_m;
+  const double & base_to_rear = vehicle_info.rear_overhang_m;
+
+  // if stationary object, extend forward and backward by the half of lon length
+  const double forward_lon_offset = base_to_front + additional_lon_offset;
+  const double backward_lon_offset = -base_to_rear;
+  const double lat_offset = width / 2.0 + additional_lat_offset;
+
+  const auto p1 = tier4_autoware_utils::calcOffsetPose(pose, forward_lon_offset, lat_offset, 0.0);
+  const auto p2 = tier4_autoware_utils::calcOffsetPose(pose, forward_lon_offset, -lat_offset, 0.0);
+  const auto p3 = tier4_autoware_utils::calcOffsetPose(pose, backward_lon_offset, -lat_offset, 0.0);
+  const auto p4 = tier4_autoware_utils::calcOffsetPose(pose, backward_lon_offset, lat_offset, 0.0);
+  geometry_msgs::msg::Polygon polygon;
+
+  polygon.points.push_back(create_point32(p1));
+  polygon.points.push_back(create_point32(p2));
+  polygon.points.push_back(create_point32(p3));
+  polygon.points.push_back(create_point32(p4));
+
+  return polygon;
+}
+}  // namespace behavior_path_planner::utils::lane_change::debug

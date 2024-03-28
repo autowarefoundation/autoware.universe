@@ -151,6 +151,14 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   set3dDataAssociation("lidar-radar", data_association_map_);
   // radar-radar association matrix
   set3dDataAssociation("radar-radar", data_association_map_);
+
+  // debug publisher
+  processing_time_publisher_ =
+    std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "decorative_object_merger_node");
+  stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
+  stop_watch_ptr_->tic("cyclic_time");
+  stop_watch_ptr_->tic("processing_time");
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void DecorativeTrackerMergerNode::set3dDataAssociation(
@@ -182,6 +190,7 @@ void DecorativeTrackerMergerNode::set3dDataAssociation(
 void DecorativeTrackerMergerNode::mainObjectsCallback(
   const TrackedObjects::ConstSharedPtr & main_objects)
 {
+  stop_watch_ptr_->toc("processing_time", true);
   // try to merge sub object
   if (!sub_objects_buffer_.empty()) {
     // get interpolated sub objects
@@ -212,8 +221,14 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
 
   // try to merge main object
   this->decorativeMerger(main_sensor_type_, main_objects);
-
-  merged_object_pub_->publish(getTrackedObjects(main_objects->header));
+  const auto & tracked_objects = getTrackedObjects(main_objects->header);
+  merged_object_pub_->publish(tracked_objects);
+  published_time_publisher_->publish_if_subscribed(
+    merged_object_pub_, tracked_objects.header.stamp);
+  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    "debug/cyclic_time_ms", stop_watch_ptr_->toc("cyclic_time", true));
+  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
 }
 
 /**
@@ -250,9 +265,6 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
 {
   // get current time
   const auto current_time = rclcpp::Time(input_objects_msg->header.stamp);
-  if (input_objects_msg->objects.empty()) {
-    return false;
-  }
   if (inner_tracker_objects_.empty()) {
     for (const auto & object : input_objects_msg->objects) {
       inner_tracker_objects_.push_back(createNewTracker(input_sensor, current_time, object));
@@ -383,7 +395,7 @@ TrackerState DecorativeTrackerMergerNode::createNewTracker(
   const MEASUREMENT_STATE input_index, rclcpp::Time current_time,
   const autoware_auto_perception_msgs::msg::TrackedObject & input_object)
 {
-  // check if object id is not included in innner_tracker_objects_
+  // check if object id is not included in inner_tracker_objects_
   for (const auto & object : inner_tracker_objects_) {
     if (object.const_uuid_ == input_object.object_id) {
       // create new uuid

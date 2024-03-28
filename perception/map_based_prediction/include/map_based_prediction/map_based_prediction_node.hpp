@@ -21,6 +21,8 @@
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
@@ -33,7 +35,6 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <tier4_debug_msgs/msg/string_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -42,6 +43,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -124,13 +126,17 @@ private:
   // ROS Publisher and Subscriber
   rclcpp::Publisher<PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_markers_;
-  rclcpp::Publisher<StringStamped>::SharedPtr pub_calculation_time_;
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<TrafficSignalArray>::SharedPtr sub_traffic_signals_;
 
+  // debug publisher
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
+
   // Object History
   std::unordered_map<std::string, std::deque<ObjectData>> objects_history_;
+  std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
 
   // Lanelet Map Pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
@@ -190,9 +196,11 @@ private:
   double acceleration_exponential_half_life_;
 
   bool use_crosswalk_signal_;
+  double threshold_velocity_assumed_as_stopping_;
+  std::vector<double> distance_set_for_no_intention_to_walk_;
+  std::vector<double> timeout_set_for_no_intention_to_walk_;
 
-  // Stop watch
-  StopWatch<std::chrono::milliseconds> stop_watch_;
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // Member Functions
   void mapCallback(const HADMapBin::ConstSharedPtr msg);
@@ -214,7 +222,8 @@ private:
 
   PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
 
-  void removeOldObjectsHistory(const double current_time);
+  void removeOldObjectsHistory(
+    const double current_time, const TrackedObjects::ConstSharedPtr in_objects);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
@@ -262,6 +271,9 @@ private:
     const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
   std::optional<lanelet::Id> getTrafficSignalId(const lanelet::ConstLanelet & way_lanelet);
   std::optional<TrafficSignalElement> getTrafficSignalElement(const lanelet::Id & id);
+  bool calcIntentionToCrossWithTrafficSignal(
+    const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
+    const lanelet::Id & signal_id);
 
   visualization_msgs::msg::Marker getDebugMarker(
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);

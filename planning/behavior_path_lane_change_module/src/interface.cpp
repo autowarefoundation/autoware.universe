@@ -56,6 +56,7 @@ void LaneChangeInterface::processOnExit()
 {
   module_type_->resetParameters();
   debug_marker_.markers.clear();
+  post_process_safety_status_ = {};
   resetPathCandidate();
 }
 
@@ -79,29 +80,29 @@ void LaneChangeInterface::updateData()
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
   module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
   module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
+  module_type_->updateSpecialData();
 
   if (isWaitingApproval()) {
     module_type_->updateLaneChangeStatus();
   }
   updateDebugMarker();
 
-  module_type_->updateSpecialData();
   module_type_->resetStopPose();
 }
 
 void LaneChangeInterface::postProcess()
 {
-  post_process_safety_status_ = module_type_->isApprovedPathSafe();
+  if (getCurrentStatus() == ModuleStatus::RUNNING) {
+    const auto safety_status = module_type_->isApprovedPathSafe();
+    post_process_safety_status_ =
+      module_type_->evaluateApprovedPathWithUnsafeHysteresis(safety_status);
+  }
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
 {
   resetPathCandidate();
   resetPathReference();
-
-  if (!module_type_->isValidPath()) {
-    return {};
-  }
 
   auto output = module_type_->generateOutput();
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
@@ -203,11 +204,6 @@ bool LaneChangeInterface::canTransitSuccessState()
     }
   }
 
-  if (!module_type_->isValidPath()) {
-    log_debug_throttled("Has no valid path.");
-    return true;
-  }
-
   if (module_type_->isAbortState() && module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has completed.");
     return true;
@@ -299,11 +295,10 @@ bool LaneChangeInterface::canTransitFailureState()
 
 void LaneChangeInterface::updateDebugMarker() const
 {
+  debug_marker_.markers.clear();
   if (!parameters_->publish_debug_marker) {
     return;
   }
-
-  debug_marker_.markers.clear();
   using marker_utils::lane_change_markers::createDebugMarkerArray;
   debug_marker_ = createDebugMarkerArray(module_type_->getDebugData());
 }

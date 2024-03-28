@@ -242,6 +242,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     this, get_clock(), period_ns, std::bind(&VehicleCmdGate::publishStatus, this));
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 bool VehicleCmdGate::isHeartbeatTimeout(
@@ -430,13 +432,17 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Check engage
   if (!is_engaged_) {
-    filtered_commands.control = createStopControlCmd();
+    filtered_commands.control.longitudinal = createLongitudinalStopControlCmd();
   }
 
   // Check pause. Place this check after all other checks as it needs the final output.
   adapi_pause_->update(filtered_commands.control);
   if (adapi_pause_->is_paused()) {
-    filtered_commands.control = createStopControlCmd();
+    if (is_engaged_) {
+      filtered_commands.control.longitudinal = createLongitudinalStopControlCmd();
+    } else {
+      filtered_commands.control = createStopControlCmd();
+    }
   }
 
   // Check if command filtering option is enable
@@ -452,6 +458,8 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   // Publish commands
   vehicle_cmd_emergency_pub_->publish(vehicle_cmd_emergency);
   control_cmd_pub_->publish(filtered_commands.control);
+  published_time_publisher_->publish_if_subscribed(
+    control_cmd_pub_, filtered_commands.control.stamp);
   adapi_pause_->publish();
   moderate_stop_interface_->publish();
 
@@ -595,6 +603,17 @@ AckermannControlCommand VehicleCmdGate::createStopControlCmd() const
   cmd.lateral.steering_tire_rotation_rate = 0.0;
   cmd.longitudinal.speed = 0.0;
   cmd.longitudinal.acceleration = stop_hold_acceleration_;
+
+  return cmd;
+}
+
+LongitudinalCommand VehicleCmdGate::createLongitudinalStopControlCmd() const
+{
+  LongitudinalCommand cmd;
+  const auto t = this->now();
+  cmd.stamp = t;
+  cmd.speed = 0.0;
+  cmd.acceleration = stop_hold_acceleration_;
 
   return cmd;
 }

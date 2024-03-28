@@ -23,6 +23,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 #include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -55,6 +56,7 @@ namespace vehicle_cmd_gate
 using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_control_msgs::msg::LongitudinalCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
@@ -220,6 +222,7 @@ private:
   // Algorithm
   AckermannControlCommand prev_control_cmd_;
   AckermannControlCommand createStopControlCmd() const;
+  LongitudinalCommand createLongitudinalStopControlCmd() const;
   AckermannControlCommand createEmergencyStopControlCmd() const;
 
   std::shared_ptr<rclcpp::Time> prev_time_;
@@ -246,6 +249,8 @@ private:
   void publishMarkers(const IsFilterActivated & filter_activated);
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 
 }  // namespace vehicle_cmd_gate
