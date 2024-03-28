@@ -360,9 +360,7 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
         tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, object_position);
       const double signed_distance_from_right =
         tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, object_position);
-      std::cerr << "signed_distance_from_left " << signed_distance_from_left << "\n";
-      std::cerr << "signed_distance_from_right " << signed_distance_from_right << "\n";
-
+      // If object is outside of the ego path, include it
       if (signed_distance_from_left > 0.0 || signed_distance_from_right < 0.0) {
         obstacles_outside_of_path.push_back(o);
       }
