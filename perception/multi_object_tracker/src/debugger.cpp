@@ -105,7 +105,8 @@ void TrackerDebugger::startMeasurementTime(
   stamp_process_start_ = now;
   if (debug_settings_.publish_processing_time) {
     double input_latency_ms = (stamp_process_start_ - last_input_stamp_).seconds() * 1e3;
-    const double LIMIT = 2000;
+    // saturate the latency to 2000 ms
+    constexpr double LIMIT = 2000;
     input_latency_ms = input_latency_ms > LIMIT ? 0 : input_latency_ms;
     // starting from the measurement time
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
@@ -130,8 +131,8 @@ void TrackerDebugger::endPublishTime(const rclcpp::Time & now, const rclcpp::Tim
 
     elapsed_time_from_sensor_input_ = measurement_to_publish;
 
-    // limit the value
-    const double LIMIT = 2000;
+    // saturate the latency to 2000 ms
+    constexpr double LIMIT = 2000;
     measurement_to_publish = measurement_to_publish > LIMIT ? 0 : measurement_to_publish;
     input_to_publish_ms = input_to_publish_ms > LIMIT ? 0 : input_to_publish_ms;
     cyclic_time_ms = cyclic_time_ms > LIMIT ? 0 : cyclic_time_ms;
