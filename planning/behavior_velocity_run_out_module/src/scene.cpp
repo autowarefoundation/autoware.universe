@@ -330,17 +330,36 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createVehiclePolygon(
 std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
   const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path) const
 {
+  using motion_utils::findNearestIndex;
+  using tier4_autoware_utils::calcOffsetPose;
+
   if (path.points.empty()) return dynamic_obstacles;
+  const auto footprint_extra_margin = planner_param_.run_out.ego_footprint_extra_margin;
+  const auto vehicle_width = planner_param_.vehicle_param.width;
+  const auto vehicle_with_with_margin_halved = (vehicle_width + footprint_extra_margin) / 2.0;
   std::vector<DynamicObstacle> obstacles_outside_of_path;
-  const auto footprints = createVehicleFootprints(path);
-  // TODO(Daniel): use the path center line string and the lateral deviation to check for pedestrian
-  // inside footprint, dont make the footprint
   std::for_each(
     dynamic_obstacles.begin(), dynamic_obstacles.end(),
-    [&obstacles_outside_of_path, &footprints](const auto & o) {
-      const auto x = o.pose.position.x;
-      const auto y = o.pose.position.y;
-      if (!boost::geometry::within(Point2d(x, y), footprints)) {
+    [&obstacles_outside_of_path, &path, &vehicle_with_with_margin_halved](const auto & o) {
+      const auto idx = findNearestIndex(path.points, o.pose);
+      if (!idx) {
+        obstacles_outside_of_path.push_back(o);
+        return;
+      }
+      const auto object_position = o.pose.position;
+      const auto closest_ego_pose = path.points.at(*idx).point.pose;
+      const auto vehicle_left_pose = tier4_autoware_utils::calcOffsetPose(
+        closest_ego_pose, 0, vehicle_with_with_margin_halved, 0);
+      const auto vehicle_right_pose = tier4_autoware_utils::calcOffsetPose(
+        closest_ego_pose, 0, -vehicle_with_with_margin_halved, 0);
+      const double signed_distance_from_left =
+        tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, object_position);
+      const double signed_distance_from_right =
+        tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, object_position);
+      std::cerr << "signed_distance_from_left " << signed_distance_from_left << "\n";
+      std::cerr << "signed_distance_from_right " << signed_distance_from_right << "\n";
+
+      if (signed_distance_from_left > 0.0 || signed_distance_from_right < 0.0) {
         obstacles_outside_of_path.push_back(o);
       }
     });
