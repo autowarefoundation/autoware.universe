@@ -9,7 +9,7 @@
           "split_range": {
             "type": "number",
             "description": "object_range_splitter is a package to divide detected objects into two messages by the distance from the origin",
-            "default": "50.0"
+            "default": "30.0"
           }
         },
         "required": ["split_range"],
