@@ -30,7 +30,7 @@ namespace object_recognition_utils
 {
 using tier4_autoware_utils::Polygon2d;
 // minimum area to avoid division by zero
-static const double MIN_AREA = 1e-9;
+static const double MIN_AREA = 1e-6;
 
 inline double getConvexShapeArea(const Polygon2d & source_polygon, const Polygon2d & target_polygon)
 {
