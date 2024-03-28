@@ -22,7 +22,7 @@ dora logs test imu_corrector
 ```
 发送的数据为如下的JSON格式：
 
-![1](/home/crp/autoware.universe/sensing/imu_corrector/figure/1.png)
+![1](figure/1.png)
 
 
 
