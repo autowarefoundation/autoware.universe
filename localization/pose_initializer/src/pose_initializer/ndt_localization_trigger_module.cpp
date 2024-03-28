@@ -28,6 +28,15 @@ NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node) 
   client_ndt_trigger_ = node_->create_client<SetBool>("ndt_trigger_node");
 }
 
+void NdtLocalizationTriggerModule::wait_for_service()
+{
+    while (!client_ndt_trigger_->wait_for_service(std::chrono::seconds(1)))
+    {
+        RCLCPP_INFO(node_->get_logger(), "NDT triggering service is not available, waiting...");
+    }
+    RCLCPP_INFO(node_->get_logger(), "NDT triggering service is available!");
+}
+
 void NdtLocalizationTriggerModule::send_request(bool flag, bool need_spin) const
 {
   const auto req = std::make_shared<SetBool::Request>();

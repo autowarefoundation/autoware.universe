@@ -98,9 +98,11 @@ void PoseInitializer::change_node_trigger(bool flag, bool need_spin)
 {
   try {
     if (ekf_localization_trigger_) {
+      ekf_localization_trigger_->wait_for_service();
       ekf_localization_trigger_->send_request(flag, need_spin);
     }
     if (ndt_localization_trigger_) {
+      ndt_localization_trigger_->wait_for_service();
       ndt_localization_trigger_->send_request(flag, need_spin);
     }
   } catch (const ServiceException & error) {
