@@ -47,6 +47,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     this->declare_parameter<int64_t>("negative_match_num_threshold");
   param_.vote_threshold_for_detect_marker =
     this->declare_parameter<int64_t>("vote_threshold_for_detect_marker");
+  param_.marker_height_from_ground =
+    this->declare_parameter<double>("marker_height_from_ground");
   param_.self_pose_timeout_sec = this->declare_parameter<double>("self_pose_timeout_sec");
   param_.self_pose_distance_tolerance_m =
     this->declare_parameter<double>("self_pose_distance_tolerance_m");
@@ -417,7 +419,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
       Pose marker_pose_on_base_link;
       marker_pose_on_base_link.position.x = bin_position * param_.resolution + min_x;
       marker_pose_on_base_link.position.y = min_y[i];
-      marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO(YamatoAndo)
+      marker_pose_on_base_link.position.z = param_.marker_height_from_ground;
       marker_pose_on_base_link.orientation =
         tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO(YamatoAndo)
       detected_landmarks.push_back(landmark_manager::Landmark{"0", marker_pose_on_base_link});

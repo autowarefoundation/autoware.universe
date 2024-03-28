@@ -46,6 +46,11 @@
           "default": 20,
           "minimum": 0
         },
+        "marker_height_from_ground": {
+          "type": "number",
+          "description": "Height from the ground to the center of the marker. [m]",
+          "default": 1.075
+        },
         "self_pose_timeout_sec": {
           "type": "number",
           "description": "Timeout for self pose. [sec]",

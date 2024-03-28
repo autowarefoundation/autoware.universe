@@ -13,6 +13,7 @@
     positive_match_num_threshold: 3
     negative_match_num_threshold: 3
     vote_threshold_for_detect_marker: 20
+    marker_height_from_ground: 1.075
 
     # for interpolate algorithm
     self_pose_timeout_sec: 1.0
