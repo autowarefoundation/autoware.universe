@@ -37,7 +37,6 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.wheel_tread = vehicle_info.wheel_tread_m;
     p.right_overhang = vehicle_info.right_overhang_m;
     p.left_overhang = vehicle_info.left_overhang_m;
-    p.vehicle_info_ptr_ = std::make_shared<vehicle_info_util::VehicleInfo>(vehicle_info);
   }
 
   const std::string ns(getModuleName());

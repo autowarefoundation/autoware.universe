@@ -25,7 +25,6 @@
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
-#include <memory>
 #include <string>
 #include <vector>
 namespace behavior_velocity_planner
@@ -79,7 +78,6 @@ struct VehicleParam
   float wheel_tread;
   double right_overhang;
   double left_overhang;
-  std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
 };
 
 struct DetectionArea

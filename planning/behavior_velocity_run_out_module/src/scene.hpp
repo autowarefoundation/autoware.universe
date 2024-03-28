@@ -22,8 +22,6 @@
 #include "utils.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <memory>
 #include <optional>
@@ -39,7 +37,6 @@ using run_out_utils::PlannerParam;
 using run_out_utils::PoseWithRange;
 using tier4_debug_msgs::msg::Float32Stamped;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
-using tier4_autoware_utils::LinearRing2d;
 
 class RunOutModule : public SceneModuleInterface
 {
@@ -70,7 +67,6 @@ private:
 
   // Function
   Polygons2d createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const;
-  std::vector<LinearRing2d> createVehicleFootprints(const PathWithLaneId & path) const;
 
   std::optional<DynamicObstacle> detectCollision(
     const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
@@ -151,6 +147,9 @@ private:
   std::vector<DynamicObstacle> excludeObstaclesCrossingEgoCutLine(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
     const geometry_msgs::msg::Pose & current_pose) const;
+
+  std::vector<DynamicObstacle> excludeObstaclesBasedOnLabel(
+    const std::vector<DynamicObstacle> & dynamic_obstacles) const;
 
   std::vector<DynamicObstacle> excludeObstaclesOutSideOfPartition(
     const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,

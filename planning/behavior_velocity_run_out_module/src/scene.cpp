@@ -36,6 +36,7 @@
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+using object_recognition_utils::convertLabelToString;
 
 RunOutModule::RunOutModule(
   const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
@@ -103,16 +104,18 @@ bool RunOutModule::modifyPathVelocity(
   debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles.size());
 
   const auto filtered_obstacles = std::invoke([&]() {
+    // Only target_obstacle_types are considered.
+    const auto target_obstacles = excludeObstaclesBasedOnLabel(dynamic_obstacles);
     // extract obstacles using lanelet information
     const auto partition_excluded_obstacles =
-      excludeObstaclesOutSideOfPartition(dynamic_obstacles, extended_smoothed_path, current_pose);
-
-    if (!planner_param_.run_out.use_ego_cut_line) return partition_excluded_obstacles;
-
+      excludeObstaclesOutSideOfPartition(target_obstacles, extended_smoothed_path, current_pose);
     // extract obstacles that cross the ego's cut line
     const auto ego_cut_line_excluded_obstacles =
       excludeObstaclesCrossingEgoCutLine(partition_excluded_obstacles, current_pose);
-    return ego_cut_line_excluded_obstacles;
+    // extract obstacles already on the ego's path
+    const auto obstacles_outside_ego_path =
+      excludeObstaclesOnEgoPath(ego_cut_line_excluded_obstacles, extended_smoothed_path);
+    return obstacles_outside_ego_path;
   });
 
   // record time for obstacle creation
@@ -332,8 +335,9 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
 {
   using motion_utils::findNearestIndex;
   using tier4_autoware_utils::calcOffsetPose;
-
-  if (path.points.empty()) return dynamic_obstacles;
+  if (!planner_param_.run_out.exclude_obstacles_already_in_path || path.points.empty()) {
+    return dynamic_obstacles;
+  }
   const auto footprint_extra_margin = planner_param_.run_out.ego_footprint_extra_margin;
   const auto vehicle_width = planner_param_.vehicle_param.width;
   const auto vehicle_with_with_margin_halved = (vehicle_width + footprint_extra_margin) / 2.0;
@@ -366,44 +370,16 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
   return obstacles_outside_of_path;
 }
 
-std::vector<LinearRing2d> RunOutModule::createVehicleFootprints(const PathWithLaneId & path) const
-{
-  using tier4_autoware_utils::transformVector;
-  const auto footprint_extra_margin = planner_param_.run_out.ego_footprint_extra_margin;
-  const auto local_vehicle_footprint =
-    planner_param_.vehicle_param.vehicle_info_ptr_->createFootprint(footprint_extra_margin);
-
-  // Create vehicle footprint on each Path point
-  std::vector<LinearRing2d> vehicle_footprints;
-  for (const auto & p : path.points) {
-    const auto transformed_footprint =
-      transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(p.point.pose));
-    vehicle_footprints.push_back(transformed_footprint);
-  }
-  return vehicle_footprints;
-}
-
 std::vector<DynamicObstacle> RunOutModule::checkCollisionWithObstacles(
   const std::vector<DynamicObstacle> & dynamic_obstacles,
   std::vector<geometry_msgs::msg::Point> poly, const float travel_time,
   const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets) const
 {
-  using object_recognition_utils::convertLabelToString;
   const auto bg_poly_vehicle = run_out_utils::createBoostPolyFromMsg(poly);
 
   // check collision for each objects
   std::vector<DynamicObstacle> obstacles_collision;
   for (const auto & obstacle : dynamic_obstacles) {
-    // get classification that has highest probability
-    const auto classification =
-      convertLabelToString(run_out_utils::getHighestProbLabel(obstacle.classifications));
-    const auto & target_obstacle_types = planner_param_.run_out.target_obstacle_types;
-    // detect only pedestrians, bicycles or motorcycles
-    const auto it =
-      std::find(target_obstacle_types.begin(), target_obstacle_types.end(), classification);
-    if (it == target_obstacle_types.end()) {
-      continue;
-    }
     // calculate predicted obstacle pose for min velocity and max velocity
     const auto predicted_obstacle_pose_min_vel =
       calcPredictedObstaclePose(obstacle.predicted_paths, travel_time, obstacle.min_velocity_mps);
@@ -879,6 +855,7 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoCutLine(
   const std::vector<DynamicObstacle> & dynamic_obstacles,
   const geometry_msgs::msg::Pose & current_pose) const
 {
+  if (!planner_param_.run_out.use_ego_cut_line) return dynamic_obstacles;
   std::vector<DynamicObstacle> extracted_obstacles;
   std::vector<geometry_msgs::msg::Point> ego_cut_line;
   const double ego_cut_line_half_width = planner_param_.run_out.ego_cut_line_length / 2.0;
@@ -891,6 +868,25 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoCutLine(
   });
   debug_ptr_->pushEgoCutLine(ego_cut_line);
   return extracted_obstacles;
+}
+
+std::vector<DynamicObstacle> RunOutModule::excludeObstaclesBasedOnLabel(
+  const std::vector<DynamicObstacle> & dynamic_obstacles) const
+{
+  std::vector<DynamicObstacle> output;
+  const auto & target_obstacle_types = planner_param_.run_out.target_obstacle_types;
+  std::for_each(dynamic_obstacles.begin(), dynamic_obstacles.end(), [&](const auto obstacle) {
+    // get classification that has highest probability
+    const auto classification =
+      convertLabelToString(run_out_utils::getHighestProbLabel(obstacle.classifications));
+    // include only pedestrians, bicycles or motorcycles
+    const auto it =
+      std::find(target_obstacle_types.begin(), target_obstacle_types.end(), classification);
+    if (it != target_obstacle_types.end()) {
+      output.push_back(obstacle);
+    }
+  });
+  return output;
 }
 
 std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOutSideOfPartition(
