@@ -71,14 +71,7 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node)
   node_(node),
   last_input_stamp_(node.now()),
   stamp_process_start_(node_.now()),
-  stamp_process_end_(node_.now()),
-  stamp_publish_start_(node_.now()),
-  stamp_publish_end_(node_.now()),
-  stamp_publish_output_(node_.now()),
-  input_latency_(0, 0),
-  process_latency_(0, 0),
-  publish_latency_(0, 0),
-  publish_interprocess_latency_(0, 0)
+  stamp_publish_output_(node_.now())
 {
   // declare debug parameters to decide whether to publish debug topics
   loadParameters();
@@ -157,46 +150,22 @@ void TrackerDebugger::startMeasurementTime(
   const rclcpp::Time & now, const rclcpp::Time & measurement_header_stamp)
 {
   last_input_stamp_ = measurement_header_stamp;
-  // start measuring processing time
   stamp_process_start_ = now;
-  input_latency_ = stamp_process_start_ - last_input_stamp_;
-}
-
-void TrackerDebugger::endMeasurementTime(const rclcpp::Time & now)
-{
-  stamp_process_end_ = now;
-  process_latency_ = stamp_process_end_ - stamp_process_start_;
   if (debug_settings_.publish_processing_time) {
-    double input_latency_ms = input_latency_.seconds() * 1e3;
-    double process_latency_ms = process_latency_.seconds() * 1e3;
-
+    double input_latency_ms = (stamp_process_start_ - last_input_stamp_).seconds() * 1e3;
     const double LIMIT = 2000;
     input_latency_ms = input_latency_ms > LIMIT ? 0 : input_latency_ms;
-    process_latency_ms = process_latency_ms > LIMIT ? 0 : process_latency_ms;
-
     // starting from the measurement time
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/meas/input_latency_ms", input_latency_ms);
-    // processing time
-    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/internal/processing_time_ms", process_latency_ms);
+      "debug/input_latency_ms", input_latency_ms);
   }
-}
-
-void TrackerDebugger::startPublishTime(const rclcpp::Time & now)
-{
-  publish_interprocess_latency_ = now - stamp_process_end_;
-  stamp_publish_start_ = now;
 }
 
 void TrackerDebugger::endPublishTime(const rclcpp::Time & now, const rclcpp::Time & object_time)
 {
   const auto current_time = now;
-  stamp_publish_end_ = current_time;
-  publish_latency_ = stamp_publish_end_ - stamp_publish_start_;
   if (debug_settings_.publish_processing_time) {
     // calculate processing time
-
     // measurement to publish time: time from measurement to publish
     double measurement_to_publish = (current_time - last_input_stamp_).seconds() * 1e3;
     // input to publish time: time between input and publish
@@ -206,10 +175,6 @@ void TrackerDebugger::endPublishTime(const rclcpp::Time & now, const rclcpp::Tim
     // measurement to object time: time from measurement to object time.
     // If there is not latency compensation, this value is zero
     double measurement_to_object_ms = (object_time - last_input_stamp_).seconds() * 1e3;
-    // process to publish time: time from processing end to publish
-    double process_to_publish_ms = (current_time - stamp_process_end_).seconds() * 1e3;
-    double publish_latency_ms = publish_latency_.seconds() * 1e3;
-    double publish_interprocess_latency_ms = publish_interprocess_latency_.seconds() * 1e3;
 
     elapsed_time_from_sensor_input_ = measurement_to_publish;
 
@@ -219,28 +184,16 @@ void TrackerDebugger::endPublishTime(const rclcpp::Time & now, const rclcpp::Tim
     input_to_publish_ms = input_to_publish_ms > LIMIT ? 0 : input_to_publish_ms;
     cyclic_time_ms = cyclic_time_ms > LIMIT ? 0 : cyclic_time_ms;
     measurement_to_object_ms = measurement_to_object_ms > LIMIT ? 0 : measurement_to_object_ms;
-    process_to_publish_ms = process_to_publish_ms > LIMIT ? 0 : process_to_publish_ms;
-    publish_latency_ms = publish_latency_ms > LIMIT ? 0 : publish_latency_ms;
-    publish_interprocess_latency_ms =
-      publish_interprocess_latency_ms > LIMIT ? 0 : publish_interprocess_latency_ms;
 
-    // internal time
-    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/internal/publish_latency_ms", publish_latency_ms);
     // starting from the measurement time
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/total/pipeline_latency_ms", measurement_to_publish);
+      "debug/pipeline_latency_ms", measurement_to_publish);
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/meas/to_tracked_object_ms", measurement_to_object_ms);
-    // inter-process time
+      "debug/cyclic_time_ms", cyclic_time_ms);
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/internal/cyclic_time_ms", cyclic_time_ms);
+      "debug/processing_time_ms", input_to_publish_ms);
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/internal/process_to_publish_ms", process_to_publish_ms);
-    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/internal/publish_interprocess_latency_ms", publish_interprocess_latency_ms);
-    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/internal/input_to_publish_ms", input_to_publish_ms);
+      "debug/meas_to_tracked_object_ms", measurement_to_object_ms);
   }
   stamp_publish_output_ = current_time;
 }
@@ -368,8 +321,6 @@ void MultiObjectTracker::onMeasurement(
       createNewTracker(transformed_objects.objects.at(i), measurement_time, *self_transform);
     if (tracker) list_tracker_.push_back(tracker);
   }
-
-  debugger_->endMeasurementTime(this->now());
 
   if (publish_timer_ == nullptr) {
     publish(measurement_time);
@@ -518,8 +469,6 @@ inline bool MultiObjectTracker::shouldTrackerPublish(
 
 void MultiObjectTracker::publish(const rclcpp::Time & time) const
 {
-  debugger_->startPublishTime(this->now());
-
   const auto subscriber_count = tracked_objects_pub_->get_subscription_count() +
                                 tracked_objects_pub_->get_intra_process_subscription_count();
   if (subscriber_count < 1) {

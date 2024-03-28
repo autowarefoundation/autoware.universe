@@ -65,8 +65,6 @@ public:
     const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const;
   void startMeasurementTime(
     const rclcpp::Time & now, const rclcpp::Time & measurement_header_stamp);
-  void endMeasurementTime(const rclcpp::Time & now);
-  void startPublishTime(const rclcpp::Time & now);
   void endPublishTime(const rclcpp::Time & now, const rclcpp::Time & object_time);
   void setupDiagnostics();
   void checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat);
@@ -88,16 +86,8 @@ private:
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
   rclcpp::Time last_input_stamp_;
-
   rclcpp::Time stamp_process_start_;
-  rclcpp::Time stamp_process_end_;
-  rclcpp::Time stamp_publish_start_;
-  rclcpp::Time stamp_publish_end_;
   rclcpp::Time stamp_publish_output_;
-  rclcpp::Duration input_latency_;
-  rclcpp::Duration process_latency_;
-  rclcpp::Duration publish_latency_;
-  rclcpp::Duration publish_interprocess_latency_;
 };
 
 class MultiObjectTracker : public rclcpp::Node
