@@ -63,7 +63,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
       declare_parameter<std::vector<double>>("user_defined_initial_pose.pose");
     if (initial_pose_array.size() != 7) {
       throw std::invalid_argument(
-        "Could not set initial pose directly. The size of initial_pose is " +
+        "Could not set user defined initial pose. The size of initial_pose is " +
         std::to_string(initial_pose_array.size()) + ". It must be 7.");
     } else if ( initial_pose_array[3] < 1e-6 && initial_pose_array[4] < 1e-6 &&
                 initial_pose_array[5] < 1e-6 && initial_pose_array[6] < 1e-6) {
@@ -129,10 +129,10 @@ void PoseInitializer::set_user_defined_initial_pose(const geometry_msgs::msg::Po
     change_node_trigger(true, true);
     change_state(State::Message::INITIALIZED);
 
-    RCLCPP_INFO(get_logger(), "Set initial pose directly");
+    RCLCPP_INFO(get_logger(), "Set user defined initial pose");
   } catch (const ServiceException & error) {
     change_state(State::Message::UNINITIALIZED);
-    RCLCPP_WARN(get_logger(), "Could not set initial pose directly");
+    RCLCPP_WARN(get_logger(), "Could not set user defined initial pose");
   }
 }
 
