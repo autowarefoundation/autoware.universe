@@ -30,11 +30,10 @@ NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node) 
 
 void NdtLocalizationTriggerModule::wait_for_service()
 {
-    while (!client_ndt_trigger_->wait_for_service(std::chrono::seconds(1)))
-    {
-        RCLCPP_INFO(node_->get_logger(), "NDT triggering service is not available, waiting...");
-    }
-    RCLCPP_INFO(node_->get_logger(), "NDT triggering service is available!");
+  while (!client_ndt_trigger_->wait_for_service(std::chrono::seconds(1))) {
+    RCLCPP_INFO(node_->get_logger(), "NDT triggering service is not available, waiting...");
+  }
+  RCLCPP_INFO(node_->get_logger(), "NDT triggering service is available!");
 }
 
 void NdtLocalizationTriggerModule::send_request(bool flag, bool need_spin) const

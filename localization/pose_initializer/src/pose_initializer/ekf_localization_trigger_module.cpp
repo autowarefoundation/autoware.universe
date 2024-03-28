@@ -28,14 +28,12 @@ EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node) 
   client_ekf_trigger_ = node_->create_client<SetBool>("ekf_trigger_node");
 }
 
-
 void EkfLocalizationTriggerModule::wait_for_service()
 {
-    while (!client_ekf_trigger_->wait_for_service(std::chrono::seconds(1)))
-    {
-        RCLCPP_INFO(node_->get_logger(), "EKF triggering service is not available, waiting...");
-    }
-    RCLCPP_INFO(node_->get_logger(), "EKF triggering service is available!");
+  while (!client_ekf_trigger_->wait_for_service(std::chrono::seconds(1))) {
+    RCLCPP_INFO(node_->get_logger(), "EKF triggering service is not available, waiting...");
+  }
+  RCLCPP_INFO(node_->get_logger(), "EKF triggering service is available!");
 }
 
 void EkfLocalizationTriggerModule::send_request(bool flag, bool need_spin) const
