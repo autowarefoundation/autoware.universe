@@ -37,6 +37,39 @@
 
 namespace motion_planning
 {
+
+template <typename T>
+class InterProcessSingleSubscriber
+{
+private:
+  typename rclcpp::Subscription<T>::SharedPtr subscriber;
+  std::optional<T> last_msg;
+
+public:
+  explicit InterProcessSingleSubscriber(rclcpp::Node * node, const std::string & topic_name)
+  {
+    auto noexec_callback_group =
+      node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
+    auto noexec_subscription_options = rclcpp::SubscriptionOptions();
+    noexec_subscription_options.callback_group = noexec_callback_group;
+
+    subscriber = node->create_subscription<T>(
+      topic_name, rclcpp::QoS{1}, [node](const typename T::ConstSharedPtr msg) { assert(false); },
+      noexec_subscription_options);
+  };
+
+  void updateLastData(void)
+  {
+    rclcpp::MessageInfo message_info;
+    T tmp;
+    while (subscriber->take(tmp, message_info)) {
+      last_msg = tmp;
+    }
+  };
+
+  std::optional<T> getData(void) const { return last_msg; };
+};
+
 class ObstacleCruisePlannerNode : public rclcpp::Node
 {
 public:
@@ -48,6 +81,8 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
+
+  void takeData();
 
   // main functions
   std::vector<Polygon2d> createOneStepPolygons(
@@ -139,12 +174,11 @@ private:
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+  InterProcessSingleSubscriber<Odometry> ego_odom_sub_{this, "~/input/odometry"};
   rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acc_sub_;
 
   // data for callback functions
   PredictedObjects::ConstSharedPtr objects_ptr_{nullptr};
-  Odometry::ConstSharedPtr ego_odom_ptr_{nullptr};
   AccelWithCovarianceStamped::ConstSharedPtr ego_accel_ptr_{nullptr};
 
   // Vehicle Parameters
