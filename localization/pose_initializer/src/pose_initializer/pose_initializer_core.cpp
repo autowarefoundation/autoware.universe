@@ -58,9 +58,9 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
 
   change_state(State::Message::UNINITIALIZED);
 
-  if (declare_parameter<bool>("initial_pose_directly.enable")) {
+  if (declare_parameter<bool>("user_defined_initial_pose.enable")) {
     const auto initial_pose_array =
-      declare_parameter<std::vector<double>>("initial_pose_directly.pose");
+      declare_parameter<std::vector<double>>("user_defined_initial_pose.pose");
     if (initial_pose_array.size() != 7) {
       throw std::invalid_argument(
         "Could not set initial pose directly. The size of initial_pose is " +
@@ -75,7 +75,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
       initial_pose.orientation.z = initial_pose_array[5];
       initial_pose.orientation.w = initial_pose_array[6];
 
-      set_initial_pose_directly(initial_pose);
+      set_user_defined_initial_pose(initial_pose);
     }
   }
 }
@@ -110,7 +110,7 @@ void PoseInitializer::change_node_trigger(bool flag, bool need_spin)
   }
 }
 
-void PoseInitializer::set_initial_pose_directly(const geometry_msgs::msg::Pose initial_pose)
+void PoseInitializer::set_user_defined_initial_pose(const geometry_msgs::msg::Pose initial_pose)
 {
   try {
     change_state(State::Message::INITIALIZING);

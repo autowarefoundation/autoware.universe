@@ -6,18 +6,18 @@
     "pose_initializer": {
       "type": "object",
       "properties": {
-        "initial_pose_directly": {
+        "user_defined_initial_pose": {
           "type": "object",
           "properties": {
             "enable": {
               "type": "string",
-              "description": "If true, initial_pose_directly.pose is set as the initial position. [boolean]",
+              "description": "If true, user_defined_initial_pose.pose is set as the initial position. [boolean]",
               "default": "false"
             },
             "pose": {
               "type": "string",
               "description": "initial pose (x, y, z, quat_x, quat_y, quat_z, quat_w). [array]",
-              "default": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+              "default": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]"
             }
           },
           "required": ["enable", "pose"],
@@ -72,7 +72,7 @@
         }
       },
       "required": [
-        "initial_pose_directly",
+        "user_defined_initial_pose",
         "gnss_pose_timeout",
         "stop_check_duration",
         "ekf_enabled",
