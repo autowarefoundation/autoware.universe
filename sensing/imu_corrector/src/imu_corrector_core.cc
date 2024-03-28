@@ -1,6 +1,8 @@
 extern "C"
 {
 #include "node_api.h"
+#include "operator_api.h"
+#include "operator_types.h"
 }
 
 #include <iostream>
@@ -70,12 +72,12 @@ int run(void *dora_context)
             char *id;
             size_t id_len;
             read_dora_input_id(event, &id, &id_len);
-            if (strcmp(id, "Imu100D4") == 0)
+            if (strcmp(id, "imu100D4") == 0)
             {
                 char *data;
                 size_t data_len;
 
-                printf("Imu100D4 event\n");
+                printf("imu100D4 event\n");
                 read_dora_input_data(event, &data, &data_len);
                 std::string data_str(data, data_len);
                 try 
@@ -83,8 +85,6 @@ int run(void *dora_context)
                     // 处理解析成功的情况
                     json j = json::parse(data_str);
 
-                    // // 将 JSON 对象序列化为字符串
-                    std::string json_string = j.dump(4); // 参数 4 表示缩进宽度
 
 
 
@@ -100,28 +100,28 @@ int run(void *dora_context)
                     j["angular_velocity"]["x"] = (double)j["angular_velocity"]["x"]-angular_velocity_offset_x_;
                     j["angular_velocity"]["y"] = (double)j["angular_velocity"]["y"]-angular_velocity_offset_y_;
                     j["angular_velocity"]["z"] = (double)j["angular_velocity"]["z"]-angular_velocity_offset_z_;
+                    // 将 JSON 对象序列化为字符串
+                    std::string json_string = j.dump(4); // 参数 4 表示缩进宽度
 
                     // 将字符串转换为 char* 类型
                     char *c_json_string = new char[json_string.length() + 1];
                     strcpy(c_json_string, json_string.c_str());
 
                     // 输出提取的数据
-                    std::cout << "Orientation: (" << orientation_x << ", " << orientation_y << ", " << orientation_z << ", " << orientation_w << ")" << std::endl;
-                    std::cout << "Linear Acceleration: (" << linear_acceleration_x << ", " << linear_acceleration_y << ", " << linear_acceleration_z << ")" << std::endl;
-                    std::cout << "Angular Velocity: (" << j["angular_velocity"]["x"] << ", " << j["angular_velocity"]["y"] << ", " <<  j["angular_velocity"]["z"] << ")" << std::endl;
+                    // std::cout << "Orientation: (" << orientation_x << ", " << orientation_y << ", " << orientation_z << ", " << orientation_w << ")" << std::endl;
+                    // std::cout << "Linear Acceleration: (" << linear_acceleration_x << ", " << linear_acceleration_y << ", " << linear_acceleration_z << ")" << std::endl;
+                    // std::cout << "Angular Velocity: (" << j["angular_velocity"]["x"] << ", " << j["angular_velocity"]["y"] << ", " <<  j["angular_velocity"]["z"] << ")" << std::endl;
+                    printf(c_json_string);
                     
-                    
-                    // std::string out_id = "imu";
-                    // unsigned char counter = 1;
-                    // int result = dora_send_output(event, &out_id[0], out_id.length(), c_json_string, std::strlen(c_json_string));
-                    // if (result != 0)
-                    // {
-                    //     std::cerr << "failed to send output" << std::endl;
-                    //     return 1;
-                    // }
-                    // // std::cout<<json_string;
-                    // std::cout << "lenth : " << data_len << std::endl; 
-                    // printf("C operator received message:\n`%s`\n", data_str.c_str());
+                    std::string out_id = "imu100D4";
+
+                    int result = dora_send_output(dora_context, &out_id[0], out_id.length(), c_json_string, std::strlen(c_json_string));
+                   
+                    if (result != 0)
+                    {
+                        std::cerr << "failed to send output" << std::endl;
+                        return 1;
+                    }
                 } 
                 catch (const json::parse_error& e) 
                 {

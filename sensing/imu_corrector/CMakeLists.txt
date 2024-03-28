@@ -40,7 +40,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${YAMLCPP_INCLUDE_DIRS}
   $ENV{HOME}/dora/apis/c/node #dora的头文件路径 node_api.h
-  #$ENV{HOME}/dora/apis/c/operator
+  $ENV{HOME}/dora/apis/c/operator
 )
 
 add_executable(imu_corrector_core src/imu_corrector_core.cc )
@@ -49,6 +49,7 @@ target_link_libraries(imu_corrector_core
   ${YAMLCPP_LIBRARIES}
   # glog::glog
   $ENV{HOME}/dora/target/release/libdora_node_api_c.a
+  #$ENV{HOME}/dora/target/debug/libdora_node_api_c.a
   m
   rt
   dl 

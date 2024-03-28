@@ -14,7 +14,8 @@ import dora
 import random
 import json
 from json import *
-serial_port = "/dev/ttyUSB0"
+import time
+serial_port = "/dev/ttyUSB1"
 serial_baud = 115200
 class Operator:
     """
@@ -61,10 +62,16 @@ class Operator:
         # 打开串口读取数据
         try:
             self.IMU = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=3)
-            # if self.IMU and self.IMU.is_open:
+             # if self.IMU and self.IMU.is_open:
             #     self.IMU.close()
             # self.IMU.open()
-            self.tmp = self.IMU.write(('\xA5\x5A\x04\x01\x05\xAA\X' + chr(13)).encode())
+            # self.tmp = self.IMU.write(('\xA5\x5A\x04\x02\x06\xAA' + chr(13)).encode())
+            self.IMU.close()
+            time.sleep(0.2)
+            self.IMU.open()
+            # self.IMU.flushInput() 
+            # time.sleep(0.5)
+            self.tmp = self.IMU.write(b'\xA5\x5A\x04\x01\x05\xAA\n')
 
         except serial.SerialException as ex:
             print(
@@ -163,6 +170,9 @@ class Operator:
                     self.orientation['w']=q[3]
                     # print(pa.array([direction]))
                     imu_dict = {
+                        "header":{
+                            "frame_id": "map"
+                        },
                         "orientation":{
                             "x": self.orientation['x'],
                             "y": self.orientation['y'],
@@ -191,7 +201,8 @@ class Operator:
                     print(pa.array([imu_dict]))
                     self.imu_writer.publish(pa.array([imu_dict]))
                     serialized_data = pickle.dumps(imu_dict)
-                    send_output("Imu100D4",json_bytes,dora_event["metadata"])
+                    send_output("imu100D4",json_bytes,dora_event["metadata"])
+                    self.IMU.flushInput() 
 
 
         
