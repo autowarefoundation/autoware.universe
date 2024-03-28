@@ -240,9 +240,10 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const auto cmp_with_time_buffer = [&](const auto & t, const auto cmp_fn) {
     return t && cmp_fn((now - *t).seconds(), planner_param_.occlusion_time_buffer);
   };
+  const auto crosswalk_has_traffic_light =
+    !crosswalk_.regulatoryElementsAs<const lanelet::TrafficLight>().empty();
   const auto is_crosswalk_ignored =
-    (planner_param_.occlusion_ignore_with_traffic_light &&
-     !road_.regulatoryElementsAs<const lanelet::TrafficLight>().empty()) ||
+    (planner_param_.occlusion_ignore_with_traffic_light && crosswalk_has_traffic_light) ||
     crosswalk_.hasAttribute("skip_occluded_slowdown");
   if (planner_param_.occlusion_enable && !path_intersects.empty() && !is_crosswalk_ignored) {
     const auto dist_ego_to_crosswalk =
