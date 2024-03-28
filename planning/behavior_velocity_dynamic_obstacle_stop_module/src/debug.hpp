@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #ifndef DEBUG_HPP_
 #define DEBUG_HPP_
 
+#include "object_stop_decision.hpp"
 #include "types.hpp"
 
 #include <rclcpp/time.hpp>

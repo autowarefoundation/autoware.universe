@@ -15,6 +15,7 @@
 #ifndef SCENE_DYNAMIC_OBSTACLE_STOP_HPP_
 #define SCENE_DYNAMIC_OBSTACLE_STOP_HPP_
 
+#include "object_stop_decision.hpp"
 #include "types.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>

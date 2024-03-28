@@ -26,7 +26,6 @@
 
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -85,29 +84,6 @@ struct Collision
   geometry_msgs::msg::Point point;
   std::string object_uuid;
 };
-
-struct ObjectStopDecision
-{
-  geometry_msgs::msg::Point collision_point{};
-  bool collision_detected = true;
-  std::optional<rclcpp::Time> start_detection_time{};
-  std::optional<rclcpp::Time> last_stop_decision_time{};
-
-public:
-  void update_timers(const rclcpp::Time & now, const double add_buffer, const double remove_buffer)
-  {
-    if (collision_detected) {
-      if (!start_detection_time) start_detection_time = now;
-      if ((now - *start_detection_time).seconds() >= add_buffer) last_stop_decision_time = now;
-    } else if (
-      !last_stop_decision_time || (now - *last_stop_decision_time).seconds() >= remove_buffer) {
-      start_detection_time.reset();
-    }
-  }
-  bool should_be_avoided() const { return start_detection_time && last_stop_decision_time; }
-  bool is_inactive() const { return !start_detection_time; }
-};
-using ObjectStopDecisionMap = std::unordered_map<std::string, ObjectStopDecision>;
 }  // namespace behavior_velocity_planner::dynamic_obstacle_stop
 
 #endif  // TYPES_HPP_
