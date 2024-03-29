@@ -381,7 +381,7 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
       return;
     }
 
-    // if the obstacle has been on the ego path for a certain time, it is excluded
+    // if the obstacle has been on the ego path for more than a threshold time, it is excluded
     const auto first_detection_inside_path_time = it->second;
     const auto now = clock_->now().seconds();
     const double elapsed_time_since_detection_inside_of_path =
