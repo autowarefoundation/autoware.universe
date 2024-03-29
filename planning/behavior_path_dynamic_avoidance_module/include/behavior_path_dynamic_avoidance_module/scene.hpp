@@ -78,9 +78,9 @@ enum class PolygonGenerationMethod {
 };
 
 enum class ObjectBehaviorType {
-  NOT_TO_AVOID = 0,
+  OutOfTarget = 0,
   RegulatedObject,
-  NonRegulatedObject,
+  PrioritizedObject,
 };
 
 struct DynamicAvoidanceParameters
@@ -367,6 +367,11 @@ private:
     const double max_lon_offset;
     const double min_lon_offset;
   };
+  struct EgoPathReservePoly
+  {
+    const tier4_autoware_utils::MultiPolygon2d left_avoid;
+    const tier4_autoware_utils::MultiPolygon2d right_avoid;
+  };
 
   bool canTransitSuccessState() override;
 
@@ -374,10 +379,10 @@ private:
 
   ObjectBehaviorType getLabelAsTargetObstacle(const uint8_t label) const;
   void registerLaneDriveObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
-  void registerFreeRunObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
+  void registerPrioritizedObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
   void determineWhetherToAvoidAgainstLaneDriveObjects(
     const std::vector<DynamicAvoidanceObject> & prev_objects);
-  void determineWhetherToAvoidAgainstFreeRunObjects(
+  void determineWhetherToAvoidAgainstPrioritizedObjects(
     const std::vector<DynamicAvoidanceObject> & prev_objects);
   LatFeasiblePaths generateLateralFeasiblePaths(
     const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const;
@@ -425,8 +430,10 @@ private:
     const DynamicAvoidanceObject & object) const;
   std::optional<tier4_autoware_utils::Polygon2d> calcObjectPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
-  std::optional<tier4_autoware_utils::Polygon2d> calcFreeRunObstaclePolygon(
-    const DynamicAvoidanceObject & object, const PathWithLaneId & ego_path) const;
+  std::optional<tier4_autoware_utils::Polygon2d> calcPrioritizedObstaclePolygon(
+    const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const;
+  EgoPathReservePoly calcEgoPathReservePoly(
+  const PathWithLaneId & ego_path) const;
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)
   {
