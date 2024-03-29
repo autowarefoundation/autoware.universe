@@ -21,6 +21,7 @@
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/ros/polling_reciever.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -37,38 +38,6 @@
 
 namespace motion_planning
 {
-
-template <typename T>
-class InterProcessSingleSubscriber
-{
-private:
-  typename rclcpp::Subscription<T>::SharedPtr subscriber;
-  std::optional<T> last_msg;
-
-public:
-  explicit InterProcessSingleSubscriber(rclcpp::Node * node, const std::string & topic_name)
-  {
-    auto noexec_callback_group =
-      node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
-    auto noexec_subscription_options = rclcpp::SubscriptionOptions();
-    noexec_subscription_options.callback_group = noexec_callback_group;
-
-    subscriber = node->create_subscription<T>(
-      topic_name, rclcpp::QoS{1}, [node](const typename T::ConstSharedPtr msg) { assert(false); },
-      noexec_subscription_options);
-  };
-
-  void updateLastData(void)
-  {
-    rclcpp::MessageInfo message_info;
-    T tmp;
-    while (subscriber->take(tmp, message_info)) {
-      last_msg = tmp;
-    }
-  };
-
-  std::optional<T> getData(void) const { return last_msg; };
-};
 
 class ObstacleCruisePlannerNode : public rclcpp::Node
 {
@@ -173,13 +142,35 @@ private:
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
-  InterProcessSingleSubscriber<Odometry> ego_odom_sub_{this, "~/input/odometry"};
-  rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acc_sub_;
+  class PollingInputTopics
+  {
+  private:
+    tier4_autoware_utils::InterProcessPollingReciever<Odometry> ego_odom_sub_;
+    tier4_autoware_utils::InterProcessPollingReciever<PredictedObjects> objects_sub_;
+    tier4_autoware_utils::InterProcessPollingReciever<AccelWithCovarianceStamped> acc_sub_;
 
-  // data for callback functions
-  PredictedObjects::ConstSharedPtr objects_ptr_{nullptr};
-  AccelWithCovarianceStamped::ConstSharedPtr ego_accel_ptr_{nullptr};
+  public:
+    PollingInputTopics(rclcpp::Node * node)
+    : ego_odom_sub_(node, "~/input/odometry"),
+      objects_sub_(node, "~/input/objects"),
+      acc_sub_(node, "~/input/acceleration")
+    {
+    }
+    std::optional<Odometry> ego_odom_opt;
+    std::optional<PredictedObjects> objects_opt;
+    std::optional<AccelWithCovarianceStamped> ego_accel_opt;
+    bool takeData()
+    {
+      ego_odom_sub_.takeLastData(ego_odom_opt);
+      objects_sub_.takeLastData(objects_opt);
+      acc_sub_.takeLastData(ego_accel_opt);
+
+      if (!ego_odom_opt.has_value() || !objects_opt.has_value() || !ego_accel_opt.has_value()) {
+        return false;
+      }
+      return true;
+    };
+  } polling_topics_{this};
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;

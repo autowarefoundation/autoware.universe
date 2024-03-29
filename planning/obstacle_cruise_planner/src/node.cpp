@@ -357,13 +357,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   traj_sub_ = create_subscription<Trajectory>(
     "~/input/trajectory", rclcpp::QoS{1},
     std::bind(&ObstacleCruisePlannerNode::onTrajectory, this, _1));
-  objects_sub_ = create_subscription<PredictedObjects>(
-    "~/input/objects", rclcpp::QoS{1},
-    [this](const PredictedObjects::ConstSharedPtr msg) { objects_ptr_ = msg; });
-
-  acc_sub_ = create_subscription<AccelWithCovarianceStamped>(
-    "~/input/acceleration", rclcpp::QoS{1},
-    [this](const AccelWithCovarianceStamped::ConstSharedPtr msg) { ego_accel_ptr_ = msg; });
 
   // publisher
   trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", 1);
@@ -491,14 +484,13 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
 
 void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
-  ego_odom_sub_.updateLastData();
+  if (!polling_topics_.takeData()) {
+    return;
+  }
 
   const auto traj_points = motion_utils::convertToTrajectoryPointArray(*msg);
-
   // check if subscribed variables are ready
-  if (
-    traj_points.empty() || !ego_odom_sub_.getData().has_value() || !ego_accel_ptr_ ||
-    !objects_ptr_) {
+  if (traj_points.empty()) {
     return;
   }
 
@@ -611,11 +603,11 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
 {
   stop_watch_.tic(__func__);
 
-  const auto obj_stamp = rclcpp::Time(objects_ptr_->header.stamp);
+  const auto obj_stamp = rclcpp::Time(polling_topics_.objects_opt->header.stamp);
   const auto & p = behavior_determination_param_;
 
   std::vector<Obstacle> target_obstacles;
-  for (const auto & predicted_object : objects_ptr_->objects) {
+  for (const auto & predicted_object : polling_topics_.objects_opt->objects) {
     const auto & object_id =
       tier4_autoware_utils::toHexString(predicted_object.object_id).substr(0, 4);
     const auto & current_obstacle_pose =
@@ -634,7 +626,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
 
     // 2. Check if the obstacle is in front of the ego.
     const size_t ego_idx =
-      ego_nearest_param_.findIndex(traj_points, ego_odom_sub_.getData().value().pose.pose);
+      ego_nearest_param_.findIndex(traj_points, polling_topics_.ego_odom_opt->pose.pose);
     const auto ego_to_obstacle_distance =
       calcDistanceToFrontVehicle(traj_points, ego_idx, current_obstacle_pose.pose.position);
     if (!ego_to_obstacle_distance) {
@@ -730,7 +722,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   // calculated decimated trajectory points and trajectory polygon
   const auto decimated_traj_points = decimateTrajectoryPoints(traj_points);
   const auto decimated_traj_polys = createOneStepPolygons(
-    decimated_traj_points, vehicle_info_, ego_odom_sub_.getData().value().pose.pose);
+    decimated_traj_points, vehicle_info_, polling_topics_.ego_odom_opt->pose.pose);
   debug_data_ptr_->detection_polygons = decimated_traj_polys;
 
   // determine ego's behavior from stop, cruise and slow down
@@ -788,7 +780,8 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   slow_down_condition_counter_.removeCounterUnlessUpdated();
 
   // Check target obstacles' consistency
-  checkConsistency(objects_ptr_->header.stamp, *objects_ptr_, stop_obstacles);
+  checkConsistency(
+    polling_topics_.objects_opt->header.stamp, *polling_topics_.objects_opt, stop_obstacles);
 
   // update previous obstacles
   prev_stop_obstacles_ = stop_obstacles;
@@ -810,7 +803,7 @@ std::vector<TrajectoryPoint> ObstacleCruisePlannerNode::decimateTrajectoryPoints
 
   // trim trajectory
   const size_t ego_seg_idx =
-    ego_nearest_param_.findSegmentIndex(traj_points, ego_odom_sub_.getData().value().pose.pose);
+    ego_nearest_param_.findSegmentIndex(traj_points, polling_topics_.ego_odom_opt->pose.pose);
   const size_t traj_start_point_idx = ego_seg_idx;
   const auto trimmed_traj_points =
     std::vector<TrajectoryPoint>(traj_points.begin() + traj_start_point_idx, traj_points.end());
@@ -1194,8 +1187,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
 
   // calculate collision points with trajectory with lateral stop margin
   const auto traj_polys_with_lat_margin = createOneStepPolygons(
-    traj_points, vehicle_info_, ego_odom_sub_.getData().value().pose.pose,
-    p.max_lat_margin_for_stop);
+    traj_points, vehicle_info_, polling_topics_.ego_odom_opt->pose.pose, p.max_lat_margin_for_stop);
 
   const auto collision_point = polygon_utils::getCollisionPoint(
     traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);
@@ -1265,7 +1257,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   // calculate collision points with trajectory with lateral stop margin
   // NOTE: For additional margin, hysteresis is not divided by two.
   const auto traj_polys_with_lat_margin = createOneStepPolygons(
-    traj_points, vehicle_info_, ego_odom_sub_.getData().value().pose.pose,
+    traj_points, vehicle_info_, polling_topics_.ego_odom_opt->pose.pose,
     p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down);
 
   std::vector<Polygon2d> front_collision_polygons;
@@ -1428,8 +1420,8 @@ double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
   const std::vector<PointWithStamp> & collision_points,
   const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward) const
 {
-  const auto & ego_pose = ego_odom_sub_.getData().value().pose.pose;
-  const double ego_vel = ego_odom_sub_.getData().value().twist.twist.linear.x;
+  const auto & ego_pose = polling_topics_.ego_odom_opt->pose.pose;
+  const double ego_vel = polling_topics_.ego_odom_opt->twist.twist.linear.x;
 
   const double time_to_reach_collision_point = [&]() {
     const double abs_ego_offset = is_driving_forward
@@ -1461,9 +1453,9 @@ PlannerData ObstacleCruisePlannerNode::createPlannerData(
   PlannerData planner_data;
   planner_data.current_time = now();
   planner_data.traj_points = traj_points;
-  planner_data.ego_pose = ego_odom_sub_.getData().value().pose.pose;
-  planner_data.ego_vel = ego_odom_sub_.getData().value().twist.twist.linear.x;
-  planner_data.ego_acc = ego_accel_ptr_->accel.accel.linear.x;
+  planner_data.ego_pose = polling_topics_.ego_odom_opt->pose.pose;
+  planner_data.ego_vel = polling_topics_.ego_odom_opt->twist.twist.linear.x;
+  planner_data.ego_acc = polling_topics_.ego_accel_opt->accel.accel.linear.x;
   planner_data.is_driving_forward = is_driving_forward_;
   return planner_data;
 }
