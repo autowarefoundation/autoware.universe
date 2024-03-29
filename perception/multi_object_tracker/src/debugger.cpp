@@ -22,8 +22,8 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node)
 : diagnostic_updater_(&node),
   node_(node),
   last_input_stamp_(node.now()),
-  stamp_process_start_(node_.now()),
-  stamp_publish_output_(node_.now())
+  stamp_process_start_(node.now()),
+  stamp_publish_output_(node.now())
 {
   // declare debug parameters to decide whether to publish debug topics
   loadParameters();
@@ -73,7 +73,7 @@ void TrackerDebugger::loadParameters()
 
 void TrackerDebugger::checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  const double delay = elapsed_time_from_sensor_input_;  // [s]
+  const double delay = pipeline_latency_ms_;  // [s]
 
   if (delay == 0.0) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Detection delay is not calculated.");
@@ -104,11 +104,7 @@ void TrackerDebugger::startMeasurementTime(
   last_input_stamp_ = measurement_header_stamp;
   stamp_process_start_ = now;
   if (debug_settings_.publish_processing_time) {
-    double input_latency_ms = (stamp_process_start_ - last_input_stamp_).seconds() * 1e3;
-    // saturate the latency to 2000 ms
-    constexpr double LIMIT = 2000;
-    input_latency_ms = input_latency_ms > LIMIT ? 0 : input_latency_ms;
-    // starting from the measurement time
+    double input_latency_ms = (now - last_input_stamp_).seconds() * 1e3;
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/input_latency_ms", input_latency_ms);
   }
@@ -117,34 +113,24 @@ void TrackerDebugger::startMeasurementTime(
 void TrackerDebugger::endPublishTime(const rclcpp::Time & now, const rclcpp::Time & object_time)
 {
   const auto current_time = now;
+  // pipeline latency: time from sensor measurement to publish
+  pipeline_latency_ms_ = (current_time - last_input_stamp_).seconds() * 1e3;
   if (debug_settings_.publish_processing_time) {
-    // calculate processing time
-    // measurement to publish time: time from measurement to publish
-    double measurement_to_publish = (current_time - last_input_stamp_).seconds() * 1e3;
-    // input to publish time: time between input and publish
-    double input_to_publish_ms = (current_time - stamp_process_start_).seconds() * 1e3;
+    // processing time: time between input and publish
+    double processing_time_ms = (current_time - stamp_process_start_).seconds() * 1e3;
     // cycle time: time between two consecutive publish
     double cyclic_time_ms = (current_time - stamp_publish_output_).seconds() * 1e3;
-    // measurement to object time: time from measurement to object time.
-    // If there is not latency compensation, this value is zero
+    // measurement to tracked-object time: time from the sensor measurement to the publishing object
+    // time If there is not latency compensation, this value is zero
     double measurement_to_object_ms = (object_time - last_input_stamp_).seconds() * 1e3;
-
-    elapsed_time_from_sensor_input_ = measurement_to_publish;
-
-    // saturate the latency to 2000 ms
-    constexpr double LIMIT = 2000;
-    measurement_to_publish = measurement_to_publish > LIMIT ? 0 : measurement_to_publish;
-    input_to_publish_ms = input_to_publish_ms > LIMIT ? 0 : input_to_publish_ms;
-    cyclic_time_ms = cyclic_time_ms > LIMIT ? 0 : cyclic_time_ms;
-    measurement_to_object_ms = measurement_to_object_ms > LIMIT ? 0 : measurement_to_object_ms;
 
     // starting from the measurement time
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/pipeline_latency_ms", measurement_to_publish);
+      "debug/pipeline_latency_ms", pipeline_latency_ms_);
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "debug/processing_time_ms", input_to_publish_ms);
+      "debug/processing_time_ms", processing_time_ms);
     processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/meas_to_tracked_object_ms", measurement_to_object_ms);
   }

@@ -22,7 +22,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
@@ -52,7 +51,7 @@ public:
     double diagnostics_warn_delay;
     double diagnostics_error_delay;
   } debug_settings_;
-  double elapsed_time_from_sensor_input_ = 0.0;
+  double pipeline_latency_ms_ = 0.0;
   diagnostic_updater::Updater diagnostic_updater_;
 
 private:
@@ -60,7 +59,6 @@ private:
   rclcpp::Node & node_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
     debug_tentative_objects_pub_;
-  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
   rclcpp::Time last_input_stamp_;
   rclcpp::Time stamp_process_start_;
