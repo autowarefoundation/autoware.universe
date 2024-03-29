@@ -65,8 +65,9 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
       throw std::invalid_argument(
         "Could not set user defined initial pose. The size of initial_pose is " +
         std::to_string(initial_pose_array.size()) + ". It must be 7.");
-    } else if (std::abs(initial_pose_array[3]) < 1e-6 && std::abs(initial_pose_array[4]) < 1e-6 &&
-               std::abs(initial_pose_array[5]) < 1e-6 && std::abs(initial_pose_array[6]) < 1e-6) {
+    } else if (
+      std::abs(initial_pose_array[3]) < 1e-6 && std::abs(initial_pose_array[4]) < 1e-6 &&
+      std::abs(initial_pose_array[5]) < 1e-6 && std::abs(initial_pose_array[6]) < 1e-6) {
       throw std::invalid_argument("Input quaternion is invalid. All elements are close to zero.");
     } else {
       geometry_msgs::msg::Pose initial_pose;
