@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TIER4_AUTOWARE_UTILS__ROS__POLLING_RECIEVER_HPP_
-#define TIER4_AUTOWARE_UTILS__ROS__POLLING_RECIEVER_HPP_
+#ifndef TIER4_AUTOWARE_UTILS__ROS__POLLING_RECEIVER_HPP_
+#define TIER4_AUTOWARE_UTILS__ROS__POLLING_RECEIVER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -21,13 +21,13 @@ namespace tier4_autoware_utils
 {
 
 template <typename T>
-class InterProcessPollingReciever
+class InterProcessPollingReceiver
 {
 private:
   typename rclcpp::Subscription<T>::SharedPtr subscriber;
 
 public:
-  explicit InterProcessPollingReciever(rclcpp::Node * node, const std::string & topic_name)
+  explicit InterProcessPollingReceiver(rclcpp::Node * node, const std::string & topic_name)
   {
     auto noexec_callback_group =
       node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
@@ -52,4 +52,4 @@ public:
 
 }  // namespace tier4_autoware_utils
 
-#endif  // TIER4_AUTOWARE_UTILS__ROS__POLLING_RECIEVER_HPP_
+#endif  // TIER4_AUTOWARE_UTILS__ROS__POLLING_RECEIVER_HPP_

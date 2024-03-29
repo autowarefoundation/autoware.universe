@@ -142,9 +142,9 @@ private:
   class PollingInputTopics
   {
   private:
-    tier4_autoware_utils::InterProcessPollingReciever<Odometry> ego_odom_sub_;
-    tier4_autoware_utils::InterProcessPollingReciever<PredictedObjects> objects_sub_;
-    tier4_autoware_utils::InterProcessPollingReciever<AccelWithCovarianceStamped> acc_sub_;
+    tier4_autoware_utils::InterProcessPollingReceiver<Odometry> ego_odom_sub_;
+    tier4_autoware_utils::InterProcessPollingReceiver<PredictedObjects> objects_sub_;
+    tier4_autoware_utils::InterProcessPollingReceiver<AccelWithCovarianceStamped> acc_sub_;
 
   public:
     PollingInputTopics(rclcpp::Node * node)
