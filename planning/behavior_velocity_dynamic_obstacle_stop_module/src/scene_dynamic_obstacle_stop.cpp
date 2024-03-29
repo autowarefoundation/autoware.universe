@@ -43,7 +43,7 @@ DynamicObstacleStopModule::DynamicObstacleStopModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), params_(std::move(planner_param))
 {
-  velocity_factor_.init(PlanningBehavior::UNKNOWN);
+  velocity_factor_.init(PlanningBehavior::ROUTE_OBSTACLE);
 }
 
 bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -109,12 +109,18 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     debug_data_.stop_pose = stop_pose;
     if (stop_pose) {
       motion_utils::insertStopPoint(*stop_pose, 0.0, path->points);
-      velocity_factor_.set(path->points, ego_data.pose, *stop_pose, VelocityFactor::ROUTE_OBSTACLE);
+      const auto stop_pose_reached =
+        planner_data_->current_velocity->twist.linear.x < 1e-3 &&
+        tier4_autoware_utils::calcDistance2d(ego_data.pose, *stop_pose) < 1e-3;
+      velocity_factor_.set(
+        path->points, ego_data.pose, *stop_pose,
+        stop_pose_reached ? VelocityFactor::STOPPED : VelocityFactor::APPROACHING,
+        "dynamic_obstacle_stop");
     }
   }
 
   const auto total_time_us = stopwatch.toc();
-  RCLCPP_WARN(
+  RCLCPP_INFO(
     logger_,
     "Total time = %2.2fus\n\tpreprocessing = %2.2fus\n\tfootprints = "
     "%2.2fus\n\tcollisions = %2.2fus\n",
