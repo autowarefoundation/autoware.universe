@@ -18,6 +18,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace behavior_velocity_planner
 {
@@ -57,7 +58,10 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
   {
     auto & p = planner_param_.run_out;
     p.detection_method = getOrDeclareParameter<std::string>(node, ns + ".detection_method");
+    p.target_obstacle_types =
+      getOrDeclareParameter<std::vector<std::string>>(node, ns + ".target_obstacle_types");
     p.use_partition_lanelet = getOrDeclareParameter<bool>(node, ns + ".use_partition_lanelet");
+    p.use_ego_cut_line = getOrDeclareParameter<bool>(node, ns + ".use_ego_cut_line");
     p.suppress_on_crosswalk = getOrDeclareParameter<bool>(node, ns + ".suppress_on_crosswalk");
     p.specify_decel_jerk = getOrDeclareParameter<bool>(node, ns + ".specify_decel_jerk");
     p.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
@@ -66,6 +70,7 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.detection_distance = getOrDeclareParameter<double>(node, ns + ".detection_distance");
     p.detection_span = getOrDeclareParameter<double>(node, ns + ".detection_span");
     p.min_vel_ego_kmph = getOrDeclareParameter<double>(node, ns + ".min_vel_ego_kmph");
+    p.ego_cut_line_length = getOrDeclareParameter<double>(node, ns + ".ego_cut_line_length");
   }
 
   {
