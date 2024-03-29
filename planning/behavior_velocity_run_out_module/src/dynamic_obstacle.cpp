@@ -18,6 +18,7 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/geometry/pose_deviation.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 #include <tier4_autoware_utils/transform/transforms.hpp>
 
 #include <boost/geometry/algorithms/covered_by.hpp>
@@ -27,7 +28,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <random>
 #include <string>
 
 namespace behavior_velocity_planner
@@ -463,17 +463,6 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
 {
   std::lock_guard<std::mutex> lock(mutex_);
   std::vector<DynamicObstacle> dynamic_obstacles;
-
-  const auto generateUUID = []() {
-    // Generate random number
-    unique_identifier_msgs::msg::UUID uuid;
-    std::mt19937 gen(std::random_device{}());
-    std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
-    std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
-
-    return uuid;
-  };
-
   for (const auto & point : obstacle_points_map_filtered_) {
     DynamicObstacle dynamic_obstacle;
 
@@ -504,7 +493,7 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
       param_.max_prediction_time);
     predicted_path.confidence = 1.0;
     dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
-    dynamic_obstacle.uuid = generateUUID();
+    dynamic_obstacle.uuid = tier4_autoware_utils::generateUUID();
     dynamic_obstacles.emplace_back(dynamic_obstacle);
   }
 
