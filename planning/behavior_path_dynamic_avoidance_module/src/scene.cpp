@@ -1845,6 +1845,8 @@ DynamicAvoidanceModule::calcObjectPathBasedDynamicObstaclePolygon(
 std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcFreeRunObstaclePolygon(
   const DynamicAvoidanceObject & object, const PathWithLaneId & ego_path) const
 {
+  stop_watch_.tic(__func__);
+
   constexpr double end_time_to_consider = 3.0;
   constexpr double required_confidence = 0.3;
 
@@ -1919,6 +1921,11 @@ std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcFreeR
   tier4_autoware_utils::MultiPolygon2d output_poly;
   boost::geometry::difference(expanded_poly[0], ego_path_restriction_poly, output_poly);
   if (output_poly.empty()) return {};
+
+  const double calculation_time = stop_watch_.toc(__func__);
+  RCLCPP_INFO_EXPRESSION(
+    getLogger(), parameters_->enable_debug_info, "  %s := %f [ms]", __func__, calculation_time);
+
   return output_poly[0];
 }
 

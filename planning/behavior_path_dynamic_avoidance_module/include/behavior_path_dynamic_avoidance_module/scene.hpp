@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_DYNAMIC_AVOIDANCE_MODULE__SCENE_HPP_
 
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -442,6 +443,10 @@ private:
   std::shared_ptr<DynamicAvoidanceParameters> parameters_;
 
   TargetObjectsManager target_objects_manager_;
+
+  mutable tier4_autoware_utils::StopWatch<
+    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
+    stop_watch_;
 };
 }  // namespace behavior_path_planner
 
