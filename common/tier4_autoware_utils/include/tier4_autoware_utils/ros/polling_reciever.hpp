@@ -43,8 +43,8 @@ public:
   {
     rclcpp::MessageInfo message_info;
     T tmp;
-    // "while" is required for the case of Queue size (QoS) is 2 or lager
-    while (subscriber->take(tmp, message_info)) {
+    // The queue size (QoS) must be 1 to get the last message data.
+    if (subscriber->take(tmp, message_info)) {
       data = tmp;
     }
   };
