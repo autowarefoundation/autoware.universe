@@ -344,7 +344,8 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
   const auto vehicle_width = planner_param_.vehicle_param.width;
   const auto vehicle_with_with_margin_halved = (vehicle_width + footprint_extra_margin) / 2.0;
   const bool is_last_obstacle = last_stop_obstacle_uuid_.has_value();
-  constexpr double time_threshold_for_prev_collision_obstacle = 1.0;
+  const double time_threshold_for_prev_collision_obstacle =
+    planner_param_.run_out.keep_obstacle_on_path_time_threshold;
 
   std::vector<DynamicObstacle> obstacles_outside_of_path;
   std::for_each(dynamic_obstacles.begin(), dynamic_obstacles.end(), [&](const auto & o) {
