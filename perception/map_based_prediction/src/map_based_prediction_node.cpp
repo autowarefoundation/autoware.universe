@@ -606,7 +606,7 @@ ObjectClassification::_label_type changeLabelForPrediction(
                                            // constraints
       const bool within_road_lanelet = withinRoadLanelet(object, lanelet_map_ptr_, true);
       const float high_speed_threshold =
-        tier4_autoware_utils::kmph2mps(25.0);  // High speed bicycle 25 km/h
+        tier4_autoware_utils::kmph2mps(9.0);  // For lv4 special tuning. High speed bicycle 9 km/h
       // calc abs speed from x and y velocity
       const double abs_speed = std::hypot(
         object.kinematics.twist_with_covariance.twist.linear.x,
@@ -624,17 +624,17 @@ ObjectClassification::_label_type changeLabelForPrediction(
     case ObjectClassification::PEDESTRIAN: {
       const bool within_road_lanelet = withinRoadLanelet(object, lanelet_map_ptr_, true);
       const float max_velocity_for_human_mps =
-        tier4_autoware_utils::kmph2mps(25.0);  // Max human being motion speed is 25km/h
+        tier4_autoware_utils::kmph2mps(9.0);  // Max human being motion speed is 25km/h
       const double abs_speed = std::hypot(
         object.kinematics.twist_with_covariance.twist.linear.x,
         object.kinematics.twist_with_covariance.twist.linear.y);
       const bool high_speed_object = abs_speed > max_velocity_for_human_mps;
       // fast, human-like object: like segway
-      if (within_road_lanelet && high_speed_object) return label;  // currently do nothing
-      // return ObjectClassification::MOTORCYCLE;
-      if (high_speed_object) return label;  // currently do nothing
-      // fast human outside road lanelet will move like unknown object
-      // return ObjectClassification::UNKNOWN;
+      if (within_road_lanelet && high_speed_object)  // return label;  // currently do nothing
+        return ObjectClassification::MOTORCYCLE;
+      if (high_speed_object)  // return label;  // currently do nothing
+        // fast human outside road lanelet will move like unknown object
+        return ObjectClassification::UNKNOWN;
       return label;
     }
 
