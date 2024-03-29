@@ -38,7 +38,6 @@
 
 namespace motion_planning
 {
-
 class ObstacleCruisePlannerNode : public rclcpp::Node
 {
 public:
@@ -50,8 +49,6 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
-
-  void takeData();
 
   // main functions
   std::vector<Polygon2d> createOneStepPolygons(
