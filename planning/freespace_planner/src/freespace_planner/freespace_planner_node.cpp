@@ -481,6 +481,7 @@ void FreespacePlannerNode::onTimer()
 
   // StopTrajectory
   if (trajectory_.points.size() <= 1) {
+    is_new_parking_cycle_ = false;
     return;
   }
 
