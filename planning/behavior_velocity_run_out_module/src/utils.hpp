@@ -21,9 +21,11 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <string>
 #include <vector>
@@ -188,6 +190,7 @@ struct DynamicObstacle
   std::vector<ObjectClassification> classifications;
   Shape shape;
   std::vector<PredictedPath> predicted_paths;
+  unique_identifier_msgs::msg::UUID uuid;
 };
 
 struct DynamicObstacleData

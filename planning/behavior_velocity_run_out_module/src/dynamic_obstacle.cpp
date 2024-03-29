@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <random>
 #include <string>
 
 namespace behavior_velocity_planner
@@ -373,6 +374,7 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObsta
     }
     dynamic_obstacle.classifications = predicted_object.classification;
     dynamic_obstacle.shape = predicted_object.shape;
+    dynamic_obstacle.uuid = predicted_object.object_id;
 
     // get predicted paths of predicted_objects
     for (const auto & path : predicted_object.kinematics.predicted_paths) {
@@ -418,6 +420,7 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObjectWithoutPath::createD
       param_.max_prediction_time);
     predicted_path.confidence = 1.0;
     dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
+    dynamic_obstacle.uuid = predicted_object.object_id;
 
     dynamic_obstacles.emplace_back(dynamic_obstacle);
   }
@@ -460,6 +463,17 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
 {
   std::lock_guard<std::mutex> lock(mutex_);
   std::vector<DynamicObstacle> dynamic_obstacles;
+
+  const auto generateUUID = []() {
+    // Generate random number
+    unique_identifier_msgs::msg::UUID uuid;
+    std::mt19937 gen(std::random_device{}());
+    std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
+    std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
+
+    return uuid;
+  };
+
   for (const auto & point : obstacle_points_map_filtered_) {
     DynamicObstacle dynamic_obstacle;
 
@@ -490,7 +504,7 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
       param_.max_prediction_time);
     predicted_path.confidence = 1.0;
     dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
-
+    dynamic_obstacle.uuid = generateUUID();
     dynamic_obstacles.emplace_back(dynamic_obstacle);
   }
 
