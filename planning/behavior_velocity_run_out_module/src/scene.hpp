@@ -25,6 +25,8 @@
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -65,6 +67,7 @@ private:
   std::unique_ptr<run_out_utils::StateMachine> state_machine_;
   std::shared_ptr<rclcpp::Time> first_detected_time_;
   std::optional<unique_identifier_msgs::msg::UUID> last_stop_obstacle_uuid_;
+  std::unordered_map<std::string, double> obstacle_in_ego_path_times_;
 
   // Function
   Polygons2d createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const;
@@ -157,14 +160,14 @@ private:
     const geometry_msgs::msg::Pose & current_pose) const;
 
   std::vector<DynamicObstacle> excludeObstaclesOnEgoPath(
-    const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path) const;
+    const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path);
 
   void publishDebugValue(
     const PathWithLaneId & path, const std::vector<DynamicObstacle> extracted_obstacles,
     const std::optional<DynamicObstacle> & dynamic_obstacle,
     const geometry_msgs::msg::Pose & current_pose) const;
 
-  bool isMomentaryDetection(const unique_identifier_msgs::msg::UUID & uuid);
+  bool isMomentaryDetection();
 };
 }  // namespace behavior_velocity_planner
 

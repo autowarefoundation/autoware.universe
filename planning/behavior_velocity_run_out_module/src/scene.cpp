@@ -22,6 +22,7 @@
 #include <motion_utils/distance/distance.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/algorithms/within.hpp>
@@ -47,8 +48,7 @@ RunOutModule::RunOutModule(
   planner_param_(planner_param),
   dynamic_obstacle_creator_(std::move(dynamic_obstacle_creator)),
   debug_ptr_(debug_ptr),
-  state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.approaching.state)),
-  last_stop_obstacle_uuid_(std::nullopt)
+  state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.approaching.state))
 {
   velocity_factor_.init(PlanningBehavior::UNKNOWN);
 
@@ -224,7 +224,7 @@ std::optional<DynamicObstacle> RunOutModule::detectCollision(
     }
 
     // ignore momentary obstacle detection to avoid sudden stopping by false positive
-    if (isMomentaryDetection(obstacle_selected->uuid)) {
+    if (isMomentaryDetection()) {
       return {};
     }
 
@@ -235,7 +235,6 @@ std::optional<DynamicObstacle> RunOutModule::detectCollision(
   }
 
   // no collision detected
-  last_stop_obstacle_uuid_.reset();
   first_detected_time_.reset();
   return {};
 }
@@ -333,7 +332,7 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createVehiclePolygon(
 }
 
 std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path) const
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path)
 {
   using motion_utils::findNearestIndex;
   using tier4_autoware_utils::calcOffsetPose;
@@ -343,22 +342,11 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
   const auto footprint_extra_margin = planner_param_.run_out.ego_footprint_extra_margin;
   const auto vehicle_width = planner_param_.vehicle_param.width;
   const auto vehicle_with_with_margin_halved = (vehicle_width + footprint_extra_margin) / 2.0;
-  const bool is_last_obstacle = last_stop_obstacle_uuid_.has_value();
   const double time_threshold_for_prev_collision_obstacle =
     planner_param_.run_out.keep_obstacle_on_path_time_threshold;
 
   std::vector<DynamicObstacle> obstacles_outside_of_path;
   std::for_each(dynamic_obstacles.begin(), dynamic_obstacles.end(), [&](const auto & o) {
-    // if the obstacle was already detected as a stop obstacle, we don't exclude it for some time
-    if (is_last_obstacle && last_stop_obstacle_uuid_.value() == o.uuid) {
-      const auto now = clock_->now();
-      const double elapsed_time_since_detection = (now - *first_detected_time_).seconds();
-      if (elapsed_time_since_detection < time_threshold_for_prev_collision_obstacle) {
-        obstacles_outside_of_path.push_back(o);
-        return;
-      }
-    }
-
     const auto idx = findNearestIndex(path.points, o.pose);
     if (!idx) {
       obstacles_outside_of_path.push_back(o);
@@ -374,9 +362,33 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
       tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, object_position);
     const double signed_distance_from_right =
       tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, object_position);
-    // If object is outside of the ego path, include it
+
+    // If object is outside of the ego path, include it in list of possible target objects
+    // It is also deleted from the path of objects inside ego path
+    const auto obstacle_uuid_hex = tier4_autoware_utils::toHexString(o.uuid);
     if (signed_distance_from_left > 0.0 || signed_distance_from_right < 0.0) {
       obstacles_outside_of_path.push_back(o);
+      obstacle_in_ego_path_times_.erase(obstacle_uuid_hex);
+      return;
+    }
+
+    const auto it = obstacle_in_ego_path_times_.find(obstacle_uuid_hex);
+    // This obstacle is first detected inside the ego path, we keep it.
+    if (it == obstacle_in_ego_path_times_.end()) {
+      const auto now = clock_->now().seconds();
+      obstacle_in_ego_path_times_.insert(std::make_pair(obstacle_uuid_hex, now));
+      obstacles_outside_of_path.push_back(o);
+      return;
+    }
+
+    // if the obstacle has been on the ego path for a certain time, it is excluded
+    const auto first_detection_inside_path_time = it->second;
+    const auto now = clock_->now().seconds();
+    const double elapsed_time_since_detection_inside_of_path =
+      (now - first_detection_inside_path_time);
+    if (elapsed_time_since_detection_inside_of_path < time_threshold_for_prev_collision_obstacle) {
+      obstacles_outside_of_path.push_back(o);
+      return;
     }
   });
   return obstacles_outside_of_path;
@@ -967,16 +979,15 @@ void RunOutModule::publishDebugValue(
   debug_ptr_->publishDebugValue();
 }
 
-bool RunOutModule::isMomentaryDetection(const unique_identifier_msgs::msg::UUID & uuid)
+bool RunOutModule::isMomentaryDetection()
 {
   if (!planner_param_.ignore_momentary_detection.enable) {
     return false;
   }
 
   // No detection until now
-  if (!first_detected_time_ || !last_stop_obstacle_uuid_) {
+  if (!first_detected_time_) {
     first_detected_time_ = std::make_shared<rclcpp::Time>(clock_->now());
-    last_stop_obstacle_uuid_ = uuid;
     return true;
   }
 
