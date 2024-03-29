@@ -47,7 +47,8 @@ RunOutModule::RunOutModule(
   planner_param_(planner_param),
   dynamic_obstacle_creator_(std::move(dynamic_obstacle_creator)),
   debug_ptr_(debug_ptr),
-  state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.approaching.state))
+  state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.approaching.state)),
+  last_stop_obstacle_uuid_(std::nullopt)
 {
   velocity_factor_.init(PlanningBehavior::UNKNOWN);
 
@@ -223,7 +224,7 @@ std::optional<DynamicObstacle> RunOutModule::detectCollision(
     }
 
     // ignore momentary obstacle detection to avoid sudden stopping by false positive
-    if (isMomentaryDetection()) {
+    if (isMomentaryDetection(obstacle_selected->uuid)) {
       return {};
     }
 
@@ -234,6 +235,7 @@ std::optional<DynamicObstacle> RunOutModule::detectCollision(
   }
 
   // no collision detected
+  last_stop_obstacle_uuid_.reset();
   first_detected_time_.reset();
   return {};
 }
@@ -341,30 +343,41 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
   const auto footprint_extra_margin = planner_param_.run_out.ego_footprint_extra_margin;
   const auto vehicle_width = planner_param_.vehicle_param.width;
   const auto vehicle_with_with_margin_halved = (vehicle_width + footprint_extra_margin) / 2.0;
+  const bool is_last_obstacle = last_stop_obstacle_uuid_.has_value();
+  constexpr double time_threshold_for_prev_collision_obstacle = 1.0;
+
   std::vector<DynamicObstacle> obstacles_outside_of_path;
-  std::for_each(
-    dynamic_obstacles.begin(), dynamic_obstacles.end(),
-    [&obstacles_outside_of_path, &path, &vehicle_with_with_margin_halved](const auto & o) {
-      const auto idx = findNearestIndex(path.points, o.pose);
-      if (!idx) {
+  std::for_each(dynamic_obstacles.begin(), dynamic_obstacles.end(), [&](const auto & o) {
+    // if the obstacle was already detected as a stop obstacle, we don't exclude it for some time
+    if (is_last_obstacle && last_stop_obstacle_uuid_.value() == o.uuid) {
+      const auto now = clock_->now();
+      const double elapsed_time_since_detection = (now - *first_detected_time_).seconds();
+      if (elapsed_time_since_detection < time_threshold_for_prev_collision_obstacle) {
         obstacles_outside_of_path.push_back(o);
         return;
       }
-      const auto object_position = o.pose.position;
-      const auto closest_ego_pose = path.points.at(*idx).point.pose;
-      const auto vehicle_left_pose = tier4_autoware_utils::calcOffsetPose(
-        closest_ego_pose, 0, vehicle_with_with_margin_halved, 0);
-      const auto vehicle_right_pose = tier4_autoware_utils::calcOffsetPose(
-        closest_ego_pose, 0, -vehicle_with_with_margin_halved, 0);
-      const double signed_distance_from_left =
-        tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, object_position);
-      const double signed_distance_from_right =
-        tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, object_position);
-      // If object is outside of the ego path, include it
-      if (signed_distance_from_left > 0.0 || signed_distance_from_right < 0.0) {
-        obstacles_outside_of_path.push_back(o);
-      }
-    });
+    }
+
+    const auto idx = findNearestIndex(path.points, o.pose);
+    if (!idx) {
+      obstacles_outside_of_path.push_back(o);
+      return;
+    }
+    const auto object_position = o.pose.position;
+    const auto closest_ego_pose = path.points.at(*idx).point.pose;
+    const auto vehicle_left_pose =
+      tier4_autoware_utils::calcOffsetPose(closest_ego_pose, 0, vehicle_with_with_margin_halved, 0);
+    const auto vehicle_right_pose = tier4_autoware_utils::calcOffsetPose(
+      closest_ego_pose, 0, -vehicle_with_with_margin_halved, 0);
+    const double signed_distance_from_left =
+      tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, object_position);
+    const double signed_distance_from_right =
+      tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, object_position);
+    // If object is outside of the ego path, include it
+    if (signed_distance_from_left > 0.0 || signed_distance_from_right < 0.0) {
+      obstacles_outside_of_path.push_back(o);
+    }
+  });
   return obstacles_outside_of_path;
 }
 
@@ -953,14 +966,16 @@ void RunOutModule::publishDebugValue(
   debug_ptr_->publishDebugValue();
 }
 
-bool RunOutModule::isMomentaryDetection()
+bool RunOutModule::isMomentaryDetection(const unique_identifier_msgs::msg::UUID & uuid)
 {
   if (!planner_param_.ignore_momentary_detection.enable) {
     return false;
   }
 
-  if (!first_detected_time_) {
+  // No detection until now
+  if (!first_detected_time_ || !last_stop_obstacle_uuid_) {
     first_detected_time_ = std::make_shared<rclcpp::Time>(clock_->now());
+    last_stop_obstacle_uuid_ = uuid;
     return true;
   }
 

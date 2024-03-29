@@ -64,6 +64,7 @@ private:
   std::shared_ptr<RunOutDebug> debug_ptr_;
   std::unique_ptr<run_out_utils::StateMachine> state_machine_;
   std::shared_ptr<rclcpp::Time> first_detected_time_;
+  std::optional<unique_identifier_msgs::msg::UUID> last_stop_obstacle_uuid_;
 
   // Function
   Polygons2d createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const;
@@ -163,7 +164,7 @@ private:
     const std::optional<DynamicObstacle> & dynamic_obstacle,
     const geometry_msgs::msg::Pose & current_pose) const;
 
-  bool isMomentaryDetection();
+  bool isMomentaryDetection(const unique_identifier_msgs::msg::UUID & uuid);
 };
 }  // namespace behavior_velocity_planner
 
