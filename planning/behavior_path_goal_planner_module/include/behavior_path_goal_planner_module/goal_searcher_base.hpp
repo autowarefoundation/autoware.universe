@@ -17,6 +17,7 @@
 
 #include "behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "behavior_path_planner_common/data_manager.hpp"
+#include "behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
@@ -56,12 +57,20 @@ public:
   }
 
   MultiPolygon2d getAreaPolygons() { return area_polygons_; }
-  virtual GoalCandidates search() = 0;
-  virtual void update([[maybe_unused]] GoalCandidates & goal_candidates) const { return; }
+  virtual GoalCandidates search(
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) = 0;
+  virtual void update(
+    [[maybe_unused]] GoalCandidates & goal_candidates,
+    [[maybe_unused]] const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map)
+    const
+  {
+    return;
+  }
   virtual GoalCandidate getClosetGoalCandidateAlongLanes(
     const GoalCandidates & goal_candidates) const = 0;
   virtual bool isSafeGoalWithMarginScaleFactor(
-    const GoalCandidate & goal_candidate, const double margin_scale_factor) const = 0;
+    const GoalCandidate & goal_candidate, const double margin_scale_factor,
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const = 0;
 
 protected:
   GoalPlannerParameters parameters_{};

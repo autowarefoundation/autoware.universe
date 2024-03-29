@@ -90,16 +90,15 @@ struct SortByWeightedDistance
 };
 
 GoalSearcher::GoalSearcher(
-  const GoalPlannerParameters & parameters, const LinearRing2d & vehicle_footprint,
-  const std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map)
+  const GoalPlannerParameters & parameters, const LinearRing2d & vehicle_footprint)
 : GoalSearcherBase{parameters},
   vehicle_footprint_{vehicle_footprint},
-  occupancy_grid_map_{occupancy_grid_map},
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
 }
 
-GoalCandidates GoalSearcher::search()
+GoalCandidates GoalSearcher::search(
+  const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map)
 {
   GoalCandidates goal_candidates{};
 
@@ -195,7 +194,7 @@ GoalCandidates GoalSearcher::search()
   }
   createAreaPolygons(original_search_poses);
 
-  update(goal_candidates);
+  update(goal_candidates, occupancy_grid_map);
 
   return goal_candidates;
 }
@@ -264,7 +263,9 @@ void GoalSearcher::countObjectsToAvoid(
   }
 }
 
-void GoalSearcher::update(GoalCandidates & goal_candidates) const
+void GoalSearcher::update(
+  GoalCandidates & goal_candidates,
+  const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const
 {
   const auto pull_over_lane_stop_objects =
     goal_planner_utils::extractStaticObjectsInExpandedPullOverLanes(
@@ -293,7 +294,7 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
     const Pose goal_pose = goal_candidate.goal_pose;
 
     // check collision with footprint
-    if (checkCollision(goal_pose, pull_over_lane_stop_objects)) {
+    if (checkCollision(goal_pose, pull_over_lane_stop_objects, occupancy_grid_map)) {
       goal_candidate.is_safe = false;
       continue;
     }
@@ -303,7 +304,7 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
     const auto target_objects = goal_planner_utils::filterObjectsByLateralDistance(
       goal_pose, planner_data_->parameters.vehicle_width, pull_over_lane_stop_objects,
       parameters_.object_recognition_collision_check_hard_margins.back(), filter_inside);
-    if (checkCollisionWithLongitudinalDistance(goal_pose, target_objects)) {
+    if (checkCollisionWithLongitudinalDistance(goal_pose, target_objects, occupancy_grid_map)) {
       goal_candidate.is_safe = false;
       continue;
     }
@@ -315,8 +316,10 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
 // Note: this function is not just return goal_candidate.is_safe but check collision with
 // current planner_data_ and margin scale factor.
 // And is_safe is not updated in this function.
+// これはutil系に切り出してOK
 bool GoalSearcher::isSafeGoalWithMarginScaleFactor(
-  const GoalCandidate & goal_candidate, const double margin_scale_factor) const
+  const GoalCandidate & goal_candidate, const double margin_scale_factor,
+  const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const
 {
   if (!parameters_.use_object_recognition) {
     return true;
@@ -343,21 +346,23 @@ bool GoalSearcher::isSafeGoalWithMarginScaleFactor(
   const auto target_objects = goal_planner_utils::filterObjectsByLateralDistance(
     goal_pose, planner_data_->parameters.vehicle_width, pull_over_lane_stop_objects, margin,
     filter_inside);
-  if (checkCollisionWithLongitudinalDistance(goal_pose, target_objects)) {
+  if (checkCollisionWithLongitudinalDistance(goal_pose, target_objects, occupancy_grid_map)) {
     return false;
   }
 
   return true;
 }
 
-bool GoalSearcher::checkCollision(const Pose & pose, const PredictedObjects & objects) const
+bool GoalSearcher::checkCollision(
+  const Pose & pose, const PredictedObjects & objects,
+  const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const
 {
   if (parameters_.use_occupancy_grid_for_goal_search) {
-    const Pose pose_grid_coords = global2local(occupancy_grid_map_->getMap(), pose);
+    const Pose pose_grid_coords = global2local(occupancy_grid_map->getMap(), pose);
     const auto idx = pose2index(
-      occupancy_grid_map_->getMap(), pose_grid_coords, occupancy_grid_map_->getParam().theta_size);
+      occupancy_grid_map->getMap(), pose_grid_coords, occupancy_grid_map->getParam().theta_size);
     const bool check_out_of_range = false;
-    if (occupancy_grid_map_->detectCollision(idx, check_out_of_range)) {
+    if (occupancy_grid_map->detectCollision(idx, check_out_of_range)) {
       return true;
     }
   }
@@ -373,7 +378,8 @@ bool GoalSearcher::checkCollision(const Pose & pose, const PredictedObjects & ob
 }
 
 bool GoalSearcher::checkCollisionWithLongitudinalDistance(
-  const Pose & ego_pose, const PredictedObjects & objects) const
+  const Pose & ego_pose, const PredictedObjects & objects,
+  const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const
 {
   if (
     parameters_.use_occupancy_grid_for_goal_search &&
@@ -385,22 +391,22 @@ bool GoalSearcher::checkCollisionWithLongitudinalDistance(
     // check forward collision
     const Pose ego_pose_moved_forward = calcOffsetPose(ego_pose, offset, 0, 0);
     const Pose forward_pose_grid_coords =
-      global2local(occupancy_grid_map_->getMap(), ego_pose_moved_forward);
+      global2local(occupancy_grid_map->getMap(), ego_pose_moved_forward);
     const auto forward_idx = pose2index(
-      occupancy_grid_map_->getMap(), forward_pose_grid_coords,
-      occupancy_grid_map_->getParam().theta_size);
-    if (occupancy_grid_map_->detectCollision(forward_idx, check_out_of_range)) {
+      occupancy_grid_map->getMap(), forward_pose_grid_coords,
+      occupancy_grid_map->getParam().theta_size);
+    if (occupancy_grid_map->detectCollision(forward_idx, check_out_of_range)) {
       return true;
     }
 
     // check backward collision
     const Pose ego_pose_moved_backward = calcOffsetPose(ego_pose, -offset, 0, 0);
     const Pose backward_pose_grid_coords =
-      global2local(occupancy_grid_map_->getMap(), ego_pose_moved_backward);
+      global2local(occupancy_grid_map->getMap(), ego_pose_moved_backward);
     const auto backward_idx = pose2index(
-      occupancy_grid_map_->getMap(), backward_pose_grid_coords,
-      occupancy_grid_map_->getParam().theta_size);
-    if (occupancy_grid_map_->detectCollision(backward_idx, check_out_of_range)) {
+      occupancy_grid_map->getMap(), backward_pose_grid_coords,
+      occupancy_grid_map->getParam().theta_size);
+    if (occupancy_grid_map->detectCollision(backward_idx, check_out_of_range)) {
       return true;
     }
   }
