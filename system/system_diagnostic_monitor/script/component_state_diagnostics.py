@@ -94,6 +94,9 @@ class ComponentStateDiagnosticsNode(rclpy.node.Node):
 
 
 if __name__ == "__main__":
-    rclpy.init()
-    rclpy.spin(ComponentStateDiagnosticsNode())
-    rclpy.shutdown()
+    try:
+        rclpy.init()
+        rclpy.spin(ComponentStateDiagnosticsNode())
+        rclpy.shutdown()
+    except KeyboardInterrupt:
+        pass
