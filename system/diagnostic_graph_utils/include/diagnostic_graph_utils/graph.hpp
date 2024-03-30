@@ -15,6 +15,8 @@
 #ifndef DIAGNOSTIC_GRAPH_UTILS__GRAPH_HPP_
 #define DIAGNOSTIC_GRAPH_UTILS__GRAPH_HPP_
 
+#include <rclcpp/time.hpp>
+
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <tier4_system_msgs/msg/diag_graph_status.hpp>
 #include <tier4_system_msgs/msg/diag_graph_struct.hpp>
@@ -28,15 +30,24 @@
 namespace diagnostic_graph_utils
 {
 
+class DiagLink;
 class DiagUnit
 {
 public:
-  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
-  using DiagLevel = DiagStatus::_level_type;
-  virtual DiagLevel level() const = 0;
+  using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
+  using DiagnosticLevel = DiagnosticStatus::_level_type;
+
+  struct DiagChild
+  {
+    DiagLink * link;
+    DiagUnit * unit;
+  };
+
+  virtual DiagnosticStatus create_diagnostic_status() const = 0;
+  virtual DiagnosticLevel level() const = 0;
   virtual std::string type() const = 0;
   virtual std::string path() const = 0;
-  virtual std::vector<DiagUnit *> children() const = 0;
+  virtual std::vector<DiagChild> children() const = 0;
 };
 
 class DiagLink
@@ -59,17 +70,18 @@ public:
   using DiagNodeStatus = tier4_system_msgs::msg::DiagNodeStatus;
   explicit DiagNode(const DiagNodeStruct & msg) : struct_(msg) {}
   void update(const DiagNodeStatus & msg) { status_ = msg; }
-  void add_children(DiagUnit * unit) { children_.push_back(unit); }
 
-  DiagLevel level() const override { return status_.level; }
+  DiagnosticStatus create_diagnostic_status() const override;
+  DiagnosticLevel level() const override { return status_.level; }
   std::string type() const override { return struct_.type; }
   std::string path() const override { return struct_.path; }
-  std::vector<DiagUnit *> children() const override { return children_; }
+  std::vector<DiagChild> children() const override { return children_; }
+  void add_child(const DiagChild & child) { children_.push_back(child); }
 
 private:
   DiagNodeStruct struct_;
   DiagNodeStatus status_;
-  std::vector<DiagUnit *> children_;
+  std::vector<DiagChild> children_;
 };
 
 class DiagLeaf : public DiagUnit
@@ -79,19 +91,19 @@ public:
   using DiagLeafStatus = tier4_system_msgs::msg::DiagLeafStatus;
   explicit DiagLeaf(const DiagLeafStruct & msg) : struct_(msg) {}
   void update(const DiagLeafStatus & msg) { status_ = msg; }
-  const DiagLeafStatus & status() const { return status_; }
 
-  DiagLevel level() const override { return status_.level; }
+  DiagnosticStatus create_diagnostic_status() const override;
+  DiagnosticLevel level() const override { return status_.level; }
   std::string type() const override { return struct_.type; }
   std::string path() const override { return struct_.path; }
-  std::vector<DiagUnit *> children() const override { return {}; }
+  std::vector<DiagChild> children() const override { return {}; }
 
 private:
   DiagLeafStruct struct_;
   DiagLeafStatus status_;
 };
 
-struct DiagGraph
+class DiagGraph
 {
 public:
   using DiagGraphStruct = tier4_system_msgs::msg::DiagGraphStruct;
@@ -100,11 +112,16 @@ public:
   using ConstSharedPtr = std::shared_ptr<const DiagGraph>;
   void create(const DiagGraphStruct & msg);
   bool update(const DiagGraphStatus & msg);
-  const auto & nodes() const { return nodes_; }
-  const auto & diags() const { return diags_; }
-  const auto & links() const { return links_; }
+  rclcpp::Time created_stamp() const { return created_stamp_; }
+  rclcpp::Time updated_stamp() const { return updated_stamp_; }
+  std::vector<DiagUnit *> units() const;
+  std::vector<DiagNode *> nodes() const;
+  std::vector<DiagLeaf *> diags() const;
+  std::vector<DiagLink *> links() const;
 
 private:
+  rclcpp::Time created_stamp_;
+  rclcpp::Time updated_stamp_;
   std::string id_;
   std::vector<std::unique_ptr<DiagNode>> nodes_;
   std::vector<std::unique_ptr<DiagLeaf>> diags_;

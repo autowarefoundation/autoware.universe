@@ -29,32 +29,11 @@ ConverterNode::ConverterNode() : Node("converter")
 
 void ConverterNode::on_update(DiagGraph::ConstSharedPtr graph)
 {
-  const auto & nodes = graph->nodes();
-  const auto & diags = graph->diags();
-
   DiagnosticArray array;
-  array.status.reserve(nodes.size() + diags.size());
-  for (const auto & node : nodes) {
-    const auto & path = node->path();
-    if (!path.empty()) {
-      DiagnosticStatus msg;
-      msg.level = node->level();
-      msg.name = path;
-      array.status.push_back(msg);
-    }
-  }
-  for (const auto & diag : diags) {
-    const auto & path = diag->path();
-    if (!path.empty()) {
-      DiagnosticStatus msg;
-      const auto & status = diag->status();
-      msg.level = diag->level();
-      msg.name = path;
-      msg.message = status.message;
-      msg.hardware_id = status.hardware_id;
-      msg.values = status.values;
-      array.status.push_back(msg);
-    }
+  array.header.stamp = graph->updated_stamp();
+  for (const auto & unit : graph->units()) {
+    if (unit->path().empty()) continue;
+    array.status.push_back(unit->create_diagnostic_status());
   }
   pub_array_->publish(array);
 }

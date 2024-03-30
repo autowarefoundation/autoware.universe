@@ -41,10 +41,8 @@ void DumpNode::on_create(DiagGraph::ConstSharedPtr graph)
   const std::string title_type = "Type";
   const std::string title_link = "Children";
 
-  // Merge nodes and units as units.
-  std::vector<DiagUnit *> units;
-  for (const auto & node : graph->nodes()) units.push_back(node.get());
-  for (const auto & diag : graph->diags()) units.push_back(diag.get());
+  // Cache units.
+  const auto units = graph->units();
 
   // Assign merged units index.
   int table_index = 0;
@@ -58,7 +56,7 @@ void DumpNode::on_create(DiagGraph::ConstSharedPtr graph)
   for (const auto & unit : units) {
     std::string links;
     for (const auto & child : unit->children()) {
-      links += std::to_string(table_.at(child).index) + " ";
+      links += std::to_string(table_.at(child.unit).index) + " ";
     }
     if (!links.empty()) {
       links.pop_back();
@@ -67,7 +65,7 @@ void DumpNode::on_create(DiagGraph::ConstSharedPtr graph)
   }
 
   // Calculate table cell width.
-  const auto width_index = std::to_string(units.size()).length();
+  const auto width_index = std::max(title_index.length(), std::to_string(units.size()).length());
   const auto width_level = title_level.length();
   auto width_path = title_path.length();
   auto width_type = title_type.length();
@@ -114,11 +112,11 @@ void DumpNode::on_create(DiagGraph::ConstSharedPtr graph)
 
 void DumpNode::on_update(DiagGraph::ConstSharedPtr graph)
 {
-  const auto text_level = [](DiagUnit::DiagLevel level) {
-    if (level == DiagUnit::DiagStatus::OK) return "OK   ";
-    if (level == DiagUnit::DiagStatus::WARN) return "WARN ";
-    if (level == DiagUnit::DiagStatus::ERROR) return "ERROR";
-    if (level == DiagUnit::DiagStatus::STALE) return "STALE";
+  const auto text_level = [](DiagUnit::DiagnosticLevel level) {
+    if (level == DiagUnit::DiagnosticStatus::OK) return "OK   ";
+    if (level == DiagUnit::DiagnosticStatus::WARN) return "WARN ";
+    if (level == DiagUnit::DiagnosticStatus::ERROR) return "ERROR";
+    if (level == DiagUnit::DiagnosticStatus::STALE) return "STALE";
     return "-----";
   };
 
@@ -126,13 +124,9 @@ void DumpNode::on_update(DiagGraph::ConstSharedPtr graph)
   std::cout << header_ << std::endl;
   std::cout << border_ << std::endl;
 
-  for (const auto & node : graph->nodes()) {
-    const auto & line = table_.at(node.get());
-    std::cout << line.text1 << text_level(node->level()) << line.text2 << std::endl;
-  }
-  for (const auto & diag : graph->diags()) {
-    const auto & line = table_.at(diag.get());
-    std::cout << line.text1 << text_level(diag->level()) << line.text2 << std::endl;
+  for (const auto & unit : graph->units()) {
+    const auto & line = table_.at(unit);
+    std::cout << line.text1 << text_level(unit->level()) << line.text2 << std::endl;
   }
 }
 
