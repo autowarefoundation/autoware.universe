@@ -1,0 +1,53 @@
+nodes:
+  - path: /autoware/control
+    type: and
+    list:
+      - { type: link, link: /autoware/control/topic_rate_check/trajectory_follower }
+      - { type: link, link: /autoware/control/topic_rate_check/control_command }
+      - { type: link, link: /autoware/control/node_alive_monitoring/vehicle_cmd_gate }
+      - { type: link, link: /autoware/control/emergency_braking }
+      - { type: link, link: /autoware/control/performance_monitoring/lane_departure }
+      - { type: link, link: /autoware/control/performance_monitoring/trajectory_deviation }
+      - { type: link, link: /autoware/control/performance_monitoring/control_state }
+
+  - path: /autoware/control/local
+    type: and
+    list:
+      - { type: link, link: /autoware/control/topic_rate_check/selector }
+      - { type: link, link: /autoware/control/topic_rate_check/local }
+
+  - path: /autoware/control/remote
+    type: and
+    list:
+      - { type: link, link: /autoware/control/topic_rate_check/selector }
+      - { type: link, link: /autoware/control/topic_rate_check/remote }
+
+  - path: /autoware/control/topic_rate_check/trajectory_follower
+    diag: "topic_state_monitor_trajectory_follower_control_cmd: control_topic_status"
+
+  - path: /autoware/control/topic_rate_check/control_command
+    diag: "topic_state_monitor_control_command_control_cmd: control_topic_status"
+
+  - path: /autoware/control/node_alive_monitoring/vehicle_cmd_gate
+    diag: "vehicle_cmd_gate: heartbeat"
+
+  - path: /autoware/control/emergency_braking
+    diag: "autonomous_emergency_braking: aeb_emergency_stop"
+
+  - path: /autoware/control/performance_monitoring/lane_departure
+    diag: "lane_departure_checker_node: lane_departure"
+
+  - path: /autoware/control/performance_monitoring/trajectory_deviation
+    diag: "lane_departure_checker_node: trajectory_deviation"
+
+  - path: /autoware/control/performance_monitoring/control_state
+    diag: "controller_node_exe: control_state"
+
+  - path: /autoware/control/topic_rate_check/selector
+    diag: "external_cmd_selector: heartbeat"
+
+  - path: /autoware/control/topic_rate_check/local
+    diag: "joy_controller: joy_controller_connection"
+
+  - path: /autoware/control/topic_rate_check/remote
+    diag: "external_cmd_converter: remote_control_topic_status"
