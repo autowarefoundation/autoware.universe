@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /external/joystick_command
     type: diag
     diag: "external_command_checker: joystick_command"

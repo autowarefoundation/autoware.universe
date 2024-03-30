@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /functions/pose_estimation
     type: and
     list:

@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: output
     type: and
     list:
