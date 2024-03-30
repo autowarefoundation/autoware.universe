@@ -96,8 +96,9 @@ class UnitLink:
 
 class Graph:
     def __init__(self, msg):
-        # Create graph units and links.
-        self._stamp = Time.from_msg(msg.stamp)
+        self._struct_stamp = Time.from_msg(msg.stamp)
+        self._status_stamp = None
+        self._id = msg.id
         self._nodes = [NodeUnit(struct) for struct in msg.nodes]
         self._diags = [DiagUnit(struct) for struct in msg.diags]
         self._units = self._nodes + self._diags
@@ -108,14 +109,14 @@ class Graph:
             self._links.append(UnitLink(nodes[struct.parent], units[struct.child]))
 
     def update(self, msg):
-        if Time.from_msg(msg.stamp) < self._stamp:
-            return
-        for node, status in zip(self._nodes, msg.nodes):
-            node.update(status)
-        for diag, status in zip(self._diags, msg.diags):
-            diag.update(status)
-        for link, status in zip(self._links, msg.links):
-            link.update(status)
+        if msg.id == self._id:
+            self._status_stamp = Time.from_msg(msg.stamp)
+            for node, status in zip(self._nodes, msg.nodes):
+                node.update(status)
+            for diag, status in zip(self._diags, msg.diags):
+                diag.update(status)
+            for link, status in zip(self._links, msg.links):
+                link.update(status)
 
     @property
     def units(self):
