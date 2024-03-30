@@ -13,4 +13,4 @@ This package contains default configurations of diagnostic graph and scripts for
 
 | Name                                                                   | Description                                         |
 | ---------------------------------------------------------------------- | --------------------------------------------------- |
-| [component_state_diagnostics](./script/component_state_diagnostics.py) | Node that converts conponent states to diagnostics. |
+| [component_state_diagnostics](./script/component_state_diagnostics.py) | Node that converts component states to diagnostics. |

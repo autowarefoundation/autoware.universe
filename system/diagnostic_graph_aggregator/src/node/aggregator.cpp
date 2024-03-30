@@ -28,9 +28,9 @@ AggregatorNode::AggregatorNode() : Node("aggregator")
   // Init diagnostics graph.
   {
     const auto graph_file = declare_parameter<std::string>("graph_file");
-    std::ostringstream sout;
-    sout << std::hex << stamp.nanoseconds();
-    graph_.create(graph_file, sout.str());
+    std::ostringstream id;
+    id << std::hex << stamp.nanoseconds();
+    graph_.create(graph_file, id.str());
   }
 
   // Init plugins.
