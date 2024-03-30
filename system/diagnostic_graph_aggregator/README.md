@@ -19,6 +19,10 @@ In addition, every diag unit has a message, a hardware_id, and values that are t
 The unit type represents how the unit status is calculated, such as AND or OR.
 The unit path is any unique string that represents the functionality of the unit.
 
+NOTE: This feature is currently under development.
+The diagnostic graph also supports "link" because there are cases where connections between units have additional status.
+For example, it is natural that many functional units will have an error status until initialization is complete.
+
 ## Operation mode availability
 
 For MRM, this node publishes the status of the top-level functional units in the dedicated message.
