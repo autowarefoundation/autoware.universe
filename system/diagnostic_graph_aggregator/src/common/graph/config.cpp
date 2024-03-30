@@ -204,8 +204,9 @@ void apply_edits(FileConfig & config)
   // Create a mapping from path to unit.
   const auto path_to_unit = create_path_mapping(config.units);
 
-  // List units to remove.
+  // List units to remove and links from/to them.
   std::unordered_set<UnitConfig *> remove_units;
+  std::unordered_set<LinkConfig *> remove_links;
   for (const auto & edit : config.edits) {
     if (edit->type == edit_name::remove) {
       const auto path = edit->data.required("path").text();
@@ -215,8 +216,27 @@ void apply_edits(FileConfig & config)
       remove_units.insert(path_to_unit.at(path));
     }
   }
+  for (const auto & link : config.links) {
+    if (remove_units.count(link->parent) || remove_units.count(link->child)) {
+      remove_links.insert(link.get());
+    }
+  }
 
-  // Remove units and links from/to them.
+  // Filter references to the removed links.
+  for (const auto & unit : config.units) {
+    if (remove_links.count(unit->item) == 0) {
+      unit->item = nullptr;
+    }
+    std::vector<LinkConfig *> filtered_list;
+    for (const auto & link : unit->list) {
+      if (remove_links.count(link) == 0) {
+        filtered_list.push_back(link);
+      }
+      unit->list = filtered_list;
+    }
+  }
+
+  // Remove units and links.
   std::vector<std::unique_ptr<UnitConfig>> filtered_units;
   std::vector<std::unique_ptr<LinkConfig>> filtered_links;
   for (auto & unit : config.units) {
@@ -225,7 +245,7 @@ void apply_edits(FileConfig & config)
     }
   }
   for (auto & link : config.links) {
-    if (remove_units.count(link->parent) == 0 && remove_units.count(link->child) == 0) {
+    if (remove_links.count(link.get()) == 0) {
       filtered_links.push_back(std::move(link));
     }
   }
