@@ -6,7 +6,11 @@ units:
       - { type: link, link: /autoware/vehicle/topic_rate_check/steering }
 
   - path: /autoware/vehicle/topic_rate_check/velocity
-    diag: "topic_state_monitor_vehicle_status_velocity_status: vehicle_topic_status"
+    type: diag
+    node: topic_state_monitor_vehicle_status_velocity_status
+    name: vehicle_topic_status
 
   - path: /autoware/vehicle/topic_rate_check/steering
-    diag: "topic_state_monitor_vehicle_status_steering_status: vehicle_topic_status"
+    type: diag
+    node: topic_state_monitor_vehicle_status_steering_status
+    name: vehicle_topic_status

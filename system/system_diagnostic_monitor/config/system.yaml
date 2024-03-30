@@ -7,13 +7,21 @@ units:
       - { type: link, link: /autoware/system/emergency_stop_operation }
 
   - path: /autoware/system/duplicated_node_checker
-    diag: "duplicated_node_checker: duplicated_node_checker"
+    type: diag
+    node: duplicated_node_checker
+    name: duplicated_node_checker
 
   - path: /autoware/system/service_log_checker
-    diag: "service_log_checker: response_status"
+    type: diag
+    node: service_log_checker
+    name: response_status
 
   - path: /autoware/system/topic_rate_check/emergency_control_command
-    diag: "topic_state_monitor_system_emergency_control_cmd: system_topic_status"
+    type: diag
+    node: topic_state_monitor_system_emergency_control_cmd
+    name: system_topic_status
 
   - path: /autoware/system/emergency_stop_operation
-    diag: "vehicle_cmd_gate: emergency_stop_operation"
+    type: diag
+    node: vehicle_cmd_gate
+    name: emergency_stop_operation

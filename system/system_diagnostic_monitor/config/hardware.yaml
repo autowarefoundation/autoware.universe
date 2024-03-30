@@ -1,3 +1,4 @@
+# TODO(Takagi, Isamu): This file is under construction.
 units:
   - path: /autoware/system/resources/clock/offset
     diag: ": NTP Offset"

@@ -23,31 +23,51 @@ units:
       - { type: link, link: /autoware/control/topic_rate_check/remote }
 
   - path: /autoware/control/topic_rate_check/trajectory_follower
-    diag: "topic_state_monitor_trajectory_follower_control_cmd: control_topic_status"
+    type: diag
+    node: topic_state_monitor_trajectory_follower_control_cmd
+    name: control_topic_status
 
   - path: /autoware/control/topic_rate_check/control_command
-    diag: "topic_state_monitor_control_command_control_cmd: control_topic_status"
+    type: diag
+    node: topic_state_monitor_control_command_control_cmd
+    name: control_topic_status
 
   - path: /autoware/control/node_alive_monitoring/vehicle_cmd_gate
-    diag: "vehicle_cmd_gate: heartbeat"
+    type: diag
+    node: vehicle_cmd_gate
+    name: heartbeat
 
   - path: /autoware/control/emergency_braking
-    diag: "autonomous_emergency_braking: aeb_emergency_stop"
+    type: diag
+    node: autonomous_emergency_braking
+    name: aeb_emergency_stop
 
   - path: /autoware/control/performance_monitoring/lane_departure
-    diag: "lane_departure_checker_node: lane_departure"
+    type: diag
+    node: lane_departure_checker_node
+    name: lane_departure
 
   - path: /autoware/control/performance_monitoring/trajectory_deviation
-    diag: "lane_departure_checker_node: trajectory_deviation"
+    type: diag
+    node: lane_departure_checker_node
+    name: trajectory_deviation
 
   - path: /autoware/control/performance_monitoring/control_state
-    diag: "controller_node_exe: control_state"
+    type: diag
+    node: controller_node_exe
+    name: control_state
 
   - path: /autoware/control/topic_rate_check/selector
-    diag: "external_cmd_selector: heartbeat"
+    type: diag
+    node: external_cmd_selector
+    name: heartbeat
 
   - path: /autoware/control/topic_rate_check/local
-    diag: "joy_controller: joy_controller_connection"
+    type: diag
+    node: joy_controller
+    name: joy_controller_connection
 
   - path: /autoware/control/topic_rate_check/remote
-    diag: "external_cmd_converter: remote_control_topic_status"
+    type: diag
+    node: external_cmd_converter
+    name: remote_control_topic_status
