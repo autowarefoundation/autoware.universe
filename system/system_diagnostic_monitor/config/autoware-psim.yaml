@@ -1,5 +1,5 @@
 files:
-  - { path: $(find-pkg-share system_diagnostic_monitor)/config/autoware.yaml }
+  - { path: $(find-pkg-share system_diagnostic_monitor)/config/autoware-main.yaml }
 
 edits:
   - { type: remove, path: /autoware/map/topic_rate_check/pointcloud_map }

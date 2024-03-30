@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /autoware/control
     type: and
     list:

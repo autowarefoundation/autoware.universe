@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /autoware/planning
     type: short-circuit-and
     list:

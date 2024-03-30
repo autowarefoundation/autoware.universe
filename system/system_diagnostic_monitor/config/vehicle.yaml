@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /autoware/vehicle
     type: and
     list:

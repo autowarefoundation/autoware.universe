@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /autoware/map
     type: and
     list:

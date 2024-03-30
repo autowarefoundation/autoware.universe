@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /autoware/system/resources/clock/offset
     diag: ": NTP Offset"
     timeout: 10.0

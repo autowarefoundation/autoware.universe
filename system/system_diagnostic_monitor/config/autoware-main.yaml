@@ -7,7 +7,7 @@ files:
   - { path: $(find-pkg-share system_diagnostic_monitor)/config/vehicle.yaml }
   - { path: $(find-pkg-share system_diagnostic_monitor)/config/system.yaml }
 
-nodes:
+units:
   - path: /autoware/modes/stop
     type: ok
 
