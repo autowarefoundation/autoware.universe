@@ -24,6 +24,7 @@
 #include <QLabel>
 #include <QLayout>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSlider>
 #include <QSpinBox>
 #include <QTableWidget>
@@ -40,11 +41,15 @@
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <memory>
+#include <string>
+#include <unordered_map>
 
 namespace rviz_plugins
 {
@@ -60,6 +65,8 @@ class AutowareStatePanel : public rviz_common::Panel
   using MotionState = autoware_adapi_v1_msgs::msg::MotionState;
   using AcceptStart = autoware_adapi_v1_msgs::srv::AcceptStart;
   using MRMState = autoware_adapi_v1_msgs::msg::MrmState;
+  using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
+  using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   Q_OBJECT
 
@@ -89,6 +96,7 @@ protected:
   QVBoxLayout * makeLocalizationGroup();
   QVBoxLayout * makeMotionGroup();
   QVBoxLayout * makeFailSafeGroup();
+  QVBoxLayout * makeDiagnosticGroup();
 
   // void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
   void onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg);
@@ -164,6 +172,17 @@ protected:
   rclcpp::Subscription<MRMState>::SharedPtr sub_mrm_;
 
   void onMRMState(const MRMState::ConstSharedPtr msg);
+
+  // Diagnostic
+
+  QLabel * diagnostic_label_ptr_{nullptr};
+  QVBoxLayout * diagnostic_layout_{nullptr};
+  std::unordered_map<std::string, QLabel *> statusLabels;
+
+  rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_diag_;
+  void onDiagnostics(const DiagnosticArray::ConstSharedPtr msg);
+  void addStatusLabel(const std::string & name, int level);
+  void updateStatusLabel(const std::string & name, int level);
 
   // Others
   QLabel * velocity_limit_setter_ptr_;
