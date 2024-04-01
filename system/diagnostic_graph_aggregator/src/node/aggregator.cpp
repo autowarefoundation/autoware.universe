@@ -46,7 +46,7 @@ AggregatorNode::AggregatorNode() : Node("aggregator")
     const auto qos_status = rclcpp::QoS(declare_parameter<int64_t>("graph_qos_depth"));
     const auto callback = std::bind(&AggregatorNode::on_diag, this, std::placeholders::_1);
     sub_input_ = create_subscription<DiagnosticArray>("/diagnostics", qos_input, callback);
-    pub_unknown_ = create_publisher<DiagnosticArray>("/diagnostics_graph/unknown", qos_unknown);
+    pub_unknown_ = create_publisher<DiagnosticArray>("/diagnostics_graph/unknowns", qos_unknown);
     pub_struct_ = create_publisher<DiagGraphStruct>("/diagnostics_graph/struct", qos_struct);
     pub_status_ = create_publisher<DiagGraphStatus>("/diagnostics_graph/status", qos_status);
 

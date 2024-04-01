@@ -42,7 +42,7 @@ This feature breaks the generality of the graph and may be changed to a plugin o
 | Interface Type | Interface Name                        | Data Type                                         | Description                        |
 | -------------- | ------------------------------------- | ------------------------------------------------- | ---------------------------------- |
 | subscription   | `/diagnostics`                        | `diagnostic_msgs/msg/DiagnosticArray`             | Diagnostics input.                 |
-| publisher      | `/diagnostics_graph/unknown`          | `diagnostic_msgs/msg/DiagnosticArray`             | Diagnostics not included in graph. |
+| publisher      | `/diagnostics_graph/unknowns`         | `diagnostic_msgs/msg/DiagnosticArray`             | Diagnostics not included in graph. |
 | publisher      | `/diagnostics_graph/struct`           | `tier4_system_msgs/msg/DiagGraphStruct`           | Diagnostic graph (static part).    |
 | publisher      | `/diagnostics_graph/status`           | `tier4_system_msgs/msg/DiagGraphStatus`           | Diagnostic graph (dynamic part).   |
 | publisher      | `/system/operation_mode/availability` | `tier4_system_msgs/msg/OperationModeAvailability` | Operation mode availability.       |
