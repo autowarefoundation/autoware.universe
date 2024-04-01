@@ -91,7 +91,7 @@ private:
   void service_trigger_node(
     const SetBool::Request::SharedPtr req, SetBool::Response::SharedPtr res);
 
-  void initilize_diagnostics();
+  void initialize_diagnostics();
   void main_process(const PointCloud2::ConstSharedPtr & points_msg_ptr);
   std::vector<landmark_manager::Landmark> detect_landmarks(
     const PointCloud2::ConstSharedPtr & points_msg_ptr);

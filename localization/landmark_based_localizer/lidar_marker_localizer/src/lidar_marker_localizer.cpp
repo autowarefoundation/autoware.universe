@@ -105,7 +105,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   diagnostics_module_.reset(new DiagnosticsModule(this, "localization", ""));
 }
 
-void LidarMarkerLocalizer::initilize_diagnostics()
+void LidarMarkerLocalizer::initialize_diagnostics()
 {
   diagnostics_module_->clear();
   diagnostics_module_->addKeyValue("is_received_map", false);
@@ -147,7 +147,7 @@ void LidarMarkerLocalizer::self_pose_callback(
 
 void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
-  initilize_diagnostics();
+  initialize_diagnostics();
 
   main_process(std::move(points_msg_ptr));
 
