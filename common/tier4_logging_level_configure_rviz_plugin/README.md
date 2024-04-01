@@ -24,7 +24,7 @@ In RVIZ2, go to Panels and add LoggingLevelConfigureRVizPlugin. Then, search for
 
 ## How to add or find your logger name
 
-Because there are no available ROS2 CLI commands to list loggers, there isn't a straightforward way to check your logger name. Additionally, the following assumes that you already know which node you're working with.
+Because there are no available ROS 2 CLI commands to list loggers, there isn't a straightforward way to check your logger name. Additionally, the following assumes that you already know which node you're working with.
 
 ### For logger as a class member variable
 
