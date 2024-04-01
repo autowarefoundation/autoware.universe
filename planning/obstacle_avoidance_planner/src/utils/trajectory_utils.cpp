@@ -91,8 +91,8 @@ std::vector<ReferencePoint> sanitizePoints(const std::vector<ReferencePoint> & p
         std::fabs(current_pos.y - prev_pos.y) < 1e-6) {
         continue;
       }
-      output.push_back(points.at(i));
     }
+    output.push_back(points.at(i));
   }
   return output;
 }
