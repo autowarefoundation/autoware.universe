@@ -112,11 +112,15 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
       lanelet_map_ptr, shift_path, start_segment_idx);
     if (cropped_path.points.empty()) continue;
 
+    // check that the path is not cropped in excess and there is not excessive longitudinal
+    // deviation between the first 2 points
     auto validate_cropped_path = [&](const auto & cropped_path) -> bool {
       if (cropped_path.points.size() < 2) return false;
-      constexpr double max_long_offset = 1.0;
+      const double max_long_offset = parameters_.maximum_longitudinal_deviation;
       const size_t start_segment_idx_after_crop =
         motion_utils::findFirstNearestIndexWithSoftConstraints(cropped_path.points, start_pose);
+
+      // if the start segment id after crop is not 0, then the cropping is not excessive
       if (start_segment_idx_after_crop != 0) return true;
 
       const auto long_offset_to_closest_point = motion_utils::calcLongitudinalOffsetToSegment(
