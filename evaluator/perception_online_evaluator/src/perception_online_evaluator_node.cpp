@@ -140,8 +140,7 @@ void PerceptionOnlineEvaluatorNode::publishDebugMarker()
     int32_t history_path_first_id = 0;
     int32_t smoothed_history_path_first_id = 0;
     size_t i = 0;
-    for (auto it = history_path_map.begin(); it != history_path_map.end(); ++it) {
-      const auto & [uuid, history_path] = *it;
+    for (const auto & [uuid, history_path] : history_path_map) {
       {
         const auto c = createColorFromString(uuid + "_raw");
         if (p.show_history_path) {
@@ -178,8 +177,7 @@ void PerceptionOnlineEvaluatorNode::publishDebugMarker()
     int32_t deviation_lines_first_id = 0;
     size_t i = 0;
     const auto object_data_map = metrics_calculator_.getDebugObjectData();
-    for (auto it = object_data_map.begin(); it != object_data_map.end(); ++it) {
-      const auto & [uuid, object_data] = *it;
+    for (const auto & [uuid, object_data] : object_data_map) {
       const auto c = createColorFromString(uuid);
       const auto predicted_path = object_data.getPredictedPath();
       const auto history_path = object_data.getHistoryPath();
