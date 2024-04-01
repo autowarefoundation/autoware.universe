@@ -1,0 +1,23 @@
+nodes:
+  - id: webcam
+    operator:
+      python: webcam.py
+      inputs:
+        tick: dora/timer/millis/50
+      outputs:
+        - image
+
+  - id: object_detection
+    operator:
+      python: object_detection_yolov5.py
+      inputs:
+        image: webcam/image
+      outputs:
+        - bbox
+
+  - id: plot
+    operator:
+      python: plot.py
+      inputs:
+        image: webcam/image
+        bbox: object_detection/bbox

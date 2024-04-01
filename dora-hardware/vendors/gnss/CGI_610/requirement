@@ -1,0 +1,36 @@
+
+## Environment and versions：
+	platform: linux-64
+
+	Python 3.7.16
+
+	dora-rs==0.2.3  
+
+	pyserial==3.5
+
+	transforms3d==0.4.1
+
+  - For Dora installation instructions, please refer to: https://dora.carsmos.ai/docs/guides/Installation/installing/
+
+
+  - External devices：
+  Make sure the Serial port of GNSS_D300 connected to computer USB port.
+  The default variables in gnss_D300_driver_dora.py is changed according to the situation after connecting the serial port:
+  
+	serial_port = "/dev/ttyUSB0"
+	serial_baud = 115200
+	
+	
+	
+please run:
+
+	pip install pyserial
+
+	pip install transforms3d
+	
+	sudo chmod 777 /dev/ttyUSB*   # Make sure the Serial port of GNSS_D300 connected to computer USB port
+			
+	dora up
+
+        dora start gnss_D300_driver_dora.yaml
+

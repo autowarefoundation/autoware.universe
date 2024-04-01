@@ -1,0 +1,46 @@
+## Introduction
+  This file is a node created based on the Dora platform. It calls gnss_D300 to obtain information such as position, speed and time. The code will be published within the Dora platform.
+  
+  The Serial port of GNSS_D300 connected to computer USB port.
+ 
+  The operator of"gnss_D300_driver_dora" has completed the extraction of data based on the NMEA protocol from the hardware, verified it, and released the message after it is correct. 
+  
+  The operator of"nmea_subscribeTopic"receive messages. Among them, DoraNavSatFix, DoraQuaternionStamped, and DoraTwistStamped correspond to the three message types of NavSatFix, QuaternionStamped, and TwistStamped of ros2. 
+  
+  
+
+  - External devices：
+  The default variables in gnss_D300_driver_dora.py is changed according to the situation after connecting the serial port:
+  
+	serial_port = "/dev/ttyUSB0"
+	serial_baud = 115200
+
+
+## Environment and versions：
+	platform: linux-64
+
+	Python 3.7.16
+
+	dora-rs==0.2.3  
+
+	pyserial==3.5
+
+	transforms3d==0.4.1
+
+  - For Dora installation instructions, please refer to: https://dora.carsmos.ai/docs/guides/Installation/installing/
+
+please run:
+
+	pip install pyserial
+
+	pip install transforms3d
+	
+	sudo chmod 777 /dev/ttyUSB*   # Make sure the Serial port of GNSS_D300 connected to computer USB port
+			
+	dora up
+
+        dora start gnss_D300_driver_dora.yaml
+
+
+
+
