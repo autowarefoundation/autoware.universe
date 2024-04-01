@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 DiagnosticsModule::DiagnosticsModule(
   rclcpp::Node * node, const std::string & prefix_diagnostic_name,
