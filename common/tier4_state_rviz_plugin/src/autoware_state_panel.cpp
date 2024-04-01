@@ -37,8 +37,8 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
 {
   // Panel Configuration
   this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  this->setMinimumWidth(512);
-  this->setMaximumWidth(512);
+  this->setMinimumWidth(550);
+  this->setMaximumWidth(550);
 
   // Layout
   auto * main_v_layout = new QVBoxLayout;
@@ -50,13 +50,14 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   main_v_layout->addWidget(operation_mode_group);
 
   // Diagnostic
-  auto * diagnostic_group = new QGroupBox("Diagnostic");
+  auto * diagnostic_group_box = new QGroupBox("Diagnostic");
   auto * diagnostic_v_layout = new QVBoxLayout;
 
   auto * localization_group = makeLocalizationGroup();
   auto * motion_group = makeMotionGroup();
   auto * fail_safe_group = makeFailSafeGroup();
   auto * routing_group = makeRoutingGroup();
+  auto * diagnostic_group = makeDiagnosticGroup();
 
   diagnostic_v_layout->addLayout(routing_group);
   // add space between routing and localization
@@ -66,8 +67,10 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   diagnostic_v_layout->addLayout(motion_group);
   diagnostic_v_layout->addSpacing(5);
   diagnostic_v_layout->addLayout(fail_safe_group);
-  diagnostic_group->setLayout(diagnostic_v_layout);
-  main_v_layout->addWidget(diagnostic_group);
+  diagnostic_v_layout->addSpacing(5);
+  diagnostic_v_layout->addLayout(diagnostic_group);
+  diagnostic_group_box->setLayout(diagnostic_v_layout);
+  main_v_layout->addWidget(diagnostic_group_box);
 
   // Velocity Limit
   auto * velocity_limit_group = makeVelocityLimitGroup();
@@ -260,6 +263,38 @@ QVBoxLayout * AutowareStatePanel::makeFailSafeGroup()
   return group;
 }
 
+QVBoxLayout * AutowareStatePanel::makeDiagnosticGroup()
+{
+  auto * group = new QVBoxLayout;
+
+  // Create the scroll area
+  QScrollArea * scrollArea = new QScrollArea;
+  scrollArea->setFixedHeight(100);  // Adjust the height as needed
+  scrollArea->setWidgetResizable(true);
+  scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+  scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+  // Create a widget to contain the layout
+  QWidget * scrollAreaWidgetContents = new QWidget;
+  // use layout to contain the diagnostic label and the diagnostic level
+  diagnostic_layout_ = new QVBoxLayout();
+  diagnostic_layout_->setSpacing(5);                   // Set space between items
+  diagnostic_layout_->setContentsMargins(5, 5, 5, 5);  // Set margins within the layout
+
+  // Add a QLabel to display the title of what this is
+  auto * tsm_label_title_ptr_ = new QLabel("Topic State Monitor: ");
+  // Set the layout on the widget
+  scrollAreaWidgetContents->setLayout(diagnostic_layout_);
+
+  // Set the widget on the scroll area
+  scrollArea->setWidget(scrollAreaWidgetContents);
+
+  group->addWidget(tsm_label_title_ptr_);
+  group->addWidget(scrollArea);
+
+  return group;
+}
+
 QGroupBox * AutowareStatePanel::makeVelocityLimitGroup()
 {
   // Velocity Limit
@@ -382,6 +417,10 @@ void AutowareStatePanel::onInitialize()
   sub_mrm_ = raw_node_->create_subscription<MRMState>(
     "/api/fail_safe/mrm_state", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStatePanel::onMRMState, this, _1));
+
+  // Diagnostics
+  sub_diag_ = raw_node_->create_subscription<DiagnosticArray>(
+    "/diagnostics", 10, std::bind(&AutowareStatePanel::onDiagnostics, this, _1));
 
   sub_emergency_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::Emergency>(
     "/api/autoware/get/emergency", 10, std::bind(&AutowareStatePanel::onEmergencyStatus, this, _1));
@@ -640,6 +679,122 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     }
 
     updateButton(mrm_behavior_label_ptr_, text, style_sheet);
+  }
+}
+
+void AutowareStatePanel::onDiagnostics(const DiagnosticArray::ConstSharedPtr msg)
+{
+  for (const auto & status : msg->status) {
+    std::string statusName = status.name;  // Assuming name is a std::string
+    int level = status.level;              // Assuming level is an int
+
+    // Check if this status name already has an associated QLabel
+    auto it = statusLabels.find(statusName);
+    if (it != statusLabels.end()) {
+      // Status exists, update its display (QLabel) with the new level
+      updateStatusLabel(statusName, level);
+    } else {
+      // New status, add a QLabel for it to the map and the layout
+      addStatusLabel(statusName, level);
+    }
+  }
+}
+
+void AutowareStatePanel::addStatusLabel(const std::string & name, int level)
+{
+  QString baseStyle =
+    "QLabel {"
+    "  border-radius: 4px;"
+    "  padding: 4px;"
+    "  margin: 2px;"
+    "  font-weight: bold;"
+    "  color: #000;";
+
+  QString okStyle = baseStyle + "background-color: #00e678;}";
+  QString warnStyle = baseStyle + "background-color: #FFCC00;}";
+  QString errorStyle = baseStyle + "background-color: #dc3545;}";
+  QString staleStyle = baseStyle + "background-color: #6c757d;}";
+
+  QString labelText = QString::fromStdString(name);
+  // + ": " +
+  //                     (level == diagnostic_msgs::msg::DiagnosticStatus::OK      ? "OK"
+  //                      : level == diagnostic_msgs::msg::DiagnosticStatus::WARN  ? "WARN"
+  //                      : level == diagnostic_msgs::msg::DiagnosticStatus::ERROR ? "ERROR"
+  //                                                                               : "STALE");
+
+  auto * label = new QLabel(labelText);
+  label->setMinimumHeight(30);  // for example, set a minimum height
+  label->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
+
+  // Adjust style based on level
+  QString styleSheet;
+  switch (level) {
+    case diagnostic_msgs::msg::DiagnosticStatus::OK:
+      styleSheet = okStyle;
+      break;
+    case diagnostic_msgs::msg::DiagnosticStatus::WARN:
+      styleSheet = warnStyle;
+      break;
+    case diagnostic_msgs::msg::DiagnosticStatus::ERROR:
+      styleSheet = errorStyle;
+      break;
+    default:
+      styleSheet = staleStyle;
+      break;
+  }
+
+  label->setStyleSheet(styleSheet);
+  diagnostic_layout_->addWidget(label);
+  statusLabels[name] = label;
+}
+
+void AutowareStatePanel::updateStatusLabel(const std::string & name, int level)
+{
+  QString baseStyle =
+    "QLabel {"
+    "  border-radius: 4px;"
+    "  padding: 4px;"
+    "  margin: 2px;"
+    "  font-weight: bold;"
+    "  color: #000;";
+
+  QString okStyle = baseStyle + "background-color: #00e678;}";
+  QString warnStyle = baseStyle + "background-color: #FFCC00;}";
+  QString errorStyle = baseStyle + "background-color: #dc3545;}";
+  QString staleStyle = baseStyle + "background-color: #6c757d;}";
+
+  // Find the QLabel* associated with this status name
+  auto it = statusLabels.find(name);
+  if (it != statusLabels.end()) {
+    QLabel * label = it->second;
+
+    // Update label's text
+    QString labelText = QString::fromStdString(name);
+    // +": " + (level == diagnostic_msgs::msg::DiagnosticStatus::OK      ? "OK"
+    //          : level == diagnostic_msgs::msg::DiagnosticStatus::WARN  ? "WARN"
+    //          : level == diagnostic_msgs::msg::DiagnosticStatus::ERROR ? "ERROR"
+    //                                                                   : "STALE");
+    label->setText(labelText);
+
+    // Update style based on level, similar to addStatusLabel
+    QString styleSheet;
+    switch (level) {
+      case diagnostic_msgs::msg::DiagnosticStatus::OK:
+        styleSheet = okStyle;
+        break;
+      case diagnostic_msgs::msg::DiagnosticStatus::WARN:
+        styleSheet = warnStyle;
+        break;
+      case diagnostic_msgs::msg::DiagnosticStatus::ERROR:
+        styleSheet = errorStyle;
+        break;
+      default:
+        styleSheet = staleStyle;
+        break;
+    }
+    label->setStyleSheet(styleSheet);
+    label->adjustSize();  // Adjust the size of the label to fit the content if needed
+    label->update();      // Ensure the label is updated immediately
   }
 }
 
