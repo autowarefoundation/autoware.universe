@@ -114,6 +114,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
 
     auto validate_cropped_path = [&](const auto & cropped_path) -> bool {
       if (cropped_path.points.size() < 2) return false;
+      constexpr double max_long_offset = 1.0;
       const size_t start_segment_idx_after_crop =
         motion_utils::findFirstNearestIndexWithSoftConstraints(cropped_path.points, start_pose);
       if (start_segment_idx_after_crop != 0) return true;
@@ -122,7 +123,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
         cropped_path.points, start_segment_idx_after_crop, start_pose.position);
       const auto long_offset_to_next_point = motion_utils::calcLongitudinalOffsetToSegment(
         cropped_path.points, start_segment_idx_after_crop + 1, start_pose.position);
-      return std::abs(long_offset_to_closest_point - long_offset_to_next_point) < 1.0;
+      return std::abs(long_offset_to_closest_point - long_offset_to_next_point) < max_long_offset;
     };
 
     if (!validate_cropped_path(cropped_path)) continue;
