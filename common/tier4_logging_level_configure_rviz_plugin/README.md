@@ -6,7 +6,7 @@ This package provides an rviz_plugin that can easily change the logger level of 
 
 This plugin dispatches services to the "logger name" associated with "nodes" specified in YAML, adjusting the logger level.
 
-!!! warn
+!!! Warning
 
     It is highly recommended to use this plugin when you're attempting to print any debug information. Furthermore, it is strongly advised to avoid using the logging level INFO, as it might flood the terminal with your information, potentially causing other useful information to be missed.
 
