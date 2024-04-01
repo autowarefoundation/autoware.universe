@@ -484,9 +484,11 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
 
 void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
-  if (
-    !ego_odom_sub_.takeLatestData() || !objects_sub_.takeLatestData() ||
-    !acc_sub_.takeLatestData()) {
+  ego_odom_opt_ = ego_odom_sub_.takeLatestData();
+  objects_opt_ = objects_sub_.takeLatestData();
+  acc_opt_ = acc_sub_.takeLatestData();
+
+  if (!ego_odom_opt_ || !objects_opt_ || !acc_opt_) {
     return;
   }
 
@@ -605,11 +607,11 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
 {
   stop_watch_.tic(__func__);
 
-  const auto obj_stamp = rclcpp::Time(objects_sub_.data->header.stamp);
+  const auto obj_stamp = rclcpp::Time(objects_opt_->header.stamp);
   const auto & p = behavior_determination_param_;
 
   std::vector<Obstacle> target_obstacles;
-  for (const auto & predicted_object : objects_sub_.data->objects) {
+  for (const auto & predicted_object : objects_opt_->objects) {
     const auto & object_id =
       tier4_autoware_utils::toHexString(predicted_object.object_id).substr(0, 4);
     const auto & current_obstacle_pose =
@@ -627,7 +629,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     }
 
     // 2. Check if the obstacle is in front of the ego.
-    const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, ego_odom_sub_.data->pose.pose);
+    const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, ego_odom_opt_->pose.pose);
     const auto ego_to_obstacle_distance =
       calcDistanceToFrontVehicle(traj_points, ego_idx, current_obstacle_pose.pose.position);
     if (!ego_to_obstacle_distance) {
@@ -723,7 +725,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   // calculated decimated trajectory points and trajectory polygon
   const auto decimated_traj_points = decimateTrajectoryPoints(traj_points);
   const auto decimated_traj_polys =
-    createOneStepPolygons(decimated_traj_points, vehicle_info_, ego_odom_sub_.data->pose.pose);
+    createOneStepPolygons(decimated_traj_points, vehicle_info_, ego_odom_opt_->pose.pose);
   debug_data_ptr_->detection_polygons = decimated_traj_polys;
 
   // determine ego's behavior from stop, cruise and slow down
@@ -781,7 +783,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   slow_down_condition_counter_.removeCounterUnlessUpdated();
 
   // Check target obstacles' consistency
-  checkConsistency(objects_sub_.data->header.stamp, objects_sub_.data.value(), stop_obstacles);
+  checkConsistency(objects_opt_->header.stamp, objects_opt_.value(), stop_obstacles);
 
   // update previous obstacles
   prev_stop_obstacles_ = stop_obstacles;
@@ -803,7 +805,7 @@ std::vector<TrajectoryPoint> ObstacleCruisePlannerNode::decimateTrajectoryPoints
 
   // trim trajectory
   const size_t ego_seg_idx =
-    ego_nearest_param_.findSegmentIndex(traj_points, ego_odom_sub_.data->pose.pose);
+    ego_nearest_param_.findSegmentIndex(traj_points, ego_odom_opt_->pose.pose);
   const size_t traj_start_point_idx = ego_seg_idx;
   const auto trimmed_traj_points =
     std::vector<TrajectoryPoint>(traj_points.begin() + traj_start_point_idx, traj_points.end());
@@ -1187,7 +1189,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
 
   // calculate collision points with trajectory with lateral stop margin
   const auto traj_polys_with_lat_margin = createOneStepPolygons(
-    traj_points, vehicle_info_, ego_odom_sub_.data->pose.pose, p.max_lat_margin_for_stop);
+    traj_points, vehicle_info_, ego_odom_opt_->pose.pose, p.max_lat_margin_for_stop);
 
   const auto collision_point = polygon_utils::getCollisionPoint(
     traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);
@@ -1257,7 +1259,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   // calculate collision points with trajectory with lateral stop margin
   // NOTE: For additional margin, hysteresis is not divided by two.
   const auto traj_polys_with_lat_margin = createOneStepPolygons(
-    traj_points, vehicle_info_, ego_odom_sub_.data->pose.pose,
+    traj_points, vehicle_info_, ego_odom_opt_->pose.pose,
     p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down);
 
   std::vector<Polygon2d> front_collision_polygons;
@@ -1420,8 +1422,8 @@ double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
   const std::vector<PointWithStamp> & collision_points,
   const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward) const
 {
-  const auto & ego_pose = ego_odom_sub_.data->pose.pose;
-  const double ego_vel = ego_odom_sub_.data->twist.twist.linear.x;
+  const auto & ego_pose = ego_odom_opt_->pose.pose;
+  const double ego_vel = ego_odom_opt_->twist.twist.linear.x;
 
   const double time_to_reach_collision_point = [&]() {
     const double abs_ego_offset = is_driving_forward
@@ -1453,9 +1455,9 @@ PlannerData ObstacleCruisePlannerNode::createPlannerData(
   PlannerData planner_data;
   planner_data.current_time = now();
   planner_data.traj_points = traj_points;
-  planner_data.ego_pose = ego_odom_sub_.data->pose.pose;
-  planner_data.ego_vel = ego_odom_sub_.data->twist.twist.linear.x;
-  planner_data.ego_acc = acc_sub_.data->accel.accel.linear.x;
+  planner_data.ego_pose = ego_odom_opt_->pose.pose;
+  planner_data.ego_vel = ego_odom_opt_->twist.twist.linear.x;
+  planner_data.ego_acc = acc_opt_->accel.accel.linear.x;
   planner_data.is_driving_forward = is_driving_forward_;
   return planner_data;
 }

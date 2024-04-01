@@ -21,7 +21,7 @@
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
-#include "tier4_autoware_utils/ros/polling_reciever.hpp"
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -139,12 +139,16 @@ private:
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  tier4_autoware_utils::InterProcessPollingReceiver<Odometry> ego_odom_sub_{
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
     this, "~/input/odometry"};
-  tier4_autoware_utils::InterProcessPollingReceiver<PredictedObjects> objects_sub_{
+  tier4_autoware_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
     this, "~/input/objects"};
-  tier4_autoware_utils::InterProcessPollingReceiver<AccelWithCovarianceStamped> acc_sub_{
+  tier4_autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
     this, "~/input/acceleration"};
+    
+  std::optional<Odometry> ego_odom_opt_;
+  std::optional<PredictedObjects> objects_opt_;
+  std::optional<AccelWithCovarianceStamped> acc_opt_;
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;

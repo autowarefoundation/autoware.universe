@@ -21,14 +21,14 @@ namespace tier4_autoware_utils
 {
 
 template <typename T>
-class InterProcessPollingReceiver
+class InterProcessPollingSubscriber
 {
 private:
   typename rclcpp::Subscription<T>::SharedPtr subscriber;
+  std::optional<T> data;
 
 public:
-  std::optional<T> data;
-  explicit InterProcessPollingReceiver(rclcpp::Node * node, const std::string & topic_name)
+  explicit InterProcessPollingSubscriber(rclcpp::Node * node, const std::string & topic_name)
   {
     auto noexec_callback_group =
       node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
@@ -39,7 +39,7 @@ public:
       topic_name, rclcpp::QoS{1}, [node](const typename T::ConstSharedPtr msg) { assert(false); },
       noexec_subscription_options);
   };
-  bool takeLatestData()
+  std::optional<T> takeLatestData()
   {
     rclcpp::MessageInfo message_info;
     T tmp;
@@ -47,10 +47,10 @@ public:
     if (subscriber->take(tmp, message_info)) {
       data = tmp;
     }
-    return data.has_value();
+    return data;
   };
 };
 
 }  // namespace tier4_autoware_utils
 
-#endif  // TIER4_AUTOWARE_UTILS__ROS__POLLING_RECEIVER_HPP_
+#endif  // TIER4_AUTOWARE_UTILS__ROS__POLLING_SUBSCRIBER_HPP_
