@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TIER4_AUTOWARE_UTILS__ROS__POLLING_RECEIVER_HPP_
-#define TIER4_AUTOWARE_UTILS__ROS__POLLING_RECEIVER_HPP_
+#ifndef TIER4_AUTOWARE_UTILS__ROS__POLLING_SUBSCRIBER_HPP_
+#define TIER4_AUTOWARE_UTILS__ROS__POLLING_SUBSCRIBER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -39,7 +39,7 @@ public:
       topic_name, rclcpp::QoS{1}, [node](const typename T::ConstSharedPtr msg) { assert(false); },
       noexec_subscription_options);
   };
-  std::optional<T> takeLatestData()
+  bool updateLatestData()
   {
     rclcpp::MessageInfo message_info;
     T tmp;
@@ -47,8 +47,9 @@ public:
     if (subscriber->take(tmp, message_info)) {
       data = tmp;
     }
-    return data;
+    return data.has_value();
   };
+  const std::optional<T> & getData() const { return data; };
 };
 
 }  // namespace tier4_autoware_utils

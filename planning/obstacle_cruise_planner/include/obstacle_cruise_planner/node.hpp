@@ -145,10 +145,6 @@ private:
     this, "~/input/objects"};
   tier4_autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
     this, "~/input/acceleration"};
-    
-  std::optional<Odometry> ego_odom_opt_;
-  std::optional<PredictedObjects> objects_opt_;
-  std::optional<AccelWithCovarianceStamped> acc_opt_;
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
