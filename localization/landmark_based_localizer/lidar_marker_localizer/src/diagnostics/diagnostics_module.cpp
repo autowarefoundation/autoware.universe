@@ -28,7 +28,7 @@ DiagnosticsModule::DiagnosticsModule(
 {
   node_.reset(node);
   if (node_ == nullptr) {
-    return;  // TODO throw error
+    return;  // TODO(YamatoAndo) throw error
   }
 
   diagnostics_pub_ =
