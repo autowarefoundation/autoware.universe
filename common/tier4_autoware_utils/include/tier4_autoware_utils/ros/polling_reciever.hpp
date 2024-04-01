@@ -27,6 +27,7 @@ private:
   typename rclcpp::Subscription<T>::SharedPtr subscriber;
 
 public:
+  std::optional<T> data;
   explicit InterProcessPollingReceiver(rclcpp::Node * node, const std::string & topic_name)
   {
     auto noexec_callback_group =
@@ -38,8 +39,7 @@ public:
       topic_name, rclcpp::QoS{1}, [node](const typename T::ConstSharedPtr msg) { assert(false); },
       noexec_subscription_options);
   };
-
-  void takeLastData(std::optional<T> & data)
+  bool takeLatestData()
   {
     rclcpp::MessageInfo message_info;
     T tmp;
@@ -47,6 +47,7 @@ public:
     if (subscriber->take(tmp, message_info)) {
       data = tmp;
     }
+    return data.has_value();
   };
 };
 

@@ -139,35 +139,12 @@ private:
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  class PollingInputTopics
-  {
-  private:
-    tier4_autoware_utils::InterProcessPollingReceiver<Odometry> ego_odom_sub_;
-    tier4_autoware_utils::InterProcessPollingReceiver<PredictedObjects> objects_sub_;
-    tier4_autoware_utils::InterProcessPollingReceiver<AccelWithCovarianceStamped> acc_sub_;
-
-  public:
-    PollingInputTopics(rclcpp::Node * node)
-    : ego_odom_sub_(node, "~/input/odometry"),
-      objects_sub_(node, "~/input/objects"),
-      acc_sub_(node, "~/input/acceleration")
-    {
-    }
-    std::optional<Odometry> ego_odom_opt;
-    std::optional<PredictedObjects> objects_opt;
-    std::optional<AccelWithCovarianceStamped> ego_accel_opt;
-    bool takeData()
-    {
-      ego_odom_sub_.takeLastData(ego_odom_opt);
-      objects_sub_.takeLastData(objects_opt);
-      acc_sub_.takeLastData(ego_accel_opt);
-
-      if (!ego_odom_opt.has_value() || !objects_opt.has_value() || !ego_accel_opt.has_value()) {
-        return false;
-      }
-      return true;
-    };
-  } polling_topics_{this};
+  tier4_autoware_utils::InterProcessPollingReceiver<Odometry> ego_odom_sub_{
+    this, "~/input/odometry"};
+  tier4_autoware_utils::InterProcessPollingReceiver<PredictedObjects> objects_sub_{
+    this, "~/input/objects"};
+  tier4_autoware_utils::InterProcessPollingReceiver<AccelWithCovarianceStamped> acc_sub_{
+    this, "~/input/acceleration"};
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
