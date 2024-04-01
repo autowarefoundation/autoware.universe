@@ -78,9 +78,9 @@ enum class PolygonGenerationMethod {
 };
 
 enum class ObjectBehaviorType {
-  OutOfTarget = 0,
-  RegulatedObject,
-  PrioritizedObject,
+  Ignore = 0,
+  Regulated,
+  Prioritized,
 };
 
 struct DynamicAvoidanceParameters
@@ -119,12 +119,18 @@ struct DynamicAvoidanceParameters
   double max_overtaking_crossing_object_angle{0.0};
   double min_oncoming_crossing_object_vel{0.0};
   double max_oncoming_crossing_object_angle{0.0};
+  double max_pedestrians_crossing_vel{0.0};
   double max_stopped_object_vel{0.0};
 
   // drivable area generation
   PolygonGenerationMethod polygon_generation_method{};
   double min_obj_path_based_lon_polygon_margin{0.0};
   double lat_offset_from_obstacle{0.0};
+  double margin_distance_around_pedestrian{0.0};
+
+  double end_time_to_consider{0.0};
+  double threshold_confidence{0.0};
+
   double max_lat_offset_to_avoid{0.0};
   double max_time_for_lat_shift{0.0};
   double lpf_gain_for_lat_avoid_to_offset{0.0};
@@ -242,7 +248,7 @@ public:
 
       // increase counter
       if (counter_map_.count(uuid) != 0) {
-        counter_map_.at(uuid) = std::min(max_count_, counter_map_.at(uuid) + 1);
+        counter_map_.at(uuid) = std::min(max_count_, std::max(1, counter_map_.at(uuid) + 1));
       } else {
         counter_map_.emplace(uuid, 1);
       }
@@ -286,7 +292,7 @@ public:
       // remove objects whose counter is lower than threshold
       const auto counter_map_keys = getAllKeys(counter_map_);
       for (const auto & key : counter_map_keys) {
-        if (counter_map_.at(key) == 0) {
+        if (counter_map_.at(key) < min_count_) {
           counter_map_.erase(key);
           object_map_.erase(key);
           // std::cerr << "delete: " << key << std::endl;
@@ -378,9 +384,9 @@ private:
   bool canTransitFailureState() override { return false; }
 
   ObjectBehaviorType getLabelAsTargetObstacle(const uint8_t label) const;
-  void registerLaneDriveObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
+  void registerRegulatedObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
   void registerPrioritizedObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
-  void determineWhetherToAvoidAgainstLaneDriveObjects(
+  void determineWhetherToAvoidAgainstRegulatedObjects(
     const std::vector<DynamicAvoidanceObject> & prev_objects);
   void determineWhetherToAvoidAgainstPrioritizedObjects(
     const std::vector<DynamicAvoidanceObject> & prev_objects);
@@ -432,8 +438,7 @@ private:
     const DynamicAvoidanceObject & object) const;
   std::optional<tier4_autoware_utils::Polygon2d> calcPrioritizedObstaclePolygon(
     const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const;
-  EgoPathReservePoly calcEgoPathReservePoly(
-  const PathWithLaneId & ego_path) const;
+  EgoPathReservePoly calcEgoPathReservePoly(const PathWithLaneId & ego_path) const;
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)
   {
