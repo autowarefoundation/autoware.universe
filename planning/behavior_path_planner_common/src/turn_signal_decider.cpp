@@ -140,10 +140,15 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
   const size_t current_seg_idx, const RouteHandler & route_handler,
   const double nearest_dist_threshold, const double nearest_yaw_threshold)
 {
+  const auto requires_turn_signal = [&](const auto & lane_attribute) {
+    constexpr double stop_velocity_threshold = 0.1;
+    return (
+      lane_attribute == "right" || lane_attribute == "left" ||
+      (lane_attribute == "straight" && current_vel < stop_velocity_threshold));
+  };
   // base search distance
   const double base_search_distance =
     intersection_search_time_ * current_vel + intersection_search_distance_;
-  constexpr double stop_velocity_threshold = 0.1;
 
   // unique lane ids
   std::vector<lanelet::Id> unique_lane_ids;
@@ -172,9 +177,7 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
     // Get the lane and its attribute
     const std::string lane_attribute =
       current_lane.attributeOr("turn_direction", std::string("none"));
-    if (!(lane_attribute == "right" || lane_attribute == "left" ||
-          (lane_attribute == "straight" && current_vel < stop_velocity_threshold)))
-      continue;
+    if (!requires_turn_signal(lane_attribute)) continue;
 
     do {
       processed_lanes.insert(current_lane.id());
@@ -257,9 +260,7 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
     } else if (search_distance <= dist_to_front_point) {
       continue;
     }
-    if (
-      lane_attribute == "right" || lane_attribute == "left" ||
-      (lane_attribute == "straight" && current_vel < stop_velocity_threshold)) {
+    if (requires_turn_signal(lane_attribute)) {
       // update map if necessary
       if (desired_start_point_map_.find(lane_id) == desired_start_point_map_.end()) {
         desired_start_point_map_.emplace(lane_id, current_pose);
