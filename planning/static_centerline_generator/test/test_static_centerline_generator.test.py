@@ -28,11 +28,11 @@ import pytest
 @pytest.mark.launch_test
 def generate_test_description():
     lanelet2_map_path = os.path.join(
-        get_package_share_directory("static_centerline_generator"), "test/data/lanelet2_map.osm"
+        get_package_share_directory("autoware_static_centerline_generator"), "test/data/lanelet2_map.osm"
     )
 
     static_centerline_generator_node = Node(
-        package="static_centerline_generator",
+        package="autoware_static_centerline_generator",
         executable="main",
         output="screen",
         parameters=[
@@ -50,7 +50,7 @@ def generate_test_description():
                 "mission_planner.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("static_centerline_generator"),
+                get_package_share_directory("autoware_static_centerline_generator"),
                 "config/static_centerline_generator.param.yaml",
             ),
             os.path.join(
@@ -74,15 +74,15 @@ def generate_test_description():
                 "config/lanelet2_map_loader.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("static_centerline_generator"),
+                get_package_share_directory("autoware_static_centerline_generator"),
                 "config/common.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("static_centerline_generator"),
+                get_package_share_directory("autoware_static_centerline_generator"),
                 "config/nearest_search.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("static_centerline_generator"),
+                get_package_share_directory("autoware_static_centerline_generator"),
                 "config/vehicle_info.param.yaml",
             ),
         ],

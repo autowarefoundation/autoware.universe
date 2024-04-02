@@ -16,7 +16,7 @@
 #define STATIC_CENTERLINE_GENERATOR__UTILS_HPP_
 
 #include "route_handler/route_handler.hpp"
-#include "static_centerline_generator/type_alias.hpp"
+#include "autoware_static_centerline_generator/type_alias.hpp"
 
 #include <rclcpp/time.hpp>
 
