@@ -339,11 +339,10 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
     if (!map_ptr) {
       return nullptr;
     }
-    const auto lanelet2_output_file_path = "/tmp/lanelet2_map.osm";
 
-    std::unique_ptr<lanelet::Projector> projector =
-      geography_utils::get_lanelet2_projector(map_projector_info);
-    lanelet::write(lanelet2_output_file_path, *map_ptr, *projector);
+    map_projector_ = geography_utils::get_lanelet2_projector(map_projector_info);
+    // const auto lanelet2_output_file_path = "/tmp/lanelet2_map.osm";
+    // lanelet::write(lanelet2_output_file_path, *map_ptr, *projector);
 
     // NOTE: The original map is stored here since the various ids in the lanelet map will change
     //       after lanelet::utils::overwriteLaneletCenterline, and saving map will fail.
@@ -351,7 +350,7 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
       Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
 
     // overwrite more dense centerline
-    // lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
+    lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
 
     // create map bin msg
     const auto map_bin_msg =
@@ -752,20 +751,11 @@ void StaticCenterlineOptimizerNode::save_map(
   const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
 
   // update centerline in map
-  // utils::update_centerline(*route_handler_ptr_, route_lanelets, optimized_traj_points);
+  utils::update_centerline(*route_handler_ptr_, route_lanelets, optimized_traj_points);
   RCLCPP_INFO(get_logger(), "Updated centerline in map.");
 
   // save map with modified center line
-  // lanelet::write(lanelet2_output_file_path, *original_map_ptr_);
+  lanelet::write(lanelet2_output_file_path, *original_map_ptr_, *map_projector_);
   RCLCPP_INFO(get_logger(), "Saved map.");
-
-  /*
-  const auto lanelet2_input_file_path = "/home/takayuki/autoware_map/sample_map/lanelet2_map.osm";
-  tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
-  map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
-  const auto map_ptr =
-    Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
-  lanelet::write(lanelet2_output_file_path, *map_ptr);
-  */
 }
 }  // namespace static_centerline_optimizer
