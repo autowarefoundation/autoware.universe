@@ -114,10 +114,11 @@ void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
       node->declare_parameter<double>(ns + "object_path_base.min_longitudinal_polygon_margin");
     p.lat_offset_from_obstacle = node->declare_parameter<double>(ns + "lat_offset_from_obstacle");
     p.margin_distance_around_pedestrian =
-      node->declare_parameter<double>(ns + "predicted_path.margin_distance_around_pedestrian");
+      node->declare_parameter<double>(ns + "margin_distance_around_pedestrian");
     p.end_time_to_consider =
       node->declare_parameter<double>(ns + "predicted_path.end_time_to_consider");
-    p.threshold_confidence = node->declare_parameter<double>(ns + "threshold_confidence");
+    p.threshold_confidence =
+      node->declare_parameter<double>(ns + "predicted_path.threshold_confidence");
     p.max_lat_offset_to_avoid = node->declare_parameter<double>(ns + "max_lat_offset_to_avoid");
     p.max_time_for_lat_shift =
       node->declare_parameter<double>(ns + "max_time_for_object_lat_shift");
