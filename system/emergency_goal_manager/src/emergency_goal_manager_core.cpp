@@ -49,9 +49,6 @@ EmergencyGoalManager::EmergencyGoalManager() : Node("emergency_goal_manager")
 void EmergencyGoalManager::onEmergencyGoals(
   const tier4_system_msgs::msg::EmergencyGoalsStamped::SharedPtr msg)
 {
-  if (!emergency_goals_map_.empty()) {
-    emergency_goals_map_.clear();
-  }
 
   std::queue<geometry_msgs::msg::Pose> emergency_goals_queue;
   for (const auto & goal : msg->goals) {
