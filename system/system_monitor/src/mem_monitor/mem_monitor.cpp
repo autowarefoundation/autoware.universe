@@ -163,13 +163,13 @@ void MemMonitor::checkEcc(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::string line;
 
   while (std::getline(iss, line)) {
-      if (line.find("Uncorrected") != std::string::npos) {
-          stat.summary(DiagStatus::ERROR, line);
-          return;
-      } else if (line.find("Corrected") != std::string::npos) {
-          stat.summary(DiagStatus::WARN, line);
-          return;
-      }
+    if (line.find("Uncorrected") != std::string::npos) {
+      stat.summary(DiagStatus::ERROR, line);
+      return;
+    } else if (line.find("Corrected") != std::string::npos) {
+      stat.summary(DiagStatus::WARN, line);
+      return;
+    }
   }
 
   // Check timeout has expired regarding executing edac-util command
@@ -188,8 +188,9 @@ void MemMonitor::checkEcc(diagnostic_updater::DiagnosticStatusWrapper & stat)
   stat.addf("execution time", "%f ms", elapsed_ms);
 }
 
-void MemMonitor::readMemInfo(std::unordered_map<std::string, size_t> & memInfo) {
-    std::ifstream file("/proc/meminfo");
+void MemMonitor::readMemInfo(std::unordered_map<std::string, size_t> & memInfo)
+{
+  std::ifstream file("/proc/meminfo");
 >>>>>>> Stashed changes
 
   if (!file.is_open()) {
@@ -242,10 +243,10 @@ std::string MemMonitor::readUsage(std::map<std::string, size_t> & map)
     stat.add("read file error", "Error opening /proc/meminfo or parsing line in it.");
     return;
 =======
-  try{
-    readMemInfo(memInfo);
-  } catch (const std::exception& e) {
-    return e.what();
+    try {
+      readMemInfo(memInfo);
+    } catch (const std::exception & e) {
+      return e.what();
 >>>>>>> Stashed changes
   }
 
@@ -266,9 +267,9 @@ std::string MemMonitor::readUsage(std::map<std::string, size_t> & map)
     return;
   }
 =======
-  } catch (const std::out_of_range& e) {
-    return e.what();
-  } 
+    } catch (const std::out_of_range & e) {
+      return e.what();
+    }
 >>>>>>> Stashed changes
 
   if (mem_total == 0) {
@@ -287,7 +288,7 @@ std::string MemMonitor::readUsage(std::map<std::string, size_t> & map)
   map["Mem: available"] = mem_available;
 
   size_t swap_used = swap_total - swap_free;
-  map["Swap: total"] = swap_total; 
+  map["Swap: total"] = swap_total;
   map["Swap: used"] = swap_used;
   map["Swap: free"] = swap_free;
 
@@ -370,8 +371,9 @@ void MemMonitor::onUsageTimer()
     usage_timeout_expired_ = false;
   }
   usage_timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(usage_timeout_), std::bind(&MemMonitor::onUsageTimeout, this));
-  
+    this, get_clock(), std::chrono::seconds(usage_timeout_),
+    std::bind(&MemMonitor::onUsageTimeout, this));
+
   error_str = readUsage(map);
 
   // Returning from readUsage, stop timeout timer
@@ -383,7 +385,7 @@ void MemMonitor::onUsageTimer()
   {
     std::lock_guard<std::mutex> lock(usage_mutex_);
     usage_error_str_ = error_str;
-    usage_map_ =  map;
+    usage_map_ = map;
     usage_elapsed_ms_ = elapsed_ms;
   }
 }
@@ -411,8 +413,9 @@ void MemMonitor::onEccTimer()
     ecc_timeout_expired_ = false;
   }
   ecc_timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(ecc_timeout_), std::bind(&MemMonitor::onEccTimeout, this));
-  
+    this, get_clock(), std::chrono::seconds(ecc_timeout_),
+    std::bind(&MemMonitor::onEccTimeout, this));
+
   error_str = executeEdacUtil(output, pipe2_error_str);
 
   // Returning from edac-util command, stop timeout timer
@@ -425,7 +428,7 @@ void MemMonitor::onEccTimer()
     std::lock_guard<std::mutex> lock(ecc_mutex_);
     ecc_error_str_ = error_str;
     ecc_pipe2_error_str_ = pipe2_error_str;
-    ecc_output_ =  output;
+    ecc_output_ = output;
     ecc_elapsed_ms_ = elapsed_ms;
   }
 }

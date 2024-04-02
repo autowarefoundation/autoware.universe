@@ -22,7 +22,6 @@
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
-
 #include <boost/process.hpp>
 
 #include <climits>
@@ -110,29 +109,31 @@ protected:
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name
 
   size_t available_size_;  //!< @brief Memory available size to generate error
-  int usage_timeout_;         //!< @brief Timeout duration for executing readUsage
-  int ecc_timeout_;         //!< @brief Timeout duration for executing edac-util command
+  int usage_timeout_;      //!< @brief Timeout duration for executing readUsage
+  int ecc_timeout_;        //!< @brief Timeout duration for executing edac-util command
 
-  rclcpp::TimerBase::SharedPtr usage_timer_;  //!< @brief Timer to execute readUsage
-  rclcpp::TimerBase::SharedPtr ecc_timer_;  //!< @brief Timer to execute checkEcc
+  rclcpp::TimerBase::SharedPtr usage_timer_;               //!< @brief Timer to execute readUsage
+  rclcpp::TimerBase::SharedPtr ecc_timer_;                 //!< @brief Timer to execute checkEcc
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
 
-  rclcpp::TimerBase::SharedPtr usage_timeout_timer_;       //!< @brief Timer for executing readUsage
-  std::mutex usage_mutex_;  //!< @brief Mutex for output from /proc/meminfo
-  std::string usage_error_str_;      //!< @brief Error string
+  rclcpp::TimerBase::SharedPtr usage_timeout_timer_;  //!< @brief Timer for executing readUsage
+  std::mutex usage_mutex_;                   //!< @brief Mutex for output from /proc/meminfo
+  std::string usage_error_str_;              //!< @brief Error string
   std::map<std::string, size_t> usage_map_;  //!< @brief Output of /proc/meminfo
-  double usage_elapsed_ms_;                                //!< @brief Execution time of readUsage
+  double usage_elapsed_ms_;                  //!< @brief Execution time of readUsage
   std::mutex usage_timeout_mutex_;  //!< @brief Mutex regarding timeout for executing readUsage
   bool usage_timeout_expired_;      //!< @brief Timeout for executing readUsage has expired or not
 
-  rclcpp::TimerBase::SharedPtr ecc_timeout_timer_;       //!< @brief Timer for executing edac-util command
-  std::mutex ecc_mutex_;  //!< @brief Mutex for output from edac-util command
-  std::string ecc_error_str_;      //!< @brief Error string
+  rclcpp::TimerBase::SharedPtr
+    ecc_timeout_timer_;              //!< @brief Timer for executing edac-util command
+  std::mutex ecc_mutex_;             //!< @brief Mutex for output from edac-util command
+  std::string ecc_error_str_;        //!< @brief Error string
   std::string ecc_pipe2_error_str_;  //!< @brief Error string regarding pipe2 function call
-  std::string ecc_output_;  //!< @brief Output of edac-util command
-  double ecc_elapsed_ms_;                                //!< @brief Execution time of edac-util command
-  std::mutex ecc_timeout_mutex_;  //!< @brief Mutex regarding timeout for executing edac-util command
-  bool ecc_timeout_expired_;      //!< @brief Timeout for executing edac-util command has expired or not
+  std::string ecc_output_;           //!< @brief Output of edac-util command
+  double ecc_elapsed_ms_;            //!< @brief Execution time of edac-util command
+  std::mutex
+    ecc_timeout_mutex_;       //!< @brief Mutex regarding timeout for executing edac-util command
+  bool ecc_timeout_expired_;  //!< @brief Timeout for executing edac-util command has expired or not
 
   /**
    * @brief Memory usage status messages
