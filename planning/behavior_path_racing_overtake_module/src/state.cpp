@@ -70,7 +70,7 @@ void Approach::update(PlannerDataPtr planner_data)
   auto center_path = *generateCenterLinePath(planner_data);
   auto rival_vehicle = util::detectRivalVehicleInEgoCourse(
     planner_data->self_odometry->pose.pose, center_path, planner_data->dynamic_object->objects,
-    2.8);
+    context_->getParameters().ego_course_width);
 
   bool prev_state_is_after_overtake = context_->getPreviousState().getName() == "AfterOvertake";
 
