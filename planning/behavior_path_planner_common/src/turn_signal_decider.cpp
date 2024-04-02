@@ -25,7 +25,6 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <limits>
 #include <queue>
@@ -87,12 +86,9 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
     extended_path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
 
   // Get closest intersection turn signal if exists
-  auto stop_watch = tier4_autoware_utils::StopWatch<std::chrono::milliseconds>();
   const auto intersection_turn_signal_info = getIntersectionTurnSignalInfo(
     extended_path, current_pose, current_vel, ego_seg_idx, *route_handler, nearest_dist_threshold,
     nearest_yaw_threshold);
-  const auto t = stop_watch.toc();
-  RCLCPP_WARN(logger_, "getIntersectionTurnSignalInfo = %2.2fms");
 
   if (intersection_turn_signal_info) {
     debug_data.intersection_turn_signal_info = *intersection_turn_signal_info;
