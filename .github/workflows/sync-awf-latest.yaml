@@ -2,7 +2,7 @@ name: sync-awf-latest
 
 on:
   schedule:
-    - cron: 0 15 * * *
+    - cron: 50 */1 * * * # every 1 hour (**:50)
   workflow_dispatch:
 
 jobs:
