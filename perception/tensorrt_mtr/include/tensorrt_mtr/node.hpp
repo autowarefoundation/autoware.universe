@@ -15,17 +15,57 @@
 #ifndef TENSORRT_MTR__NODE_HPP_
 #define TENSORRT_MTR__NODE_HPP_
 
+#include "tensorrt_mtr/polyline.hpp"
+#include "tensorrt_mtr/trt_mtr.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
+
+#include <fstream>
+#include <map>
+#include <memory>
+#include <string>
+
 namespace trt_mtr
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 using autoware_perception_msgs::msg::PredictedObjects;
+
+class PolylineTypeMap
+{
+public:
+  explicit PolylineTypeMap(rclcpp::Node * node)
+  {
+    const auto filepath = node->declare_parameter<std::string>("polyline.label_file");
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+      RCLCPP_ERROR_STREAM(node->get_logger(), "Could not open polyline label file: " << filepath);
+      rclcpp::shutdown();
+    }
+
+    int label_index = 0;
+    std::string label;
+    while (getline(file, label)) {
+      std::transform(
+        label.begin(), label.end(), label.begin(), [](auto c) { return std::toupper(c); });
+      label_map_.insert({label_index, label});
+      ++label_index;
+    }
+  }
+
+  const size_t & getTypeID(const & std::string & type) const { return label_map_.at(type); }
+
+private:
+  std::map<size_t, std::string> label_map_;
+};  // class PolylineTypeMap
 
 class MTRNode : public rclcpp::Node
 {
@@ -50,8 +90,9 @@ private:
   /**
    * @brief Converts lanelet2 to polylines.
    *
+   * @return true
    */
-  void convertLaneletToPolyline();
+  bool convertLaneletToPolyline();
 
   /**
    * @brief Appends new states to history and remove old data.
@@ -59,6 +100,14 @@ private:
    * @param current_time
    */
   void updateAgentHistory(const float current_time);
+
+  std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
+  std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
+  std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
+
+  std::unique_ptr<MtrConfig> config_ptr_;
+  PolylineTypeMap polyline_type_map_;
+  PolylineData polylines_;
 };  // class MTRNode
 }  // namespace trt_mtr
 #endif  // TENSORRT_MTR__NODE_HPP_

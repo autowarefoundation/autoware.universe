@@ -15,6 +15,9 @@
 #ifndef TENSORRT_MTR__POLYLINE_HPP_
 #define TENSORRT_MTR__POLYLINE_HPP_
 
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/geometry/Polygon.h>
+
 #include <array>
 #include <cmath>
 #include <tuple>
@@ -247,6 +250,24 @@ private:
   std::vector<float> data_;
   const float distance_threshold_;
 };
+
+std::vector<LanePoint> getLanePointFromLineString(
+  const lanelet::ConstLineString3d & linestring, const int type_id)
+{
+  std::vector<LanePoint> points;
+  points.reserve(linestring.size());
+  // TODO(ktro2828): DO SOMETHING
+  return points;
+}
+
+std::vector<LanePoint> getLanePointFromPolygon(
+  const lanelet::CompoundPolygon3d & polygon, const int type_id)
+{
+  std::vector<LanePoint> points;
+  points.reserve(polygon.size());
+  // TODO(ktro2828): DO SOMETHING
+  return points;
+}
 
 }  // namespace trt_mtr
 #endif  // TENSORRT_MTR__POLYLINE_HPP_
