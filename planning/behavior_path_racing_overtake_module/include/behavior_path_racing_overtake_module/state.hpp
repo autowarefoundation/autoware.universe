@@ -111,7 +111,7 @@ private:
   bool is_first_time_to_plan_ = true;
 
 public:
-  BackToCenter(Context * context, double after_overtake_shift_length)
+  BackToCenter(Context * context, const double after_overtake_shift_length)
   : RacingOverTakeState(context), after_overtake_shift_length_(after_overtake_shift_length){};
   void update(PlannerDataPtr planner_data) override;
   std::string getName() const override;
