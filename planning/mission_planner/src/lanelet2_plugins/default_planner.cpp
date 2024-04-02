@@ -333,10 +333,8 @@ bool DefaultPlanner::is_goal_valid(
 
   lanelet::ConstLanelet goal_lanelet;
   lanelet::ConstLanelets goal_lanelets;
-  if (!lanelet::utils::query::getCurrentLanelets(
-        road_lanelets_, goal, &goal_lanelets)) {
-    if (!lanelet::utils::query::getClosestLanelet(
-          road_lanelets_, goal, &goal_lanelet)) {
+  if (!lanelet::utils::query::getCurrentLanelets(road_lanelets_, goal, &goal_lanelets)) {
+    if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal, &goal_lanelet)) {
     }
     goal_lanelets = {goal_lanelet};
   }
@@ -356,7 +354,8 @@ bool DefaultPlanner::is_goal_valid(
   for (const auto & gl_llt : goal_lanelets) {
     if (
       param_.check_footprint_inside_lanes &&
-      !check_goal_footprint_inside_lanes(gl_llt, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
+      !check_goal_footprint_inside_lanes(
+        gl_llt, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
       !is_in_parking_lot(
         lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_),
         lanelet::utils::conversion::toLaneletPoint(goal.position))) {
