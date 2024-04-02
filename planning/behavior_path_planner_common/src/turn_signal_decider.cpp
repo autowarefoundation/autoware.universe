@@ -25,6 +25,7 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <limits>
 #include <queue>
@@ -86,9 +87,12 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
     extended_path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
 
   // Get closest intersection turn signal if exists
+  auto stop_watch = tier4_autoware_utils::StopWatch<std::chrono::milliseconds>();
   const auto intersection_turn_signal_info = getIntersectionTurnSignalInfo(
     extended_path, current_pose, current_vel, ego_seg_idx, *route_handler, nearest_dist_threshold,
     nearest_yaw_threshold);
+  const auto t = stop_watch.toc();
+  RCLCPP_WARN(logger_, "getIntersectionTurnSignalInfo = %2.2fms");
 
   if (intersection_turn_signal_info) {
     debug_data.intersection_turn_signal_info = *intersection_turn_signal_info;
@@ -139,6 +143,7 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
   // base search distance
   const double base_search_distance =
     intersection_search_time_ * current_vel + intersection_search_distance_;
+  constexpr double stop_velocity_threshold = 0.1;
 
   // unique lane ids
   std::vector<lanelet::Id> unique_lane_ids;
@@ -164,25 +169,20 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
     if (processed_lanes.find(lane_id) != processed_lanes.end()) continue;
     auto current_lane = route_handler.getLaneletsFromId(lane_id);
     lanelet::ConstLanelets combined_lane_elems{};
-    while (rclcpp::ok()) {
+    // Get the lane and its attribute
+    const std::string lane_attribute =
+      current_lane.attributeOr("turn_direction", std::string("none"));
+    if (!(lane_attribute == "right" || lane_attribute == "left" ||
+          (lane_attribute == "straight" && current_vel < stop_velocity_threshold)))
+      continue;
+
+    do {
       processed_lanes.insert(current_lane.id());
       combined_lane_elems.push_back(current_lane);
-
-      // Get the lane and its attribute
-      const std::string lane_attribute =
-        current_lane.attributeOr("turn_direction", std::string("none"));
-
-      // check next lane has the same attribute
       lanelet::ConstLanelet next_lane{};
-      if (!route_handler.getNextLaneletWithinRoute(current_lane, &next_lane)) {
-        break;
-      }
-      if (next_lane.attributeOr("turn_direction", std::string("none")) != lane_attribute) {
-        break;
-      }
-
       current_lane = next_lane;
-    }
+    } while (route_handler.getNextLaneletWithinRoute(current_lane, &current_lane) &&
+             current_lane.attributeOr("turn_direction", std::string("none")) == lane_attribute);
 
     if (!combined_lane_elems.empty()) {
       // store combined lane and its front lane
@@ -257,7 +257,6 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
     } else if (search_distance <= dist_to_front_point) {
       continue;
     }
-    constexpr double stop_velocity_threshold = 0.1;
     if (
       lane_attribute == "right" || lane_attribute == "left" ||
       (lane_attribute == "straight" && current_vel < stop_velocity_threshold)) {
