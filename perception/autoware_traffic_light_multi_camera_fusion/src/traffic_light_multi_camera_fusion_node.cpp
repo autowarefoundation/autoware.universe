@@ -85,6 +85,9 @@ int compareRecord(
   int visible_score_1 = calVisibleScore(r1);
   int visible_score_2 = calVisibleScore(r2);
   if (visible_score_1 == visible_score_2) {
+    /*
+    if the visible scores are the same, the one with higher confidence is of higher priority
+    */
     double confidence_1 = r1.signal.elements[0].confidence;
     double confidence_2 = r2.signal.elements[0].confidence;
     return confidence_1 < confidence_2 ? -1 : 1;
