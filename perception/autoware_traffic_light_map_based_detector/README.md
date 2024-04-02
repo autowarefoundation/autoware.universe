@@ -9,7 +9,7 @@ Calibration and vibration errors can be entered as parameters, and the size of t
 ![traffic_light_map_based_detector_result](./docs/traffic_light_map_based_detector_result.svg)
 
 If the node receives route information, it only looks at traffic lights on that route.
-If the node receives no route information, it looks at a radius of 200 meters and the angle between the traffic light and the camera is less than 40 degrees.
+If the node receives no route information, it looks at a radius of max_detection_range and the angle between the traffic light and the camera is less than traffic_light_max_angle_range.
 
 ## Input topics
 
@@ -37,6 +37,8 @@ If the node receives no route information, it looks at a radius of 200 meters an
 | `max_vibration_width`  | double | Maximum error in width direction. If -5~+5, it will be 10.            |
 | `max_vibration_depth`  | double | Maximum error in depth direction. If -5~+5, it will be 10.            |
 | `max_detection_range`  | double | Maximum detection range in meters. Must be positive                   |
+| `car_traffic_light_max_angle_range` | double | Maximum angle between the vehicular traffic light and the camera in degrees. Must be positive     
+| `pedestrian_traffic_light_max_angle_range` | double | Maximum angle between the pedestrian traffic light and the camera in degrees. Must be positive                   |
 | `min_timestamp_offset` | double | Minimum timestamp offset when searching for corresponding tf          |
 | `max_timestamp_offset` | double | Maximum timestamp offset when searching for corresponding tf          |
 | `timestamp_sample_len` | double | sampling length between min_timestamp_offset and max_timestamp_offset |
