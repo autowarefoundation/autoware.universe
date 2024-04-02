@@ -418,8 +418,23 @@ bool isParkedVehicle(
 
   bool is_left_side_parked_vehicle = false;
   if (!isOnRight(object)) {
-    const auto most_left_lanelet =
-      route_handler->getMostLeftLanelet(object.overhang_lanelet, true, true);
+    const auto most_left_lanelet = [&]() {
+      const auto same_direction_lane =
+        route_handler->getMostLeftLanelet(object.overhang_lanelet, true, true);
+      const lanelet::Attribute sub_type =
+        same_direction_lane.attribute(lanelet::AttributeName::Subtype);
+      if (sub_type == "road_shoulder") {
+        return same_direction_lane;
+      }
+
+      const auto opposite_lanes = route_handler->getLeftOppositeLanelets(same_direction_lane);
+      if (opposite_lanes.empty()) {
+        return same_direction_lane;
+      }
+
+      return static_cast<lanelet::ConstLanelet>(opposite_lanes.front().invert());
+    }();
+
     const auto center_to_left_boundary = distance2d(
       to2D(most_left_lanelet.leftBound().basicLineString()),
       to2D(toLaneletPoint(centerline_pos)).basicPoint());
@@ -451,8 +466,23 @@ bool isParkedVehicle(
 
   bool is_right_side_parked_vehicle = false;
   if (isOnRight(object)) {
-    const auto most_right_lanelet =
-      route_handler->getMostRightLanelet(object.overhang_lanelet, true, true);
+    const auto most_right_lanelet = [&]() {
+      const auto same_direction_lane =
+        route_handler->getMostRightLanelet(object.overhang_lanelet, true, true);
+      const lanelet::Attribute sub_type =
+        same_direction_lane.attribute(lanelet::AttributeName::Subtype);
+      if (sub_type == "road_shoulder") {
+        return same_direction_lane;
+      }
+
+      const auto opposite_lanes = route_handler->getRightOppositeLanelets(same_direction_lane);
+      if (opposite_lanes.empty()) {
+        return same_direction_lane;
+      }
+
+      return static_cast<lanelet::ConstLanelet>(opposite_lanes.front().invert());
+    }();
+
     const auto center_to_right_boundary = distance2d(
       to2D(most_right_lanelet.rightBound().basicLineString()),
       to2D(toLaneletPoint(centerline_pos)).basicPoint());
