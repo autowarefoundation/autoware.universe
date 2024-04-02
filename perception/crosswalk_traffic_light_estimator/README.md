@@ -25,13 +25,16 @@
 | Name                          | Type     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Default value |
 | :---------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
 | `use_last_detect_color`       | `bool`   | If this parameter is `true`, this module estimates pedestrian's traffic signal as RED not only when vehicle's traffic signal is detected as GREEN/AMBER but also when detection results change GREEN/AMBER to UNKNOWN. (If detection results change RED or AMBER to UNKNOWN, this module estimates pedestrian's traffic signal as UNKNOWN.) If this parameter is `false`, this module use only latest detection results for estimation. (Only when the detection result is GREEN/AMBER, this module estimates pedestrian's traffic signal as RED.) | `true`        |
-| `last_detect_color_hold_time` | `double` | The time threshold to hold for last detected vehicle traffic light color.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `2.0`         |
-| `last_colors_hold_time`       | `double` | The time threshold to hold for history detected pedetrian traffic light color.
+| `last_detect_color_hold_time` | `double` | The time threshold to hold for last detected vehicle traffic light color.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `2.0`         |
+| `last_colors_hold_time`       | `double` | The time threshold to hold for history detected pedetrian traffic light color.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ## Inner-workings / Algorithms
+
 1. Estimate the color of pedestrian traffic light from HDMap and detected vehicle traffic signals.
 2. If pedestrian traffic light recognition is available, determine the final state based on classification result and estimation result.
+
 ### Estimation
+
 ```plantuml
 
 start
@@ -83,13 +86,14 @@ If traffic between pedestrians and vehicles is controlled by traffic signals, th
 </div>
 
 ### Final state
+
 ```plantumul
 start
 if (the pedestrian traffic light classification result exists)then
     : update the flashing flag according to the classification result(in_signal) and last_signals
     if (the traffic light is flashing?)then(yes)
       : update the traffic light state
-    else(no)     
+    else(no)
       : the traffic light state is the same with the classification result
 if (the classification result not exists)
     : the traffic light state is the same with the estimation
@@ -98,6 +102,7 @@ end
 ```
 
 #### Update flashing flag
+
 <div align="center">
   <img src="images/flashing_state.png" width=70%>
 </div>
