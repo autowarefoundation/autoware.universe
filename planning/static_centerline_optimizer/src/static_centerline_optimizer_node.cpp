@@ -18,6 +18,7 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
+#include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "obstacle_avoidance_planner/node.hpp"
@@ -28,6 +29,7 @@
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 
+#include <geography_utils/lanelet2_projector.hpp>
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -331,13 +333,17 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
   // load map by the map_loader package
   map_bin_ptr_ = [&]() -> HADMapBin::ConstSharedPtr {
     // load map
-    tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
-    map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+    const auto map_projector_info = load_info_from_lanelet2_map(lanelet2_input_file_path);
     const auto map_ptr =
       Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
     if (!map_ptr) {
       return nullptr;
     }
+    const auto lanelet2_output_file_path = "/tmp/lanelet2_map.osm";
+
+    std::unique_ptr<lanelet::Projector> projector =
+      geography_utils::get_lanelet2_projector(map_projector_info);
+    lanelet::write(lanelet2_output_file_path, *map_ptr, *projector);
 
     // NOTE: The original map is stored here since the various ids in the lanelet map will change
     //       after lanelet::utils::overwriteLaneletCenterline, and saving map will fail.
@@ -345,7 +351,7 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
       Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
 
     // overwrite more dense centerline
-    lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
+    // lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
 
     // create map bin msg
     const auto map_bin_msg =
@@ -746,11 +752,20 @@ void StaticCenterlineOptimizerNode::save_map(
   const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
 
   // update centerline in map
-  utils::update_centerline(*route_handler_ptr_, route_lanelets, optimized_traj_points);
+  // utils::update_centerline(*route_handler_ptr_, route_lanelets, optimized_traj_points);
   RCLCPP_INFO(get_logger(), "Updated centerline in map.");
 
   // save map with modified center line
-  lanelet::write(lanelet2_output_file_path, *original_map_ptr_);
+  // lanelet::write(lanelet2_output_file_path, *original_map_ptr_);
   RCLCPP_INFO(get_logger(), "Saved map.");
+
+  /*
+  const auto lanelet2_input_file_path = "/home/takayuki/autoware_map/sample_map/lanelet2_map.osm";
+  tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
+  map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+  const auto map_ptr =
+    Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
+  lanelet::write(lanelet2_output_file_path, *map_ptr);
+  */
 }
 }  // namespace static_centerline_optimizer
