@@ -44,23 +44,32 @@ public:
   std::array<double, 36> ndt_covariance_modifier(std::array<double, 36> & in_ndt_covariance);
   geometry_msgs::msg::PoseWithCovarianceStamped trusted_source_pose_with_cov;
 
-  void checkTrustedPoseTimeout();
+  void check_trusted_pose_timeout();
 
 private:
-  void selectPositionSource(
-    double trusted_pose_average_rmse_xy, double trusted_pose_yaw_rmse_in_degrees, double trusted_pose_average_rmse_z);
+  void update_pose_source_based_on_rmse(
+    double trusted_pose_average_rmse_xy, double trusted_pose_rmse_z,
+    double trusted_pose_yaw_rmse_in_degrees);
 
   enum class PoseSource {
     GNSS = 0,
     GNSS_NDT = 1,
     NDT = 2,
   };
-  void publishPoseSource();
-  int pose_source_;
-  rclcpp::Time trustedPoseCallbackTime;
+
+  rclcpp::Time trustedPoseLastReceivedTime_;
+
+  PoseSource pose_source_;
 
   double gnss_error_reliable_max_, gnss_error_unreliable_min_, yaw_error_deg_threshold_;
+  double trusted_pose_timeout_sec_;
   bool debug_;
+
+  // covariance matrix indexes
+  const int X_POS_IDX_ = 0;
+  const int Y_POS_IDX_ = 7;
+  const int Z_POS_IDX_ = 14;
+  const int YAW_POS_IDX_ = 35;
 };
 
 #endif  // AUTOWARE_POSE_COVARIANCE_MODIFIER_NODE_HPP_

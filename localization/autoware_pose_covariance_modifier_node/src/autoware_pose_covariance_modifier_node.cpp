@@ -17,7 +17,9 @@
 #include <rclcpp/rclcpp.hpp>
 
 AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
-: Node("AutowarePoseCovarianceModifierNode")
+: Node("AutowarePoseCovarianceModifierNode"),
+  trustedPoseLastReceivedTime_(this->now()),
+  pose_source_(AutowarePoseCovarianceModifierNode::PoseSource::NDT)
 {
   gnss_error_reliable_max_ =
     this->declare_parameter<double>("error_thresholds.gnss_error_reliable_max", 0.10);
@@ -25,17 +27,18 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
     this->declare_parameter<double>("error_thresholds.gnss_error_unreliable_min", 0.25);
   yaw_error_deg_threshold_ =
     this->declare_parameter<double>("error_thresholds.yaw_error_deg_threshold", 0.3);
+  trusted_pose_timeout_sec_ = this->declare_parameter<double>("trusted_pose_timeout_sec", 1.0);
   debug_ = this->declare_parameter<bool>("debug.enable_debug_topics", false);
 
   trusted_pose_with_cov_sub_ =
     this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "input_trusted_pose_with_cov_topic", 10000,
+      "input_trusted_pose_with_cov_topic", 10,
       std::bind(
         &AutowarePoseCovarianceModifierNode::trusted_pose_with_cov_callback, this,
         std::placeholders::_1));
 
   ndt_pose_with_cov_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "input_ndt_pose_with_cov_topic", 10000,
+    "input_ndt_pose_with_cov_topic", 10,
     std::bind(
       &AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback, this,
       std::placeholders::_1));
@@ -51,12 +54,12 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
       "/autoware_pose_covariance_modifier/output/gnss_position_rmse", 10);
   }
 }
-void AutowarePoseCovarianceModifierNode::checkTrustedPoseTimeout()
+void AutowarePoseCovarianceModifierNode::check_trusted_pose_timeout()
 {
-  auto timeDiff = this->now() - trustedPoseCallbackTime;
-  if (timeDiff.seconds() > 1.0) {
+  auto time_diff = this->now() - trustedPoseLastReceivedTime_;
+  if (time_diff.seconds() > trusted_pose_timeout_sec_) {
     RCLCPP_WARN(this->get_logger(), "Trusted Pose Timeout");
-    pose_source_ = static_cast<int>(AutowarePoseCovarianceModifierNode::PoseSource::NDT);
+    pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::NDT;
     std_msgs::msg::String selected_pose_type;
     selected_pose_type.data = "NDT";
     pose_source_pub_->publish(selected_pose_type);
@@ -67,54 +70,56 @@ std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifi
   std::array<double, 36> & in_ndt_covariance)
 {
   std::array<double, 36> ndt_covariance = in_ndt_covariance;
-
   /*
    * ndt_min_rmse_meters = in_ndt_rmse
    * ndt_max_rmse_meters = in_ndt_rmse  * 2
-   * ndt_rmse = ndt_max_rmse_meters - (gnss_rmse * (ndt_max_rmse_meters - ndt_min_rmse_meters) /
-   * normalization_coeff)
+   * ndt_rmse = (ndt_max_rmse_meters - gnss_rmse) * (ndt_min_rmse_meters) / 0.1
    */
-  double normalization_coeff = 0.1;
-  ndt_covariance[0] = std::pow(
-    ((std::sqrt(in_ndt_covariance[0]) * 2) -
-     std::sqrt(trusted_source_pose_with_cov.pose.covariance[0])) *
-      (std::sqrt(in_ndt_covariance[0])) / normalization_coeff,
+
+  ndt_covariance[X_POS_IDX_] = std::pow(
+    ((std::sqrt(in_ndt_covariance[X_POS_IDX_]) * 2) -
+     std::sqrt(trusted_source_pose_with_cov.pose.covariance[X_POS_IDX_])) *
+      (std::sqrt(in_ndt_covariance[X_POS_IDX_])) / 0.1,
     2);
-  ndt_covariance[7] = std::pow(
-    ((std::sqrt(in_ndt_covariance[7]) * 2) -
-     std::sqrt(trusted_source_pose_with_cov.pose.covariance[7])) *
-      (std::sqrt(in_ndt_covariance[7])) / normalization_coeff,
+  ndt_covariance[Y_POS_IDX_] = std::pow(
+    ((std::sqrt(in_ndt_covariance[Y_POS_IDX_]) * 2) -
+     std::sqrt(trusted_source_pose_with_cov.pose.covariance[Y_POS_IDX_])) *
+      (std::sqrt(in_ndt_covariance[Y_POS_IDX_])) / 0.1,
     2);
-  ndt_covariance[14] = std::pow(
-    ((std::sqrt(in_ndt_covariance[14]) * 2) -
-     std::sqrt(trusted_source_pose_with_cov.pose.covariance[14])) *
-      (std::sqrt(in_ndt_covariance[14])) / normalization_coeff,
+  ndt_covariance[Z_POS_IDX_] = std::pow(
+    ((std::sqrt(in_ndt_covariance[Z_POS_IDX_]) * 2) -
+     std::sqrt(trusted_source_pose_with_cov.pose.covariance[Z_POS_IDX_])) *
+      (std::sqrt(in_ndt_covariance[Z_POS_IDX_])) / 0.1,
     2);
 
-  ndt_covariance[0] = std::max(ndt_covariance[0], in_ndt_covariance[0]);
-  ndt_covariance[7] = std::max(ndt_covariance[7], in_ndt_covariance[7]);
-  ndt_covariance[14] = std::max(ndt_covariance[14], in_ndt_covariance[14]);
+  ndt_covariance[X_POS_IDX_] = std::max(ndt_covariance[X_POS_IDX_], in_ndt_covariance[X_POS_IDX_]);
+  ndt_covariance[Y_POS_IDX_] = std::max(ndt_covariance[Y_POS_IDX_], in_ndt_covariance[Y_POS_IDX_]);
+  ndt_covariance[Z_POS_IDX_] = std::max(ndt_covariance[Z_POS_IDX_], in_ndt_covariance[Z_POS_IDX_]);
 
   return ndt_covariance;
 }
 void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  AutowarePoseCovarianceModifierNode::checkTrustedPoseTimeout();
+  AutowarePoseCovarianceModifierNode::check_trusted_pose_timeout();
 
-  std::array<double, 36> ndt_covariance_in_ = msg->pose.covariance;
-  std::array<double, 36> out_ndt_covariance_ =
-    pose_source_ == 1 ? ndt_covariance_modifier(ndt_covariance_in_) : ndt_covariance_in_;
+  std::array<double, 36> ndt_covariance_in = msg->pose.covariance;
+  std::array<double, 36> out_ndt_covariance =
+    pose_source_ == AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT
+      ? ndt_covariance_modifier(ndt_covariance_in)
+      : ndt_covariance_in;
 
   geometry_msgs::msg::PoseWithCovarianceStamped ndt_pose_with_covariance = *msg;
-  ndt_pose_with_covariance.pose.covariance = out_ndt_covariance_;
-  if (pose_source_ != 0) {
+  ndt_pose_with_covariance.pose.covariance = out_ndt_covariance;
+  if (pose_source_ != AutowarePoseCovarianceModifierNode::PoseSource::GNSS) {
     new_pose_estimator_pub_->publish(ndt_pose_with_covariance);
     if (debug_) {
       std_msgs::msg::Float32 out_ndt_rmse;
-      out_ndt_rmse.data = (std::sqrt(ndt_pose_with_covariance.pose.covariance[0]) +
-                           std::sqrt(ndt_pose_with_covariance.pose.covariance[7])) /
-                          2;
+
+      out_ndt_rmse.data = static_cast<float>(
+        (std::sqrt(ndt_pose_with_covariance.pose.covariance[X_POS_IDX_]) +
+         std::sqrt(ndt_pose_with_covariance.pose.covariance[Y_POS_IDX_])) /
+        2);
       out_ndt_position_rmse_pub_->publish(out_ndt_rmse);
     }
   }
@@ -122,45 +127,49 @@ void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
 void AutowarePoseCovarianceModifierNode::trusted_pose_with_cov_callback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  trustedPoseCallbackTime = this->now();
+  trustedPoseLastReceivedTime_ = this->now();
   trusted_source_pose_with_cov = *msg;
 
-//  double trusted_pose_average_rmse_xy;
-//  double trusted_pose_yaw_rmse_in_degrees;
-    double trusted_pose_average_rmse_xy = (std::sqrt(trusted_source_pose_with_cov.pose.covariance[0]) +
-                                  std::sqrt(trusted_source_pose_with_cov.pose.covariance[7])) /
-                                 2;
+  double trusted_pose_average_rmse_xy =
+    (std::sqrt(trusted_source_pose_with_cov.pose.covariance[X_POS_IDX_]) +
+     std::sqrt(trusted_source_pose_with_cov.pose.covariance[Y_POS_IDX_])) /
+    2;
 
-    double trusted_pose_rmse_z = std::sqrt(trusted_source_pose_with_cov.pose.covariance[0]);
-    double trusted_pose_yaw_rmse_in_degrees =
-    std::sqrt(trusted_source_pose_with_cov.pose.covariance[35]) * 180 / M_PI;
+  double trusted_pose_rmse_z = std::sqrt(trusted_source_pose_with_cov.pose.covariance[Z_POS_IDX_]);
+  double trusted_pose_yaw_rmse_in_degrees =
+    std::sqrt(trusted_source_pose_with_cov.pose.covariance[YAW_POS_IDX_]) * 180 / M_PI;
 
-  selectPositionSource(trusted_pose_average_rmse_xy, trusted_pose_yaw_rmse_in_degrees,trusted_pose_rmse_z);
+  update_pose_source_based_on_rmse(
+    trusted_pose_average_rmse_xy, trusted_pose_rmse_z, trusted_pose_yaw_rmse_in_degrees);
 
-  if (pose_source_ != 2) {
+  if (pose_source_ != AutowarePoseCovarianceModifierNode::PoseSource::NDT) {
     new_pose_estimator_pub_->publish(trusted_source_pose_with_cov);
     if (debug_) {
       std_msgs::msg::Float32 out_gnss_rmse;
-      out_gnss_rmse.data = trusted_pose_average_rmse_xy;
+      out_gnss_rmse.data = static_cast<float>(trusted_pose_average_rmse_xy);
       out_gnss_position_rmse_pub_->publish(out_gnss_rmse);
     }
   }
 }
 
-void AutowarePoseCovarianceModifierNode::selectPositionSource(
-  double trusted_pose_average_rmse_xy, double trusted_pose_yaw_rmse_in_degrees, double trusted_pose_rmse_z)
+void AutowarePoseCovarianceModifierNode::update_pose_source_based_on_rmse(
+  double trusted_pose_average_rmse_xy, double trusted_pose_rmse_z,
+  double trusted_pose_yaw_rmse_in_degrees)
 {
   std_msgs::msg::String selected_pose_type;
   if (
     trusted_pose_average_rmse_xy <= gnss_error_reliable_max_ &&
-    trusted_pose_yaw_rmse_in_degrees < yaw_error_deg_threshold_ && trusted_pose_rmse_z < gnss_error_reliable_max_) {
-    pose_source_ = static_cast<int>(AutowarePoseCovarianceModifierNode::PoseSource::GNSS);
+    trusted_pose_yaw_rmse_in_degrees < yaw_error_deg_threshold_ &&
+    trusted_pose_rmse_z < gnss_error_reliable_max_) {
+    pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS;
     selected_pose_type.data = "GNSS";
-  } else if (trusted_pose_average_rmse_xy <= gnss_error_unreliable_min_ && trusted_pose_rmse_z < gnss_error_unreliable_min_) {
-    pose_source_ = static_cast<int>(AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT);
+  } else if (
+    trusted_pose_average_rmse_xy <= gnss_error_unreliable_min_ &&
+    trusted_pose_rmse_z < gnss_error_unreliable_min_) {
+    pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT;
     selected_pose_type.data = "GNSS + NDT";
   } else {
-    pose_source_ = static_cast<int>(AutowarePoseCovarianceModifierNode::PoseSource::NDT);
+    pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::NDT;
     selected_pose_type.data = "NDT";
   }
   pose_source_pub_->publish(selected_pose_type);
