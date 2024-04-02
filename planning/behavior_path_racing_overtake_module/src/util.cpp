@@ -27,7 +27,7 @@ namespace behavior_path_planner::racing_overtake::util
 
 using motion_utils::calcInterpolatedPose;
 
-void addLateralOffset(PathWithLaneId * path, double lateral_offset)
+void addLateralOffset(PathWithLaneId * path, const double lateral_offset)
 {
   for (auto & point : path->points) {
     double yaw = tf2::getYaw(point.point.pose.orientation);
@@ -106,8 +106,8 @@ std::tuple<PathWithLaneId, Pose, double> calcOvertakePath(
 }
 
 std::pair<PathWithLaneId, Pose> calcBackToCenterPath(
-  const PathWithLaneId & reference_path, const Pose & ego_pose, double shift_length,
-  double shift_start_length, double shift_end_length)
+  const PathWithLaneId & reference_path, const Pose & ego_pose, const double shift_length,
+  const double shift_start_length, const double shift_end_length)
 {
   auto ego_frenet_point = utils::convertToFrenetPoint(reference_path.points, ego_pose.position, 0);
 

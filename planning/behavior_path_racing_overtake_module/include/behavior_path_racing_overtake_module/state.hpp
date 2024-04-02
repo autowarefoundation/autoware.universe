@@ -64,7 +64,7 @@ private:
   double after_overtake_shift_length_ = 0.0;
 
 public:
-  explicit Approach(Context * context, double current_course_shift_length = 0.0)
+  explicit Approach(Context * context, const double current_course_shift_length = 0.0)
   : RacingOverTakeState(context), current_course_shift_length_(current_course_shift_length){};
   void update(PlannerDataPtr planner_data) override;
   std::string getName() const override;
@@ -82,7 +82,7 @@ private:
   double after_overtake_shift_length_ = 0.0;
 
 public:
-  explicit Overtaking(Context * context, double current_course_shift_length = 0.0)
+  explicit Overtaking(Context * context, const double current_course_shift_length = 0.0)
   : RacingOverTakeState(context), current_course_shift_length_(current_course_shift_length){};
   void update(PlannerDataPtr) override;
   std::string getName() const override;
@@ -95,7 +95,7 @@ private:
   const double after_overtake_shift_length_;
 
 public:
-  AfterOvertake(Context * context, double after_overtake_shift_length)
+  AfterOvertake(Context * context, const double after_overtake_shift_length)
   : RacingOverTakeState(context), after_overtake_shift_length_(after_overtake_shift_length){};
   void update(PlannerDataPtr planner_data) override;
   std::string getName() const override;
