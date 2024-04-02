@@ -2122,24 +2122,28 @@ bool NormalLaneChange::check_prepare_phase() const
   const auto & route_handler = getRouteHandler();
   const auto & vehicle_info = getCommonParam().vehicle_info;
 
-  const auto check_prepare_phase_in_intersection = std::invoke([&]() {
+  const auto check_in_general_lanes =
+    lane_change_parameters_->enable_collision_check_for_prepare_phase_in_general_lanes;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
+    RCLCPP_DEBUG(
+      logger_, "Unable to get current lane. Default to %s.",
+      (check_in_general_lanes ? "true" : "false"));
+    return check_in_general_lanes;
+  }
+
+  const auto ego_footprint = utils::lane_change::getEgoCurrentFootprint(getEgoPose(), vehicle_info);
+
+  const auto check_in_intersection = std::invoke([&]() {
     if (!lane_change_parameters_->enable_collision_check_for_prepare_phase_in_intersection) {
       return false;
     }
 
-    lanelet::ConstLanelet current_lane;
-    if (!route_handler->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
-      RCLCPP_DEBUG(logger_, "unable to get current lane");
-      return false;
-    }
-
-    const auto ego_footprint =
-      utils::lane_change::getEgoCurrentFootprint(getEgoPose(), vehicle_info);
-    return utils::lane_change::isWithinIntersection(getRouteHandler(), current_lane, ego_footprint);
+    return utils::lane_change::isWithinIntersection(route_handler, current_lane, ego_footprint);
   });
 
-  return check_prepare_phase_in_intersection ||
-         lane_change_parameters_->enable_collision_check_for_prepare_phase_in_general_lanes;
+  return check_in_intersection || check_in_general_lanes;
 }
 
 }  // namespace behavior_path_planner
