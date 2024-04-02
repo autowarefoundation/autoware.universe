@@ -5,6 +5,8 @@
   <version>0.1.0</version>
   <description>The behavior_path_racing_overtake_module package</description>
 
+  <maintainer email="satoshi.ota@tier4.jp">Satoshi OTA</maintainer>
+  <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
   <maintainer email="yhisaki31@gmail.com">Yukinari Hisaki</maintainer>
 
   <license>Apache License 2.0</license>
