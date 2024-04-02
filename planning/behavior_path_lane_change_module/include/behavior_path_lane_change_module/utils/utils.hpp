@@ -223,9 +223,37 @@ lanelet::ConstLanelets generateExpandedLanelets(
  */
 rclcpp::Logger getLogger(const std::string & type);
 
+/**
+ * @brief Computes the current footprint of the ego vehicle based on its pose and size.
+ *
+ * This function calculates the 2D polygon representing the current footprint of the ego vehicle.
+ * The footprint is determined by the vehicle's pose and its dimensions, including the distance
+ * from the base to the front and rear ends of the vehicle, as well as its width.
+ *
+ * @param ego_pose The current pose of the ego vehicle.
+ * @param ego_info The structural information of the ego vehicle, such as its maximum longitudinal
+ *                 offset, rear overhang, and width.
+ *
+ * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
+ */
 Polygon2d getEgoCurrentFootprint(
   const Pose & ego_pose, const vehicle_info_util::VehicleInfo & ego_info);
 
+/**
+ * @brief Checks if the given polygon is within an intersection area.
+ *
+ * This function evaluates whether a specified polygon is located within the bounds of an
+ * intersection. It identifies the intersection area by checking the attributes of the provided
+ * lanelet. If the lanelet has an attribute indicating it is part of an intersection, the function
+ * then checks if the polygon is fully contained within this area.
+ *
+ * @param route_handler a shared pointer to the route_handler
+ * @param lanelet A lanelet to check against the
+ *                intersection area.
+ * @param polygon The polygon to check for containment within the intersection area.
+ *
+ * @return bool True if the polygon is within the intersection area, false otherwise.
+ */
 bool isWithinIntersection(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lanelet,
   const Polygon2d & polygon);
