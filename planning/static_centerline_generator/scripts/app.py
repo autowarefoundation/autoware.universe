@@ -17,15 +17,15 @@
 import json
 import uuid
 
+from autoware_static_centerline_generator.srv import LoadMap
+from autoware_static_centerline_generator.srv import PlanPath
+from autoware_static_centerline_generator.srv import PlanRoute
 from flask import Flask
 from flask import jsonify
 from flask import request
 from flask_cors import CORS
 import rclpy
 from rclpy.node import Node
-from autoware_static_centerline_generator.srv import LoadMap
-from autoware_static_centerline_generator.srv import PlanPath
-from autoware_static_centerline_generator.srv import PlanRoute
 
 rclpy.init()
 node = Node("static_centerline_generator_http_server")
