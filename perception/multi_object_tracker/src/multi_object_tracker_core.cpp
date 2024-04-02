@@ -95,11 +95,13 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     this->get_node_base_interface(), this->get_node_timers_interface());
   tf_buffer_.setCreateTimerInterface(cti);
 
-  // Create ROS time based timer
+  // Create ROS time based timer.
+  // If the delay compensation is enabled, the timer is used to publish the output at the correct
+  // time.
   if (enable_delay_compensation) {
-    publisher_period_ = 1.0 / publish_rate;  // [s]
-    const auto timer_period =
-      rclcpp::Rate(publish_rate * 20.0).period();  // 20 times frequent than the publish rate
+    publisher_period_ = 1.0 / publish_rate;    // [s]
+    constexpr double timer_multiplier = 20.0;  // 20 times frequent for publish timing check
+    const auto timer_period = rclcpp::Rate(publish_rate * timer_multiplier).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
   }
@@ -201,10 +203,12 @@ void MultiObjectTracker::onMeasurement(
 
   // Publish objects if the timer is not enabled
   if (publish_timer_ == nullptr) {
+    // Publish if the delay compensation is disabled
     publish(measurement_time);
   } else {
     // Publish if the next publish time is close
-    if ((this->now() - last_published_time_).seconds() > publisher_period_ * 0.7) {
+    const double minimum_publish_interval = publisher_period_ * 0.7;  // 70% of the period
+    if ((this->now() - last_published_time_).seconds() > minimum_publish_interval) {
       checkAndPublish(this->now());
     }
   }
@@ -242,8 +246,10 @@ void MultiObjectTracker::onTimer()
   const rclcpp::Time current_time = this->now();
   // check the publish period
   const auto elapsed_time = (current_time - last_published_time_).seconds();
-  // if the elapsed time is over the period, publish with prediction
-  if (elapsed_time > publisher_period_ * 1.11) {
+  // if the elapsed time is over the period, publish objects with prediction
+  constexpr double latency_ratio = 1.11;  // 11% margin
+  const double maximum_publish_latency = publisher_period_ * latest_publish_latency_ratio;
+  if (elapsed_time > maximum_publish_latency) {
     checkAndPublish(current_time);
   }
 }
