@@ -15,13 +15,11 @@
 #ifndef EMERGENCY_GOAL_MANAGER_CORE_HPP_
 #define EMERGENCY_GOAL_MANAGER_CORE_HPP_
 
-// Autoware
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 #include <tier4_system_msgs/msg/emergency_goals_clear_command.hpp>
 #include <tier4_system_msgs/msg/emergency_goals_stamped.hpp>
 
-// ROS 2 core
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
