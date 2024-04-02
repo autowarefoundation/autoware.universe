@@ -340,9 +340,9 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
       return nullptr;
     }
 
+    // NOTE: generate map projector for lanelet::write().
+    //       Without this, lat/lon of the generated LL2 map will be wrong.
     map_projector_ = geography_utils::get_lanelet2_projector(map_projector_info);
-    // const auto lanelet2_output_file_path = "/tmp/lanelet2_map.osm";
-    // lanelet::write(lanelet2_output_file_path, *map_ptr, *projector);
 
     // NOTE: The original map is stored here since the various ids in the lanelet map will change
     //       after lanelet::utils::overwriteLaneletCenterline, and saving map will fail.
