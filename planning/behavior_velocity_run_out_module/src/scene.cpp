@@ -152,8 +152,6 @@ bool RunOutModule::modifyPathVelocity(
     const auto now = clock_->now().seconds();
     const double elapsed_time_since_stop_wall_was_generated =
       (now - stop_point_generation_time_.value());
-    std::cerr << "elapsed_time_since_stop_wall_was_generated "
-              << elapsed_time_since_stop_wall_was_generated << "\n";
     return elapsed_time_since_stop_wall_was_generated < planner_param_.run_out.keep_stop_point_time;
   };
   // insert stop point for the detected obstacle
@@ -175,9 +173,7 @@ bool RunOutModule::modifyPathVelocity(
 
     const bool is_maintain_stop_point = should_maintain_stop_point(is_stopping_point_inserted);
     if (is_maintain_stop_point) {
-      std::cerr << "Maintain point: \n";
       insertStopPoint(last_stop_point_, *path);
-      std::cerr << "Maintain point: \n";
     }
   }
 
@@ -748,8 +744,6 @@ bool RunOutModule::insertStopPoint(
   // no stop point
   if (!stop_point) {
     RCLCPP_DEBUG_STREAM(logger_, "already has same point");
-    std::cerr << "already has same point"
-              << "\n";
     return false;
   }
 
@@ -762,9 +756,6 @@ bool RunOutModule::insertStopPoint(
   if (
     insert_idx == path.points.size() - 1 &&
     planning_utils::isAheadOf(*stop_point, path.points.at(insert_idx).point.pose)) {
-    std::cerr << "is ahead of"
-              << "\n";
-
     return false;
   }
 
