@@ -174,6 +174,10 @@ bool RunOutModule::modifyPathVelocity(
     const bool is_maintain_stop_point = should_maintain_stop_point(is_stopping_point_inserted);
     if (is_maintain_stop_point) {
       insertStopPoint(last_stop_point_, *path);
+      // debug
+      debug_ptr_->setAccelReason(RunOutDebug::AccelReason::STOP);
+      debug_ptr_->pushStopPose(tier4_autoware_utils::calcOffsetPose(
+        *last_stop_point_, planner_param_.vehicle_param.base_to_front, 0, 0));
     }
   }
 
