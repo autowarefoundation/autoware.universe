@@ -57,7 +57,8 @@ See: <https://github.com/ANYbotics/grid_map/tree/ros2/grid_map_pcl>
 
 Rigid body transform that is applied to the point cloud before computing elevation.
 
-{{ json_to_markdown("perception/elevation_map_loader/schema/sub/cloud_transform.json") }}
+{{ json_to_markdown("perception/elevation_map_loader/schema/sub/cloud_transform_translation.json") }}
+{{ json_to_markdown("perception/elevation_map_loader/schema/sub/cloud_transform_rotation.json") }}
 
 #### Cluster Extraction Parameters
 
