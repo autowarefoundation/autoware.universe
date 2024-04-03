@@ -24,8 +24,8 @@ template <typename T>
 class InterProcessPollingSubscriber
 {
 private:
-  typename rclcpp::Subscription<T>::SharedPtr subscriber;
-  std::optional<T> data;
+  typename rclcpp::Subscription<T>::SharedPtr subscriber_;
+  std::optional<T> data_;
 
 public:
   explicit InterProcessPollingSubscriber(rclcpp::Node * node, const std::string & topic_name)
@@ -35,7 +35,7 @@ public:
     auto noexec_subscription_options = rclcpp::SubscriptionOptions();
     noexec_subscription_options.callback_group = noexec_callback_group;
 
-    subscriber = node->create_subscription<T>(
+    subscriber_ = node->create_subscription<T>(
       topic_name, rclcpp::QoS{1}, [node](const typename T::ConstSharedPtr msg) { assert(false); },
       noexec_subscription_options);
   };
@@ -44,17 +44,17 @@ public:
     rclcpp::MessageInfo message_info;
     T tmp;
     // The queue size (QoS) must be 1 to get the last message data.
-    if (subscriber->take(tmp, message_info)) {
-      data = tmp;
+    if (subscriber_->take(tmp, message_info)) {
+      data_ = tmp;
     }
-    return data.has_value();
+    return data_.has_value();
   };
   const T & getData() const
   {
-    if (!data.has_value()) {
+    if (!data_.has_value()) {
       throw std::runtime_error("Bad_optional_access in class InterProcessPollingSubscriber");
     }
-    return data.value();
+    return data_.value();
   };
 };
 
