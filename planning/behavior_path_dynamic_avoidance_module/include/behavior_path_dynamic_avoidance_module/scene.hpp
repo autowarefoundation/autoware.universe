@@ -68,8 +68,8 @@ struct MinMaxValue
     ret.min_value = min_value + scalar;
     ret.max_value = max_value + scalar;
     return ret;
-  }
-  void swap() { std::swap(min_value, max_value); }
+  };
+  void swap() { std::swap(min_value, max_value); };
 };
 
 enum class PolygonGenerationMethod {
@@ -78,9 +78,9 @@ enum class PolygonGenerationMethod {
 };
 
 enum class ObjectBehaviorType {
-  Ignore = 0,
-  Regulated,
-  Prioritized,
+  IGNORE = 0,
+  REGULATED,
+  PRIORITIZED,
 };
 
 struct DynamicAvoidanceParameters
@@ -191,7 +191,7 @@ public:
     std::string uuid{};
     uint8_t label{};
     geometry_msgs::msg::Pose pose{};
-    double pose_covariance_sqrt[36];  // for experimantal
+    double pose_covariance_sqrt[36];  // for experimental
     autoware_auto_perception_msgs::msg::Shape shape;
     double vel{0.0};
     double lat_vel{0.0};
@@ -295,7 +295,6 @@ public:
         if (counter_map_.at(key) < min_count_) {
           counter_map_.erase(key);
           object_map_.erase(key);
-          // std::cerr << "delete: " << key << std::endl;
         }
       }
     }
@@ -426,7 +425,7 @@ private:
     const Polygon2d & obj_points, const geometry_msgs::msg::Point & obj_pos, const double obj_vel,
     const bool is_collision_left, const double obj_normal_vel,
     const std::optional<DynamicAvoidanceObject> & prev_object) const;
-  std::optional<MinMaxValue> calcLateralAvoidanceDistanceRange(
+  std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoidAgainstPrioritizedObject(
     const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
     const std::optional<DynamicAvoidanceObject> & prev_object,
     const DynamicAvoidanceObject & object) const;

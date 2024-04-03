@@ -30,8 +30,6 @@
 #include <boost/geometry/algorithms/difference.hpp>
 #include <boost/geometry/strategies/agnostic/buffer_distance_symmetric.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_end_flat.hpp>
-#include <boost/geometry/strategies/cartesian/buffer_end_round.hpp>
-#include <boost/geometry/strategies/cartesian/buffer_join_miter.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_join_round.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_point_circle.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
@@ -174,18 +172,6 @@ double calcObstacleWidth(const autoware_auto_perception_msgs::msg::Shape & shape
   }
   throw std::logic_error("The shape type is not supported in dynamic_avoidance.");
 }
-
-// double calcObstacleLength(const autoware_auto_perception_msgs::msg::Shape & shape)
-// {
-//   if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-//     return shape.dimensions.x;
-//   } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
-//     return shape.dimensions.x;
-//   } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
-//     return 1.0; //not compatible for this type
-//   }
-//   throw std::logic_error("The shape type is not supported in dynamic_avoidance.");
-// }
 
 double calcDiffAngleAgainstPath(
   const std::vector<PathPointWithLaneId> & path_points,
@@ -416,14 +402,12 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
   for (const auto & object : target_objects_) {
     const auto obstacle_poly = [&]() {
-      if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
-        if (getLabelAsTargetObstacle(object.label) == ObjectBehaviorType::Prioritized) {
-          return calcPrioritizedObstaclePolygon(object, ego_path_reserve_poly);
-        } else {
-          return calcEgoPathBasedDynamicObstaclePolygon(object);
-        }
-      }
-      if (parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
+      if (getLabelAsTargetObstacle(object.label) == ObjectBehaviorType::PRIORITIZED) {
+        return calcPrioritizedObstaclePolygon(object, ego_path_reserve_poly);
+      } else if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
+        return calcEgoPathBasedDynamicObstaclePolygon(object);
+      } else if (
+        parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
         return calcObjectPathBasedDynamicObstaclePolygon(object);
       }
       throw std::logic_error("The polygon_generation_method's string is invalid.");
@@ -477,30 +461,30 @@ ObjectBehaviorType DynamicAvoidanceModule::getLabelAsTargetObstacle(const uint8_
   using autoware_auto_perception_msgs::msg::ObjectClassification;
 
   if (label == ObjectClassification::CAR && parameters_->avoid_car) {
-    return ObjectBehaviorType::Regulated;
+    return ObjectBehaviorType::REGULATED;
   }
   if (label == ObjectClassification::TRUCK && parameters_->avoid_truck) {
-    return ObjectBehaviorType::Regulated;
+    return ObjectBehaviorType::REGULATED;
   }
   if (label == ObjectClassification::BUS && parameters_->avoid_bus) {
-    return ObjectBehaviorType::Regulated;
+    return ObjectBehaviorType::REGULATED;
   }
   if (label == ObjectClassification::TRAILER && parameters_->avoid_trailer) {
-    return ObjectBehaviorType::Regulated;
+    return ObjectBehaviorType::REGULATED;
   }
   if (label == ObjectClassification::UNKNOWN && parameters_->avoid_unknown) {
-    return ObjectBehaviorType::Prioritized;
+    return ObjectBehaviorType::PRIORITIZED;
   }
   if (label == ObjectClassification::BICYCLE && parameters_->avoid_bicycle) {
-    return ObjectBehaviorType::Prioritized;
+    return ObjectBehaviorType::PRIORITIZED;
   }
   if (label == ObjectClassification::MOTORCYCLE && parameters_->avoid_motorcycle) {
-    return ObjectBehaviorType::Regulated;
+    return ObjectBehaviorType::REGULATED;
   }
   if (label == ObjectClassification::PEDESTRIAN && parameters_->avoid_pedestrian) {
-    return ObjectBehaviorType::Prioritized;
+    return ObjectBehaviorType::PRIORITIZED;
   }
-  return ObjectBehaviorType::Ignore;
+  return ObjectBehaviorType::IGNORE;
 }
 
 void DynamicAvoidanceModule::registerRegulatedObjects(
@@ -528,7 +512,7 @@ void DynamicAvoidanceModule::registerRegulatedObjects(
     // 1.a. check label
     if (
       getLabelAsTargetObstacle(predicted_object.classification.front().label) !=
-      ObjectBehaviorType::Regulated) {
+      ObjectBehaviorType::REGULATED) {
       continue;
     }
 
@@ -562,9 +546,8 @@ void DynamicAvoidanceModule::registerRegulatedObjects(
     }
 
     // 1.e. check if object lateral offset to ego's path is small enough
-    const double dist_obj_center_to_path = calcDistanceToPath(input_path.points, obj_pose.position);
-    const bool is_object_far_from_path =
-      isObjectFarFromPath(predicted_object, dist_obj_center_to_path);
+    const double obj_dist_to_path = calcDistanceToPath(input_path.points, obj_pose.position);
+    const bool is_object_far_from_path = isObjectFarFromPath(predicted_object, obj_dist_to_path);
     if (is_object_far_from_path) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
@@ -574,7 +557,7 @@ void DynamicAvoidanceModule::registerRegulatedObjects(
 
     // 1.f. calculate the object is on ego's path or not
     const bool is_object_on_ego_path =
-      dist_obj_center_to_path <
+      obj_dist_to_path <
       planner_data_->parameters.vehicle_width / 2.0 + parameters_->min_obj_lat_offset_to_ego_path;
 
     // 1.g. calculate latest time inside ego's path
@@ -619,7 +602,7 @@ void DynamicAvoidanceModule::registerPrioritizedObjects(
     // 1.a. check label
     if (
       getLabelAsTargetObstacle(predicted_object.classification.front().label) !=
-      ObjectBehaviorType::Prioritized) {
+      ObjectBehaviorType::PRIORITIZED) {
       continue;
     }
 
@@ -643,16 +626,17 @@ void DynamicAvoidanceModule::registerPrioritizedObjects(
     }
 
     // 1.e. check if object lateral distance to ego's path is small enough
-    constexpr double max_ped_obj_lat_offset_to_ego_path = 30.0;
     const double dist_obj_center_to_path =
       std::abs(motion_utils::calcLateralOffset(input_path.points, obj_pose.position));
-    if (dist_obj_center_to_path > max_ped_obj_lat_offset_to_ego_path) {
-      RCLCPP_INFO_EXPRESSION(
-        getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since lateral distance (%7.3f) is large.",
-        obj_uuid.c_str(), dist_obj_center_to_path);
-      continue;
-    }
+
+    // constexpr double max_ped_obj_lat_offset_to_ego_path = 30.0;
+    // if (dist_obj_center_to_path > max_ped_obj_lat_offset_to_ego_path) {
+    //   RCLCPP_INFO_EXPRESSION(
+    //     getLogger(), parameters_->enable_debug_info,
+    //     "[DynamicAvoidance] Ignore obstacle (%s) since lateral distance (%7.3f) is large.",
+    //     obj_uuid.c_str(), dist_obj_center_to_path);
+    //   continue;
+    // }
 
     // 1.f. calculate the object is on ego's path or not
     const bool is_object_on_ego_path =
@@ -686,7 +670,7 @@ void DynamicAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObjects(
   const auto & input_path = getPreviousModuleOutput().path;
 
   for (const auto & object : target_objects_manager_.getValidObjects()) {
-    if (getLabelAsTargetObstacle(object.label) != ObjectBehaviorType::Regulated) {
+    if (getLabelAsTargetObstacle(object.label) != ObjectBehaviorType::REGULATED) {
       continue;
     }
 
@@ -846,7 +830,7 @@ void DynamicAvoidanceModule::determineWhetherToAvoidAgainstPrioritizedObjects(
   const auto & input_path = getPreviousModuleOutput().path;
 
   for (const auto & object : target_objects_manager_.getValidObjects()) {
-    if (getLabelAsTargetObstacle(object.label) != ObjectBehaviorType::Prioritized) {
+    if (getLabelAsTargetObstacle(object.label) != ObjectBehaviorType::PRIORITIZED) {
       continue;
     }
 
@@ -888,12 +872,12 @@ void DynamicAvoidanceModule::determineWhetherToAvoidAgainstPrioritizedObjects(
 
     // 2.h. calculate longitudinal and lateral offset to avoid to generate object polygon by
     // "ego_path_base"
-    const auto lat_offset_to_avoid =
-      calcLateralAvoidanceDistanceRange(ref_path_points_for_obj_poly, prev_object, object);
+    const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoidAgainstPrioritizedObject(
+      ref_path_points_for_obj_poly, prev_object, object);
     if (!lat_offset_to_avoid) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since the object laterally covers the ego's path "
+        "[DynamicAvoidance] Ignore obstacle (%s) since the object will intersects the ego's path "
         "enough",
         obj_uuid.c_str());
       continue;
@@ -1511,7 +1495,8 @@ std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoi
 }
 
 // min value denotes near side, max value denotes far side
-std::optional<MinMaxValue> DynamicAvoidanceModule::calcLateralAvoidanceDistanceRange(
+std::optional<MinMaxValue>
+DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoidAgainstPrioritizedObject(
   const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
   const std::optional<DynamicAvoidanceObject> & prev_object,
   const DynamicAvoidanceObject & object) const
@@ -1814,7 +1799,20 @@ DynamicAvoidanceModule::calcPrioritizedObstaclePolygon(
   boost::geometry::difference(
     expanded_poly[0],
     object.is_collision_left ? ego_path_poly.right_avoid : ego_path_poly.left_avoid, output_poly);
-  if (output_poly.empty()) return {};
+
+  if (output_poly.empty()) {
+    RCLCPP_INFO_EXPRESSION(
+      getLogger(), parameters_->enable_debug_info,
+      "[DynamicAvoidance] Ignore obstacle (%s) bacause it stay inside the ego's path.",
+      object.uuid.c_str());
+    return {};
+  } else if (output_poly.size() >= 2) {
+    RCLCPP_INFO_EXPRESSION(
+      getLogger(), parameters_->enable_debug_info,
+      "[DynamicAvoidance] Ignore obstacle (%s) because it covers the ego's path.",
+      object.uuid.c_str());
+    return {};
+  }
 
   return output_poly[0];
 }
@@ -1831,21 +1829,21 @@ DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathRe
     ego_path_lines.push_back(tier4_autoware_utils::fromMsg(path_point.point.pose.position).to_2d());
   }
 
-  const double path_half_width =
+  const double reserve_width_obj_side =
     planner_data_->parameters.vehicle_width / 2.0 - parameters_->max_lat_offset_to_avoid;
-  constexpr double reserve_width = 3.0;
-  namespace strategy = boost::geometry::strategy::buffer;
+  const double reserve_width_opposite_side = planner_data_->parameters.vehicle_width / 2.0;
 
-  tier4_autoware_utils::MultiPolygon2d left_avoid_poly;
+  namespace strategy = boost::geometry::strategy::buffer;
   strategy::distance_asymmetric<double> left_avoid_distance_strategy{
-    reserve_width, path_half_width};
+    reserve_width_opposite_side, reserve_width_obj_side};
+  tier4_autoware_utils::MultiPolygon2d left_avoid_poly;
   boost::geometry::buffer(
     ego_path_lines, left_avoid_poly, left_avoid_distance_strategy, strategy::side_straight(),
     strategy::join_round(), strategy::end_flat(), strategy::point_circle());
 
-  tier4_autoware_utils::MultiPolygon2d right_avoid_poly;
   strategy::distance_asymmetric<double> right_avoid_distance_strategy{
-    path_half_width, reserve_width};
+    reserve_width_obj_side, reserve_width_opposite_side};
+  tier4_autoware_utils::MultiPolygon2d right_avoid_poly;
   boost::geometry::buffer(
     ego_path_lines, right_avoid_poly, right_avoid_distance_strategy, strategy::side_straight(),
     strategy::join_round(), strategy::end_flat(), strategy::point_circle());
