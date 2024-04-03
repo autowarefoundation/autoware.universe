@@ -104,7 +104,7 @@ end
 #### Update flashing flag
 
 <div align="center">
-  <img src="images/flashing_state.png" width=70%>
+  <img src="images/flashing_state.png" width=50%>
 </div>
 
 ## Assumptions / Known limits
