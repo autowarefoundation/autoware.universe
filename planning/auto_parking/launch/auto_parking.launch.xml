@@ -1,0 +1,26 @@
+<launch>
+  <arg name="input_odometry" default="/localization/kinematic_state"/>
+  <arg name="input_occupancy_grid" default="/planning/scenario_planning/parking/costmap_generator/occupancy_grid"/>
+  <arg name="input_lanelet_map_bin" default="/map/vector_map"/>
+  <arg name="input_odometry" default="/localization/kinematic_state"/>
+  <arg name="input_engage" default="/api/autoware/get/engage"/>
+
+  <arg name="output_engage" default="/api/autoware/set/engage"/>
+  <arg name="output_goal" default="/planning/mission_planning/goal"/>
+  
+
+  <arg name="param_file" default="$(find-pkg-share auto_parking)/config/auto_parking.param.yaml"/>
+  <!-- vehicle info -->
+  <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
+
+  <node pkg="auto_parking" exec="auto_parking" name="auto_parking" output="screen">
+    <remap from="~/input/odometry" to="$(var input_odometry)"/>
+    <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>
+    <remap from="~/input/lanelet_map_bin" to="$(var input_lanelet_map_bin)"/>
+    <remap from="~/input/engage" to="$(var input_engage)"/>
+    <remap from="~/service/engage" to="$(var output_engage)"/>
+    <remap from="~/output/fixed_goal" to="$(var output_goal)"/>
+    <param from="$(var param_file)"/>
+    <param from="$(var vehicle_info_param_file)"/>
+  </node>
+</launch>
