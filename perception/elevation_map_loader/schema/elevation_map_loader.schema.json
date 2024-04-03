@@ -8,7 +8,9 @@
       "properties": {
         "node": { "$ref": "sub/node.json#/definitions/node" },
         "cloud_transform": { "$ref": "sub/cloud_transform.json#/definitions/cloud_transform" },
-        "cluster_extraction": { "$ref": "sub/cluster_extraction.json#/definitions/cluster_extraction" },
+        "cluster_extraction": {
+          "$ref": "sub/cluster_extraction.json#/definitions/cluster_extraction"
+        },
         "outlier_removal": { "$ref": "sub/outlier_removal.json#/definitions/outlier_removal" },
         "downsampling": { "$ref": "sub/downsampling.json#/definitions/downsampling" },
         "grid_map": { "$ref": "sub/grid_map.json#/definitions/grid_map" }
