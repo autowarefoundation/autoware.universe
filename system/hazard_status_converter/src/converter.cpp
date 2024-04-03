@@ -20,8 +20,6 @@
 namespace
 {
 
-using AutowareState = autoware_system_msgs::msg::AutowareState;
-using OperationMode = autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_system_msgs::msg::HazardStatus;
 using autoware_auto_system_msgs::msg::HazardStatusStamped;
 using diagnostic_msgs::msg::DiagnosticStatus;

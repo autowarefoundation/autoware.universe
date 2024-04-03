@@ -18,8 +18,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
-#include <autoware_system_msgs/msg/autoware_state.hpp>
 #include <tier4_system_msgs/msg/diagnostic_graph.hpp>
 
 #include <string>
@@ -35,7 +35,7 @@ public:
   explicit Converter(const rclcpp::NodeOptions & options);
 
 private:
-  using AutowareState = autoware_system_msgs::msg::AutowareState;
+  using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
   using OperationMode = autoware_adapi_v1_msgs::msg::OperationModeState;
   using DiagnosticGraph = tier4_system_msgs::msg::DiagnosticGraph;
   using HazardStatusStamped = autoware_auto_system_msgs::msg::HazardStatusStamped;
