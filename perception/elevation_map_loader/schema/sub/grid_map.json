@@ -31,7 +31,13 @@
           "default": 1.0
         }
       },
-      "required": ["num_processing_threads", "min_num_points_per_cell", "resolution", "height_type", "height_thresh"],
+      "required": [
+        "num_processing_threads",
+        "min_num_points_per_cell",
+        "resolution",
+        "height_type",
+        "height_thresh"
+      ],
       "additionalProperties": false
     }
   }
