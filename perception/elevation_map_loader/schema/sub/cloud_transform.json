@@ -5,8 +5,8 @@
     "cloud_transform": {
       "type": "object",
       "properties": {
-        "translation": { "$ref": "sub/cloud_transform_translation.json#/definitions/translation" },
-        "rotation": { "$ref": "sub/cloud_transform_rotation.json#/definitions/rotation" }
+        "translation": { "$ref": "cloud_transform_translation.json#/definitions/translation" },
+        "rotation": { "$ref": "cloud_transform_rotation.json#/definitions/rotation" }
       },
       "required": ["translation", "rotation"],
       "additionalProperties": false
