@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Elevation Map Loader Params",
+  "definitions": {
+    "translation": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "Translation (x) that is applied to the input point cloud before computing elevation",
+          "default": 0.0
+        },
+        "y": {
+          "type": "number",
+          "description": "Translation (y) that is applied to the input point cloud before computing elevation",
+          "default": 0.0
+        },
+        "z": {
+          "type": "number",
+          "description": "Translation (z) that is applied to the input point cloud before computing elevation",
+          "default": 0.0
+        }
+      },
+      "required": ["x", "y", "z"],
+      "additionalProperties": false
+    }
+  }
+}

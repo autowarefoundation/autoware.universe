@@ -41,4 +41,38 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 
 ## Parameters
 
-{{ json_to_markdown("perception/elevation_map_loader/schema/elevation_map_loader.schema.json") }}
+### Node Parameters
+
+{{ json_to_markdown("perception/elevation_map_loader/schema/sub/node.json") }}
+
+### Grid Map Parameters
+
+See: <https://github.com/ANYbotics/grid_map/tree/ros2/grid_map_pcl>
+
+{{ json_to_markdown("perception/elevation_map_loader/schema/sub/grid_map.json") }}
+
+### Point Cloud Preprocessing Parameters
+
+#### Rigid body transform parameters
+
+Rigid body transform that is applied to the point cloud before computing elevation.
+
+{{ json_to_markdown("perception/elevation_map_loader/schema/sub/cloud_transform.json") }}
+
+#### Cluster Extraction Parameters
+
+Cluster extraction is based on pcl algorithms. See <https://pointclouds.org/documentation/tutorials/cluster_extraction.html> for more details.
+
+{{ json_to_markdown("perception/elevation_map_loader/schema/sub/cluster_extraction.json") }}
+
+#### Outlier Removal Parameters
+
+See <https://pointclouds.org/documentation/tutorials/statistical_outlier.html> for more explanation on outlier removal.
+
+{{ json_to_markdown("perception/elevation_map_loader/schema/sub/outlier_removal.json") }}
+
+#### Subsampling Parameters
+
+See <https://pointclouds.org/documentation/tutorials/voxel_grid.html> for more explanation on point cloud downsampling.
+
+{{ json_to_markdown("perception/elevation_map_loader/schema/sub/downsampling.json") }}
