@@ -5,6 +5,11 @@
     "grid_map": {
       "type": "object",
       "properties": {
+        "num_processing_threads": {
+          "type": "number",
+          "description": "Number of threads for processing grid map cells. Filtering of the raw input point cloud is not parallelized",
+          "default": "12"
+        },
         "min_num_points_per_cell": {
           "type": "integer",
           "description": "Minimum number of points in the point cloud that have to fall within any of the grid map cells. Otherwise the cell elevation will be set to NaN",
@@ -26,7 +31,7 @@
           "default": 1.0
         }
       },
-      "required": ["min_num_points_per_cell", "resolution", "height_type", "height_thresh"],
+      "required": ["num_processing_threads", "min_num_points_per_cell", "resolution", "height_type", "height_thresh"],
       "additionalProperties": false
     }
   }
