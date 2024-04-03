@@ -15,10 +15,13 @@
 #ifndef TENSORRT_MTR__NODE_HPP_
 #define TENSORRT_MTR__NODE_HPP_
 
+#include "tensorrt_mtr/agent.hpp"
 #include "tensorrt_mtr/polyline.hpp"
 #include "tensorrt_mtr/trt_mtr.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/transform_listener.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
@@ -32,11 +35,14 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace trt_mtr
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 
 class PolylineTypeMap
@@ -95,19 +101,46 @@ private:
   bool convertLaneletToPolyline();
 
   /**
-   * @brief Appends new states to history and remove old data.
+   * @brief Remove ancient agent histories.
    *
    * @param current_time
+   * @param objects_msg
    */
-  void updateAgentHistory(const float current_time);
+  void removeAncientAgentHistory(
+    const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
 
+  /**
+   * @brief Appends new states to history.
+   *
+   * @param current_time
+   * @param objects_msg
+   */
+  void updateAgentHistory(
+    const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
+
+  /**
+   * @brief Predict future trajectories with MTR.
+   *
+   * @return true
+   * @return false
+   */
+  bool predictFuture();
+
+  // Lanelet map pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
   std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
   std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
 
+  // Agent history
+  std::unordered_map<std::string, AgentHistory> agent_history_map_;
+
+  // Pose transform listener
+  tier4_autoware_utils::TransformListener transform_listener_{this};
+
+  // MTR parameters
   std::unique_ptr<MtrConfig> config_ptr_;
   PolylineTypeMap polyline_type_map_;
-  PolylineData polylines_;
+  std::shared_ptr<PolylineData> polyline_ptr_;
 };  // class MTRNode
 }  // namespace trt_mtr
 #endif  // TENSORRT_MTR__NODE_HPP_
