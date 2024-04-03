@@ -216,10 +216,15 @@ void DummyPerceptionPublisherNode::timerCallback()
   std::vector<ObjectInfo> obj_infos;
   static std::uniform_real_distribution<> detection_successful_random(0.0, 1.0);
   for (size_t i = 0; i < objects_.size(); ++i) {
-    if (detection_successful_rate_ >= detection_successful_random(random_generator_)) {
+    const auto obj_info = ObjectInfo(objects_.at(i), current_time);
+    const auto tf_base_link_to_object = tf_base_link2map * obj_info.tf_map2moved_object;
+
+    // true positive rate
+    const auto tp_rate = getSuccessRate(tf_base_link_to_object.getOrigin());
+
+    if (tp_rate >= detection_successful_random(random_generator_)) {
       selected_indices.push_back(i);
     }
-    const auto obj_info = ObjectInfo(objects_.at(i), current_time);
     obj_infos.push_back(obj_info);
   }
 
@@ -326,6 +331,37 @@ void DummyPerceptionPublisherNode::timerCallback()
   if (publish_ground_truth_objects_) {
     ground_truth_objects_pub_->publish(output_ground_truth_objects_msg);
   }
+}
+
+double DummyPerceptionPublisherNode::getSuccessRate(const tf2::Vector3 & tf_baselink_to_object)
+{
+  const bool use_adaptive_tp_rate_ = true;
+
+  // constant tp rate
+  if (!use_adaptive_tp_rate_) {
+    return detection_successful_rate_;
+  }
+
+  // adaptive tp rate
+  // todo: parametrize
+  const auto a = 0.4;
+  const auto b = 1.0;
+  const std::vector<double> v_range = {10.0, 20.0, 40.0, 60.0, 80.0, 120.0, 150.0, 180.0, 1000.0};
+  const std::vector<double> r_range = {0.922, 0.862, 0.795, 0.682, 0.611,
+                                       0.416, 0.207, 0.113, 0.005};
+
+  const auto x_by_a = tf_baselink_to_object.getX() / a;
+  const auto y_by_b = tf_baselink_to_object.getY() / b;
+  const auto ellipse_radius = std::sqrt(x_by_a * x_by_a + y_by_b * y_by_b);
+
+  auto tp_rate = v_range.back();
+  for (size_t i = 0; i < r_range.size(); ++i) {
+    if (ellipse_radius < r_range.at(i)) {
+      tp_rate = v_range.at(i);
+      break;
+    }
+  }
+  return tp_rate;
 }
 
 void DummyPerceptionPublisherNode::objectCallback(

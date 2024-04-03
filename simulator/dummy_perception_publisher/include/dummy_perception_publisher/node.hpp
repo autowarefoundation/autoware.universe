@@ -136,6 +136,8 @@ private:
   void timerCallback();
   void objectCallback(const dummy_perception_publisher::msg::Object::ConstSharedPtr msg);
 
+  double getSuccessRate(const tf2::Vector3 & tf_baselink_to_object);
+
 public:
   DummyPerceptionPublisherNode();
   ~DummyPerceptionPublisherNode() {}
