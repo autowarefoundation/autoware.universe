@@ -74,25 +74,6 @@ std::shared_ptr<lanelet::ConstPolygon3d> filterNearestParkinglot(
   }
 }
 
-// bool isInLane(
-//   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
-//   const geometry_msgs::msg::Point & current_pos)
-// {
-//   const auto & p = current_pos;
-//   const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
-
-//   std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelets =
-//     lanelet::geometry::findNearest(lanelet_map_ptr->laneletLayer, search_point.basicPoint2d(), 1);
-
-//   if (nearest_lanelets.empty()) {
-//     return false;
-//   }
-
-//   const auto nearest_lanelet = nearest_lanelets.front().second;
-
-//   return lanelet::geometry::within(search_point, nearest_lanelet.polygon3d());
-// }
-
 Pose transformPose(const Pose & pose, const TransformStamped & transform)
 {
   PoseStamped transformed_pose;
@@ -327,10 +308,9 @@ bool AutoParkingNode::findParkingSpace()
       bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
 
       if(result){
-        RCLCPP_INFO(get_logger(), "Found free parking space!");
+        RCLCPP_INFO(get_logger(), "Auto-parking: Found free parking space!");
         return true;
       }
-
       continue;
     }
   }
@@ -349,9 +329,9 @@ void AutoParkingNode::engageAutonomous()
   // engage
   auto req = std::make_shared<EngageSrv::Request>();
   req->engage = true;
-  RCLCPP_INFO(get_logger(), "auto-engage client request");
+  RCLCPP_INFO(get_logger(), "Auto-parking: auto-engage client request");
   if (!client_engage_->service_is_ready()) {
-    RCLCPP_INFO(get_logger(), "auto-engage client is unavailable");
+    RCLCPP_INFO(get_logger(), "Auto-parking: auto-engage client is unavailable");
     return;
   }
   client_engage_->async_send_request(
@@ -362,13 +342,14 @@ void AutoParkingNode::reset()
 {
   set_parking_lot_goal_ = false;
   set_parking_space_goal_ = false;
+  active_ = true;
 }
 
 void AutoParkingNode::onTimer()
 {
   // Check all inputs are ready
   if (!odom_ || !lanelet_map_ptr_ || !routing_graph_ptr_ ||
-      !engage_sub_ || !client_engage_) {
+      !engage_sub_ || !client_engage_ || !active_) {
     return;
   }
 
@@ -386,7 +367,7 @@ void AutoParkingNode::onTimer()
     current_goal_.header.stamp = rclcpp::Time();
     current_goal_.pose = parking_goal_;
     goalPublisher(current_goal_);
-    RCLCPP_INFO(get_logger(), "Publishing parking lot goal");
+    RCLCPP_INFO(get_logger(), "Auto-parking: Publishing parking lot goal");
     set_parking_lot_goal_ = true;
   }
 
@@ -395,7 +376,7 @@ void AutoParkingNode::onTimer()
 
   // Arrived at parking lot exit without finding parking space
   if(set_parking_lot_goal_ && isArrived(parking_goal_)){
-    RCLCPP_INFO(get_logger(), "Auto-parking: failed to find parking space");
+    RCLCPP_INFO(get_logger(), "Auto-parking: Failed to find parking space");
     return;
   }
   
@@ -404,12 +385,19 @@ void AutoParkingNode::onTimer()
       isInParkingLot() && 
       occupancy_grid_)
   { 
-    RCLCPP_INFO(get_logger(), "Searching...");
+    RCLCPP_INFO(get_logger(), "Auto-parking: Searching...");
     if(findParkingSpace()){
       goalPublisher(current_goal_);
-      RCLCPP_INFO(get_logger(), "Publishing parking space goal");
+      RCLCPP_INFO(get_logger(), "Auto-parking: Publishing parking space goal");
       set_parking_space_goal_ = true;
     }
+  }
+
+  // Arrived at parking space goal
+  if(set_parking_space_goal_ && isArrived(current_goal_.pose)){
+    RCLCPP_INFO(get_logger(), "Auto-parking: Complete!");
+    active_ = false;
+    return;
   }
 
   // Engage autonomous once a goal is set

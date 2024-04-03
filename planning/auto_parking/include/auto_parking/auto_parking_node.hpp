@@ -142,6 +142,7 @@ private:
   Pose parking_goal_;
   bool set_parking_lot_goal_;
   bool set_parking_space_goal_;
+  bool active_;
 
   bool is_engaged_;
 };
