@@ -67,7 +67,6 @@ void MemMonitor::update()
 
 void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  std::cout << "checkUsage" << std::endl;
   std::string error_str;
   std::map<std::string, size_t> map;
   double elapsed_ms;
@@ -118,7 +117,6 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   stat.addf("execution time", "%f ms", elapsed_ms);
-  std::cout << "checkUsage end" << std::endl;
 }
 
 void MemMonitor::checkEcc(diagnostic_updater::DiagnosticStatusWrapper & stat)
