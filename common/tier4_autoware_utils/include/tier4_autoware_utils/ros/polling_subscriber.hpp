@@ -17,6 +17,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <string>
+
 namespace tier4_autoware_utils
 {
 
