@@ -60,6 +60,11 @@ private:
   [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position);
   void publish_partial_pcd_map();
 
+  // Looking for PCDs in the vicinity of the specified location
+  void query_pcds(double px, double py, double radius, std::unordered_set<std::string>& maps_to_add, std::unordered_set<std::string>& maps_to_remove);
+  // Compute distance between an origin and a pcd segment
+  double dist(double px, double py, int idx, int idy);
+
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 
   rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr
@@ -71,6 +76,13 @@ private:
   rclcpp::Clock::SharedPtr clock_;
 
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
+
+  // Metadata of segmented PCDs
+  std::unordered_set<std::string> all_pcds_;
+  std::unordered_set<std::string> cur_pcds_;
+  double pcd_res_x_, pcd_res_y_;
+  double pcd_lower_x_, pcd_lower_y_;
+  std::string pcd_tag_;
 
   HyperParameters::DynamicMapLoading param_;
 
