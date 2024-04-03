@@ -137,10 +137,10 @@ Converter::Converter(const rclcpp::NodeOptions & options) : Node("converter", op
     "~/diagnostics_graph", rclcpp::QoS(3),
     std::bind(&Converter::on_graph, this, std::placeholders::_1));
   sub_state_ = create_subscription<AutowareState>(
-    "~/diagnostics_graph", rclcpp::QoS(1),
+    "/autoware/state", rclcpp::QoS(1),
     std::bind(&Converter::on_state, this, std::placeholders::_1));
   sub_mode_ = create_subscription<OperationMode>(
-    "~/diagnostics_graph", rclcpp::QoS(1),
+    "/system/operation_mode/state", rclcpp::QoS(1).transient_local(),
     std::bind(&Converter::on_mode, this, std::placeholders::_1));
 }
 
@@ -170,16 +170,13 @@ void Converter::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
   };
 
   const auto is_ignore = [this]() {
-    if (mode_) {
-      if (mode_->mode == OperationMode::AUTONOMOUS) {
-        if (state_->state == AutowareState::INITIALIZING) return true;
-        if (state_->state == AutowareState::FINALIZING) return true;
+    if (mode_ && state_) {
+      if (mode_->mode == OperationMode::AUTONOMOUS || mode_->mode == OperationMode::STOP) {
         if (state_->state == AutowareState::WAITING_FOR_ROUTE) return true;
         if (state_->state == AutowareState::PLANNING) return true;
-      } else {
-        if (state_->state == AutowareState::INITIALIZING) return true;
-        if (state_->state == AutowareState::FINALIZING) return true;
       }
+      if (state_->state == AutowareState::INITIALIZING) return true;
+      if (state_->state == AutowareState::FINALIZING) return true;
     }
     return false;
   };
