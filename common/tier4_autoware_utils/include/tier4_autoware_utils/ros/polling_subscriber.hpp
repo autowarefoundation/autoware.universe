@@ -49,7 +49,13 @@ public:
     }
     return data.has_value();
   };
-  const std::optional<T> & getData() const { return data; };
+  const T & getData() const
+  {
+    if (!data.has_value()) {
+      throw std::runtime_error("Bad_optional_access in class InterProcessPollingSubscriber");
+    }
+    return data.value();
+  };
 };
 
 }  // namespace tier4_autoware_utils
