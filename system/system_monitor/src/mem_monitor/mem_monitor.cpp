@@ -65,12 +65,6 @@ void MemMonitor::update()
   updater_.force_update();
 }
 
-<<<<<<< Updated upstream
-std::unordered_map<std::string, size_t> readMemInfo()
-{
-  std::unordered_map<std::string, size_t> memInfo;
-  std::ifstream file("/proc/meminfo");
-=======
 void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   std::cout << "checkUsage" << std::endl;
@@ -191,7 +185,6 @@ void MemMonitor::checkEcc(diagnostic_updater::DiagnosticStatusWrapper & stat)
 void MemMonitor::readMemInfo(std::unordered_map<std::string, size_t> & memInfo)
 {
   std::ifstream file("/proc/meminfo");
->>>>>>> Stashed changes
 
   if (!file.is_open()) {
     throw std::runtime_error("Could not open /proc/meminfo");
@@ -213,12 +206,7 @@ void MemMonitor::readMemInfo(std::unordered_map<std::string, size_t> & memInfo)
     } else {
       throw std::runtime_error("Invalid line in /proc/meminfo: " + line);
     }
-<<<<<<< Updated upstream
   }
-
-  return memInfo;
-=======
->>>>>>> Stashed changes
 }
 
 std::string MemMonitor::readUsage(std::map<std::string, size_t> & map)
@@ -235,19 +223,10 @@ std::string MemMonitor::readUsage(std::map<std::string, size_t> & map)
   size_t swap_total = 0;
   size_t swap_free = 0;
 
-<<<<<<< Updated upstream
   try {
-    memInfo = readMemInfo();
+    readMemInfo(memInfo);
   } catch (const std::exception & e) {
-    stat.summary(DiagStatus::ERROR, e.what());
-    stat.add("read file error", "Error opening /proc/meminfo or parsing line in it.");
-    return;
-=======
-    try {
-      readMemInfo(memInfo);
-    } catch (const std::exception & e) {
-      return e.what();
->>>>>>> Stashed changes
+    return e.what();
   }
 
   try {
@@ -260,17 +239,9 @@ std::string MemMonitor::readUsage(std::map<std::string, size_t> & map)
     cached = memInfo.at("Cached");
     swap_total = memInfo.at("SwapTotal");
     swap_free = memInfo.at("SwapFree");
-<<<<<<< Updated upstream
   } catch (const std::out_of_range & e) {
-    stat.summary(DiagStatus::ERROR, e.what());
-    stat.add("unordered_map::at", "Error reading a key of memory info");
-    return;
+    return e.what();
   }
-=======
-    } catch (const std::out_of_range & e) {
-      return e.what();
-    }
->>>>>>> Stashed changes
 
   if (mem_total == 0) {
     return "Usage calculate error: mem_info is zero";
@@ -335,25 +306,6 @@ std::string MemMonitor::executeEdacUtil(std::string & output, std::string & pipe
   is_out >> os.rdbuf();
   output = os.str().c_str();
   return result;
-  // std::string line;
-
-  // /*
-  //  Output example of `edac-util --quiet`
-  //  edac-util generates output if error occurred, otherwise no output
-  //  mc0: 3 Uncorrected Errors with no DIMM info
-  //  mc0: 3 Corrected Errors with no DIMM info
-  //  */
-  // while (std::getline(is_out, line)) {
-  //   if (line.find("Uncorrected") != std::string::npos) {
-  //     stat.summary(DiagStatus::ERROR, line);
-  //     return;
-  //   } else if (line.find("Corrected") != std::string::npos) {
-  //     stat.summary(DiagStatus::WARN, line);
-  //     return;
-  //   }
-  // }
-
-  // stat.summary(DiagStatus::OK, "OK");
 }
 
 void MemMonitor::onUsageTimer()
