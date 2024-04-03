@@ -29,7 +29,6 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
   const autoware_map_msgs::msg::AreaInfo & area, const std::vector<std::string> & cached_ids,
   GetDifferentialPointCloudMap::Response::SharedPtr & response) const
 {
-
   // For debug
   std::ofstream test("/home/anh/Work/autoware/test.txt", std::ios::app);
 
@@ -91,7 +90,6 @@ autoware_map_msgs::msg::PointCloudMapCellWithID
 DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
   const std::string & path, const std::string & map_id) const
 {
-
   // For debug
   std::ofstream test("/home/anh/Work/autoware/test.txt", std::ios::app);
 

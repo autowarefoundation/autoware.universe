@@ -61,7 +61,9 @@ private:
   void publish_partial_pcd_map();
 
   // Looking for PCDs in the vicinity of the specified location
-  void query_pcds(double px, double py, double radius, std::unordered_set<std::string>& maps_to_add, std::unordered_set<std::string>& maps_to_remove);
+  void query_pcds(
+    double px, double py, double radius, std::unordered_set<std::string> & maps_to_add,
+    std::unordered_set<std::string> & maps_to_remove);
   // Compute distance between an origin and a pcd segment
   double dist(double px, double py, int idx, int idy);
 

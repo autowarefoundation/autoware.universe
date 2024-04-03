@@ -161,13 +161,13 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
     if (!rclcpp::ok()) {
       return false;  // No update
     }
-    
+
     auto cur = std::chrono::system_clock::now();
 
     // Report an error if wait for too long
-    if (cur - start >= timeout)
-    {
-      RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, "Waited for incoming PCDs for too long. Abandon NDT update.");
+    if (cur - start >= timeout) {
+      RCLCPP_ERROR_STREAM_THROTTLE(
+        logger_, *clock_, 1000, "Waited for incoming PCDs for too long. Abandon NDT update.");
       return false;
     }
 
@@ -178,19 +178,16 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   auto & map_ids_to_remove = result.get()->ids_to_remove;
 
   // Check if there are any maps in the pcds_to_add not coming
-  for (auto& name : pcds_to_add)
-  {
-    if (maps_to_add.find(name) == maps_to_add.end())
-    {
+  for (auto & name : pcds_to_add) {
+    if (maps_to_add.find(name) == maps_to_add.end()) {
       RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, "File %s not coming.", name.c_str());
     }
   }
 
-  for (auto& name : pcds_to_remove)
-  {
-    if (map_ids_to_remove.find(name) == map_ids_to_remove.end())
-    {
-      RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, "File %s should be removed but it was not.", name.c_str());
+  for (auto & name : pcds_to_remove) {
+    if (map_ids_to_remove.find(name) == map_ids_to_remove.end()) {
+      RCLCPP_ERROR_STREAM_THROTTLE(
+        logger_, *clock_, 1000, "File %s should be removed but it was not.", name.c_str());
     }
   }
 
@@ -237,7 +234,9 @@ void MapUpdateModule::publish_partial_pcd_map()
   loaded_pcd_pub_->publish(map_msg);
 }
 
-void MapUpdateModuble::query_pcds(double px, double py, double radius, std::unordered_set<std::string>& maps_to_add, std::unordered_set<std::string>& maps_to_remove)
+void MapUpdateModuble::query_pcds(
+  double px, double py, double radius, std::unordered_set<std::string> & maps_to_add,
+  std::unordered_set<std::string> & maps_to_remove)
 {
   int lower_x = static_cast<int>(floor((px - radius) / pcd_res_x_));
   int lower_y = static_cast<int>(floor((py - radius) / pcd_res_y_));
@@ -246,35 +245,27 @@ void MapUpdateModuble::query_pcds(double px, double py, double radius, std::unor
   double rel_px = px - pcd_lower_x_, rel_py = py - pcd_lower_y_;
   std::unordered_set<std::string> nn_pcds;
 
-  for (int idx = lower_x; idx < upper_x; ++idx)
-  {
-    for (int idy = lower_y; idy < upper_y; ++idy)
-    {
+  for (int idx = lower_x; idx < upper_x; ++idx) {
+    for (int idy = lower_y; idy < upper_y; ++idy) {
       // Skip if the pcd file is not within the query radius
-      if (dist(rel_px, rel_py, idx, idy) > radius)
-      {
+      if (dist(rel_px, rel_py, idx, idy) > radius) {
         continue;
       }
 
       // Generate name of the PCD file
       std::string name = pcd_tag_ + "_" + std::to_string(x) + "_" + std::to_string(y) + ".pcd";
 
-      if (cur_pcds_.find(name) == cur_pcds_.end())
-      {
+      if (cur_pcds_.find(name) == cur_pcds_.end()) {
         maps_to_add.insert(name);
-      }
-      else
-      {
+      } else {
         nn_pcds.insert(name);
       }
     }
   }
 
   // Compare with @cur_pcds_ to find out which pcds to remove
-  for (auto& name : cur_pcds_)
-  {
-    if (nn_pcds.find(name) == nn_pcds.end())
-    {
+  for (auto & name : cur_pcds_) {
+    if (nn_pcds.find(name) == nn_pcds.end()) {
       map_ids_to_remove.insert(name);
     }
   }
