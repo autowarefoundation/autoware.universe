@@ -1,17 +1,17 @@
 /**:
   ros__parameters:
-    map_layer_name: "elevation"
-    param_file_path: "path_default"
-    map_frame: "map"
-    use_sequential_load: true
-    sequential_map_load_num: 1
-    use_inpaint: true
-    inpaint_radius: 0.3
-    use_elevation_map_cloud_publisher: false
-    elevation_map_directory: "path_default"
-    use_lane_filter: false
-    lane_margin: 0.0
-    num_processing_threads: 12
+    node:
+      map_layer_name: "elevation"
+      param_file_path: "path_default"
+      map_frame: "map"
+      use_sequential_load: true
+      sequential_map_load_num: 1
+      use_inpaint: true
+      inpaint_radius: 0.3
+      use_elevation_map_cloud_publisher: false
+      elevation_map_directory: "path_default"
+      use_lane_filter: false
+      lane_margin: 0.0
     cloud_transform:
       translation:
         x: 0.0
@@ -36,6 +36,7 @@
         y: 0.02
         z: 0.02
     grid_map:
+      num_processing_threads: 12
       min_num_points_per_cell: 3
       resolution: 0.3
       height_type: 1
