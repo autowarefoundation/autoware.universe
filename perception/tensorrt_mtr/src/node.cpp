@@ -16,6 +16,10 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
+#include <tf2/utils.h>
+
+#include <utility>
+
 namespace
 {
 /**
@@ -92,6 +96,29 @@ void insertPoints(const std::vector<LanePoint> & src, std::vector<LanePoint> dst
 {
   dst.insert(dst.end(), src.cbegin(), src.cend());
 }
+
+AgentState trackedObjectToAgentState(const TrackedObject & object, const bool is_valid)
+{
+  const auto & pose = object.kinematics.pose_with_covariance.pose;
+  const auto & twist = object.kinematics.twist_with_covariance.twist;
+  const auto & accel = object.kinematics.accel_with_covariance.accel;
+  const auto & dimensions = object.shape.dimensions;
+  const auto yaw = tf2::getYaw(pose.orientation);
+  const auto valid = is_valid ? 1.0f : 0.0f;
+
+  return {pose.position.x,
+          pose.position.y,
+          pose.position.z,
+          dimensions.x,
+          dimensions.y,
+          dimensions.z,
+          yaw,
+          twist.linear.x,
+          twist.linear.y,
+          accel.linear.x,
+          accel.linear.y,
+          valid};
+}
 }  // namespace
 
 namespace trt_mtr
@@ -105,6 +132,20 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
 void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
 {
   // TODO(ktro2828)
+  if (!lanelet_map_ptr_ || !polyline_ptr_) {
+    return;
+  }
+
+  const auto current_time = rclcpp::Time(object_msg->header.stamp).seconds();
+  removeAncientAgentHistory(current_time, object_msg);
+  updateAgentHistory(current_time, object_msg);
+
+  std::vector<AgentHistory> histories;
+  histories.reserve(agent_history_map_.size());
+  for (const auto & [_, history] : agent_history_map_) {
+    histories.emplace_back(history);
+  }
+  // TODO(ktro2828): set AgentData
 }
 
 void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
@@ -181,12 +222,56 @@ bool MTRNode::convertLaneletToPolyline()
     return false;
   } else {
     // TODO(ktro2828): load from model config
-    polylines_ = PolylineData(all_points, 798, 20, 1.0f);
+    polyline_ptr_ = std::make_shared<PolylineData>(all_points, 798, 20, 1.0f);
     return true;
   }
 }
 
-void MTRNode::updateAgentHistory(const float current_time)
+void MTRNode::removeAncientAgentHistory(
+  const float current_time, const TrackedObjects::ConstSharedPtr objects_msg)
+{
+  // TODO(ktro2828): use ego info
+  for (const auto & object : objects_msg->objects) {
+    const auto & object_id = tier4_autoware_utils::toHexString(object.object_id);
+    if (agent_history_map_.count(object) == 0) {
+      continue;
+    }
+
+    const auto & history = agent_history_map_.at(object_id);
+    if (history.is_ancient(current_time, 1.0)) {  // TODO(ktro2828): use parameter
+      agent_history_map_.erase(object_id);
+    }
+  }
+}
+
+void MTRNode::updateAgentHistory(
+  const float current_time, const TrackedObjects::ConstSharedPtr objects_msg)
+{
+  // TODO(ktro2828): use ego info
+  std::vector<std::string> observed_ids;
+  for (const auto & object : objects_msg->objects) {
+    const auto & object_id = tier4_autoware_utils::toHexString(object.object_id);
+    observed_ids.emplace_back(object_id);
+    state = trackedObjectToAgentState(object, true);
+    if (agent_history_map_.count(object_id) == 0) {
+      history = AgentHistory(object_id, 10);
+      history.update(current_time, state);
+      agent_history_map_.emplace(object_id, history);
+    } else {
+      agent_history_map_.at(object_id).update(current_time, state);
+    }
+  }
+
+  // update unobserved histories with empty
+  for (auto & [object_id, history] : agent_history_map_) {
+    if (std::find(observed_ids.cbegin(), observed_ids.cend(), object_id) != observed_ids.cend()) {
+      continue;
+    }
+    history.update_empty();
+  }
+}
+
+bool MTRNode::predictFuture()
 {
   // TODO(ktro2828)
 }
