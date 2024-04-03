@@ -10,7 +10,7 @@
           "description": "Whether to perform downsampling or not",
           "default": false
         },
-        "voxel_size": { "$ref": "sub/downsampling_voxel_size.json#/definitions/voxel_size" }
+        "voxel_size": { "$ref": "downsampling_voxel_size.json#/definitions/voxel_size" }
       },
       "required": ["is_downsample_cloud", "voxel_size"],
       "additionalProperties": false
