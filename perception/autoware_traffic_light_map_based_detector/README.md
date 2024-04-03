@@ -9,7 +9,7 @@ Calibration and vibration errors can be entered as parameters, and the size of t
 ![traffic_light_map_based_detector_result](./docs/traffic_light_map_based_detector_result.svg)
 
 If the node receives route information, it only looks at traffic lights on that route.
-If the node receives no route information, it looks at a radius of max_detection_range and the angle between the traffic light and the camera is less than traffic_light_max_angle_range.
+If the node receives no route information, it looks at a radius of `max_detection_range` and the angle between the traffic light and the camera is less than `traffic_light_max_angle_range`.
 
 ## Input topics
 
