@@ -308,7 +308,6 @@ std::string MemMonitor::executeEdacUtil(std::string & output, std::string & pipe
 
 void MemMonitor::onTimer()
 {
-  
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   // Check Memory Usage
@@ -345,7 +344,7 @@ void MemMonitor::onTimer()
   }
 
   // Check ECC Error
-  if (use_edac_util_){
+  if (use_edac_util_) {
     stop_watch.tic("ecc_execution_time");
 
     std::string error_str;

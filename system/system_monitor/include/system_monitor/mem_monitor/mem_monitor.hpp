@@ -107,14 +107,15 @@ protected:
   int usage_timeout_;      //!< @brief Timeout duration for executing readUsage
   int ecc_timeout_;        //!< @brief Timeout duration for executing edac-util command
 
-  rclcpp::TimerBase::SharedPtr timer_;               //!< @brief Timer to execute readUsage and edac-utils command
+  rclcpp::TimerBase::SharedPtr
+    timer_;  //!< @brief Timer to execute readUsage and edac-utils command
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
 
   rclcpp::TimerBase::SharedPtr timeout_timer_;  //!< @brief Timer for executing readUsage
-  std::mutex usage_mutex_;                   //!< @brief Mutex for output from /proc/meminfo
-  std::string usage_error_str_;              //!< @brief Error string
-  std::map<std::string, size_t> usage_map_;  //!< @brief Output of /proc/meminfo
-  double usage_elapsed_ms_;                  //!< @brief Execution time of readUsage
+  std::mutex usage_mutex_;                      //!< @brief Mutex for output from /proc/meminfo
+  std::string usage_error_str_;                 //!< @brief Error string
+  std::map<std::string, size_t> usage_map_;     //!< @brief Output of /proc/meminfo
+  double usage_elapsed_ms_;                     //!< @brief Execution time of readUsage
   std::mutex usage_timeout_mutex_;  //!< @brief Mutex regarding timeout for executing readUsage
   bool usage_timeout_expired_;      //!< @brief Timeout for executing readUsage has expired or not
 
@@ -126,7 +127,7 @@ protected:
   std::mutex
     ecc_timeout_mutex_;       //!< @brief Mutex regarding timeout for executing edac-util command
   bool ecc_timeout_expired_;  //!< @brief Timeout for executing edac-util command has expired or not
-  bool use_edac_util_;  //!< @brief Available to use edac-util command or not
+  bool use_edac_util_;        //!< @brief Available to use edac-util command or not
 
   /**
    * @brief Memory usage status messages
