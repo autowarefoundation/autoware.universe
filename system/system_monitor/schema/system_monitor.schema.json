@@ -8,12 +8,12 @@
       "properties": {
         "usage_warn": {
           "type": "number",
-          "default": 0.90,
+          "default": 0.9,
           "description": "Generates warning when CPU usage reaches a specified value or higher and last for usage_warn_count counts."
         },
         "usage_error": {
           "type": "number",
-          "default": 1.00,
+          "default": 1.0,
           "description": "Generates error when CPU usage reaches a specified value or higher and last for usage_error_count counts."
         },
         "usage_warn_count": {
@@ -56,9 +56,7 @@
           "description": "Generates warning when available memory size is less than the specified value."
         }
       },
-      "required": [
-        "available_size"
-      ],
+      "required": ["available_size"],
       "additionalProperties": false
     },
     "net_monitor": {
@@ -124,11 +122,7 @@
           "description": "Timeout for NTP query."
         }
       },
-      "required": [
-        "offset_warn",
-        "offset_error",
-        "timeout"
-      ],
+      "required": ["offset_warn", "offset_error", "timeout"],
       "additionalProperties": false
     },
     "process_monitor": {
@@ -140,9 +134,7 @@
           "description": "The number of processes to generate High-load Proc[0-9] and High-mem Proc[0-9]."
         }
       },
-      "required": [
-        "num_of_procs"
-      ],
+      "required": ["num_of_procs"],
       "additionalProperties": false
     },
     "hdd_monitor": {
@@ -262,15 +254,11 @@
               "additionalProperties": false
             }
           },
-          "required": [
-            "disk0"
-          ],
+          "required": ["disk0"],
           "additionalProperties": false
         }
       },
-      "required": [
-        "disks"
-      ],
+      "required": ["disks"],
       "additionalProperties": false
     },
     "gpu_monitor": {
@@ -288,12 +276,12 @@
         },
         "gpu_usage_warn": {
           "type": "number",
-          "default": 0.90,
+          "default": 0.9,
           "description": "Generates warning when GPU usage reaches a specified value or higher."
         },
         "gpu_usage_error": {
           "type": "number",
-          "default": 1.00,
+          "default": 1.0,
           "description": "Generates error when GPU usage reaches a specified value or higher."
         },
         "memory_usage_warn": {
@@ -322,12 +310,12 @@
       "properties": {
         "cmos_battery_warn": {
           "type": "number",
-          "default": 2.90,
+          "default": 2.9,
           "description": "Generates warning when voltage of CMOS Battery is lower."
         },
         "cmos_battery_error": {
           "type": "number",
-          "default": 2.70,
+          "default": 2.7,
           "description": "Generates error when voltage of CMOS Battery is lower."
         },
         "cmos_battery_label": {
@@ -336,11 +324,7 @@
           "description": "voltage string in sensors command outputs. if empty no voltage will be checked."
         }
       },
-      "required": [
-        "cmos_battery_warn",
-        "cmos_battery_error",
-        "cmos_battery_label"
-      ],
+      "required": ["cmos_battery_warn", "cmos_battery_error", "cmos_battery_label"],
       "additionalProperties": false
     }
   },

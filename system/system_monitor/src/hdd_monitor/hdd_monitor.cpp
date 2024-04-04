@@ -520,14 +520,14 @@ void HddMonitor::getHddParams()
     param.write_data_rate_warn_ = declare_parameter<float>(prefix + ".write_data_rate_warn");
     param.read_iops_warn_ = declare_parameter<float>(prefix + ".read_iops_warn");
     param.write_iops_warn_ = declare_parameter<float>(prefix + ".write_iops_warn");
-    param.temp_attribute_id_ =
-      static_cast<uint8_t>(std::stoi(declare_parameter<std::string>(prefix + ".temp_attribute_id"), nullptr, 16));
-    param.power_on_hours_attribute_id_ =
-      static_cast<uint8_t>(std::stoi(declare_parameter<std::string>(prefix + ".power_on_hours_attribute_id"), nullptr, 16));
-    param.total_data_written_attribute_id_ = static_cast<uint8_t>(
-      std::stoi(declare_parameter<std::string>(prefix + ".total_data_written_attribute_id"), nullptr, 16));
-    param.recovered_error_attribute_id_ =
-      static_cast<uint8_t>(std::stoi(declare_parameter<std::string>(prefix + ".recovered_error_attribute_id"), nullptr, 16));
+    param.temp_attribute_id_ = static_cast<uint8_t>(
+      std::stoi(declare_parameter<std::string>(prefix + ".temp_attribute_id"), nullptr, 16));
+    param.power_on_hours_attribute_id_ = static_cast<uint8_t>(std::stoi(
+      declare_parameter<std::string>(prefix + ".power_on_hours_attribute_id"), nullptr, 16));
+    param.total_data_written_attribute_id_ = static_cast<uint8_t>(std::stoi(
+      declare_parameter<std::string>(prefix + ".total_data_written_attribute_id"), nullptr, 16));
+    param.recovered_error_attribute_id_ = static_cast<uint8_t>(std::stoi(
+      declare_parameter<std::string>(prefix + ".recovered_error_attribute_id"), nullptr, 16));
 
     hdd_params_[mount_point] = param;
 
