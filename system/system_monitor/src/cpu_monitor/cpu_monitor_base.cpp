@@ -51,7 +51,6 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   usage_error_count_(declare_parameter<int>("usage_error_count", 2)),
   usage_avg_(declare_parameter<bool>("usage_avg", true))
 {
-
   using namespace std::literals::chrono_literals;
 
   gethostname(hostname_, sizeof(hostname_));
@@ -75,20 +74,19 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   durable_qos.transient_local();
   pub_cpu_usage_ =
     this->create_publisher<tier4_external_api_msgs::msg::CpuUsage>("~/cpu_usage", durable_qos);
-  
+
   // timer
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   temp_timer_ = rclcpp::create_timer(
     this, get_clock(), 1s, std::bind(&MemMonitor::onTempTimer, this), timer_callback_group_);
   usage_timer_ = rclcpp::create_timer(
-  this, get_clock(), 1s, std::bind(&MemMonitor::onUsageTimer, this), timer_callback_group_);
+    this, get_clock(), 1s, std::bind(&MemMonitor::onUsageTimer, this), timer_callback_group_);
   load_timer_ = rclcpp::create_timer(
     this, get_clock(), 1s, std::bind(&MemMonitor::onLoadTimer, this), timer_callback_group_);
   throt_timer_ = rclcpp::create_timer(
     this, get_clock(), 1s, std::bind(&MemMonitor::onThrottlingTimer, this), timer_callback_group_);
   freq_timer_ = rclcpp::create_timer(
     this, get_clock(), 1s, std::bind(&MemMonitor::onFrequencyTimer, this), timer_callback_group_);
-
 }
 
 void CPUMonitorBase::update()
