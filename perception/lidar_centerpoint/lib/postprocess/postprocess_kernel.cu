@@ -126,9 +126,12 @@ __global__ void generateBoxes3D_kernel(
     det_boxes3d[idx].length_variance = expf(l_variance);
     det_boxes3d[idx].width_variance = expf(w_variance);
     det_boxes3d[idx].height_variance = expf(h_variance);
-    det_boxes3d[idx].yaw_variance = (powf(yaw_cos, 2) * expf(yaw_sin_log_variance) +
-                                     powf(yaw_sin, 2) * expf(yaw_cos_log_variance)) /
-                                    (powf((powf(yaw_sin, 2) + powf(yaw_cos, 2)), 2));
+    const float yaw_sin_sq = yaw_sin * yaw_sin;
+    const float yaw_cos_sq = yaw_cos * yaw_cos;
+    const float yaw_norm_sq = (yaw_sin_sq + yaw_cos_sq) * (yaw_sin_sq + yaw_cos_sq);
+    det_boxes3d[idx].yaw_variance =
+      (yaw_cos_sq * expf(yaw_sin_log_variance) + yaw_sin_sq * expf(yaw_cos_log_variance)) /
+      yaw_norm_sq;
     det_boxes3d[idx].vel_x_variance = expf(vel_x_variance);
     det_boxes3d[idx].vel_y_variance = expf(vel_y_variance);
   }
