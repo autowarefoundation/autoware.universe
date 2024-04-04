@@ -30,13 +30,13 @@ EmergencyGoalManager::EmergencyGoalManager() : Node("emergency_goal_manager")
   // Client
   client_set_mrm_route_points_callback_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_set_mrm_route_points_ = create_client<SetRoutePoints>(
-    "/planning/mission_planning/mission_planner/srv/set_mrm_route",
+  client_set_mrm_route_points_ = create_client<SetWaypointRoute>(
+    "/planning/mission_planning/route_selector/mrm/set_waypoint_route",
     rmw_qos_profile_services_default, client_set_mrm_route_points_callback_group_);
   client_clear_mrm_route_callback_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_clear_mrm_route_ = create_client<ClearRoute>(
-    "/planning/mission_planning/mission_planner/srv/clear_mrm_route",
+    "/planning/mission_planning/route_selector/mrm/clear_route",
     rmw_qos_profile_services_default, client_clear_mrm_route_callback_group_);
 
   // Initialize
@@ -76,10 +76,10 @@ void EmergencyGoalManager::onEmergencyGoalsClearCommand(
 
 void EmergencyGoalManager::callSetMrmRoutePoints()
 {
-  auto request = std::make_shared<SetRoutePoints::Request>();
+  auto request = std::make_shared<SetWaypointRoute::Request>();
   request->header.frame_id = "map";
   request->header.stamp = this->now();
-  request->option.allow_goal_modification = true;
+  request->allow_modification = true;
 
   while (!emergency_goals_map_.empty()) {
     // TODO(Makoto Kurihara): set goals with the highest priority
@@ -92,7 +92,7 @@ void EmergencyGoalManager::callSetMrmRoutePoints()
       continue;
     }
 
-    request->goal = goal_queue.front();
+    request->goal_pose = goal_queue.front();
     goal_queue.pop();
 
     auto future = client_set_mrm_route_points_->async_send_request(request);

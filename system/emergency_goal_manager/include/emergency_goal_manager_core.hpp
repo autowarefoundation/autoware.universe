@@ -17,10 +17,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
-#include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <tier4_planning_msgs/srv/clear_route.hpp>
+#include <tier4_planning_msgs/srv/set_waypoint_route.hpp>
 #include <tier4_system_msgs/msg/emergency_goals_clear_command.hpp>
 #include <tier4_system_msgs/msg/emergency_goals_stamped.hpp>
 
@@ -36,8 +36,8 @@ public:
   EmergencyGoalManager();
 
 private:
-  using SetRoutePoints = autoware_adapi_v1_msgs::srv::SetRoutePoints;
-  using ClearRoute = autoware_adapi_v1_msgs::srv::ClearRoute;
+  using SetWaypointRoute = tier4_planning_msgs::srv::SetWaypointRoute;
+  using ClearRoute = tier4_planning_msgs::srv::ClearRoute;
 
   // Subscriber
   rclcpp::Subscription<tier4_system_msgs::msg::EmergencyGoalsStamped>::SharedPtr
@@ -51,7 +51,7 @@ private:
 
   // Client
   rclcpp::CallbackGroup::SharedPtr client_set_mrm_route_points_callback_group_;
-  rclcpp::Client<SetRoutePoints>::SharedPtr client_set_mrm_route_points_;
+  rclcpp::Client<SetWaypointRoute>::SharedPtr client_set_mrm_route_points_;
   rclcpp::CallbackGroup::SharedPtr client_clear_mrm_route_callback_group_;
   rclcpp::Client<ClearRoute>::SharedPtr client_clear_mrm_route_;
 
