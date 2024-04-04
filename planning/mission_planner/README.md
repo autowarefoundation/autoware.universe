@@ -173,31 +173,17 @@ Reroute here means changing the route while driving. Unlike route setting, it is
 
 ![rerouting_safety](./media/rerouting_safety.svg)
 
-And there are three use cases that require reroute.
+And there are three use cases that require reroute. It is used when changing the destination while driving or when driving a divided loop route. When the vehicle is driving on a MRM route, normal rerouting by this interface is not allowed.
 
-- Route change API
+- Route change from API
 - Emergency route
 - Goal modification
 
-![rerouting_interface](./media/rerouting_interface.svg)
-
-#### Route change API
-
-- `change_route_points`
-- `change_route`
-
-This is route change that the application makes using the API. It is used when changing the destination while driving or when driving a divided loop route. When the vehicle is driving on a MRM route, normal rerouting by this interface is not allowed.
-
 #### Emergency route
 
-- `set_mrm_route`
-- `clear_mrm_route`
-
-This interface for the MRM that pulls over the road shoulder. It has to be stopped as soon as possible, so a reroute is required. The MRM route has priority over the normal route. And if MRM route is cleared, try to return to the normal route also with a rerouting safety check.
+The interface for the MRM that pulls over the road shoulder. It has to be stopped as soon as possible, so a reroute is required. The MRM route has priority over the normal route. And if MRM route is cleared, try to return to the normal route also with a rerouting safety check.
 
 ##### Goal modification
-
-- `modified_goal`
 
 This is a goal change to pull over, avoid parked vehicles, and so on by a planning component. If the modified goal is outside the calculated route, a reroute is required. This goal modification is executed by checking the local environment and path safety as the vehicle actually approaches the destination. And this modification is allowed for both normal_route and mrm_route.
 The new route generated here is sent to the AD API so that it can also be referenced by the application. Note, however, that the specifications here are subject to change in the future.
