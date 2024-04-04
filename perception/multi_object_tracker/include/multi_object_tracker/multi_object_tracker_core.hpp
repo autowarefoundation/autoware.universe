@@ -76,35 +76,12 @@ private:
   // internal states
   std::string world_frame_id_;  // tracking frame
   std::unique_ptr<DataAssociation> data_association_;
-  // std::list<std::shared_ptr<Tracker>> list_tracker_;
-  // std::map<std::uint8_t, std::string> tracker_map_;
   std::unique_ptr<TrackerProcessor> processor_;
 
   // callback functions
   void onMeasurement(
     const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
-
-  // // tracker processes
-  // void predict(const rclcpp::Time & time, std::list<std::shared_ptr<Tracker>> & list_tracker)
-  // const; void update(
-  //   const autoware_auto_perception_msgs::msg::DetectedObjects & transformed_objects,
-  //   const geometry_msgs::msg::Transform & self_transform,
-  //   const std::unordered_map<int, int> & direct_assignment,
-  //   std::list<std::shared_ptr<Tracker>> & list_tracker) const;
-  // void spawn(
-  //   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
-  //   const geometry_msgs::msg::Transform & self_transform,
-  //   const std::unordered_map<int, int> & reverse_assignment,
-  //   std::list<std::shared_ptr<Tracker>> & list_tracker) const;
-  // std::shared_ptr<Tracker> createNewTracker(
-  //   const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-  //   const geometry_msgs::msg::Transform & self_transform) const;
-
-  // void checkTrackerLifeCycle(
-  //   const rclcpp::Time & time, std::list<std::shared_ptr<Tracker>> & list_tracker) const;
-  // void sanitizeTracker(
-  //   const rclcpp::Time & time, std::list<std::shared_ptr<Tracker>> & list_tracker) const;
 
   // publish processes
   void checkAndPublish(const rclcpp::Time & time);
