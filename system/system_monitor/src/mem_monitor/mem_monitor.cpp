@@ -39,7 +39,8 @@ MemMonitor::MemMonitor(const rclcpp::NodeOptions & options)
   usage_timeout_(declare_parameter<int>("usage_timeout", 5)),
   usage_timeout_expired_(false),
   ecc_timeout_(declare_parameter<int>("ecc_timeout", 5)),
-  ecc_timeout_expired_(false)
+  ecc_timeout_expired_(false),
+  use_edac_util_(false)
 {
   using namespace std::literals::chrono_literals;
 
@@ -49,14 +50,13 @@ MemMonitor::MemMonitor(const rclcpp::NodeOptions & options)
 
   // Start timer to execute checkUsage and checkEcc
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  usage_timer_ = rclcpp::create_timer(
-    this, get_clock(), 1s, std::bind(&MemMonitor::onUsageTimer, this), timer_callback_group_);
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 1s, std::bind(&MemMonitor::onTimer, this), timer_callback_group_);
 
   // Enable ECC error detection if edac-utils package is installed
   if (!bp::search_path("edac-util").empty()) {
     updater_.add("Memory ECC", this, &MemMonitor::checkEcc);
-    ecc_timer_ = rclcpp::create_timer(
-      this, get_clock(), 1s, std::bind(&MemMonitor::onEccTimer, this), timer_callback_group_);
+    use_edac_util_ = true;
   }
 }
 
@@ -306,37 +306,76 @@ std::string MemMonitor::executeEdacUtil(std::string & output, std::string & pipe
   return result;
 }
 
-void MemMonitor::onUsageTimer()
+void MemMonitor::onTimer()
 {
-  // Start to measure elapsed time
+  
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
 
-  std::string error_str;
-  std::map<std::string, size_t> map;
-
-  // Start timeout timer for executing readUsage
+  // Check Memory Usage
   {
-    std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-    usage_timeout_expired_ = false;
+    // Start to measure elapsed time
+    stop_watch.tic("usage_execution_time");
+
+    std::string error_str;
+    std::map<std::string, size_t> map;
+
+    // Start timeout timer for executing readUsage
+    {
+      std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
+      usage_timeout_expired_ = false;
+    }
+    timeout_timer_ = rclcpp::create_timer(
+      this, get_clock(), std::chrono::seconds(usage_timeout_),
+      std::bind(&MemMonitor::onUsageTimeout, this));
+
+    error_str = readUsage(map);
+
+    // Returning from readUsage, stop timeout timer
+    timeout_timer_->cancel();
+
+    const double elapsed_ms = stop_watch.toc("usage_execution_time");
+
+    // thread-safe copy
+    {
+      std::lock_guard<std::mutex> lock(usage_mutex_);
+      usage_error_str_ = error_str;
+      usage_map_ = map;
+      usage_elapsed_ms_ = elapsed_ms;
+    }
   }
-  usage_timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(usage_timeout_),
-    std::bind(&MemMonitor::onUsageTimeout, this));
 
-  error_str = readUsage(map);
+  // Check ECC Error
+  if (use_edac_util_){
+    stop_watch.tic("ecc_execution_time");
 
-  // Returning from readUsage, stop timeout timer
-  usage_timeout_timer_->cancel();
+    std::string error_str;
+    std::string pipe2_error_str;
+    std::string output;
 
-  const double elapsed_ms = stop_watch.toc("execution_time");
+    // Start timeout timer for executing edac-util command
+    {
+      std::lock_guard<std::mutex> lock(ecc_timeout_mutex_);
+      ecc_timeout_expired_ = false;
+    }
+    timeout_timer_ = rclcpp::create_timer(
+      this, get_clock(), std::chrono::seconds(ecc_timeout_),
+      std::bind(&MemMonitor::onEccTimeout, this));
 
-  // thread-safe copy
-  {
-    std::lock_guard<std::mutex> lock(usage_mutex_);
-    usage_error_str_ = error_str;
-    usage_map_ = map;
-    usage_elapsed_ms_ = elapsed_ms;
+    error_str = executeEdacUtil(output, pipe2_error_str);
+
+    // Returning from edac-util command, stop timeout timer
+    timeout_timer_->cancel();
+
+    const double elapsed_ms = stop_watch.toc("ecc_execution_time");
+
+    // thread-safe copy
+    {
+      std::lock_guard<std::mutex> lock(ecc_mutex_);
+      ecc_error_str_ = error_str;
+      ecc_pipe2_error_str_ = pipe2_error_str;
+      ecc_output_ = output;
+      ecc_elapsed_ms_ = elapsed_ms;
+    }
   }
 }
 
@@ -345,42 +384,6 @@ void MemMonitor::onUsageTimeout()
   RCLCPP_WARN(get_logger(), "Read Memory Usage Timeout occurred.");
   std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
   usage_timeout_expired_ = true;
-}
-
-void MemMonitor::onEccTimer()
-{
-  // Start to measure elapsed time
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
-
-  std::string error_str;
-  std::string pipe2_error_str;
-  std::string output;
-
-  // Start timeout timer for executing edac-util command
-  {
-    std::lock_guard<std::mutex> lock(ecc_timeout_mutex_);
-    ecc_timeout_expired_ = false;
-  }
-  ecc_timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(ecc_timeout_),
-    std::bind(&MemMonitor::onEccTimeout, this));
-
-  error_str = executeEdacUtil(output, pipe2_error_str);
-
-  // Returning from edac-util command, stop timeout timer
-  ecc_timeout_timer_->cancel();
-
-  const double elapsed_ms = stop_watch.toc("execution_time");
-
-  // thread-safe copy
-  {
-    std::lock_guard<std::mutex> lock(ecc_mutex_);
-    ecc_error_str_ = error_str;
-    ecc_pipe2_error_str_ = pipe2_error_str;
-    ecc_output_ = output;
-    ecc_elapsed_ms_ = elapsed_ms;
-  }
 }
 
 void MemMonitor::onEccTimeout()
