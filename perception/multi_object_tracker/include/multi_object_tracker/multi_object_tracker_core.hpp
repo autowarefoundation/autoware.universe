@@ -46,6 +46,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 class MultiObjectTracker : public rclcpp::Node
@@ -54,42 +55,60 @@ public:
   explicit MultiObjectTracker(const rclcpp::NodeOptions & node_options);
 
 private:
+  // ROS interface
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
     tracked_objects_pub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
+  // debugger
+  std::unique_ptr<TrackerDebugger> debugger_;
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // publish timer
   rclcpp::TimerBase::SharedPtr publish_timer_;
   rclcpp::Time last_published_time_;
   double publisher_period_;
 
-  // debugger class
-  std::unique_ptr<TrackerDebugger> debugger_;
-
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
-
+  // internal states
+  std::string world_frame_id_;  // tracking frame
+  std::list<std::shared_ptr<Tracker>> list_tracker_;
+  std::unique_ptr<DataAssociation> data_association_;
   std::map<std::uint8_t, std::string> tracker_map_;
 
-  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
-
+  // callback functions
   void onMeasurement(
     const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
 
-  std::string world_frame_id_;  // tracking frame
-  std::list<std::shared_ptr<Tracker>> list_tracker_;
-  std::unique_ptr<DataAssociation> data_association_;
+  // tracker processes
+  void associate(
+    const rclcpp::Time & time,
+    const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+    std::unordered_map<int, int> & direct_assignment,
+    std::unordered_map<int, int> & reverse_assignment);
+  void update(
+    const rclcpp::Time & time,
+    const autoware_auto_perception_msgs::msg::DetectedObjects & transformed_objects,
+    const geometry_msgs::msg::Transform & self_transform,
+    const std::unordered_map<int, int> & direct_assignment);
+  void spawn(
+    const rclcpp::Time & time,
+    const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+    const geometry_msgs::msg::Transform & self_transform,
+    const std::unordered_map<int, int> & reverse_assignment);
+  std::shared_ptr<Tracker> createNewTracker(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const geometry_msgs::msg::Transform & self_transform) const;
 
   void checkTrackerLifeCycle(
     std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time);
   void sanitizeTracker(
     std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time);
-  std::shared_ptr<Tracker> createNewTracker(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-    const geometry_msgs::msg::Transform & self_transform) const;
 
+  // publish processes
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;

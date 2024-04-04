@@ -68,9 +68,9 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
-  last_published_time_(this->now()),
   tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_)
+  tf_listener_(tf_buffer_),
+  last_published_time_(this->now())
 {
   // glog for debug
   google::InitGoogleLogging("multi_object_tracker");
@@ -88,9 +88,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
 
-  // Debug publishers
-  debugger_ = std::make_unique<TrackerDebugger>(*this);
-
+  // Create tf timer
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
     this->get_node_base_interface(), this->get_node_timers_interface());
   tf_buffer_.setCreateTimerInterface(cti);
@@ -106,6 +104,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
   }
 
+  // Data association initialization
   const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
   const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
 
@@ -115,7 +114,6 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   const auto max_rad_matrix = this->declare_parameter<std::vector<double>>("max_rad_matrix");
   const auto min_iou_matrix = this->declare_parameter<std::vector<double>>("min_iou_matrix");
 
-  // tracker map
   tracker_map_.insert(
     std::make_pair(Label::CAR, this->declare_parameter<std::string>("car_tracker")));
   tracker_map_.insert(
@@ -134,6 +132,9 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   data_association_ = std::make_unique<DataAssociation>(
     can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix, max_rad_matrix,
     min_iou_matrix);
+
+  // Debugger
+  debugger_ = std::make_unique<TrackerDebugger>(*this);
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
@@ -151,7 +152,6 @@ void MultiObjectTracker::onMeasurement(
   if (!self_transform) {
     return;
   }
-
   /* transform to world coordinate */
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
@@ -165,38 +165,21 @@ void MultiObjectTracker::onMeasurement(
 
   /* global nearest neighbor */
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
-  Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
-    transformed_objects, list_tracker_);  // row : tracker, col : measurement
-  data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
 
-  /* tracker measurement update */
-  int tracker_idx = 0;
-  for (auto tracker_itr = list_tracker_.begin(); tracker_itr != list_tracker_.end();
-       ++tracker_itr, ++tracker_idx) {
-    if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
-      (*(tracker_itr))
-        ->updateWithMeasurement(
-          transformed_objects.objects.at(direct_assignment.find(tracker_idx)->second),
-          measurement_time, *self_transform);
-    } else {  // not found
-      (*(tracker_itr))->updateWithoutMeasurement();
-    }
-  }
+  ////// Association and update
+  /* association */
+  associate(measurement_time, transformed_objects, direct_assignment, reverse_assignment);
+  /* tracker update */
+  update(measurement_time, transformed_objects, *self_transform, direct_assignment);
 
-  /* life cycle check */
+  ////// Tracker management
+  // if the tracker is old, delete it
   checkTrackerLifeCycle(list_tracker_, measurement_time);
-  /* sanitize trackers */
+  // if the tracker is too close, delete it
   sanitizeTracker(list_tracker_, measurement_time);
 
-  /* new tracker */
-  for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
-    if (reverse_assignment.find(i) != reverse_assignment.end()) {  // found
-      continue;
-    }
-    std::shared_ptr<Tracker> tracker =
-      createNewTracker(transformed_objects.objects.at(i), measurement_time, *self_transform);
-    if (tracker) list_tracker_.push_back(tracker);
-  }
+  ////// Spawn new tracker
+  spawn(measurement_time, transformed_objects, *self_transform, reverse_assignment);
 
   // debugger time
   debugger_->endMeasurementTime(this->now());
@@ -212,33 +195,6 @@ void MultiObjectTracker::onMeasurement(
       checkAndPublish(this->now());
     }
   }
-}
-
-std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform) const
-{
-  const std::uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
-  if (tracker_map_.count(label) != 0) {
-    const auto tracker = tracker_map_.at(label);
-
-    if (tracker == "bicycle_tracker") {
-      return std::make_shared<BicycleTracker>(time, object, self_transform);
-    } else if (tracker == "big_vehicle_tracker") {
-      return std::make_shared<BigVehicleTracker>(time, object, self_transform);
-    } else if (tracker == "multi_vehicle_tracker") {
-      return std::make_shared<MultipleVehicleTracker>(time, object, self_transform);
-    } else if (tracker == "normal_vehicle_tracker") {
-      return std::make_shared<NormalVehicleTracker>(time, object, self_transform);
-    } else if (tracker == "pass_through_tracker") {
-      return std::make_shared<PassThroughTracker>(time, object, self_transform);
-    } else if (tracker == "pedestrian_and_bicycle_tracker") {
-      return std::make_shared<PedestrianAndBicycleTracker>(time, object, self_transform);
-    } else if (tracker == "pedestrian_tracker") {
-      return std::make_shared<PedestrianTracker>(time, object, self_transform);
-    }
-  }
-  return std::make_shared<UnknownTracker>(time, object, self_transform);
 }
 
 void MultiObjectTracker::onTimer()
@@ -257,8 +213,11 @@ void MultiObjectTracker::onTimer()
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
 {
   /* life cycle check */
+  // if the tracker is old, delete it
   checkTrackerLifeCycle(list_tracker_, time);
+
   /* sanitize trackers */
+  // if the tracker is too close, delete it
   sanitizeTracker(list_tracker_, time);
 
   // Publish
@@ -266,6 +225,84 @@ void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
 
   // Update last published time
   last_published_time_ = this->now();
+}
+
+void MultiObjectTracker::associate(
+  const rclcpp::Time & time,
+  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+  std::unordered_map<int, int> & direct_assignment,
+  std::unordered_map<int, int> & reverse_assignment)
+{
+  /* tracker prediction */
+  for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
+    (*itr)->predict(time);
+  }
+
+  /* global nearest neighbor */
+  Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
+    detected_objects, list_tracker_);  // row : tracker, col : measurement
+  data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
+}
+
+void MultiObjectTracker::update(
+  const rclcpp::Time & time,
+  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+  const geometry_msgs::msg::Transform & self_transform,
+  const std::unordered_map<int, int> & direct_assignment)
+{
+  int tracker_idx = 0;
+  for (auto tracker_itr = list_tracker_.begin(); tracker_itr != list_tracker_.end();
+       ++tracker_itr, ++tracker_idx) {
+    if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
+      (*(tracker_itr))
+        ->updateWithMeasurement(
+          detected_objects.objects.at(direct_assignment.find(tracker_idx)->second), time,
+          self_transform);
+    } else {  // not found
+      (*(tracker_itr))->updateWithoutMeasurement();
+    }
+  }
+}
+
+void MultiObjectTracker::spawn(
+  const rclcpp::Time & time,
+  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+  const geometry_msgs::msg::Transform & self_transform,
+  const std::unordered_map<int, int> & reverse_assignment)
+{
+  for (size_t i = 0; i < detected_objects.objects.size(); ++i) {
+    if (reverse_assignment.find(i) != reverse_assignment.end()) {  // found
+      continue;
+    }
+    std::shared_ptr<Tracker> tracker =
+      createNewTracker(detected_objects.objects.at(i), time, self_transform);
+    if (tracker) list_tracker_.push_back(tracker);
+  }
+}
+
+std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const geometry_msgs::msg::Transform & self_transform) const
+{
+  const std::uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
+  if (tracker_map_.count(label) != 0) {
+    const auto tracker = tracker_map_.at(label);
+    if (tracker == "bicycle_tracker")
+      return std::make_shared<BicycleTracker>(time, object, self_transform);
+    if (tracker == "big_vehicle_tracker")
+      return std::make_shared<BigVehicleTracker>(time, object, self_transform);
+    if (tracker == "multi_vehicle_tracker")
+      return std::make_shared<MultipleVehicleTracker>(time, object, self_transform);
+    if (tracker == "normal_vehicle_tracker")
+      return std::make_shared<NormalVehicleTracker>(time, object, self_transform);
+    if (tracker == "pass_through_tracker")
+      return std::make_shared<PassThroughTracker>(time, object, self_transform);
+    if (tracker == "pedestrian_and_bicycle_tracker")
+      return std::make_shared<PedestrianAndBicycleTracker>(time, object, self_transform);
+    if (tracker == "pedestrian_tracker")
+      return std::make_shared<PedestrianTracker>(time, object, self_transform);
+  }
+  return std::make_shared<UnknownTracker>(time, object, self_transform);
 }
 
 void MultiObjectTracker::checkTrackerLifeCycle(
