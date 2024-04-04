@@ -40,6 +40,7 @@
 
 #include <memory>
 #include <random>
+#include <tuple>
 #include <vector>
 
 struct ObjectInfo
@@ -136,7 +137,18 @@ private:
   void timerCallback();
   void objectCallback(const dummy_perception_publisher::msg::Object::ConstSharedPtr msg);
 
-  double getSuccessRate(const tf2::Vector3 & tf_baselink_to_object);
+  // adaptive noise parameters
+  bool enable_adaptive_success_rate_ = false;
+  bool enable_adaptive_noise_ = false;
+  double ellipse_normalized_x_radius_ = 0.0;
+  double ellipse_normalized_y_radius_ = 0.0;
+  std::vector<double> ellipse_radius_keys_ = {};
+  std::vector<double> ellipse_success_rate_values_ = {};
+  std::vector<double> ellipse_xy_noise_values_ = {};
+  std::vector<double> ellipse_yaw_noise_values_ = {};
+  std::tuple<double, double, double> getNoiseStdDev(
+    const ObjectInfo & object_info, const tf2::Vector3 & tf_base_link_to_object) const;
+  double getSuccessRate(const tf2::Vector3 & tf_baselink_to_object) const;
 
 public:
   DummyPerceptionPublisherNode();
