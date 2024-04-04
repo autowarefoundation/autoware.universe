@@ -234,7 +234,6 @@ protected:
   int temp_timeout_;   //!< @brief Timeout duration for reading temperature
   int usage_timeout_;  //!< @brief Timeout duration for reading usage
   int load_timeout_;   //!< @brief Timeout duration for reading load
-  int throt_timeout_;  //!< @brief Timeout duration for reading thermal throttling
   int freq_timeout_;   //!< @brief Timeout duration for reading frequency
 
   std::mutex temp_mutex_;                  //!< @brief Mutex for output from reading temperature

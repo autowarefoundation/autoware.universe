@@ -51,7 +51,15 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   usage_error_(declare_parameter<float>("usage_error", 0.96)),
   usage_warn_count_(declare_parameter<int>("usage_warn_count", 1)),
   usage_error_count_(declare_parameter<int>("usage_error_count", 2)),
-  usage_avg_(declare_parameter<bool>("usage_avg", true))
+  usage_avg_(declare_parameter<bool>("usage_avg", true)),
+  temp_timeout_(declare_parameter<int>("temp_timeout", 5)),
+  usage_timeout_(declare_parameter<int>("usage_timeout", 5)),
+  load_timeout_(declare_parameter<int>("load_timeout", 5)),
+  freq_timeout_(declare_parameter<int>("freq_timeout", 5)),
+  temp_timeout_expired_(false),
+  usage_timeout_expired_(false),
+  load_timeout_expired_(false),
+  freq_timeout_expired_(false)
 {
   using namespace std::literals::chrono_literals;
 
@@ -90,6 +98,7 @@ void CPUMonitorBase::update()
 
 void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  std::cout << "CPUMonitorBase::checkTemp not implemented A" << std::endl;
   std::string error_str;
   std::map<std::string, float> map;
   double elapsed_ms;
@@ -100,6 +109,8 @@ void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & sta
     map = temp_map_;
     elapsed_ms = temp_elapsed_ms_;
   }
+
+  std::cout << "CPUMonitorBase::checkTemp not implemented. B" << std::endl;
 
   int level = DiagStatus::OK;
 
@@ -126,6 +137,8 @@ void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & sta
   }
 
   stat.addf("elapsed_time", "%f ms", elapsed_ms);
+
+  std::cout << "CPUMonitorBase::checkTemp not implemented. C" << std::endl;
 }
 
 void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)

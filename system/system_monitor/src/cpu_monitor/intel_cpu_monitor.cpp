@@ -39,7 +39,10 @@
 
 namespace fs = boost::filesystem;
 
-CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options) : CPUMonitorBase("cpu_monitor", options)
+CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
+: CPUMonitorBase("cpu_monitor", options),
+throt_timeout_(declare_parameter<int>("throt_timeout", 5)),
+throt_timeout_expired_(false)
 {
   msr_reader_port_ = declare_parameter<int>("msr_reader_port", 7634);
 
