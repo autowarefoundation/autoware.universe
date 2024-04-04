@@ -19,13 +19,16 @@
 #include "tensorrt_mtr/polyline.hpp"
 #include "tensorrt_mtr/trt_mtr.hpp"
 
+#include <object_recognition_utils/object_classification.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
-#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -35,15 +38,18 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include <vector>
 
 namespace trt_mtr
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_perception_msgs::msg::ObjectClassification;
+using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
-using autoware_perception_msgs::msg::PredictedObject;
-using autoware_perception_msgs::msg::PredictedObjects;
+
+constexpr std::string EGO_ID = "EGO";
 
 class PolylineTypeMap
 {
@@ -115,8 +121,18 @@ private:
    * @param current_time
    * @param objects_msg
    */
-  void updateAgentHistory(
+  std::vector<size_t> updateAgentHistory(
     const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
+
+  /**
+   * @brief Extract target agents and return corresponding indices.
+   *
+   * NOTE: Extract targets in order of proximity, closest first.
+   *
+   * @param histories
+   * @return std::vector<size_t>
+   */
+  std::vector<size_t> extractTargetAgent(const std::vector<AgentHistory> & histories) const;
 
   /**
    * @brief Predict future trajectories with MTR.
@@ -132,7 +148,7 @@ private:
   std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
 
   // Agent history
-  std::unordered_map<std::string, AgentHistory> agent_history_map_;
+  std::map<std::string, AgentHistory> agent_history_map_;
 
   // Pose transform listener
   tier4_autoware_utils::TransformListener transform_listener_{this};
@@ -141,6 +157,7 @@ private:
   std::unique_ptr<MtrConfig> config_ptr_;
   PolylineTypeMap polyline_type_map_;
   std::shared_ptr<PolylineData> polyline_ptr_;
+  std::vector<float> timestamps_;
 };  // class MTRNode
 }  // namespace trt_mtr
 #endif  // TENSORRT_MTR__NODE_HPP_

@@ -16,10 +16,16 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
 #include <tf2/utils.h>
 
+#include <algorithm>
+#include <cmath>
 #include <utility>
 
+namespace trt_mtr
+{
 namespace
 {
 /**
@@ -97,11 +103,18 @@ void insertPoints(const std::vector<LanePoint> & src, std::vector<LanePoint> dst
   dst.insert(dst.end(), src.cbegin(), src.cend());
 }
 
+/**
+ * @brief Convert TrackedObject to AgentState.
+ *
+ * @param object
+ * @param is_valid
+ * @return AgentState
+ */
 AgentState trackedObjectToAgentState(const TrackedObject & object, const bool is_valid)
 {
   const auto & pose = object.kinematics.pose_with_covariance.pose;
   const auto & twist = object.kinematics.twist_with_covariance.twist;
-  const auto & accel = object.kinematics.accel_with_covariance.accel;
+  const auto & accel = object.kinematics.acceleration_with_covariance.accel;
   const auto & dimensions = object.shape.dimensions;
   const auto yaw = tf2::getYaw(pose.orientation);
   const auto valid = is_valid ? 1.0f : 0.0f;
@@ -119,10 +132,31 @@ AgentState trackedObjectToAgentState(const TrackedObject & object, const bool is
           accel.linear.y,
           valid};
 }
+
+/**
+ * @brief Get the label index corresponding to AgentLabel. If the label of tracked object is not
+ * defined in AgentLabel returns `-1`.
+ *
+ * @param object
+ * @return int
+ */
+int getLabelIndex(const TrackedObject & object)
+{
+  const auto classification = object_recognition_utils::getHighestProbLabel(object.classification);
+  if (object_recognition_utils::isCarLikeVehicle(classification)) {
+    return AgentLabel::VEHICLE;
+  } else if (classification == ObjectClassification::PEDESTRIAN) {
+    return AgentLabel::PEDESTRIAN;
+  } else if (
+    classification == ObjectClassification::MOTORCYCLE ||
+    classification == ObjectClassification::BICYCLE) {
+    return AgentLabel::CYCLIST;
+  } else {
+    return -1;  // other labels
+  }
+}
 }  // namespace
 
-namespace trt_mtr
-{
 MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("tensorrt_mtr_node", node_options), polyline_type_map_(this)
 {
@@ -132,20 +166,47 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
 void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
 {
   // TODO(ktro2828)
-  if (!lanelet_map_ptr_ || !polyline_ptr_) {
+  if (!polyline_ptr_) {
     return;
   }
 
   const auto current_time = rclcpp::Time(object_msg->header.stamp).seconds();
+
+  constexpr int max_time_length = 10;  // TODO(ktro2828): use parameter
+  timestamps_.emplace_back(current_time);
+  // TODO(ktro2828): update timestamps
+  if (timestamps_.size() < max_time_length) {
+    return;  // Not enough timestamps
+  } else if (max_time_length < timestamps_.size()) {
+    timestamps_.erase(timestamps_.begin(), timestamps_.begin());
+  }
+
   removeAncientAgentHistory(current_time, object_msg);
   updateAgentHistory(current_time, object_msg);
 
   std::vector<AgentHistory> histories;
+  std::vector<int> label_indices;
   histories.reserve(agent_history_map_.size());
-  for (const auto & [_, history] : agent_history_map_) {
+  label_indices.reserve(agent_history_map_.size());
+  int sdc_index = -1;
+  for (const auto & [object_id, history] : agent_history_map_) {
     histories.emplace_back(history);
+    label_indices.emplace_back(history.label_index());
+    if (object_id == EGO_ID) {
+      sdc_index = histories.size() - 1;
+    }
   }
-  // TODO(ktro2828): set AgentData
+
+  if (sdc_index == -1) {
+    return;  // No ego
+  }
+
+  const auto target_indices = extractTargetAgent(histories);
+  if (target_indices.empty()) {
+    return;  // No target
+  }
+
+  AgentData agent_data(histories, sdc_index, target_indices, label_indices, timestamps_);
 }
 
 void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
@@ -166,10 +227,13 @@ void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
 
 bool MTRNode::convertLaneletToPolyline()
 {
+  if (!lanelet_map_ptr_) {
+    return false;
+  }
+
   std::vector<LanePoint> all_points;
   all_points.reserve(1000);
   for (const auto & lanelet : lanelet_map_ptr_->laneletLayer) {
-    const auto lanelet_id = lanelet.id();
     const auto lanelet_subtype = getLaneletSubtype(lanelet);
     if (
       lanelet_subtype == "road" || lanelet_subtype == "highway" ||
@@ -237,8 +301,9 @@ void MTRNode::removeAncientAgentHistory(
       continue;
     }
 
+    constexpr float time_threshold = 1.0f;  // TODO(ktro2828): use parameter
     const auto & history = agent_history_map_.at(object_id);
-    if (history.is_ancient(current_time, 1.0)) {  // TODO(ktro2828): use parameter
+    if (history.is_ancient(current_time, time_threshold)) {
       agent_history_map_.erase(object_id);
     }
   }
@@ -250,11 +315,18 @@ void MTRNode::updateAgentHistory(
   // TODO(ktro2828): use ego info
   std::vector<std::string> observed_ids;
   for (const auto & object : objects_msg->objects) {
+    auto label_index = getLabelIndex(object);
+    if (label_index == -1) {
+      continue;
+    }
+
     const auto & object_id = tier4_autoware_utils::toHexString(object.object_id);
     observed_ids.emplace_back(object_id);
-    state = trackedObjectToAgentState(object, true);
+    auto state = trackedObjectToAgentState(object, true);
+
+    constexpr int max_time_length = 10;  // TODO(ktro2828): use parameter
     if (agent_history_map_.count(object_id) == 0) {
-      history = AgentHistory(object_id, 10);
+      AgentHistory history(object_id, label_index, max_time_length);
       history.update(current_time, state);
       agent_history_map_.emplace(object_id, history);
     } else {
@@ -269,6 +341,54 @@ void MTRNode::updateAgentHistory(
     }
     history.update_empty();
   }
+}
+
+std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> & histories) const
+{
+  std::vector<std::pair<size_t, float>> distances;
+  for (size_t i = 0; i < histories.size(); ++i) {
+    const auto history = histories.at(i);
+    if (!history.is_valid_latest() || history.object_id() == EGO_ID) {
+      distances.emplace_back(std::make_pair(i, INFINITY));
+    } else {
+      auto map2ego = transform_listener_.getTransform(
+        "base_link",  // target
+        "map",        // src
+        rclcpp::Time(), rclcpp::Duration::from_seconds(0.1));
+      if (!map2ego) {
+        return {};
+      }
+      const auto state = history.get_latest_state();
+      geometry_msgs::msg::PoseStamped pose_in_map;
+      pose_in_map.pose.position.x = state.x();
+      pose_in_map.pose.position.y = state.y();
+      pose_in_map.pose.position.z = state.z();
+      pose_in_map.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(state.yaw());
+
+      geometry_msgs::msg::PoseStamped pose_in_ego;
+      tf2::doTransform(pose_in_map, pose_in_ego, *map2ego);
+
+      const auto dist = std::hypot(
+        pose_in_ego.pose.position.x, pose_in_ego.pose.position.y, pose_in_ego.pose.position.z);
+      distances.emplace_back(std::make_pair(i, dist));
+    }
+  }
+
+  std::sort(distances.begin(), distances.end(), [](const auto & item1, const auto & item2) {
+    return item1.second < item2.second;
+  });
+
+  constexpr size_t max_target_size = 15;  // TODO(ktro2828): use parameter
+  std::vector<size_t> target_indices;
+  target_indices.reserve(max_target_size);
+  for (const auto & [idx, _] : distances) {
+    target_indices.emplace_back(idx);
+    if (max_target_size <= target_indices.size()) {
+      break;
+    }
+  }
+
+  return target_indices;
 }
 
 bool MTRNode::predictFuture()
