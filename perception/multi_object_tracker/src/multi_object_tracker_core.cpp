@@ -158,19 +158,13 @@ void MultiObjectTracker::onMeasurement(
         *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
-  /* tracker prediction */
-  for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    (*itr)->predict(measurement_time);
-  }
-
-  /* global nearest neighbor */
-  std::unordered_map<int, int> direct_assignment, reverse_assignment;
 
   ////// Association and update
   /* association */
-  associate(measurement_time, transformed_objects, direct_assignment, reverse_assignment);
+  std::unordered_map<int, int> direct_assignment, reverse_assignment;
+  associate(transformed_objects, direct_assignment, reverse_assignment);
   /* tracker update */
-  update(measurement_time, transformed_objects, *self_transform, direct_assignment);
+  update(transformed_objects, *self_transform, direct_assignment);
 
   ////// Tracker management
   // if the tracker is old, delete it
@@ -179,7 +173,7 @@ void MultiObjectTracker::onMeasurement(
   sanitizeTracker(list_tracker_, measurement_time);
 
   ////// Spawn new tracker
-  spawn(measurement_time, transformed_objects, *self_transform, reverse_assignment);
+  spawn(transformed_objects, *self_transform, reverse_assignment);
 
   // debugger time
   debugger_->endMeasurementTime(this->now());
@@ -228,11 +222,11 @@ void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
 }
 
 void MultiObjectTracker::associate(
-  const rclcpp::Time & time,
   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
   std::unordered_map<int, int> & direct_assignment,
   std::unordered_map<int, int> & reverse_assignment)
 {
+  const auto & time = detected_objects.header.stamp;
   /* tracker prediction */
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     (*itr)->predict(time);
@@ -245,19 +239,18 @@ void MultiObjectTracker::associate(
 }
 
 void MultiObjectTracker::update(
-  const rclcpp::Time & time,
   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
   const std::unordered_map<int, int> & direct_assignment)
 {
   int tracker_idx = 0;
+  const auto & time = detected_objects.header.stamp;
   for (auto tracker_itr = list_tracker_.begin(); tracker_itr != list_tracker_.end();
        ++tracker_itr, ++tracker_idx) {
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
-      (*(tracker_itr))
-        ->updateWithMeasurement(
-          detected_objects.objects.at(direct_assignment.find(tracker_idx)->second), time,
-          self_transform);
+      const auto & associated_object =
+        detected_objects.objects.at(direct_assignment.find(tracker_idx)->second);
+      (*(tracker_itr))->updateWithMeasurement(associated_object, time, self_transform);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement();
     }
@@ -265,17 +258,17 @@ void MultiObjectTracker::update(
 }
 
 void MultiObjectTracker::spawn(
-  const rclcpp::Time & time,
   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
   const std::unordered_map<int, int> & reverse_assignment)
 {
+  const auto & time = detected_objects.header.stamp;
   for (size_t i = 0; i < detected_objects.objects.size(); ++i) {
     if (reverse_assignment.find(i) != reverse_assignment.end()) {  // found
       continue;
     }
-    std::shared_ptr<Tracker> tracker =
-      createNewTracker(detected_objects.objects.at(i), time, self_transform);
+    const auto & new_object = detected_objects.objects.at(i);
+    std::shared_ptr<Tracker> tracker = createNewTracker(new_object, time, self_transform);
     if (tracker) list_tracker_.push_back(tracker);
   }
 }

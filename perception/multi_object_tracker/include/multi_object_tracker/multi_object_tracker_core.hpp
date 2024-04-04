@@ -85,17 +85,14 @@ private:
 
   // tracker processes
   void associate(
-    const rclcpp::Time & time,
     const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
     std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);
   void update(
-    const rclcpp::Time & time,
     const autoware_auto_perception_msgs::msg::DetectedObjects & transformed_objects,
     const geometry_msgs::msg::Transform & self_transform,
     const std::unordered_map<int, int> & direct_assignment);
   void spawn(
-    const rclcpp::Time & time,
     const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
     const geometry_msgs::msg::Transform & self_transform,
     const std::unordered_map<int, int> & reverse_assignment);
