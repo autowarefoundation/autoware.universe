@@ -15,6 +15,7 @@ import pandas as pd
 from pyquaternion import Quaternion
 import time
 import pickle
+from tqdm import tqdm
 
 import sys
 import os
@@ -93,8 +94,8 @@ if __name__ == "__main__":
     ## search grid goal
     start_time = time.monotonic()
 
-    # for i, yaw in enumerate(yaws):
-    for i, yaw in enumerate([0]):
+    for i, yaw in enumerate(tqdm(yaws)):
+    # for i, yaw in enumerate([0]):
         # print("yaw = ", yaw)
         for j, x in enumerate(xs):
             for k, y in enumerate(ys):
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     print('search_time : ', end_time-start_time)
 
     result_bag = resultBag(xs, ys, yaws, results, trajectories)
-    filename = os.path.dirname(__file__)+"/result/searched_trajectories.txt"
+    filename = os.path.dirname(__file__)+"/result/searched_trajectories_full.txt"
     file1 = open(filename, "wb")
     pickle.dump(result_bag, file1)
     file1.close

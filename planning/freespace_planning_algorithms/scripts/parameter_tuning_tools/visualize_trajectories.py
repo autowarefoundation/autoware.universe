@@ -31,8 +31,8 @@ class DrawClickedTrajectory:
             'button_release_event', self.on_release)
         
     def on_press(self, event):
-        press_x, press_y = int(event.xdata), int(event.ydata)
-        self.press_point = (press_x + 0.5, press_y + 0.5)
+        press_x, press_y = event.xdata, event.ydata
+        self.press_point = (press_x, press_y)
         
     def on_release(self, event):
         if self.press_point == None:
@@ -40,12 +40,12 @@ class DrawClickedTrajectory:
         
         # Get the clicked coordinates and adjust to the center of the cell
         release_x, release_y = int(event.xdata), int(event.ydata)
-        yaw = math.atan2(release_y-self.press_point[1],release_x-self.press_point[0])
+        yaw = math.atan2(release_y-self.press_point[1],release_x-self.press_point[0]) + (2*math.pi/20)
         if yaw < 0:
             yaw += 2*math.pi
         # TODO: parameterize
         yaw_d = int(yaw*(10/(2*math.pi)))
-        cell_center = (self.press_point[0] + 0.5, self.press_point[1] + 0.5, yaw_d)  # Center of the clicked cell
+        cell_center = (math.floor(self.press_point[0]+0.5), math.floor(self.press_point[1]+0.5), yaw_d)  # Center of the clicked cell
 
         # Add the cell to the set if it's not there, remove if it is
         if cell_center in self.clicked_cells:
@@ -76,9 +76,6 @@ class DrawClickedTrajectory:
                )
         ax.grid(True)
 
-        # Center cell coordinates
-        center_x, center_y = 5, 5
-
         # Draw all paths
         for cell in self.clicked_cells:
             i = self.yaws.index(cell[2])
@@ -101,7 +98,7 @@ class DrawClickedTrajectory:
         plt.draw()
 
 
-with open(os.path.dirname(__file__)+"/result/searched_trajectories.txt", "rb") as f:
+with open(os.path.dirname(__file__)+"/result/searched_trajectories_full.txt", "rb") as f:
     result_bag = pickle.load(f)
 
 xs = result_bag.xs
