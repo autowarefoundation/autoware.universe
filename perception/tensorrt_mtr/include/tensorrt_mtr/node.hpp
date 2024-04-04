@@ -17,6 +17,7 @@
 
 #include "tensorrt_mtr/agent.hpp"
 #include "tensorrt_mtr/polyline.hpp"
+#include "tensorrt_mtr/trajectory.hpp"
 #include "tensorrt_mtr/trt_mtr.hpp"
 
 #include <object_recognition_utils/object_classification.hpp>
@@ -155,6 +156,7 @@ private:
 
   // MTR parameters
   std::unique_ptr<MtrConfig> config_ptr_;
+  std::unique_ptr<TrtMTR> model_ptr_;
   PolylineTypeMap polyline_type_map_;
   std::shared_ptr<PolylineData> polyline_ptr_;
   std::vector<float> timestamps_;

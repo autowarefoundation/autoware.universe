@@ -38,7 +38,9 @@ TrtMTR::TrtMTR(
   CHECK_CUDA_ERROR(cudaStreamCreate(&stream_));
 }
 
-bool TrtMTR::doInference(AgentData & agent_data, PolylineData & polyline_data)
+bool TrtMTR::doInference(
+  AgentData & agent_data, PolylineData & polyline_data,
+  std::vector<PredictedTrajectory> & trajectories)
 {
   initCudaPtr(agent_data, polyline_data);
 
@@ -58,7 +60,7 @@ bool TrtMTR::doInference(AgentData & agent_data, PolylineData & polyline_data)
     return false;
   }
 
-  if (!postProcess(agent_data)) {
+  if (!postProcess(agent_data, trajectories)) {
     std::cerr << "Fail to preprocess" << std::endl;
     return false;
   }
@@ -185,7 +187,7 @@ bool TrtMTR::preProcess(AgentData & agent_data, PolylineData & polyline_data)
   return true;
 }
 
-bool TrtMTR::postProcess(AgentData & agent_data)
+bool TrtMTR::postProcess(AgentData & agent_data, std::vector<PredictedTrajectory> & trajectories)
 {
   // DEBUG
   event_debugger_.createEvent(stream_);
@@ -195,6 +197,14 @@ bool TrtMTR::postProcess(AgentData & agent_data)
     d_target_state_.get(), config_.num_predict_dim, d_out_score_.get(), d_out_trajectory_.get(),
     stream_));
   event_debugger_.printElapsedTime(stream_);
+
+  trajectories.reserve(agent_data.TargetNum);
+  for (size_t b = 0; b < agent_data.TargetNum; ++b) {
+    const auto score_ptr = d_out_score_.get() + b * config_.num_mode;
+    const auto trajectory_ptr =
+      d_out_trajectory_.get() + b * config_.num_mode * config_.num_future * PredictedStateDim;
+    trajectories.emplace_back(score_ptr, trajectory_ptr, config_.num_mode, config_.num_future);
+  }
 
   debugPostprocess(agent_data);
 
