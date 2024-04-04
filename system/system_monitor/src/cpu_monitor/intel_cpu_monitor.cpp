@@ -52,7 +52,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   std::string error_str;
   std::map<int, int> map;
   double elapsed_ms;
-    
+
   {
     std::lock_guard<std::mutex> lock(throt_mutex_);
     error_str = throt_error_str_;
@@ -88,7 +88,6 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   stat.addf("elapsed_time", "%f ms", elapsed_ms);
 }
 
-
 void CPUMonitor::onThrotTimeout()
 {
   RCLCPP_WARN(get_logger(), "Read CPU Throttling Timeout occurred.");
@@ -108,7 +107,8 @@ void CPUMonitor::executeReadThrottling()
     throt_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(temp_timeout_), std::bind(&CPUMonitor::onThrotTimeout, this));
+    this, get_clock(), std::chrono::seconds(temp_timeout_),
+    std::bind(&CPUMonitor::onThrotTimeout, this));
 
   std::string error_str;
 

@@ -112,7 +112,7 @@ void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & sta
   for (auto itr = map.begin(); itr != map.end(); ++itr) {
     stat.addf(itr->first, "%.1f DegC", itr->second);
   }
-  
+
   bool timeout_expired = false;
   {
     std::lock_guard<std::mutex> lock(temp_timeout_mutex_);
@@ -292,7 +292,7 @@ void CPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper 
   for (auto itr = map.begin(); itr != map.end(); ++itr) {
     stat.addf(fmt::format("CPU {}: clock", itr->first), "%d MHz", itr->second);
   }
-  
+
   bool timeout_expired = false;
   {
     std::lock_guard<std::mutex> lock(freq_timeout_mutex_);
@@ -357,7 +357,8 @@ void CPUMonitorBase::executeReadTemp()
     temp_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(temp_timeout_), std::bind(&CPUMonitorBase::onTempTimeout, this));
+    this, get_clock(), std::chrono::seconds(temp_timeout_),
+    std::bind(&CPUMonitorBase::onTempTimeout, this));
 
   std::string error_str = "";
   std::map<std::string, float> map;
@@ -408,7 +409,8 @@ void CPUMonitorBase::executeReadUsage()
     usage_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(usage_timeout_), std::bind(&CPUMonitorBase::onUsageTimeout, this));
+    this, get_clock(), std::chrono::seconds(usage_timeout_),
+    std::bind(&CPUMonitorBase::onUsageTimeout, this));
 
   tier4_external_api_msgs::msg::CpuUsage cpu_usage;
   using CpuStatus = tier4_external_api_msgs::msg::CpuStatus;
@@ -452,7 +454,8 @@ void CPUMonitorBase::executeReadUsage()
   }
 
   if (prev_usages_[0].usr_ <= 0) {
-    error_str = "cpu usages overflow error: A value of /proc/stat is greater than INT_MAX. Restart ECU";
+    error_str =
+      "cpu usages overflow error: A value of /proc/stat is greater than INT_MAX. Restart ECU";
     cpu_usage.all.status = CpuStatus::STALE;
     publishCpuUsage(cpu_usage);
     return;
@@ -487,7 +490,7 @@ void CPUMonitorBase::executeReadUsage()
 
   // Publish msg
   publishCpuUsage(cpu_usage);
-  
+
   // stop timeout timer
   timeout_timer_->cancel();
 
@@ -514,7 +517,8 @@ void CPUMonitorBase::executeReadLoad()
     load_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(load_timeout_), std::bind(&CPUMonitorBase::onLoadTimeout, this));
+    this, get_clock(), std::chrono::seconds(load_timeout_),
+    std::bind(&CPUMonitorBase::onLoadTimeout, this));
 
   double avg[3];
   std::string error_str = "";
@@ -573,11 +577,12 @@ void CPUMonitorBase::executeReadFrequency()
     freq_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(freq_timeout_), std::bind(&CPUMonitorBase::onFreqTimeout, this));
+    this, get_clock(), std::chrono::seconds(freq_timeout_),
+    std::bind(&CPUMonitorBase::onFreqTimeout, this));
 
   std::string error_str = "";
   std::map<int, float> map;
-  
+
   if (freqs_.empty()) {
     error_str = "frequency files not found";
     return;
