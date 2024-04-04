@@ -36,8 +36,8 @@ EmergencyGoalManager::EmergencyGoalManager() : Node("emergency_goal_manager")
   client_clear_mrm_route_callback_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_clear_mrm_route_ = create_client<ClearRoute>(
-    "/planning/mission_planning/route_selector/mrm/clear_route",
-    rmw_qos_profile_services_default, client_clear_mrm_route_callback_group_);
+    "/planning/mission_planning/route_selector/mrm/clear_route", rmw_qos_profile_services_default,
+    client_clear_mrm_route_callback_group_);
 
   // Initialize
   while (!client_set_mrm_route_points_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
