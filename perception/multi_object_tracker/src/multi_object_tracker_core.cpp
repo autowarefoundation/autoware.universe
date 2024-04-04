@@ -31,7 +31,6 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/multi_object_tracker_core.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-// #include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>

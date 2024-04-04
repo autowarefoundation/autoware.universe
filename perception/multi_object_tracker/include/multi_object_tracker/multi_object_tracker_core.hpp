@@ -21,7 +21,7 @@
 
 #include "multi_object_tracker/data_association/data_association.hpp"
 #include "multi_object_tracker/debugger.hpp"
-#include "multi_object_tracker/processor.hpp"
+#include "multi_object_tracker/processor/processor.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>

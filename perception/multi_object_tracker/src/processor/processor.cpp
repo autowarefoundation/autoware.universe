@@ -14,7 +14,7 @@
 //
 //
 
-#include "multi_object_tracker/processor.hpp"
+#include "multi_object_tracker/processor/processor.hpp"
 
 #include "multi_object_tracker/tracker/tracker.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"

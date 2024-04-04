@@ -14,8 +14,8 @@
 //
 //
 
-#ifndef MULTI_OBJECT_TRACKER__PROCESSOR_HPP_
-#define MULTI_OBJECT_TRACKER__PROCESSOR_HPP_
+#ifndef MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_
+#define MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_
 
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
@@ -61,4 +61,4 @@ private:
     const geometry_msgs::msg::Transform & self_transform) const;
 };
 
-#endif  // MULTI_OBJECT_TRACKER__PROCESSOR_HPP_
+#endif  // MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_
