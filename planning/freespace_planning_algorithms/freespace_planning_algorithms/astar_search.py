@@ -38,11 +38,11 @@ class AstarSearch:
         return self.astar_search.makePlan(start_pose_byte, goal_pose_byte)
 
     def getWaypoints(self):
-        waypoints_vetor = self.astar_search.getWaypoints()
+        waypoints_vector = self.astar_search.getWaypoints()
         waypoints = PlannerWaypoints()
 
-        waypoints.length = waypoints_vetor.length
-        for waypoint in waypoints_vetor.waypoints:
+        waypoints.length = waypoints_vector.length
+        for waypoint in waypoints_vector.waypoints:
             pos = Point(x=waypoint[0], y=waypoint[1], z=waypoint[2])
             quat = Quaternion(x=waypoint[3], y=waypoint[4], z=waypoint[5], w=waypoint[6])
             waypoints.waypoints.append(Pose(position=pos, orientation=quat))
