@@ -159,21 +159,30 @@ void MultiObjectTracker::onMeasurement(
     return;
   }
 
-  ////// Association and update
+  ////// Tracker Process
+  //// Association and update
+  /* prediction */
+  predict(measurement_time, list_tracker_);
   /* association */
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
-  associate(transformed_objects, direct_assignment, reverse_assignment);
+  {
+    const auto & detected_objects = transformed_objects;
+    // global nearest neighbor
+    Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
+      detected_objects, list_tracker_);  // row : tracker, col : measurement
+    data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
+  }
   /* tracker update */
-  update(transformed_objects, *self_transform, direct_assignment);
+  update(transformed_objects, *self_transform, direct_assignment, list_tracker_);
 
-  ////// Tracker management
+  //// Tracker management
   // if the tracker is old, delete it
-  checkTrackerLifeCycle(list_tracker_, measurement_time);
+  checkTrackerLifeCycle(measurement_time, list_tracker_);
   // if the tracker is too close, delete it
-  sanitizeTracker(list_tracker_, measurement_time);
+  sanitizeTracker(measurement_time, list_tracker_);
 
-  ////// Spawn new tracker
-  spawn(transformed_objects, *self_transform, reverse_assignment);
+  //// Spawn new tracker
+  spawn(transformed_objects, *self_transform, reverse_assignment, list_tracker_);
 
   // debugger time
   debugger_->endMeasurementTime(this->now());
@@ -181,7 +190,7 @@ void MultiObjectTracker::onMeasurement(
   // Publish objects if the timer is not enabled
   if (publish_timer_ == nullptr) {
     // Publish if the delay compensation is disabled
-    publish(measurement_time);
+    publish(measurement_time, list_tracker_);
   } else {
     // Publish if the next publish time is close
     const double minimum_publish_interval = publisher_period_ * 0.70;  // 70% of the period
@@ -208,44 +217,37 @@ void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
 {
   /* life cycle check */
   // if the tracker is old, delete it
-  checkTrackerLifeCycle(list_tracker_, time);
+  checkTrackerLifeCycle(time, list_tracker_);
 
   /* sanitize trackers */
   // if the tracker is too close, delete it
-  sanitizeTracker(list_tracker_, time);
+  sanitizeTracker(time, list_tracker_);
 
   // Publish
-  publish(time);
+  publish(time, list_tracker_);
 
   // Update last published time
   last_published_time_ = this->now();
 }
 
-void MultiObjectTracker::associate(
-  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
-  std::unordered_map<int, int> & direct_assignment,
-  std::unordered_map<int, int> & reverse_assignment)
+void MultiObjectTracker::predict(
+  const rclcpp::Time & time, std::list<std::shared_ptr<Tracker>> & list_tracker) const
 {
-  const auto & time = detected_objects.header.stamp;
   /* tracker prediction */
-  for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
+  for (auto itr = list_tracker.begin(); itr != list_tracker.end(); ++itr) {
     (*itr)->predict(time);
   }
-
-  /* global nearest neighbor */
-  Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
-    detected_objects, list_tracker_);  // row : tracker, col : measurement
-  data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
 }
 
 void MultiObjectTracker::update(
   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
-  const std::unordered_map<int, int> & direct_assignment)
+  const std::unordered_map<int, int> & direct_assignment,
+  std::list<std::shared_ptr<Tracker>> & list_tracker) const
 {
   int tracker_idx = 0;
   const auto & time = detected_objects.header.stamp;
-  for (auto tracker_itr = list_tracker_.begin(); tracker_itr != list_tracker_.end();
+  for (auto tracker_itr = list_tracker.begin(); tracker_itr != list_tracker.end();
        ++tracker_itr, ++tracker_idx) {
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
       const auto & associated_object =
@@ -260,7 +262,8 @@ void MultiObjectTracker::update(
 void MultiObjectTracker::spawn(
   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
-  const std::unordered_map<int, int> & reverse_assignment)
+  const std::unordered_map<int, int> & reverse_assignment,
+  std::list<std::shared_ptr<Tracker>> & list_tracker) const
 {
   const auto & time = detected_objects.header.stamp;
   for (size_t i = 0; i < detected_objects.objects.size(); ++i) {
@@ -269,7 +272,7 @@ void MultiObjectTracker::spawn(
     }
     const auto & new_object = detected_objects.objects.at(i);
     std::shared_ptr<Tracker> tracker = createNewTracker(new_object, time, self_transform);
-    if (tracker) list_tracker_.push_back(tracker);
+    if (tracker) list_tracker.push_back(tracker);
   }
 }
 
@@ -299,7 +302,7 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
 }
 
 void MultiObjectTracker::checkTrackerLifeCycle(
-  std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time)
+  const rclcpp::Time & time, std::list<std::shared_ptr<Tracker>> & list_tracker) const
 {
   /* params */
   constexpr float max_elapsed_time = 1.0;
@@ -316,7 +319,7 @@ void MultiObjectTracker::checkTrackerLifeCycle(
 }
 
 void MultiObjectTracker::sanitizeTracker(
-  std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time)
+  const rclcpp::Time & time, std::list<std::shared_ptr<Tracker>> & list_tracker) const
 {
   constexpr float min_iou = 0.1;
   constexpr float min_iou_for_unknown_object = 0.001;
@@ -392,7 +395,8 @@ inline bool MultiObjectTracker::shouldTrackerPublish(
   return true;
 }
 
-void MultiObjectTracker::publish(const rclcpp::Time & time) const
+void MultiObjectTracker::publish(
+  const rclcpp::Time & time, const std::list<std::shared_ptr<Tracker>> & list_tracker) const
 {
   debugger_->startPublishTime(this->now());
   const auto subscriber_count = tracked_objects_pub_->get_subscription_count() +
@@ -406,7 +410,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   output_msg.header.stamp = time;
   tentative_objects_msg.header = output_msg.header;
 
-  for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
+  for (auto itr = list_tracker.begin(); itr != list_tracker.end(); ++itr) {
     if (!shouldTrackerPublish(*itr)) {  // for debug purpose
       autoware_auto_perception_msgs::msg::TrackedObject object;
       if (!(*itr)->getTrackedObject(time, object)) continue;
