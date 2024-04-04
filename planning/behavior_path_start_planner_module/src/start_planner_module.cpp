@@ -253,6 +253,41 @@ void StartPlannerModule::updateData()
 
   status_.is_safe_dynamic_objects =
     (!requiresDynamicObjectsCollisionDetection()) ? true : !hasCollisionWithDynamicObjects();
+
+  if (status_.is_safe_static_objects) return;
+  const std::lock_guard<std::mutex> lock(mutex_);
+
+  const auto planner_ptr_itr = std::find_if(
+    start_planners_.begin(), start_planners_.end(),
+    [&](const auto & p) { return p->getPlannerType() == status_.planner_type; });
+
+  if (planner_ptr_itr == start_planners_.end()) return;
+
+  // Cropped current path to only check for collisions on the relevant parts of the path
+  const auto cropped_path = std::invoke([&]() -> std::optional<PullOutPath> {
+    if (status_.pull_out_path.partial_paths.empty()) return std::nullopt;
+    PullOutPath cropped_path = status_.pull_out_path;
+    const auto & pull_out_path_front = status_.pull_out_path.partial_paths.front();
+    const auto current_pose = planner_data_->self_odometry->pose.pose;
+    const auto current_idx =
+      motion_utils::findNearestIndex(pull_out_path_front.points, current_pose.position);
+    if (current_idx >= pull_out_path_front.points.size()) return std::nullopt;
+    std::vector<PathPointWithLaneId> clipped_points{
+      pull_out_path_front.points.begin() + current_idx, pull_out_path_front.points.end()};
+    cropped_path.partial_paths.front().points = clipped_points;
+    return cropped_path;
+  });
+
+  if (!cropped_path.has_value()) return;
+
+  std::map<PlannerType, double> collision_check_distances = {
+    {PlannerType::SHIFT, parameters_->shift_collision_check_distance_from_end},
+    {PlannerType::GEOMETRIC, parameters_->geometric_collision_check_distance_from_end}};
+
+  double collision_check_distance_from_end = collision_check_distances[status_.planner_type];
+  const auto & planner_ptr = *planner_ptr_itr;
+  status_.is_safe_static_objects =
+    !planner_ptr->isPullOutPathCollided(cropped_path.value(), collision_check_distance_from_end);
 }
 
 bool StartPlannerModule::hasFinishedBackwardDriving() const
@@ -592,7 +627,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
       return *status_.prev_stop_path_after_approval;
     }
 
-    if (!status_.is_safe_dynamic_objects) {
+    if (!status_.is_safe_dynamic_objects || !status_.is_safe_static_objects) {
       auto current_path = getCurrentPath();
       const auto stop_path =
         behavior_path_planner::utils::parking_departure::generateFeasibleStopPath(
@@ -781,6 +816,8 @@ void StartPlannerModule::planWithPriority(
   const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
+  CollidedPullOutStatus cps;
+
   for (const auto & collision_check_margin : parameters_->collision_check_margins) {
     for (const auto & [index, planner] : order_priority) {
       if (findPullOutPath(
@@ -790,7 +827,33 @@ void StartPlannerModule::planWithPriority(
         debug_data_.margin_for_start_pose_candidate = collision_check_margin;
         return;
       }
+
+      if (!cps.best_collided_path.has_value() && planner->hasBestCollidedPath()) {
+        cps.best_collided_path = planner->getBestCollidedPath();
+        cps.best_collided_path_planner_type = planner->getPlannerType();
+        cps.best_collided_path_index = index;
+        cps.best_collided_path_collision_check_margin = collision_check_margin;
+        cps.best_collided_path_requires_backwards =
+          start_planner_utils::backwardsMovementIsNecessary(
+            start_pose_candidates[index], refined_start_pose);
+      }
     }
+  }
+  // NO path found, check if there is a collided path
+  if (cps.best_collided_path.has_value()) {
+    debug_data_.selected_start_pose_candidate_index = cps.best_collided_path_index;
+    debug_data_.margin_for_start_pose_candidate = cps.best_collided_path_collision_check_margin;
+    const auto & start_pose_candidate = start_pose_candidates.at(cps.best_collided_path_index);
+    if (cps.best_collided_path_requires_backwards) {
+      updateStatusWithNextPath(
+        cps.best_collided_path.value(), start_pose_candidate, cps.best_collided_path_planner_type,
+        false);
+      return;
+    }
+    updateStatusWithCurrentPath(
+      cps.best_collided_path.value(), start_pose_candidate, cps.best_collided_path_planner_type,
+      false);
+    return;
   }
 
   updateStatusIfNoSafePathFound();
@@ -828,9 +891,9 @@ bool StartPlannerModule::findPullOutPath(
   const Pose & refined_start_pose, const Pose & goal_pose, const double collision_check_margin)
 {
   // if start_pose_candidate is far from refined_start_pose, backward driving is necessary
-  constexpr double epsilon = 0.01;
-  const bool backward_is_unnecessary =
-    tier4_autoware_utils::calcDistance2d(start_pose_candidate, refined_start_pose) < epsilon;
+
+  const bool backward_is_necessary =
+    start_planner_utils::backwardsMovementIsNecessary(start_pose_candidate, refined_start_pose);
 
   planner->setCollisionCheckMargin(collision_check_margin);
   planner->setPlannerData(planner_data_);
@@ -841,7 +904,7 @@ bool StartPlannerModule::findPullOutPath(
     return false;
   }
 
-  if (backward_is_unnecessary) {
+  if (!backward_is_necessary) {
     updateStatusWithCurrentPath(*pull_out_path, start_pose_candidate, planner->getPlannerType());
     return true;
   }
@@ -853,7 +916,7 @@ bool StartPlannerModule::findPullOutPath(
 
 void StartPlannerModule::updateStatusWithCurrentPath(
   const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
-  const behavior_path_planner::PlannerType & planner_type)
+  const behavior_path_planner::PlannerType & planner_type, const bool is_safe_static_objects)
 {
   const std::lock_guard<std::mutex> lock(mutex_);
   status_.driving_forward = true;
@@ -861,11 +924,12 @@ void StartPlannerModule::updateStatusWithCurrentPath(
   status_.pull_out_path = path;
   status_.pull_out_start_pose = start_pose;
   status_.planner_type = planner_type;
+  status_.is_safe_static_objects = is_safe_static_objects;
 }
 
 void StartPlannerModule::updateStatusWithNextPath(
   const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
-  const behavior_path_planner::PlannerType & planner_type)
+  const behavior_path_planner::PlannerType & planner_type, const bool is_safe_static_objects)
 {
   const std::lock_guard<std::mutex> lock(mutex_);
   status_.driving_forward = false;
@@ -873,6 +937,7 @@ void StartPlannerModule::updateStatusWithNextPath(
   status_.pull_out_path = path;
   status_.pull_out_start_pose = start_pose;
   status_.planner_type = planner_type;
+  status_.is_safe_static_objects = is_safe_static_objects;
 }
 
 void StartPlannerModule::updateStatusIfNoSafePathFound()
@@ -1421,6 +1486,7 @@ std::optional<PullOutStatus> StartPlannerModule::planFreespacePath(
 
     auto status = pull_out_status;
     status.pull_out_path = *freespace_path;
+    status.is_safe_static_objects = true;
     status.pull_out_start_pose = current_pose;
     status.planner_type = freespace_planner_->getPlannerType();
     status.found_pull_out_path = true;

@@ -72,6 +72,14 @@ PathWithLaneId getBackwardPath(
   return backward_path;
 }
 
+bool backwardsMovementIsNecessary(
+  const Pose & start_pose_candidate, const Pose & refined_start_pose)
+{
+  // if start_pose_candidate is far from refined_start_pose, backward driving is necessary
+  constexpr double epsilon = 0.01;
+  return tier4_autoware_utils::calcDistance2d(start_pose_candidate, refined_start_pose) > epsilon;
+}
+
 Pose getBackedPose(
   const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance)
 {

@@ -63,9 +63,11 @@ public:
   virtual PlannerType getPlannerType() const = 0;
   virtual std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) = 0;
 
-protected:
+  bool hasBestCollidedPath() { return best_collided_path_.has_value(); }
+  std::optional<PullOutPath> getBestCollidedPath() { return best_collided_path_; }
+
   bool isPullOutPathCollided(
-    behavior_path_planner::PullOutPath & pull_out_path,
+    const behavior_path_planner::PullOutPath & pull_out_path,
     double collision_check_distance_from_end) const
   {
     // check for collisions
@@ -97,6 +99,7 @@ protected:
   LinearRing2d vehicle_footprint_;
   StartPlannerParameters parameters_;
   double collision_check_margin_;
+  std::optional<PullOutPath> best_collided_path_;
 };
 }  // namespace behavior_path_planner
 

@@ -63,7 +63,8 @@ struct PullOutStatus
   PathWithLaneId backward_path{};
   bool found_pull_out_path{false};      // current path is safe against static objects
   bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
-  bool driving_forward{false};          // if ego is driving on backward path, this is set to false
+  bool is_safe_static_objects{false};
+  bool driving_forward{false};  // if ego is driving on backward path, this is set to false
   bool backward_driving_complete{
     false};  // after backward driving is complete, this is set to true (warning: this is set to
              // false at next cycle after backward driving is complete)
@@ -78,6 +79,14 @@ struct PullOutStatus
   PullOutStatus() {}
 };
 
+struct CollidedPullOutStatus
+{
+  std::optional<PullOutPath> best_collided_path;
+  size_t best_collided_path_index;
+  double best_collided_path_collision_check_margin;
+  bool best_collided_path_requires_backwards;
+  behavior_path_planner::PlannerType best_collided_path_planner_type;
+};
 class StartPlannerModule : public SceneModuleInterface
 {
 public:
@@ -243,10 +252,12 @@ private:
     const PullOutPath & path, const behavior_path_planner::PlannerType & planner_type);
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
-    const behavior_path_planner::PlannerType & planner_type);
+    const behavior_path_planner::PlannerType & planner_type,
+    const bool is_safe_static_objects = true);
   void updateStatusWithNextPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
-    const behavior_path_planner::PlannerType & planner_type);
+    const behavior_path_planner::PlannerType & planner_type,
+    const bool is_safe_static_objects = true);
   void updateStatusIfNoSafePathFound();
 
   std::shared_ptr<StartPlannerParameters> parameters_;

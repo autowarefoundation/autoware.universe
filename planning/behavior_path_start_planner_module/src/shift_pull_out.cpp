@@ -135,6 +135,9 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     shift_path.header = planner_data_->route_handler->getRouteHeader();
 
     if (isPullOutPathCollided(pull_out_path, parameters_.shift_collision_check_distance_from_end)) {
+      if (!best_collided_path_.has_value()) {
+        best_collided_path_ = pull_out_path;
+      }
       continue;
     }
 
