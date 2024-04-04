@@ -28,21 +28,20 @@ using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 TrackerProcessor::TrackerProcessor(const std::map<std::uint8_t, std::string> & tracker_map)
 : tracker_map_(tracker_map)
 {
-  // tracker lifetime parameters
+  // Set tracker lifetime parameters
   max_elapsed_time_ = 1.0;  // [s]
 
-  // tracker overlap remover parameters
+  // Set tracker overlap remover parameters
   min_iou_ = 0.1;                       // [ratio]
   min_iou_for_unknown_object_ = 0.001;  // [ratio]
   distance_threshold_ = 5.0;            // [m]
 
-  // tracker confidence threshold
+  // Set tracker confidence threshold
   confident_count_threshold_ = 3;  // [count]
 }
 
 void TrackerProcessor::predict(const rclcpp::Time & time)
 {
-  /* tracker prediction */
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     (*itr)->predict(time);
   }
@@ -110,18 +109,18 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
 
 void TrackerProcessor::prune(const rclcpp::Time & time)
 {
-  // check lifetime: if the tracker is old, delete it
+  // Check tracker lifetime: if the tracker is old, delete it
   removeOldTracker(time);
-  // check overlap: if the tracker is overlapped, delete the one with lower IOU
+  // Check tracker overlap: if the tracker is overlapped, delete the one with lower IOU
   removeOverlappedTracker(time);
 }
 
 void TrackerProcessor::removeOldTracker(const rclcpp::Time & time)
 {
-  // check elapsed time from last update
+  // Check elapsed time from last update
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     const bool is_old = max_elapsed_time_ < (*itr)->getElapsedTimeFromLastUpdate(time);
-    // if the tracker is old, delete it
+    // If the tracker is old, delete it
     if (is_old) {
       auto erase_itr = itr;
       --itr;
@@ -130,28 +129,32 @@ void TrackerProcessor::removeOldTracker(const rclcpp::Time & time)
   }
 }
 
+// This function removes overlapped trackers based on distance and IoU criteria
 void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
 {
-  // check overlap between trackers
-  // if the overlap is too large, delete one of them
+  // Iterate through the list of trackers
   for (auto itr1 = list_tracker_.begin(); itr1 != list_tracker_.end(); ++itr1) {
     autoware_auto_perception_msgs::msg::TrackedObject object1;
     if (!(*itr1)->getTrackedObject(time, object1)) continue;
+
+    // Compare the current tracker with the remaining trackers
     for (auto itr2 = std::next(itr1); itr2 != list_tracker_.end(); ++itr2) {
       autoware_auto_perception_msgs::msg::TrackedObject object2;
       if (!(*itr2)->getTrackedObject(time, object2)) continue;
 
-      // if the distance is too large, skip
+      // Calculate the distance between the two objects
       const double distance = std::hypot(
         object1.kinematics.pose_with_covariance.pose.position.x -
           object2.kinematics.pose_with_covariance.pose.position.x,
         object1.kinematics.pose_with_covariance.pose.position.y -
           object2.kinematics.pose_with_covariance.pose.position.y);
+
+      // If the distance is too large, skip
       if (distance > distance_threshold_) {
         continue;
       }
 
-      // Check IoU between two objects
+      // Check the Intersection over Union (IoU) between the two objects
       const double min_union_iou_area = 1e-2;
       const auto iou = object_recognition_utils::get2dIoU(object1, object2, min_union_iou_area);
       const auto & label1 = (*itr1)->getHighestProbLabel();
@@ -159,8 +162,8 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
       bool should_delete_tracker1 = false;
       bool should_delete_tracker2 = false;
 
-      // If at least one of them is UNKNOWN, delete the younger tracker. Because the UNKNOWN
-      // objects are not reliable.
+      // If both trackers are UNKNOWN, delete the younger tracker
+      // If one side of the tracker is UNKNOWN, delete UNKNOWN objects
       if (label1 == Label::UNKNOWN || label2 == Label::UNKNOWN) {
         if (iou > min_iou_for_unknown_object_) {
           if (label1 == Label::UNKNOWN && label2 == Label::UNKNOWN) {
@@ -175,7 +178,7 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
             should_delete_tracker2 = true;
           }
         }
-      } else {  // If neither is UNKNOWN, delete the younger tracker
+      } else {  // If neither object is UNKNOWN, delete the younger tracker
         if (iou > min_iou_) {
           if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
             should_delete_tracker1 = true;
@@ -185,7 +188,7 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
         }
       }
 
-      // delete the tracker
+      // Delete the tracker
       if (should_delete_tracker1) {
         itr1 = list_tracker_.erase(itr1);
         --itr1;
@@ -201,8 +204,9 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
 
 bool TrackerProcessor::isConfidentTracker(const std::shared_ptr<Tracker> & tracker) const
 {
-  // confidence is measured by counting the number of measurements
-  // if the number of measurements is same or more than the threshold, the tracker is confident
+  // Confidence is determined by counting the number of measurements.
+  // If the number of measurements is equal to or greater than the threshold, the tracker is
+  // considered confident.
   return tracker->getTotalMeasurementCount() >= confident_count_threshold_;
 }
 
@@ -212,9 +216,9 @@ void TrackerProcessor::getTrackedObjects(
 {
   tracked_objects.header.stamp = time;
   for (const auto & tracker : list_tracker_) {
-    // skip if the tracker is not confident
+    // Skip if the tracker is not confident
     if (!isConfidentTracker(tracker)) continue;
-    // get the tracked object, extrapolated to the given time
+    // Get the tracked object, extrapolated to the given time
     autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
     if (tracker->getTrackedObject(time, tracked_object)) {
       tracked_objects.objects.push_back(tracked_object);

@@ -40,18 +40,20 @@ using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 namespace
 {
+// Function to get the transform between two frames
 boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
   const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
   const std::string & target_frame_id, const rclcpp::Time & time)
 {
   try {
-    // check if the frames are ready
+    // Check if the frames are ready
     std::string errstr;  // This argument prevents error msg from being displayed in the terminal.
     if (!tf_buffer.canTransform(
           target_frame_id, source_frame_id, tf2::TimePointZero, tf2::Duration::zero(), &errstr)) {
       return boost::none;
     }
 
+    // Lookup the transform
     geometry_msgs::msg::TransformStamped self_transform_stamped;
     self_transform_stamped = tf_buffer.lookupTransform(
       /*target*/ target_frame_id, /*src*/ source_frame_id, time,
@@ -71,7 +73,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tf_listener_(tf_buffer_),
   last_published_time_(this->now())
 {
-  // glog for debug
+  // Initialize Google Logging (glog) for debugging
   google::InitGoogleLogging("multi_object_tracker");
   google::InstallFailureSignalHandler();
 
@@ -82,7 +84,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tracked_objects_pub_ =
     create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
-  // Parameters
+  // Get parameters
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
@@ -205,9 +207,9 @@ void MultiObjectTracker::onMeasurement(
 void MultiObjectTracker::onTimer()
 {
   const rclcpp::Time current_time = this->now();
-  // check the publish period
+  // Check the publish period
   const auto elapsed_time = (current_time - last_published_time_).seconds();
-  // if the elapsed time is over the period, publish objects with prediction
+  // If the elapsed time is over the period, publish objects with prediction
   constexpr double maximum_latency_ratio = 1.11;  // 11% margin
   const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
   if (elapsed_time > maximum_publish_latency) {
@@ -244,7 +246,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   tracked_objects_pub_->publish(output_msg);
   published_time_publisher_->publish_if_subscribed(tracked_objects_pub_, output_msg.header.stamp);
 
-  // Debugger Publish if enabled
+  // Publish debugger information if enabled
   debugger_->endPublishTime(this->now(), time);
 
   if (debugger_->shouldPublishTentativeObjects()) {
