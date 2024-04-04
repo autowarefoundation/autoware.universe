@@ -55,7 +55,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   const std::string head_onnx_path = this->declare_parameter<std::string>("head_onnx_path");
   const std::string head_engine_path = this->declare_parameter<std::string>("head_engine_path");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
-  has_variance_ = this->declare_parameter("has_variance", false);
+  has_variance_ = this->declare_parameter<bool>("has_variance");
   has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
