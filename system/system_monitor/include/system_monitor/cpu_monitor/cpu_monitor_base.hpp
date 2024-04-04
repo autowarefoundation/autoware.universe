@@ -99,6 +99,7 @@ public:
 
 protected:
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
+  using CpuStatus = tier4_external_api_msgs::msg::CpuStatus;
 
   /**
    * @brief constructor
@@ -158,14 +159,69 @@ protected:
   virtual void checkFrequency(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
+  /**
+   * @brief Timer callback to execute all checks
+   */
+  virtual void onTimer();
+
+  /**
+   * @brief Timeout callback function for executing reading temperature
+   */
+  virtual void onTempTimeout();
+
+  /**
+   * @brief Timeout callback function for executing reading usage
+   */
+  virtual void onUsageTimeout();
+
+  /**
+   * @brief Timeout callback function for executing reading load
+   */
+  virtual void onLoadTimeout();
+
+  /**
+   * @brief Timeout callback function for executing reading frequency
+   */
+  virtual void onFreqTimeout();
+
+  /**
+   * @brief execute reading temperature
+   */
+  virtual void executeReadTemp();
+
+  /**
+   * @brief execute reading usage
+   */
+  virtual void executeReadUsage();
+
+  /**
+   * @brief execute reading load
+   */
+  virtual void executeReadLoad();
+
+  /**
+   * @brief execute reading thermal throttling
+   */
+  virtual void executeReadThrottling();
+
+  /**
+   * @brief execute reading frequency
+   */
+  virtual void executeReadFrequency();
+
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
+
+
+  rclcpp::TimerBase::SharedPtr timer_;  //!< @brief Timer to execute onTempTimer
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
+    rclcpp::TimerBase::SharedPtr timeout_timer_;       //!< @brief Timeout for reading each CPU status
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name
   int num_cores_;                     //!< @brief number of cores
   std::vector<cpu_temp_info> temps_;  //!< @brief CPU list for temperature
   std::vector<cpu_freq_info> freqs_;  //!< @brief CPU list for frequency
-  std::vector<cpu_usage_info> prev_usages_;
-  ;                                         //!< @brief CPU list for usage
+  std::vector<cpu_usage_info> prev_usages_; //!< @brief CPU list for usage
+  
   std::vector<int> usage_warn_check_cnt_;   //!< @brief CPU list for usage over warn check counter
   std::vector<int> usage_error_check_cnt_;  //!< @brief CPU list for usage over error check counter
   bool mpstat_exists_;                      //!< @brief flag if mpstat exists
@@ -175,6 +231,41 @@ protected:
   int usage_warn_count_;   //!< @brief continuous count over usage_warn_ to generate warning
   int usage_error_count_;  //!< @brief continuous count over usage_error_ to generate error
   bool usage_avg_;         //!< @brief Check CPU usage calculated as averages among all processors
+
+  int temp_timeout_;  //!< @brief Timeout duration for reading temperature
+  int usage_timeout_; //!< @brief Timeout duration for reading usage
+  int load_timeout_;  //!< @brief Timeout duration for reading load
+  int throt_timeout_;  //!< @brief Timeout duration for reading thermal throttling
+  int freq_timeout_;  //!< @brief Timeout duration for reading frequency
+
+  std::mutex temp_mutex_;           //!< @brief Mutex for output from reading temperature
+  std::string temp_error_str_;      //!< @brief Error string
+  std::map<std::string, float> temp_map_;        //!< @brief CPU temperature map
+  double temp_elapsed_ms_;                                //!< @brief Execution time of reading temperature
+  std::mutex temp_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading temperature
+  bool temp_timeout_expired_;      //!< @brief Timeout for reading temperature has expired or not
+
+  std::mutex usage_mutex_;           //!< @brief Mutex for output from reading usage
+  std::string usage_error_str_;      //!< @brief Error string
+  std::map<std::string, CpuStatus> usage_map_;        //!< @brief CPU usage map
+  double usage_elapsed_ms_;                                //!< @brief Execution time of reading usage
+  std::mutex usage_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading usage
+  bool usage_timeout_expired_;      //!< @brief Timeout for reading usage has expired or not
+
+  std::mutex load_mutex_;           //!< @brief Mutex for output from reading load
+  std::string load_error_str_;      //!< @brief Error string
+  double load_avg_[3];              //!< @brief CPU load average
+  double load_elapsed_ms_;                                //!< @brief Execution time of reading load
+  std::mutex load_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading load
+  bool load_timeout_expired_;      //!< @brief Timeout for reading load has expired or not
+
+  std::mutex freq_mutex_;           //!< @brief Mutex for output from reading frequency
+  std::string freq_error_str_;      //!< @brief Error string
+  std::map<int, float> freq_map_;        //!< @brief CPU frequency vector
+  double freq_elapsed_ms_;                                //!< @brief Execution time of reading frequency
+  rclcpp::TimerBase::SharedPtr freq_timeout_timer_;       //!< @brief Timeout for reading frequency
+  std::mutex freq_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading frequency
+  bool freq_timeout_expired_;      //!< @brief Timeout for reading frequency has expired or not
 
   /**
    * @brief CPU temperature status messages

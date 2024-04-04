@@ -42,6 +42,16 @@ protected:
    */
   void checkThrottling(
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
+  
+  /** 
+   * @brief execute read throttling
+   */
+  void executeReadThrottling() override;
+
+  /**
+   * @brief Timeout for reading thermal throttling
+   */
+  void onThrotTimeout();
 
   /**
    * @brief get names for core temperature files
@@ -54,6 +64,13 @@ protected:
   void modprobeMSR();
 
   int msr_reader_port_;  //!< @brief port number to connect to msr_reader
+
+  std::mutex throt_mutex_;           //!< @brief Mutex for output from reading thermal throttling
+  std::string throt_error_str_;      //!< @brief Error string
+  std::map<int, int> throt_map_;     //!< @brief Map of core id and thermal throttling status
+  double throt_elapsed_ms_;          //!< @brief Execution time of reading thermal throttling
+  std::mutex throt_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading thermal throttling
+  bool throt_timeout_expired_;      //!< @brief Timeout for reading thermal throttling has expired or not
 };
 
 #endif  // SYSTEM_MONITOR__CPU_MONITOR__INTEL_CPU_MONITOR_HPP_
