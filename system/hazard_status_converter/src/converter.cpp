@@ -181,7 +181,7 @@ void Converter::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
 
   const auto get_root = [this]() {
     if (mode_) {
-      if (mode_->mode == OperationMode::STOP) return "/autoware/modes/autonomous";
+      if (mode_->mode == OperationMode::STOP) return "/autoware/modes/stop";
       if (mode_->mode == OperationMode::AUTONOMOUS) return "/autoware/modes/autonomous";
       if (mode_->mode == OperationMode::LOCAL) return "/autoware/modes/local";
       if (mode_->mode == OperationMode::REMOTE) return "/autoware/modes/remote";
