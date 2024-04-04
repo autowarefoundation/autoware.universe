@@ -24,6 +24,7 @@
 #include "tensorrt_mtr/cuda_helper.hpp"
 #include "tensorrt_mtr/intention_point.hpp"
 #include "tensorrt_mtr/polyline.hpp"
+#include "tensorrt_mtr/trajectory.hpp"
 
 #include <array>
 #include <memory>
@@ -105,9 +106,12 @@ public:
    *
    * @param agent_data The agent data to input.
    * @param polyline_data The polyline data to input.
+   * @param trajectories A container to store predicted trajectories.
    * @return True if the inference finishes successfully.
    */
-  bool doInference(AgentData & agent_data, PolylineData & polyline_data);
+  bool doInference(
+    AgentData & agent_data, PolylineData & polyline_data,
+    std::vector<PredictedTrajectory> & trajectories);
 
   /**
    * @brief Return the model configuration.
@@ -138,9 +142,10 @@ private:
    * @brief Execute post-process.
    *
    * @param agent_data The input agent data.
+   * @param trajectories A container to store predicted trajectories.
    * @return True if the post-process finishes successfully.
    */
-  bool postProcess(AgentData & agent_data);
+  bool postProcess(AgentData & agent_data, std::vector<PredictedTrajectory> & trajectories);
 
   // model parameters
   MtrConfig config_;

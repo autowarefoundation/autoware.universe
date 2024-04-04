@@ -165,9 +165,8 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
 
 void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
 {
-  // TODO(ktro2828)
   if (!polyline_ptr_) {
-    return;
+    return;  // No polyline
   }
 
   const auto current_time = rclcpp::Time(object_msg->header.stamp).seconds();
@@ -207,15 +206,20 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
   }
 
   AgentData agent_data(histories, sdc_index, target_indices, label_indices, timestamps_);
+
+  std::vector<PredictedTrajectory> trajectories;
+  if (!model_ptr_->doInference(agent_data, polyline_ptr_.get(), trajectories)) {
+    RCLCPP_WARN(get_logger(), "Inference failed");
+    return;
+  }
+  // TODO(ktro2828): add post-process operation
 }
 
 void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
 {
-  RCLCPP_DEBUG(get_logger(), "[TensorRT MTR]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *map_msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  RCLCPP_DEBUG(get_logger(), "[TensorRT MTR]: Finish loading lanelet");
 
   RCLCPP_DEBUG(get_logger(), "[TensorRT MTR]: Start converting lanelet to polyline");
   if (convertLaneletToPolyline()) {
