@@ -173,11 +173,15 @@ Reroute here means changing the route while driving. Unlike route setting, it is
 
 ![rerouting_safety](./media/rerouting_safety.svg)
 
-And there are three use cases that require reroute. It is used when changing the destination while driving or when driving a divided loop route. When the vehicle is driving on a MRM route, normal rerouting by this interface is not allowed.
+And there are three use cases that require reroute.
 
-- Route change from API
+- Route change API
 - Emergency route
 - Goal modification
+
+#### Route change API
+
+It is used when changing the destination while driving or when driving a divided loop route. When the vehicle is driving on a MRM route, normal rerouting by this interface is not allowed.
 
 #### Emergency route
 
