@@ -140,7 +140,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
       isClassTable_.erase(cls);
     }
   }
-  has_variance_ = this->declare_parameter("has_variance", false);
+  has_variance_ = this->declare_parameter<bool>("has_variance");
   has_twist_ = this->declare_parameter<bool>("model_params.has_twist");
   const std::size_t point_feature_size = static_cast<std::size_t>(
     this->declare_parameter<std::int64_t>("model_params.point_feature_size"));
