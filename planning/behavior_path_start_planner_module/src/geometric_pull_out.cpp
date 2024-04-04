@@ -115,6 +115,9 @@ std::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const
   output.end_pose = planner_.getArcPaths().at(1).points.back().point.pose;
 
   if (isPullOutPathCollided(output, parameters_.geometric_collision_check_distance_from_end)) {
+    if (!best_collided_path_.has_value()) {
+      best_collided_path_ = output;
+    }
     return {};
   }
 
