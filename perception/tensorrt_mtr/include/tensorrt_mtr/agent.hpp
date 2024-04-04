@@ -15,6 +15,7 @@
 #ifndef TENSORRT_MTR__AGENT_HPP_
 #define TENSORRT_MTR__AGENT_HPP_
 
+#include <algorithm>
 #include <array>
 #include <limits>
 #include <sstream>
@@ -58,9 +59,27 @@ struct AgentState
     const float x, const float y, const float z, const float length, const float width,
     const float height, const float yaw, const float vx, const float vy, const float ax,
     const float ay, const float is_valid)
-  : data_({x, y, z, length, width, height, yaw, vx, vy, ax, ay, is_valid})
+  : data_({x, y, z, length, width, height, yaw, vx, vy, ax, ay, is_valid}),
+    x_(x),
+    y_(y),
+    z_(z),
+    length_(length),
+    width_(width),
+    height_(height),
+    yaw_(yaw),
+    vx_(vx),
+    vy_(vy),
+    ax_(ax),
+    is_valid_(is_valid)
   {
   }
+
+  /**
+   * @brief Construct a new instance with a pointer.
+   *
+   * @param ptr
+   */
+  explicit AgentState(const float * ptr) { std::copy(ptr, ptr + Dim, data_.begin()); }
 
   static const size_t Dim = AgentStateDim;
 
@@ -78,8 +97,23 @@ struct AgentState
    */
   float * data_ptr() noexcept { return data_.data(); }
 
+  float x() const { return x_; }
+  float y() const { return y_; }
+  float z() const { return z_; }
+  float length() const { return length_; }
+  float width() const { return width_; }
+  float height() const { return height_; }
+  float yaw() const { return yaw_; }
+  float vx() const { return vx_; }
+  float vy() const { return vy_; }
+  float ax() const { return ax_; }
+  float ay() const { return ay_; }
+  bool is_valid() const { return is_valid_ == 1.0f; }
+
 private:
   std::array<float, Dim> data_;
+  float x_{0.0f}, y_{0.0f}, z_{0.0f}, length_{0.0f}, width_{0.0f}, height_{0.0f}, yaw_{0.0f},
+    vx_{0.0f}, vy_{0.0f}, ax_{0.0f}, ay_{0.0f}, is_valid_{0.0f};
 };
 
 /**
@@ -115,9 +149,10 @@ struct AgentHistory
    * @param object_id Object ID.
    * @param max_time_length History time length.
    */
-  AgentHistory(const std::string & object_id, const size_t max_time_length)
+  AgentHistory(const std::string & object_id, const int label_index, const size_t max_time_length)
   : data_(max_time_length * StateDim),
     object_id_(object_id),
+    label_index_(label_index),
     latest_time_(-std::numeric_limits<float>::max()),
     max_time_length_(max_time_length)
   {
@@ -131,6 +166,13 @@ struct AgentHistory
    * @return const std::string&
    */
   const std::string & object_id() const { return object_id_; }
+
+  /**
+   * @brief Return the label index.
+   *
+   * @return int
+   */
+  int label_index() const { return label_index_; }
 
   /**
    * @brief Return the history length.
@@ -206,11 +248,24 @@ struct AgentHistory
    * @return true If the end of element is 1.0f.
    * @return false Otherwise.
    */
-  bool is_valid_latest() const { return data_.at(StateDim * max_time_length_ - 1) == 1.0f; }
+  bool is_valid_latest() const { return get_latest_state().is_valid(); }
+
+  /**
+   * @brief Get the latest agent state.
+   *
+   * @return AgentState
+   */
+  AgentState get_latest_state()
+  {
+    const auto ptr = data_ptr();
+    const auto latest_ptr = ptr + StateDim * (max_time_length_ - 1);
+    return {latest_ptr};
+  }
 
 private:
   std::vector<float> data_;
   const std::string object_id_;
+  const int label_index_;
   float latest_time_;
   const size_t max_time_length_;
 };
