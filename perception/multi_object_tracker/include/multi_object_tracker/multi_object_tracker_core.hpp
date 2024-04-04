@@ -85,8 +85,7 @@ private:
 
   // publish processes
   void checkAndPublish(const rclcpp::Time & time);
-  void publish(
-    const rclcpp::Time & time, const std::list<std::shared_ptr<Tracker>> & list_tracker) const;
+  void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
 };
 

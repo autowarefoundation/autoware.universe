@@ -22,6 +22,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 
 #include <list>
 #include <map>
@@ -51,6 +52,15 @@ public:
     const std::unordered_map<int, int> & reverse_assignment);
   void checkTrackerLifeCycle(const rclcpp::Time & time);
   void sanitizeTracker(const rclcpp::Time & time);
+
+  // output
+  bool isConfidentTracker(const std::shared_ptr<Tracker> & tracker) const;
+  void getTrackedObjects(
+    const rclcpp::Time & time,
+    autoware_auto_perception_msgs::msg::TrackedObjects & tracked_objects) const;
+  void getTentativeObjects(
+    const rclcpp::Time & time,
+    autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const;
 
 private:
   std::map<std::uint8_t, std::string> tracker_map_;

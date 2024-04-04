@@ -95,12 +95,13 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
 
 void TrackerProcessor::checkTrackerLifeCycle(const rclcpp::Time & time)
 {
-  /* params */
+  // params
   constexpr float max_elapsed_time = 1.0;
 
-  /* delete tracker */
+  // check elapsed time from last update
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     const bool is_old = max_elapsed_time < (*itr)->getElapsedTimeFromLastUpdate(time);
+    // if the tracker is old, delete it
     if (is_old) {
       auto erase_itr = itr;
       --itr;
@@ -111,10 +112,13 @@ void TrackerProcessor::checkTrackerLifeCycle(const rclcpp::Time & time)
 
 void TrackerProcessor::sanitizeTracker(const rclcpp::Time & time)
 {
+  // params
   constexpr float min_iou = 0.1;
   constexpr float min_iou_for_unknown_object = 0.001;
   constexpr double distance_threshold = 5.0;
-  /* delete collision tracker */
+  
+  // check overlap between trackers
+  // if the overlap is too large, delete the one with lower IOU
   for (auto itr1 = list_tracker_.begin(); itr1 != list_tracker_.end(); ++itr1) {
     autoware_auto_perception_msgs::msg::TrackedObject object1;
     if (!(*itr1)->getTrackedObject(time, object1)) continue;
@@ -170,6 +174,45 @@ void TrackerProcessor::sanitizeTracker(const rclcpp::Time & time)
       } else if (should_delete_tracker2) {
         itr2 = list_tracker_.erase(itr2);
         --itr2;
+      }
+    }
+  }
+}
+
+bool TrackerProcessor::isConfidentTracker(const std::shared_ptr<Tracker> & tracker) const
+{
+  // confidence is measured by counting the number of measurements
+  // if the number of measurements is same or more than the threshold, the tracker is confident
+  constexpr int measurement_count_threshold = 3;
+  return measurement_count_threshold <= tracker->getTotalMeasurementCount();
+}
+
+void TrackerProcessor::getTrackedObjects(
+  const rclcpp::Time & time,
+  autoware_auto_perception_msgs::msg::TrackedObjects & tracked_objects) const
+{
+  tracked_objects.header.stamp = time;
+  for (const auto & tracker : list_tracker_) {
+    // skip if the tracker is not confident
+    if (!isConfidentTracker(tracker)) continue;
+    // get the tracked object, extrapolated to the given time
+    autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
+    if (tracker->getTrackedObject(time, tracked_object)) {
+      tracked_objects.objects.push_back(tracked_object);
+    }
+  }
+}
+
+void TrackerProcessor::getTentativeObjects(
+  const rclcpp::Time & time,
+  autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const
+{
+  tentative_objects.header.stamp = time;
+  for (const auto & tracker : list_tracker_) {
+    if (!isConfidentTracker(tracker)) {
+      autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
+      if (tracker->getTrackedObject(time, tracked_object)) {
+        tentative_objects.objects.push_back(tracked_object);
       }
     }
   }

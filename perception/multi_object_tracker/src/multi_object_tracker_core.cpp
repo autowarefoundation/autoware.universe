@@ -197,8 +197,7 @@ void MultiObjectTracker::onMeasurement(
   // Publish objects if the timer is not enabled
   if (publish_timer_ == nullptr) {
     // Publish if the delay compensation is disabled
-    const auto & list_tracker = processor_->getListTracker();
-    publish(measurement_time, list_tracker);
+    publish(measurement_time);
   } else {
     // Publish if the next publish time is close
     const double minimum_publish_interval = publisher_period_ * 0.70;  // 70% of the period
@@ -223,34 +222,20 @@ void MultiObjectTracker::onTimer()
 
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
 {
-  /* life cycle check */
-  // if the tracker is old, delete it
+  // check life cycle: if the tracker is old, delete it
   processor_->checkTrackerLifeCycle(time);
 
-  /* sanitize trackers */
-  // if the tracker is too close, delete it
+  // sanitize: if the tracker is too close to others, delete one side
   processor_->sanitizeTracker(time);
 
   // Publish
-  const auto & list_tracker = processor_->getListTracker();
-  publish(time, list_tracker);
+  publish(time);
 
   // Update last published time
   last_published_time_ = this->now();
 }
 
-inline bool MultiObjectTracker::shouldTrackerPublish(
-  const std::shared_ptr<const Tracker> tracker) const
-{
-  constexpr int measurement_count_threshold = 3;
-  if (tracker->getTotalMeasurementCount() < measurement_count_threshold) {
-    return false;
-  }
-  return true;
-}
-
-void MultiObjectTracker::publish(
-  const rclcpp::Time & time, const std::list<std::shared_ptr<Tracker>> & list_tracker) const
+void MultiObjectTracker::publish(const rclcpp::Time & time) const
 {
   debugger_->startPublishTime(this->now());
   const auto subscriber_count = tracked_objects_pub_->get_subscription_count() +
@@ -261,20 +246,7 @@ void MultiObjectTracker::publish(
   // Create output msg
   autoware_auto_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
-  output_msg.header.stamp = time;
-  tentative_objects_msg.header = output_msg.header;
-
-  for (auto itr = list_tracker.begin(); itr != list_tracker.end(); ++itr) {
-    if (!shouldTrackerPublish(*itr)) {  // for debug purpose
-      autoware_auto_perception_msgs::msg::TrackedObject object;
-      if (!(*itr)->getTrackedObject(time, object)) continue;
-      tentative_objects_msg.objects.push_back(object);
-      continue;
-    }
-    autoware_auto_perception_msgs::msg::TrackedObject object;
-    if (!(*itr)->getTrackedObject(time, object)) continue;
-    output_msg.objects.push_back(object);
-  }
+  processor_->getTrackedObjects(time, output_msg);
 
   // Publish
   tracked_objects_pub_->publish(output_msg);
@@ -282,7 +254,13 @@ void MultiObjectTracker::publish(
 
   // Debugger Publish if enabled
   debugger_->endPublishTime(this->now(), time);
-  debugger_->publishTentativeObjects(tentative_objects_msg);
+
+  if (debugger_->shouldPublishTentativeObjects()) {
+    autoware_auto_perception_msgs::msg::TrackedObjects tentative_objects_msg;
+    tentative_objects_msg.header.frame_id = world_frame_id_;
+    processor_->getTentativeObjects(time, tentative_objects_msg);
+    debugger_->publishTentativeObjects(tentative_objects_msg);
+  }
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)
