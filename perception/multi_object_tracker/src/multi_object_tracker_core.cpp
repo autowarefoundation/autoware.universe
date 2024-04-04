@@ -169,7 +169,7 @@ void MultiObjectTracker::onMeasurement(
   //// Associate and update
   /* prediction */
   processor_->predict(measurement_time);
-  /* association */
+  /* object association */
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
   {
     const auto & list_tracker = processor_->getListTracker();
@@ -181,14 +181,9 @@ void MultiObjectTracker::onMeasurement(
   }
   /* tracker update */
   processor_->update(transformed_objects, *self_transform, direct_assignment);
-
-  //// Tracker management
-  // if the tracker is old, delete it
-  processor_->checkTrackerLifeCycle(measurement_time);
-  // if the tracker is too close, delete it
-  processor_->sanitizeTracker(measurement_time);
-
-  //// Spawn new tracker
+  /* tracker pruning */
+  processor_->prune(measurement_time);
+  /* spawn new tracker */
   processor_->spawn(transformed_objects, *self_transform, reverse_assignment);
 
   // debugger time
@@ -222,11 +217,8 @@ void MultiObjectTracker::onTimer()
 
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
 {
-  // check life cycle: if the tracker is old, delete it
-  processor_->checkTrackerLifeCycle(time);
-
-  // sanitize: if the tracker is too close to others, delete one side
-  processor_->sanitizeTracker(time);
+  /* tracker pruning*/
+  processor_->prune(time);
 
   // Publish
   publish(time);

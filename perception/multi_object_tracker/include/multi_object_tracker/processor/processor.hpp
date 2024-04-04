@@ -34,10 +34,7 @@
 class TrackerProcessor
 {
 public:
-  explicit TrackerProcessor(const std::map<std::uint8_t, std::string> & tracker_map)
-  : tracker_map_(tracker_map)
-  {
-  }
+  explicit TrackerProcessor(const std::map<std::uint8_t, std::string> & tracker_map);
 
   const std::list<std::shared_ptr<Tracker>> & getListTracker() const { return list_tracker_; }
   // tracker processes
@@ -50,8 +47,7 @@ public:
     const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
     const geometry_msgs::msg::Transform & self_transform,
     const std::unordered_map<int, int> & reverse_assignment);
-  void checkTrackerLifeCycle(const rclcpp::Time & time);
-  void sanitizeTracker(const rclcpp::Time & time);
+  void prune(const rclcpp::Time & time);
 
   // output
   bool isConfidentTracker(const std::shared_ptr<Tracker> & tracker) const;
@@ -66,6 +62,15 @@ private:
   std::map<std::uint8_t, std::string> tracker_map_;
   std::list<std::shared_ptr<Tracker>> list_tracker_;
 
+  // parameters
+  float max_elapsed_time_;            // [s]
+  float min_iou_;                     // [ratio]
+  float min_iou_for_unknown_object_;  // [ratio]
+  double distance_threshold_;         // [m]
+  int confident_count_threshold_;     // [count]
+
+  void removeOldTracker(const rclcpp::Time & time);
+  void removeOverlappedTracker(const rclcpp::Time & time);
   std::shared_ptr<Tracker> createNewTracker(
     const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) const;

@@ -25,6 +25,21 @@
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
+TrackerProcessor::TrackerProcessor(const std::map<std::uint8_t, std::string> & tracker_map)
+: tracker_map_(tracker_map)
+{
+  // tracker lifetime parameters
+  max_elapsed_time_ = 1.0;  // [s]
+
+  // tracker overlap remover parameters
+  min_iou_ = 0.1;                       // [ratio]
+  min_iou_for_unknown_object_ = 0.001;  // [ratio]
+  distance_threshold_ = 5.0;            // [m]
+
+  // tracker confidence threshold
+  confident_count_threshold_ = 3;  // [count]
+}
+
 void TrackerProcessor::predict(const rclcpp::Time & time)
 {
   /* tracker prediction */
@@ -93,14 +108,19 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
   return std::make_shared<UnknownTracker>(time, object, self_transform);
 }
 
-void TrackerProcessor::checkTrackerLifeCycle(const rclcpp::Time & time)
+void TrackerProcessor::prune(const rclcpp::Time & time)
 {
-  // params
-  constexpr float max_elapsed_time = 1.0;
+  // check lifetime: if the tracker is old, delete it
+  removeOldTracker(time);
+  // check overlap: if the tracker is overlapped, delete the one with lower IOU
+  removeOverlappedTracker(time);
+}
 
+void TrackerProcessor::removeOldTracker(const rclcpp::Time & time)
+{
   // check elapsed time from last update
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    const bool is_old = max_elapsed_time < (*itr)->getElapsedTimeFromLastUpdate(time);
+    const bool is_old = max_elapsed_time_ < (*itr)->getElapsedTimeFromLastUpdate(time);
     // if the tracker is old, delete it
     if (is_old) {
       auto erase_itr = itr;
@@ -110,30 +130,28 @@ void TrackerProcessor::checkTrackerLifeCycle(const rclcpp::Time & time)
   }
 }
 
-void TrackerProcessor::sanitizeTracker(const rclcpp::Time & time)
+void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
 {
-  // params
-  constexpr float min_iou = 0.1;
-  constexpr float min_iou_for_unknown_object = 0.001;
-  constexpr double distance_threshold = 5.0;
-  
   // check overlap between trackers
-  // if the overlap is too large, delete the one with lower IOU
+  // if the overlap is too large, delete one of them
   for (auto itr1 = list_tracker_.begin(); itr1 != list_tracker_.end(); ++itr1) {
     autoware_auto_perception_msgs::msg::TrackedObject object1;
     if (!(*itr1)->getTrackedObject(time, object1)) continue;
     for (auto itr2 = std::next(itr1); itr2 != list_tracker_.end(); ++itr2) {
       autoware_auto_perception_msgs::msg::TrackedObject object2;
       if (!(*itr2)->getTrackedObject(time, object2)) continue;
+
+      // if the distance is too large, skip
       const double distance = std::hypot(
         object1.kinematics.pose_with_covariance.pose.position.x -
           object2.kinematics.pose_with_covariance.pose.position.x,
         object1.kinematics.pose_with_covariance.pose.position.y -
           object2.kinematics.pose_with_covariance.pose.position.y);
-      if (distance_threshold < distance) {
+      if (distance > distance_threshold_) {
         continue;
       }
 
+      // Check IoU between two objects
       const double min_union_iou_area = 1e-2;
       const auto iou = object_recognition_utils::get2dIoU(object1, object2, min_union_iou_area);
       const auto & label1 = (*itr1)->getHighestProbLabel();
@@ -141,10 +159,10 @@ void TrackerProcessor::sanitizeTracker(const rclcpp::Time & time)
       bool should_delete_tracker1 = false;
       bool should_delete_tracker2 = false;
 
-      // If at least one of them is UNKNOWN, delete the one with lower IOU. Because the UNKNOWN
+      // If at least one of them is UNKNOWN, delete the younger tracker. Because the UNKNOWN
       // objects are not reliable.
       if (label1 == Label::UNKNOWN || label2 == Label::UNKNOWN) {
-        if (min_iou_for_unknown_object < iou) {
+        if (iou > min_iou_for_unknown_object_) {
           if (label1 == Label::UNKNOWN && label2 == Label::UNKNOWN) {
             if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
               should_delete_tracker1 = true;
@@ -157,8 +175,8 @@ void TrackerProcessor::sanitizeTracker(const rclcpp::Time & time)
             should_delete_tracker2 = true;
           }
         }
-      } else {  // If neither is UNKNOWN, delete the one with lower IOU.
-        if (min_iou < iou) {
+      } else {  // If neither is UNKNOWN, delete the younger tracker
+        if (iou > min_iou_) {
           if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
             should_delete_tracker1 = true;
           } else {
@@ -167,11 +185,13 @@ void TrackerProcessor::sanitizeTracker(const rclcpp::Time & time)
         }
       }
 
+      // delete the tracker
       if (should_delete_tracker1) {
         itr1 = list_tracker_.erase(itr1);
         --itr1;
         break;
-      } else if (should_delete_tracker2) {
+      }
+      if (should_delete_tracker2) {
         itr2 = list_tracker_.erase(itr2);
         --itr2;
       }
@@ -183,8 +203,7 @@ bool TrackerProcessor::isConfidentTracker(const std::shared_ptr<Tracker> & track
 {
   // confidence is measured by counting the number of measurements
   // if the number of measurements is same or more than the threshold, the tracker is confident
-  constexpr int measurement_count_threshold = 3;
-  return measurement_count_threshold <= tracker->getTotalMeasurementCount();
+  return tracker->getTotalMeasurementCount() >= confident_count_threshold_;
 }
 
 void TrackerProcessor::getTrackedObjects(
