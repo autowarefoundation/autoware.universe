@@ -155,10 +155,16 @@ void MultiObjectTracker::onMeasurement(
     (*itr)->predict(measurement_time);
   }
 
+  /* filter by objects size before association */
+  autoware_auto_perception_msgs::msg::DetectedObjects filtered_objects;
+  autoware_auto_perception_msgs::msg::DetectedObjects unexpected_objects;
+  data_association_->filterMeasurementsBySize(
+    transformed_objects, filtered_objects, unexpected_objects);
+
   /* global nearest neighbor */
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
   Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
-    transformed_objects, list_tracker_);  // row : tracker, col : measurement
+    filtered_objects, list_tracker_);  // row : tracker, col : measurement
   data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
 
   /* tracker measurement update */
@@ -168,7 +174,7 @@ void MultiObjectTracker::onMeasurement(
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
       (*(tracker_itr))
         ->updateWithMeasurement(
-          transformed_objects.objects.at(direct_assignment.find(tracker_idx)->second),
+          filtered_objects.objects.at(direct_assignment.find(tracker_idx)->second),
           measurement_time, *self_transform);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement();
@@ -181,12 +187,12 @@ void MultiObjectTracker::onMeasurement(
   sanitizeTracker(list_tracker_, measurement_time);
 
   /* new tracker */
-  for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
+  for (size_t i = 0; i < filtered_objects.objects.size(); ++i) {
     if (reverse_assignment.find(i) != reverse_assignment.end()) {  // found
       continue;
     }
     std::shared_ptr<Tracker> tracker =
-      createNewTracker(transformed_objects.objects.at(i), measurement_time, *self_transform);
+      createNewTracker(filtered_objects.objects.at(i), measurement_time, *self_transform);
     if (tracker) list_tracker_.push_back(tracker);
   }
 
