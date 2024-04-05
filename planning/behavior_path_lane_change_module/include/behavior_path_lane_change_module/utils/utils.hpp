@@ -257,5 +257,37 @@ Polygon2d getEgoCurrentFootprint(
 bool isWithinIntersection(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lanelet,
   const Polygon2d & polygon);
+
+/**
+ * @brief Determines if a polygon is within lanes designated for turning.
+ *
+ * Checks if a polygon overlaps with lanelets tagged for turning directions (excluding 'straight').
+ * It evaluates the lanelet's 'turn_direction' attribute and determines overlap with the lanelet's
+ * area.
+ *
+ * @param lanelet Lanelet representing the road segment whose turn direction is to be evaluated.
+ * @param polygon The polygon to be checked for its presence within turn direction lanes.
+ *
+ * @return bool True if the polygon is within a lane designated for turning, false if it is within a
+ *              straight lane or no turn direction is specified.
+ */
+bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
+
+/**
+ * @brief Calculates the distance required during a lane change operation.
+ *
+ * Used for computing prepare or lane change length based on current and maximum velocity,
+ * acceleration, and duration, returning the lesser of accelerated distance or distance at max
+ * velocity.
+ *
+ * @param velocity The current velocity of the vehicle in meters per second (m/s).
+ * @param maximum_velocity The maximum velocity the vehicle can reach in meters per second (m/s).
+ * @param acceleration The acceleration of the vehicle in meters per second squared (m/s^2).
+ * @param duration The duration of the lane change in seconds (s).
+ * @return The calculated minimum distance in meters (m).
+ */
+double calcPhaseLength(
+  const double velocity, const double maximum_velocity, const double acceleration,
+  const double time);
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
