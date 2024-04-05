@@ -56,17 +56,14 @@ namespace fault_injection
 class FaultInjectionDiagUpdater : public diagnostic_updater::DiagnosticTaskVector
 {
 public:
-  template<class NodeT>
+  template <class NodeT>
   explicit FaultInjectionDiagUpdater(NodeT node, double period = 1.0)
   : FaultInjectionDiagUpdater(
-      node->get_node_base_interface(),
-      node->get_node_clock_interface(),
-      node->get_node_logging_interface(),
-      node->get_node_parameters_interface(),
-      node->get_node_timers_interface(),
-      node->get_node_topics_interface(),
-      period)
-  {}
+      node->get_node_base_interface(), node->get_node_clock_interface(),
+      node->get_node_logging_interface(), node->get_node_parameters_interface(),
+      node->get_node_timers_interface(), node->get_node_topics_interface(), period)
+  {
+  }
 
   FaultInjectionDiagUpdater(
     std::shared_ptr<rclcpp::node_interfaces::NodeBaseInterface> base_interface,
@@ -80,14 +77,14 @@ public:
     timers_interface_(timers_interface),
     clock_(clock_interface->get_clock()),
     period_(rclcpp::Duration::from_nanoseconds(period * 1e9)),
-    publisher_(
-      rclcpp::create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
-        topics_interface, "/diagnostics", 1)),
+    publisher_(rclcpp::create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
+      topics_interface, "/diagnostics", 1)),
     logger_(logging_interface->get_logger()),
     node_name_(base_interface->get_name())
   {
-    period = parameters_interface->declare_parameter(
-      "diagnostic_updater.period", rclcpp::ParameterValue(period)).get<double>();
+    period = parameters_interface
+               ->declare_parameter("diagnostic_updater.period", rclcpp::ParameterValue(period))
+               .get<double>();
     period_ = rclcpp::Duration::from_nanoseconds(period * 1e9);
 
     reset_timer();
@@ -96,7 +93,7 @@ public:
   /**
    * \brief Returns the interval between updates.
    */
-  auto getPeriod() const {return period_;}
+  auto getPeriod() const { return period_; }
 
   /**
    * \brief Sets the period as a rclcpp::Duration
@@ -110,18 +107,12 @@ public:
   /**
    * \brief Sets the period given a value in seconds
    */
-  void setPeriod(double period)
-  {
-    setPeriod(rclcpp::Duration::from_nanoseconds(period * 1e9));
-  }
+  void setPeriod(double period) { setPeriod(rclcpp::Duration::from_nanoseconds(period * 1e9)); }
 
   /**
    * \brief Forces to send out an update for all known DiagnosticStatus.
    */
-  void force_update()
-  {
-    update();
-  }
+  void force_update() { update(); }
 
   /**
    * \brief Output a message on all the known DiagnosticStatus.
@@ -138,10 +129,8 @@ public:
     std::vector<diagnostic_msgs::msg::DiagnosticStatus> status_vec;
 
     const std::vector<DiagnosticTaskInternal> & tasks = getTasks();
-    for (std::vector<DiagnosticTaskInternal>::const_iterator iter =
-      tasks.begin();
-      iter != tasks.end(); iter++)
-    {
+    for (std::vector<DiagnosticTaskInternal>::const_iterator iter = tasks.begin();
+         iter != tasks.end(); iter++) {
       diagnostic_updater::DiagnosticStatusWrapper status;
 
       status.name = iter->getName();
@@ -166,16 +155,13 @@ public:
     va_end(va);
   }
 
-  void setHardwareID(const std::string & hwid) {hwid_ = hwid;}
+  void setHardwareID(const std::string & hwid) { hwid_ = hwid; }
 
 private:
   void reset_timer()
   {
     update_timer_ = rclcpp::create_timer(
-      base_interface_,
-      timers_interface_,
-      clock_,
-      period_,
+      base_interface_, timers_interface_, clock_, period_,
       std::bind(&FaultInjectionDiagUpdater::update, this));
   }
 
@@ -189,12 +175,10 @@ private:
       std::vector<diagnostic_msgs::msg::DiagnosticStatus> status_vec;
 
       std::unique_lock<std::mutex> lock(
-        lock_);    // Make sure no adds happen while we are processing here.
+        lock_);  // Make sure no adds happen while we are processing here.
       const std::vector<DiagnosticTaskInternal> & tasks = getTasks();
-      for (std::vector<DiagnosticTaskInternal>::const_iterator iter =
-        tasks.begin();
-        iter != tasks.end(); iter++)
-      {
+      for (std::vector<DiagnosticTaskInternal>::const_iterator iter = tasks.begin();
+           iter != tasks.end(); iter++) {
         diagnostic_updater::DiagnosticStatusWrapper status;
 
         status.name = iter->getName();
@@ -257,4 +241,4 @@ private:
 };
 }  // namespace fault_injection
 
-#endif
+#endif  // FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_

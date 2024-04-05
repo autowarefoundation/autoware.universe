@@ -17,6 +17,7 @@
 
 #include "fault_injection/diagnostic_storage.hpp"
 #include "fault_injection/fault_injection_diag_updater.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_simulation_msgs/msg/simulation_events.hpp>
