@@ -57,6 +57,7 @@ public:
   InterconnectedModel()
   {
     // Initialize python library
+    // cspell:ignore libpython
     // Manually load libpython3.10.so as we need it for python.h.
     dlopen("libpython3.10.so", RTLD_GLOBAL | RTLD_NOW);
     /*
