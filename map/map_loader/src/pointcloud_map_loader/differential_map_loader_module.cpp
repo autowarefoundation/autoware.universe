@@ -29,13 +29,6 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
   const autoware_map_msgs::msg::AreaInfo & area, const std::vector<std::string> & cached_ids,
   GetDifferentialPointCloudMap::Response::SharedPtr & response) const
 {
-
-  // For debug
-  std::ofstream test("/home/anh/Work/autoware/test.txt", std::ios::app);
-
-  test << __FILE__ << "::" << __LINE__ << "::" << __func__ << std::endl;
-  // End
-
   // iterate over all the available pcd map grids
   std::vector<bool> should_remove(static_cast<int>(cached_ids.size()), true);
   for (const auto & ele : all_pcd_file_metadata_dict_) {
@@ -74,12 +67,6 @@ bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
   GetDifferentialPointCloudMap::Request::SharedPtr req,
   GetDifferentialPointCloudMap::Response::SharedPtr res)
 {
-  // For debug
-  std::ofstream test("/home/anh/Work/autoware/test.txt", std::ios::app);
-
-  test << __FILE__ << "::" << __LINE__ << "::" << __func__ << std::endl;
-  // End
-
   auto area = req->area;
   std::vector<std::string> cached_ids = req->cached_ids;
   differentialAreaLoad(area, cached_ids, res);
@@ -91,13 +78,6 @@ autoware_map_msgs::msg::PointCloudMapCellWithID
 DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
   const std::string & path, const std::string & map_id) const
 {
-
-  // For debug
-  std::ofstream test("/home/anh/Work/autoware/test.txt", std::ios::app);
-
-  test << __FILE__ << "::" << __LINE__ << "::" << __func__ << std::endl;
-  // End
-
   sensor_msgs::msg::PointCloud2 pcd;
   if (pcl::io::loadPCDFile(path, pcd) == -1) {
     RCLCPP_ERROR_STREAM(logger_, "PCD load failed: " << path);
