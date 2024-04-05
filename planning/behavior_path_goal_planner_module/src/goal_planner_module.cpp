@@ -122,37 +122,35 @@ GoalPlannerModule::GoalPlannerModule(
   // Initialize safety checker
   if (parameters_->safety_check_params.enable_safety_check) {
     initializeSafetyCheckParameters();
-    utils::parking_departure::initializeCollisionCheckDebugMap(goal_planner_data_.collision_check);
+    // utils::parking_departure::initializeCollisionCheckDebugMap(goal_planner_data_.collision_check);
   }
-
-  prev_data_.reset();
 }
 
 bool GoalPlannerModule::hasPreviousModulePathShapeChanged(
   const BehaviorModuleOutput & previous_module_output) const
 {
-  // TODO(Mamoru Sobue): last_previous_module_output_
-  if (!last_previous_module_output_) {
+  const auto last_previous_module_output = thread_safe_data_.get_last_previous_module_output();
+  if (!last_previous_module_output) {
     return true;
   }
 
   const auto current_path = previous_module_output.path;
 
   // the terminal distance is far
-  // TODO(Mamoru Sobue): last_previous_module_output_
   return calcDistance2d(
-           last_previous_module_output_->path.points.back().point,
+           last_previous_module_output->path.points.back().point,
            current_path.points.back().point) > 0.3;
 }
 
 bool GoalPlannerModule::hasDeviatedFromLastPreviousModulePath(
   const std::shared_ptr<const PlannerData> planner_data) const
 {
-  if (!last_previous_module_output_) {
+  const auto last_previous_module_output = thread_safe_data_.get_last_previous_module_output();
+  if (!last_previous_module_output) {
     return true;
   }
   return std::abs(motion_utils::calcLateralOffset(
-           last_previous_module_output_->path.points,
+           last_previous_module_output->path.points,
            planner_data->self_odometry->pose.pose.position)) > 0.3;
 }
 
@@ -310,15 +308,11 @@ void GoalPlannerModule::onTimer()
   }
 
   // set member variables
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    thread_safe_data_.set_pull_over_path_candidates(path_candidates);
-    thread_safe_data_.set_closest_start_pose(closest_start_pose);
-    RCLCPP_INFO(getLogger(), "generated %lu pull over path candidates", path_candidates.size());
-  }
+  thread_safe_data_.set_pull_over_path_candidates(path_candidates);
+  thread_safe_data_.set_closest_start_pose(closest_start_pose);
+  RCLCPP_INFO(getLogger(), "generated %lu pull over path candidates", path_candidates.size());
 
-  // TODO(Mamoru Sobue): move to thread safe data
-  last_previous_module_output_ = previous_module_output;
+  thread_safe_data_.set_last_previous_module_output(previous_module_output);
 }
 
 void GoalPlannerModule::onFreespaceParkingTimer()
@@ -505,7 +499,7 @@ void GoalPlannerModule::processOnExit()
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();
-  prev_data_.reset();
+  thread_safe_data_.reset();
   last_approval_data_.reset();
 }
 
@@ -1135,7 +1129,7 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus(
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const
 {
-  const auto & prev_status = prev_data_.deciding_path_status;
+  const auto & prev_status = thread_safe_data_.get_prev_data().deciding_path_status;
   const bool enable_safety_check = parameters.safety_check_params.enable_safety_check;
 
   // Once this function returns true, it will continue to return true thereafter
@@ -1406,31 +1400,34 @@ void GoalPlannerModule::updatePreviousData()
 {
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
-  // TODO(Mamoru Sobue): prev_data_ should be in ThreadSafeData
-  prev_data_.found_path = thread_safe_data_.foundPullOverPath();
+  // TODO(Mamoru Sobue): put prev_data_ out of  ThreadSafeData
+  auto prev_data = thread_safe_data_.get_prev_data();
+  prev_data.found_path = thread_safe_data_.foundPullOverPath();
 
-  prev_data_.deciding_path_status = checkDecidingPathStatus(
+  prev_data.deciding_path_status = checkDecidingPathStatus(
     planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
     objects_filtering_params_);
 
   // This is related to safety check, so if it is disabled, return here.
   if (!parameters_->safety_check_params.enable_safety_check) {
-    prev_data_.safety_status.is_safe = true;
-    return;
+    prev_data.safety_status.is_safe = true;
+  } else {
+    // Even if the current path is safe, it will not be safe unless it stands for a certain period
+    // of time. Record the time when the current path has become safe
+    const auto [is_safe, current_is_safe] = isSafePath(
+      planner_data_, *parameters_, ego_predicted_path_params_, objects_filtering_params_);
+    if (current_is_safe) {
+      if (!prev_data.safety_status.safe_start_time) {
+        prev_data.safety_status.safe_start_time = clock_->now();
+      }
+    } else {
+      prev_data.safety_status.safe_start_time = std::nullopt;
+    }
+    prev_data.safety_status.is_safe = is_safe;
   }
 
-  // Even if the current path is safe, it will not be safe unless it stands for a certain period of
-  // time. Record the time when the current path has become safe
-  const auto [is_safe, current_is_safe] =
-    isSafePath(planner_data_, *parameters_, ego_predicted_path_params_, objects_filtering_params_);
-  if (current_is_safe) {
-    if (!prev_data_.safety_status.safe_start_time) {
-      prev_data_.safety_status.safe_start_time = clock_->now();
-    }
-  } else {
-    prev_data_.safety_status.safe_start_time = std::nullopt;
-  }
-  prev_data_.safety_status.is_safe = is_safe;
+  // commit the change
+  thread_safe_data_.set_prev_data(prev_data);
 }
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
@@ -2121,6 +2118,7 @@ bool GoalPlannerModule::isCrossingPossible(const PullOverPath & pull_over_path) 
   return isCrossingPossible(start_pose, end_pose, lanes);
 }
 
+/*
 void GoalPlannerModule::updateSafetyCheckTargetObjectsData(
   const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const
@@ -2129,6 +2127,7 @@ void GoalPlannerModule::updateSafetyCheckTargetObjectsData(
   goal_planner_data_.target_objects_on_lane = target_objects_on_lane;
   goal_planner_data_.ego_predicted_path = ego_predicted_path;
 }
+*/
 
 static std::vector<utils::path_safety_checker::ExtendedPredictedObject> filterObjectsByWithinPolicy(
   const std::shared_ptr<const PredictedObjects> & objects,
@@ -2262,27 +2261,29 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
   const auto filtered_objects = filterObjectsByWithinPolicy(
     dynamic_object, {merged_expanded_pull_over_lanes}, objects_filtering_params);
 
+  const auto prev_data = thread_safe_data_.get_prev_data();
   const double hysteresis_factor =
-    prev_data_.safety_status.is_safe ? 1.0 : parameters.hysteresis_factor_expand_rate;
+    prev_data.safety_status.is_safe ? 1.0 : parameters.hysteresis_factor_expand_rate;
 
+  CollisionCheckDebugMap collision_check{};
   const bool current_is_safe = std::invoke([&]() {
     if (parameters.safety_check_params.method == "RSS") {
       return behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
-        pull_over_path, ego_predicted_path, filtered_objects, goal_planner_data_.collision_check,
+        pull_over_path, ego_predicted_path, filtered_objects, collision_check,
         planner_data->parameters, safety_check_params_->rss_params,
         objects_filtering_params->use_all_predicted_path, hysteresis_factor);
     } else if (parameters.safety_check_params.method == "integral_predicted_polygon") {
       return utils::path_safety_checker::checkSafetyWithIntegralPredictedPolygon(
         ego_predicted_path, vehicle_info_, filtered_objects,
         objects_filtering_params->check_all_predicted_path,
-        parameters.safety_check_params.integral_predicted_polygon_params,
-        goal_planner_data_.collision_check);
+        parameters.safety_check_params.integral_predicted_polygon_params, collision_check);
     }
     RCLCPP_ERROR(
       getLogger(), " [pull_over] invalid safety check method: %s",
       parameters.safety_check_params.method.c_str());
     throw std::domain_error("[pull_over] invalid safety check method");
   });
+  thread_safe_data_.set_collision_check(collision_check);
 
   /*
    *                      ==== is_safe
@@ -2299,8 +2300,8 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
    */
   if (current_is_safe) {
     if (
-      prev_data_.safety_status.safe_start_time &&
-      (clock_->now() - prev_data_.safety_status.safe_start_time.value()).seconds() >
+      prev_data.safety_status.safe_start_time &&
+      (clock_->now() - prev_data.safety_status.safe_start_time.value()).seconds() >
         parameters.safety_check_params.keep_unsafe_time) {
       return {true /*is_safe*/, true /*current_is_safe*/};
     }
@@ -2352,9 +2353,11 @@ void GoalPlannerModule::setDebugData()
   // Visualize previous module output
   add(createPathMarkerArray(
     getPreviousModuleOutput().path, "previous_module_path", 0, 1.0, 0.0, 0.0));
-  if (last_previous_module_output_.has_value()) {
+
+  const auto last_previous_module_output = thread_safe_data_.get_last_previous_module_output();
+  if (last_previous_module_output.has_value()) {
     add(createPathMarkerArray(
-      last_previous_module_output_.value().path, "last_previous_module_path", 0, 0.0, 1.0, 1.0));
+      last_previous_module_output.value().path, "last_previous_module_path", 0, 0.0, 1.0, 1.0));
   }
 
   // Visualize path and related pose
@@ -2411,6 +2414,7 @@ void GoalPlannerModule::setDebugData()
     }
   }
 
+  auto collision_check = thread_safe_data_.get_collision_check();
   // safety check
   if (parameters_->safety_check_params.enable_safety_check) {
     if (goal_planner_data_.ego_predicted_path.size() > 0) {
@@ -2425,33 +2429,35 @@ void GoalPlannerModule::setDebugData()
     }
 
     if (parameters_->safety_check_params.method == "RSS") {
-      add(showSafetyCheckInfo(goal_planner_data_.collision_check, "object_debug_info"));
+      add(showSafetyCheckInfo(collision_check, "object_debug_info"));
     }
-    add(showPredictedPath(goal_planner_data_.collision_check, "ego_predicted_path"));
-    add(showPolygon(goal_planner_data_.collision_check, "ego_and_target_polygon_relation"));
+    add(showPredictedPath(collision_check, "ego_predicted_path"));
+    add(showPolygon(collision_check, "ego_and_target_polygon_relation"));
 
     // set objects of interest
-    for (const auto & [uuid, data] : goal_planner_data_.collision_check) {
+    for (const auto & [uuid, data] : collision_check) {
       const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
       setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
     }
 
-    utils::parking_departure::initializeCollisionCheckDebugMap(goal_planner_data_.collision_check);
+    // TODO(Mamoru Sobue): it is not clear where ThreadSafeData::collision_check should be cleared
+    utils::parking_departure::initializeCollisionCheckDebugMap(collision_check);
 
     // visualize safety status maker
     {
+      const auto prev_data = thread_safe_data_.get_prev_data();
       visualization_msgs::msg::MarkerArray marker_array{};
-      const auto color = prev_data_.safety_status.is_safe ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
-                                                          : createMarkerColor(1.0, 0.0, 0.0, 0.99);
+      const auto color = prev_data.safety_status.is_safe ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
+                                                         : createMarkerColor(1.0, 0.0, 0.0, 0.99);
       auto marker = createDefaultMarker(
         header.frame_id, header.stamp, "safety_status", 0,
         visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0), color);
 
       marker.pose = planner_data_->self_odometry->pose.pose;
-      marker.text += "is_safe: " + std::to_string(prev_data_.safety_status.is_safe) + "\n";
-      if (prev_data_.safety_status.safe_start_time) {
+      marker.text += "is_safe: " + std::to_string(prev_data.safety_status.is_safe) + "\n";
+      if (prev_data.safety_status.safe_start_time) {
         const double elapsed_time_from_safe_start =
-          (clock_->now() - prev_data_.safety_status.safe_start_time.value()).seconds();
+          (clock_->now() - prev_data.safety_status.safe_start_time.value()).seconds();
         marker.text +=
           "elapsed_time_from_safe_start: " + std::to_string(elapsed_time_from_safe_start) + "\n";
       }

@@ -91,6 +91,33 @@ public:                                                       \
   DEFINE_SETTER_WITH_MUTEX(TYPE, NAME)              \
   DEFINE_GETTER_WITH_MUTEX(TYPE, NAME)
 
+enum class DecidingPathStatus {
+  NOT_DECIDED,
+  DECIDING,
+  DECIDED,
+};
+using DecidingPathStatusWithStamp = std::pair<DecidingPathStatus, rclcpp::Time>;
+
+struct PreviousPullOverData
+{
+  struct SafetyStatus
+  {
+    std::optional<rclcpp::Time> safe_start_time{};
+    bool is_safe{false};
+  };
+
+  void reset()
+  {
+    found_path = false;
+    safety_status = SafetyStatus{};
+    deciding_path_status = DecidingPathStatusWithStamp{};
+  }
+
+  bool found_path{false};
+  SafetyStatus safety_status{};
+  DecidingPathStatusWithStamp deciding_path_status{};
+};
+
 class ThreadSafeData
 {
 public:
@@ -145,6 +172,9 @@ public:
   void set(const std::shared_ptr<PullOverPath> & arg) { set_pull_over_path(arg); }
   void set(const PullOverPath & arg) { set_pull_over_path(arg); }
   void set(const GoalCandidate & arg) { set_modified_goal_pose(arg); }
+  void set(const BehaviorModuleOutput & arg) { set_last_previous_module_output(arg); }
+  void set(const PreviousPullOverData & arg) { set_prev_data(arg); }
+  void set(const CollisionCheckDebugMap & arg) { set_collision_check(arg); }
 
   void clearPullOverPath()
   {
@@ -182,7 +212,8 @@ public:
     last_path_update_time_ = std::nullopt;
     last_path_idx_increment_time_ = std::nullopt;
     closest_start_pose_ = std::nullopt;
-    // TODO(Mamoru Sobue): should reset last_previous_module_output to null?
+    last_previous_module_output_ = std::nullopt;
+    prev_data_.reset();
   }
 
   DEFINE_GETTER_WITH_MUTEX(std::shared_ptr<PullOverPath>, pull_over_path)
@@ -194,8 +225,9 @@ public:
   DEFINE_SETTER_GETTER_WITH_MUTEX(GoalCandidates, goal_candidates)
   DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<GoalCandidate>, modified_goal_pose)
   DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<Pose>, closest_start_pose)
-  // DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<BehaviorModuleOutput>,
-  // last_previous_module_output) DEFINE_SETTER_GETTER_WITH_MUTEX(PreviousPullOverData, prev_data)
+  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<BehaviorModuleOutput>, last_previous_module_output)
+  DEFINE_SETTER_GETTER_WITH_MUTEX(PreviousPullOverData, prev_data)
+  DEFINE_SETTER_GETTER_WITH_MUTEX(CollisionCheckDebugMap, collision_check)
 
 private:
   std::shared_ptr<PullOverPath> pull_over_path_{nullptr};
@@ -206,8 +238,9 @@ private:
   std::optional<rclcpp::Time> last_path_update_time_;
   std::optional<rclcpp::Time> last_path_idx_increment_time_;
   std::optional<Pose> closest_start_pose_{};
-  // std::optional<BehaviorModuleOutput> last_previous_module_output_{};
-  // PreviousPullOverData prev_data_{};
+  std::optional<BehaviorModuleOutput> last_previous_module_output_{};
+  PreviousPullOverData prev_data_{};
+  CollisionCheckDebugMap collision_check_{};
 
   std::recursive_mutex & mutex_;
   rclcpp::Clock::SharedPtr clock_;
@@ -237,33 +270,6 @@ struct LastApprovalData
 
   rclcpp::Time time{};
   Pose pose{};
-};
-
-enum class DecidingPathStatus {
-  NOT_DECIDED,
-  DECIDING,
-  DECIDED,
-};
-using DecidingPathStatusWithStamp = std::pair<DecidingPathStatus, rclcpp::Time>;
-
-struct PreviousPullOverData
-{
-  struct SafetyStatus
-  {
-    std::optional<rclcpp::Time> safe_start_time{};
-    bool is_safe{false};
-  };
-
-  void reset()
-  {
-    found_path = false;
-    safety_status = SafetyStatus{};
-    deciding_path_status = DecidingPathStatusWithStamp{};
-  }
-
-  bool found_path{false};
-  SafetyStatus safety_status{};
-  DecidingPathStatusWithStamp deciding_path_status{};
 };
 
 // store stop_pose_ pointer with reason string
@@ -470,10 +476,10 @@ private:
   tier4_autoware_utils::LinearRing2d vehicle_footprint_;
 
   std::recursive_mutex mutex_;
-  ThreadSafeData thread_safe_data_;
+  // TODO(Mamoru Sobue): isSafePath() modifies ThreadSafeData::check_collision, avoid this mutable
+  mutable ThreadSafeData thread_safe_data_;
 
   std::unique_ptr<LastApprovalData> last_approval_data_{nullptr};
-  PreviousPullOverData prev_data_{};
 
   // approximate distance from the start point to the end point of pull_over.
   // this is used as an assumed value to decelerate, etc., before generating the actual path.
@@ -599,7 +605,6 @@ private:
   TurnSignalInfo calcTurnSignalInfo();
   std::optional<lanelet::Id> ignore_signal_{std::nullopt};
 
-  std::optional<BehaviorModuleOutput> last_previous_module_output_{};
   bool hasPreviousModulePathShapeChanged(const BehaviorModuleOutput & previous_module_output) const;
   bool hasDeviatedFromLastPreviousModulePath(
     const std::shared_ptr<const PlannerData> planner_data) const;
@@ -621,9 +626,11 @@ private:
   // safety check
   void initializeSafetyCheckParameters();
   SafetyCheckParams createSafetyCheckParams() const;
+  /*
   void updateSafetyCheckTargetObjectsData(
     const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
+  */
   /**
    * @brief Checks if the current path is safe.
    * @return std::pair<bool, bool>
