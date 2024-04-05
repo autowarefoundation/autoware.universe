@@ -16,8 +16,7 @@
 #define FAULT_INJECTION__FAULT_INJECTION_NODE_HPP_
 
 #include "fault_injection/diagnostic_storage.hpp"
-
-#include <diagnostic_updater/diagnostic_updater.hpp>
+#include "fault_injection/fault_injection_diag_updater.hpp"
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_simulation_msgs/msg/simulation_events.hpp>
@@ -52,7 +51,7 @@ private:
 
   std::vector<DiagConfig> readEventDiagList();
 
-  diagnostic_updater::Updater updater_;
+  FaultInjectionDiagUpdater updater_;
 
   DiagnosticStorage diagnostic_storage_;
 };

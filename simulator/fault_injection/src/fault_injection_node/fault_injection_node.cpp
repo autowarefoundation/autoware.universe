@@ -43,7 +43,7 @@ using rosidl_generator_traits::to_yaml;
 
 FaultInjectionNode::FaultInjectionNode(rclcpp::NodeOptions node_options)
 : Node("fault_injection", node_options.automatically_declare_parameters_from_overrides(true)),
-  updater_(this)
+  updater_(this, 0.05)
 {
   updater_.setHardwareID("fault_injection");
 
