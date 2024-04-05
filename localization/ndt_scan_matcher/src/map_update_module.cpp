@@ -146,7 +146,7 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
     request,
     [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
 
-      // Wait for maximum 10 milliseconds
+  // Wait for maximum 10 milliseconds
   std::chrono::milliseconds timeout(10);
   auto start = std::chrono::system_clock::now();
 
