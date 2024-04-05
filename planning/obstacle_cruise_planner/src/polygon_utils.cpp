@@ -104,38 +104,6 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
 
 namespace polygon_utils
 {
-Polygon2d createOneStepPolygon(
-  const std::vector<geometry_msgs::msg::Pose> & last_poses,
-  const std::vector<geometry_msgs::msg::Pose> & current_poses,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
-{
-  Polygon2d polygon;
-
-  const double base_to_front = vehicle_info.max_longitudinal_offset_m;
-  const double width = vehicle_info.vehicle_width_m / 2.0 + lat_margin;
-  const double base_to_rear = vehicle_info.rear_overhang_m;
-
-  for (auto & pose : last_poses) {
-    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, width));
-    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, -width));
-    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, -width));
-    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, width));
-  }
-  for (auto & pose : current_poses) {
-    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, width));
-    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, -width));
-    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, -width));
-    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, width));
-  }
-
-  bg::correct(polygon);
-
-  Polygon2d hull_polygon;
-  bg::convex_hull(polygon, hull_polygon);
-
-  return hull_polygon;
-}
-
 std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const Obstacle & obstacle, const bool is_driving_forward,
