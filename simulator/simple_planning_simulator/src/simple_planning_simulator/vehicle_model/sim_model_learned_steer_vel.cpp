@@ -77,7 +77,7 @@ void SimModelLearnedSteerVel::update(const double & dt)
   vehicle.initState(new_state);
 
   // model forward
-  std::vector<double> vehicle_state_ = vehicle.updatePymodel(vehicle_input_);
+  std::vector<double> vehicle_state_ = vehicle.updatePyModel(vehicle_input_);
 
   // std::vector<double> to Eigen::VectorXd
   for (size_t i = 0; i < vehicle_state_.size(); i++) state_[i] = vehicle_state_[i];

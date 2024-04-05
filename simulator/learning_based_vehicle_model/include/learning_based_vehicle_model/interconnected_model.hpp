@@ -44,7 +44,7 @@ class __attribute__((visibility("default"))) InterconnectedModel
   // in "all_variables_names"
   std::vector<int> map_in_to_sig_vec;
 
-  // index in "map_sig_vec_to_out" is index in "pymodel_outputs" and value in "map_sig_vec_to_out"
+  // index in "map_sig_vec_to_out" is index in "py_model_outputs" and value in "map_sig_vec_to_out"
   // is index in "all_variables_names"
   std::vector<int> map_sig_vec_to_out;
 
@@ -124,7 +124,7 @@ public:
    * @brief compute next step of the PSIM model using python sub-models
    * @param [in] psim_input vector of input values provided by PSIM
    */
-  std::vector<double> updatePymodel(std::vector<double> psim_input);
+  std::vector<double> updatePyModel(std::vector<double> psim_input);
 };
 
 #endif  // LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_

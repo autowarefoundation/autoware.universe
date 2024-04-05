@@ -75,8 +75,8 @@ void InterconnectedModel::addSubmodel(
   std::tuple<std::string, std::string, std::string> submodel_desc)
 {
   const auto [lib_path, param_path, class_name] = submodel_desc;
-  auto new_model = new SimplePymodel(lib_path, param_path, class_name);
-  submodels.push_back(std::unique_ptr<SimplePymodel>(new_model));
+  auto new_model = new SimplePyModel(lib_path, param_path, class_name);
+  submodels.push_back(std::unique_ptr<SimplePyModel>(new_model));
 }
 
 void InterconnectedModel::initState(std::vector<double> new_state)
@@ -112,7 +112,7 @@ void InterconnectedModel::dtSet(double dt)
   }
 }
 
-std::vector<double> InterconnectedModel::updatePymodel(std::vector<double> psim_input)
+std::vector<double> InterconnectedModel::updatePyModel(std::vector<double> psim_input)
 {
   // map input to vector of all variables
   for (size_t PSIM_INPUT_IDX = 0; PSIM_INPUT_IDX < psim_input.size(); PSIM_INPUT_IDX++) {

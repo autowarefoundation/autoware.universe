@@ -21,14 +21,14 @@
 
 namespace py = pybind11;
 
-SimplePymodel::SimplePymodel(
-  std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name)
+SimplePyModel::SimplePyModel(
+  std::string py_model_import_name_, std::string param_file_path, std::string py_class_name)
 {
   // Import model class
-  pymodel_import_name = pymodel_import_name_;
-  if (!pymodel_import_name.empty()) {
+  py_model_import_name = py_model_import_name_;
+  if (!py_model_import_name.empty()) {
     // Import python module
-    py::module_ imported_module = py::module_::import(pymodel_import_name.c_str());
+    py::module_ imported_module = py::module_::import(py_model_import_name.c_str());
     // Initialize model class from imported module
     py_model_class = imported_module.attr(py_class_name.c_str())();
   } else {
@@ -42,25 +42,25 @@ SimplePymodel::SimplePymodel(
   }
 
   // Get string names of states of python model, convert them to C++ string and store them in
-  // pymodel_state_names
-  py::list pymodel_state_names_ = py_model_class.attr("get_state_names")();
-  num_outputs_py = pymodel_state_names_.size();
+  // py_model_state_names
+  py::list py_model_state_names_ = py_model_class.attr("get_state_names")();
+  num_outputs_py = py_model_state_names_.size();
   for (int STATE_IDX = 0; STATE_IDX < num_outputs_py; STATE_IDX++) {
-    pymodel_state_names.push_back(PyBytes_AS_STRING(
-      PyUnicode_AsEncodedString(pymodel_state_names_[STATE_IDX].ptr(), "UTF-8", "strict")));
+    py_model_state_names.push_back(PyBytes_AS_STRING(
+      PyUnicode_AsEncodedString(py_model_state_names_[STATE_IDX].ptr(), "UTF-8", "strict")));
   }
 
   // Get string names of actions (inputs) of python model, convert them to C++ string and store
-  // them in pymodel_input_names
-  py::list pymodel_input_names_ = py_model_class.attr("get_action_names")();
-  num_inputs_py = pymodel_input_names_.size();
+  // them in py_model_input_names
+  py::list py_model_input_names_ = py_model_class.attr("get_action_names")();
+  num_inputs_py = py_model_input_names_.size();
   for (int INPUT_IDX = 0; INPUT_IDX < num_inputs_py; INPUT_IDX++) {
-    pymodel_input_names.push_back(PyBytes_AS_STRING(
-      PyUnicode_AsEncodedString(pymodel_input_names_[INPUT_IDX].ptr(), "UTF-8", "strict")));
+    py_model_input_names.push_back(PyBytes_AS_STRING(
+      PyUnicode_AsEncodedString(py_model_input_names_[INPUT_IDX].ptr(), "UTF-8", "strict")));
   }
 }
 
-std::vector<double> SimplePymodel::getNextState(
+std::vector<double> SimplePyModel::getNextState(
   std::vector<double> model_signals_vec, std::vector<double> model_signals_vec_next)
 {
   // get inputs and states of the python model from the vector of signals
@@ -81,31 +81,31 @@ std::vector<double> SimplePymodel::getNextState(
   return next_state;
 }
 
-void SimplePymodel::dtSet(double dt)
+void SimplePyModel::dtSet(double dt)
 {
   py_model_class.attr("dtSet")(dt);
 }
 
-std::vector<char *> SimplePymodel::getInputNames()
+std::vector<char *> SimplePyModel::getInputNames()
 {
-  return pymodel_input_names;
+  return py_model_input_names;
 }
 
-std::vector<char *> SimplePymodel::getStateNames()
+std::vector<char *> SimplePyModel::getStateNames()
 {
-  return pymodel_state_names;
+  return py_model_state_names;
 }
 
-void SimplePymodel::mapInputs(std::vector<char *> signals_vec_names)
+void SimplePyModel::mapInputs(std::vector<char *> signals_vec_names)
 {
   // index in "map_sig_vec_to_py_model_inputs" is index in "py_inputs" and value in
   // "map_sig_vec_to_py_model_inputs" is index in "signals_vec_names"
-  map_sig_vec_to_py_model_inputs = createConnectionsMap(signals_vec_names, pymodel_input_names);
+  map_sig_vec_to_py_model_inputs = createConnectionsMap(signals_vec_names, py_model_input_names);
 }
 
-void SimplePymodel::mapOutputs(std::vector<char *> signals_vec_names)
+void SimplePyModel::mapOutputs(std::vector<char *> signals_vec_names)
 {
-  // index in "map_py_model_outputs_to_sig_vec" is index in "pymodel_outputs" and value in
+  // index in "map_py_model_outputs_to_sig_vec" is index in "py_model_outputs" and value in
   // "map_py_model_outputs_to_sig_vec" is index in "signals_vec_names"
-  map_py_model_outputs_to_sig_vec = createConnectionsMap(signals_vec_names, pymodel_state_names);
+  map_py_model_outputs_to_sig_vec = createConnectionsMap(signals_vec_names, py_model_state_names);
 }

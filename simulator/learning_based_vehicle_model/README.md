@@ -18,7 +18,7 @@ This library creates an interface between models in Python and PSIM (C++). It is
 
 The idea behind this package is that the model we want to use for simulation consists of multiple sub-models (e.g., steering model, drive model, vehicle kinematics, etc.). These sub-models are implemented in Python and can be trainable. Each sub-model has string names for all of its inputs/outputs, which are used to create model interconnections automatically (see image below). This allows us to easily switch sub-models for better customization of the simulator.
 
-![pymodel_interface](./image/python_model_interface.png "PyModel interface")
+![py_model_interface](./image/python_model_interface.png "PyModel interface")
 
 ## Assumptions / Known limits
 
@@ -124,7 +124,7 @@ Outputs:
 
 - None
 
-#### `std::vector<double> updatePymodel(std::vector<double> psim_input)`
+#### `std::vector<double> updatePyModel(std::vector<double> psim_input)`
 
 Calculate the next state of the model by calculating the next state of all of the sub-models.
 
@@ -196,7 +196,7 @@ std::vector<double> current_state = {0.2, 0.5}; // STATE_NAME_1, STATE_NAME_2
 vehicle.initState(current_state);
 
 // Calculate the next state of the model
-std::vector<double> next_state = vehicle.updatePymodel(vehicle_input);
+std::vector<double> next_state = vehicle.updatePyModel(vehicle_input);
 ```
 
 ## References / External links

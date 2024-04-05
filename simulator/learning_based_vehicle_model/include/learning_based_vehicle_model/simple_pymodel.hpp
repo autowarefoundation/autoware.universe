@@ -27,13 +27,13 @@
 namespace py = pybind11;
 
 /**
- * @class SimplePymodel
+ * @class SimplePyModel
  * @brief This class is an interface between C++ and python models.
  */
-class SimplePymodel : public SubModelInterface
+class SimplePyModel : public SubModelInterface
 {
 private:
-  std::string pymodel_import_name;
+  std::string py_model_import_name;
 
   int num_inputs_py;
   int num_outputs_py;
@@ -45,22 +45,22 @@ private:
                                      // "py_inputs" and value in "map_sig_vec_to_py_model_inputs" is
                                      // index in "signals_vec_names"
   std::vector<int> map_py_model_outputs_to_sig_vec;  // index in "map_py_model_outputs_to_sig_vec"
-                                                     // is index in "pymodel_outputs" and value in
+                                                     // is index in "py_model_outputs" and value in
                                                      // "map_py_model_outputs_to_sig_vec" is index
                                                      // in "signals_vec_names"
 
-  std::vector<char *> pymodel_input_names;
-  std::vector<char *> pymodel_state_names;
+  std::vector<char *> py_model_input_names;
+  std::vector<char *> py_model_state_names;
 
 public:
   /**
    * @brief constructor
-   * @param [in] pymodel_import_name_ path to python model
+   * @param [in] py_model_import_name_ path to python model
    * @param [in] param_file_path path to saved parameter file of the python sub-model
    * @param [in] py_class_name name of the python class
    */
-  SimplePymodel(
-    std::string pymodel_import_name_, std::string param_file_path, std::string py_class_name);
+  SimplePyModel(
+    std::string py_model_import_name_, std::string param_file_path, std::string py_class_name);
 
   /**
    * @brief calculate the next state of a python model
