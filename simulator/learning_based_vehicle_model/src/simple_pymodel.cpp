@@ -66,16 +66,17 @@ std::vector<double> SimplePymodel::getNextState(
   // get inputs and states of the python model from the vector of signals
   std::vector<double> py_inputs(num_inputs_py);
   std::vector<double> py_state(num_outputs_py);
-  py_inputs = fillVectorUsingMap(py_inputs, model_signals_vec, map_sig_vec_to_pyin, true);
-  py_state = fillVectorUsingMap(py_state, model_signals_vec, map_pyout_to_sig_vec, true);
+  py_inputs =
+    fillVectorUsingMap(py_inputs, model_signals_vec, map_sig_vec_to_py_model_inputs, true);
+  py_state = fillVectorUsingMap(py_state, model_signals_vec, map_py_model_outputs_to_sig_vec, true);
 
   // forward pass through the base model
   py::tuple res = py_model_class.attr("forward")(py_inputs, py_state);
   std::vector<double> py_state_next = res.cast<std::vector<double>>();
 
   // map outputs from python model to required outputs
-  std::vector<double> next_state =
-    fillVectorUsingMap(py_state_next, model_signals_vec_next, map_pyout_to_sig_vec, false);
+  std::vector<double> next_state = fillVectorUsingMap(
+    py_state_next, model_signals_vec_next, map_py_model_outputs_to_sig_vec, false);
 
   return next_state;
 }
@@ -97,14 +98,14 @@ std::vector<char *> SimplePymodel::getStateNames()
 
 void SimplePymodel::mapInputs(std::vector<char *> signals_vec_names)
 {
-  // index in "map_sig_vec_to_pyin" is index in "py_inputs" and value in "map_sig_vec_to_pyin" is
-  // index in "signals_vec_names"
-  map_sig_vec_to_pyin = createConnectionsMap(signals_vec_names, pymodel_input_names);
+  // index in "map_sig_vec_to_py_model_inputs" is index in "py_inputs" and value in
+  // "map_sig_vec_to_py_model_inputs" is index in "signals_vec_names"
+  map_sig_vec_to_py_model_inputs = createConnectionsMap(signals_vec_names, pymodel_input_names);
 }
 
 void SimplePymodel::mapOutputs(std::vector<char *> signals_vec_names)
 {
-  // index in "map_pyout_to_sig_vec" is index in "pymodel_outputs" and value in
-  // "map_pyout_to_sig_vec" is index in "signals_vec_names"
-  map_pyout_to_sig_vec = createConnectionsMap(signals_vec_names, pymodel_state_names);
+  // index in "map_py_model_outputs_to_sig_vec" is index in "pymodel_outputs" and value in
+  // "map_py_model_outputs_to_sig_vec" is index in "signals_vec_names"
+  map_py_model_outputs_to_sig_vec = createConnectionsMap(signals_vec_names, pymodel_state_names);
 }

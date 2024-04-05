@@ -27,7 +27,7 @@
 namespace py = pybind11;
 
 /**
- * @class SimModelPymodels
+ * @class SimplePymodel
  * @brief This class is an interface between C++ and python models.
  */
 class SimplePymodel : public SubModelInterface
@@ -41,11 +41,13 @@ private:
   py::object py_model_class;
 
   std::vector<int>
-    map_sig_vec_to_pyin;  // index in "map_sig_vec_to_pyin" is index in "py_inputs" and value in
-                          // "map_sig_vec_to_pyin" is index in "signals_vec_names"
-  std::vector<int>
-    map_pyout_to_sig_vec;  // index in "map_pyout_to_sig_vec" is index in "pymodel_outputs" and
-                           // value in "map_pyout_to_sig_vec" is index in "signals_vec_names"
+    map_sig_vec_to_py_model_inputs;  // index in "map_sig_vec_to_py_model_inputs" is index in
+                                     // "py_inputs" and value in "map_sig_vec_to_py_model_inputs" is
+                                     // index in "signals_vec_names"
+  std::vector<int> map_py_model_outputs_to_sig_vec;  // index in "map_py_model_outputs_to_sig_vec"
+                                                     // is index in "pymodel_outputs" and value in
+                                                     // "map_py_model_outputs_to_sig_vec" is index
+                                                     // in "signals_vec_names"
 
   std::vector<char *> pymodel_input_names;
   std::vector<char *> pymodel_state_names;
