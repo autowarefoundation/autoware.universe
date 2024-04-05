@@ -207,7 +207,7 @@ void MultiObjectTracker::onMeasurement(
     publish(measurement_time);
   } else {
     // Publish if the next publish time is close
-    const double minimum_publish_interval = publisher_period_ * 0.70;  // 70% of the period
+    const double minimum_publish_interval = publisher_period_ * 0.4;  // 40% of the period
     if ((this->now() - last_published_time_).seconds() > minimum_publish_interval) {
       checkAndPublish(this->now());
     }
