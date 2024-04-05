@@ -146,12 +146,26 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
     request,
     [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
 
+      // Wait for maximum 10 milliseconds
+  std::chrono::milliseconds timeout(10);
+  auto start = std::chrono::system_clock::now();
+
   std::future_status status = result.wait_for(std::chrono::seconds(0));
   while (status != std::future_status::ready) {
     RCLCPP_INFO(logger_, "waiting response");
     if (!rclcpp::ok()) {
       return false;  // No update
     }
+
+    auto cur = std::chrono::system_clock::now();
+
+    // Report an error if wait for too long
+    if (cur - start >= timeout) {
+      RCLCPP_ERROR_STREAM_THROTTLE(
+        logger_, *clock_, 1000, "Waited for incoming PCDs for too long. Abandon NDT update.");
+      return false;
+    }
+
     status = result.wait_for(std::chrono::seconds(1));
   }
 
