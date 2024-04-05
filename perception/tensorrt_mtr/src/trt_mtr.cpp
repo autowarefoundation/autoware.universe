@@ -171,9 +171,7 @@ bool TrtMTR::preProcess(AgentData & agent_data, PolylineData & polyline_data)
       d_target_state_.get(), config_.offset_xy[0], config_.offset_xy[1], d_topk_index_.get(),
       d_in_polyline_.get(), d_in_polyline_mask_.get(), d_in_polyline_center_.get(), stream_));
   } else {
-    assert(
-      ("The number of config.max_num_polyline and PolylineData.PolylineNum must be same",
-       config_.max_num_polyline == polyline_data.PolylineNum));
+    assert(config_.max_num_polyline == polyline_data.PolylineNum);
     CHECK_CUDA_ERROR(polylinePreprocessLauncher(
       polyline_data.PolylineNum, polyline_data.PointNum, polyline_data.StateDim, d_polyline_.get(),
       agent_data.TargetNum, agent_data.StateDim, d_target_state_.get(), d_in_polyline_.get(),

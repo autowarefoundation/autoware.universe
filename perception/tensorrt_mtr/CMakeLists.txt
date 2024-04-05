@@ -72,7 +72,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/builder.cpp
   src/trt_mtr.cpp
 )
-target_include_directories(${PEOJECT_NAME} PRIVATE
+target_include_directories(${PROJECT_NAME} PUBLIC
   include
   lib/include
 )
@@ -87,7 +87,7 @@ rclcpp_components_register_node(${PROJECT_NAME}_node
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE
-  -Wall -Wextra -Wpedantic -Werror -Wno-deprecated-declarations TENSORRT_VERSION_MAJOR=${TENSORRT_VERSION_MAJOR}
+  -Wall -Wextra -Wpedantic -Werror -Wno-deprecated-declarations
 )
 
 if(BUILD_TESTING)

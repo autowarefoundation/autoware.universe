@@ -50,8 +50,6 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 
-constexpr std::string EGO_ID = "EGO";
-
 class PolylineTypeMap
 {
 public:
@@ -69,15 +67,15 @@ public:
     while (getline(file, label)) {
       std::transform(
         label.begin(), label.end(), label.begin(), [](auto c) { return std::toupper(c); });
-      label_map_.insert({label_index, label});
+      label_map_.insert({label, label_index});
       ++label_index;
     }
   }
 
-  const size_t & getTypeID(const & std::string & type) const { return label_map_.at(type); }
+  const size_t & getTypeID(const std::string & type) const { return label_map_.at(type); }
 
 private:
-  std::map<size_t, std::string> label_map_;
+  std::map<std::string, size_t> label_map_;
 };  // class PolylineTypeMap
 
 class MTRNode : public rclcpp::Node
@@ -122,7 +120,7 @@ private:
    * @param current_time
    * @param objects_msg
    */
-  std::vector<size_t> updateAgentHistory(
+  void updateAgentHistory(
     const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
 
   /**
@@ -133,15 +131,10 @@ private:
    * @param histories
    * @return std::vector<size_t>
    */
-  std::vector<size_t> extractTargetAgent(const std::vector<AgentHistory> & histories) const;
+  std::vector<size_t> extractTargetAgent(const std::vector<AgentHistory> & histories);
 
-  /**
-   * @brief Predict future trajectories with MTR.
-   *
-   * @return true
-   * @return false
-   */
-  bool predictFuture();
+  // Object ID for ego vehicle
+  const std::string EGO_ID{"EGO"};
 
   // Lanelet map pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
@@ -152,7 +145,7 @@ private:
   std::map<std::string, AgentHistory> agent_history_map_;
 
   // Pose transform listener
-  tier4_autoware_utils::TransformListener transform_listener_{this};
+  tier4_autoware_utils::TransformListener transform_listener_;
 
   // MTR parameters
   std::unique_ptr<MtrConfig> config_ptr_;
