@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// cspell:ignore pymodel
 #ifndef LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
 #define LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
 
