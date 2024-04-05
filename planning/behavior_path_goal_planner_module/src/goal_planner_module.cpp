@@ -342,8 +342,10 @@ void GoalPlannerModule::onFreespaceParkingTimer()
     }
   }
   // end of critical section
-  if (!local_planner_data) {
-    // TODO(Mamoru Sobue): log here and check all
+  if (!local_planner_data || !current_status_opt || !parameters_opt) {
+    RCLCPP_ERROR(
+      getLogger(),
+      "failed to get valid planner_data/current_status/parameters in onFreespaceParkingTimer");
     return;
   }
 
