@@ -86,12 +86,6 @@ public:
       data_map_[label].emplace_back(x);
       data_map_[label].emplace_back(y);
     }
-
-    for (const auto & [key, values] : data_map_) {
-      assert(
-        ("The number of clusters is not same with the specified value",
-         values.size() == StateDim * num_cluster));
-    }
   }
 
   /**
