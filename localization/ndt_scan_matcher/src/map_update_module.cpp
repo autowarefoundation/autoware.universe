@@ -172,7 +172,7 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   auto & maps_to_add = result.get()->new_pointcloud_with_ids;
   auto & map_ids_to_remove = result.get()->ids_to_remove;
 
-  // Check 
+  // Check
   RCLCPP_INFO(
     logger_, "Update map (Add: %lu, Remove: %lu)", maps_to_add.size(), map_ids_to_remove.size());
   if (maps_to_add.empty() && map_ids_to_remove.empty()) {
