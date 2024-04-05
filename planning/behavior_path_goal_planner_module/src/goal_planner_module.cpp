@@ -175,6 +175,7 @@ void GoalPlannerModule::onTimer()
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
   std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params{nullptr};
   std::shared_ptr<ObjectsFilteringParams> objects_filtering_params{nullptr};
+  std::shared_ptr<SafetyCheckParams> safety_check_params{nullptr};
 
   // begin of critical section
   {
@@ -188,6 +189,7 @@ void GoalPlannerModule::onTimer()
       parameters_opt = gp_planner_data.parameters;
       ego_predicted_path_params = gp_planner_data.ego_predicted_path_params;
       objects_filtering_params = gp_planner_data.objects_filtering_params;
+      safety_check_params = gp_planner_data.safety_check_params;
     }
   }
   // end of critical section
@@ -231,7 +233,7 @@ void GoalPlannerModule::onTimer()
       hasDeviatedFromLastPreviousModulePath(local_planner_data) &&
       !hasDecidedPath(
         local_planner_data, occupancy_grid_map, parameters, ego_predicted_path_params,
-        objects_filtering_params)) {
+        objects_filtering_params, safety_check_params)) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
     }
@@ -321,11 +323,8 @@ void GoalPlannerModule::onFreespaceParkingTimer()
 
   std::shared_ptr<const PlannerData> local_planner_data{nullptr};
   std::optional<ModuleStatus> current_status_opt{std::nullopt};
-  std::optional<BehaviorModuleOutput> previous_module_output_opt{std::nullopt};
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map{nullptr};
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
-  std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params{nullptr};
-  std::shared_ptr<ObjectsFilteringParams> objects_filtering_params{nullptr};
 
   // begin of critical section
   {
@@ -334,11 +333,8 @@ void GoalPlannerModule::onFreespaceParkingTimer()
       const auto & gp_planner_data = gp_planner_data_.value();
       local_planner_data = std::make_shared<const PlannerData>(gp_planner_data.planner_data);
       current_status_opt = gp_planner_data.current_status;
-      previous_module_output_opt = gp_planner_data.previous_module_output;
       occupancy_grid_map = gp_planner_data.occupancy_grid_map;
       parameters_opt = gp_planner_data.parameters;
-      ego_predicted_path_params = gp_planner_data.ego_predicted_path_params;
-      objects_filtering_params = gp_planner_data.objects_filtering_params;
     }
   }
   // end of critical section
@@ -585,7 +581,8 @@ bool GoalPlannerModule::isExecutionReady() const
 {
   if (parameters_->safety_check_params.enable_safety_check && isWaitingApproval()) {
     if (!isSafePath(
-           planner_data_, *parameters_, ego_predicted_path_params_, objects_filtering_params_)
+           planner_data_, *parameters_, ego_predicted_path_params_, objects_filtering_params_,
+           safety_check_params_)
            .first) {
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
       return false;
@@ -1005,7 +1002,9 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 
   if (
     parameters_->safety_check_params.enable_safety_check &&
-    !isSafePath(planner_data_, *parameters_, ego_predicted_path_params_, objects_filtering_params_)
+    !isSafePath(
+       planner_data_, *parameters_, ego_predicted_path_params_, objects_filtering_params_,
+       safety_check_params_)
        .first &&
     isActivated()) {
     // situation : not safe against dynamic objects after approval
@@ -1033,7 +1032,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   if (
     hasDecidedPath(
       planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-      objects_filtering_params_) &&
+      objects_filtering_params_, safety_check_params_) &&
     isActivated()) {
     setTurnSignalInfo(output);
   }
@@ -1103,11 +1102,12 @@ bool GoalPlannerModule::hasDecidedPath(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const GoalPlannerParameters & parameters,
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const
+  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+  const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
   return checkDecidingPathStatus(
            planner_data, occupancy_grid_map, parameters, ego_predicted_path_params,
-           objects_filtering_params)
+           objects_filtering_params, safety_check_params)
            .first == DecidingPathStatus::DECIDED;
 }
 
@@ -1116,11 +1116,12 @@ bool GoalPlannerModule::hasNotDecidedPath(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const GoalPlannerParameters & parameters,
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const
+  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+  const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
   return checkDecidingPathStatus(
            planner_data, occupancy_grid_map, parameters, ego_predicted_path_params,
-           objects_filtering_params)
+           objects_filtering_params, safety_check_params)
            .first == DecidingPathStatus::NOT_DECIDED;
 }
 
@@ -1129,7 +1130,8 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const GoalPlannerParameters & parameters,
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const
+  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+  const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
   const auto & prev_status = thread_safe_data_.get_prev_data().deciding_path_status;
   const bool enable_safety_check = parameters.safety_check_params.enable_safety_check;
@@ -1148,7 +1150,9 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus(
   // This eliminates a unsafe path to be approved
   if (
     enable_safety_check &&
-    !isSafePath(planner_data, parameters, ego_predicted_path_params, objects_filtering_params)
+    !isSafePath(
+       planner_data, parameters, ego_predicted_path_params, objects_filtering_params,
+       safety_check_params)
        .first &&
     !isActivated()) {
     RCLCPP_DEBUG(
@@ -1188,9 +1192,10 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus(
     }
 
     if (
-      enable_safety_check &&
-      !isSafePath(planner_data, parameters, ego_predicted_path_params, objects_filtering_params)
-         .first) {
+      enable_safety_check && !isSafePath(
+                                planner_data, parameters, ego_predicted_path_params,
+                                objects_filtering_params, safety_check_params)
+                                .first) {
       RCLCPP_DEBUG(
         getLogger(),
         "[DecidingPathStatus]: DECIDING->NOT_DECIDED. path is not safe against dynamic objects");
@@ -1256,7 +1261,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOver()
 {
   if (!hasDecidedPath(
         planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-        objects_filtering_params_)) {
+        objects_filtering_params_, safety_check_params_)) {
     return planPullOverAsCandidate();
   }
 
@@ -1303,7 +1308,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
   if (
     hasNotDecidedPath(
       planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-      objects_filtering_params_) &&
+      objects_filtering_params_, safety_check_params_) &&
     needPathUpdate(
       planner_data_->self_odometry->pose.pose, 1.0 /*path_update_duration*/, *parameters_)) {
     // if the final path is not decided and enough time has passed since last path update,
@@ -1383,7 +1388,7 @@ void GoalPlannerModule::postProcess()
   // waste of time because it gives same result throughout the main thread.
   const bool has_decided_path = hasDecidedPath(
     planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-    objects_filtering_params_);
+    objects_filtering_params_, safety_check_params_);
 
   if (has_decided_path) {
     updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
@@ -1408,7 +1413,7 @@ void GoalPlannerModule::updatePreviousData()
 
   prev_data.deciding_path_status = checkDecidingPathStatus(
     planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-    objects_filtering_params_);
+    objects_filtering_params_, safety_check_params_);
 
   // This is related to safety check, so if it is disabled, return here.
   if (!parameters_->safety_check_params.enable_safety_check) {
@@ -1417,7 +1422,8 @@ void GoalPlannerModule::updatePreviousData()
     // Even if the current path is safe, it will not be safe unless it stands for a certain period
     // of time. Record the time when the current path has become safe
     const auto [is_safe, current_is_safe] = isSafePath(
-      planner_data_, *parameters_, ego_predicted_path_params_, objects_filtering_params_);
+      planner_data_, *parameters_, ego_predicted_path_params_, objects_filtering_params_,
+      safety_check_params_);
     if (current_is_safe) {
       if (!prev_data.safety_status.safe_start_time) {
         prev_data.safety_status.safe_start_time = clock_->now();
@@ -2178,7 +2184,8 @@ static std::vector<utils::path_safety_checker::ExtendedPredictedObject> filterOb
 std::pair<bool, bool> GoalPlannerModule::isSafePath(
   const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const
+  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+  const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
   if (!thread_safe_data_.get_pull_over_path()) {
     return {false, false};
@@ -2272,7 +2279,7 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
     if (parameters.safety_check_params.method == "RSS") {
       return behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
         pull_over_path, ego_predicted_path, filtered_objects, collision_check,
-        planner_data->parameters, safety_check_params_->rss_params,
+        planner_data->parameters, safety_check_params->rss_params,
         objects_filtering_params->use_all_predicted_path, hysteresis_factor);
     } else if (parameters.safety_check_params.method == "integral_predicted_polygon") {
       return utils::path_safety_checker::checkSafetyWithIntegralPredictedPolygon(
@@ -2338,11 +2345,12 @@ void GoalPlannerModule::setDebugData()
   };
   if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
     // Visualize pull over areas
-    const auto color = hasDecidedPath(
-                         planner_data_, occupancy_grid_map_, *parameters_,
-                         ego_predicted_path_params_, objects_filtering_params_)
-                         ? createMarkerColor(1.0, 1.0, 0.0, 0.999)   // yellow
-                         : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
+    const auto color =
+      hasDecidedPath(
+        planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
+        objects_filtering_params_, safety_check_params_)
+        ? createMarkerColor(1.0, 1.0, 0.0, 0.999)   // yellow
+        : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
     const double z = planner_data_->route_handler->getGoalPose().position.z;
     add(goal_planner_utils::createPullOverAreaMarkerArray(
       goal_searcher_->getAreaPolygons(), header, color, z));

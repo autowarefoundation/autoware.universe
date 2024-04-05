@@ -547,19 +547,22 @@ private:
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-    const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const;
+    const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params) const;
   bool hasNotDecidedPath(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-    const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const;
+    const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params) const;
   DecidingPathStatusWithStamp checkDecidingPathStatus(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-    const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const;
+    const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params) const;
   void decideVelocity();
   bool foundPullOverPath() const;
   void updateStatus(const BehaviorModuleOutput & output);
@@ -640,7 +643,8 @@ private:
   std::pair<bool, bool> isSafePath(
     const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-    const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params) const;
+    const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params) const;
 
   // debug
   void setDebugData();
