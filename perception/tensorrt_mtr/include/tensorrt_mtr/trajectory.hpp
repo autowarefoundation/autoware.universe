@@ -63,8 +63,8 @@ struct PredictedMode
 
   static const size_t StateDim = PredictedStateDim;
 
-  const float score;
-  const size_t NumFuture;
+  float score;
+  size_t NumFuture;
 
   /**
    * @brief Get the waypoints.

@@ -79,7 +79,10 @@ struct AgentState
    *
    * @param ptr
    */
-  explicit AgentState(const float * ptr) { std::copy(ptr, ptr + Dim, data_.begin()); }
+  explicit AgentState(const std::vector<float>::const_iterator & itr)
+  {
+    std::copy(itr, itr + Dim, data_.begin());
+  }
 
   static const size_t Dim = AgentStateDim;
 
@@ -130,10 +133,11 @@ struct AgentHistory
    * @param max_time_length History length.
    */
   AgentHistory(
-    AgentState & state, const std::string & object_id, const float current_time,
-    const size_t max_time_length)
+    AgentState & state, const std::string & object_id, const size_t label_index,
+    const float current_time, const size_t max_time_length)
   : data_((max_time_length - 1) * StateDim),
     object_id_(object_id),
+    label_index_(label_index),
     latest_time_(current_time),
     max_time_length_(max_time_length)
   {
@@ -149,7 +153,8 @@ struct AgentHistory
    * @param object_id Object ID.
    * @param max_time_length History time length.
    */
-  AgentHistory(const std::string & object_id, const int label_index, const size_t max_time_length)
+  AgentHistory(
+    const std::string & object_id, const size_t label_index, const size_t max_time_length)
   : data_(max_time_length * StateDim),
     object_id_(object_id),
     label_index_(label_index),
@@ -170,9 +175,9 @@ struct AgentHistory
   /**
    * @brief Return the label index.
    *
-   * @return int
+   * @return size_t
    */
-  int label_index() const { return label_index_; }
+  size_t label_index() const { return label_index_; }
 
   /**
    * @brief Return the history length.
@@ -255,11 +260,10 @@ struct AgentHistory
    *
    * @return AgentState
    */
-  AgentState get_latest_state()
+  AgentState get_latest_state() const
   {
-    const auto ptr = data_ptr();
-    const auto latest_ptr = ptr + StateDim * (max_time_length_ - 1);
-    return {latest_ptr};
+    const auto & latest_itr = (data_.begin() + StateDim * (max_time_length_ - 1));
+    return AgentState(latest_itr);
   }
 
 private:
@@ -285,8 +289,8 @@ struct AgentData
    * @param timestamps An array of timestamps.
    */
   AgentData(
-    std::vector<AgentHistory> & histories, const int sdc_index,
-    const std::vector<int> & target_index, const std::vector<int> & label_index,
+    std::vector<AgentHistory> & histories, const size_t sdc_index,
+    const std::vector<size_t> & target_index, const std::vector<size_t> & label_index,
     const std::vector<float> & timestamps)
   : TargetNum(target_index.size()),
     AgentNum(histories.size()),
@@ -332,9 +336,9 @@ struct AgentData
   const size_t ClassNum = 3;  // TODO(ktro2828): Do not use magic number.
 
   int sdc_index;
-  std::vector<int> target_index;
-  std::vector<int> label_index;
-  std::vector<int> target_label_index;
+  std::vector<size_t> target_index;
+  std::vector<size_t> label_index;
+  std::vector<size_t> target_label_index;
   std::vector<float> timestamps;
 
   /**
@@ -371,7 +375,7 @@ private:
   std::vector<float> ego_data_;
 };
 
-std::vector<std::string> getLabelNames(const std::vector<int> & label_index)
+std::vector<std::string> getLabelNames(const std::vector<size_t> & label_index)
 {
   std::vector<std::string> label_names;
   label_names.reserve(label_index.size());

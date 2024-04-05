@@ -20,12 +20,13 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <tuple>
 #include <vector>
 
 namespace trt_mtr
 {
-constexpr std::size_t PointStateDim = 7;
+constexpr size_t PointStateDim = 7;
 
 enum PolylineLabel { LANE = 0, ROAD_LINE = 1, ROAD_EDGE = 2, CROSSWALK = 3 };
 
@@ -54,7 +55,7 @@ struct LanePoint
   {
   }
 
-  static const std::size_t Dim = PointStateDim;
+  static const size_t Dim = PointStateDim;
 
   /**
    * @brief Return the x position of the point.
@@ -128,7 +129,7 @@ struct PolylineData
    * @param distance_threshold The distance threshold to separate polylines.
    */
   PolylineData(
-    std::vector<LanePoint> points, const int min_num_polyline, const int max_num_point,
+    std::vector<LanePoint> points, const size_t min_num_polyline, const size_t max_num_point,
     const float distance_threshold)
   : PolylineNum(0), PointNum(max_num_point), distance_threshold_(distance_threshold)
   {
@@ -164,9 +165,9 @@ struct PolylineData
     }
   }
 
-  std::size_t PolylineNum;
-  const std::size_t PointNum;
-  const std::size_t StateDim = PointStateDim;
+  size_t PolylineNum;
+  const size_t PointNum;
+  const size_t StateDim = PointStateDim;
 
   /**
    * @brief Return the data shape.
@@ -189,10 +190,10 @@ private:
    *
    * @param num_polyline The number of polylines to add.
    */
-  void addEmptyPolyline(std::size_t num_polyline)
+  void addEmptyPolyline(size_t num_polyline)
   {
-    for (std::size_t i = 0; i < num_polyline; ++i) {
-      std::size_t point_cnt = 0;
+    for (size_t i = 0; i < num_polyline; ++i) {
+      size_t point_cnt = 0;
       auto empty_point = LanePoint::empty();
       addNewPolyline(empty_point, point_cnt);
       addEmptyPoints(point_cnt);
@@ -206,10 +207,10 @@ private:
    * @param point LanePoint instance.
    * @param point_cnt The current count of points, which will be reset to `1`.
    */
-  void addNewPolyline(LanePoint & point, std::size_t & point_cnt)
+  void addNewPolyline(LanePoint & point, size_t & point_cnt)
   {
     const auto s = point.data_ptr();
-    for (std::size_t d = 0; d < StateDim; ++d) {
+    for (size_t d = 0; d < StateDim; ++d) {
       data_.push_back(*(s + d));
     }
     ++PolylineNum;
@@ -221,7 +222,7 @@ private:
    *
    * @param point_cnt The number of current count of points, which will be reset to `PointNum`.
    */
-  void addEmptyPoints(std::size_t & point_cnt)
+  void addEmptyPoints(size_t & point_cnt)
   {
     const auto s = LanePoint::empty().data_ptr();
     for (std::size_t n = point_cnt; n < PointNum; ++n) {
@@ -241,7 +242,7 @@ private:
   void addPoint(LanePoint & point, std::size_t & point_cnt)
   {
     const auto s = point.data_ptr();
-    for (std::size_t d = 0; d < StateDim; ++d) {
+    for (size_t d = 0; d < StateDim; ++d) {
       data_.push_back(*(s + d));
     }
     ++point_cnt;
@@ -252,20 +253,54 @@ private:
 };
 
 std::vector<LanePoint> getLanePointFromLineString(
-  const lanelet::ConstLineString3d & linestring, const int type_id)
+  const lanelet::ConstLineString3d & linestring, const size_t type_id)
 {
-  std::vector<LanePoint> points;
+  if (linestring.size() == 0) {
+    return {};
+  }
+
+  const float type_value = static_cast<float>(type_id);
+  const auto & start = linestring.begin();
+  std::vector<LanePoint> points{
+    {static_cast<float>(start->x()), static_cast<float>(start->y()), static_cast<float>(start->z()),
+     0.0f, 0.0f, 0.0f, type_value}};
   points.reserve(linestring.size());
-  // TODO(ktro2828): DO SOMETHING
+  for (auto itr = start + 1; itr != linestring.end(); ++itr) {
+    const auto dx = (itr)->x() - (itr - 1)->x();
+    const auto dy = (itr)->y() - (itr - 1)->y();
+    const auto dz = (itr)->z() - (itr - 1)->z();
+    const auto norm = std::hypot(dx, dy, dz);
+    points.emplace_back(
+      static_cast<float>(itr->x()), static_cast<float>(itr->y()), static_cast<float>(itr->z()),
+      static_cast<float>(dx / norm), static_cast<float>(dy / norm), static_cast<float>(dz / norm),
+      type_value);
+  }
   return points;
 }
 
 std::vector<LanePoint> getLanePointFromPolygon(
-  const lanelet::CompoundPolygon3d & polygon, const int type_id)
+  const lanelet::CompoundPolygon3d & polygon, const size_t type_id)
 {
-  std::vector<LanePoint> points;
+  if (polygon.size() == 0) {
+    return {};
+  }
+
+  const float type_value = static_cast<float>(type_id);
+  const auto & start = polygon.begin();
+  std::vector<LanePoint> points{
+    {static_cast<float>(start->x()), static_cast<float>(start->y()), static_cast<float>(start->z()),
+     0.0f, 0.0f, 0.0f, type_value}};
   points.reserve(polygon.size());
-  // TODO(ktro2828): DO SOMETHING
+  for (auto itr = start + 1; itr != polygon.end(); ++itr) {
+    const auto dx = (itr)->x() - (itr - 1)->x();
+    const auto dy = (itr)->y() - (itr - 1)->y();
+    const auto dz = (itr)->z() - (itr - 1)->z();
+    const auto norm = std::hypot(dx, dy, dz);
+    points.emplace_back(
+      static_cast<float>(itr->x()), static_cast<float>(itr->y()), static_cast<float>(itr->z()),
+      static_cast<float>(dx / norm), static_cast<float>(dy / norm), static_cast<float>(dz / norm),
+      type_value);
+  }
   return points;
 }
 

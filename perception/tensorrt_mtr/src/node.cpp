@@ -119,18 +119,19 @@ AgentState trackedObjectToAgentState(const TrackedObject & object, const bool is
   const auto yaw = tf2::getYaw(pose.orientation);
   const auto valid = is_valid ? 1.0f : 0.0f;
 
-  return {pose.position.x,
-          pose.position.y,
-          pose.position.z,
-          dimensions.x,
-          dimensions.y,
-          dimensions.z,
-          yaw,
-          twist.linear.x,
-          twist.linear.y,
-          accel.linear.x,
-          accel.linear.y,
-          valid};
+  return {
+    static_cast<float>(pose.position.x),
+    static_cast<float>(pose.position.y),
+    static_cast<float>(pose.position.z),
+    static_cast<float>(dimensions.x),
+    static_cast<float>(dimensions.y),
+    static_cast<float>(dimensions.z),
+    static_cast<float>(yaw),
+    static_cast<float>(twist.linear.x),
+    static_cast<float>(twist.linear.y),
+    static_cast<float>(accel.linear.x),
+    static_cast<float>(accel.linear.y),
+    static_cast<float>(valid)};
 }
 
 /**
@@ -158,7 +159,9 @@ int getLabelIndex(const TrackedObject & object)
 }  // namespace
 
 MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("tensorrt_mtr_node", node_options), polyline_type_map_(this)
+: rclcpp::Node("tensorrt_mtr_node", node_options),
+  transform_listener_(this),
+  polyline_type_map_(this)
 {
   // TODO(ktro2828)
 }
@@ -184,7 +187,7 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
   updateAgentHistory(current_time, object_msg);
 
   std::vector<AgentHistory> histories;
-  std::vector<int> label_indices;
+  std::vector<size_t> label_indices;
   histories.reserve(agent_history_map_.size());
   label_indices.reserve(agent_history_map_.size());
   int sdc_index = -1;
@@ -205,10 +208,11 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
     return;  // No target
   }
 
-  AgentData agent_data(histories, sdc_index, target_indices, label_indices, timestamps_);
+  AgentData agent_data(
+    histories, static_cast<size_t>(sdc_index), target_indices, label_indices, timestamps_);
 
   std::vector<PredictedTrajectory> trajectories;
-  if (!model_ptr_->doInference(agent_data, polyline_ptr_.get(), trajectories)) {
+  if (!model_ptr_->doInference(agent_data, *polyline_ptr_.get(), trajectories)) {
     RCLCPP_WARN(get_logger(), "Inference failed");
     return;
   }
@@ -301,7 +305,7 @@ void MTRNode::removeAncientAgentHistory(
   // TODO(ktro2828): use ego info
   for (const auto & object : objects_msg->objects) {
     const auto & object_id = tier4_autoware_utils::toHexString(object.object_id);
-    if (agent_history_map_.count(object) == 0) {
+    if (agent_history_map_.count(object_id) == 0) {
       continue;
     }
 
@@ -347,11 +351,11 @@ void MTRNode::updateAgentHistory(
   }
 }
 
-std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> & histories) const
+std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> & histories)
 {
   std::vector<std::pair<size_t, float>> distances;
   for (size_t i = 0; i < histories.size(); ++i) {
-    const auto history = histories.at(i);
+    const auto & history = histories.at(i);
     if (!history.is_valid_latest() || history.object_id() == EGO_ID) {
       distances.emplace_back(std::make_pair(i, INFINITY));
     } else {
@@ -393,11 +397,6 @@ std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> 
   }
 
   return target_indices;
-}
-
-bool MTRNode::predictFuture()
-{
-  // TODO(ktro2828)
 }
 
 }  // namespace trt_mtr
