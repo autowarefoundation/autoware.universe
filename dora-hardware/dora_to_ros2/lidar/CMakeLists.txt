@@ -83,7 +83,7 @@ target_link_libraries(rslidar_driver_ros
   ${PCL_LIBRARIES}
   ${EIGEN_LIBRARIES}
   ${YAMLCPP_LIBRARIES}
-  $ENV{HOME}/dora_project/dora-rs/dora/target/debug/libdora_node_api_cxx.a
+  $ENV{HOME}/dora/target/debug/libdora_node_api_cxx.a
   m
   rt
   dl 

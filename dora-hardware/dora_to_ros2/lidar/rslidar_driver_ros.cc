@@ -289,11 +289,16 @@ int main()
         PointCloud2.is_dense =false;
         // PointCloud2.data.assign(output_data + 16, output_data + output_data_len);
         // PointCloud2.data.reserve(PointCloud2.data.size() + output_data_len - 16);
-        // std::copy(output_data + 16, output_data + output_data_len, std::back_inserter(PointCloud2.data));
-        
-        for (int i = 16; i<output_data_len; i++) {
-            PointCloud2.data.push_back(static_cast<uint8_t>(output_data[i]));
-        }
+        std::copy(output_data + 16, output_data + output_data_len, std::back_inserter(PointCloud2.data));
+       
+        // PointCloud2.data = output_data;
+        // std::copy(output_data+16, output_data + output_data_len, PointCloud2.data);
+        // std::vector 
+        // std::copy(output_data.begin(), output_data.end(), PointCloud2.data);
+        // std::memcpy(PointCloud2.data.data(), output_data+16, output_data_len-16);
+        // for (int i = 16; i<output_data_len; i++) {
+        //     PointCloud2.data.push_back(static_cast<uint8_t>(output_data[i]));
+        // }
         
         delete []output_data;
         output_data = NULL;
