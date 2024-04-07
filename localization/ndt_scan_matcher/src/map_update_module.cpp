@@ -161,9 +161,8 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
 
     // Report an error if wait for too long
     if (cur - start >= timeout) {
-      RCLCPP_ERROR_STREAM_THROTTLE(
-        logger_, *clock_, 1000, "Waited for incoming PCDs for too long. Abandon NDT update.");
-      return false;
+      RCLCPP_WARN_STREAM_THROTTLE(
+        logger_, *clock_, 1000, "Waited for incoming PCDs for too long...");
     }
 
     status = result.wait_for(std::chrono::seconds(1));
