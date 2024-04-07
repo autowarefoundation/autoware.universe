@@ -321,7 +321,7 @@ void ScanGroundFilterComponent::recheckGroundCluster(
   pcl::PointIndices & non_ground_indices)
 {
   float reference_height = 0.0f;
-  if (use_lowest_point_) {
+  if (use_lowest_point) {
     reference_height = gnd_cluster.getMinHeight();
   } else {
     reference_height = gnd_cluster.getAverageHeight();
