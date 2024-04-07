@@ -638,10 +638,10 @@ BehaviorModuleOutput StartPlannerModule::plan()
       // Insert stop point in the path if needed
       const std::string stop_point_reason = std::invoke([&]() {
         if (status_.is_safe_static_objects)
-          return "Insert stop point in the path because of dynamic objects";
+          return "Insert stop point in the path because of dynamic objects.";
         if (status_.is_safe_dynamic_objects)
           return "All path candidates cause a collision with static objects. Outputting best path "
-                 "with a stop point";
+                 "with a stop point.";
         return "Collision with dynamic objects and static objects. A stop point is inserted for "
                "safety.";
       });
