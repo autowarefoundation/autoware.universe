@@ -96,7 +96,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/costmap", 1, std::bind(&BehaviorPathPlannerNode::onCostMap, this, _1),
     createSubscriptionOptions(this));
   traffic_signals_subscriber_ =
-    this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+    this->create_subscription<autoware_perception_msgs::msg::TrafficLightArray>(
       "~/input/traffic_signals", 1, std::bind(&BehaviorPathPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
   lateral_offset_subscriber_ = this->create_subscription<LateralOffset>(
@@ -787,7 +787,7 @@ void BehaviorPathPlannerNode::onCostMap(const OccupancyGrid::ConstSharedPtr msg)
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->costmap = msg;
 }
-void BehaviorPathPlannerNode::onTrafficSignals(const TrafficSignalArray::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onTrafficSignals(const TrafficLightArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
 
