@@ -5,6 +5,7 @@
       - yaw_deviation
       - predicted_path_deviation
       - yaw_rate
+      - objects_count
 
     # this should be an odd number, because it includes the target point
     smoothing_window_size: 11
@@ -12,6 +13,8 @@
     prediction_time_horizons: [1.0, 2.0, 3.0, 5.0]
 
     stopped_velocity_threshold: 1.0
+    detection_range: 100.0
+    detection_height: 10.0
 
     target_object:
       car:

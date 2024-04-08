@@ -20,6 +20,7 @@
 #include "perception_online_evaluator/parameters.hpp"
 #include "perception_online_evaluator/stat.hpp"
 #include "perception_online_evaluator/utils/objects_filtering.hpp"
+#include "tf2_ros/buffer.h"
 
 #include <rclcpp/time.hpp>
 
@@ -29,7 +30,10 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <optional>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -75,6 +79,7 @@ using HistoryPathMap =
 using StampObjectMap = std::map<rclcpp::Time, PredictedObject>;
 using StampObjectMapIterator = std::map<rclcpp::Time, PredictedObject>::const_iterator;
 using ObjectMap = std::unordered_map<std::string, StampObjectMap>;
+using DetectionCountMap = std::unordered_map<std::uint8_t, int>;
 
 class MetricsCalculator
 {
@@ -95,8 +100,11 @@ public:
    */
   void setPredictedObjects(const PredictedObjects & objects);
 
+  void updateObjectsCountMap(const PredictedObjects & objects, const tf2_ros::Buffer & tf_buffer);
+
   HistoryPathMap getHistoryPathMap() const { return history_path_map_; }
   ObjectDataMap getDebugObjectData() const { return debug_target_object_; }
+  DetectionCountMap getDetectionCountMap() const { return historical_detection_count_map_; }
 
 private:
   std::shared_ptr<Parameters> parameters_;
@@ -104,6 +112,21 @@ private:
   // Store predicted objects information and calculation results
   ObjectMap object_map_;
   HistoryPathMap history_path_map_;
+  DetectionCountMap initializeDetectionCountMap()
+  {
+    return {
+      {0, 0},  // UNKNOWN
+      {1, 0},  // CAR
+      {2, 0},  // TRUCK
+      {3, 0},  // BUS
+      {4, 0},  // TRAILER
+      {5, 0},  // MOTORCYCLE
+      {6, 0},  // BICYCLE
+      {7, 0},  // PEDESTRIAN
+    };
+  }
+
+  DetectionCountMap historical_detection_count_map_ = initializeDetectionCountMap();
 
   rclcpp::Time current_stamp_;
 
@@ -129,6 +152,7 @@ private:
   Stat<double> calcPredictedPathDeviationMetrics(
     const PredictedObjects & objects, const double time_horizon) const;
   MetricStatMap calcYawRateMetrics(const ClassObjectsMap & class_objects_map) const;
+  MetricStatMap calcObjectsCountMetrics() const;
 
   bool hasPassedTime(const rclcpp::Time stamp) const;
   bool hasPassedTime(const std::string uuid, const rclcpp::Time stamp) const;

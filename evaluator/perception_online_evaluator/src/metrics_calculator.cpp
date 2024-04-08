@@ -15,6 +15,7 @@
 #include "perception_online_evaluator/metrics_calculator.hpp"
 
 #include "motion_utils/trajectory/trajectory.hpp"
+#include "object_recognition_utils/object_classification.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
@@ -58,6 +59,8 @@ std::optional<MetricStatMap> MetricsCalculator::calculate(const Metric & metric)
       return calcPredictedPathDeviationMetrics(class_moving_objects_map);
     case Metric::yaw_rate:
       return calcYawRateMetrics(class_stopped_objects_map);
+    case Metric::objects_count:
+      return calcObjectsCountMetrics();
     default:
       return {};
   }
@@ -399,6 +402,19 @@ MetricStatMap MetricsCalculator::calcYawRateMetrics(const ClassObjectsMap & clas
   return metric_stat_map;
 }
 
+MetricStatMap MetricsCalculator::calcObjectsCountMetrics() const
+{
+  MetricStatMap metric_stat_map{};
+
+  for (const auto & [label, count] : historical_detection_count_map_) {
+    Stat<double> stat;
+    stat.add(static_cast<double>(count));
+    metric_stat_map["objects_count_" + convertLabelToString(label)] = stat;
+  }
+
+  return metric_stat_map;
+}
+
 void MetricsCalculator::setPredictedObjects(const PredictedObjects & objects)
 {
   current_stamp_ = objects.header.stamp;
@@ -414,6 +430,43 @@ void MetricsCalculator::setPredictedObjects(const PredictedObjects & objects)
     }
     deleteOldObjects(current_stamp_);
     updateHistoryPath();
+  }
+}
+
+void MetricsCalculator::updateObjectsCountMap(
+  const PredictedObjects & objects, const tf2_ros::Buffer & tf_buffer)
+{
+  const auto objects_frame_id = objects.header.frame_id;
+
+  geometry_msgs::msg::TransformStamped transform_stamped;
+  try {
+    transform_stamped = tf_buffer.lookupTransform(
+      "base_link", objects_frame_id, tf2::TimePointZero, tf2::durationFromSec(1.0));
+  } catch (const tf2::TransformException & ex) {
+    std::cerr << "[perception_online_evaluator] Failed to get transform from '" << objects_frame_id
+              << "' to 'base_link': " << ex.what() << std::endl;
+    return;
+  }
+
+  for (const auto & object : objects.objects) {
+    const auto label = object_recognition_utils::getHighestProbLabel(object.classification);
+
+    geometry_msgs::msg::PoseStamped pose_in, pose_out;
+    pose_in.header.frame_id = objects_frame_id;
+    pose_in.pose = object.kinematics.initial_pose_with_covariance.pose;
+
+    // Transform the object's pose into the 'base_link' coordinate frame
+    tf2::doTransform(pose_in, pose_out, transform_stamped);
+
+    const double distance_to_pose = std::hypot(pose_out.pose.position.x, pose_out.pose.position.y);
+
+    // If the pose is within the detection_range and below a detection_height, increment the count
+    if (
+      distance_to_pose < parameters_->detection_range &&
+      pose_out.pose.position.z < parameters_->detection_height) {
+      historical_detection_count_map_[label]++;
+    }
+
   }
 }
 
