@@ -1064,6 +1064,8 @@ PidLongitudinalController::StateAfterDelay PidLongitudinalController::predictedS
 double PidLongitudinalController::applyVelocityFeedback(const ControlData & control_data)
 {
   const double diff_vel = target_motion.vel - current_vel;
+  std::cerr << "target_motion.vel: " << target_motion.vel << std::endl;
+  std::cerr << "current_vel: " << current_vel << std::endl;  
   const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
                                 m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
 
@@ -1096,7 +1098,12 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
 
   // NOTE: Acceleration command is always positive even if the ego drives backward.
   const double vel_sign = (shift == Shift::Forward) ? 1.0 : (shift == Shift::Reverse ? -1.0 : 0.0);
+  std::cerr << "desired_vel_sign: " << vel_sign << std::endl;
   const double feedback_acc = (ff_acc + pid_acc) * vel_sign;
+  std::cerr << "ff_acc_signed: " << ff_acc * vel_sign << std::endl;
+  std::cerr << "pid_acc_signed: " << pid_acc * vel_sign << std::endl;
+  std::cerr << "feedback_acc: " << feedback_acc << std::endl;
+  std::cerr << "----------------------" << std::endl;
 
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_PID_APPLIED, feedback_acc);
   m_debug_values.setValues(DebugValues::TYPE::ERROR_VEL_FILTERED, error_vel_filtered);

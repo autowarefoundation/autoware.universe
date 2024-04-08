@@ -80,10 +80,18 @@ void ShiftDecider::updateCurrentShiftCmd()
   if (autoware_state_->state == AutowareState::DRIVING) {
     if (control_cmd_->longitudinal.speed > vel_threshold) {
       shift_cmd_.command = GearCommand::DRIVE;
+      std::cerr << "shift_cmd: DRIVE" << std::endl;
     } else if (control_cmd_->longitudinal.speed < -vel_threshold) {
       shift_cmd_.command = GearCommand::REVERSE;
+      std::cerr << "shift_cmd: REVERSE" << std::endl;
     } else {
       shift_cmd_.command = prev_shift_command;
+      if (prev_shift_command == GearCommand::DRIVE) {
+        std::cerr << "shift_cmd: DRIVE" << std::endl;
+      }
+      if (prev_shift_command == GearCommand::REVERSE) {
+        std::cerr << "shift_cmd: REVERSE" << std::endl;
+      }
     }
   } else {
     if (
