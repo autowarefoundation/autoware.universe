@@ -27,7 +27,7 @@
 #include <rviz_common/panel.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 #endif
 
 #include <set>
@@ -36,9 +36,9 @@ namespace rviz_plugins
 {
 
 using autoware_auto_mapping_msgs::msg::HADMapBin;
-using autoware_perception_msgs::msg::TrafficSignal;
-using autoware_perception_msgs::msg::TrafficSignalArray;
-using autoware_perception_msgs::msg::TrafficSignalElement;
+using autoware_perception_msgs::msg::TrafficLight;
+using autoware_perception_msgs::msg::TrafficLightArray;
+using autoware_perception_msgs::msg::TrafficLightElement;
 class TrafficLightPublishPanel : public rviz_common::Panel
 {
   Q_OBJECT
@@ -60,7 +60,7 @@ protected:
 
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::TimerBase::SharedPtr pub_timer_;
-  rclcpp::Publisher<TrafficSignalArray>::SharedPtr pub_traffic_signals_;
+  rclcpp::Publisher<TrafficLightArray>::SharedPtr pub_traffic_signals_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
 
   QSpinBox * publishing_rate_input_;
@@ -74,7 +74,7 @@ protected:
   QPushButton * publish_button_;
   QTableWidget * traffic_table_;
 
-  TrafficSignalArray extra_traffic_signals_;
+  TrafficLightArray extra_traffic_signals_;
 
   bool enable_publish_{false};
   std::set<int> traffic_light_ids_;
