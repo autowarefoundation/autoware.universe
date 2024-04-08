@@ -28,6 +28,7 @@
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/difference.hpp>
+#include <boost/geometry/algorithms/union.hpp>
 #include <boost/geometry/strategies/agnostic/buffer_distance_symmetric.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_end_flat.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_join_round.hpp>
@@ -396,6 +397,10 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   // stop_watch_.tic(std::string(__func__));
 
   const auto & input_path = getPreviousModuleOutput().path;
+  if (input_path.points.empty()) {
+    throw std::runtime_error("input path is empty");
+  }
+
   const auto ego_path_reserve_poly = calcEgoPathReservePoly(input_path);
 
   // create obstacles to avoid (= extract from the drivable area)
@@ -404,7 +409,9 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
     const auto obstacle_poly = [&]() {
       if (getLabelAsTargetObstacle(object.label) == ObjectBehaviorType::PRIORITIZED) {
         return calcPrioritizedObstaclePolygon(object, ego_path_reserve_poly);
-      } else if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
+      }
+
+      if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
         return calcEgoPathBasedDynamicObstaclePolygon(object);
       } else if (
         parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
@@ -902,6 +909,7 @@ LatFeasiblePaths DynamicAvoidanceModule::generateLateralFeasiblePaths(
 
   LatFeasiblePaths ego_lat_feasible_paths;
   for (double t = 0; t < 10.0; t += 1.0) {
+    // maybe this equation does not have physical meaning (takagi)
     const double feasible_lat_offset = lat_acc * std::pow(std::max(t - delay_time, 0.0), 2) / 2.0 +
                                        lat_jerk * std::pow(std::max(t - delay_time, 0.0), 3) / 6.0 -
                                        planner_data_->parameters.vehicle_width / 2.0;
@@ -1765,22 +1773,10 @@ DynamicAvoidanceModule::calcPrioritizedObstaclePolygon(
 
   tier4_autoware_utils::Polygon2d obj_points_as_poly;
   for (const auto pose : candidate_poses) {
-    obj_points_as_poly.outer().push_back(
-      tier4_autoware_utils::fromMsg(
-        tier4_autoware_utils::calcOffsetPose(pose, obj_half_length, obj_half_width, 0.0).position)
-        .to_2d());
-    obj_points_as_poly.outer().push_back(
-      tier4_autoware_utils::fromMsg(
-        tier4_autoware_utils::calcOffsetPose(pose, -obj_half_length, obj_half_width, 0.0).position)
-        .to_2d());
-    obj_points_as_poly.outer().push_back(
-      tier4_autoware_utils::fromMsg(
-        tier4_autoware_utils::calcOffsetPose(pose, -obj_half_length, -obj_half_width, 0.0).position)
-        .to_2d());
-    obj_points_as_poly.outer().push_back(
-      tier4_autoware_utils::fromMsg(
-        tier4_autoware_utils::calcOffsetPose(pose, obj_half_length, -obj_half_width, 0.0).position)
-        .to_2d());
+    boost::geometry::append(
+      obj_points_as_poly,
+      tier4_autoware_utils::toFootprint(pose, obj_half_length, obj_half_length, obj_half_width)
+        .outer());
   }
   boost::geometry::correct(obj_points_as_poly);
   Polygon2d obj_poly;
@@ -1824,34 +1820,67 @@ DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathRe
   // double calculation_time;
   // stop_watch_.tic(std::string(__func__));
 
+  namespace strategy = boost::geometry::strategy::buffer;
+
+  assert(!ego_path.points.empty());
+
   tier4_autoware_utils::LineString2d ego_path_lines;
   for (const auto & path_point : ego_path.points) {
     ego_path_lines.push_back(tier4_autoware_utils::fromMsg(path_point.point.pose.position).to_2d());
   }
 
-  const double reserve_width_obj_side =
-    planner_data_->parameters.vehicle_width / 2.0 - parameters_->max_lat_offset_to_avoid;
-  const double reserve_width_opposite_side = planner_data_->parameters.vehicle_width / 2.0;
+  auto calcReservePoly =
+    [&ego_path_lines](
+      strategy::distance_asymmetric<double> path_expand_strategy,
+      strategy::distance_asymmetric<double> steer_expand_strategy,
+      std::vector<geometry_msgs::msg::Point> steer_outer_path) -> tier4_autoware_utils::Polygon2d {
+    tier4_autoware_utils::MultiPolygon2d path_poly;
+    boost::geometry::buffer(
+      ego_path_lines, path_poly, path_expand_strategy, strategy::side_straight(),
+      strategy::join_round(), strategy::end_flat(), strategy::point_circle());
 
-  namespace strategy = boost::geometry::strategy::buffer;
-  strategy::distance_asymmetric<double> left_avoid_distance_strategy{
-    reserve_width_opposite_side, reserve_width_obj_side};
-  tier4_autoware_utils::MultiPolygon2d left_avoid_poly;
-  boost::geometry::buffer(
-    ego_path_lines, left_avoid_poly, left_avoid_distance_strategy, strategy::side_straight(),
-    strategy::join_round(), strategy::end_flat(), strategy::point_circle());
+    tier4_autoware_utils::LineString2d steer_lines;
+    for (const auto & point : steer_outer_path) {
+      const auto bg_point = tier4_autoware_utils::fromMsg(point).to_2d();
+      if (boost::geometry::within(bg_point, path_poly)) {
+        if (steer_lines.size() != 0) {
+          boost::geometry::append(steer_lines, bg_point);
+        }
+        break;
+      }
+      boost::geometry::append(steer_lines, bg_point);
+    }
+    tier4_autoware_utils::MultiPolygon2d steer_poly;
+    boost::geometry::buffer(
+      steer_lines, steer_poly, steer_expand_strategy, strategy::side_straight(),
+      strategy::join_round(), strategy::end_flat(), strategy::point_circle());
 
-  strategy::distance_asymmetric<double> right_avoid_distance_strategy{
-    reserve_width_obj_side, reserve_width_opposite_side};
-  tier4_autoware_utils::MultiPolygon2d right_avoid_poly;
-  boost::geometry::buffer(
-    ego_path_lines, right_avoid_poly, right_avoid_distance_strategy, strategy::side_straight(),
-    strategy::join_round(), strategy::end_flat(), strategy::point_circle());
+    tier4_autoware_utils::MultiPolygon2d output_poly;
+    boost::geometry::union_(path_poly, steer_poly, output_poly);
+    if (output_poly.size() != 1) {
+      assert(false);
+    }
+    return output_poly[0];
+  };
+
+  const auto motion_saturated_outer_paths =
+    generateLateralFeasiblePaths(getEgoPose(), getEgoSpeed());
+
+  const double vehicle_half_width = planner_data_->parameters.vehicle_width * 0.5;
+  const double reserve_width_obj_side = vehicle_half_width - parameters_->max_lat_offset_to_avoid;
+
+  const tier4_autoware_utils::Polygon2d left_avoid_poly = calcReservePoly(
+    strategy::distance_asymmetric<double>(vehicle_half_width, reserve_width_obj_side),
+    strategy::distance_asymmetric<double>(vehicle_half_width, 0.0),
+    motion_saturated_outer_paths.right_path);
+  const tier4_autoware_utils::Polygon2d right_avoid_poly = calcReservePoly(
+    strategy::distance_asymmetric<double>(reserve_width_obj_side, vehicle_half_width),
+    strategy::distance_asymmetric<double>(0.0, vehicle_half_width),
+    motion_saturated_outer_paths.left_path);
 
   // calculation_time = stop_watch_.toc(std::string(__func__));
   // RCLCPP_INFO_STREAM_EXPRESSION(
-  //   getLogger(), parameters_->enable_debug_info,
-  //   __func__ << ":=" << calculation_time << "[ms]_square");
+  //   getLogger(), parameters_->enable_debug_info, __func__ << ":=" << calculation_time << "[ms]");
 
   return {left_avoid_poly, right_avoid_poly};
 }

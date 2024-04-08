@@ -374,8 +374,8 @@ private:
   };
   struct EgoPathReservePoly
   {
-    const tier4_autoware_utils::MultiPolygon2d left_avoid;
-    const tier4_autoware_utils::MultiPolygon2d right_avoid;
+    const tier4_autoware_utils::Polygon2d left_avoid;
+    const tier4_autoware_utils::Polygon2d right_avoid;
   };
 
   bool canTransitSuccessState() override;
