@@ -25,6 +25,7 @@
 #include <boost/geometry/algorithms/overlaps.hpp>
 #include <boost/geometry/algorithms/union.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
+
 #include <limits>
 
 namespace behavior_path_planner::utils::path_safety_checker

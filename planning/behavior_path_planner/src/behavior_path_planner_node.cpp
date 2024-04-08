@@ -22,8 +22,8 @@
 #include <tier4_autoware_utils/ros/update_param.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/path_change_module_id.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <functional>
 #include <memory>
@@ -828,7 +828,7 @@ void BehaviorPathPlannerNode::onOperationMode(const OperationModeState::ConstSha
 void BehaviorPathPlannerNode::on_external_velocity_limiter(
   const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg)
 {
-  if(!msg){
+  if (!msg) {
     return;
   }
 
