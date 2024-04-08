@@ -187,8 +187,7 @@ bool isTrafficSignalStop(
         continue;
       }
 
-      if (traffic_light_utils::isTrafficSignalStop(
-            lanelet, traffic_signal_stamped.value().signal)) {
+      if (isTrafficSignalStop(lanelet, traffic_signal_stamped.value().signal)) {
         return true;
       }
     }
