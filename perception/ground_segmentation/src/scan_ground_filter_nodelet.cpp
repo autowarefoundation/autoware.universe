@@ -320,12 +320,8 @@ void ScanGroundFilterComponent::recheckGroundCluster(
   PointsCentroid & gnd_cluster, const float non_ground_threshold, const bool use_lowest_point,
   pcl::PointIndices & non_ground_indices)
 {
-  float reference_height = 0.0f;
-  if (use_lowest_point) {
-    reference_height = gnd_cluster.getMinHeight();
-  } else {
-    reference_height = gnd_cluster.getAverageHeight();
-  }
+  float reference_height =
+    use_lowest_point ? gnd_cluster.getMinHeight() : gnd_cluster.getAverageHeight();
   const pcl::PointIndices & gnd_indices = gnd_cluster.getIndicesRef();
   const std::vector<float> & height_list = gnd_cluster.getHeightListRef();
   for (size_t i = 0; i < height_list.size(); ++i) {
