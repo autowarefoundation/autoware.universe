@@ -204,7 +204,7 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
 
     if (p->policy_deceleration != "best_effort" && p->policy_deceleration != "reliable") {
       RCLCPP_ERROR(
-        rclcpp::get_logger(__func__), "invalid policy. please select 'best_effort' or 'reliable'.");
+        rclcpp::get_logger(__func__), "invalid deceleration policy. Please select 'best_effort' or 'reliable'.");
     }
 
     if (p->policy_lateral_margin != "best_effort" && p->policy_lateral_margin != "reliable") {
