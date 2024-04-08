@@ -80,7 +80,7 @@ public:
   : base_interface_(base_interface),
     timers_interface_(std::move(timers_interface)),
     clock_(clock_interface->get_clock()),
-    period_(rclcpp::Duration::from_nanoseconds(static_cast<long>(period * 1e9))),
+    period_(rclcpp::Duration::from_nanoseconds(static_cast<rcl_duration_value_t>(period * 1e9))),
     publisher_(rclcpp::create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
       topics_interface, "/diagnostics", 1)),
     logger_(logging_interface->get_logger()),
@@ -108,7 +108,7 @@ public:
    */
   void set_period(double period)
   {
-    set_period(rclcpp::Duration::from_nanoseconds(static_cast<long>(period * 1e9)));
+    set_period(rclcpp::Duration::from_nanoseconds(static_cast<rcl_duration_value_t>(period * 1e9)));
   }
 
   /**
