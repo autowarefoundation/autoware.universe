@@ -48,7 +48,7 @@ TrafficDisplay::TrafficDisplay()
 }
 
 void TrafficDisplay::updateTrafficLightData(
-  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr & msg)
+  const autoware_perception_msgs::msg::TrafficLightArray::ConstSharedPtr & msg)
 {
   current_traffic_ = *msg;
 }
