@@ -1954,13 +1954,6 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
       target_objects.other_lane.end());
   }
 
-  const auto extenal_velocity_limit_ptr = planner_data_->external_limit_max_velocity;
-  const auto max_velocity_limit =
-    (extenal_velocity_limit_ptr)
-      ? std::min(
-          static_cast<double>(extenal_velocity_limit_ptr->max_velocity), getCommonParam().max_vel)
-      : getCommonParam().max_vel;
-
   const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
     lane_change_path.info.target_lanes, direction_,
     lane_change_parameters_->lane_expansion_left_offset,
@@ -1974,7 +1967,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     for (const auto & obj_path : obj_predicted_paths) {
       const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
         path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
-        max_velocity_limit, current_debug_data.second);
+        get_max_velocity_for_safety_check(), current_debug_data.second);
 
       if (collided_polygons.empty()) {
         utils::path_safety_checker::updateCollisionCheckDebugMap(
@@ -2069,6 +2062,16 @@ bool NormalLaneChange::isVehicleStuck(
   return false;
 }
 
+double NormalLaneChange::get_max_velocity_for_safety_check() const
+{
+  const auto extenal_velocity_limit_ptr = planner_data_->external_limit_max_velocity;
+  if (extenal_velocity_limit_ptr) {
+    return std::min(
+      static_cast<double>(extenal_velocity_limit_ptr->max_velocity), getCommonParam().max_vel);
+  }
+
+  return getCommonParam().max_vel;
+}
 bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const
 {
   if (current_lanes.empty()) {

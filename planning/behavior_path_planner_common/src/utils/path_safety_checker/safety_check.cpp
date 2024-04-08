@@ -588,7 +588,7 @@ std::vector<Polygon2d> getCollidedPolygons(
     // get object information at current time
     const auto & obj_pose = obj_pose_with_poly.pose;
     const auto & obj_polygon = obj_pose_with_poly.poly;
-    const auto & object_velocity = obj_pose_with_poly.velocity;
+    const auto object_velocity = obj_pose_with_poly.velocity;
 
     // get ego information at current time
     // Note: we can create these polygons in advance. However, it can decrease the readability and
@@ -601,7 +601,7 @@ std::vector<Polygon2d> getCollidedPolygons(
     }
     const auto & ego_pose = interpolated_data->pose;
     const auto & ego_polygon = interpolated_data->poly;
-    const auto & ego_velocity = std::min(interpolated_data->velocity, max_velocity_limit);
+    const auto ego_velocity = std::min(interpolated_data->velocity, max_velocity_limit);
 
     // check overlap
     if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
