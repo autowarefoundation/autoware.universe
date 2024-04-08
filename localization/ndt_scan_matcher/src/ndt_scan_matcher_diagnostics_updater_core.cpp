@@ -27,9 +27,9 @@ NDTScanMatcherDiagnosticsUpdaterCore::NDTScanMatcherDiagnosticsUpdaterCore(
   NDTScanMatcher * ndt_scan_mathcer_ptr)
 {
   // diagnostics_func_is_activated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    // "check_is_activated", std::bind(
-    //                         &NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated, this,
-    //                         std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_activated_))));
+  // "check_is_activated", std::bind(
+  //                         &NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated, this,
+  //                         std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_activated_))));
   diagnostics_func_is_succeed_latest_ndt_aling_service.reset(
     new diagnostic_updater::FunctionDiagnosticTask(
       "check_is_succeed_latest_ndt_aling_service",

@@ -235,8 +235,11 @@ bool NDTScanMatcher::validate_converged_param(
   bool is_ok = false;
   if (param_.score_estimation.converged_param_type == ConvergedParamType::TRANSFORM_PROBABILITY) {
     is_ok = validate_score(
-      transform_probability, param_.score_estimation.converged_param_transform_probability, "Transform Probability");
-  } else if (param_.score_estimation.converged_param_type == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
+      transform_probability, param_.score_estimation.converged_param_transform_probability,
+      "Transform Probability");
+  } else if (
+    param_.score_estimation.converged_param_type ==
+    ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
     is_ok = validate_score(
       nearest_voxel_transformation_likelihood,
       param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood,

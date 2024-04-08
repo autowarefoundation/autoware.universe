@@ -81,7 +81,6 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   is_running_ndt_aling_service_ = false;
   latest_ndt_aling_service_best_score_ = 0.0;
 
-
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group =
     this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -347,7 +346,8 @@ bool NDTScanMatcher::set_input_source(
   }
 
   if (!validate_sensor_points_delay_time(
-        sensor_points_msg_in_sensor_frame->header.stamp, this->now(), param_.validation.lidar_topic_timeout_sec)) {
+        sensor_points_msg_in_sensor_frame->header.stamp, this->now(),
+        param_.validation.lidar_topic_timeout_sec)) {
     // If the delay time of the LiDAR topic exceeds the delay compensation time of ekf_localizer,
     // even if further processing continues, the estimated result will be rejected by ekf_localizer.
     // Therefore, it would be acceptable to exit the function here.
@@ -422,7 +422,6 @@ bool NDTScanMatcher::process_scan_matching(
   //       interpolator.get_new_pose().pose.pose.position, initial_pose_distance_tolerance_m_)) {
   //   return false;
   // }
-
 
   if (!interpolation_result_opt) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No interpolated pose!");
@@ -718,7 +717,8 @@ void NDTScanMatcher::publish_initial_to_result(
 //   if (!is_ok_iter_num) {
 //     RCLCPP_WARN(
 //       get_logger(),
-//       "The number of iterations has reached its upper limit. The number of iterations: %d, Limit: "
+//       "The number of iterations has reached its upper limit. The number of iterations: %d, Limit:
+//       "
 //       "%d",
 //       iter_num, max_iter_num);
 //   }
@@ -741,7 +741,8 @@ void NDTScanMatcher::publish_initial_to_result(
 //   const double & transform_probability, const double & nearest_voxel_transformation_likelihood)
 // {
 //   bool is_ok_converged_param = false;
-//   if (param_.score_estimation.converged_param_type == ConvergedParamType::TRANSFORM_PROBABILITY) {
+//   if (param_.score_estimation.converged_param_type == ConvergedParamType::TRANSFORM_PROBABILITY)
+//   {
 //     is_ok_converged_param = validate_score(
 //       transform_probability, param_.score_estimation.converged_param_transform_probability,
 //       "Transform Probability");
@@ -946,7 +947,8 @@ void NDTScanMatcher::service_ndt_align(
     res->success = false;
     is_succeed_latest_ndt_aling_service_ = false;
     is_running_ndt_aling_service_ = false;
-    RCLCPP_WARN(get_logger(), "No InputTarget. Please check the map file and the map_loader service");
+    RCLCPP_WARN(
+      get_logger(), "No InputTarget. Please check the map file and the map_loader service");
     return;
   }
 

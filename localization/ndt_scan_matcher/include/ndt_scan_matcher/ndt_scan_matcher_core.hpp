@@ -17,11 +17,11 @@
 
 #define FMT_HEADER_ONLY
 
-#include "ndt_scan_matcher/diagnostics_module.hpp"
-#include "ndt_scan_matcher/ndt_scan_matcher_diagnostics_updater_core.hpp"
 #include "localization_util/smart_pose_buffer.hpp"
+#include "ndt_scan_matcher/diagnostics_module.hpp"
 #include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
+#include "ndt_scan_matcher/ndt_scan_matcher_diagnostics_updater_core.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
