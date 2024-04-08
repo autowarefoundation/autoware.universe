@@ -21,6 +21,7 @@
 #include "behavior_path_planner_common/interface/steering_factor_interface.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
+#include <rclcpp/subscription.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -36,6 +37,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include <tier4_planning_msgs/msg/detail/velocity_limit__struct.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
 #include <tier4_planning_msgs/msg/reroute_availability.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
@@ -103,6 +105,8 @@ private:
   rclcpp::Publisher<PoseWithUuidStamped>::SharedPtr modified_goal_publisher_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_publisher_;
   rclcpp::Publisher<RerouteAvailability>::SharedPtr reroute_availability_publisher_;
+  rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr
+    external_limit_max_velocity_subscriber_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_candidate_publishers_;
@@ -142,6 +146,9 @@ private:
   void onRoute(const LaneletRoute::ConstSharedPtr route_msg);
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
   void onLateralOffset(const LateralOffset::ConstSharedPtr msg);
+  void on_external_velocity_limiter(
+    const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
+
   SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
   OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
