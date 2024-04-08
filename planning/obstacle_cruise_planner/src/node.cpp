@@ -1197,7 +1197,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
 
   // calculate collision points with trajectory with lateral stop margin
   const auto traj_polys_with_lat_margin = createOneStepPolygons(
-    traj_points, vehicle_info_, ego_odom_sub_.getData().pose.pose, p.max_lat_margin_for_stop, 0.5);
+    traj_points, vehicle_info_, ego_odom_sub_.getData().pose.pose, p.max_lat_margin_for_stop, 0.3);
 
   const auto collision_point = polygon_utils::getCollisionPoint(
     traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);
