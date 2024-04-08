@@ -60,7 +60,7 @@ private:
   void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decision_state_pub_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficSignal>::SharedPtr tl_observation_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLight>::SharedPtr tl_observation_pub_;
 };
 
 class MergeFromPrivateModuleManager : public SceneModuleManagerInterface
