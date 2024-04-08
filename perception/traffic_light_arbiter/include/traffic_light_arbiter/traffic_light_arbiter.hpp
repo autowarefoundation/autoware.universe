@@ -19,7 +19,7 @@
 #include <traffic_light_arbiter/signal_match_validator.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 
 #include <lanelet2_core/Forward.h>
 
@@ -32,19 +32,19 @@ public:
   explicit TrafficLightArbiter(const rclcpp::NodeOptions & options);
 
 private:
-  using Element = autoware_perception_msgs::msg::TrafficSignalElement;
+  using Element = autoware_perception_msgs::msg::TrafficLightElement;
   using LaneletMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
-  using TrafficSignalArray = autoware_perception_msgs::msg::TrafficSignalArray;
-  using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
+  using TrafficLightArray = autoware_perception_msgs::msg::TrafficLightArray;
+  using TrafficLight = autoware_perception_msgs::msg::TrafficLight;
 
   rclcpp::Subscription<LaneletMapBin>::SharedPtr map_sub_;
-  rclcpp::Subscription<TrafficSignalArray>::SharedPtr perception_tlr_sub_;
-  rclcpp::Subscription<TrafficSignalArray>::SharedPtr external_tlr_sub_;
-  rclcpp::Publisher<TrafficSignalArray>::SharedPtr pub_;
+  rclcpp::Subscription<TrafficLightArray>::SharedPtr perception_tlr_sub_;
+  rclcpp::Subscription<TrafficLightArray>::SharedPtr external_tlr_sub_;
+  rclcpp::Publisher<TrafficLightArray>::SharedPtr pub_;
 
   void onMap(const LaneletMapBin::ConstSharedPtr msg);
-  void onPerceptionMsg(const TrafficSignalArray::ConstSharedPtr msg);
-  void onExternalMsg(const TrafficSignalArray::ConstSharedPtr msg);
+  void onPerceptionMsg(const TrafficLightArray::ConstSharedPtr msg);
+  void onExternalMsg(const TrafficLightArray::ConstSharedPtr msg);
   void arbitrateAndPublish(const builtin_interfaces::msg::Time & stamp);
 
   std::unique_ptr<std::unordered_set<lanelet::Id>> map_regulatory_elements_set_;
@@ -54,8 +54,8 @@ private:
   bool external_priority_;
   bool enable_signal_matching_;
 
-  TrafficSignalArray latest_perception_msg_;
-  TrafficSignalArray latest_external_msg_;
+  TrafficLightArray latest_perception_msg_;
+  TrafficLightArray latest_external_msg_;
   std::unique_ptr<SignalMatchValidator> signal_match_validator_;
 };
 

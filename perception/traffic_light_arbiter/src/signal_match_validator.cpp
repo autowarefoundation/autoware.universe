@@ -16,14 +16,14 @@
 
 namespace util
 {
-using TrafficSignalArray = autoware_perception_msgs::msg::TrafficSignalArray;
-using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
-using Element = autoware_perception_msgs::msg::TrafficSignalElement;
+using TrafficLightArray = autoware_perception_msgs::msg::TrafficLightArray;
+using TrafficLight = autoware_perception_msgs::msg::TrafficLight;
+using Element = autoware_perception_msgs::msg::TrafficLightElement;
 using Time = builtin_interfaces::msg::Time;
 
-// Finds a signal by its ID within a TrafficSignalArray
-std::optional<TrafficSignal> find_signal_by_id(
-  const std::unordered_map<lanelet::Id, TrafficSignal> & id_signal_map, int64_t signal_id)
+// Finds a signal by its ID within a TrafficLightArray
+std::optional<TrafficLight> find_signal_by_id(
+  const std::unordered_map<lanelet::Id, TrafficLight> & id_signal_map, int64_t signal_id)
 {
   auto it = id_signal_map.find(signal_id);
   if (it != id_signal_map.end()) {
@@ -33,11 +33,11 @@ std::optional<TrafficSignal> find_signal_by_id(
   }
 }
 
-// Creates a map from signal IDs to TrafficSignal objects.
-std::unordered_map<lanelet::Id, TrafficSignal> create_id_signal_map(
-  const TrafficSignalArray & traffic_signals)
+// Creates a map from signal IDs to TrafficLight objects.
+std::unordered_map<lanelet::Id, TrafficLight> create_id_signal_map(
+  const TrafficLightArray & traffic_signals)
 {
-  std::unordered_map<lanelet::Id, TrafficSignal> id_signal_map;
+  std::unordered_map<lanelet::Id, TrafficLight> id_signal_map;
   for (const auto & traffic_signal : traffic_signals.signals) {
     id_signal_map[traffic_signal.traffic_signal_id] = traffic_signal;
   }
@@ -45,7 +45,7 @@ std::unordered_map<lanelet::Id, TrafficSignal> create_id_signal_map(
   return id_signal_map;
 }
 
-// Creates a TrafficSignalElement with specified attributes
+// Creates a TrafficLightElement with specified attributes
 Element create_element(
   const Element::_color_type & color, const Element::_shape_type & shape,
   const Element::_status_type & status, const Element::_confidence_type & confidence)
@@ -82,9 +82,9 @@ std::vector<Element> create_unknown_elements(
 }
 
 // Creates a 'unknown' signal with elements matching the shapes of a given signal's elements
-TrafficSignal create_unknown_signal(const TrafficSignal & traffic_signal)
+TrafficLight create_unknown_signal(const TrafficLight & traffic_signal)
 {
-  TrafficSignal unknown_signal;
+  TrafficLight unknown_signal;
   unknown_signal.traffic_signal_id = traffic_signal.traffic_signal_id;
   for (const auto & element : traffic_signal.elements) {
     // Confidence is set to a default value as it is not relevant for unknown signals
@@ -97,9 +97,9 @@ TrafficSignal create_unknown_signal(const TrafficSignal & traffic_signal)
 }
 
 // Creates an 'unknown' signal by combining unique shapes from two signals' elements
-TrafficSignal create_unknown_signal(const TrafficSignal & signal1, const TrafficSignal & signal2)
+TrafficLight create_unknown_signal(const TrafficLight & signal1, const TrafficLight & signal2)
 {
-  TrafficSignal unknown_signal;
+  TrafficLight unknown_signal;
 
   // Assumes that both signals have the same traffic_signal_id
   unknown_signal.traffic_signal_id = signal1.traffic_signal_id;
@@ -134,9 +134,9 @@ bool are_all_elements_equivalent(
     [](const Element & a, const Element & b) { return a.color == b.color && a.shape == b.shape; });
 }
 
-// Creates a set of unique signal IDs from two vectors of TrafficSignals
+// Creates a set of unique signal IDs from two vectors of TrafficLights
 std::unordered_set<lanelet::Id> create_signal_id_set(
-  const std::vector<TrafficSignal> & signals1, const std::vector<TrafficSignal> & signals2)
+  const std::vector<TrafficLight> & signals1, const std::vector<TrafficLight> & signals2)
 {
   std::unordered_set<lanelet::Id> signal_id_set;
   for (const auto & traffic_signal : signals1) {
@@ -150,9 +150,9 @@ std::unordered_set<lanelet::Id> create_signal_id_set(
 }
 
 // Returns the signal with the highest confidence elements, considering a external priority
-TrafficSignal get_highest_confidence_signal(
-  const std::optional<TrafficSignal> & perception_signal,
-  const std::optional<TrafficSignal> & external_signal, const bool external_priority)
+TrafficLight get_highest_confidence_signal(
+  const std::optional<TrafficLight> & perception_signal,
+  const std::optional<TrafficLight> & external_signal, const bool external_priority)
 {
   // Returns the existing signal if only one of them exists
   if (!perception_signal) {
@@ -177,7 +177,7 @@ TrafficSignal get_highest_confidence_signal(
     shape_element_map[element.shape].emplace_back(element);
   }
 
-  TrafficSignal highest_confidence_signal;
+  TrafficLight highest_confidence_signal;
 
   // Assumes that both signals have the same traffic_signal_id
   highest_confidence_signal.traffic_signal_id = perception_signal->traffic_signal_id;
@@ -206,10 +206,10 @@ Time get_newer_stamp(const Time & stamp1, const Time & stamp2)
 
 }  // namespace util
 
-autoware_perception_msgs::msg::TrafficSignalArray SignalMatchValidator::validateSignals(
-  const TrafficSignalArray & perception_signals, const TrafficSignalArray & external_signals)
+autoware_perception_msgs::msg::TrafficLightArray SignalMatchValidator::validateSignals(
+  const TrafficLightArray & perception_signals, const TrafficLightArray & external_signals)
 {
-  TrafficSignalArray validated_signals;
+  TrafficLightArray validated_signals;
 
   // Set newer stamp
   validated_signals.stamp = util::get_newer_stamp(perception_signals.stamp, external_signals.stamp);

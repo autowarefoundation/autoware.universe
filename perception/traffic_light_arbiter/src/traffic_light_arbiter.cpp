@@ -82,15 +82,15 @@ TrafficLightArbiter::TrafficLightArbiter(const rclcpp::NodeOptions & options)
     "~/sub/vector_map", rclcpp::QoS(1).transient_local(),
     std::bind(&TrafficLightArbiter::onMap, this, std::placeholders::_1));
 
-  perception_tlr_sub_ = create_subscription<TrafficSignalArray>(
+  perception_tlr_sub_ = create_subscription<TrafficLightArray>(
     "~/sub/perception_traffic_signals", rclcpp::QoS(1),
     std::bind(&TrafficLightArbiter::onPerceptionMsg, this, std::placeholders::_1));
 
-  external_tlr_sub_ = create_subscription<TrafficSignalArray>(
+  external_tlr_sub_ = create_subscription<TrafficLightArray>(
     "~/sub/external_traffic_signals", rclcpp::QoS(1),
     std::bind(&TrafficLightArbiter::onExternalMsg, this, std::placeholders::_1));
 
-  pub_ = create_publisher<TrafficSignalArray>("~/pub/traffic_signals", rclcpp::QoS(1));
+  pub_ = create_publisher<TrafficLightArray>("~/pub/traffic_signals", rclcpp::QoS(1));
 }
 
 void TrafficLightArbiter::onMap(const LaneletMapBin::ConstSharedPtr msg)
@@ -112,7 +112,7 @@ void TrafficLightArbiter::onMap(const LaneletMapBin::ConstSharedPtr msg)
   }
 }
 
-void TrafficLightArbiter::onPerceptionMsg(const TrafficSignalArray::ConstSharedPtr msg)
+void TrafficLightArbiter::onPerceptionMsg(const TrafficLightArray::ConstSharedPtr msg)
 {
   latest_perception_msg_ = *msg;
 
@@ -125,7 +125,7 @@ void TrafficLightArbiter::onPerceptionMsg(const TrafficSignalArray::ConstSharedP
   arbitrateAndPublish(msg->stamp);
 }
 
-void TrafficLightArbiter::onExternalMsg(const TrafficSignalArray::ConstSharedPtr msg)
+void TrafficLightArbiter::onExternalMsg(const TrafficLightArray::ConstSharedPtr msg)
 {
   latest_external_msg_ = *msg;
 
@@ -149,7 +149,7 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
     return;
   }
 
-  TrafficSignalArray output_signals_msg;
+  TrafficLightArray output_signals_msg;
   output_signals_msg.stamp = stamp;
 
   if (map_regulatory_elements_set_->empty()) {
@@ -220,7 +220,7 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
   output_signals_msg.signals.reserve(regulatory_element_signals_map.size());
 
   for (const auto & [regulatory_element_id, elements] : regulatory_element_signals_map) {
-    TrafficSignal signal_msg;
+    TrafficLight signal_msg;
     signal_msg.traffic_signal_id = regulatory_element_id;
     signal_msg.elements = get_highest_confidence_elements(elements);
     output_signals_msg.signals.emplace_back(signal_msg);

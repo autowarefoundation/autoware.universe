@@ -18,7 +18,7 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 
@@ -38,9 +38,9 @@
 class SignalMatchValidator
 {
 public:
-  using TrafficSignalArray = autoware_perception_msgs::msg::TrafficSignalArray;
-  using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
-  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+  using TrafficLightArray = autoware_perception_msgs::msg::TrafficLightArray;
+  using TrafficLight = autoware_perception_msgs::msg::TrafficLight;
+  using TrafficLightElement = autoware_perception_msgs::msg::TrafficLightElement;
   using TrafficLightConstPtr = lanelet::TrafficLightConstPtr;
 
   /**
@@ -58,10 +58,10 @@ public:
    *
    * @param perception_signals Traffic signal data from perception.
    * @param external_signals Traffic signal data from external source.
-   * @return A validated TrafficSignalArray.
+   * @return A validated TrafficLightArray.
    */
-  TrafficSignalArray validateSignals(
-    const TrafficSignalArray & perception_signals, const TrafficSignalArray & external_signals);
+  TrafficLightArray validateSignals(
+    const TrafficLightArray & perception_signals, const TrafficLightArray & external_signals);
 
   /**
    * @brief Sets the pedestrian signals to be considered during validation.
