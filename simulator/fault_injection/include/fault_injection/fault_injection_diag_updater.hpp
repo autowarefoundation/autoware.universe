@@ -64,8 +64,8 @@ public:
   explicit FaultInjectionDiagUpdater(NodeT node, double period = 1.0)
   : FaultInjectionDiagUpdater(
       node->get_node_base_interface(), node->get_node_clock_interface(),
-      node->get_node_logging_interface(),
-      node->get_node_timers_interface(), node->get_node_topics_interface(), period)
+      node->get_node_logging_interface(), node->get_node_timers_interface(),
+      node->get_node_topics_interface(), period)
   {
   }
 
