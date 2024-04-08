@@ -14,6 +14,8 @@
 
 #include "localization_error_monitor/node.hpp"
 
+#include "localization_error_monitor/diagnostics.hpp"
+
 #include <Eigen/Dense>
 
 #include <tf2/utils.h>
@@ -30,17 +32,16 @@
 #include <string>
 #include <utility>
 
-LocalizationErrorMonitor::LocalizationErrorMonitor()
-: Node("localization_error_monitor"), updater_(this)
+LocalizationErrorMonitor::LocalizationErrorMonitor() : Node("localization_error_monitor")
 {
-  scale_ = this->declare_parameter("scale", 3.0);
-  error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 1.0);
-  warn_ellipse_size_ = this->declare_parameter("warn_ellipse_size", 0.8);
+  scale_ = this->declare_parameter<double>("scale");
+  error_ellipse_size_ = this->declare_parameter<double>("error_ellipse_size");
+  warn_ellipse_size_ = this->declare_parameter<double>("warn_ellipse_size");
 
   error_ellipse_size_lateral_direction_ =
-    this->declare_parameter("error_ellipse_size_lateral_direction", 0.3);
+    this->declare_parameter<double>("error_ellipse_size_lateral_direction");
   warn_ellipse_size_lateral_direction_ =
-    this->declare_parameter("warn_ellipse_size_lateral_direction", 0.2);
+    this->declare_parameter<double>("warn_ellipse_size_lateral_direction");
 
   odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "input/odom", 1, std::bind(&LocalizationErrorMonitor::onOdom, this, std::placeholders::_1));
@@ -51,55 +52,9 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
   ellipse_marker_pub_ =
     this->create_publisher<visualization_msgs::msg::Marker>("debug/ellipse_marker", durable_qos);
 
-  updater_.setHardwareID("localization_error_monitor");
-  updater_.add("localization_accuracy", this, &LocalizationErrorMonitor::checkLocalizationAccuracy);
-  updater_.add(
-    "localization_accuracy_lateral_direction", this,
-    &LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection);
+  diag_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
-  // Set timer
-  using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), 100ms, std::bind(&LocalizationErrorMonitor::onTimer, this));
-}
-
-void LocalizationErrorMonitor::onTimer()
-{
-  updater_.force_update();
-}
-
-void LocalizationErrorMonitor::checkLocalizationAccuracy(
-  diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  stat.add("localization_accuracy", ellipse_.long_radius);
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message = "ellipse size is within the expected range";
-  if (warn_ellipse_size_ <= ellipse_.long_radius) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "ellipse size is too large";
-  }
-  if (error_ellipse_size_ <= ellipse_.long_radius) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    diag_message = "ellipse size is over the expected range";
-  }
-  stat.summary(diag_level, diag_message);
-}
-
-void LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection(
-  diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  stat.add("localization_accuracy_lateral_direction", ellipse_.size_lateral_direction);
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message = "ellipse size along lateral direction is within the expected range";
-  if (warn_ellipse_size_lateral_direction_ <= ellipse_.size_lateral_direction) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "ellipse size along lateral direction is too large";
-  }
-  if (error_ellipse_size_lateral_direction_ <= ellipse_.size_lateral_direction) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    diag_message = "ellipse size along lateral direction is over the expected range";
-  }
-  stat.summary(diag_level, diag_message);
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 visualization_msgs::msg::Marker LocalizationErrorMonitor::createEllipseMarker(
@@ -158,6 +113,24 @@ void LocalizationErrorMonitor::onOdom(nav_msgs::msg::Odometry::ConstSharedPtr in
 
   const auto ellipse_marker = createEllipseMarker(ellipse_, input_msg);
   ellipse_marker_pub_->publish(ellipse_marker);
+
+  // diagnostics
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
+  diag_status_array.push_back(
+    checkLocalizationAccuracy(ellipse_.long_radius, warn_ellipse_size_, error_ellipse_size_));
+  diag_status_array.push_back(checkLocalizationAccuracyLateralDirection(
+    ellipse_.size_lateral_direction, warn_ellipse_size_lateral_direction_,
+    error_ellipse_size_lateral_direction_));
+
+  diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;
+  diag_merged_status = mergeDiagnosticStatus(diag_status_array);
+  diag_merged_status.name = "localization: " + std::string(this->get_name());
+  diag_merged_status.hardware_id = this->get_name();
+
+  diagnostic_msgs::msg::DiagnosticArray diag_msg;
+  diag_msg.header.stamp = this->now();
+  diag_msg.status.push_back(diag_merged_status);
+  diag_pub_->publish(diag_msg);
 }
 
 double LocalizationErrorMonitor::measureSizeEllipseAlongBodyFrame(

@@ -26,10 +26,10 @@
 NDTScanMatcherDiagnosticsUpdaterCore::NDTScanMatcherDiagnosticsUpdaterCore(
   NDTScanMatcher * ndt_scan_mathcer_ptr)
 {
-  diagnostics_func_is_activated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "check_is_activated", std::bind(
-                            &NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated, this,
-                            std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_activated_))));
+  // diagnostics_func_is_activated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    // "check_is_activated", std::bind(
+    //                         &NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated, this,
+    //                         std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_activated_))));
   diagnostics_func_is_succeed_latest_ndt_aling_service.reset(
     new diagnostic_updater::FunctionDiagnosticTask(
       "check_is_succeed_latest_ndt_aling_service",
@@ -51,7 +51,7 @@ NDTScanMatcherDiagnosticsUpdaterCore::NDTScanMatcherDiagnosticsUpdaterCore(
 
   diagnostics_composite_task_.reset(
     new diagnostic_updater::CompositeDiagnosticTask("ndt_scan_matcher_core"));
-  diagnostics_composite_task_->addTask(diagnostics_func_is_activated_.get());
+  // diagnostics_composite_task_->addTask(diagnostics_func_is_activated_.get());
   diagnostics_composite_task_->addTask(diagnostics_func_is_succeed_latest_ndt_aling_service.get());
   diagnostics_composite_task_->addTask(diagnostics_func_is_running_ndt_aling_service.get());
   diagnostics_composite_task_->addTask(diagnostics_func_latest_ndt_aling_service_best_score.get());

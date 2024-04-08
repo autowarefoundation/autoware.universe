@@ -14,7 +14,6 @@
 
 #include "ndt_scan_matcher/diagnostics_module.hpp"
 #include "ndt_scan_matcher/ndt_scan_matcher_core.hpp"
-#include "ndt_scan_matcher/util_func.hpp"
 
 #include <string>
 
@@ -234,13 +233,13 @@ bool NDTScanMatcher::validate_converged_param(
     "nearest_voxel_transformation_likelihood", nearest_voxel_transformation_likelihood);
 
   bool is_ok = false;
-  if (converged_param_type_ == ConvergedParamType::TRANSFORM_PROBABILITY) {
+  if (param_.score_estimation.converged_param_type == ConvergedParamType::TRANSFORM_PROBABILITY) {
     is_ok = validate_score(
-      transform_probability, converged_param_transform_probability_, "Transform Probability");
-  } else if (converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
+      transform_probability, param_.score_estimation.converged_param_transform_probability, "Transform Probability");
+  } else if (param_.score_estimation.converged_param_type == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
     is_ok = validate_score(
       nearest_voxel_transformation_likelihood,
-      converged_param_nearest_voxel_transformation_likelihood_,
+      param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood,
       "Nearest Voxel Transformation Likelihood");
   } else {
     is_ok = false;

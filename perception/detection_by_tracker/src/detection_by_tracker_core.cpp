@@ -160,7 +160,15 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output", rclcpp::QoS{1});
 
-  ignore_unknown_tracker_ = declare_parameter<bool>("ignore_unknown_tracker", true);
+  // Set parameters
+  tracker_ignore_.UNKNOWN = declare_parameter<bool>("tracker_ignore_label.UNKNOWN");
+  tracker_ignore_.CAR = declare_parameter<bool>("tracker_ignore_label.CAR");
+  tracker_ignore_.TRUCK = declare_parameter<bool>("tracker_ignore_label.TRUCK");
+  tracker_ignore_.BUS = declare_parameter<bool>("tracker_ignore_label.BUS");
+  tracker_ignore_.TRAILER = declare_parameter<bool>("tracker_ignore_label.TRAILER");
+  tracker_ignore_.MOTORCYCLE = declare_parameter<bool>("tracker_ignore_label.MOTORCYCLE");
+  tracker_ignore_.BICYCLE = declare_parameter<bool>("tracker_ignore_label.BICYCLE");
+  tracker_ignore_.PEDESTRIAN = declare_parameter<bool>("tracker_ignore_label.PEDESTRIAN");
 
   // set maximum search setting for merger/divider
   setMaxSearchRange();
@@ -169,6 +177,7 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
     false, 10, 10000, 0.7, 0.3, 0);
   debugger_ = std::make_shared<Debugger>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void DetectionByTracker::setMaxSearchRange()
@@ -198,6 +207,7 @@ void DetectionByTracker::setMaxSearchRange()
 void DetectionByTracker::onObjects(
   const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg)
 {
+  debugger_->startMeasureProcessingTime();
   autoware_auto_perception_msgs::msg::DetectedObjects detected_objects;
   detected_objects.header = input_msg->header;
 
@@ -212,6 +222,7 @@ void DetectionByTracker::onObjects(
       !object_recognition_utils::transformObjects(
         objects, input_msg->header.frame_id, tf_buffer_, transformed_objects)) {
       objects_pub_->publish(detected_objects);
+      published_time_publisher_->publish_if_subscribed(objects_pub_, detected_objects.header.stamp);
       return;
     }
     // to simplify post processes, convert tracked_objects to DetectedObjects message.
@@ -242,6 +253,8 @@ void DetectionByTracker::onObjects(
   }
 
   objects_pub_->publish(detected_objects);
+  published_time_publisher_->publish_if_subscribed(objects_pub_, detected_objects.header.stamp);
+  debugger_->publishProcessingTime();
 }
 
 void DetectionByTracker::divideUnderSegmentedObjects(
@@ -259,7 +272,7 @@ void DetectionByTracker::divideUnderSegmentedObjects(
 
   for (const auto & tracked_object : tracked_objects.objects) {
     const auto & label = tracked_object.classification.front().label;
-    if (ignore_unknown_tracker_ && (label == Label::UNKNOWN)) continue;
+    if (tracker_ignore_.isIgnore(label)) continue;
 
     // change search range according to label type
     const float max_search_range = max_search_distance_for_divider_[label];
@@ -395,7 +408,7 @@ void DetectionByTracker::mergeOverSegmentedObjects(
 
   for (const auto & tracked_object : tracked_objects.objects) {
     const auto & label = tracked_object.classification.front().label;
-    if (ignore_unknown_tracker_ && (label == Label::UNKNOWN)) continue;
+    if (tracker_ignore_.isIgnore(label)) continue;
 
     // change search range according to label type
     const float max_search_range = max_search_distance_for_merger_[label];

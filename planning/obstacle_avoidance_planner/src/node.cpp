@@ -16,6 +16,7 @@
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "obstacle_avoidance_planner/debug_marker.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
@@ -45,11 +46,19 @@ StringStamped createStringStamped(const rclcpp::Time & now, const std::string & 
   return msg;
 }
 
+Float64Stamped createFloat64Stamped(const rclcpp::Time & now, const float & data)
+{
+  Float64Stamped msg;
+  msg.stamp = now;
+  msg.data = data;
+  return msg;
+}
+
 void setZeroVelocityAfterStopPoint(std::vector<TrajectoryPoint> & traj_points)
 {
   const auto opt_zero_vel_idx = motion_utils::searchZeroVelocityIndex(traj_points);
   if (opt_zero_vel_idx) {
-    for (size_t i = opt_zero_vel_idx.get(); i < traj_points.size(); ++i) {
+    for (size_t i = opt_zero_vel_idx.value(); i < traj_points.size(); ++i) {
       traj_points.at(i).longitudinal_velocity_mps = 0.0;
     }
   }
@@ -92,7 +101,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   // debug publisher
   debug_extended_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_traj", 1);
   debug_markers_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
-  debug_calculation_time_pub_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
+  debug_calculation_time_str_pub_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
+  debug_calculation_time_float_pub_ =
+    create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
 
   {  // parameters
     // parameter for option
@@ -140,6 +151,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   // initialized.
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&ObstacleAvoidancePlanner::onParam, this, std::placeholders::_1));
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
@@ -193,7 +207,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
 
 void ObstacleAvoidancePlanner::initializePlanning()
 {
-  RCLCPP_INFO(get_logger(), "Initialize planning");
+  RCLCPP_DEBUG(get_logger(), "Initialize planning");
 
   mpt_optimizer_ptr_->initialize(enable_debug_info_, traj_param_);
 
@@ -224,8 +238,9 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
       "Backward path is NOT supported. Just converting path to trajectory");
 
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
-    const auto output_traj_msg = trajectory_utils::createTrajectory(path_ptr->header, traj_points);
+    const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
+    published_time_publisher_->publish_if_subscribed(traj_pub_, output_traj_msg.header.stamp);
     return;
   }
 
@@ -251,11 +266,14 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
   // publish calculation_time
   // NOTE: This function must be called after measuring onPath calculation time
   const auto calculation_time_msg = createStringStamped(now(), time_keeper_ptr_->getLog());
-  debug_calculation_time_pub_->publish(calculation_time_msg);
+  debug_calculation_time_str_pub_->publish(calculation_time_msg);
+  debug_calculation_time_float_pub_->publish(
+    createFloat64Stamped(now(), time_keeper_ptr_->getAccumulatedTime()));
 
   const auto output_traj_msg =
-    trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
+    motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
   traj_pub_->publish(output_traj_msg);
+  published_time_publisher_->publish_if_subscribed(traj_pub_, output_traj_msg.header.stamp);
 }
 
 bool ObstacleAvoidancePlanner::isDataReady(const Path & path, rclcpp::Clock clock) const
@@ -349,7 +367,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data, p.traj_points);
+  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data);
 
   time_keeper_ptr_->toc(__func__, "    ");
   return mpt_traj;
@@ -433,7 +451,7 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
   // insert stop point explicitly
   const auto stop_idx = motion_utils::searchZeroVelocityIndex(forward_cropped_input_traj_points);
   if (stop_idx) {
-    const auto & input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.get()).pose;
+    const auto & input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.value()).pose;
     // NOTE: motion_utils::findNearestSegmentIndex is used instead of
     // trajectory_utils::findEgoSegmentIndex
     //       for the case where input_traj_points is much longer than output_traj_points, and the
@@ -443,7 +461,24 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
       ego_nearest_param_.yaw_threshold);
 
     // calculate and insert stop pose on output trajectory
-    if (stop_seg_idx) {
+    const bool is_stop_point_inside_trajectory = [&]() {
+      if (!stop_seg_idx) {
+        return false;
+      }
+      if (*stop_seg_idx == output_traj_points.size() - 2) {
+        const double signed_projected_length_to_segment =
+          motion_utils::calcLongitudinalOffsetToSegment(
+            output_traj_points, *stop_seg_idx, input_stop_pose.position);
+        const double segment_length =
+          motion_utils::calcSignedArcLength(output_traj_points, *stop_seg_idx, *stop_seg_idx + 1);
+        if (segment_length < signed_projected_length_to_segment) {
+          // NOTE: input_stop_pose is outside output_traj_points.
+          return false;
+        }
+      }
+      return true;
+    }();
+    if (is_stop_point_inside_trajectory) {
       trajectory_utils::insertStopPoint(output_traj_points, input_stop_pose, *stop_seg_idx);
     }
   }
@@ -573,25 +608,25 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::extendTrajectory(
   const auto joint_end_traj_point_idx = trajectory_utils::getPointIndexAfter(
     traj_points, joint_start_pose.position, joint_start_traj_seg_idx,
     joint_traj_max_length_for_smoothing, joint_traj_min_length_for_smoothing);
+  if (!joint_end_traj_point_idx) {
+    return trajectory_utils::resampleTrajectoryPoints(
+      optimized_traj_points, traj_param_.output_delta_arc_length);
+  }
 
   // calculate full trajectory points
   const auto full_traj_points = [&]() {
-    if (!joint_end_traj_point_idx) {
-      return optimized_traj_points;
-    }
-
-    const auto extended_traj_points = std::vector<TrajectoryPoint>{
+    auto extended_traj_points = std::vector<TrajectoryPoint>{
       traj_points.begin() + *joint_end_traj_point_idx, traj_points.end()};
 
-    // NOTE: if optimized_traj_points's back is non zero velocity and extended_traj_points' front is
-    // zero velocity, the zero velocity will be inserted in the whole joint trajectory.
-    auto modified_optimized_traj_points = optimized_traj_points;
-    if (!extended_traj_points.empty() && !modified_optimized_traj_points.empty()) {
-      modified_optimized_traj_points.back().longitudinal_velocity_mps =
-        extended_traj_points.front().longitudinal_velocity_mps;
+    if (!extended_traj_points.empty() && !optimized_traj_points.empty()) {
+      // NOTE: Without this code, if optimized_traj_points's back is non zero velocity and
+      // extended_traj_points' front
+      //       is zero velocity, the zero velocity will be inserted in the whole joint trajectory.
+      //       The input stop point will be inserted explicitly in the latter part.
+      extended_traj_points.front().longitudinal_velocity_mps =
+        optimized_traj_points.back().longitudinal_velocity_mps;
     }
-
-    return concatVectors(modified_optimized_traj_points, extended_traj_points);
+    return concatVectors(optimized_traj_points, extended_traj_points);
   }();
 
   // resample trajectory points
@@ -599,7 +634,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::extendTrajectory(
     full_traj_points, traj_param_.output_delta_arc_length);
 
   // update stop velocity on joint
-  for (size_t i = joint_start_traj_seg_idx + 1; i <= joint_end_traj_point_idx; ++i) {
+  for (size_t i = joint_start_traj_seg_idx + 1; i <= *joint_end_traj_point_idx; ++i) {
     if (hasZeroVelocity(traj_points.at(i))) {
       if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
         // Here is when current point is 0 velocity, but previous point is not 0 velocity.
@@ -625,7 +660,7 @@ void ObstacleAvoidancePlanner::publishDebugData(const Header & header) const
 
   // publish trajectories
   const auto debug_extended_traj =
-    trajectory_utils::createTrajectory(header, debug_data_ptr_->extended_traj_points);
+    motion_utils::convertToTrajectory(debug_data_ptr_->extended_traj_points, header);
   debug_extended_traj_pub_->publish(debug_extended_traj);
 
   time_keeper_ptr_->toc(__func__, "  ");

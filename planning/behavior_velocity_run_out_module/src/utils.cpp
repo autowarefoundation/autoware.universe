@@ -133,7 +133,7 @@ bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg:
 }
 
 // if path points have the same point as target_point, return the index
-boost::optional<size_t> haveSamePoint(
+std::optional<size_t> haveSamePoint(
   const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & target_point)
 {
   for (size_t i = 0; i < path_points.size(); i++) {
@@ -164,7 +164,7 @@ void insertPathVelocityFromIndex(
   }
 }
 
-boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points)
+std::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points)
 {
   for (size_t i = 0; i < path_points.size(); i++) {
     const auto vel = path_points.at(i).point.longitudinal_velocity_mps;
@@ -174,6 +174,28 @@ boost::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points
   }
 
   return {};
+}
+
+bool pathIntersectsEgoCutLine(
+  const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
+  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_line)
+{
+  if (path.size() < 2) return false;
+  const auto p1 =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, 0.0, half_line_length, 0.0).position;
+  const auto p2 =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, 0.0, -half_line_length, 0.0).position;
+  ego_cut_line = {p1, p2};
+
+  for (size_t i = 1; i < path.size(); ++i) {
+    const auto & p3 = path.at(i).position;
+    const auto & p4 = path.at(i - 1).position;
+    const auto intersection = tier4_autoware_utils::intersect(p1, p2, p3, p4);
+    if (intersection.has_value()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly)
@@ -272,7 +294,7 @@ PathWithLaneId trimPathFromSelfPose(
 
 // create polygon for passing lines and deceleration line calculated by stopping jerk
 // note that this polygon is not closed
-boost::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
+std::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon(
   const std::vector<std::vector<geometry_msgs::msg::Point>> & passing_lines,
   const size_t deceleration_line_idx)
 {
@@ -359,7 +381,7 @@ Polygons2d createDetectionAreaPolygon(
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
   if (!stop_dist) {
-    stop_dist = boost::make_optional<double>(0.0);
+    stop_dist = std::make_optional<double>(0.0);
   }
 
   // create detection area polygon
@@ -403,7 +425,7 @@ Polygons2d createMandatoryDetectionAreaPolygon(
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
   if (!stop_dist) {
-    stop_dist = boost::make_optional<double>(0.0);
+    stop_dist = std::make_optional<double>(0.0);
   }
 
   // create detection area polygon

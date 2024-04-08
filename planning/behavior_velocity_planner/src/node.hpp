@@ -16,11 +16,13 @@
 #define NODE_HPP_
 
 #include "planner_manager.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <behavior_velocity_planner/srv/load_plugin.hpp>
 #include <behavior_velocity_planner/srv/unload_plugin.hpp>
 #include <behavior_velocity_planner_common/planner_data.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -101,6 +103,7 @@ private:
   //  parameter
   double forward_path_length_;
   double backward_path_length_;
+  double behavior_output_path_interval_;
 
   // member
   PlannerData planner_data_;
@@ -126,6 +129,10 @@ private:
   autoware_auto_planning_msgs::msg::Path generatePath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace behavior_velocity_planner
 

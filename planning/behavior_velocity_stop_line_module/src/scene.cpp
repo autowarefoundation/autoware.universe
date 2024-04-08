@@ -34,7 +34,7 @@ StopLineModule::StopLineModule(
   stop_line_(stop_line),
   state_(State::APPROACH)
 {
-  velocity_factor_.init(VelocityFactor::STOP_SIGN);
+  velocity_factor_.init(PlanningBehavior::STOP_SIGN);
   planner_param_ = planner_param;
 }
 
@@ -124,7 +124,7 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
       }
 
       SegmentIndexWithPose ego_pos_on_path;
-      ego_pos_on_path.pose = stopped_pose.get();
+      ego_pos_on_path.pose = stopped_pose.value();
       ego_pos_on_path.index = findEgoSegmentIndex(path->points);
 
       // Insert stop pose

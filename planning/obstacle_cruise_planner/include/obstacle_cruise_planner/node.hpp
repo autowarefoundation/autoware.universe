@@ -20,9 +20,12 @@
 #include "obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -48,6 +51,10 @@ private:
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // main functions
+  std::vector<Polygon2d> createOneStepPolygons(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const vehicle_info_util::VehicleInfo & vehicle_info,
+    const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
   std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
@@ -65,6 +72,10 @@ private:
   std::optional<geometry_msgs::msg::Point> createCollisionPointForStopObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle) const;
+  std::optional<CruiseObstacle> createYieldCruiseObstacle(
+    const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points);
+  std::optional<std::vector<CruiseObstacle>> findYieldCruiseObstacles(
+    const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points);
   std::optional<CruiseObstacle> createCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle, const double precise_lat_dist);
@@ -86,7 +97,7 @@ private:
 
   void checkConsistency(
     const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
-    const std::vector<TrajectoryPoint> & traj_points, std::vector<StopObstacle> & stop_obstacles);
+    std::vector<StopObstacle> & stop_obstacles);
   void publishVelocityLimit(
     const std::optional<VelocityLimit> & vel_limit, const std::string & module_name);
   void publishDebugMarker() const;
@@ -128,14 +139,12 @@ private:
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
-  rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acc_sub_;
-
-  // data for callback functions
-  PredictedObjects::ConstSharedPtr objects_ptr_{nullptr};
-  Odometry::ConstSharedPtr ego_odom_ptr_{nullptr};
-  AccelWithCovarianceStamped::ConstSharedPtr ego_accel_ptr_{nullptr};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
+    this, "~/input/odometry"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
+    this, "~/input/objects"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
+    this, "~/input/acceleration"};
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
@@ -183,9 +192,6 @@ private:
     // prediction resampling
     double prediction_resampling_time_interval;
     double prediction_resampling_time_horizon;
-    // goal extension
-    double goal_extension_length;
-    double goal_extension_interval;
     // max lateral margin
     double max_lat_margin_for_stop;
     double max_lat_margin_for_cruise;
@@ -193,6 +199,15 @@ private:
     double lat_hysteresis_margin_for_slow_down;
     int successive_num_to_entry_slow_down_condition;
     int successive_num_to_exit_slow_down_condition;
+    // consideration for the current ego pose
+    double time_to_convergence{1.5};
+    bool enable_to_consider_current_pose{false};
+    // yield related parameters
+    bool enable_yield{false};
+    double yield_lat_distance_threshold;
+    double max_lat_dist_between_obstacles;
+    double stopped_obstacle_velocity_threshold;
+    double max_obstacles_collision_time;
   };
   BehaviorDeterminationParam behavior_determination_param_;
 
@@ -252,6 +267,10 @@ private:
 
   // previous closest obstacle
   std::shared_ptr<StopObstacle> prev_closest_stop_obstacle_ptr_{nullptr};
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace motion_planning
 

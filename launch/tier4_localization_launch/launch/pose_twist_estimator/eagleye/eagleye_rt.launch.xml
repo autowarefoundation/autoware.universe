@@ -145,8 +145,13 @@
   </group>
 
   <group if="$(var use_eagleye_pose)">
-    <include file="$(var directory_with_related_launches)/fix2pose.launch.xml">
-      <arg name="output_pose_with_cov_name" value="$(var output_pose_with_cov_name)"/>
+    <arg name="geo_pose_topic_name" default="eagleye/geo_pose_with_covariance"/>
+    <include file="$(find-pkg-share eagleye_geo_pose_fusion)/launch/geo_pose_fusion.launch.xml">
+      <arg name="output_geo_pose" value="$(var geo_pose_topic_name)"/>
+    </include>
+    <include file="$(find-pkg-share geo_pose_projector)/launch/geo_pose_projector.launch.xml">
+      <arg name="input_geo_pose" value="$(var geo_pose_topic_name)"/>
+      <arg name="output_pose" value="$(var output_pose_with_cov_name)"/>
     </include>
   </group>
 </launch>

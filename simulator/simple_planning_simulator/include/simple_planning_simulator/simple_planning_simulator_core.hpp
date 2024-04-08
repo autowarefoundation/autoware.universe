@@ -171,36 +171,36 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   /* received & published topics */
-  PoseWithCovarianceStamped::ConstSharedPtr initial_pose_;
-  TwistStamped initial_twist_;
-  VelocityReport current_velocity_;
-  Odometry current_odometry_;
-  SteeringReport current_steer_;
-  AckermannControlCommand current_ackermann_cmd_;
-  AckermannControlCommand current_manual_ackermann_cmd_;
-  GearCommand current_gear_cmd_;
-  GearCommand current_manual_gear_cmd_;
-  TurnIndicatorsCommand::ConstSharedPtr current_turn_indicators_cmd_ptr_;
-  HazardLightsCommand::ConstSharedPtr current_hazard_lights_cmd_ptr_;
-  Trajectory::ConstSharedPtr current_trajectory_ptr_;
-  bool simulate_motion_;  //!< stop vehicle motion simulation if false
-  ControlModeReport current_control_mode_;
-  bool enable_road_slope_simulation_;
+  PoseWithCovarianceStamped::ConstSharedPtr initial_pose_{};
+  TwistStamped initial_twist_{};
+  VelocityReport current_velocity_{};
+  Odometry current_odometry_{};
+  SteeringReport current_steer_{};
+  AckermannControlCommand current_ackermann_cmd_{};
+  AckermannControlCommand current_manual_ackermann_cmd_{};
+  GearCommand current_gear_cmd_{};
+  GearCommand current_manual_gear_cmd_{};
+  TurnIndicatorsCommand::ConstSharedPtr current_turn_indicators_cmd_ptr_{};
+  HazardLightsCommand::ConstSharedPtr current_hazard_lights_cmd_ptr_{};
+  Trajectory::ConstSharedPtr current_trajectory_ptr_{};
+  bool simulate_motion_ = true;  //!< stop vehicle motion simulation if false
+  ControlModeReport current_control_mode_{};
+  bool enable_road_slope_simulation_ = true;
 
   /* frame_id */
-  std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id
-  std::string origin_frame_id_;     //!< @brief map frame_id
+  std::string simulated_frame_id_ = "";  //!< @brief simulated vehicle frame id
+  std::string origin_frame_id_ = "";     //!< @brief map frame_id
 
   /* flags */
-  bool is_initialized_;         //!< @brief flag to check the initial position is set
-  bool add_measurement_noise_;  //!< @brief flag to add measurement noise
+  bool is_initialized_ = false;         //!< @brief flag to check the initial position is set
+  bool add_measurement_noise_ = false;  //!< @brief flag to add measurement noise
 
-  DeltaTime delta_time_;  //!< @brief to calculate delta time
+  DeltaTime delta_time_{};  //!< @brief to calculate delta time
 
-  MeasurementNoiseGenerator measurement_noise_;  //!< @brief for measurement noise
+  MeasurementNoiseGenerator measurement_noise_{};  //!< @brief for measurement noise
 
-  double x_stddev_;  //!< @brief x standard deviation for dummy covariance in map coordinate
-  double y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
+  double x_stddev_ = 0.0;  //!< @brief x standard deviation for dummy covariance in map coordinate
+  double y_stddev_ = 0.0;  //!< @brief y standard deviation for dummy covariance in map coordinate
 
   /* vehicle model */
   enum class VehicleModelType {
@@ -209,7 +209,8 @@ private:
     DELAY_STEER_ACC = 2,
     DELAY_STEER_ACC_GEARED = 3,
     IDEAL_STEER_VEL = 4,
-    DELAY_STEER_VEL = 5
+    DELAY_STEER_VEL = 5,
+    DELAY_STEER_MAP_ACC_GEARED = 6
   } vehicle_model_type_;  //!< @brief vehicle model type to decide the model dynamics
   std::shared_ptr<SimModelInterface> vehicle_model_ptr_;  //!< @brief vehicle model pointer
 
@@ -276,9 +277,10 @@ private:
    * @brief get z-position from trajectory
    * @param [in] x current x-position
    * @param [in] y current y-position
+   * @param [in] prev_odometry odometry calculated in the previous step
    * @return get z-position from trajectory
    */
-  double get_z_pose_from_trajectory(const double x, const double y);
+  double get_z_pose_from_trajectory(const double x, const double y, const Odometry & prev_odometry);
 
   /**
    * @brief get transform from two frame_ids

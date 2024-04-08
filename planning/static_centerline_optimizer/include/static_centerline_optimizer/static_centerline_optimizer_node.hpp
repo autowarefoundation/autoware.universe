@@ -22,6 +22,11 @@
 #include "static_centerline_optimizer/type_alias.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
+#include <geography_utils/lanelet2_projector.hpp>
+
+#include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/int32.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -45,31 +50,50 @@ private:
     const LoadMap::Request::SharedPtr request, const LoadMap::Response::SharedPtr response);
 
   // plan route
-  std::vector<unsigned int> plan_route(const int start_lanelet_id, const int end_lanelet_id);
+  std::vector<lanelet::Id> plan_route(
+    const lanelet::Id start_lanelet_id, const lanelet::Id end_lanelet_id);
   void on_plan_route(
     const PlanRoute::Request::SharedPtr request, const PlanRoute::Response::SharedPtr response);
 
   // plan path
-  std::vector<TrajectoryPoint> plan_path(const std::vector<unsigned int> & route_lane_ids);
+  std::vector<TrajectoryPoint> plan_path(const std::vector<lanelet::Id> & route_lane_ids);
+  std::vector<TrajectoryPoint> optimize_trajectory(const Path & raw_path) const;
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
 
   void evaluate(
-    const std::vector<unsigned int> & route_lane_ids,
+    const std::vector<lanelet::Id> & route_lane_ids,
     const std::vector<TrajectoryPoint> & optimized_traj_points);
   void save_map(
-    const std::string & lanelet2_output_file_path, const std::vector<unsigned int> & route_lane_ids,
+    const std::string & lanelet2_output_file_path, const std::vector<lanelet::Id> & route_lane_ids,
     const std::vector<TrajectoryPoint> & optimized_traj_points);
 
+  lanelet::LaneletMapPtr original_map_ptr_{nullptr};
   HADMapBin::ConstSharedPtr map_bin_ptr_{nullptr};
   std::shared_ptr<RouteHandler> route_handler_ptr_{nullptr};
+  std::unique_ptr<lanelet::Projector> map_projector_{nullptr};
+
+  int traj_start_index_{0};
+  int traj_end_index_{0};
+  struct MetaDataToSaveMap
+  {
+    std::vector<TrajectoryPoint> optimized_traj_points{};
+    std::vector<lanelet::Id> route_lane_ids{};
+  };
+  std::optional<MetaDataToSaveMap> meta_data_to_save_map_{std::nullopt};
 
   // publisher
   rclcpp::Publisher<HADMapBin>::SharedPtr pub_map_bin_{nullptr};
   rclcpp::Publisher<PathWithLaneId>::SharedPtr pub_raw_path_with_lane_id_{nullptr};
   rclcpp::Publisher<Path>::SharedPtr pub_raw_path_{nullptr};
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_unsafe_footprints_{nullptr};
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_whole_optimized_centerline_{nullptr};
   rclcpp::Publisher<Trajectory>::SharedPtr pub_optimized_centerline_{nullptr};
+
+  // subscriber
+  rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr sub_traj_start_index_;
+  rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr sub_traj_end_index_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_save_map_;
 
   // service
   rclcpp::Service<LoadMap>::SharedPtr srv_load_map_;

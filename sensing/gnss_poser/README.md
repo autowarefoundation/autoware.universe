@@ -4,6 +4,11 @@
 
 The `gnss_poser` is a node that subscribes gnss sensing messages and calculates vehicle pose with covariance.
 
+This node subscribes to NavSatFix to publish the pose of **base_link**. The data in NavSatFix represents the antenna's position. Therefore, it performs a coordinate transformation using the tf from `base_link` to the antenna's position. The frame_id of the antenna's position refers to NavSatFix's `header.frame_id`.
+(**Note that `header.frame_id` in NavSatFix indicates the antenna's frame_id, not the Earth or reference ellipsoid.** [See also NavSatFix definition.](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/NavSatFix.html))
+
+If the transformation from `base_link` to the antenna cannot be obtained, it outputs the pose of the antenna position without performing coordinate transformation.
+
 ## Inner-workings / Algorithms
 
 ## Inputs / Outputs
@@ -28,13 +33,7 @@ The `gnss_poser` is a node that subscribes gnss sensing messages and calculates 
 
 ### Core Parameters
 
-| Name                   | Type   | Default Value    | Description                                                                                            |
-| ---------------------- | ------ | ---------------- | ------------------------------------------------------------------------------------------------------ |
-| `base_frame`           | string | "base_link"      | frame id                                                                                               |
-| `gnss_frame`           | string | "gnss"           | frame id                                                                                               |
-| `gnss_base_frame`      | string | "gnss_base_link" | frame id                                                                                               |
-| `map_frame`            | string | "map"            | frame id                                                                                               |
-| `gnss_pose_pub_method` | int    | 0                | 0: Instant Value 1: Average Value 2: Median Value. If 0 is chosen buffer_epoch parameter loses affect. |
+{{ json_to_markdown("sensing/gnss_poser/schema/gnss_poser.schema.json") }}
 
 ## Assumptions / Known limits
 

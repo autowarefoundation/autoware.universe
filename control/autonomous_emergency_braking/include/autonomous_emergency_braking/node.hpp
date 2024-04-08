@@ -41,6 +41,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -140,10 +141,9 @@ public:
   bool hasCollision(
     const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects);
 
-  void generateEgoPath(
-    const double curr_v, const double curr_w, Path & path, std::vector<Polygon2d> & polygons);
-  void generateEgoPath(
-    const Trajectory & predicted_traj, Path & path, std::vector<Polygon2d> & polygons);
+  Path generateEgoPath(const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons);
+  std::optional<Path> generateEgoPath(
+    const Trajectory & predicted_traj, std::vector<Polygon2d> & polygons);
   void createObjectData(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
@@ -172,8 +172,11 @@ public:
   Updater updater_{this};
 
   // member variables
+  bool publish_debug_pointcloud_;
   bool use_predicted_trajectory_;
   bool use_imu_path_;
+  double detection_range_min_height_;
+  double detection_range_max_height_margin_;
   double voxel_grid_x_;
   double voxel_grid_y_;
   double voxel_grid_z_;
@@ -183,8 +186,10 @@ public:
   double t_response_;
   double a_ego_min_;
   double a_obj_min_;
-  double prediction_time_horizon_;
-  double prediction_time_interval_;
+  double imu_prediction_time_horizon_;
+  double imu_prediction_time_interval_;
+  double mpc_prediction_time_horizon_;
+  double mpc_prediction_time_interval_;
   CollisionDataKeeper collision_data_keeper_;
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking

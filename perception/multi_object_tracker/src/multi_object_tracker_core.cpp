@@ -16,6 +16,7 @@
 
 #include <boost/optional.hpp>
 
+#include <glog/logging.h>
 #include <tf2_ros/create_timer_interface.h>
 #include <tf2_ros/create_timer_ros.h>
 
@@ -70,6 +71,10 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {
+  // glog for debug
+  google::InitGoogleLogging("multi_object_tracker");
+  google::InstallFailureSignalHandler();
+
   // Create publishers and subscribers
   detected_object_sub_ = create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "input", rclcpp::QoS{1},
@@ -78,9 +83,12 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
   // Parameters
-  double publish_rate = declare_parameter<double>("publish_rate", 30.0);
-  world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
-  bool enable_delay_compensation{declare_parameter("enable_delay_compensation", false)};
+  double publish_rate = declare_parameter<double>("publish_rate");
+  world_frame_id_ = declare_parameter<std::string>("world_frame_id");
+  bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
+
+  // Debug publishers
+  debugger_ = std::make_unique<TrackerDebugger>(*this);
 
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
     this->get_node_base_interface(), this->get_node_timers_interface());
@@ -121,11 +129,14 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   data_association_ = std::make_unique<DataAssociation>(
     can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix, max_rad_matrix,
     min_iou_matrix);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void MultiObjectTracker::onMeasurement(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg)
 {
+  /* keep the latest input stamp and check transform*/
+  debugger_->startMeasurementTime(this->now(), rclcpp::Time(input_objects_msg->header.stamp));
   const auto self_transform = getTransformAnonymous(
     tf_buffer_, "base_link", world_frame_id_, input_objects_msg->header.stamp);
   if (!self_transform) {
@@ -139,7 +150,7 @@ void MultiObjectTracker::onMeasurement(
     return;
   }
   /* tracker prediction */
-  rclcpp::Time measurement_time = input_objects_msg->header.stamp;
+  const rclcpp::Time measurement_time = input_objects_msg->header.stamp;
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     (*itr)->predict(measurement_time);
   }
@@ -213,7 +224,7 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
 
 void MultiObjectTracker::onTimer()
 {
-  rclcpp::Time current_time = this->now();
+  const rclcpp::Time current_time = this->now();
   const auto self_transform =
     getTransformAnonymous(tf_buffer_, world_frame_id_, "base_link", current_time);
   if (!self_transform) {
@@ -256,10 +267,10 @@ void MultiObjectTracker::sanitizeTracker(
   /* delete collision tracker */
   for (auto itr1 = list_tracker.begin(); itr1 != list_tracker.end(); ++itr1) {
     autoware_auto_perception_msgs::msg::TrackedObject object1;
-    (*itr1)->getTrackedObject(time, object1);
+    if (!(*itr1)->getTrackedObject(time, object1)) continue;
     for (auto itr2 = std::next(itr1); itr2 != list_tracker.end(); ++itr2) {
       autoware_auto_perception_msgs::msg::TrackedObject object2;
-      (*itr2)->getTrackedObject(time, object2);
+      if (!(*itr2)->getTrackedObject(time, object2)) continue;
       const double distance = std::hypot(
         object1.kinematics.pose_with_covariance.pose.position.x -
           object2.kinematics.pose_with_covariance.pose.position.x,
@@ -332,20 +343,30 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     return;
   }
   // Create output msg
-  autoware_auto_perception_msgs::msg::TrackedObjects output_msg;
+  autoware_auto_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
   output_msg.header.stamp = time;
+  tentative_objects_msg.header = output_msg.header;
+
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    if (!shouldTrackerPublish(*itr)) {
+    if (!shouldTrackerPublish(*itr)) {  // for debug purpose
+      autoware_auto_perception_msgs::msg::TrackedObject object;
+      if (!(*itr)->getTrackedObject(time, object)) continue;
+      tentative_objects_msg.objects.push_back(object);
       continue;
     }
     autoware_auto_perception_msgs::msg::TrackedObject object;
-    (*itr)->getTrackedObject(time, object);
+    if (!(*itr)->getTrackedObject(time, object)) continue;
     output_msg.objects.push_back(object);
   }
 
   // Publish
   tracked_objects_pub_->publish(output_msg);
+  published_time_publisher_->publish_if_subscribed(tracked_objects_pub_, output_msg.header.stamp);
+
+  // Debugger Publish if enabled
+  debugger_->endPublishTime(this->now(), time);
+  debugger_->publishTentativeObjects(tentative_objects_msg);
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)

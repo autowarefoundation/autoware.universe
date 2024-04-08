@@ -35,14 +35,17 @@ class DebugValues
 public:
   enum class TYPE {
     CALCULATION_TIME = 0,
-    CALCULATION_TIME_COLLISION_CHECK = 1,
-    LATERAL_DIST = 2,
-    LONGITUDINAL_DIST_OBSTACLE = 3,
-    LONGITUDINAL_DIST_COLLISION = 4,
-    COLLISION_POS_FROM_EGO_FRONT = 5,
-    STOP_DISTANCE = 6,
-    NUM_OBSTACLES = 7,
-    LATERAL_PASS_DIST = 8,
+    CALCULATION_TIME_PATH_PROCESSING = 1,
+    CALCULATION_TIME_OBSTACLE_CREATION = 2,
+    CALCULATION_TIME_COLLISION_CHECK = 3,
+    CALCULATION_TIME_PATH_PLANNING = 4,
+    LATERAL_DIST = 5,
+    LONGITUDINAL_DIST_OBSTACLE = 6,
+    LONGITUDINAL_DIST_COLLISION = 7,
+    COLLISION_POS_FROM_EGO_FRONT = 8,
+    STOP_DISTANCE = 9,
+    NUM_OBSTACLES = 10,
+    LATERAL_PASS_DIST = 11,
     SIZE,  // this is the number of enum elements
   };
 
@@ -106,6 +109,7 @@ public:
   void pushPredictedVehiclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushPredictedObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
+  void pushEgoCutLine(const std::vector<geometry_msgs::msg::Point> & line);
   void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushMandatoryDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushTravelTimeTexts(
@@ -131,6 +135,7 @@ private:
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_debug_pointcloud_;
   std::vector<geometry_msgs::msg::Point> collision_points_;
   std::vector<geometry_msgs::msg::Point> nearest_collision_point_;
+  std::vector<geometry_msgs::msg::Point> ego_cut_line_;
   std::vector<geometry_msgs::msg::Pose> stop_pose_;
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_vehicle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_obstacle_polygons_;

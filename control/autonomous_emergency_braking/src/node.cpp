@@ -21,6 +21,7 @@
 
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
+#include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
 #include <tf2/utils.h>
 
@@ -125,8 +126,12 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
 
   // parameter
+  publish_debug_pointcloud_ = declare_parameter<bool>("publish_debug_pointcloud");
   use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
   use_imu_path_ = declare_parameter<bool>("use_imu_path");
+  detection_range_min_height_ = declare_parameter<double>("detection_range_min_height");
+  detection_range_max_height_margin_ =
+    declare_parameter<double>("detection_range_max_height_margin");
   voxel_grid_x_ = declare_parameter<double>("voxel_grid_x");
   voxel_grid_y_ = declare_parameter<double>("voxel_grid_y");
   voxel_grid_z_ = declare_parameter<double>("voxel_grid_z");
@@ -136,8 +141,10 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   t_response_ = declare_parameter<double>("t_response");
   a_ego_min_ = declare_parameter<double>("a_ego_min");
   a_obj_min_ = declare_parameter<double>("a_obj_min");
-  prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
-  prediction_time_interval_ = declare_parameter<double>("prediction_time_interval");
+  imu_prediction_time_horizon_ = declare_parameter<double>("imu_prediction_time_horizon");
+  imu_prediction_time_interval_ = declare_parameter<double>("imu_prediction_time_interval");
+  mpc_prediction_time_horizon_ = declare_parameter<double>("mpc_prediction_time_horizon");
+  mpc_prediction_time_interval_ = declare_parameter<double>("mpc_prediction_time_interval");
 
   const auto collision_keeping_sec = declare_parameter<double>("collision_keeping_sec");
   collision_data_keeper_.setTimeout(collision_keeping_sec);
@@ -218,16 +225,28 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
     pcl::fromROSMsg(transformed_points, *pointcloud_ptr);
   }
 
+  // apply z-axis filter for removing False Positive points
+  PointCloud::Ptr height_filtered_pointcloud_ptr(new PointCloud);
+  pcl::PassThrough<pcl::PointXYZ> height_filter;
+  height_filter.setInputCloud(pointcloud_ptr);
+  height_filter.setFilterFieldName("z");
+  height_filter.setFilterLimits(
+    detection_range_min_height_,
+    vehicle_info_.vehicle_height_m + detection_range_max_height_margin_);
+  height_filter.filter(*height_filtered_pointcloud_ptr);
+
   pcl::VoxelGrid<pcl::PointXYZ> filter;
   PointCloud::Ptr no_height_filtered_pointcloud_ptr(new PointCloud);
-  filter.setInputCloud(pointcloud_ptr);
+  filter.setInputCloud(height_filtered_pointcloud_ptr);
   filter.setLeafSize(voxel_grid_x_, voxel_grid_y_, voxel_grid_z_);
   filter.filter(*no_height_filtered_pointcloud_ptr);
 
   obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
   pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
-  pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
+  if (publish_debug_pointcloud_) {
+    pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
+  }
 }
 
 bool AEB::isDataReady()
@@ -304,7 +323,6 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   // step3. create ego path based on sensor data
   bool has_collision_ego = false;
   if (use_imu_path_) {
-    Path ego_path;
     std::vector<Polygon2d> ego_polys;
     const double current_w = angular_velocity_ptr_->z;
     constexpr double color_r = 0.0 / 256.0;
@@ -312,8 +330,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_b = 205.0 / 256.0;
     constexpr double color_a = 0.999;
     const auto current_time = get_clock()->now();
-    generateEgoPath(current_v, current_w, ego_path, ego_polys);
-
+    const auto ego_path = generateEgoPath(current_v, current_w, ego_polys);
     std::vector<ObjectData> objects;
     createObjectData(ego_path, ego_polys, current_time, objects);
     has_collision_ego = hasCollision(current_v, ego_path, objects);
@@ -327,7 +344,6 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   // step4. transform predicted trajectory from control module
   bool has_collision_predicted = false;
   if (use_predicted_trajectory_) {
-    Path predicted_path;
     std::vector<Polygon2d> predicted_polys;
     const auto predicted_traj_ptr = predicted_traj_ptr_;
     constexpr double color_r = 0.0;
@@ -335,15 +351,18 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_b = 0.0;
     constexpr double color_a = 0.999;
     const auto current_time = predicted_traj_ptr->header.stamp;
-    generateEgoPath(*predicted_traj_ptr, predicted_path, predicted_polys);
-    std::vector<ObjectData> objects;
-    createObjectData(predicted_path, predicted_polys, current_time, objects);
-    has_collision_predicted = hasCollision(current_v, predicted_path, objects);
+    const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr, predicted_polys);
+    if (predicted_path_opt) {
+      const auto & predicted_path = predicted_path_opt.value();
+      std::vector<ObjectData> objects;
+      createObjectData(predicted_path, predicted_polys, current_time, objects);
+      has_collision_predicted = hasCollision(current_v, predicted_path, objects);
 
-    std::string ns = "predicted";
-    addMarker(
-      current_time, predicted_path, predicted_polys, objects, color_r, color_g, color_b, color_a,
-      ns, debug_markers);
+      std::string ns = "predicted";
+      addMarker(
+        current_time, predicted_path, predicted_polys, objects, color_r, color_g, color_b, color_a,
+        ns, debug_markers);
+    }
   }
 
   return has_collision_ego || has_collision_predicted;
@@ -353,31 +372,36 @@ bool AEB::hasCollision(
   const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects)
 {
   // calculate RSS
-  const auto current_p = tier4_autoware_utils::createPoint(0.0, 0.0, 0.0);
+  const auto current_p = tier4_autoware_utils::createPoint(
+    ego_path[0].position.x, ego_path[0].position.y, ego_path[0].position.z);
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
     const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
                             obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
-    const double dist_ego_to_object =
-      motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
-      vehicle_info_.max_longitudinal_offset_m;
-    if (dist_ego_to_object < rss_dist) {
-      // collision happens
-      ObjectData collision_data = obj;
-      collision_data.rss = rss_dist;
-      collision_data.distance_to_object = dist_ego_to_object;
-      collision_data_keeper_.update(collision_data);
-      return true;
+
+    // check the object is front the ego or not
+    if ((obj.position.x - ego_path[0].position.x) > 0) {
+      const double dist_ego_to_object =
+        motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
+        vehicle_info_.max_longitudinal_offset_m;
+      if (dist_ego_to_object < rss_dist) {
+        // collision happens
+        ObjectData collision_data = obj;
+        collision_data.rss = rss_dist;
+        collision_data.distance_to_object = dist_ego_to_object;
+        collision_data_keeper_.update(collision_data);
+        return true;
+      }
     }
   }
-
   return false;
 }
 
-void AEB::generateEgoPath(
-  const double curr_v, const double curr_w, Path & path, std::vector<Polygon2d> & polygons)
+Path AEB::generateEgoPath(
+  const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons)
 {
+  Path path;
   double curr_x = 0.0;
   double curr_y = 0.0;
   double curr_yaw = 0.0;
@@ -388,12 +412,12 @@ void AEB::generateEgoPath(
 
   if (curr_v < 0.1) {
     // if current velocity is too small, assume it stops at the same point
-    return;
+    return path;
   }
 
   constexpr double epsilon = 1e-6;
-  const double & dt = prediction_time_interval_;
-  const double & horizon = prediction_time_horizon_;
+  const double & dt = imu_prediction_time_interval_;
+  const double & horizon = imu_prediction_time_horizon_;
   for (double t = 0.0; t < horizon + epsilon; t += dt) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
@@ -426,12 +450,16 @@ void AEB::generateEgoPath(
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
   }
+  return path;
 }
 
-void AEB::generateEgoPath(
-  const Trajectory & predicted_traj, Path & path,
-  std::vector<tier4_autoware_utils::Polygon2d> & polygons)
+std::optional<Path> AEB::generateEgoPath(
+  const Trajectory & predicted_traj, std::vector<tier4_autoware_utils::Polygon2d> & polygons)
 {
+  if (predicted_traj.points.empty()) {
+    return std::nullopt;
+  }
+
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -439,22 +467,27 @@ void AEB::generateEgoPath(
       rclcpp::Duration::from_seconds(0.5));
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
-    return;
+    return std::nullopt;
   }
 
   // create path
+  Path path;
   path.resize(predicted_traj.points.size());
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
     geometry_msgs::msg::Pose map_pose;
     tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped);
     path.at(i) = map_pose;
-  }
 
+    if (i * mpc_prediction_time_interval_ > mpc_prediction_time_horizon_) {
+      break;
+    }
+  }
   // create polygon
   polygons.resize(path.size());
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
   }
+  return path;
 }
 
 void AEB::createObjectData(

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "detected_object_filter/object_lanelet_filter.hpp"
+#include "detected_object_validation/detected_object_filter/object_lanelet_filter.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -52,6 +52,10 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
     "input/object", rclcpp::QoS{1}, std::bind(&ObjectLaneletFilterNode::objectCallback, this, _1));
   object_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "output/object", rclcpp::QoS{1});
+
+  debug_publisher_ =
+    std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "object_lanelet_filter");
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void ObjectLaneletFilterNode::mapCallback(
@@ -62,6 +66,7 @@ void ObjectLaneletFilterNode::mapCallback(
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
   const lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
+  shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
 }
 
 void ObjectLaneletFilterNode::objectCallback(
@@ -87,7 +92,10 @@ void ObjectLaneletFilterNode::objectCallback(
   // calculate convex hull
   const auto convex_hull = getConvexHull(transformed_objects);
   // get intersected lanelets
-  lanelet::ConstLanelets intersected_lanelets = getIntersectedLanelets(convex_hull, road_lanelets_);
+  lanelet::ConstLanelets intersected_road_lanelets =
+    getIntersectedLanelets(convex_hull, road_lanelets_);
+  lanelet::ConstLanelets intersected_shoulder_lanelets =
+    getIntersectedLanelets(convex_hull, shoulder_lanelets_);
 
   int index = 0;
   for (const auto & object : transformed_objects.objects) {
@@ -101,7 +109,9 @@ void ObjectLaneletFilterNode::objectCallback(
         polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
       }
       polygon.outer().push_back(polygon.outer().front());
-      if (isPolygonOverlapLanelets(polygon, intersected_lanelets)) {
+      if (isPolygonOverlapLanelets(polygon, intersected_road_lanelets)) {
+        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
+      } else if (isPolygonOverlapLanelets(polygon, intersected_shoulder_lanelets)) {
         output_object_msg.objects.emplace_back(input_msg->objects.at(index));
       }
     } else {
@@ -110,6 +120,16 @@ void ObjectLaneletFilterNode::objectCallback(
     ++index;
   }
   object_pub_->publish(output_object_msg);
+  published_time_publisher_->publish_if_subscribed(object_pub_, output_object_msg.header.stamp);
+
+  // Publish debug info
+  const double pipeline_latency =
+    std::chrono::duration<double, std::milli>(
+      std::chrono::nanoseconds(
+        (this->get_clock()->now() - output_object_msg.header.stamp).nanoseconds()))
+      .count();
+  debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    "debug/pipeline_latency_ms", pipeline_latency);
 }
 
 geometry_msgs::msg::Polygon ObjectLaneletFilterNode::setFootprint(
@@ -159,6 +179,9 @@ lanelet::ConstLanelets ObjectLaneletFilterNode::getIntersectedLanelets(
   const LinearRing2d & convex_hull, const lanelet::ConstLanelets & road_lanelets)
 {
   lanelet::ConstLanelets intersected_lanelets;
+
+  // WARNING: This implementation currently iterate all lanelets, which could degrade performance
+  // when handling large sized map.
   for (const auto & road_lanelet : road_lanelets) {
     if (boost::geometry::intersects(convex_hull, road_lanelet.polygon2d().basicPolygon())) {
       intersected_lanelets.emplace_back(road_lanelet);

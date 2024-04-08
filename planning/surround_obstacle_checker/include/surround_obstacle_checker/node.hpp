@@ -16,6 +16,7 @@
 #define SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 
 #include "surround_obstacle_checker/debug_marker.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -30,13 +31,12 @@
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <boost/optional/optional.hpp>
-
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -92,13 +92,13 @@ private:
 
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
-  boost::optional<Obstacle> getNearestObstacle() const;
+  std::optional<Obstacle> getNearestObstacle() const;
 
-  boost::optional<Obstacle> getNearestObstacleByPointCloud() const;
+  std::optional<Obstacle> getNearestObstacleByPointCloud() const;
 
-  boost::optional<Obstacle> getNearestObstacleByDynamicObject() const;
+  std::optional<Obstacle> getNearestObstacleByDynamicObject() const;
 
-  boost::optional<geometry_msgs::msg::TransformStamped> getTransform(
+  std::optional<geometry_msgs::msg::TransformStamped> getTransform(
     const std::string & source, const std::string & target, const rclcpp::Time & stamp,
     double duration_sec) const;
 
@@ -138,6 +138,12 @@ private:
   // State Machine
   State state_ = State::PASS;
   std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  bool use_dynamic_object_;
+
+  std::unordered_map<std::string, int> label_map_;
 };
 }  // namespace surround_obstacle_checker
 

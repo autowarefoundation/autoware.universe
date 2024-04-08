@@ -77,6 +77,10 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);
   filter_activated_marker_pub_ =
     create_publisher<MarkerArray>("~/is_filter_activated/marker", durable_qos);
+  filter_activated_marker_raw_pub_ =
+    create_publisher<MarkerArray>("~/is_filter_activated/marker_raw", durable_qos);
+  filter_activated_flag_pub_ =
+    create_publisher<BoolStamped>("~/is_filter_activated/flag", durable_qos);
 
   // Subscriber
   external_emergency_stop_heartbeat_sub_ = create_subscription<Heartbeat>(
@@ -160,6 +164,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     declare_parameter<double>("moderate_stop_service_acceleration");
   stop_check_duration_ = declare_parameter<double>("stop_check_duration");
   enable_cmd_limit_filter_ = declare_parameter<bool>("enable_cmd_limit_filter");
+  filter_activated_count_threshold_ = declare_parameter<int>("filter_activated_count_threshold");
+  filter_activated_velocity_threshold_ =
+    declare_parameter<double>("filter_activated_velocity_threshold");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -233,6 +240,10 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&VehicleCmdGate::onTimer, this));
   timer_pub_status_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&VehicleCmdGate::publishStatus, this));
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 bool VehicleCmdGate::isHeartbeatTimeout(
@@ -421,13 +432,17 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Check engage
   if (!is_engaged_) {
-    filtered_commands.control = createStopControlCmd();
+    filtered_commands.control.longitudinal = createLongitudinalStopControlCmd();
   }
 
   // Check pause. Place this check after all other checks as it needs the final output.
   adapi_pause_->update(filtered_commands.control);
   if (adapi_pause_->is_paused()) {
-    filtered_commands.control = createStopControlCmd();
+    if (is_engaged_) {
+      filtered_commands.control.longitudinal = createLongitudinalStopControlCmd();
+    } else {
+      filtered_commands.control = createStopControlCmd();
+    }
   }
 
   // Check if command filtering option is enable
@@ -443,6 +458,8 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   // Publish commands
   vehicle_cmd_emergency_pub_->publish(vehicle_cmd_emergency);
   control_cmd_pub_->publish(filtered_commands.control);
+  published_time_publisher_->publish_if_subscribed(
+    control_cmd_pub_, filtered_commands.control.stamp);
   adapi_pause_->publish();
   moderate_stop_interface_->publish();
 
@@ -553,9 +570,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   // set prev value for both to keep consistency over switching:
   // Actual steer, vel, acc should be considered in manual mode to prevent sudden motion when
   // switching from manual to autonomous
-  const auto in_autonomous =
-    (mode.mode == OperationModeState::AUTONOMOUS && mode.is_autoware_control_enabled);
-  auto prev_values = in_autonomous ? out : current_status_cmd;
+  auto prev_values = mode.is_autoware_control_enabled ? out : current_status_cmd;
 
   if (ego_is_stopped) {
     prev_values.longitudinal = out.longitudinal;
@@ -572,7 +587,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
 
   is_filter_activated.stamp = now();
   is_filter_activated_pub_->publish(is_filter_activated);
-  filter_activated_marker_pub_->publish(createMarkerArray(is_filter_activated));
+  publishMarkers(is_filter_activated);
 
   return out;
 }
@@ -588,6 +603,17 @@ AckermannControlCommand VehicleCmdGate::createStopControlCmd() const
   cmd.lateral.steering_tire_rotation_rate = 0.0;
   cmd.longitudinal.speed = 0.0;
   cmd.longitudinal.acceleration = stop_hold_acceleration_;
+
+  return cmd;
+}
+
+LongitudinalCommand VehicleCmdGate::createLongitudinalStopControlCmd() const
+{
+  LongitudinalCommand cmd;
+  const auto t = this->now();
+  cmd.stamp = t;
+  cmd.speed = 0.0;
+  cmd.acceleration = stop_hold_acceleration_;
 
   return cmd;
 }
@@ -787,6 +813,28 @@ MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_a
   return msg;
 }
 
+void VehicleCmdGate::publishMarkers(const IsFilterActivated & filter_activated)
+{
+  BoolStamped filter_activated_flag;
+  if (filter_activated.is_activated) {
+    filter_activated_count_++;
+  } else {
+    filter_activated_count_ = 0;
+  }
+  if (
+    filter_activated_count_ >= filter_activated_count_threshold_ &&
+    std::fabs(current_kinematics_.twist.twist.linear.x) >= filter_activated_velocity_threshold_ &&
+    current_operation_mode_.mode == OperationModeState::AUTONOMOUS) {
+    filter_activated_marker_pub_->publish(createMarkerArray(filter_activated));
+    filter_activated_flag.data = true;
+  } else {
+    filter_activated_flag.data = false;
+  }
+
+  filter_activated_flag.stamp = now();
+  filter_activated_flag_pub_->publish(filter_activated_flag);
+  filter_activated_marker_raw_pub_->publish(createMarkerArray(filter_activated));
+}
 }  // namespace vehicle_cmd_gate
 
 #include <rclcpp_components/register_node_macro.hpp>

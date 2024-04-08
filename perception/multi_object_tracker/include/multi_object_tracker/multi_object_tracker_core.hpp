@@ -20,6 +20,7 @@
 #define MULTI_OBJECT_TRACKER__MULTI_OBJECT_TRACKER_CORE_HPP_
 
 #include "multi_object_tracker/data_association/data_association.hpp"
+#include "multi_object_tracker/debugger.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -59,10 +60,15 @@ private:
     detected_object_sub_;
   rclcpp::TimerBase::SharedPtr publish_timer_;  // publish timer
 
+  // debugger class
+  std::unique_ptr<TrackerDebugger> debugger_;
+
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
   std::map<std::uint8_t, std::string> tracker_map_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   void onMeasurement(
     const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);

@@ -8,6 +8,10 @@
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <maintainer email="masahiro.sakamoto@tier4.jp">Masahiro Sakamoto</maintainer>
+  <maintainer email="anh.nguyen.2@tier4.jp">NGUYEN Viet Anh</maintainer>
+  <maintainer email="taiki.yamada@tier4.jp">Taiki Yamada</maintainer>
+  <maintainer email="shintaro.sakoda@tier4.jp">Shintaro Sakoda</maintainer>
+  <maintainer email="ryu.yamamoto@tier4.jp">Ryu Yamamoto</maintainer>
   <license>Apache License 2.0</license>
   <author email="yamato.ando@tier4.jp">Yamato Ando</author>
 
@@ -19,7 +23,9 @@
   <depend>diagnostic_updater</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
+  <depend>libgoogle-glog-dev</depend>
   <depend>libpcl-all-dev</depend>
+  <depend>localization_util</depend>
   <depend>nav_msgs</depend>
   <depend>ndt_omp</depend>
   <depend>pcl_conversions</depend>
@@ -35,10 +41,12 @@
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_localization_msgs</depend>
+  <depend>tree_structured_parzen_estimator</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_cmake_cppcheck</test_depend>
   <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ros_testing</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

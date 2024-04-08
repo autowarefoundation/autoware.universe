@@ -18,8 +18,10 @@
 #include "obstacle_velocity_limiter/obstacles.hpp"
 #include "obstacle_velocity_limiter/parameters.hpp"
 #include "obstacle_velocity_limiter/types.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 
@@ -28,7 +30,7 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <std_msgs/msg/int64.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/optional.hpp>
@@ -55,7 +57,7 @@ private:
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     pub_debug_markers_;  //!< @brief publisher for debug markers
-  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr
     pub_runtime_;  //!< @brief publisher for callback runtime
   rclcpp::Subscription<Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscriber for reference trajectory
@@ -101,6 +103,10 @@ private:
   /// @brief validate the inputs of the node
   /// @return true if the inputs are valid
   bool validInputs();
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace obstacle_velocity_limiter
 

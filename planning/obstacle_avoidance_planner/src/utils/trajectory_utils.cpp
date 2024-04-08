@@ -15,7 +15,7 @@
 #include "obstacle_avoidance_planner/utils/trajectory_utils.hpp"
 
 #include "motion_utils/resample/resample.hpp"
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/utils/geometry_utils.hpp"
@@ -79,6 +79,24 @@ std::vector<ReferencePoint> convertToReferencePoints(
   return ref_points;
 }
 
+std::vector<ReferencePoint> sanitizePoints(const std::vector<ReferencePoint> & points)
+{
+  std::vector<ReferencePoint> output;
+  for (size_t i = 0; i < points.size(); i++) {
+    if (i > 0) {
+      const auto & current_pos = points.at(i).pose.position;
+      const auto & prev_pos = points.at(i - 1).pose.position;
+      if (
+        std::fabs(current_pos.x - prev_pos.x) < 1e-6 &&
+        std::fabs(current_pos.y - prev_pos.y) < 1e-6) {
+        continue;
+      }
+    }
+    output.push_back(points.at(i));
+  }
+  return output;
+}
+
 void compensateLastPose(
   const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
   const double delta_dist_threshold, const double delta_yaw_threshold)
@@ -115,15 +133,6 @@ geometry_msgs::msg::Point getNearestPosition(
   }
 
   return points.back().pose.position;
-}
-
-Trajectory createTrajectory(
-  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points)
-{
-  auto traj = motion_utils::convertToTrajectory(traj_points);
-  traj.header = header;
-
-  return traj;
 }
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(

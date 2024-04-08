@@ -21,6 +21,9 @@
 #include "path_smoother/replan_checker.hpp"
 #include "path_smoother/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -35,14 +38,18 @@ class ElasticBandSmoother : public rclcpp::Node
 public:
   explicit ElasticBandSmoother(const rclcpp::NodeOptions & node_options);
 
-protected:
+  // NOTE: This is for the static_centerline_optimizer package which utilizes the following
+  // instance.
+  std::shared_ptr<EBPathSmoother> getElasticBandSmoother() const { return eb_path_smoother_ptr_; }
+
+private:
   class DrivingDirectionChecker
   {
   public:
     bool isDrivingForward(const std::vector<PathPoint> & path_points)
     {
       const auto is_driving_forward = motion_utils::isDrivingForward(path_points);
-      is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+      is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
       return is_driving_forward_;
     }
 
@@ -81,7 +88,8 @@ protected:
 
   // debug publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;
-  rclcpp::Publisher<StringStamped>::SharedPtr debug_calculation_time_pub_;
+  rclcpp::Publisher<StringStamped>::SharedPtr debug_calculation_time_str_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_float_pub_;
 
   // parameter callback
   rcl_interfaces::msg::SetParametersResult onParam(
@@ -104,6 +112,10 @@ protected:
   std::vector<TrajectoryPoint> extendTrajectory(
     const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<TrajectoryPoint> & optimized_points) const;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace path_smoother
 

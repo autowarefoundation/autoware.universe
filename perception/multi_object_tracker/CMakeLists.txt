@@ -12,6 +12,7 @@ endif()
 ### Find Eigen Dependencies
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(glog REQUIRED)
 
 include_directories(
   SYSTEM
@@ -21,6 +22,14 @@ include_directories(
 # Generate exe file
 set(MULTI_OBJECT_TRACKER_SRC
   src/multi_object_tracker_core.cpp
+  src/debugger.cpp
+  src/data_association/data_association.cpp
+  src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
+  src/tracker/motion_model/motion_model_base.cpp
+  src/tracker/motion_model/bicycle_motion_model.cpp
+  # cspell: ignore ctrv
+  src/tracker/motion_model/ctrv_motion_model.cpp
+  src/tracker/motion_model/cv_motion_model.cpp
   src/tracker/model/tracker_base.cpp
   src/tracker/model/big_vehicle_tracker.cpp
   src/tracker/model/normal_vehicle_tracker.cpp
@@ -30,11 +39,6 @@ set(MULTI_OBJECT_TRACKER_SRC
   src/tracker/model/pedestrian_and_bicycle_tracker.cpp
   src/tracker/model/unknown_tracker.cpp
   src/tracker/model/pass_through_tracker.cpp
-  src/data_association/data_association.cpp
-)
-
-ament_auto_add_library(mu_successive_shortest_path SHARED
-  src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
 )
 
 ament_auto_add_library(multi_object_tracker_node SHARED
@@ -42,8 +46,8 @@ ament_auto_add_library(multi_object_tracker_node SHARED
 )
 
 target_link_libraries(multi_object_tracker_node
-  mu_successive_shortest_path
   Eigen3::Eigen
+  glog::glog
 )
 
 rclcpp_components_register_node(multi_object_tracker_node

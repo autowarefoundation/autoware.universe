@@ -43,18 +43,20 @@ These colors and shapes are assigned to the message as follows:
 
 ### Output
 
-| Name                       | Type                                             | Description         |
-| -------------------------- | ------------------------------------------------ | ------------------- |
-| `~/output/traffic_signals` | `tier4_perception_msgs::msg::TrafficSignalArray` | classified signals  |
-| `~/output/debug/image`     | `sensor_msgs::msg::Image`                        | image for debugging |
+| Name                       | Type                                            | Description         |
+| -------------------------- | ----------------------------------------------- | ------------------- |
+| `~/output/traffic_signals` | `tier4_perception_msgs::msg::TrafficLightArray` | classified signals  |
+| `~/output/debug/image`     | `sensor_msgs::msg::Image`                       | image for debugging |
 
 ## Parameters
 
 ### Node Parameters
 
-| Name              | Type | Description                                 |
-| ----------------- | ---- | ------------------------------------------- |
-| `classifier_type` | int  | if the value is `1`, cnn_classifier is used |
+| Name                  | Type  | Description                                                                                                                                                                                                                                                                                                                                                |
+| --------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `classifier_type`     | int   | if the value is `1`, cnn_classifier is used                                                                                                                                                                                                                                                                                                                |
+| `data_path`           | str   | packages data and artifacts directory path                                                                                                                                                                                                                                                                                                                 |
+| `backlight_threshold` | float | If the intensity get grater than this overwrite with UNKNOWN in corresponding RoI. Note that, if the value is much higher, the node only overwrites in the harsher backlight situations. Therefore, If you wouldn't like to use this feature set this value to `1.0`. The value can be `[0.0, 1.0]`. The confidence of overwritten signal is set to `0.0`. |
 
 ### Core Parameters
 
@@ -146,6 +148,8 @@ DATASET_ROOT
 ### Installation
 
 #### Prerequisites
+
+<!-- cspell:ignore Miniconda -->
 
 **Step 1.** Download and install Miniconda from the [official website](https://mmpretrain.readthedocs.io/en/latest/get_started.html).
 
@@ -294,7 +298,7 @@ python tools/train.py configs/mobilenet_v2/mobilenet-v2_8xb32_custom.py
 
 Training logs and weights will be saved in the `work_dirs/mobilenet-v2_8xb32_custom` folder.
 
-### Convert PyTorh model to ONNX model
+### Convert PyTorch model to ONNX model
 
 #### Install mmdeploy
 

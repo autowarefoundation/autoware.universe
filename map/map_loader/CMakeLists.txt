@@ -4,7 +4,7 @@ project(map_loader)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(PCL REQUIRED COMPONENTS io)
+find_package(PCL REQUIRED COMPONENTS common io filters)
 
 ament_auto_add_library(pointcloud_map_loader_node SHARED
   src/pointcloud_map_loader/pointcloud_map_loader_node.cpp
@@ -46,7 +46,7 @@ rclcpp_components_register_node(lanelet2_map_visualization_node
 )
 
 if(BUILD_TESTING)
-  add_ros_test(
+  add_launch_test(
     test/lanelet2_map_loader_launch.test.py
     TIMEOUT "30"
   )

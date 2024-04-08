@@ -71,6 +71,7 @@
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
@@ -88,6 +89,7 @@ namespace pointcloud_preprocessor
 {
 using autoware_point_types::PointXYZI;
 using point_cloud_msg_wrapper::PointCloud2Modifier;
+
 /** \brief @b PointCloudConcatenateDataSynchronizerComponent is a special form of data
  * synchronizer: it listens for a set of input PointCloud messages on the same topic,
  * checks their timestamps, and concatenates their fields together into a single
@@ -124,6 +126,8 @@ private:
   double timeout_sec_ = 0.1;
 
   bool publish_synchronized_pointcloud_;
+  bool keep_input_frame_in_synchronized_pointcloud_;
+  std::string synchronized_pointcloud_postfix_;
 
   std::set<std::string> not_subscribed_topic_names_;
 
@@ -131,9 +135,12 @@ private:
   std::vector<rclcpp::Subscription<PointCloud2>::SharedPtr> filters_;
 
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr sub_twist_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   diagnostic_updater::Updater updater_{this};
+
+  const std::string input_twist_topic_type_;
 
   /** \brief Output TF frame the concatenated points should be transformed to. */
   std::string output_frame_;
@@ -170,9 +177,12 @@ private:
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);
   void twist_callback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input);
+  void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);
   void timer_callback();
 
   void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  std::string replaceSyncTopicNamePostfix(
+    const std::string & original_topic_name, const std::string & postfix);
 
   /** \brief processing time publisher. **/
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;

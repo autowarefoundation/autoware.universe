@@ -50,13 +50,17 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns + ".objects.use_predicted_paths");
   pp.objects_min_confidence =
     getOrDeclareParameter<double>(node, ns + ".objects.predicted_path_min_confidence");
+  pp.objects_dist_buffer = getOrDeclareParameter<double>(node, ns + ".objects.distance_buffer");
+  pp.objects_cut_predicted_paths_beyond_red_lights =
+    getOrDeclareParameter<bool>(node, ns + ".objects.cut_predicted_paths_beyond_red_lights");
 
   pp.overlap_min_dist = getOrDeclareParameter<double>(node, ns + ".overlap.minimum_distance");
   pp.overlap_extra_length = getOrDeclareParameter<double>(node, ns + ".overlap.extra_length");
 
   pp.skip_if_over_max_decel =
     getOrDeclareParameter<bool>(node, ns + ".action.skip_if_over_max_decel");
-  pp.strict = getOrDeclareParameter<bool>(node, ns + ".action.strict");
+  pp.precision = getOrDeclareParameter<double>(node, ns + ".action.precision");
+  pp.min_decision_duration = getOrDeclareParameter<double>(node, ns + ".action.min_duration");
   pp.dist_buffer = getOrDeclareParameter<double>(node, ns + ".action.distance_buffer");
   pp.slow_velocity = getOrDeclareParameter<double>(node, ns + ".action.slowdown.velocity");
   pp.slow_dist_threshold =

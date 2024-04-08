@@ -22,6 +22,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/utils/utils.cpp
   src/roi_cluster_fusion/node.cpp
   src/roi_detected_object_fusion/node.cpp
+  src/segmentation_pointcloud_fusion/node.cpp
   src/roi_pointcloud_fusion/node.cpp
 )
 
@@ -38,6 +39,11 @@ rclcpp_components_register_node(${PROJECT_NAME}
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "image_projection_based_fusion::RoiClusterFusionNode"
   EXECUTABLE roi_cluster_fusion_node
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "image_projection_based_fusion::SegmentPointCloudFusionNode"
+  EXECUTABLE segmentation_pointcloud_fusion_node
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
@@ -146,6 +152,10 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE pointpainting_fusion_node
   )
 
+  install(
+    TARGETS pointpainting_cuda_lib
+    DESTINATION lib
+  )
 else()
   message("Skipping build of some nodes due to missing dependencies")
 endif()

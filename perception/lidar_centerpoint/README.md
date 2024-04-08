@@ -45,6 +45,15 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 | `nms_iou_threshold`             | double       | -             | IoU threshold for the IoU-based Non Maximum Suppression       |
 | `build_only`                    | bool         | `false`       | shutdown the node after TensorRT engine file is built         |
 
+### The `build_only` option
+
+The `lidar_centerpoint` node has `build_only` option to build the TensorRT engine file from the ONNX file.
+Although it is preferred to move all the ROS parameters in `.param.yaml` file in Autoware Universe, the `build_only` option is not moved to the `.param.yaml` file for now, because it may be used as a flag to execute the build as a pre-task. You can execute with the following command:
+
+```bash
+ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml model_name:=centerpoint_tiny model_path:=/home/autoware/autoware_data/lidar_centerpoint model_param_path:=$(ros2 pkg prefix lidar_centerpoint --share)/config/centerpoint_tiny.param.yaml build_only:=true
+```
+
 ## Assumptions / Known limits
 
 - The `object.existence_probability` is stored the value of classification confidence of a DNN, not probability.
@@ -58,18 +67,6 @@ You can download the onnx format of trained models by clicking on the links belo
 
 `Centerpoint` was trained in `nuScenes` (~28k lidar frames) [8] and TIER IV's internal database (~11k lidar frames) for 60 epochs.
 `Centerpoint tiny` was trained in `Argoverse 2` (~110k lidar frames) [9] and TIER IV's internal database (~11k lidar frames) for 20 epochs.
-
-## Standalone inference and visualization
-
-In addition to its use as a standard ROS node, `lidar_centerpoint` can also be used to perform inferences in an isolated manner.
-To do so, execute the following launcher, where `pcd_path` is the path of the pointcloud to be used for inference.
-
-```bash
-ros2 launch lidar_centerpoint single_inference_lidar_centerpoint.launch.xml pcd_path:=test_pointcloud.pcd detections_path:=test_detections.ply
-```
-
-`lidar_centerpoint` generates a `ply` file in the provided `detections_path`, which contains the detections as triangle meshes.
-These detections can be visualized by most 3D tools, but we also integrate a visualization UI using `Open3D` which is launched alongside `lidar_centerpoint`.
 
 ### Changelog
 

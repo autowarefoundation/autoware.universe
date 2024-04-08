@@ -61,7 +61,8 @@
 #include <utility>
 #include <vector>
 
-#define POSTFIX_NAME "_synchronized"
+#define DEFAULT_SYNC_TOPIC_POSTFIX \
+  "_synchronized"  // default postfix name for synchronized pointcloud
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -69,7 +70,8 @@ namespace pointcloud_preprocessor
 {
 PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchronizerComponent(
   const rclcpp::NodeOptions & node_options)
-: Node("point_cloud_concatenator_component", node_options)
+: Node("point_cloud_concatenator_component", node_options),
+  input_twist_topic_type_(declare_parameter<std::string>("input_twist_topic_type", "twist"))
 {
   // initialize debug tool
   {
@@ -110,7 +112,11 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
 
     // Check if publish synchronized pointcloud
-    publish_synchronized_pointcloud_ = declare_parameter("publish_synchronized_pointcloud", false);
+    publish_synchronized_pointcloud_ = declare_parameter("publish_synchronized_pointcloud", true);
+    keep_input_frame_in_synchronized_pointcloud_ =
+      declare_parameter("keep_input_frame_in_synchronized_pointcloud", true);
+    synchronized_pointcloud_postfix_ =
+      declare_parameter("synchronized_pointcloud_postfix", "pointcloud");
   }
 
   // Initialize not_subscribed_topic_names_
@@ -141,10 +147,10 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Subscribers
   {
-    RCLCPP_INFO_STREAM(
+    RCLCPP_DEBUG_STREAM(
       get_logger(), "Subscribing to " << input_topics_.size() << " user given topics as inputs:");
     for (auto & input_topic : input_topics_) {
-      RCLCPP_INFO_STREAM(get_logger(), " - " << input_topic);
+      RCLCPP_DEBUG_STREAM(get_logger(), " - " << input_topic);
     }
 
     // Subscribe to the filters
@@ -164,16 +170,30 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
       filters_[d] = this->create_subscription<sensor_msgs::msg::PointCloud2>(
         input_topics_[d], rclcpp::SensorDataQoS().keep_last(maximum_queue_size_), cb);
     }
-    auto twist_cb = std::bind(
-      &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this, std::placeholders::_1);
-    sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-      "~/input/twist", rclcpp::QoS{100}, twist_cb);
+
+    if (input_twist_topic_type_ == "twist") {
+      auto twist_cb = std::bind(
+        &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this,
+        std::placeholders::_1);
+      sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
+        "~/input/twist", rclcpp::QoS{100}, twist_cb);
+    } else if (input_twist_topic_type_ == "odom") {
+      auto odom_cb = std::bind(
+        &PointCloudConcatenateDataSynchronizerComponent::odom_callback, this,
+        std::placeholders::_1);
+      sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+        "~/input/odom", rclcpp::QoS{100}, odom_cb);
+    } else {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "input_twist_topic_type is invalid: " << input_twist_topic_type_);
+      throw std::runtime_error("input_twist_topic_type is invalid: " + input_twist_topic_type_);
+    }
   }
 
-  // Transformed Raw PointCloud2 Publisher
-  {
+  // Transformed Raw PointCloud2 Publisher to publish the transformed pointcloud
+  if (publish_synchronized_pointcloud_) {
     for (auto & topic : input_topics_) {
-      std::string new_topic = topic + POSTFIX_NAME;
+      std::string new_topic = replaceSyncTopicNamePostfix(topic, synchronized_pointcloud_postfix_);
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
       transformed_raw_pc_publisher_map_.insert({topic, publisher});
@@ -216,6 +236,35 @@ void PointCloudConcatenateDataSynchronizerComponent::transformPointCloud(
   }
 }
 
+std::string PointCloudConcatenateDataSynchronizerComponent::replaceSyncTopicNamePostfix(
+  const std::string & original_topic_name, const std::string & postfix)
+{
+  std::string replaced_topic_name;
+  // separate the topic name by '/' and replace the last element with the new postfix
+  size_t pos = original_topic_name.find_last_of("/");
+  if (pos == std::string::npos) {
+    // not found '/': this is not a namespaced topic
+    RCLCPP_WARN_STREAM(
+      get_logger(),
+      "The topic name is not namespaced. The postfix will be added to the end of the topic name.");
+    return original_topic_name + postfix;
+  } else {
+    // replace the last element with the new postfix
+    replaced_topic_name = original_topic_name.substr(0, pos) + "/" + postfix;
+  }
+
+  // if topic name is the same with original topic name, add postfix to the end of the topic name
+  if (replaced_topic_name == original_topic_name) {
+    RCLCPP_WARN_STREAM(
+      get_logger(), "The topic name "
+                      << original_topic_name
+                      << " have the same postfix with synchronized pointcloud. We use the postfix "
+                         "to the end of the topic name.");
+    replaced_topic_name = original_topic_name + DEFAULT_SYNC_TOPIC_POSTFIX;
+  }
+  return replaced_topic_name;
+}
+
 /**
  * @brief compute transform to adjust for old timestamp
  *
@@ -227,8 +276,19 @@ Eigen::Matrix4f
 PointCloudConcatenateDataSynchronizerComponent::computeTransformToAdjustForOldTimestamp(
   const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp)
 {
-  // return identity if no twist is available or old_stamp is newer than new_stamp
-  if (twist_ptr_queue_.empty() || old_stamp > new_stamp) {
+  // return identity if no twist is available
+  if (twist_ptr_queue_.empty()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(10000).count(),
+      "No twist is available. Please confirm twist topic and timestamp");
+    return Eigen::Matrix4f::Identity();
+  }
+
+  // return identity if old_stamp is newer than new_stamp
+  if (old_stamp > new_stamp) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(10000).count(),
+      "old_stamp is newer than new_stamp,");
     return Eigen::Matrix4f::Identity();
   }
 
@@ -292,6 +352,9 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   for (const auto & e : cloud_stdmap_) {
     transformed_clouds[e.first] = nullptr;
     if (e.second != nullptr) {
+      if (e.second->data.size() == 0) {
+        continue;
+      }
       pc_stamps.push_back(rclcpp::Time(e.second->header.stamp));
     }
   }
@@ -306,6 +369,9 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   // Step2. Calculate compensation transform and concatenate with the oldest stamp
   for (const auto & e : cloud_stdmap_) {
     if (e.second != nullptr) {
+      if (e.second->data.size() == 0) {
+        continue;
+      }
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
       transformPointCloud(e.second, transformed_cloud_ptr);
@@ -333,10 +399,23 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
         pcl::concatenatePointCloud(
           *concat_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concat_cloud_ptr);
       }
-      // gather transformed clouds
-      transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
-      transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
-      transformed_clouds[e.first] = transformed_delay_compensated_cloud_ptr;
+      // convert to original sensor frame if necessary
+      bool need_transform_to_sensor_frame = (e.second->header.frame_id != output_frame_);
+      if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
+        sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr_in_sensor_frame(
+          new sensor_msgs::msg::PointCloud2());
+        pcl_ros::transformPointCloud(
+          (std::string)e.second->header.frame_id, *transformed_delay_compensated_cloud_ptr,
+          *transformed_cloud_ptr_in_sensor_frame, *tf2_buffer_);
+        transformed_cloud_ptr_in_sensor_frame->header.stamp = oldest_stamp;
+        transformed_cloud_ptr_in_sensor_frame->header.frame_id = e.second->header.frame_id;
+        transformed_clouds[e.first] = transformed_cloud_ptr_in_sensor_frame;
+      } else {
+        transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
+        transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
+        transformed_clouds[e.first] = transformed_delay_compensated_cloud_ptr;
+      }
+
     } else {
       not_subscribed_topic_names_.insert(e.first);
     }
@@ -390,6 +469,19 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
       "debug/cyclic_time_ms", cyclic_time_ms);
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
+  }
+  for (const auto & e : cloud_stdmap_) {
+    if (e.second != nullptr) {
+      if (debug_publisher_) {
+        const auto pipeline_latency_ms =
+          std::chrono::duration<double, std::milli>(
+            std::chrono::nanoseconds(
+              (this->get_clock()->now() - e.second->header.stamp).nanoseconds()))
+            .count();
+        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+          "debug" + e.first + "/pipeline_latency_ms", pipeline_latency_ms);
+      }
+    }
   }
 }
 
@@ -453,15 +545,15 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+  sensor_msgs::msg::PointCloud2::SharedPtr xyzi_input_ptr(new sensor_msgs::msg::PointCloud2());
   auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
   if (input->data.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
-    return;
+  } else {
+    // convert to XYZI pointcloud if pointcloud is not empty
+    convertToXYZICloud(input, xyzi_input_ptr);
   }
-
-  sensor_msgs::msg::PointCloud2::SharedPtr xyzi_input_ptr(new sensor_msgs::msg::PointCloud2());
-  convertToXYZICloud(input, xyzi_input_ptr);
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
@@ -534,6 +626,32 @@ void PointCloudConcatenateDataSynchronizerComponent::timer_callback()
 
 void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input)
+{
+  // if rosbag restart, clear buffer
+  if (!twist_ptr_queue_.empty()) {
+    if (rclcpp::Time(twist_ptr_queue_.front()->header.stamp) > rclcpp::Time(input->header.stamp)) {
+      twist_ptr_queue_.clear();
+    }
+  }
+
+  // pop old data
+  while (!twist_ptr_queue_.empty()) {
+    if (
+      rclcpp::Time(twist_ptr_queue_.front()->header.stamp) + rclcpp::Duration::from_seconds(1.0) >
+      rclcpp::Time(input->header.stamp)) {
+      break;
+    }
+    twist_ptr_queue_.pop_front();
+  }
+
+  auto twist_ptr = std::make_shared<geometry_msgs::msg::TwistStamped>();
+  twist_ptr->header = input->header;
+  twist_ptr->twist = input->twist.twist;
+  twist_ptr_queue_.push_back(twist_ptr);
+}
+
+void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
+  const nav_msgs::msg::Odometry::ConstSharedPtr input)
 {
   // if rosbag restart, clear buffer
   if (!twist_ptr_queue_.empty()) {

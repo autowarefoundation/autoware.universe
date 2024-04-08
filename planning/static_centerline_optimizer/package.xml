@@ -18,16 +18,19 @@
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
-  <depend>behavior_path_planner</depend>
+  <depend>behavior_path_planner_common</depend>
+  <depend>geography_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>global_parameter_loader</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
   <depend>map_loader</depend>
+  <depend>map_projection_loader</depend>
   <depend>mission_planner</depend>
   <depend>motion_utils</depend>
   <depend>obstacle_avoidance_planner</depend>
   <depend>osqp_interface</depend>
+  <depend>path_smoother</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>
@@ -41,6 +44,8 @@
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
+  <test_depend>behavior_path_planner</test_depend>
+  <test_depend>behavior_velocity_planner</test_depend>
   <test_depend>ros_testing</test_depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>

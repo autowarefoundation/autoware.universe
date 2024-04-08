@@ -16,12 +16,14 @@
 #define LOCALIZATION_ERROR_MONITOR__NODE_HPP_
 
 #include <Eigen/Dense>
-#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+
+#include <memory>
 
 struct Ellipse
 {
@@ -37,24 +39,23 @@ class LocalizationErrorMonitor : public rclcpp::Node
 private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr ellipse_marker_pub_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diag_pub_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
   double scale_;
   double error_ellipse_size_;
   double warn_ellipse_size_;
   double error_ellipse_size_lateral_direction_;
   double warn_ellipse_size_lateral_direction_;
   Ellipse ellipse_;
-  diagnostic_updater::Updater updater_;
 
-  void checkLocalizationAccuracy(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  void checkLocalizationAccuracyLateralDirection(
-    diagnostic_updater::DiagnosticStatusWrapper & stat);
   void onOdom(nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
   visualization_msgs::msg::Marker createEllipseMarker(
     const Ellipse & ellipse, nav_msgs::msg::Odometry::ConstSharedPtr odom);
   double measureSizeEllipseAlongBodyFrame(const Eigen::Matrix2d & Pinv, double theta);
-  void onTimer();
 
 public:
   LocalizationErrorMonitor();

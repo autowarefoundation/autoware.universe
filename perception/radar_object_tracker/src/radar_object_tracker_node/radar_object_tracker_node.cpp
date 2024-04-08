@@ -23,6 +23,7 @@
 
 #include <boost/optional.hpp>
 
+#include <glog/logging.h>
 #include <tf2_ros/create_timer_interface.h>
 #include <tf2_ros/create_timer_ros.h>
 
@@ -194,6 +195,10 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {
+  // glog for debug
+  google::InitGoogleLogging("radar_object_tracker");
+  google::InstallFailureSignalHandler();
+
   // Create publishers and subscribers
   detected_object_sub_ = create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "input", rclcpp::QoS{1},
@@ -207,6 +212,7 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
   // Parameters
   tracker_lifetime_ = declare_parameter<double>("tracker_lifetime");
   double publish_rate = declare_parameter<double>("publish_rate");
+  measurement_count_threshold_ = declare_parameter<int>("measurement_count_threshold");
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
   tracker_config_directory_ = declare_parameter<std::string>("tracking_config_directory");
@@ -363,6 +369,10 @@ std::shared_ptr<Tracker> RadarObjectTrackerNode::createNewTracker(
     if (tracker == "linear_motion_tracker") {
       std::string config_file = tracker_config_directory_ + "linear_motion_tracker.yaml";
       return std::make_shared<LinearMotionTracker>(time, object, config_file, label);
+    } else if (tracker == "constant_turn_rate_motion_tracker") {
+      std::string config_file =
+        tracker_config_directory_ + "constant_turn_rate_motion_tracker.yaml";
+      return std::make_shared<ConstantTurnRateMotionTracker>(time, object, config_file, label);
     } else {
       // not implemented yet so put warning
       RCLCPP_WARN(get_logger(), "Tracker %s is not implemented yet", tracker.c_str());
@@ -530,8 +540,7 @@ void RadarObjectTrackerNode::sanitizeTracker(
 inline bool RadarObjectTrackerNode::shouldTrackerPublish(
   const std::shared_ptr<const Tracker> tracker) const
 {
-  constexpr int measurement_count_threshold = 3;
-  if (tracker->getTotalMeasurementCount() < measurement_count_threshold) {
+  if (tracker->getTotalMeasurementCount() < measurement_count_threshold_) {
     return false;
   }
   return true;

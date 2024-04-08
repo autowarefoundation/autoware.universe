@@ -2,7 +2,7 @@
 
 **ArTagBasedLocalizer** is a vision-based localization node.
 
-<img src="./doc_image/ar_tag_image.png" width="320px">
+<img src="./doc_image/ar_tag_image.png" width="320px" alt="ar_tag_image">
 
 This node uses [the ArUco library](https://index.ros.org/p/aruco/) to detect AR-Tags from camera images and calculates and publishes the pose of the ego vehicle based on these detections.
 The positions and orientations of the AR-Tags are assumed to be written in the Lanelet2 format.
@@ -13,11 +13,12 @@ The positions and orientations of the AR-Tags are assumed to be written in the L
 
 #### Input
 
-| Name                  | Type                                            | Description                                                                                                                                                                                                                                                               |
-| :-------------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `~/input/image`       | `sensor_msgs::msg::Image`                       | Camera Image                                                                                                                                                                                                                                                              |
-| `~/input/camera_info` | `sensor_msgs::msg::CameraInfo`                  | Camera Info                                                                                                                                                                                                                                                               |
-| `~/input/ekf_pose`    | `geometry_msgs::msg::PoseWithCovarianceStamped` | EKF Pose without IMU correction. It is used to validate detected AR tags by filtering out False Positives. Only if the EKF Pose and the AR tag-detected Pose are within a certain temporal and spatial range, the AR tag-detected Pose is considered valid and published. |
+| Name                   | Type                                            | Description                                                                                                                                                                                                                                                               |
+| :--------------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `~/input/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin`    | Data of lanelet2                                                                                                                                                                                                                                                          |
+| `~/input/image`        | `sensor_msgs::msg::Image`                       | Camera Image                                                                                                                                                                                                                                                              |
+| `~/input/camera_info`  | `sensor_msgs::msg::CameraInfo`                  | Camera Info                                                                                                                                                                                                                                                               |
+| `~/input/ekf_pose`     | `geometry_msgs::msg::PoseWithCovarianceStamped` | EKF Pose without IMU correction. It is used to validate detected AR tags by filtering out False Positives. Only if the EKF Pose and the AR tag-detected Pose are within a certain temporal and spatial range, the AR tag-detected Pose is considered valid and published. |
 
 #### Output
 
@@ -25,7 +26,13 @@ The positions and orientations of the AR-Tags are assumed to be written in the L
 | :------------------------------ | :---------------------------------------------- | :---------------------------------------------------------------------------------------- |
 | `~/output/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose                                                                            |
 | `~/debug/result`                | `sensor_msgs::msg::Image`                       | [debug topic] Image in which marker detection results are superimposed on the input image |
-| `tf`                            | `geometry_msgs::msg::TransformStamped`          | [debug topic] TF from camera to detected tag                                              |
+| `~/debug/marker`                | `visualization_msgs::msg::MarkerArray`          | [debug topic] Loaded landmarks to visualize in Rviz as thin boards                        |
+| `/tf`                           | `geometry_msgs::msg::TransformStamped`          | [debug topic] TF from camera to detected tag                                              |
+| `/diagnostics`                  | `diagnostic_msgs::msg::DiagnosticArray`         | Diagnostics outputs                                                                       |
+
+## Parameters
+
+{{ json_to_markdown("localization/landmark_based_localizer/ar_tag_based_localizer/schema/ar_tag_based_localizer.schema.json") }}
 
 ## How to launch
 
