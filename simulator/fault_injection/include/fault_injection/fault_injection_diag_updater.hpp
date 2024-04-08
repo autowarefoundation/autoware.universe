@@ -49,6 +49,9 @@
 #ifndef FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_
 #define FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_
 
+#include <memory>
+#include <vector>
+#include <string>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 namespace fault_injection
