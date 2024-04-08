@@ -425,7 +425,7 @@ private:
     const Polygon2d & obj_points, const geometry_msgs::msg::Point & obj_pos, const double obj_vel,
     const bool is_collision_left, const double obj_normal_vel,
     const std::optional<DynamicAvoidanceObject> & prev_object) const;
-  std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoidAgainstPrioritizedObject(
+  std::optional<MinMaxValue> calcMinMaxLateralOffsetAgainstPrioritizedObject(
     const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
     const std::optional<DynamicAvoidanceObject> & prev_object,
     const DynamicAvoidanceObject & object) const;
@@ -435,9 +435,9 @@ private:
     const DynamicAvoidanceObject & object) const;
   std::optional<tier4_autoware_utils::Polygon2d> calcObjectPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
-  std::optional<tier4_autoware_utils::Polygon2d> calcPrioritizedObstaclePolygon(
+  std::optional<tier4_autoware_utils::Polygon2d> calcPrioritizedObstacleAvoidPolygon(
     const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const;
-  EgoPathReservePoly calcEgoPathReservePoly(const PathWithLaneId & ego_path) const;
+  EgoPathReservePoly calcEgoPathPreservePoly(const PathWithLaneId & ego_path) const;
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)
   {

@@ -401,14 +401,14 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
     throw std::runtime_error("input path is empty");
   }
 
-  const auto ego_path_reserve_poly = calcEgoPathReservePoly(input_path);
+  const auto ego_path_reserve_poly = calcEgoPathPreservePoly(input_path);
 
   // create obstacles to avoid (= extract from the drivable area)
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
   for (const auto & object : target_objects_) {
     const auto obstacle_poly = [&]() {
       if (getLabelAsTargetObstacle(object.label) == ObjectBehaviorType::PRIORITIZED) {
-        return calcPrioritizedObstaclePolygon(object, ego_path_reserve_poly);
+        return calcPrioritizedObstacleAvoidPolygon(object, ego_path_reserve_poly);
       }
 
       if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
@@ -879,7 +879,7 @@ void DynamicAvoidanceModule::determineWhetherToAvoidAgainstPrioritizedObjects(
 
     // 2.h. calculate longitudinal and lateral offset to avoid to generate object polygon by
     // "ego_path_base"
-    const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoidAgainstPrioritizedObject(
+    const auto lat_offset_to_avoid = calcMinMaxLateralOffsetAgainstPrioritizedObject(
       ref_path_points_for_obj_poly, prev_object, object);
     if (!lat_offset_to_avoid) {
       RCLCPP_INFO_EXPRESSION(
@@ -1503,8 +1503,7 @@ std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoi
 }
 
 // min value denotes near side, max value denotes far side
-std::optional<MinMaxValue>
-DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoidAgainstPrioritizedObject(
+std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetAgainstPrioritizedObject(
   const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
   const std::optional<DynamicAvoidanceObject> & prev_object,
   const DynamicAvoidanceObject & object) const
@@ -1749,7 +1748,7 @@ DynamicAvoidanceModule::calcObjectPathBasedDynamicObstaclePolygon(
 }
 
 std::optional<tier4_autoware_utils::Polygon2d>
-DynamicAvoidanceModule::calcPrioritizedObstaclePolygon(
+DynamicAvoidanceModule::calcPrioritizedObstacleAvoidPolygon(
   const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const
 {
   std::vector<geometry_msgs::msg::Pose> candidate_poses;
@@ -1813,7 +1812,7 @@ DynamicAvoidanceModule::calcPrioritizedObstaclePolygon(
   return output_poly[0];
 }
 
-DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathReservePoly(
+DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathPreservePoly(
   const PathWithLaneId & ego_path) const
 {
   // This function require almost 0.5 ms. Should be refactored in the future
