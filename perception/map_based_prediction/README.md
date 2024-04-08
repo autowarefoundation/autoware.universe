@@ -214,7 +214,7 @@ If the target object is inside the road or crosswalk, this module outputs one or
 | -------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
 | `~/perception/object_recognition/tracking/objects`       | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracking objects without predicted path.                   |
 | `~/vector_map`                                           | `autoware_auto_mapping_msgs::msg::HADMapBin`         | binary data of Lanelet2 Map.                               |
-| '~/perception/traffic_light_recognition/traffic_signals' | 'autoware_perception_msgs::msg::TrafficSignalArray;' | rearranged information on the corresponding traffic lights |
+| '~/perception/traffic_light_recognition/traffic_signals' | 'autoware_perception_msgs::msg::TrafficLightArray;'  | rearranged information on the corresponding traffic lights |
 
 ### Output
 

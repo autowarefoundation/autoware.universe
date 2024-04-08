@@ -31,7 +31,7 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
@@ -111,9 +111,9 @@ using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using autoware_perception_msgs::msg::TrafficSignal;
-using autoware_perception_msgs::msg::TrafficSignalArray;
-using autoware_perception_msgs::msg::TrafficSignalElement;
+using autoware_perception_msgs::msg::TrafficLight;
+using autoware_perception_msgs::msg::TrafficLightArray;
+using autoware_perception_msgs::msg::TrafficLightElement;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::StringStamped;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
@@ -128,7 +128,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_markers_;
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
-  rclcpp::Subscription<TrafficSignalArray>::SharedPtr sub_traffic_signals_;
+  rclcpp::Subscription<TrafficLightArray>::SharedPtr sub_traffic_signals_;
 
   // debug publisher
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
@@ -143,7 +143,7 @@ private:
   std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
   std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
 
-  std::unordered_map<lanelet::Id, TrafficSignal> traffic_signal_id_map_;
+  std::unordered_map<lanelet::Id, TrafficLight> traffic_signal_id_map_;
 
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -204,7 +204,7 @@ private:
 
   // Member Functions
   void mapCallback(const HADMapBin::ConstSharedPtr msg);
-  void trafficSignalsCallback(const TrafficSignalArray::ConstSharedPtr msg);
+  void trafficSignalsCallback(const TrafficLightArray::ConstSharedPtr msg);
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
   bool doesPathCrossAnyFence(const PredictedPath & predicted_path);
@@ -270,7 +270,7 @@ private:
   bool isDuplicated(
     const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
   std::optional<lanelet::Id> getTrafficSignalId(const lanelet::ConstLanelet & way_lanelet);
-  std::optional<TrafficSignalElement> getTrafficSignalElement(const lanelet::Id & id);
+  std::optional<TrafficLightElement> getTrafficSignalElement(const lanelet::Id & id);
   bool calcIntentionToCrossWithTrafficSignal(
     const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
     const lanelet::Id & signal_id);

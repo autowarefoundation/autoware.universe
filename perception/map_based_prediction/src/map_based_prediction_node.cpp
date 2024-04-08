@@ -801,7 +801,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sub_map_ = this->create_subscription<HADMapBin>(
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
-  sub_traffic_signals_ = this->create_subscription<TrafficSignalArray>(
+  sub_traffic_signals_ = this->create_subscription<TrafficLightArray>(
     "/traffic_signals", 1,
     std::bind(&MapBasedPredictionNode::trafficSignalsCallback, this, std::placeholders::_1));
 
@@ -881,7 +881,7 @@ void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
 }
 
-void MapBasedPredictionNode::trafficSignalsCallback(const TrafficSignalArray::ConstSharedPtr msg)
+void MapBasedPredictionNode::trafficSignalsCallback(const TrafficLightArray::ConstSharedPtr msg)
 {
   traffic_signal_id_map_.clear();
   for (const auto & signal : msg->signals) {
@@ -2280,7 +2280,7 @@ std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
   return traffic_light_reg_elems.front()->id();
 }
 
-std::optional<TrafficSignalElement> MapBasedPredictionNode::getTrafficSignalElement(
+std::optional<TrafficLightElement> MapBasedPredictionNode::getTrafficSignalElement(
   const lanelet::Id & id)
 {
   if (traffic_signal_id_map_.count(id) != 0) {
@@ -2301,12 +2301,12 @@ bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSignal(
 {
   const auto signal_color = [&] {
     const auto elem_opt = getTrafficSignalElement(signal_id);
-    return elem_opt ? elem_opt.value().color : TrafficSignalElement::UNKNOWN;
+    return elem_opt ? elem_opt.value().color : TrafficLightElement::UNKNOWN;
   }();
 
   const auto key = std::make_pair(tier4_autoware_utils::toHexString(object.object_id), signal_id);
   if (
-    signal_color == TrafficSignalElement::GREEN &&
+    signal_color == TrafficLightElement::GREEN &&
     tier4_autoware_utils::calcNorm(object.kinematics.twist_with_covariance.twist.linear) <
       threshold_velocity_assumed_as_stopping_) {
     stopped_times_against_green_.try_emplace(key, this->get_clock()->now());
@@ -2351,7 +2351,7 @@ bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSignal(
     // If the pedestrian disappears, another function erases the old data.
   }
 
-  if (signal_color == TrafficSignalElement::RED) {
+  if (signal_color == TrafficLightElement::RED) {
     return false;
   }
 
