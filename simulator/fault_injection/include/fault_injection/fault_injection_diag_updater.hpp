@@ -155,11 +155,11 @@ public:
     if (vsnprintf(buff, kBufferSize, format, va) >= kBufferSize) {
       RCLCPP_DEBUG(logger_, "Really long string in diagnostic_updater::setHardwareIDf.");
     }
-    hwid_ = std::string(buff);
+    hardware_id_ = std::string(buff);
     va_end(va);
   }
 
-  void setHardwareID(const std::string & hwid) { hwid_ = hwid; }
+  void setHardwareID(const std::string & hardware_id) { hardware_id_ = hardware_id; }
 
 private:
   void reset_timer()
@@ -188,7 +188,7 @@ private:
         status.name = iter->getName();
         status.level = 2;
         status.message = "No message was set";
-        status.hardware_id = hwid_;
+        status.hardware_id = hardware_id_;
 
         iter->run(status);
 
@@ -240,7 +240,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr publisher_;
   rclcpp::Logger logger_;
 
-  std::string hwid_;
+  std::string hardware_id_;
   std::string node_name_;
 };
 }  // namespace fault_injection
