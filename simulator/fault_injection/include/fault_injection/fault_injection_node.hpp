@@ -47,9 +47,6 @@ private:
   void update_event_diag(
     diagnostic_updater::DiagnosticStatusWrapper & wrap, const std::string & event_name);
 
-  void addDiag(
-    const diagnostic_msgs::msg::DiagnosticStatus & status, diagnostic_updater::Updater & updater);
-
   std::vector<DiagConfig> read_event_diag_list();
 
   FaultInjectionDiagUpdater updater_;

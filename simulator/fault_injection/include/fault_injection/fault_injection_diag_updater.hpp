@@ -53,6 +53,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fault_injection
@@ -79,7 +80,7 @@ public:
   : base_interface_(base_interface),
     timers_interface_(std::move(timers_interface)),
     clock_(clock_interface->get_clock()),
-    period_(rclcpp::Duration::from_nanoseconds((long)(period * 1e9))),
+    period_(rclcpp::Duration::from_nanoseconds(static_cast<long>(period * 1e9))),
     publisher_(rclcpp::create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
       topics_interface, "/diagnostics", 1)),
     logger_(logging_interface->get_logger()),
@@ -105,7 +106,7 @@ public:
   /**
    * \brief Sets the period given a value in seconds
    */
-  void set_period(double period) { set_period(rclcpp::Duration::from_nanoseconds(period * 1e9)); }
+  void set_period(double period) { set_period(rclcpp::Duration::from_nanoseconds(static_cast<long>(period * 1e9))); }
 
   /**
    * \brief Forces to send out an update for all known DiagnosticStatus.
@@ -122,7 +123,7 @@ public:
    *
    * \param msg Status message to output.
    */
-  void broadcast(int lvl, const std::string msg)
+  void broadcast(int lvl, const std::string & msg)
   {
     std::vector<diagnostic_msgs::msg::DiagnosticStatus> status_vec;
 
@@ -143,7 +144,7 @@ public:
   {
     va_list va;
     const int k_buffer_size = 1000;
-    char buff[k_buffer_size];  // @todo This could be done more elegantly.
+    char buff[1000];  // @todo This could be done more elegantly.
     va_start(va, format);
     if (vsnprintf(buff, k_buffer_size, format, va) >= k_buffer_size) {
       RCLCPP_DEBUG(logger_, "Really long string in diagnostic_updater::setHardwareIDf.");
@@ -216,7 +217,7 @@ private:
    * Causes a placeholder DiagnosticStatus to be published as soon as a
    * diagnostic task is added to the Updater.
    */
-  virtual void addedTaskCallback(DiagnosticTaskInternal & task) override
+  void addedTaskCallback(DiagnosticTaskInternal & task) override
   {
     diagnostic_updater::DiagnosticStatusWrapper stat;
     stat.name = task.getName();
