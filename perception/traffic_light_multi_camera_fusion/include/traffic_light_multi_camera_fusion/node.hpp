@@ -18,7 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_array.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
@@ -71,8 +71,8 @@ public:
   typedef tier4_perception_msgs::msg::TrafficLightArray SignalArrayType;
   typedef tier4_perception_msgs::msg::TrafficLightRoiArray RoiArrayType;
   typedef tier4_perception_msgs::msg::TrafficLightRoi::_traffic_light_id_type IdType;
-  typedef autoware_perception_msgs::msg::TrafficSignal NewSignalType;
-  typedef autoware_perception_msgs::msg::TrafficSignalArray NewSignalArrayType;
+  typedef autoware_perception_msgs::msg::TrafficLight NewSignalType;
+  typedef autoware_perception_msgs::msg::TrafficLightArray NewSignalArrayType;
 
   typedef std::pair<RoiArrayType, SignalArrayType> RecordArrayType;
 

@@ -96,11 +96,11 @@ V at_or(const std::unordered_map<K, V> & map, const K & key, const V & value)
   return map.count(key) ? map.at(key) : value;
 }
 
-autoware_perception_msgs::msg::TrafficSignalElement convert(
+autoware_perception_msgs::msg::TrafficLightElement convert(
   const tier4_perception_msgs::msg::TrafficLightElement & input)
 {
   typedef tier4_perception_msgs::msg::TrafficLightElement OldElem;
-  typedef autoware_perception_msgs::msg::TrafficSignalElement NewElem;
+  typedef autoware_perception_msgs::msg::TrafficLightElement NewElem;
   static const std::unordered_map<OldElem::_color_type, NewElem::_color_type> color_map(
     {{OldElem::RED, NewElem::RED},
      {OldElem::AMBER, NewElem::AMBER},
