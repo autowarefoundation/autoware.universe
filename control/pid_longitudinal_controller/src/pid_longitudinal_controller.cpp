@@ -1063,7 +1063,6 @@ PidLongitudinalController::StateAfterDelay PidLongitudinalController::predictedS
 
 double PidLongitudinalController::applyVelocityFeedback(const ControlData & control_data)
 {
-  // NOTE: Acceleration command is always positive even if the ego drives backward.
   const double diff_vel = target_motion.vel - current_vel;
   const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
                                 m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
@@ -1095,7 +1094,9 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
   const double ff_acc =
     control_data.interpolated_traj.points.at(control_data.target_idx).acceleration_mps2 * ff_scale;
 
-  const double feedback_acc = ff_acc + pid_acc;
+  // NOTE: Acceleration command is always positive even if the ego drives backward.
+  const double vel_sign = (shift == Shift::Forward) ? 1.0 : (shift == Shift::Reverse ? -1.0 : 0.0);
+  const double feedback_acc = (ff_acc + pid_acc) * vel_sign;
 
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_PID_APPLIED, feedback_acc);
   m_debug_values.setValues(DebugValues::TYPE::ERROR_VEL_FILTERED, error_vel_filtered);
