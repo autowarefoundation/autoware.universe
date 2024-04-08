@@ -1556,7 +1556,7 @@ DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoidAgainstPrioritizedObject(
     temp_bound_pos.max_value += parameters_->lat_offset_from_obstacle;
     temp_bound_pos.min_value -= parameters_->lat_offset_from_obstacle;
     if (std::abs(temp_bound_pos.max_value) < std::abs(temp_bound_pos.min_value)) {
-      temp_bound_pos.swap();  // From here, min denotes near boud, max denotes far bound.
+      temp_bound_pos.swap();  // From here, min denotes near bound, max denotes far bound.
     }
 
     const double near_bound_limit =
@@ -1799,7 +1799,7 @@ DynamicAvoidanceModule::calcPrioritizedObstaclePolygon(
   if (output_poly.empty()) {
     RCLCPP_INFO_EXPRESSION(
       getLogger(), parameters_->enable_debug_info,
-      "[DynamicAvoidance] Ignore obstacle (%s) bacause it stay inside the ego's path.",
+      "[DynamicAvoidance] Ignore obstacle (%s) because it stay inside the ego's path.",
       object.uuid.c_str());
     return {};
   } else if (output_poly.size() >= 2) {
