@@ -122,11 +122,6 @@ private:
         calcSignedArcLength(path.points, ego_position, left_shift.finish_pose.position);
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         left_shift.uuid, true, start_distance, finish_distance, clock_->now());
-      if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
-          {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, SteeringFactor::LEFT, SteeringFactor::TURNING, "");
-      }
     }
 
     for (const auto & right_shift : right_shift_array_) {
@@ -136,11 +131,6 @@ private:
         calcSignedArcLength(path.points, ego_position, right_shift.finish_pose.position);
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         right_shift.uuid, true, start_distance, finish_distance, clock_->now());
-      if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
-          {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
-      }
     }
   }
 
@@ -416,6 +406,10 @@ private:
   bool arrived_path_end_{false};
 
   bool safe_{true};
+
+  bool is_recording_{false};
+
+  bool is_record_necessary_{false};
 
   std::shared_ptr<AvoidanceHelper> helper_;
 
