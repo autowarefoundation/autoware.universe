@@ -106,7 +106,10 @@ public:
   /**
    * \brief Sets the period given a value in seconds
    */
-  void set_period(double period) { set_period(rclcpp::Duration::from_nanoseconds(static_cast<long>(period * 1e9))); }
+  void set_period(double period)
+  {
+    set_period(rclcpp::Duration::from_nanoseconds(static_cast<long>(period * 1e9)));
+  }
 
   /**
    * \brief Forces to send out an update for all known DiagnosticStatus.
