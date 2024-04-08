@@ -36,21 +36,21 @@ public:
 
 private:
   // Subscribers
-  void onSimulationEvents(const SimulationEvents::ConstSharedPtr msg);
+  void on_simulation_events(const SimulationEvents::ConstSharedPtr msg);
   rclcpp::Subscription<SimulationEvents>::SharedPtr sub_simulation_events_;
 
   // Parameter Server
-  rcl_interfaces::msg::SetParametersResult onSetParam(
+  rcl_interfaces::msg::SetParametersResult on_set_param(
     const std::vector<rclcpp::Parameter> & params);
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
-  void updateEventDiag(
+  void update_event_diag(
     diagnostic_updater::DiagnosticStatusWrapper & wrap, const std::string & event_name);
 
   void addDiag(
     const diagnostic_msgs::msg::DiagnosticStatus & status, diagnostic_updater::Updater & updater);
 
-  std::vector<DiagConfig> readEventDiagList();
+  std::vector<DiagConfig> read_event_diag_list();
 
   FaultInjectionDiagUpdater updater_;
 

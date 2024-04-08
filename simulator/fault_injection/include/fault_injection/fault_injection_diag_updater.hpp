@@ -64,45 +64,39 @@ public:
   explicit FaultInjectionDiagUpdater(NodeT node, double period = 1.0)
   : FaultInjectionDiagUpdater(
       node->get_node_base_interface(), node->get_node_clock_interface(),
-      node->get_node_logging_interface(), node->get_node_parameters_interface(),
+      node->get_node_logging_interface(),
       node->get_node_timers_interface(), node->get_node_topics_interface(), period)
   {
   }
 
   FaultInjectionDiagUpdater(
-    std::shared_ptr<rclcpp::node_interfaces::NodeBaseInterface> base_interface,
-    std::shared_ptr<rclcpp::node_interfaces::NodeClockInterface> clock_interface,
-    std::shared_ptr<rclcpp::node_interfaces::NodeLoggingInterface> logging_interface,
-    std::shared_ptr<rclcpp::node_interfaces::NodeParametersInterface> parameters_interface,
+    const std::shared_ptr<rclcpp::node_interfaces::NodeBaseInterface> & base_interface,
+    const std::shared_ptr<rclcpp::node_interfaces::NodeClockInterface> & clock_interface,
+    const std::shared_ptr<rclcpp::node_interfaces::NodeLoggingInterface> & logging_interface,
     std::shared_ptr<rclcpp::node_interfaces::NodeTimersInterface> timers_interface,
     std::shared_ptr<rclcpp::node_interfaces::NodeTopicsInterface> topics_interface,
     double period = 1.0)
   : base_interface_(base_interface),
-    timers_interface_(timers_interface),
+    timers_interface_(std::move(timers_interface)),
     clock_(clock_interface->get_clock()),
-    period_(rclcpp::Duration::from_nanoseconds(period * 1e9)),
+    period_(rclcpp::Duration::from_nanoseconds((long)(period * 1e9))),
     publisher_(rclcpp::create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
       topics_interface, "/diagnostics", 1)),
     logger_(logging_interface->get_logger()),
     node_name_(base_interface->get_name())
   {
-    period = parameters_interface
-               ->declare_parameter("diagnostic_updater.period", rclcpp::ParameterValue(period))
-               .get<double>();
-    period_ = rclcpp::Duration::from_nanoseconds(period * 1e9);
-
     reset_timer();
   }
 
   /**
    * \brief Returns the interval between updates.
    */
-  auto getPeriod() const { return period_; }
+  [[nodiscard]] auto get_period() const { return period_; }
 
   /**
    * \brief Sets the period as a rclcpp::Duration
    */
-  void setPeriod(rclcpp::Duration period)
+  void set_period(const rclcpp::Duration & period)
   {
     period_ = period;
     reset_timer();
@@ -111,7 +105,7 @@ public:
   /**
    * \brief Sets the period given a value in seconds
    */
-  void setPeriod(double period) { setPeriod(rclcpp::Duration::from_nanoseconds(period * 1e9)); }
+  void set_period(double period) { set_period(rclcpp::Duration::from_nanoseconds(period * 1e9)); }
 
   /**
    * \brief Forces to send out an update for all known DiagnosticStatus.
@@ -133,11 +127,10 @@ public:
     std::vector<diagnostic_msgs::msg::DiagnosticStatus> status_vec;
 
     const std::vector<DiagnosticTaskInternal> & tasks = getTasks();
-    for (std::vector<DiagnosticTaskInternal>::const_iterator iter = tasks.begin();
-         iter != tasks.end(); iter++) {
+    for (const auto & task : tasks) {
       diagnostic_updater::DiagnosticStatusWrapper status;
 
-      status.name = iter->getName();
+      status.name = task.getName();
       status.summary(lvl, msg);
 
       status_vec.push_back(status);
@@ -146,20 +139,20 @@ public:
     publish(status_vec);
   }
 
-  void setHardwareIDf(const char * format, ...)
+  void set_hardware_id_f(const char * format, ...)
   {
     va_list va;
-    const int kBufferSize = 1000;
-    char buff[kBufferSize];  // @todo This could be done more elegantly.
+    const int k_buffer_size = 1000;
+    char buff[k_buffer_size];  // @todo This could be done more elegantly.
     va_start(va, format);
-    if (vsnprintf(buff, kBufferSize, format, va) >= kBufferSize) {
+    if (vsnprintf(buff, k_buffer_size, format, va) >= k_buffer_size) {
       RCLCPP_DEBUG(logger_, "Really long string in diagnostic_updater::setHardwareIDf.");
     }
     hardware_id_ = std::string(buff);
     va_end(va);
   }
 
-  void setHardwareID(const std::string & hardware_id) { hardware_id_ = hardware_id; }
+  void set_hardware_id(const std::string & hardware_id) { hardware_id_ = hardware_id; }
 
 private:
   void reset_timer()
@@ -181,16 +174,15 @@ private:
       std::unique_lock<std::mutex> lock(
         lock_);  // Make sure no adds happen while we are processing here.
       const std::vector<DiagnosticTaskInternal> & tasks = getTasks();
-      for (std::vector<DiagnosticTaskInternal>::const_iterator iter = tasks.begin();
-           iter != tasks.end(); iter++) {
+      for (const auto & task : tasks) {
         diagnostic_updater::DiagnosticStatusWrapper status;
 
-        status.name = iter->getName();
+        status.name = task.getName();
         status.level = 2;
         status.message = "No message was set";
         status.hardware_id = hardware_id_;
 
-        iter->run(status);
+        task.run(status);
 
         status_vec.push_back(status);
       }
@@ -224,7 +216,7 @@ private:
    * Causes a placeholder DiagnosticStatus to be published as soon as a
    * diagnostic task is added to the Updater.
    */
-  virtual void addedTaskCallback(DiagnosticTaskInternal & task)
+  virtual void addedTaskCallback(DiagnosticTaskInternal & task) override
   {
     diagnostic_updater::DiagnosticStatusWrapper stat;
     stat.name = task.getName();
