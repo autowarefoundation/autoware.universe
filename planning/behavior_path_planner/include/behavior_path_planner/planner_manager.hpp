@@ -137,7 +137,7 @@ public:
     std::for_each(manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->reset(); });
     approved_module_ptrs_.clear();
     candidate_module_ptrs_.clear();
-    root_lanelet_ = std::nullopt;
+    current_route_lanelet_ = std::nullopt;
     resetProcessingTime();
   }
 
@@ -300,11 +300,11 @@ private:
     BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & data) const;
 
   /**
-   * @brief get reference path from root_lanelet_ centerline.
+   * @brief get reference path from current_route_lanelet_ centerline.
    * @param planner data.
    * @return reference path.
    */
-  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data) const;
+  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data);
 
   /**
    * @brief stop and unregister the module from manager.
@@ -447,7 +447,7 @@ private:
 
   static std::string getNames(const std::vector<SceneModulePtr> & modules);
 
-  std::optional<lanelet::ConstLanelet> root_lanelet_{std::nullopt};
+  std::optional<lanelet::ConstLanelet> current_route_lanelet_{std::nullopt};
 
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
 

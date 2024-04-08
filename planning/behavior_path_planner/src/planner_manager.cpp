@@ -89,8 +89,8 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   stop_watch_.tic("total_time");
   debug_info_.clear();
 
-  if (!root_lanelet_) {
-    root_lanelet_ = updateRootLanelet(data);
+  if (!current_route_lanelet_) {
+    current_route_lanelet_ = updateRootLanelet(data);
   }
 
   std::for_each(
@@ -416,8 +416,7 @@ BehaviorModuleOutput PlannerManager::runKeepLastModules(
   return output;
 }
 
-BehaviorModuleOutput PlannerManager::getReferencePath(
-  const std::shared_ptr<PlannerData> & data) const
+BehaviorModuleOutput PlannerManager::getReferencePath(const std::shared_ptr<PlannerData> & data)
 {
   const auto & route_handler = data->route_handler;
   const auto & pose = data->self_odometry->pose.pose;
@@ -428,20 +427,20 @@ BehaviorModuleOutput PlannerManager::getReferencePath(
     std::max(p.backward_path_length, p.backward_path_length + extra_margin);
 
   const auto lanelet_sequence = route_handler->getLaneletSequence(
-    root_lanelet_.value(), pose, backward_length, std::numeric_limits<double>::max());
+    current_route_lanelet_.value(), pose, backward_length, p.forward_path_length);
 
   lanelet::ConstLanelet closest_lane{};
-  if (lanelet::utils::query::getClosestLaneletWithConstrains(
-        lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
-        p.ego_nearest_yaw_threshold)) {
-    return utils::getReferencePath(closest_lane, data);
-  }
+  const auto could_calculate_closest_lanelet =
+    lanelet::utils::query::getClosestLaneletWithConstrains(
+      lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+      p.ego_nearest_yaw_threshold) ||
+    lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane);
 
-  if (lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
-    return utils::getReferencePath(closest_lane, data);
-  }
-
-  return {};  // something wrong.
+  if (could_calculate_closest_lanelet)
+    current_route_lanelet_ = closest_lane;
+  else
+    current_route_lanelet_ = updateRootLanelet(data);
+  return utils::getReferencePath(*current_route_lanelet_, data);
 }
 
 SceneModulePtr PlannerManager::selectHighestPriorityModule(
@@ -803,7 +802,7 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
     if (std::any_of(itr, approved_module_ptrs_.end(), [](const auto & m) {
           return m->isRootLaneletToBeUpdated();
         })) {
-      root_lanelet_ = updateRootLanelet(data);
+      current_route_lanelet_ = updateRootLanelet(data);
     }
 
     std::for_each(itr, approved_module_ptrs_.end(), [&](auto & m) {
@@ -877,8 +876,8 @@ void PlannerManager::updateCandidateModules(
 
 void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 {
-  if (!root_lanelet_) {
-    root_lanelet_ = updateRootLanelet(data);
+  if (!current_route_lanelet_) {
+    current_route_lanelet_ = updateRootLanelet(data);
     return;
   }
 
@@ -898,18 +897,19 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
   // if root_lanelet is not route lanelets, reset root lanelet.
   // this can be caused by rerouting.
   const auto & route_handler = data->route_handler;
-  if (!route_handler->isRouteLanelet(root_lanelet_.value())) {
-    root_lanelet_ = root_lanelet;
+  if (!route_handler->isRouteLanelet(current_route_lanelet_.value())) {
+    current_route_lanelet_ = root_lanelet;
     return;
   }
 
   // check ego is in same lane
-  if (root_lanelet_.value().id() == root_lanelet.id()) {
+  if (current_route_lanelet_.value().id() == root_lanelet.id()) {
     return;
   }
 
   // check ego is in next lane
-  const auto next_lanelets = route_handler->getRoutingGraphPtr()->following(root_lanelet_.value());
+  const auto next_lanelets =
+    route_handler->getRoutingGraphPtr()->following(current_route_lanelet_.value());
   for (const auto & next : next_lanelets) {
     if (next.id() == root_lanelet.id()) {
       return;
@@ -926,7 +926,7 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
     }
   }
 
-  root_lanelet_ = root_lanelet;
+  current_route_lanelet_ = root_lanelet;
 
   RCLCPP_INFO_EXPRESSION(logger_, verbose_, "change ego's following lane. reset.");
 }
