@@ -18,6 +18,7 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
+#include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "obstacle_avoidance_planner/node.hpp"
@@ -26,11 +27,15 @@
 #include "static_centerline_optimizer/type_alias.hpp"
 #include "static_centerline_optimizer/utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/ros/parameter.hpp"
 
+#include <geography_utils/lanelet2_projector.hpp>
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
+#include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/int32.hpp"
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
@@ -41,6 +46,7 @@
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
+#include <chrono>
 #include <fstream>
 #include <limits>
 #include <memory>
@@ -202,6 +208,14 @@ std::vector<lanelet::Id> check_lanelet_connection(
 
   return unconnected_lane_ids;
 }
+
+std_msgs::msg::Header createHeader(const rclcpp::Time & now)
+{
+  std_msgs::msg::Header header;
+  header.frame_id = "map";
+  header.stamp = now;
+  return header;
+}
 }  // namespace
 
 StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
@@ -214,12 +228,61 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
   pub_raw_path_with_lane_id_ =
     create_publisher<PathWithLaneId>("input_centerline", create_transient_local_qos());
   pub_raw_path_ = create_publisher<Path>("debug/raw_centerline", create_transient_local_qos());
+  pub_whole_optimized_centerline_ =
+    create_publisher<Trajectory>("output_whole_centerline", create_transient_local_qos());
   pub_optimized_centerline_ =
     create_publisher<Trajectory>("output_centerline", create_transient_local_qos());
 
   // debug publishers
   pub_debug_unsafe_footprints_ =
     create_publisher<MarkerArray>("debug/unsafe_footprints", create_transient_local_qos());
+
+  // subscribers
+  sub_traj_start_index_ = create_subscription<std_msgs::msg::Int32>(
+    "/centerline_updater_helper/traj_start_index", rclcpp::QoS{1},
+    [this](const std_msgs::msg::Int32 & msg) {
+      if (!meta_data_to_save_map_ || traj_end_index_ + 1 < msg.data) {
+        return;
+      }
+      traj_start_index_ = msg.data;
+
+      const auto & d = meta_data_to_save_map_;
+      const auto selected_optimized_traj_points = std::vector<TrajectoryPoint>(
+        d->optimized_traj_points.begin() + traj_start_index_,
+        d->optimized_traj_points.begin() + traj_end_index_ + 1);
+
+      pub_optimized_centerline_->publish(motion_utils::convertToTrajectory(
+        selected_optimized_traj_points, createHeader(this->now())));
+    });
+  sub_traj_end_index_ = create_subscription<std_msgs::msg::Int32>(
+    "/centerline_updater_helper/traj_end_index", rclcpp::QoS{1},
+    [this](const std_msgs::msg::Int32 & msg) {
+      if (!meta_data_to_save_map_ || msg.data + 1 < traj_start_index_) {
+        return;
+      }
+      traj_end_index_ = msg.data;
+
+      const auto & d = meta_data_to_save_map_;
+      const auto selected_optimized_traj_points = std::vector<TrajectoryPoint>(
+        d->optimized_traj_points.begin() + traj_start_index_,
+        d->optimized_traj_points.begin() + traj_end_index_ + 1);
+
+      pub_optimized_centerline_->publish(motion_utils::convertToTrajectory(
+        selected_optimized_traj_points, createHeader(this->now())));
+    });
+  sub_save_map_ = create_subscription<std_msgs::msg::Bool>(
+    "/centerline_updater_helper/save_map", rclcpp::QoS{1}, [this](const std_msgs::msg::Bool & msg) {
+      const auto lanelet2_output_file_path =
+        tier4_autoware_utils::getOrDeclareParameter<std::string>(
+          *this, "lanelet2_output_file_path");
+      if (!meta_data_to_save_map_ || msg.data) {
+        const auto & d = meta_data_to_save_map_;
+        const auto selected_optimized_traj_points = std::vector<TrajectoryPoint>(
+          d->optimized_traj_points.begin() + traj_start_index_,
+          d->optimized_traj_points.begin() + traj_end_index_ + 1);
+        save_map(lanelet2_output_file_path, d->route_lane_ids, selected_optimized_traj_points);
+      }
+    });
 
   // services
   callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -259,7 +322,11 @@ void StaticCenterlineOptimizerNode::run()
   load_map(lanelet2_input_file_path);
   const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
   const auto optimized_traj_points = plan_path(route_lane_ids);
+  traj_start_index_ = 0;
+  traj_end_index_ = optimized_traj_points.size() - 1;
   save_map(lanelet2_output_file_path, route_lane_ids, optimized_traj_points);
+
+  meta_data_to_save_map_ = MetaDataToSaveMap{optimized_traj_points, route_lane_ids};
 }
 
 void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_file_path)
@@ -267,13 +334,16 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
   // load map by the map_loader package
   map_bin_ptr_ = [&]() -> LaneletMapBin::ConstSharedPtr {
     // load map
-    tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
-    map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+    const auto map_projector_info = load_info_from_lanelet2_map(lanelet2_input_file_path);
     const auto map_ptr =
       Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
     if (!map_ptr) {
       return nullptr;
     }
+
+    // NOTE: generate map projector for lanelet::write().
+    //       Without this, lat/lon of the generated LL2 map will be wrong.
+    map_projector_ = geography_utils::get_lanelet2_projector(map_projector_info);
 
     // NOTE: The original map is stored here since the various ids in the lanelet map will change
     //       after lanelet::utils::overwriteLaneletCenterline, and saving map will fail.
@@ -451,6 +521,8 @@ std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
 
   // smooth trajectory and road collision avoidance
   const auto optimized_traj_points = optimize_trajectory(raw_path);
+  pub_whole_optimized_centerline_->publish(
+    motion_utils::convertToTrajectory(optimized_traj_points, raw_path.header));
   pub_optimized_centerline_->publish(
     motion_utils::convertToTrajectory(optimized_traj_points, raw_path.header));
   RCLCPP_INFO(
@@ -684,7 +756,7 @@ void StaticCenterlineOptimizerNode::save_map(
   RCLCPP_INFO(get_logger(), "Updated centerline in map.");
 
   // save map with modified center line
-  lanelet::write(lanelet2_output_file_path, *original_map_ptr_);
+  lanelet::write(lanelet2_output_file_path, *original_map_ptr_, *map_projector_);
   RCLCPP_INFO(get_logger(), "Saved map.");
 }
 }  // namespace static_centerline_optimizer
