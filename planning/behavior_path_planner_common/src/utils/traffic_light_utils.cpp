@@ -81,7 +81,7 @@ std::optional<double> calcDistanceToRedTrafficLight(
   const std::shared_ptr<const PlannerData> & planner_data)
 {
   for (const auto & lanelet : lanelets) {
-    for (const auto & element : lanelet.regulatoryElementsAs<TrafficLight>()) {
+    for (const auto & element : lanelet.regulatoryElementsAs<lanelet::TrafficLight>()) {
       const auto traffic_signal_stamped = planner_data->getTrafficSignal(element->id());
       if (!traffic_signal_stamped.has_value()) {
         continue;
@@ -131,7 +131,7 @@ bool isTrafficSignalStop(
   const lanelet::ConstLanelets & lanelets, const std::shared_ptr<const PlannerData> & planner_data)
 {
   for (const auto & lanelet : lanelets) {
-    for (const auto & element : lanelet.regulatoryElementsAs<TrafficLight>()) {
+    for (const auto & element : lanelet.regulatoryElementsAs<lanelet::TrafficLight>()) {
       const auto traffic_signal_stamped = planner_data->getTrafficSignal(element->id());
       if (!traffic_signal_stamped.has_value()) {
         continue;

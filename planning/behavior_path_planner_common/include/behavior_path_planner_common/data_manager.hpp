@@ -31,7 +31,7 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -55,7 +55,7 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
-using autoware_perception_msgs::msg::TrafficSignal;
+using autoware_perception_msgs::msg::TrafficLight;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::PoseStamped;
@@ -70,7 +70,7 @@ using unique_identifier_msgs::msg::UUID;
 struct TrafficSignalStamped
 {
   builtin_interfaces::msg::Time stamp;
-  TrafficSignal signal;
+  TrafficLight signal;
 };
 
 struct BoolStamped
