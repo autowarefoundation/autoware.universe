@@ -20,7 +20,7 @@
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
@@ -44,9 +44,9 @@ using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_autoware_utils::DebugPublisher;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
-using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
-using TrafficSignalArray = autoware_perception_msgs::msg::TrafficSignalArray;
-using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+using TrafficSignal = autoware_perception_msgs::msg::TrafficLight;
+using TrafficSignalArray = autoware_perception_msgs::msg::TrafficLightArray;
+using TrafficSignalElement = autoware_perception_msgs::msg::TrafficLightElement;
 using TrafficSignalAndTime = std::pair<TrafficSignal, rclcpp::Time>;
 using TrafficLightIdMap = std::unordered_map<lanelet::Id, TrafficSignalAndTime>;
 
