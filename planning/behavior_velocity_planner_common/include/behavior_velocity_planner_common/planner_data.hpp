@@ -23,7 +23,7 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>

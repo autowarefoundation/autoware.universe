@@ -19,7 +19,7 @@
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_perception_msgs/msg/traffic_signal.hpp>
+#include <autoware_perception_msgs/msg/traffic_light.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 
@@ -53,7 +53,7 @@ struct DetectionRange
 struct TrafficSignalStamped
 {
   builtin_interfaces::msg::Time stamp;
-  autoware_perception_msgs::msg::TrafficSignal signal;
+  autoware_perception_msgs::msg::TrafficLight signal;
 };
 
 using Pose = geometry_msgs::msg::Pose;
