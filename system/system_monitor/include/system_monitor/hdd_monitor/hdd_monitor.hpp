@@ -277,19 +277,29 @@ protected:
   void onTimer();
 
   /**
+   * @brief Timeout callback function for executing chronyc
+   */
+  void onSmartTimeout();
+
+  /**
+   * @brief set initial status
+   */
+  void setInitialStatus();
+
+  /**
    * @brief update HDD information list
    */
-  void updateHddInfoList();
+  void updateHddInfoList(diagnostic_updater::DiagnosticStatusWrapper & tmp_connect_diag, std::map<std::string, bool> & tmp_hdd_connected_flags, HddInfoList tmp_hdd_info_list);
 
   /**
    * @brief start HDD transfer measurement
    */
-  void startHddTransferMeasurement();
+  void startHddTransferMeasurement(rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats, std::map<std::string, bool> & tmp_hdd_connected_flags);
 
   /**
    * @brief update HDD statistics
    */
-  void updateHddStatistics();
+  void updateHddStatistics(rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats, std::map<std::string, bool> & tmp_hdd_connected_flags);
 
   /**
    * @brief get increment value of sysfs device stats per second
@@ -312,7 +322,7 @@ protected:
   /**
    * @brief update HDD connections
    */
-  void updateHddConnections();
+  void updateHddConnections(std::map<std::string, bool> & tmp_hdd_connected_flags, std::map<std::string, HddStat> & tmp_hdd_stats);
 
   /**
    * @brief unmount device
@@ -322,12 +332,20 @@ protected:
   int unmountDevice(std::string & device);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get HDD information from HddReader
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name
 
   int hdd_reader_port_;                         //!< @brief port number to connect to hdd_reader
   std::map<std::string, HddParam> hdd_params_;  //!< @brief list of error and warning levels
+  rclcpp::TimerBase::SharedPtr smart_timeout_timer_;       //!< @brief Timeout for reading smart HDD status
+  std::mutex smart_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading smart HDD status
+  bool smart_timeout_expired_;      //!< @brief Timeout for reading smart HDD status has expired or not
+  int smart_timeout_;                //!< @brief Timeout duration for reading smart HDD status
+  double smart_elapsed_ms_;          //!< @brief Execution time of reading smart HDD status
+
+  std::mutex smart_mutex_;           //!< @brief Mutex for output from 
   std::map<std::string, bool>
     hdd_connected_flags_;  //!< @brief list of flag whether HDD is connected
   std::map<std::string, uint32_t>

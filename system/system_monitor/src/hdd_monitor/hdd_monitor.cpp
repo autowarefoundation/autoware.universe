@@ -22,6 +22,8 @@
 #include "system_monitor/hdd_reader/hdd_reader.hpp"
 #include "system_monitor/system_monitor_utility.hpp"
 
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -43,7 +45,8 @@ HddMonitor::HddMonitor(const rclcpp::NodeOptions & options)
 : Node("hdd_monitor", options),
   updater_(this),
   hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635)),
-  last_hdd_stat_update_time_{0, 0, this->get_clock()->get_clock_type()}
+  last_hdd_stat_update_time_{0, 0, this->get_clock()->get_clock_type()},
+  smart_timeout_(declare_parameter<int>("smart_timeout", 5))
 {
   using namespace std::literals::chrono_literals;
 
@@ -63,15 +66,10 @@ HddMonitor::HddMonitor(const rclcpp::NodeOptions & options)
   updater_.add("HDD WriteIOPS", this, &HddMonitor::checkWriteIops);
   updater_.add("HDD Connection", this, &HddMonitor::checkConnection);
 
-  // get HDD connection status
-  updateHddConnections();
+  // set initial status
+  setInitialStatus();
 
-  // get HDD information from HDD reader for the first time
-  updateHddInfoList();
-
-  // start HDD transfer measurement
-  startHddTransferMeasurement();
-
+  timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&HddMonitor::onTimer, this));
 }
 
@@ -98,18 +96,30 @@ void HddMonitor::checkSmartRecoveredError(diagnostic_updater::DiagnosticStatusWr
 void HddMonitor::checkSmart(
   diagnostic_updater::DiagnosticStatusWrapper & stat, HddSmartInfoItem item)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::map<std::string, HddParam> tmp_hdd_params;
+  std::map<std::string, bool> tmp_hdd_connected_flags;
+  diagnostic_updater::DiagnosticStatusWrapper tmp_connect_diag;
+  HddInfoList tmp_hdd_info_list;
+  double tmp_elapsed_ms;
 
-  if (hdd_params_.empty()) {
+  {
+    std::lock_guard<std::mutex> lock(smart_mutex_);
+    tmp_hdd_params = hdd_params_;
+    tmp_hdd_connected_flags = hdd_connected_flags_;
+    tmp_connect_diag = connect_diag_;
+    tmp_hdd_info_list = hdd_info_list_;
+    tmp_elapsed_ms = smart_elapsed_ms_;
+  }
+
+  if (tmp_hdd_params.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
     return;
   }
 
   // Return error if connection diagnostic indicates error
-  if (connect_diag_.level != DiagStatus::OK) {
-    stat.summary(connect_diag_.level, connect_diag_.message);
-    for (const auto & e : connect_diag_.values) {
+  if (tmp_connect_diag.level != DiagStatus::OK) {
+    stat.summary(tmp_connect_diag.level, tmp_connect_diag.message);
+    for (const auto & e : tmp_connect_diag.values) {
       stat.add(e.key, e.value);
     }
     return;
@@ -122,14 +132,14 @@ void HddMonitor::checkSmart(
   std::string key_str = "";
   std::string val_str = "";
 
-  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++index) {
-    if (!hdd_connected_flags_[itr->first]) {
+  for (auto itr = tmp_hdd_params.begin(); itr != tmp_hdd_params.end(); ++itr, ++index) {
+    if (!tmp_hdd_connected_flags[itr->first]) {
       continue;
     }
 
     // Retrieve HDD information
-    auto hdd_itr = hdd_info_list_.find(itr->second.disk_device_);
-    if (hdd_itr == hdd_info_list_.end()) {
+    auto hdd_itr = tmp_hdd_info_list.find(itr->second.disk_device_);
+    if (hdd_itr == tmp_hdd_info_list.end()) {
       stat.add(fmt::format("HDD {}: status", index), "hdd_reader error");
       stat.add(fmt::format("HDD {}: name", index), itr->second.part_device_.c_str());
       stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(ENOENT));
@@ -222,14 +232,22 @@ void HddMonitor::checkSmart(
     whole_level = std::max(whole_level, level);
   }
 
+  // Check timeout has expired regarding executing chronyc
+  bool timeout_expired = false;
+  {
+    std::lock_guard<std::mutex> lock(smart_timeout_mutex_);
+    timeout_expired = smart_timeout_expired_;
+  }
+
   if (!error_str.empty()) {
     stat.summary(DiagStatus::ERROR, error_str);
+  } else if (timeout_expired) {
+    stat.summary(DiagStatus::WARN, "HDD smart status reading timeout expired");
   } else {
     stat.summary(whole_level, smart_dicts_[static_cast<uint32_t>(item)].at(whole_level));
   }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+  stat.addf("execution time", "%f ms", tmp_elapsed_ms);
 }
 
 void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -516,22 +534,120 @@ std::string HddMonitor::getDeviceFromMountPoint(const std::string & mount_point)
 
 void HddMonitor::onTimer()
 {
-  updateHddConnections();
-  updateHddInfoList();
-  updateHddStatistics();
+  // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
+
+  // Start timeout timer for reading HDD status
+  {
+    std::lock_guard<std::mutex> lock(smart_timeout_mutex_);
+    smart_timeout_expired_ = false;
+  }
+  smart_timeout_timer_ = rclcpp::create_timer(
+    this, get_clock(), std::chrono::seconds(smart_timeout_), std::bind(&HddMonitor::onSmartTimeout, this));
+  
+  std::map<std::string, bool> tmp_hdd_connected_flags;
+  std::map<std::string, HddStat> tmp_hdd_stats;
+  diagnostic_updater::DiagnosticStatusWrapper tmp_connect_diag;
+  tmp_connect_diag.clearSummary();
+  HddInfoList tmp_hdd_info_list;
+  rclcpp::Time tmp_last_hdd_stat_update_time;
+
+  {
+    std::lock_guard<std::mutex> lock(smart_mutex_);
+    tmp_hdd_connected_flags = hdd_connected_flags_;
+    tmp_hdd_stats = hdd_stats_;
+    tmp_connect_diag = connect_diag_;
+    tmp_hdd_info_list = hdd_info_list_;
+    tmp_last_hdd_stat_update_time = last_hdd_stat_update_time_;
+  }
+
+  updateHddConnections(tmp_hdd_connected_flags, tmp_hdd_stats);
+  updateHddInfoList(tmp_connect_diag, tmp_hdd_connected_flags, tmp_hdd_info_list);
+  updateHddStatistics(tmp_last_hdd_stat_update_time, tmp_hdd_stats, tmp_hdd_connected_flags);
+
+  // Returning from reading HDD status, stop timeout timer
+  smart_timeout_timer_->cancel();
+
+  const double elapsed_ms = stop_watch.toc("execution_time");
+  {
+    std::lock_guard<std::mutex> lock(smart_mutex_);
+    hdd_connected_flags_ = tmp_hdd_connected_flags;
+    hdd_stats_ = tmp_hdd_stats;
+    connect_diag_ = tmp_connect_diag;
+    hdd_info_list_ = tmp_hdd_info_list;
+    smart_elapsed_ms_ = elapsed_ms;
+  }
 }
 
-void HddMonitor::updateHddInfoList()
+void HddMonitor::setInitialStatus()
 {
-  // Clear diagnostic of connection
-  connect_diag_.clear();
-  connect_diag_.clearSummary();
+    // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
 
+  // Start timeout timer for reading HDD status
+  {
+    std::lock_guard<std::mutex> lock(smart_timeout_mutex_);
+    smart_timeout_expired_ = false;
+  }
+  smart_timeout_timer_ = rclcpp::create_timer(
+    this, get_clock(), std::chrono::seconds(smart_timeout_), std::bind(&HddMonitor::onSmartTimeout, this));
+  
+  std::map<std::string, bool> tmp_hdd_connected_flags;
+  std::map<std::string, HddStat> tmp_hdd_stats;
+  diagnostic_updater::DiagnosticStatusWrapper tmp_connect_diag;
+  tmp_connect_diag.clearSummary();
+  HddInfoList tmp_hdd_info_list;
+  rclcpp::Time tmp_last_hdd_stat_update_time;
+
+  {
+    std::lock_guard<std::mutex> lock(smart_mutex_);
+    tmp_hdd_connected_flags = hdd_connected_flags_;
+    tmp_hdd_stats = hdd_stats_;
+    tmp_connect_diag = connect_diag_;
+    tmp_hdd_info_list = hdd_info_list_;
+    tmp_last_hdd_stat_update_time = last_hdd_stat_update_time_;
+  }
+
+  // get HDD connection status
+  updateHddConnections(tmp_hdd_connected_flags, tmp_hdd_stats);
+
+  // get HDD information from HDD reader for the first time
+  updateHddInfoList(tmp_connect_diag, tmp_hdd_connected_flags, tmp_hdd_info_list);
+
+  // start HDD transfer measurement
+  startHddTransferMeasurement(tmp_last_hdd_stat_update_time, tmp_hdd_stats, tmp_hdd_connected_flags);
+
+  // Returning from reading HDD status, stop timeout timer
+  smart_timeout_timer_->cancel();
+
+  const double elapsed_ms = stop_watch.toc("execution_time");
+
+  {
+    std::lock_guard<std::mutex> lock(smart_mutex_);
+    hdd_connected_flags_ = tmp_hdd_connected_flags;
+    hdd_stats_ = tmp_hdd_stats;
+    connect_diag_ = tmp_connect_diag;
+    hdd_info_list_ = tmp_hdd_info_list;
+    smart_elapsed_ms_ = elapsed_ms;
+  }
+}
+
+void HddMonitor::onSmartTimeout()
+{
+  RCLCPP_WARN(get_logger(), " HDD Smart information Timeout occurred.");
+  std::lock_guard<std::mutex> lock(smart_timeout_mutex_);
+  smart_timeout_expired_ = true;
+}
+
+void HddMonitor::updateHddInfoList(diagnostic_updater::DiagnosticStatusWrapper & tmp_connect_diag, std::map<std::string, bool> & tmp_hdd_connected_flags, HddInfoList tmp_hdd_info_list)
+{
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "socket error");
-    connect_diag_.add("socket", strerror(errno));
+    tmp_connect_diag.summary(DiagStatus::ERROR, "socket error");
+    tmp_connect_diag.add("socket", strerror(errno));
     return;
   }
 
@@ -541,8 +657,8 @@ void HddMonitor::updateHddInfoList()
   tv.tv_usec = 0;
   int ret = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
   if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "setsockopt error");
-    connect_diag_.add("setsockopt", strerror(errno));
+    tmp_connect_diag.summary(DiagStatus::ERROR, "setsockopt error");
+    tmp_connect_diag.add("setsockopt", strerror(errno));
     close(sock);
     return;
   }
@@ -555,8 +671,8 @@ void HddMonitor::updateHddInfoList()
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
   if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "connect error");
-    connect_diag_.add("connect", strerror(errno));
+    tmp_connect_diag.summary(DiagStatus::ERROR, "connect error");
+    tmp_connect_diag.add("connect", strerror(errno));
     close(sock);
     return;
   }
@@ -564,7 +680,7 @@ void HddMonitor::updateHddInfoList()
   uint8_t request_id = HddReaderRequestId::GetHddInfo;
   std::vector<HddDevice> hdd_devices;
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr) {
-    if (!hdd_connected_flags_[itr->first]) {
+    if (!tmp_hdd_connected_flags[itr->first]) {
       continue;
     }
 
@@ -586,8 +702,8 @@ void HddMonitor::updateHddInfoList()
   // Write list of devices to FD
   ret = write(sock, oss.str().c_str(), oss.str().length());
   if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "write error");
-    connect_diag_.add("write", strerror(errno));
+    tmp_connect_diag.summary(DiagStatus::ERROR, "write error");
+    tmp_connect_diag.add("write", strerror(errno));
     RCLCPP_ERROR(get_logger(), "write error");
     close(sock);
     return;
@@ -597,15 +713,15 @@ void HddMonitor::updateHddInfoList()
   char buf[1024] = "";
   ret = recv(sock, buf, sizeof(buf) - 1, 0);
   if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "recv error");
-    connect_diag_.add("recv", strerror(errno));
+    tmp_connect_diag.summary(DiagStatus::ERROR, "recv error");
+    tmp_connect_diag.add("recv", strerror(errno));
     close(sock);
     return;
   }
   // No data received
   if (ret == 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "recv error");
-    connect_diag_.add("recv", "No data received");
+    tmp_connect_diag.summary(DiagStatus::ERROR, "recv error");
+    tmp_connect_diag.add("recv", "No data received");
     close(sock);
     return;
   }
@@ -613,8 +729,8 @@ void HddMonitor::updateHddInfoList()
   // Close the file descriptor FD
   ret = close(sock);
   if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "close error");
-    connect_diag_.add("close", strerror(errno));
+    tmp_connect_diag.summary(DiagStatus::ERROR, "close error");
+    tmp_connect_diag.add("close", strerror(errno));
     return;
   }
 
@@ -622,20 +738,20 @@ void HddMonitor::updateHddInfoList()
   try {
     std::istringstream iss(buf);
     boost::archive::text_iarchive oa(iss);
-    oa >> hdd_info_list_;
+    oa >> tmp_hdd_info_list;
   } catch (const std::exception & e) {
-    connect_diag_.summary(DiagStatus::ERROR, "recv error");
-    connect_diag_.add("recv", e.what());
+    tmp_connect_diag.summary(DiagStatus::ERROR, "recv error");
+    tmp_connect_diag.add("recv", e.what());
     return;
   }
 }
 
-void HddMonitor::startHddTransferMeasurement()
+void HddMonitor::startHddTransferMeasurement(rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats, std::map<std::string, bool> & tmp_hdd_connected_flags)
 {
-  for (auto & hdd_stat : hdd_stats_) {
+  for (auto & hdd_stat : tmp_hdd_stats) {
     hdd_stat.second.error_str_ = "";
 
-    if (!hdd_connected_flags_[hdd_stat.first]) {
+    if (!tmp_hdd_connected_flags[hdd_stat.first]) {
       continue;
     }
 
@@ -647,17 +763,17 @@ void HddMonitor::startHddTransferMeasurement()
     hdd_stat.second.last_sysfs_dev_stat_ = sysfs_dev_stat;
   }
 
-  last_hdd_stat_update_time_ = this->now();
+  tmp_last_hdd_stat_update_time = this->now();
 }
 
-void HddMonitor::updateHddStatistics()
+void HddMonitor::updateHddStatistics(rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats, std::map<std::string, bool> & tmp_hdd_connected_flags)
 {
-  double duration_sec = (this->now() - last_hdd_stat_update_time_).seconds();
+  double duration_sec = (this->now() - tmp_last_hdd_stat_update_time).seconds();
 
-  for (auto & hdd_stat : hdd_stats_) {
+  for (auto & hdd_stat : tmp_hdd_stats) {
     hdd_stat.second.error_str_ = "";
 
-    if (!hdd_connected_flags_[hdd_stat.first]) {
+    if (!tmp_hdd_connected_flags[hdd_stat.first]) {
       continue;
     }
 
@@ -683,7 +799,7 @@ void HddMonitor::updateHddStatistics()
     hdd_stat.second.last_sysfs_dev_stat_ = sysfs_dev_stat;
   }
 
-  last_hdd_stat_update_time_ = this->now();
+  tmp_last_hdd_stat_update_time = this->now();
 }
 
 double HddMonitor::getIncreaseSysfsDeviceStatValuePerSec(
@@ -727,10 +843,10 @@ int HddMonitor::readSysfsDeviceStat(const std::string & device, SysfsDevStat & s
   return ret;
 }
 
-void HddMonitor::updateHddConnections()
+void HddMonitor::updateHddConnections(std::map<std::string, bool> & tmp_hdd_connected_flags, std::map<std::string, HddStat> & tmp_hdd_stats)
 {
   for (auto & hdd_param : hdd_params_) {
-    hdd_connected_flags_[hdd_param.first] = false;
+    tmp_hdd_connected_flags[hdd_param.first] = false;
 
     // Get device name from mount point
     hdd_param.second.part_device_ = getDeviceFromMountPoint(hdd_param.first);
@@ -738,7 +854,7 @@ void HddMonitor::updateHddConnections()
       // Check the existence of device file
       std::error_code ec;
       if (std::filesystem::exists(hdd_param.second.part_device_, ec)) {
-        hdd_connected_flags_[hdd_param.first] = true;
+        tmp_hdd_connected_flags[hdd_param.first] = true;
 
         // Remove index number of partition for passing device name to hdd-reader
         if (boost::starts_with(hdd_param.second.part_device_, "/dev/sd")) {
@@ -752,7 +868,7 @@ void HddMonitor::updateHddConnections()
         }
 
         const std::regex raw_pattern(".*/");
-        hdd_stats_[hdd_param.first].device_ =
+        tmp_hdd_stats[hdd_param.first].device_ =
           std::regex_replace(hdd_param.second.disk_device_, raw_pattern, "");
       } else {
         // Deal with the issue that file system remains mounted when a drive is actually
