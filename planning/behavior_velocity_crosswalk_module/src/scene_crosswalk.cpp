@@ -1130,8 +1130,7 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
     }
 
     for (const auto & element : lights) {
-      if (
-        element.color == TrafficSignalElement::RED && element.shape == TrafficSignalElement::CIRCLE)
+      if (element.color == TrafficLightElement::RED && element.shape == TrafficLightElement::CIRCLE)
         return true;
     }
   }
