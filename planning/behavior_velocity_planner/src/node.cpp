@@ -104,7 +104,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1),
     createSubscriptionOptions(this));
   sub_traffic_signals_ =
-    this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+    this->create_subscription<autoware_perception_msgs::msg::TrafficLightArray>(
       "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
@@ -323,7 +323,7 @@ void BehaviorVelocityPlannerNode::onLaneletMap(
 }
 
 void BehaviorVelocityPlannerNode::onTrafficSignals(
-  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
+  const autoware_perception_msgs::msg::TrafficLightArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -339,7 +339,7 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
     planner_data_.traffic_light_id_map_raw_[signal.traffic_signal_id] = traffic_signal;
     const bool is_unknown_observation =
       std::any_of(signal.elements.begin(), signal.elements.end(), [](const auto & element) {
-        return element.color == autoware_perception_msgs::msg::TrafficSignalElement::UNKNOWN;
+        return element.color == autoware_perception_msgs::msg::TrafficLightElement::UNKNOWN;
       });
     // if the observation is UNKNOWN and past observation is available, only update the timestamp
     // and keep the body of the info
