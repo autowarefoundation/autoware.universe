@@ -36,17 +36,15 @@ namespace behavior_velocity_planner
 class TrafficLightModule : public SceneModuleInterface
 {
 public:
-  using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
-  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+  using TrafficSignal = autoware_perception_msgs::msg::TrafficLight;
+  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficLightElement;
   using Time = rclcpp::Time;
   enum class State { APPROACH, GO_OUT };
 
   struct DebugData
   {
     double base_link2front;
-    std::vector<std::tuple<
-      std::shared_ptr<const lanelet::TrafficLight>, autoware_perception_msgs::msg::TrafficSignal>>
-      tl_state;
+    std::vector<std::tuple<std::shared_ptr<const lanelet::TrafficLight>, TrafficSignal>> tl_state;
     std::vector<geometry_msgs::msg::Pose> stop_poses;
     geometry_msgs::msg::Pose first_stop_pose;
     std::vector<geometry_msgs::msg::Pose> dead_line_poses;
