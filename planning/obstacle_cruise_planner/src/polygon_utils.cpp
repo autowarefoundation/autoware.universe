@@ -20,18 +20,6 @@
 
 namespace
 {
-void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point & geom_point)
-{
-  Point2d point(geom_point.x, geom_point.y);
-  bg::append(polygon.outer(), point);
-}
-
-geometry_msgs::msg::Point calcOffsetPosition(
-  const geometry_msgs::msg::Pose & pose, const double offset_x, const double offset_y)
-{
-  return tier4_autoware_utils::calcOffsetPose(pose, offset_x, offset_y, 0.0).position;
-}
-
 PointWithStamp calcNearestCollisionPoint(
   const size_t first_within_idx, const std::vector<PointWithStamp> & collision_points,
   const std::vector<TrajectoryPoint> & decimated_traj_points, const bool is_driving_forward)
