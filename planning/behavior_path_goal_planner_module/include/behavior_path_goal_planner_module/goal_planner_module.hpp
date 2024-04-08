@@ -379,10 +379,15 @@ private:
    */
   struct GoalPlannerData
   {
+    GoalPlannerData(const PlannerData & planner_data, const GoalPlannerParameters & parameters)
+    {
+      initializeOccupancyGridMap(planner_data, parameters);
+    };
     GoalPlannerParameters parameters;
     std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params;
     std::shared_ptr<ObjectsFilteringParams> objects_filtering_params;
     std::shared_ptr<SafetyCheckParams> safety_check_params;
+    tier4_autoware_utils::LinearRing2d vehicle_footprint;
 
     PlannerData planner_data;
     ModuleStatus current_status;
@@ -390,6 +395,8 @@ private:
     // collision detector
     // need to be shared_ptr to be used in planner and goal searcher
     std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map;
+    std::shared_ptr<GoalSearcherBase> goal_searcher;
+
     const BehaviorModuleOutput & getPreviousModuleOutput() const { return previous_module_output; }
     const ModuleStatus & getCurrentStatus() const { return current_status; }
     void updateOccupancyGrid();
@@ -400,12 +407,16 @@ private:
       const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params_,
       const std::shared_ptr<SafetyCheckParams> & safety_check_params_,
       const PlannerData & planner_data, const ModuleStatus & current_status,
-      const BehaviorModuleOutput & previous_module_output);
+      const BehaviorModuleOutput & previous_module_output,
+      const std::shared_ptr<GoalSearcherBase> goal_searcher_,
+      const tier4_autoware_utils::LinearRing2d & vehicle_footprint);
+
+  private:
+    void initializeOccupancyGridMap(
+      const PlannerData & planner_data, const GoalPlannerParameters & parameters);
   };
   std::optional<GoalPlannerData> gp_planner_data_{std::nullopt};
   std::mutex gp_planner_data_mutex_;
-
-  std::shared_ptr<OccupancyGridBasedCollisionDetector> initializeOccupancyGridMap() const;
 
   // Flag class for managing whether a certain callback is running in multi-threading
   class ScopedFlag
@@ -548,21 +559,24 @@ private:
     const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
     const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
-    const std::shared_ptr<SafetyCheckParams> & safety_check_params) const;
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params,
+    const std::shared_ptr<GoalSearcherBase> goal_searcher) const;
   bool hasNotDecidedPath(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
     const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
-    const std::shared_ptr<SafetyCheckParams> & safety_check_params) const;
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params,
+    const std::shared_ptr<GoalSearcherBase> goal_searcher) const;
   DecidingPathStatusWithStamp checkDecidingPathStatus(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
     const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
-    const std::shared_ptr<SafetyCheckParams> & safety_check_params) const;
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params,
+    const std::shared_ptr<GoalSearcherBase> goal_searcher) const;
   void decideVelocity();
   bool foundPullOverPath() const;
   void updateStatus(const BehaviorModuleOutput & output);

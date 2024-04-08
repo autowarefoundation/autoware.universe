@@ -176,6 +176,7 @@ void GoalPlannerModule::onTimer()
   std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params{nullptr};
   std::shared_ptr<ObjectsFilteringParams> objects_filtering_params{nullptr};
   std::shared_ptr<SafetyCheckParams> safety_check_params{nullptr};
+  std::shared_ptr<GoalSearcherBase> goal_searcher{nullptr};
 
   // begin of critical section
   {
@@ -190,10 +191,20 @@ void GoalPlannerModule::onTimer()
       ego_predicted_path_params = gp_planner_data.ego_predicted_path_params;
       objects_filtering_params = gp_planner_data.objects_filtering_params;
       safety_check_params = gp_planner_data.safety_check_params;
+      goal_searcher = gp_planner_data.goal_searcher;
     }
   }
   // end of critical section
-  if (!local_planner_data) {
+  if (
+    !local_planner_data || !current_status_opt || !previous_module_output_opt ||
+    !occupancy_grid_map || !parameters_opt || !ego_predicted_path_params ||
+    !objects_filtering_params || !safety_check_params || !goal_searcher) {
+    RCLCPP_ERROR(
+      getLogger(),
+      "failed to get valid "
+      "local_planner_data/current_status/previous_module_output/occupancy_grid_map/parameters_opt/"
+      "ego_predicted_path_params/objects_filtering_params/safety_check_params/goal_searcher in "
+      "onTimer");
     return;
   }
   const auto & current_status = current_status_opt.value();
@@ -233,7 +244,7 @@ void GoalPlannerModule::onTimer()
       hasDeviatedFromLastPreviousModulePath(local_planner_data) &&
       !hasDecidedPath(
         local_planner_data, occupancy_grid_map, parameters, ego_predicted_path_params,
-        objects_filtering_params, safety_check_params)) {
+        objects_filtering_params, safety_check_params, goal_searcher)) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
     }
@@ -325,6 +336,7 @@ void GoalPlannerModule::onFreespaceParkingTimer()
   std::optional<ModuleStatus> current_status_opt{std::nullopt};
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map{nullptr};
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
+  std::shared_ptr<GoalSearcherBase> goal_searcher{nullptr};
 
   // begin of critical section
   {
@@ -335,13 +347,15 @@ void GoalPlannerModule::onFreespaceParkingTimer()
       current_status_opt = gp_planner_data.current_status;
       occupancy_grid_map = gp_planner_data.occupancy_grid_map;
       parameters_opt = gp_planner_data.parameters;
+      goal_searcher = gp_planner_data.goal_searcher;
     }
   }
   // end of critical section
-  if (!local_planner_data || !current_status_opt || !parameters_opt) {
+  if (!local_planner_data || !current_status_opt || !parameters_opt || !goal_searcher) {
     RCLCPP_ERROR(
       getLogger(),
-      "failed to get valid planner_data/current_status/parameters in onFreespaceParkingTimer");
+      "failed to get valid planner_data/current_status/parameters/goal_searcher in "
+      "onFreespaceParkingTimer");
     return;
   }
 
@@ -415,10 +429,11 @@ void GoalPlannerModule::updateData()
   {
     std::lock_guard<std::mutex> guard(gp_planner_data_mutex_);
     if (!gp_planner_data_) {
-      gp_planner_data_ = GoalPlannerData{};
+      gp_planner_data_ = GoalPlannerData(*planner_data_, *parameters_);
       gp_planner_data_.value().update(
         *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
-        *planner_data_, getCurrentStatus(), getPreviousModuleOutput());
+        *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
+        vehicle_footprint_);
     } else {
       auto & gp_planner_data = gp_planner_data_.value();
       // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
@@ -429,7 +444,8 @@ void GoalPlannerModule::updateData()
       // and if these two coincided, only the reference count is affected
       gp_planner_data.update(
         *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
-        *planner_data_, getCurrentStatus(), getPreviousModuleOutput());
+        *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
+        vehicle_footprint_);
       // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
       // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
       // behavior_path_planner::run() updates
@@ -448,8 +464,7 @@ void GoalPlannerModule::updateData()
       // is thread-safe because gp_planner_data.occupancy_grid_map is only re-pointed here and its
       // prior resource is still owned by the onFreespaceParkingTimer thread locally.
     }
-    auto & gp_planner_data = gp_planner_data_.value();
-    gp_planner_data.occupancy_grid_map = initializeOccupancyGridMap();
+    const auto & gp_planner_data = gp_planner_data_.value();
     occupancy_grid_map_ = gp_planner_data.occupancy_grid_map;
   }
   // end of critical section
@@ -464,7 +479,6 @@ void GoalPlannerModule::updateData()
 
   // update goal searcher and generate goal candidates
   if (thread_safe_data_.get_goal_candidates().empty()) {
-    goal_searcher_->setPlannerData(planner_data_);
     goal_searcher_->setReferenceGoal(
       calcRefinedGoal(planner_data_->route_handler->getOriginalGoalPose()));
     thread_safe_data_.set_goal_candidates(generateGoalCandidates());
@@ -673,13 +687,8 @@ bool GoalPlannerModule::planFreespacePath(
   GoalCandidates goal_candidates{};
   {
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    /*
-     * countObjectsToAvoidをやった情報があればいいのでgoal_searcherはいらないかも
-     * thread safe data経由でいいかも
-     */
-    goal_searcher_->setPlannerData(planner_data);
     goal_candidates = thread_safe_data_.get_goal_candidates();
-    goal_searcher_->update(goal_candidates, occupancy_grid_map);
+    goal_searcher_->update(goal_candidates, occupancy_grid_map, planner_data);
     thread_safe_data_.set_goal_candidates(goal_candidates);
     debug_data_.freespace_planner.num_goal_candidates = goal_candidates.size();
     debug_data_.freespace_planner.is_planning = true;
@@ -761,7 +770,7 @@ GoalCandidates GoalPlannerModule::generateGoalCandidates() const
   // calculate goal candidates
   const auto & route_handler = planner_data_->route_handler;
   if (utils::isAllowedGoalModification(route_handler)) {
-    return goal_searcher_->search(occupancy_grid_map_);
+    return goal_searcher_->search(occupancy_grid_map_, planner_data_);
   }
 
   // NOTE:
@@ -1032,7 +1041,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   if (
     hasDecidedPath(
       planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-      objects_filtering_params_, safety_check_params_) &&
+      objects_filtering_params_, safety_check_params_, goal_searcher_) &&
     isActivated()) {
     setTurnSignalInfo(output);
   }
@@ -1103,11 +1112,12 @@ bool GoalPlannerModule::hasDecidedPath(
   const GoalPlannerParameters & parameters,
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
-  const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
+  const std::shared_ptr<SafetyCheckParams> & safety_check_params,
+  const std::shared_ptr<GoalSearcherBase> goal_searcher) const
 {
   return checkDecidingPathStatus(
            planner_data, occupancy_grid_map, parameters, ego_predicted_path_params,
-           objects_filtering_params, safety_check_params)
+           objects_filtering_params, safety_check_params, goal_searcher)
            .first == DecidingPathStatus::DECIDED;
 }
 
@@ -1117,11 +1127,12 @@ bool GoalPlannerModule::hasNotDecidedPath(
   const GoalPlannerParameters & parameters,
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
-  const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
+  const std::shared_ptr<SafetyCheckParams> & safety_check_params,
+  const std::shared_ptr<GoalSearcherBase> goal_searcher) const
 {
   return checkDecidingPathStatus(
            planner_data, occupancy_grid_map, parameters, ego_predicted_path_params,
-           objects_filtering_params, safety_check_params)
+           objects_filtering_params, safety_check_params, goal_searcher)
            .first == DecidingPathStatus::NOT_DECIDED;
 }
 
@@ -1131,7 +1142,8 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus(
   const GoalPlannerParameters & parameters,
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
-  const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
+  const std::shared_ptr<SafetyCheckParams> & safety_check_params,
+  const std::shared_ptr<GoalSearcherBase> goal_searcher) const
 {
   const auto & prev_status = thread_safe_data_.get_prev_data().deciding_path_status;
   const bool enable_safety_check = parameters.safety_check_params.enable_safety_check;
@@ -1170,11 +1182,11 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus(
     const double hysteresis_factor = 0.9;
 
     // check goal pose collision
-    goal_searcher_->setPlannerData(planner_data);
     const auto modified_goal_opt = thread_safe_data_.get_modified_goal_pose();
     if (
-      modified_goal_opt && !goal_searcher_->isSafeGoalWithMarginScaleFactor(
-                             modified_goal_opt.value(), hysteresis_factor, occupancy_grid_map)) {
+      modified_goal_opt &&
+      !goal_searcher->isSafeGoalWithMarginScaleFactor(
+        modified_goal_opt.value(), hysteresis_factor, occupancy_grid_map, planner_data)) {
       RCLCPP_DEBUG(getLogger(), "[DecidingPathStatus]: DECIDING->NOT_DECIDED. goal is not safe");
       return {DecidingPathStatus::NOT_DECIDED, clock_->now()};
     }
@@ -1261,7 +1273,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOver()
 {
   if (!hasDecidedPath(
         planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-        objects_filtering_params_, safety_check_params_)) {
+        objects_filtering_params_, safety_check_params_, goal_searcher_)) {
     return planPullOverAsCandidate();
   }
 
@@ -1308,7 +1320,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
   if (
     hasNotDecidedPath(
       planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-      objects_filtering_params_, safety_check_params_) &&
+      objects_filtering_params_, safety_check_params_, goal_searcher_) &&
     needPathUpdate(
       planner_data_->self_odometry->pose.pose, 1.0 /*path_update_duration*/, *parameters_)) {
     // if the final path is not decided and enough time has passed since last path update,
@@ -1319,9 +1331,8 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
     thread_safe_data_.clearPullOverPath();
 
     // update goal candidates
-    goal_searcher_->setPlannerData(planner_data_);
     auto goal_candidates = thread_safe_data_.get_goal_candidates();
-    goal_searcher_->update(goal_candidates, occupancy_grid_map_);
+    goal_searcher_->update(goal_candidates, occupancy_grid_map_, planner_data_);
 
     // update pull over path candidates
     const auto pull_over_path_candidates = sortPullOverPathCandidatesByGoalPriority(
@@ -1388,7 +1399,7 @@ void GoalPlannerModule::postProcess()
   // waste of time because it gives same result throughout the main thread.
   const bool has_decided_path = hasDecidedPath(
     planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-    objects_filtering_params_, safety_check_params_);
+    objects_filtering_params_, safety_check_params_, goal_searcher_);
 
   if (has_decided_path) {
     updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
@@ -1413,7 +1424,7 @@ void GoalPlannerModule::updatePreviousData()
 
   prev_data.deciding_path_status = checkDecidingPathStatus(
     planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-    objects_filtering_params_, safety_check_params_);
+    objects_filtering_params_, safety_check_params_, goal_searcher_);
 
   // This is related to safety check, so if it is disabled, return here.
   if (!parameters_->safety_check_params.enable_safety_check) {
@@ -1512,8 +1523,8 @@ PathWithLaneId GoalPlannerModule::generateStopPath() const
   // calculate search start offset pose from the closest goal candidate pose with
   // approximate_pull_over_distance_ ego vehicle decelerates to this position. or if no feasible
   // stop point is found, stop at this position.
-  const auto closest_goal_candidate =
-    goal_searcher_->getClosetGoalCandidateAlongLanes(thread_safe_data_.get_goal_candidates());
+  const auto closest_goal_candidate = goal_searcher_->getClosetGoalCandidateAlongLanes(
+    thread_safe_data_.get_goal_candidates(), planner_data_);
   const auto decel_pose = calcLongitudinalOffsetPose(
     extended_prev_path.points, closest_goal_candidate.goal_pose.position,
     -approximate_pull_over_distance_);
@@ -1944,8 +1955,8 @@ double GoalPlannerModule::calcSignedArcLengthFromEgo(
 void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
 {
   // decelerate before the search area start
-  const auto closest_goal_candidate =
-    goal_searcher_->getClosetGoalCandidateAlongLanes(thread_safe_data_.get_goal_candidates());
+  const auto closest_goal_candidate = goal_searcher_->getClosetGoalCandidateAlongLanes(
+    thread_safe_data_.get_goal_candidates(), planner_data_);
   const auto decel_pose = calcLongitudinalOffsetPose(
     pull_over_path.getFullPath().points, closest_goal_candidate.goal_pose.position,
     -approximate_pull_over_distance_);
@@ -2348,7 +2359,7 @@ void GoalPlannerModule::setDebugData()
     const auto color =
       hasDecidedPath(
         planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
-        objects_filtering_params_, safety_check_params_)
+        objects_filtering_params_, safety_check_params_, goal_searcher_)
         ? createMarkerColor(1.0, 1.0, 0.0, 0.999)   // yellow
         : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
     const double z = planner_data_->route_handler->getGoalPose().position.z;
@@ -2562,31 +2573,27 @@ bool GoalPlannerModule::hasEnoughTimePassedSincePathUpdate(const double duration
   return (clock_->now() - *thread_safe_data_.get_last_path_update_time()).seconds() > duration;
 }
 
-std::shared_ptr<OccupancyGridBasedCollisionDetector> GoalPlannerModule::initializeOccupancyGridMap()
-  const
+void GoalPlannerModule::GoalPlannerData::initializeOccupancyGridMap(
+  const PlannerData & planner_data, const GoalPlannerParameters & parameters)
 {
-  auto occupancy_grid_map = std::make_shared<OccupancyGridBasedCollisionDetector>();
   OccupancyGridMapParam occupancy_grid_map_param{};
-  const double margin = parameters_->occupancy_grid_collision_check_margin;
+  const double margin = parameters.occupancy_grid_collision_check_margin;
   occupancy_grid_map_param.vehicle_shape.length =
-    planner_data_->parameters.vehicle_length + 2 * margin;
-  occupancy_grid_map_param.vehicle_shape.width =
-    planner_data_->parameters.vehicle_width + 2 * margin;
+    planner_data.parameters.vehicle_length + 2 * margin;
+  occupancy_grid_map_param.vehicle_shape.width = planner_data.parameters.vehicle_width + 2 * margin;
   occupancy_grid_map_param.vehicle_shape.base2back =
-    planner_data_->parameters.base_link2rear + margin;
-  occupancy_grid_map_param.theta_size = parameters_->theta_size;
-  occupancy_grid_map_param.obstacle_threshold = parameters_->obstacle_threshold;
+    planner_data.parameters.base_link2rear + margin;
+  occupancy_grid_map_param.theta_size = parameters.theta_size;
+  occupancy_grid_map_param.obstacle_threshold = parameters.obstacle_threshold;
   occupancy_grid_map->setParam(occupancy_grid_map_param);
-  occupancy_grid_map->setMap(*(planner_data_->occupancy_grid));
-  return occupancy_grid_map;
 }
 
 GoalPlannerModule::GoalPlannerData GoalPlannerModule::GoalPlannerData::clone() const
 {
-  GoalPlannerModule::GoalPlannerData gp_planner_data;
+  GoalPlannerModule::GoalPlannerData gp_planner_data(planner_data, parameters);
   gp_planner_data.update(
     parameters, ego_predicted_path_params, objects_filtering_params, safety_check_params,
-    planner_data, current_status, previous_module_output);
+    planner_data, current_status, previous_module_output, goal_searcher, vehicle_footprint);
   return gp_planner_data;
 }
 
@@ -2596,17 +2603,26 @@ void GoalPlannerModule::GoalPlannerData::update(
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params_,
   const std::shared_ptr<SafetyCheckParams> & safety_check_params_,
   const PlannerData & planner_data_, const ModuleStatus & current_status_,
-  const BehaviorModuleOutput & previous_module_output_)
+  const BehaviorModuleOutput & previous_module_output_,
+  const std::shared_ptr<GoalSearcherBase> goal_searcher_,
+  const tier4_autoware_utils::LinearRing2d & vehicle_footprint_)
 {
   parameters = parameters_;
   ego_predicted_path_params = ego_predicted_path_params_;
   objects_filtering_params = objects_filtering_params_;
   safety_check_params = safety_check_params_;
+  vehicle_footprint = vehicle_footprint_;
 
   planner_data = planner_data_;
   planner_data.route_handler = std::make_shared<RouteHandler>(*(planner_data_.route_handler));
   current_status = current_status_;
   previous_module_output = previous_module_output_;
+  occupancy_grid_map->setMap(*(planner_data.occupancy_grid));
+  // to create a deepcopy of GoalPlanner(not GoalPlannerBase), goal_searcher_ is not enough, so
+  // recreate it here
+  goal_searcher = std::make_shared<GoalSearcher>(parameters, vehicle_footprint);
+  // and then copy the reference goal
+  goal_searcher->setReferenceGoal(goal_searcher_->getReferenceGoal());
 }
 
 }  // namespace behavior_path_planner

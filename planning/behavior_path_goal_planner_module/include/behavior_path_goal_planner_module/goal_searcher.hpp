@@ -32,29 +32,37 @@ public:
   GoalSearcher(const GoalPlannerParameters & parameters, const LinearRing2d & vehicle_footprint);
 
   GoalCandidates search(
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) override;
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
+    const std::shared_ptr<const PlannerData> & planner_data) override;
   void update(
     GoalCandidates & goal_candidates,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const override;
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
+    const std::shared_ptr<const PlannerData> & planner_data) const override;
 
   // todo(kosuke55): Functions for this specific use should not be in the interface,
   // so it is better to consider interface design when we implement other goal searchers.
   GoalCandidate getClosetGoalCandidateAlongLanes(
-    const GoalCandidates & goal_candidates) const override;
+    const GoalCandidates & goal_candidates,
+    const std::shared_ptr<const PlannerData> & planner_data) const override;
   bool isSafeGoalWithMarginScaleFactor(
     const GoalCandidate & goal_candidate, const double margin_scale_factor,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const override;
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
+    const std::shared_ptr<const PlannerData> & planner_data) const override;
 
 private:
   void countObjectsToAvoid(
-    GoalCandidates & goal_candidates, const PredictedObjects & objects) const;
-  void createAreaPolygons(std::vector<Pose> original_search_poses);
+    GoalCandidates & goal_candidates, const PredictedObjects & objects,
+    const std::shared_ptr<const PlannerData> & planner_data) const;
+  void createAreaPolygons(
+    std::vector<Pose> original_search_poses,
+    const std::shared_ptr<const PlannerData> & planner_data);
   bool checkCollision(
     const Pose & pose, const PredictedObjects & objects,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const;
   bool checkCollisionWithLongitudinalDistance(
     const Pose & ego_pose, const PredictedObjects & objects,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const;
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
+    const std::shared_ptr<const PlannerData> & planner_data) const;
   BasicPolygons2d getNoParkingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
   BasicPolygons2d getNoStoppingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
   bool isInAreas(const LinearRing2d & footprint, const BasicPolygons2d & areas) const;
