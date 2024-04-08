@@ -263,12 +263,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
       double imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
 
-      for (;
-           (imu_it != std::end(angular_velocity_queue_) - 1 &&
-            *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
-           ++imu_it) {
-      }
-
       while (imu_it != std::end(angular_velocity_queue_) - 1 && *it_time_stamp > imu_stamp) {
         ++imu_it;
         imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
