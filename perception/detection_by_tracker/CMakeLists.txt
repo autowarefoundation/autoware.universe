@@ -39,9 +39,12 @@ target_link_libraries(detection_by_tracker_node
   ${PCL_LIBRARIES}
 )
 
-rclcpp_components_register_node(detection_by_tracker_node
-  PLUGIN "DetectionByTracker"
-  EXECUTABLE detection_by_tracker
+ament_auto_add_executable(${PROJECT_NAME}
+  src/detection_by_tracker_node.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+  detection_by_tracker_node glog
 )
 
 ament_auto_package(
