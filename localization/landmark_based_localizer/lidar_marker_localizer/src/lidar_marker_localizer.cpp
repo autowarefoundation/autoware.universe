@@ -333,6 +333,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   for (const pcl::PointCloud<autoware_point_types::PointXYZIRADRT> & one_ring : ring_points) {
     std::vector<double> intensity_sum(bin_num, 0.0);
     std::vector<int> intensity_num(bin_num, 0);
+    std::vector<double> average_intensity(bin_num, 0.0);
 
     for (const autoware_point_types::PointXYZIRADRT & point : one_ring.points) {
       const int bin_index = static_cast<int>((point.x - min_x) / param_.resolution);
@@ -341,7 +342,12 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
       min_y[bin_index] = std::min(min_y[bin_index], point.y);
     }
 
-    // filter
+    // calc average
+    for (int bin_index = 0; bin_index < bin_num; bin_index++) {
+      average_intensity[bin_index] = intensity_sum[bin_index] / intensity_num[bin_index];
+    }
+
+    // pattern matching
     for (size_t i = 0; i < bin_num - param_.intensity_pattern.size(); i++) {
       int64_t pos = 0;
       int64_t neg = 0;
@@ -353,9 +359,9 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
         if (intensity_num[i + j] == 0) {
           continue;
         }
-        const double average = intensity_sum[i + j] / intensity_num[i + j];
-        min_intensity = std::min(min_intensity, average);
-        max_intensity = std::max(max_intensity, average);
+
+        min_intensity = std::min(min_intensity, average_intensity[i+ j]);
+        max_intensity = std::max(max_intensity, average_intensity[i+ j]);
       }
 
       if (max_intensity <= min_intensity) {
@@ -369,16 +375,14 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
           continue;
         }
 
-        const double average = intensity_sum[i + j] / intensity_num[i + j];
-
         if (param_.intensity_pattern[j] == 1) {
           // check positive
-          if (average > center_intensity + param_.match_intensity_difference_threshold) {
+          if (average_intensity[i+ j] > center_intensity + param_.match_intensity_difference_threshold) {
             pos++;
           }
         } else if (param_.intensity_pattern[j] == -1) {
           // check negative
-          if (average < center_intensity - param_.match_intensity_difference_threshold) {
+          if (average_intensity[i+ j] < center_intensity - param_.match_intensity_difference_threshold) {
             neg++;
           }
         } else {
