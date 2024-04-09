@@ -217,7 +217,6 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
       message << "Could not detect marker, because the distance from self_pose to nearest_marker "
                  "is too far ("
               << distance_from_self_pose_to_nearest_marker << " [m]).";
-      // RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
       diagnostics_module_->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::OK, message.str());
     } else {
