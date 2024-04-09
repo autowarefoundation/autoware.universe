@@ -35,8 +35,8 @@
 
 #include <algorithm>
 #include <filesystem>
-#include <system_error>
 #include <string>
+#include <system_error>
 #include <vector>
 
 namespace bp = boost::process;
@@ -589,11 +589,11 @@ std::string HddMonitor::getDeviceFromMountPoint(const std::string & mount_point)
     }
 
     if (target == mount_point) {
-        return source;
+      return source;
     }
   }
 
-  RCLCPP_ERROR(get_logger(), "Failed to find device name %s in /proc/mounts" , mount_point.c_str());
+  RCLCPP_ERROR(get_logger(), "Failed to find device name %s in /proc/mounts", mount_point.c_str());
   return "";
 }
 
@@ -689,7 +689,7 @@ void HddMonitor::onTimer()
 
 void HddMonitor::setInitialStatus()
 {
-    // Start to measure elapsed time
+  // Start to measure elapsed time
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("execution_time");
 
@@ -724,7 +724,8 @@ void HddMonitor::setInitialStatus()
   updateHddInfoList(tmp_connect_diag, tmp_hdd_connected_flags, tmp_hdd_info_list);
 
   // start HDD transfer measurement
-  startHddTransferMeasurement(tmp_last_hdd_stat_update_time, tmp_hdd_stats, tmp_hdd_connected_flags);
+  startHddTransferMeasurement(
+    tmp_last_hdd_stat_update_time, tmp_hdd_stats, tmp_hdd_connected_flags);
 
   // Returning from reading HDD status, stop timeout timer
   timeout_timer_->cancel();
@@ -860,7 +861,9 @@ void HddMonitor::updateHddInfoList(diagnostic_updater::DiagnosticStatusWrapper &
   }
 }
 
-void HddMonitor::startHddTransferMeasurement(rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats, std::map<std::string, bool> & tmp_hdd_connected_flags)
+void HddMonitor::startHddTransferMeasurement(
+  rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats,
+  std::map<std::string, bool> & tmp_hdd_connected_flags)
 {
   for (auto & hdd_stat : tmp_hdd_stats) {
     hdd_stat.second.error_str_ = "";
@@ -880,7 +883,9 @@ void HddMonitor::startHddTransferMeasurement(rclcpp::Time tmp_last_hdd_stat_upda
   tmp_last_hdd_stat_update_time = this->now();
 }
 
-void HddMonitor::updateHddStatistics(rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats, std::map<std::string, bool> & tmp_hdd_connected_flags)
+void HddMonitor::updateHddStatistics(
+  rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats,
+  std::map<std::string, bool> & tmp_hdd_connected_flags)
 {
   double duration_sec = (this->now() - tmp_last_hdd_stat_update_time).seconds();
 
@@ -957,7 +962,9 @@ int HddMonitor::readSysfsDeviceStat(const std::string & device, SysfsDevStat & s
   return ret;
 }
 
-void HddMonitor::updateHddConnections(std::map<std::string, bool> & tmp_hdd_connected_flags, std::map<std::string, HddStat> & tmp_hdd_stats)
+void HddMonitor::updateHddConnections(
+  std::map<std::string, bool> & tmp_hdd_connected_flags,
+  std::map<std::string, HddStat> & tmp_hdd_stats)
 {
   for (auto & hdd_param : hdd_params_) {
     tmp_hdd_connected_flags[hdd_param.first] = false;

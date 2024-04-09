@@ -318,12 +318,16 @@ protected:
   /**
    * @brief start HDD transfer measurement
    */
-  void startHddTransferMeasurement(rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats, std::map<std::string, bool> & tmp_hdd_connected_flags);
+  void startHddTransferMeasurement(
+    rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats,
+    std::map<std::string, bool> & tmp_hdd_connected_flags);
 
   /**
    * @brief update HDD statistics
    */
-  void updateHddStatistics(rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats, std::map<std::string, bool> & tmp_hdd_connected_flags);
+  void updateHddStatistics(
+    rclcpp::Time tmp_last_hdd_stat_update_time, std::map<std::string, HddStat> & tmp_hdd_stats,
+    std::map<std::string, bool> & tmp_hdd_connected_flags);
 
   /**
    * @brief get increment value of sysfs device stats per second
@@ -346,7 +350,9 @@ protected:
   /**
    * @brief update HDD connections
    */
-  void updateHddConnections(std::map<std::string, bool> & tmp_hdd_connected_flags, std::map<std::string, HddStat> & tmp_hdd_stats);
+  void updateHddConnections(
+    std::map<std::string, bool> & tmp_hdd_connected_flags,
+    std::map<std::string, HddStat> & tmp_hdd_stats);
 
   /**
    * @brief unmount device
@@ -357,7 +363,7 @@ protected:
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
-  rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get HDD information from HddReader
+  rclcpp::TimerBase::SharedPtr timer_;  //!< @brief timer to get HDD information from HddReader
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name
 
