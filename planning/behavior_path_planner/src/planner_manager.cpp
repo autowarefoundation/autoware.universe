@@ -876,7 +876,6 @@ void PlannerManager::updateCandidateModules(
 
 void PlannerManager::resetCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data)
 {
-  std::cout << "*resetCurrentRouteLanelet\n";
   if (!current_route_lanelet_) {
     current_route_lanelet_ = updateCurrentRouteLanelet(data);
     return;
@@ -893,42 +892,7 @@ void PlannerManager::resetCurrentRouteLanelet(const std::shared_ptr<PlannerData>
     return;
   }
 
-  const auto current_route_lanelet = updateCurrentRouteLanelet(data);
-
-  // if current_route_lanelet is not route lanelets, reset root lanelet.
-  // this can be caused by rerouting.
-  const auto & route_handler = data->route_handler;
-  if (!route_handler->isRouteLanelet(current_route_lanelet_.value())) {
-    current_route_lanelet_ = current_route_lanelet;
-    return;
-  }
-
-  // check ego is in same lane
-  if (current_route_lanelet_.value().id() == current_route_lanelet.id()) {
-    return;
-  }
-
-  // check ego is in next lane
-  const auto next_lanelets =
-    route_handler->getRoutingGraphPtr()->following(current_route_lanelet_.value());
-  for (const auto & next : next_lanelets) {
-    if (next.id() == current_route_lanelet.id()) {
-      return;
-    }
-  }
-
-  if (!approved_module_ptrs_.empty()) {
-    return;
-  }
-
-  for (const auto & m : candidate_module_ptrs_) {
-    if (m->isLockedNewModuleLaunch()) {
-      return;
-    }
-  }
-
-  current_route_lanelet_ = current_route_lanelet;
-
+  current_route_lanelet_ = updateCurrentRouteLanelet(data);
   RCLCPP_INFO_EXPRESSION(logger_, verbose_, "change ego's following lane. reset.");
 }
 
