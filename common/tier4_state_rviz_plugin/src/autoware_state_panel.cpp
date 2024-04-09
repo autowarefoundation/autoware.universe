@@ -61,6 +61,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   auto * velocity_limit_layout = new QHBoxLayout();
   v_layout->addWidget(makeOperationModeGroup());
   v_layout->addWidget(makeControlModeGroup());
+  v_layout->addWidget(makeAutoParkModeGroup());
   {
     auto * h_layout = new QHBoxLayout();
     h_layout->addWidget(makeRoutingGroup());
@@ -132,6 +133,25 @@ QGroupBox * AutowareStatePanel::makeControlModeGroup()
   disable_button_ptr_->setCheckable(true);
   connect(disable_button_ptr_, SIGNAL(clicked()), SLOT(onClickDirectControl()));
   grid->addWidget(disable_button_ptr_, 0, 2);
+
+  group->setLayout(grid);
+  return group;
+}
+
+QGroupBox * AutowareStatePanel::makeAutoParkModeGroup()
+{
+  auto * group = new QGroupBox("AutoParking");
+  auto * grid = new QGridLayout;
+
+  park_mode_label_ptr_ = new QLabel("INIT");
+  park_mode_label_ptr_->setAlignment(Qt::AlignCenter);
+  park_mode_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(park_mode_label_ptr_, 0, 0);
+
+  p_enable_button_ptr_ = new QPushButton("Enable");
+  p_enable_button_ptr_->setCheckable(true);
+  connect(p_enable_button_ptr_, SIGNAL(clicked()), SLOT(onClickEngageAutoPark()));
+  grid->addWidget(p_enable_button_ptr_, 0, 1);
 
   group->setLayout(grid);
   return group;
@@ -222,6 +242,9 @@ void AutowareStatePanel::onInitialize()
   sub_operation_mode_ = raw_node_->create_subscription<OperationModeState>(
     "/api/operation_mode/state", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStatePanel::onOperationMode, this, _1));
+  sub_auto_park_status_ = raw_node_->create_subscription<std_msgs::msg::Bool>(
+    "/planning/auto_parking/status", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStatePanel::onAutoParkStatus, this, _1));
 
   client_change_to_autonomous_ =
     raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/change_to_autonomous");
@@ -240,6 +263,9 @@ void AutowareStatePanel::onInitialize()
 
   client_enable_direct_control_ =
     raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/disable_autoware_control");
+
+  client_auto_park_ = 
+    raw_node_->create_client<std_srvs::srv::SetBool>("/planning/auto_parking/set_status");
 
   // Routing
   sub_route_ = raw_node_->create_subscription<RouteState>(
@@ -350,6 +376,27 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
 
   changeButtonState(enable_button_ptr_, !msg->is_autoware_control_enabled);
   changeButtonState(disable_button_ptr_, msg->is_autoware_control_enabled);
+}
+
+void AutowareStatePanel::onAutoParkStatus(const std_msgs::msg::Bool::ConstSharedPtr msg)
+{
+  auto_park_running_ = msg->data;
+  auto changeButtonState = [this](
+                             QPushButton * button, const bool is_desired_mode_available,
+                             const uint8_t current_mode = OperationModeState::UNKNOWN,
+                             const uint8_t desired_mode = OperationModeState::STOP) {
+    if (is_desired_mode_available && current_mode != desired_mode) {
+      activateButton(button);
+    } else {
+      deactivateButton(button);
+    }
+  };
+  if (auto_park_running_) {
+    updateLabel(park_mode_label_ptr_, "Enable", "background-color: #00FF00;");  // green
+  } else {
+    updateLabel(park_mode_label_ptr_, "Disable", "background-color: #FFFF00;");  // yellow
+  }
+  changeButtonState(p_enable_button_ptr_, !auto_park_running_);
 }
 
 void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
@@ -571,6 +618,9 @@ void AutowareStatePanel::onClickAutonomous()
 void AutowareStatePanel::onClickStop()
 {
   callServiceWithoutResponse<ChangeOperationMode>(client_change_to_stop_);
+  if(auto_park_running_){
+  onClickDisengageAutoPark();
+  }
 }
 void AutowareStatePanel::onClickLocal()
 {
@@ -583,6 +633,32 @@ void AutowareStatePanel::onClickRemote()
 void AutowareStatePanel::onClickAutowareControl()
 {
   callServiceWithoutResponse<ChangeOperationMode>(client_enable_autoware_control_);
+}
+void AutowareStatePanel::onClickEngageAutoPark()
+{
+  auto req = std::make_shared<std_srvs::srv::SetBool::Request>();
+  req->data = true;
+  RCLCPP_DEBUG(raw_node_->get_logger(), "client request");
+  if (!client_auto_park_->service_is_ready()) {
+    RCLCPP_DEBUG(raw_node_->get_logger(), "client is unavailable");
+    return;
+  }
+  client_auto_park_->async_send_request(
+    req, 
+    [this]([[maybe_unused]] rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture result) {});
+}
+void AutowareStatePanel::onClickDisengageAutoPark()
+{
+  auto req = std::make_shared<std_srvs::srv::SetBool::Request>();
+  req->data = false;
+  RCLCPP_DEBUG(raw_node_->get_logger(), "client request");
+  if (!client_auto_park_->service_is_ready()) {
+    RCLCPP_DEBUG(raw_node_->get_logger(), "client is unavailable");
+    return;
+  }
+  client_auto_park_->async_send_request(
+    req, 
+    [this]([[maybe_unused]] rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture result) {});
 }
 void AutowareStatePanel::onClickDirectControl()
 {
