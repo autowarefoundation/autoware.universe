@@ -46,7 +46,8 @@ HddMonitor::HddMonitor(const rclcpp::NodeOptions & options)
   updater_(this),
   hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635)),
   last_hdd_stat_update_time_{0, 0, this->get_clock()->get_clock_type()},
-  smart_timeout_(declare_parameter<int>("smart_timeout", 5))
+  hdd_status_timeout_(declare_parameter<int>("hdd_status_timeout", 5)),
+  hdd_usage_timeout_(declare_parameter<int>("hdd_usage_timeout", 5))
 {
   using namespace std::literals::chrono_literals;
 
@@ -103,12 +104,12 @@ void HddMonitor::checkSmart(
   double tmp_elapsed_ms;
 
   {
-    std::lock_guard<std::mutex> lock(smart_mutex_);
+    std::lock_guard<std::mutex> lock(hdd_status_mutex_);
     tmp_hdd_params = hdd_params_;
     tmp_hdd_connected_flags = hdd_connected_flags_;
     tmp_connect_diag = connect_diag_;
     tmp_hdd_info_list = hdd_info_list_;
-    tmp_elapsed_ms = smart_elapsed_ms_;
+    tmp_elapsed_ms = hdd_status_elapsed_ms_;
   }
 
   if (tmp_hdd_params.empty()) {
@@ -144,6 +145,7 @@ void HddMonitor::checkSmart(
       stat.add(fmt::format("HDD {}: name", index), itr->second.part_device_.c_str());
       stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(ENOENT));
       error_str = "hdd_reader error";
+      std::cerr << "HDD " << index << ": " << itr->second.disk_device_ << " AAAAA not found" << std::endl;
       continue;
     }
 
@@ -152,6 +154,7 @@ void HddMonitor::checkSmart(
       stat.add(fmt::format("HDD {}: name", index), itr->second.part_device_.c_str());
       stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(hdd_itr->second.error_code_));
       error_str = "hdd_reader error";
+      std::cerr << "HDD " << index << ": " << itr->second.disk_device_ << "BBBBB error: " << hdd_itr->second.error_code_ << std::endl;
       continue;
     }
 
@@ -232,17 +235,17 @@ void HddMonitor::checkSmart(
     whole_level = std::max(whole_level, level);
   }
 
-  // Check timeout has expired regarding executing chronyc
+  // Check timeout has expired regarding reading HDD status
   bool timeout_expired = false;
   {
-    std::lock_guard<std::mutex> lock(smart_timeout_mutex_);
-    timeout_expired = smart_timeout_expired_;
+    std::lock_guard<std::mutex> lock(hdd_status_timeout_mutex_);
+    timeout_expired = hdd_status_timeout_expired_;
   }
 
   if (!error_str.empty()) {
     stat.summary(DiagStatus::ERROR, error_str);
   } else if (timeout_expired) {
-    stat.summary(DiagStatus::WARN, "HDD smart status reading timeout expired");
+    stat.summary(DiagStatus::WARN, "HDD status reading timeout expired");
   } else {
     stat.summary(whole_level, smart_dicts_[static_cast<uint32_t>(item)].at(whole_level));
   }
@@ -252,72 +255,110 @@ void HddMonitor::checkSmart(
 
 void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::map<std::string, bool> tmp_hdd_connected_flags;
+  std::vector<HddUsage> tmp_hdd_usages;
+  std::string sum_error_str = "";
+  std::string detail_error_str = "";
+  double elapsed_ms;
+
+  {
+    std::lock_guard<std::mutex> lock(hdd_status_mutex_);
+    tmp_hdd_connected_flags = hdd_connected_flags_;
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(hdd_usage_mutex_);
+    tmp_hdd_usages = hdd_usages_;
+    sum_error_str = hdd_usage_sum_error_str_;
+    detail_error_str = hdd_usage_detail_error_str_;
+    elapsed_ms = hdd_usage_elapsed_ms_;
+  }
 
   if (hdd_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
     return;
   }
 
+  if (!sum_error_str.empty()) {
+    stat.summary(DiagStatus::ERROR, sum_error_str);
+    stat.add("error", detail_error_str);
+    return;
+  }
+
   int hdd_index = 0;
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
-  std::string error_str = "";
-  std::filesystem::space_info si;
-  std::error_code ec;
-  unsigned int size;
-  unsigned int used;
-  unsigned int avail;
-  unsigned int use;
 
-  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
-    if (!hdd_connected_flags_[itr->first]) {
+  for (auto itr = tmp_hdd_usages.begin(); itr != tmp_hdd_usages.end(); ++itr, ++hdd_index) {
+    if (!hdd_connected_flags_[itr->mount_point_]) {
       continue;
     }
 
-    try {
-      si = std::filesystem::space(itr->first, ec);
-      if (ec) {
-        error_str = "std::filesystem::space error";
-        stat.add(fmt::format("HDD {}: status", hdd_index), "getting filesystem usage information error");
-      }
-        size = si.capacity / (1024 * 1024);
-        used = (si.capacity - si.available) / (1024 * 1024);
-        avail = si.available / (1024 * 1024);
-        use = 100 * used / size;
-    } catch (std::filesystem::filesystem_error& e) {
-      error_str = e.what();
-      stat.add(fmt::format("HDD {}: status", hdd_index), "getting filesystem usage information error");
-    }
-
-    if (avail <= itr->second.free_error_) {
+    if (itr->avail_ <= hdd_params_[itr->mount_point_].free_error_) {
       level = DiagStatus::ERROR;
-    } else if (avail <= itr->second.free_warn_) {
+    } else if (itr->avail_ <= hdd_params_[itr->mount_point_].free_warn_) {
       level = DiagStatus::WARN;
     } else {
       level = DiagStatus::OK;
     }
 
     stat.add(fmt::format("HDD {}: status", hdd_index), usage_dict_.at(level));
-    stat.add(fmt::format("HDD {}: filesystem", hdd_index), itr->second.part_device_.c_str());
-    stat.add(fmt::format("HDD {}: size", hdd_index), (std::to_string(size) + " MiB").c_str());
-    stat.add(fmt::format("HDD {}: used", hdd_index), (std::to_string(used) + " MiB").c_str());
-    stat.add(fmt::format("HDD {}: avail", hdd_index), (std::to_string(avail) + " MiB").c_str());
-    stat.add(fmt::format("HDD {}: use", hdd_index), (std::to_string(use) + " %").c_str());
-    stat.add(fmt::format("HDD {}: mounted on", hdd_index), itr->first.c_str());
+    stat.add(fmt::format("HDD {}: filesystem", hdd_index), itr->device_.c_str());
+    stat.add(fmt::format("HDD {}: size", hdd_index), (std::to_string(itr->size_) + " MiB").c_str());
+    stat.add(fmt::format("HDD {}: used", hdd_index), (std::to_string(itr->used_) + " MiB").c_str());
+    stat.add(fmt::format("HDD {}: avail", hdd_index), (std::to_string(itr->avail_) + " MiB").c_str());
+    stat.add(fmt::format("HDD {}: use", hdd_index), (std::to_string(itr->use_) + " %").c_str());
+    stat.add(fmt::format("HDD {}: mounted on", hdd_index), itr->mount_point_.c_str());
 
     whole_level = std::max(whole_level, level);
   }
 
-  if (!error_str.empty()) {
-    stat.summary(DiagStatus::ERROR, error_str);
+  // Check timeout has expired regarding reading HDD status
+  bool timeout_expired = false;
+  {
+    std::lock_guard<std::mutex> lock(hdd_usage_timeout_mutex_);
+    timeout_expired = hdd_usage_timeout_expired_;
+  }
+
+  if (timeout_expired) {
+    stat.summary(DiagStatus::WARN, "HDD usage reading timeout expired");
   } else {
     stat.summary(whole_level, usage_dict_.at(whole_level));
   }
+}
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+void HddMonitor::readHddUsage(std::map<std::string, bool> & tmp_hdd_connected_flags, std::vector<HddUsage> & tmp_hdd_usages, std::string tmp_sum_error_str, std::string & tmp_detail_error_str)
+{
+  std::filesystem::space_info si;
+  std::error_code ec;
+
+  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr) {
+    HddUsage hdd_usage;
+
+    if (!tmp_hdd_connected_flags[itr->first]) {
+      tmp_hdd_usages.push_back(hdd_usage);
+      continue;
+    }
+
+    try {
+      hdd_usage.device_ = itr->second.part_device_;
+      hdd_usage.mount_point_ = itr->first;
+      si = std::filesystem::space(itr->first, ec);
+      if (ec) {
+        tmp_sum_error_str = "std::filesystem::space error";
+        tmp_detail_error_str = "getting filesystem usage information error";
+      }
+      hdd_usage.size_ = si.capacity / (1024 * 1024);
+      hdd_usage.used_ = (si.capacity - si.available) / (1024 * 1024);
+      hdd_usage.avail_ = si.available / (1024 * 1024);
+      hdd_usage.use_ = 100 * hdd_usage.used_ / hdd_usage.size_;
+    } catch (std::filesystem::filesystem_error & e) {
+      tmp_sum_error_str = e.what();
+      tmp_detail_error_str = "getting filesystem usage information error";
+    }
+
+    tmp_hdd_usages.push_back(hdd_usage);
+  }
 }
 
 void HddMonitor::checkReadDataRate(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -343,10 +384,20 @@ void HddMonitor::checkWriteIops(diagnostic_updater::DiagnosticStatusWrapper & st
 void HddMonitor::checkStatistics(
   diagnostic_updater::DiagnosticStatusWrapper & stat, HddStatItem item)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::map<std::string, HddParam> tmp_hdd_params;
+  std::map<std::string, bool> tmp_hdd_connected_flags;
+  std::map<std::string, HddStat> tmp_hdd_stats_;
+  double tmp_elapsed_ms;
 
-  if (hdd_params_.empty()) {
+  {
+    std::lock_guard<std::mutex> lock(hdd_status_mutex_);
+    tmp_hdd_params = hdd_params_;
+    tmp_hdd_connected_flags = hdd_connected_flags_;
+    tmp_hdd_stats_ = hdd_stats_;
+    tmp_elapsed_ms = hdd_status_elapsed_ms_;
+  }
+
+  if (tmp_hdd_params.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
     return;
   }
@@ -357,8 +408,8 @@ void HddMonitor::checkStatistics(
   std::string key_str = "";
   std::string val_str = "";
 
-  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
-    if (!hdd_connected_flags_[itr->first]) {
+  for (auto itr = tmp_hdd_params.begin(); itr != tmp_hdd_params.end(); ++itr, ++hdd_index) {
+    if (!tmp_hdd_connected_flags[itr->first]) {
       continue;
     }
 
@@ -366,7 +417,7 @@ void HddMonitor::checkStatistics(
 
     switch (item) {
       case HddStatItem::READ_DATA_RATE: {
-        float read_data_rate = hdd_stats_[itr->first].read_data_rate_MBs_;
+        float read_data_rate = tmp_hdd_stats_[itr->first].read_data_rate_MBs_;
 
         if (read_data_rate >= itr->second.read_data_rate_warn_) {
           level = DiagStatus::WARN;
@@ -375,7 +426,7 @@ void HddMonitor::checkStatistics(
         val_str = fmt::format("{:.2f} MB/s", read_data_rate);
       } break;
       case HddStatItem::WRITE_DATA_RATE: {
-        float write_data_rate = hdd_stats_[itr->first].write_data_rate_MBs_;
+        float write_data_rate = tmp_hdd_stats_[itr->first].write_data_rate_MBs_;
 
         if (write_data_rate >= itr->second.write_data_rate_warn_) {
           level = DiagStatus::WARN;
@@ -384,7 +435,7 @@ void HddMonitor::checkStatistics(
         val_str = fmt::format("{:.2f} MB/s", write_data_rate);
       } break;
       case HddStatItem::READ_IOPS: {
-        float read_iops = hdd_stats_[itr->first].read_iops_;
+        float read_iops = tmp_hdd_stats_[itr->first].read_iops_;
 
         if (read_iops >= itr->second.read_iops_warn_) {
           level = DiagStatus::WARN;
@@ -393,7 +444,7 @@ void HddMonitor::checkStatistics(
         val_str = fmt::format("{:.2f} IOPS", read_iops);
       } break;
       case HddStatItem::WRITE_IOPS: {
-        float write_iops = hdd_stats_[itr->first].write_iops_;
+        float write_iops = tmp_hdd_stats_[itr->first].write_iops_;
 
         if (write_iops >= itr->second.write_iops_warn_) {
           level = DiagStatus::WARN;
@@ -405,8 +456,8 @@ void HddMonitor::checkStatistics(
         break;
     }
 
-    if (!hdd_stats_[itr->first].error_str_.empty()) {
-      error_str = hdd_stats_[itr->first].error_str_;
+    if (!tmp_hdd_stats_[itr->first].error_str_.empty()) {
+      error_str = tmp_hdd_stats_[itr->first].error_str_;
       stat.add(fmt::format("HDD {}: status", hdd_index), error_str);
       stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device_.c_str());
     } else {
@@ -426,8 +477,22 @@ void HddMonitor::checkStatistics(
     stat.summary(whole_level, stat_dicts_[static_cast<uint32_t>(item)].at(whole_level));
   }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+  // Check timeout has expired regarding reading HDD status
+  bool timeout_expired = false;
+  {
+    std::lock_guard<std::mutex> lock(hdd_status_timeout_mutex_);
+    timeout_expired = hdd_status_timeout_expired_;
+  }
+
+  if (!error_str.empty()) {
+    stat.summary(DiagStatus::ERROR, error_str);
+  } else if (timeout_expired) {
+    stat.summary(DiagStatus::WARN, "HDD status reading timeout expired");
+  } else {
+    stat.summary(whole_level, smart_dicts_[static_cast<uint32_t>(item)].at(whole_level));
+  }
+
+  stat.addf("execution time", "%f ms", tmp_elapsed_ms);
 }
 
 void HddMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -534,17 +599,18 @@ std::string HddMonitor::getDeviceFromMountPoint(const std::string & mount_point)
 
 void HddMonitor::onTimer()
 {
+  // execute HDD status check
   // Start to measure elapsed time
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
+  stop_watch.tic("hdd_status_execution_time");
 
   // Start timeout timer for reading HDD status
   {
-    std::lock_guard<std::mutex> lock(smart_timeout_mutex_);
-    smart_timeout_expired_ = false;
+    std::lock_guard<std::mutex> lock(hdd_status_timeout_mutex_);
+    hdd_status_timeout_expired_ = false;
   }
-  smart_timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(smart_timeout_), std::bind(&HddMonitor::onSmartTimeout, this));
+  timeout_timer_ = rclcpp::create_timer(
+    this, get_clock(), std::chrono::seconds(hdd_status_timeout_), std::bind(&HddMonitor::onHddStatusTimeout, this));
   
   std::map<std::string, bool> tmp_hdd_connected_flags;
   std::map<std::string, HddStat> tmp_hdd_stats;
@@ -554,7 +620,7 @@ void HddMonitor::onTimer()
   rclcpp::Time tmp_last_hdd_stat_update_time;
 
   {
-    std::lock_guard<std::mutex> lock(smart_mutex_);
+    std::lock_guard<std::mutex> lock(hdd_status_mutex_);
     tmp_hdd_connected_flags = hdd_connected_flags_;
     tmp_hdd_stats = hdd_stats_;
     tmp_connect_diag = connect_diag_;
@@ -567,17 +633,58 @@ void HddMonitor::onTimer()
   updateHddStatistics(tmp_last_hdd_stat_update_time, tmp_hdd_stats, tmp_hdd_connected_flags);
 
   // Returning from reading HDD status, stop timeout timer
-  smart_timeout_timer_->cancel();
+  timeout_timer_->cancel();
 
-  const double elapsed_ms = stop_watch.toc("execution_time");
+  double elapsed_ms = stop_watch.toc("hdd_status_execution_time");
+
   {
-    std::lock_guard<std::mutex> lock(smart_mutex_);
+    std::lock_guard<std::mutex> lock(hdd_status_mutex_);
     hdd_connected_flags_ = tmp_hdd_connected_flags;
     hdd_stats_ = tmp_hdd_stats;
     connect_diag_ = tmp_connect_diag;
     hdd_info_list_ = tmp_hdd_info_list;
-    smart_elapsed_ms_ = elapsed_ms;
+    hdd_status_elapsed_ms_ = elapsed_ms;
   }
+
+  // execute HDD usage check
+  // Start to measure elapsed time
+
+  stop_watch.tic("hdd_usage_execution_time");
+
+  // Start timeout timer for reading HDD usage
+  {
+    std::lock_guard<std::mutex> lock(hdd_usage_timeout_mutex_);
+    hdd_usage_timeout_expired_ = false;
+  }
+  timeout_timer_ = rclcpp::create_timer(
+    this, get_clock(), std::chrono::seconds(hdd_usage_timeout_), std::bind(&HddMonitor::onHddUsageTimeout, this));
+
+  std::vector<HddUsage> tmp_hdd_usages;
+  std::string tmp_sum_error_str;
+  std::string tmp_detail_error_str;
+
+  {
+    std::lock_guard<std::mutex> lock(hdd_usage_mutex_);
+    tmp_hdd_usages = hdd_usages_;
+    tmp_sum_error_str = hdd_usage_sum_error_str_;
+    tmp_detail_error_str = hdd_usage_detail_error_str_;
+  }
+
+  readHddUsage(tmp_hdd_connected_flags, tmp_hdd_usages, tmp_sum_error_str, tmp_detail_error_str);
+
+  // Returning from reading HDD usage, stop timeout timer
+  timeout_timer_->cancel();
+
+  elapsed_ms = stop_watch.toc("hdd_usage_execution_time");
+
+  {
+    std::lock_guard<std::mutex> lock(hdd_usage_mutex_);
+    hdd_usages_ = tmp_hdd_usages;
+    hdd_usage_sum_error_str_ = tmp_sum_error_str;
+    hdd_usage_detail_error_str_ = tmp_detail_error_str;
+    hdd_usage_elapsed_ms_ = elapsed_ms;
+  }
+
 }
 
 void HddMonitor::setInitialStatus()
@@ -588,11 +695,11 @@ void HddMonitor::setInitialStatus()
 
   // Start timeout timer for reading HDD status
   {
-    std::lock_guard<std::mutex> lock(smart_timeout_mutex_);
-    smart_timeout_expired_ = false;
+    std::lock_guard<std::mutex> lock(hdd_status_timeout_mutex_);
+    hdd_status_timeout_expired_ = false;
   }
-  smart_timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(smart_timeout_), std::bind(&HddMonitor::onSmartTimeout, this));
+  timeout_timer_ = rclcpp::create_timer(
+    this, get_clock(), std::chrono::seconds(hdd_status_timeout_), std::bind(&HddMonitor::onHddStatusTimeout, this));
   
   std::map<std::string, bool> tmp_hdd_connected_flags;
   std::map<std::string, HddStat> tmp_hdd_stats;
@@ -602,7 +709,7 @@ void HddMonitor::setInitialStatus()
   rclcpp::Time tmp_last_hdd_stat_update_time;
 
   {
-    std::lock_guard<std::mutex> lock(smart_mutex_);
+    std::lock_guard<std::mutex> lock(hdd_status_mutex_);
     tmp_hdd_connected_flags = hdd_connected_flags_;
     tmp_hdd_stats = hdd_stats_;
     tmp_connect_diag = connect_diag_;
@@ -620,28 +727,35 @@ void HddMonitor::setInitialStatus()
   startHddTransferMeasurement(tmp_last_hdd_stat_update_time, tmp_hdd_stats, tmp_hdd_connected_flags);
 
   // Returning from reading HDD status, stop timeout timer
-  smart_timeout_timer_->cancel();
+  timeout_timer_->cancel();
 
   const double elapsed_ms = stop_watch.toc("execution_time");
 
   {
-    std::lock_guard<std::mutex> lock(smart_mutex_);
+    std::lock_guard<std::mutex> lock(hdd_status_mutex_);
     hdd_connected_flags_ = tmp_hdd_connected_flags;
     hdd_stats_ = tmp_hdd_stats;
     connect_diag_ = tmp_connect_diag;
     hdd_info_list_ = tmp_hdd_info_list;
-    smart_elapsed_ms_ = elapsed_ms;
+    hdd_status_elapsed_ms_ = elapsed_ms;
   }
 }
 
-void HddMonitor::onSmartTimeout()
+void HddMonitor::onHddStatusTimeout()
 {
-  RCLCPP_WARN(get_logger(), " HDD Smart information Timeout occurred.");
-  std::lock_guard<std::mutex> lock(smart_timeout_mutex_);
-  smart_timeout_expired_ = true;
+  RCLCPP_WARN(get_logger(), " HDD Status Timeout occurred.");
+  std::lock_guard<std::mutex> lock(hdd_status_timeout_mutex_);
+  hdd_status_timeout_expired_ = true;
 }
 
-void HddMonitor::updateHddInfoList(diagnostic_updater::DiagnosticStatusWrapper & tmp_connect_diag, std::map<std::string, bool> & tmp_hdd_connected_flags, HddInfoList tmp_hdd_info_list)
+void HddMonitor::onHddUsageTimeout()
+{
+  RCLCPP_WARN(get_logger(), " HDD Usage Timeout occurred.");
+  std::lock_guard<std::mutex> lock(hdd_usage_timeout_mutex_);
+  hdd_usage_timeout_expired_ = true;
+}
+
+void HddMonitor::updateHddInfoList(diagnostic_updater::DiagnosticStatusWrapper & tmp_connect_diag, std::map<std::string, bool> & tmp_hdd_connected_flags, HddInfoList & tmp_hdd_info_list)
 {
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -850,6 +964,7 @@ void HddMonitor::updateHddConnections(std::map<std::string, bool> & tmp_hdd_conn
 
     // Get device name from mount point
     hdd_param.second.part_device_ = getDeviceFromMountPoint(hdd_param.first);
+    
     if (!hdd_param.second.part_device_.empty()) {
       // Check the existence of device file
       std::error_code ec;

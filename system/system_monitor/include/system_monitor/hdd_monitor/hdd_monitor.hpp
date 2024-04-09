@@ -107,6 +107,21 @@ struct HddStat
 };
 
 /**
+ * @brief HDD Usage
+ */
+struct HddUsage
+{
+  std::string device_;      //!< @brief device
+  std::string mount_point_;  //!< @brief mount point
+  unsigned int size_;         //!< @brief free space (MB)
+  unsigned int used_;        //!< @brief total space (MB)
+  unsigned int avail_;         //!< @brief used space (MB)
+  unsigned int use_;           //!< @brief usage (%)
+
+  HddUsage() : device_(""), mount_point_(""), size_(0), used_(0), avail_(0), use_(0) {}
+};
+
+/**
  * @brief SMART information items to check
  */
 enum class HddSmartInfoItem : uint32_t {
@@ -277,9 +292,14 @@ protected:
   void onTimer();
 
   /**
-   * @brief Timeout callback function for executing chronyc
+   * @brief Timeout callback function for reading HDD status
    */
-  void onSmartTimeout();
+  void onHddStatusTimeout();
+
+  /**
+   * @brief Timeout callback function for reading HDD usage
+   */
+  void onHddUsageTimeout();
 
   /**
    * @brief set initial status
@@ -287,9 +307,13 @@ protected:
   void setInitialStatus();
 
   /**
+   * @brief read Hdd usage
+  */
+  void readHddUsage(std::map<std::string, bool> & tmp_hdd_connected_flags, std::vector<HddUsage> & tmp_hdd_usages, std::string tmp_sum_error_str, std::string & tmp_detail_error_str);
+  /**
    * @brief update HDD information list
    */
-  void updateHddInfoList(diagnostic_updater::DiagnosticStatusWrapper & tmp_connect_diag, std::map<std::string, bool> & tmp_hdd_connected_flags, HddInfoList tmp_hdd_info_list);
+  void updateHddInfoList(diagnostic_updater::DiagnosticStatusWrapper & tmp_connect_diag, std::map<std::string, bool> & tmp_hdd_connected_flags, HddInfoList & tmp_hdd_info_list);
 
   /**
    * @brief start HDD transfer measurement
@@ -339,13 +363,13 @@ protected:
 
   int hdd_reader_port_;                         //!< @brief port number to connect to hdd_reader
   std::map<std::string, HddParam> hdd_params_;  //!< @brief list of error and warning levels
-  rclcpp::TimerBase::SharedPtr smart_timeout_timer_;       //!< @brief Timeout for reading smart HDD status
-  std::mutex smart_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading smart HDD status
-  bool smart_timeout_expired_;      //!< @brief Timeout for reading smart HDD status has expired or not
-  int smart_timeout_;                //!< @brief Timeout duration for reading smart HDD status
-  double smart_elapsed_ms_;          //!< @brief Execution time of reading smart HDD status
+  rclcpp::TimerBase::SharedPtr timeout_timer_;       //!< @brief Timeout for reading HDD infomation
+  std::mutex hdd_status_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading HDD status
+  bool hdd_status_timeout_expired_;      //!< @brief Timeout for reading HDD status has expired or not
+  int hdd_status_timeout_;                //!< @brief Timeout duration for reading HDD status
+  double hdd_status_elapsed_ms_;          //!< @brief Execution time of reading HDD status
 
-  std::mutex smart_mutex_;           //!< @brief Mutex for output from 
+  std::mutex hdd_status_mutex_;           //!< @brief Mutex for output from reading HDD status
   std::map<std::string, bool>
     hdd_connected_flags_;  //!< @brief list of flag whether HDD is connected
   std::map<std::string, uint32_t>
@@ -355,6 +379,16 @@ protected:
   diagnostic_updater::DiagnosticStatusWrapper connect_diag_;
   HddInfoList hdd_info_list_;               //!< @brief list of HDD information
   rclcpp::Time last_hdd_stat_update_time_;  //!< @brief last HDD statistics update time
+
+  std::mutex hdd_usage_mutex_;  //!< @brief Mutex for output from reading HDD usage
+  double hdd_usage_elapsed_ms_;  //!< @brief Execution time of reading HDD usage
+  int hdd_usage_timeout_;        //!< @brief Timeout duration for reading HDD usage
+  bool hdd_usage_timeout_expired_;  //!< @brief Timeout for reading HDD usage has expired or not
+  std::vector<HddUsage> hdd_usages_;  //!< @brief vector of HDD usages
+  std::mutex hdd_usage_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading HDD usage
+  std::string hdd_usage_sum_error_str_;  //!< @brief summary error string of HDD usage
+  std::string hdd_usage_detail_error_str_;  //!< @brief detail error string of HDD usage
+
 
   /**
    * @brief HDD SMART status messages
