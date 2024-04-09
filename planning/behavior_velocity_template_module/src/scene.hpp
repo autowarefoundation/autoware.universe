@@ -26,9 +26,10 @@ namespace autoware
 namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using ::behavior_path_planner::StopReason;
+using ::behavior_velocity_planner::StopReason;
+using ::behavior_velocity_planner::SceneModuleInterface;
 
-class TemplateModule : public SceneModuleInterface
+class TemplateModule : public ::behavior_velocity_planner::SceneModuleInterface
 {
 public:
   TemplateModule(

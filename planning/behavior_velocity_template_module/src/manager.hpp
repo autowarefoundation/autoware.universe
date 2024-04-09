@@ -39,7 +39,7 @@ namespace behavior_velocity_planner
  *
  * @param node A reference to the ROS node.
  */
-class TemplateModuleManager : public SceneModuleManagerInterface
+class TemplateModuleManager : public ::behavior_velocity_planner::SceneModuleManagerInterface
 {
 public:
   explicit TemplateModuleManager(rclcpp::Node & node);
@@ -86,7 +86,7 @@ private:
  * The TemplateModulePlugin class is used to integrate the TemplateModuleManager into the Behavior
  * Velocity Planner.
  */
-class TemplateModulePlugin : public PluginWrapper<TemplateModuleManager>
+class TemplateModulePlugin : public ::behavior_velocity_planner::PluginWrapper<TemplateModuleManager>
 {
 };
 
