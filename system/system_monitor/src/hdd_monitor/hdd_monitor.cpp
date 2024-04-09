@@ -47,7 +47,9 @@ HddMonitor::HddMonitor(const rclcpp::NodeOptions & options)
   hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635)),
   last_hdd_stat_update_time_{0, 0, this->get_clock()->get_clock_type()},
   hdd_status_timeout_(declare_parameter<int>("hdd_status_timeout", 5)),
-  hdd_usage_timeout_(declare_parameter<int>("hdd_usage_timeout", 5))
+  hdd_usage_timeout_(declare_parameter<int>("hdd_usage_timeout", 5)),
+  hdd_status_timeout_expired_(false),
+  hdd_usage_timeout_expired_(false)
 {
   using namespace std::literals::chrono_literals;
 
