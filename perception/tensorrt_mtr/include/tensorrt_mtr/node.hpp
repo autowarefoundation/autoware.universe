@@ -28,7 +28,9 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object_kinematics.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -46,7 +48,9 @@ namespace trt_mtr
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedObjectKinematics;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 
@@ -133,6 +137,16 @@ private:
    */
   std::vector<size_t> extractTargetAgent(const std::vector<AgentHistory> & histories);
 
+  /**
+   * @brief Generate `PredictedObject` from `PredictedTrajectory`.
+   *
+   * @param object
+   * @param trajectory
+   * @return PredictedObject
+   */
+  PredictedObject generatePredictedObject(
+    const TrackedObject & object, const PredictedTrajectory & trajectory);
+
   // Object ID for ego vehicle
   const std::string EGO_ID{"EGO"};
 
@@ -143,6 +157,7 @@ private:
 
   // Agent history
   std::map<std::string, AgentHistory> agent_history_map_;
+  std::map<std::string, TrackedObject> object_msg_map_;
 
   // Pose transform listener
   tier4_autoware_utils::TransformListener transform_listener_;

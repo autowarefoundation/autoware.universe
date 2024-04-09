@@ -16,6 +16,7 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
+#include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <tf2/utils.h>
@@ -131,7 +132,7 @@ AgentState trackedObjectToAgentState(const TrackedObject & object, const bool is
     static_cast<float>(twist.linear.y),
     static_cast<float>(accel.linear.x),
     static_cast<float>(accel.linear.y),
-    static_cast<float>(valid)};
+    valid};
 }
 
 /**
@@ -174,7 +175,7 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
 
   const auto current_time = rclcpp::Time(object_msg->header.stamp).seconds();
 
-  constexpr int max_time_length = 10;  // TODO(ktro2828): use parameter
+  constexpr size_t max_time_length = 10;  // TODO(ktro2828): use parameter
   timestamps_.emplace_back(current_time);
   // TODO(ktro2828): update timestamps
   if (timestamps_.size() < max_time_length) {
@@ -186,12 +187,15 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
   removeAncientAgentHistory(current_time, object_msg);
   updateAgentHistory(current_time, object_msg);
 
+  std::vector<std::string> object_ids;
   std::vector<AgentHistory> histories;
   std::vector<size_t> label_indices;
   histories.reserve(agent_history_map_.size());
+  object_ids.reserve(agent_history_map_.size());
   label_indices.reserve(agent_history_map_.size());
   int sdc_index = -1;
   for (const auto & [object_id, history] : agent_history_map_) {
+    object_ids.emplace_back(object_id);
     histories.emplace_back(history);
     label_indices.emplace_back(history.label_index());
     if (object_id == EGO_ID) {
@@ -216,7 +220,18 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
     RCLCPP_WARN(get_logger(), "Inference failed");
     return;
   }
-  // TODO(ktro2828): add post-process operation
+
+  PredictedObjects output;
+  output.header = object_msg->header;
+  output.objects.reserve(target_indices.size());
+  for (size_t i = 0; i < target_indices.size(); ++i) {
+    const auto & trajectory = trajectories.at(i);
+    const auto & target_idx = target_indices.at(i);
+    const auto & object_id = object_ids.at(target_idx);
+    const auto & object = object_msg_map_.at(object_id);
+    auto predicted_object = generatePredictedObject(object, trajectory);
+    output.objects.emplace_back(predicted_object);
+  }
 }
 
 void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
@@ -330,6 +345,7 @@ void MTRNode::updateAgentHistory(
 
     const auto & object_id = tier4_autoware_utils::toHexString(object.object_id);
     observed_ids.emplace_back(object_id);
+    object_msg_map_.emplace(object_id, object);
     auto state = trackedObjectToAgentState(object, true);
 
     constexpr int max_time_length = 10;  // TODO(ktro2828): use parameter
@@ -397,6 +413,48 @@ std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> 
   }
 
   return target_indices;
+}
+
+PredictedObject MTRNode::generatePredictedObject(
+  const TrackedObject & object, const PredictedTrajectory & trajectory)
+{
+  const auto & init_pose_with_cov = object.kinematics.pose_with_covariance;
+  const auto & init_twist_with_cov = object.kinematics.twist_with_covariance;
+  const auto & init_accel_with_cov = object.kinematics.acceleration_with_covariance;
+
+  PredictedObject predicted_object;
+  predicted_object.kinematics.initial_pose_with_covariance = init_pose_with_cov;
+  predicted_object.kinematics.initial_twist_with_covariance = init_twist_with_cov;
+  predicted_object.kinematics.initial_acceleration_with_covariance = init_accel_with_cov;
+  predicted_object.classification = object.classification;
+  predicted_object.shape = object.shape;
+  predicted_object.object_id = object.object_id;
+
+  float max_existence_probability = 0.0f;
+  for (const auto & mode : trajectory.getModes()) {
+    PredictedPath waypoints;
+    waypoints.confidence = mode.score;
+    waypoints.time_step = rclcpp::Duration::from_seconds(0.1);  // TODO(ktro282): use a parameter
+    waypoints.path.reserve(mode.NumFuture);
+    if (max_existence_probability < mode.score) {
+      max_existence_probability = mode.score;
+    }
+    for (const auto & state : mode.getWaypoints()) {
+      geometry_msgs::msg::Pose predicted_pose;
+      predicted_pose.position.x = static_cast<double>(state.x());
+      predicted_pose.position.y = static_cast<double>(state.y());
+      predicted_pose.position.z = init_pose_with_cov.pose.position.z;
+      predicted_pose.orientation = init_pose_with_cov.pose.orientation;
+      waypoints.path.emplace_back(predicted_pose);
+      if (waypoints.path.size() >= waypoints.path.max_size()) {
+        break;
+      }
+    }
+    predicted_object.kinematics.predicted_paths.emplace_back(waypoints);
+  }
+  predicted_object.existence_probability = max_existence_probability;
+
+  return predicted_object;
 }
 
 }  // namespace trt_mtr
