@@ -26,6 +26,7 @@
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 #include <lanelet2_core/Forward.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
