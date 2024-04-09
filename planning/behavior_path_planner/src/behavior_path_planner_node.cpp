@@ -826,6 +826,8 @@ void BehaviorPathPlannerNode::onOperationMode(const OperationModeState::ConstSha
 void BehaviorPathPlannerNode::on_external_velocity_limiter(
   const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg)
 {
+  // Note: Using this parameter during path planning might cause unexpected deceleration or jerk.
+  // Therefore, do not use it for anything other than safety checks.
   if (!msg) {
     return;
   }
