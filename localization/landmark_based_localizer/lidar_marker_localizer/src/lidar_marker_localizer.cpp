@@ -360,8 +360,8 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
           continue;
         }
 
-        min_intensity = std::min(min_intensity, average_intensity[i+ j]);
-        max_intensity = std::max(max_intensity, average_intensity[i+ j]);
+        min_intensity = std::min(min_intensity, average_intensity[i + j]);
+        max_intensity = std::max(max_intensity, average_intensity[i + j]);
       }
 
       if (max_intensity <= min_intensity) {
@@ -377,12 +377,16 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
 
         if (param_.intensity_pattern[j] == 1) {
           // check positive
-          if (average_intensity[i+ j] > center_intensity + param_.match_intensity_difference_threshold) {
+          if (
+            average_intensity[i + j] >
+            center_intensity + param_.match_intensity_difference_threshold) {
             pos++;
           }
         } else if (param_.intensity_pattern[j] == -1) {
           // check negative
-          if (average_intensity[i+ j] < center_intensity - param_.match_intensity_difference_threshold) {
+          if (
+            average_intensity[i + j] <
+            center_intensity - param_.match_intensity_difference_threshold) {
             neg++;
           }
         } else {
