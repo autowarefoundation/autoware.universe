@@ -25,7 +25,8 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
-  auto object_position_filter = std::make_shared<object_position_filter::ObjectPositionFilterNode>(options);
+  auto object_position_filter =
+    std::make_shared<object_position_filter::ObjectPositionFilterNode>(options);
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(object_position_filter);
   exec.spin();

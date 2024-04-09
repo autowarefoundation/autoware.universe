@@ -25,7 +25,8 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
-  auto occupancy_grid_based_validator = std::make_shared<occupancy_grid_based_validator::OccupancyGridBasedValidator>(options);
+  auto occupancy_grid_based_validator =
+    std::make_shared<occupancy_grid_based_validator::OccupancyGridBasedValidator>(options);
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(occupancy_grid_based_validator);
   exec.spin();

@@ -25,7 +25,8 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
-  auto object_lanelet_filter = std::make_shared<object_lanelet_filter::ObjectLaneletFilterNode>(options);
+  auto object_lanelet_filter =
+    std::make_shared<object_lanelet_filter::ObjectLaneletFilterNode>(options);
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(object_lanelet_filter);
   exec.spin();

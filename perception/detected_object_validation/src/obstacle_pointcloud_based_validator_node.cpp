@@ -25,7 +25,9 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
-  auto obstacle_pointcloud_based_validator = std::make_shared<obstacle_pointcloud_based_validator::ObstaclePointCloudBasedValidator>(options);
+  auto obstacle_pointcloud_based_validator =
+    std::make_shared<obstacle_pointcloud_based_validator::ObstaclePointCloudBasedValidator>(
+      options);
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(obstacle_pointcloud_based_validator);
   exec.spin();
