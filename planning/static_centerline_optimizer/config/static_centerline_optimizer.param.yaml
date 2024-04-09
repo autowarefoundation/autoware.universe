@@ -1,4 +1,5 @@
 /**:
   ros__parameters:
+    centerline_source: "optimization_trajectory_planning" # select from "optimization_trajectory_planning" and "ego_trajectory_from_bag"
     marker_color: ["FF0000", "00FF00", "0000FF"]
     marker_color_dist_thresh : [0.1, 0.2, 0.3]
