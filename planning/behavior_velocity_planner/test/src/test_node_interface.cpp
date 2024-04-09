@@ -50,7 +50,7 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
   const auto planning_test_utils_dir =
     ament_index_cpp::get_package_share_directory("planning_test_utils");
   const auto behavior_velocity_planner_dir =
-    ament_index_cpp::get_package_share_directory("behavior_velocity_planner");
+    ament_index_cpp::get_package_share_directory("autoware_behavior_velocity_planner");
   const auto motion_velocity_smoother_dir =
     ament_index_cpp::get_package_share_directory("motion_velocity_smoother");
 
@@ -153,6 +153,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
 
   // test with empty path_with_lane_id
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithAbnormalPathWithLaneId(test_target_node));
+
   rclcpp::shutdown();
 }
 

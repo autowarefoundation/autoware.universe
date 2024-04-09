@@ -53,7 +53,7 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
 
 BehaviorVelocityPlannerManager::BehaviorVelocityPlannerManager()
 : plugin_loader_(
-    "behavior_velocity_planner", "autoware::behavior_velocity_planner::PluginInterface")
+    "autoware_behavior_velocity_planner", "autoware::behavior_velocity_planner::PluginInterface")
 {
 }
 
