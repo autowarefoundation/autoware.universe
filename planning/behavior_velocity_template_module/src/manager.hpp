@@ -55,7 +55,7 @@ public:
   const char * getModuleName() override { return "template"; }
 
 private:
-  double dummy_parameter{0.0};
+  double dummy_parameter_{0.0};
 
   /**
    * @brief Launch new modules based on the provided path.
