@@ -25,7 +25,8 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
-  auto map_based_prediction = std::make_shared<map_based_prediction::MapBasedPredictionNode>(options);
+  auto map_based_prediction =
+    std::make_shared<map_based_prediction::MapBasedPredictionNode>(options);
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(map_based_prediction);
   exec.spin();
