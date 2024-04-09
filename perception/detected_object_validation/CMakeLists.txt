@@ -65,24 +65,36 @@ ament_auto_add_library(object_position_filter SHARED
   src/utils.cpp
 )
 
-rclcpp_components_register_node(obstacle_pointcloud_based_validator
-  PLUGIN "obstacle_pointcloud_based_validator::ObstaclePointCloudBasedValidator"
-  EXECUTABLE obstacle_pointcloud_based_validator_node
+ament_auto_add_executable(obstacle_pointcloud_based_validator_node
+  src/obstacle_pointcloud_based_validator_node.cpp
 )
 
-rclcpp_components_register_node(object_lanelet_filter
-  PLUGIN "object_lanelet_filter::ObjectLaneletFilterNode"
-  EXECUTABLE object_lanelet_filter_node
+target_link_libraries(obstacle_pointcloud_based_validator_node
+  obstacle_pointcloud_based_validator glog
 )
 
-rclcpp_components_register_node(object_position_filter
-  PLUGIN "object_position_filter::ObjectPositionFilterNode"
-  EXECUTABLE object_position_filter_node
+ament_auto_add_executable(object_lanelet_filter_node
+  src/object_lanelet_filter_node.cpp
 )
 
-rclcpp_components_register_node(occupancy_grid_based_validator
-  PLUGIN "occupancy_grid_based_validator::OccupancyGridBasedValidator"
-  EXECUTABLE occupancy_grid_based_validator_node
+target_link_libraries(object_lanelet_filter_node
+  object_lanelet_filter glog
+)
+
+ament_auto_add_executable(object_position_filter_node
+  src/object_position_filter_node.cpp
+)
+
+target_link_libraries(object_position_filter_node
+  object_position_filter glog
+)
+
+ament_auto_add_executable(occupancy_grid_based_validator_node
+  src/occupancy_grid_based_validator_node.cpp
+)
+
+target_link_libraries(occupancy_grid_based_validator_node
+  occupancy_grid_based_validator glog
 )
 
 ament_auto_package(INSTALL_TO_SHARE
