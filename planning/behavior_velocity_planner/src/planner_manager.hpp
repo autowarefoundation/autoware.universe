@@ -40,6 +40,9 @@ namespace autoware
 {
 namespace behavior_velocity_planner
 {
+using ::behavior_velocity_planner::PlannerData;
+using ::behavior_velocity_planner::PluginInterface;
+
 class BehaviorVelocityPlannerManager
 {
 public:
