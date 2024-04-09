@@ -25,7 +25,8 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
-  auto object_association_merger = std::make_shared<object_association::ObjectAssociationMergerNode>(options);
+  auto object_association_merger =
+    std::make_shared<object_association::ObjectAssociationMergerNode>(options);
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(object_association_merger);
   exec.spin();
