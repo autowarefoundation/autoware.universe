@@ -305,19 +305,8 @@ void LidarMarkerLocalizer::service_trigger_node(
 std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   const PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
-  const std::string sensor_frame = points_msg_ptr->header.frame_id;
-  // get sensor_frame pose to base_link
-  // TransformStamped transform_sensor_to_base_link;
-  // try
-  // {
-  //   transform_sensor_to_base_link = tf_buffer_->lookupTransform(
-  //   "base_link", sensor_frame, tf2::TimePointZero);
-  // }
-  // catch (tf2::TransformException & ex)
-  // {
-  //   RCLCPP_WARN(get_logger(), "cannot get base_link to %s transform. %s", sensor_frame,
-  //   ex.what());
-  // }
+  // TODO (YamatoAndo)
+  // Transform sensor_frame to base_link
 
   pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
     new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
