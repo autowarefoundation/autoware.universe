@@ -4,7 +4,7 @@
   <name>auto_parking</name>
   <version>0.0.0</version>
   <description>The auto_parking package</description>
-  <maintainer email="aswinvijay807@gmail.com">aswinvijay</maintainer>
+  <maintainer email="aswinvijay807@gmail.com">Aswin Vijay</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
@@ -22,6 +22,7 @@
   <depend>nav_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tf2</depend>
+  <depend>std_srvs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

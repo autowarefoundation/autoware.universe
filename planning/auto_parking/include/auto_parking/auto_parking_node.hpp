@@ -33,6 +33,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
@@ -90,7 +92,6 @@ public:
   void onTimer();
   void filterGoalPoseinParkingLot(const lanelet::ConstLineString3d center_line, Pose& goal);
   bool findParkingSpace();
-  //void getGoalToParkingSpace();
   
   bool isInParkingLot();
   bool initAutoParking();
@@ -98,6 +99,9 @@ public:
 
   void onEngage(EngageMsg::ConstSharedPtr msg);
   void engageAutonomous();
+  void onSetActiveStatus(
+    const std_srvs::srv::SetBool::Request::SharedPtr req, 
+    std_srvs::srv::SetBool::Response::SharedPtr res);
 
   // functions used in the fpa constructor
   PlannerCommonParam getPlannerCommonParam();
@@ -106,15 +110,19 @@ public:
 private:
   // ros
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<PoseStamped>::SharedPtr goal_pose_pub_;
-
   nav_msgs::msg::Odometry::ConstSharedPtr odom_;
+
+  rclcpp::Publisher<PoseStamped>::SharedPtr goal_pose_pub_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr active_status_pub_;
   
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_map_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr lanelet_map_sub_;
   rclcpp::Subscription<EngageMsg>::SharedPtr engage_sub_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_sub_;
+
   rclcpp::Client<EngageSrv>::SharedPtr client_engage_;
+
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr srv_set_active_;
 
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
   std::shared_ptr<lanelet::ConstPolygon3d> nearest_parking_lot_;
@@ -124,7 +132,7 @@ private:
   lanelet::ConstLanelets parking_lot_lanelets_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_;
 
-  // fpa algo
+  // fpa algo vars
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::unique_ptr<AbstractPlanningAlgorithm> algo_;
@@ -143,8 +151,8 @@ private:
   bool set_parking_lot_goal_;
   bool set_parking_space_goal_;
   bool active_;
-
   bool is_engaged_;
+
 };
 }  // namespace auto_parking
 #endif  // AUTO_PARKING__AUTO_PARKING_NODE_HPP_

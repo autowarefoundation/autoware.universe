@@ -54,7 +54,7 @@ using PoseStamped = geometry_msgs::msg::PoseStamped;
 
 namespace 
 {
-
+// get nearest parking lot by distance
 std::shared_ptr<lanelet::ConstPolygon3d> filterNearestParkinglot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const lanelet::BasicPoint2d & current_position)
@@ -126,6 +126,20 @@ void AutoParkingNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr m
 void AutoParkingNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
 {
   occupancy_grid_ = msg;
+}
+
+void AutoParkingNode::onSetActiveStatus(
+  const std_srvs::srv::SetBool::Request::SharedPtr req,
+  std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  if(req->data) {
+    reset();
+    active_ = true;
+  } else {
+    active_ = false;
+  }
+  res->success = true;
+  return;
 }
 
 PlannerCommonParam AutoParkingNode::getPlannerCommonParam()
@@ -342,14 +356,24 @@ void AutoParkingNode::reset()
 {
   set_parking_lot_goal_ = false;
   set_parking_space_goal_ = false;
-  active_ = true;
+  active_ = false;
 }
 
 void AutoParkingNode::onTimer()
 {
+  // Publish active status message
+  std_msgs::msg::Bool is_active_msg;
+  is_active_msg.data = active_;
+  active_status_pub_->publish(is_active_msg);
+
+  if (!active_){
+    return;
+  }
+
   // Check all inputs are ready
   if (!odom_ || !lanelet_map_ptr_ || !routing_graph_ptr_ ||
-      !engage_sub_ || !client_engage_ || !active_) {
+      !engage_sub_ || !client_engage_) {
+    active_ = false;
     return;
   }
 
@@ -357,12 +381,18 @@ void AutoParkingNode::onTimer()
   current_pose_.header = odom_->header;
 
   if (current_pose_.header.frame_id == "") {
+    active_ = false;
     return;
   }
 
   // Publish parking lot entrance goal
   if(!set_parking_lot_goal_){
-    if(!initAutoParking()){ return; }
+    // Initialize variables
+    if(!initAutoParking()){ 
+      RCLCPP_INFO(get_logger(), "Auto-parking: Initialization failed!");
+      active_ = false;
+      return; 
+    }
     current_goal_.header.frame_id = odom_->header.frame_id;
     current_goal_.header.stamp = rclcpp::Time();
     current_goal_.pose = parking_goal_;
@@ -371,12 +401,10 @@ void AutoParkingNode::onTimer()
     set_parking_lot_goal_ = true;
   }
 
-  // If stopped replan: TODO
-  //const auto is_vehicle_stopped = stop_checker_->isVehicleStopped(1.0);
-
   // Arrived at parking lot exit without finding parking space
   if(set_parking_lot_goal_ && isArrived(parking_goal_)){
     RCLCPP_INFO(get_logger(), "Auto-parking: Failed to find parking space");
+    active_ = false;
     return;
   }
   
@@ -393,6 +421,30 @@ void AutoParkingNode::onTimer()
     }
   }
 
+  // Check if astar goal is still valid
+  // else replan
+  if(set_parking_space_goal_ && 
+     isInParkingLot() &&
+     occupancy_grid_)
+  {
+    // Set occupancy map and current pose
+    algo_->setMap(*occupancy_grid_);
+    const auto current_pose_in_costmap_frame = transformPose(
+    current_pose_.pose,
+    getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
+    const auto goal_pose_in_costmap_frame = transformPose(
+    current_goal_.pose, 
+    getTransform(occupancy_grid_->header.frame_id, current_goal_.header.frame_id));
+    bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
+    if(!result) { 
+      set_parking_space_goal_ = false;
+      current_goal_.pose = parking_goal_;
+      goalPublisher(current_goal_);
+      set_parking_lot_goal_ = true;
+      return;
+    }
+  }
+
   // Arrived at parking space goal
   if(set_parking_space_goal_ && isArrived(current_goal_.pose)){
     RCLCPP_INFO(get_logger(), "Auto-parking: Complete!");
@@ -400,8 +452,12 @@ void AutoParkingNode::onTimer()
     return;
   }
 
+  // If ego stopped/stuck replan: TODO
+  // const auto is_vehicle_stopped = stop_checker_->isVehicleStopped(1.0);
+
   // Engage autonomous once a goal is set
-  // For smooth transition remove vehicle stopping after publishing goal pose in freespace planner node
+  // For smooth transition remove vehicle stopping after 
+  // publishing goal pose in freespace planner node
   if(!is_engaged_ && !isArrived(current_goal_.pose)){
     engageAutonomous();
   }
@@ -430,11 +486,11 @@ AutoParkingNode::AutoParkingNode(const rclcpp::NodeOptions & node_options)
 
   // Subscribers
   {
-    sub_lanelet_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+    lanelet_map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/lanelet_map_bin", rclcpp::QoS{10}.transient_local(),
     std::bind(&AutoParkingNode::onMap, this, std::placeholders::_1));
 
-    sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", rclcpp::QoS{100},
     std::bind(&AutoParkingNode::onOdometry, this, std::placeholders::_1));
 
@@ -450,6 +506,15 @@ AutoParkingNode::AutoParkingNode(const rclcpp::NodeOptions & node_options)
     rclcpp::QoS qos{1};
     qos.transient_local();  // latch
     goal_pose_pub_ = this->create_publisher<PoseStamped>("~/output/fixed_goal", qos);
+    active_status_pub_ = this->create_publisher<std_msgs::msg::Bool>("~/output/active_status", qos);
+  }
+
+  // Service
+  {
+    srv_set_active_ = create_service<std_srvs::srv::SetBool>(
+    "~/service/set_active", 
+    std::bind(
+    &AutoParkingNode::onSetActiveStatus, this, std::placeholders::_1, std::placeholders::_2));
   }
   
   // Client
