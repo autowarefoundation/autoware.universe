@@ -207,7 +207,7 @@ void MultiObjectTracker::onMeasurement(
     publish(measurement_time);
   } else {
     // Publish if the next publish time is close
-    const double minimum_publish_interval = publisher_period_ * 0.4;  // 40% of the period
+    const double minimum_publish_interval = publisher_period_ * 0.70;  // 70% of the period
     if ((this->now() - last_published_time_).seconds() > minimum_publish_interval) {
       checkAndPublish(this->now());
     }
@@ -247,7 +247,7 @@ void MultiObjectTracker::onTimer()
   // check the publish period
   const auto elapsed_time = (current_time - last_published_time_).seconds();
   // if the elapsed time is over the period, publish objects with prediction
-  constexpr double maximum_latency_ratio = 1.4;  // 40% margin
+  constexpr double maximum_latency_ratio = 1.11;  // 11% margin
   const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
   if (elapsed_time > maximum_publish_latency) {
     checkAndPublish(current_time);
