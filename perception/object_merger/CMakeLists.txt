@@ -28,9 +28,12 @@ target_link_libraries(object_association_merger
   Eigen3::Eigen
 )
 
-rclcpp_components_register_node(object_association_merger
-  PLUGIN "object_association::ObjectAssociationMergerNode"
-  EXECUTABLE object_association_merger_node
+ament_auto_add_executable(object_association_merger_node
+  src/object_association_merger/main.cpp
+)
+
+target_link_libraries(object_association_merger_node
+  object_association_merger glog
 )
 
 ament_auto_package(INSTALL_TO_SHARE
