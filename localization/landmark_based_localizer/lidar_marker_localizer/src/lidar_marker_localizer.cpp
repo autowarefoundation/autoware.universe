@@ -167,7 +167,7 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
     std::stringstream message;
     message << "Not receive the landmark information. Please check if the vector map is being "
                "published and if the landmark information is correctly specified.";
-    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     diagnostics_module_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return;
@@ -183,7 +183,7 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
     std::stringstream message;
     message << "Could not get self_pose. Please check if the self pose is being published and if "
                "the timestamp of the self pose is correctly specified";
-    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     diagnostics_module_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return;
@@ -219,7 +219,7 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
       message << "Could not detect marker, because the distance from self_pose to nearest_marker "
                  "is too far ("
               << distance_from_self_pose_to_nearest_marker << " [m]).";
-      // RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+      // RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
       diagnostics_module_->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::OK, message.str());
     } else {
@@ -227,7 +227,7 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
       message << "Could not detect marker, although the distance from self_pose to nearest_marker "
                  "is near ("
               << distance_from_self_pose_to_nearest_marker << " [m]).";
-      RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+      RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
       diagnostics_module_->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     }
@@ -263,7 +263,7 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
     std::stringstream message;
     message << "The distance from lanelet2 to the detect marker is too far(" << diff_norm
             << " [m]). The limit is " << param_.limit_distance_from_self_pose_to_marker << ".";
-    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, message.str());
+    RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     diagnostics_module_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return;
@@ -313,7 +313,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
 
   if (points_ptr->empty()) {
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No points!");
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "No points!");
     is_detected_marker_ = false;
     return std::vector<landmark_manager::Landmark>{};
   }
