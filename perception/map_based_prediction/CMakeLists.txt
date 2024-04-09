@@ -21,9 +21,12 @@ ament_auto_add_library(map_based_prediction_node SHARED
 
 target_link_libraries(map_based_prediction_node glog::glog)
 
-rclcpp_components_register_node(map_based_prediction_node
-  PLUGIN "map_based_prediction::MapBasedPredictionNode"
-  EXECUTABLE map_based_prediction
+ament_auto_add_executable(map_based_prediction
+  src/main.cpp
+)
+
+target_link_libraries(map_based_prediction
+  map_based_prediction_node glog
 )
 
 ament_auto_package(
