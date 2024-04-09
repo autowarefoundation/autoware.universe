@@ -24,6 +24,7 @@
 
 #include <rclcpp/time.hpp>
 
+#include "autoware_auto_perception_msgs/msg/object_classification.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include <unique_identifier_msgs/msg/uuid.hpp>
@@ -115,14 +116,10 @@ private:
   DetectionCountMap initializeDetectionCountMap()
   {
     return {
-      {0, 0},  // UNKNOWN
-      {1, 0},  // CAR
-      {2, 0},  // TRUCK
-      {3, 0},  // BUS
-      {4, 0},  // TRAILER
-      {5, 0},  // MOTORCYCLE
-      {6, 0},  // BICYCLE
-      {7, 0},  // PEDESTRIAN
+      {ObjectClassification::UNKNOWN, 0}, {ObjectClassification::CAR, 0},
+      {ObjectClassification::TRUCK, 0},   {ObjectClassification::BUS, 0},
+      {ObjectClassification::TRAILER, 0}, {ObjectClassification::MOTORCYCLE, 0},
+      {ObjectClassification::BICYCLE, 0}, {ObjectClassification::PEDESTRIAN, 0},
     };
   }
 
