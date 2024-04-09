@@ -86,7 +86,8 @@ private:
  * The TemplateModulePlugin class is used to integrate the TemplateModuleManager into the Behavior
  * Velocity Planner.
  */
-class TemplateModulePlugin : public ::behavior_velocity_planner::PluginWrapper<TemplateModuleManager>
+class TemplateModulePlugin
+: public ::behavior_velocity_planner::PluginWrapper<TemplateModuleManager>
 {
 };
 
