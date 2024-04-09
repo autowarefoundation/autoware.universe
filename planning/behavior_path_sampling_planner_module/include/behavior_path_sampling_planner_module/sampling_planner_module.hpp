@@ -93,7 +93,7 @@ public:
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
   void updateData() override;
-  bool isRootLaneletToBeUpdated() const override
+  bool isCurrentRouteLaneletToBeUpdated() const override
   {
     return getCurrentStatus() == ModuleStatus::SUCCESS;
   }

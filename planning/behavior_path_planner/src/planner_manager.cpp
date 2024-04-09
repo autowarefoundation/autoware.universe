@@ -90,7 +90,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   debug_info_.clear();
 
   if (!current_route_lanelet_) {
-    current_route_lanelet_ = updateRootLanelet(data);
+    current_route_lanelet_ = updateCurrentRouteLanelet(data);
   }
 
   std::for_each(
@@ -439,7 +439,7 @@ BehaviorModuleOutput PlannerManager::getReferencePath(const std::shared_ptr<Plan
   if (could_calculate_closest_lanelet)
     current_route_lanelet_ = closest_lane;
   else
-    current_route_lanelet_ = updateRootLanelet(data);
+    current_route_lanelet_ = updateCurrentRouteLanelet(data);
   return utils::getReferencePath(*current_route_lanelet_, data);
 }
 
@@ -800,9 +800,9 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
       std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), success_module_cond);
 
     if (std::any_of(itr, approved_module_ptrs_.end(), [](const auto & m) {
-          return m->isRootLaneletToBeUpdated();
+          return m->isCurrentRouteLaneletToBeUpdated();
         })) {
-      current_route_lanelet_ = updateRootLanelet(data);
+      current_route_lanelet_ = updateCurrentRouteLanelet(data);
     }
 
     std::for_each(itr, approved_module_ptrs_.end(), [&](auto & m) {
@@ -874,10 +874,11 @@ void PlannerManager::updateCandidateModules(
   sortByPriority(candidate_module_ptrs_);
 }
 
-void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
+void PlannerManager::resetCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data)
 {
+  std::cout << "*resetCurrentRouteLanelet\n";
   if (!current_route_lanelet_) {
-    current_route_lanelet_ = updateRootLanelet(data);
+    current_route_lanelet_ = updateCurrentRouteLanelet(data);
     return;
   }
 
@@ -885,25 +886,25 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
   const bool is_lane_change_running = std::invoke([&]() {
     const auto lane_change_itr = std::find_if(
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
-      [](const auto & m) { return m->isRootLaneletToBeUpdated(); });
+      [](const auto & m) { return m->isCurrentRouteLaneletToBeUpdated(); });
     return lane_change_itr != approved_module_ptrs_.end();
   });
   if (is_lane_change_running) {
     return;
   }
 
-  const auto root_lanelet = updateRootLanelet(data);
+  const auto current_route_lanelet = updateCurrentRouteLanelet(data);
 
-  // if root_lanelet is not route lanelets, reset root lanelet.
+  // if current_route_lanelet is not route lanelets, reset root lanelet.
   // this can be caused by rerouting.
   const auto & route_handler = data->route_handler;
   if (!route_handler->isRouteLanelet(current_route_lanelet_.value())) {
-    current_route_lanelet_ = root_lanelet;
+    current_route_lanelet_ = current_route_lanelet;
     return;
   }
 
   // check ego is in same lane
-  if (current_route_lanelet_.value().id() == root_lanelet.id()) {
+  if (current_route_lanelet_.value().id() == current_route_lanelet.id()) {
     return;
   }
 
@@ -911,7 +912,7 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
   const auto next_lanelets =
     route_handler->getRoutingGraphPtr()->following(current_route_lanelet_.value());
   for (const auto & next : next_lanelets) {
-    if (next.id() == root_lanelet.id()) {
+    if (next.id() == current_route_lanelet.id()) {
       return;
     }
   }
@@ -926,7 +927,7 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
     }
   }
 
-  current_route_lanelet_ = root_lanelet;
+  current_route_lanelet_ = current_route_lanelet;
 
   RCLCPP_INFO_EXPRESSION(logger_, verbose_, "change ego's following lane. reset.");
 }

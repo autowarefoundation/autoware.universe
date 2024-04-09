@@ -244,7 +244,7 @@ public:
    * @param planner data.
    * @details this function is called only when it is in disengage and drive by manual.
    */
-  void resetRootLanelet(const std::shared_ptr<PlannerData> & data);
+  void resetCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data);
 
   /**
    * @brief show planner manager internal condition.
@@ -366,7 +366,7 @@ private:
    * @param planner data.
    * @return root lanelet.
    */
-  lanelet::ConstLanelet updateRootLanelet(const std::shared_ptr<PlannerData> & data) const
+  lanelet::ConstLanelet updateCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data) const
   {
     lanelet::ConstLanelet ret{};
     data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);

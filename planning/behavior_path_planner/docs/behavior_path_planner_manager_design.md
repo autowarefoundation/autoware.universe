@@ -591,7 +591,7 @@ In addition, while manual driving, the manager always reinitialize the **current
     if (could_calculate_closest_lanelet)
       current_route_lanelet_ = closest_lane;
     else
-      current_route_lanelet_ = updateRootLanelet(data);
+      current_route_lanelet_ = updateCurrentRouteLanelet(data);
     return utils::getReferencePath(*current_route_lanelet_, data);
   }
 ```

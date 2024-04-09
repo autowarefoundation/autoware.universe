@@ -372,7 +372,7 @@ void BehaviorPathPlannerNode::run()
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
   if (route_ptr) {
     planner_data_->route_handler->setRoute(*route_ptr);
-    planner_manager_->resetRootLanelet(planner_data_);
+    planner_manager_->resetCurrentRouteLanelet(planner_data_);
 
     // uuid is not changed when rerouting with modified goal,
     // in this case do not need to rest modules.
@@ -391,7 +391,7 @@ void BehaviorPathPlannerNode::run()
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
     planner_data_->operation_mode->is_autoware_control_enabled;
   if (!controlled_by_autoware_autonomously) {
-    planner_manager_->resetRootLanelet(planner_data_);
+    planner_manager_->resetCurrentRouteLanelet(planner_data_);
   }
 
   // run behavior planner

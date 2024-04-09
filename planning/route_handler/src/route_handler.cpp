@@ -1847,15 +1847,15 @@ lanelet::ConstLanelets RouteHandler::getCheckTargetLanesFromPath(
   if (root_lane_id == lanelet::InvalId) {
     return target_lanes;
   }
-  lanelet::ConstLanelet root_lanelet;
+  lanelet::ConstLanelet current_route_lanelet;
   for (const auto & llt : target_lanes) {
     if (llt.id() == root_lane_id) {
-      root_lanelet = llt;
+      current_route_lanelet = llt;
     }
   }
 
   const auto sequences = lanelet::utils::query::getPrecedingLaneletSequences(
-    routing_graph_ptr_, root_lanelet, check_length);
+    routing_graph_ptr_, current_route_lanelet, check_length);
   lanelet::ConstLanelets check_lanelets;
   for (const auto & sequence : sequences) {
     for (const auto & llt : sequence) {
