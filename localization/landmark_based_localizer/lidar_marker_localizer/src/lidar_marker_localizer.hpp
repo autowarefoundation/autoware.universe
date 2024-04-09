@@ -120,8 +120,6 @@ private:
 
   Param param_;
   bool is_activated_;
-  bool is_detected_marker_;
-  bool is_exist_marker_within_self_pose_;
   std::unique_ptr<SmartPoseBuffer> ekf_pose_buffer_;
 
   landmark_manager::LandmarkManager landmark_manager_;

@@ -30,9 +30,7 @@
 
 LidarMarkerLocalizer::LidarMarkerLocalizer()
 : Node("lidar_marker_localizer"),
-  is_activated_(false),
-  is_detected_marker_(false),
-  is_exist_marker_within_self_pose_(false)
+  is_activated_(false)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -314,7 +312,6 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
 
   if (points_ptr->empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "No points!");
-    is_detected_marker_ = false;
     return std::vector<landmark_manager::Landmark>{};
   }
 
