@@ -18,12 +18,7 @@
 
 #include <memory>
 
-TrackerDebugger::TrackerDebugger(rclcpp::Node & node)
-: diagnostic_updater_(&node),
-  node_(node),
-  last_input_stamp_(node.now()),
-  stamp_process_start_(node.now()),
-  stamp_publish_output_(node.now())
+TrackerDebugger::TrackerDebugger(rclcpp::Node & node) : diagnostic_updater_(&node), node_(node)
 {
   // declare debug parameters to decide whether to publish debug topics
   loadParameters();
@@ -39,7 +34,15 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node)
         "debug/tentative_objects", rclcpp::QoS{1});
   }
 
-  // initialize stop watch and diagnostics
+  // initialize timestamps
+  const rclcpp::Time now = node_.now();
+  last_input_stamp_ = now;
+  stamp_process_start_ = now;
+  stamp_process_end_ = now;
+  stamp_publish_start_ = now;
+  stamp_publish_output_ = now;
+
+  // setup diagnostics
   setupDiagnostics();
 }
 
