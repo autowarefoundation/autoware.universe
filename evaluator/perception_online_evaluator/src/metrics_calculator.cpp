@@ -409,7 +409,12 @@ MetricStatMap MetricsCalculator::calcObjectsCountMetrics() const
   for (const auto & [label, count] : historical_detection_count_map_) {
     Stat<double> stat;
     stat.add(static_cast<double>(count));
-    metric_stat_map["objects_count_" + convertLabelToString(label)] = stat;
+    metric_stat_map["historical_objects_count_" + convertLabelToString(label)] = stat;
+  }
+  for (const auto & [label, count] : current_detection_count_map_) {
+    Stat<double> stat;
+    stat.add(static_cast<double>(count));
+    metric_stat_map["current_objects_count_" + convertLabelToString(label)] = stat;
   }
 
   return metric_stat_map;
@@ -447,6 +452,10 @@ void MetricsCalculator::updateObjectsCountMap(
               << "' to 'base_link': " << ex.what() << std::endl;
     return;
   }
+  // initialize the current_detection_count_map_ with 0
+  for (const auto & [label, count] : current_detection_count_map_) {
+    current_detection_count_map_[label] = 0;
+  }
 
   for (const auto & object : objects.objects) {
     const auto label = object_recognition_utils::getHighestProbLabel(object.classification);
@@ -465,8 +474,8 @@ void MetricsCalculator::updateObjectsCountMap(
       distance_to_pose < parameters_->detection_range &&
       pose_out.pose.position.z < parameters_->detection_height) {
       historical_detection_count_map_[label]++;
+      current_detection_count_map_[label]++;
     }
-
   }
 }
 

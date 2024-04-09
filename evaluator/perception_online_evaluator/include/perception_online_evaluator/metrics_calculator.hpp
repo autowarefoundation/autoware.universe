@@ -127,6 +127,7 @@ private:
   }
 
   DetectionCountMap historical_detection_count_map_ = initializeDetectionCountMap();
+  DetectionCountMap current_detection_count_map_ = initializeDetectionCountMap();
 
   rclcpp::Time current_stamp_;
 
