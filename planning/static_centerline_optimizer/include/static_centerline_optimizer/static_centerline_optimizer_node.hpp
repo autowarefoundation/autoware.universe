@@ -84,8 +84,8 @@ private:
   std::optional<CenterlineWithRoute> centerline_with_route_{std::nullopt};
 
   enum class CenterlineSource {
-    OptimizationTrajectoryPlanning = 0,
-    EgoTrajectoryFromBag,
+    OptimizationTrajectoryBase = 0,
+    BagEgoTrajectoryBase,
   };
   CenterlineSource centerline_source_;
 

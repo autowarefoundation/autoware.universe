@@ -276,7 +276,8 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
         const auto & c = *centerline_with_route_;
         const auto selected_centerline = std::vector<TrajectoryPoint>(
           c.centerline.begin() + traj_start_index_, c.centerline.begin() + traj_end_index_ + 1);
-        save_map(lanelet2_output_file_path, *centerline_with_route_);
+        save_map(
+          lanelet2_output_file_path, CenterlineWithRoute{selected_centerline, c.route_lane_ids});
       }
     });
 
@@ -306,10 +307,10 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 
   centerline_source_ = [&]() {
     const auto centerline_source_param = declare_parameter<std::string>("centerline_source");
-    if (centerline_source_param == "optimization_trajectory_planning") {
-      return CenterlineSource::OptimizationTrajectoryPlanning;
-    } else if (centerline_source_param == "ego_trajectory_from_bag") {
-      return CenterlineSource::EgoTrajectoryFromBag;
+    if (centerline_source_param == "optimization_trajectory_base") {
+      return CenterlineSource::OptimizationTrajectoryBase;
+    } else if (centerline_source_param == "bag_ego_trajectory_base") {
+      return CenterlineSource::BagEgoTrajectoryBase;
     }
     throw std::logic_error(
       "The centerline source is not supported in static_centerline_optimizer.");
@@ -336,13 +337,13 @@ void StaticCenterlineOptimizerNode::run()
 StaticCenterlineOptimizerNode::CenterlineWithRoute
 StaticCenterlineOptimizerNode::generate_centerline_with_route()
 {
-  if (centerline_source_ == CenterlineSource::OptimizationTrajectoryPlanning) {
+  if (centerline_source_ == CenterlineSource::OptimizationTrajectoryBase) {
     const lanelet::Id start_lanelet_id = declare_parameter<int64_t>("start_lanelet_id");
     const lanelet::Id end_lanelet_id = declare_parameter<int64_t>("end_lanelet_id");
     const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
     const auto optimized_traj_points = plan_path(route_lane_ids);
     return CenterlineWithRoute{optimized_traj_points, route_lane_ids};
-  } else if (centerline_source_ == CenterlineSource::EgoTrajectoryFromBag) {
+  } else if (centerline_source_ == CenterlineSource::BagEgoTrajectoryBase) {
     return CenterlineWithRoute{};
   }
 
