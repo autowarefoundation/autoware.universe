@@ -28,9 +28,7 @@
 #include <string>
 #include <utility>
 
-LidarMarkerLocalizer::LidarMarkerLocalizer()
-: Node("lidar_marker_localizer"),
-  is_activated_(false)
+LidarMarkerLocalizer::LidarMarkerLocalizer() : Node("lidar_marker_localizer"), is_activated_(false)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
