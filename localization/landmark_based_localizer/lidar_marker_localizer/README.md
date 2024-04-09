@@ -38,7 +38,60 @@ ros2 launch autoware_launch ... \
     ...
 ```
 
-### Detection Algorithm
+## Design
+
+### Flowchart
+
+```plantuml
+@startuml
+
+group main process
+  start
+  if (Receive a map?) then (yes)
+  else (no)
+    stop
+  endif
+
+  :Interpolate based on the received ego-vehicle's positions to align with sensor time;
+
+  if (Could interpolate?) then (yes)
+  else (no)
+    stop
+  endif
+
+  :Detect markers (see "Detection Algorithm");
+
+  :Calculate the distance from the ego-vehicle's positions to the nearest marker's position on the lanelet2 map;
+
+  if (Find markers?) then (yes)
+  else (no)
+    if (the distance is nearby?) then (yes)
+      stop
+      note : Error. It should have been able to detect marker
+    else (no)
+      stop
+      note : Not Error. There are no markers around the ego-vehicle
+    endif
+  endif
+
+  :Calculate the correction amount from the ego-vehicle's position;
+
+  if (Is the found marker's position close to the one on the lanelet2 map?) then (yes)
+  else (no)
+    stop
+    note : Detected something that isn't a marker
+  endif
+
+  :Publish result;
+
+  stop
+end group
+
+@enduml
+
+```
+
+## Detection Algorithm
 
 ![detection_algorithm](./doc_image/detection_algorithm.png)
 
