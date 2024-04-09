@@ -985,7 +985,9 @@ void HddMonitor::updateHddConnections(
   }
 }
 
-void HddMonitor::readHddUsage(std::map<std::string, bool> & tmp_hdd_connected_flags, std::vector<HddUsage> & tmp_hdd_usages, std::string tmp_sum_error_str, std::string & tmp_detail_error_str)
+void HddMonitor::readHddUsage(
+  std::map<std::string, bool> & tmp_hdd_connected_flags, std::vector<HddUsage> & tmp_hdd_usages,
+  std::string tmp_sum_error_str, std::string & tmp_detail_error_str)
 {
   std::filesystem::space_info si;
   std::error_code ec;
