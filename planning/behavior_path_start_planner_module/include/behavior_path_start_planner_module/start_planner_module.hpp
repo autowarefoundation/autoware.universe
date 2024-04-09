@@ -155,6 +155,24 @@ public:
   bool isFreespacePlanning() const { return status_.planner_type == PlannerType::FREESPACE; }
 
 private:
+  struct StartPlannerData
+  {
+    StartPlannerParameters parameters;
+    PlannerData planner_data;
+    ModuleStatus current_status;
+    PullOutStatus main_thread_pull_out_status;
+    bool is_stopped;
+
+    StartPlannerData clone() const;
+    void update(
+      const StartPlannerParameters & parameters, const PlannerData & planner_data,
+      const ModuleStatus & current_status, const PullOutStatus & pull_out_status,
+      const bool is_stopped);
+  };
+  std::optional<PullOutStatus> freespace_thread_status_{std::nullopt};
+  std::optional<StartPlannerData> sp_planner_data_{std::nullopt};
+  std::mutex sp_planner_data_mutex_;
+
   // Flag class for managing whether a certain callback is running in multi-threading
   class ScopedFlag
   {
@@ -307,7 +325,9 @@ private:
   SafetyCheckParams createSafetyCheckParams() const;
   // freespace planner
   void onFreespacePlannerTimer();
-  bool planFreespacePath();
+  std::optional<PullOutStatus> planFreespacePath(
+    const StartPlannerParameters & parameters,
+    const std::shared_ptr<const PlannerData> & planner_data, const PullOutStatus & pull_out_status);
 
   void setDebugData();
   void logPullOutStatus(rclcpp::Logger::Level log_level = rclcpp::Logger::Level::Info) const;
