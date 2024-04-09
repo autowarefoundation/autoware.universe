@@ -77,10 +77,10 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   self_pose_callback_group =
     this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   auto self_pose_sub_opt = rclcpp::SubscriptionOptions();
-  points_sub_opt.callback_group = self_pose_callback_group;
+  self_pose_sub_opt.callback_group = self_pose_callback_group;
   sub_self_pose_ = this->create_subscription<PoseWithCovarianceStamped>(
     "~/input/ekf_pose", rclcpp::QoS(1),
-    std::bind(&LidarMarkerLocalizer::self_pose_callback, this, _1), points_sub_opt);
+    std::bind(&LidarMarkerLocalizer::self_pose_callback, this, _1), self_pose_sub_opt);
   sub_map_bin_ = this->create_subscription<HADMapBin>(
     "~/input/lanelet2_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&LidarMarkerLocalizer::map_bin_callback, this, _1));
