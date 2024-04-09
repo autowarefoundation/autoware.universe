@@ -18,11 +18,11 @@
 
 #include <memory>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 ExternalRequestLaneChange::ExternalRequestLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction)
 : NormalLaneChange(parameters, LaneChangeModuleType::EXTERNAL_REQUEST, direction)
 {
 }
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner

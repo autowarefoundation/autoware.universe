@@ -19,11 +19,12 @@
 
 #include <memory>
 
-namespace autoware
-{
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using ::behavior_path_planner::LaneChangeParameters;
+using ::behavior_path_planner::NormalLaneChange;
+using ::behavior_path_planner::Direction;
+using ::behavior_path_planner::LaneChangeModuleType;
 
 class ExternalRequestLaneChange : public NormalLaneChange
 {
@@ -37,7 +38,6 @@ public:
   ExternalRequestLaneChange & operator=(ExternalRequestLaneChange &&) = delete;
   ~ExternalRequestLaneChange() override = default;
 };
-}  // namespace behavior_path_planner
-}  // namespace autoware
+}  // namespace autoware::behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__SCENE_HPP_
