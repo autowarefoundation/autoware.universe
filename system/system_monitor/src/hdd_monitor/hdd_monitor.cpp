@@ -143,7 +143,8 @@ void HddMonitor::checkSmart(
       stat.add(fmt::format("HDD {}: name", index), itr->second.part_device_.c_str());
       stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(ENOENT));
       error_str = "hdd_reader error";
-      std::cerr << "HDD " << index << ": " << itr->second.disk_device_ << " AAAAA not found" << std::endl;
+      std::cerr << "HDD " << index << ": " << itr->second.disk_device_ << " AAAAA not found"
+                << std::endl;
       continue;
     }
 
@@ -152,7 +153,8 @@ void HddMonitor::checkSmart(
       stat.add(fmt::format("HDD {}: name", index), itr->second.part_device_.c_str());
       stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(hdd_itr->second.error_code_));
       error_str = "hdd_reader error";
-      std::cerr << "HDD " << index << ": " << itr->second.disk_device_ << "BBBBB error: " << hdd_itr->second.error_code_ << std::endl;
+      std::cerr << "HDD " << index << ": " << itr->second.disk_device_
+                << "BBBBB error: " << hdd_itr->second.error_code_ << std::endl;
       continue;
     }
 
@@ -304,7 +306,8 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     stat.add(fmt::format("HDD {}: filesystem", hdd_index), itr->device_.c_str());
     stat.add(fmt::format("HDD {}: size", hdd_index), (std::to_string(itr->size_) + " MiB").c_str());
     stat.add(fmt::format("HDD {}: used", hdd_index), (std::to_string(itr->used_) + " MiB").c_str());
-    stat.add(fmt::format("HDD {}: avail", hdd_index), (std::to_string(itr->avail_) + " MiB").c_str());
+    stat.add(
+      fmt::format("HDD {}: avail", hdd_index), (std::to_string(itr->avail_) + " MiB").c_str());
     stat.add(fmt::format("HDD {}: use", hdd_index), (std::to_string(itr->use_) + " %").c_str());
     stat.add(fmt::format("HDD {}: mounted on", hdd_index), itr->mount_point_.c_str());
 
@@ -584,8 +587,9 @@ void HddMonitor::onTimer()
     hdd_status_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(hdd_status_timeout_), std::bind(&HddMonitor::onHddStatusTimeout, this));
-  
+    this, get_clock(), std::chrono::seconds(hdd_status_timeout_),
+    std::bind(&HddMonitor::onHddStatusTimeout, this));
+
   std::map<std::string, bool> tmp_hdd_connected_flags;
   std::map<std::string, HddStat> tmp_hdd_stats;
   diagnostic_updater::DiagnosticStatusWrapper tmp_connect_diag;
@@ -631,7 +635,8 @@ void HddMonitor::onTimer()
     hdd_usage_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(hdd_usage_timeout_), std::bind(&HddMonitor::onHddUsageTimeout, this));
+    this, get_clock(), std::chrono::seconds(hdd_usage_timeout_),
+    std::bind(&HddMonitor::onHddUsageTimeout, this));
 
   std::vector<HddUsage> tmp_hdd_usages;
   std::string tmp_sum_error_str;
@@ -658,7 +663,6 @@ void HddMonitor::onTimer()
     hdd_usage_detail_error_str_ = tmp_detail_error_str;
     hdd_usage_elapsed_ms_ = elapsed_ms;
   }
-
 }
 
 void HddMonitor::setInitialStatus()
@@ -673,8 +677,9 @@ void HddMonitor::setInitialStatus()
     hdd_status_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(hdd_status_timeout_), std::bind(&HddMonitor::onHddStatusTimeout, this));
-  
+    this, get_clock(), std::chrono::seconds(hdd_status_timeout_),
+    std::bind(&HddMonitor::onHddStatusTimeout, this));
+
   std::map<std::string, bool> tmp_hdd_connected_flags;
   std::map<std::string, HddStat> tmp_hdd_stats;
   diagnostic_updater::DiagnosticStatusWrapper tmp_connect_diag;
@@ -730,7 +735,9 @@ void HddMonitor::onHddUsageTimeout()
   hdd_usage_timeout_expired_ = true;
 }
 
-void HddMonitor::updateHddInfoList(diagnostic_updater::DiagnosticStatusWrapper & tmp_connect_diag, std::map<std::string, bool> & tmp_hdd_connected_flags, HddInfoList & tmp_hdd_info_list)
+void HddMonitor::updateHddInfoList(
+  diagnostic_updater::DiagnosticStatusWrapper & tmp_connect_diag,
+  std::map<std::string, bool> & tmp_hdd_connected_flags, HddInfoList & tmp_hdd_info_list)
 {
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -945,7 +952,7 @@ void HddMonitor::updateHddConnections(
 
     // Get device name from mount point
     hdd_param.second.part_device_ = getDeviceFromMountPoint(hdd_param.first);
-    
+
     if (!hdd_param.second.part_device_.empty()) {
       // Check the existence of device file
       std::error_code ec;
