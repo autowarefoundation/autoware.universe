@@ -97,7 +97,6 @@ void HddMonitor::checkSmartRecoveredError(diagnostic_updater::DiagnosticStatusWr
 void HddMonitor::checkSmart(
   diagnostic_updater::DiagnosticStatusWrapper & stat, HddSmartInfoItem item)
 {
-  std::map<std::string, HddParam> tmp_hdd_params;
   std::map<std::string, bool> tmp_hdd_connected_flags;
   diagnostic_updater::DiagnosticStatusWrapper tmp_connect_diag;
   HddInfoList tmp_hdd_info_list;
@@ -105,14 +104,13 @@ void HddMonitor::checkSmart(
 
   {
     std::lock_guard<std::mutex> lock(hdd_status_mutex_);
-    tmp_hdd_params = hdd_params_;
     tmp_hdd_connected_flags = hdd_connected_flags_;
     tmp_connect_diag = connect_diag_;
     tmp_hdd_info_list = hdd_info_list_;
     tmp_elapsed_ms = hdd_status_elapsed_ms_;
   }
 
-  if (tmp_hdd_params.empty()) {
+  if (hdd_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
     return;
   }
@@ -133,7 +131,7 @@ void HddMonitor::checkSmart(
   std::string key_str = "";
   std::string val_str = "";
 
-  for (auto itr = tmp_hdd_params.begin(); itr != tmp_hdd_params.end(); ++itr, ++index) {
+  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++index) {
     if (!tmp_hdd_connected_flags[itr->first]) {
       continue;
     }
@@ -257,9 +255,9 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   std::map<std::string, bool> tmp_hdd_connected_flags;
   std::vector<HddUsage> tmp_hdd_usages;
-  std::string sum_error_str = "";
-  std::string detail_error_str = "";
-  double elapsed_ms;
+  std::string tmp_sum_error_str = "";
+  std::string tmp_detail_error_str = "";
+  double tmp_elapsed_ms;
 
   {
     std::lock_guard<std::mutex> lock(hdd_status_mutex_);
@@ -269,9 +267,9 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   {
     std::lock_guard<std::mutex> lock(hdd_usage_mutex_);
     tmp_hdd_usages = hdd_usages_;
-    sum_error_str = hdd_usage_sum_error_str_;
-    detail_error_str = hdd_usage_detail_error_str_;
-    elapsed_ms = hdd_usage_elapsed_ms_;
+    tmp_sum_error_str = hdd_usage_sum_error_str_;
+    tmp_detail_error_str = hdd_usage_detail_error_str_;
+    tmp_elapsed_ms = hdd_usage_elapsed_ms_;
   }
 
   if (hdd_params_.empty()) {
@@ -279,9 +277,9 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     return;
   }
 
-  if (!sum_error_str.empty()) {
-    stat.summary(DiagStatus::ERROR, sum_error_str);
-    stat.add("error", detail_error_str);
+  if (!tmp_sum_error_str.empty()) {
+    stat.summary(DiagStatus::ERROR, tmp_sum_error_str);
+    stat.add("error", tmp_detail_error_str);
     return;
   }
 
@@ -325,40 +323,8 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   } else {
     stat.summary(whole_level, usage_dict_.at(whole_level));
   }
-}
 
-void HddMonitor::readHddUsage(std::map<std::string, bool> & tmp_hdd_connected_flags, std::vector<HddUsage> & tmp_hdd_usages, std::string tmp_sum_error_str, std::string & tmp_detail_error_str)
-{
-  std::filesystem::space_info si;
-  std::error_code ec;
-
-  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr) {
-    HddUsage hdd_usage;
-
-    if (!tmp_hdd_connected_flags[itr->first]) {
-      tmp_hdd_usages.push_back(hdd_usage);
-      continue;
-    }
-
-    try {
-      hdd_usage.device_ = itr->second.part_device_;
-      hdd_usage.mount_point_ = itr->first;
-      si = std::filesystem::space(itr->first, ec);
-      if (ec) {
-        tmp_sum_error_str = "std::filesystem::space error";
-        tmp_detail_error_str = "getting filesystem usage information error";
-      }
-      hdd_usage.size_ = si.capacity / (1024 * 1024);
-      hdd_usage.used_ = (si.capacity - si.available) / (1024 * 1024);
-      hdd_usage.avail_ = si.available / (1024 * 1024);
-      hdd_usage.use_ = 100 * hdd_usage.used_ / hdd_usage.size_;
-    } catch (std::filesystem::filesystem_error & e) {
-      tmp_sum_error_str = e.what();
-      tmp_detail_error_str = "getting filesystem usage information error";
-    }
-
-    tmp_hdd_usages.push_back(hdd_usage);
-  }
+  stat.addf("execution time", "%f ms", tmp_elapsed_ms);
 }
 
 void HddMonitor::checkReadDataRate(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -384,20 +350,18 @@ void HddMonitor::checkWriteIops(diagnostic_updater::DiagnosticStatusWrapper & st
 void HddMonitor::checkStatistics(
   diagnostic_updater::DiagnosticStatusWrapper & stat, HddStatItem item)
 {
-  std::map<std::string, HddParam> tmp_hdd_params;
   std::map<std::string, bool> tmp_hdd_connected_flags;
   std::map<std::string, HddStat> tmp_hdd_stats_;
   double tmp_elapsed_ms;
 
   {
     std::lock_guard<std::mutex> lock(hdd_status_mutex_);
-    tmp_hdd_params = hdd_params_;
     tmp_hdd_connected_flags = hdd_connected_flags_;
     tmp_hdd_stats_ = hdd_stats_;
     tmp_elapsed_ms = hdd_status_elapsed_ms_;
   }
 
-  if (tmp_hdd_params.empty()) {
+  if (hdd_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
     return;
   }
@@ -408,7 +372,7 @@ void HddMonitor::checkStatistics(
   std::string key_str = "";
   std::string val_str = "";
 
-  for (auto itr = tmp_hdd_params.begin(); itr != tmp_hdd_params.end(); ++itr, ++hdd_index) {
+  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
     if (!tmp_hdd_connected_flags[itr->first]) {
       continue;
     }
@@ -471,12 +435,6 @@ void HddMonitor::checkStatistics(
     whole_level = std::max(whole_level, level);
   }
 
-  if (!error_str.empty()) {
-    stat.summary(DiagStatus::ERROR, error_str);
-  } else {
-    stat.summary(whole_level, stat_dicts_[static_cast<uint32_t>(item)].at(whole_level));
-  }
-
   // Check timeout has expired regarding reading HDD status
   bool timeout_expired = false;
   {
@@ -497,8 +455,14 @@ void HddMonitor::checkStatistics(
 
 void HddMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::map<std::string, bool> tmp_hdd_connected_flags;
+  double tmp_elapsed_ms;
+
+  {
+    std::lock_guard<std::mutex> lock(hdd_status_mutex_);
+    tmp_hdd_connected_flags = hdd_connected_flags_;
+    tmp_elapsed_ms = hdd_status_elapsed_ms_;
+  }
 
   if (hdd_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
@@ -522,10 +486,20 @@ void HddMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & s
     whole_level = std::max(whole_level, level);
   }
 
-  stat.summary(whole_level, connection_dict_.at(whole_level));
+  // Check timeout has expired regarding reading HDD status
+  bool timeout_expired = false;
+  {
+    std::lock_guard<std::mutex> lock(hdd_status_timeout_mutex_);
+    timeout_expired = hdd_status_timeout_expired_;
+  }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+  if (timeout_expired) {
+    stat.summary(DiagStatus::WARN, "HDD status reading timeout expired");
+  } else {
+    stat.summary(whole_level, connection_dict_.at(whole_level));
+  }
+
+  stat.addf("execution time", "%f ms", tmp_elapsed_ms);
 }
 
 void HddMonitor::getHddParams()
@@ -1001,6 +975,41 @@ void HddMonitor::updateHddConnections(
         }
       }
     }
+  }
+}
+
+void HddMonitor::readHddUsage(std::map<std::string, bool> & tmp_hdd_connected_flags, std::vector<HddUsage> & tmp_hdd_usages, std::string tmp_sum_error_str, std::string & tmp_detail_error_str)
+{
+  std::filesystem::space_info si;
+  std::error_code ec;
+  tmp_hdd_usages.clear();
+
+  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr) {
+    HddUsage hdd_usage;
+
+    if (!tmp_hdd_connected_flags[itr->first]) {
+      tmp_hdd_usages.push_back(hdd_usage);
+      continue;
+    }
+
+    try {
+      hdd_usage.device_ = itr->second.part_device_;
+      hdd_usage.mount_point_ = itr->first;
+      si = std::filesystem::space(itr->first, ec);
+      if (ec) {
+        tmp_sum_error_str = "std::filesystem::space error";
+        tmp_detail_error_str = "getting filesystem usage information error";
+      }
+      hdd_usage.size_ = si.capacity / (1024 * 1024);
+      hdd_usage.used_ = (si.capacity - si.available) / (1024 * 1024);
+      hdd_usage.avail_ = si.available / (1024 * 1024);
+      hdd_usage.use_ = 100 * hdd_usage.used_ / hdd_usage.size_;
+    } catch (std::filesystem::filesystem_error & e) {
+      tmp_sum_error_str = e.what();
+      tmp_detail_error_str = "getting filesystem usage information error";
+    }
+
+    tmp_hdd_usages.push_back(hdd_usage);
   }
 }
 
