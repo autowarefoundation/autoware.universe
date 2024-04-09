@@ -57,9 +57,12 @@ target_link_libraries(shape_estimation_node
   shape_estimation_lib
 )
 
-rclcpp_components_register_node(shape_estimation_node
-  PLUGIN "ShapeEstimationNode"
-  EXECUTABLE shape_estimation
+ament_auto_add_executable(${PROJECT_NAME}
+  src/main.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+  shape_estimation_node glog
 )
 
 ament_auto_package(INSTALL_TO_SHARE
