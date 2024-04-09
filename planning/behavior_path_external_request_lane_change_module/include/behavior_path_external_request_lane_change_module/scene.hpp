@@ -21,10 +21,10 @@
 
 namespace autoware::behavior_path_planner
 {
-using ::behavior_path_planner::LaneChangeParameters;
-using ::behavior_path_planner::NormalLaneChange;
 using ::behavior_path_planner::Direction;
 using ::behavior_path_planner::LaneChangeModuleType;
+using ::behavior_path_planner::LaneChangeParameters;
+using ::behavior_path_planner::NormalLaneChange;
 
 class ExternalRequestLaneChange : public NormalLaneChange
 {
