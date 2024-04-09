@@ -2064,14 +2064,15 @@ bool NormalLaneChange::isVehicleStuck(
 
 double NormalLaneChange::get_max_velocity_for_safety_check() const
 {
-  const auto extenal_velocity_limit_ptr = planner_data_->external_limit_max_velocity;
-  if (extenal_velocity_limit_ptr) {
+  const auto external_velocity_limit_ptr = planner_data_->external_limit_max_velocity;
+  if (external_velocity_limit_ptr) {
     return std::min(
-      static_cast<double>(extenal_velocity_limit_ptr->max_velocity), getCommonParam().max_vel);
+      static_cast<double>(external_velocity_limit_ptr->max_velocity), getCommonParam().max_vel);
   }
 
   return getCommonParam().max_vel;
 }
+
 bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const
 {
   if (current_lanes.empty()) {

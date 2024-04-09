@@ -23,9 +23,7 @@
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <tier4_planning_msgs/msg/path_change_module_id.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
-#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
