@@ -25,7 +25,8 @@ int main(int argc, char ** argv)
 
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
-  auto detected_object_feature_remover = std::make_shared<detected_object_feature_remover::DetectedObjectFeatureRemover>(options);
+  auto detected_object_feature_remover =
+    std::make_shared<detected_object_feature_remover::DetectedObjectFeatureRemover>(options);
   rclcpp::executors::SingleThreadedExecutor exec;
   exec.add_node(detected_object_feature_remover);
   exec.spin();
