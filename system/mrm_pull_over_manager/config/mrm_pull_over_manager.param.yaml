@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    update_rate: 10.0
+    max_goal_pose_num: 3
+    yaw_deviation_threshold: 0.5 # [rad]
+    margin_time_to_goal: 10.0 # [sec]
