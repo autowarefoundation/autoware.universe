@@ -170,8 +170,8 @@ private:
       const bool is_stopped);
   };
   std::optional<PullOutStatus> freespace_thread_status_{std::nullopt};
-  std::optional<StartPlannerData> sp_planner_data_{std::nullopt};
-  std::mutex sp_planner_data_mutex_;
+  std::optional<StartPlannerData> start_planner_data_{std::nullopt};
+  std::mutex start_planner_data_mutex_;
 
   // Flag class for managing whether a certain callback is running in multi-threading
   class ScopedFlag

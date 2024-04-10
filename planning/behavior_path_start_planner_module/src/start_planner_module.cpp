@@ -101,14 +101,14 @@ void StartPlannerModule::onFreespacePlannerTimer()
 
   // begin of critical section
   {
-    std::lock_guard<std::mutex> guard(sp_planner_data_mutex_);
-    if (sp_planner_data_) {
-      const auto & sp_planner_data = sp_planner_data_.value();
-      local_planner_data = std::make_shared<PlannerData>(sp_planner_data.planner_data);
-      current_status_opt = sp_planner_data.current_status;
-      parameters_opt = sp_planner_data.parameters;
-      pull_out_status_opt = sp_planner_data.main_thread_pull_out_status;
-      is_stopped = sp_planner_data.is_stopped;
+    std::lock_guard<std::mutex> guard(start_planner_data_mutex_);
+    if (start_planner_data_) {
+      const auto & start_planner_data = start_planner_data_.value();
+      local_planner_data = std::make_shared<PlannerData>(start_planner_data.planner_data);
+      current_status_opt = start_planner_data.current_status;
+      parameters_opt = start_planner_data.parameters;
+      pull_out_status_opt = start_planner_data.main_thread_pull_out_status;
+      is_stopped = start_planner_data.is_stopped;
     }
   }
   // end of critical section
@@ -140,7 +140,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
     const auto free_space_status =
       planFreespacePath(parameters, local_planner_data, pull_out_status);
     if (free_space_status) {
-      std::lock_guard<std::mutex> guard(sp_planner_data_mutex_);
+      std::lock_guard<std::mutex> guard(start_planner_data_mutex_);
       freespace_thread_status_ = free_space_status;
     }
   }
@@ -205,22 +205,22 @@ void StartPlannerModule::updateData()
   // In PlannerManager::run(), it calls SceneModuleInterface::setData and
   // SceneModuleInterface::setPreviousModuleOutput before module_ptr->run().
   // Then module_ptr->run() invokes GoalPlannerModule::updateData and then
-  // planWaitingApproval()/plan(), so we can copy latest current_status to sp_planner_data_ here
+  // planWaitingApproval()/plan(), so we can copy latest current_status to start_planner_data_ here
 
-  // NOTE: onFreespacePlannerTimer copies sp_planner_data to its thread local variable, so we need
-  // to lock sp_planner_data_ here to avoid data race. But the following clone process is
+  // NOTE: onFreespacePlannerTimer copies start_planner_data to its thread local variable, so we
+  // need to lock start_planner_data_ here to avoid data race. But the following clone process is
   // lightweight because most of the member variables of PlannerData/RouteHandler is
   // shared_ptrs/bool
   // begin of critical section
   {
-    std::lock_guard<std::mutex> guard(sp_planner_data_mutex_);
-    if (!sp_planner_data_) {
-      sp_planner_data_ = StartPlannerData();
-      sp_planner_data_.value().update(
+    std::lock_guard<std::mutex> guard(start_planner_data_mutex_);
+    if (!start_planner_data_) {
+      start_planner_data_ = StartPlannerData();
+      start_planner_data_.value().update(
         *parameters_, *planner_data_, getCurrentStatus(), status_, isStopped());
     } else {
-      auto & sp_planner_data = sp_planner_data_.value();
-      sp_planner_data.update(
+      auto & start_planner_data = start_planner_data_.value();
+      start_planner_data.update(
         *parameters_, *planner_data_, getCurrentStatus(), status_, isStopped());
       if (freespace_thread_status_) {
         // if freespace solution is available, copy it to status_ on main thread
@@ -1735,10 +1735,10 @@ void StartPlannerModule::logPullOutStatus(rclcpp::Logger::Level log_level) const
 
 StartPlannerModule::StartPlannerData StartPlannerModule::StartPlannerData::clone() const
 {
-  StartPlannerData sp_planner_data;
-  sp_planner_data.update(
+  StartPlannerData start_planner_data;
+  start_planner_data.update(
     parameters, planner_data, current_status, main_thread_pull_out_status, is_stopped);
-  return sp_planner_data;
+  return start_planner_data;
 }
 
 void StartPlannerModule::StartPlannerData::update(
