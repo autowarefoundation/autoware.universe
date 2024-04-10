@@ -34,11 +34,19 @@
 #include <utility>
 #include <vector>
 
+<<<<<<< HEAD:planning/static_centerline_generator/include/static_centerline_generator/static_centerline_generator_node.hpp
 namespace autoware::static_centerline_generator
 {
 using autoware::static_centerline_generator::srv::LoadMap;
 using autoware::static_centerline_generator::srv::PlanPath;
 using autoware::static_centerline_generator::srv::PlanRoute;
+=======
+namespace autoware::static_centerline_optimizer
+{
+using autoware_static_centerline_optimizer::srv::LoadMap;
+using autoware_static_centerline_optimizer::srv::PlanPath;
+using autoware_static_centerline_optimizer::srv::PlanRoute;
+>>>>>>> 5120827050 (fix(autoware_static_centerline_optimizer): fix clang-tidy issues):planning/static_centerline_optimizer/include/autoware_static_centerline_optimizer/static_centerline_optimizer_node.hpp
 
 struct CenterlineWithRoute
 {
@@ -64,8 +72,14 @@ private:
   void on_plan_route(
     const PlanRoute::Request::SharedPtr request, const PlanRoute::Response::SharedPtr response);
 
+<<<<<<< HEAD:planning/static_centerline_generator/include/static_centerline_generator/static_centerline_generator_node.hpp
   // plan centerline
   CenterlineWithRoute generate_centerline_with_route();
+=======
+  // plan path
+  std::vector<TrajectoryPoint> plan_path(const std::vector<lanelet::Id> & route_lane_ids);
+  static std::vector<TrajectoryPoint> optimize_trajectory(const Path & raw_path) ;
+>>>>>>> 5120827050 (fix(autoware_static_centerline_optimizer): fix clang-tidy issues):planning/static_centerline_optimizer/include/autoware_static_centerline_optimizer/static_centerline_optimizer_node.hpp
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
 
@@ -113,7 +127,12 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_;
 
   // vehicle info
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  vehicle_info_util::VehicleInfo vehicle_info_{};
 };
+<<<<<<< HEAD:planning/static_centerline_generator/include/static_centerline_generator/static_centerline_generator_node.hpp
 }  // namespace autoware::static_centerline_generator
 #endif  // STATIC_CENTERLINE_GENERATOR__STATIC_CENTERLINE_GENERATOR_NODE_HPP_
+=======
+} // namespace autoware::static_centerline_optimizer
+#endif  // AUTOWARE_STATIC_CENTERLINE_OPTIMIZER__STATIC_CENTERLINE_OPTIMIZER_NODE_HPP_
+>>>>>>> 5120827050 (fix(autoware_static_centerline_optimizer): fix clang-tidy issues):planning/static_centerline_optimizer/include/autoware_static_centerline_optimizer/static_centerline_optimizer_node.hpp
