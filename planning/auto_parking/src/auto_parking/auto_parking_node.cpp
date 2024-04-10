@@ -325,6 +325,7 @@ bool AutoParkingNode::findParkingSpace()
         RCLCPP_INFO(get_logger(), "Auto-parking: Found free parking space!");
         return true;
       }
+
       continue;
     }
   }
@@ -370,17 +371,13 @@ void AutoParkingNode::onTimer()
     return;
   }
 
-  // Check all inputs are ready
-  if (!odom_ || !lanelet_map_ptr_ || !routing_graph_ptr_ ||
-      !engage_sub_ || !client_engage_) {
-    active_ = false;
-    return;
-  }
-
   current_pose_.pose = odom_->pose.pose;
   current_pose_.header = odom_->header;
 
-  if (current_pose_.header.frame_id == "") {
+  // Check all inputs are ready
+  if (!odom_ || !lanelet_map_ptr_ || !routing_graph_ptr_ ||
+      !engage_sub_ || !client_engage_ ||
+      current_pose_.header.frame_id == "") {
     active_ = false;
     return;
   }
@@ -408,40 +405,37 @@ void AutoParkingNode::onTimer()
     return;
   }
   
-  // Search parking spaces if inside parking lot
-  if(!set_parking_space_goal_ && 
-      isInParkingLot() && 
-      occupancy_grid_)
-  { 
-    RCLCPP_INFO(get_logger(), "Auto-parking: Searching...");
-    if(findParkingSpace()){
-      goalPublisher(current_goal_);
-      RCLCPP_INFO(get_logger(), "Auto-parking: Publishing parking space goal");
-      set_parking_space_goal_ = true;
-    }
-  }
-
-  // Check if astar goal is still valid
-  // else replan
-  if(set_parking_space_goal_ && 
-     isInParkingLot() &&
-     occupancy_grid_)
+  if(isInParkingLot() && occupancy_grid_)
   {
-    // Set occupancy map and current pose
-    algo_->setMap(*occupancy_grid_);
-    const auto current_pose_in_costmap_frame = transformPose(
-    current_pose_.pose,
-    getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
-    const auto goal_pose_in_costmap_frame = transformPose(
-    current_goal_.pose, 
-    getTransform(occupancy_grid_->header.frame_id, current_goal_.header.frame_id));
-    bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
-    if(!result) { 
-      set_parking_space_goal_ = false;
-      current_goal_.pose = parking_goal_;
-      goalPublisher(current_goal_);
-      set_parking_lot_goal_ = true;
-      return;
+    // Search parking spaces if inside parking lot
+    if(!set_parking_space_goal_)
+    { 
+      RCLCPP_INFO_THROTTLE(get_logger(), *this->get_clock(), 2000, "Auto-parking: Searching...");
+      if(findParkingSpace()){
+        goalPublisher(current_goal_);
+        RCLCPP_INFO(get_logger(), "Auto-parking: Publishing parking space goal");
+        set_parking_space_goal_ = true;
+      }
+    }
+    // if parking space goal set
+    // check if astar goal is still valid, else replan
+    else
+    {
+      // Set occupancy map and current pose
+      algo_->setMap(*occupancy_grid_);
+      const auto current_pose_in_costmap_frame = transformPose(
+      current_pose_.pose,
+      getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
+      const auto goal_pose_in_costmap_frame = transformPose(
+      current_goal_.pose, 
+      getTransform(occupancy_grid_->header.frame_id, current_goal_.header.frame_id));
+      bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
+      if(!result) { 
+        set_parking_space_goal_ = false;
+        current_goal_.pose = parking_goal_;
+        goalPublisher(current_goal_);
+        return;
+      }
     }
   }
 
