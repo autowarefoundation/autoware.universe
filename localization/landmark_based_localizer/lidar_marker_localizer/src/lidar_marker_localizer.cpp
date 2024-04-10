@@ -300,7 +300,7 @@ void LidarMarkerLocalizer::service_trigger_node(
 std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   const PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
-  // TODO (YamatoAndo)
+  // TODO(YamatoAndo)
   // Transform sensor_frame to base_link
 
   pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
