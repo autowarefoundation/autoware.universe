@@ -26,9 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using tier4_autoware_utils::getOrDeclareParameter;
 
@@ -58,7 +56,6 @@ TemplateModuleManager::getModuleExpiredFunction(
   };
 }
 
-}  // namespace behavior_velocity_planner
 }  // namespace autoware
 
 #include <pluginlib/class_list_macros.hpp>
