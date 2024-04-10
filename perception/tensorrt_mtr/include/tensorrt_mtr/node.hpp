@@ -32,6 +32,7 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -53,13 +54,14 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
+using nav_msgs::msg::Odometry;
 
 class PolylineTypeMap
 {
 public:
   explicit PolylineTypeMap(rclcpp::Node * node)
   {
-    const auto filepath = node->declare_parameter<std::string>("polyline.label_file");
+    const auto filepath = node->declare_parameter<std::string>("polyline_label_path");
     std::ifstream file(filepath);
     if (!file.is_open()) {
       RCLCPP_ERROR_STREAM(node->get_logger(), "Could not open polyline label file: " << filepath);
@@ -87,6 +89,9 @@ class MTRNode : public rclcpp::Node
 public:
   explicit MTRNode(const rclcpp::NodeOptions & node_options);
 
+  // Object ID for ego vehicle
+  const std::string EGO_ID{"EGO"};
+
 private:
   /**
    * @brief Main callback being invoked when the tracked objects topic is subscribed.
@@ -101,6 +106,13 @@ private:
    * @param map_msg
    */
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
+
+  /**
+   * @brief Callback being invoked when the Ego's odometry topic is subscribed.
+   *
+   * @param ego_msg
+   */
+  void onEgo(const Odometry::ConstSharedPtr ego_msg);
 
   /**
    * @brief Converts lanelet2 to polylines.
@@ -147,8 +159,12 @@ private:
   PredictedObject generatePredictedObject(
     const TrackedObject & object, const PredictedTrajectory & trajectory);
 
-  // Object ID for ego vehicle
-  const std::string EGO_ID{"EGO"};
+  // ROS Publisher and Subscriber
+  // TODO(ktro2828): add debug publisher
+  rclcpp::Publisher<PredictedObjects>::SharedPtr pub_objects_;
+  rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<Odometry>::SharedPtr sub_ego_;
 
   // Lanelet map pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
