@@ -34,7 +34,8 @@ foreach(libName ${TRT_PLUGINS})
   list(APPEND TRT_PLUGINS ${${libName}_lib})
 endforeach()
 
-cuda_add_library(custom_plugin SHARED
+# TRT plugins and cuda kernels
+cuda_add_library(${PROJECT_NAME}_cuda_lib SHARED
   lib/src/attention/trt_attn_value_computation_kernel.cu
   lib/src/attention/trt_attn_value_computation.cpp
   lib/src/attention/trt_attn_weight_computation_kernel.cu
@@ -43,51 +44,47 @@ cuda_add_library(custom_plugin SHARED
   lib/src/knn/trt_knn_batch.cpp
   lib/src/knn/trt_knn_batch_mlogk_kernel.cu
   lib/src/knn/trt_knn_batch_mlogk.cpp
-)
-target_link_libraries(custom_plugin
-    ${TRT_PLUGINS}
-    ${TRT_PLUGIN_LIBS}
-    ${CUDA_LIBRARIES}
-    ${CUBLAS_LIBRARIES}
-    ${CUDNN_LIBRARIES})
-target_include_directories(custom_plugin PUBLIC
-  lib/include
-)
-
-# preprocess and postprocess kernels
-cuda_add_library(custom_kernel SHARED
   lib/src/preprocess/agent_preprocess_kernel.cu
   lib/src/preprocess/polyline_preprocess_kernel.cu
   lib/src/postprocess/postprocess_kernel.cu
 )
-target_link_libraries(custom_kernel
-  ${CUDA_LIBRARIES}
-  ${CUBLAS_LIBRARIES}
-  ${CUDNN_LIBRARIES})
-target_include_directories(custom_kernel PUBLIC
+target_include_directories(${PROJECT_NAME}_cuda_lib PUBLIC
   lib/include
 )
 
-ament_auto_add_library(${PROJECT_NAME} SHARED
+ament_auto_add_library(${PROJECT_NAME}_lib SHARED
   src/builder.cpp
   src/trt_mtr.cpp
 )
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_link_libraries(${PROJECT_NAME}_lib
+  ${TRT_PLUGINS}
+  ${TRT_PLUGIN_LIBS}
+  ${CUDA_LIBRARIES}
+  ${CUBLAS_LIBRARIES}
+  ${CUDNN_LIBRARIES}
+  ${PROJECT_NAME}_cuda_lib
+)
+target_include_directories(${PROJECT_NAME}_lib PUBLIC
   include
   lib/include
 )
 
+target_compile_options(${PROJECT_NAME}_lib PRIVATE
+  -Wall -Wextra -Wpedantic -Werror -Wno-deprecated-declarations
+)
+
+# ROS 2 node
 ament_auto_add_library(${PROJECT_NAME}_node SHARED
   src/node.cpp
 )
 
-rclcpp_components_register_node(${PROJECT_NAME}_node
-  PLUGIN "tensorrt_mtr::MTRNode"
-  EXECUTABLE ${PROJECT_NAME}_node_exe
+target_link_libraries(${PROJECT_NAME}_node
+  ${PROJECT_NAME}_lib
 )
 
-target_compile_options(${PROJECT_NAME} PRIVATE
-  -Wall -Wextra -Wpedantic -Werror -Wno-deprecated-declarations
+rclcpp_components_register_node(${PROJECT_NAME}_node
+  PLUGIN "trt_mtr::MTRNode"
+  EXECUTABLE ${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
@@ -99,4 +96,5 @@ ament_auto_package(
   INSTALL_TO_SHARE
   launch
   config
+  data
 )

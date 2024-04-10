@@ -44,7 +44,6 @@ struct MtrConfig
    * @param target_labels An array of target label names.
    * @param num_mode The number of modes.
    * @param num_future The number of future time step length predicted by MTR.
-   * @param num_predict_dim The number of state dimensions.
    * @param max_num_polyline The max number of polylines which can be contained in a single input.
    * @param offset_xy The offset value used in input pre-process.
    * @param intention_point_filepath The path to intention points file.
@@ -52,16 +51,19 @@ struct MtrConfig
    */
   MtrConfig(
     const std::vector<std::string> & target_labels = {"VEHICLE", "PEDESTRIAN", "CYCLIST"},
-    const size_t num_mode = 6, const size_t num_future = 80, const size_t num_predict_dim = 7,
-    const size_t max_num_polyline = 768, const std::array<float, 2> offset_xy = {30.0f, 0.0f},
+    const size_t num_past = 10, const size_t num_mode = 6, const size_t num_future = 80,
+    const size_t max_num_polyline = 768, const size_t max_num_point = 20,
+    const float point_break_distance = 1.0f, const std::array<float, 2> & offset_xy = {30.0f, 0.0f},
     const std::string & intention_point_filepath = "./data/waymo64.csv",
     const size_t num_intention_point_cluster = 64)
   : target_labels(target_labels),
     num_class(target_labels.size()),
+    num_past(num_past),
     num_mode(num_mode),
     num_future(num_future),
-    num_predict_dim(num_predict_dim),
     max_num_polyline(max_num_polyline),
+    max_num_point(max_num_point),
+    point_break_distance(point_break_distance),
     offset_xy(offset_xy),
     intention_point_filepath(intention_point_filepath),
     num_intention_point_cluster(num_intention_point_cluster)
@@ -70,10 +72,12 @@ struct MtrConfig
 
   std::vector<std::string> target_labels;
   size_t num_class;
+  size_t num_past;
   size_t num_mode;
   size_t num_future;
-  size_t num_predict_dim;
   size_t max_num_polyline;
+  size_t max_num_point;
+  float point_break_distance;
   std::array<float, 2> offset_xy;
   std::string intention_point_filepath;
   size_t num_intention_point_cluster;

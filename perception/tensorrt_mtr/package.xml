@@ -16,6 +16,7 @@
   <depend>lanelet2_extension</depend>
   <depend>lanelet2_routing</depend>
   <depend>lanelet2_traffic_rules</depend>
+  <depend>nav_msgs</depend>
   <depend>object_recognition_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
