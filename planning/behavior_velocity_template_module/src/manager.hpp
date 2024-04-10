@@ -27,9 +27,7 @@
 #include <functional>
 #include <memory>
 
-namespace autoware
-{
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 /**
  * @brief Constructor for the TemplateModuleManager class.
@@ -91,7 +89,6 @@ class TemplateModulePlugin
 {
 };
 
-}  // namespace behavior_velocity_planner
-}  // namespace autoware
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // MANAGER_HPP_
