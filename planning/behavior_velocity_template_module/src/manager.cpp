@@ -56,7 +56,7 @@ TemplateModuleManager::getModuleExpiredFunction(
   };
 }
 
-}  // namespace autoware
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
