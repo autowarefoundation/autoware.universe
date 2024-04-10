@@ -49,10 +49,6 @@ FaultInjectionNode::FaultInjectionNode(rclcpp::NodeOptions node_options)
 
   using std::placeholders::_1;
 
-  // Parameter Server
-  set_param_res_ =
-    this->add_on_set_parameters_callback(std::bind(&FaultInjectionNode::on_set_param, this, _1));
-
   // Subscriber
   sub_simulation_events_ = this->create_subscription<SimulationEvents>(
     "~/input/simulation_events", rclcpp::QoS{rclcpp::KeepLast(10)},
@@ -84,29 +80,6 @@ void FaultInjectionNode::update_event_diag(
   wrap.level = diag.level;
   wrap.message = diag.message;
   wrap.hardware_id = diag.hardware_id;
-}
-
-rcl_interfaces::msg::SetParametersResult FaultInjectionNode::on_set_param(
-  const std::vector<rclcpp::Parameter> & params)
-{
-  rcl_interfaces::msg::SetParametersResult result;
-
-  RCLCPP_DEBUG(this->get_logger(), "call on_set_param");
-
-  try {
-    double value = NAN;
-    if (tier4_autoware_utils::updateParam(params, "diagnostic_updater.period", value)) {
-      updater_.set_period(value);
-    }
-  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
-    result.successful = false;
-    result.reason = e.what();
-    return result;
-  }
-
-  result.successful = true;
-  result.reason = "success";
-  return result;
 }
 
 std::vector<DiagConfig> FaultInjectionNode::read_event_diag_list()

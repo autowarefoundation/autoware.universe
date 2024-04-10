@@ -39,11 +39,6 @@ private:
   void on_simulation_events(const SimulationEvents::ConstSharedPtr msg);
   rclcpp::Subscription<SimulationEvents>::SharedPtr sub_simulation_events_;
 
-  // Parameter Server
-  rcl_interfaces::msg::SetParametersResult on_set_param(
-    const std::vector<rclcpp::Parameter> & params);
-  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
-
   void update_event_diag(
     diagnostic_updater::DiagnosticStatusWrapper & wrap, const std::string & event_name);
 
