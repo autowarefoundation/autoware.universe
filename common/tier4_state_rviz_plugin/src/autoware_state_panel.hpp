@@ -25,8 +25,6 @@
 #include <QTableWidget>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
-#include <std_msgs/msg/bool.hpp>
-#include <std_srvs/srv/set_bool.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/motion_state.hpp>
@@ -38,6 +36,8 @@
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>

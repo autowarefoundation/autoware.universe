@@ -31,28 +31,27 @@
 #ifndef AUTO_PARKING__AUTO_PARKING_NODE_HPP_
 #define AUTO_PARKING__AUTO_PARKING_NODE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <std_msgs/msg/bool.hpp>
-#include <std_srvs/srv/set_bool.hpp>
-#include <motion_utils/vehicle/vehicle_state_checker.hpp>
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <freespace_planning_algorithms/astar_search.hpp>
+#include <motion_utils/vehicle/vehicle_state_checker.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
+#include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_srvs/srv/set_bool.hpp>
+#include <tier4_external_api_msgs/srv/engage.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
-
-#include <geometry_msgs/msg/pose.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-
-#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
-#include <tier4_external_api_msgs/srv/engage.hpp>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 using Pose = geometry_msgs::msg::Pose;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
@@ -73,10 +72,11 @@ namespace auto_parking
 
 struct AutoParkParam
 {
-  double th_arrived_distance_m; // threshold to check arrival at goal 1.0
-  double th_parking_space_distance_m; // search for parking spaces within this radius 10
-  double update_rate; // Timer() update rate 2
-  double vehicle_shape_margin_m; // margin to add to vehicle dimensions for astar collision check, collision margin 0.2
+  double th_arrived_distance_m;        // threshold to check arrival at goal 1.0
+  double th_parking_space_distance_m;  // search for parking spaces within this radius 10
+  double update_rate;                  // Timer() update rate 2
+  double vehicle_shape_margin_m;  // margin to add to vehicle dimensions for astar collision check,
+                                  // collision margin 0.2
 };
 
 class AutoParkingNode : public rclcpp::Node
@@ -90,17 +90,17 @@ public:
   void goalPublisher(const PoseStamped msg);
   void reset();
   void onTimer();
-  void filterGoalPoseinParkingLot(const lanelet::ConstLineString3d center_line, Pose& goal);
+  void filterGoalPoseinParkingLot(const lanelet::ConstLineString3d center_line, Pose & goal);
   bool findParkingSpace();
-  
+
   bool isInParkingLot();
   bool initAutoParking();
-  bool isArrived(const Pose& goal);
+  bool isArrived(const Pose & goal);
 
   void onEngage(EngageMsg::ConstSharedPtr msg);
   void engageAutonomous();
   void onSetActiveStatus(
-    const std_srvs::srv::SetBool::Request::SharedPtr req, 
+    const std_srvs::srv::SetBool::Request::SharedPtr req,
     std_srvs::srv::SetBool::Response::SharedPtr res);
 
   // functions used in the fpa constructor
@@ -114,7 +114,7 @@ private:
 
   rclcpp::Publisher<PoseStamped>::SharedPtr goal_pose_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr active_status_pub_;
-  
+
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr lanelet_map_sub_;
   rclcpp::Subscription<EngageMsg>::SharedPtr engage_sub_;
@@ -152,7 +152,6 @@ private:
   bool set_parking_space_goal_;
   bool active_;
   bool is_engaged_;
-
 };
 }  // namespace auto_parking
 #endif  // AUTO_PARKING__AUTO_PARKING_NODE_HPP_

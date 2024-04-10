@@ -14,43 +14,42 @@ Once inside the parking lot, while driving to exit lanelet goal, the node search
 
 ### Input topics
 
-| Name                             | Type                                    | Description                           |
-| -------------------------------- | --------------------------------------- | --------------------------------------|
-| `~/input/engage`                 | autoware_auto_vehicle_msgs::msg::Engage | status of autoware AUTONOMOUS         |
-| `~/input/lanelet_map_bin`        | autoware_auto_mapping_msgs::HADMapBin   | vector map, for drivable areas        |
-| `~/input/occupancy_grid`         | nav_msgs::msg::OccupancyGrid            | occupancy grid from costmap generator |
-| `~input/odometry`                | nav_msgs::Odometry                      | for getting current pose              |
+| Name                      | Type                                    | Description                           |
+| ------------------------- | --------------------------------------- | ------------------------------------- |
+| `~/input/engage`          | autoware_auto_vehicle_msgs::msg::Engage | status of autoware AUTONOMOUS         |
+| `~/input/lanelet_map_bin` | autoware_auto_mapping_msgs::HADMapBin   | vector map, for drivable areas        |
+| `~/input/occupancy_grid`  | nav_msgs::msg::OccupancyGrid            | occupancy grid from costmap generator |
+| `~input/odometry`         | nav_msgs::Odometry                      | for getting current pose              |
 
 ### Output topics
 
-| Name                     | Type                                    | Description                                    |
-| ------------------------ | --------------------------------------- | ---------------------------------------------- |
-| `~/output/fixed_goal`    | geometry_msgs::msg::PoseStamped         | current goal published by auto_parking         |
-| `~/output/active_status` | std_msgs::msg::Bool                     | active status of auto_park node                |
+| Name                     | Type                            | Description                            |
+| ------------------------ | ------------------------------- | -------------------------------------- |
+| `~/output/fixed_goal`    | geometry_msgs::msg::PoseStamped | current goal published by auto_parking |
+| `~/output/active_status` | std_msgs::msg::Bool             | active status of auto_park node        |
 
 ### Service
 
-| Name                     | Type                                    | Description                       |
-| ------------------------ | --------------------------------------- | --------------------------------- |
-| `~/service/set_active`   | std_srvs::srv::SetBool                  | set active status of node         |
+| Name                   | Type                   | Description               |
+| ---------------------- | ---------------------- | ------------------------- |
+| `~/service/set_active` | std_srvs::srv::SetBool | set active status of node |
 
 ### Client
 
-| Name                 | Type                                    | Description                                    |
-| -------------------- | --------------------------------------- | ---------------------------------------------- |
-| `~/service/engage`   | tier4_external_api_msgs::srv::Engage    | client to engage AUTONOMOUS mode               |
+| Name               | Type                                 | Description                      |
+| ------------------ | ------------------------------------ | -------------------------------- |
+| `~/service/engage` | tier4_external_api_msgs::srv::Engage | client to engage AUTONOMOUS mode |
 
 ### How to launch
 
 1. Write your remapping info in `auto-parking.launch.xml` or add args when executing `roslaunch`
 2. Launch node using `ros2 launch auto-parking auto-parking.launch.xml`
 3. Call service to start auto parking after placing ego on map `ros2 service call /planning/auto_parking/set_status std_srvs/srv/SetBool "{data: True}"`
-3. To stop/reset call with False arg `ros2 service call /planning/auto_parking/set_status std_srvs/srv/SetBool "{data: False}"`
+4. To stop/reset call with False arg `ros2 service call /planning/auto_parking/set_status std_srvs/srv/SetBool "{data: False}"`
 
 ### Parameters
 
 {{ json_to_markdown("schema/auto_parking.schema.json") }}
-
 
 ### Flowchart
 
@@ -107,4 +106,3 @@ endif
 stop
 @enduml
 ```
-

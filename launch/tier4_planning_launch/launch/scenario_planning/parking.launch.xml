@@ -38,21 +38,21 @@
   <!-- auto parking module -->
   <group if="$(var launch_avp_module)">
     <push-ros-namespace namespace="avp"/>
-      <node_container pkg="rclcpp_components" exec="component_container" name="auto_parking_container" namespace="">
-          <composable_node pkg="auto_parking" plugin="auto_parking::AutoParkingNode" name="auto_parking" namespace="">
-            <remap from="~/input/odometry" to="/localization/kinematic_state"/>
-            <remap from="~/input/occupancy_grid" to="/planning/scenario_planning/parking/costmap_generator/occupancy_grid"/>
-            <remap from="~/input/lanelet_map_bin" to="/map/vector_map"/>
-            <remap from="~/input/engage" to="/api/autoware/get/engage"/>
-            <remap from="~/service/engage" to="/api/autoware/set/engage"/>
-            <remap from="~/output/fixed_goal" to="/planning/mission_planning/goal"/>
-            <remap from="~/output/active_status" to="/planning/auto_parking/status"/>
-            <remap from="~/service/set_active" to="/planning/auto_parking/set_status"/>
-            <!-- params -->
-            <param from="$(var vehicle_param_file)"/>
-            <param from="$(var auto_parking_param_path)"/>
-          </composable_node>
-          <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component" namespace=""/>
-      </node_container>
+    <node_container pkg="rclcpp_components" exec="component_container" name="auto_parking_container" namespace="">
+      <composable_node pkg="auto_parking" plugin="auto_parking::AutoParkingNode" name="auto_parking" namespace="">
+        <remap from="~/input/odometry" to="/localization/kinematic_state"/>
+        <remap from="~/input/occupancy_grid" to="/planning/scenario_planning/parking/costmap_generator/occupancy_grid"/>
+        <remap from="~/input/lanelet_map_bin" to="/map/vector_map"/>
+        <remap from="~/input/engage" to="/api/autoware/get/engage"/>
+        <remap from="~/service/engage" to="/api/autoware/set/engage"/>
+        <remap from="~/output/fixed_goal" to="/planning/mission_planning/goal"/>
+        <remap from="~/output/active_status" to="/planning/auto_parking/status"/>
+        <remap from="~/service/set_active" to="/planning/auto_parking/set_status"/>
+        <!-- params -->
+        <param from="$(var vehicle_param_file)"/>
+        <param from="$(var auto_parking_param_path)"/>
+      </composable_node>
+      <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component" namespace=""/>
+    </node_container>
   </group>
 </launch>

@@ -32,14 +32,13 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
-
-#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -52,7 +51,7 @@ using lanelet::utils::to2D;
 using Pose = geometry_msgs::msg::Pose;
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 
-namespace 
+namespace
 {
 // get nearest parking lot by distance
 std::shared_ptr<lanelet::ConstPolygon3d> filterNearestParkinglot(
@@ -61,12 +60,13 @@ std::shared_ptr<lanelet::ConstPolygon3d> filterNearestParkinglot(
 {
   const auto all_parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map_ptr);
   const auto linked_parking_lot = std::make_shared<lanelet::ConstPolygon3d>();
-  *linked_parking_lot = *std::min_element(all_parking_lots.begin(), all_parking_lots.end(),
-    [&](const lanelet::ConstPolygon3d& p1, const lanelet::ConstPolygon3d& p2) {
-    const double dist_p1 = boost::geometry::distance(current_position, to2D(p1).basicPolygon());
-    const double dist_p2 = boost::geometry::distance(current_position, to2D(p2).basicPolygon());
-    return dist_p1 < dist_p2;
-  });
+  *linked_parking_lot = *std::min_element(
+    all_parking_lots.begin(), all_parking_lots.end(),
+    [&](const lanelet::ConstPolygon3d & p1, const lanelet::ConstPolygon3d & p2) {
+      const double dist_p1 = boost::geometry::distance(current_position, to2D(p1).basicPolygon());
+      const double dist_p2 = boost::geometry::distance(current_position, to2D(p2).basicPolygon());
+      return dist_p1 < dist_p2;
+    });
   if (linked_parking_lot) {
     return linked_parking_lot;
   } else {
@@ -92,8 +92,7 @@ void AutoParkingNode::goalPublisher(const PoseStamped msg)
   goal_pose_pub_->publish(msg);
 }
 
-TransformStamped AutoParkingNode::getTransform(
-  const std::string & from, const std::string & to)
+TransformStamped AutoParkingNode::getTransform(const std::string & from, const std::string & to)
 {
   TransformStamped tf;
   try {
@@ -105,8 +104,7 @@ TransformStamped AutoParkingNode::getTransform(
   return tf;
 }
 
-void AutoParkingNode::onMap(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+void AutoParkingNode::onMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
@@ -132,7 +130,7 @@ void AutoParkingNode::onSetActiveStatus(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
-  if(req->data) {
+  if (req->data) {
     reset();
     active_ = true;
   } else {
@@ -167,26 +165,29 @@ PlannerCommonParam AutoParkingNode::getPlannerCommonParam()
   return p;
 }
 
-bool AutoParkingNode::isArrived(const Pose& goal)
+bool AutoParkingNode::isArrived(const Pose & goal)
 {
   // Check distance to current goal
-  if (node_param_.th_arrived_distance_m < tier4_autoware_utils::calcDistance2d(current_pose_.pose, goal)) {
+  if (
+    node_param_.th_arrived_distance_m <
+    tier4_autoware_utils::calcDistance2d(current_pose_.pose, goal)) {
     return false;
   }
   return true;
 }
 
-void AutoParkingNode::filterGoalPoseinParkingLot(const lanelet::ConstLineString3d center_line, 
-                                                 Pose& goal)
+void AutoParkingNode::filterGoalPoseinParkingLot(
+  const lanelet::ConstLineString3d center_line, Pose & goal)
 {
-  for(size_t i = 0; i < center_line.size(); i++){
-    const lanelet::Point3d search_point(lanelet::InvalId, center_line[i].x(), center_line[i].y(), 0.0);
-    if(lanelet::geometry::within(search_point, nearest_parking_lot_->basicPolygon())){
+  for (size_t i = 0; i < center_line.size(); i++) {
+    const lanelet::Point3d search_point(
+      lanelet::InvalId, center_line[i].x(), center_line[i].y(), 0.0);
+    if (lanelet::geometry::within(search_point, nearest_parking_lot_->basicPolygon())) {
       goal.position.x = center_line[i].x();
       goal.position.y = center_line[i].y();
       goal.position.z = 0.0;
       const auto yaw = std::atan2(
-        center_line[i+1].y() - center_line[i].y(), center_line[i+1].x() - center_line[i].x());
+        center_line[i + 1].y() - center_line[i].y(), center_line[i + 1].x() - center_line[i].x());
       tf2::Quaternion q;
       q.setRPY(0, 0, yaw);
       goal.orientation = tf2::toMsg(q);
@@ -199,7 +200,7 @@ bool AutoParkingNode::isInParkingLot()
 {
   const auto & p = current_pose_.pose.position;
   const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
-  if(lanelet::geometry::within(search_point, nearest_parking_lot_->basicPolygon())){
+  if (lanelet::geometry::within(search_point, nearest_parking_lot_->basicPolygon())) {
     return true;
   }
   return false;
@@ -210,48 +211,49 @@ bool AutoParkingNode::initAutoParking()
   const auto & p = current_pose_.pose.position;
   const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
 
-  nearest_parking_lot_ =
-    filterNearestParkinglot(lanelet_map_ptr_, search_point.basicPoint2d());
-  if(!nearest_parking_lot_){
+  nearest_parking_lot_ = filterNearestParkinglot(lanelet_map_ptr_, search_point.basicPoint2d());
+  if (!nearest_parking_lot_) {
     RCLCPP_INFO(get_logger(), "No parking lot found!!");
     return false;
   }
 
-  const auto & all_parking_spaces_ = 
-    lanelet::utils::query::getAllParkingSpaces(lanelet_map_ptr_);
+  const auto & all_parking_spaces_ = lanelet::utils::query::getAllParkingSpaces(lanelet_map_ptr_);
 
-  nearest_parking_spaces_ = 
+  nearest_parking_spaces_ =
     lanelet::utils::query::getLinkedParkingSpaces(*nearest_parking_lot_, all_parking_spaces_);
 
   const auto & all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   const auto & all_road_lanelets = lanelet::utils::query::roadLanelets(all_lanelets);
 
-  parking_lot_lanelets_ = 
+  parking_lot_lanelets_ =
     lanelet::utils::query::getLinkedLanelets(*nearest_parking_lot_, all_road_lanelets);
 
   // Get closest lanelet to ego-vehicle
-  if(!lanelet::utils::query::getClosestLanelet(all_road_lanelets, 
-      current_pose_.pose, &current_lanelet_)){
+  if (!lanelet::utils::query::getClosestLanelet(
+        all_road_lanelets, current_pose_.pose, &current_lanelet_)) {
     RCLCPP_INFO(get_logger(), "No close lanelet to vehicle found!!");
     return false;
   }
 
-  // Order parking lot lanelets by route length  
+  // Order parking lot lanelets by route length
   // - Sort lanelets
-  std::sort(parking_lot_lanelets_.begin(), parking_lot_lanelets_.end(), 
-      [&](const lanelet::ConstLanelet& l1, const lanelet::ConstLanelet& l2){ 
-      const auto l1_length = routing_graph_ptr_->shortestPath(current_lanelet_, l1, {}, false)->size();
-      const auto l2_length = routing_graph_ptr_->shortestPath(current_lanelet_, l2, {}, false)->size();
-      return ( l1_length < l2_length);
-      });
+  std::sort(
+    parking_lot_lanelets_.begin(), parking_lot_lanelets_.end(),
+    [&](const lanelet::ConstLanelet & l1, const lanelet::ConstLanelet & l2) {
+      const auto l1_length =
+        routing_graph_ptr_->shortestPath(current_lanelet_, l1, {}, false)->size();
+      const auto l2_length =
+        routing_graph_ptr_->shortestPath(current_lanelet_, l2, {}, false)->size();
+      return (l1_length < l2_length);
+    });
 
   // Set parking lot goal, goal at exit of parking lot
   // Assuming parking lot has one entry, longest route is from
   // entry to exit.
-  lanelet::ConstLineString3d exit_llt_cline = 
-  parking_lot_lanelets_.back().centerline(); // final lanelet from sorted lanelets
+  lanelet::ConstLineString3d exit_llt_cline =
+    parking_lot_lanelets_.back().centerline();  // final lanelet from sorted lanelets
   filterGoalPoseinParkingLot(exit_llt_cline, parking_goal_);
-  
+
   // print out sortet lanelet ID's for DEBUG.
   // for (const auto & lanelet : parking_lot_lanelets_) {
   //   // check if parking space is close to lanelet
@@ -269,43 +271,45 @@ bool AutoParkingNode::findParkingSpace()
   // Set occupancy map and current pose
   algo_->setMap(*occupancy_grid_);
   const auto current_pose_in_costmap_frame = transformPose(
-  current_pose_.pose,
-  getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
+    current_pose_.pose,
+    getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
 
   // Cycle through parking spaces
-  for(const auto & parking_space : nearest_parking_spaces_){
-    const double dist = boost::geometry::distance(to2D(parking_space).basicLineString(), search_point);
-    // Check if parking space is nearby                                 
-    if(node_param_.th_parking_space_distance_m < dist){
+  for (const auto & parking_space : nearest_parking_spaces_) {
+    const double dist =
+      boost::geometry::distance(to2D(parking_space).basicLineString(), search_point);
+    // Check if parking space is nearby
+    if (node_param_.th_parking_space_distance_m < dist) {
       continue;
     }
 
     // Compute two goal poses for each parking space
-    double distance_thresh = boost::geometry::distance(parking_space.front().basicPoint(), 
-                                                       parking_space.back().basicPoint()) / 4;
+    double distance_thresh =
+      boost::geometry::distance(
+        parking_space.front().basicPoint(), parking_space.back().basicPoint()) /
+      4;
     lanelet::ConstPoints3d p_space_fw_bk;
     p_space_fw_bk.push_back(parking_space.back());
     p_space_fw_bk.push_back(parking_space.front());
 
-    // Compute parking space poses, orientations i = 0 , 1 
+    // Compute parking space poses, orientations i = 0 , 1
     // Check if freespace trajectory available then set parking space goal
     // Check back to front pose first then opposite
 
-    for(auto i = 0; i < 2; i++){
-
+    for (auto i = 0; i < 2; i++) {
       auto in1 = i % 2;
       auto in2 = (i + 1) % 2;
 
-      Eigen::Vector3d direction =
-        p_space_fw_bk[in2].basicPoint() - p_space_fw_bk[in1].basicPoint();
+      Eigen::Vector3d direction = p_space_fw_bk[in2].basicPoint() - p_space_fw_bk[in1].basicPoint();
       direction.normalize();
 
-      // Set pose 
-      const Eigen::Vector3d goal_pose = p_space_fw_bk[in1].basicPoint() + direction * distance_thresh;
+      // Set pose
+      const Eigen::Vector3d goal_pose =
+        p_space_fw_bk[in1].basicPoint() + direction * distance_thresh;
       const auto yaw = std::atan2(direction.y(), direction.x());
       tf2::Quaternion q;
       q.setRPY(0, 0, yaw);
-      
+
       Pose goal;
       goal.position.x = goal_pose.x();
       goal.position.y = goal_pose.y();
@@ -317,11 +321,11 @@ bool AutoParkingNode::findParkingSpace()
       current_goal_.header.stamp = rclcpp::Time();
 
       const auto goal_pose_in_costmap_frame = transformPose(
-      current_goal_.pose, 
-      getTransform(occupancy_grid_->header.frame_id, current_goal_.header.frame_id));
+        current_goal_.pose,
+        getTransform(occupancy_grid_->header.frame_id, current_goal_.header.frame_id));
       bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
 
-      if(result){
+      if (result) {
         RCLCPP_INFO(get_logger(), "Auto-parking: Found free parking space!");
         return true;
       }
@@ -367,7 +371,7 @@ void AutoParkingNode::onTimer()
   is_active_msg.data = active_;
   active_status_pub_->publish(is_active_msg);
 
-  if (!active_){
+  if (!active_) {
     return;
   }
 
@@ -375,20 +379,20 @@ void AutoParkingNode::onTimer()
   current_pose_.header = odom_->header;
 
   // Check all inputs are ready
-  if (!odom_ || !lanelet_map_ptr_ || !routing_graph_ptr_ ||
-      !engage_sub_ || !client_engage_ ||
-      current_pose_.header.frame_id == "") {
+  if (
+    !odom_ || !lanelet_map_ptr_ || !routing_graph_ptr_ || !engage_sub_ || !client_engage_ ||
+    current_pose_.header.frame_id == "") {
     active_ = false;
     return;
   }
 
   // Publish parking lot entrance goal
-  if(!set_parking_lot_goal_){
+  if (!set_parking_lot_goal_) {
     // Initialize variables
-    if(!initAutoParking()){ 
+    if (!initAutoParking()) {
       RCLCPP_INFO(get_logger(), "Auto-parking: Initialization failed!");
       active_ = false;
-      return; 
+      return;
     }
     current_goal_.header.frame_id = odom_->header.frame_id;
     current_goal_.header.stamp = rclcpp::Time();
@@ -399,19 +403,17 @@ void AutoParkingNode::onTimer()
   }
 
   // Arrived at parking lot exit without finding parking space
-  if(set_parking_lot_goal_ && isArrived(parking_goal_)){
+  if (set_parking_lot_goal_ && isArrived(parking_goal_)) {
     RCLCPP_INFO(get_logger(), "Auto-parking: Failed to find parking space");
     active_ = false;
     return;
   }
-  
-  if(isInParkingLot() && occupancy_grid_)
-  {
+
+  if (isInParkingLot() && occupancy_grid_) {
     // Search parking spaces if inside parking lot
-    if(!set_parking_space_goal_)
-    { 
+    if (!set_parking_space_goal_) {
       RCLCPP_INFO_THROTTLE(get_logger(), *this->get_clock(), 2000, "Auto-parking: Searching...");
-      if(findParkingSpace()){
+      if (findParkingSpace()) {
         goalPublisher(current_goal_);
         RCLCPP_INFO(get_logger(), "Auto-parking: Publishing parking space goal");
         set_parking_space_goal_ = true;
@@ -419,18 +421,17 @@ void AutoParkingNode::onTimer()
     }
     // if parking space goal set
     // check if astar goal is still valid, else replan
-    else
-    {
+    else {
       // Set occupancy map and current pose
       algo_->setMap(*occupancy_grid_);
       const auto current_pose_in_costmap_frame = transformPose(
-      current_pose_.pose,
-      getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
+        current_pose_.pose,
+        getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
       const auto goal_pose_in_costmap_frame = transformPose(
-      current_goal_.pose, 
-      getTransform(occupancy_grid_->header.frame_id, current_goal_.header.frame_id));
+        current_goal_.pose,
+        getTransform(occupancy_grid_->header.frame_id, current_goal_.header.frame_id));
       bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
-      if(!result) { 
+      if (!result) {
         set_parking_space_goal_ = false;
         current_goal_.pose = parking_goal_;
         goalPublisher(current_goal_);
@@ -440,7 +441,7 @@ void AutoParkingNode::onTimer()
   }
 
   // Arrived at parking space goal
-  if(set_parking_space_goal_ && isArrived(current_goal_.pose)){
+  if (set_parking_space_goal_ && isArrived(current_goal_.pose)) {
     RCLCPP_INFO(get_logger(), "Auto-parking: Complete!");
     active_ = false;
     return;
@@ -450,9 +451,9 @@ void AutoParkingNode::onTimer()
   // const auto is_vehicle_stopped = stop_checker_->isVehicleStopped(1.0);
 
   // Engage autonomous once a goal is set
-  // For smooth transition remove vehicle stopping after 
+  // For smooth transition remove vehicle stopping after
   // publishing goal pose in freespace planner node
-  if(!is_engaged_ && !isArrived(current_goal_.pose)){
+  if (!is_engaged_ && !isArrived(current_goal_.pose)) {
     engageAutonomous();
   }
 }
@@ -460,7 +461,6 @@ void AutoParkingNode::onTimer()
 AutoParkingNode::AutoParkingNode(const rclcpp::NodeOptions & node_options)
 : Node("auto_parking", node_options)
 {
-
   // Auto-park params
   {
     auto & p = node_param_;
@@ -475,26 +475,29 @@ AutoParkingNode::AutoParkingNode(const rclcpp::NodeOptions & node_options)
     const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
     vehicle_shape_.length = vehicle_info.vehicle_length_m + node_param_.vehicle_shape_margin_m;
     vehicle_shape_.width = vehicle_info.vehicle_width_m + node_param_.vehicle_shape_margin_m;
-    vehicle_shape_.base2back = vehicle_info.rear_overhang_m + node_param_.vehicle_shape_margin_m / 2;
+    vehicle_shape_.base2back =
+      vehicle_info.rear_overhang_m + node_param_.vehicle_shape_margin_m / 2;
   }
 
   // Subscribers
   {
     lanelet_map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
-    "~/input/lanelet_map_bin", rclcpp::QoS{10}.transient_local(),
-    std::bind(&AutoParkingNode::onMap, this, std::placeholders::_1));
+      "~/input/lanelet_map_bin", rclcpp::QoS{10}.transient_local(),
+      std::bind(&AutoParkingNode::onMap, this, std::placeholders::_1));
 
     odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/odometry", rclcpp::QoS{100},
-    std::bind(&AutoParkingNode::onOdometry, this, std::placeholders::_1));
+      "~/input/odometry", rclcpp::QoS{100},
+      std::bind(&AutoParkingNode::onOdometry, this, std::placeholders::_1));
 
     engage_sub_ = create_subscription<EngageMsg>(
-    "~/input/engage", rclcpp::QoS{5}, std::bind(&AutoParkingNode::onEngage, this, std::placeholders::_1));
+      "~/input/engage", rclcpp::QoS{5},
+      std::bind(&AutoParkingNode::onEngage, this, std::placeholders::_1));
 
     occupancy_grid_sub_ = create_subscription<OccupancyGrid>(
-    "~/input/occupancy_grid", 10, std::bind(&AutoParkingNode::onOccupancyGrid, this, std::placeholders::_1));
+      "~/input/occupancy_grid", 10,
+      std::bind(&AutoParkingNode::onOccupancyGrid, this, std::placeholders::_1));
   }
-  
+
   // Publishers
   {
     rclcpp::QoS qos{1};
@@ -506,11 +509,11 @@ AutoParkingNode::AutoParkingNode(const rclcpp::NodeOptions & node_options)
   // Service
   {
     srv_set_active_ = create_service<std_srvs::srv::SetBool>(
-    "~/service/set_active", 
-    std::bind(
-    &AutoParkingNode::onSetActiveStatus, this, std::placeholders::_1, std::placeholders::_2));
+      "~/service/set_active",
+      std::bind(
+        &AutoParkingNode::onSetActiveStatus, this, std::placeholders::_1, std::placeholders::_2));
   }
-  
+
   // Client
   {
     client_engage_ = this->create_client<EngageSrv>("~/service/engage");
@@ -539,7 +542,7 @@ AutoParkingNode::AutoParkingNode(const rclcpp::NodeOptions & node_options)
   stop_checker_ = std::make_unique<motion_utils::VehicleStopCheckerBase>(this, 1.0 + 1.0);
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
-}
+}  // namespace auto_parking
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(auto_parking::AutoParkingNode)

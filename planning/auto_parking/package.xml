@@ -10,19 +10,19 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <depend>geometry_msgs</depend>
-  <depend>rclcpp</depend>
-  <depend>rclcpp_components</depend>
-  <depend>tier4_autoware_utils</depend>
-  <depend>lanelet2_extension</depend>
-  <depend>motion_utils</depend>
-  <depend>tier4_external_api_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>freespace_planning_algorithms</depend>
+  <depend>geometry_msgs</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
-  <depend>tf2_ros</depend>
-  <depend>tf2</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>std_srvs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tier4_autoware_utils</depend>
+  <depend>tier4_external_api_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

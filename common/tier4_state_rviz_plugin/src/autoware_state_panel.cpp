@@ -264,7 +264,7 @@ void AutowareStatePanel::onInitialize()
   client_enable_direct_control_ =
     raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/disable_autoware_control");
 
-  client_auto_park_ = 
+  client_auto_park_ =
     raw_node_->create_client<std_srvs::srv::SetBool>("/planning/auto_parking/set_status");
 
   // Routing
@@ -618,8 +618,8 @@ void AutowareStatePanel::onClickAutonomous()
 void AutowareStatePanel::onClickStop()
 {
   callServiceWithoutResponse<ChangeOperationMode>(client_change_to_stop_);
-  if(auto_park_running_){
-  onClickDisengageAutoPark();
+  if (auto_park_running_) {
+    onClickDisengageAutoPark();
   }
 }
 void AutowareStatePanel::onClickLocal()
@@ -644,8 +644,7 @@ void AutowareStatePanel::onClickEngageAutoPark()
     return;
   }
   client_auto_park_->async_send_request(
-    req, 
-    [this]([[maybe_unused]] rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture result) {});
+    req, [this]([[maybe_unused]] rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture result) {});
 }
 void AutowareStatePanel::onClickDisengageAutoPark()
 {
@@ -657,8 +656,7 @@ void AutowareStatePanel::onClickDisengageAutoPark()
     return;
   }
   client_auto_park_->async_send_request(
-    req, 
-    [this]([[maybe_unused]] rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture result) {});
+    req, [this]([[maybe_unused]] rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture result) {});
 }
 void AutowareStatePanel::onClickDirectControl()
 {

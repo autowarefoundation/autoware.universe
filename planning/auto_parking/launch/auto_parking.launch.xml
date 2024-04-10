@@ -9,7 +9,6 @@
   <arg name="output_status" default="/planning/auto_parking/status"/>
 
   <arg name="srv_active" default="/planning/auto_parking/set_status"/>
-  
 
   <arg name="param_file" default="$(find-pkg-share auto_parking)/config/auto_parking.param.yaml"/>
   <!-- vehicle info -->
