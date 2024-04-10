@@ -657,4 +657,4 @@ void StaticCenterlineGeneratorNode::save_map(
     lanelet2_output_file_path, debug_output_file_dir + "lanelet2_map.osm",
     std::filesystem::copy_options::overwrite_existing);
 }
-}  // namespace autoware::static_centerline_generator
+}  // namespace static_centerline_generator

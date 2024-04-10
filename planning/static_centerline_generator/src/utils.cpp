@@ -32,7 +32,7 @@ nav_msgs::msg::Odometry::ConstSharedPtr convert_to_odometry(const geometry_msgs:
   return odometry_ptr;
 }
 
-lanelet::Point3d createPoint3d(const double x, const double y, const double z = 19.0)
+lanelet::Point3d create_point3d(const double x, const double y, const double z = 19.0)
 {
   lanelet::Point3d point(lanelet::utils::getId());
   point.setAttribute("local_x", x);
@@ -89,7 +89,7 @@ geometry_msgs::msg::Pose get_center_pose(
 }
 
 PathWithLaneId get_path_with_lane_id(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets lanelets,
+  const RouteHandler & route_handler, const lanelet::ConstLanelets& lanelets,
   const geometry_msgs::msg::Pose & start_pose, const double ego_nearest_dist_threshold,
   const double ego_nearest_yaw_threshold)
 {
@@ -141,7 +141,7 @@ void update_centerline(
       const lanelet::BasicPoint2d point(traj_pos.x, traj_pos.y);
       const bool is_inside = lanelet::geometry::inside(lanelet_ref, point);
       if (is_inside) {
-        const auto center_point = createPoint3d(traj_pos.x, traj_pos.y, traj_pos.z);
+        const auto center_point = create_point3d(traj_pos.x, traj_pos.y, traj_pos.z);
 
         // set center point
         centerline.push_back(center_point);

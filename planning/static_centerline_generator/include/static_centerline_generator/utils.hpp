@@ -24,9 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::static_centerline_generator
-{
-namespace utils
+namespace autoware::static_centerline_generator::utils
 {
 rclcpp::QoS create_transient_local_qos();
 
@@ -37,7 +35,7 @@ geometry_msgs::msg::Pose get_center_pose(
   const RouteHandler & route_handler, const size_t lanelet_id);
 
 PathWithLaneId get_path_with_lane_id(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets lanelets,
+  const RouteHandler & route_handler, const lanelet::ConstLanelets& lanelets,
   const geometry_msgs::msg::Pose & start_pose, const double nearest_ego_dist_threshold,
   const double nearest_ego_yaw_threshold);
 
@@ -52,7 +50,6 @@ MarkerArray create_footprint_marker(
 MarkerArray create_distance_text_marker(
   const geometry_msgs::msg::Pose & pose, const double dist,
   const std::array<double, 3> & marker_color, const rclcpp::Time & now, const size_t idx);
-}  // namespace utils
-}  // namespace autoware::static_centerline_generator
+}  // namespace autoware::static_centerline_generator::utils
 
 #endif  // STATIC_CENTERLINE_GENERATOR__UTILS_HPP_
