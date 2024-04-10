@@ -65,38 +65,30 @@ def main(args=None):
 
 if __name__ == "__main__":
 
-    # -- Costmap Definition
-    size = 350 #110
-    resolution = 0.2
-
-    costmap = OccupancyGrid()
-    costmap.info.resolution = resolution
-    costmap.info.height = size
-    costmap.info.width = size
-    costmap.info.origin.position.x = -size*resolution/2
-    costmap.info.origin.position.y = -size*resolution/2
-    costmap.data = [0 for i in range(size**2) ]
+    with open(os.path.dirname(__file__)+"/result/costmap.txt", "rb") as f:
+        costmap = pickle.load(f)
 
     # -- Start and Goal Pose
     start_pose = Pose()
 
     goal_pose = Pose()
 
-    yaws = [2*np.pi*i/10 for i in range(10)]
     xs = [i for i in range(-35,36)]
     ys = [i for i in range(-35,36)]
+    yaws = [2*np.pi*i/10 for i in range(10)]
 
     results = np.zeros((len(yaws),len(xs),len(ys)))
 
+    trajectories = [[[Trajectory() for k in range(len(ys))] for j in range(len(xs))] for i in range(len(yaws))]
 
-    trajectories = [[[Trajectory() for i in range(len(ys))] for i in range(len(xs))] for i in range(len(yaws))]
+    ## -- Search
+    astar = fp.AstarSearch(planner_param, vehicle_shape, astar_param)
+    astar.setMap(costmap)
 
-    ## search grid goal
     start_time = time.monotonic()
 
     for i, yaw in enumerate(tqdm(yaws)):
     # for i, yaw in enumerate([0]):
-        # print("yaw = ", yaw)
         for j, x in enumerate(xs):
             for k, y in enumerate(ys):
     # for i, yaw in enumerate([0]):
@@ -105,8 +97,8 @@ if __name__ == "__main__":
     #         for k, y in enumerate([20]):
                 
                 # initialize astar instance every time.
-                astar = fp.AstarSearch(planner_param, vehicle_shape, astar_param)
-                astar.setMap(costmap)
+                # astar = fp.AstarSearch(planner_param, vehicle_shape, astar_param)
+                # astar.setMap(costmap)
                 
                 goal_pose.position.x = float(x)
                 goal_pose.position.y = float(y)
@@ -130,7 +122,7 @@ if __name__ == "__main__":
     print('search_time : ', end_time-start_time)
 
     result_bag = resultBag(xs, ys, yaws, results, trajectories)
-    filename = os.path.dirname(__file__)+"/result/searched_trajectories_full.txt"
+    filename = os.path.dirname(__file__)+"/result/searched_trajectories_with_obstacle_yaw0.txt"
     file1 = open(filename, "wb")
     pickle.dump(result_bag, file1)
     file1.close

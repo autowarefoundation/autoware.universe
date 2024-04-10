@@ -2,13 +2,19 @@ from autoware_auto_planning_msgs.msg import Trajectory, TrajectoryPoint
 
 import math
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import seaborn as sns
+import numpy as np
 import pickle
 
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
 from common.common_classes import resultBag
+
+# colors
+tab_colors = mcolors.TABLEAU_COLORS
+color_keys = list(tab_colors.keys())
 
 
 class DrawClickedTrajectory:
@@ -74,32 +80,40 @@ class DrawClickedTrajectory:
                                 headlength=10, connectionstyle='arc3',
                                 facecolor='gray', edgecolor='gray')
                )
+        ax.scatter(obstacle_x, obstacle_y, c='#000000', s=1)
         ax.grid(True)
 
         # Draw all paths
-        for cell in self.clicked_cells:
+        for c, cell in enumerate(self.clicked_cells):
             i = self.yaws.index(cell[2])
             j = self.xs.index(cell[0])
             k = self.ys.index(cell[1])
-            x = [point.pose.position.x for point in self.trajectories[i][j][k].points]
-            y = [point.pose.position.y for point in self.trajectories[i][j][k].points]
-            ax.plot([point.pose.position.x for point in self.trajectories[i][j][k].points], \
-                    [point.pose.position.y for point in self.trajectories[i][j][k].points])
 
+            color_key = color_keys[c % len(tab_colors)]
+            color = tab_colors[color_key]
+
+            # plot path
+            ax.plot([point.pose.position.x for point in self.trajectories[i][j][k].points], \
+                    [point.pose.position.y for point in self.trajectories[i][j][k].points], \
+                    color=color)
+            # plot goal arrow
             goal = [cell[0], cell[1]]
             yaw = (2*math.pi/10)*cell[2]
             direction = [2*math.cos(yaw)+cell[0], 2*math.sin(yaw)+cell[1]]
             ax.annotate('', xy=direction, xytext=goal,
                 arrowprops=dict(shrink=0, width=1, headwidth=8, 
                                 headlength=10, connectionstyle='arc3',
-                                facecolor='red', edgecolor='red')
+                                facecolor=color, edgecolor=color)
                )
         # Redraw the figure to show changes
         plt.draw()
 
-
-with open(os.path.dirname(__file__)+"/result/searched_trajectories_full.txt", "rb") as f:
+## load result data
+with open(os.path.dirname(__file__)+"/result/searched_trajectories_with_obstacle_yaw0.txt", "rb") as f:
     result_bag = pickle.load(f)
+
+with open(os.path.dirname(__file__)+"/result/costmap.txt", "rb") as f:
+    costmap = pickle.load(f)
 
 xs = result_bag.xs
 ys = result_bag.ys
@@ -108,8 +122,38 @@ yaws_d = [int((10/(2*math.pi))*yaw) for yaw in yaws]
 results = result_bag.results
 trajectories = result_bag.trajectories
 
+obstacle_x = []
+obstacle_y = []
+for i, cost in enumerate(costmap.data):
+    if cost >= 100:
+        obstacle_x.append((i % costmap.info.width) * costmap.info.resolution - 35)
+        obstacle_y.append((i / costmap.info.width) * costmap.info.resolution - 35)
+
+
+## plot result
+fig_result, axes_result = plt.subplots(nrows=2, ncols=5, figsize=(25,10), tight_layout=True)
+fig_result.suptitle('Search result, [white: success, red: failed, black: obstacle]')
+
+for i, yaw in enumerate(yaws):
+    result = np.transpose(results[i])
+
+    # plot result 
+    ax_result=axes_result[i//5, i%5]
+    sns.heatmap(result, ax=ax_result, cmap='Reds_r', vmin=-1, vmax=1, center=0, linewidths=0.5,\
+                cbar = False, xticklabels=xs, yticklabels=ys)
+    # plot obstacle
+    ax_result.scatter(np.array(obstacle_x)+35.5, np.array(obstacle_y)+35.5, c='black', s=1)
+
+    ax_result.invert_yaxis()
+    ax_result.set_title('yaw = '+str(yaw))
+    ax_result.set_xlabel('x')
+    ax_result.set_ylabel('y')
+
+plt.draw()
+
+## visualize searched path
 # Create a figure and axis to plot the grid
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(13, 13))
 ax.set_xlim([xs[0], xs[-1]])
 ax.set_ylim([ys[0], ys[-1]])
 ax.set_xticks(xs)
@@ -119,6 +163,7 @@ ax.annotate('', xy=[2, 0], xytext=[0, 0],
                                 headlength=10, connectionstyle='arc3',
                                 facecolor='gray', edgecolor='gray')
                )
+ax.scatter(obstacle_x, obstacle_y, c='#000000', s=1)
 ax.grid(True)
 
 # Connect the click event to the drawing function
