@@ -89,7 +89,7 @@ geometry_msgs::msg::Pose get_center_pose(
 }
 
 PathWithLaneId get_path_with_lane_id(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets& lanelets,
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelets,
   const geometry_msgs::msg::Pose & start_pose, const double ego_nearest_dist_threshold,
   const double ego_nearest_yaw_threshold)
 {
