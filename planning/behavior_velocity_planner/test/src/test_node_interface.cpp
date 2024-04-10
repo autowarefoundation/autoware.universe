@@ -26,7 +26,7 @@
 using autoware::behavior_velocity_planner::BehaviorVelocityPlannerNode;
 using planning_test_utils::PlanningInterfaceTestManager;
 
-std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
+std::shared_ptr<PlanningInterfaceTestManager> generate_test_manager()
 {
   auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
 
@@ -43,7 +43,7 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
   return test_manager;
 }
 
-std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
+std::shared_ptr<BehaviorVelocityPlannerNode> generate_node()
 {
   auto node_options = rclcpp::NodeOptions{};
 
@@ -114,9 +114,9 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
   return std::make_shared<BehaviorVelocityPlannerNode>(node_options);
 }
 
-void publishMandatoryTopics(
-  std::shared_ptr<PlanningInterfaceTestManager> test_manager,
-  std::shared_ptr<BehaviorVelocityPlannerNode> test_target_node)
+void publish_mandatory_topics(
+  const std::shared_ptr<PlanningInterfaceTestManager>& test_manager,
+  const std::shared_ptr<BehaviorVelocityPlannerNode>& test_target_node)
 {
   // publish necessary topics from test_manager
   test_manager->publishTF(test_target_node, "/tf");
@@ -142,10 +142,10 @@ void publishMandatoryTopics(
 TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
 {
   rclcpp::init(0, nullptr);
-  auto test_manager = generateTestManager();
-  auto test_target_node = generateNode();
+  auto test_manager = generate_test_manager();
+  auto test_target_node = generate_node();
 
-  publishMandatoryTopics(test_manager, test_target_node);
+  publish_mandatory_topics(test_manager, test_target_node);
 
   // test with nominal path_with_lane_id
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPathWithLaneId(test_target_node));
@@ -161,9 +161,9 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 {
   rclcpp::init(0, nullptr);
 
-  auto test_manager = generateTestManager();
-  auto test_target_node = generateNode();
-  publishMandatoryTopics(test_manager, test_target_node);
+  auto test_manager = generate_test_manager();
+  auto test_target_node = generate_node();
+  publish_mandatory_topics(test_manager, test_target_node);
 
   // test for normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPathWithLaneId(test_target_node));
