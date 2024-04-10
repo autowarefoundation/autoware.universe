@@ -641,4 +641,4 @@ void StaticCenterlineGeneratorNode::save_map(
   lanelet::write(lanelet2_output_file_path, *original_map_ptr_, *map_projector_);
   RCLCPP_INFO(get_logger(), "Saved map.");
 }
-}  // namespace static_centerline_generator
+}  // namespace autoware::static_centerline_generator
