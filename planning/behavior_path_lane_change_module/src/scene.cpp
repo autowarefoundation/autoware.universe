@@ -157,23 +157,15 @@ BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
 
   const auto current_lanes = getCurrentLanes();
   if (current_lanes.empty()) {
-    RCLCPP_WARN(logger_, "Current lanes not found!!! Something wrong.");
-    output.path = prev_module_path_;
-    output.reference_path = prev_module_reference_path_;
-    output.drivable_area_info = prev_drivable_area_info_;
-    output.turn_signal_info = prev_turn_signal_info_;
-    return output;
+    RCLCPP_DEBUG(logger_, "Current lanes not found. Returning previous module's path as output.");
+    return use_previous_module_output();
   }
 
   const auto terminal_path =
     calcTerminalLaneChangePath(current_lanes, getLaneChangeLanes(current_lanes, direction_));
   if (!terminal_path) {
-    RCLCPP_DEBUG(logger_, "Terminal path not found!!!");
-    output.path = prev_module_path_;
-    output.reference_path = prev_module_reference_path_;
-    output.drivable_area_info = prev_drivable_area_info_;
-    output.turn_signal_info = prev_turn_signal_info_;
-    return output;
+    RCLCPP_DEBUG(logger_, "Terminal path not found. Returning previous module's path as output.");
+    return use_previous_module_output();
   }
 
   output.path = terminal_path->path;
@@ -193,16 +185,12 @@ BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
 
 BehaviorModuleOutput NormalLaneChange::generateOutput()
 {
-  BehaviorModuleOutput output;
-
   if (!status_.is_valid_path) {
-    output.path = prev_module_path_;
-    output.reference_path = prev_module_reference_path_;
-    output.drivable_area_info = prev_drivable_area_info_;
-    output.turn_signal_info = prev_turn_signal_info_;
-    return output;
+    RCLCPP_DEBUG(logger_, "No valid path found. Returning previous module's path as output.");
+    return use_previous_module_output();
   }
 
+  BehaviorModuleOutput output;
   if (isAbortState() && abort_path_) {
     output.path = abort_path_->path;
     output.reference_path = prev_module_reference_path_;
@@ -2162,6 +2150,18 @@ bool NormalLaneChange::check_prepare_phase() const
   });
 
   return check_in_intersection || check_in_turns || check_in_general_lanes;
+}
+
+BehaviorModuleOutput NormalLaneChange::use_previous_module_output() const
+{
+  BehaviorModuleOutput output;
+
+  output.path = prev_module_path_;
+  output.reference_path = prev_module_reference_path_;
+  output.drivable_area_info = prev_drivable_area_info_;
+  output.turn_signal_info = prev_turn_signal_info_;
+
+  return output;
 }
 
 }  // namespace behavior_path_planner

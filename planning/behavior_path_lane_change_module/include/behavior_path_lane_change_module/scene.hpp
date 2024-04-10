@@ -183,6 +183,8 @@ protected:
 
   std::pair<double, double> calcCurrentMinMaxAcceleration() const;
 
+  BehaviorModuleOutput use_previous_module_output() const;
+
   void setStopPose(const Pose & stop_pose);
 
   void updateStopTime();
