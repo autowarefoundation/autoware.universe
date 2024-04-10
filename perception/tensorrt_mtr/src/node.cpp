@@ -160,11 +160,48 @@ int getLabelIndex(const TrackedObject & object)
 }  // namespace
 
 MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("tensorrt_mtr_node", node_options),
-  transform_listener_(this),
-  polyline_type_map_(this)
+: rclcpp::Node("tensorrt_mtr", node_options), transform_listener_(this), polyline_type_map_(this)
 {
   // TODO(ktro2828)
+  {
+    // Build MTR and its config
+    const auto model_path = declare_parameter<std::string>("model_path");
+    const auto precision = declare_parameter<std::string>("precision");
+    const auto target_labels = declare_parameter<std::vector<std::string>>("target_labels");
+    const auto num_past = static_cast<size_t>(declare_parameter<int>("num_past"));
+    const auto num_mode = static_cast<size_t>(declare_parameter<int>("num_mode"));
+    const auto num_future = static_cast<size_t>(declare_parameter<int>("num_future"));
+    const auto max_num_polyline = static_cast<size_t>(declare_parameter<int>("max_num_polyline"));
+    const auto max_num_point = static_cast<size_t>(declare_parameter<int>("max_num_point"));
+    const auto point_break_distance =
+      static_cast<float>(declare_parameter<double>("point_break_distance"));
+    auto tmp_offset_xy = declare_parameter<std::vector<double>>("offset_xy");
+    std::array<float, 2> offset_xy;
+    std::copy_n(tmp_offset_xy.begin(), 2, offset_xy.begin());
+    const auto intention_point_filepath =
+      declare_parameter<std::string>("intention_point_filepath");
+    const auto num_intention_point_cluster =
+      static_cast<size_t>(declare_parameter<int>("num_intention_point_cluster"));
+    config_ptr_ = std::make_unique<MtrConfig>(
+      target_labels, num_past, num_mode, num_future, max_num_polyline, max_num_point,
+      point_break_distance, offset_xy, intention_point_filepath, num_intention_point_cluster);
+    model_ptr_ = std::make_unique<TrtMTR>(model_path, precision, *config_ptr_.get());
+  }
+
+  sub_objects_ = create_subscription<TrackedObjects>(
+    "~/input/objects", rclcpp::QoS{1}, std::bind(&MTRNode::callback, this, std::placeholders::_1));
+  sub_map_ = create_subscription<HADMapBin>(
+    "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
+    std::bind(&MTRNode::onMap, this, std::placeholders::_1));
+  sub_ego_ = create_subscription<Odometry>(
+    "~/input/ego", rclcpp::QoS{1}, std::bind(&MTRNode::onEgo, this, std::placeholders::_1));
+
+  pub_objects_ = create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
+
+  if (declare_parameter<bool>("build_only")) {
+    RCLCPP_INFO(get_logger(), "TensorRT engine file is built and exit.");
+    rclcpp::shutdown();
+  }
 }
 
 void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
@@ -175,12 +212,11 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
 
   const auto current_time = rclcpp::Time(object_msg->header.stamp).seconds();
 
-  constexpr size_t max_time_length = 10;  // TODO(ktro2828): use parameter
   timestamps_.emplace_back(current_time);
   // TODO(ktro2828): update timestamps
-  if (timestamps_.size() < max_time_length) {
+  if (timestamps_.size() < config_ptr_->num_past) {
     return;  // Not enough timestamps
-  } else if (max_time_length < timestamps_.size()) {
+  } else if (config_ptr_->num_past < timestamps_.size()) {
     timestamps_.erase(timestamps_.begin(), timestamps_.begin());
   }
 
@@ -232,6 +268,9 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
     auto predicted_object = generatePredictedObject(object, trajectory);
     output.objects.emplace_back(predicted_object);
   }
+
+  // Publish results
+  pub_objects_->publish(output);
 }
 
 void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
@@ -246,6 +285,11 @@ void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
   } else {
     RCLCPP_WARN(get_logger(), "[TensorRT MTR]: Fail to convert lanelet to polyline");
   }
+}
+
+void MTRNode::onEgo(const Odometry::ConstSharedPtr ego_msg)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "Ego msg is received: " << ego_msg->header.frame_id);
 }
 
 bool MTRNode::convertLaneletToPolyline()
@@ -308,8 +352,9 @@ bool MTRNode::convertLaneletToPolyline()
   if (all_points.size() == 0) {
     return false;
   } else {
-    // TODO(ktro2828): load from model config
-    polyline_ptr_ = std::make_shared<PolylineData>(all_points, 798, 20, 1.0f);
+    polyline_ptr_ = std::make_shared<PolylineData>(
+      all_points, config_ptr_->max_num_polyline, config_ptr_->max_num_point,
+      config_ptr_->point_break_distance);
     return true;
   }
 }
@@ -348,9 +393,8 @@ void MTRNode::updateAgentHistory(
     object_msg_map_.emplace(object_id, object);
     auto state = trackedObjectToAgentState(object, true);
 
-    constexpr int max_time_length = 10;  // TODO(ktro2828): use parameter
     if (agent_history_map_.count(object_id) == 0) {
-      AgentHistory history(object_id, label_index, max_time_length);
+      AgentHistory history(object_id, label_index, config_ptr_->num_past);
       history.update(current_time, state);
       agent_history_map_.emplace(object_id, history);
     } else {
