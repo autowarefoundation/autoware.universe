@@ -134,8 +134,7 @@ nav_msgs::msg::OccupancyGrid construct_cost_map(
       }
     }
   }
-  return costmap_msg;
-
+  
   return costmap_msg;
 }
 
@@ -210,9 +209,11 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi)
   // configure astar param
   const bool only_behind_solutions = false;
   const bool use_back = true;
+  const bool use_curve_weight = true;
+  const bool use_complete_astar = true;
   const double distance_heuristic_weight = 1.0;
   const auto astar_param =
-    fpa::AstarParam{only_behind_solutions, use_back, distance_heuristic_weight};
+    fpa::AstarParam{only_behind_solutions, use_back, use_curve_weight, use_complete_astar, distance_heuristic_weight};
 
   auto algo = std::make_unique<fpa::AstarSearch>(planner_common_param, vehicle_shape, astar_param);
   return algo;

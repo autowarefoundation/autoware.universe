@@ -34,14 +34,12 @@ if(BUILD_TESTING)
   target_link_libraries(freespace_planning_algorithms-test
     freespace_planning_algorithms
   )
-  find_package(ament_cmake_ros REQUIRED)
-  ament_add_ros_isolated_gtest(freespace_planning_algorithms_no_obstacles-test
+  ament_add_ros_isolated_gtest(freespace_planning_algorithms_no_obs-test
     test/src/test_freespace_planning_algorithms_no_obstacles.cpp
   )
-  target_link_libraries(freespace_planning_algorithms_no_obstacles-test
+  target_link_libraries(freespace_planning_algorithms_no_obs-test
     freespace_planning_algorithms
   )
-  find_package(ament_cmake_ros REQUIRED)
   ament_add_gtest(rrtstar_core_informed-test
     test/src/test_rrtstar_core_informed.cpp
   )
