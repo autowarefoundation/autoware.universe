@@ -450,12 +450,14 @@ void MrmHandler::updateMrmState()
   const bool is_emergency = isEmergency();
 
   // Get mode
-  const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
+  const bool is_vehicle_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
+  const bool is_operation_mode_auto_mode =
+    operation_mode_state_->mode == autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS;
 
   // State Machine
   if (mrm_state_.state == MrmState::NORMAL) {
     // NORMAL
-    if (is_auto_mode && is_emergency) {
+    if (is_vehicle_auto_mode && is_operation_mode_auto_mode && is_emergency) {
       transitionTo(MrmState::MRM_OPERATING);
       return;
     }
