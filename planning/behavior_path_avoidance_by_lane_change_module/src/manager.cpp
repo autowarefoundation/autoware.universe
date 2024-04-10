@@ -72,10 +72,12 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
       param.max_expand_ratio = getOrDeclareParameter<double>(*node, ns + "max_expand_ratio");
       param.envelope_buffer_margin =
         getOrDeclareParameter<double>(*node, ns + "envelope_buffer_margin");
-      param.avoid_margin_lateral =
-        getOrDeclareParameter<double>(*node, ns + "avoid_margin_lateral");
-      param.safety_buffer_lateral =
-        getOrDeclareParameter<double>(*node, ns + "safety_buffer_lateral");
+      param.lateral_soft_margin =
+        getOrDeclareParameter<double>(*node, ns + "lateral_margin.soft_margin");
+      param.lateral_hard_margin =
+        getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin");
+      param.lateral_hard_margin_for_parked_vehicle =
+        getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
       return param;
     };
 
@@ -130,11 +132,14 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   }
 
   {
-    const std::string ns = "avoidance.target_filtering.force_avoidance.";
-    p.enable_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<bool>(*node, ns + "enable");
-    p.threshold_time_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<double>(*node, ns + "time_threshold");
+    const std::string ns = "avoidance.target_filtering.avoidance_for_ambiguous_vehicle.";
+    p.enable_avoidance_for_ambiguous_vehicle = getOrDeclareParameter<bool>(*node, ns + "enable");
+    p.closest_distance_to_wait_and_see_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "closest_distance_to_wait_and_see");
+    p.time_threshold_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "condition.time_threshold");
+    p.distance_threshold_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "condition.distance_threshold");
     p.object_ignore_section_traffic_light_in_front_distance =
       getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
     p.object_ignore_section_crosswalk_in_front_distance =
