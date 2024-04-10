@@ -180,7 +180,7 @@ void BehaviorVelocityPlannerNode::onUnloadPlugin(
 
 // NOTE: argument planner_data must not be referenced for multithreading
 bool BehaviorVelocityPlannerNode::isDataReady(
-  const PlannerData& planner_data, rclcpp::Clock clock) const
+  const PlannerData & planner_data, rclcpp::Clock clock) const
 {
   const auto & d = planner_data;
 
@@ -478,7 +478,7 @@ void BehaviorVelocityPlannerNode::publishDebugMarker(
   }
   debug_viz_pub_->publish(output_msg);
 }
-}  // namespace autoware
+}  // namespace autoware::behavior_velocity_planner
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware::behavior_velocity_planner::BehaviorVelocityPlannerNode)

@@ -35,7 +35,7 @@ std::string json_dumps_pose(const geometry_msgs::msg::Pose & pose)
 }
 
 diagnostic_msgs::msg::DiagnosticStatus make_stop_reason_diag(
-  const std::string& stop_reason, const geometry_msgs::msg::Pose & stop_pose)
+  const std::string & stop_reason, const geometry_msgs::msg::Pose & stop_pose)
 {
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
   diagnostic_msgs::msg::KeyValue stop_reason_diag_kv;
@@ -83,7 +83,7 @@ void BehaviorVelocityPlannerManager::removeScenePlugin(
 {
   auto it = std::remove_if(
     scene_manager_plugins_.begin(), scene_manager_plugins_.end(),
-    [&](const std::shared_ptr<autoware::behavior_velocity_planner::PluginInterface>& plugin) {
+    [&](const std::shared_ptr<autoware::behavior_velocity_planner::PluginInterface> & plugin) {
       return plugin->getModuleName() == name;
     });
 
@@ -129,4 +129,4 @@ diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::getStopRe
 {
   return stop_reason_diag_;
 }
-}  // namespace autoware
+}  // namespace autoware::behavior_velocity_planner

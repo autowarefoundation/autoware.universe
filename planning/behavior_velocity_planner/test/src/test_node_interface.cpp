@@ -115,8 +115,8 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generate_node()
 }
 
 void publish_mandatory_topics(
-  const std::shared_ptr<PlanningInterfaceTestManager>& test_manager,
-  const std::shared_ptr<BehaviorVelocityPlannerNode>& test_target_node)
+  const std::shared_ptr<PlanningInterfaceTestManager> & test_manager,
+  const std::shared_ptr<BehaviorVelocityPlannerNode> & test_target_node)
 {
   // publish necessary topics from test_manager
   test_manager->publishTF(test_target_node, "/tf");
