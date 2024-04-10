@@ -25,7 +25,7 @@
 using ::behavior_path_planner::BehaviorPathPlannerNode;
 using planning_test_utils::PlanningInterfaceTestManager;
 
-std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
+std::shared_ptr<PlanningInterfaceTestManager> generate_test_manager()
 {
   auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
 
@@ -40,7 +40,7 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
   return test_manager;
 }
 
-std::shared_ptr<BehaviorPathPlannerNode> generateNode()
+std::shared_ptr<BehaviorPathPlannerNode> generate_node()
 {
   auto node_options = rclcpp::NodeOptions{};
   const auto planning_test_utils_dir =
@@ -74,9 +74,9 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }
 
-void publishMandatoryTopics(
-  std::shared_ptr<PlanningInterfaceTestManager> test_manager,
-  std::shared_ptr<BehaviorPathPlannerNode> test_target_node)
+void publish_mandatory_topics(
+  const std::shared_ptr<PlanningInterfaceTestManager>& test_manager,
+  const std::shared_ptr<BehaviorPathPlannerNode>& test_target_node)
 {
   // publish necessary topics from test_manager
   test_manager->publishInitialPose(test_target_node, "behavior_path_planner/input/odometry");
@@ -96,10 +96,10 @@ void publishMandatoryTopics(
 TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
 {
   rclcpp::init(0, nullptr);
-  auto test_manager = generateTestManager();
-  auto test_target_node = generateNode();
+  auto test_manager = generate_test_manager();
+  auto test_target_node = generate_node();
 
-  publishMandatoryTopics(test_manager, test_target_node);
+  publish_mandatory_topics(test_manager, test_target_node);
 
   // test for normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithBehaviorNominalRoute(test_target_node));
@@ -114,9 +114,9 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 {
   rclcpp::init(0, nullptr);
 
-  auto test_manager = generateTestManager();
-  auto test_target_node = generateNode();
-  publishMandatoryTopics(test_manager, test_target_node);
+  auto test_manager = generate_test_manager();
+  auto test_target_node = generate_node();
+  publish_mandatory_topics(test_manager, test_target_node);
 
   // test for normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithBehaviorNominalRoute(test_target_node));
