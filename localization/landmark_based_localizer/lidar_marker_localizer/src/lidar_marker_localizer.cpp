@@ -344,6 +344,10 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
 
     // calc average
     for (int bin_index = 0; bin_index < bin_num; bin_index++) {
+      if (intensity_num[bin_index] == 0) {
+        continue;
+      }
+
       average_intensity[bin_index] = intensity_sum[bin_index] / intensity_num[bin_index];
     }
 
