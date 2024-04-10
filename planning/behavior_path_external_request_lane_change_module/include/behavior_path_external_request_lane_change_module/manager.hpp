@@ -25,7 +25,6 @@
 
 namespace autoware::behavior_path_planner
 {
-using ::behavior_path_planner::LaneChangeInterface;
 using ::behavior_path_planner::LaneChangeModuleManager;
 using ::behavior_path_planner::LaneChangeModuleType;
 using ::behavior_path_planner::SceneModuleInterface;
