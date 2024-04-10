@@ -13,8 +13,9 @@
     prediction_time_horizons: [1.0, 2.0, 3.0, 5.0]
 
     stopped_velocity_threshold: 1.0
-    detection_range: 100.0
+    detection_radius: 100.0
     detection_height: 10.0
+    objects_count_window_seconds: 3.0
 
     target_object:
       car:

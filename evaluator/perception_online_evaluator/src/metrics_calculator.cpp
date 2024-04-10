@@ -404,17 +404,27 @@ MetricStatMap MetricsCalculator::calcYawRateMetrics(const ClassObjectsMap & clas
 
 MetricStatMap MetricsCalculator::calcObjectsCountMetrics() const
 {
-  MetricStatMap metric_stat_map{};
+  MetricStatMap metric_stat_map;
 
   for (const auto & [label, count] : historical_detection_count_map_) {
     Stat<double> stat;
     stat.add(static_cast<double>(count));
     metric_stat_map["historical_objects_count_" + convertLabelToString(label)] = stat;
   }
-  for (const auto & [label, count] : current_detection_count_map_) {
+
+  int vector_size = detection_count_vector_.size();
+  DetectionCountMap interval_detection_count_map = initializeDetectionCountMap();
+
+  for (const auto & [detection_count_map, stamp] : detection_count_vector_) {
+    for (const auto & [label, count] : detection_count_map) {
+      interval_detection_count_map[label] += count;
+    }
+  }
+
+  for (const auto & [label, count] : interval_detection_count_map) {
     Stat<double> stat;
-    stat.add(static_cast<double>(count));
-    metric_stat_map["current_objects_count_" + convertLabelToString(label)] = stat;
+    stat.add(static_cast<double>(count) / static_cast<double>(vector_size));
+    metric_stat_map["interval_objects_count_" + convertLabelToString(label)] = stat;
   }
 
   return metric_stat_map;
@@ -442,6 +452,7 @@ void MetricsCalculator::updateObjectsCountMap(
   const PredictedObjects & objects, const tf2_ros::Buffer & tf_buffer)
 {
   const auto objects_frame_id = objects.header.frame_id;
+  DetectionCountMap current_detection_count_map = initializeDetectionCountMap();
 
   geometry_msgs::msg::TransformStamped transform_stamped;
   try {
@@ -451,10 +462,6 @@ void MetricsCalculator::updateObjectsCountMap(
     std::cerr << "[perception_online_evaluator] Failed to get transform from '" << objects_frame_id
               << "' to 'base_link': " << ex.what() << std::endl;
     return;
-  }
-  // initialize the current_detection_count_map_ with 0
-  for (const auto & [label, count] : current_detection_count_map_) {
-    current_detection_count_map_[label] = 0;
   }
 
   for (const auto & object : objects.objects) {
@@ -467,16 +474,24 @@ void MetricsCalculator::updateObjectsCountMap(
     // Transform the object's pose into the 'base_link' coordinate frame
     tf2::doTransform(pose_in, pose_out, transform_stamped);
 
-    const double distance_to_pose = std::hypot(pose_out.pose.position.x, pose_out.pose.position.y);
+    const double distance_to_base_link =
+      std::hypot(pose_out.pose.position.x, pose_out.pose.position.y);
 
-    // If the pose is within the detection_range and below a detection_height, increment the count
-    if (
-      distance_to_pose < parameters_->detection_range &&
-      pose_out.pose.position.z < parameters_->detection_height) {
+    // If the pose is within the detection_radius and below a detection_height, increment the count
+    const bool is_within_detection_radius = distance_to_base_link < parameters_->detection_radius;
+    const bool is_below_detection_height = pose_out.pose.position.z < parameters_->detection_height;
+    if (is_within_detection_radius && is_below_detection_height) {
       historical_detection_count_map_[label]++;
-      current_detection_count_map_[label]++;
+      current_detection_count_map[label]++;
     }
   }
+  auto remove_before =
+    current_stamp_ - rclcpp::Duration::from_seconds(parameters_->objects_count_window_seconds);
+  detection_count_vector_.erase(
+    std::remove_if(
+      detection_count_vector_.begin(), detection_count_vector_.end(),
+      [&](const auto & pair) { return pair.second < remove_before; }),
+    detection_count_vector_.end());
 }
 
 void MetricsCalculator::deleteOldObjects(const rclcpp::Time stamp)

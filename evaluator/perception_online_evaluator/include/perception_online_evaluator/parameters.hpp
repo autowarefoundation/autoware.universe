@@ -49,8 +49,9 @@ struct Parameters
   size_t smoothing_window_size{0};
   std::vector<double> prediction_time_horizons;
   double stopped_velocity_threshold{0.0};
-  double detection_range;
+  double detection_radius;
   double detection_height;
+  double objects_count_window_seconds;
   DebugMarkerParameter debug_marker_parameters;
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;

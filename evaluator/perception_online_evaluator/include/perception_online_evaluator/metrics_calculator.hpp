@@ -113,7 +113,7 @@ private:
   // Store predicted objects information and calculation results
   ObjectMap object_map_;
   HistoryPathMap history_path_map_;
-  DetectionCountMap initializeDetectionCountMap()
+  DetectionCountMap initializeDetectionCountMap() const
   {
     return {
       {ObjectClassification::UNKNOWN, 0}, {ObjectClassification::CAR, 0},
@@ -124,7 +124,7 @@ private:
   }
 
   DetectionCountMap historical_detection_count_map_ = initializeDetectionCountMap();
-  DetectionCountMap current_detection_count_map_ = initializeDetectionCountMap();
+  std::vector<std::pair<DetectionCountMap, rclcpp::Time>> detection_count_vector_;
 
   rclcpp::Time current_stamp_;
 

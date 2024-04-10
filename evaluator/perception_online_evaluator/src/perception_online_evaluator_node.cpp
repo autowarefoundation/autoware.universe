@@ -216,8 +216,9 @@ rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParame
 
   updateParam<size_t>(parameters, "smoothing_window_size", p->smoothing_window_size);
   updateParam<double>(parameters, "stopped_velocity_threshold", p->stopped_velocity_threshold);
-  updateParam<double>(parameters, "detection_range", p->detection_range);
+  updateParam<double>(parameters, "detection_radius", p->detection_radius);
   updateParam<double>(parameters, "detection_height", p->detection_height);
+  updateParam<double>(parameters, "objects_count_window_seconds", p->objects_count_window_seconds);
 
   // update metrics
   {
@@ -310,8 +311,10 @@ void PerceptionOnlineEvaluatorNode::initParameter()
     getOrDeclareParameter<std::vector<double>>(*this, "prediction_time_horizons");
   p->stopped_velocity_threshold =
     getOrDeclareParameter<double>(*this, "stopped_velocity_threshold");
-  p->detection_range = getOrDeclareParameter<double>(*this, "detection_range");
+  p->detection_radius = getOrDeclareParameter<double>(*this, "detection_radius");
   p->detection_height = getOrDeclareParameter<double>(*this, "detection_height");
+  p->objects_count_window_seconds =
+    getOrDeclareParameter<double>(*this, "objects_count_window_seconds");
 
   // set metrics
   const auto selected_metrics =
