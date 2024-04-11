@@ -276,9 +276,6 @@ struct AvoidanceParameters
   // line.
   double lateral_small_shift_threshold{0.0};
 
-  // use for judge if the ego is shifting or not.
-  double lateral_avoid_check_threshold{0.0};
-
   // use for return shift approval.
   double ratio_for_return_shift_approval{0.0};
 

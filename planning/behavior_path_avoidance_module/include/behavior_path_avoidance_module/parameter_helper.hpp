@@ -252,8 +252,6 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "lateral_execution_threshold");
     p.lateral_small_shift_threshold =
       getOrDeclareParameter<double>(*node, ns + "lateral_small_shift_threshold");
-    p.lateral_avoid_check_threshold =
-      getOrDeclareParameter<double>(*node, ns + "lateral_avoid_check_threshold");
     p.max_right_shift_length = getOrDeclareParameter<double>(*node, ns + "max_right_shift_length");
     p.max_left_shift_length = getOrDeclareParameter<double>(*node, ns + "max_left_shift_length");
     p.max_deviation_from_lane =

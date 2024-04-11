@@ -370,7 +370,7 @@ public:
 
   bool isShifted() const
   {
-    return std::abs(getEgoShift()) > parameters_->lateral_avoid_check_threshold;
+    return std::abs(getEgoShift()) > parameters_->lateral_execution_threshold;
   }
 
   bool isInitialized() const

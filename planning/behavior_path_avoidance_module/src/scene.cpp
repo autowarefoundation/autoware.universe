@@ -162,7 +162,7 @@ bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & 
 
   const bool has_shift_point = !path_shifter_.getShiftLines().empty();
   const bool has_base_offset =
-    std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_avoid_check_threshold;
+    std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_execution_threshold;
 
   // Nothing to do. -> EXIT.
   if (!has_shift_point && !has_base_offset) {
@@ -734,7 +734,7 @@ bool AvoidanceModule::isSafePath(
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
-      if (parameters_->lateral_avoid_check_threshold < length) {
+      if (parameters_->lateral_execution_threshold < length) {
         return true;
       }
     }
@@ -746,7 +746,7 @@ bool AvoidanceModule::isSafePath(
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
-      if (parameters_->lateral_avoid_check_threshold < -1.0 * length) {
+      if (parameters_->lateral_execution_threshold < -1.0 * length) {
         return true;
       }
     }
