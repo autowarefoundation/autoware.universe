@@ -1026,8 +1026,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose_by_rand
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose_by_grid_search(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "start " << __func__);
-
   output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
 
   const geometry_msgs::msg::Point base_xyz = initial_pose_with_cov.pose.pose.position;
