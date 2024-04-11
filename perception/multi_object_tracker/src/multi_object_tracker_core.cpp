@@ -36,8 +36,6 @@
 #include <Eigen/Geometry>
 #include <rclcpp_components/register_node_macro.hpp>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
-
 namespace
 {
 // Function to get the transform between two frames
@@ -67,6 +65,10 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
 
 }  // namespace
 
+namespace multi_object_tracker
+{
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
   tf_buffer_(this->get_clock()),
@@ -74,11 +76,10 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   last_published_time_(this->now())
 {
   // Create publishers and subscribers
-  detected_object_sub_ = create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  detected_object_sub_ = create_subscription<DetectedObjects>(
     "input", rclcpp::QoS{1},
     std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
-  tracked_objects_pub_ =
-    create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
+  tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
 
   // Get parameters
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
@@ -142,8 +143,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
-void MultiObjectTracker::onMeasurement(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg)
+void MultiObjectTracker::onMeasurement(const DetectedObjects::ConstSharedPtr input_objects_msg)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
@@ -157,7 +157,7 @@ void MultiObjectTracker::onMeasurement(
     return;
   }
   /* transform to world coordinate */
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+  DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
         *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
@@ -234,7 +234,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     return;
   }
   // Create output msg
-  autoware_auto_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
+  TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
   processor_->getTrackedObjects(time, output_msg);
 
@@ -246,11 +246,13 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   debugger_->endPublishTime(this->now(), time);
 
   if (debugger_->shouldPublishTentativeObjects()) {
-    autoware_auto_perception_msgs::msg::TrackedObjects tentative_objects_msg;
+    TrackedObjects tentative_objects_msg;
     tentative_objects_msg.header.frame_id = world_frame_id_;
     processor_->getTentativeObjects(time, tentative_objects_msg);
     debugger_->publishTentativeObjects(tentative_objects_msg);
   }
 }
 
-RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)
+}  // namespace multi_object_tracker
+
+RCLCPP_COMPONENTS_REGISTER_NODE(multi_object_tracker::MultiObjectTracker)
