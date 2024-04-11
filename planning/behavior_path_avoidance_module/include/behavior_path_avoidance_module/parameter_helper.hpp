@@ -58,7 +58,6 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   {
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
-      param.execute_num = getOrDeclareParameter<int>(*node, ns + "execute_num");
       param.moving_speed_threshold = getOrDeclareParameter<double>(*node, ns + "th_moving_speed");
       param.moving_time_threshold = getOrDeclareParameter<double>(*node, ns + "th_moving_time");
       param.max_expand_ratio = getOrDeclareParameter<double>(*node, ns + "max_expand_ratio");
@@ -370,16 +369,10 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // shift line pipeline
   {
     const std::string ns = "avoidance.shift_line_pipeline.";
-    p.quantize_filter_threshold =
-      getOrDeclareParameter<double>(*node, ns + "trim.quantize_filter_threshold");
-    p.same_grad_filter_1_threshold =
-      getOrDeclareParameter<double>(*node, ns + "trim.same_grad_filter_1_threshold");
-    p.same_grad_filter_2_threshold =
-      getOrDeclareParameter<double>(*node, ns + "trim.same_grad_filter_2_threshold");
-    p.same_grad_filter_3_threshold =
-      getOrDeclareParameter<double>(*node, ns + "trim.same_grad_filter_3_threshold");
-    p.sharp_shift_filter_threshold =
-      getOrDeclareParameter<double>(*node, ns + "trim.sharp_shift_filter_threshold");
+    p.quantize_size = getOrDeclareParameter<double>(*node, ns + "trim.quantize_size");
+    p.th_similar_grad_1 = getOrDeclareParameter<double>(*node, ns + "trim.th_similar_grad_1");
+    p.th_similar_grad_2 = getOrDeclareParameter<double>(*node, ns + "trim.th_similar_grad_2");
+    p.th_similar_grad_3 = getOrDeclareParameter<double>(*node, ns + "trim.th_similar_grad_3");
   }
 
   // debug

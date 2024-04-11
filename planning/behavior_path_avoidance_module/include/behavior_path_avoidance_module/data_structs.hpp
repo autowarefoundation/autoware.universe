@@ -280,19 +280,16 @@ struct AvoidanceParameters
   double ratio_for_return_shift_approval{0.0};
 
   // For shift line generation process. The continuous shift length is quantized by this value.
-  double quantize_filter_threshold{0.0};
+  double quantize_size{0.0};
 
   // For shift line generation process. Merge small shift lines. (First step)
-  double same_grad_filter_1_threshold{0.0};
+  double th_similar_grad_1{0.0};
 
   // For shift line generation process. Merge small shift lines. (Second step)
-  double same_grad_filter_2_threshold{0.0};
+  double th_similar_grad_2{0.0};
 
   // For shift line generation process. Merge small shift lines. (Third step)
-  double same_grad_filter_3_threshold{0.0};
-
-  // For shift line generation process. Remove sharp(=jerky) shift line.
-  double sharp_shift_filter_threshold{0.0};
+  double th_similar_grad_3{0.0};
 
   // policy
   bool use_shorten_margin_immediately{false};

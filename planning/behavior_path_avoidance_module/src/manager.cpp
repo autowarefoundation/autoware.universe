@@ -46,12 +46,6 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
 
   auto p = parameters_;
 
-  {
-    const std::string ns = "avoidance.";
-    updateParam<bool>(parameters, ns + "enable_safety_check", p->enable_safety_check);
-    updateParam<bool>(parameters, ns + "print_debug_info", p->print_debug_info);
-  }
-
   const auto update_object_param = [&p, &parameters](
                                      const auto & semantic, const std::string & ns) {
     auto & config = p->object_parameters.at(semantic);
@@ -255,21 +249,16 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
 
   {
     const std::string ns = "avoidance.shift_line_pipeline.";
-    updateParam<double>(
-      parameters, ns + "trim.quantize_filter_threshold", p->quantize_filter_threshold);
-    updateParam<double>(
-      parameters, ns + "trim.same_grad_filter_1_threshold", p->same_grad_filter_1_threshold);
-    updateParam<double>(
-      parameters, ns + "trim.same_grad_filter_2_threshold", p->same_grad_filter_2_threshold);
-    updateParam<double>(
-      parameters, ns + "trim.same_grad_filter_3_threshold", p->same_grad_filter_3_threshold);
-    updateParam<double>(
-      parameters, ns + "trim.sharp_shift_filter_threshold", p->sharp_shift_filter_threshold);
+    updateParam<double>(parameters, ns + "trim.quantize_size", p->quantize_size);
+    updateParam<double>(parameters, ns + "trim.th_similar_grad_1", p->th_similar_grad_1);
+    updateParam<double>(parameters, ns + "trim.th_similar_grad_2", p->th_similar_grad_2);
+    updateParam<double>(parameters, ns + "trim.th_similar_grad_3", p->th_similar_grad_3);
   }
 
   {
     const std::string ns = "avoidance.debug.";
     updateParam<bool>(parameters, ns + "marker", p->publish_debug_marker);
+    updateParam<bool>(parameters, ns + "console", p->print_debug_info);
   }
 
   std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
