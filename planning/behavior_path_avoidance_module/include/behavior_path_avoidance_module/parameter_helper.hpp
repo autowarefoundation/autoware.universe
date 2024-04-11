@@ -40,10 +40,7 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.resample_interval_for_output =
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
     p.enable_bound_clipping = getOrDeclareParameter<bool>(*node, ns + "enable_bound_clipping");
-    p.enable_cancel_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_cancel_maneuver");
     p.disable_path_update = getOrDeclareParameter<bool>(*node, ns + "disable_path_update");
-    p.publish_debug_marker = getOrDeclareParameter<bool>(*node, ns + "publish_debug_marker");
-    p.print_debug_info = getOrDeclareParameter<bool>(*node, ns + "print_debug_info");
   }
 
   // drivable area
@@ -123,16 +120,20 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "object_check_goal_distance");
     p.object_check_return_pose_distance =
       getOrDeclareParameter<double>(*node, ns + "object_check_return_pose_distance");
-    p.threshold_distance_object_is_on_center =
-      getOrDeclareParameter<double>(*node, ns + "threshold_distance_object_is_on_center");
-    p.object_check_shiftable_ratio =
-      getOrDeclareParameter<double>(*node, ns + "object_check_shiftable_ratio");
-    p.object_check_min_road_shoulder_width =
-      getOrDeclareParameter<double>(*node, ns + "object_check_min_road_shoulder_width");
     p.object_check_yaw_deviation =
       getOrDeclareParameter<double>(*node, ns + "intersection.yaw_deviation");
     p.object_last_seen_threshold =
-      getOrDeclareParameter<double>(*node, ns + "object_last_seen_threshold");
+      getOrDeclareParameter<double>(*node, ns + "max_compensation_time");
+  }
+
+  {
+    const std::string ns = "avoidance.target_filtering.parked_vehicle.";
+    p.threshold_distance_object_is_on_center =
+      getOrDeclareParameter<double>(*node, ns + "th_offset_from_centerline");
+    p.object_check_shiftable_ratio =
+      getOrDeclareParameter<double>(*node, ns + "th_shiftable_ratio");
+    p.object_check_min_road_shoulder_width =
+      getOrDeclareParameter<double>(*node, ns + "min_road_shoulder_width");
   }
 
   {
@@ -285,6 +286,12 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "traffic_light.buffer");
   }
 
+  // cancel
+  {
+    const std::string ns = "avoidance.cancel.";
+    p.enable_cancel_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable");
+  }
+
   // yield
   {
     const std::string ns = "avoidance.yield.";
@@ -376,6 +383,14 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.sharp_shift_filter_threshold =
       getOrDeclareParameter<double>(*node, ns + "trim.sharp_shift_filter_threshold");
   }
+
+  // debug
+  {
+    const std::string ns = "avoidance.debug.";
+    p.publish_debug_marker = getOrDeclareParameter<bool>(*node, ns + "marker");
+    p.print_debug_info = getOrDeclareParameter<bool>(*node, ns + "console");
+  }
+
   return p;
 }
 }  // namespace behavior_path_planner

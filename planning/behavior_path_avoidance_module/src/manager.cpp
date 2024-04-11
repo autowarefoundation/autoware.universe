@@ -49,7 +49,6 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
   {
     const std::string ns = "avoidance.";
     updateParam<bool>(parameters, ns + "enable_safety_check", p->enable_safety_check);
-    updateParam<bool>(parameters, ns + "publish_debug_marker", p->publish_debug_marker);
     updateParam<bool>(parameters, ns + "print_debug_info", p->print_debug_info);
   }
 
@@ -112,16 +111,16 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "object_check_goal_distance", p->object_check_goal_distance);
     updateParam<double>(
       parameters, ns + "object_check_return_pose_distance", p->object_check_return_pose_distance);
+    updateParam<double>(parameters, ns + "max_compensation_time", p->object_last_seen_threshold);
+  }
+
+  {
+    const std::string ns = "avoidance.target_filtering.parked_vehicle.";
     updateParam<double>(
-      parameters, ns + "threshold_distance_object_is_on_center",
-      p->threshold_distance_object_is_on_center);
+      parameters, ns + "th_offset_from_centerline", p->threshold_distance_object_is_on_center);
+    updateParam<double>(parameters, ns + "th_shiftable_ratio", p->object_check_shiftable_ratio);
     updateParam<double>(
-      parameters, ns + "object_check_shiftable_ratio", p->object_check_shiftable_ratio);
-    updateParam<double>(
-      parameters, ns + "object_check_min_road_shoulder_width",
-      p->object_check_min_road_shoulder_width);
-    updateParam<double>(
-      parameters, ns + "object_last_seen_threshold", p->object_last_seen_threshold);
+      parameters, ns + "min_road_shoulder_width", p->object_check_min_road_shoulder_width);
   }
 
   {
@@ -268,6 +267,11 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "trim.same_grad_filter_3_threshold", p->same_grad_filter_3_threshold);
     updateParam<double>(
       parameters, ns + "trim.sharp_shift_filter_threshold", p->sharp_shift_filter_threshold);
+  }
+
+  {
+    const std::string ns = "avoidance.debug.";
+    updateParam<bool>(parameters, ns + "marker", p->publish_debug_marker);
   }
 
   std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
