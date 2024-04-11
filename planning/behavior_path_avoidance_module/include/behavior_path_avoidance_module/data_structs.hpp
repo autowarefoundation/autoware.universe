@@ -75,7 +75,7 @@ struct ObjectParameter
 
   double lateral_hard_margin_for_parked_vehicle{1.0};
 
-  double safety_buffer_longitudinal{0.0};
+  double longitudinal_margin{0.0};
 
   bool use_conservative_buffer_longitudinal{true};
 };
@@ -243,11 +243,11 @@ struct AvoidanceParameters
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double soft_road_shoulder_margin{1.0};
+  double soft_drivable_bound_margin{1.0};
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double hard_road_shoulder_margin{1.0};
+  double hard_drivable_bound_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
   double max_right_shift_length{0.0};

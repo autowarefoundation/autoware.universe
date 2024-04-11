@@ -1222,7 +1222,7 @@ bool AvoidanceModule::isValidShiftLine(
   // check if the vehicle is in road. (yaw angle is not considered)
   {
     const auto minimum_distance = 0.5 * planner_data_->parameters.vehicle_width +
-                                  parameters_->hard_road_shoulder_margin -
+                                  parameters_->hard_drivable_bound_margin -
                                   parameters_->max_deviation_from_lane;
 
     const size_t start_idx = shift_lines.front().start_idx;

@@ -65,8 +65,7 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
     updateParam<double>(
       parameters, ns + "lateral_margin.hard_margin_for_parked_vehicle",
       config.lateral_hard_margin_for_parked_vehicle);
-    updateParam<double>(
-      parameters, ns + "safety_buffer_longitudinal", config.safety_buffer_longitudinal);
+    updateParam<double>(parameters, ns + "longitudinal_margin", config.longitudinal_margin);
     updateParam<bool>(
       parameters, ns + "use_conservative_buffer_longitudinal",
       config.use_conservative_buffer_longitudinal);
@@ -167,8 +166,10 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "lateral_execution_threshold", p->lateral_execution_threshold);
     updateParam<double>(
       parameters, ns + "lateral_small_shift_threshold", p->lateral_small_shift_threshold);
-    updateParam<double>(parameters, ns + "soft_road_shoulder_margin", p->soft_road_shoulder_margin);
-    updateParam<double>(parameters, ns + "hard_road_shoulder_margin", p->hard_road_shoulder_margin);
+    updateParam<double>(
+      parameters, ns + "soft_drivable_bound_margin", p->soft_drivable_bound_margin);
+    updateParam<double>(
+      parameters, ns + "hard_drivable_bound_margin", p->hard_drivable_bound_margin);
   }
 
   {

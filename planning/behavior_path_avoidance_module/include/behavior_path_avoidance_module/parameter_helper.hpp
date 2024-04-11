@@ -75,8 +75,7 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
         getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin");
       param.lateral_hard_margin_for_parked_vehicle =
         getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
-      param.safety_buffer_longitudinal =
-        getOrDeclareParameter<double>(*node, ns + "safety_buffer_longitudinal");
+      param.longitudinal_margin = getOrDeclareParameter<double>(*node, ns + "longitudinal_margin");
       param.use_conservative_buffer_longitudinal =
         getOrDeclareParameter<bool>(*node, ns + "use_conservative_buffer_longitudinal");
       return param;
@@ -244,14 +243,13 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // avoidance maneuver (lateral)
   {
     const std::string ns = "avoidance.avoidance.lateral.";
-    p.soft_road_shoulder_margin =
-      getOrDeclareParameter<double>(*node, ns + "soft_road_shoulder_margin");
-    p.hard_road_shoulder_margin =
-      getOrDeclareParameter<double>(*node, ns + "hard_road_shoulder_margin");
-    p.lateral_execution_threshold =
-      getOrDeclareParameter<double>(*node, ns + "lateral_execution_threshold");
+    p.soft_drivable_bound_margin =
+      getOrDeclareParameter<double>(*node, ns + "soft_drivable_bound_margin");
+    p.hard_drivable_bound_margin =
+      getOrDeclareParameter<double>(*node, ns + "hard_drivable_bound_margin");
+    p.lateral_execution_threshold = getOrDeclareParameter<double>(*node, ns + "th_avoid_execution");
     p.lateral_small_shift_threshold =
-      getOrDeclareParameter<double>(*node, ns + "lateral_small_shift_threshold");
+      getOrDeclareParameter<double>(*node, ns + "th_small_shift_length");
     p.max_right_shift_length = getOrDeclareParameter<double>(*node, ns + "max_right_shift_length");
     p.max_left_shift_length = getOrDeclareParameter<double>(*node, ns + "max_left_shift_length");
     p.max_deviation_from_lane =
