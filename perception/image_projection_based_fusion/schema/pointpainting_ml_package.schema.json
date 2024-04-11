@@ -55,23 +55,6 @@
             }
           }
         },
-        "densification_params": {
-          "type": "object",
-          "description": "Parameters for pointcloud densification.",
-          "properties": {
-            "world_frame_id": {
-              "type": "string",
-              "description": "A name of frame id where world coordinates system is defined with respect to.",
-              "default": "map"
-            },
-            "num_past_frames": {
-              "type": "integer",
-              "description": "A number of past frames to be considered as same input frame.",
-              "default": 0,
-              "minimum": 0
-            }
-          }
-        },
         "omp_params": {
           "type": "object",
           "properties": {

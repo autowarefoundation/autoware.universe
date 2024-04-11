@@ -47,7 +47,7 @@
               "default": ["CAR"],
               "uniqueItems": true
             },
-            "iou_search_distance_2d": {
+            "iou_nms_search_distance_2d": {
               "type": "number",
               "description": "A maximum distance value to search the nearest objects.",
               "default": 10.0,
@@ -64,6 +64,23 @@
               "type": "boolean",
               "description": "Indicates whether the model outputs twist value.",
               "default": false
+            }
+          }
+        },
+        "densification_params": {
+          "type": "object",
+          "description": "Parameters for pointcloud densification.",
+          "properties": {
+            "world_frame_id": {
+              "type": "string",
+              "description": "A name of frame id where world coordinates system is defined with respect to.",
+              "default": "map"
+            },
+            "num_past_frames": {
+              "type": "integer",
+              "description": "A number of past frames to be considered as same input frame.",
+              "default": 0,
+              "minimum": 0
             }
           }
         }
