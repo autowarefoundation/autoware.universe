@@ -205,14 +205,14 @@ void StartPlannerModule::updateData()
   // The method PlannerManager::run() calls SceneModuleInterface::setData and
   // SceneModuleInterface::setPreviousModuleOutput() before this module's run() method is called
   // with module_ptr->run(). Then module_ptr->run() invokes StartPlannerModule::updateData and,
-  // finally, planWaitingApproval()/plan(), so we can copy latest current_status to
-  // start_planner_data_ here
+  // finally, the planWaitingApproval()/plan() methods are called by run(). So we can copy the
+  // latest current_status to start_planner_data_ here for later usage.
 
   // NOTE: onFreespacePlannerTimer copies start_planner_data to its thread local variable, so we
   // need to lock start_planner_data_ here to avoid data race. But the following clone process is
   // lightweight because most of the member variables of PlannerData/RouteHandler is
   // shared_ptrs/bool
-  // begin of critical section
+  // making a local copy of thread sensitive data
   {
     std::lock_guard<std::mutex> guard(start_planner_data_mutex_);
     if (!start_planner_data_) {
@@ -236,7 +236,7 @@ void StartPlannerModule::updateData()
       }
     }
   }
-  // end of critical section
+  // finish copying thread sensitive data
 
   if (receivedNewRoute()) {
     resetStatus();
