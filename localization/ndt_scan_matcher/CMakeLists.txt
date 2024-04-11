@@ -29,7 +29,6 @@ include_directories(${PCL_INCLUDE_DIRS})
 ament_auto_add_executable(ndt_scan_matcher
   src/diagnostics_module.cpp
   src/diagnostics_updater_module.cpp
-  src/map_update_module_diagnostics.cpp
   src/map_update_module.cpp
   src/ndt_scan_matcher_core.cpp
   src/ndt_scan_matcher_diagnostics_updater_core.cpp
@@ -52,7 +51,6 @@ if(BUILD_TESTING)
     test/test_cases/standard_sequence_for_initial_pose_estimation.cpp
     src/diagnostics_module.cpp
     src/diagnostics_updater_module.cpp
-    src/map_update_module_diagnostics.cpp
     src/map_update_module.cpp
     src/ndt_scan_matcher_core.cpp
     src/ndt_scan_matcher_diagnostics_updater_core.cpp
@@ -64,7 +62,6 @@ if(BUILD_TESTING)
     test/test_cases/once_initialize_at_out_of_map_then_initialize_correctly.cpp
     src/diagnostics_module.cpp
     src/diagnostics_updater_module.cpp
-    src/map_update_module_diagnostics.cpp
     src/map_update_module.cpp
     src/ndt_scan_matcher_core.cpp
     src/ndt_scan_matcher_diagnostics_updater_core.cpp

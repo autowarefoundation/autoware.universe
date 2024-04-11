@@ -65,6 +65,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <sstream>
 #include <thread>
 #include <vector>
 
@@ -82,6 +83,9 @@ private:
   friend class NDTScanMatcherDiagnosticsUpdaterCore;
 
   void service_ndt_align(
+    const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
+    tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
+  void service_ndt_align_main(
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
   void service_trigger_node(
@@ -137,24 +141,24 @@ private:
 
   // These validators are written in ndt_scan_matcher_diagnostics_sensor_points.hpp
   void initialize_diagnostics_key_value();
-  bool validate_is_node_activated();
-  bool validate_is_set_map_points();
+  bool validate_is_node_activated(const bool is_activated);
+  bool validate_is_set_map_points(const bool is_set_map_points);
   bool validate_is_set_sensor_points(const bool is_set_sensor_points);
   bool validate_sensor_points_empty(const size_t sensor_points_size);
   bool validate_sensor_points_delay_time(
     const rclcpp::Time & sensor_ros_time, const rclcpp::Time & ros_time_now,
     const double warn_timeout_sec);
+  bool validate_sensor_points_max_distance(
+    const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points,
+    const double warn_distance);
   bool validate_initial_pose_array_size(const size_t initial_pose_array_size);
-  bool validate_time_stamp_difference(
-    const std::string & name, const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
-    const double time_tolerance_sec);
+  bool validate_succeed_interpolete_intial_pose(const bool is_succeed);
   bool validate_position_difference(
     const geometry_msgs::msg::Point & target_point,
     const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
   bool validate_num_iteration(const int iter_num, const int max_iter_num);
   bool validate_local_optimal_solution_oscillation(
-    const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
-    const float oscillation_threshold, const float inversion_vector_threshold);
+  const int oscillation_count, const int oscillation_count_threshold);
   bool validate_score(
     const double score, const double score_threshold, const std::string & score_name);
   bool validate_converged_param(
@@ -164,7 +168,6 @@ private:
   bool validate_execution_time(const double execution_time, const double warn_execution_time);
   bool validate_skipping_publish_num(const size_t skipping_publish_num, const size_t error_num);
 
-  void publish_diagnostic();
 
   rclcpp::TimerBase::SharedPtr map_update_timer_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
@@ -212,7 +215,6 @@ private:
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
 
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
-  std::shared_ptr<std::map<std::string, std::string>> state_ptr_;
 
   Eigen::Matrix4f base_to_sensor_matrix_;
 
@@ -226,10 +228,8 @@ private:
   std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
 
   std::atomic<bool> is_activated_;
-  bool is_succeed_latest_ndt_aling_service_;
-  bool is_running_ndt_aling_service_;
-  double latest_ndt_aling_service_best_score_;
   std::unique_ptr<DiagnosticsModule> diagnostics_module_;
+  std::unique_ptr<DiagnosticsModule> diagnostics_module_ndt_align_;
   std::unique_ptr<NDTScanMatcherDiagnosticsUpdaterCore> diagnostics_update_module_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;

@@ -37,6 +37,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <sstream>
 #include <thread>
 #include <vector>
 
@@ -55,16 +56,14 @@ public:
 private:
   friend class NDTScanMatcher;
 
+  void initialize_diagnostics_key_value();
+
   // Update the specified NDT
   bool update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt);
   void update_map(const geometry_msgs::msg::Point & position);
   [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position);
   void publish_partial_pcd_map();
 
-  // These functions are written in map_update_module_diagnostics.cpp
-  void initialize_diagnostics_key_value();
-  bool validate_map_is_in_lidar_range(const double distance, const double warn_distance);
-  bool validate_is_set_current_position(const bool is_set_current_position);
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 
