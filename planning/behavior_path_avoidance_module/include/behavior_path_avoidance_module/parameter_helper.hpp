@@ -59,10 +59,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
       param.execute_num = getOrDeclareParameter<int>(*node, ns + "execute_num");
-      param.moving_speed_threshold =
-        getOrDeclareParameter<double>(*node, ns + "moving_speed_threshold");
-      param.moving_time_threshold =
-        getOrDeclareParameter<double>(*node, ns + "moving_time_threshold");
+      param.moving_speed_threshold = getOrDeclareParameter<double>(*node, ns + "th_moving_speed");
+      param.moving_time_threshold = getOrDeclareParameter<double>(*node, ns + "th_moving_time");
       param.max_expand_ratio = getOrDeclareParameter<double>(*node, ns + "max_expand_ratio");
       param.envelope_buffer_margin =
         getOrDeclareParameter<double>(*node, ns + "envelope_buffer_margin");
@@ -142,9 +140,9 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.closest_distance_to_wait_and_see_for_ambiguous_vehicle =
       getOrDeclareParameter<double>(*node, ns + "closest_distance_to_wait_and_see");
     p.time_threshold_for_ambiguous_vehicle =
-      getOrDeclareParameter<double>(*node, ns + "condition.time_threshold");
+      getOrDeclareParameter<double>(*node, ns + "condition.th_stopped_time");
     p.distance_threshold_for_ambiguous_vehicle =
-      getOrDeclareParameter<double>(*node, ns + "condition.distance_threshold");
+      getOrDeclareParameter<double>(*node, ns + "condition.th_moving_distance");
     p.object_ignore_section_traffic_light_in_front_distance =
       getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
     p.object_ignore_section_crosswalk_in_front_distance =

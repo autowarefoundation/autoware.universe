@@ -55,8 +55,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
   const auto update_object_param = [&p, &parameters](
                                      const auto & semantic, const std::string & ns) {
     auto & config = p->object_parameters.at(semantic);
-    updateParam<double>(parameters, ns + "moving_speed_threshold", config.moving_speed_threshold);
-    updateParam<double>(parameters, ns + "moving_time_threshold", config.moving_time_threshold);
+    updateParam<double>(parameters, ns + "th_moving_speed", config.moving_speed_threshold);
+    updateParam<double>(parameters, ns + "th_moving_time", config.moving_time_threshold);
     updateParam<double>(parameters, ns + "max_expand_ratio", config.max_expand_ratio);
     updateParam<double>(parameters, ns + "envelope_buffer_margin", config.envelope_buffer_margin);
     updateParam<double>(parameters, ns + "lateral_margin.soft_margin", config.lateral_soft_margin);
@@ -140,9 +140,9 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "closest_distance_to_wait_and_see",
       p->closest_distance_to_wait_and_see_for_ambiguous_vehicle);
     updateParam<double>(
-      parameters, ns + "condition.time_threshold", p->time_threshold_for_ambiguous_vehicle);
+      parameters, ns + "condition.th_stopped_time", p->time_threshold_for_ambiguous_vehicle);
     updateParam<double>(
-      parameters, ns + "condition.distance_threshold", p->distance_threshold_for_ambiguous_vehicle);
+      parameters, ns + "condition.th_moving_distance", p->distance_threshold_for_ambiguous_vehicle);
     updateParam<double>(
       parameters, ns + "ignore_area.traffic_light.front_distance",
       p->object_ignore_section_traffic_light_in_front_distance);
@@ -161,10 +161,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
 
   {
     const std::string ns = "avoidance.avoidance.lateral.";
-    updateParam<double>(
-      parameters, ns + "lateral_execution_threshold", p->lateral_execution_threshold);
-    updateParam<double>(
-      parameters, ns + "lateral_small_shift_threshold", p->lateral_small_shift_threshold);
+    updateParam<double>(parameters, ns + "th_avoid_execution", p->lateral_execution_threshold);
+    updateParam<double>(parameters, ns + "th_small_shift_length", p->lateral_small_shift_threshold);
     updateParam<double>(
       parameters, ns + "soft_drivable_bound_margin", p->soft_drivable_bound_margin);
     updateParam<double>(
