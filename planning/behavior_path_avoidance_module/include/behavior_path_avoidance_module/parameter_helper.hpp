@@ -313,6 +313,10 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.use_shorten_margin_immediately =
       getOrDeclareParameter<bool>(*node, ns + "use_shorten_margin_immediately");
 
+    if (p.policy_approval != "per_shift_line" && p.policy_approval != "per_avoidance_maneuver") {
+      throw std::domain_error("invalid policy. please select 'best_effort' or 'reliable'.");
+    }
+
     if (p.policy_deceleration != "best_effort" && p.policy_deceleration != "reliable") {
       throw std::domain_error("invalid policy. please select 'best_effort' or 'reliable'.");
     }
@@ -330,6 +334,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.max_deceleration = getOrDeclareParameter<double>(*node, ns + "max_deceleration");
     p.max_jerk = getOrDeclareParameter<double>(*node, ns + "max_jerk");
     p.max_acceleration = getOrDeclareParameter<double>(*node, ns + "max_acceleration");
+    p.min_velocity_to_limit_max_acceleration =
+      getOrDeclareParameter<double>(*node, ns + "min_velocity_to_limit_max_acceleration");
   }
 
   // constraints (lateral)

@@ -23,6 +23,7 @@
 #include "rclcpp/logger.hpp"
 
 #include <route_handler/route_handler.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -31,6 +32,7 @@
 
 #include <lanelet2_core/Forward.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -185,7 +187,7 @@ std::optional<lanelet::BasicPolygon2d> createPolygon(
 
 ExtendedPredictedObject transform(
   const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters);
+  const LaneChangeParameters & lane_change_parameters, const bool check_at_prepare_phase);
 
 bool isCollidedPolygonsInLanelet(
   const std::vector<Polygon2d> & collided_polygons, const lanelet::ConstLanelets & lanes);
@@ -220,6 +222,73 @@ lanelet::ConstLanelets generateExpandedLanelets(
  * @return rclcpp::Logger The logger instance configured for the specified lane change type.
  */
 rclcpp::Logger getLogger(const std::string & type);
+
+/**
+ * @brief Computes the current footprint of the ego vehicle based on its pose and size.
+ *
+ * This function calculates the 2D polygon representing the current footprint of the ego vehicle.
+ * The footprint is determined by the vehicle's pose and its dimensions, including the distance
+ * from the base to the front and rear ends of the vehicle, as well as its width.
+ *
+ * @param ego_pose The current pose of the ego vehicle.
+ * @param ego_info The structural information of the ego vehicle, such as its maximum longitudinal
+ *                 offset, rear overhang, and width.
+ *
+ * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
+ */
+Polygon2d getEgoCurrentFootprint(
+  const Pose & ego_pose, const vehicle_info_util::VehicleInfo & ego_info);
+
+/**
+ * @brief Checks if the given polygon is within an intersection area.
+ *
+ * This function evaluates whether a specified polygon is located within the bounds of an
+ * intersection. It identifies the intersection area by checking the attributes of the provided
+ * lanelet. If the lanelet has an attribute indicating it is part of an intersection, the function
+ * then checks if the polygon is fully contained within this area.
+ *
+ * @param route_handler a shared pointer to the route_handler
+ * @param lanelet A lanelet to check against the
+ *                intersection area.
+ * @param polygon The polygon to check for containment within the intersection area.
+ *
+ * @return bool True if the polygon is within the intersection area, false otherwise.
+ */
+bool isWithinIntersection(
+  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lanelet,
+  const Polygon2d & polygon);
+
+/**
+ * @brief Determines if a polygon is within lanes designated for turning.
+ *
+ * Checks if a polygon overlaps with lanelets tagged for turning directions (excluding 'straight').
+ * It evaluates the lanelet's 'turn_direction' attribute and determines overlap with the lanelet's
+ * area.
+ *
+ * @param lanelet Lanelet representing the road segment whose turn direction is to be evaluated.
+ * @param polygon The polygon to be checked for its presence within turn direction lanes.
+ *
+ * @return bool True if the polygon is within a lane designated for turning, false if it is within a
+ *              straight lane or no turn direction is specified.
+ */
+bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
+
+/**
+ * @brief Calculates the distance required during a lane change operation.
+ *
+ * Used for computing prepare or lane change length based on current and maximum velocity,
+ * acceleration, and duration, returning the lesser of accelerated distance or distance at max
+ * velocity.
+ *
+ * @param velocity The current velocity of the vehicle in meters per second (m/s).
+ * @param maximum_velocity The maximum velocity the vehicle can reach in meters per second (m/s).
+ * @param acceleration The acceleration of the vehicle in meters per second squared (m/s^2).
+ * @param duration The duration of the lane change in seconds (s).
+ * @return The calculated minimum distance in meters (m).
+ */
+double calcPhaseLength(
+  const double velocity, const double maximum_velocity, const double acceleration,
+  const double time);
 }  // namespace behavior_path_planner::utils::lane_change
 
 namespace behavior_path_planner::utils::lane_change::debug
