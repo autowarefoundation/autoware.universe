@@ -143,6 +143,9 @@ struct AvoidanceParameters
   // To prevent large acceleration while avoidance.
   double max_acceleration{0.0};
 
+  // To prevent large acceleration while avoidance.
+  double min_velocity_to_limit_max_acceleration{0.0};
+
   // upper distance for envelope polygon expansion.
   double upper_distance_for_polygon_expansion{0.0};
 
@@ -215,9 +218,6 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
-
-  // keep target velocity in yield maneuver
-  double yield_velocity{0.0};
 
   // maximum stop distance
   double stop_max_distance{0.0};
@@ -374,7 +374,7 @@ struct ObjectData  // avoidance target
   double distance_factor{0.0};
 
   // count up when object disappeared. Removed when it exceeds threshold.
-  rclcpp::Time last_seen;
+  rclcpp::Time last_seen{rclcpp::Clock(RCL_ROS_TIME).now()};
   double lost_time{0.0};
 
   // count up when object moved. Removed when it exceeds threshold.

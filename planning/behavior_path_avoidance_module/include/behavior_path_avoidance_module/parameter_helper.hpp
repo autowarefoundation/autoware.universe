@@ -41,9 +41,6 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
     p.enable_bound_clipping = getOrDeclareParameter<bool>(*node, ns + "enable_bound_clipping");
     p.enable_cancel_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_cancel_maneuver");
-    p.enable_yield_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable_yield_maneuver");
-    p.enable_yield_maneuver_during_shifting =
-      getOrDeclareParameter<bool>(*node, ns + "enable_yield_maneuver_during_shifting");
     p.disable_path_update = getOrDeclareParameter<bool>(*node, ns + "disable_path_update");
     p.publish_debug_marker = getOrDeclareParameter<bool>(*node, ns + "publish_debug_marker");
     p.print_debug_info = getOrDeclareParameter<bool>(*node, ns + "print_debug_info");
@@ -295,7 +292,9 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   // yield
   {
     const std::string ns = "avoidance.yield.";
-    p.yield_velocity = getOrDeclareParameter<double>(*node, ns + "yield_velocity");
+    p.enable_yield_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable");
+    p.enable_yield_maneuver_during_shifting =
+      getOrDeclareParameter<bool>(*node, ns + "enable_during_shifting");
   }
 
   // stop
@@ -314,6 +313,10 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.use_shorten_margin_immediately =
       getOrDeclareParameter<bool>(*node, ns + "use_shorten_margin_immediately");
 
+    if (p.policy_approval != "per_shift_line" && p.policy_approval != "per_avoidance_maneuver") {
+      throw std::domain_error("invalid policy. please select 'best_effort' or 'reliable'.");
+    }
+
     if (p.policy_deceleration != "best_effort" && p.policy_deceleration != "reliable") {
       throw std::domain_error("invalid policy. please select 'best_effort' or 'reliable'.");
     }
@@ -331,6 +334,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.max_deceleration = getOrDeclareParameter<double>(*node, ns + "max_deceleration");
     p.max_jerk = getOrDeclareParameter<double>(*node, ns + "max_jerk");
     p.max_acceleration = getOrDeclareParameter<double>(*node, ns + "max_acceleration");
+    p.min_velocity_to_limit_max_acceleration =
+      getOrDeclareParameter<double>(*node, ns + "min_velocity_to_limit_max_acceleration");
   }
 
   // constraints (lateral)

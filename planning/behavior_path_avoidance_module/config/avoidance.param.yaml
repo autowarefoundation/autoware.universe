@@ -6,8 +6,6 @@
       resample_interval_for_output: 4.0                 # [m]
       # avoidance module common setting
       enable_bound_clipping: false
-      enable_yield_maneuver: true
-      enable_yield_maneuver_during_shifting: false
       enable_cancel_maneuver: true
       disable_path_update: false
 
@@ -247,7 +245,8 @@
 
       # For yield maneuver
       yield:
-        yield_velocity: 2.78                            # [m/s]
+        enable: true                                    # [-]
+        enable_during_shifting: false                   # [-]
 
       # For stop maneuver
       stop:
@@ -288,7 +287,8 @@
           nominal_jerk: 0.5                             # [m/sss]
           max_deceleration: -1.5                        # [m/ss]
           max_jerk: 1.0                                 # [m/sss]
-          max_acceleration: 1.0                         # [m/ss]
+          max_acceleration: 0.5                         # [m/ss]
+          min_velocity_to_limit_max_acceleration: 2.78  # [m/ss]
 
       shift_line_pipeline:
         trim:
