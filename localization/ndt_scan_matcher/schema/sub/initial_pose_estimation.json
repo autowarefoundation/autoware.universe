@@ -9,10 +9,7 @@
           "type": "number",
           "description": "The method to estimate the initial pose. 0:RANDOM_SEARCH, 1:GRID_SEARCH",
           "default": 1,
-          "enum": [
-            0,
-            1
-          ]
+          "enum": [0, 1]
         },
         "particles_num": {
           "type": "number",
