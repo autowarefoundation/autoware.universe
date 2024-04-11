@@ -814,6 +814,23 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
+
+  // crash in 10s
+  std::thread thread([]() {
+    const auto you_shall_not_pass = []() {
+      char * ptr = (char *)42;
+      int v = *ptr;
+      return v;
+    };
+    // print countdown
+    for (int i = 10; i > 0; i--) {
+      std::cout << "Countdown: " << i << std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    int v = you_shall_not_pass();
+    std::cout << "v=" << v << std::endl;
+  });
+  thread.detach();
 }
 
 rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
