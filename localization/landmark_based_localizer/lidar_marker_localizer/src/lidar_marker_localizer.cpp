@@ -350,7 +350,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
     }
 
     // pattern matching
-    for (size_t i = 0; i < bin_num - param_.intensity_pattern.size(); i++) {
+    for (size_t i = 0; i <= bin_num - param_.intensity_pattern.size(); i++) {
       int64_t pos = 0;
       int64_t neg = 0;
       double min_intensity = std::numeric_limits<double>::max();
