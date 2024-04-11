@@ -5,6 +5,15 @@
     "initial_pose_estimation": {
       "type": "object",
       "properties": {
+        "method": {
+          "type": "number",
+          "description": "The method to estimate the initial pose. 0:RANDOM_SEARCH, 1:GRID_SEARCH",
+          "default": 1,
+          "enum": [
+            0,
+            1
+          ]
+        },
         "particles_num": {
           "type": "number",
           "description": "The number of particles to estimate initial pose.",
@@ -16,9 +25,97 @@
           "description": "The number of initial random trials in the TPE (Tree-Structured Parzen Estimator). This value should be equal to or less than 'initial_estimate_particles_num' and more than 0. If it is equal to 'initial_estimate_particles_num', the search will be the same as a full random search.",
           "default": 20,
           "minimum": 1
+        },
+        "grid_num_x": {
+          "type": "number",
+          "description": "The number of grid search in x-axis.",
+          "default": 3,
+          "minimum": 1
+        },
+        "grid_num_y": {
+          "type": "number",
+          "description": "The number of grid search in y-axis.",
+          "default": 3,
+          "minimum": 1
+        },
+        "grid_num_z": {
+          "type": "number",
+          "description": "The number of grid search in z-axis.",
+          "default": 1,
+          "minimum": 1
+        },
+        "grid_num_roll": {
+          "type": "number",
+          "description": "The number of grid search in roll-axis.",
+          "default": 1,
+          "minimum": 1
+        },
+        "grid_num_pitch": {
+          "type": "number",
+          "description": "The number of grid search in pitch-axis.",
+          "default": 1,
+          "minimum": 1
+        },
+        "grid_num_yaw": {
+          "type": "number",
+          "description": "The number of grid search in yaw-axis.",
+          "default": 80,
+          "minimum": 1
+        },
+        "grid_search_range_x": {
+          "type": "number",
+          "description": "The range of grid search in x-axis. [m]",
+          "default": 3.0,
+          "minimum": 0.0
+        },
+        "grid_search_range_y": {
+          "type": "number",
+          "description": "The range of grid search in y-axis. [m]",
+          "default": 3.0,
+          "minimum": 0.0
+        },
+        "grid_search_range_z": {
+          "type": "number",
+          "description": "The range of grid search in z-axis. [m]",
+          "default": 0.0,
+          "minimum": 0.0
+        },
+        "grid_search_range_roll": {
+          "type": "number",
+          "description": "The range of grid search in roll-axis. [rad]",
+          "default": 0.0,
+          "minimum": 0.0
+        },
+        "grid_search_range_pitch": {
+          "type": "number",
+          "description": "The range of grid search in pitch-axis. [rad]",
+          "default": 0.0,
+          "minimum": 0.0
+        },
+        "grid_search_range_yaw": {
+          "type": "number",
+          "description": "The range of grid search in yaw-axis. [rad]",
+          "default": 3.0,
+          "minimum": 3.14159265359
         }
       },
-      "required": ["particles_num", "n_startup_trials"],
+      "required": [
+        "method",
+        "particles_num",
+        "n_startup_trials",
+        "grid_num_x",
+        "grid_num_y",
+        "grid_num_z",
+        "grid_num_roll",
+        "grid_num_pitch",
+        "grid_num_yaw",
+        "grid_search_range_x",
+        "grid_search_range_y",
+        "grid_search_range_z",
+        "grid_search_range_roll",
+        "grid_search_range_pitch",
+        "grid_search_range_yaw"
+      ],
       "additionalProperties": false
     }
   }
