@@ -75,9 +75,10 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
   if (distance + param_.lidar_radius > param_.map_radius) {
     std::stringstream message;
     message << "Dynamic map loading is not keeping up.";
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
     RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
-  
+
     // If the map does not keep up with the current position,
     // lock ndt_ptr_ entirely until it is fully rebuilt.
     need_rebuild_ = true;
@@ -111,9 +112,12 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
     const bool updated = update_ndt(position, *ndt_ptr_);
     if (!updated) {
       std::stringstream message;
-      message << "update_ndt failed. If this happens with initial position estimation, make sure that"
-              << "(1) the initial position matches the pcd map and (2) the map_loader is working properly.";
-      diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());      
+      message
+        << "update_ndt failed. If this happens with initial position estimation, make sure that"
+        << "(1) the initial position matches the pcd map and (2) the map_loader is working "
+           "properly.";
+      diagnostics_module_->updateLevelAndMessage(
+        diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
       RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
       last_update_position_ = position;
       ndt_ptr_mutex_->unlock();

@@ -64,8 +64,8 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <string>
 #include <sstream>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -158,7 +158,7 @@ private:
     const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
   bool validate_num_iteration(const int iter_num, const int max_iter_num);
   bool validate_local_optimal_solution_oscillation(
-  const int oscillation_count, const int oscillation_count_threshold);
+    const int oscillation_count, const int oscillation_count_threshold);
   bool validate_score(
     const double score, const double score_threshold, const std::string & score_name);
   bool validate_converged_param(
@@ -167,7 +167,6 @@ private:
     const double distance_initial_to_result, const double warn_distance_initial_to_result);
   bool validate_execution_time(const double execution_time, const double warn_execution_time);
   bool validate_skipping_publish_num(const size_t skipping_publish_num, const size_t error_num);
-
 
   rclcpp::TimerBase::SharedPtr map_update_timer_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;

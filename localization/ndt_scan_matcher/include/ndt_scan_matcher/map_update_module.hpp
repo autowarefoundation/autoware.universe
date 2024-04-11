@@ -36,8 +36,8 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <string>
 #include <sstream>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -63,7 +63,6 @@ private:
   void update_map(const geometry_msgs::msg::Point & position);
   [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position);
   void publish_partial_pcd_map();
-
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 

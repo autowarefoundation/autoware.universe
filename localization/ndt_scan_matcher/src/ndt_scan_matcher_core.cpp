@@ -298,7 +298,8 @@ bool NDTScanMatcher::set_input_source(
     sensor_points_in_baselink_frame);
 
   // check max distance of sensor points
-  if (!validate_sensor_points_max_distance(sensor_points_in_baselink_frame, param_.sensor_points.required_distance)) {
+  if (!validate_sensor_points_max_distance(
+        sensor_points_in_baselink_frame, param_.sensor_points.required_distance)) {
     return false;
   }
 
@@ -321,7 +322,7 @@ bool NDTScanMatcher::process_scan_matching(
   std::optional<SmartPoseBuffer::InterpolateResult> interpolation_result_opt =
     initial_pose_buffer_->interpolate(sensor_ros_time);
 
-  if (!validate_succeed_interpolete_intial_pose( interpolation_result_opt != std::nullopt )) {
+  if (!validate_succeed_interpolete_intial_pose(interpolation_result_opt != std::nullopt)) {
     return false;
   }
 
@@ -334,7 +335,7 @@ bool NDTScanMatcher::process_scan_matching(
     add_regularization_pose(sensor_ros_time);
   }
 
-  if(!validate_is_set_map_points(ndt_ptr_->getInputTarget() != nullptr)) {
+  if (!validate_is_set_map_points(ndt_ptr_->getInputTarget() != nullptr)) {
     return false;
   }
 
@@ -358,8 +359,8 @@ bool NDTScanMatcher::process_scan_matching(
   const int oscillation_num = count_oscillation(transformation_msg_array);
 
   constexpr int oscillation_count_threshold = 10;
-  bool is_local_optimal_solution_oscillation = validate_local_optimal_solution_oscillation(
-    oscillation_num, oscillation_count_threshold);
+  bool is_local_optimal_solution_oscillation =
+    validate_local_optimal_solution_oscillation(oscillation_num, oscillation_count_threshold);
 
   bool is_ok_converged_param = validate_converged_param(
     ndt_result.transform_probability, ndt_result.nearest_voxel_transformation_likelihood);
@@ -793,7 +794,8 @@ void NDTScanMatcher::service_ndt_align_main(
   if (!is_set_map_points) {
     std::stringstream message;
     message << "No InputTarget. Please check the map file and the map_loader service";
-    diagnostics_module_ndt_align_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());      
+    diagnostics_module_ndt_align_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     RCLCPP_WARN(get_logger(), message.str().c_str());
 
     res->success = false;
@@ -805,7 +807,8 @@ void NDTScanMatcher::service_ndt_align_main(
   if (!is_set_sensor_points) {
     std::stringstream message;
     message << "No InputSource. Please check the input lidar topic";
-    diagnostics_module_ndt_align_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());      
+    diagnostics_module_ndt_align_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     RCLCPP_WARN(get_logger(), message.str().c_str());
 
     res->success = false;
@@ -940,7 +943,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
 
   output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   RCLCPP_DEBUG_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
-  diagnostics_module_ndt_align_->addKeyValue("latest_ndt_aling_service_best_score", best_particle_ptr->score);
+  diagnostics_module_ndt_align_->addKeyValue(
+    "latest_ndt_aling_service_best_score", best_particle_ptr->score);
 
   return result_pose_with_cov_msg;
 }

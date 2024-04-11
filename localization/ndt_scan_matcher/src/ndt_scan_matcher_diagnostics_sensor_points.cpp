@@ -15,8 +15,8 @@
 #include "ndt_scan_matcher/diagnostics_module.hpp"
 #include "ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 
-#include <string>
 #include <sstream>
+#include <string>
 
 void NDTScanMatcher::initialize_diagnostics_key_value()
 {
@@ -45,7 +45,8 @@ bool NDTScanMatcher::validate_is_node_activated(const bool is_activated)
     std::stringstream message;
     message << "Node is not activated.";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -59,7 +60,8 @@ bool NDTScanMatcher::validate_is_set_map_points(const bool is_set_map_points)
     std::stringstream message;
     message << "Map points is not set.";  // TODO "Map points are?"
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -73,7 +75,8 @@ bool NDTScanMatcher::validate_is_set_sensor_points(const bool is_set_sensor_poin
     std::stringstream message;
     message << "Sensor points is not set.";  // TODO "Sensor points are?"
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -87,7 +90,8 @@ bool NDTScanMatcher::validate_sensor_points_empty(const size_t sensor_points_siz
     std::stringstream message;
     message << "Sensor points is empty.";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -106,14 +110,14 @@ bool NDTScanMatcher::validate_sensor_points_delay_time(
             << "The delay time is " << sensor_points_delay_time_sec << "[sec] "
             << "(the tolerance is " << warn_timeout_sec << "[sec]).";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
 
 bool NDTScanMatcher::validate_sensor_points_max_distance(
-  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points,
-  const double warn_distance)
+  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points, const double warn_distance)
 {
   double max_distance = 0.0;
   for (const auto & point : sensor_points->points) {
@@ -126,11 +130,11 @@ bool NDTScanMatcher::validate_sensor_points_max_distance(
   bool is_ok = (max_distance > warn_distance);
   if (!is_ok) {
     std::stringstream message;
-    message << "Max distance of sensor points = "
-            << std::fixed << std::setprecision(3) << max_distance << " [m] < "
-            << warn_distance << " [m]";
+    message << "Max distance of sensor points = " << std::fixed << std::setprecision(3)
+            << max_distance << " [m] < " << warn_distance << " [m]";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -145,7 +149,8 @@ bool NDTScanMatcher::validate_initial_pose_array_size(const size_t initial_pose_
     std::stringstream message;
     message << "Initial poses have not arrived. Please check the initial pose topic.";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -159,7 +164,8 @@ bool NDTScanMatcher::validate_succeed_interpolete_intial_pose(const bool is_succ
     std::stringstream message;
     message << "Couldn't interpolate pose. Please check the initial pose topic";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -171,10 +177,11 @@ bool NDTScanMatcher::validate_num_iteration(const int iter_num, const int max_it
   bool is_ok = iter_num < max_iter_num;
   if (!is_ok) {
     std::stringstream message;
-    message << "The number of iterations has reached its upper limit. The number of iterations: " << iter_num
-            << ", Limit: " << max_iter_num << ".";
+    message << "The number of iterations has reached its upper limit. The number of iterations: "
+            << iter_num << ", Limit: " << max_iter_num << ".";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -182,15 +189,15 @@ bool NDTScanMatcher::validate_num_iteration(const int iter_num, const int max_it
 bool NDTScanMatcher::validate_local_optimal_solution_oscillation(
   const int oscillation_count, const int oscillation_count_threshold)
 {
-  diagnostics_module_->addKeyValue(
-    "local_optimal_solution_oscillation_count", oscillation_count);
+  diagnostics_module_->addKeyValue("local_optimal_solution_oscillation_count", oscillation_count);
 
   bool is_ok = oscillation_count < oscillation_count_threshold;
   if (!is_ok) {
     std::stringstream message;
     message << "There is a possibility of oscillation in a local minimum";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -201,10 +208,11 @@ bool NDTScanMatcher::validate_score(
   bool is_ok = score > score_threshold;
   if (!is_ok) {
     std::stringstream message;
-    message << score_name << " is below the threshold. Score: " << score 
+    message << score_name << " is below the threshold. Score: " << score
             << ", Threshold: " << score_threshold << ".";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -234,7 +242,8 @@ bool NDTScanMatcher::validate_converged_param(
     std::stringstream message;
     message << "Unknown converged param type. Please check `score_estimation.converged_param_type`";
     RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());   
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
   }
   return is_ok;
 }
@@ -247,9 +256,11 @@ bool NDTScanMatcher::validate_distance_initial_to_result(
   bool is_ok = distance_initial_to_result < warn_distance_initial_to_result;
   if (!is_ok) {
     std::stringstream message;
-    message << "distance_initial_to_result is too large (" << distance_initial_to_result << " [m]).";
+    message << "distance_initial_to_result is too large (" << distance_initial_to_result
+            << " [m]).";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -264,7 +275,8 @@ bool NDTScanMatcher::validate_execution_time(
     std::stringstream message;
     message << "NDT exe time is too long (took " << execution_time << " [ms]).";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
   return is_ok;
 }
@@ -279,7 +291,8 @@ bool NDTScanMatcher::validate_skipping_publish_num(
     std::stringstream message;
     message << "skipping_publish_num exceed limit ( " << skipping_publish_num << " times).";
     RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
   }
   return is_ok;
 }
