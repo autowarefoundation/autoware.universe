@@ -5,6 +5,7 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Eigen3 REQUIRED)
+find_package(backward_ros REQUIRED)
 
 include_directories(
   SYSTEM
