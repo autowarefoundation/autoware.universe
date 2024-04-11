@@ -105,7 +105,6 @@ public:
 
   HistoryPathMap getHistoryPathMap() const { return history_path_map_; }
   ObjectDataMap getDebugObjectData() const { return debug_target_object_; }
-  DetectionCountMap getDetectionCountMap() const { return historical_detection_count_map_; }
 
 private:
   std::shared_ptr<Parameters> parameters_;
@@ -113,18 +112,10 @@ private:
   // Store predicted objects information and calculation results
   ObjectMap object_map_;
   HistoryPathMap history_path_map_;
-  DetectionCountMap initializeDetectionCountMap() const
-  {
-    return {
-      {ObjectClassification::UNKNOWN, 0}, {ObjectClassification::CAR, 0},
-      {ObjectClassification::TRUCK, 0},   {ObjectClassification::BUS, 0},
-      {ObjectClassification::TRAILER, 0}, {ObjectClassification::MOTORCYCLE, 0},
-      {ObjectClassification::BICYCLE, 0}, {ObjectClassification::PEDESTRIAN, 0},
-    };
-  }
 
   DetectionCountMap historical_detection_count_map_ = initializeDetectionCountMap();
-  std::vector<std::pair<DetectionCountMap, rclcpp::Time>> detection_count_vector_;
+  int objects_count_frame_ = 0;
+  std::vector<std::pair<DetectionCountMap, rclcpp::Time>> detection_count_vector_{};
 
   rclcpp::Time current_stamp_;
 
@@ -165,6 +156,16 @@ private:
   std::optional<std::pair<rclcpp::Time, PredictedObject>> getPreviousObjectByStamp(
     const std::string uuid, const rclcpp::Time stamp) const;
   PredictedObjects getObjectsByStamp(const rclcpp::Time stamp) const;
+
+  DetectionCountMap initializeDetectionCountMap() const
+  {
+    return {
+      {ObjectClassification::UNKNOWN, 0}, {ObjectClassification::CAR, 0},
+      {ObjectClassification::TRUCK, 0},   {ObjectClassification::BUS, 0},
+      {ObjectClassification::TRAILER, 0}, {ObjectClassification::MOTORCYCLE, 0},
+      {ObjectClassification::BICYCLE, 0}, {ObjectClassification::PEDESTRIAN, 0},
+    };
+  }
 
 };  // class MetricsCalculator
 

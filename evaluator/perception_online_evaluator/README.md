@@ -24,16 +24,17 @@ This module allows for the evaluation of how accurately perception results are g
 
 ## Parameters
 
-| Name                              | Type         | Description                                                                                      |
-| --------------------------------- | ------------ | ------------------------------------------------------------------------------------------------ |
-| `selected_metrics`                | List         | Metrics to be evaluated, such as lateral deviation, yaw deviation, and predicted path deviation. |
-| `smoothing_window_size`           | Integer      | Determines the window size for smoothing path, should be an odd number.                          |
-| `prediction_time_horizons`        | list[double] | Time horizons for prediction evaluation in seconds.                                              |
-| `stopped_velocity_threshold`      | double       | threshold velocity to check if vehicle is stopped                                                |
-| `detection_radius`                | double       | Detection radius for objects to be evaluated.(used for objects count only)                       |
-| `detection_height`                | double       | Detection height for objects to be evaluated. (used for objects count only)                      |
-| `target_object.*.check_deviation` | bool         | Whether to check deviation for specific object types (car, truck, etc.).                         |
-| `debug_marker.*`                  | bool         | Debugging parameters for marker visualization (history path, predicted path, etc.).              |
+| Name                              | Type         | Description                                                                                                                                     |
+| --------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `selected_metrics`                | List         | Metrics to be evaluated, such as lateral deviation, yaw deviation, and predicted path deviation.                                                |
+| `smoothing_window_size`           | Integer      | Determines the window size for smoothing path, should be an odd number.                                                                         |
+| `prediction_time_horizons`        | list[double] | Time horizons for prediction evaluation in seconds.                                                                                             |
+| `stopped_velocity_threshold`      | double       | threshold velocity to check if vehicle is stopped                                                                                               |
+| `detection_radius`                | double       | Detection radius for objects to be evaluated.(used for objects count only)                                                                      |
+| `detection_height`                | double       | Detection height for objects to be evaluated. (used for objects count only)                                                                     |
+| `objects_count_window_seconds`    | double       | Time window for keeping object detection counts. The number of object detections within this time window is stored in `detection_count_vector_` |
+| `target_object.*.check_deviation` | bool         | Whether to check deviation for specific object types (car, truck, etc.).                                                                        |
+| `debug_marker.*`                  | bool         | Debugging parameters for marker visualization (history path, predicted path, etc.).                                                             |
 
 ## Assumptions / Known limits
 
@@ -45,5 +46,4 @@ It is assumed that the current positions of PredictedObjects are reasonably accu
 - Metrics for objects with strange physical behavior (e.g., going through a fence)
 - Metrics for splitting objects
 - Metrics for problems with objects that are normally stationary but move
-- Metrics for counting the number of objects per class within a specified time frame.
 - Disappearing object metrics

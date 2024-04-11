@@ -408,7 +408,8 @@ MetricStatMap MetricsCalculator::calcObjectsCountMetrics() const
 
   for (const auto & [label, count] : historical_detection_count_map_) {
     Stat<double> stat;
-    stat.add(static_cast<double>(count));
+    stat.add(
+      static_cast<double>(static_cast<double>(count) / static_cast<double>(objects_count_frame_)));
     metric_stat_map["historical_objects_count_" + convertLabelToString(label)] = stat;
   }
 
@@ -452,6 +453,7 @@ void MetricsCalculator::updateObjectsCountMap(
   const PredictedObjects & objects, const tf2_ros::Buffer & tf_buffer)
 {
   const auto objects_frame_id = objects.header.frame_id;
+  objects_count_frame_++;
   DetectionCountMap current_detection_count_map = initializeDetectionCountMap();
 
   geometry_msgs::msg::TransformStamped transform_stamped;
@@ -485,6 +487,9 @@ void MetricsCalculator::updateObjectsCountMap(
       current_detection_count_map[label]++;
     }
   }
+
+  detection_count_vector_.emplace_back(current_detection_count_map, current_stamp_);
+
   auto remove_before =
     current_stamp_ - rclcpp::Duration::from_seconds(parameters_->objects_count_window_seconds);
   detection_count_vector_.erase(
