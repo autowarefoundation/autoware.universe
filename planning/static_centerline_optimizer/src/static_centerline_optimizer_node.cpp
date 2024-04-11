@@ -57,19 +57,6 @@ namespace static_centerline_optimizer
 {
 namespace
 {
-[[maybe_unused]] lanelet::ConstLanelets get_lanelets_from_route(
-  const RouteHandler & route_handler, const LaneletRoute & route)
-{
-  lanelet::ConstLanelets lanelets;
-  for (const auto & segment : route.segments) {
-    const auto & target_lanelet_id = segment.preferred_primitive.id;
-    const auto target_lanelet = route_handler.getLaneletsFromId(target_lanelet_id);
-    lanelets.push_back(target_lanelet);
-  }
-
-  return lanelets;
-}
-
 std::vector<lanelet::Id> get_lane_ids_from_route(const LaneletRoute & route)
 {
   std::vector<lanelet::Id> lane_ids;
@@ -79,11 +66,6 @@ std::vector<lanelet::Id> get_lane_ids_from_route(const LaneletRoute & route)
   }
 
   return lane_ids;
-}
-
-rclcpp::QoS create_transient_local_qos()
-{
-  return rclcpp::QoS{1}.transient_local();
 }
 
 lanelet::BasicPoint2d convertToLaneletPoint(const geometry_msgs::msg::Point & geom_point)
@@ -165,7 +147,7 @@ std::vector<lanelet::Id> check_lanelet_connection(
   return unconnected_lane_ids;
 }
 
-std_msgs::msg::Header createHeader(const rclcpp::Time & now)
+std_msgs::msg::Header create_header(const rclcpp::Time & now)
 {
   std_msgs::msg::Header header;
   header.frame_id = "map";
@@ -188,29 +170,27 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 : Node("static_centerline_optimizer", node_options)
 {
   // publishers
-  pub_map_bin_ = create_publisher<HADMapBin>("lanelet2_map_topic", create_transient_local_qos());
+  pub_map_bin_ =
+    create_publisher<HADMapBin>("lanelet2_map_topic", utils::create_transient_local_qos());
   pub_whole_centerline_ =
-    create_publisher<Trajectory>("output_whole_centerline", create_transient_local_qos());
-  pub_centerline_ = create_publisher<Trajectory>("output_centerline", create_transient_local_qos());
+    create_publisher<Trajectory>("output_whole_centerline", utils::create_transient_local_qos());
+  pub_centerline_ =
+    create_publisher<Trajectory>("output_centerline", utils::create_transient_local_qos());
 
   // debug publishers
   pub_debug_unsafe_footprints_ =
-    create_publisher<MarkerArray>("debug/unsafe_footprints", create_transient_local_qos());
+    create_publisher<MarkerArray>("debug/unsafe_footprints", utils::create_transient_local_qos());
 
   // subscribers
   sub_traj_start_index_ = create_subscription<std_msgs::msg::Int32>(
     "/centerline_updater_helper/traj_start_index", rclcpp::QoS{1},
     [this](const std_msgs::msg::Int32 & msg) {
-      if (msg.data <= traj_end_index_ + 1) {
-        update_centerline_range(msg.data, traj_end_index_);
-      }
+      update_centerline_range(msg.data, traj_range_indices_.second);
     });
   sub_traj_end_index_ = create_subscription<std_msgs::msg::Int32>(
     "/centerline_updater_helper/traj_end_index", rclcpp::QoS{1},
     [this](const std_msgs::msg::Int32 & msg) {
-      if (traj_start_index_ <= msg.data + 1) {
-        update_centerline_range(traj_start_index_, msg.data);
-      }
+      update_centerline_range(traj_range_indices_.first, msg.data);
     });
   sub_save_map_ = create_subscription<std_msgs::msg::Bool>(
     "/centerline_updater_helper/save_map", rclcpp::QoS{1}, [this](const std_msgs::msg::Bool & msg) {
@@ -220,7 +200,8 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
       if (!centerline_with_route_ || msg.data) {
         const auto & c = *centerline_with_route_;
         const auto selected_centerline = std::vector<TrajectoryPoint>(
-          c.centerline.begin() + traj_start_index_, c.centerline.begin() + traj_end_index_ + 1);
+          c.centerline.begin() + traj_range_indices_.first,
+          c.centerline.begin() + traj_range_indices_.second + 1);
         save_map(
           lanelet2_output_file_path, CenterlineWithRoute{selected_centerline, c.route_lane_ids});
       }
@@ -271,19 +252,19 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 void StaticCenterlineOptimizerNode::update_centerline_range(
   const int traj_start_index, const int traj_end_index)
 {
-  if (!centerline_with_route_) {
+  if (!centerline_with_route_ || traj_range_indices_.second + 1 < traj_start_index) {
     return;
   }
 
-  traj_start_index_ = traj_start_index;
-  traj_end_index_ = traj_end_index;
+  traj_range_indices_ = std::make_pair(traj_start_index, traj_end_index);
 
   const auto & centerline = centerline_with_route_->centerline;
   const auto selected_centerline = std::vector<TrajectoryPoint>(
-    centerline.begin() + traj_start_index_, centerline.begin() + traj_end_index_ + 1);
+    centerline.begin() + traj_range_indices_.first,
+    centerline.begin() + traj_range_indices_.second + 1);
 
   pub_centerline_->publish(
-    motion_utils::convertToTrajectory(selected_centerline, createHeader(this->now())));
+    motion_utils::convertToTrajectory(selected_centerline, create_header(this->now())));
 }
 
 void StaticCenterlineOptimizerNode::run()
@@ -296,8 +277,7 @@ void StaticCenterlineOptimizerNode::run()
   // process
   load_map(lanelet2_input_file_path);
   const auto centerline_with_route = generate_centerline_with_route();
-  traj_start_index_ = 0;
-  traj_end_index_ = centerline_with_route.centerline.size() - 1;
+  traj_range_indices_ = std::make_pair(0, centerline_with_route.centerline.size() - 1);
   save_map(lanelet2_output_file_path, centerline_with_route);
 
   centerline_with_route_ = centerline_with_route;
@@ -310,6 +290,7 @@ CenterlineWithRoute StaticCenterlineOptimizerNode::generate_centerline_with_rout
     return CenterlineWithRoute{};
   }
 
+  // generate centerline with route
   auto centerline_with_route = [&]() {
     if (centerline_source_ == CenterlineSource::OptimizationTrajectoryBase) {
       const lanelet::Id start_lanelet_id = declare_parameter<int64_t>("start_lanelet_id");
@@ -339,15 +320,16 @@ CenterlineWithRoute StaticCenterlineOptimizerNode::generate_centerline_with_rout
       "The centerline source is not supported in static_centerline_optimizer.");
   }();
 
+  // resample
   const double output_trajectory_interval = declare_parameter<double>("output_trajectory_interval");
   centerline_with_route.centerline =
     resampleTrajectoryPoints(centerline_with_route.centerline, output_trajectory_interval);
 
-  pub_whole_centerline_->publish(
-    motion_utils::convertToTrajectory(centerline_with_route.centerline, createHeader(this->now())));
+  pub_whole_centerline_->publish(motion_utils::convertToTrajectory(
+    centerline_with_route.centerline, create_header(this->now())));
 
-  pub_centerline_->publish(
-    motion_utils::convertToTrajectory(centerline_with_route.centerline, createHeader(this->now())));
+  pub_centerline_->publish(motion_utils::convertToTrajectory(
+    centerline_with_route.centerline, create_header(this->now())));
 
   return centerline_with_route;
 }
@@ -571,13 +553,10 @@ void StaticCenterlineOptimizerNode::evaluate(
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
   const auto route_lanelets = utils::get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
-  const auto dist_thresh_vec =
-    has_parameter("marker_color_dist_thresh")
-      ? get_parameter("marker_color_dist_thresh").as_double_array()
-      : declare_parameter<std::vector<double>>("marker_color_dist_thresh");
-  const auto marker_color_vec = has_parameter("marker_color")
-                                  ? get_parameter("marker_color").as_string_array()
-                                  : declare_parameter<std::vector<std::string>>("marker_color");
+  const auto dist_thresh_vec = tier4_autoware_utils::getOrDeclareParameter<std::vector<double>>(
+    *this, "marker_color_dist_thresh");
+  const auto marker_color_vec =
+    tier4_autoware_utils::getOrDeclareParameter<std::vector<std::string>>(*this, "marker_color");
   const auto get_marker_color = [&](const double dist) -> boost::optional<std::array<double, 3>> {
     for (size_t i = 0; i < dist_thresh_vec.size(); ++i) {
       const double dist_thresh = dist_thresh_vec.at(i);
