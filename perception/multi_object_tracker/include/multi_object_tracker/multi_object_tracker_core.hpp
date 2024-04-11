@@ -86,6 +86,7 @@ private:
   // inputs
   rclcpp::Subscription<DetectedObjects>::SharedPtr sub_objects_{};
   std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array_{};
+  rclcpp::Time last_measurement_time_;
 
   std::vector<std::string> input_topic_names_{};
   size_t input_topic_size_{};

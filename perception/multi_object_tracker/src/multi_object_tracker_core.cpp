@@ -89,6 +89,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   input_topic_names_ = get_parameter("input_topic_names").as_string_array();
 
   // Set input topics
+  last_measurement_time_ = this->now();
   if (input_topic_names_.empty()) {
     RCLCPP_ERROR(get_logger(), "Need a 'input_topic_names' parameter to be set before continuing");
     return;
@@ -98,7 +99,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   objects_data_.resize(input_topic_size_);
 
   for (size_t i = 0; i < input_topic_size_; i++) {
-    RCLCPP_DEBUG(get_logger(), "Subscribing to %s", input_topic_names_.at(i).c_str());
+    RCLCPP_INFO(get_logger(), "Subscribing to %s", input_topic_names_.at(i).c_str());
 
     std::function<void(const DetectedObjects::ConstSharedPtr msg)> func =
       std::bind(&MultiObjectTracker::onData, this, std::placeholders::_1, i);
@@ -167,7 +168,17 @@ void MultiObjectTracker::onData(DetectedObjects::ConstSharedPtr msg, const size_
 {
   objects_data_.at(array_number) = msg;
   // debug message
-  // std::cout << "Received data from topic " << input_topic_names_.at(array_number) << std::endl;
+  RCLCPP_INFO(
+    get_logger(), "Received data from topic %s", input_topic_names_.at(array_number).c_str());
+  if (last_measurement_time_ > msg->header.stamp) {
+    const double delta_time = (last_measurement_time_ - msg->header.stamp).seconds() * 1e3;
+    RCLCPP_INFO(
+      get_logger(), "Received data is older than the last measurement time by %f ms", delta_time);
+    return;
+  }
+  if (last_measurement_time_ < msg->header.stamp) {
+    last_measurement_time_ = msg->header.stamp;
+  }
 
   onMeasurement(msg);
 }
