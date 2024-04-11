@@ -68,7 +68,7 @@ std::vector<lanelet::Id> get_lane_ids_from_route(const LaneletRoute & route)
   return lane_ids;
 }
 
-lanelet::BasicPoint2d convertToLaneletPoint(const geometry_msgs::msg::Point & geom_point)
+lanelet::BasicPoint2d convert_to_lanelet_point(const geometry_msgs::msg::Point & geom_point)
 {
   lanelet::BasicPoint2d point(geom_point.x, geom_point.y);
   return point;
@@ -113,7 +113,7 @@ geometry_msgs::msg::Pose get_text_pose(
   return tier4_autoware_utils::calcOffsetPose(pose, x_front, y_left, 0.0);
 }
 
-std::array<double, 3> convertHexStringToDecimal(const std::string & hex_str_color)
+std::array<double, 3> convert_hex_string_to_decimal(const std::string & hex_str_color)
 {
   unsigned int hex_int_color;
   std::istringstream iss(hex_str_color);
@@ -155,7 +155,7 @@ std_msgs::msg::Header create_header(const rclcpp::Time & now)
   return header;
 }
 
-std::vector<TrajectoryPoint> resampleTrajectoryPoints(
+std::vector<TrajectoryPoint> resample_trajectory_points(
   const std::vector<TrajectoryPoint> & input_traj_points, const double resample_interval)
 {
   // resample and calculate trajectory points' orientation
@@ -323,7 +323,7 @@ CenterlineWithRoute StaticCenterlineOptimizerNode::generate_centerline_with_rout
   // resample
   const double output_trajectory_interval = declare_parameter<double>("output_trajectory_interval");
   centerline_with_route.centerline =
-    resampleTrajectoryPoints(centerline_with_route.centerline, output_trajectory_interval);
+    resample_trajectory_points(centerline_with_route.centerline, output_trajectory_interval);
 
   pub_whole_centerline_->publish(motion_utils::convertToTrajectory(
     centerline_with_route.centerline, create_header(this->now())));
@@ -519,8 +519,8 @@ void StaticCenterlineOptimizerNode::on_plan_path(
     std::vector<geometry_msgs::msg::Point> current_lanelet_points;
 
     // check if target point is inside the lanelet
-    while (
-      lanelet::geometry::inside(lanelet, convertToLaneletPoint(target_traj_point->pose.position))) {
+    while (lanelet::geometry::inside(
+      lanelet, convert_to_lanelet_point(target_traj_point->pose.position))) {
       // memorize points inside the lanelet
       current_lanelet_points.push_back(target_traj_point->pose.position);
       target_traj_point++;
@@ -561,7 +561,7 @@ void StaticCenterlineOptimizerNode::evaluate(
     for (size_t i = 0; i < dist_thresh_vec.size(); ++i) {
       const double dist_thresh = dist_thresh_vec.at(i);
       if (dist < dist_thresh) {
-        return convertHexStringToDecimal(marker_color_vec.at(i));
+        return convert_hex_string_to_decimal(marker_color_vec.at(i));
       }
     }
     return boost::none;
