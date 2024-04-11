@@ -217,23 +217,19 @@ void StartPlannerModule::updateData()
     std::lock_guard<std::mutex> guard(start_planner_data_mutex_);
     if (!start_planner_data_) {
       start_planner_data_ = StartPlannerData();
-      start_planner_data_.value().update(
-        *parameters_, *planner_data_, getCurrentStatus(), status_, isStopped());
-    } else {
-      auto & start_planner_data = start_planner_data_.value();
-      start_planner_data.update(
-        *parameters_, *planner_data_, getCurrentStatus(), status_, isStopped());
-      if (freespace_thread_status_) {
-        // if freespace solution is available, copy it to status_ on main thread
-        const auto & freespace_status = freespace_thread_status_.value();
-        status_.pull_out_path = freespace_status.pull_out_path;
-        status_.pull_out_start_pose = freespace_status.pull_out_start_pose;
-        status_.planner_type = freespace_status.planner_type;
-        status_.found_pull_out_path = freespace_status.found_pull_out_path;
-        status_.driving_forward = freespace_status.driving_forward;
-        // and then reset it
-        freespace_thread_status_ = std::nullopt;
-      }
+    }
+    start_planner_data_.value().update(
+      *parameters_, *planner_data_, getCurrentStatus(), status_, isStopped());
+    if (freespace_thread_status_) {
+      // if freespace solution is available, copy it to status_ on main thread
+      const auto & freespace_status = freespace_thread_status_.value();
+      status_.pull_out_path = freespace_status.pull_out_path;
+      status_.pull_out_start_pose = freespace_status.pull_out_start_pose;
+      status_.planner_type = freespace_status.planner_type;
+      status_.found_pull_out_path = freespace_status.found_pull_out_path;
+      status_.driving_forward = freespace_status.driving_forward;
+      // and then reset it
+      freespace_thread_status_ = std::nullopt;
     }
   }
   // finish copying thread sensitive data
@@ -1736,6 +1732,24 @@ void StartPlannerModule::StartPlannerData::update(
 {
   parameters = parameters_;
   planner_data = planner_data_;
+  // TODO(Mamoru Sobue): in the future we will add planner_data->is_route_handler_updated flag to
+  // avoid the copy overhead of lanelet objects inside the RouteHandler. behavior_path_planner can
+  // tell us the flag if map/route changed, so we can skip route_handler update if it
+  // is false in the following way
+  /*
+    auto route_handler_self = planner_data.route_handler;
+    planner_data = planner_data_; // sync planer_data to planner_data_, planner_data.route_handler
+    is once repointed
+
+    if (!planner_data_->is_route_handler_updated && route_handler_self != nullptr) {
+      // we do not need to sync planner_data.route_handler with that of planner_data_
+      // repoint to the original again
+      planner_data.route_handler = route_handler_self;
+    } else {
+      // this is actually heavy if the lanelet_map is HUGE
+      planner_data.route_handler = std::make_shared<RouteHandler>(*(planner_data_.route_handler));
+    }
+   */
   planner_data.route_handler = std::make_shared<RouteHandler>(*(planner_data_.route_handler));
   current_status = current_status_;
   main_thread_pull_out_status = pull_out_status_;
