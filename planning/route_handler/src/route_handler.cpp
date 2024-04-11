@@ -587,12 +587,13 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
       }
       candidate_lanelets = prev_lanes;
     }
-    // loop check
-    if (std::any_of(
-          candidate_lanelets.begin(), candidate_lanelets.end(),
-          [lanelet](auto & prev_llt) { return lanelet.id() == prev_llt.id(); })) {
-      break;
-    }
+
+    // loop check, remove goal lanelet from candidate lanelets
+    candidate_lanelets.erase(
+      std::remove_if(
+        candidate_lanelets.begin(), candidate_lanelets.end(),
+        [lanelet](auto & prev_llt) { return lanelet.id() == prev_llt.id(); }),
+      candidate_lanelets.end());
 
     // If lanelet_sequence_backward with input lanelet contains all candidate lanelets,
     // break the loop.
