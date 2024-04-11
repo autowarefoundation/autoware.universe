@@ -99,7 +99,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
   std::optional<PullOutStatus> pull_out_status_opt{std::nullopt};
   bool is_stopped;
 
-  // begin of critical section
+  // making a local copy of thread sensitive data
   {
     std::lock_guard<std::mutex> guard(start_planner_data_mutex_);
     if (start_planner_data_) {
@@ -111,7 +111,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
       is_stopped = start_planner_data.is_stopped;
     }
   }
-  // end of critical section
+  // finish copying thread sensitive data
   if (!local_planner_data || !current_status_opt || !parameters_opt || !pull_out_status_opt) {
     return;
   }
@@ -202,10 +202,11 @@ void StartPlannerModule::updateObjectsFilteringParams(
 
 void StartPlannerModule::updateData()
 {
-  // In PlannerManager::run(), it calls SceneModuleInterface::setData and
-  // SceneModuleInterface::setPreviousModuleOutput before module_ptr->run().
-  // Then module_ptr->run() invokes GoalPlannerModule::updateData and then
-  // planWaitingApproval()/plan(), so we can copy latest current_status to start_planner_data_ here
+  // The method PlannerManager::run() calls SceneModuleInterface::setData and
+  // SceneModuleInterface::setPreviousModuleOutput() before this module's run() method is called
+  // with module_ptr->run(). Then module_ptr->run() invokes StartPlannerModule::updateData and,
+  // finally, planWaitingApproval()/plan(), so we can copy latest current_status to
+  // start_planner_data_ here
 
   // NOTE: onFreespacePlannerTimer copies start_planner_data to its thread local variable, so we
   // need to lock start_planner_data_ here to avoid data race. But the following clone process is
