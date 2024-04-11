@@ -134,9 +134,9 @@ void StartPlannerModule::onFreespacePlannerTimer()
     return;
   }
 
-  if (
-    is_stopped && pull_out_status.planner_type == PlannerType::STOP &&
-    !pull_out_status.found_pull_out_path) {
+  const bool is_stuck = is_stopped && pull_out_status.planner_type == PlannerType::STOP &&
+                        !pull_out_status.found_pull_out_path;
+  if (is_stuck) {
     const auto free_space_status =
       planFreespacePath(parameters, local_planner_data, pull_out_status);
     if (free_space_status) {
@@ -1192,19 +1192,6 @@ bool StartPlannerModule::needToPrepareBlinkerBeforeStartDrivingForward() const
   const double elapsed =
     rclcpp::Duration(clock_->now() - first_engaged_and_driving_forward_time).seconds();
   return elapsed < parameters_->prepare_time_before_start;
-}
-
-bool StartPlannerModule::isStuck()
-{
-  if (!isStopped()) {
-    return false;
-  }
-
-  if (status_.planner_type == PlannerType::STOP || !status_.found_pull_out_path) {
-    return true;
-  }
-
-  return false;
 }
 
 bool StartPlannerModule::hasFinishedCurrentPath()

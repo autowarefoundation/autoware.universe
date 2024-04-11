@@ -308,7 +308,6 @@ private:
   bool hasFinishedBackwardDriving() const;
   bool hasCollisionWithDynamicObjects() const;
   bool isStopped();
-  bool isStuck();
   bool hasFinishedCurrentPath();
   void updateSafetyCheckTargetObjectsData(
     const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
