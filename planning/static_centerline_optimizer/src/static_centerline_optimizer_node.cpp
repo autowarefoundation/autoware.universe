@@ -179,11 +179,6 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   // resample and calculate trajectory points' orientation
   const auto input_traj = motion_utils::convertToTrajectory(input_traj_points);
   auto resampled_input_traj = motion_utils::resampleTrajectory(input_traj, resample_interval);
-  if (1 < resampled_input_traj.points.size()) {
-    const size_t traj_points_size = resampled_input_traj.points.size();
-    resampled_input_traj.points.at(traj_points_size - 1).pose.orientation =
-      resampled_input_traj.points.at(traj_points_size - 10).pose.orientation;
-  }
   return motion_utils::convertToTrajectoryPointArray(resampled_input_traj);
 }
 }  // namespace

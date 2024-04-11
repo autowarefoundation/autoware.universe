@@ -62,6 +62,21 @@ std::vector<TrajectoryPoint> generate_centerline_with_bag(rclcpp::Node & node)
 
   RCLCPP_INFO(node.get_logger(), "Extracted centerline from the bag.");
 
+  // calculate rough orientation of centerline trajectory points
+  for (size_t i = 0; i < centerline_traj_points.size(); ++i) {
+    if (i == centerline_traj_points.size() - 1) {
+      if (i != 0) {
+        centerline_traj_points.at(i).pose.orientation =
+          centerline_traj_points.at(i - 1).pose.orientation;
+      }
+    } else {
+      const double yaw_angle = tier4_autoware_utils::calcAzimuthAngle(
+        centerline_traj_points.at(i).pose.position, centerline_traj_points.at(i + 1).pose.position);
+      centerline_traj_points.at(i).pose.orientation =
+        tier4_autoware_utils::createQuaternionFromYaw(yaw_angle);
+    }
+  }
+
   return centerline_traj_points;
 }
 }  // namespace static_centerline_optimizer
