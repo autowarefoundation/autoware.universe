@@ -32,7 +32,7 @@ public:
   void clearKeyValue();
   void clearLevelAndMessage();
   void addKeyValue(const diagnostic_msgs::msg::KeyValue & key_value_msg);
-  template<typename T>
+  template <typename T>
   void addKeyValue(const std::string & key, const T & value);
   void updateLevelAndMessage(const int8_t level, const std::string & message);
   void publish();
@@ -49,7 +49,7 @@ private:
   diagnostic_msgs::msg::DiagnosticStatus diagnostics_status_msg_;
 };
 
-template<typename T>
+template <typename T>
 void DiagnosticsModule::addKeyValue(const std::string & key, const T & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
@@ -58,9 +58,9 @@ void DiagnosticsModule::addKeyValue(const std::string & key, const T & value)
   addKeyValue(key_value);
 }
 
-template<>
+template <>
 void DiagnosticsModule::addKeyValue(const std::string & key, const std::string & value);
-template<>
+template <>
 void DiagnosticsModule::addKeyValue(const std::string & key, const bool & value);
 
 #endif  // DIAGNOSTICS__DIAGNOSTICS_MODULE_HPP_

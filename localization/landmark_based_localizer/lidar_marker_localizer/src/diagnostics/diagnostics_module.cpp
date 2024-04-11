@@ -65,14 +65,14 @@ void DiagnosticsModule::addKeyValue(const diagnostic_msgs::msg::KeyValue & key_v
   const auto it = findIteratorByKey(key_value_msg.key);
   if (existIterator(it)) {
     diagnostics_status_msg_.values
-    .at(std::distance(std::cbegin(diagnostics_status_msg_.values), it))
-    .value = key_value_msg.value;  // FIX ME
+      .at(std::distance(std::cbegin(diagnostics_status_msg_.values), it))
+      .value = key_value_msg.value;  // FIX ME
   } else {
     diagnostics_status_msg_.values.push_back(key_value_msg);
   }
 }
 
-template<>
+template <>
 void DiagnosticsModule::addKeyValue(const std::string & key, const std::string & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
@@ -81,7 +81,7 @@ void DiagnosticsModule::addKeyValue(const std::string & key, const std::string &
   addKeyValue(key_value);
 }
 
-template<>
+template <>
 void DiagnosticsModule::addKeyValue(const std::string & key, const bool & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
@@ -126,7 +126,7 @@ std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator DiagnosticsModule::f
 {
   const auto it = std::find_if(
     std::begin(diagnostics_status_msg_.values), std::end(diagnostics_status_msg_.values),
-    [key](const auto & arg) {return arg.key == key;});
+    [key](const auto & arg) { return arg.key == key; });
   return it;
 }
 

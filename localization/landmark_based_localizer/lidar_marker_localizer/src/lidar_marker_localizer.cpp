@@ -213,15 +213,13 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
     if (!is_exist_marker_within_self_pose) {
       std::stringstream message;
       message << "Could not detect marker, because the distance from self_pose to nearest_marker "
-              << "is too far ("
-              << distance_from_self_pose_to_nearest_marker << " [m]).";
+              << "is too far (" << distance_from_self_pose_to_nearest_marker << " [m]).";
       diagnostics_module_->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::OK, message.str());
     } else {
       std::stringstream message;
       message << "Could not detect marker, although the distance from self_pose to nearest_marker "
-              << "is near ("
-              << distance_from_self_pose_to_nearest_marker << " [m]).";
+              << "is near (" << distance_from_self_pose_to_nearest_marker << " [m]).";
       RCLCPP_INFO_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
       diagnostics_module_->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
@@ -383,16 +381,14 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
           // check positive
           if (
             average_intensity[i + j] >
-            center_intensity + param_.match_intensity_difference_threshold)
-          {
+            center_intensity + param_.match_intensity_difference_threshold) {
             pos++;
           }
         } else if (param_.intensity_pattern[j] == -1) {
           // check negative
           if (
             average_intensity[i + j] <
-            center_intensity - param_.match_intensity_difference_threshold)
-          {
+            center_intensity - param_.match_intensity_difference_threshold) {
             neg++;
           }
         } else {
@@ -401,8 +397,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
       }
 
       if (
-        pos >= param_.positive_match_num_threshold && neg >= param_.negative_match_num_threshold)
-      {
+        pos >= param_.positive_match_num_threshold && neg >= param_.negative_match_num_threshold) {
         vote[i]++;
       }
     }
