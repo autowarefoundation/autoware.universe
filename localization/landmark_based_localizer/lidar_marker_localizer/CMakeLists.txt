@@ -19,6 +19,11 @@ target_link_libraries(lidar_marker_localizer
   ${PCL_LIBRARIES}
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 ament_auto_package(INSTALL_TO_SHARE
   config
   launch
