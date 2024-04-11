@@ -354,17 +354,17 @@ void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
   PclPointCloud & high_confidence, PclPointCloud & low_confidence, PclPointCloud & out_ogm)
 {
   for (sensor_msgs::PointCloud2ConstIterator<float> x(pointcloud, "x"), y(pointcloud, "y"),
-       z(pointcloud, "z");
-       x != x.end(); ++x, ++y, ++z) {
+       z(pointcloud, "z"), intensity(pointcloud, "intensity");
+       x != x.end(); ++x, ++y, ++z, ++intensity) {
     const auto cost = getCost(occupancy_grid_map, *x, *y);
     if (cost) {
       if (cost_threshold_ < *cost) {
-        high_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
+        high_confidence.push_back(pcl::PointXYZI(*x, *y, *z, *intensity));
       } else {
-        low_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
+        low_confidence.push_back(pcl::PointXYZI(*x, *y, *z, *intensity));
       }
     } else {
-      out_ogm.push_back(pcl::PointXYZ(*x, *y, *z));
+      out_ogm.push_back(pcl::PointXYZI(*x, *y, *z, *intensity));
     }
   }
 }
