@@ -65,11 +65,11 @@
       grid_num_z: 1
       grid_num_roll: 1
       grid_num_pitch: 1
-      grid_num_yaw: 40
+      grid_num_yaw: 80
 
       # The range of grid search
-      grid_search_range_x: 1.0 # [m] (Search range: -1.0m ~ 1.0m)
-      grid_search_range_y: 1.0 # [m] (Search range: -1.0m ~ 1.0m)
+      grid_search_range_x: 3.0 # [m] (Search range: -3.0m ~ 3.0m)
+      grid_search_range_y: 3.0 # [m] (Search range: -3.0m ~ 3.0m)
       grid_search_range_z: 0.0 # [m]
       grid_search_range_roll: 0.0  # [rad]
       grid_search_range_pitch: 0.0 # [rad]
