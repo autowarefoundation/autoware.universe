@@ -1739,11 +1739,11 @@ void StartPlannerModule::StartPlannerData::update(
   /*
     auto route_handler_self = planner_data.route_handler;
     planner_data = planner_data_; // sync planer_data to planner_data_, planner_data.route_handler
-    is once repointed
+    is once re-pointed
 
     if (!planner_data_->is_route_handler_updated && route_handler_self != nullptr) {
       // we do not need to sync planner_data.route_handler with that of planner_data_
-      // repoint to the original again
+      // re-point to the original again
       planner_data.route_handler = route_handler_self;
     } else {
       // this is actually heavy if the lanelet_map is HUGE
