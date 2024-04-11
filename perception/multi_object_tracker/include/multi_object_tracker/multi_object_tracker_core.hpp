@@ -83,7 +83,16 @@ private:
   std::unique_ptr<DataAssociation> data_association_;
   std::unique_ptr<TrackerProcessor> processor_;
 
+  // inputs
+  rclcpp::Subscription<DetectedObjects>::SharedPtr sub_objects_{};
+  std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array_{};
+
+  std::vector<std::string> input_topic_names_{};
+  size_t input_topic_size_{};
+  std::vector<DetectedObjects::ConstSharedPtr> objects_data_{};
+
   // callback functions
+  void onData(DetectedObjects::ConstSharedPtr msg, const size_t array_number);
   void onMeasurement(const DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
 

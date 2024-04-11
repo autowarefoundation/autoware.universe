@@ -76,15 +76,35 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   last_published_time_(this->now())
 {
   // Create publishers and subscribers
-  detected_object_sub_ = create_subscription<DetectedObjects>(
-    "input", rclcpp::QoS{1},
-    std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
+  // detected_object_sub_ = create_subscription<DetectedObjects>(
+  //   "input", rclcpp::QoS{1},
+  //   std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
   tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
 
   // Get parameters
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
+  declare_parameter("input_topic_names", std::vector<std::string>());
+  input_topic_names_ = get_parameter("input_topic_names").as_string_array();
+
+  // Set input topics
+  if (input_topic_names_.empty()) {
+    RCLCPP_ERROR(get_logger(), "Need a 'input_topic_names' parameter to be set before continuing");
+    return;
+  }
+  input_topic_size_ = input_topic_names_.size();
+  sub_objects_array_.resize(input_topic_size_);
+  objects_data_.resize(input_topic_size_);
+
+  for (size_t i = 0; i < input_topic_size_; i++) {
+    RCLCPP_DEBUG(get_logger(), "Subscribing to %s", input_topic_names_.at(i).c_str());
+
+    std::function<void(const DetectedObjects::ConstSharedPtr msg)> func =
+      std::bind(&MultiObjectTracker::onData, this, std::placeholders::_1, i);
+    sub_objects_array_.at(i) =
+      create_subscription<DetectedObjects>(input_topic_names_.at(i), rclcpp::QoS{1}, func);
+  }
 
   // Create tf timer
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
@@ -141,6 +161,15 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // Debugger
   debugger_ = std::make_unique<TrackerDebugger>(*this);
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+}
+
+void MultiObjectTracker::onData(DetectedObjects::ConstSharedPtr msg, const size_t array_number)
+{
+  objects_data_.at(array_number) = msg;
+  // debug message
+  // std::cout << "Received data from topic " << input_topic_names_.at(array_number) << std::endl;
+
+  onMeasurement(msg);
 }
 
 void MultiObjectTracker::onMeasurement(const DetectedObjects::ConstSharedPtr input_objects_msg)
