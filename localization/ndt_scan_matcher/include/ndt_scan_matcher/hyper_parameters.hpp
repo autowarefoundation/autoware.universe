@@ -23,6 +23,11 @@
 #include <string>
 #include <vector>
 
+enum class InitialPoseEstimationMethod {
+  RANDOM_SEARCH = 0,
+  GRID_SEARCH = 1,
+};
+
 enum class ConvergedParamType {
   TRANSFORM_PROBABILITY = 0,
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
@@ -47,8 +52,23 @@ struct HyperParameters
 
   struct InitialPoseEstimation
   {
+    InitialPoseEstimationMethod method;
+    // Parameters for RANDOM_SEARCH
     int64_t particles_num;
     int64_t n_startup_trials;
+    // Parameters for GRID_SEARCH
+    int64_t grid_num_x;
+    int64_t grid_num_y;
+    int64_t grid_num_z;
+    int64_t grid_num_roll;
+    int64_t grid_num_pitch;
+    int64_t grid_num_yaw;
+    double grid_search_range_x;
+    double grid_search_range_y;
+    double grid_search_range_z;
+    double grid_search_range_roll;
+    double grid_search_range_pitch;
+    double grid_search_range_yaw;
   } initial_pose_estimation;
 
   struct Validation
@@ -109,10 +129,38 @@ public:
     ndt.regularization_scale_factor =
       static_cast<float>(node->declare_parameter<float>("ndt.regularization.scale_factor"));
 
+    const int64_t initial_pose_estimation_method_tmp =
+      node->declare_parameter<int64_t>("initial_pose_estimation.method");
+    initial_pose_estimation.method =
+      static_cast<InitialPoseEstimationMethod>(initial_pose_estimation_method_tmp);
     initial_pose_estimation.particles_num =
       node->declare_parameter<int64_t>("initial_pose_estimation.particles_num");
     initial_pose_estimation.n_startup_trials =
       node->declare_parameter<int64_t>("initial_pose_estimation.n_startup_trials");
+    initial_pose_estimation.grid_num_x =
+      node->declare_parameter<int64_t>("initial_pose_estimation.grid_num_x");
+    initial_pose_estimation.grid_num_y =
+      node->declare_parameter<int64_t>("initial_pose_estimation.grid_num_y");
+    initial_pose_estimation.grid_num_z =
+      node->declare_parameter<int64_t>("initial_pose_estimation.grid_num_z");
+    initial_pose_estimation.grid_num_roll =
+      node->declare_parameter<int64_t>("initial_pose_estimation.grid_num_roll");
+    initial_pose_estimation.grid_num_pitch =
+      node->declare_parameter<int64_t>("initial_pose_estimation.grid_num_pitch");
+    initial_pose_estimation.grid_num_yaw =
+      node->declare_parameter<int64_t>("initial_pose_estimation.grid_num_yaw");
+    initial_pose_estimation.grid_search_range_x =
+      node->declare_parameter<double>("initial_pose_estimation.grid_search_range_x");
+    initial_pose_estimation.grid_search_range_y =
+      node->declare_parameter<double>("initial_pose_estimation.grid_search_range_y");
+    initial_pose_estimation.grid_search_range_z =
+      node->declare_parameter<double>("initial_pose_estimation.grid_search_range_z");
+    initial_pose_estimation.grid_search_range_roll =
+      node->declare_parameter<double>("initial_pose_estimation.grid_search_range_roll");
+    initial_pose_estimation.grid_search_range_pitch =
+      node->declare_parameter<double>("initial_pose_estimation.grid_search_range_pitch");
+    initial_pose_estimation.grid_search_range_yaw =
+      node->declare_parameter<double>("initial_pose_estimation.grid_search_range_yaw");
 
     validation.lidar_topic_timeout_sec =
       node->declare_parameter<double>("validation.lidar_topic_timeout_sec");

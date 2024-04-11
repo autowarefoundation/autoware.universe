@@ -92,7 +92,9 @@ private:
   void callback_regularization_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
+  geometry_msgs::msg::PoseWithCovarianceStamped align_pose_by_random_search(
+    const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
+  geometry_msgs::msg::PoseWithCovarianceStamped align_pose_by_grid_search(
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(

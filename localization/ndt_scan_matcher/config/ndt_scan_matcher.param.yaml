@@ -42,6 +42,12 @@
 
 
     initial_pose_estimation:
+      # method: 0=RANDOM_SEARCH(including TPE), 1=GRID_SEARCH
+      method: 1
+
+      #
+      # Parameters for RANDOM_SEARCH
+      #
       # The number of particles to estimate initial pose
       particles_num: 200
 
@@ -50,6 +56,24 @@
       # If it is equal to 'initial_estimate_particles_num', the search will be the same as a full random search.
       n_startup_trials: 20
 
+      #
+      # Parameters for GRID_SEARCH
+      #
+      # The number of grid search
+      grid_num_x: 3
+      grid_num_y: 3
+      grid_num_z: 1
+      grid_num_roll: 1
+      grid_num_pitch: 1
+      grid_num_yaw: 40
+
+      # The range of grid search
+      grid_search_range_x: 1.0 # [m] (Search range: -1.0m ~ 1.0m)
+      grid_search_range_y: 1.0 # [m] (Search range: -1.0m ~ 1.0m)
+      grid_search_range_z: 0.0 # [m]
+      grid_search_range_roll: 0.0  # [rad]
+      grid_search_range_pitch: 0.0 # [rad]
+      grid_search_range_yaw: 3.14159265359 # [rad] (Search range: -pi ~ pi)
 
     validation:
       # Tolerance of timestamp difference between current time and sensor pointcloud. [sec]

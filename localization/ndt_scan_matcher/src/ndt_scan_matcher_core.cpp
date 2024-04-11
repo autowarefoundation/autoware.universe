@@ -880,12 +880,23 @@ void NDTScanMatcher::service_ndt_align(
     return;
   }
 
-  res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
+  if (param_.initial_pose_estimation.method == InitialPoseEstimationMethod::RANDOM_SEARCH) {
+    res->pose_with_covariance = align_pose_by_random_search(initial_pose_msg_in_map_frame);
+  } else if (param_.initial_pose_estimation.method == InitialPoseEstimationMethod::GRID_SEARCH) {
+    res->pose_with_covariance = align_pose_by_grid_search(initial_pose_msg_in_map_frame);
+  } else {
+    res->success = false;
+    RCLCPP_ERROR(
+      get_logger(),
+      "Unknown initial pose estimation method. "
+      "Please check initial_pose_estimation.method in ndt_scan_matcher.param.yaml.");
+    return;
+  }
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
+geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose_by_random_search(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
   output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
@@ -998,6 +1009,110 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   }
 
   auto best_particle_ptr = std::max_element(
+    std::begin(particle_array), std::end(particle_array),
+    [](const Particle & lhs, const Particle & rhs) { return lhs.score < rhs.score; });
+
+  geometry_msgs::msg::PoseWithCovarianceStamped result_pose_with_cov_msg;
+  result_pose_with_cov_msg.header.stamp = initial_pose_with_cov.header.stamp;
+  result_pose_with_cov_msg.header.frame_id = param_.frame.map_frame;
+  result_pose_with_cov_msg.pose.pose = best_particle_ptr->result_pose;
+
+  output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
+  RCLCPP_DEBUG_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
+
+  return result_pose_with_cov_msg;
+}
+
+geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose_by_grid_search(
+  const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "start " << __func__);
+
+  output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
+
+  const geometry_msgs::msg::Point base_xyz = initial_pose_with_cov.pose.pose.position;
+  const geometry_msgs::msg::Vector3 base_rpy = get_rpy(initial_pose_with_cov);
+
+  std::vector<Particle> particle_array;
+  auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
+
+  // publish the estimated poses in 20 times to see the progress and to avoid dropping data
+  const int64_t publish_interval = 20;
+  visualization_msgs::msg::MarkerArray marker_array;
+
+  // calculate unit of grid search
+  const double unit_x = 2.0 * param_.initial_pose_estimation.grid_search_range_x /
+                        std::max(param_.initial_pose_estimation.grid_num_x - 1, (int64_t)1);
+  const double unit_y = 2.0 * param_.initial_pose_estimation.grid_search_range_y /
+                        std::max(param_.initial_pose_estimation.grid_num_y - 1, (int64_t)1);
+  const double unit_z = 2.0 * param_.initial_pose_estimation.grid_search_range_z /
+                        std::max(param_.initial_pose_estimation.grid_num_z - 1, (int64_t)1);
+  const double unit_roll = 2.0 * param_.initial_pose_estimation.grid_num_roll /
+                           std::max(param_.initial_pose_estimation.grid_num_roll - 1, (int64_t)1);
+  const double unit_pitch = 2.0 * param_.initial_pose_estimation.grid_num_pitch /
+                            std::max(param_.initial_pose_estimation.grid_num_pitch - 1, (int64_t)1);
+  const double unit_yaw = 2.0 * param_.initial_pose_estimation.grid_num_yaw /
+                          std::max(param_.initial_pose_estimation.grid_num_yaw - 1, (int64_t)1);
+
+  int64_t total_i = 0;
+  for (int64_t ix = 0; ix < param_.initial_pose_estimation.grid_num_x; ix++) {
+    for (int64_t iy = 0; iy < param_.initial_pose_estimation.grid_num_y; iy++) {
+      for (int64_t iz = 0; iz < param_.initial_pose_estimation.grid_num_z; iz++) {
+        for (int64_t i_roll = 0; i_roll < param_.initial_pose_estimation.grid_num_roll; i_roll++) {
+          for (int64_t i_pitch = 0; i_pitch < param_.initial_pose_estimation.grid_num_pitch;
+               i_pitch++) {
+            for (int64_t i_yaw = 0; i_yaw < param_.initial_pose_estimation.grid_num_yaw; i_yaw++) {
+              geometry_msgs::msg::Pose initial_pose;
+              initial_pose.position.x =
+                base_xyz.x - param_.initial_pose_estimation.grid_search_range_x + ix * unit_x;
+              initial_pose.position.y =
+                base_xyz.y - param_.initial_pose_estimation.grid_search_range_y + iy * unit_y;
+              initial_pose.position.z =
+                base_xyz.z - param_.initial_pose_estimation.grid_search_range_z + iz * unit_z;
+              geometry_msgs::msg::Vector3 init_rpy;
+              init_rpy.x = base_rpy.x - param_.initial_pose_estimation.grid_search_range_roll +
+                           i_roll * unit_roll;
+              init_rpy.y = base_rpy.y - param_.initial_pose_estimation.grid_search_range_pitch +
+                           i_pitch * unit_pitch;
+              init_rpy.z = base_rpy.z - param_.initial_pose_estimation.grid_search_range_yaw +
+                           i_yaw * unit_yaw;
+              tf2::Quaternion tf_quaternion;
+              tf_quaternion.setRPY(init_rpy.x, init_rpy.y, init_rpy.z);
+              initial_pose.orientation = tf2::toMsg(tf_quaternion);
+
+              const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose);
+              ndt_ptr_->align(*output_cloud, initial_pose_matrix);
+              const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
+
+              const Particle particle(
+                initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
+                ndt_result.iteration_num);
+              particle_array.push_back(particle);
+              push_debug_markers(
+                marker_array, get_clock()->now(), param_.frame.map_frame, particle, total_i);
+              if (
+                (total_i + 1) % publish_interval == 0 ||
+                (total_i + 1) == param_.initial_pose_estimation.particles_num) {
+                ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
+                marker_array.markers.clear();
+              }
+
+              auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
+              tier4_autoware_utils::transformPointCloud(
+                *ndt_ptr_->getInputSource(), *sensor_points_in_map_ptr, ndt_result.pose);
+              publish_point_cloud(
+                initial_pose_with_cov.header.stamp, param_.frame.map_frame,
+                sensor_points_in_map_ptr);
+
+              total_i++;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const auto best_particle_ptr = std::max_element(
     std::begin(particle_array), std::end(particle_array),
     [](const Particle & lhs, const Particle & rhs) { return lhs.score < rhs.score; });
 
