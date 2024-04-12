@@ -64,6 +64,7 @@ BaseUnit::NodeData BaseUnit::report() const
 
 void DiagUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
 {
+  is_reported_ = true;
   name_ = config->data.take_text("diag");
   timeout_ = config->data.take<double>("timeout", 1.0);
 }
@@ -87,7 +88,19 @@ void DiagUnit::update(const rclcpp::Time & stamp)
 
 void DiagUnit::callback(const rclcpp::Time & stamp, const DiagnosticStatus & status)
 {
+  // Do not overwrite if high error level has not been reported yet.
+  if (diagnostics_ && !is_reported_) {
+    if (status.level < diagnostics_->second.level) {
+      return;
+    }
+  }
+  is_reported_ = false;
   diagnostics_ = std::make_pair(stamp, status);
+}
+
+void DiagUnit::reported()
+{
+  is_reported_ = true;
 }
 
 AndUnit::AndUnit(const std::string & path, bool short_circuit) : BaseUnit(path)

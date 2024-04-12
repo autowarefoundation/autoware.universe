@@ -210,6 +210,11 @@ DiagnosticGraph Graph::report(const rclcpp::Time & stamp)
     }
     message.nodes.push_back(temp);
   }
+
+  for (const auto & [name, diag] : diags_) {
+    diag->reported();
+  }
+
   return message;
 }
 

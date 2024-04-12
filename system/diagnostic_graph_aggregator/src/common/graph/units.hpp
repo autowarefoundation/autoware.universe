@@ -82,8 +82,10 @@ public:
 
   std::string name() const { return name_; }
   void callback(const rclcpp::Time & stamp, const DiagnosticStatus & status);
+  void reported();
 
 private:
+  bool is_reported_;
   double timeout_;
   std::optional<std::pair<rclcpp::Time, DiagnosticStatus>> diagnostics_;
   std::string name_;
