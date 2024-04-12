@@ -21,8 +21,7 @@
 #include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
-#include "obstacle_avoidance_planner/node.hpp"
-#include "path_smoother/elastic_band_smoother.hpp"
+#include "static_centerline_optimizer/centerline_source/bag_ego_trajectory_based_centerline.hpp"
 #include "static_centerline_optimizer/msg/points_with_lane_id.hpp"
 #include "static_centerline_optimizer/type_alias.hpp"
 #include "static_centerline_optimizer/utils.hpp"
@@ -35,6 +34,7 @@
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/int32.hpp"
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
 
@@ -57,47 +57,6 @@ namespace static_centerline_optimizer
 {
 namespace
 {
-Path convert_to_path(const PathWithLaneId & path_with_lane_id)
-{
-  Path path;
-  path.header = path_with_lane_id.header;
-  path.left_bound = path_with_lane_id.left_bound;
-  path.right_bound = path_with_lane_id.right_bound;
-  for (const auto & point : path_with_lane_id.points) {
-    path.points.push_back(point.point);
-  }
-
-  return path;
-}
-
-Trajectory convert_to_trajectory(const Path & path)
-{
-  Trajectory traj;
-  for (const auto & point : path.points) {
-    TrajectoryPoint traj_point;
-    traj_point.pose = point.pose;
-    traj_point.longitudinal_velocity_mps = point.longitudinal_velocity_mps;
-    traj_point.lateral_velocity_mps = point.lateral_velocity_mps;
-    traj_point.heading_rate_rps = point.heading_rate_rps;
-
-    traj.points.push_back(traj_point);
-  }
-  return traj;
-}
-
-[[maybe_unused]] lanelet::ConstLanelets get_lanelets_from_route(
-  const RouteHandler & route_handler, const LaneletRoute & route)
-{
-  lanelet::ConstLanelets lanelets;
-  for (const auto & segment : route.segments) {
-    const auto & target_lanelet_id = segment.preferred_primitive.id;
-    const auto target_lanelet = route_handler.getLaneletsFromId(target_lanelet_id);
-    lanelets.push_back(target_lanelet);
-  }
-
-  return lanelets;
-}
-
 std::vector<lanelet::Id> get_lane_ids_from_route(const LaneletRoute & route)
 {
   std::vector<lanelet::Id> lane_ids;
@@ -109,28 +68,7 @@ std::vector<lanelet::Id> get_lane_ids_from_route(const LaneletRoute & route)
   return lane_ids;
 }
 
-lanelet::ConstLanelets get_lanelets_from_ids(
-  const RouteHandler & route_handler, const std::vector<lanelet::Id> & lane_ids)
-{
-  lanelet::ConstLanelets lanelets;
-  for (const lanelet::Id lane_id : lane_ids) {
-    const auto lanelet = route_handler.getLaneletsFromId(lane_id);
-    lanelets.push_back(lanelet);
-  }
-  return lanelets;
-}
-
-rclcpp::NodeOptions create_node_options()
-{
-  return rclcpp::NodeOptions{};
-}
-
-rclcpp::QoS create_transient_local_qos()
-{
-  return rclcpp::QoS{1}.transient_local();
-}
-
-lanelet::BasicPoint2d convertToLaneletPoint(const geometry_msgs::msg::Point & geom_point)
+lanelet::BasicPoint2d convert_to_lanelet_point(const geometry_msgs::msg::Point & geom_point)
 {
   lanelet::BasicPoint2d point(geom_point.x, geom_point.y);
   return point;
@@ -175,7 +113,7 @@ geometry_msgs::msg::Pose get_text_pose(
   return tier4_autoware_utils::calcOffsetPose(pose, x_front, y_left, 0.0);
 }
 
-std::array<double, 3> convertHexStringToDecimal(const std::string & hex_str_color)
+std::array<double, 3> convert_hex_string_to_decimal(const std::string & hex_str_color)
 {
   unsigned int hex_int_color;
   std::istringstream iss(hex_str_color);
@@ -209,12 +147,21 @@ std::vector<lanelet::Id> check_lanelet_connection(
   return unconnected_lane_ids;
 }
 
-std_msgs::msg::Header createHeader(const rclcpp::Time & now)
+std_msgs::msg::Header create_header(const rclcpp::Time & now)
 {
   std_msgs::msg::Header header;
   header.frame_id = "map";
   header.stamp = now;
   return header;
+}
+
+std::vector<TrajectoryPoint> resample_trajectory_points(
+  const std::vector<TrajectoryPoint> & input_traj_points, const double resample_interval)
+{
+  // resample and calculate trajectory points' orientation
+  const auto input_traj = motion_utils::convertToTrajectory(input_traj_points);
+  auto resampled_input_traj = motion_utils::resampleTrajectory(input_traj, resample_interval);
+  return motion_utils::convertToTrajectoryPointArray(resampled_input_traj);
 }
 }  // namespace
 
@@ -223,64 +170,46 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 : Node("static_centerline_optimizer", node_options)
 {
   // publishers
-  pub_map_bin_ = create_publisher<HADMapBin>("lanelet2_map_topic", create_transient_local_qos());
-  pub_raw_path_with_lane_id_ =
-    create_publisher<PathWithLaneId>("input_centerline", create_transient_local_qos());
-  pub_raw_path_ = create_publisher<Path>("debug/raw_centerline", create_transient_local_qos());
-  pub_whole_optimized_centerline_ =
-    create_publisher<Trajectory>("output_whole_centerline", create_transient_local_qos());
-  pub_optimized_centerline_ =
-    create_publisher<Trajectory>("output_centerline", create_transient_local_qos());
+  pub_map_bin_ =
+    create_publisher<HADMapBin>("lanelet2_map_topic", utils::create_transient_local_qos());
+  pub_whole_centerline_ =
+    create_publisher<Trajectory>("output_whole_centerline", utils::create_transient_local_qos());
+  pub_centerline_ =
+    create_publisher<Trajectory>("output_centerline", utils::create_transient_local_qos());
 
   // debug publishers
   pub_debug_unsafe_footprints_ =
-    create_publisher<MarkerArray>("debug/unsafe_footprints", create_transient_local_qos());
+    create_publisher<MarkerArray>("debug/unsafe_footprints", utils::create_transient_local_qos());
 
   // subscribers
   sub_traj_start_index_ = create_subscription<std_msgs::msg::Int32>(
     "/centerline_updater_helper/traj_start_index", rclcpp::QoS{1},
     [this](const std_msgs::msg::Int32 & msg) {
-      if (!meta_data_to_save_map_ || traj_end_index_ + 1 < msg.data) {
-        return;
-      }
-      traj_start_index_ = msg.data;
-
-      const auto & d = meta_data_to_save_map_;
-      const auto selected_optimized_traj_points = std::vector<TrajectoryPoint>(
-        d->optimized_traj_points.begin() + traj_start_index_,
-        d->optimized_traj_points.begin() + traj_end_index_ + 1);
-
-      pub_optimized_centerline_->publish(motion_utils::convertToTrajectory(
-        selected_optimized_traj_points, createHeader(this->now())));
+      update_centerline_range(msg.data, traj_range_indices_.second);
     });
   sub_traj_end_index_ = create_subscription<std_msgs::msg::Int32>(
     "/centerline_updater_helper/traj_end_index", rclcpp::QoS{1},
     [this](const std_msgs::msg::Int32 & msg) {
-      if (!meta_data_to_save_map_ || msg.data + 1 < traj_start_index_) {
-        return;
-      }
-      traj_end_index_ = msg.data;
-
-      const auto & d = meta_data_to_save_map_;
-      const auto selected_optimized_traj_points = std::vector<TrajectoryPoint>(
-        d->optimized_traj_points.begin() + traj_start_index_,
-        d->optimized_traj_points.begin() + traj_end_index_ + 1);
-
-      pub_optimized_centerline_->publish(motion_utils::convertToTrajectory(
-        selected_optimized_traj_points, createHeader(this->now())));
+      update_centerline_range(traj_range_indices_.first, msg.data);
     });
   sub_save_map_ = create_subscription<std_msgs::msg::Bool>(
     "/centerline_updater_helper/save_map", rclcpp::QoS{1}, [this](const std_msgs::msg::Bool & msg) {
       const auto lanelet2_output_file_path =
         tier4_autoware_utils::getOrDeclareParameter<std::string>(
           *this, "lanelet2_output_file_path");
-      if (!meta_data_to_save_map_ || msg.data) {
-        const auto & d = meta_data_to_save_map_;
-        const auto selected_optimized_traj_points = std::vector<TrajectoryPoint>(
-          d->optimized_traj_points.begin() + traj_start_index_,
-          d->optimized_traj_points.begin() + traj_end_index_ + 1);
-        save_map(lanelet2_output_file_path, d->route_lane_ids, selected_optimized_traj_points);
+      if (!centerline_with_route_ || msg.data) {
+        const auto & c = *centerline_with_route_;
+        const auto selected_centerline = std::vector<TrajectoryPoint>(
+          c.centerline.begin() + traj_range_indices_.first,
+          c.centerline.begin() + traj_range_indices_.second + 1);
+        save_map(
+          lanelet2_output_file_path, CenterlineWithRoute{selected_centerline, c.route_lane_ids});
       }
+    });
+  sub_traj_resample_interval_ = create_subscription<std_msgs::msg::Float32>(
+    "/centerline_updater_helper/traj_resample_interval", rclcpp::QoS{1},
+    [this]([[maybe_unused]] const std_msgs::msg::Float32 & msg) {
+      // TODO(murooka)
     });
 
   // services
@@ -306,6 +235,36 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 
   // vehicle info
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+
+  centerline_source_ = [&]() {
+    const auto centerline_source_param = declare_parameter<std::string>("centerline_source");
+    if (centerline_source_param == "optimization_trajectory_base") {
+      optimization_trajectory_based_centerline_ = OptimizationTrajectoryBasedCenterline(*this);
+      return CenterlineSource::OptimizationTrajectoryBase;
+    } else if (centerline_source_param == "bag_ego_trajectory_base") {
+      return CenterlineSource::BagEgoTrajectoryBase;
+    }
+    throw std::logic_error(
+      "The centerline source is not supported in static_centerline_optimizer.");
+  }();
+}
+
+void StaticCenterlineOptimizerNode::update_centerline_range(
+  const int traj_start_index, const int traj_end_index)
+{
+  if (!centerline_with_route_ || traj_range_indices_.second + 1 < traj_start_index) {
+    return;
+  }
+
+  traj_range_indices_ = std::make_pair(traj_start_index, traj_end_index);
+
+  const auto & centerline = centerline_with_route_->centerline;
+  const auto selected_centerline = std::vector<TrajectoryPoint>(
+    centerline.begin() + traj_range_indices_.first,
+    centerline.begin() + traj_range_indices_.second + 1);
+
+  pub_centerline_->publish(
+    motion_utils::convertToTrajectory(selected_centerline, create_header(this->now())));
 }
 
 void StaticCenterlineOptimizerNode::run()
@@ -314,18 +273,65 @@ void StaticCenterlineOptimizerNode::run()
   const auto lanelet2_input_file_path = declare_parameter<std::string>("lanelet2_input_file_path");
   const auto lanelet2_output_file_path =
     declare_parameter<std::string>("lanelet2_output_file_path");
-  const lanelet::Id start_lanelet_id = declare_parameter<int64_t>("start_lanelet_id");
-  const lanelet::Id end_lanelet_id = declare_parameter<int64_t>("end_lanelet_id");
 
   // process
   load_map(lanelet2_input_file_path);
-  const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
-  const auto optimized_traj_points = plan_path(route_lane_ids);
-  traj_start_index_ = 0;
-  traj_end_index_ = optimized_traj_points.size() - 1;
-  save_map(lanelet2_output_file_path, route_lane_ids, optimized_traj_points);
+  const auto centerline_with_route = generate_centerline_with_route();
+  traj_range_indices_ = std::make_pair(0, centerline_with_route.centerline.size() - 1);
+  save_map(lanelet2_output_file_path, centerline_with_route);
 
-  meta_data_to_save_map_ = MetaDataToSaveMap{optimized_traj_points, route_lane_ids};
+  centerline_with_route_ = centerline_with_route;
+}
+
+CenterlineWithRoute StaticCenterlineOptimizerNode::generate_centerline_with_route()
+{
+  if (!route_handler_ptr_) {
+    RCLCPP_ERROR(get_logger(), "Route handler is not ready. Return empty trajectory.");
+    return CenterlineWithRoute{};
+  }
+
+  // generate centerline with route
+  auto centerline_with_route = [&]() {
+    if (centerline_source_ == CenterlineSource::OptimizationTrajectoryBase) {
+      const lanelet::Id start_lanelet_id = declare_parameter<int64_t>("start_lanelet_id");
+      const lanelet::Id end_lanelet_id = declare_parameter<int64_t>("end_lanelet_id");
+      const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
+      const auto optimized_centerline =
+        optimization_trajectory_based_centerline_.generate_centerline_with_optimization(
+          *this, *route_handler_ptr_, route_lane_ids);
+      return CenterlineWithRoute{optimized_centerline, route_lane_ids};
+    } else if (centerline_source_ == CenterlineSource::BagEgoTrajectoryBase) {
+      const auto bag_centerline = generate_centerline_with_bag(*this);
+      const auto start_lanelets =
+        route_handler_ptr_->getClosestLanelets(bag_centerline.front().pose);
+      const auto end_lanelets = route_handler_ptr_->getClosestLanelets(bag_centerline.back().pose);
+      if (start_lanelets.empty() || end_lanelets.empty()) {
+        RCLCPP_ERROR(get_logger(), "Nearest lanelets to the bag's centerline are not found.");
+        return CenterlineWithRoute{};
+      }
+
+      const lanelet::Id start_lanelet_id = start_lanelets.front().id();
+      const lanelet::Id end_lanelet_id = end_lanelets.front().id();
+      const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
+
+      return CenterlineWithRoute{bag_centerline, route_lane_ids};
+    }
+    throw std::logic_error(
+      "The centerline source is not supported in static_centerline_optimizer.");
+  }();
+
+  // resample
+  const double output_trajectory_interval = declare_parameter<double>("output_trajectory_interval");
+  centerline_with_route.centerline =
+    resample_trajectory_points(centerline_with_route.centerline, output_trajectory_interval);
+
+  pub_whole_centerline_->publish(motion_utils::convertToTrajectory(
+    centerline_with_route.centerline, create_header(this->now())));
+
+  pub_centerline_->publish(motion_utils::convertToTrajectory(
+    centerline_with_route.centerline, create_header(this->now())));
+
+  return centerline_with_route;
 }
 
 void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_file_path)
@@ -421,7 +427,7 @@ std::vector<lanelet::Id> StaticCenterlineOptimizerNode::plan_route(
       plugin_loader.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
 
     // initialize mission_planner
-    auto node = rclcpp::Node("po");
+    auto node = rclcpp::Node("mission_planner");
     mission_planner->initialize(&node, map_bin_ptr_);
 
     // plan route
@@ -450,7 +456,7 @@ void StaticCenterlineOptimizerNode::on_plan_route(
 
   // plan route
   const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
-  const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
+  const auto route_lanelets = utils::get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
 
   // extract lane ids
   std::vector<lanelet::Id> lane_ids;
@@ -469,133 +475,6 @@ void StaticCenterlineOptimizerNode::on_plan_route(
   response->lane_ids = lane_ids;
 }
 
-std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::plan_path(
-  const std::vector<lanelet::Id> & route_lane_ids)
-{
-  if (!route_handler_ptr_) {
-    RCLCPP_ERROR(get_logger(), "Route handler is not ready. Return empty trajectory.");
-    return std::vector<TrajectoryPoint>{};
-  }
-
-  const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
-
-  // optimize centerline inside the lane
-  const auto start_center_pose =
-    utils::get_center_pose(*route_handler_ptr_, route_lane_ids.front());
-
-  // get ego nearest search parameters and resample interval in behavior_path_planner
-  const double ego_nearest_dist_threshold =
-    has_parameter("ego_nearest_dist_threshold")
-      ? get_parameter("ego_nearest_dist_threshold").as_double()
-      : declare_parameter<double>("ego_nearest_dist_threshold");
-  const double ego_nearest_yaw_threshold =
-    has_parameter("ego_nearest_yaw_threshold")
-      ? get_parameter("ego_nearest_yaw_threshold").as_double()
-      : declare_parameter<double>("ego_nearest_yaw_threshold");
-  const double behavior_path_interval = has_parameter("output_path_interval")
-                                          ? get_parameter("output_path_interval").as_double()
-                                          : declare_parameter<double>("output_path_interval");
-  const double behavior_vel_interval =
-    has_parameter("behavior_output_path_interval")
-      ? get_parameter("behavior_output_path_interval").as_double()
-      : declare_parameter<double>("behavior_output_path_interval");
-
-  // extract path with lane id from lanelets
-  const auto raw_path_with_lane_id = [&]() {
-    const auto non_resampled_path_with_lane_id = utils::get_path_with_lane_id(
-      *route_handler_ptr_, route_lanelets, start_center_pose, ego_nearest_dist_threshold,
-      ego_nearest_yaw_threshold);
-    return motion_utils::resamplePath(non_resampled_path_with_lane_id, behavior_path_interval);
-  }();
-  pub_raw_path_with_lane_id_->publish(raw_path_with_lane_id);
-  RCLCPP_INFO(get_logger(), "Calculated raw path with lane id and published.");
-
-  // convert path with lane id to path
-  const auto raw_path = [&]() {
-    const auto non_resampled_path = convert_to_path(raw_path_with_lane_id);
-    return motion_utils::resamplePath(non_resampled_path, behavior_vel_interval);
-  }();
-  pub_raw_path_->publish(raw_path);
-  RCLCPP_INFO(get_logger(), "Converted to path and published.");
-
-  // smooth trajectory and road collision avoidance
-  const auto optimized_traj_points = optimize_trajectory(raw_path);
-  pub_whole_optimized_centerline_->publish(
-    motion_utils::convertToTrajectory(optimized_traj_points, raw_path.header));
-  pub_optimized_centerline_->publish(
-    motion_utils::convertToTrajectory(optimized_traj_points, raw_path.header));
-  RCLCPP_INFO(
-    get_logger(), "Smoothed trajectory and made it collision free with the road and published.");
-
-  return optimized_traj_points;
-}
-
-std::vector<TrajectoryPoint> StaticCenterlineOptimizerNode::optimize_trajectory(
-  const Path & raw_path) const
-{
-  // convert to trajectory points
-  const auto raw_traj_points = [&]() {
-    const auto raw_traj = convert_to_trajectory(raw_path);
-    return motion_utils::convertToTrajectoryPointArray(raw_traj);
-  }();
-
-  // create an instance of elastic band and model predictive trajectory.
-  const auto eb_path_smoother_ptr =
-    path_smoother::ElasticBandSmoother(create_node_options()).getElasticBandSmoother();
-  const auto mpt_optimizer_ptr =
-    obstacle_avoidance_planner::ObstacleAvoidancePlanner(create_node_options()).getMPTOptimizer();
-
-  // NOTE: The optimization is executed every valid_optimized_traj_points_num points.
-  constexpr int valid_optimized_traj_points_num = 10;
-  const int traj_segment_num = raw_traj_points.size() / valid_optimized_traj_points_num;
-
-  // NOTE: num_initial_optimization exists to make the both optimizations stable since they may use
-  // warm start.
-  constexpr int num_initial_optimization = 2;
-
-  std::vector<TrajectoryPoint> whole_optimized_traj_points;
-  for (int virtual_ego_pose_idx = -num_initial_optimization;
-       virtual_ego_pose_idx < traj_segment_num; ++virtual_ego_pose_idx) {
-    // calculate virtual ego pose for the optimization
-    constexpr int virtual_ego_pose_offset_idx = 1;
-    const auto virtual_ego_pose =
-      raw_traj_points
-        .at(
-          valid_optimized_traj_points_num * std::max(virtual_ego_pose_idx, 0) +
-          virtual_ego_pose_offset_idx)
-        .pose;
-
-    // smooth trajectory by elastic band in the path_smoother package
-    const auto smoothed_traj_points =
-      eb_path_smoother_ptr->smoothTrajectory(raw_traj_points, virtual_ego_pose);
-
-    // road collision avoidance by model predictive trajectory in the obstacle_avoidance_planner
-    // package
-    const obstacle_avoidance_planner::PlannerData planner_data{
-      raw_path.header, smoothed_traj_points, raw_path.left_bound, raw_path.right_bound,
-      virtual_ego_pose};
-    const auto optimized_traj_points = mpt_optimizer_ptr->optimizeTrajectory(planner_data);
-
-    // connect the previously and currently optimized trajectory points
-    for (size_t j = 0; j < whole_optimized_traj_points.size(); ++j) {
-      const double dist = tier4_autoware_utils::calcDistance2d(
-        whole_optimized_traj_points.at(j), optimized_traj_points.front());
-      if (dist < 0.5) {
-        const std::vector<TrajectoryPoint> extracted_whole_optimized_traj_points{
-          whole_optimized_traj_points.begin(),
-          whole_optimized_traj_points.begin() + std::max(j, 1UL) - 1};
-        whole_optimized_traj_points = extracted_whole_optimized_traj_points;
-        break;
-      }
-    }
-    for (size_t j = 0; j < optimized_traj_points.size(); ++j) {
-      whole_optimized_traj_points.push_back(optimized_traj_points.at(j));
-    }
-  }
-
-  return whole_optimized_traj_points;
-}
-
 void StaticCenterlineOptimizerNode::on_plan_path(
   const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response)
 {
@@ -607,7 +486,7 @@ void StaticCenterlineOptimizerNode::on_plan_path(
 
   // get lanelets from route lane ids
   const auto route_lane_ids = request->route;
-  const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
+  const auto route_lanelets = utils::get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
 
   // check if input route lanelets are connected to each other.
   const auto unconnected_lane_ids = check_lanelet_connection(*route_handler_ptr_, route_lanelets);
@@ -619,7 +498,9 @@ void StaticCenterlineOptimizerNode::on_plan_path(
   }
 
   // plan path
-  const auto optimized_traj_points = plan_path(route_lane_ids);
+  const auto optimized_traj_points =
+    optimization_trajectory_based_centerline_.generate_centerline_with_optimization(
+      *this, *route_handler_ptr_, route_lane_ids);
 
   // check calculation result
   if (optimized_traj_points.empty()) {
@@ -638,8 +519,8 @@ void StaticCenterlineOptimizerNode::on_plan_path(
     std::vector<geometry_msgs::msg::Point> current_lanelet_points;
 
     // check if target point is inside the lanelet
-    while (
-      lanelet::geometry::inside(lanelet, convertToLaneletPoint(target_traj_point->pose.position))) {
+    while (lanelet::geometry::inside(
+      lanelet, convert_to_lanelet_point(target_traj_point->pose.position))) {
       // memorize points inside the lanelet
       current_lanelet_points.push_back(target_traj_point->pose.position);
       target_traj_point++;
@@ -671,19 +552,16 @@ void StaticCenterlineOptimizerNode::evaluate(
   const std::vector<lanelet::Id> & route_lane_ids,
   const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
-  const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
-  const auto dist_thresh_vec =
-    has_parameter("marker_color_dist_thresh")
-      ? get_parameter("marker_color_dist_thresh").as_double_array()
-      : declare_parameter<std::vector<double>>("marker_color_dist_thresh");
-  const auto marker_color_vec = has_parameter("marker_color")
-                                  ? get_parameter("marker_color").as_string_array()
-                                  : declare_parameter<std::vector<std::string>>("marker_color");
+  const auto route_lanelets = utils::get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
+  const auto dist_thresh_vec = tier4_autoware_utils::getOrDeclareParameter<std::vector<double>>(
+    *this, "marker_color_dist_thresh");
+  const auto marker_color_vec =
+    tier4_autoware_utils::getOrDeclareParameter<std::vector<std::string>>(*this, "marker_color");
   const auto get_marker_color = [&](const double dist) -> boost::optional<std::array<double, 3>> {
     for (size_t i = 0; i < dist_thresh_vec.size(); ++i) {
       const double dist_thresh = dist_thresh_vec.at(i);
       if (dist < dist_thresh) {
-        return convertHexStringToDecimal(marker_color_vec.at(i));
+        return convert_hex_string_to_decimal(marker_color_vec.at(i));
       }
     }
     return boost::none;
@@ -741,17 +619,17 @@ void StaticCenterlineOptimizerNode::evaluate(
 }
 
 void StaticCenterlineOptimizerNode::save_map(
-  const std::string & lanelet2_output_file_path, const std::vector<lanelet::Id> & route_lane_ids,
-  const std::vector<TrajectoryPoint> & optimized_traj_points)
+  const std::string & lanelet2_output_file_path, const CenterlineWithRoute & centerline_with_route)
 {
   if (!route_handler_ptr_) {
     return;
   }
 
-  const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
+  const auto & c = centerline_with_route;
+  const auto route_lanelets = utils::get_lanelets_from_ids(*route_handler_ptr_, c.route_lane_ids);
 
   // update centerline in map
-  utils::update_centerline(*route_handler_ptr_, route_lanelets, optimized_traj_points);
+  utils::update_centerline(*route_handler_ptr_, route_lanelets, c.centerline);
   RCLCPP_INFO(get_logger(), "Updated centerline in map.");
 
   // save map with modified center line
