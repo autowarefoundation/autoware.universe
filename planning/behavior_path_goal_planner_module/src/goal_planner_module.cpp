@@ -459,7 +459,6 @@ void GoalPlannerModule::updateData()
     // planner_data on onFreespaceParkingTimer thread local memory space. So following operation
     // is thread-safe because gp_planner_data.occupancy_grid_map is only re-pointed here and its
     // prior resource is still owned by the onFreespaceParkingTimer thread locally.
-    const auto & gp_planner_data = gp_planner_data_.value();
     occupancy_grid_map_ = gp_planner_data.occupancy_grid_map;
   }
   // end of critical section
