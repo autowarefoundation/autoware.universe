@@ -108,17 +108,17 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
 {
   // Subscribers
   sub_point_cloud_ = this->create_subscription<PointCloud2>(
-    "~/input/pointcloud", rclcpp::SensorDataQoS(),
+    "/perception/obstacle_segmentation/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&AEB::onPointCloud, this, std::placeholders::_1));
 
   sub_velocity_ = this->create_subscription<VelocityReport>(
-    "~/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
+    "/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
 
   sub_imu_ = this->create_subscription<Imu>(
-    "~/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
+    "/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
 
   sub_predicted_traj_ = this->create_subscription<Trajectory>(
-    "~/input/predicted_trajectory", rclcpp::QoS{1},
+    "/input/predicted_trajectory", rclcpp::QoS{1},
     std::bind(&AEB::onPredictedTrajectory, this, std::placeholders::_1));
 
   sub_autoware_state_ = this->create_subscription<AutowareState>(
@@ -172,6 +172,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
 
 void AEB::onTimer()
 {
+  std::cerr << "On TIMER!\n";
   updater_.force_update();
 }
 
@@ -295,6 +296,7 @@ bool AEB::isDataReady()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
+  std::cerr << " onCheckCollision \n";
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkExpired()) {
@@ -321,17 +323,20 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
   // step1. check data
   if (!isDataReady()) {
+    std::cerr << __func__ << " !isDataReady() \n";
     return false;
   }
 
   // if not driving, disable aeb
   if (autoware_state_->state != AutowareState::DRIVING) {
+    std::cerr << __func__ << " Driving \n";
     return false;
   }
 
   // step2. create velocity data check if the vehicle stops or not
   const double current_v = current_velocity_ptr_->longitudinal_velocity;
   if (current_v < 0.1) {
+    std::cerr << __func__ << " Current vel \n";
     return false;
   }
 
