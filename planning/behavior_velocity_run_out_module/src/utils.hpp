@@ -49,6 +49,7 @@ struct RunOutParam
 {
   std::string detection_method;
   bool use_partition_lanelet;
+  bool suppress_on_crosswalk;
   bool specify_decel_jerk;
   double stop_margin;
   double passing_margin;
@@ -109,11 +110,13 @@ struct Smoother
 struct DynamicObstacleParam
 {
   bool use_mandatory_area;
+  bool assume_fixed_velocity;
 
   float min_vel_kmph;
   float max_vel_kmph;
 
   // parameter to convert points to dynamic obstacle
+  float std_dev_multiplier;
   float diameter;             // [m]
   float height;               // [m]
   float max_prediction_time;  // [sec]
