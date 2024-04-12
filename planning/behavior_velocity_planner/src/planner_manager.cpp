@@ -23,19 +23,19 @@ namespace autoware::behavior_velocity_planner
 {
 namespace
 {
-std::string json_dumps_pose(const geometry_msgs::msg::Pose & pose)
+std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
 {
-  const std::string json_dumps_pose =
+  const std::string jsonDumpsPose =
     (boost::format(
        R"({"position":{"x":%lf,"y":%lf,"z":%lf},"orientation":{"w":%lf,"x":%lf,"y":%lf,"z":%lf}})") %
      pose.position.x % pose.position.y % pose.position.z % pose.orientation.w % pose.orientation.x %
      pose.orientation.y % pose.orientation.z)
       .str();
-  return json_dumps_pose;
+  return jsonDumpsPose;
 }
 
-diagnostic_msgs::msg::DiagnosticStatus make_stop_reason_diag(
-  const std::string & stop_reason, const geometry_msgs::msg::Pose & stop_pose)
+diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
+  const std::string stop_reason, const geometry_msgs::msg::Pose & stop_pose)
 {
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
   diagnostic_msgs::msg::KeyValue stop_reason_diag_kv;
@@ -43,7 +43,7 @@ diagnostic_msgs::msg::DiagnosticStatus make_stop_reason_diag(
   stop_reason_diag.name = "stop_reason";
   stop_reason_diag.message = stop_reason;
   stop_reason_diag_kv.key = "stop_pose";
-  stop_reason_diag_kv.value = json_dumps_pose(stop_pose);
+  stop_reason_diag_kv.value = jsonDumpsPose(stop_pose);
   stop_reason_diag.values.push_back(stop_reason_diag_kv);
   return stop_reason_diag;
 }
@@ -83,7 +83,7 @@ void BehaviorVelocityPlannerManager::removeScenePlugin(
 {
   auto it = std::remove_if(
     scene_manager_plugins_.begin(), scene_manager_plugins_.end(),
-    [&](const std::shared_ptr<autoware::behavior_velocity_planner::PluginInterface> & plugin) {
+    [&](const std::shared_ptr<autoware::behavior_velocity_planner::PluginInterface> plugin) {
       return plugin->getModuleName() == name;
     });
 
@@ -109,17 +109,17 @@ autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager:
   for (const auto & plugin : scene_manager_plugins_) {
     plugin->updateSceneModuleInstances(planner_data, input_path_msg);
     plugin->plan(&output_path_msg);
-    const auto first_stop_path_point_index = plugin->getFirstStopPathPointIndex();
+    const auto firstStopPathPointIndex = plugin->getFirstStopPathPointIndex();
 
-    if (first_stop_path_point_index) {
-      if (first_stop_path_point_index.value() < first_stop_path_point_index) {
-        first_stop_path_point_index = first_stop_path_point_index.value();
+    if (firstStopPathPointIndex) {
+      if (firstStopPathPointIndex.value() < first_stop_path_point_index) {
+        first_stop_path_point_index = firstStopPathPointIndex.value();
         stop_reason_msg = plugin->getModuleName();
       }
     }
   }
 
-  stop_reason_diag_ = make_stop_reason_diag(
+  stop_reason_diag_ = makeStopReasonDiag(
     stop_reason_msg, output_path_msg.points[first_stop_path_point_index].point.pose);
 
   return output_path_msg;
