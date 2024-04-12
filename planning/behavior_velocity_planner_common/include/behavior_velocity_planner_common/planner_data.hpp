@@ -47,7 +47,6 @@
 
 namespace behavior_velocity_planner
 {
-class BehaviorVelocityPlannerNode;
 struct PlannerData
 {
   explicit PlannerData(rclcpp::Node & node)
