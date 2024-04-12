@@ -50,7 +50,6 @@ using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_behavior_velocity_planner::srv::LoadPlugin;
 using autoware_behavior_velocity_planner::srv::UnloadPlugin;
 using ::behavior_velocity_planner::PlannerData;
-using ::behavior_velocity_planner::TrafficSignalStamped;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class BehaviorVelocityPlannerNode : public rclcpp::Node

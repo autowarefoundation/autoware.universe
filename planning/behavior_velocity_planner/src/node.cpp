@@ -54,6 +54,8 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
 
 namespace autoware::behavior_velocity_planner
 {
+using ::behavior_velocity_planner::TrafficSignalStamped;
+
 namespace
 {
 

@@ -52,7 +52,7 @@ public:
     const std::shared_ptr<const PlannerData> & planner_data,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg);
 
-  diagnostic_msgs::msg::DiagnosticStatus getStopReasonDiag() const;
+  [[nodiscard]] diagnostic_msgs::msg::DiagnosticStatus getStopReasonDiag() const;
 
 private:
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag_;
