@@ -116,19 +116,23 @@ RadiusSearch2dFilter::RadiusSearch2dFilter(rclcpp::Node & node)
 }
 
 void RadiusSearch2dFilter::filter(
-  const PclPointCloud & input, const Pose & pose, PclPointCloud & output, PclPointCloud & outlier)
+  const PointCloud2 & input, const Pose & pose, PointCloud2 & output, PointCloud2 & outlier)
 {
-  const auto & xyz_cloud = input;
   pcl::PointCloud<pcl::PointXY>::Ptr xy_cloud(new pcl::PointCloud<pcl::PointXY>);
-  xy_cloud->points.resize(xyz_cloud.points.size());
-  for (size_t i = 0; i < xyz_cloud.points.size(); ++i) {
-    xy_cloud->points[i].x = xyz_cloud.points[i].x;
-    xy_cloud->points[i].y = xyz_cloud.points[i].y;
+  int point_step = input.point_step;
+  int x_offset = input.fields[pcl::getFieldIndex(input, "x")].offset;
+  int y_offset = input.fields[pcl::getFieldIndex(input, "y")].offset;
+  xy_cloud->points.resize(input.data.size() / point_step);
+  for (size_t i = 0; i < input.data.size() / point_step; ++i) {
+    std::memcpy(&xy_cloud->points[i].x, &input.data[i * x_offset], sizeof(float));
+    std::memcpy(&xy_cloud->points[i].y, &input.data[i * y_offset], sizeof(float));
   }
 
   std::vector<int> k_indices(xy_cloud->points.size());
   std::vector<float> k_distances(xy_cloud->points.size());
   kd_tree_->setInputCloud(xy_cloud);
+  size_t output_size = 0;
+  size_t outlier_size = 0;
   for (size_t i = 0; i < xy_cloud->points.size(); ++i) {
     const float distance =
       std::hypot(xy_cloud->points[i].x - pose.position.x, xy_cloud->points[i].y - pose.position.y);
@@ -139,11 +143,15 @@ void RadiusSearch2dFilter::filter(
       kd_tree_->radiusSearch(i, search_radius_, k_indices, k_distances, min_points_threshold);
 
     if (min_points_threshold <= points_num) {
-      output.points.push_back(xyz_cloud.points.at(i));
+      std::memcpy(&output.data[output_size], &input.data[i * point_step], point_step);
+      output_size += point_step;
     } else {
-      outlier.points.push_back(xyz_cloud.points.at(i));
+      std::memcpy(&outlier.data[outlier_size], &input.data[i * point_step], point_step);
+      outlier_size += point_step;
     }
   }
+  output.data.resize(output_size);
+  outlier.data.resize(outlier_size);
 }
 
 void RadiusSearch2dFilter::filter(
@@ -372,12 +380,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 void OccupancyGridMapOutlierFilterComponent::initializerPointCloud2(
   const PointCloud2 & input, PointCloud2 & output)
 {
-  output.header = input.header;
   output.point_step = input.point_step;
-  output.fields = input.fields;
-  output.height = input.height;
-  output.is_bigendian = input.is_bigendian;
-  output.is_dense = input.is_dense;
   output.data.resize(input.data.size());
 }
 
@@ -407,8 +410,6 @@ void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
 {
   int x_offset = pointcloud.fields[pcl::getFieldIndex(pointcloud, "x")].offset;
   int y_offset = pointcloud.fields[pcl::getFieldIndex(pointcloud, "y")].offset;
-  // int z_offset = pointcloud.fields[pcl::getFieldIndex(pointcloud, "z")].offset;
-  // int intensity_offset = pointcloud.fields[pcl::getFieldIndex(pointcloud, "intensity")].offset;
   size_t high_confidence_size = 0;
   size_t low_confidence_size = 0;
   size_t out_ogm_size = 0;

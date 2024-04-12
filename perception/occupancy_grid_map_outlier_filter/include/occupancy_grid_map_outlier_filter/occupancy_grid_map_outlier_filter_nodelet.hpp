@@ -53,8 +53,7 @@ class RadiusSearch2dFilter
 public:
   explicit RadiusSearch2dFilter(rclcpp::Node & node);
   void filter(
-    const PclPointCloud & input, const Pose & pose, PclPointCloud & output,
-    PclPointCloud & outlier);
+    const PointCloud2 & input, const Pose & pose, PointCloud2 & output, PointCloud2 & outlier);
   void filter(
     const PointCloud2 & high_conf_input, const PointCloud2 & low_conf_input, const Pose & pose,
     PointCloud2 & output, PointCloud2 & outlier);
