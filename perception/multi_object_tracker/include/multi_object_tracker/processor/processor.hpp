@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//
 
 #ifndef MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_
 #define MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_

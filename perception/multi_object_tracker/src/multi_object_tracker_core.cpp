@@ -75,12 +75,6 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tf_listener_(tf_buffer_),
   last_published_time_(this->now())
 {
-  // Create publishers and subscribers
-  // detected_object_sub_ = create_subscription<DetectedObjects>(
-  //   "input", rclcpp::QoS{1},
-  //   std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
-  tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
-
   // Get parameters
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
@@ -88,8 +82,13 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   declare_parameter("input_topic_names", std::vector<std::string>());
   input_topic_names_ = get_parameter("input_topic_names").as_string_array();
 
-  // Set input topics
+  // Initialize the last measurement time
   last_measurement_time_ = this->now();
+
+  // ROS interface - Publisher
+  tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
+
+  // ROS interface - Subscribers
   if (input_topic_names_.empty()) {
     RCLCPP_ERROR(get_logger(), "Need a 'input_topic_names' parameter to be set before continuing");
     return;
@@ -164,9 +163,11 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
-void MultiObjectTracker::onData(DetectedObjects::ConstSharedPtr msg, const size_t array_number)
+void MultiObjectTracker::onData(
+  const DetectedObjects::ConstSharedPtr msg, const size_t array_number)
 {
   objects_data_.at(array_number) = msg;
+
   // debug message
   RCLCPP_INFO(
     get_logger(), "Received data from topic %s", input_topic_names_.at(array_number).c_str());

@@ -93,7 +93,7 @@ private:
   std::vector<DetectedObjects::ConstSharedPtr> objects_data_{};
 
   // callback functions
-  void onData(DetectedObjects::ConstSharedPtr msg, const size_t array_number);
+  void onData(const DetectedObjects::ConstSharedPtr msg, const size_t array_number);
   void onMeasurement(const DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
 
