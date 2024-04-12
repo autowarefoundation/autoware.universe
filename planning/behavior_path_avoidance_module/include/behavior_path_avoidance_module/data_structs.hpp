@@ -189,14 +189,6 @@ struct AvoidanceParameters
   double time_threshold_for_ambiguous_vehicle{0.0};
   double distance_threshold_for_ambiguous_vehicle{0.0};
 
-  // when complete avoidance motion, there is a distance margin with the object
-  // for longitudinal direction
-  double longitudinal_collision_margin_min_distance{0.0};
-
-  // when complete avoidance motion, there is a time margin with the object
-  // for longitudinal direction
-  double longitudinal_collision_margin_time{0.0};
-
   // parameters for safety check area
   bool enable_safety_check{false};
   bool check_current_lane{false};
