@@ -23,14 +23,14 @@ if (CUDA_FOUND)
     PATH_SUFFIXES lib lib64 bin
     DOC "CUDNN library.")
 else()
-  message(FAITAL_ERROR "Can not find CUDA")
+  message(FATAL_ERROR "Can not find CUDA")
 endif()
 
 list(APPEND TRT_PLUGINS "nvinfer")
 list(APPEND TRT_PLUGINS "nvonnxparser")
 list(APPEND TRT_PLUGINS "nvparsers")
 foreach(libName ${TRT_PLUGINS})
-  find_library(${libName}_lib NAMES ${libName} "/usr" PATH_SUFFIES lib)
+  find_library(${libName}_lib NAMES ${libName} "/usr" PATH_SUFFIXES lib)
   list(APPEND TRT_PLUGINS ${${libName}_lib})
 endforeach()
 

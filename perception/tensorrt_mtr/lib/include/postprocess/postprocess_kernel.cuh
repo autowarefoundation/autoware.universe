@@ -23,7 +23,7 @@
  *
  * @param B The number of target agents.
  * @param M The number of modes.
- * @param T The number of future timestmaps.
+ * @param T The number of future timestamps.
  * @param inDim The number of input agent state dimensions.
  * @param targetState Source target agent states at latest timestamp, in shape [B*inDim].
  * @param outDim The number of output state dimensions.

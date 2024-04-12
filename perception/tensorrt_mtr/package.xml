@@ -3,7 +3,7 @@
 <package format="3">
   <name>tensorrt_mtr</name>
   <version>0.1.0</version>
-  <description>ROS 2 Node of Motion Transfomer(a.k.a MTR).</description>
+  <description>ROS 2 Node of Motion Transfromer(a.k.a MTR).</description>
   <maintainer email="kotaro.uetake@tier4.jp">kotarouetake</maintainer>
   <license>Apache-2.0</license>
 
