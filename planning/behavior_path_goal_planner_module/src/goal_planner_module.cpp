@@ -430,40 +430,35 @@ void GoalPlannerModule::updateData()
     std::lock_guard<std::mutex> guard(gp_planner_data_mutex_);
     if (!gp_planner_data_) {
       gp_planner_data_ = GoalPlannerData(*planner_data_, *parameters_);
-      gp_planner_data_.value().update(
-        *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
-        *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
-        vehicle_footprint_);
-    } else {
-      auto & gp_planner_data = gp_planner_data_.value();
-      // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
-      // planner_data_ is not nullptr, so it is OK to copy as value
-      // By copying PlannerData as value, the internal shared member variables are also copied
-      // (reference count is incremented), so `gp_planner_data_.foo` is now thread-safe from the
-      // **re-pointing** by `planner_data_->foo = msg` in behavior_path_planner::onCallbackFor(msg)
-      // and if these two coincided, only the reference count is affected
-      gp_planner_data.update(
-        *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
-        *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
-        vehicle_footprint_);
-      // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
-      // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
-      // behavior_path_planner::run() updates
-      // planner_data_->route_handler->lanelet_map_ptr_/routing_graph_ptr_ especially, we also have
-      // to copy route_handler as value to use lanelet_map_ptr_/routing_graph_ptr_ thread-safely in
-      // onTimer/onFreespaceParkingTimer
-      // TODO(Mamoru Sobue): If the copy of RouteHandler.road_lanelets/shoulder_lanelets is not
-      // lightweight, we should update gp_planner_data_.route_handler only when
-      // `planner_data_.is_route_handler_updated` variable is set true by behavior_path_planner
-      // (although this flag is not implemented yet). In that case, gp_planner_data members except
-      // for route_handler should be copied from planner_data_
-
-      // GoalPlannerModule::occupancy_grid_map_ and gp_planner_data.occupancy_grid_map share the
-      // ownership, and gp_planner_data.occupancy_grid_map maybe also shared by the local
-      // planner_data on onFreespaceParkingTimer thread local memory space. So following operation
-      // is thread-safe because gp_planner_data.occupancy_grid_map is only re-pointed here and its
-      // prior resource is still owned by the onFreespaceParkingTimer thread locally.
     }
+    auto & gp_planner_data = gp_planner_data_.value();
+    // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
+    // planner_data_ is not nullptr, so it is OK to copy as value
+    // By copying PlannerData as value, the internal shared member variables are also copied
+    // (reference count is incremented), so `gp_planner_data_.foo` is now thread-safe from the
+    // **re-pointing** by `planner_data_->foo = msg` in behavior_path_planner::onCallbackFor(msg)
+    // and if these two coincided, only the reference count is affected
+    gp_planner_data.update(
+      *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
+      *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
+      vehicle_footprint_);
+    // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
+    // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
+    // behavior_path_planner::run() updates
+    // planner_data_->route_handler->lanelet_map_ptr_/routing_graph_ptr_ especially, we also have
+    // to copy route_handler as value to use lanelet_map_ptr_/routing_graph_ptr_ thread-safely in
+    // onTimer/onFreespaceParkingTimer
+    // TODO(Mamoru Sobue): If the copy of RouteHandler.road_lanelets/shoulder_lanelets is not
+    // lightweight, we should update gp_planner_data_.route_handler only when
+    // `planner_data_.is_route_handler_updated` variable is set true by behavior_path_planner
+    // (although this flag is not implemented yet). In that case, gp_planner_data members except
+    // for route_handler should be copied from planner_data_
+
+    // GoalPlannerModule::occupancy_grid_map_ and gp_planner_data.occupancy_grid_map share the
+    // ownership, and gp_planner_data.occupancy_grid_map maybe also shared by the local
+    // planner_data on onFreespaceParkingTimer thread local memory space. So following operation
+    // is thread-safe because gp_planner_data.occupancy_grid_map is only re-pointed here and its
+    // prior resource is still owned by the onFreespaceParkingTimer thread locally.
     const auto & gp_planner_data = gp_planner_data_.value();
     occupancy_grid_map_ = gp_planner_data.occupancy_grid_map;
   }
