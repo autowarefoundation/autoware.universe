@@ -362,7 +362,8 @@ void BehaviorVelocityPlannerNode::on_traffic_signals(
   }
 }
 
-void BehaviorVelocityPlannerNode::on_external_velocity_limit(const VelocityLimit::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::on_external_velocity_limit(
+  const VelocityLimit::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.external_velocity_limit = *msg;
