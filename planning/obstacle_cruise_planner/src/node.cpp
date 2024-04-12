@@ -549,10 +549,13 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
   const vehicle_info_util::VehicleInfo & vehicle_info,
-  const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin,
-  const double margin_exclusion_period) const
+  const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin) const
 {
   const auto & p = behavior_determination_param_;
+
+  const double front_length = vehicle_info.max_longitudinal_offset_m;
+  const double rear_length = vehicle_info.rear_overhang_m;
+  const double vehicle_width = vehicle_info.vehicle_width_m;
 
   const size_t nearest_idx =
     motion_utils::findNearestSegmentIndex(traj_points, current_ego_pose.position);
@@ -579,16 +582,39 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
         tier4_autoware_utils::createPoint(0.0, current_ego_lat_error * rem_ratio, 0.0));
       current_poses.push_back(
         tier4_autoware_utils::transformPose(indexed_pose_err, traj_points.at(i).pose));
+      if (traj_points.at(i).longitudinal_velocity_mps != 0.0) {
+        time_elapsed +=
+          p.decimate_trajectory_step_length / std::abs(traj_points.at(i).longitudinal_velocity_mps);
+      } else {
+        time_elapsed = std::numeric_limits<double>::max();
+      }
     }
 
     Polygon2d idx_poly{};
-    const double indexed_lat_margin = time_elapsed < margin_exclusion_period ? 0.0 : lat_margin;
     for (const auto & pose : current_poses) {
-      boost::geometry::append(
-        idx_poly, tier4_autoware_utils::toFootprint(
-                    pose, vehicle_info.max_longitudinal_offset_m, vehicle_info.rear_overhang_m,
-                    vehicle_info.vehicle_width_m + indexed_lat_margin * 2.0)
-                    .outer());
+      if (i == 0 && traj_points.at(i).longitudinal_velocity_mps > 1e-3) {
+        boost::geometry::append(
+          idx_poly,
+          tier4_autoware_utils::toFootprint(pose, front_length, rear_length, vehicle_width)
+            .outer());
+        boost::geometry::append(
+          idx_poly,
+          tier4_autoware_utils::fromMsg(tier4_autoware_utils::calcOffsetPose(
+                                          pose, front_length, vehicle_width * 0.5 + lat_margin, 0.0)
+                                          .position)
+            .to_2d());
+        boost::geometry::append(
+          idx_poly, tier4_autoware_utils::fromMsg(
+                      tier4_autoware_utils::calcOffsetPose(
+                        pose, front_length, -vehicle_width * 0.5 - lat_margin, 0.0)
+                        .position)
+                      .to_2d());
+      } else {
+        boost::geometry::append(
+          idx_poly, tier4_autoware_utils::toFootprint(
+                      pose, front_length, rear_length, vehicle_width + lat_margin * 2.0)
+                      .outer());
+      }
     }
 
     boost::geometry::append(tmp_polys, idx_poly.outer());
@@ -598,13 +624,6 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
 
     output_polygons.push_back(hull_polygon);
     tmp_polys = std::move(idx_poly);
-
-    if (traj_points.at(i).longitudinal_velocity_mps != 0.0) {
-      time_elapsed +=
-        p.decimate_trajectory_step_length / std::abs(traj_points.at(i).longitudinal_velocity_mps);
-    } else {
-      time_elapsed = std::numeric_limits<double>::max();
-    }
   }
   return output_polygons;
 }
@@ -1197,7 +1216,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
 
   // calculate collision points with trajectory with lateral stop margin
   const auto traj_polys_with_lat_margin = createOneStepPolygons(
-    traj_points, vehicle_info_, ego_odom_sub_.getData().pose.pose, p.max_lat_margin_for_stop, 0.3);
+    traj_points, vehicle_info_, ego_odom_sub_.getData().pose.pose, p.max_lat_margin_for_stop);
 
   const auto collision_point = polygon_utils::getCollisionPoint(
     traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);

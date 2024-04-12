@@ -54,8 +54,7 @@ private:
   std::vector<Polygon2d> createOneStepPolygons(
     const std::vector<TrajectoryPoint> & traj_points,
     const vehicle_info_util::VehicleInfo & vehicle_info,
-    const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0,
-    const double margin_exclusion_period = 0.0) const;
+    const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
   std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
