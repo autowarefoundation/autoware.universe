@@ -76,8 +76,6 @@ struct ObjectParameter
   double lateral_hard_margin_for_parked_vehicle{1.0};
 
   double longitudinal_margin{0.0};
-
-  bool use_conservative_buffer_longitudinal{true};
 };
 
 struct AvoidanceParameters
@@ -218,6 +216,9 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
+
+  bool consider_front_overhang{true};
+  bool consider_rear_overhang{true};
 
   // maximum stop distance
   double stop_max_distance{0.0};
