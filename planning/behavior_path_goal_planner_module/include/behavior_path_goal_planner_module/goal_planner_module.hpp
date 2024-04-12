@@ -415,8 +415,8 @@ private:
     void initializeOccupancyGridMap(
       const PlannerData & planner_data, const GoalPlannerParameters & parameters);
   };
-  std::optional<GoalPlannerData> gp_planner_data_{std::nullopt};
-  std::mutex gp_planner_data_mutex_;
+  std::optional<GoalPlannerData> goal_planner_data_{std::nullopt};
+  std::mutex goal_planner_data_mutex_;
 
   // Flag class for managing whether a certain callback is running in multi-threading
   class ScopedFlag

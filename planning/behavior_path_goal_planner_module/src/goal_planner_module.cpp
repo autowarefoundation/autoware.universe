@@ -180,18 +180,18 @@ void GoalPlannerModule::onTimer()
 
   // begin of critical section
   {
-    std::lock_guard<std::mutex> guard(gp_planner_data_mutex_);
-    if (gp_planner_data_) {
-      const auto & gp_planner_data = gp_planner_data_.value();
-      local_planner_data = std::make_shared<const PlannerData>(gp_planner_data.planner_data);
-      current_status_opt = gp_planner_data.current_status;
-      previous_module_output_opt = gp_planner_data.previous_module_output;
-      occupancy_grid_map = gp_planner_data.occupancy_grid_map;
-      parameters_opt = gp_planner_data.parameters;
-      ego_predicted_path_params = gp_planner_data.ego_predicted_path_params;
-      objects_filtering_params = gp_planner_data.objects_filtering_params;
-      safety_check_params = gp_planner_data.safety_check_params;
-      goal_searcher = gp_planner_data.goal_searcher;
+    std::lock_guard<std::mutex> guard(goal_planner_data_mutex_);
+    if (goal_planner_data_) {
+      const auto & goal_planner_data = goal_planner_data_.value();
+      local_planner_data = std::make_shared<const PlannerData>(goal_planner_data.planner_data);
+      current_status_opt = goal_planner_data.current_status;
+      previous_module_output_opt = goal_planner_data.previous_module_output;
+      occupancy_grid_map = goal_planner_data.occupancy_grid_map;
+      parameters_opt = goal_planner_data.parameters;
+      ego_predicted_path_params = goal_planner_data.ego_predicted_path_params;
+      objects_filtering_params = goal_planner_data.objects_filtering_params;
+      safety_check_params = goal_planner_data.safety_check_params;
+      goal_searcher = goal_planner_data.goal_searcher;
     }
   }
   // end of critical section
@@ -340,14 +340,14 @@ void GoalPlannerModule::onFreespaceParkingTimer()
 
   // begin of critical section
   {
-    std::lock_guard<std::mutex> guard(gp_planner_data_mutex_);
-    if (gp_planner_data_) {
-      const auto & gp_planner_data = gp_planner_data_.value();
-      local_planner_data = std::make_shared<const PlannerData>(gp_planner_data.planner_data);
-      current_status_opt = gp_planner_data.current_status;
-      occupancy_grid_map = gp_planner_data.occupancy_grid_map;
-      parameters_opt = gp_planner_data.parameters;
-      goal_searcher = gp_planner_data.goal_searcher;
+    std::lock_guard<std::mutex> guard(goal_planner_data_mutex_);
+    if (goal_planner_data_) {
+      const auto & goal_planner_data = goal_planner_data_.value();
+      local_planner_data = std::make_shared<const PlannerData>(goal_planner_data.planner_data);
+      current_status_opt = goal_planner_data.current_status;
+      occupancy_grid_map = goal_planner_data.occupancy_grid_map;
+      parameters_opt = goal_planner_data.parameters;
+      goal_searcher = goal_planner_data.goal_searcher;
     }
   }
   // end of critical section
@@ -419,53 +419,48 @@ void GoalPlannerModule::updateData()
   // SceneModuleInterface::setPreviousModuleOutput before module_ptr->run().
   // Then module_ptr->run() invokes GoalPlannerModule::updateData and then
   // planWaitingApproval()/plan(), so we can copy latest current_status/previous_module_output to
-  // gp_planner_data_ here
+  // goal_planner_data_ here
 
-  // NOTE: onTimer/onFreespaceParkingTimer copies gp_planner_data_ to their local clone, so we need
-  // to lock gp_planner_data_ here to avoid data race. But the following clone process is
+  // NOTE: onTimer/onFreespaceParkingTimer copies goal_planner_data_ to their local clone, so we
+  // need to lock goal_planner_data_ here to avoid data race. But the following clone process is
   // lightweight because most of the member variables of PlannerData/RouteHandler is
   // shared_ptrs/bool
   // begin of critical section
   {
-    std::lock_guard<std::mutex> guard(gp_planner_data_mutex_);
-    if (!gp_planner_data_) {
-      gp_planner_data_ = GoalPlannerData(*planner_data_, *parameters_);
-      gp_planner_data_.value().update(
-        *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
-        *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
-        vehicle_footprint_);
-    } else {
-      auto & gp_planner_data = gp_planner_data_.value();
-      // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
-      // planner_data_ is not nullptr, so it is OK to copy as value
-      // By copying PlannerData as value, the internal shared member variables are also copied
-      // (reference count is incremented), so `gp_planner_data_.foo` is now thread-safe from the
-      // **re-pointing** by `planner_data_->foo = msg` in behavior_path_planner::onCallbackFor(msg)
-      // and if these two coincided, only the reference count is affected
-      gp_planner_data.update(
-        *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
-        *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
-        vehicle_footprint_);
-      // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
-      // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
-      // behavior_path_planner::run() updates
-      // planner_data_->route_handler->lanelet_map_ptr_/routing_graph_ptr_ especially, we also have
-      // to copy route_handler as value to use lanelet_map_ptr_/routing_graph_ptr_ thread-safely in
-      // onTimer/onFreespaceParkingTimer
-      // TODO(Mamoru Sobue): If the copy of RouteHandler.road_lanelets/shoulder_lanelets is not
-      // lightweight, we should update gp_planner_data_.route_handler only when
-      // `planner_data_.is_route_handler_updated` variable is set true by behavior_path_planner
-      // (although this flag is not implemented yet). In that case, gp_planner_data members except
-      // for route_handler should be copied from planner_data_
-
-      // GoalPlannerModule::occupancy_grid_map_ and gp_planner_data.occupancy_grid_map share the
-      // ownership, and gp_planner_data.occupancy_grid_map maybe also shared by the local
-      // planner_data on onFreespaceParkingTimer thread local memory space. So following operation
-      // is thread-safe because gp_planner_data.occupancy_grid_map is only re-pointed here and its
-      // prior resource is still owned by the onFreespaceParkingTimer thread locally.
+    std::lock_guard<std::mutex> guard(goal_planner_data_mutex_);
+    if (!goal_planner_data_) {
+      goal_planner_data_ = GoalPlannerData(*planner_data_, *parameters_);
     }
-    const auto & gp_planner_data = gp_planner_data_.value();
-    occupancy_grid_map_ = gp_planner_data.occupancy_grid_map;
+    auto & goal_planner_data = goal_planner_data_.value();
+    // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
+    // planner_data_ is not nullptr, so it is OK to copy as value
+    // By copying PlannerData as value, the internal shared member variables are also copied
+    // (reference count is incremented), so `goal_planner_data_.foo` is now thread-safe from the
+    // **re-pointing** by `planner_data_->foo = msg` in behavior_path_planner::onCallbackFor(msg)
+    // and if these two coincided, only the reference count is affected
+    goal_planner_data.update(
+      *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
+      *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
+      vehicle_footprint_);
+    // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
+    // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
+    // behavior_path_planner::run() updates
+    // planner_data_->route_handler->lanelet_map_ptr_/routing_graph_ptr_ especially, we also have
+    // to copy route_handler as value to use lanelet_map_ptr_/routing_graph_ptr_ thread-safely in
+    // onTimer/onFreespaceParkingTimer
+    // TODO(Mamoru Sobue): If the copy of RouteHandler.road_lanelets/shoulder_lanelets is not
+    // lightweight, we should update goal_planner_data_.route_handler only when
+    // `planner_data_.is_route_handler_updated` variable is set true by behavior_path_planner
+    // (although this flag is not implemented yet). In that case, goal_planner_data members except
+    // for route_handler should be copied from planner_data_
+
+    // GoalPlannerModule::occupancy_grid_map_ and goal_planner_data.occupancy_grid_map share the
+    // ownership, and goal_planner_data.occupancy_grid_map maybe also shared by the local
+    // planner_data on onFreespaceParkingTimer thread local memory space. So following operation
+    // is thread-safe because goal_planner_data.occupancy_grid_map is only re-pointed here and its
+    // prior resource is still owned by the onFreespaceParkingTimer thread locally.
+    const auto & goal_planner_data = goal_planner_data_.value();
+    occupancy_grid_map_ = goal_planner_data.occupancy_grid_map;
   }
   // end of critical section
 
@@ -2590,11 +2585,11 @@ void GoalPlannerModule::GoalPlannerData::initializeOccupancyGridMap(
 
 GoalPlannerModule::GoalPlannerData GoalPlannerModule::GoalPlannerData::clone() const
 {
-  GoalPlannerModule::GoalPlannerData gp_planner_data(planner_data, parameters);
-  gp_planner_data.update(
+  GoalPlannerModule::GoalPlannerData goal_planner_data(planner_data, parameters);
+  goal_planner_data.update(
     parameters, ego_predicted_path_params, objects_filtering_params, safety_check_params,
     planner_data, current_status, previous_module_output, goal_searcher, vehicle_footprint);
-  return gp_planner_data;
+  return goal_planner_data;
 }
 
 void GoalPlannerModule::GoalPlannerData::update(
