@@ -261,16 +261,6 @@ void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
 {
   int x_offset = input_pc->fields[pcl::getFieldIndex(*input_pc, "x")].offset;
   int point_step = input_pc->point_step;
-
-  front_pc.data.resize(input_pc->data.size());
-  behind_pc.data.resize(input_pc->data.size());
-  front_pc.point_step = input_pc->point_step;
-  behind_pc.point_step = input_pc->point_step;
-  front_pc.fields = input_pc->fields;
-  behind_pc.fields = input_pc->fields;
-  front_pc.height = input_pc->height;
-  behind_pc.height = input_pc->height;
-
   size_t front_count = 0;
   size_t behind_count = 0;
 
@@ -290,34 +280,24 @@ void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
       front_count++;
     }
   }
-  front_pc.data.resize(front_count * point_step);
-  front_pc.width = front_count;
-  front_pc.row_step = front_count * front_pc.point_step;
-  front_pc.header = input_pc->header;
-  front_pc.is_bigendian = input_pc->is_bigendian;
-  front_pc.is_dense = input_pc->is_dense;
-
-  behind_pc.data.resize(behind_count * point_step);
-  behind_pc.width = behind_count;
-  behind_pc.row_step = behind_count * behind_pc.point_step;
-  behind_pc.header = input_pc->header;
-  behind_pc.is_bigendian = input_pc->is_bigendian;
-  behind_pc.is_dense = input_pc->is_dense;
 }
 void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   const OccupancyGrid::ConstSharedPtr & input_ogm, const PointCloud2::ConstSharedPtr & input_pc)
 {
   stop_watch_ptr_->toc("processing_time", true);
   // Transform to occupancy grid map frame
-  PointCloud2 ogm_frame_pc{};
-  PointCloud2 input_front_pc{};
+
   PointCloud2 input_behind_pc{};
-  PointCloud2 ogm_frame_input_behind_pc{};
-  PointCloud2 ogm_frame_pc;
-  PointCloud2 input_front_pc;
-  PointCloud2 input_behind_pc;
-  PointCloud2 ogm_frame_input_behind_pc;
+  PointCloud2 input_front_pc{};
+  initializerPointCloud2(*input_pc, input_front_pc);
+  initializerPointCloud2(*input_pc, input_behind_pc);
+  // Split pointcloud into front and behind of the vehicle to reduce the calculation cost
   splitPointCloudFrontBack(input_pc, input_front_pc, input_behind_pc);
+  finalizePointCloud2(*input_pc, input_front_pc);
+  finalizePointCloud2(*input_pc, input_behind_pc);
+
+  PointCloud2 ogm_frame_pc{};
+  PointCloud2 ogm_frame_input_behind_pc{};
   if (
     !transformPointcloud(input_front_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc) ||
     !transformPointcloud(
@@ -331,8 +311,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   initializerPointCloud2(ogm_frame_pc, high_confidence_pc);
   initializerPointCloud2(ogm_frame_pc, low_confidence_pc);
   initializerPointCloud2(ogm_frame_pc, out_ogm_pc);
-  // PclPointCloud ogm_frame_behind_pc;
-  // pcl::fromROSMsg(ogm_frame_input_behind_pc, ogm_frame_behind_pc);
+  // split front pointcloud into high and low confidence and out of map pointcloud
   filterByOccupancyGridMap(
     *input_ogm, ogm_frame_pc, high_confidence_pc, low_confidence_pc, out_ogm_pc);
   // Apply Radius search 2d filter for low confidence pointcloud
@@ -340,11 +319,8 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   PointCloud2 outlier_pc{};
   initializerPointCloud2(low_confidence_pc, outlier_pc);
   initializerPointCloud2(low_confidence_pc, filtered_low_confidence_pc);
-  PointCloud2 outlier_pc;
-  outlier_pc.data.resize(low_confidence_pc.data.size());
-  outlier_pc.point_step = low_confidence_pc.point_step;
-  outlier_pc.fields = low_confidence_pc.fields;
-  outlier_pc.height = 1;
+  initializerPointCloud2(low_confidence_pc, outlier_pc);
+
   if (radius_search_2d_filter_ptr_) {
     auto pc_frame_pose_stamped = getPoseStamped(
       *tf2_, input_ogm->header.frame_id, input_pc->header.frame_id, input_ogm->header.stamp);
@@ -361,12 +337,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   concatPointCloud2(ogm_frame_filtered_pc, filtered_low_confidence_pc);
   concatPointCloud2(ogm_frame_filtered_pc, out_ogm_pc);
   concatPointCloud2(ogm_frame_filtered_pc, ogm_frame_input_behind_pc);
-
   finalizePointCloud2(ogm_frame_pc, ogm_frame_filtered_pc);
-  finalizePointCloud2(ogm_frame_pc, filtered_low_confidence_pc);
-  finalizePointCloud2(ogm_frame_pc, outlier_pc);
-  finalizePointCloud2(ogm_frame_pc, high_confidence_pc);
-  // Convert to ros msg
   {
     auto base_link_frame_filtered_pc_ptr = std::make_unique<PointCloud2>();
     ogm_frame_filtered_pc.header = ogm_frame_pc.header;
@@ -377,6 +348,9 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     pointcloud_pub_->publish(std::move(base_link_frame_filtered_pc_ptr));
   }
   if (debugger_ptr_) {
+    finalizePointCloud2(ogm_frame_pc, filtered_low_confidence_pc);
+    finalizePointCloud2(ogm_frame_pc, outlier_pc);
+    finalizePointCloud2(ogm_frame_pc, high_confidence_pc);
     debugger_ptr_->publishHighConfidence(high_confidence_pc, ogm_frame_pc.header);
     debugger_ptr_->publishLowConfidence(filtered_low_confidence_pc, ogm_frame_pc.header);
     debugger_ptr_->publishOutlier(outlier_pc, ogm_frame_pc.header);
@@ -396,12 +370,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 void OccupancyGridMapOutlierFilterComponent::initializerPointCloud2(
   const PointCloud2 & input, PointCloud2 & output)
 {
-  output.header = input.header;
   output.point_step = input.point_step;
-  output.fields = input.fields;
-  output.height = input.height;
-  output.is_bigendian = input.is_bigendian;
-  output.is_dense = input.is_dense;
   output.data.resize(input.data.size());
 }
 
