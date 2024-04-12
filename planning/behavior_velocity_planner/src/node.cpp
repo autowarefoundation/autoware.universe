@@ -141,6 +141,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   planner_data_.ego_nearest_yaw_threshold =
     this->declare_parameter<double>("ego_nearest_yaw_threshold");
 
+  // is simulation or not
+  planner_data_.is_simulation = declare_parameter<bool>("is_simulation");
+
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
     planner_manager_.launchScenePlugin(*this, name);

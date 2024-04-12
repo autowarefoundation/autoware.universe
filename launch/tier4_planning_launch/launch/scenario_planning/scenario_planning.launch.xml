@@ -1,4 +1,5 @@
 <launch>
+  <arg name="is_simulation"/>
   <!-- scenario selector -->
   <group>
     <include file="$(find-pkg-share scenario_selector)/launch/scenario_selector.launch.xml">
@@ -58,6 +59,7 @@
         <arg name="use_surround_obstacle_check" value="$(var use_surround_obstacle_check)"/>
         <arg name="cruise_planner_type" value="$(var cruise_planner_type)"/>
         <arg name="use_experimental_lane_change_function" value="$(var use_experimental_lane_change_function)"/>
+        <arg name="is_simulation" value="$(var is_simulation)"/>
       </include>
     </group>
     <!-- parking -->

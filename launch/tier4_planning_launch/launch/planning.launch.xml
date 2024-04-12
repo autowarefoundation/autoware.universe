@@ -47,6 +47,7 @@
   <arg name="velocity_smoother_type_param_path"/>
   <!-- planning validator -->
   <arg name="planning_validator_param_path"/>
+  <arg name="is_simulation"/>
 
   <group>
     <push-ros-namespace namespace="planning"/>
@@ -68,6 +69,7 @@
         <arg name="use_surround_obstacle_check" value="$(var use_surround_obstacle_check)"/>
         <arg name="cruise_planner_type" value="$(var cruise_planner_type)"/>
         <arg name="use_experimental_lane_change_function" value="$(var use_experimental_lane_change_function)"/>
+        <arg name="is_simulation" value="$(var is_simulation)"/>
       </include>
     </group>
 
