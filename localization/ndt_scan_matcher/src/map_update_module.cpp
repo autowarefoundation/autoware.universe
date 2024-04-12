@@ -122,8 +122,6 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
     // lock ndt_ptr_ entirely until it is fully rebuilt.
     need_rebuild_ = true;
   }
-  diagnostics_map_update_->publish();
-  diagnostics_map_update_->clearLevelAndMessage();
 
   return distance > param_.update_distance;
 }
