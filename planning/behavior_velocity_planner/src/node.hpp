@@ -44,9 +44,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware
-{
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_behavior_velocity_planner::srv::LoadPlugin;
@@ -114,7 +112,7 @@ private:
   BehaviorVelocityPlannerManager planner_manager_;
   bool is_driving_forward_{true};
   HADMapBin::ConstSharedPtr map_ptr_{nullptr};
-  bool has_received_map_;
+  bool has_received_map_{};
 
   rclcpp::Service<LoadPlugin>::SharedPtr srv_load_plugin_;
   rclcpp::Service<UnloadPlugin>::SharedPtr srv_unload_plugin_;
@@ -129,7 +127,7 @@ private:
 
   // function
   geometry_msgs::msg::PoseStamped getCurrentPose();
-  bool isDataReady(const PlannerData planner_data, rclcpp::Clock clock) const;
+  bool isDataReady(const PlannerData & planner_data, rclcpp::Clock clock) const;
   autoware_auto_planning_msgs::msg::Path generatePath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
@@ -138,7 +136,6 @@ private:
 
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
-}  // namespace behavior_velocity_planner
 }  // namespace autoware
 
 #endif  // NODE_HPP_

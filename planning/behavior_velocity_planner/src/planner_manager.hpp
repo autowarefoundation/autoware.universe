@@ -36,9 +36,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware
-{
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using ::behavior_velocity_planner::PlannerData;
 using ::behavior_velocity_planner::PluginInterface;
@@ -61,7 +59,6 @@ private:
   pluginlib::ClassLoader<PluginInterface> plugin_loader_;
   std::vector<std::shared_ptr<PluginInterface>> scene_manager_plugins_;
 };
-}  // namespace behavior_velocity_planner
 }  // namespace autoware
 
 #endif  // PLANNER_MANAGER_HPP_

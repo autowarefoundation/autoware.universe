@@ -152,7 +152,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
     // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
-    if (name == "") {
+    if (name.empty()) {
       break;
     }
     planner_manager_.launchScenePlugin(*this, name);
@@ -180,7 +180,7 @@ void BehaviorVelocityPlannerNode::onUnloadPlugin(
 
 // NOTE: argument planner_data must not be referenced for multithreading
 bool BehaviorVelocityPlannerNode::isDataReady(
-  const PlannerData planner_data, rclcpp::Clock clock) const
+  const PlannerData& planner_data, rclcpp::Clock clock) const
 {
   const auto & d = planner_data;
 
