@@ -72,7 +72,7 @@ visualization_msgs::msg::Marker::SharedPtr get_path_confidence_marker_ptr(
 visualization_msgs::msg::Marker::SharedPtr get_predicted_path_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
-  const std_msgs::msg::ColorRGBA & predicted_path_color, const bool is_simple)
+  const std_msgs::msg::ColorRGBA & predicted_path_color, const int simple_visualize_mode)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
@@ -83,7 +83,7 @@ visualization_msgs::msg::Marker::SharedPtr get_predicted_path_marker_ptr(
   marker_ptr->color = predicted_path_color;
   marker_ptr->color.a = 0.6;
   marker_ptr->scale.x = 0.015;
-  calc_path_line_list(predicted_path, marker_ptr->points, is_simple);
+  calc_path_line_list(predicted_path, marker_ptr->points, simple_visualize_mode);
   for (size_t k = 0; k < marker_ptr->points.size(); ++k) {
     marker_ptr->points.at(k).z -= shape.dimensions.z * 0.5;
   }
@@ -906,21 +906,42 @@ void calc_2d_polygon_bottom_line_list(
 
 void calc_path_line_list(
   const autoware_auto_perception_msgs::msg::PredictedPath & paths,
-  std::vector<geometry_msgs::msg::Point> & points, const bool is_simple)
+  std::vector<geometry_msgs::msg::Point> & points, const int simple_visualize_mode)
 {
-  const int circle_line_num = is_simple ? 5 : 10;
+  int circle_line_num = 10;
+  int line_interval = 1;
+  int circle_interval = 1;
 
-  for (int i = 0; i < static_cast<int>(paths.path.size()) - 1; ++i) {
+  switch (simple_visualize_mode) {
+    default:
+    case 0:
+      // Normal
+      break;
+    case 1:
+      // Simple
+      circle_line_num = 5;
+      line_interval = 1;
+      circle_interval = 2;
+      break;
+    case 2:
+      // Simple2
+      circle_line_num = 3;
+      line_interval = 2;
+      circle_interval = 4;
+      break;
+  }
+
+  for (int i = 0; i < static_cast<int>(paths.path.size()) - line_interval; i += line_interval) {
     geometry_msgs::msg::Point point;
     point.x = paths.path.at(i).position.x;
     point.y = paths.path.at(i).position.y;
     point.z = paths.path.at(i).position.z;
     points.push_back(point);
-    point.x = paths.path.at(i + 1).position.x;
-    point.y = paths.path.at(i + 1).position.y;
-    point.z = paths.path.at(i + 1).position.z;
+    point.x = paths.path.at(i + line_interval).position.x;
+    point.y = paths.path.at(i + line_interval).position.y;
+    point.z = paths.path.at(i + line_interval).position.z;
     points.push_back(point);
-    if (!is_simple || i % 2 == 0) {
+    if (simple_visualize_mode == 0 || i % circle_interval == 0) {
       calc_circle_line_list(point, 0.25, points, circle_line_num);
     }
   }

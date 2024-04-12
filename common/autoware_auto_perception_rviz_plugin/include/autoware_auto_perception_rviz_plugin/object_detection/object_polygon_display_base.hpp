@@ -104,6 +104,7 @@ public:
       "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this);
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
+    m_simple_visualize_mode_property->addOption("Simple2", 2);
     // Confidence interval property
     m_confidence_interval_property = new rviz_common::properties::EnumProperty(
       "Confidence Interval", "95%", "Confidence interval of state estimations.", this);
@@ -361,7 +362,7 @@ protected:
       const std_msgs::msg::ColorRGBA predicted_path_color = get_color_from_uuid(uuid_str);
       return detail::get_predicted_path_marker_ptr(
         shape, predicted_path, predicted_path_color,
-        m_simple_visualize_mode_property->getOptionInt() == 1);
+        m_simple_visualize_mode_property->getOptionInt());
     } else {
       return std::nullopt;
     }
