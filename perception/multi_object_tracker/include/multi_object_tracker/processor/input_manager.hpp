@@ -33,6 +33,9 @@ public:
     const std::string & input_topic, const std::string & long_name, const std::string & short_name);
 
   void setObjects(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
+  void getObjectsOlderThan(
+    const rclcpp::Time & time, const double duration,
+    std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects);
 
 private:
   rclcpp::Node & node_;
@@ -57,7 +60,8 @@ private:
   rclcpp::Time latest_message_time_;
 };
 
-class InputManager{
+class InputManager
+{
 public:
   explicit InputManager(rclcpp::Node & node);
 

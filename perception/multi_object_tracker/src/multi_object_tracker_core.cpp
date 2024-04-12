@@ -217,27 +217,25 @@ void MultiObjectTracker::onTimer()
   constexpr double maximum_latency_ratio = 1.11;  // 11% margin
   const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
 
-  if (elapsed_time > maximum_publish_latency) {
-    // update objects
-    if (objects_data_.empty()) {
-      return;
-    }
-    // updated from accumulated objects
-    // sort by time
-    sort(objects_data_.begin(), objects_data_.end(), [](const auto & a, const auto & b) {
-      return a.first.seconds() < b.first.seconds();
-    });
+  if (elapsed_time < maximum_publish_latency) return;
 
-    // run onMeasurement for each queue
-    while (!objects_data_.empty()) {
-      const auto & pair = objects_data_.front();
-      runProcess(std::make_shared<DetectedObjects>(pair.second));
-      objects_data_.erase(objects_data_.begin());
-    }
+  // update trackers from accumulated input objects
+  if (objects_data_.empty()) return;
 
-    // Publish
-    checkAndPublish(current_time);
+  // sort by time
+  sort(objects_data_.begin(), objects_data_.end(), [](const auto & a, const auto & b) {
+    return a.first.seconds() < b.first.seconds();
+  });
+
+  // run onMeasurement for each queue
+  while (!objects_data_.empty()) {
+    const auto & pair = objects_data_.front();
+    runProcess(std::make_shared<DetectedObjects>(pair.second));
+    objects_data_.erase(objects_data_.begin());
   }
+
+  // Publish
+  checkAndPublish(current_time);
 }
 
 void MultiObjectTracker::runProcess(const DetectedObjects::ConstSharedPtr input_objects_msg)

@@ -75,6 +75,25 @@ void InputStream::setObjects(
   latency_var_ = (1.0 - gain) * latency_var_ + gain * latency_delta * latency_delta;
 }
 
+void InputStream::getObjectsOlderThan(
+  const rclcpp::Time & time, const double duration,
+  std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
+{
+  objects.clear();
+  for (const auto & object : objects_que_) {
+    // Skip if the object is older than the specified duration
+    const rclcpp::Time object_time = rclcpp::Time(object.header.stamp);
+    const double time_diff = (object_time - time).seconds();
+    if (time_diff > duration) {
+      continue;
+    }
+    // Add the object if the object is older than the specified time
+    if (time_diff >= 0.0) {
+      objects.push_back(object);
+    }
+  }
+}
+
 InputManager::InputManager(rclcpp::Node & node) : node_(node)
 {
 }
@@ -89,4 +108,33 @@ void InputManager::init(
     input_stream.init(input_topics[i], long_names[i], short_names[i]);
     input_streams_.push_back(std::make_shared<InputStream>(input_stream));
   }
+}
+
+void InputManager::getObjects(
+  const rclcpp::Time & now,
+  std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
+{
+  objects.clear();
+
+  // Get proper latency
+  constexpr double target_latency = 0.15;   // [s], measurement to tracking latency, as much as the
+                                            // detector latency, the less total latency
+  constexpr double acceptable_band = 0.15;  // [s], acceptable band from the target latency
+  rclcpp::Time time = now - rclcpp::Duration::from_seconds(target_latency);
+
+  // Get objects from all input streams
+  for (const auto & input_stream : input_streams_) {
+    std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_tmp;
+    input_stream->getObjectsOlderThan(time, acceptable_band, objects_tmp);
+    objects.insert(objects.end(), objects_tmp.begin(), objects_tmp.end());
+  }
+
+  // Sort objects by timestamp
+  std::sort(
+    objects.begin(), objects.end(),
+    [](
+      const autoware_auto_perception_msgs::msg::DetectedObjects & a,
+      const autoware_auto_perception_msgs::msg::DetectedObjects & b) {
+      return (rclcpp::Time(a.header.stamp) - rclcpp::Time(b.header.stamp)).seconds() < 0;
+    });
 }
