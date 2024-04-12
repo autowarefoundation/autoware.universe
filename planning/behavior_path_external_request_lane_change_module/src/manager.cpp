@@ -19,6 +19,7 @@
 
 namespace autoware::behavior_path_planner
 {
+using ::behavior_path_planner::LaneChangeInterface;
 
 std::unique_ptr<SceneModuleInterface>
 ExternalRequestLaneChangeRightModuleManager::createNewSceneModuleInstance()
