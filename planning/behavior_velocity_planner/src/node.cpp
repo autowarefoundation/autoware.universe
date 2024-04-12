@@ -119,7 +119,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       std::bind(&BehaviorVelocityPlannerNode::on_virtual_traffic_light_states, this, _1),
       create_subscription_options(this));
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-    "~/input/occupancy_grid", 1, std::bind(&BehaviorVelocityPlannerNode::on_occupancy_grid, this, _1),
+    "~/input/occupancy_grid", 1,
+    std::bind(&BehaviorVelocityPlannerNode::on_occupancy_grid, this, _1),
     create_subscription_options(this));
 
   srv_load_plugin_ = create_service<LoadPlugin>(
