@@ -21,6 +21,7 @@
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include "motion_utils/vehicle/vehicle_state_checker.hpp"
 
 #include <memory>
 
@@ -36,6 +37,8 @@ private:
   void onCurrentGear(autoware_auto_vehicle_msgs::msg::GearReport::SharedPtr msg);
   void updateCurrentShiftCmd();
   void initTimer(double period_s);
+
+  std::unique_ptr<motion_utils::VehicleStopChecker> vehicle_stop_checker_;
 
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_shift_cmd_;
   rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "shift_decider/shift_decider.hpp"
+#include "motion_utils/vehicle/vehicle_state_checker.hpp"
 
 #include <rclcpp/timer.hpp>
 
@@ -25,7 +26,7 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
 : Node("shift_decider", node_options)
 {
   using std::placeholders::_1;
-
+  vehicle_stop_checker_ = std::make_unique<motion_utils::VehicleStopChecker>(this);
   static constexpr std::size_t queue_size = 1;
   rclcpp::QoS durable_qos(queue_size);
   durable_qos.transient_local();
@@ -75,23 +76,20 @@ void ShiftDecider::updateCurrentShiftCmd()
   using autoware_auto_system_msgs::msg::AutowareState;
   using autoware_auto_vehicle_msgs::msg::GearCommand;
 
+  const auto stopped = vehicle_stop_checker_->isVehicleStopped(0.0);
+  std::cerr << "stopped: " << stopped << std::endl;
   shift_cmd_.stamp = now();
   static constexpr double vel_threshold = 0.01;  // to prevent chattering
+  std::cerr << "longitudinal.speed: " << control_cmd_->longitudinal.speed << std::endl;
   if (autoware_state_->state == AutowareState::DRIVING) {
-    if (control_cmd_->longitudinal.speed > vel_threshold) {
-      shift_cmd_.command = GearCommand::DRIVE;
-      std::cerr << "shift_cmd: DRIVE" << std::endl;
-    } else if (control_cmd_->longitudinal.speed < -vel_threshold) {
-      shift_cmd_.command = GearCommand::REVERSE;
-      std::cerr << "shift_cmd: REVERSE" << std::endl;
+    if (stopped) {
+      if (control_cmd_->longitudinal.speed > vel_threshold) {
+        shift_cmd_.command = GearCommand::DRIVE;
+      } else if (control_cmd_->longitudinal.speed < -vel_threshold) {
+        shift_cmd_.command = GearCommand::REVERSE;
+      } 
     } else {
       shift_cmd_.command = prev_shift_command;
-      if (prev_shift_command == GearCommand::DRIVE) {
-        std::cerr << "shift_cmd: DRIVE" << std::endl;
-      }
-      if (prev_shift_command == GearCommand::REVERSE) {
-        std::cerr << "shift_cmd: REVERSE" << std::endl;
-      }
     }
   } else {
     if (
@@ -104,6 +102,13 @@ void ShiftDecider::updateCurrentShiftCmd()
     }
   }
   prev_shift_command = shift_cmd_.command;
+  if (shift_cmd_.command == GearCommand::DRIVE) {
+    std::cerr << "ShiftDecider: DRIVE" << std::endl;
+  } else if (shift_cmd_.command == GearCommand::REVERSE) {
+      std::cerr << "ShiftDecider: REVERSE" << std::endl;
+  } else if (shift_cmd_.command == GearCommand::PARK) {
+      std::cerr << "ShiftDecider: PARK" << std::endl;
+  } 
 }
 
 void ShiftDecider::initTimer(double period_s)
