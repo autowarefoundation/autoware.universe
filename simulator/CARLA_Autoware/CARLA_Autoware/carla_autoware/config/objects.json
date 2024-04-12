@@ -24,33 +24,19 @@
           "type": "sensor.camera.rgb",
           "id": "rgb_front",
           "spawn_point": { "x": 0.7, "y": 0.0, "z": 1.6, "roll": 0.0, "pitch": 0.0, "yaw": 0.0 },
-          "image_size_x": 1280,
-          "image_size_y": 720,
-          "fov": 100.0
-        },
-        {
-          "type": "sensor.camera.rgb",
-          "id": "rgb_view",
-          "spawn_point": { "x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0 },
-          "image_size_x": 800,
-          "image_size_y": 600,
-          "fov": 90.0,
-          "attached_objects": [
-            {
-              "type": "actor.pseudo.control",
-              "id": "control"
-            }
-          ]
+          "image_size_x": 480,
+          "image_size_y": 360,
+          "fov": 90.0
         },
         {
           "type": "sensor.lidar.ray_cast",
           "id": "lidar",
           "spawn_point": { "x": 0.0, "y": 0.0, "z": 2.6, "roll": 0.0, "pitch": 0.0, "yaw": 0.0 },
           "range": 50,
-          "channels": 32,
-          "points_per_second": 320000,
-          "upper_fov": 2.0,
-          "lower_fov": -26.8,
+          "channels": 64,
+          "points_per_second": 480000,
+          "upper_fov": 3.0,
+          "lower_fov": -27.0,
           "rotation_frequency": 20,
           "noise_stddev": 0.0
         },
@@ -85,11 +71,6 @@
           "spawn_point": { "x": 0.0, "y": 0.0, "z": 0.0 }
         },
         {
-          "type": "sensor.other.lane_invasion",
-          "id": "lane_invasion",
-          "spawn_point": { "x": 0.0, "y": 0.0, "z": 0.0 }
-        },
-        {
           "type": "sensor.pseudo.tf",
           "id": "tf"
         },
@@ -100,10 +81,6 @@
         {
           "type": "sensor.pseudo.odom",
           "id": "odometry"
-        },
-        {
-          "type": "sensor.pseudo.speedometer",
-          "id": "speedometer"
         },
         {
           "type": "actor.pseudo.control",
