@@ -53,6 +53,17 @@ struct gpu_info
   std::set<unsigned int> supported_gpu_clocks;  //!< @brief list of supported GPU clocks
 };
 
+/**
+ * @brief GPU temperature inforamation
+ */
+struct gpu_temp_info
+{
+  std::string name;  //!< @brief name of device
+  unsigned int temp;    //!< @brief temperature of device
+  std::string pci_bus_id;  //!< @brief PCI bus ID of device
+  std::string context;  //!< @brief error message
+};
+
 class GPUMonitor : public GPUMonitorBase
 {
 public:
@@ -117,6 +128,23 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
 
   /**
+   *  
+   * @brief check GPU information
+   */
+  void onTimer();
+
+  /**
+   * @brief timeout timer for temperature
+   */
+  void onTempTimeout();
+
+  /**
+   * @brief read GPU temperature
+   */
+  void readTemp();
+
+
+  /**
    * @brief get human-readable output for memory size
    * @param [in] size size with bytes
    * @return human-readable output
@@ -147,8 +175,21 @@ protected:
   static const size_t MAX_ARRAY_SIZE = 64;
   static const size_t MAX_NAME_LENGTH = 128;
 
+  rclcpp::TimerBase::SharedPtr timer_;  //!< @brief timer for monitoring
+  rclcpp::TimerBase::SharedPtr timeout_timer_;  //!< @brief timer for temperature timeout
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief callback group for timer
+
   std::vector<gpu_info> gpus_;      //!< @brief list of gpus
   uint64_t current_timestamp_ = 0;  //!< @brief latest timestamp[usec] of addProcessUsage()
+
+  std::mutex temp_mutex_; //!< @brief mutex for temperature
+  std::vector<gpu_temp_info> temp_info_vector_;  //!< @brief list of temperature information
+  int temp_timeout_;                   //!< @brief timeout for temperature
+  double temp_elapsed_ms_;              //!< @brief elapsed time for temperature
+  std::mutex temp_timeout_mutex_;         //!< @brief mutex for temperature timeout
+  bool temp_timeout_expired_;             //!< @brief timeout for temperature has expired or not
+
+
 
   /**
    * @brief GPU frequency status messages

@@ -1,5 +1,6 @@
 /**:
   ros__parameters:
+    temp_timeout: 5
     temp_warn: 90.0
     temp_error: 95.0
     gpu_usage_warn: 0.90
