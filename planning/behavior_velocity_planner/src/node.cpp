@@ -82,14 +82,14 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
     this->create_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
-      "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1),
+      "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::on_trigger, this, _1),
       createSubscriptionOptions(this));
 
   // Subscribers
   sub_predicted_objects_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
       "~/input/dynamic_objects", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onPredictedObjects, this, _1),
+      std::bind(&BehaviorVelocityPlannerNode::on_predicted_objects, this, _1),
       createSubscriptionOptions(this));
   sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
@@ -232,7 +232,7 @@ void BehaviorVelocityPlannerNode::onOccupancyGrid(
   planner_data_.occupancy_grid = msg;
 }
 
-void BehaviorVelocityPlannerNode::onPredictedObjects(
+void BehaviorVelocityPlannerNode::on_predicted_objects(
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -374,7 +374,7 @@ void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
   planner_data_.virtual_traffic_light_states = msg;
 }
 
-void BehaviorVelocityPlannerNode::onTrigger(
+void BehaviorVelocityPlannerNode::on_trigger(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   std::unique_lock<std::mutex> lk(mutex_);
