@@ -280,6 +280,8 @@ void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
       front_count++;
     }
   }
+  front_pc.data.resize(front_count * point_step);
+  behind_pc.data.resize(behind_count * point_step);
 }
 void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   const OccupancyGrid::ConstSharedPtr & input_ogm, const PointCloud2::ConstSharedPtr & input_pc)
@@ -348,9 +350,9 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     pointcloud_pub_->publish(std::move(base_link_frame_filtered_pc_ptr));
   }
   if (debugger_ptr_) {
+    finalizePointCloud2(ogm_frame_pc, high_confidence_pc);
     finalizePointCloud2(ogm_frame_pc, filtered_low_confidence_pc);
     finalizePointCloud2(ogm_frame_pc, outlier_pc);
-    finalizePointCloud2(ogm_frame_pc, high_confidence_pc);
     debugger_ptr_->publishHighConfidence(high_confidence_pc, ogm_frame_pc.header);
     debugger_ptr_->publishLowConfidence(filtered_low_confidence_pc, ogm_frame_pc.header);
     debugger_ptr_->publishOutlier(outlier_pc, ogm_frame_pc.header);
@@ -370,7 +372,12 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 void OccupancyGridMapOutlierFilterComponent::initializerPointCloud2(
   const PointCloud2 & input, PointCloud2 & output)
 {
+  output.header = input.header;
   output.point_step = input.point_step;
+  output.fields = input.fields;
+  output.height = input.height;
+  output.is_bigendian = input.is_bigendian;
+  output.is_dense = input.is_dense;
   output.data.resize(input.data.size());
 }
 
