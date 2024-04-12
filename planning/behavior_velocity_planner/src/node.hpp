@@ -136,6 +136,6 @@ private:
 
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
-}  // namespace autoware
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // NODE_HPP_
