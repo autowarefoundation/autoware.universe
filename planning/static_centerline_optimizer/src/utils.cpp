@@ -45,6 +45,22 @@ lanelet::Point3d createPoint3d(const double x, const double y, const double z = 
 
 namespace utils
 {
+rclcpp::QoS create_transient_local_qos()
+{
+  return rclcpp::QoS{1}.transient_local();
+}
+
+lanelet::ConstLanelets get_lanelets_from_ids(
+  const RouteHandler & route_handler, const std::vector<lanelet::Id> & lane_ids)
+{
+  lanelet::ConstLanelets lanelets;
+  for (const lanelet::Id lane_id : lane_ids) {
+    const auto lanelet = route_handler.getLaneletsFromId(lane_id);
+    lanelets.push_back(lanelet);
+  }
+  return lanelets;
+}
+
 geometry_msgs::msg::Pose get_center_pose(
   const RouteHandler & route_handler, const size_t lanelet_id)
 {
