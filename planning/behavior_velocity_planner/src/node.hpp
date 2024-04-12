@@ -83,14 +83,14 @@ private:
   void on_predicted_objects(
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
   void on_no_ground_point_cloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
-  void onAcceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
-  void onLaneletMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  void on_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
+  void on_acceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
+  void on_lanelet_map(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   void onTrafficSignals(
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
   void on_virtual_traffic_light_states(
     const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
-  void onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
+  void on_occupancy_grid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
   void onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg);
   void onParam();
 
@@ -126,7 +126,7 @@ private:
 
   // function
   geometry_msgs::msg::PoseStamped getCurrentPose();
-  bool isDataReady(const PlannerData & planner_data, rclcpp::Clock clock) const;
+  bool is_data_ready(const PlannerData & planner_data, rclcpp::Clock clock) const;
   autoware_auto_planning_msgs::msg::Path generatePath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
