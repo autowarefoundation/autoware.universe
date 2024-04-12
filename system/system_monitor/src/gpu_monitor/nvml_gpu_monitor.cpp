@@ -117,7 +117,7 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   for (auto itr = tmp_temp_info_vector.begin(); itr != tmp_temp_info_vector.end(); ++itr, ++index) {
-    if (itr->context.empty()) {
+    if (!itr->context.empty()) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current temperature");
       stat.add(fmt::format("GPU {}: name", index), itr->name);
       stat.add(fmt::format("GPU {}: bus-id", index), itr->pci_bus_id);
