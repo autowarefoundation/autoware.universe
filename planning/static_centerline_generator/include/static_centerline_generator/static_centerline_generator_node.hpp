@@ -39,6 +39,7 @@ namespace autoware::static_centerline_generator
 using autoware::static_centerline_generator::srv::LoadMap;
 using autoware::static_centerline_generator::srv::PlanPath;
 using autoware::static_centerline_generator::srv::PlanRoute;
+using ::route_handler::RouteHandler;
 
 struct CenterlineWithRoute
 {
