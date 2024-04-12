@@ -1860,7 +1860,7 @@ bool NormalLaneChange::calcAbortPath()
     RCLCPP_ERROR(logger_, "failed to generate abort shifted path.");
   }
 
-  PathWithLaneId reference_lane_segment = prev_module_output_.path;
+  auto reference_lane_segment = prev_module_output_.path;
   {
     const auto terminal_path =
       calcTerminalLaneChangePath(reference_lanelets, selected_path.info.target_lanes);
