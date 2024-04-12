@@ -95,7 +95,6 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
   input_topic_size_ = input_topic_names_.size();
   sub_objects_array_.resize(input_topic_size_);
-  objects_data_.resize(input_topic_size_);
 
   for (size_t i = 0; i < input_topic_size_; i++) {
     RCLCPP_INFO(get_logger(), "Subscribing to %s", input_topic_names_.at(i).c_str());
@@ -166,7 +165,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 void MultiObjectTracker::onData(
   const DetectedObjects::ConstSharedPtr msg, const size_t array_number)
 {
-  objects_data_.at(array_number) = msg;
+  std::pair<rclcpp::Time, DetectedObjects> pair = std::make_pair(msg->header.stamp, *msg);
+  objects_data_.push_back(pair);
 
   // debug message
   RCLCPP_INFO(
@@ -181,7 +181,7 @@ void MultiObjectTracker::onData(
     last_measurement_time_ = msg->header.stamp;
   }
 
-  onMeasurement(msg);
+  // onMeasurement(msg);
 }
 
 void MultiObjectTracker::onMeasurement(const DetectedObjects::ConstSharedPtr input_objects_msg)
@@ -190,42 +190,8 @@ void MultiObjectTracker::onMeasurement(const DetectedObjects::ConstSharedPtr inp
   const rclcpp::Time measurement_time =
     rclcpp::Time(input_objects_msg->header.stamp, this->now().get_clock_type());
 
-  /* keep the latest input stamp and check transform*/
   debugger_->startMeasurementTime(this->now(), measurement_time);
-  const auto self_transform =
-    getTransformAnonymous(tf_buffer_, "base_link", world_frame_id_, measurement_time);
-  if (!self_transform) {
-    return;
-  }
-  /* transform to world coordinate */
-  DetectedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
-        *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
-    return;
-  }
-
-  ////// Tracker Process
-  //// Associate and update
-  /* prediction */
-  processor_->predict(measurement_time);
-  /* object association */
-  std::unordered_map<int, int> direct_assignment, reverse_assignment;
-  {
-    const auto & list_tracker = processor_->getListTracker();
-    const auto & detected_objects = transformed_objects;
-    // global nearest neighbor
-    Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
-      detected_objects, list_tracker);  // row : tracker, col : measurement
-    data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
-  }
-  /* tracker update */
-  processor_->update(transformed_objects, *self_transform, direct_assignment);
-  /* tracker pruning */
-  processor_->prune(measurement_time);
-  /* spawn new tracker */
-  processor_->spawn(transformed_objects, *self_transform, reverse_assignment);
-
-  // debugger time
+  runProcess(input_objects_msg);
   debugger_->endMeasurementTime(this->now());
 
   // Publish objects if the timer is not enabled
@@ -244,14 +210,78 @@ void MultiObjectTracker::onMeasurement(const DetectedObjects::ConstSharedPtr inp
 void MultiObjectTracker::onTimer()
 {
   const rclcpp::Time current_time = this->now();
+
   // Check the publish period
   const auto elapsed_time = (current_time - last_published_time_).seconds();
   // If the elapsed time is over the period, publish objects with prediction
   constexpr double maximum_latency_ratio = 1.11;  // 11% margin
   const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
+
   if (elapsed_time > maximum_publish_latency) {
+    // update objects
+    if (objects_data_.empty()) {
+      return;
+    }
+    // updated from accumulated objects
+    // sort by time
+    sort(objects_data_.begin(), objects_data_.end(), [](const auto & a, const auto & b) {
+      return a.first.seconds() < b.first.seconds();
+    });
+
+    // run onMeasurement for each queue
+    while (!objects_data_.empty()) {
+      const auto & pair = objects_data_.front();
+      runProcess(std::make_shared<DetectedObjects>(pair.second));
+      objects_data_.erase(objects_data_.begin());
+    }
+
+    // Publish
     checkAndPublish(current_time);
   }
+}
+
+void MultiObjectTracker::runProcess(const DetectedObjects::ConstSharedPtr input_objects_msg)
+{
+  // Get the time of the measurement
+  const rclcpp::Time measurement_time =
+    rclcpp::Time(input_objects_msg->header.stamp, this->now().get_clock_type());
+
+  // Get the transform of the self frame
+  const auto self_transform =
+    getTransformAnonymous(tf_buffer_, "base_link", world_frame_id_, measurement_time);
+  if (!self_transform) {
+    return;
+  }
+
+  // Transform the objects to the world frame
+  DetectedObjects transformed_objects;
+  if (!object_recognition_utils::transformObjects(
+        *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
+    return;
+  }
+
+  /* prediction */
+  processor_->predict(measurement_time);
+
+  /* object association */
+  std::unordered_map<int, int> direct_assignment, reverse_assignment;
+  {
+    const auto & list_tracker = processor_->getListTracker();
+    const auto & detected_objects = transformed_objects;
+    // global nearest neighbor
+    Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
+      detected_objects, list_tracker);  // row : tracker, col : measurement
+    data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
+  }
+
+  /* tracker update */
+  processor_->update(transformed_objects, *self_transform, direct_assignment);
+
+  /* tracker pruning */
+  processor_->prune(measurement_time);
+
+  /* spawn new tracker */
+  processor_->spawn(transformed_objects, *self_transform, reverse_assignment);
 }
 
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)

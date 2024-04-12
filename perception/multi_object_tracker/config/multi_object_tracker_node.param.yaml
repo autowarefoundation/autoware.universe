@@ -21,3 +21,5 @@
     diagnostics_error_delay: 1.0     # [sec]
 
     input_topic_names: ["/perception/object_recognition/detection/objects"]
+    input_names_long: [merged_objects]
+    input_names_short: [all]

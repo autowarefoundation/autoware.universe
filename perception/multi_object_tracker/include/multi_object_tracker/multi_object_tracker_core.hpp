@@ -48,6 +48,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace multi_object_tracker
@@ -90,7 +91,7 @@ private:
 
   std::vector<std::string> input_topic_names_{};
   size_t input_topic_size_{};
-  std::vector<DetectedObjects::ConstSharedPtr> objects_data_{};
+  std::vector<std::pair<rclcpp::Time, DetectedObjects>> objects_data_{};
 
   // callback functions
   void onData(const DetectedObjects::ConstSharedPtr msg, const size_t array_number);
@@ -98,6 +99,7 @@ private:
   void onTimer();
 
   // publish processes
+  void runProcess(const DetectedObjects::ConstSharedPtr input_objects_msg);
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
