@@ -46,9 +46,12 @@ private:
   size_t que_size_{20};
   std::deque<autoware_auto_perception_msgs::msg::DetectedObjects> objects_que_;
 
+  bool is_time_initialized_{false};
   double expected_rate_;
   double latency_mean_;
   double latency_var_;
+  double interval_mean_;
+  double interval_var_;
 
   rclcpp::Time latest_measurement_time_;
   rclcpp::Time latest_message_time_;

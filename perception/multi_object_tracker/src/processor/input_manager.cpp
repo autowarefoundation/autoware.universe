@@ -34,8 +34,10 @@ void InputManager::init(
 
   // Initialize latency statistics
   expected_rate_ = 10.0;
-  latency_mean_ = 1 / expected_rate_;
+  latency_mean_ = 0.10;  // [s]
   latency_var_ = 0.0;
+  interval_mean_ = 1 / expected_rate_;
+  interval_var_ = 0.0;
 }
 
 void InputManager::setObjects(
@@ -46,14 +48,28 @@ void InputManager::setObjects(
   if (objects_que_.size() > que_size_) {
     objects_que_.pop_front();
   }
-  latest_message_time_ = node_.now();
+
+  // Filter parameters
+  constexpr double gain = 0.05;
+  const auto now = node_.now();
+
+  // Calculate interval, Update interval statistics
+  if (is_time_initialized_) {
+    const double interval = (now - latest_message_time_).seconds();
+    interval_mean_ = (1.0 - gain) * interval_mean_ + gain * interval;
+    const double interval_delta = interval - interval_mean_;
+    interval_var_ = (1.0 - gain) * interval_var_ + gain * interval_delta * interval_delta;
+  }
+
+  // Update time
+  latest_message_time_ = now;
   latest_measurement_time_ = object.header.stamp;
+  if (!is_time_initialized_) is_time_initialized_ = true;
 
   // Calculate latency
   const double latency = (latest_message_time_ - latest_measurement_time_).seconds();
 
   // Update latency statistics
-  constexpr double gain = 0.05;
   latency_mean_ = (1.0 - gain) * latency_mean_ + gain * latency;
   const double latency_delta = latency - latency_mean_;
   latency_var_ = (1.0 - gain) * latency_var_ + gain * latency_delta * latency_delta;
