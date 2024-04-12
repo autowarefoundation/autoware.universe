@@ -23,7 +23,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <utility>
 
 namespace trt_mtr
 {
@@ -182,7 +181,7 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
       declare_parameter<std::string>("intention_point_filepath");
     const auto num_intention_point_cluster =
       static_cast<size_t>(declare_parameter<int>("num_intention_point_cluster"));
-    config_ptr_ = std::make_unique<MtrConfig>(
+    config_ptr_ = std::make_unique<MTRConfig>(
       target_labels, num_past, num_mode, num_future, max_num_polyline, max_num_point,
       point_break_distance, offset_xy, intention_point_filepath, num_intention_point_cluster);
     model_ptr_ = std::make_unique<TrtMTR>(model_path, precision, *config_ptr_.get());
@@ -210,7 +209,7 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
     return;  // No polyline
   }
 
-  const auto current_time = rclcpp::Time(object_msg->header.stamp).seconds();
+  const auto current_time = static_cast<float>(rclcpp::Time(object_msg->header.stamp).seconds());
 
   timestamps_.emplace_back(current_time);
   // TODO(ktro2828): update timestamps
@@ -289,7 +288,30 @@ void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
 
 void MTRNode::onEgo(const Odometry::ConstSharedPtr ego_msg)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "Ego msg is received: " << ego_msg->header.frame_id);
+  const auto current_time = static_cast<float>(rclcpp::Time(ego_msg->header.stamp).seconds());
+  const auto & position = ego_msg->pose.pose.position;
+  const auto & twist = ego_msg->twist.twist;
+  const auto yaw = static_cast<float>(tf2::getYaw(ego_msg->pose.pose.orientation));
+  float ax = 0.0f, ay = 0.0f;
+  if (!ego_states_.empty()) {
+    const auto & latest_state = ego_states_.back();
+    const auto time_diff = current_time - latest_state.first;
+    ax = (static_cast<float>(twist.linear.x) - latest_state.second.vx()) / (time_diff + 1e-10f);
+    ay = static_cast<float>(twist.linear.y) - latest_state.second.vy() / (time_diff + 1e-10f);
+  }
+
+  // TODO(ktro2828): use received ego size topic
+  ego_states_.emplace_back(std::make_pair(
+    current_time,
+    AgentState(
+      static_cast<float>(position.x), static_cast<float>(position.y),
+      static_cast<float>(position.z), EGO_LENGTH, EGO_WIDTH, EGO_HEIGHT, yaw,
+      static_cast<float>(twist.linear.x), static_cast<float>(twist.linear.y), ax, ay, true)));
+
+  constexpr size_t max_buffer_size = 100;
+  if (max_buffer_size < ego_states_.size()) {
+    ego_states_.erase(ego_states_.begin(), ego_states_.begin());
+  }
 }
 
 bool MTRNode::convertLaneletToPolyline()
@@ -362,18 +384,23 @@ bool MTRNode::convertLaneletToPolyline()
 void MTRNode::removeAncientAgentHistory(
   const float current_time, const TrackedObjects::ConstSharedPtr objects_msg)
 {
-  // TODO(ktro2828): use ego info
+  constexpr float time_threshold = 1.0f;  // TODO(ktro2828): use parameter
   for (const auto & object : objects_msg->objects) {
     const auto & object_id = tier4_autoware_utils::toHexString(object.object_id);
     if (agent_history_map_.count(object_id) == 0) {
       continue;
     }
 
-    constexpr float time_threshold = 1.0f;  // TODO(ktro2828): use parameter
     const auto & history = agent_history_map_.at(object_id);
     if (history.is_ancient(current_time, time_threshold)) {
       agent_history_map_.erase(object_id);
     }
+  }
+
+  if (
+    agent_history_map_.count(EGO_ID) != 0 &&
+    agent_history_map_.at(EGO_ID).is_ancient(current_time, time_threshold)) {
+    agent_history_map_.erase(EGO_ID);
   }
 }
 
@@ -402,6 +429,15 @@ void MTRNode::updateAgentHistory(
     }
   }
 
+  auto ego_state = extractNearestEgo(current_time);
+  if (agent_history_map_.count(EGO_ID) == 0) {
+    AgentHistory history(EGO_ID, AgentLabel::VEHICLE, config_ptr_->num_past);
+    history.update(current_time, ego_state);
+  } else {
+    agent_history_map_.at(EGO_ID).update(current_time, ego_state);
+  }
+  observed_ids.emplace_back(EGO_ID);
+
   // update unobserved histories with empty
   for (auto & [object_id, history] : agent_history_map_) {
     if (std::find(observed_ids.cbegin(), observed_ids.cend(), object_id) != observed_ids.cend()) {
@@ -409,6 +445,15 @@ void MTRNode::updateAgentHistory(
     }
     history.update_empty();
   }
+}
+
+AgentState MTRNode::extractNearestEgo(const float current_time) const
+{
+  auto state = std::min_element(
+    ego_states_.cbegin(), ego_states_.cend(), [&](const auto & s1, const auto & s2) {
+      return std::abs(s1.first - current_time) < std::abs(s2.first - current_time);
+    });
+  return state->second;
 }
 
 std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> & histories)

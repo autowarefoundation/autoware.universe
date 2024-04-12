@@ -36,10 +36,10 @@ namespace trt_mtr
 /**
  * @brief A configuration of MTR.
  */
-struct MtrConfig
+struct MTRConfig
 {
   /**
-   * @brief Construct a new Mtr Config object
+   * @brief Construct a new instance.
    *
    * @param target_labels An array of target label names.
    * @param num_mode The number of modes.
@@ -49,7 +49,7 @@ struct MtrConfig
    * @param intention_point_filepath The path to intention points file.
    * @param num_intention_point_cluster The number of clusters for intension points.
    */
-  MtrConfig(
+  MTRConfig(
     const std::vector<std::string> & target_labels = {"VEHICLE", "PEDESTRIAN", "CYCLIST"},
     const size_t num_past = 10, const size_t num_mode = 6, const size_t num_future = 80,
     const size_t max_num_polyline = 768, const size_t max_num_point = 20,
@@ -81,7 +81,7 @@ struct MtrConfig
   std::array<float, 2> offset_xy;
   std::string intention_point_filepath;
   size_t num_intention_point_cluster;
-};
+};  // struct MTRConfig
 
 /**
  * @brief A class to inference with MTR.
@@ -101,7 +101,7 @@ public:
    */
   TrtMTR(
     const std::string & model_path, const std::string & precision,
-    const MtrConfig & config = MtrConfig(), const BatchConfig & batch_config = {1, 1, 1},
+    const MTRConfig & config = MTRConfig(), const BatchConfig & batch_config = {1, 1, 1},
     const size_t max_workspace_size = (1ULL << 30),
     const BuildConfig & build_config = BuildConfig());
 
@@ -122,7 +122,7 @@ public:
    *
    * @return const MtrConfig& The model configuration which can not be updated.
    */
-  const MtrConfig & config() const { return config_; }
+  const MTRConfig & config() const { return config_; }
 
 private:
   /**
@@ -152,7 +152,7 @@ private:
   bool postProcess(AgentData & agent_data, std::vector<PredictedTrajectory> & trajectories);
 
   // model parameters
-  MtrConfig config_;
+  MTRConfig config_;
 
   std::unique_ptr<MTRBuilder> builder_;
   cudaStream_t stream_{nullptr};
