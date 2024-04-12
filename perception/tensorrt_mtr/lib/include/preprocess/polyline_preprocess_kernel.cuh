@@ -82,7 +82,7 @@ __global__ void calculatePolylineCenterKernel(
 
 /**
  * @brief In cases of the number of batch polylines (L) is greater than K,
- *  extacts the topK elements.
+ *  extracts the topK elements.
  *
  * @param L The number of source polylines.
  * @param K The number of polylines expected as the model input.

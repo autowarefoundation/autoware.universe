@@ -42,6 +42,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace trt_mtr
@@ -55,6 +56,11 @@ using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 using nav_msgs::msg::Odometry;
+
+// TODO(ktro2828): use received ego size topic
+constexpr float EGO_LENGTH = 4.0f;
+constexpr float EGO_WIDTH = 2.0f;
+constexpr float EGO_HEIGHT = 1.0f;
 
 class PolylineTypeMap
 {
@@ -139,6 +145,8 @@ private:
   void updateAgentHistory(
     const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
 
+  AgentState extractNearestEgo(const float current_time) const;
+
   /**
    * @brief Extract target agents and return corresponding indices.
    *
@@ -179,10 +187,11 @@ private:
   tier4_autoware_utils::TransformListener transform_listener_;
 
   // MTR parameters
-  std::unique_ptr<MtrConfig> config_ptr_;
+  std::unique_ptr<MTRConfig> config_ptr_;
   std::unique_ptr<TrtMTR> model_ptr_;
   PolylineTypeMap polyline_type_map_;
   std::shared_ptr<PolylineData> polyline_ptr_;
+  std::vector<std::pair<float, AgentState>> ego_states_;
   std::vector<float> timestamps_;
 };  // class MTRNode
 }  // namespace trt_mtr

@@ -21,7 +21,7 @@
 namespace trt_mtr
 {
 TrtMTR::TrtMTR(
-  const std::string & model_path, const std::string & precision, const MtrConfig & config,
+  const std::string & model_path, const std::string & precision, const MTRConfig & config,
   const BatchConfig & batch_config, const size_t max_workspace_size,
   const BuildConfig & build_config)
 : config_(config),
