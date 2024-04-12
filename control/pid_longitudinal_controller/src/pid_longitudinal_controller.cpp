@@ -17,7 +17,7 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/normalization.hpp"
-
+#include "motion_utils/vehicle/vehicle_state_checker.hpp"
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -31,7 +31,8 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
 : node_parameters_(node.get_node_parameters_interface()),
   clock_(node.get_clock()),
   logger_(node.get_logger().get_child("longitudinal_controller")),
-  diagnostic_updater_(&node)
+  diagnostic_updater_(&node),   
+  vehicle_stop_checker_(std::make_unique<motion_utils::VehicleStopChecker>(&node))
 {
   using std::placeholders::_1;
 
@@ -891,12 +892,16 @@ enum PidLongitudinalController::Shift PidLongitudinalController::getCurrentShift
   const double target_vel =
     control_data.interpolated_traj.points.at(control_data.target_idx).longitudinal_velocity_mps;
 
-  if (target_vel > epsilon) {
-    return Shift::Forward;
-  } else if (target_vel < -epsilon) {
-    return Shift::Reverse;
-  }
+  const auto stopped = vehicle_stop_checker_->isVehicleStopped(0.0);
 
+  if (stopped) {
+    if (target_vel > epsilon) {
+      return Shift::Forward;
+    } else if (target_vel < -epsilon) {
+      return Shift::Reverse;
+    }
+  }
+  
   return m_prev_shift;
 }
 

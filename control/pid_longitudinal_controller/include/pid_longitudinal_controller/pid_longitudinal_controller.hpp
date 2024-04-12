@@ -41,6 +41,7 @@
 #include "tf2_msgs/msg/tf_message.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 #include "visualization_msgs/msg/marker.hpp"
+#include "motion_utils/vehicle/vehicle_state_checker.hpp"
 
 #include <deque>
 #include <memory>
@@ -247,6 +248,8 @@ private:
   DiagnosticData m_diagnostic_data;
   void setupDiagnosticUpdater();
   void checkControlState(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  std::unique_ptr<motion_utils::VehicleStopChecker> vehicle_stop_checker_;
 
   /**
    * @brief set current and previous velocity with received message
