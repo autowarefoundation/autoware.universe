@@ -3,28 +3,21 @@ from autoware_auto_vehicle_msgs.msg import ControlModeReport
 from autoware_auto_vehicle_msgs.msg import GearReport
 from autoware_auto_vehicle_msgs.msg import SteeringReport
 from autoware_auto_vehicle_msgs.msg import VelocityReport
-import carla
+from autoware_perception_msgs.msg import TrafficSignalArray
 from carla_msgs.msg import CarlaEgoVehicleControl
 from carla_msgs.msg import CarlaEgoVehicleStatus
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from nav_msgs.msg import Odometry
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile
-from sensor_msgs.msg import Imu
-from sensor_msgs.msg import PointCloud2
 
 
 class CarlaVehicleInterface(Node):
     def __init__(self):
         super().__init__("carla_vehicle_interface_node")
-
-        client = carla.Client("localhost", 2000)
-        client.set_timeout(30)
-
-        self._world = client.get_world()
         self.current_vel = 0.0
         self.target_vel = 0.0
         self.vel_diff = 0.0
-        self.current_control = carla.VehicleControl()
 
         # Publishes Topics used for AUTOWARE
         self.pub_vel_state = self.create_publisher(
@@ -40,26 +33,68 @@ class CarlaVehicleInterface(Node):
         self.pub_control = self.create_publisher(
             CarlaEgoVehicleControl, "/carla/ego_vehicle/vehicle_control_cmd", 1
         )
-        self.vehicle_imu_publisher = self.create_publisher(Imu, "/sensing/imu/tamagawa/imu_raw", 1)
-        self.sensing_cloud_publisher = self.create_publisher(PointCloud2, "/carla_pointcloud", 1)
+        self.pub_traffic_signal_info = self.create_publisher(
+            TrafficSignalArray, "/perception/traffic_light_recognition/traffic_signals", 1
+        )
+        self.pub_pose_with_cov = self.create_publisher(
+            PoseWithCovarianceStamped, "/sensing/gnss/pose_with_covariance", 1
+        )
 
         # Subscribe Topics used in Control
         self.sub_status = self.create_subscription(
             CarlaEgoVehicleStatus, "/carla/ego_vehicle/vehicle_status", self.ego_status_callback, 1
         )
         self.sub_control = self.create_subscription(
-            AckermannControlCommand,
-            "/control/command/control_cmd",
-            self.control_callback,
-            qos_profile=QoSProfile(depth=1),
+            AckermannControlCommand, "/control/command/control_cmd", self.control_callback, 1
         )
-        self.sub_imu = self.create_subscription(Imu, "/carla/ego_vehicle/imu", self.publish_imu, 1)
-        self.sub_lidar = self.create_subscription(
-            PointCloud2,
-            "/carla/ego_vehicle/lidar",
-            self.publish_lidar,
-            qos_profile=QoSProfile(depth=1),
+        self.sub_odom = self.create_subscription(
+            Odometry, "/carla/ego_vehicle/odometry", self.pose_callback, 1
         )
+
+    def pose_callback(self, pose_msg):
+        out_pose_with_cov = PoseWithCovarianceStamped()
+        out_pose_with_cov.header.frame_id = "map"
+        out_pose_with_cov.header.stamp = pose_msg.header.stamp
+        out_pose_with_cov.pose.pose = pose_msg.pose.pose
+        out_pose_with_cov.pose.covariance = [
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+        self.pub_pose_with_cov.publish(out_pose_with_cov)
 
     def ego_status_callback(self, in_status):
         """Convert and publish CARLA Ego Vehicle Status to AUTOWARE."""
@@ -67,6 +102,7 @@ class CarlaVehicleInterface(Node):
         out_steering_state = SteeringReport()
         out_ctrl_mode = ControlModeReport()
         out_gear_state = GearReport()
+        out_traffic = TrafficSignalArray()
 
         out_vel_state.header = in_status.header
         out_vel_state.header.frame_id = "base_link"
@@ -88,6 +124,7 @@ class CarlaVehicleInterface(Node):
         self.pub_steering_state.publish(out_steering_state)
         self.pub_ctrl_mode.publish(out_ctrl_mode)
         self.pub_gear_state.publish(out_gear_state)
+        self.pub_traffic_signal_info.publish(out_traffic)
 
     def control_callback(self, in_cmd):
         """Convert and publish CARLA Ego Vehicle Control to AUTOWARE."""
@@ -109,16 +146,6 @@ class CarlaVehicleInterface(Node):
 
         out_cmd.steer = -in_cmd.lateral.steering_tire_angle
         self.pub_control.publish(out_cmd)
-
-    def publish_lidar(self, lidar_msg):
-        """Publish LIDAR to Interface."""
-        lidar_msg.header.frame_id = "velodyne_top"
-        self.sensing_cloud_publisher.publish(lidar_msg)
-
-    def publish_imu(self, imu_msg):
-        """Publish IMU to Autoware."""
-        imu_msg.header.frame_id = "tamagawa/imu_link"
-        self.vehicle_imu_publisher.publish(imu_msg)
 
 
 def main(args=None):

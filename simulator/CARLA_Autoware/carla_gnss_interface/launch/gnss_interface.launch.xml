@@ -1,5 +1,0 @@
-<launch>
-  <group>
-    <node pkg="carla_gnss_interface" exec="carla_gnss_interface_node" name="carla_gnss_interface" output="screen"/>
-  </group>
-</launch>

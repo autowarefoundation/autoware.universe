@@ -1,0 +1,6 @@
+<launch>
+  <group>
+    <node pkg="carla_autoware" exec="carla_autoware" name="carla_autoware" output="screen"/>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="ego_vehicle2base_link" args="0 0 0 0 0 0 /ego_vehicle /base_link "/>
+  </group>
+</launch>
