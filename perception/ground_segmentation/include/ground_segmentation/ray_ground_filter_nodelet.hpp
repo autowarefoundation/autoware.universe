@@ -84,7 +84,7 @@ namespace ground_segmentation
 {
 class RayGroundFilterComponent : public pointcloud_preprocessor::Filter
 {
-  typedef pcl::PointXYZ PointType_;
+  typedef pcl::PointXYZI PointType_;
 
   struct PointXYZRTColor
   {
