@@ -69,7 +69,7 @@ public:
     const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names,
     const std::vector<std::string> & short_names);
 
-  void getObjects(
+  bool getObjects(
     const rclcpp::Time & now,
     std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects);
 

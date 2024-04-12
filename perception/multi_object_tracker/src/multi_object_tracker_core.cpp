@@ -79,8 +79,13 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
+
   declare_parameter("input_topic_names", std::vector<std::string>());
-  input_topic_names_ = get_parameter("input_topic_names").as_string_array();
+  declare_parameter("input_names_long", std::vector<std::string>());
+  declare_parameter("input_names_short", std::vector<std::string>());
+  std::vector<std::string> input_topic_names = get_parameter("input_topic_names").as_string_array();
+  std::vector<std::string> input_names_long = get_parameter("input_names_long").as_string_array();
+  std::vector<std::string> input_names_short = get_parameter("input_names_short").as_string_array();
 
   // Initialize the last measurement time
   last_measurement_time_ = this->now();
@@ -89,21 +94,29 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
 
   // ROS interface - Subscribers
-  if (input_topic_names_.empty()) {
+  if (input_topic_names.empty()) {
     RCLCPP_ERROR(get_logger(), "Need a 'input_topic_names' parameter to be set before continuing");
     return;
   }
-  input_topic_size_ = input_topic_names_.size();
-  sub_objects_array_.resize(input_topic_size_);
+  input_topic_size_ = input_topic_names.size();
 
+  // print input information
   for (size_t i = 0; i < input_topic_size_; i++) {
-    RCLCPP_INFO(get_logger(), "Subscribing to %s", input_topic_names_.at(i).c_str());
-
-    std::function<void(const DetectedObjects::ConstSharedPtr msg)> func =
-      std::bind(&MultiObjectTracker::onData, this, std::placeholders::_1, i);
-    sub_objects_array_.at(i) =
-      create_subscription<DetectedObjects>(input_topic_names_.at(i), rclcpp::QoS{1}, func);
+    RCLCPP_INFO(get_logger(), "Subscribing to %s %s %s", input_topic_names.at(i).c_str(), input_names_long.at(i).c_str(), input_names_short.at(i).c_str());
   }
+  
+  input_manager_ = std::make_unique<InputManager>(*this);
+  input_manager_->init(input_topic_names_, input_names_long, input_names_short);
+
+  // sub_objects_array_.resize(input_topic_size_);
+
+  // for (size_t i = 0; i < input_topic_size_; i++) {
+  // RCLCPP_INFO(get_logger(), "Subscribing to %s", input_topic_names_.at(i).c_str());
+  // std::function<void(const DetectedObjects::ConstSharedPtr msg)> func =
+  //   std::bind(&MultiObjectTracker::onData, this, std::placeholders::_1, i);
+  // sub_objects_array_.at(i) =
+  //   create_subscription<DetectedObjects>(input_topic_names_.at(i), rclcpp::QoS{1}, func);
+  // }
 
   // Create tf timer
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
@@ -191,7 +204,7 @@ void MultiObjectTracker::onMeasurement(const DetectedObjects::ConstSharedPtr inp
     rclcpp::Time(input_objects_msg->header.stamp, this->now().get_clock_type());
 
   debugger_->startMeasurementTime(this->now(), measurement_time);
-  runProcess(input_objects_msg);
+  runProcess(*input_objects_msg);
   debugger_->endMeasurementTime(this->now());
 
   // Publish objects if the timer is not enabled
@@ -219,30 +232,36 @@ void MultiObjectTracker::onTimer()
 
   if (elapsed_time < maximum_publish_latency) return;
 
-  // update trackers from accumulated input objects
-  if (objects_data_.empty()) return;
+  // // update trackers from accumulated input objects
+  // if (objects_data_.empty()) return;
 
-  // sort by time
-  sort(objects_data_.begin(), objects_data_.end(), [](const auto & a, const auto & b) {
-    return a.first.seconds() < b.first.seconds();
-  });
-
-  // run onMeasurement for each queue
-  while (!objects_data_.empty()) {
-    const auto & pair = objects_data_.front();
-    runProcess(std::make_shared<DetectedObjects>(pair.second));
-    objects_data_.erase(objects_data_.begin());
+  // // sort by time
+  // sort(objects_data_.begin(), objects_data_.end(), [](const auto & a, const auto & b) {
+  //   return a.first.seconds() < b.first.seconds();
+  // });
+  std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_data;
+  if (input_manager_->getObjects(current_time, objects_data)) {
+    for (const auto & objects : objects_data) {
+      runProcess(objects);
+    }
   }
+
+  // // run onMeasurement for each queue
+  // while (!objects_data_.empty()) {
+  //   const auto & pair = objects_data_.front();
+  //   runProcess(std::make_shared<DetectedObjects>(pair.second));
+  //   objects_data_.erase(objects_data_.begin());
+  // }
 
   // Publish
   checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::runProcess(const DetectedObjects::ConstSharedPtr input_objects_msg)
+void MultiObjectTracker::runProcess(const DetectedObjects & input_objects_msg)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
-    rclcpp::Time(input_objects_msg->header.stamp, this->now().get_clock_type());
+    rclcpp::Time(input_objects_msg.header.stamp, this->now().get_clock_type());
 
   // Get the transform of the self frame
   const auto self_transform =
@@ -254,7 +273,7 @@ void MultiObjectTracker::runProcess(const DetectedObjects::ConstSharedPtr input_
   // Transform the objects to the world frame
   DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
-        *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
+        input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
 

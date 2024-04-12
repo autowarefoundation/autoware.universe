@@ -21,6 +21,7 @@
 
 #include "multi_object_tracker/data_association/data_association.hpp"
 #include "multi_object_tracker/debugger.hpp"
+#include "multi_object_tracker/processor/input_manager.hpp"
 #include "multi_object_tracker/processor/processor.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
@@ -89,6 +90,9 @@ private:
   std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array_{};
   rclcpp::Time last_measurement_time_;
 
+  // input manager
+  std::unique_ptr<InputManager> input_manager_;
+
   std::vector<std::string> input_topic_names_{};
   size_t input_topic_size_{};
   std::vector<std::pair<rclcpp::Time, DetectedObjects>> objects_data_{};
@@ -99,7 +103,7 @@ private:
   void onTimer();
 
   // publish processes
-  void runProcess(const DetectedObjects::ConstSharedPtr input_objects_msg);
+  void runProcess(const DetectedObjects & input_objects_msg);
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;

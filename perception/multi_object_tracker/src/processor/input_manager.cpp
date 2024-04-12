@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "multi_object_tracker/processor/input_manager.hpp"
+#include <cassert>
 
 InputStream::InputStream(rclcpp::Node & node) : node_(node)
 {
@@ -99,18 +100,19 @@ InputManager::InputManager(rclcpp::Node & node) : node_(node)
 }
 
 void InputManager::init(
-  const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names,
-  const std::vector<std::string> & short_names)
+  const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names, const std::vector<std::string> & short_names)
 {
   input_size_ = input_topics.size();
-  for (size_t i = 0; i < input_size_; ++i) {
+  
+  for (size_t i = 0; i < input_size_; i++) {
+
     InputStream input_stream(node_);
-    input_stream.init(input_topics[i], long_names[i], short_names[i]);
+    input_stream.init(input_topics.at(i), long_names.at(i), short_names.at(i));
     input_streams_.push_back(std::make_shared<InputStream>(input_stream));
   }
 }
 
-void InputManager::getObjects(
+bool InputManager::getObjects(
   const rclcpp::Time & now,
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
 {
@@ -137,4 +139,6 @@ void InputManager::getObjects(
       const autoware_auto_perception_msgs::msg::DetectedObjects & b) {
       return (rclcpp::Time(a.header.stamp) - rclcpp::Time(b.header.stamp)).seconds() < 0;
     });
+
+  return !objects.empty();
 }
