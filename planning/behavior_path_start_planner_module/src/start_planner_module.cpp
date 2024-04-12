@@ -852,15 +852,16 @@ void StartPlannerModule::planWithPriority(
     debug_data_.selected_start_pose_candidate_index = cps.best_collided_path_index;
     debug_data_.margin_for_start_pose_candidate = cps.best_collided_path_collision_check_margin;
     const auto & start_pose_candidate = start_pose_candidates.at(cps.best_collided_path_index);
+    constexpr bool is_path_without_static_collisions = false;
     if (cps.best_collided_path_requires_backwards) {
       updateStatusWithNextPath(
         cps.best_collided_path.value(), start_pose_candidate, cps.best_collided_path_planner_type,
-        false);
+        is_path_without_static_collisions);
       return;
     }
     updateStatusWithCurrentPath(
       cps.best_collided_path.value(), start_pose_candidate, cps.best_collided_path_planner_type,
-      false);
+      is_path_without_static_collisions);
     return;
   }
 
@@ -898,8 +899,6 @@ bool StartPlannerModule::findPullOutPath(
   const Pose & start_pose_candidate, const std::shared_ptr<PullOutPlannerBase> & planner,
   const Pose & refined_start_pose, const Pose & goal_pose, const double collision_check_margin)
 {
-  // if start_pose_candidate is far from refined_start_pose, backward driving is necessary
-
   const bool backward_is_necessary =
     start_planner_utils::backwardsMovementIsNecessary(start_pose_candidate, refined_start_pose);
 
