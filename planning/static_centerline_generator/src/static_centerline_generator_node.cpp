@@ -63,6 +63,8 @@
 
 namespace autoware::static_centerline_generator
 {
+using ::tier4_autoware_utils::Point2d;
+
 namespace
 {
 std::vector<lanelet::Id> get_lane_ids_from_route(const LaneletRoute & route)
