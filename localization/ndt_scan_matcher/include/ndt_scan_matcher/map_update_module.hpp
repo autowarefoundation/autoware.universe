@@ -57,6 +57,7 @@ private:
   friend class NDTScanMatcher;
 
   void initialize_diagnostics_key_value();
+  void callback_timer(const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position);
 
   // Update the specified NDT
   bool update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt);
@@ -73,7 +74,7 @@ private:
   std::mutex * ndt_ptr_mutex_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
-  std::unique_ptr<DiagnosticsModule> diagnostics_module_;
+  std::unique_ptr<DiagnosticsModule> diagnostics_map_update_;
 
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
 

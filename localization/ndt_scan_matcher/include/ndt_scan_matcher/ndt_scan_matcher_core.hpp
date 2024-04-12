@@ -21,7 +21,6 @@
 #include "ndt_scan_matcher/diagnostics_module.hpp"
 #include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
-#include "ndt_scan_matcher/ndt_scan_matcher_diagnostics_updater_core.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
@@ -227,9 +226,9 @@ private:
   std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
 
   std::atomic<bool> is_activated_;
-  std::unique_ptr<DiagnosticsModule> diagnostics_module_;
-  std::unique_ptr<DiagnosticsModule> diagnostics_module_ndt_align_;
-  std::unique_ptr<NDTScanMatcherDiagnosticsUpdaterCore> diagnostics_update_module_;
+  std::unique_ptr<DiagnosticsModule> diagnostics_scan_points_;
+  std::unique_ptr<DiagnosticsModule> diagnostics_initial_pose_;
+  std::unique_ptr<DiagnosticsModule> diagnostics_ndt_align_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
