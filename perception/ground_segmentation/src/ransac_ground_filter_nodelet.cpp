@@ -198,11 +198,11 @@ void RANSACGroundFilterComponent::extractPointsIndices(
 Eigen::Affine3d RANSACGroundFilterComponent::getPlaneAffine(
   const pcl::PointCloud<PointType> segment_ground_cloud, const Eigen::Vector3d & plane_normal)
 {
-  pcl::CentroidPoint<pcl::PointXYZ> centroid;
+  pcl::CentroidPoint<PointType> centroid;
   for (const auto p : segment_ground_cloud.points) {
     centroid.add(p);
   }
-  pcl::PointXYZ centroid_point;
+  PointType centroid_point;
   centroid.get(centroid_point);
   Eigen::Translation<double, 3> trans(centroid_point.x, centroid_point.y, centroid_point.z);
   const ground_segmentation::PlaneBasis basis = getPlaneBasis(plane_normal);
