@@ -130,7 +130,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::on_unload_plugin, this, _1, _2));
 
   // set velocity smoother param
-  onParam();
+  on_param();
 
   // Publishers
   path_pub_ = this->create_publisher<autoware_auto_planning_msgs::msg::Path>("~/output/path", 1);
@@ -307,9 +307,9 @@ void BehaviorVelocityPlannerNode::on_acceleration(
   planner_data_.current_acceleration = msg;
 }
 
-void BehaviorVelocityPlannerNode::onParam()
+void BehaviorVelocityPlannerNode::on_param()
 {
-  // Note(VRichardJP): mutex lock is not necessary as onParam is only called once in the
+  // Note(VRichardJP): mutex lock is not necessary as on_param is only called once in the
   // constructed. It would be required if it was a callback. std::lock_guard<std::mutex>
   // lock(mutex_);
   planner_data_.velocity_smoother_ =
@@ -400,20 +400,20 @@ void BehaviorVelocityPlannerNode::on_trigger(
   }
 
   const autoware_auto_planning_msgs::msg::Path output_path_msg =
-    generatePath(input_path_msg, planner_data_);
+    generate_path(input_path_msg, planner_data_);
 
   lk.unlock();
 
   path_pub_->publish(output_path_msg);
   published_time_publisher_->publish_if_subscribed(path_pub_, output_path_msg.header.stamp);
-  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
+  stop_reason_diag_pub_->publish(planner_manager_.get_stop_reason_diag());
 
   if (debug_viz_pub_->get_subscription_count() > 0) {
     publish_debug_marker(output_path_msg);
   }
 }
 
-autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
+autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generate_path(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
   const PlannerData & planner_data)
 {

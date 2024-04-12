@@ -92,7 +92,7 @@ private:
     const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
   void on_occupancy_grid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
   void on_external_velocity_limit(const VelocityLimit::ConstSharedPtr msg);
-  void onParam();
+  void on_param();
 
   // publisher
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Path>::SharedPtr path_pub_;
@@ -125,9 +125,9 @@ private:
   std::mutex mutex_;
 
   // function
-  geometry_msgs::msg::PoseStamped getCurrentPose();
+  geometry_msgs::msg::PoseStamped get_current_pose();
   bool is_data_ready(const PlannerData & planner_data, rclcpp::Clock clock) const;
-  autoware_auto_planning_msgs::msg::Path generatePath(
+  autoware_auto_planning_msgs::msg::Path generate_path(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
 

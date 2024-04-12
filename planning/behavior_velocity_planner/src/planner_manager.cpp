@@ -125,7 +125,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager:
   return output_path_msg;
 }
 
-diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::getStopReasonDiag() const
+diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::get_stop_reason_diag() const
 {
   return stop_reason_diag_;
 }
