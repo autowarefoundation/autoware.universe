@@ -108,11 +108,11 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   sub_traffic_signals_ =
     this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
       "~/input/traffic_signals", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
+      std::bind(&BehaviorVelocityPlannerNode::on_traffic_signals, this, _1),
       create_subscription_options(this));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
-    std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
+    std::bind(&BehaviorVelocityPlannerNode::on_external_velocity_limit, this, _1));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
       "~/input/virtual_traffic_light_states", 1,
@@ -126,7 +126,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     "~/service/load_plugin", std::bind(&BehaviorVelocityPlannerNode::onLoadPlugin, this, _1, _2));
   srv_unload_plugin_ = create_service<UnloadPlugin>(
     "~/service/unload_plugin",
-    std::bind(&BehaviorVelocityPlannerNode::onUnloadPlugin, this, _1, _2));
+    std::bind(&BehaviorVelocityPlannerNode::on_unload_plugin, this, _1, _2));
 
   // set velocity smoother param
   onParam();
@@ -172,7 +172,7 @@ void BehaviorVelocityPlannerNode::onLoadPlugin(
   planner_manager_.launchScenePlugin(*this, request->plugin_name);
 }
 
-void BehaviorVelocityPlannerNode::onUnloadPlugin(
+void BehaviorVelocityPlannerNode::on_unload_plugin(
   const UnloadPlugin::Request::SharedPtr request,
   [[maybe_unused]] const UnloadPlugin::Response::SharedPtr response)
 {
@@ -325,7 +325,7 @@ void BehaviorVelocityPlannerNode::on_lanelet_map(
   has_received_map_ = true;
 }
 
-void BehaviorVelocityPlannerNode::onTrafficSignals(
+void BehaviorVelocityPlannerNode::on_traffic_signals(
   const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -361,7 +361,7 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
   }
 }
 
-void BehaviorVelocityPlannerNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::on_external_velocity_limit(const VelocityLimit::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.external_velocity_limit = *msg;
@@ -408,7 +408,7 @@ void BehaviorVelocityPlannerNode::on_trigger(
   stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
 
   if (debug_viz_pub_->get_subscription_count() > 0) {
-    publishDebugMarker(output_path_msg);
+    publish_debug_marker(output_path_msg);
   }
 }
 
@@ -458,7 +458,7 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
   return output_path_msg;
 }
 
-void BehaviorVelocityPlannerNode::publishDebugMarker(
+void BehaviorVelocityPlannerNode::publish_debug_marker(
   const autoware_auto_planning_msgs::msg::Path & path)
 {
   visualization_msgs::msg::MarkerArray output_msg;

@@ -86,12 +86,12 @@ private:
   void on_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void on_acceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
   void on_lanelet_map(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  void onTrafficSignals(
+  void on_traffic_signals(
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
   void on_virtual_traffic_light_states(
     const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
   void on_occupancy_grid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
-  void onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg);
+  void on_external_velocity_limit(const VelocityLimit::ConstSharedPtr msg);
   void onParam();
 
   // publisher
@@ -99,7 +99,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
 
-  void publishDebugMarker(const autoware_auto_planning_msgs::msg::Path & path);
+  void publish_debug_marker(const autoware_auto_planning_msgs::msg::Path & path);
 
   //  parameter
   double forward_path_length_;
@@ -115,7 +115,7 @@ private:
 
   rclcpp::Service<LoadPlugin>::SharedPtr srv_load_plugin_;
   rclcpp::Service<UnloadPlugin>::SharedPtr srv_unload_plugin_;
-  void onUnloadPlugin(
+  void on_unload_plugin(
     const UnloadPlugin::Request::SharedPtr request,
     const UnloadPlugin::Response::SharedPtr response);
   void onLoadPlugin(
