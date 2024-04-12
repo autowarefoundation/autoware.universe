@@ -82,13 +82,13 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
   void on_predicted_objects(
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
-  void onNoGroundPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  void on_no_ground_point_cloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onAcceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onLaneletMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   void onTrafficSignals(
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
-  void onVirtualTrafficLightStates(
+  void on_virtual_traffic_light_states(
     const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
   void onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
   void onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg);

@@ -93,7 +93,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       createSubscriptionOptions(this));
   sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1),
+    std::bind(&BehaviorVelocityPlannerNode::on_no_ground_point_cloud, this, _1),
     createSubscriptionOptions(this));
   sub_vehicle_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/vehicle_odometry", 1, std::bind(&BehaviorVelocityPlannerNode::onOdometry, this, _1),
@@ -116,7 +116,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
       "~/input/virtual_traffic_light_states", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1),
+      std::bind(&BehaviorVelocityPlannerNode::on_virtual_traffic_light_states, this, _1),
       createSubscriptionOptions(this));
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
     "~/input/occupancy_grid", 1, std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1),
@@ -239,7 +239,7 @@ void BehaviorVelocityPlannerNode::on_predicted_objects(
   planner_data_.predicted_objects = msg;
 }
 
-void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
+void BehaviorVelocityPlannerNode::on_no_ground_point_cloud(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   geometry_msgs::msg::TransformStamped transform;
@@ -367,7 +367,7 @@ void BehaviorVelocityPlannerNode::onExternalVelocityLimit(const VelocityLimit::C
   planner_data_.external_velocity_limit = *msg;
 }
 
-void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
+void BehaviorVelocityPlannerNode::on_virtual_traffic_light_states(
   const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
