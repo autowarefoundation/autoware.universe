@@ -23,15 +23,15 @@ namespace autoware::behavior_velocity_planner
 {
 namespace
 {
-std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
+std::string json_dumps_pose(const geometry_msgs::msg::Pose & pose)
 {
-  const std::string jsonDumpsPose =
+  const std::string json_dumps_pose =
     (boost::format(
        R"({"position":{"x":%lf,"y":%lf,"z":%lf},"orientation":{"w":%lf,"x":%lf,"y":%lf,"z":%lf}})") %
      pose.position.x % pose.position.y % pose.position.z % pose.orientation.w % pose.orientation.x %
      pose.orientation.y % pose.orientation.z)
       .str();
-  return jsonDumpsPose;
+  return json_dumps_pose;
 }
 
 diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
@@ -43,7 +43,7 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
   stop_reason_diag.name = "stop_reason";
   stop_reason_diag.message = stop_reason;
   stop_reason_diag_kv.key = "stop_pose";
-  stop_reason_diag_kv.value = jsonDumpsPose(stop_pose);
+  stop_reason_diag_kv.value = json_dumps_pose(stop_pose);
   stop_reason_diag.values.push_back(stop_reason_diag_kv);
   return stop_reason_diag;
 }
@@ -55,7 +55,7 @@ BehaviorVelocityPlannerManager::BehaviorVelocityPlannerManager()
 {
 }
 
-void BehaviorVelocityPlannerManager::launchScenePlugin(
+void BehaviorVelocityPlannerManager::launch_scene_plugin(
   rclcpp::Node & node, const std::string & name)
 {
   if (plugin_loader_.isClassAvailable(name)) {
@@ -78,7 +78,7 @@ void BehaviorVelocityPlannerManager::launchScenePlugin(
   }
 }
 
-void BehaviorVelocityPlannerManager::removeScenePlugin(
+void BehaviorVelocityPlannerManager::remove_scene_plugin(
   rclcpp::Node & node, const std::string & name)
 {
   auto it = std::remove_if(
@@ -97,7 +97,7 @@ void BehaviorVelocityPlannerManager::removeScenePlugin(
   }
 }
 
-autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager::planPathVelocity(
+autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager::plan_path_velocity(
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg)
 {

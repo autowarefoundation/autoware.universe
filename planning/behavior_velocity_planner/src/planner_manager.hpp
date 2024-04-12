@@ -45,10 +45,10 @@ class BehaviorVelocityPlannerManager
 {
 public:
   BehaviorVelocityPlannerManager();
-  void launchScenePlugin(rclcpp::Node & node, const std::string & name);
-  void removeScenePlugin(rclcpp::Node & node, const std::string & name);
+  void launch_scene_plugin(rclcpp::Node & node, const std::string & name);
+  void remove_scene_plugin(rclcpp::Node & node, const std::string & name);
 
-  autoware_auto_planning_msgs::msg::PathWithLaneId planPathVelocity(
+  autoware_auto_planning_msgs::msg::PathWithLaneId plan_path_velocity(
     const std::shared_ptr<const PlannerData> & planner_data,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg);
 

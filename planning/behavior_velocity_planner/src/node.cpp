@@ -124,7 +124,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     create_subscription_options(this));
 
   srv_load_plugin_ = create_service<LoadPlugin>(
-    "~/service/load_plugin", std::bind(&BehaviorVelocityPlannerNode::onLoadPlugin, this, _1, _2));
+    "~/service/load_plugin", std::bind(&BehaviorVelocityPlannerNode::on_load_plugin, this, _1, _2));
   srv_unload_plugin_ = create_service<UnloadPlugin>(
     "~/service/unload_plugin",
     std::bind(&BehaviorVelocityPlannerNode::on_unload_plugin, this, _1, _2));
@@ -158,19 +158,19 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     if (name.empty()) {
       break;
     }
-    planner_manager_.launchScenePlugin(*this, name);
+    planner_manager_.launch_scene_plugin(*this, name);
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
-void BehaviorVelocityPlannerNode::onLoadPlugin(
+void BehaviorVelocityPlannerNode::on_load_plugin(
   const LoadPlugin::Request::SharedPtr request,
   [[maybe_unused]] const LoadPlugin::Response::SharedPtr response)
 {
   std::unique_lock<std::mutex> lk(mutex_);
-  planner_manager_.launchScenePlugin(*this, request->plugin_name);
+  planner_manager_.launch_scene_plugin(*this, request->plugin_name);
 }
 
 void BehaviorVelocityPlannerNode::on_unload_plugin(
@@ -178,7 +178,7 @@ void BehaviorVelocityPlannerNode::on_unload_plugin(
   [[maybe_unused]] const UnloadPlugin::Response::SharedPtr response)
 {
   std::unique_lock<std::mutex> lk(mutex_);
-  planner_manager_.removeScenePlugin(*this, request->plugin_name);
+  planner_manager_.remove_scene_plugin(*this, request->plugin_name);
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
@@ -435,7 +435,7 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
   }
 
   // Plan path velocity
-  const auto velocity_planned_path = planner_manager_.planPathVelocity(
+  const auto velocity_planned_path = planner_manager_.plan_path_velocity(
     std::make_shared<const PlannerData>(planner_data), *input_path_msg);
 
   // screening

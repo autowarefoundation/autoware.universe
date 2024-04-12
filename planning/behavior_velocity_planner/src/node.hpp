@@ -118,7 +118,7 @@ private:
   void on_unload_plugin(
     const UnloadPlugin::Request::SharedPtr request,
     const UnloadPlugin::Response::SharedPtr response);
-  void onLoadPlugin(
+  void on_load_plugin(
     const LoadPlugin::Request::SharedPtr request, const LoadPlugin::Response::SharedPtr response);
 
   // mutex for planner_data_
