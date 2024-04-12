@@ -14,11 +14,11 @@
 
 #include "multi_object_tracker/processor/input_manager.hpp"
 
-InputManager::InputManager(rclcpp::Node & node) : node_(node)
+InputStream::InputStream(rclcpp::Node & node) : node_(node)
 {
 }
 
-void InputManager::init(
+void InputStream::init(
   const std::string & input_topic, const std::string & long_name, const std::string & short_name)
 {
   // Initialize parameters
@@ -28,7 +28,7 @@ void InputManager::init(
 
   // Initialize subscription
   std::function<void(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)>
-    func = std::bind(&InputManager::setObjects, this, std::placeholders::_1);
+    func = std::bind(&InputStream::setObjects, this, std::placeholders::_1);
   sub_objects_ = node_.create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
     input_topic_, rclcpp::QoS{1}, func);
 
@@ -40,7 +40,7 @@ void InputManager::init(
   interval_var_ = 0.0;
 }
 
-void InputManager::setObjects(
+void InputStream::setObjects(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)
 {
   const auto & object = *msg;
@@ -75,18 +75,18 @@ void InputManager::setObjects(
   latency_var_ = (1.0 - gain) * latency_var_ + gain * latency_delta * latency_delta;
 }
 
-InputManagers::InputManagers(rclcpp::Node & node) : node_(node)
+InputManager::InputManager(rclcpp::Node & node) : node_(node)
 {
 }
 
-void InputManagers::init(
+void InputManager::init(
   const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names,
   const std::vector<std::string> & short_names)
 {
   input_size_ = input_topics.size();
   for (size_t i = 0; i < input_size_; ++i) {
-    InputManager input_manager(node_);
-    input_manager.init(input_topics[i], long_names[i], short_names[i]);
-    input_managers_.push_back(std::make_shared<InputManager>(input_manager));
+    InputStream input_stream(node_);
+    input_stream.init(input_topics[i], long_names[i], short_names[i]);
+    input_streams_.push_back(std::make_shared<InputStream>(input_stream));
   }
 }

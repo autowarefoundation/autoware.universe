@@ -24,10 +24,10 @@
 #include <string>
 #include <vector>
 
-class InputManager
+class InputStream
 {
 public:
-  explicit InputManager(rclcpp::Node & node);
+  explicit InputStream(rclcpp::Node & node);
 
   void init(
     const std::string & input_topic, const std::string & long_name, const std::string & short_name);
@@ -57,10 +57,9 @@ private:
   rclcpp::Time latest_message_time_;
 };
 
-class InputManagers
-{
+class InputManager{
 public:
-  explicit InputManagers(rclcpp::Node & node);
+  explicit InputManager(rclcpp::Node & node);
 
   void init(
     const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names,
@@ -74,7 +73,7 @@ private:
   rclcpp::Node & node_;
 
   size_t input_size_;
-  std::vector<std::shared_ptr<InputManager>> input_managers_;
+  std::vector<std::shared_ptr<InputStream>> input_streams_;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__PROCESSOR__INPUT_MANAGER_HPP_
