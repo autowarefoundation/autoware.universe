@@ -372,6 +372,7 @@ PredictedPathDeviationMetrics MetricsCalculator::calcPredictedPathDeviationMetri
         sum_of_squared_deviations += std::pow(path_point_deviation - mean_deviation, 2);
       }
       const double variance_deviation = sum_of_squared_deviations / object_path_deviations.size();
+
       metrics.variance.add(variance_deviation);
     }
   }
