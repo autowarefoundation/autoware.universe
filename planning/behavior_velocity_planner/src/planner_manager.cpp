@@ -34,7 +34,7 @@ std::string json_dumps_pose(const geometry_msgs::msg::Pose & pose)
   return json_dumps_pose;
 }
 
-diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
+diagnostic_msgs::msg::DiagnosticStatus make_stop_reason_diag(
   const std::string & stop_reason, const geometry_msgs::msg::Pose & stop_pose)
 {
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
@@ -119,7 +119,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager:
     }
   }
 
-  stop_reason_diag_ = makeStopReasonDiag(
+  stop_reason_diag_ = make_stop_reason_diag(
     stop_reason_msg, output_path_msg.points[first_stop_path_point_index].point.pose);
 
   return output_path_msg;
