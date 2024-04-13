@@ -37,9 +37,11 @@
 GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options) 
 : GPUMonitorBase("gpu_monitor", options),
   temp_timeout_(declare_parameter<int>("temp_timeout", 5)),
-  temp_timeout_expired_(false)
+  temp_timeout_expired_(false),
   usage_timeout_(declare_parameter<int>("usage_timeout", 5)),
-  usage_timeout_expired_(false)
+  usage_timeout_expired_(false),
+  memory_usage_timeout_(declare_parameter<int>("memory_usage_timeout", 5)),
+  memory_usage_timeout_expired_(false)
 {
   nvmlReturn_t ret = nvmlInit();
   if (ret != NVML_SUCCESS) {
@@ -223,121 +225,38 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   stat.addf("execution time", "%.3f ms", tmp_usage_elapsed_ms);
 }
 
-// void GPUMonitor::addProcessUsage(
-//   int index, nvmlDevice_t device, diagnostic_updater::DiagnosticStatusWrapper & stat)
-// {
-//   nvmlReturn_t ret{};
-//   std::list<uint32_t> running_pid_list;
-
-//   // Get Compute Process ID
-//   uint32_t info_count = MAX_ARRAY_SIZE;
-//   std::unique_ptr<nvmlProcessInfo_t[]> infos;
-//   infos = std::make_unique<nvmlProcessInfo_t[]>(MAX_ARRAY_SIZE);
-//   ret = nvmlDeviceGetComputeRunningProcesses(device, &info_count, infos.get());
-//   if (ret != NVML_SUCCESS) {
-//     RCLCPP_WARN(
-//       this->get_logger(), "Failed to nvmlDeviceGetComputeRunningProcesses NVML: %s",
-//       nvmlErrorString(ret));
-//     return;
-//   }
-//   for (uint32_t cnt = 0; cnt < info_count; ++cnt) {
-//     running_pid_list.push_back(infos[cnt].pid);
-//   }
-
-//   // Get Graphics Process ID
-//   info_count = MAX_ARRAY_SIZE;
-//   infos = std::make_unique<nvmlProcessInfo_t[]>(MAX_ARRAY_SIZE);
-//   ret = nvmlDeviceGetGraphicsRunningProcesses(device, &info_count, infos.get());
-//   if (ret != NVML_SUCCESS) {
-//     RCLCPP_WARN(
-//       this->get_logger(), "Failed to nvmlDeviceGetGraphicsRunningProcesses NVML: %s",
-//       nvmlErrorString(ret));
-//     return;
-//   }
-//   for (uint32_t cnt = 0; cnt < info_count; ++cnt) {
-//     running_pid_list.push_back(infos[cnt].pid);
-//   }
-
-//   // Get util_count(1st call of nvmlDeviceGetProcessUtilization)
-//   uint32_t util_count = 0;
-//   ret = nvmlDeviceGetProcessUtilization(device, NULL, &util_count, current_timestamp_);
-//   // This function result will not succeed, because arg[util_count(in)] is 0.
-//   if (ret != NVML_ERROR_INSUFFICIENT_SIZE) {
-//     RCLCPP_WARN(
-//       this->get_logger(), "Failed to nvmlDeviceGetProcessUtilization(1st) NVML: %s",
-//       nvmlErrorString(ret));
-//     return;
-//   }
-//   // Check util_count
-//   if (util_count <= 0) {
-//     RCLCPP_WARN(this->get_logger(), "Illegal util_count: %d", util_count);
-//     return;
-//   }
-
-//   // Get utils data(2nd call of nvmlDeviceGetProcessUtilization)
-//   std::unique_ptr<nvmlProcessUtilizationSample_t[]> utils;
-//   utils = std::make_unique<nvmlProcessUtilizationSample_t[]>(util_count);
-//   ret = nvmlDeviceGetProcessUtilization(device, utils.get(), &util_count, current_timestamp_);
-//   if (ret != NVML_SUCCESS) {
-//     RCLCPP_WARN(
-//       this->get_logger(), "Failed to nvmlDeviceGetProcessUtilization(2nd) NVML: %s",
-//       nvmlErrorString(ret));
-//     return;
-//   }
-
-//   // Add data to diagnostic
-//   int add_cnt = 0;
-//   for (uint32_t cnt = 0; cnt < util_count; ++cnt) {
-//     for (auto pid : running_pid_list) {
-//       // PID check, because it contains illegal PID data. ex) PID:0
-//       if (utils[cnt].pid == pid) {
-//         char name[MAX_NAME_LENGTH + 1] = {};
-//         nvmlSystemGetProcessName(utils[cnt].pid, name, MAX_NAME_LENGTH);
-//         stat.add(fmt::format("GPU {0}: process {1}: pid", index, add_cnt), utils[cnt].pid);
-//         stat.add(fmt::format("GPU {0}: process {1}: name", index, add_cnt), name);
-//         stat.addf(
-//           fmt::format("GPU {0}: process {1}: usage", index, add_cnt), "%ld.0%%",
-//           ((utils[cnt].smUtil != UINT32_MAX) ? utils[cnt].smUtil : 0));
-//         ++add_cnt;
-//         break;
-//       }
-//     }
-//   }
-
-//   // Update timestamp(usec)
-//   rclcpp::Clock system_clock(RCL_SYSTEM_TIME);
-//   current_timestamp_ = system_clock.now().nanoseconds() / 1000;
-// }
-
 void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::vector<gpu_memory_usage_info> tmp_memory_usage_info_vector;
+  double tmp_memory_usage_elapsed_ms = 0.0;
+
+  //thread-sage copy
+  {
+    std::lock_guard<std::mutex> lock(memory_usage_mutex_);
+    tmp_memory_usage_info_vector = memory_usage_info_vector_;
+    tmp_memory_usage_elapsed_ms = memory_usage_elapsed_ms_;
+  }
 
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
-  nvmlReturn_t ret{};
 
-  if (gpus_.empty()) {
-    stat.summary(DiagStatus::ERROR, "gpu not found");
+  if (tmp_memory_usage_info_vector.empty()) {
+      stat.summary(DiagStatus::ERROR, "gpu not found");
     return;
   }
 
-  for (auto itr = gpus_.begin(); itr != gpus_.end(); ++itr, ++index) {
-    nvmlMemory_t memory;
-    ret = nvmlDeviceGetMemoryInfo(itr->device, &memory);
-    if (ret != NVML_SUCCESS) {
-      stat.summary(
-        DiagStatus::ERROR, "Failed to retrieve the amount of used, free and total memory");
+  for (auto itr = tmp_memory_usage_info_vector.begin(); itr != tmp_memory_usage_info_vector.end(); ++itr, ++index) {
+    if (!itr->context.empty()) {
+      stat.summary(DiagStatus::ERROR, "Failed to retrieve the current memory usage");
       stat.add(fmt::format("GPU {}: name", index), itr->name);
-      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
-      stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
+      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci_bus_id);
+      stat.add(fmt::format("GPU {}: content", index), itr->context);
       return;
     }
 
     level = DiagStatus::OK;
-    float usage = static_cast<float>(itr->utilization.memory) / 100.0;
+    float usage = static_cast<float>(itr->memory_usage) / 100.0;
     if (usage >= memory_usage_error_) {
       level = std::max(level, static_cast<int>(DiagStatus::ERROR));
     } else if (usage >= memory_usage_warn_) {
@@ -346,18 +265,27 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
 
     stat.add(fmt::format("GPU {}: status", index), load_dict_.at(level));
     stat.add(fmt::format("GPU {}: name", index), itr->name);
-    stat.addf(fmt::format("GPU {}: usage", index), "%d.0%%", itr->utilization.memory);
-    stat.add(fmt::format("GPU {}: total", index), toHumanReadable(memory.total));
-    stat.add(fmt::format("GPU {}: used", index), toHumanReadable(memory.used));
-    stat.add(fmt::format("GPU {}: free", index), toHumanReadable(memory.free));
+    stat.addf(fmt::format("GPU {}: usage", index), "%d.0%%", itr->memory_usage);
+    stat.add(fmt::format("GPU {}: total", index), toHumanReadable(itr->memory_detail.total));
+    stat.add(fmt::format("GPU {}: used", index), toHumanReadable(itr->memory_detail.used));
+    stat.add(fmt::format("GPU {}: free", index), toHumanReadable(itr->memory_detail.free));
 
     whole_level = std::max(whole_level, level);
   }
 
-  stat.summary(whole_level, load_dict_.at(whole_level));
+  bool timeout_expired = false;
+  {
+    std::lock_guard<std::mutex> lock(memory_usage_timeout_mutex_);
+    timeout_expired = memory_usage_timeout_expired_;
+  }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+  if (timeout_expired) {
+    stat.summary(DiagStatus::WARN, "Reading Memory Usage Timeout");
+  } else {
+    stat.summary(whole_level, load_dict_.at(whole_level));
+  }
+
+  stat.addf("execution time", "%.3f ms", tmp_memory_usage_elapsed_ms);
 }
 
 void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -494,6 +422,7 @@ void GPUMonitor::onTimer()
 {
   readTemp();
   readUsage();
+  readMemoryUsage();
 }
 
 void GPUMonitor::onTempTimeout()
@@ -506,6 +435,12 @@ void GPUMonitor::onUsageTimeout()
 {
   std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
   usage_timeout_expired_ = true;
+}
+
+void GPUMonitor::onMemoryUsageTimeout()
+{
+  std::lock_guard<std::mutex> lock(memory_usage_timeout_mutex_);
+  memory_usage_timeout_expired_ = true;
 }
 
 void GPUMonitor::readTemp()
@@ -685,42 +620,49 @@ void GPUMonitor::addProcessUsage(nvmlDevice_t device, std::list<gpu_util_info> &
 void GPUMonitor::readMemoryUsage()
 {
   // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
 
+  std::vector<gpu_memory_usage_info> tmp_memory_usage_info_vector;
+
+  // Start timeout timer for read temperature
+  {
+    std::lock_guard<std::mutex> lock(memory_usage_timeout_mutex_);
+    memory_usage_timeout_expired_ = false;
+  }
+  timeout_timer_ = rclcpp::create_timer(
+    this, get_clock(), std::chrono::seconds(memory_usage_timeout_), std::bind(&GPUMonitor::onMemoryUsageTimeout, this));
 
   int index = 0;
   nvmlReturn_t ret{};
 
   for (auto itr = gpus_.begin(); itr != gpus_.end(); ++itr, ++index) {
     nvmlMemory_t memory;
+    gpu_memory_usage_info memory_usage_info;
     ret = nvmlDeviceGetMemoryInfo(itr->device, &memory);
     if (ret != NVML_SUCCESS) {
-      stat.summary(
-        DiagStatus::ERROR, "Failed to retrieve the amount of used, free and total memory");
-      stat.add(fmt::format("GPU {}: name", index), itr->name);
-      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
-      stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
-      return;
+      memory_usage_info.name = itr->name;
+      memory_usage_info.pci_bus_id = itr->pci.busId;
+      memory_usage_info.context = nvmlErrorString(ret);
+    } else {
+      memory_usage_info.name = itr->name;
+      memory_usage_info.memory_usage = itr->utilization.memory;
+      memory_usage_info.memory_detail = memory;
     }
-
-    level = DiagStatus::OK;
-    float usage = static_cast<float>(itr->utilization.memory) / 100.0;
-    if (usage >= memory_usage_error_) {
-      level = std::max(level, static_cast<int>(DiagStatus::ERROR));
-    } else if (usage >= memory_usage_warn_) {
-      level = std::max(level, static_cast<int>(DiagStatus::WARN));
-    }
-
-    stat.add(fmt::format("GPU {}: status", index), load_dict_.at(level));
-    stat.add(fmt::format("GPU {}: name", index), itr->name);
-    stat.addf(fmt::format("GPU {}: usage", index), "%d.0%%", itr->utilization.memory);
-    stat.add(fmt::format("GPU {}: total", index), toHumanReadable(memory.total));
-    stat.add(fmt::format("GPU {}: used", index), toHumanReadable(memory.used));
-    stat.add(fmt::format("GPU {}: free", index), toHumanReadable(memory.free));
-
-    whole_level = std::max(whole_level, level);
+    tmp_memory_usage_info_vector.push_back(memory_usage_info);
   }
 
-  stat.summary(whole_level, load_dict_.at(whole_level));
+  // Stop timeout timer for read temperature
+  timeout_timer_->cancel();
+
+  double elapsed_ms = stop_watch.toc("execution_time");
+
+  //thread-sage copy
+  {
+    std::lock_guard<std::mutex> lock(memory_usage_mutex_);
+    memory_usage_info_vector_ = tmp_memory_usage_info_vector;
+    memory_usage_elapsed_ms_ = elapsed_ms;
+  } 
 }
 
 // void GPUMonitor::checkThrottling()

@@ -54,7 +54,7 @@ struct gpu_info
 };
 
 /**
- * @brief GPU temperature inforamation
+ * @brief GPU temperature information
  */
 struct gpu_temp_info
 {
@@ -75,7 +75,7 @@ struct gpu_util_info
 };
 
 /**
- * @brief GPU usage inforamation
+ * @brief GPU usage information
  */
 struct gpu_usage_info
 {
@@ -85,6 +85,18 @@ struct gpu_usage_info
   std::string context;  //!< @brief error message
   std::list<gpu_util_info> util_list;  //!< @brief list of process usage
 }; 
+
+/**
+ * @brief GPU temperature information
+ */
+struct gpu_memory_usage_info
+{
+  std::string name;  //!< @brief name of device
+  unsigned int memory_usage;    //!< @brief temperature of device
+  std::string pci_bus_id;  //!< @brief PCI bus ID of device
+  std::string context;  //!< @brief error message
+  nvmlMemory_t memory_detail; //!< @brief memory detail
+};
 
 class GPUMonitor : public GPUMonitorBase
 {
@@ -166,6 +178,11 @@ protected:
   void onUsageTimeout();
 
   /**
+   * @brief timeout timer for memory usage
+   */
+  void onMemoryUsageTimeout();
+
+  /**
    * @brief read GPU temperature
    */
   void readTemp();
@@ -174,6 +191,11 @@ protected:
    * @brief read GPU usage
    */
   void readUsage();
+
+  /**
+   * @brief read GPU memory usage
+   */
+  void readMemoryUsage();
 
 
   /**
@@ -227,6 +249,13 @@ protected:
   double usage_elapsed_ms_;              //!< @brief elapsed time for usage
   std::mutex usage_timeout_mutex_;         //!< @brief mutex for usage timeout
   bool usage_timeout_expired_;             //!< @brief timeout for usage has expired or not
+
+  std::mutex memory_usage_mutex_;  //!< @brief mutex for memory usage
+  std::vector<gpu_memory_usage_info> memory_usage_info_vector_;  //!< @brief list of memory usage information
+  int memory_usage_timeout_;                   //!< @brief timeout for memory usage
+  double memory_usage_elapsed_ms_;              //!< @brief elapsed time for memory usage
+  std::mutex memory_usage_timeout_mutex_;         //!< @brief mutex for memory usage timeout
+  bool memory_usage_timeout_expired_;             //!< @brief timeout for memory usage has expired or not
 
 
 
