@@ -98,6 +98,22 @@ struct gpu_memory_usage_info
   nvmlMemory_t memory_detail; //!< @brief memory detail
 };
 
+/**
+ * @brief GPU throttling information
+ */
+struct gpu_throttling_info
+{
+  std::string name;  //!< @brief name of device
+  std::vector<std::string> reasons;    //!< @brief reason of throttling
+  unsigned int clock;    //!< @brief clock of device
+  std::string pci_bus_id;  //!< @brief PCI bus ID of device
+  std::string context;  //!< @brief error message
+  std::string summary;  //!< @brief summary of throttling
+  int level;  //!< @brief level of throttling
+  gpu_throttling_info() : clock(0) {}
+};
+
+
 class GPUMonitor : public GPUMonitorBase
 {
 public:
@@ -183,6 +199,12 @@ protected:
   void onMemoryUsageTimeout();
 
   /**
+   * @brief timeout timer for throttling
+   */
+  void onThrottlingTimeout();
+
+
+  /**
    * @brief read GPU temperature
    */
   void readTemp();
@@ -196,6 +218,11 @@ protected:
    * @brief read GPU memory usage
    */
   void readMemoryUsage();
+
+  /**
+   * @brief read GPU throttling
+   */
+  void readThrottling();
 
 
   /**
@@ -256,6 +283,13 @@ protected:
   double memory_usage_elapsed_ms_;              //!< @brief elapsed time for memory usage
   std::mutex memory_usage_timeout_mutex_;         //!< @brief mutex for memory usage timeout
   bool memory_usage_timeout_expired_;             //!< @brief timeout for memory usage has expired or not
+
+  std::mutex throttling_mutex_;  //!< @brief mutex for throttling
+  std::vector<gpu_throttling_info> throttling_info_vector_;  //!< @brief list of throttling information
+  int throttling_timeout_;                   //!< @brief timeout for throttling
+  double throttling_elapsed_ms_;              //!< @brief elapsed time for throttling
+  std::mutex throttling_timeout_mutex_;         //!< @brief mutex for throttling timeout
+  bool throttling_timeout_expired_;             //!< @brief timeout for throttling has expired or not
 
 
 
