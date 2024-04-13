@@ -64,6 +64,28 @@ struct gpu_temp_info
   std::string context;  //!< @brief error message
 };
 
+/**
+ * @brief GPU util information
+ */
+struct gpu_util_info
+{
+  unsigned int pid;  //!< @brief process ID
+  std::string name;  //!< @brief process name
+  unsigned int smUtil;  //!< @brief SM utilization
+};
+
+/**
+ * @brief GPU usage inforamation
+ */
+struct gpu_usage_info
+{
+  std::string name;  //!< @brief name of device
+  float usage;    //!< @brief usage of device
+  std::string pci_bus_id;  //!< @brief PCI bus ID of device
+  std::string context;  //!< @brief error message
+  std::list<gpu_util_info> util_list;  //!< @brief list of process usage
+}; 
+
 class GPUMonitor : public GPUMonitorBase
 {
 public:
@@ -107,7 +129,7 @@ protected:
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    */
   void addProcessUsage(
-    int index, nvmlDevice_t device, diagnostic_updater::DiagnosticStatusWrapper & stat);
+    nvmlDevice_t device, std::list<gpu_util_info> & util_list);
 
   /**
    * @brief check GPU memory usage
@@ -139,9 +161,19 @@ protected:
   void onTempTimeout();
 
   /**
+   * @brief timeout timer for usage
+   */
+  void onUsageTimeout();
+
+  /**
    * @brief read GPU temperature
    */
   void readTemp();
+
+  /**
+   * @brief read GPU usage
+   */
+  void readUsage();
 
 
   /**
@@ -188,6 +220,13 @@ protected:
   double temp_elapsed_ms_;              //!< @brief elapsed time for temperature
   std::mutex temp_timeout_mutex_;         //!< @brief mutex for temperature timeout
   bool temp_timeout_expired_;             //!< @brief timeout for temperature has expired or not
+
+  std::mutex usage_mutex_;  //!< @brief mutex for usage
+  std::vector<gpu_usage_info> usage_info_vector_;  //!< @brief list of usage information
+  int usage_timeout_;                   //!< @brief timeout for usage
+  double usage_elapsed_ms_;              //!< @brief elapsed time for usage
+  std::mutex usage_timeout_mutex_;         //!< @brief mutex for usage timeout
+  bool usage_timeout_expired_;             //!< @brief timeout for usage has expired or not
 
 
 
