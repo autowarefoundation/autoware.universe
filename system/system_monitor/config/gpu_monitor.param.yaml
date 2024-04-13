@@ -4,6 +4,7 @@
     usage_timeout: 5
     memory_usage_timeout: 5
     throttling_timeout: 5
+    frequency_timeout: 5
     temp_warn: 90.0
     temp_error: 95.0
     gpu_usage_warn: 0.90

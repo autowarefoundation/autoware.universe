@@ -113,6 +113,19 @@ struct gpu_throttling_info
   gpu_throttling_info() : clock(0) {}
 };
 
+/**
+ * @brief GPU frequency information
+ */
+struct gpu_frequency_info
+{
+  std::string name;  //!< @brief name of device
+  unsigned int clock;    //!< @brief clock of device
+  std::string pci_bus_id;  //!< @brief PCI bus ID of device
+  std::string context;  //!< @brief error message
+  int level;  //!< @brief level of throttling
+  gpu_frequency_info() : clock(0) {}
+};
+
 
 class GPUMonitor : public GPUMonitorBase
 {
@@ -203,6 +216,11 @@ protected:
    */
   void onThrottlingTimeout();
 
+  /**
+   * @brief timeout timer for frequency
+   */
+  void onFrequencyTimeout();
+
 
   /**
    * @brief read GPU temperature
@@ -223,6 +241,11 @@ protected:
    * @brief read GPU throttling
    */
   void readThrottling();
+
+  /**
+   * @brief read GPU frequency
+   */
+  void readFrequency();
 
 
   /**
@@ -291,7 +314,12 @@ protected:
   std::mutex throttling_timeout_mutex_;         //!< @brief mutex for throttling timeout
   bool throttling_timeout_expired_;             //!< @brief timeout for throttling has expired or not
 
-
+  std::mutex frequency_mutex_;  //!< @brief mutex for frequency
+  std::vector<gpu_frequency_info> frequency_info_vector_;  //!< @brief list of frequency information
+  int frequency_timeout_;                   //!< @brief timeout for frequency
+  double frequency_elapsed_ms_;              //!< @brief elapsed time for frequency
+  std::mutex frequency_timeout_mutex_;         //!< @brief mutex for frequency timeout
+  bool frequency_timeout_expired_;             //!< @brief timeout for frequency has expired or not
 
   /**
    * @brief GPU frequency status messages

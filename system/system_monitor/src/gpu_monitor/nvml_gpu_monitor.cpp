@@ -43,7 +43,9 @@ GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options)
   memory_usage_timeout_(declare_parameter<int>("memory_usage_timeout", 5)),
   memory_usage_timeout_expired_(false),
   throttling_timeout_(declare_parameter<int>("throttling_timeout", 5)),
-  throttling_timeout_expired_(false)
+  throttling_timeout_expired_(false),
+  frequency_timeout_(declare_parameter<int>("frequency_timeout", 5)),
+  frequency_timeout_expired_(false)
 {
   nvmlReturn_t ret = nvmlInit();
   if (ret != NVML_SUCCESS) {
@@ -346,6 +348,8 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   } else {
     stat.summary(whole_level, throttling_dict_.at(whole_level));
   }
+
+  stat.addf("execution time", "%.3f ms", tmp_throttling_elapsed_ms);
 }
 
 std::string GPUMonitor::toHumanReadable(unsigned long long size)  // NOLINT
@@ -364,45 +368,53 @@ std::string GPUMonitor::toHumanReadable(unsigned long long size)  // NOLINT
 
 void GPUMonitor::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::vector<gpu_frequency_info> tmp_frequency_info_vector;
+  double tmp_frequency_elapsed_ms = 0.0;
+
+  //thread-sage copy
+  {
+    std::lock_guard<std::mutex> lock(frequency_mutex_);
+    tmp_frequency_info_vector = frequency_info_vector_;
+    tmp_frequency_elapsed_ms = frequency_elapsed_ms_;
+  }
 
   int whole_level = DiagStatus::OK;
   int index = 0;
   nvmlReturn_t ret{};
 
-  if (gpus_.empty()) {
+  if (tmp_frequency_info_vector.empty()) {
     stat.summary(DiagStatus::ERROR, "gpu not found");
     return;
   }
 
-  for (auto itr = gpus_.begin(); itr != gpus_.end(); ++itr, ++index) {
-    int level = DiagStatus::OK;
-    unsigned int clock = 0;
-    ret = nvmlDeviceGetClockInfo(itr->device, NVML_CLOCK_GRAPHICS, &clock);
-    if (ret != NVML_SUCCESS) {
+  for (auto itr = tmp_frequency_info_vector.begin(); itr != tmp_frequency_info_vector.end(); ++itr, ++index) {
+    if (!itr->context.empty()) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current clock speeds");
       stat.add(fmt::format("GPU {}: name", index), itr->name);
-      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
-      stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
+      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci_bus_id);
+      stat.add(fmt::format("GPU {}: content", index), itr->context);
       return;
     }
 
-    if (itr->supported_gpu_clocks.find(clock) == itr->supported_gpu_clocks.end()) {
-      level = DiagStatus::WARN;
-    }
-
-    stat.add(fmt::format("GPU {}: status", index), frequency_dict_.at(level));
+    stat.add(fmt::format("GPU {}: status", index), frequency_dict_.at(itr->level));
     stat.add(fmt::format("GPU {}: name", index), itr->name);
-    stat.addf(fmt::format("GPU {}: graphics clock", index), "%d MHz", clock);
-
-    whole_level = std::max(whole_level, level);
+    stat.addf(fmt::format("GPU {}: graphics clock", index), "%d MHz", itr->clock);
+    whole_level = std::max(whole_level, itr->level);
   }
 
-  stat.summary(whole_level, frequency_dict_.at(whole_level));
+  bool timeout_expired = false;
+  {
+    std::lock_guard<std::mutex> lock(frequency_timeout_mutex_);
+    timeout_expired = frequency_timeout_expired_;
+  }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+  if (timeout_expired) {
+    stat.summary(DiagStatus::WARN, "Reading Frequency Timeout");
+  } else {
+    stat.summary(whole_level, frequency_dict_.at(whole_level));
+  }
+
+  stat.addf("execution time", "%.3f ms", tmp_frequency_elapsed_ms);
 }
 
 void GPUMonitor::onTimer()
@@ -411,6 +423,7 @@ void GPUMonitor::onTimer()
   readUsage();
   readMemoryUsage();
   readThrottling();
+  readFrequency();
 }
 
 void GPUMonitor::onTempTimeout()
@@ -435,6 +448,12 @@ void GPUMonitor::onThrottlingTimeout()
 {
   std::lock_guard<std::mutex> lock(throttling_timeout_mutex_);
   throttling_timeout_expired_ = true;
+}
+
+void GPUMonitor::onFrequencyTimeout()
+{
+  std::lock_guard<std::mutex> lock(frequency_timeout_mutex_);
+  frequency_timeout_expired_ = true;
 }
 
 void GPUMonitor::readTemp()
@@ -742,48 +761,57 @@ void GPUMonitor::readThrottling()
   }
 }
 
-// void GPUMonitor::checkFrequency()
-// {
-//   // Remember start time to measure elapsed time
-//   const auto t_start = SystemMonitorUtility::startMeasurement();
+void GPUMonitor::readFrequency()
+{
+  // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
 
-//   int whole_level = DiagStatus::OK;
-//   int index = 0;
-//   nvmlReturn_t ret{};
+  std::vector<gpu_frequency_info> tmp_frequency_info_vector;
 
-//   if (gpus_.empty()) {
-//     stat.summary(DiagStatus::ERROR, "gpu not found");
-//     return;
-//   }
+  // Start timeout timer for read temperature
+  {
+    std::lock_guard<std::mutex> lock(frequency_timeout_mutex_);
+    frequency_timeout_expired_ = false;
+  }
+  timeout_timer_ = rclcpp::create_timer(
+    this, get_clock(), std::chrono::seconds(frequency_timeout_), std::bind(&GPUMonitor::onFrequencyTimeout, this));
 
-//   for (auto itr = gpus_.begin(); itr != gpus_.end(); ++itr, ++index) {
-//     int level = DiagStatus::OK;
-//     unsigned int clock = 0;
-//     ret = nvmlDeviceGetClockInfo(itr->device, NVML_CLOCK_GRAPHICS, &clock);
-//     if (ret != NVML_SUCCESS) {
-//       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current clock speeds");
-//       stat.add(fmt::format("GPU {}: name", index), itr->name);
-//       stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
-//       stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
-//       return;
-//     }
+  nvmlReturn_t ret{};
 
-//     if (itr->supported_gpu_clocks.find(clock) == itr->supported_gpu_clocks.end()) {
-//       level = DiagStatus::WARN;
-//     }
+  for (auto itr = gpus_.begin(); itr != gpus_.end(); ++itr) {
+    gpu_frequency_info frequency_info;
+    frequency_info.level = DiagStatus::OK;
+    ret = nvmlDeviceGetClockInfo(itr->device, NVML_CLOCK_GRAPHICS, &frequency_info.clock);
+    if (ret != NVML_SUCCESS) {
+      frequency_info.name = itr->name;
+      frequency_info.pci_bus_id = itr->pci.busId;
+      frequency_info.context = nvmlErrorString(ret);
+      tmp_frequency_info_vector.push_back(frequency_info);
+      break;
+    } 
 
-//     stat.add(fmt::format("GPU {}: status", index), frequency_dict_.at(level));
-//     stat.add(fmt::format("GPU {}: name", index), itr->name);
-//     stat.addf(fmt::format("GPU {}: graphics clock", index), "%d MHz", clock);
+    frequency_info.name = itr->name;
 
-//     whole_level = std::max(whole_level, level);
-//   }
+    if (itr->supported_gpu_clocks.find(frequency_info.clock) == itr->supported_gpu_clocks.end()) {
+      frequency_info.level = DiagStatus::WARN;
+    }
 
-//   stat.summary(whole_level, frequency_dict_.at(whole_level));
+    tmp_frequency_info_vector.push_back(frequency_info);
+  }
 
-//   // Measure elapsed time since start time and report
-//   SystemMonitorUtility::stopMeasurement(t_start, stat);
-// }
+  // Stop timeout timer for read temperature
+  timeout_timer_->cancel();
+
+  double elapsed_ms = stop_watch.toc("execution_time");
+
+  //thread-sage copy
+  {
+    std::lock_guard<std::mutex> lock(frequency_mutex_);
+    frequency_info_vector_ = tmp_frequency_info_vector;
+    frequency_elapsed_ms_ = elapsed_ms;
+  }
+}
 
 bool GPUMonitor::getSupportedGPUClocks(
   int index, nvmlDevice_t & device, std::set<unsigned int> & supported_gpu_clocks)
