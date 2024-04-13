@@ -339,7 +339,7 @@ void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_
 {
   // copy the input LL2 map to the temporary file for debugging
   const std::string debug_input_file_dir{"/tmp/static_centerline_generator/input/"};
-  std::filesystem::create_directory(debug_input_file_dir);
+  std::filesystem::create_directories(debug_input_file_dir);
   std::filesystem::copy(
     lanelet2_input_file_path, debug_input_file_dir + "lanelet2_map.osm",
     std::filesystem::copy_options::overwrite_existing);
@@ -646,7 +646,7 @@ void StaticCenterlineGeneratorNode::save_map(
 
   // copy the output LL2 map to the temporary file for debugging
   const std::string debug_output_file_dir{"/tmp/static_centerline_generator/output/"};
-  std::filesystem::create_directory(debug_output_file_dir);
+  std::filesystem::create_directories(debug_output_file_dir);
   std::filesystem::copy(
     lanelet2_output_file_path, debug_output_file_dir + "lanelet2_map.osm",
     std::filesystem::copy_options::overwrite_existing);
