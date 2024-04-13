@@ -46,7 +46,6 @@ using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 using sensor_msgs::msg::PointCloud2;
 using std_msgs::msg::Header;
-using PclPointCloud = pcl::PointCloud<pcl::PointXYZI>;
 
 class RadiusSearch2dFilter
 {
