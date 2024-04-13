@@ -25,9 +25,9 @@ def sort_attributes(root):
         attrib = shallow_element.attrib
         if len(attrib) > 1:
             # adjust attribute order, e.g. by sorting
-            attribs = sorted(attrib.items())
+            attributes = sorted(attrib.items())
             attrib.clear()
-            attrib.update(attribs)
+            attrib.update(attributes)
         if shallow_element.tag == "relation":
             pass
 
@@ -41,9 +41,9 @@ def sort_attributes(root):
             attrib = deep_element.attrib
             if len(attrib) > 1:
                 # adjust attribute order, e.g. by sorting
-                attribs = sorted(attrib.items())
+                attributes = sorted(attrib.items())
                 attrib.clear()
-                attrib.update(attribs)
+                attrib.update(attributes)
 
 
 def remove_diff_to_ignore(osm_root):
@@ -65,13 +65,13 @@ def remove_diff_to_ignore(osm_root):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-s", "--sort-attributes", action="store_true", help="Sort attribues of LL2 maps"
+        "-s", "--sort-attributes", action="store_true", help="Sort attributes of LL2 maps"
     )
     parser.add_argument(
         "-i",
         "--ignore-minor-attributes",
         action="store_true",
-        help="Ignore minor attribues of LL2 maps which does not change the map's behavior",
+        help="Ignore minor attributes of LL2 maps which does not change the map's behavior",
     )
     args = parser.parse_args()
 
