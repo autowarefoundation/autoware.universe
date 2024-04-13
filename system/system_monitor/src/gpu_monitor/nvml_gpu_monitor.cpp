@@ -219,6 +219,8 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   } else {
     stat.summary(whole_level, load_dict_.at(whole_level));
   }
+
+  stat.addf("execution time", "%.3f ms", tmp_usage_elapsed_ms);
 }
 
 // void GPUMonitor::addProcessUsage(
@@ -682,6 +684,8 @@ void GPUMonitor::addProcessUsage(nvmlDevice_t device, std::list<gpu_util_info> &
 
 void GPUMonitor::readMemoryUsage()
 {
+  // Start to measure elapsed time
+
 
   int index = 0;
   nvmlReturn_t ret{};
