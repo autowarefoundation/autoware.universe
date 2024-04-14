@@ -1,0 +1,14 @@
+nodes:
+  - id: dora_node_pub_rosmsg
+    custom:
+      source: build/dora_node_pub_rosmsg
+      inputs:
+        tick: dora/timer/millis/500
+      outputs:
+        - pose
+
+  - id: dora_node_sub_rosmsg
+    custom:
+      source: build/dora_node_sub_rosmsg
+      #inputs:
+      #  tick: dora/timer/millis/500
