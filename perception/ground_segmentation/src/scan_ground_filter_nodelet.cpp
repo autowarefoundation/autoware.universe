@@ -612,7 +612,7 @@ void ScanGroundFilterComponent::faster_filter(
   output.row_step = no_ground_indices.indices.size() * input->point_step;
   output.data.resize(output.row_step);
   output.width = no_ground_indices.indices.size();
-  output.fields.assign(input->fields.begin(), input->fields.begin() + 3);
+  output.fields.assign(input->fields.begin(), input->fields.begin() + 4);
   output.is_dense = true;
   output.height = input->height;
   output.is_bigendian = input->is_bigendian;
