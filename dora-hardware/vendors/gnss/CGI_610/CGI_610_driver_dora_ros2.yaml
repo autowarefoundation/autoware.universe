@@ -1,0 +1,24 @@
+nodes:
+  - id: CGI_610_driver_dora
+    operator:
+      python: ./CGI_610_driver_dora.py
+      inputs:
+        tick: dora/timer/millis/50
+      outputs:
+        - DoraSentence   #输出原始字符流
+        - DoraNavSatFix
+        - DoraQuaternionStamped
+        - DoraTwistStamped
+    env:
+      DEVICE_INDEX: 0
+
+  - id: gps_to_ros2
+    operator:
+      python: ./gps_to_ros2.py
+      inputs:
+              DoraSentence: CGI_610_driver_dora/DoraSentence
+              DoraNavSatFix: CGI_610_driver_dora/DoraNavSatFix
+              DoraQuaternionStamped: CGI_610_driver_dora/DoraQuaternionStamped
+              DoraTwistStamped: CGI_610_driver_dora/DoraTwistStamped
+
+
