@@ -89,6 +89,7 @@ void processCloud(void)
     {
       continue;
     }
+    usleep(1000*100); //只针对pcap文件
 
     // Well, it is time to process the point cloud msg, even it is time-consuming.
     RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
