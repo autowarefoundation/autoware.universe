@@ -83,8 +83,8 @@ Using this $\delta_{\mathrm{ref}, k}$, $\tan \delta_k$ is linearized as follows.
 
 $$
 \begin{align}
-\tan \delta_k & \approx \tan \delta_{\mathrm{ref}, k} + \lbrace.\frac{d \tan \delta}{d \delta}\rbrace|_{\delta = \delta_{\mathrm{ref}, k}} \Delta \delta_k \\\
-& = \tan \delta_{\mathrm{ref}, k} + \lbrace.\frac{d \tan \delta}{d \delta}\rbrace|_{\delta = \delta_{\mathrm{ref}, k}} (\delta_{\mathrm{ref}, k} - \delta_k) \\\
+\tan \delta_k & \approx \tan \delta_{\mathrm{ref}, k} + \lbrace\frac{d \tan \delta}{d \delta}\rbrace|_{\delta = \delta_{\mathrm{ref}, k}} \Delta \delta_k \\\
+& = \tan \delta_{\mathrm{ref}, k} + \lbrace\frac{d \tan \delta}{d \delta}\rbrace|_{\delta = \delta_{\mathrm{ref}, k}} (\delta_{\mathrm{ref}, k} - \delta_k) \\\
 & = \tan \delta_{\mathrm{ref}, k} - \frac{\delta_{\mathrm{ref}, k}}{\cos^2 \delta_{\mathrm{ref}, k}} + \frac{1}{\cos^2 \delta_{\mathrm{ref}, k}} \delta_k
 \end{align}
 $$
@@ -102,31 +102,31 @@ $$
     =
     \begin{pmatrix}
         1 & v dt \\\
-        0 & 1 \\\
+        0 & 1
     \end{pmatrix}
     \begin{pmatrix}
         y_k \\\
-        \theta_k \\\
+        \theta_k
     \end{pmatrix}
     +
     \begin{pmatrix}
         0 \\\
-        \frac{v dt}{L \cos^{2} \delta_{\mathrm{ref}, k}} \\\
+        \frac{v dt}{L \cos^{2} \delta_{\mathrm{ref}, k}}
     \end{pmatrix}
     \delta_{k}
     +
     \begin{pmatrix}
         0 \\\
-        \frac{v \tan(\delta_{\mathrm{ref}, k}) dt}{L} - \frac{v \delta_{\mathrm{ref}, k} dt}{L \cos^{2} \delta_{\mathrm{ref}, k}} - \kappa_k v dt\\\
+        \frac{v \tan(\delta_{\mathrm{ref}, k}) dt}{L} - \frac{v \delta_{\mathrm{ref}, k} dt}{L \cos^{2} \delta_{\mathrm{ref}, k}} - \kappa_k v dt
     \end{pmatrix}
 \end{align}
 $$
 
-which can be formulated as follows with the state $\boldsymbol{x}$, control input $u$ and some matrices, where $\boldsymbol{x} = (y_k, \theta_k)$
+which can be formulated as follows with the state $\mathbf{x}$, control input $u$ and some matrices, where $\mathbf{x} = (y_k, \theta_k)$
 
 $$
 \begin{align}
-  \boldsymbol{x}_{k+1} = A_k \boldsymbol{x}_k + \boldsymbol{b}_k u_k + \boldsymbol{w}_k
+  \mathbf{x}_{k+1} = A_k \mathbf{x}_k + \mathbf{b}_k u_k + \mathbf{w}_k
 \end{align}
 $$
 
@@ -136,7 +136,7 @@ Then, we formulate time-series state equation by concatenating states, control i
 
 $$
 \begin{align}
-  \boldsymbol{x} = A \boldsymbol{x}_0 + B \boldsymbol{u} + \boldsymbol{w}
+  \mathbf{x} = A \mathbf{x}_0 + B \mathbf{u} + \mathbf{w}
 \end{align}
 $$
 
@@ -144,9 +144,9 @@ where
 
 $$
 \begin{align}
-\boldsymbol{x} = (\boldsymbol{x}^T_1, \boldsymbol{x}^T_2, \boldsymbol{x}^T_3, \dots, \boldsymbol{x}^T_{n-1})^T \\\
-\boldsymbol{u} = (u_0, u_1, u_2, \dots, u_{n-2})^T \\\
-\boldsymbol{w} = (\boldsymbol{w}^T_0, \boldsymbol{w}^T_1, \boldsymbol{w}^T_2, \dots, \boldsymbol{w}^T_{n-1})^T. \\\
+\mathbf{x} = (\mathbf{x}^T_1, \mathbf{x}^T_2, \mathbf{x}^T_3, \dots, \mathbf{x}^T_{n-1})^T \\\
+\mathbf{u} = (u_0, u_1, u_2, \dots, u_{n-2})^T \\\
+\mathbf{w} = (\mathbf{w}^T_0, \mathbf{w}^T_1, \mathbf{w}^T_2, \dots, \mathbf{w}^T_{n-1})^T. \\\
 \end{align}
 $$
 
@@ -155,11 +155,11 @@ In detail, each matrices are constructed as follows.
 $$
 \begin{align}
     \begin{pmatrix}
-        \boldsymbol{x}_1 \\\
-        \boldsymbol{x}_2 \\\
-        \boldsymbol{x}_3 \\\
+        \mathbf{x}_1 \\\
+        \mathbf{x}_2 \\\
+        \mathbf{x}_3 \\\
         \vdots \\\
-        \boldsymbol{x}_{n-1}
+        \mathbf{x}_{n-1}
     \end{pmatrix}
     =
     \begin{pmatrix}
@@ -169,7 +169,7 @@ $$
         \vdots \\\
         \prod\limits_{k=0}^{n-1} A_{k}
     \end{pmatrix}
-    \boldsymbol{x}_0
+    \mathbf{x}_0
     +
     \begin{pmatrix}
       B_0 & 0 & & \dots & 0 \\\
@@ -194,24 +194,24 @@ $$
       \prod\limits_{k=0}^{n-3} A_k & \prod\limits_{k=0}^{n-4} A_k & \dots & A_0 & I
     \end{pmatrix}
     \begin{pmatrix}
-        \boldsymbol{w}_0 \\\
-        \boldsymbol{w}_1 \\\
-        \boldsymbol{w}_2 \\\
+        \mathbf{w}_0 \\\
+        \mathbf{w}_1 \\\
+        \mathbf{w}_2 \\\
         \vdots \\\
-        \boldsymbol{w}_{n-2}
+        \mathbf{w}_{n-2}
     \end{pmatrix}
 \end{align}
 $$
 
 ### Free-boundary-conditioned time-series state equation
 
-For path planning which does not start from the current ego pose, $\boldsymbol{x}_0$ should be the design variable of optimization.
-Therefore, we make $\boldsymbol{u}'$ by concatenating $\boldsymbol{x}_0$ and $\boldsymbol{u}$, and redefine $\boldsymbol{x}$ as follows.
+For path planning which does not start from the current ego pose, $\mathbf{x}_0$ should be the design variable of optimization.
+Therefore, we make $\mathbf{u}'$ by concatenating $\mathbf{x}_0$ and $\mathbf{u}$, and redefine $\mathbf{x}$ as follows.
 
 $$
 \begin{align}
-  \boldsymbol{u}' & = (\boldsymbol{x}^T_0, \boldsymbol{u}^T)^T \\\
-  \boldsymbol{x} & = (\boldsymbol{x}^T_0, \boldsymbol{x}^T_1, \boldsymbol{x}^T_2, \dots, \boldsymbol{x}^T_{n-1})^T
+  \mathbf{u}' & = (\mathbf{x}^T_0, \mathbf{u}^T)^T \\\
+  \mathbf{x} & = (\mathbf{x}^T_0, \mathbf{x}^T_1, \mathbf{x}^T_2, \dots, \mathbf{x}^T_{n-1})^T
 \end{align}
 $$
 
@@ -219,7 +219,7 @@ Then we get the following state equation
 
 $$
 \begin{align}
-  \boldsymbol{x}' = B \boldsymbol{u}' + \boldsymbol{w},
+  \mathbf{x}' = B \mathbf{u}' + \mathbf{w},
 \end{align}
 $$
 
@@ -228,12 +228,12 @@ which is in detail
 $$
 \begin{align}
     \begin{pmatrix}
-        \boldsymbol{x}_0 \\\
-        \boldsymbol{x}_1 \\\
-        \boldsymbol{x}_2 \\\
-        \boldsymbol{x}_3 \\\
+        \mathbf{x}_0 \\\
+        \mathbf{x}_1 \\\
+        \mathbf{x}_2 \\\
+        \mathbf{x}_3 \\\
         \vdots \\\
-        \boldsymbol{x}_{n-1}
+        \mathbf{x}_{n-1}
     \end{pmatrix}
     =
     \begin{pmatrix}
@@ -245,7 +245,7 @@ $$
       \prod\limits_{k=0}^{n-1} A_k & \prod\limits_{k=0}^{n-3} A_k B_0 & \prod\limits_{k=0}^{n-4} A_k B_1 & \dots & A_0 B_{n-3} & B_{n-2}
     \end{pmatrix}
     \begin{pmatrix}
-        \boldsymbol{x}_0 \\\
+        \mathbf{x}_0 \\\
         u_0 \\\
         u_1 \\\
         u_2 \\\
@@ -262,11 +262,11 @@ $$
       \prod\limits_{k=0}^{n-3} A_k & \prod\limits_{k=0}^{n-4} A_k & \dots & A_0 & I
     \end{pmatrix}
     \begin{pmatrix}
-        \boldsymbol{w}_0 \\\
-        \boldsymbol{w}_1 \\\
-        \boldsymbol{w}_2 \\\
+        \mathbf{w}_0 \\\
+        \mathbf{w}_1 \\\
+        \mathbf{w}_2 \\\
         \vdots \\\
-        \boldsymbol{w}_{n-2}
+        \mathbf{w}_{n-2}
     \end{pmatrix}.
 \end{align}
 $$
@@ -277,9 +277,9 @@ The objective function for smoothing and tracking is shown as follows, which can
 
 $$
 \begin{align}
-J_1 (\boldsymbol{x}', \boldsymbol{u}') & = w_y \sum_{k} y_k^2 + w_{\theta} \sum_{k} \theta_k^2 + w_{\delta} \sum_k \delta_k^2 + w_{\dot \delta} \sum_k \dot \delta_k^2 + w_{\ddot \delta} \sum_k \ddot \delta_k^2 \\\
-& = \boldsymbol{x}'^T Q \boldsymbol{x}' + \boldsymbol{u}'^T R \boldsymbol{u}' \\\
-& = \boldsymbol{u}'^T H \boldsymbol{u}' + \boldsymbol{u}'^T \boldsymbol{f}
+J_1 (\mathbf{x}', \mathbf{u}') & = w_y \sum_{k} y_k^2 + w_{\theta} \sum_{k} \theta_k^2 + w_{\delta} \sum_k \delta_k^2 + w_{\dot \delta} \sum_k \dot \delta_k^2 + w_{\ddot \delta} \sum_k \ddot \delta_k^2 \\\
+& = \mathbf{x}'^T Q \mathbf{x}' + \mathbf{u}'^T R \mathbf{u}' \\\
+& = \mathbf{u}'^T H \mathbf{u}' + \mathbf{u}'^T \mathbf{f}
 \end{align}
 $$
 
@@ -299,19 +299,19 @@ Since $y_{\mathrm{base}, k}, y_{\mathrm{top}, k}, y_{\mathrm{mid}, k}$ is formul
 
 $$
 \begin{align}
-J_2 & (\boldsymbol{\lambda}_\mathrm{base}, \boldsymbol{\lambda}_\mathrm{top}, \boldsymbol {\lambda}_\mathrm{mid})\\\
+J_2 & (\mathbf{\lambda}_\mathrm{base}, \mathbf{\lambda}_\mathrm{top}, \mathbf {\lambda}_\mathrm{mid})\\\
 & = w_{\mathrm{base}} \sum_{k} \lambda_{\mathrm{base}, k} + w_{\mathrm{mid}} \sum_k \lambda_{\mathrm{mid}, k} + w_{\mathrm{top}} \sum_k \lambda_{\mathrm{top}, k}
 \end{align}
 $$
 
 Slack variables are also design variables for optimization.
-We define a vector $\boldsymbol{v}$, that concatenates all the design variables.
+We define a vector $\mathbf{v}$, that concatenates all the design variables.
 
 $$
 \begin{align}
-\boldsymbol{v} =
+\mathbf{v} =
 \begin{pmatrix}
-  \boldsymbol{u}'^T & \boldsymbol{\lambda}_\mathrm{base}^T & \boldsymbol{\lambda}_\mathrm{top}^T & \boldsymbol{\lambda}_\mathrm{mid}^T
+  \mathbf{u}'^T & \mathbf{\lambda}_\mathrm{base}^T & \mathbf{\lambda}_\mathrm{top}^T & \mathbf{\lambda}_\mathrm{mid}^T
 \end{pmatrix}^T
 \end{align}
 $$
@@ -320,7 +320,7 @@ The summation of these two objective functions is the objective function for the
 
 $$
 \begin{align}
-\min_{\boldsymbol{v}} J (\boldsymbol{v}) = \min_{\boldsymbol{v}} J_1 (\boldsymbol{u}') + J_2 (\boldsymbol{\lambda}_\mathrm{base}, \boldsymbol{\lambda}_\mathrm{top}, \boldsymbol{\lambda}_\mathrm{mid})
+\min_{\mathbf{v}} J (\mathbf{v}) = \min_{\mathbf{v}} J_1 (\mathbf{u}') + J_2 (\mathbf{\lambda}_\mathrm{base}, \mathbf{\lambda}_\mathrm{top}, \mathbf{\lambda}_\mathrm{mid})
 \end{align}
 $$
 
@@ -337,8 +337,8 @@ Finally we transform those objective functions to the following QP problem, and 
 
 $$
 \begin{align}
-\min_{\boldsymbol{v}} \ & \frac{1}{2} \boldsymbol{v}^T \boldsymbol{H} \boldsymbol{v} + \boldsymbol{f} \boldsymbol{v} \\\
-\mathrm{s.t.} \ & \boldsymbol{b}_{lower} \leq \boldsymbol{A} \boldsymbol{v} \leq \boldsymbol{b}_{upper}
+\min_{\mathbf{v}} \ & \frac{1}{2} \mathbf{v}^T \mathbf{H} \mathbf{v} + \mathbf{f} \mathbf{v} \\\
+\mathrm{s.t.} \ & \mathbf{b}_{lower} \leq \mathbf{A} \mathbf{v} \leq \mathbf{b}_{upper}
 \end{align}
 $$
 
@@ -394,9 +394,9 @@ $$
 
 $$
 \begin{align}
-y' & = C_1 \boldsymbol{x} + C_2 \\\
-& = C_1 (B \boldsymbol{v} + \boldsymbol{w}) + C_2 \\\
-& = C_1 B \boldsymbol{v} + \boldsymbol{w} + C_2
+y' & = C_1 \mathbf{x} + C_2 \\\
+& = C_1 (B \mathbf{v} + \mathbf{w}) + C_2 \\\
+& = C_1 B \mathbf{v} + \mathbf{w} + C_2
 \end{align}
 $$
 
@@ -412,16 +412,16 @@ $$
         -C_1 B & O & \dots & O & I & O \dots & O\\\
         O & O & \dots & O & I & O \dots & O
     \end{pmatrix}
-    \in \boldsymbol{R}^{3 N_{ref} \times D_v + N_{circle} N_{ref}} \\\
-    \boldsymbol{b}_{lower, blk} & =
+    \in \mathbf{R}^{3 N_{ref} \times D_v + N_{circle} N_{ref}} \\\
+    \mathbf{b}_{lower, blk} & =
     \begin{pmatrix}
-        \boldsymbol{b}_{lower} - C_1 \boldsymbol{w} - C_2 \\\
-        -\boldsymbol{b}_{upper} + C_1 \boldsymbol{w} + C_2 \\\
+        \mathbf{b}_{lower} - C_1 \mathbf{w} - C_2 \\\
+        -\mathbf{b}_{upper} + C_1 \mathbf{w} + C_2 \\\
         O
     \end{pmatrix}
-    \in \boldsymbol{R}^{3 N_{ref}} \\\
-    \boldsymbol{b}_{upper, blk} & = \boldsymbol{\infty}
-    \in \boldsymbol{R}^{3 N_{ref}}
+    \in \mathbf{R}^{3 N_{ref}} \\\
+    \mathbf{b}_{upper, blk} & = \mathbf{\infty}
+    \in \mathbf{R}^{3 N_{ref}}
 \end{align}
 $$
 
@@ -440,7 +440,7 @@ $$
         -C_1 B & I \\\
         O & I
     \end{pmatrix}
-\in \boldsymbol{R}^{3N_{ref} \times D_v + N_{ref}}
+\in \mathbf{R}^{3N_{ref} \times D_v + N_{ref}}
 \end{align}
 $$
 
