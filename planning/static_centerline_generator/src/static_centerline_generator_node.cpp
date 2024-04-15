@@ -14,6 +14,10 @@
 
 #include "autoware_static_centerline_generator/static_centerline_generator_node.hpp"
 
+#include "autoware_static_centerline_generator/centerline_source/bag_ego_trajectory_based_centerline.hpp"
+#include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
+#include "autoware_static_centerline_generator/type_alias.hpp"
+#include "autoware_static_centerline_generator/utils.hpp"
 #include "autoware_static_centerline_optimizer/msg/points_with_lane_id.hpp"
 #include "autoware_static_centerline_optimizer/type_alias.hpp"
 #include "autoware_static_centerline_optimizer/utils.hpp"
@@ -24,10 +28,6 @@
 #include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
-#include "autoware_static_centerline_generator/centerline_source/bag_ego_trajectory_based_centerline.hpp"
-#include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
-#include "autoware_static_centerline_generator/type_alias.hpp"
-#include "autoware_static_centerline_generator/utils.hpp"
 #include "obstacle_avoidance_planner/node.hpp"
 #include "path_smoother/elastic_band_smoother.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"

@@ -29,7 +29,7 @@ import pytest
 def generate_test_description():
     lanelet2_map_path = os.path.join(
         get_package_share_directory("autoware_static_centerline_generator"),
-        "test/data/lanelet2_map.osm"
+        "test/data/lanelet2_map.osm",
     )
 
     static_centerline_generator_node = Node(
