@@ -37,9 +37,9 @@ MemMonitor::MemMonitor(const rclcpp::NodeOptions & options)
   updater_(this),
   available_size_(declare_parameter<int>("available_size", 1024) * 1024 * 1024),
   usage_timeout_(declare_parameter<int>("usage_timeout", 5)),
-  usage_timeout_expired_(false),
   ecc_timeout_(declare_parameter<int>("ecc_timeout", 5)),
-  ecc_timeout_expired_(false),
+  usage_elapsed_ms_(0.0),
+  ecc_elapsed_ms_(0.0),
   use_edac_util_(false)
 {
   using namespace std::literals::chrono_literals;
@@ -87,7 +87,7 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   // Check if Memory Usage is sound state
   int level;
-  if (map["Mem: usage"] > map["Total: used+"]) {
+  if (map["Mem: total"] > map["Total: used+"]) {
     level = DiagStatus::OK;
   } else if (map["Mem: available"] >= available_size_) {
     level = DiagStatus::WARN;
@@ -103,17 +103,12 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     }
   }
 
-  // Check timeout has expired regarding executing readUsage
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-    timeout_expired = usage_timeout_expired_;
-  }
-
-  if (!timeout_expired) {
-    stat.summary(level, usage_dict_.at(level));
-  } else {
+  if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "do not execute readUsage yet");
+  } else if (elapsed_ms > usage_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "readUsage timeout expired");
+  } else {
+    stat.summary(level, usage_dict_.at(level));
   }
 
   stat.addf("execution time", "%f ms", elapsed_ms);
@@ -124,7 +119,7 @@ void MemMonitor::checkEcc(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::string error_str;
   std::string pipe2_error_str;
   std::string output;
-  double elapsed_ms;
+  double elapsed_ms = 0.0;
 
   // thread-safe copy
   {
@@ -164,17 +159,12 @@ void MemMonitor::checkEcc(diagnostic_updater::DiagnosticStatusWrapper & stat)
     }
   }
 
-  // Check timeout has expired regarding executing edac-util command
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(ecc_timeout_mutex_);
-    timeout_expired = ecc_timeout_expired_;
-  }
-
-  if (!timeout_expired) {
-    stat.summary(DiagStatus::OK, "OK");
+  if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "do not execute edac-util yet");
+  } else if (elapsed_ms > ecc_timeout_ * 1000) {
+    stat.summary(DiagStatus::WARN, "edac-util timeout expired");
   } else {
-    stat.summary(DiagStatus::WARN, "edac-util command timeout expired");
+    stat.summary(DiagStatus::OK, "OK");
   }
 
   stat.addf("execution time", "%f ms", elapsed_ms);
@@ -307,7 +297,7 @@ std::string MemMonitor::executeEdacUtil(std::string & output, std::string & pipe
 }
 
 void MemMonitor::onTimer()
-{
+{ 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   // Check Memory Usage
@@ -318,19 +308,7 @@ void MemMonitor::onTimer()
     std::string error_str;
     std::map<std::string, size_t> map;
 
-    // Start timeout timer for executing readUsage
-    {
-      std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-      usage_timeout_expired_ = false;
-    }
-    timeout_timer_ = rclcpp::create_timer(
-      this, get_clock(), std::chrono::seconds(usage_timeout_),
-      std::bind(&MemMonitor::onUsageTimeout, this));
-
     error_str = readUsage(map);
-
-    // Returning from readUsage, stop timeout timer
-    timeout_timer_->cancel();
 
     const double elapsed_ms = stop_watch.toc("usage_execution_time");
 
@@ -351,19 +329,7 @@ void MemMonitor::onTimer()
     std::string pipe2_error_str;
     std::string output;
 
-    // Start timeout timer for executing edac-util command
-    {
-      std::lock_guard<std::mutex> lock(ecc_timeout_mutex_);
-      ecc_timeout_expired_ = false;
-    }
-    timeout_timer_ = rclcpp::create_timer(
-      this, get_clock(), std::chrono::seconds(ecc_timeout_),
-      std::bind(&MemMonitor::onEccTimeout, this));
-
     error_str = executeEdacUtil(output, pipe2_error_str);
-
-    // Returning from edac-util command, stop timeout timer
-    timeout_timer_->cancel();
 
     const double elapsed_ms = stop_watch.toc("ecc_execution_time");
 
@@ -376,20 +342,6 @@ void MemMonitor::onTimer()
       ecc_elapsed_ms_ = elapsed_ms;
     }
   }
-}
-
-void MemMonitor::onUsageTimeout()
-{
-  RCLCPP_WARN(get_logger(), "Read Memory Usage Timeout occurred.");
-  std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-  usage_timeout_expired_ = true;
-}
-
-void MemMonitor::onEccTimeout()
-{
-  RCLCPP_WARN(get_logger(), "Execute edac-util Timeout occurred.");
-  std::lock_guard<std::mutex> lock(ecc_timeout_mutex_);
-  ecc_timeout_expired_ = true;
 }
 
 std::string MemMonitor::toHumanReadable(const std::string & str)
