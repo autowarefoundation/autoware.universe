@@ -101,10 +101,10 @@ protected:
     timer_;  //!< @brief Timer to execute readUsage and edac-utils command
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
 
-  std::mutex usage_mutex_;                      //!< @brief Mutex for output from /proc/meminfo
-  std::string usage_error_str_;                 //!< @brief Error string
-  std::map<std::string, size_t> usage_map_;     //!< @brief Output of /proc/meminfo
-  double usage_elapsed_ms_;                     //!< @brief Execution time of readUsage
+  std::mutex usage_mutex_;                   //!< @brief Mutex for output from /proc/meminfo
+  std::string usage_error_str_;              //!< @brief Error string
+  std::map<std::string, size_t> usage_map_;  //!< @brief Output of /proc/meminfo
+  double usage_elapsed_ms_;                  //!< @brief Execution time of readUsage
   std::mutex usage_timeout_mutex_;  //!< @brief Mutex regarding timeout for executing readUsage
 
   std::mutex ecc_mutex_;             //!< @brief Mutex for output from edac-util command
@@ -113,8 +113,8 @@ protected:
   std::string ecc_output_;           //!< @brief Output of edac-util command
   double ecc_elapsed_ms_;            //!< @brief Execution time of edac-util command
   std::mutex
-    ecc_timeout_mutex_;       //!< @brief Mutex regarding timeout for executing edac-util command
-  bool use_edac_util_;        //!< @brief Available to use edac-util command or not
+    ecc_timeout_mutex_;  //!< @brief Mutex regarding timeout for executing edac-util command
+  bool use_edac_util_;   //!< @brief Available to use edac-util command or not
 
   /**
    * @brief Memory usage status messages

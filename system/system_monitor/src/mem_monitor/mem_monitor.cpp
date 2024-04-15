@@ -297,7 +297,7 @@ std::string MemMonitor::executeEdacUtil(std::string & output, std::string & pipe
 }
 
 void MemMonitor::onTimer()
-{ 
+{
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   // Check Memory Usage
