@@ -467,7 +467,7 @@ void BehaviorVelocityPlannerNode::publish_debug_marker(
   for (size_t i = 0; i < path.points.size(); ++i) {
     visualization_msgs::msg::Marker marker;
     marker.header = path.header;
-    marker.id = i;
+    marker.id = static_cast<int32_t>(i);
     marker.type = visualization_msgs::msg::Marker::ARROW;
     marker.pose = path.points.at(i).pose;
     marker.scale.y = marker.scale.z = 0.05;
