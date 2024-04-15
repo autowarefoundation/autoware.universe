@@ -77,9 +77,10 @@ void VoxelBasedCompareMapFilterComponent::filter(
   size_t output_size = 0;
   for (size_t global_offset = 0; global_offset < input->data.size(); global_offset += point_step) {
     pcl::PointXYZ point{};
-    std::memcpy(&point.x, &input->data[global_offset + offset_x], sizeof(float));
-    std::memcpy(&point.y, &input->data[global_offset + offset_y], sizeof(float));
-    std::memcpy(&point.z, &input->data[global_offset + offset_z], sizeof(float));
+    point.x = *reinterpret_cast<const float *>(&input->data[global_offset + offset_x]);
+    point.y = *reinterpret_cast<const float *>(&input->data[global_offset + offset_y]);
+    point.z = *reinterpret_cast<const float *>(&input->data[global_offset + offset_z]);
+
     if (voxel_grid_map_loader_->is_close_to_map(point, distance_threshold_)) {
       continue;
     }
