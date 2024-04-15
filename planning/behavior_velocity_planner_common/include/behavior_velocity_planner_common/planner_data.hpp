@@ -47,6 +47,7 @@
 
 namespace behavior_velocity_planner
 {
+class BehaviorVelocityPlannerNode;
 struct PlannerData
 {
   explicit PlannerData(rclcpp::Node & node)
@@ -71,8 +72,8 @@ struct PlannerData
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid;
 
   // nearest search
-  double ego_nearest_dist_threshold = 0.0;
-  double ego_nearest_yaw_threshold = 0.0;
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 
   // other internal data
   // traffic_light_id_map_raw is the raw observation, while traffic_light_id_map_keep_last keeps the
@@ -98,9 +99,9 @@ struct PlannerData
   double max_stop_jerk_threshold;
   double system_delay;
   double delay_response_time;
-  double stop_line_extend_length = 0.0;
+  double stop_line_extend_length;
 
-  [[nodiscard]] bool is_vehicle_stopped(const double stop_duration = 0.0) const
+  bool isVehicleStopped(const double stop_duration = 0.0) const
   {
     if (velocity_buffer.empty()) {
       return false;
@@ -136,7 +137,7 @@ struct PlannerData
    *@brief queries the traffic signal information of given Id. if keep_last_observation = true,
    *recent UNKNOWN observation is overwritten as the last non-UNKNOWN observation
    */
-  [[nodiscard]] std::optional<TrafficSignalStamped> get_traffic_signal(
+  std::optional<TrafficSignalStamped> getTrafficSignal(
     const lanelet::Id id, const bool keep_last_observation = false) const
   {
     const auto & traffic_light_id_map =
