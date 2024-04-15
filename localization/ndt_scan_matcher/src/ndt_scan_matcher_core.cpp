@@ -761,14 +761,14 @@ void NDTScanMatcher::service_ndt_align(
   diagnostics_ndt_align_->clear();
 
   diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", this->now().seconds());
-  diagnostics_ndt_align_->addKeyValue("is_succeed_latest_ndt_aling_service", false);
+  diagnostics_ndt_align_->addKeyValue("is_succeed_latest_ndt_align_service", false);
   diagnostics_ndt_align_->addKeyValue("is_set_sensor_points", false);
   diagnostics_ndt_align_->addKeyValue("is_set_map_points", false);
-  diagnostics_ndt_align_->addKeyValue("latest_ndt_aling_service_best_score", 0.0);
+  diagnostics_ndt_align_->addKeyValue("latest_ndt_align_service_best_score", 0.0);
 
   service_ndt_align_main(req, res);
 
-  diagnostics_ndt_align_->addKeyValue("is_succeed_latest_ndt_aling_service", res->success);
+  diagnostics_ndt_align_->addKeyValue("is_succeed_latest_ndt_align_service", res->success);
 
   diagnostics_ndt_align_->publish();
 }
@@ -959,7 +959,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   RCLCPP_DEBUG_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
   diagnostics_ndt_align_->addKeyValue(
-    "latest_ndt_aling_service_best_score", best_particle_ptr->score);
+    "latest_ndt_align_service_best_score", best_particle_ptr->score);
 
   return result_pose_with_cov_msg;
 }
