@@ -192,6 +192,8 @@ public:
 
   const std::string uuid_str;
 
+  const std::optional<double> get_dist_to_stopline_opt() const { return dist_to_stopline_opt; }
+
 private:
   autoware_auto_perception_msgs::msg::PredictedObject predicted_object_;
 

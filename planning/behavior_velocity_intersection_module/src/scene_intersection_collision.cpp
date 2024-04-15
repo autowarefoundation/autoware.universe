@@ -168,20 +168,23 @@ void IntersectionModule::updateObjectInfoManagerCollision(
   // dynamically change TTC margin according to traffic light color to gradually relax from green to
   // red
   // ==========================================================================================
-  const auto [collision_start_margin_time, collision_end_margin_time] = [&]() {
+  const auto collision_start_margin_time = [&]() {
     if (traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED) {
-      return std::make_pair(
-        planner_param_.collision_detection.fully_prioritized.collision_start_margin_time,
-        planner_param_.collision_detection.fully_prioritized.collision_end_margin_time);
+      return planner_param_.collision_detection.fully_prioritized.collision_start_margin_time;
     }
     if (traffic_prioritized_level == TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED) {
-      return std::make_pair(
-        planner_param_.collision_detection.partially_prioritized.collision_start_margin_time,
-        planner_param_.collision_detection.partially_prioritized.collision_end_margin_time);
+      return planner_param_.collision_detection.partially_prioritized.collision_start_margin_time;
     }
-    return std::make_pair(
-      planner_param_.collision_detection.not_prioritized.collision_start_margin_time,
-      planner_param_.collision_detection.not_prioritized.collision_end_margin_time);
+    return planner_param_.collision_detection.not_prioritized.collision_start_margin_time;
+  }();
+  const auto collision_end_margin_time = [&]() {
+    if (traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED) {
+      return planner_param_.collision_detection.fully_prioritized.collision_end_margin_time;
+    }
+    if (traffic_prioritized_level == TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED) {
+      return planner_param_.collision_detection.partially_prioritized.collision_end_margin_time;
+    }
+    return planner_param_.collision_detection.not_prioritized.collision_end_margin_time;
   }();
 
   constexpr size_t object_debug_size = 57;
@@ -280,9 +283,29 @@ void IntersectionModule::updateObjectInfoManagerCollision(
         // ==========================================================================================
         continue;
       }
+      // ==========================================================================================
+      // if the object is already inside the intersection(dist_to_stopline < 0), then relax the
+      // collision_end_margin to `passthrough_distance_margin_for_preemptive_start /
+      // object_velocity`
+      // ==========================================================================================
+      const double collision_end_margin_time_reconciled = [&]() {
+        if (!object_info->get_dist_to_stopline_opt()) {
+          return collision_end_margin_time;
+        }
+        const double dist_to_stopline = object_info->get_dist_to_stopline_opt().value();
+        if (dist_to_stopline > 0) {
+          return collision_end_margin_time;
+        }
+        return std::min(
+          collision_end_margin_time,
+          planner_param_.collision_detection.not_prioritized
+              .passthrough_distance_margin_for_preemptive_start /
+            predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x);
+      }();
+
       auto ego_end_itr = std::lower_bound(
         time_distance_array.begin(), time_distance_array.end(),
-        object_exit_time + collision_end_margin_time,
+        object_exit_time + collision_end_margin_time_reconciled,
         [](const auto & a, const double b) { return a.first < b; });
       if (ego_end_itr == time_distance_array.end()) {
         ego_end_itr = time_distance_array.end() - 1;
