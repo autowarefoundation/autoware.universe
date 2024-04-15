@@ -122,7 +122,6 @@ GoalPlannerModule::GoalPlannerModule(
   // Initialize safety checker
   if (parameters_->safety_check_params.enable_safety_check) {
     initializeSafetyCheckParameters();
-    // utils::parking_departure::initializeCollisionCheckDebugMap(goal_planner_data_.collision_check);
   }
 }
 
