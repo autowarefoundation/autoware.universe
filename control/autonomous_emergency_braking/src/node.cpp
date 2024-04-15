@@ -153,9 +153,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   const double aeb_hz = declare_parameter<double>("aeb_hz");
   const auto period_ns = rclcpp::Rate(aeb_hz).period();
   std::cerr << "period " << period_ns.count() << "\n";
-  cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  timer_ = rclcpp::create_timer(
-    this, this->get_clock(), period_ns, std::bind(&AEB::onTimer, this), cb_group_);
+  timer_ = rclcpp::create_timer(this, this->get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 }
 
 void AEB::onTimer()
