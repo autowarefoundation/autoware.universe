@@ -533,7 +533,7 @@ void StaticCenterlineGeneratorNode::on_plan_path(
 
     if (!current_lanelet_points.empty()) {
       // register points with lane_id
-      static_centerline_generator::msg::PointsWithLaneId points_with_lane_id;
+      autoware_static_centerline_generator::msg::PointsWithLaneId points_with_lane_id;
       points_with_lane_id.lane_id = lanelet.id();
       points_with_lane_id.points = current_lanelet_points;
       response->points_with_lane_ids.push_back(points_with_lane_id);
