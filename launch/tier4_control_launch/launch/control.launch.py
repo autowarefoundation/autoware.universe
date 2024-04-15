@@ -345,21 +345,7 @@ def launch_setup(context, *args, **kwargs):
                 glog_component,
             ],
         )
-        control_validator_component = ComposableNode(
-            package="control_validator",
-            plugin="control_validator::ControlValidator",
-            name="control_validator",
-            remappings=[
-                ("~/input/kinematics", "/localization/kinematic_state"),
-                ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
-                (
-                    "~/input/predicted_trajectory",
-                    "/control/trajectory_follower/lateral/predicted_trajectory",
-                ),
-                ("~/output/validation_status", "~/validation_status"),
-            ],
-            parameters=[control_validator_param],
-        )
+
     else:
         container = ComposableNodeContainer(
             name="control_container",
@@ -374,21 +360,22 @@ def launch_setup(context, *args, **kwargs):
                 glog_component,
             ],
         )
-        control_validator_component = ComposableNode(
-            package="control_validator",
-            plugin="control_validator::ControlValidator",
-            name="control_validator",
-            remappings=[
-                ("~/input/kinematics", "/localization/kinematic_state"),
-                ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
-                (
-                    "~/input/predicted_trajectory",
-                    "/control/trajectory_follower/lateral/predicted_trajectory",
-                ),
-                ("~/output/validation_status", "~/validation_status"),
-            ],
-            parameters=[control_validator_param],
-        )
+
+    control_validator_component = ComposableNode(
+        package="control_validator",
+        plugin="control_validator::ControlValidator",
+        name="control_validator",
+        remappings=[
+            ("~/input/kinematics", "/localization/kinematic_state"),
+            ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
+            (
+                "~/input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
+            ("~/output/validation_status", "~/validation_status"),
+        ],
+        parameters=[control_validator_param],
+    )
 
     group = GroupAction(
         [
@@ -468,7 +455,7 @@ def generate_launch_description():
 
     # component
     add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
-    add_launch_arg("use_multithread", "false", "use multithread")
+    add_launch_arg("use_multithread", "true", "use multithread")
     add_launch_arg(
         "trajectory_follower_mode",
         "trajectory_follower_node",
@@ -480,12 +467,11 @@ def generate_launch_description():
         condition=UnlessCondition(LaunchConfiguration("use_multithread")),
     )
 
-    if True:
-        set_container_mt_executable = SetLaunchConfiguration(
-            "container_executable",
-            "component_container_mt",
-            condition=IfCondition(LaunchConfiguration("use_multithread")),
-        )
+    set_container_mt_executable = SetLaunchConfiguration(
+        "container_executable",
+        "component_container_mt",
+        condition=IfCondition(LaunchConfiguration("use_multithread")),
+    )
     return launch.LaunchDescription(
         launch_arguments
         + [
