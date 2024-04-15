@@ -120,7 +120,7 @@ geometry_msgs::msg::Pose get_text_pose(
 
 std::array<double, 3> convert_hex_string_to_decimal(const std::string & hex_str_color)
 {
-  unsigned int hex_int_color;
+  unsigned int hex_int_color = 0.0;
   std::istringstream iss(hex_str_color);
   iss >> std::hex >> hex_int_color;
 
@@ -213,7 +213,7 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
     });
   sub_traj_resample_interval_ = create_subscription<std_msgs::msg::Float32>(
     "/centerline_updater_helper/traj_resample_interval", rclcpp::QoS{1},
-    [this]([[maybe_unused]] const std_msgs::msg::Float32 & msg) {
+    []([[maybe_unused]] const std_msgs::msg::Float32 & msg) {
       // TODO(murooka)
     });
 

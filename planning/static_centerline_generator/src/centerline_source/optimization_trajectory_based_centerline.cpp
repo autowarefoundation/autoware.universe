@@ -79,13 +79,13 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
   const auto start_center_pose = utils::get_center_pose(route_handler, route_lane_ids.front());
 
   // get ego nearest search parameters and resample interval in behavior_path_planner
-  const double ego_nearest_dist_threshold =
+  const auto ego_nearest_dist_threshold =
     tier4_autoware_utils::getOrDeclareParameter<double>(node, "ego_nearest_dist_threshold");
-  const double ego_nearest_yaw_threshold =
+  const auto ego_nearest_yaw_threshold =
     tier4_autoware_utils::getOrDeclareParameter<double>(node, "ego_nearest_yaw_threshold");
-  const double behavior_path_interval =
+  const auto behavior_path_interval =
     tier4_autoware_utils::getOrDeclareParameter<double>(node, "output_path_interval");
-  const double behavior_vel_interval =
+  const auto behavior_vel_interval =
     tier4_autoware_utils::getOrDeclareParameter<double>(node, "behavior_output_path_interval");
 
   // extract path with lane id from lanelets
@@ -107,7 +107,7 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
   RCLCPP_INFO(node.get_logger(), "Converted to path and published.");
 
   // smooth trajectory and road collision avoidance
-  const auto optimized_traj_points = optimize_trajectory(raw_path);
+  auto optimized_traj_points = optimize_trajectory(raw_path);
   RCLCPP_INFO(
     node.get_logger(),
     "Smoothed trajectory and made it collision free with the road and published.");
@@ -173,8 +173,8 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
         break;
       }
     }
-    for (size_t j = 0; j < optimized_traj_points.size(); ++j) {
-      whole_optimized_traj_points.push_back(optimized_traj_points.at(j));
+    for (const auto & optimized_traj_point : optimized_traj_points) {
+      whole_optimized_traj_points.push_back(optimized_traj_point);
     }
   }
 
