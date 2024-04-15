@@ -303,7 +303,7 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 | `is_set_map_points`                   | whether the map points is set or not                       | set                        | not set                                                                            | none                          |
 | `latest_ndt_align_service_best_score` | the best score of particle                                 | allways                    | none                                                                               | none                          |
 
-※ 
+※
 This diagram is only published when the service is called, so it becomes stale after the initial pose estimation is completed.
 
 ### map_update_module
