@@ -14,17 +14,17 @@
 
 #include "autonomous_emergency_braking/node.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <pcl_ros/transforms.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
-#include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
-
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/point_types.h>
+#include <pcl/registration/gicp.h>
+#include <pcl/segmentation/extract_clusters.h>
 #include <tf2/utils.h>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -284,7 +284,6 @@ bool AEB::isDataReady()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
-  std::cerr << " onCheckCollision \n";
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkExpired()) {
@@ -320,7 +319,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   }
 
   // step2. create velocity data check if the vehicle stops or not
-  const double current_v = current_velocity_ptr_->longitudinal_velocity;
+  const double current_v = current_velocity_ptr_->longitudinal_velocity + 2.25;
   if (current_v < 0.1) {
     std::cerr << __func__ << " Current vel \n";
     return false;
@@ -328,6 +327,9 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
   // step3. create ego path based on sensor data
   bool has_collision_ego = false;
+  std::cerr << "-----------------OBJECT CREATION------------------\n";
+  std::cerr << "-----------------IMU OBJECT CREATION------------------\n";
+
   if (use_imu_path_) {
     std::vector<Polygon2d> ego_polys;
     const double current_w = angular_velocity_ptr_->z;
@@ -339,13 +341,19 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto ego_path = generateEgoPath(current_v, current_w, ego_polys);
     std::vector<ObjectData> objects;
     createObjectData(ego_path, ego_polys, current_time, objects);
-    has_collision_ego = hasCollision(current_v, ego_path, objects);
+    std::cerr << "Object Size Regular MEthod: " << objects.size() << "\n";
+    std::vector<ObjectData> objects_cluster;
+    createClusteredPointCloudObjectData(ego_path, ego_polys, current_time, objects_cluster);
+    std::cerr << "Clustering Method " << objects_cluster.size() << "\n";
 
+    has_collision_ego = hasCollision(current_v, ego_path, objects_cluster);
     std::string ns = "ego";
     addMarker(
-      current_time, ego_path, ego_polys, objects, color_r, color_g, color_b, color_a, ns,
+      current_time, ego_path, ego_polys, objects_cluster, color_r, color_g, color_b, color_a, ns,
       debug_markers);
   }
+
+  std::cerr << "-----------------MPC OBJECT CREATION------------------\n";
 
   // step4. transform predicted trajectory from control module
   bool has_collision_predicted = false;
@@ -362,15 +370,23 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       const auto & predicted_path = predicted_path_opt.value();
       std::vector<ObjectData> objects;
       createObjectData(predicted_path, predicted_polys, current_time, objects);
-      has_collision_predicted = hasCollision(current_v, predicted_path, objects);
-
+      std::cerr << "Object Size Regular MEthod: " << objects.size() << "\n";
+      std::vector<ObjectData> objects_cluster;
+      createClusteredPointCloudObjectData(
+        predicted_path, predicted_polys, current_time, objects_cluster);
+      std::cerr << "Clustering Method " << objects_cluster.size() << "\n";
+      has_collision_predicted = hasCollision(current_v, predicted_path, objects_cluster);
       std::string ns = "predicted";
       addMarker(
-        current_time, predicted_path, predicted_polys, objects, color_r, color_g, color_b, color_a,
-        ns, debug_markers);
+        current_time, predicted_path, predicted_polys, objects_cluster, color_r, color_g, color_b,
+        color_a, ns, debug_markers);
     }
   }
-  std::cerr << "Has collision! \n";
+  std::cerr << "-----------------OBJECT CREATION------------------\n";
+
+  std::string col = (has_collision_ego || has_collision_predicted) ? "Has collision! \n"
+                                                                   : "DOES NOT HAVE COLLISION \n";
+  std::cerr << col;
   return has_collision_ego || has_collision_predicted;
 }
 
@@ -507,14 +523,75 @@ void AEB::createObjectData(
 
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
+  std::cerr << "obstacle_points_ptr->points.size() " << obstacle_points_ptr->points.size() << "\n";
   for (const auto & point : obstacle_points_ptr->points) {
     ObjectData obj;
     obj.stamp = stamp;
     obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
     obj.velocity = 0.0;
     const Point2d obj_point(point.x, point.y);
-    const double lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
-    if (lat_dist > 5.0) {
+    const double lat_dist = tier4_autoware_utils::calcLateralOffset(ego_path, obj.position);
+    if (lat_dist > vehicle_info_.vehicle_width_m / 2.0) {
+      continue;
+    }
+    for (const auto & ego_poly : ego_polys) {
+      if (bg::within(obj_point, ego_poly)) {
+        objects.push_back(obj);
+        break;
+      }
+    }
+  }
+}
+
+void AEB::createClusteredPointCloudObjectData(
+  const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
+  std::vector<ObjectData> & objects)
+{
+  // check if the predicted path has valid number of points
+  if (ego_path.size() < 2 || ego_polys.empty()) {
+    return;
+  }
+  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
+  pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
+
+  std::vector<pcl::PointIndices> cluster_indices;
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+  tree->setInputCloud(obstacle_points_ptr);
+
+  pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+  ec.setClusterTolerance(0.1);
+  ec.setMinClusterSize(10);
+  ec.setMaxClusterSize(10000);
+  ec.setSearchMethod(tree);
+  ec.setInputCloud(obstacle_points_ptr);
+  ec.extract(cluster_indices);
+
+  std::vector<PointCloud::Ptr> clusters;
+  std::vector<Eigen::Vector4f> cluster_centroids;
+
+  for (const auto & indices : cluster_indices) {
+    PointCloud::Ptr cluster(new PointCloud);
+    for (const auto & index : indices.indices) {
+      cluster->push_back((*obstacle_points_ptr)[index]);
+    }
+    cluster->width = cluster->size();
+    cluster->height = 1;
+    cluster->is_dense = true;
+    clusters.push_back(cluster);
+    Eigen::Vector4f centroid;
+    pcl::compute3DCentroid(*cluster, centroid);
+    cluster_centroids.push_back(centroid);
+  }
+
+  const double half_width = vehicle_info_.vehicle_width_m / 2.0;
+  for (const auto & centroid : cluster_centroids) {
+    ObjectData obj;
+    obj.stamp = stamp;
+    obj.position = tier4_autoware_utils::createPoint(centroid(0), centroid(1), centroid(2));
+    obj.velocity = 0.0;
+    const Point2d obj_point(centroid(0), centroid(1));
+    const double lat_dist = tier4_autoware_utils::calcLateralOffset(ego_path, obj.position);
+    if (lat_dist > half_width) {
       continue;
     }
     for (const auto & ego_poly : ego_polys) {
@@ -559,7 +636,7 @@ void AEB::addMarker(
 
   auto object_data_marker = tier4_autoware_utils::createDefaultMarker(
     "base_link", current_time, ns + "_objects", 0, Marker::SPHERE_LIST,
-    tier4_autoware_utils::createMarkerScale(0.05, 0.05, 0.05),
+    tier4_autoware_utils::createMarkerScale(0.5, 0.5, 0.5),
     tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
   for (const auto & e : objects) {
     object_data_marker.points.push_back(e.position);
