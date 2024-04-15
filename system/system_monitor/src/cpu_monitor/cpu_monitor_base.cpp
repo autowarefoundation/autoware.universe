@@ -56,11 +56,11 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   usage_timeout_(declare_parameter<int>("usage_timeout", 5)),
   load_timeout_(declare_parameter<int>("load_timeout", 5)),
   freq_timeout_(declare_parameter<int>("freq_timeout", 5)),
-  temp_timeout_expired_(false),
-  usage_timeout_expired_(false),
-  load_timeout_expired_(false),
-  freq_timeout_expired_(false)
-{
+  temp_elapsed_ms_(0),
+  usage_elapsed_ms_(0),
+  load_elapsed_ms_(0),
+  freq_elapsed_ms_(0)
+{ 
   using namespace std::literals::chrono_literals;
 
   gethostname(hostname_, sizeof(hostname_));
@@ -98,7 +98,6 @@ void CPUMonitorBase::update()
 
 void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  std::cout << "CPUMonitorBase::checkTemp not implemented A" << std::endl;
   std::string error_str;
   std::map<std::string, float> map;
   double elapsed_ms;
@@ -109,8 +108,6 @@ void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & sta
     map = temp_map_;
     elapsed_ms = temp_elapsed_ms_;
   }
-
-  std::cout << "CPUMonitorBase::checkTemp not implemented. B" << std::endl;
 
   int level = DiagStatus::OK;
 
@@ -124,21 +121,15 @@ void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & sta
     stat.addf(itr->first, "%.1f DegC", itr->second);
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(temp_timeout_mutex_);
-    timeout_expired = temp_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read Temp error");
+  } else if (elapsed_ms > temp_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "read Temp Timeout");
   } else {
     stat.summary(level, temp_dict_.at(level));
   }
 
-  stat.addf("elapsed_time", "%f ms", elapsed_ms);
-
-  std::cout << "CPUMonitorBase::checkTemp not implemented. C" << std::endl;
+  stat.addf("excution_time", "%f ms", elapsed_ms);
 }
 
 void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -181,19 +172,17 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     }
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-    timeout_expired = usage_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (whole_level == DiagStatus::ERROR) {
+    stat.summary(whole_level, load_dict_.at(whole_level));
+  } else if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read Usage error");
+  } else if (elapsed_ms > usage_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "read Usage Timeout");
   } else {
     stat.summary(whole_level, load_dict_.at(whole_level));
   }
 
-  stat.addf("elapsed_time", "%f ms", elapsed_ms);
+  stat.addf("execution time", "%f ms", elapsed_ms);
 }
 
 int CPUMonitorBase::CpuUsageToLevel(const std::string & cpu_name, float usage)
@@ -259,13 +248,9 @@ void CPUMonitorBase::checkLoad(diagnostic_updater::DiagnosticStatusWrapper & sta
     return;
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(load_timeout_mutex_);
-    timeout_expired = load_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read Load error");
+  } else if (elapsed_ms > load_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "read Load Timeout");
   } else {
     stat.summary(DiagStatus::OK, "OK");
@@ -274,7 +259,7 @@ void CPUMonitorBase::checkLoad(diagnostic_updater::DiagnosticStatusWrapper & sta
     stat.addf("15min", "%.2f%%", avg[2] * 1e2);
   }
 
-  stat.addf("elapsed_time", "%f ms", elapsed_ms);
+  stat.addf("execution time", "%f ms", elapsed_ms);
 }
 
 void CPUMonitorBase::checkThrottling(
@@ -306,79 +291,104 @@ void CPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper 
     stat.addf(fmt::format("CPU {}: clock", itr->first), "%d MHz", itr->second);
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(freq_timeout_mutex_);
-    timeout_expired = freq_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read Frequency error");
+  } else if (elapsed_ms > freq_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "read Frequency Timeout");
   } else {
     stat.summary(DiagStatus::OK, "OK");
   }
 
-  stat.addf("elapsed_time", "%f ms", elapsed_ms);
+  stat.addf("execution time", "%f ms", elapsed_ms);
 }
 
 void CPUMonitorBase::onTimer()
 {
-  executeReadTemp();
-  executeReadUsage();
-  executeReadLoad();
-  executeReadThrottling();
-  executeReadFrequency();
-}
-
-void CPUMonitorBase::onTempTimeout()
-{
-  RCLCPP_WARN(get_logger(), "Read CPU Temperature Timeout occurred.");
-  std::lock_guard<std::mutex> lock(temp_timeout_mutex_);
-  temp_timeout_expired_ = true;
-}
-
-void CPUMonitorBase::onUsageTimeout()
-{
-  RCLCPP_WARN(get_logger(), "Read CPU Usage Timeout occurred.");
-  std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-  usage_timeout_expired_ = true;
-}
-
-void CPUMonitorBase::onLoadTimeout()
-{
-  RCLCPP_WARN(get_logger(), "Read CPU Load Timeout occurred.");
-  std::lock_guard<std::mutex> lock(load_timeout_mutex_);
-  load_timeout_expired_ = true;
-}
-
-void CPUMonitorBase::onFreqTimeout()
-{
-  RCLCPP_WARN(get_logger(), "Read CPU Frequency Timeout occurred.");
-  std::lock_guard<std::mutex> lock(freq_timeout_mutex_);
-  freq_timeout_expired_ = true;
-}
-
-void CPUMonitorBase::executeReadTemp()
-{
-  // Remember start time to measure elapsed time
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
 
-  // Start timeout timer for reading temperature
+  // Read temperature
   {
-    std::lock_guard<std::mutex> lock(temp_timeout_mutex_);
-    temp_timeout_expired_ = false;
+    stop_watch.tic("execution_time");
+
+    std::string error_str;
+    std::map<std::string, float> map;
+
+    error_str = executeReadTemp(map);
+
+    // Measure elapsed time since start time and report
+    const double elapsed_ms = stop_watch.toc("execution_time");
+    {
+      std::lock_guard<std::mutex> lock(temp_mutex_);
+      temp_error_str_ = error_str;
+      temp_map_ = map;
+      temp_elapsed_ms_ = elapsed_ms;
+    }
   }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(temp_timeout_),
-    std::bind(&CPUMonitorBase::onTempTimeout, this));
 
-  std::string error_str = "";
-  std::map<std::string, float> map;
+  // Read usage
+  {
+    stop_watch.tic("execution_time");
 
+    std::string error_str;
+    std::map<std::string, CpuStatus> map;
+
+    error_str = executeReadUsage(map);
+
+    // Measure elapsed time since start time and report
+    const double elapsed_ms = stop_watch.toc("execution_time");
+    {
+      std::lock_guard<std::mutex> lock(usage_mutex_);
+      usage_error_str_ = error_str;
+      usage_map_ = map;
+      usage_elapsed_ms_ = elapsed_ms;
+    }
+  }
+
+  // Read load
+  {
+    stop_watch.tic("execution_time");
+
+    std::string error_str;
+    double avg[3];
+
+    error_str = executeReadLoad(avg);
+
+    // Measure elapsed time since start time and report
+    const double elapsed_ms = stop_watch.toc("execution_time");
+
+    {
+      std::lock_guard<std::mutex> lock(load_mutex_);
+      load_error_str_ = error_str;
+      std::copy(std::begin(avg), std::end(avg), std::begin(load_avg_));
+      load_elapsed_ms_ = elapsed_ms;
+    }
+  }
+  
+  // Read frequency
+  {
+    stop_watch.tic("execution_time");
+
+    std::string error_str;
+    std::map<int, float> map;
+
+    error_str = executeReadFrequency(map);
+    // Measure elapsed time since start time and report
+    const double elapsed_ms = stop_watch.toc("execution_time");
+
+    {
+      std::lock_guard<std::mutex> lock(freq_mutex_);
+      freq_error_str_ = error_str;
+      freq_map_ = map;
+      freq_elapsed_ms_ = elapsed_ms;
+    }
+  }
+}
+
+std::string CPUMonitorBase::executeReadTemp(std::map<std::string, float> & map)
+{
+  std::string error_str;
   if (temps_.empty()) {
-    error_str = "temperature files not found";
-    return;
+    return "temperature files not found";
   }
 
   for (auto itr = temps_.begin(); itr != temps_.end(); ++itr) {
@@ -396,51 +406,21 @@ void CPUMonitorBase::executeReadTemp()
     temp /= 1000;
     map[itr->label_] = temp;
   }
-  // stop timeout timer
-  timeout_timer_->cancel();
-
-  // Measure elapsed time since start time and report
-  const double elapsed_ms = stop_watch.toc("execution_time");
-
-  {
-    std::lock_guard<std::mutex> lock(temp_mutex_);
-    temp_error_str_ = error_str;
-    temp_map_ = map;
-    temp_elapsed_ms_ = elapsed_ms;
-  }
+  return error_str;
 }
 
-void CPUMonitorBase::executeReadUsage()
+std::string CPUMonitorBase::executeReadUsage(std::map<std::string, CpuStatus> & map)
 {
-  // Remember start time to measure elapsed time
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
-
-  // Start timeout timer for reading temperature
-  {
-    std::lock_guard<std::mutex> lock(temp_timeout_mutex_);
-    usage_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(usage_timeout_),
-    std::bind(&CPUMonitorBase::onUsageTimeout, this));
-
   tier4_external_api_msgs::msg::CpuUsage cpu_usage;
   using CpuStatus = tier4_external_api_msgs::msg::CpuStatus;
-
   std::ifstream ifs("/proc/stat");
   std::vector<cpu_usage_info> curr_usages;
   std::string line;
-  std::string error_str = "";
-  std::map<std::string, CpuStatus> map;
-  int level = DiagStatus::OK;
-  int whole_level = DiagStatus::OK;
 
   if (!ifs) {
-    error_str = "ifstream: Error opening /proc/stat";
     cpu_usage.all.status = CpuStatus::STALE;
     publishCpuUsage(cpu_usage);
-    return;
+    return "ifstream: Error opening /proc/stat";
   }
 
   while (std::getline(ifs, line)) {
@@ -450,10 +430,9 @@ void CPUMonitorBase::executeReadUsage()
       if (!(ss >> tmp_usage.cpu_name_ >> tmp_usage.usr_ >> tmp_usage.nice_ >> tmp_usage.sys_ >>
             tmp_usage.idle_ >> tmp_usage.iowait_ >> tmp_usage.irq_ >> tmp_usage.soft_ >>
             tmp_usage.steal_)) {
-        error_str = "istringstream: Error parsing line in /proc/stat: " + line;
         cpu_usage.all.status = CpuStatus::STALE;
         publishCpuUsage(cpu_usage);
-        return;
+        return "istringstream: Error parsing line in /proc/stat: " + line;
       }
       curr_usages.push_back(tmp_usage);
     } else {
@@ -463,28 +442,30 @@ void CPUMonitorBase::executeReadUsage()
 
   if (prev_usages_.empty()) {
     prev_usages_ = curr_usages;
-    return;
+    return "initialize cpu usage info from /proc/stat";
   }
 
   if (prev_usages_[0].usr_ <= 0) {
-    error_str =
-      "cpu usages overflow error: A value of /proc/stat is greater than INT_MAX. Restart ECU";
     cpu_usage.all.status = CpuStatus::STALE;
     publishCpuUsage(cpu_usage);
-    return;
+    return "cpu usages overflow error: A value of /proc/stat is greater than INT_MAX. Restart ECU";
   }
 
   if (prev_usages_.size() != curr_usages.size()) {
-    error_str = "update error: Error update cpu usage info from /proc/stat";
     cpu_usage.all.status = CpuStatus::STALE;
     publishCpuUsage(cpu_usage);
-    return;
+    return "update error: Error update cpu usage info from /proc/stat";
   }
 
   for (int i = 0; i < prev_usages_.size(); i++) {
     CpuStatus cpu_status;
     if (curr_usages[i].cpu_name_ == "cpu") curr_usages[i].cpu_name_ = "cpu all";
     int total_diff = curr_usages[i].totalTime() - prev_usages_[i].totalTime();
+    if (total_diff <= 0) {
+      cpu_usage.all.status = CpuStatus::STALE;
+      publishCpuUsage(cpu_usage);
+      return "update error: Error update cpu usage info from /proc/stat";
+    }
     cpu_status.usr = 100.0 * (curr_usages[i].usr_ - prev_usages_[i].usr_) / total_diff;
     cpu_status.nice = 100.0 * (curr_usages[i].nice_ - prev_usages_[i].nice_) / total_diff;
     cpu_status.sys = 100.0 * (curr_usages[i].sys_ - prev_usages_[i].sys_) / total_diff;
@@ -504,101 +485,39 @@ void CPUMonitorBase::executeReadUsage()
   // Publish msg
   publishCpuUsage(cpu_usage);
 
-  // stop timeout timer
-  timeout_timer_->cancel();
-
-  // Measure elapsed time since start time and report
-  const double elapsed_ms = stop_watch.toc("execution_time");
-
-  {
-    std::lock_guard<std::mutex> lock(usage_mutex_);
-    usage_error_str_ = error_str;
-    usage_map_ = map;
-    usage_elapsed_ms_ = elapsed_ms;
-  }
+  prev_usages_ = curr_usages;
+  return "";
 }
 
-void CPUMonitorBase::executeReadLoad()
+std::string CPUMonitorBase::executeReadLoad(double (&avg)[3])
 {
-  // Remember start time to measure elapsed time
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
-
-  // Start timeout timer for reading temperature
-  {
-    std::lock_guard<std::mutex> lock(load_timeout_mutex_);
-    load_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(load_timeout_),
-    std::bind(&CPUMonitorBase::onLoadTimeout, this));
-
-  double avg[3];
-  std::string error_str = "";
-
   std::ifstream ifs("/proc/loadavg", std::ios::in);
 
   if (!ifs) {
-    error_str = "ifstream: Error opening /proc/loadavg";
-    return;
+    return "ifstream: Error opening /proc/loadavg";
   }
 
   std::string line;
 
   if (!std::getline(ifs, line)) {
-    error_str = "getline: Error reading /proc/loadavg";
-    return;
+    return "getline: Error reading /proc/loadavg";
   }
 
   if (sscanf(line.c_str(), "%lf %lf %lf", &avg[0], &avg[1], &avg[2]) != 3) {
-    error_str = "sscanf: Error parsing /proc/loadavg";
-    return;
+    return "sscanf: Error parsing /proc/loadavg";
   }
 
   avg[0] /= num_cores_;
   avg[1] /= num_cores_;
   avg[2] /= num_cores_;
-
-  // stop timeout timer
-  timeout_timer_->cancel();
-
-  // Measure elapsed time since start time and report
-  const double elapsed_ms = stop_watch.toc("execution_time");
-
-  {
-    std::lock_guard<std::mutex> lock(load_mutex_);
-    load_error_str_ = error_str;
-    std::copy(std::begin(avg), std::end(avg), std::begin(load_avg_));
-    load_elapsed_ms_ = elapsed_ms;
-  }
+  return "";
 }
 
-void CPUMonitorBase::executeReadThrottling()
+std::string CPUMonitorBase::executeReadFrequency(std::map<int, float> & map)
 {
-  // override this function in derived class
-}
-
-void CPUMonitorBase::executeReadFrequency()
-{
-  // Remember start time to measure elapsed time
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
-
-  // Start timeout timer for reading temperature
-  {
-    std::lock_guard<std::mutex> lock(freq_timeout_mutex_);
-    freq_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(freq_timeout_),
-    std::bind(&CPUMonitorBase::onFreqTimeout, this));
-
-  std::string error_str = "";
-  std::map<int, float> map;
-
+  std::string error_str;
   if (freqs_.empty()) {
-    error_str = "frequency files not found";
-    return;
+    return "frequency files not found";
   }
 
   for (auto itr = freqs_.begin(); itr != freqs_.end(); ++itr) {
@@ -615,19 +534,7 @@ void CPUMonitorBase::executeReadFrequency()
     }
     ifs.close();
   }
-
-  // stop timeout timer
-  timeout_timer_->cancel();
-
-  // Measure elapsed time since start time and report
-  const double elapsed_ms = stop_watch.toc("execution_time");
-
-  {
-    std::lock_guard<std::mutex> lock(freq_mutex_);
-    freq_error_str_ = error_str;
-    freq_map_ = map;
-    freq_elapsed_ms_ = elapsed_ms;
-  }
+  return error_str;
 }
 
 void CPUMonitorBase::getTempNames()

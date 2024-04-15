@@ -42,7 +42,7 @@ namespace fs = boost::filesystem;
 CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
 : CPUMonitorBase("cpu_monitor", options),
   throt_timeout_(declare_parameter<int>("throt_timeout", 5)),
-  throt_timeout_expired_(false)
+  throt_elapsed_ms_(0)
 {
   msr_reader_port_ = declare_parameter<int>("msr_reader_port", 7634);
 
@@ -76,50 +76,25 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     whole_level = std::max(whole_level, itr->second);
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(throt_timeout_mutex_);
-    timeout_expired = throt_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (whole_level == DiagStatus::ERROR) {
+    stat.summary(whole_level, thermal_dict_.at(whole_level));
+  } else if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read throttling error");
+  } else if (elapsed_ms > throt_timeout_) {
     stat.summary(DiagStatus::WARN, "read throttling timeout");
   } else {
     stat.summary(whole_level, thermal_dict_.at(whole_level));
   }
 
-  stat.addf("elapsed_time", "%f ms", elapsed_ms);
+  stat.addf("execution time", "%f ms", elapsed_ms);
 }
 
-void CPUMonitor::onThrotTimeout()
+std::string CPUMonitor::executeReadThrottling(std::map<int, int> & map)
 {
-  RCLCPP_WARN(get_logger(), "Read CPU Throttling Timeout occurred.");
-  std::lock_guard<std::mutex> lock(throt_timeout_mutex_);
-  throt_timeout_expired_ = true;
-}
-
-void CPUMonitor::executeReadThrottling()
-{
-  // Remember start time to measure elapsed time
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
-
-  // Start timeout timer for reading throttling status
-  {
-    std::lock_guard<std::mutex> lock(throt_timeout_mutex_);
-    throt_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(temp_timeout_),
-    std::bind(&CPUMonitor::onThrotTimeout, this));
-
-  std::string error_str;
-
-  // Create a new socket
+   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
-    error_str = "socket error: " + std::string(strerror(errno));
-    return;
+    return "socket error: " + std::string(strerror(errno));
   }
 
   // Specify the receiving timeouts until reporting an error
@@ -128,9 +103,8 @@ void CPUMonitor::executeReadThrottling()
   tv.tv_usec = 0;
   int ret = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
   if (ret < 0) {
-    error_str = "setsockopt error: " + std::string(strerror(errno));
     close(sock);
-    return;
+    return "setsockopt error: " + std::string(strerror(errno));
   }
 
   // Connect the socket referred to by the file descriptor
@@ -140,32 +114,28 @@ void CPUMonitor::executeReadThrottling()
   addr.sin_port = htons(msr_reader_port_);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-  if (ret < 0) {
-    error_str = "connect error: " + std::string(strerror(errno));
+  if (ret < 0) { 
     close(sock);
-    return;
+    return "connect error: " + std::string(strerror(errno));
   }
 
   // Receive messages from a socket
   char buf[1024] = "";
   ret = recv(sock, buf, sizeof(buf) - 1, 0);
   if (ret < 0) {
-    error_str = "recv error: " + std::string(strerror(errno));
     close(sock);
-    return;
+    return "recv error: " + std::string(strerror(errno));
   }
   // No data received
   if (ret == 0) {
-    error_str = "recv error: " + std::string("No data received");
     close(sock);
-    return;
+    return "recv error: " + std::string("No data received");
   }
 
   // Close the file descriptor FD
   ret = close(sock);
   if (ret < 0) {
-    error_str = "close error: " + std::string(strerror(errno));
-    return;
+    return "close error: " + std::string(strerror(errno));
   }
 
   // Restore MSR information
@@ -176,21 +146,16 @@ void CPUMonitor::executeReadThrottling()
     boost::archive::text_iarchive oa(iss);
     oa >> info;
   } catch (const std::exception & e) {
-    error_str = "recv error: " + std::string(e.what());
-    return;
+    return "recv error: " + std::string(e.what());
   }
 
   // msr_reader returns an error
   if (info.error_code_ != 0) {
-    error_str = "msr_reader error: " + std::string(strerror(info.error_code_));
-    return;
+    return "msr_reader error: " + std::string(strerror(info.error_code_));
   }
 
   int level = DiagStatus::OK;
-  int whole_level = DiagStatus::OK;
-  std::map<int, int> map;
   int index = 0;
-
   for (auto itr = info.pkg_thermal_status_.begin(); itr != info.pkg_thermal_status_.end();
        ++itr, ++index) {
     if (*itr) {
@@ -201,18 +166,30 @@ void CPUMonitor::executeReadThrottling()
 
     throt_map_[index] = level;
   }
+  return "";
+}
 
-  // stop timeout timer
-  timeout_timer_->cancel();
+void CPUMonitor::onTimer()
+{
+  CPUMonitorBase::onTimer();
 
-  // Measure elapsed time since start time and report
-  const double elapsed_ms = stop_watch.toc("execution_time");
-
+  // Remember start time to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   {
-    std::lock_guard<std::mutex> lock(throt_mutex_);
-    throt_error_str_ = error_str;
-    throt_map_ = map;
-    throt_elapsed_ms_ = elapsed_ms;
+    stop_watch.tic("execution_time");
+
+    std::string error_str;
+    std::map<int, int> map;
+
+    error_str = this->executeReadThrottling(map);
+    // Measure elapsed time since start time and report
+    const double elapsed_ms = stop_watch.toc("execution_time");
+    {
+      std::lock_guard<std::mutex> lock(throt_mutex_);
+      throt_error_str_ = error_str;
+      throt_map_ = map;
+      throt_elapsed_ms_ = elapsed_ms;
+    }
   }
 }
 

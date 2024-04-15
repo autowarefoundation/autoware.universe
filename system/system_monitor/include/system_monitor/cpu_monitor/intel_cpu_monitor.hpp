@@ -44,14 +44,14 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
 
   /**
-   * @brief execute read throttling
+   * @brief check CPU information
    */
-  void executeReadThrottling() override;
+  void onTimer() override;
 
   /**
-   * @brief Timeout for reading thermal throttling
+   * @brief execute read throttling
    */
-  void onThrotTimeout();
+  std::string executeReadThrottling(std::map<int, int> & map);
 
   /**
    * @brief get names for core temperature files
@@ -70,10 +70,6 @@ protected:
   std::string throt_error_str_;   //!< @brief Error string
   std::map<int, int> throt_map_;  //!< @brief Map of core id and thermal throttling status
   double throt_elapsed_ms_;       //!< @brief Execution time of reading thermal throttling
-  std::mutex
-    throt_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading thermal throttling
-  bool
-    throt_timeout_expired_;  //!< @brief Timeout for reading thermal throttling has expired or not
 };
 
 #endif  // SYSTEM_MONITOR__CPU_MONITOR__INTEL_CPU_MONITOR_HPP_

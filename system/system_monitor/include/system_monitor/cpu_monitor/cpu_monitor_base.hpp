@@ -165,55 +165,29 @@ protected:
   virtual void onTimer();
 
   /**
-   * @brief Timeout callback function for executing reading temperature
-   */
-  virtual void onTempTimeout();
-
-  /**
-   * @brief Timeout callback function for executing reading usage
-   */
-  virtual void onUsageTimeout();
-
-  /**
-   * @brief Timeout callback function for executing reading load
-   */
-  virtual void onLoadTimeout();
-
-  /**
-   * @brief Timeout callback function for executing reading frequency
-   */
-  virtual void onFreqTimeout();
-
-  /**
    * @brief execute reading temperature
    */
-  virtual void executeReadTemp();
+  virtual std::string executeReadTemp(std::map<std::string, float> & map);
 
   /**
    * @brief execute reading usage
    */
-  virtual void executeReadUsage();
+  virtual std::string executeReadUsage(std::map<std::string, CpuStatus> & map);
 
   /**
    * @brief execute reading load
    */
-  virtual void executeReadLoad();
-
-  /**
-   * @brief execute reading thermal throttling
-   */
-  virtual void executeReadThrottling();
+  virtual std::string executeReadLoad(double (&avg)[3]);
 
   /**
    * @brief execute reading frequency
    */
-  virtual void executeReadFrequency();
+  virtual std::string executeReadFrequency(std::map<int, float> & map);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
   rclcpp::TimerBase::SharedPtr timer_;                     //!< @brief Timer to execute onTempTimer
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
-  rclcpp::TimerBase::SharedPtr timeout_timer_;  //!< @brief Timeout for reading each CPU status
 
   char hostname_[HOST_NAME_MAX + 1];         //!< @brief host name
   int num_cores_;                            //!< @brief number of cores
@@ -240,30 +214,22 @@ protected:
   std::string temp_error_str_;             //!< @brief Error string
   std::map<std::string, float> temp_map_;  //!< @brief CPU temperature map
   double temp_elapsed_ms_;                 //!< @brief Execution time of reading temperature
-  std::mutex temp_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading temperature
-  bool temp_timeout_expired_;      //!< @brief Timeout for reading temperature has expired or not
 
   std::mutex usage_mutex_;                      //!< @brief Mutex for output from reading usage
   std::string usage_error_str_;                 //!< @brief Error string
   std::map<std::string, CpuStatus> usage_map_;  //!< @brief CPU usage map
   double usage_elapsed_ms_;                     //!< @brief Execution time of reading usage
-  std::mutex usage_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading usage
-  bool usage_timeout_expired_;      //!< @brief Timeout for reading usage has expired or not
 
   std::mutex load_mutex_;          //!< @brief Mutex for output from reading load
   std::string load_error_str_;     //!< @brief Error string
   double load_avg_[3];             //!< @brief CPU load average
   double load_elapsed_ms_;         //!< @brief Execution time of reading load
-  std::mutex load_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading load
-  bool load_timeout_expired_;      //!< @brief Timeout for reading load has expired or not
 
   std::mutex freq_mutex_;          //!< @brief Mutex for output from reading frequency
   std::string freq_error_str_;     //!< @brief Error string
   std::map<int, float> freq_map_;  //!< @brief CPU frequency vector
   double freq_elapsed_ms_;         //!< @brief Execution time of reading frequency
   rclcpp::TimerBase::SharedPtr freq_timeout_timer_;  //!< @brief Timeout for reading frequency
-  std::mutex freq_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading frequency
-  bool freq_timeout_expired_;      //!< @brief Timeout for reading frequency has expired or not
 
   /**
    * @brief CPU temperature status messages
