@@ -65,10 +65,8 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
       param.execute_num = getOrDeclareParameter<int>(*node, ns + "execute_num");
-      param.moving_speed_threshold =
-        getOrDeclareParameter<double>(*node, ns + "moving_speed_threshold");
-      param.moving_time_threshold =
-        getOrDeclareParameter<double>(*node, ns + "moving_time_threshold");
+      param.moving_speed_threshold = getOrDeclareParameter<double>(*node, ns + "th_moving_speed");
+      param.moving_time_threshold = getOrDeclareParameter<double>(*node, ns + "th_moving_time");
       param.max_expand_ratio = getOrDeclareParameter<double>(*node, ns + "max_expand_ratio");
       param.envelope_buffer_margin =
         getOrDeclareParameter<double>(*node, ns + "envelope_buffer_margin");
@@ -121,22 +119,29 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
 
     p.object_check_goal_distance =
       getOrDeclareParameter<double>(*node, ns + "object_check_goal_distance");
-    p.threshold_distance_object_is_on_center =
-      getOrDeclareParameter<double>(*node, ns + "threshold_distance_object_is_on_center");
-    p.object_check_shiftable_ratio =
-      getOrDeclareParameter<double>(*node, ns + "object_check_shiftable_ratio");
-    p.object_check_min_road_shoulder_width =
-      getOrDeclareParameter<double>(*node, ns + "object_check_min_road_shoulder_width");
     p.object_last_seen_threshold =
-      getOrDeclareParameter<double>(*node, ns + "object_last_seen_threshold");
+      getOrDeclareParameter<double>(*node, ns + "max_compensation_time");
+  }
+
+  {
+    const std::string ns = "avoidance.target_filtering.parked_vehicle.";
+    p.threshold_distance_object_is_on_center =
+      getOrDeclareParameter<double>(*node, ns + "th_offset_from_centerline");
+    p.object_check_shiftable_ratio =
+      getOrDeclareParameter<double>(*node, ns + "th_shiftable_ratio");
+    p.object_check_min_road_shoulder_width =
+      getOrDeclareParameter<double>(*node, ns + "min_road_shoulder_width");
   }
 
   {
     const std::string ns = "avoidance.target_filtering.avoidance_for_ambiguous_vehicle.";
-    p.enable_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<bool>(*node, ns + "enable");
-    p.threshold_time_force_avoidance_for_stopped_vehicle =
-      getOrDeclareParameter<double>(*node, ns + "time_threshold");
+    p.enable_avoidance_for_ambiguous_vehicle = getOrDeclareParameter<bool>(*node, ns + "enable");
+    p.closest_distance_to_wait_and_see_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "closest_distance_to_wait_and_see");
+    p.time_threshold_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "condition.th_stopped_time");
+    p.distance_threshold_for_ambiguous_vehicle =
+      getOrDeclareParameter<double>(*node, ns + "condition.th_moving_distance");
     p.object_ignore_section_traffic_light_in_front_distance =
       getOrDeclareParameter<double>(*node, ns + "ignore_area.traffic_light.front_distance");
     p.object_ignore_section_crosswalk_in_front_distance =
