@@ -457,7 +457,7 @@ std::string CPUMonitorBase::executeReadUsage(std::map<std::string, CpuStatus> & 
     return "update error: Error update cpu usage info from /proc/stat";
   }
 
-  for (int i = 0; i < prev_usages_.size(); i++) {
+  for (size_t i = 0; i < prev_usages_.size(); i++) {
     CpuStatus cpu_status;
     if (curr_usages[i].cpu_name_ == "cpu") curr_usages[i].cpu_name_ = "cpu all";
     int total_diff = curr_usages[i].totalTime() - prev_usages_[i].totalTime();
