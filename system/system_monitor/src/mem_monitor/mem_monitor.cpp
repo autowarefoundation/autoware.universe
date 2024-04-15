@@ -103,7 +103,9 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     }
   }
 
-  if (elapsed_ms == 0.0) {
+  if (level == DiagStatus::ERROR) {
+    stat.summary(level, usage_dict_.at(level));
+  } else if (elapsed_ms == 0.0) {
     stat.summary(DiagStatus::WARN, "do not execute readUsage yet");
   } else if (elapsed_ms > usage_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "readUsage timeout expired");
