@@ -64,8 +64,8 @@ protected:
    */
   void modprobeMSR();
 
-  int msr_reader_port_;  //!< @brief port number to connect to msr_reader
-  int throttle_timeout_;    //!< @brief Timeout for reading thermal throttling
+  int msr_reader_port_;   //!< @brief port number to connect to msr_reader
+  int throttle_timeout_;  //!< @brief Timeout for reading thermal throttling
 
   std::mutex throttle_mutex_;         //!< @brief Mutex for output from reading thermal throttling
   std::string throttle_error_str_;    //!< @brief Error string

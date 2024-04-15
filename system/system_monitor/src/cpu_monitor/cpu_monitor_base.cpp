@@ -60,7 +60,7 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   usage_elapsed_ms_(0),
   load_elapsed_ms_(0),
   freq_elapsed_ms_(0)
-{ 
+{
   using namespace std::literals::chrono_literals;
 
   gethostname(hostname_, sizeof(hostname_));
@@ -363,7 +363,7 @@ void CPUMonitorBase::onTimer()
       load_elapsed_ms_ = elapsed_ms;
     }
   }
-  
+
   // Read frequency
   {
     stop_watch.tic("execution_time");
