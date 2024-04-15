@@ -280,6 +280,8 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 | `execution_time`                           | the time for convergence processing                                                    | the time is **shorter** than `validation.critical_upper_bound_exe_time_ms`                                                                                                                                          | the time is **longer** than `validation.critical_upper_bound_exe_time_ms`                                                                                                                                                                                                                                                                                                | none                                     | no                                                                       |
 | `skipping_publish_num`                     | the number of times rejected estimation results consecutively                          | the number of times is 0                                                                                                                                                                                            | the number of times is **larger** than 0 and **smaller** than 5                                                                                                                                                                                                                                                                                                          | the number of times is **larger** than 5 | -                                                                        |
 
+※If the initial pose estimation takes too long, this diagnostic may become stale.
+
 ### initial_pose_callback
 
 | Name               | Description                                        | Transition condition to OK | Transition condition to Warning | Transition condition to Error |
@@ -304,7 +306,7 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 | `latest_ndt_align_service_best_score` | the best score of particle                                 | none                    | none                                                                               | none                          |
 
 ※
-This diagram is only published when the service is called, so it becomes stale after the initial pose estimation is completed.
+This diagnostic is only published when the service is called, so it becomes stale after the initial pose estimation is completed.
 
 ### map_update_module
 
