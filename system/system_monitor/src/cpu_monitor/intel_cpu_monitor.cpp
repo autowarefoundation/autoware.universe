@@ -41,8 +41,8 @@ namespace fs = boost::filesystem;
 
 CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
 : CPUMonitorBase("cpu_monitor", options),
-  throt_timeout_(declare_parameter<int>("throt_timeout", 5)),
-  throt_elapsed_ms_(0)
+  throttle_timeout_(declare_parameter<int>("throttle_timeout", 5)),
+  throttle_elapsed_ms_(0)
 {
   msr_reader_port_ = declare_parameter<int>("msr_reader_port", 7634);
 
@@ -57,10 +57,10 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   double elapsed_ms;
 
   {
-    std::lock_guard<std::mutex> lock(throt_mutex_);
-    error_str = throt_error_str_;
-    vector = throt_vector_;
-    elapsed_ms = throt_elapsed_ms_;
+    std::lock_guard<std::mutex> lock(throttle_mutex_);
+    error_str = throttle_error_str_;
+    vector = throttle_vector_;
+    elapsed_ms = throttle_elapsed_ms_;
   }
 
   if (!error_str.empty()) {
@@ -80,7 +80,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     stat.summary(whole_level, thermal_dict_.at(whole_level));
   } else if (elapsed_ms == 0.0) {
     stat.summary(DiagStatus::WARN, "read throttling error");
-  } else if (elapsed_ms > throt_timeout_) {
+  } else if (elapsed_ms > throttle_timeout_) {
     stat.summary(DiagStatus::WARN, "read throttling timeout");
   } else {
     stat.summary(whole_level, thermal_dict_.at(whole_level));
@@ -185,10 +185,10 @@ void CPUMonitor::onTimer()
     // Measure elapsed time since start time and report
     const double elapsed_ms = stop_watch.toc("execution_time");
     {
-      std::lock_guard<std::mutex> lock(throt_mutex_);
-      throt_error_str_ = error_str;
-      throt_vector_ = vector;
-      throt_elapsed_ms_ = elapsed_ms;
+      std::lock_guard<std::mutex> lock(throttle_mutex_);
+      throttle_error_str_ = error_str;
+      throttle_vector_ = vector;
+      throttle_elapsed_ms_ = elapsed_ms;
     }
   }
 }
