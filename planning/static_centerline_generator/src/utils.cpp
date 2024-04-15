@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_static_centerline_generator/utils.hpp"
+#include "static_centerline_generator/utils.hpp"
 
 #include "behavior_path_planner_common/data_manager.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"

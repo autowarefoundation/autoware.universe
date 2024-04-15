@@ -22,7 +22,7 @@
 #include "static_centerline_generator/utils.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 
-namespace static_centerline_generator
+namespace autoware::static_centerline_generator
 {
 namespace
 {
@@ -180,4 +180,4 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
 
   return whole_optimized_traj_points;
 }
-}  // namespace static_centerline_generator
+}  // namespace autoware::static_centerline_generator

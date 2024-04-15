@@ -17,11 +17,13 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "static_centerline_generator/type_alias.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
 #include <vector>
 
-namespace static_centerline_generator
+namespace autoware::static_centerline_generator
 {
+using ::autoware_auto_planning_msgs::msg::TrajectoryPoint;
 std::vector<TrajectoryPoint> generate_centerline_with_bag(rclcpp::Node & node);
-}  // namespace static_centerline_generator
+}  // namespace autoware::static_centerline_generator
 #endif  // STATIC_CENTERLINE_GENERATOR__CENTERLINE_SOURCE__BAG_EGO_TRAJECTORY_BASED_CENTERLINE_HPP_
