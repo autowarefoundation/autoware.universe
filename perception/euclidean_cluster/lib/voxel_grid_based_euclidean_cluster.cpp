@@ -52,23 +52,14 @@ bool VoxelGridBasedEuclideanCluster::cluster(
 
 bool VoxelGridBasedEuclideanCluster::cluster(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & pointcloud_msg,
-  std::vector<sensor_msgs::msg::PointCloud2> & clusters)
+  tier4_perception_msgs::msg::DetectedObjectsWithFeature & objects)
 {
   // TODO(Saito) implement use_height is false version
 
   // create voxel
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
   int point_step = pointcloud_msg->point_step;
-  int x_offset = pointcloud_msg->fields[pcl::getFieldIndex(*pointcloud_msg, "x")].offset;
-  int y_offset = pointcloud_msg->fields[pcl::getFieldIndex(*pointcloud_msg, "y")].offset;
-  int z_offset = pointcloud_msg->fields[pcl::getFieldIndex(*pointcloud_msg, "z")].offset;
-  for (size_t i = 0; i < pointcloud_msg->data.size(); i += point_step) {
-    pcl::PointXYZ point;
-    std::memcpy(&point.x, &pointcloud_msg->data[i + x_offset], sizeof(float));
-    std::memcpy(&point.y, &pointcloud_msg->data[i + y_offset], sizeof(float));
-    std::memcpy(&point.z, &pointcloud_msg->data[i + z_offset], sizeof(float));
-    pointcloud->push_back(point);
-  }
+  pcl::fromROSMsg(*pointcloud_msg, *pointcloud);
   pcl::PointCloud<pcl::PointXYZ>::Ptr voxel_map_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   voxel_grid_.setLeafSize(voxel_leaf_size_, voxel_leaf_size_, 100000.0);
   voxel_grid_.setMinimumPointsNumberPerVoxel(min_points_number_per_voxel_);
@@ -119,18 +110,14 @@ bool VoxelGridBasedEuclideanCluster::cluster(
     temporary_clusters.at(i).data.resize(pointcloud_msg->data.size());
     clusters_data_size.push_back(0);
   }
-  for (size_t i = 0; i < pointcloud_msg->data.size(); i += point_step) {
-    pcl::PointXYZ point;
-    std::memcpy(&point.x, &pointcloud_msg->data[i + x_offset], sizeof(float));
-    std::memcpy(&point.y, &pointcloud_msg->data[i + y_offset], sizeof(float));
-    std::memcpy(&point.z, &pointcloud_msg->data[i + z_offset], sizeof(float));
-
+  for (size_t i = 0; i < pointcloud->points.size(); ++i) {
+    const auto & point = pointcloud->points.at(i);
     const int index =
       voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(point.x, point.y, point.z));
     if (map.find(index) != map.end()) {
       std::memcpy(
         &temporary_clusters.at(map[index]).data[clusters_data_size.at(map[index])],
-        &pointcloud_msg->data[i], point_step);
+        &pointcloud_msg->data[i * point_step], point_step);
       clusters_data_size.at(map[index]) += point_step;
     }
   }
@@ -143,16 +130,25 @@ bool VoxelGridBasedEuclideanCluster::cluster(
         continue;
       }
       temporary_clusters.at(i).data.resize(clusters_data_size.at(i));
-      clusters.push_back(temporary_clusters[i]);
-      clusters.back().header = pointcloud_msg->header;
-      clusters.back().height = pointcloud_msg->height;
-      clusters.back().width =
-        temporary_clusters[i].data.size() / point_step / pointcloud_msg->height;
-      clusters.back().is_dense = pointcloud_msg->is_dense;
-      clusters.back().is_bigendian = pointcloud_msg->is_bigendian;
-      clusters.back().fields = pointcloud_msg->fields;
-      clusters.back().row_step = temporary_clusters[i].data.size() / pointcloud_msg->height;
+      temporary_clusters.at(i).width =
+        clusters_data_size.at(i) / point_step / pointcloud_msg->height;
+      temporary_clusters.at(i).row_step = clusters_data_size.at(i) / pointcloud_msg->height;
+      temporary_clusters.at(i).fields = pointcloud_msg->fields;
+      temporary_clusters.at(i).is_bigendian = pointcloud_msg->is_bigendian;
+      temporary_clusters.at(i).is_dense = pointcloud_msg->is_dense;
+      temporary_clusters.at(i).header = pointcloud_msg->header;
+      tier4_perception_msgs::msg::DetectedObjectWithFeature feature_object;
+      feature_object.feature.cluster = temporary_clusters.at(i);
+      feature_object.object.kinematics.pose_with_covariance.pose.position =
+        getCentroid(temporary_clusters.at(i));
+      autoware_auto_perception_msgs::msg::ObjectClassification classification;
+      classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+      classification.probability = 1.0f;
+      feature_object.object.classification.emplace_back(classification);
+
+      objects.feature_objects.push_back(feature_object);
     }
+    objects.header = pointcloud_msg->header;
   }
 
   return true;

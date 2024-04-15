@@ -60,13 +60,10 @@ void VoxelGridBasedEuclideanClusterNode::onPointCloud(
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
   }
-  // clustering
-  std::vector<sensor_msgs::msg::PointCloud2> clusters;
-  cluster_->cluster(input_msg, clusters);
-
-  // build output msg
+  // cluster and build output msg
   tier4_perception_msgs::msg::DetectedObjectsWithFeature output;
-  convertPointCloudClusters2Msg(input_msg->header, clusters, output);
+
+  cluster_->cluster(input_msg, output);
   cluster_pub_->publish(output);
 
   // build debug msg

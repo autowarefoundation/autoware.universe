@@ -35,7 +35,7 @@ public:
 
   bool cluster(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & pointcloud,
-    std::vector<sensor_msgs::msg::PointCloud2> & clusters) override;
+    tier4_perception_msgs::msg::DetectedObjectsWithFeature & clusters) override;
   void setTolerance(float tolerance) { tolerance_ = tolerance; }
 
 private:
