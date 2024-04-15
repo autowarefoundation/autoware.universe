@@ -220,10 +220,10 @@ protected:
   std::map<std::string, CpuStatus> usage_map_;  //!< @brief CPU usage map
   double usage_elapsed_ms_;                     //!< @brief Execution time of reading usage
 
-  std::mutex load_mutex_;          //!< @brief Mutex for output from reading load
-  std::string load_error_str_;     //!< @brief Error string
-  double load_avg_[3];             //!< @brief CPU load average
-  double load_elapsed_ms_;         //!< @brief Execution time of reading load
+  std::mutex load_mutex_;       //!< @brief Mutex for output from reading load
+  std::string load_error_str_;  //!< @brief Error string
+  double load_avg_[3];          //!< @brief CPU load average
+  double load_elapsed_ms_;      //!< @brief Execution time of reading load
 
   std::mutex freq_mutex_;          //!< @brief Mutex for output from reading frequency
   std::string freq_error_str_;     //!< @brief Error string

@@ -91,7 +91,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
 
 std::string CPUMonitor::executeReadThrottling(std::map<int, int> & map)
 {
-   // Create a new socket
+  // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
     return "socket error: " + std::string(strerror(errno));
@@ -114,7 +114,7 @@ std::string CPUMonitor::executeReadThrottling(std::map<int, int> & map)
   addr.sin_port = htons(msr_reader_port_);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-  if (ret < 0) { 
+  if (ret < 0) {
     close(sock);
     return "connect error: " + std::string(strerror(errno));
   }
