@@ -83,28 +83,24 @@ void InputStream::setObjects(
 }
 
 void InputStream::getObjectsOlderThan(
-  const rclcpp::Time & time, const double duration,
+  const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
 {
   objects.clear();
 
-  // remove objects older than the specified duration
-  const rclcpp::Time old_limit = time - rclcpp::Duration::from_seconds(duration);
-  for (const auto & object : objects_que_) {
-    const rclcpp::Time object_time = rclcpp::Time(object.header.stamp);
-    if (object_time < old_limit) {
-      objects_que_.pop_front();
-    } else {
-      break;
-    }
-  }
+  assert(object_latest_time.nanoseconds() > object_oldest_time.nanoseconds());
 
   for (const auto & object : objects_que_) {
-    // Skip if the object is older than the specified duration
     const rclcpp::Time object_time = rclcpp::Time(object.header.stamp);
-    const double time_diff = (time - object_time).seconds();
-    // Add the object if the object is older than the specified time
-    if (time_diff >= 0.0) {
+
+    // remove objects older than the specified duration
+    if (object_time < object_oldest_time) {
+      objects_que_.pop_front();
+      continue;
+    }
+
+    // Add the object if the object is older than the specified latest time
+    if (object_latest_time >= object_time) {
       objects.push_back(object);
       // remove the object from the queue
       objects_que_.pop_front();
@@ -113,17 +109,6 @@ void InputStream::getObjectsOlderThan(
   RCLCPP_INFO(
     node_.get_logger(), "InputStream::getObjectsOlderThan %s gives %zu objects", long_name_.c_str(),
     objects.size());
-
-  // // message to show the older limit, time, old objects in the queue, latest object in the queue
-  // if (objects_que_.empty()) {
-  //   RCLCPP_INFO(
-  //     node_.get_logger(), "InputStream::getObjectsOlderThan %s empty queue", long_name_.c_str());
-  //   return;
-  // }
-  // RCLCPP_INFO(
-  //   node_.get_logger(), "InputStream::getObjectsOlderThan %s older limit %f, time %f, %u, %u",
-  //   long_name_.c_str(), old_limit.seconds(), time.seconds(),
-  //   objects_que_.front().header.stamp.sec, objects_que_.back().header.stamp.sec);
 }
 
 InputManager::InputManager(rclcpp::Node & node) : node_(node)
@@ -134,12 +119,12 @@ void InputManager::init(
   const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names,
   const std::vector<std::string> & short_names)
 {
-  input_size_ = input_topics.size();
-
   // Check input sizes
-  RCLCPP_INFO(
-    node_.get_logger(), "InputManager::init Initializing input manager with %zu input streams",
-    input_size_);
+  input_size_ = input_topics.size();
+  if (input_size_ == 0) {
+    RCLCPP_ERROR(node_.get_logger(), "InputManager::init No input streams");
+    return;
+  }
   assert(input_size_ == long_names.size());
   assert(input_size_ == short_names.size());
 
@@ -162,29 +147,46 @@ void InputManager::init(
         input_topics.at(i), rclcpp::QoS{1}, func);
   }
 
-  if (input_size_ > 0) {
-    is_initialized_ = true;
-  }
+  is_initialized_ = true;
 }
 
 bool InputManager::getObjects(
   const rclcpp::Time & now,
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
 {
-  RCLCPP_INFO(node_.get_logger(), "InputManager::getObjects Getting objects from input streams");
+  if (!is_initialized_) {
+    RCLCPP_INFO(node_.get_logger(), "InputManager::getObjects Input manager is not initialized");
+    return false;
+  }
 
+  RCLCPP_INFO(node_.get_logger(), "InputManager::getObjects Getting objects from input streams");
   objects.clear();
 
+  // Get the streams statistics
+  std::string long_name, short_name;
+  double latency_mean, latency_var, interval_mean, interval_var;
+  for (const auto & input_stream : input_streams_) {
+    input_stream->getNames(long_name, short_name);
+    input_stream->getTimeStatistics(latency_mean, latency_var, interval_mean, interval_var);
+    RCLCPP_INFO(
+      node_.get_logger(),
+      "InputManager::getObjects %s: latency mean: %f, var: %f, interval mean: "
+      "%f, var: %f",
+      long_name.c_str(), latency_mean, latency_var, interval_mean, interval_var);
+  }
+
   // Get proper latency
-  constexpr double target_latency = 0.15;   // [s], measurement to tracking latency, as much as the
+  constexpr double target_latency = 0.11;   // [s], measurement to tracking latency, as much as the
                                             // detector latency, the less total latency
   constexpr double acceptable_band = 0.15;  // [s], acceptable band from the target latency
-  rclcpp::Time time = now - rclcpp::Duration::from_seconds(target_latency);
+  const rclcpp::Time object_latest_time = now - rclcpp::Duration::from_seconds(target_latency);
+  const rclcpp::Time object_oldest_time =
+    object_latest_time - rclcpp::Duration::from_seconds(acceptable_band);
 
   // Get objects from all input streams
   for (const auto & input_stream : input_streams_) {
     std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_tmp;
-    input_stream->getObjectsOlderThan(time, acceptable_band, objects_tmp);
+    input_stream->getObjectsOlderThan(object_latest_time, object_oldest_time, objects_tmp);
     objects.insert(objects.end(), objects_tmp.begin(), objects_tmp.end());
   }
 

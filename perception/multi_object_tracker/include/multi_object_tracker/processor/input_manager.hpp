@@ -35,8 +35,22 @@ public:
   void setObjects(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
 
   void getObjectsOlderThan(
-    const rclcpp::Time & time, const double duration,
+    const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
     std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects);
+
+  void getNames(std::string & long_name, std::string & short_name)
+  {
+    long_name = long_name_;
+    short_name = short_name_;
+  }
+  void getTimeStatistics(
+    double & latency_mean, double & latency_var, double & interval_mean, double & interval_var)
+  {
+    latency_mean = latency_mean_;
+    latency_var = latency_var_;
+    interval_mean = interval_mean_;
+    interval_var = interval_var_;
+  }
 
 private:
   rclcpp::Node & node_;
