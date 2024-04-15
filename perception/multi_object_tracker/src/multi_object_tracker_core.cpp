@@ -106,7 +106,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
   
   input_manager_ = std::make_unique<InputManager>(*this);
-  input_manager_->init(input_topic_names_, input_names_long, input_names_short);
+  input_manager_->init(input_topic_names, input_names_long, input_names_short);
 
   // sub_objects_array_.resize(input_topic_size_);
 

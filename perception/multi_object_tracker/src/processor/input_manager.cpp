@@ -27,11 +27,19 @@ void InputStream::init(
   long_name_ = long_name;
   short_name_ = short_name;
 
+  // debug message
+  RCLCPP_INFO(
+    node_.get_logger(), "Initializing %s input stream from %s", long_name_.c_str(),
+    input_topic_.c_str());
+
   // Initialize subscription
   std::function<void(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)>
     func = std::bind(&InputStream::setObjects, this, std::placeholders::_1);
   sub_objects_ = node_.create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
     input_topic_, rclcpp::QoS{1}, func);
+
+  // Initialize queue
+  objects_que_.clear();
 
   // Initialize latency statistics
   expected_rate_ = 10.0;
@@ -44,7 +52,11 @@ void InputStream::init(
 void InputStream::setObjects(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)
 {
-  const auto & object = *msg;
+  // debug message
+  RCLCPP_INFO(
+    node_.get_logger(), "Received %s message from %s", long_name_.c_str(), input_topic_.c_str());
+
+  const autoware_auto_perception_msgs::msg::DetectedObjects object = *msg;
   objects_que_.push_back(object);
   if (objects_que_.size() > que_size_) {
     objects_que_.pop_front();
@@ -103,9 +115,11 @@ void InputManager::init(
   const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names, const std::vector<std::string> & short_names)
 {
   input_size_ = input_topics.size();
-  
-  for (size_t i = 0; i < input_size_; i++) {
+  RCLCPP_INFO(node_.get_logger(), "Initializing input manager with %zu input streams", input_size_);
+  assert(input_size_ == long_names.size());
+  assert(input_size_ == short_names.size());
 
+  for (size_t i = 0; i < input_size_; i++) {
     InputStream input_stream(node_);
     input_stream.init(input_topics.at(i), long_names.at(i), short_names.at(i));
     input_streams_.push_back(std::make_shared<InputStream>(input_stream));
