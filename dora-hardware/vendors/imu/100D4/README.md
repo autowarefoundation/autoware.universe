@@ -1,42 +1,39 @@
-# 100D4
+# 传感器驱动
 
-A Python module for accessing the 100D4 digital accelerometer and gyroscope developed by Dora.
+基于 Dora0.3.2环境开发的100D4陀螺仪。
 
-## Table of Contents
+## 背景
 
-- [Background](#background)
-- [Install](#install)
-- [Usage](#usage)
-- [API](#api)
-- [Contributing](#contributing)
-- [License](#license)
+将IMU驱动与GNSS驱动放入一个数据流当中，目前IMU可以直接发到ros2进行显示。
 
-## Background
+# 文件代码说明
 
-### Overview:
-100D4 is an advanced Microelectromechanical Systems (MEMS) Inertial Measurement Unit (IMU) chip developed by InvenSense (now part of TDK). It is a sensor that integrates a three-axis accelerometer and a three-axis gyroscope, capable of accurately measuring acceleration and angular velocity in three-
+1. imu/imu.py: 陀螺仪驱动代码；
+6. Imu_to_ros2.yml： 数据流脚本。
 
-## Install
+## 用法
 
-The installation of environment dependencies is realized through the requirements.txt file of this file：
 ```
-pip install -r requirements.txt
-```
-
-## Usage
-```
-PATH=$PATH:$(pwd)
-cd abc_project(create folder without-> dora new abc_project --lang python) 
-#cd /home/crp/dora_project/dora-rs/dora-hardware/vendors/imu/100D4
 dora up
-sudo chmod 777 /dev/ttyUSB0
-dora start dataflow.yml --name first-dataflow
-# Output: c95d118b-cded-4531-a0e4-cd85b7c3916c
-dora logs first-dataflow custom_node_1
+sudo chmod 777 /dev/ttyUSB0 
+sudo chmod 777 /dev/ttyUSB1
+dora start Imu_to_ros2.yml --name test
 ```
-### After that, the content accepted by dora will appear   
+目前IMU对应/dev/ttyUSB0，GNSS对应/dev/ttyUSB1；
 
-**if you need to print the context to test the output:(Use the command line below)**  
+Imu驱动代码：imu.py
 
-- **try:RUST_LOG=debug dora start ./your path.yml --attach --hot-reload**  
-- **dora logs (number) (node_name)** 
+先插的传感器是/dev/ttyUSB0 ，后插的传感器是/dev/ttyUSB1。
+
+## 日志
+
+```bash
+dora logs test imu #查看imu的数据
+```
+
+RVIZ2可视化IMU
+
+```bash
+sudo apt-get install ros-galactic-imu-tools
+```
+

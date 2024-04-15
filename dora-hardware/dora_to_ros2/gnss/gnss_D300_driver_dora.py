@@ -7,8 +7,8 @@ from DoraNmeaDriver_utils import DoraNMEADriver, Timestamp
 from transforms3d._gohlketransforms import quaternion_from_euler
 import math
 import pickle
-
-serial_port = "/dev/ttyUSB1"
+import time
+serial_port = "/dev/ttyUSB0"
 serial_baud = 115200
 
 
@@ -21,6 +21,9 @@ class Operator:
     def __init__(self):
         try:
             self.GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=1)
+            self.GPS.close()
+            time.sleep(0.5)
+            self.GPS.open()
         except serial.SerialException as ex:
             print(
                 "Could not open serial port: I/O error({0}): {1}".format(

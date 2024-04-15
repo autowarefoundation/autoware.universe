@@ -44,8 +44,14 @@ Gnss驱动代码：gnss_D300_driver_dora.py;
 
 ## 日志
 
-```
+```bash
 dora logs test imu #查看imu的数据
 dora logs test gnss_sub #查看gnss的数据
+```
+
+RVIZ2可视化IMU
+
+```bash
+sudo apt-get install ros-galactic-imu-tools
 ```
 

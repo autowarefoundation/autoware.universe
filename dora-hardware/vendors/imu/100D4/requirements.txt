@@ -1,2 +1,0 @@
-dora==0.0.3
-smbus==1.1.post2

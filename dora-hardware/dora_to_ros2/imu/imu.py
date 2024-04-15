@@ -194,13 +194,14 @@ class Operator:
                     # json_dict = json.loads(imu_dict)
                     # 将 imu_dict 转换为 JSON 格式的字符串
                     # json_string = json.dumps(imu_dict)
+                    # 将 JSON 字符串转换为字节串
                     json_string = json.dumps(imu_dict, indent=4)  # 使用indent参数设置缩进宽度为4
                     print(json_string)
-                    # 将 JSON 字符串转换为字节串
                     json_bytes = json_string.encode('utf-8')
                     print(pa.array([imu_dict]))
                     self.imu_writer.publish(pa.array([imu_dict]))
-                    serialized_data = pickle.dumps(imu_dict)
+                    # serialized_data = pickle.dumps(imu_dict)
+                    # send_output("imu100D4",serialized_data,dora_event["metadata"])
                     send_output("imu100D4",json_bytes,dora_event["metadata"])
                     self.IMU.flushInput() 
 

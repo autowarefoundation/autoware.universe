@@ -1,0 +1,31 @@
+nodes:
+  - id: gnss
+    operator:
+      python: gnss_D300_driver_dora.py
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - DoraSentence
+        - DoraNavSatFix
+        - DoraQuaternionStamped
+        - DoraTwistStamped
+    env:
+      DEVICE_INDEX: 0
+  - id: gnss_sub
+    operator:
+      python: nmea_subscribeTopic.py
+      inputs:
+              DoraSentence: gnss/DoraSentence
+              DoraNavSatFix: gnss/DoraNavSatFix
+              DoraQuaternionStamped: gnss/DoraQuaternionStamped
+              DoraTwistStamped: gnss/DoraTwistStamped
+
+
+
+
+#   - id: custom_node_1
+#     operator:
+#       python: node_1/node_1.py
+#       inputs:
+# #        tick: dora/timer/secs/1
+#         Imu100D4: op_1/Imu100D4
