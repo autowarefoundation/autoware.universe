@@ -66,10 +66,10 @@ protected:
   int msr_reader_port_;  //!< @brief port number to connect to msr_reader
   int throt_timeout_;    //!< @brief Timeout for reading thermal throttling
 
-  std::mutex throt_mutex_;        //!< @brief Mutex for output from reading thermal throttling
-  std::string throt_error_str_;   //!< @brief Error string
+  std::mutex throt_mutex_;         //!< @brief Mutex for output from reading thermal throttling
+  std::string throt_error_str_;    //!< @brief Error string
   std::vector<int> throt_vector_;  //!< @brief Vector of core id and thermal throttling status
-  double throt_elapsed_ms_;       //!< @brief Execution time of reading thermal throttling
+  double throt_elapsed_ms_;        //!< @brief Execution time of reading thermal throttling
 };
 
 #endif  // SYSTEM_MONITOR__CPU_MONITOR__INTEL_CPU_MONITOR_HPP_
