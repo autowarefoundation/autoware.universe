@@ -62,22 +62,22 @@ void MapUpdateModule::initialize_diagnostics_key_value()
   diagnostics_map_update_->addKeyValue("latest_update_execution_time", 0.0);
 }
 
-void MapUpdateModule::callback_timer(const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position)
+void MapUpdateModule::callback_timer(
+  const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position)
 {
-
   diagnostics_map_update_->addKeyValue("is_activated", is_activated);
 
   if (is_activated) {
     const bool is_set_last_updete_position = (position != std::nullopt);
-    diagnostics_map_update_->addKeyValue("is_set_last_updete_position", is_set_last_updete_position);
+    diagnostics_map_update_->addKeyValue(
+      "is_set_last_updete_position", is_set_last_updete_position);
 
     if (is_set_last_updete_position) {
       if (should_update_map(position.value())) {
         RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
         update_map(position.value());
       }
-    }
-    else {
+    } else {
       std::stringstream message;
       message << "Cannot find the reference position for map update."
               << "Please check if the EKF odometry is provided to NDT.";
@@ -85,8 +85,7 @@ void MapUpdateModule::callback_timer(const bool is_activated, const std::optiona
         diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
       RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
     }
-  }
-  else {
+  } else {
     std::stringstream message;
     message << "Node is not activated.";
     RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
@@ -109,7 +108,8 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
   const double dy = position.y - last_update_position_.value().y;
   const double distance = std::hypot(dx, dy);
 
-  diagnostics_map_update_->addKeyValue("distance_last_updete_position_to_current_position", distance);
+  diagnostics_map_update_->addKeyValue(
+    "distance_last_updete_position_to_current_position", distance);
 
   if (distance + param_.lidar_radius > param_.map_radius) {
     std::stringstream message;

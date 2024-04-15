@@ -209,7 +209,8 @@ void NDTScanMatcher::callback_initial_pose(
     } else {
       std::stringstream message;
       message << "Received initial pose message with frame_id "
-              << initial_pose_msg_ptr->header.frame_id << ", but expected " << param_.frame.map_frame
+              << initial_pose_msg_ptr->header.frame_id << ", but expected "
+              << param_.frame.map_frame
               << ". Please check the frame_id in the input topic and ensure it is correct.";
       diagnostics_initial_pose_->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());

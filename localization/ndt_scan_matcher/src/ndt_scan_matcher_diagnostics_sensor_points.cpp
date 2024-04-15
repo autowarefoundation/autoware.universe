@@ -101,7 +101,8 @@ bool NDTScanMatcher::validate_sensor_points_delay_time(
   const double warn_timeout_sec)
 {
   const double sensor_points_delay_time_sec = (ros_time_now - sensor_ros_time).seconds();
-  diagnostics_scan_points_->addKeyValue("sensor_points_delay_time_sec", sensor_points_delay_time_sec);
+  diagnostics_scan_points_->addKeyValue(
+    "sensor_points_delay_time_sec", sensor_points_delay_time_sec);
 
   bool is_ok = sensor_points_delay_time_sec < warn_timeout_sec;
   if (!is_ok) {
@@ -189,7 +190,8 @@ bool NDTScanMatcher::validate_num_iteration(const int iter_num, const int max_it
 bool NDTScanMatcher::validate_local_optimal_solution_oscillation(
   const int oscillation_count, const int oscillation_count_threshold)
 {
-  diagnostics_scan_points_->addKeyValue("local_optimal_solution_oscillation_count", oscillation_count);
+  diagnostics_scan_points_->addKeyValue(
+    "local_optimal_solution_oscillation_count", oscillation_count);
 
   bool is_ok = oscillation_count < oscillation_count_threshold;
   if (!is_ok) {

@@ -57,7 +57,8 @@ private:
   friend class NDTScanMatcher;
 
   void initialize_diagnostics_key_value();
-  void callback_timer(const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position);
+  void callback_timer(
+    const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position);
 
   // Update the specified NDT
   bool update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt);
