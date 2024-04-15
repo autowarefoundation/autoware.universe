@@ -32,8 +32,6 @@
 #include "path_smoother/elastic_band_smoother.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
-#include "type_alias.hpp"
-#include "utils.hpp"
 
 #include <geography_utils/lanelet2_projector.hpp>
 #include <mission_planner/mission_planner_plugin.hpp>
